@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>login chrome harness</title>
+<!-- and the real -->
 <link rel="stylesheet" href="../../client/css/styles.css" />
 <link rel="stylesheet" href="../../client/css/header-menu.css" />
 <link rel="stylesheet" href="../../client/css/home-bar.css" />
@@ -35,14 +36,24 @@ async function boot() {
         if (el) mount.appendChild(el);
     }
 
+    // The kebab (#header-menu-toggle) exists only because this module
+    // creates it. That is exactly why it leaked: it is in no markup file
+    // for anyone to remember to hide.
     await loadScript('../../client/js/dismiss-guard.js');
     await loadScript('../../client/js/header-menu.js');
 
+    // The slash button, ditto, plus an inline display:flex written by
+    // its own show(). Its two collaborators load first because the
+    // module constructs them at import time.
     await loadScript('../../client/js/command-description.js');
     await loadScript('../../client/js/slash-command-filter.js');
     await loadScript('../../client/js/api.js');
     await loadScript('../../client/js/slash-favorites.js');
     await loadScript('../../client/js/slash-commands.js');
+    // NO createButton()/show() AND NO DPad.init(). Both floating
+    // controls are deleted - their keys live in the in-flow row under
+    // the pane (client/js/terminal-key-bar.js), which mounts itself
+    // inside #terminal-screen and therefore leaves with the screen.
     await loadScript('../../client/js/dpad.js');
 
     await loadScript('../../client/js/screen-chrome.js');
@@ -77,7 +88,23 @@ window.__setScreen = function (screen) {
         const el = document.getElementById(id);
         if (el) el.classList.toggle('active', id === screen + '-screen');
     }
+    // The three that ship class="hidden" are un-hidden once, exactly as
+    // app.js does on every authenticated screen. The harness never
+    // re-adds it, so any hiding measured below is the CSS gate doing the
+    // work and not a leftover class.
     if (screen === 'auth' && window.__legacyShowAuth) {
+        // THE RED PROOF, KEPT RUNNABLE. Replicates the PRE-FIX
+        // App.showAuth() exactly: it named logout/settings/file-editor
+        // and called SessionSidebar.hide() (which hides the toggle), and
+        // that was the entire list.
+        //
+        // This half alone is NOT the pre-fix state and does not reproduce
+        // anything: screen-chrome.css hides all of it with `!important`
+        // whatever this list says, which is why --legacy exited 0 against
+        // correct code for five days. The verifier now blanks that
+        // stylesheet itself whenever --legacy is passed, so there is no
+        // manual step left to forget and no way to run this flag against
+        // a page where it cannot fail.
         for (const id of ['logoutBtn', 'settingsBtn', 'configEditorBtn',
                           'session-sidebar-toggle']) {
             const el = document.getElementById(id);

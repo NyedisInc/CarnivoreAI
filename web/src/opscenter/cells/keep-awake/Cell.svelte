@@ -5,7 +5,6 @@
 </script>
 
 <script lang="ts">
-  /* keep awake */
   import type { CellProps } from '../../lib/cell';
   import { atLeast } from '../../lib/states';
   import DataTable from '../../ui/DataTable.svelte';
@@ -14,7 +13,7 @@
   import { autoSleep } from '../../../lib/auto-sleep/auto-sleep-store.svelte';
   import { sessions, projects, type SessionInfo } from '../../api';
   import type { ColumnSpec } from '../../engine/types';
-  import { projectFor } from '../running-sessions/project';
+  import { projectOfRow } from '../running-sessions/project';
   import { derivedDisplayName } from '../../../lib/sessions/session-label';
   import { keptView, type KeptRow } from './meta';
   import { t } from '../../../lib/i18n/index.svelte';
@@ -77,7 +76,7 @@
 
   function projectOf(row: KeptRow): string {
     if (!row.info) return t('opscenter.value.not_measured');
-    return projectFor(row.info.session.working_dir, projects.data ?? []);
+    return projectOfRow(row.info, projects.data ?? []);
   }
 </script>
 
@@ -126,7 +125,6 @@
 
 <style>
   @layer components {
-    /* scheduled tasks */
 
     .oc-ka-mac {
       display: flex;

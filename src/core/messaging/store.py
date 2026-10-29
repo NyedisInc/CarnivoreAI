@@ -310,12 +310,14 @@ def get_binding(binding_id: str) -> Optional[Dict[str, Any]]:
 
 def list_bindings(*, session_uuid: Optional[str] = None, conversation_id: Optional[str] = None) -> List[Dict[str, Any]]:
     clauses, args = [], []
-    if session_uuid:
-        clauses.append("b.session_uuid = ?")
-        args.append(session_uuid)
-    if conversation_id:
-        clauses.append("b.conversation_id = ?")
-        args.append(conversation_id)
+    for name, column, value in (("session_uuid", "b.session_uuid", session_uuid),
+                                ("conversation_id", "b.conversation_id", conversation_id)):
+        if value is None:
+            continue
+        if not value:
+            raise ValueError(f"list_bindings: {name} is empty; pass None for no filter")
+        clauses.append(f"{column} = ?")
+        args.append(value)
     where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
     with closing(_conn()) as conn:
         rows = conn.execute(

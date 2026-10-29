@@ -24,7 +24,14 @@
     "themes",
     "colors"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The themes screen: a grid of theme previews and the selected theme's details",
+      "caption": "The themes screen",
+      "file": "screen.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Theme system",
   "since": "2026-09-10",
   "status": "stable",
@@ -36,6 +43,5 @@
   "where": [
     "Menu tab, Themes.",
     "Or the THEMES card on the home screen."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

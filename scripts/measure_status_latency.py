@@ -22,7 +22,7 @@ writes under the slot directory it is handed.
 
 Usage:
   venv/bin/python3 scripts/measure_status_latency.py --slot-dir \
-      worktrees/.testsrv/slot2 --base http://127.0.0.1:8102 \
+      ~/dev-worktrees/.testsrv/slot2 --base http://127.0.0.1:8102 \
       --socket cloude-test2 --sessions 10 --trials 20 --idle-seconds 60
 """
 

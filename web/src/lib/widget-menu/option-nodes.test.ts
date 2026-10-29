@@ -10,24 +10,24 @@ function input(id: string, extra: Partial<OptionNodesInput> = {}): OptionNodesIn
 }
 
 describe('settingNodes (edit mode)', () => {
-  test('files: a tick for show global folder and a branch of radios for the top folder', () => {
+  test('files: a tick for show global folder, the badge tick and a branch of radios for the top folder', () => {
     const write = vi.fn();
     const groups = settingNodes(input('core.files', { write }));
     const nodes = groups.flat();
-    expect(nodes.map((n) => n.id)).toEqual(['showGlobalFolder', 'topFolder']);
+    expect(nodes.map((n) => n.id)).toEqual(['showGlobalFolder', 'showBadge', 'topFolder']);
     expect(nodes[0]!.checked).toBe(true);
     expect(nodes[0]!.toggle).toBe(true);
     nodes[0]!.run!();
     expect(write).toHaveBeenCalledWith('showGlobalFolder', false);
-    expect(nodes[1]!.children!.map((c) => [c.id, c.checked])).toEqual([['topFolder:global', true], ['topFolder:project', false]]);
-    nodes[1]!.children![1]!.run!();
+    expect(nodes[2]!.children!.map((c) => [c.id, c.checked])).toEqual([['topFolder:global', true], ['topFolder:project', false]]);
+    nodes[2]!.children![1]!.run!();
     expect(write).toHaveBeenCalledWith('topFolder', 'project');
   });
 
   test('a stored value is what is checked', () => {
     const nodes = settingNodes(input('core.files', { values: { showGlobalFolder: false, topFolder: 'project' } })).flat();
     expect(nodes[0]!.checked).toBe(false);
-    expect(nodes[1]!.children!.map((c) => c.checked)).toEqual([false, true]);
+    expect(nodes[2]!.children!.map((c) => c.checked)).toEqual([false, true]);
   });
 
   test('a number field adds one settings... item that opens the form', () => {
@@ -70,7 +70,7 @@ describe('railTip', () => {
   });
 });
 
-describe('copyOptionNodes', () => {
+describe('copyOptionNodes (Joe (ccsliinc), 2026-10-11: the questions widget)', () => {
   const schema = {
     fields: {
       kind_all: { kind: 'boolean' as const, labelKey: 'a', default: true },

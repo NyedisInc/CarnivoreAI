@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import Button from '../lib/base/Button.svelte';
+    import Field from '../lib/base/Field.svelte';
     import { untrack } from 'svelte';
     import {
         ApiRefusal, isLegacyPending, type SubmissionDetail, type SubmissionFile, type SubmissionRow,
@@ -24,6 +25,7 @@
     const overrideOpen = $derived(host.overriding === row.submission_id);
 
     let detail = $state<SubmissionDetail | null>(null);
+    const savedOverride = $derived(detail?.override ?? row.override);
     let file = $state<SubmissionFile | null>(null);
     let loading = $state(true);
     let errorKey = $state('');
@@ -95,6 +97,12 @@
         {#if report}
             <ReportView answer={report} />
         {/if}
+        {#if savedOverride && (report?.report.review?.verdict === 'blocked' || report?.report.review?.verdict === 'flagged')}
+            <p class="admin-note">{t(ADMIN_KEYS.reportReviewOverride, {
+                by: savedOverride.by_login || savedOverride.by || '',
+                at: savedOverride.at || '', reason: savedOverride.reason,
+            })}</p>
+        {/if}
         <h3 class="admin-list__name">{t(ADMIN_KEYS.detailFiles)}</h3>
         {#if !detail.files || detail.files.length === 0}
             <p class="admin-note">{t(ADMIN_KEYS.detailNoFiles)}</p>
@@ -121,7 +129,7 @@
     {#if canRevoke}
         <div class="admin-actionbar" role="group" aria-label={t(ADMIN_KEYS.actionsLabel)}>
             <label class="admin-field" for={'revoke-' + row.submission_id}>{t(ADMIN_KEYS.revokeLabel)}</label>
-            <input id={'revoke-' + row.submission_id} class="admin-input" type="text" maxlength="500"
+            <Field id={'revoke-' + row.submission_id} data-admin-grow maxlength={500}
                 value={revokeOpen ? host.revokeReason : ''}
                 oninput={(event) => host.setRevokeReason(row.submission_id, event.currentTarget.value)} />
             <Button variant="danger"
@@ -136,7 +144,7 @@
         <div class="admin-actionbar" role="group" aria-label={t(ADMIN_KEYS.actionsLabel)}>
             {#if host.rejecting === row.submission_id}
                 <label class="admin-field" for={'reason-' + row.submission_id}>{t(ADMIN_KEYS.queueRejectLabel)}</label>
-                <input id={'reason-' + row.submission_id} class="admin-input" type="text" maxlength="500"
+                <Field id={'reason-' + row.submission_id} data-admin-grow maxlength={500}
                     value={host.rejectReason}
                     oninput={(event) => host.setRejectReason(event.currentTarget.value)} />
                 <Button variant="danger" onclick={() => void host.confirmReject()}>
@@ -154,7 +162,7 @@
                 {/if}
                 {#if canOverride}
                     <label class="admin-field" for={'override-' + row.submission_id}>{t(ADMIN_KEYS.overrideLabel)}</label>
-                    <input id={'override-' + row.submission_id} class="admin-input" type="text" maxlength="500"
+                    <Field id={'override-' + row.submission_id} data-admin-grow maxlength={500}
                         value={overrideOpen ? host.overrideReason : ''}
                         oninput={(event) => {
                             if (!overrideOpen) host.beginOverride(row.submission_id);

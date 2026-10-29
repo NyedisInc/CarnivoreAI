@@ -23,7 +23,7 @@ const i18n = createI18n({ locale: 'en' }) as { t(key: string, params?: Record<st
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
 const SKILLS: CatalogItem[] = [
-    { id: 'acme/deploy', name: 'deploy', publisher: 'acme', latest: '1.0', kind: 'skill', card: { title: 'Deploy Runner', brief: 'ships a build' } },
+    { id: 'alex/deploy', name: 'deploy', publisher: 'alex', latest: '1.0', kind: 'skill', card: { title: 'Deploy Runner', brief: 'ships a build' } },
     { id: 'zoe/audit', name: 'audit', publisher: 'zoe', latest: '3.1', kind: 'skill', card: { title: 'Security Audit', brief: 'reviews a repo' } },
 ];
 const THEME: CatalogItem = { id: 'ada/neon', name: 'neon', publisher: 'ada', latest: '1', kind: 'theme', card: { title: 'Neon Glass', brief: 'a theme' } };

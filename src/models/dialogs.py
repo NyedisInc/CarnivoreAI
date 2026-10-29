@@ -38,8 +38,10 @@ class AnswerChoice(BaseModel):
             raise ValueError("give exactly one of option, options, other, dismiss, plain")
         if self.dismiss is False:
             raise ValueError("dismiss must be true")
-        if self.other is not None and any(ord(c) < 32 or ord(c) == 127 for c in self.other):
-            raise ValueError("other must be a single line of plain text")
+        texts = [self.other] if self.other is not None else []
+        texts += ([self.option] if self.option is not None else []) + list(self.options or ())
+        if not all(is_plain_line(text) for text in texts):
+            raise ValueError("other and option labels must be a single line of plain text")
         return self
 
 
@@ -68,6 +70,15 @@ class DialogResponse(BaseModel):
 
 
 class ApprovalItem(BaseModel):
+    """One thing waiting on the owner, from any provider (``GET /api/v1/approvals``).
+
+    ``source`` is ``dialog`` (an agent's open dialog), ``agent_action`` (an MCP gate) or
+    ``startup_prompt`` (a session parked on a startup screen whose options could not be read:
+    read-only, ``kind`` names the screen, ``body`` is the redacted screen text, no rows; Task Manager
+    item 63). A startup screen whose options WERE read is a ``dialog`` item with ``startup_kind``.
+    ``host`` is ``local`` or a peer host key; for a peer's item ``session_id`` is the
+    ``remote:<peer key>:<tmux name>`` wire id the dialog routes forward on.
+    """
 
     model_config = ConfigDict(extra="ignore")
 

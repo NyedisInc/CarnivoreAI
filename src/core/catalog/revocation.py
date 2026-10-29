@@ -36,24 +36,6 @@ def version_subject(item_id: str, version: str) -> str:
 
 
 def revoke_statement(*, kind: str, subject: str, since: str) -> bytes:
-    """Render the exact bytes a publisher signs to revoke something.
-
-    Description: FOUR LINES, EACH TERMINATED BY ONE LF (0x0A), in this
-      order and no other, encoded UTF-8::
-
-        carnivore-revoke-v1\\n
-        <kind>\\n
-        <subject>\\n
-        <since>\\n
-
-      There is no trailing blank line, no CR anywhere, and no separator
-      other than the LF. This is the same line oriented shape as
-      :func:`~src.models.catalog.release_statement`, and it is spelled
-      out here rather than left to a format string because the publisher
-      tooling has to reproduce these bytes in another program: one
-      differing byte is a signature that does not verify, which on this
-      path looks identical to a forgery.
-    """
     if kind not in (KIND_KEY, KIND_VERSION):
         raise ValueError(f"revocation kind must be key or version, got {kind!r}")
     fields = {"kind": kind, "subject": subject, "since": since}

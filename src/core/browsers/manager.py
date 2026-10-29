@@ -5,6 +5,7 @@ import asyncio
 import base64
 import os
 import signal
+import sqlite3
 import subprocess
 from contextlib import closing, suppress
 from dataclasses import dataclass
@@ -58,23 +59,12 @@ class BrowserUnavailable(RuntimeError):
 
 
 class CapReached(RuntimeError):
-    """``browser.max_live`` Chromium processes are already running."""
+    pass
 
 
 
 
 def _processes() -> List[Tuple[int, str]]:
-    """Every process as ``(pid, arguments)``, this process excluded.
-
-    Description: ``ps -o command=`` prints arguments only, never the
-      environment (``pgrep -fl`` can print env on macOS). Callers match a
-      needle as a substring of the whole line, not a parsed field, because
-      the state dir carries a space ("Application Support").
-    Inputs: none.
-    Output: list[tuple[int, str]].
-    Raises: OSError, subprocess.SubprocessError - ps could not run; the
-      caller must not read that as "none".
-    """
     out = subprocess.run(
         ["ps", "-axo", "pid=,command="], capture_output=True, text=True,
         check=True, timeout=10,
@@ -108,17 +98,6 @@ def _kill(pids: List[int]) -> int:
 
 def sweep_orphans(state_dir: Path, known_ids: Optional[Set[str]],
                   live_ids: Set[str] = frozenset()) -> Dict[str, int]:
-    """Boot pass: kill Chromium left on our profiles, drop unowned folders.
-
-    Description: runs before any browser is launched by this process, so
-      every Chromium on a profile under ``<state_dir>/browsers/`` is an
-      orphan of an earlier server. Killed BY PID, never by pattern-kill.
-      A folder is deleted only when ``known_ids`` was READ and does not
-      name it: None (the database could not be read) deletes nothing.
-    Inputs: state_dir (Path); known_ids (set[str] | None); live_ids
-      (set[str]) - browsers THIS process runs, never killed.
-    Output: dict - ``killed`` and ``folders_removed`` counts.
-    """
     root = store.browsers_root(state_dir)
     spared = [f"--user-data-dir={store.profile_dir(state_dir, i)}" for i in live_ids]
     killed = _kill([
@@ -210,7 +189,7 @@ class LiveBrowser:
             history = await self.cdp.send("Page.getNavigationHistory")
             index, last = history["currentIndex"], len(history["entries"]) - 1
             title = await self.page.title()
-        except Exception:  # noqa: BLE001
+        except driver_errors():
             pass
         return {
             "type": "nav", "url": self.page.url, "title": title,
@@ -286,7 +265,7 @@ class LiveBrowser:
             shot = await self.cdp.send("Page.captureScreenshot",
                                        {"format": "jpeg", "quality": JPEG_QUALITY})
             viewer.offer_frame(base64.b64decode(shot["data"]))
-        except Exception as exc:  # noqa: BLE001
+        except driver_errors() as exc:
             logger.info("browser_first_paint_skipped", browser_id=self.id,
                         error=type(exc).__name__)
         return True
@@ -295,7 +274,7 @@ class LiveBrowser:
         self.viewers.discard(viewer)
         if not self.viewers and self._casting and not self.stopping:
             self._casting = False
-            with suppress(Exception):
+            with suppress(*driver_errors()):
                 await self.cdp.send("Page.stopScreencast")
 
 
@@ -348,7 +327,7 @@ class LiveBrowser:
             task.cancel()
         try:
             await asyncio.wait_for(self.context.close(), CLOSE_TIMEOUT_S)
-        except Exception as exc:  # noqa: BLE001
+        except driver_errors() as exc:
             logger.warning("browser_close_timed_out", browser_id=self.id,
                            error=type(exc).__name__)
         try:
@@ -403,11 +382,15 @@ class BrowserManager:
             live = self.live.get(browser_id)
             if live is not None:
                 return live, False
-            return await self._launch(browser_id, url), True
+            live = await self._launch(browser_id, url)
+        await self._open_url(live, url)
+        return live, True
 
     async def launch(self, browser_id: str, url: str) -> LiveBrowser:
         async with self._lock:
-            return await self._launch(browser_id, url)
+            live = await self._launch(browser_id, url)
+        await self._open_url(live, url)
+        return live
 
     async def _launch(self, browser_id: str, url: str) -> LiveBrowser:
         cfg = self._config()
@@ -441,7 +424,7 @@ class BrowserManager:
         except BaseException as exc:
             logger.warning("browser_attach_failed", browser_id=browser_id,
                            error=error_code(exc))
-            with suppress(Exception):
+            with suppress(*driver_errors()):
                 await asyncio.wait_for(context.close(), CLOSE_TIMEOUT_S)
             await asyncio.to_thread(lambda: _kill(profile_processes(profile)))
             if isinstance(exc, Exception):
@@ -452,13 +435,17 @@ class BrowserManager:
         resource_push.notify(BROWSERS_TOPIC)
         logger.info("browser_launched", browser_id=browser_id, origin=origin_of(url),
                     binary=next(iter(binary.values()), "headless-shell"))
-        if url != ABOUT_BLANK:
-            try:
-                await page.goto(url, wait_until="commit", timeout=15_000)
-            except PlaywrightError as exc:
-                logger.info("browser_open_url_failed", browser_id=browser_id,
-                            origin=origin_of(url), error=error_code(exc))
         return live
+
+    async def _open_url(self, live: LiveBrowser, url: str) -> None:
+        if url == ABOUT_BLANK:
+            return
+        from playwright.async_api import Error as PlaywrightError
+        try:
+            await live.page.goto(url, wait_until="commit", timeout=15_000)
+        except PlaywrightError as exc:
+            logger.info("browser_open_url_failed", browser_id=live.id,
+                        origin=origin_of(url), error=error_code(exc))
 
     def _remember_url(self, browser_id: str, url: str) -> None:
         if not is_allowed(url):
@@ -521,15 +508,6 @@ class BrowserManager:
         return True
 
     async def discard(self, browser_id: str) -> None:
-        """Stop a browser and delete its profile, under the launch lock.
-
-        Description: the close path. The caller deletes the row FIRST, so
-          a socket opening after that gets 4404, and holding the lock here
-          means no relaunch can start on a profile being removed.
-        Inputs: browser_id (str).
-        Output: None.
-        Raises: OSError - the profile could not be removed.
-        """
         async with self._lock:
             await self._stop(browser_id, "closed")
             await asyncio.to_thread(store.delete_profile, self.state_dir, browser_id)
@@ -538,14 +516,14 @@ class BrowserManager:
         for browser_id in list(self.live):
             await self.stop(browser_id, "shutdown")
         if self._pw is not None:
-            with suppress(Exception):
+            with suppress(*driver_errors()):
                 await self._pw.stop()
             self._pw = None
 
     async def boot_sweep(self) -> None:
         try:
             known = await asyncio.to_thread(_stored_ids, self.state_dir)
-        except Exception as exc:  # noqa: BLE001
+        except _store_errors() as exc:
             logger.warning("browser_sweep_rows_unreadable", error=type(exc).__name__)
             known = None
         try:
@@ -556,6 +534,20 @@ class BrowserManager:
             logger.info("browser_orphan_sweep", **result)
         except (OSError, subprocess.SubprocessError) as exc:
             logger.warning("browser_orphan_sweep_failed", error=type(exc).__name__)
+
+
+def driver_errors() -> Tuple[type, ...]:
+    try:
+        from playwright.async_api import Error as PlaywrightError
+    except ImportError:
+        return (asyncio.TimeoutError, KeyError, TypeError, OSError)
+    return (PlaywrightError, asyncio.TimeoutError, KeyError, TypeError, OSError)
+
+
+def _store_errors() -> Tuple[type, ...]:
+    from src.core.db import DatastoreUnreadableError
+
+    return (sqlite3.Error, OSError, DatastoreUnreadableError)
 
 
 def _stored_ids(state_dir: Path) -> Set[str]:
@@ -572,6 +564,6 @@ def _write_last_url(state_dir: Path, browser_id: str, url: str) -> None:
         with closing(connect(db_path_for(state_dir), create=False)) as conn:
             with conn:
                 store.update(conn, browser_id, last_url=url)
-    except Exception as exc:  # noqa: BLE001
+    except _store_errors() as exc:
         logger.warning("browser_last_url_write_failed", browser_id=browser_id,
                        error=type(exc).__name__)

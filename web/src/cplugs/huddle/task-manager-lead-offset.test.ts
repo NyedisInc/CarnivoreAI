@@ -35,7 +35,7 @@ describe('the lead offset', () => {
     expect(src('TaskManagerRowPeek.svelte')).toMatch(/class="tkm-peek tkm-lead-host"/);
   });
 
-  test('marbrook solridge and artifact cards ride inside a bubble list that already pulls back, never twice', () => {
+  test('question forms and artifact cards ride inside a bubble list that already pulls back, never twice', () => {
     expect(src('TaskManagerRow.svelte')).toMatch(/:not\(\.tkm-posts, \.hdt,/);
     expect(src('TaskManagerRowPosts.svelte')).toMatch(/<TaskManagerAsk \{message\}/);
     expect(src('TaskManagerRowPosts.svelte')).toMatch(/<TaskManagerArtifactCard/);

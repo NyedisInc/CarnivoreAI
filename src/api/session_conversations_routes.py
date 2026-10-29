@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import uuid as _uuid
 from contextlib import closing
 from typing import Any, Dict, List, Optional
 
@@ -14,12 +13,12 @@ from src.core.pack.identity.home import ProjectMovedAway
 from src.api.auth import require_auth
 from src.config import settings
 from src.core import session_fork
-from src.core.db import DatastoreUnreadableError, connect, db_path_for, transaction
-from src.core.lineage import constants as LK
-from src.core.lineage import graph as lineage_graph
+from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.session_conversations import view
-from src.core.session_label import label_from_tmux_name, sanitize_tmux_name
+from src.core.session_label import label_from_tmux_name
+from src.core.session_name_claim import sanitize_tmux_name
 from src.core.session_transcript_presence import CONVERSATION_PRESENT, conversation_presence
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter(tags=["session-conversations"], dependencies=[Depends(require_auth)])
@@ -96,7 +95,7 @@ def _read(fn):
         with closing(connect(path, create=False)) as conn:
             return fn(conn)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc) from exc
 
 
 @router.get("/sessions/{session_uuid}/conversations", response_model=ConversationList)
@@ -156,34 +155,17 @@ async def resume_conversation(request: Request, session_uuid: str, conversation_
     manager = request.app.state.session_manager
     label = session_fork.fork_label(source["title"] or label_from_tmux_name(source["tmux_name"]))
     try:
-        child = await manager.create_session(
-            session_id=f"ses_{_uuid.uuid4().hex[:8]}", working_dir=source["working_dir"],
-            project_name=sanitize_tmux_name(label) or label, agent_type=source["agent_type"], model=source["model"],
-            agent_extra_args=session_fork.fork_arguments(conversation_id), label=label)
+        forked = await session_fork.spawn_fork_child(
+            manager, source=source, label=label, project_name=sanitize_tmux_name(label) or label,
+            agent_extra_args=session_fork.fork_arguments(conversation_id), db_path=_db_path(),
+            socket=manager.tmux_socket_name(), resumed_conversation=conversation_id)
     except ProjectMovedAway:
         raise
     except Exception as exc:  # noqa: BLE001
-        logger.warning("conversation_resume_create_failed", session_uuid=session_uuid, error=str(exc),
-                       error_type=type(exc).__name__)
-        raise HTTPException(status_code=500, detail=f"could not start the session: {exc}")
-
-    def stamp() -> bool:
-        with closing(connect(_db_path(), create=False)) as conn:
-            child_uuid = session_fork.newest_anchor_uuid(conn, socket=manager.tmux_socket_name(),
-                                                         tmux_name=child.tmux_session or "")
-            if not child_uuid:
-                return False
-            with transaction(conn):
-                marked = session_fork.mark_as_fork(conn, child_session_uuid=child_uuid, parent_id=source["id"])
-                if marked and lineage_graph.ready(conn):
-                    lineage_graph.add_edge(conn, LK.NODE_CONVERSATION, conversation_id, LK.NODE_SESSION, child_uuid,
-                                           LK.KIND_FORK)
-                return marked
-
-    try:
-        recorded = bool(await run_in_threadpool(stamp))
-    except DatastoreUnreadableError as exc:
-        logger.warning("conversation_resume_lineage_unrecorded", session_uuid=session_uuid, error=str(exc))
-        recorded = False
+        raise api_error(500, "session_resume_failed", exc, session_uuid=session_uuid) from exc
+    child, recorded = forked.session, forked.recorded
+    if forked.stamp_error is not None:
+        logger.warning("conversation_resume_lineage_unrecorded", session_uuid=session_uuid,
+                       error=str(forked.stamp_error))
     return ResumeResponse(session=child.model_dump(), parent_session_id=source["id"], lineage_recorded=recorded,
                           detail=None if recorded else "the session started, but its parent link could not be recorded")

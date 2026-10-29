@@ -3,6 +3,8 @@ import { browserSessionsSearchHost } from '../../lib/sessions-search/host';
 import { hostWindow } from '../../lib/sessions/env';
 import { addSession, refusalLine } from '../../opscenter/engine/components-actions';
 import type { LayoutStore } from '../../opscenter/engine/layout.svelte';
+import type { SessionInfo } from '../../opscenter/api/types';
+import { openWarroomModal } from '../../lib/warroom/modal';
 
 export interface ListingRow {
   activity_status?: string | null;
@@ -17,6 +19,7 @@ export interface ListingRow {
   host_key?: string | null;
   host_label?: string | null;
   host_state?: string | null;
+  prompt_suggestion?: string | null;
   session?: { id?: string };
 }
 
@@ -50,7 +53,6 @@ function follow(): void {
   inline = false;
 }
 
-/* no such session */
 export function sessionRow(sessionId: string | null): ListingRow | undefined {
   follow();
   void listing.version;
@@ -71,6 +73,13 @@ export function openSession(sessionId: string, tmuxName: string): Promise<boolea
 export function terminalAvailable(): boolean {
   const app = (hostWindow() as unknown as { App?: { returnToExistingTerminal?: unknown } } | undefined)?.App;
   return typeof app?.returnToExistingTerminal === 'function';
+}
+
+export function openSessionModal(sessionId: string | null): boolean {
+  const row = sessionRow(sessionId);
+  if (!row || !terminalAvailable()) return false;
+  openWarroomModal(row as unknown as SessionInfo);
+  return true;
 }
 
 export function addTerminalCell(store: LayoutStore, sessionId: string): string {

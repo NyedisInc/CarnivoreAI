@@ -30,6 +30,5 @@ test('registering and writing starts no card scanner, timer or listener', () => 
 
 test('the card host and its scanner no longer exist', () => {
   const dir = resolve(__dirname, '../../../lib/crosstalk');
-  for (const gone of ['cards.ts', 'anchors.ts', 'collapsed-calls.ts', 'card-prefs.ts']) expect(existsSync(resolve(dir, gone))).toBe(false);
-  expect(existsSync(resolve(dir, 'CrosstalkCard.svelte'))).toBe(true);
+  for (const gone of ['cards.ts', 'anchors.ts', 'collapsed-calls.ts', 'card-prefs.ts', 'CrosstalkCard.svelte']) expect(existsSync(resolve(dir, gone))).toBe(false);
 });

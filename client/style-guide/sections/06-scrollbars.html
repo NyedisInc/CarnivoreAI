@@ -29,6 +29,12 @@ themed thumb is drawn whenever the area actually overflows, and brightens under 
         <code>background</code> shorthand on the thumb (it resets <code>background-clip</code> and fills the inset
         back in).</dd>
     <dt>why never hover on the box</dt>
+    <dd>The bar is never revealed by <code>:hover</code> or <code>:focus-within</code> on the scrolling box: Chromium
+        does not reliably repaint a scrollbar pseudo element when its owner's hover state flips, so the bar lagged,
+        flickered or never appeared (Joe (ccsliinc), 2026-09-30). Only the thumb's and track's OWN
+        <code>:hover</code> and the thumb's <code>:active</code> change colour, and no state changes a size, border or
+        inset. No global <code>scrollbar-gutter</code>: it would steal width from every panel that does not overflow;
+        a surface whose geometry is measured once reserves its own.</dd>
     <dt>themes</dt>
     <dd>Reads <code>--oc-scrollbar-thumb-rest</code>, <code>--oc-scrollbar-thumb</code>, <code>--oc-scrollbar-thumb-hover</code>,
         <code>--oc-scrollbar-thumb-active</code> and <code>--oc-scrollbar-track</code>, all derived from the theme's accent,

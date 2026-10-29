@@ -69,11 +69,12 @@ function memoryStore(): {
     return { store: createTokenStore(fake), values };
 }
 
+/** An administrator, as `/v1/me` answers. */
 const ADMIN: Me = {
     user_id: 'cognito:11111111-2222-3333-4444-555555555555',
-    login: 'acme@example.test',
+    login: 'alex@example.test',
     provider: 'email',
-    email: 'acme@example.test',
+    email: 'alex@example.test',
     is_admin: true,
 };
 
@@ -144,8 +145,8 @@ describe('every code the catalog api can answer this page with', () => {
 describe('the rules that refuse before any request', () => {
     test('the caller cannot change their own standing', () => {
         expect(mayChangeStanding({ user_id: ADMIN.user_id }, ADMIN)).toBe(false);
-        expect(mayChangeStanding({ user_id: '10000001' }, ADMIN)).toBe(true);
-        expect(mayChangeStanding({ user_id: '10000001' }, null)).toBe(false);
+        expect(mayChangeStanding({ user_id: '88456975' }, ADMIN)).toBe(true);
+        expect(mayChangeStanding({ user_id: '88456975' }, null)).toBe(false);
     });
 
     test('a disabled row is offered enable, and never disable', () => {
@@ -382,12 +383,12 @@ describe('the page state machine', () => {
         expect(calls).toHaveLength(before);
         expect(host.refusal?.code).toBe('self_change');
         expect(host.mayChange({ user_id: ADMIN.user_id })).toBe(false);
-        await host.toggleStanding({ user_id: '10000001' });
+        await host.toggleStanding({ user_id: '88456975' });
         expect(calls).toHaveLength(before);
         host.setDisableReason('spam');
         await host.confirmDisable();
         expect(calls.length).toBeGreaterThan(before);
-        expect(calls[before]?.url).toBe('https://api.carnivore.ai/v1/users/10000001/disable');
+        expect(calls[before]?.url).toBe('https://api.carnivore.ai/v1/users/88456975/disable');
     });
 
     test('NEGATIVE CONTROL: confirming a rejection with no reason sends nothing', async () => {

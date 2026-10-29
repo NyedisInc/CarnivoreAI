@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "api_version": 1,
   "min_app_version": "1.16.1",
-  "author": "Carnivore contributors",
+  "author": "Carnivore",
   "license": "MIT",
   "tier": "builtin",
   "scope": [
@@ -116,7 +116,7 @@
       "policy": {
         "own": "excluded",
         "share": "excluded",
-        "reason": "needed for this plugin to work",
+        "reason": "the crate files this plugin writes into the folder the owner picked; a crate never carries crates; a purge keeps the files, they are the owner's exports",
         "purge": "kept"
       },
       "default": "crates",
@@ -130,7 +130,7 @@
       "policy": {
         "own": "excluded",
         "share": "excluded",
-        "reason": "needed for this plugin to work",
+        "reason": "copies of crates in the owner's second folder; a crate never carries crates; a purge keeps them, they are the owner's off-box copies",
         "purge": "kept"
       },
       "role": "backup_destination"

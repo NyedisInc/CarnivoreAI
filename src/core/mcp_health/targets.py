@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from src.api.subagent_listing import _fresh_claude_observation
+from src.api.subagent_listing import fresh_claude_observation
 from src.core.hosts.identity import is_remote_info
 from src.core.mcp_health.agent_process import FAMILY_CLAUDE, FAMILY_CODEX
 from src.core.mcp_health.monitor import Target
@@ -26,7 +26,7 @@ def monitor_target(watcher: Any, info: Any, now: datetime) -> Optional[Target]:
     session = info.session
     registry = None
     if family == FAMILY_CLAUDE:
-        observation = _fresh_claude_observation(watcher, info, now)
+        observation = fresh_claude_observation(watcher, info, now)
         registry = getattr(observation.evidence, "registry", None) if observation is not None else None
     known = registry is not None and getattr(registry, "known", False)
     return Target(

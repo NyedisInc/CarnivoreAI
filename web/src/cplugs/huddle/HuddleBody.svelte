@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* pop-out window show empty groups */
+  /* show empty groups */
   import { getContext, tick, untrack, type Snippet } from 'svelte';
   import '../sdk/ledger-chrome';
   import { Icon } from '../sdk/ui';
@@ -111,7 +111,6 @@
     const done = Math.max(0, doneAll - g.items.filter((i) => sectionOf(i) === 'done').length);
     return { ...g, all: g.items, scoped, items, done, doneAll, inbox: filtering ? [] : g.inbox, named: filtering ? named.map((n) => ({ ...n, folded: false })) : named };
   }));
-  /*  hidden  */
   const filterItems = $derived(allGroups.flatMap((g) => g.items));
   const doneLeftTotal = $derived(groups.reduce((n, g) => n + g.done, 0));
   const byArea = $derived(taskManagerPrefs.view === 'area');
@@ -141,7 +140,6 @@
   });
   const stacked = $derived(accordionOn && accordionOpen !== null && accordionStackFits(scrollHeight, projectKeys.length, projectHeadHeight(scrollWidth)));
   const listRead = $derived(aggregate || pinnedProject ? huddle.groups !== null : huddle.body?.list === viewList);
-  /* new read */
   $effect(() => {
     if (!listRead) return;
     const scroller = stacked ? scrollBox?.querySelector<HTMLElement>('[data-task-manager-open-body]') : scrollBox;
@@ -213,7 +211,6 @@
     return releaseSteps;
   });
 
-  /*  hidden  */
   function drawnItem(id: number): { item: HuddleItem; group: (typeof groups)[number] } | null {
     for (const group of groups) {
       const item = group.all.find((i) => i.id === id);
@@ -312,14 +309,28 @@
 
   const groupName = listLabel;
 
+  let adding = $state(false);
+
   async function add(): Promise<void> {
-    if (!entry) return;
+    if (!entry || adding) return;
+    adding = true;
     const save = async (): Promise<boolean> => {
-      const outcome = await addItem(entry); // did not answer
+      const outcome = await addItem(entry); // the server did not answer
+      adding = false;
       if (outcome !== 'failed') { draft = ''; sent.flash(); }
       return outcome === 'added';
     };
-    await submitNow(huddle.addTarget, save);
+    try {
+      await submitNow(huddle.addTarget, save);
+    } finally {
+      adding = false;
+    }
+  }
+
+  function onLineKey(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.isComposing || event.shiftKey) return;
+    event.preventDefault();
+    (event.currentTarget as HTMLInputElement).form?.requestSubmit();
   }
 
   function onAreaKey(event: KeyboardEvent): void {
@@ -462,7 +473,7 @@
       <textarea class="oc-field hd-add-input" use:baseField={'sm'} rows={MULTILINE_ROWS} bind:value={draft} maxlength="40000" onkeydown={onAreaKey}
                 placeholder={addPlaceholder} title={t('cplug.huddle.add.multi_keys_title')} aria-label={addPlaceholder} data-task-manager-add></textarea>
     {:else}
-      <input class="oc-field hd-add-input" use:baseField={'sm'} type="text" bind:value={draft} maxlength="2000"
+      <input class="oc-field hd-add-input" use:baseField={'sm'} type="text" bind:value={draft} maxlength="2000" onkeydown={onLineKey}
              placeholder={addPlaceholder} title={t('cplug.huddle.add.keys_title')} aria-label={addPlaceholder} data-task-manager-add />
     {/if}
     <button type="button" class="oc-ibtn oc-ibtn--bare hd-multi" aria-pressed={multiline} data-task-manager-multiline
@@ -472,7 +483,7 @@
       <TaskManagerSend compose={{ text: draft, add }} />
     {:else}
       <button type="submit" class="oc-btn oc-btn--sm" class:oc-btn--confirm={addLook !== 'idle'} onclick={(event) => { event.preventDefault(); void add(); }} data-task-manager-submit-look={addLook}
-              disabled={addLook === 'idle'}>{t(addLook === 'sent' ? 'cplug.huddle.submit.sent' : 'cplug.huddle.add.button')}</button>
+              disabled={addLook === 'idle' || adding}>{t(addLook === 'sent' ? 'cplug.huddle.submit.sent' : 'cplug.huddle.add.button')}</button>
     {/if}
   </form>
   {#if popout}
@@ -550,7 +561,6 @@
       flex: 1 1 auto;
     }
 
-    /*  hidden  */
     .hd-swarm {
       flex: 1 1 auto;
       min-height: 0;
@@ -732,7 +742,6 @@
       font-size: var(--oc-fs-label);
     }
 
-    /* padding */
     .hd-add {
       display: flex;
       align-items: center;

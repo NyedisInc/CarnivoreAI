@@ -95,11 +95,6 @@ def _end(env: CrateEnv, rec: state.JobRecord, now: float) -> None:
 
 
 def sweep_interrupted(env: CrateEnv, now: Optional[float] = None) -> int:
-    """End every job a stopped process left ``running`` (module docstring). Blocking. Output: how many were ended.
-
-    Raises: OSError (a record could not be written). A database that cannot be read leaves that job ``running`` for
-      the next sweep (logged), so a recovery is never skipped silently.
-    """
     root = state.jobs_dir(env.work)
     live = runner.running_id()
     at = time.time() if now is None else now

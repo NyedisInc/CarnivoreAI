@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from src.core.stats import activity_query, config, queries
+from src.core.stats import activity_query, config, queries, query_buckets
 from src.core.stats.catalog import METRICS
 from src.core.stats.plugin import progress as progress_mod
 from src.core.stats.store import StatsStore
@@ -56,7 +56,7 @@ def _old_new(store, metric: str, group_by, filters=None):
         "metric": metric, "operation": "summary", "from": datetime.fromtimestamp(T0, timezone.utc).isoformat(),
         "to": datetime.fromtimestamp(T0 + 36 * 3600, timezone.utc).isoformat(), "resolution": "hour",
         "group_by": group_by, "filters": filters or {}})
-    start, end = queries._range(request)
+    start, end = query_buckets.minute_window(request)
     zone = ZoneInfo("UTC")
     deadline = time.monotonic() + 30
     old_rows = queries._fetch(store, "activity_minutes", request.filters, start, end, group_by, deadline, metric)
@@ -65,7 +65,7 @@ def _old_new(store, metric: str, group_by, filters=None):
     where, args = queries._where("activity_minutes", request.filters, start, end)
     new_rows, new_conv = activity_query.fetch_aggregated(
         store, metric, where, args, request.filters.model_dump(exclude_none=True), start, end, group_by, deadline,
-        queries.MAX_ROWS, queries.QueryLimit, True)
+        queries.MAX_ROWS, query_buckets.QueryLimit, True)
     new_cells, new_cov = queries._aggregate_activity(new_rows, metric, "hour", zone, group_by, deadline)
     return old_cells, old_cov, old_conv, new_cells, new_cov, new_conv
 
@@ -170,7 +170,7 @@ def test_coverage_matches_the_view_and_the_route_never_waits_on_progress(tmp_pat
     fast = queries.coverage(store)
     assert view[2] == 5 and fast["minute_rows"] == view[2]
     assert fast["unknown_cost_rows"] == view[3] > 0
-    assert fast["earliest"] == queries._iso(view[0]) and fast["latest"] == queries._iso(view[1])
+    assert fast["earliest"] == query_buckets.iso_utc(view[0]) and fast["latest"] == query_buckets.iso_utc(view[1])
 
     calls = []
     monkeypatch.setattr(progress_mod, "progress", lambda d: calls.append(1) or {"known_sources": 3, "pending_sources": 1})

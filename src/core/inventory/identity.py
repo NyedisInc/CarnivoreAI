@@ -1,9 +1,3 @@
-"""Read a session's or a project's identities from their rows. Reads only.
-
-A session has many identities (its row id, its uuid, its ``ses_`` app id, its tmux name and instance epoch, its
-conversation id) and every store keys it by a different one; a project has its id, uid, name and folder. Nothing
-here decides what a purge may do (that is ``session_purge/identity.py``): it only names who is asking.
-"""
 
 from __future__ import annotations
 
@@ -14,8 +8,11 @@ from typing import Any, Dict, List, Optional
 from src.core.db import table_exists
 from src.core.inventory.model import ProjectIdentity, ProjectNotFound, SessionIdentity, SessionNotFound
 
-# conversation id
 SAFE_CONVERSATION = re.compile(r"^[0-9A-Za-z][0-9A-Za-z-]{7,63}$")
+
+def safe_conversation(conversation: Optional[str]) -> Optional[str]:
+    return conversation if conversation and SAFE_CONVERSATION.match(conversation) else None
+
 
 _SESSION_COLUMNS = ("id", "session_uuid", "tmux_name", "tmux_created_epoch", "title", "claude_session_uuid",
                     "agent_family", "working_dir", "host_key", "lifecycle", "archived_at", "legacy_session_id",
@@ -52,13 +49,6 @@ def project_session_uuids(conn: sqlite3.Connection, project_id: int) -> List[str
 
 
 def related_conversations(conn: sqlite3.Connection, ident: SessionIdentity) -> List[str]:
-    """The conversations the session ran besides its current one, oldest first. Output: list[str].
-
-    Description: a ``/clear`` or a resume flips the pane to a new conversation id, so ``sessions.claude_session_uuid``
-      names only the newest. The conversation index and the milestones record every conversation the session ran
-      (they are written per session uuid); the current one is excluded here and listed first by the caller.
-    Example: related_conversations(conn, ident)  # ["older-conversation-id"]
-    """
     found: List[str] = []
     for table in ("conversation_index", "conversation_milestones"):
         if not table_exists(conn, table):

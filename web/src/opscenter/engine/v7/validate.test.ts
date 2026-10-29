@@ -120,3 +120,13 @@ describe('refuses, naming the rule', () => {
     expect(check.ok ? null : check.refusal).toBe('leaf-id');
   });
 });
+
+describe('default slot id check (u162-01)', () => {
+  it('refuses Object.prototype names as leaf ids', async () => {
+    const { defaultIsSlotId } = await import('./validate');
+    for (const name of ['constructor', 'toString', 'hasOwnProperty', '__proto__']) {
+      expect(defaultIsSlotId(name)).toBe(false);
+    }
+    expect(defaultIsSlotId('terminal:a')).toBe(true);
+  });
+});

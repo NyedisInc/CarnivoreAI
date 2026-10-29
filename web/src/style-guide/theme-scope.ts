@@ -1,3 +1,4 @@
+/* element carrying a */
 import type { ThemeRegistry } from '../cplugs/sdk/themes';
 import { scopeVars } from './contrast';
 

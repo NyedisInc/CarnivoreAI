@@ -42,7 +42,6 @@ class SkillMdRestore(BaseModel):
 
 
 def _store(request: Request) -> SkillMdVersionStore:
-    """The versions store under the app's state directory."""
     return SkillMdVersionStore(Path(request.app.state.services.settings_reader.state_dir()) / DB_NAME)
 
 

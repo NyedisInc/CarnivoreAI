@@ -10,7 +10,6 @@ from src.core.deepsearch.cache import db
 
 
 def info(state_dir: Path) -> Dict[str, Any]:
-    """``{state, built_at}``; a cache file that does not exist yet is ``building`` with no time. Output: dict."""
     if not db.cache_path(state_dir).exists():
         return {"state": K.CACHE_BUILDING, "built_at": None}
     conn = db.open_cache(state_dir)

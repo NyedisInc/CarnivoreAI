@@ -1,3 +1,4 @@
+// The properties that matter:
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -25,6 +26,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read a file under client/.
+ * @param {...string} parts  Path segments under client/.
+ * @returns {string} File contents.
+ */
 function clientFile(...parts) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', ...parts), 'utf8');
 }
@@ -93,6 +99,9 @@ function openIds(env) {
         .map((r) => r.getAttribute('id'));
 }
 
+// ---------------------------------------------------------------------
+// The split
+// ---------------------------------------------------------------------
 
 test('the menu is closed on load and a tap on the key toggles it', () => {
     const { menu, trigger } = load();
@@ -164,6 +173,7 @@ test('THE ATTACH CAPABILITY SURVIVED: the row opens the real file input', () => 
     const html = clientFile('index.html');
     assert.ok(html.includes('id="cloude-image-attach-input"'),
         'the hidden file input must still be mounted');
+    // NO accept attribute since 2026-08-16: it steered the iOS picker at
     assert.ok(!/id="cloude-image-attach-input"[^>]*accept=/.test(html),
         'the picker must offer Files, not just Photos');
     assert.ok(clientFile('js', 'clipboard.js').includes('function wireFileInput'));
@@ -263,6 +273,8 @@ test('THE TRAY KEY RUNS THE ONE PASTE IMPLEMENTATION, through the menu the float
         'the key bar must not carry a second paste path');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the top-right tool strip is gone from the markup and the tree', () => {
     const html = clientFile('index.html');
@@ -299,6 +311,8 @@ test('the shared plumbing lives in fab-menu.js, not restated here', () => {
     assert.ok(clientFile('js', 'fab-menu.js').split('\n').length < 500);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('ICONS: every path declares stroke-width 1.5 in a 16x16 viewBox', () => {
     const { menu } = load();
@@ -521,6 +535,8 @@ function ruleOf(css, sel) {
     return css.slice(at, css.indexOf('}', at));
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the tools menu and the header kebab stay separate controls', () => {
     const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '')

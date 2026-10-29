@@ -50,10 +50,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* THE WORKFLOW VARIANT (issue #852"if
- * using workflows, make the subagent counter next to the agent icon blue
- * instead of green"). The notice hue, --oc-cyan, the one blue the palette
- * derives from each theme's --color-info. Colour only. */
 .session-row__subagent-count--workflow {
     color: var(--oc-cyan);
 }

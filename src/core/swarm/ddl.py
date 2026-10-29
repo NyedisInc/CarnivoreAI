@@ -379,13 +379,6 @@ def _tables(conn: sqlite3.Connection) -> set:
 
 
 def rename_legacy(conn: sqlite3.Connection) -> None:
-    """Rename a database's ``pack_*`` Swarm tables to ``swarm_*``, idempotent, inside the caller's transaction.
-
-    Description: ``ALTER TABLE RENAME`` rewrites foreign keys but keeps index names, so the old ``pack_`` indexes are dropped
-      and the DDL's own ``swarm_`` indexes recreated; ``swarm_deliveries`` is rebuilt so its ``source`` CHECK reads
-      ``swarm_question`` and ``swarm_answer`` and the stored values follow. A table whose ``swarm_`` twin already exists is left alone.
-    Inputs: conn (sqlite3.Connection). Output: None. Example: rename_legacy(conn)
-    """
     have = _tables(conn)
     todo = [n for n in LEGACY_TABLES if f"pack_{n}" in have and f"swarm_{n}" not in have]
     if not todo:
@@ -410,3 +403,36 @@ def rename_legacy(conn: sqlite3.Connection) -> None:
         m = re.match(r"CREATE (?:UNIQUE )?INDEX IF NOT EXISTS \w+ ON (\w+)", statement)
         if m and m.group(1) in have:
             conn.execute(statement)
+
+
+V99_COLUMNS: Tuple[Tuple[str, str, str], ...] = (
+    ("swarm_agents", "parked_row_id", "ALTER TABLE swarm_agents ADD COLUMN parked_row_id INTEGER"),
+    ("projects", "new_sessions_join_swarm",
+     "ALTER TABLE projects ADD COLUMN new_sessions_join_swarm INTEGER NOT NULL DEFAULT 0 CHECK (new_sessions_join_swarm IN (0, 1))"),
+)
+
+
+def apply_v99(conn: sqlite3.Connection) -> None:
+    for table, column, statement in V99_COLUMNS:
+        present = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+        if present and column not in present:
+            conn.execute(statement)
+
+
+V100_COLUMNS: Tuple[Tuple[str, str, str], ...] = (
+    ("swarm_facts", "kind",
+     "ALTER TABLE swarm_facts ADD COLUMN kind TEXT NOT NULL DEFAULT 'rule' CHECK (kind IN ('rule', 'note'))"),
+    ("swarm_facts", "last_used_at", "ALTER TABLE swarm_facts ADD COLUMN last_used_at TEXT"),
+    ("swarm_facts", "used_in", "ALTER TABLE swarm_facts ADD COLUMN used_in TEXT"),
+    ("swarm_facts", "ruled_at", "ALTER TABLE swarm_facts ADD COLUMN ruled_at TEXT"),
+    ("swarm_agents", "memory_swept_at", "ALTER TABLE swarm_agents ADD COLUMN memory_swept_at TEXT"),
+)
+
+
+def apply_v100(conn: sqlite3.Connection) -> None:
+    for table, column, statement in V100_COLUMNS:
+        present = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+        if present and column not in present:
+            conn.execute(statement)
+            if column == "memory_swept_at":
+                conn.execute("UPDATE swarm_agents SET memory_swept_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')")

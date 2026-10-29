@@ -10,7 +10,6 @@
         glyph?: string;
         earlier: string;
         later: string;
-        /*  hidden  */
         movable?: boolean;
     }
 

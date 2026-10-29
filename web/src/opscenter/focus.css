@@ -1,5 +1,4 @@
 
-/*  hidden  */
 :focus-visible:not(.oc-focus-host :is(input, textarea, select, [contenteditable]), .xterm-helper-textarea, .cm-content, .oc-card__open, .oc-stat-tile__sub--go),
 .oc-focus-host:has(:is(input, textarea, select, [contenteditable]):focus-visible),
 .mgr-card:has(.mgr-card__open:focus-visible),

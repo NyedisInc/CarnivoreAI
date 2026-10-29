@@ -13,6 +13,8 @@ logger = structlog.get_logger()
 REFUSE_NOT_ARCHIVED = "not_archived"
 REFUSE_LIVE = "live_session"
 REFUSE_HAS_CHILDREN = "has_children"
+REFUSE_SWARM_AGENT = "swarm_agent"
+REFUSE_REFERENCED = "still_referenced"
 LIFECYCLE_RUNNING = "running"
 
 UUID_KEYED_TABLES = ("session_notes", "session_group_membership", "session_conversations")
@@ -35,11 +37,18 @@ def purge_session(conn: sqlite3.Connection, session_uuid: str) -> Dict[str, Any]
         if children:
             raise CleanupRefused(REFUSE_HAS_CHILDREN,
                                  f"{children} session rows name this row as their parent")
+        if table_exists(conn, "swarm_agents") and conn.execute(
+                "SELECT 1 FROM swarm_agents WHERE session_row_id = ?", (row_id,)).fetchone():
+            raise CleanupRefused(REFUSE_SWARM_AGENT, "a Swarm agent still uses this session; retire the agent first")
         removed: Dict[str, int] = {}
-        for table in UUID_KEYED_TABLES:
-            if table_exists(conn, table):
-                removed[table] = conn.execute(f"DELETE FROM {table} WHERE session_uuid = ?",
-                                              (session_uuid,)).rowcount
-        removed["sessions"] = conn.execute("DELETE FROM sessions WHERE id = ?", (row_id,)).rowcount
+        try:
+            for table in UUID_KEYED_TABLES:
+                if table_exists(conn, table):
+                    removed[table] = conn.execute(f"DELETE FROM {table} WHERE session_uuid = ?",
+                                                  (session_uuid,)).rowcount
+            removed["sessions"] = conn.execute("DELETE FROM sessions WHERE id = ?", (row_id,)).rowcount
+        except sqlite3.IntegrityError as exc:
+            logger.warning("library_session_purge_refused", session_uuid=session_uuid, error=str(exc))
+            raise CleanupRefused(REFUSE_REFERENCED, "another record still points at this session") from exc
     logger.info("library_session_purged", session_uuid=session_uuid, row_id=row_id, removed=removed)
     return {"session_uuid": session_uuid, "row_id": row_id, "removed": removed}

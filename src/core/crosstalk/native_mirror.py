@@ -139,7 +139,6 @@ def _scan_line(line: bytes, start: int, pending: dict[str, tuple[str, str, int, 
 
 
 def _read_ref_line(stream: Any, start: int, length: int) -> Optional[bytes]:
-    """One complete line at a byte range, or None when the file no longer holds it there."""
     stream.seek(start)
     line = stream.read(length)
     return line if len(line) == length and line.endswith(b"\n") else None
@@ -274,7 +273,7 @@ async def _deliver(app: Any, info: Any, backlog: dict[str, tuple[str, str, str, 
         return
     for native_key, direction, peer_name, body in list(backlog.values()):
         matches = await directory.resolve_handle_async(peer_name, cards)
-        if matches.ambiguous or len(matches.matches) != 1:
+        if matches.ambiguous or len(matches.matches) != 1 or matches.tier not in directory.EXACT_TIERS:
             continue
         peer = matches.matches[0]
         sender, receiver = (peer, local) if direction == "inbound" else (local, peer)
@@ -287,5 +286,8 @@ async def _deliver(app: Any, info: Any, backlog: dict[str, tuple[str, str, str, 
                                     receiver_name=receiver["name"], receiver_provider=receiver.get("provider"),
                                     receiver_model=receiver.get("model"))
             backlog.pop(native_key, None)
+        except store.BusRefused as exc:
+            backlog.pop(native_key, None)
+            logger.warning("crosstalk_mirror_event_dropped", error_type=type(exc).__name__, reason=str(exc)[:200])
         except (OSError, ValueError) as exc:
             logger.warning("crosstalk_mirror_store_failed", error_type=type(exc).__name__)

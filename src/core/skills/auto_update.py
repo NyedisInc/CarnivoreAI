@@ -57,19 +57,6 @@ class AutoUpdateRow:
 
 @dataclass(frozen=True)
 class AutoUpdateReport:
-    """What a whole pass came to, for a log line and for a test.
-
-    Description: the rows are kept separated by outcome rather than
-      counted, because "two were skipped" is not an answer anybody can
-      act on and "these two, for these reasons" is.
-    Inputs: considered (int) - rows the ledger offered. rows
-      (tuple[AutoUpdateRow, ...]) - one per row considered. busy (bool) -
-      another pass was already running, so this one did nothing. THAT IS
-      NOT A FAILURE and it is not an empty pass either, which is why it
-      is its own field.
-    Output: none, it is a record.
-    Example: report.updated  # the rows that actually moved
-    """
 
     considered: int = 0
     rows: Tuple[AutoUpdateRow, ...] = field(default_factory=tuple)
@@ -85,7 +72,6 @@ class AutoUpdateReport:
 
     @property
     def failed(self) -> Tuple[AutoUpdateRow, ...]:
-        """The rows that were eligible and could not be applied."""
         return tuple(row for row in self.rows if row.outcome == OUTCOME_FAILED)
 
 
@@ -149,6 +135,7 @@ async def _one_row(
 ) -> AutoUpdateRow:
     from fastapi import HTTPException
 
+    from src.api.catalog_consent import staged_plugin_declares_code
     from src.api.catalog_install_support import fetch_and_stage_with
     from src.api.catalog_installed_support import apply_update_with
     from src.core.skills.installer import discard_staging
@@ -209,7 +196,7 @@ async def _one_row(
         scripts_present = (
             await asyncio.to_thread(declares_script, row.kind, staged.path)
             and not is_first_party_item(item)
-        )
+        ) or await asyncio.to_thread(staged_plugin_declares_code, row.kind, staged.path)
         verdict = auto_update_eligible(
             row,
             version,
@@ -278,7 +265,6 @@ async def run_auto_update_pass(services: Any) -> AutoUpdateReport:
         try:
             rows = await asyncio.to_thread(candidate_rows, services)
         except (OSError, sqlite3.Error) as exc:
-            # could not
             logger.warning("skill_auto_update_ledger_unreadable", error=str(exc))
             return AutoUpdateReport()
 

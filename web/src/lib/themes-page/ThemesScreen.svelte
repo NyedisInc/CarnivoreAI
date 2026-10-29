@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import { onMount } from 'svelte';
@@ -16,6 +16,7 @@
     import { themes } from '../../opscenter/api';
     import Page from '../../opscenter/ui/Page.svelte';
     import SearchField from '../../opscenter/ui/SearchField.svelte';
+    import { Button, Segmented } from '../base';
     import { t } from '../i18n/index.svelte';
 
     import { isBuiltinTheme } from '../catalog/app-own';
@@ -165,27 +166,26 @@
         placeholder={t('themes.page.search')}
         keyshortcuts="/"
     />
-    <div class="oc-page__chips" role="group" aria-label={t('themes.page.filter.label')}>
-        {#each THEME_FILTERS.filter((option) => !storeOnly || option !== 'builtin') as option (option)}
-            <button type="button" class="oc-chip" aria-pressed={filter === option} onclick={() => (filter = option)}>
-                {t(`themes.page.filter.${option}`)} <span class="themes-chip-n">{counts[option]}</span>
-            </button>
-        {/each}
-    </div>
+    <Segmented
+        label={t('themes.page.filter.label')}
+        bind:value={filter}
+        options={THEME_FILTERS.filter((option) => !storeOnly || option !== 'builtin').map((option) => ({ value: option, label: `${t(`themes.page.filter.${option}`)} ${counts[option]}`, attrs: { 'data-theme-filter': option } }))}
+    />
     <div class="oc-page__tools">
-        <button type="button" class="oc-btn" onclick={openLibrary}>{t('themes.page.library')}</button>
-        <button type="button" class="oc-btn" aria-pressed={panel === 'guide'} onclick={toggleGuide}>
+        <Button onclick={openLibrary}>{t('themes.page.library')}</Button>
+        <Button aria-pressed={panel === 'guide'} onclick={toggleGuide}>
             {t('themes.page.guide.open')}
-        </button>
+        </Button>
         <span class="themes-active">
             <span class="oc-label">{t('themes.page.stat.active')}</span>
             {#if pageTheme && activeName}
-                <button
-                    type="button"
-                    class="themes-now"
+                <Button
+                    variant="quiet"
+                    size="sm"
+                    data-themes-now
                     aria-label={t('themes.page.stat.active.open', { name: activeName })}
                     onclick={() => pageTheme && select(pageTheme)}
-                >{activeName}</button>
+                >{activeName}</Button>
             {:else}
                 <span class="themes-now">{t('themes.page.fact.unset')}</span>
             {/if}
@@ -230,7 +230,7 @@
 
             <aside class="oc-page__detail themes-side" use:clearToasts aria-label={t(panel === 'guide' ? 'themes.page.guide.title' : 'themes.page.inspector.title')}>
                 <div class="oc-page__detail-body">
-                    <button type="button" class="oc-btn themes-back" onclick={() => (sheetOpen = false)}>{t('themes.page.sheet.close')}</button>
+                    <Button data-themes-back onclick={() => (sheetOpen = false)}>{t('themes.page.sheet.close')}</Button>
                     {#if panel === 'guide'}
                         <BuildYourOwn onrescan={() => void themes.refresh(true)} onlibrary={openLibrary} onsubmit={() => openPublishPage('themes')} />
                     {:else}
@@ -249,7 +249,6 @@
         list-style: none;
     }
 
-    /* padding */
     :global(.themes-screen) {
         --themes-ctl-h: 32px;
     }
@@ -261,15 +260,6 @@
 
     :global(.themes-screen) :global(.oc-page__bar .oc-field),
     :global(.themes-screen) :global(.oc-page__bar .oc-chip),
-    :global(.themes-screen) :global(.oc-page__bar .oc-btn) {
-        box-sizing: border-box;
-        min-height: var(--themes-ctl-h);
-        padding-block: 0;
-        border-color: var(--oc-line-frame);
-        font-size: 12px;
-        line-height: 1;
-    }
-
     :global(.themes-screen) :global(.oc-page__bar .oc-field) {
         width: 100%;
         padding-inline: 10px;
@@ -277,21 +267,6 @@
 
     :global(.themes-screen) :global(.oc-page__bar .oc-field::placeholder) {
         color: var(--oc-text-secondary);
-    }
-
-    :global(.themes-screen) :global(.oc-page__bar .oc-chip) {
-        padding-inline: 10px;
-        color: var(--oc-text-secondary);
-    }
-
-    :global(.themes-screen) :global(.oc-page__bar .oc-chip[aria-pressed='true']) {
-        border-color: var(--oc-orange);
-        color: var(--oc-orange);
-    }
-
-    :global(.themes-screen) :global(.oc-page__bar .oc-btn) {
-        padding-inline: 14px;
-        color: var(--oc-text-primary);
     }
 
     :global(.themes-screen) :global(.oc-page__bar .oc-label) {
@@ -321,25 +296,17 @@
         color: var(--oc-green);
     }
 
-    button.themes-now {
+    :global([data-themes-now]) {
+        max-width: 260px;
+        color: var(--oc-green);
         text-decoration: underline;
         text-underline-offset: 3px;
-        cursor: pointer;
-    }
-
-    button.themes-now:hover {
-        color: var(--oc-text-bright);
     }
 
     @media (max-width: 1023px) {
         :global(.themes-screen) {
             --themes-ctl-h: var(--oc-tap, 44px);
         }
-    }
-
-    .themes-chip-n {
-        font-variant-numeric: tabular-nums;
-        color: var(--oc-text-muted);
     }
 
     .themes-body {
@@ -355,7 +322,7 @@
         flex: 0 0 380px;
     }
 
-    .themes-back {
+    :global([data-themes-back]) {
         display: none;
         width: 100%;
         margin-bottom: var(--oc-space-3);
@@ -376,7 +343,7 @@
             display: none;
         }
 
-        .themes-back {
+        :global([data-themes-back]) {
             display: block;
         }
     }

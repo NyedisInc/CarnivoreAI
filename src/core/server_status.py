@@ -1,32 +1,3 @@
-"""What this server process and its tmux socket currently look like.
-
-Companion to :mod:`src.core.host_metrics`, which answers the same kind of
-question about the BOX. Split in two because the two halves have nothing
-in common except the panel that renders them, and one file holding both
-would be the junk drawer the code standards forbid.
-
-OWNERSHIP IS NOT COMPUTED HERE. Whether the app created a tmux session is
-decided in exactly one place, ``TmuxBackend.list_attachable_sessions()``,
-by membership of the SessionManager's persisted ``owned_tmux_sessions``
-set. This module reads tmux for the fields that path does not carry
-(working directory, pane size, attached clients) and the caller merges the
-authoritative ``created_by_cloude`` onto it by NAME. Re-deriving ownership
-from the ``adopted:`` id prefix is wrong and has already shipped as a bug
-twice: after a server restart the app re-attaches to its own still-running
-sessions through the adopt path, so an app-created session ends up with an
-``adopted:`` id while still being in ``owned_tmux_sessions``. The NAME is
-the stable key; the id is not.
-
-NO UNTRUSTED STRING EVER REACHES A COMMAND. Session names come from tmux
-and from user input. Nothing in this module interpolates one into a
-subprocess: the only tmux calls made here are ``list-sessions`` and
-``show-options``, both of which take a fixed argv and read names OUT.
-Killing a session is not done here at all - that is the SessionManager's
-existing job.
-
-THREE OUTCOMES. Every section carries ``available`` and ``error``. A probe
-that could not run says so; it never renders as a healthy zero.
-"""
 
 from __future__ import annotations
 

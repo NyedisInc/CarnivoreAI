@@ -80,7 +80,6 @@ export function statusSections(items: readonly HuddleItem[], hide = false, needs
   }).filter((s) => s.items.length > 0);
 }
 
-/*  hidden  */
 export function sectionReorder(items: readonly HuddleItem[], section: StatusSection, from: number, to: number): number[] {
   const order = [...items].sort(byPriority).map((i) => i.id);
   if (from === to) return order;
@@ -115,15 +114,12 @@ export function clampInto(sub: Pick<AreaSubsection, 'start' | 'items'>, index: n
   return Math.min(Math.max(index, sub.start), sub.start + sub.items.length - 1);
 }
 
-/*  hidden  */
 export const NEEDS_JOE_SECTIONS: readonly TaskManagerSectionKey[] = ['needs_you', 'question', 'review'];
 
-/*  hidden  */
 export function withoutSections(items: readonly HuddleItem[], hidden: readonly TaskManagerSectionKey[]): HuddleItem[] {
   return hidden.length === 0 ? (items as HuddleItem[]) : items.filter((item) => !hidden.includes(sectionOf(item)));
 }
 
-/*  hidden  */
 export function filterChips(items: readonly HuddleItem[], hide: boolean, hidden: readonly TaskManagerSectionKey[],
   extra: Partial<Record<TaskManagerSectionKey, number>> = {}): { key: TaskManagerSectionKey; count: number; hidden: boolean; needs: boolean }[] {
   const counts = new Map<TaskManagerSectionKey, number>(SECTION_ORDER.map((k) => [k, extra[k] ?? 0]));

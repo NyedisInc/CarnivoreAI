@@ -1,15 +1,19 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import sqlite3
+import stat
 from pathlib import Path
-from typing import Any, Mapping, Optional, Tuple
+from typing import Any, FrozenSet, Mapping, Optional, Tuple
 
 import structlog
 
-from src.core.work import tables
-from src.cplugs.huddle import actor_log, blockers, lane, lineage, rules, triggers
+from src.cplugs.sdk import ports, task_folders
+
+from src.cplugs.sdk.work import tables
+from src.cplugs.huddle import actor_log, blockers, files, lane, lineage, rules, triggers
 from src.cplugs.huddle.cards import state_log
 
 logger = structlog.get_logger()
@@ -89,3 +93,70 @@ def remove_folder(folder: Path) -> bool:
         logger.warning("task_manager_item_folder_left", folder=str(folder), error=str(exc)[:200])
         return False
     return True
+
+
+def thread_file_names(conn: sqlite3.Connection, item_id: int) -> FrozenSet[str]:
+    rows = conn.execute(f"SELECT parts FROM work_messages WHERE item_id = ? AND {files.PARTS_SQL}", (item_id,)).fetchall()
+    return frozenset(Path(e["path"]).name for r in rows for e in files.entries_of(r["parts"]) if isinstance(e.get("path"), str))
+
+
+def _unlink_regular(path: Path) -> int:
+    try:
+        if not stat.S_ISREG(path.lstat().st_mode):
+            return 0
+        path.unlink()
+    except FileNotFoundError:
+        return 0
+    except OSError as exc:
+        logger.warning("task_manager_item_file_left", file=path.name, error=type(exc).__name__)
+        return 0
+    return 1
+
+
+def _rmdir_if_empty(folder: Path) -> int:
+    ignore = folder / task_folders.GITIGNORE
+    aside = folder.with_name(f".{folder.name}.gitignore.removing")
+    try:
+        left = sorted(p.name for p in folder.iterdir())
+        if left not in ([], [task_folders.GITIGNORE]) or (left and ignore.read_bytes() != task_folders.GITIGNORE_BODY):
+            return 0
+        if left:
+            os.rename(ignore, aside)
+        try:
+            folder.rmdir()
+        except OSError:
+            if left:
+                os.rename(aside, ignore)
+            raise
+        if left:
+            aside.unlink()
+    except OSError as exc:
+        logger.warning("task_manager_item_folder_left", folder=str(folder), error=type(exc).__name__)
+        return 0
+    return 1
+
+
+def _remove_named(root_real: Path, task: Path, named: FrozenSet[str]) -> int:
+    removed = 0
+    for kind in (task_folders.PASTES, task_folders.ARTIFACTS):
+        folder = task / kind
+        if not (task_folders.is_real_dir(folder) and task_folders.within(root_real, folder)):
+            continue
+        removed += sum(_unlink_regular(folder / name) for name in named)
+        removed += _rmdir_if_empty(folder)
+    return removed
+
+
+def remove_task_files(item_id: int, store_id: Optional[str] = None, named: FrozenSet[str] = frozenset()) -> int:
+    port = ports.get(task_folders.ROOT_PORT)
+    root = port.root() if port is not None else None
+    if root is None:
+        return 0
+    root_real, removed = root.resolve(), 0
+    for task in task_folders.tasks_for(root, item_id):
+        stamp = task_folders.task_store_of(task)
+        if stamp is None:
+            removed += _remove_named(root_real, task, named)
+        elif store_id and stamp == store_id:
+            removed += sum(remove_folder(task / kind) for kind in (task_folders.PASTES, task_folders.ARTIFACTS) if not (task / kind).is_symlink())
+    return removed

@@ -99,18 +99,12 @@ body {
     margin-top: 8px;
 }
 
-.admin-input {
+[data-field][data-admin-grow] {
     flex: 1 1 14rem;
     min-width: 0;
-    padding: 6px 10px;
-    border: var(--oc-border, 1px) solid var(--oc-line-panel);
-    border-radius: var(--oc-radius-sm, 4px);
-    background: var(--oc-ground-panel);
-    color: var(--oc-text-primary);
-    font: inherit;
 }
 
-.admin-input--code {
+[data-field][data-admin-code] {
     letter-spacing: 0.25em;
 }
 
@@ -330,7 +324,7 @@ body {
 }
 
 .admin-actionbar [data-btn],
-.admin-actionbar .admin-input {
+.admin-actionbar [data-field] {
     min-height: 44px;
 }
 
@@ -348,7 +342,6 @@ body {
         flex-basis: auto;
     }
 
-    /* padding */
     .admin-panel .oc-ptab {
         gap: var(--oc-space-1);
         padding: 0 var(--oc-space-1-5);
@@ -365,7 +358,7 @@ body {
         min-height: 44px;
     }
 
-    .admin-input {
+    [data-field][data-admin-grow] {
         width: 100%;
         min-height: 44px;
     }

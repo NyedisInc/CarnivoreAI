@@ -10,7 +10,6 @@ export interface LocalStateField<V> {
   readonly legacyKey?: string;
 }
 
-/* already exists */
 export interface SharedStateField<V> {
   readonly home: 'shared';
   readonly default: V;

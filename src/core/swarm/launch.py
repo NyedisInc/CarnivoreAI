@@ -18,14 +18,13 @@ logger = structlog.get_logger(__name__)
 
 
 class SwarmLaunchUnreadable(RuntimeError):
-    """The datastore exists but could not be read, so whether this row is a Swarm body is unknown (fail closed)."""
+    pass
 
 
 _UPPER_CLI_TOOLS = ",".join(t for t in UPPER_TOOLS if not t.startswith("mcp__"))
 
 
 def swarm_dir(state_dir: Path) -> Path:
-    """``<state_dir>/swarm``, the Swarm's own folder under the durable state directory."""
     return Path(state_dir) / "swarm"
 
 
@@ -79,13 +78,6 @@ def swarm_argv(agent: dict, state_dir: Path) -> List[str]:
 def swarm_launch_args(
     session_row_id: Optional[int], *, conn: Optional[sqlite3.Connection] = None
 ) -> List[str]:
-    """The Swarm flags for the session row, ``[]`` for a plain row (or no row, or no Swarm table).
-
-    Inputs: session_row_id (the ``sessions.id`` integer); conn (a ``db.connect()`` connection, else one is
-    opened and closed here). A datastore file that does not exist yet has no Swarm rows (``[]``).
-    Raises: SwarmLaunchUnreadable - the datastore exists and could not be read. FAIL CLOSED: answering ``[]`` would
-    start a Swarm row as a plain claude with no ``--agent`` and no lockdown.
-    """
     if not isinstance(session_row_id, int) or isinstance(session_row_id, bool):
         return []
     from src.config import settings
@@ -126,12 +118,6 @@ def with_swarm_args(
 def with_swarm_args_for_tmux(
     socket_name: str, name: str, args: Optional[Sequence[str]], *, hold: bool = False
 ) -> Optional[List[str]]:
-    """:func:`with_swarm_args` for a live tmux session found by socket and name (the restart seam).
-
-    Inputs: hold (bool) - passed to :func:`with_swarm_args` (a launch, not a preview).
-    Raises: SwarmLaunchUnreadable - an existing datastore could not be read (fail closed, see ``swarm_launch_args``);
-    a datastore file that does not exist yet leaves ``args`` unchanged. switch.BodyHeld as :func:`with_swarm_args`.
-    """
     from src.config import settings
     from src.core.session_store import identity_for_live_name, sessions_table_ready
 

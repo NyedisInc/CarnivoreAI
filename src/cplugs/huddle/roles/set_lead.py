@@ -17,16 +17,6 @@ class LeadRefused(Exception):
 
 async def set_lead(ctx: CplugContext, list_key: str, session: Optional[str], *, as_agent: bool = False,
                    seat_only: bool = False) -> Dict[str, Any]:
-    """Seat ``session`` as the lead of project ``list_key``, or empty the seat (``session`` None). Output: {list, seat, agent, dnd_cleared}.
-
-    Description: see the module doc. ``as_agent`` promotes the session into a project agent even where the project has none; ``seat_only``
-      pins the Task Manager seat to the session and never touches the Swarm agent (the two cannot be combined).
-    Inputs: ctx; list_key (a project's digits key); session (a stable key | None); as_agent; seat_only.
-    Raises: LeadRefused (not an agent session of this project, the project's agent cannot be cleared, the promotion was refused, both
-      ``as_agent`` and ``seat_only``: nothing changed), roles_service.RolesUnmeasured (the sessions cannot be read).
-    Example: await set_lead(ctx, '12', '7f3e...')  # {'list': '12', 'seat': {'session': '7f3e...', ...}, 'agent': True, 'dnd_cleared': False}
-    Example: await set_lead(ctx, '12', 'old-uuid', seat_only=True)  # seat 'by': 'pinned', the agent stays where it is
-    """
     if as_agent and seat_only:
         raise LeadRefused("seat only leaves the Swarm agent alone, so it cannot also make the session the agent")
     roster = await roles_service.measure(ctx)

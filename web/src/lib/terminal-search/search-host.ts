@@ -1,4 +1,3 @@
-/* could not */
 import { hostDocument, hostWindow } from '../sessions/env';
 import type {
     HistoryApi,

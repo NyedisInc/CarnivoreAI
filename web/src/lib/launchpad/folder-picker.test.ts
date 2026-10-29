@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 
+/** Repo root, four levels up from web/src/lib/launchpad. */
 const repoRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 
 function repoFile(...parts: string[]): string {
@@ -73,6 +74,7 @@ describe('the extracted picker is still one module with one entry point', () => 
     });
 });
 
+// ---- the stylesheet contract ----------------------------------------
 
 interface Rule {
     selector: string;

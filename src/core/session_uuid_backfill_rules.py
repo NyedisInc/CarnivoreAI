@@ -28,7 +28,6 @@ from src.core.session_uuid_backfill import (
     SIGNAL_SIBLING_ROW,
     SIGNAL_TITLE,
     UUID_ABSENT,
-    UUID_PHANTOM,
     UUID_PRESENT,
     Proposal,
     RowFacts,

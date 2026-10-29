@@ -11,6 +11,7 @@ const mk = (id: number, extra: Record<string, unknown>) => ({
   id, list: '7', text: `task ${id}`, title: `task ${id}`, note: '', position: id, created_by: 'joe', state: 'open', kind: 'task',
   revision: 1, created_seq: id, seq: id, deleted: false, thread: [], status: 'working', section: 'working', ...extra,
 });
+/** 21: working, newest message an unread info (the server files it in "needs you" with a read action). 22: a long conversation. */
 const ITEMS = () => [
   mk(21, { needs_you: true, needs_action: 'read', unread: true, info_unread: 1, info_unseen: true, thread: [msg(5, 21, 'claude', 'info', 'the build is green and ready', { unread: true })] }),
   mk(22, { thread: [1, 2, 3, 4, 5, 6].map((n) => msg(30 + n, 22, n % 2 ? 'claude' : 'joe', 'reply', `message number ${n}`, { unread: false })) }),
@@ -23,6 +24,7 @@ vi.mock('../../api/auth.svelte', async (importOriginal) => {
   return {
     ...real,
     authFetch: (path: string, init: RequestInit = {}) => {
+      // A write that stays unanswered until the test ends: only the optimistic draw can move a task meanwhile.
       if (init.method === 'POST') { wire.writes.push(path); return new Promise((resolve) => { wire.open.push(() => resolve({})); }); }
       if (path === '/swarm/roster') return Promise.resolve({ agents: [] });
       if (path === '/cplugs/huddle') return Promise.resolve({ revision: 1, settings: { view: 'status', hideCompleted: false } });
@@ -62,14 +64,16 @@ afterEach(() => {
   huddle.openId = null as never;
   wire.writes.length = 0;
   for (const release of wire.open.splice(0)) release();
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom without storage */ }
 });
 
+/** Settle the mocked reads. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 10; i += 1) { await Promise.resolve(); await tick(); }
   flushSync();
 }
 
+/** Mount Mark II on project 7. Output: the host. */
 async function draw(state: 'compact' | 'opened' | 'detailed' = 'opened'): Promise<HTMLElement> {
   localStorage.setItem('carnivore.core.task-manager-mk2.tm.task-state', JSON.stringify(state));
   const host = document.createElement('div');
@@ -80,6 +84,7 @@ async function draw(state: 'compact' | 'opened' | 'detailed' = 'opened'): Promis
   return host;
 }
 
+/** The status section a task is drawn in. Inputs: host, id. Output: the section key, or null. */
 const sectionOfRow = (host: HTMLElement, id: number): string | null =>
   host.querySelector(`[data-huddle-item="${id}"]`)?.closest('[data-task-manager-status-section]')?.getAttribute('data-task-manager-status-section') ?? null;
 
@@ -92,7 +97,7 @@ describe('the action tab holds the current actionable message (point 6)', () => 
     expect(card.textContent).toContain('the build is green and ready');
   });
 
-  test('no "read only" action word in the row or the action tab', async () => {
+  test('round 7 point 4: no "read only" action word in the row or the action tab', async () => {
     const host = await draw();
     const row = host.querySelector('[data-huddle-item="21"]') as HTMLElement;
     expect(row.querySelector('[data-task-manager-action]')).toBeNull();
@@ -100,7 +105,7 @@ describe('the action tab holds the current actionable message (point 6)', () => 
     expect([...row.querySelectorAll('.mk2-rows dt')].map((el) => el.textContent)).not.toContain('needs');
   });
 
-  test('a scheduled task shows its time and a base edit button that opens the schedule editor', async () => {
+  test('round 7 point 5: a scheduled task shows its time and a base edit button that opens the schedule editor', async () => {
     const host = await draw();
     const row = host.querySelector('[data-huddle-item="23"]') as HTMLElement;
     expect(row.querySelector('[data-task-manager-due]')).not.toBeNull();
@@ -141,7 +146,7 @@ describe('opened and detailed differ in how much of each tab shows (point 1)', (
     expect(chatOf(host).classList.contains('tn-chat--all')).toBe(false);
   });
 
-  test('DETAILED is the same scroll box with its show read key, only taller (never the whole thread inline)', async () => {
+  test('DETAILED is the same scroll box with its show read key, only taller (round 6 point F: never the whole thread inline)', async () => {
     const host = await draw('detailed');
     await showDiscussion(host);
     expect(host.querySelectorAll('[data-huddle-item="22"] .tn-message').length).toBe(3);

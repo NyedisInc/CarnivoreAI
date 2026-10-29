@@ -2,7 +2,7 @@ import { epochAgo, HOUR, MIN } from './clock';
 import type { WidgetFixtures } from './types';
 
 const MACHINE = { scope: 'machine', session_uuid: null, session: null, project_id: null, project: null, conversation: null };
-const SESSION = { scope: 'session', session_uuid: '0edffbc5-38a8-4edc-8c9a-e9bab14a8b5d', session: 'billing-api', project_id: 1, project: 'billing-api', conversation: null };
+const SESSION = { scope: 'session', session_uuid: '8f1c2d3e-4a5b-4c6d-8e7f-9a0b1c2d3e4f', session: 'billing-api', project_id: 1, project: 'billing-api', conversation: null };
 const PROJECT = { scope: 'project', session_uuid: null, session: null, project_id: 2, project: 'docs-site', conversation: null };
 
 function recent(plugin: string, area: object, finishedAgo: number, durationMs: number, runs: number, outcome: 'ok' | 'failed' | 'parked', error: string | null = null): unknown {

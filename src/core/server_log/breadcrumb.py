@@ -1,20 +1,3 @@
-"""The log-location breadcrumb: where the running server's log is, for processes that did not launch it (issue #1859).
-
-WRITE. At boot the server writes ``<state dir>/server-log-location.json`` as ``{path, pid, started_at, writer}``: the
-log its launcher named (``locate.own_log_path``), its own pid, its own ``ps`` lstart, and its parent pid at boot (the
-Electron app that spawned it, or launchd; a detached engine holds the log's write end itself and outlives that parent). Atomic, never through a link, mode 0600
-(``safe_file_write.write_private_file``). A server whose launcher named no log writes nothing.
-
-READ, by OTHER processes only. The running server's own route uses the path it holds in memory and never this file,
-because anything running as this user can rewrite it. :func:`read_breadcrumb` treats the file as hostile: it accepts the
-path only when it is exactly one of the allow-listed log files (``locate.allowed_log_files``: ``server.log`` in the
-Electron logs folder, or the launch agent's ``launchd.log``), its folder is a real directory we own, and the file opens
-``O_NOFOLLOW`` as a regular file we own. The pid and its start time must match a running process,
-else the answer is labeled ``stale`` (``unverified`` when ``ps`` could not answer).
-
-PRODUCTION READER: ``src/core/diagnostics/log_tails.py`` (Copy Diagnostics run with the server down, ``python3 -m
-src.core.diagnostics``). The server's own routes never call it.
-"""
 
 from __future__ import annotations
 
@@ -71,12 +54,6 @@ class LocatedLog:
 
 
 def publish(state_dir: Path, *, lstarts: Lstarts = read_lstarts) -> Optional[Path]:
-    """Description: write the breadcrumb for this server, when its launcher named a log. Never raises on disk faults.
-
-    Inputs: state_dir - the server's state directory; lstarts - the ps reader (tests pass a fake).
-    Output: the breadcrumb Path, or None (no launcher log, or the write failed and was logged).
-    Example: publish(settings.get_state_dir())
-    """
     log_path = own_log_path()
     if log_path is None:
         return None
@@ -92,11 +69,6 @@ def publish(state_dir: Path, *, lstarts: Lstarts = read_lstarts) -> Optional[Pat
 
 
 def _open_owned_regular(path: Path, what: str) -> int:
-    """Description: open ``path`` read-only without following a final link; it must be a regular file we own.
-
-    Inputs: path; what - the reason-code prefix. Output: an open fd (the caller closes it).
-    Raises: BreadcrumbRefused (link, not regular, not ours, absent); OSError on any other fault.
-    """
     try:
         fd = os.open(path, _OPEN_FLAGS)
     except FileNotFoundError as exc:

@@ -76,6 +76,8 @@ def _transport(links: peer_links.PeerLinks, dest: SshDestination, remote_port: i
 
 @router.post("/pair")
 async def pair(body: PairRequest, request: Request) -> Dict[str, Any]:
+    """Pair with the Mac at ``ssh_target`` and answer the PENDING comparison code (P10): no grant exists until the
+    owner confirms it at ``pair/confirm``. 409 ``typed_code_required`` asks for the peer's code."""
     links = _links()
     try:
         dest = SshDestination(body.ssh_target, body.ssh_port)
@@ -120,6 +122,8 @@ class ConfirmRequest(BaseModel):
 
 @router.post("/pair/confirm")
 async def pair_confirm(body: ConfirmRequest) -> Dict[str, Any]:
+    """The owner's answer to the comparison code (P10). ``match`` false drops the pairing here and tells the peer;
+    true tells the peer (signed), writes our grant and starts the link. 404 ``pair_pending_gone`` when it expired."""
     links = _links()
     held = pair_sas.INITIATING.get(body.nonce)
     if held is None:

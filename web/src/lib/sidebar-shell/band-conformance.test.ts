@@ -16,8 +16,7 @@ const HAND_DRAWN = /\bsession-sidebar-group(?![-\w])|\bsession-sidebar-group__bo
 const HEADING_OWNER = 'lib/sidebar-shell/Heading.svelte';
 
 const HEADING_KNOWN: Record<string, string> = {
-    'opscenter/layout-editor/DrawerList.svelte': 'layout editor type fold (moved by the split, bc20325e5)',
-    'lib/settings-page/mcp-panel/McpToolSwitchesPanel.svelte': 'settings fold',
+    'opscenter/layout-editor/DrawerList.svelte': 'layout editor type fold (moved by the split, ca0a57832)',
 };
 
 const HEADING_DRAWN = /\bsession-sidebar-group__(?:headerrow|menu)\b/;
@@ -106,8 +105,6 @@ const CHIP_CLASS = /class=\\?["'][^"'{]*\bsession-sidebar-row-(?:provider|share|
 
 const CHIP_KNOWN: Record<string, string> = {
     'lib/sidebar-shell/AgentTabMarks.svelte': 'tab strip marks',
-    'client/js/session-sidebar-row-controls.js': 'legacy pin builder',
-    'client/js/session-sidebar-layouts.js': 'layout row glyph',
     'client/js/sidebar-help.js': 'help specimen',
 };
 

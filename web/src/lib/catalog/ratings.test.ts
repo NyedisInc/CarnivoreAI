@@ -28,6 +28,7 @@ describe('which of the shapes a ratings block is', () => {
     });
 
     test('a real score IS offered when somebody has rated it', () => {
+        // NEGATIVE CONTROL for
         const view = ratingsView({ count: 2, average: 4.5, histogram: FIVE, reviews: [] });
         expect(view.shape).toBe('rated');
         expect(view.average).toBe(4.5);
@@ -75,12 +76,12 @@ describe('the texts other people wrote', () => {
             average: 5,
             histogram: FIVE,
             reviews: [
-                { login: 'acme', stars: 5, text: 'great', updated_at: 1789000000 },
+                { login: 'example-owner', stars: 5, text: 'great', updated_at: 1789000000 },
             ],
         });
         expect(view.texts).toEqual([
             {
-                login: 'acme', stars: 5, text: 'great', updatedAt: 1789000000,
+                login: 'example-owner', stars: 5, text: 'great', updatedAt: 1789000000,
                 author: null, publisher: false, reviewRef: null, reportedInstalling: false,
             },
         ]);
@@ -145,6 +146,7 @@ describe('the texts other people wrote', () => {
     });
 
     test('a real empty list is a MEASURED zero and is not malformed', () => {
+        // NEGATIVE CONTROL for
         const view = ratingsView({ count: 2, average: 4.5, histogram: FIVE, reviews: [] });
         expect(view.textsMalformed).toBe(false);
         expect(view.texts).toEqual([]);

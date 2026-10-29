@@ -364,7 +364,7 @@ class NotifyEngine:
         self._last_test[dest_id] = now
         event = NotifyEvent(type_id=TEST_TYPE_ID, kind="test", title=TEST_TITLE, ts=now,
                             computer=self._computer_name())
-        result = await self._attempt(Item(dest, event))
+        result = await self._lane(dest, kind_specs.get_kind(dest.kind)).send_now(Item(dest, event))
         status = self._status.get(dest_id, DestinationStatus())
         if result.ok:
             status = dataclasses.replace(status, last_ok_ts=now)

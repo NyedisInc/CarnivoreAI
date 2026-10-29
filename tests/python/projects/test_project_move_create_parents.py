@@ -26,16 +26,16 @@ def test_the_plan_lists_the_folders_it_would_create_and_creates_none(world):
 
 
 def test_apply_creates_the_parents_then_moves(world):
-    target = world.base / "org" / "initech" / "alpha"
+    target = world.base / "org" / "imc" / "alpha"
     plan = plan_for(world, move_folder=True, new_root=str(target), create_parents=True)
     with closing(connect(world.db, create=False)) as conn:
         done = apply_plan(conn, plan, state_dir=world.state)
-    assert done["folders_created"] == [str(world.base / "org" / "initech")]
+    assert done["folders_created"] == [str(world.base / "org" / "imc")]
     assert (target / "notes.md").read_text() == "x" and not world.old.exists()
 
 
 def test_a_failed_apply_removes_only_the_folders_it_created(world, monkeypatch):
-    target = world.base / "org" / "initech" / "alpha"
+    target = world.base / "org" / "imc" / "alpha"
     before = snapshot(world)
     plan = plan_for(world, move_folder=True, new_root=str(target), create_parents=True)
 
@@ -46,12 +46,12 @@ def test_a_failed_apply_removes_only_the_folders_it_created(world, monkeypatch):
     with closing(connect(world.db, create=False)) as conn, pytest.raises(apply_mod.MoveFailed) as failed:
         apply_plan(conn, plan, state_dir=world.state)
     assert failed.value.undo_errors == []
-    assert not (world.base / "org" / "initech").exists() and (world.base / "org").is_dir()
+    assert not (world.base / "org" / "imc").exists() and (world.base / "org").is_dir()
     assert snapshot(world) == before
 
 
 def test_create_parents_without_move_folder_is_named_not_silent(world):
-    plan = plan_for(world, move_folder=False, new_root=str(world.base / "org" / "initech" / "alpha"), create_parents=True)
+    plan = plan_for(world, move_folder=False, new_root=str(world.base / "org" / "imc" / "alpha"), create_parents=True)
     assert any("create_parents does nothing without move_folder" in w for w in plan.warnings)
     assert plan.folders_to_create == []
 
@@ -61,11 +61,11 @@ def test_the_route_carries_create_parents(world, monkeypatch):
     app = FastAPI()
     app.include_router(api_router, prefix="/api/v1")
     app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
-    target = str(world.base / "org" / "initech" / "alpha")
+    target = str(world.base / "org" / "imc" / "alpha")
     body = TestClient(app).post("/api/v1/projects/alpha/move", json={
         "new_root": target, "move_folder": True, "create_parents": True}).json()
     assert body["ok"] is True and body["create_parents"] is True
-    assert body["folders_to_create"] == [str(world.base / "org" / "initech")]
+    assert body["folders_to_create"] == [str(world.base / "org" / "imc")]
 
 
 def test_the_mcp_tool_carries_create_parents_and_checks_its_type(world, monkeypatch):
@@ -77,10 +77,10 @@ def test_the_mcp_tool_carries_create_parents_and_checks_its_type(world, monkeypa
     from src.core.mcp.project_tools import project_move
 
     monkeypatch.setattr(project_move_routes, "read_live_panes", lambda: NO_PANES)
-    target = str(world.base / "org" / "initech" / "alpha")
+    target = str(world.base / "org" / "imc" / "alpha")
     args = {"project": world.ids["alpha"], "new_root": target, "move_folder": True, "create_parents": True}
     answer = asyncio.run(project_move(SimpleNamespace(app=None), None, args))
     plan = json.loads(answer["content"][0]["text"])
-    assert plan["folders_to_create"] == [str(world.base / "org" / "initech")] and plan["ok"] is True
+    assert plan["folders_to_create"] == [str(world.base / "org" / "imc")] and plan["ok"] is True
     with pytest.raises(ToolError):
         asyncio.run(project_move(SimpleNamespace(app=None), None, {**args, "create_parents": "yes"}))

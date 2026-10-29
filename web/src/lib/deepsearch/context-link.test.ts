@@ -5,7 +5,7 @@ test('a link round-trips, with a subagent file and a paired computer', () => {
   const plain = { conversationId: 'c-1', line: 7, fileKind: 'conversation' as const, hostKey: null };
   expect(linkHash(plain)).toBe('#deepsearch/context?c=c-1&l=7');
   expect(parseLink(linkHash(plain))).toEqual(plain);
-  const far = { conversationId: 'c 2/x', line: 0, fileKind: 'subagent' as const, hostKey: 'peer-hostb' };
+  const far = { conversationId: 'c 2/x', line: 0, fileKind: 'subagent' as const, hostKey: 'peer-mini' };
   expect(parseLink(linkHash(far))).toEqual(far);
   expect(linkHash({ ...plain, hostKey: 'local' })).not.toContain('h=');
 });

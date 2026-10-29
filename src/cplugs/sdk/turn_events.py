@@ -23,12 +23,6 @@ def subscribe(listener: Listener) -> Callable[[], None]:
 
 
 def publish_turn_end(session_id: Optional[str] = None) -> None:
-    """Tell every listener a session's turn ended or the session is gone. Never raises.
-
-    Inputs: session_id - the session's ``ses_`` id, or None when not known. Output: None.
-    A listener's failure is logged with its type and the next listener still runs (the caller is the watcher's tick,
-    which no plugin may cost).
-    """
     for listener in list(_listeners):
         try:
             listener(session_id)

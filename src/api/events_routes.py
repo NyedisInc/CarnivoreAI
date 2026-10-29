@@ -29,9 +29,11 @@ router = APIRouter()
 
 _PONG_FRAME = json.dumps({"type": WSMessageType.PONG})
 
+PEER_LISTING_QUERY = ("listing", "push")
 PEER_FRAME_TYPES = frozenset({
     WSMessageType.EVENTS_HELLO.value, WSMessageType.PONG.value,
-    WSMessageType.SESSION_STATUS_CHANGED.value, WSMessageType.TOAST_NEW.value})
+    WSMessageType.SESSION_STATUS_CHANGED.value, WSMessageType.TOAST_NEW.value,
+    WSMessageType.PEER_LISTING.value})
 
 
 def peer_may_receive(frame: str) -> bool:
@@ -166,18 +168,24 @@ async def websocket_events(websocket: WebSocket) -> None:
     if not peer:
         await websocket.accept(subprotocol=SUBPROTOCOL_MARKER)
 
-    client: EventClient = hub.register()
+    client: EventClient = hub.register(reduced=peer or bool(websocket.scope.get("via_link") or websocket.scope.get("via_peer_link")))
     hello = json.dumps({"type": WSMessageType.EVENTS_HELLO,
                         "client_id": client.client_id,
                         "server_version": resolve_version(),
                         "client_build": client_build_key(),
                         "resource_topics": list(all_topics())})
     client.stream.offer(hello, len(hello))
-
-    writer = asyncio.create_task(_drain_to_socket(websocket, client.stream, peer))
-    reader = asyncio.create_task(_read_from_socket(websocket, client.stream))
+    feed = (getattr(websocket.app.state, "peer_listing_feed", None)
+            if peer and websocket.query_params.get(PEER_LISTING_QUERY[0]) == PEER_LISTING_QUERY[1] else None)
     verdict = "done"
     try:
+        if feed is not None:
+            try:
+                await feed.attach(client.stream)
+            except Exception:  # noqa: BLE001
+                logger.exception("peer_listing_feed_attach_failed")
+        writer = asyncio.create_task(_drain_to_socket(websocket, client.stream, peer))
+        reader = asyncio.create_task(_read_from_socket(websocket, client.stream))
         done, pending = await asyncio.wait(
             [writer, reader], return_when=asyncio.FIRST_COMPLETED
         )
@@ -188,6 +196,8 @@ async def websocket_events(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         logger.debug("events_client_disconnected", client_id=client.client_id)
     finally:
+        if feed is not None:
+            feed.detach(client.stream)
         hub.unregister(client)
         grant = websocket.scope.get("peer_grant")
         if grant is not None:

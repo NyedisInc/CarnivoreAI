@@ -20,7 +20,6 @@ BASELINE_KEY = "_baseline"
 
 
 def default_path() -> Path:
-    """The state file under this install's state directory. Output: Path."""
     from src.config import settings
 
     return Path(settings.get_state_dir()) / FILENAME

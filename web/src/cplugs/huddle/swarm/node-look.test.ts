@@ -13,19 +13,19 @@ import type { BurstParty } from '../chat/chat-model';
 
 const NOW = 1_000_000;
 const ROSTER: PanelAgent[] = [
-  { id: 4, display_name: 'Mimir', rank: 'feature', state: 'awake', thread_key: 'agent:4', session_id: 'ses_4', session_uuid: 'u-4', tmux_session: 'carnivore_mimir', project_id: 12 } as PanelAgent,
+  { id: 4, display_name: 'Echo', rank: 'feature', state: 'awake', thread_key: 'agent:4', session_id: 'ses_4', session_uuid: 'u-4', tmux_session: 'carnivore_echo', project_id: 12 } as PanelAgent,
 ];
 const CV = {
-  key: 'u-cv', name: 'carnivore_cv', label: 'bot-Layer1', sessionId: 'ses_cv', sessionUuid: 'u-cv', sessionRowId: 50, asleep: false,
+  key: 'u-cv', name: 'carnivore_cv', label: 'Cv-Layer1', sessionId: 'ses_cv', sessionUuid: 'u-cv', sessionRowId: 50, asleep: false,
   projectId: 12, projectName: 'cloudecode', harness: 'claude', listing: { activity_status: 'working' },
 } as FloorSession;
 const ROWS: Record<string, { activity_status: string }> = { ses_4: { activity_status: 'question' }, ses_cv: { activity_status: 'working' } };
 
 const floor = buildFloor({
-  agents: ROSTER, sessions: [CV], companies: [{ id: 1, name: 'acme' }], projects: [{ id: 12, name: 'cloudecode', companyId: 1 }],
+  agents: ROSTER, sessions: [CV], companies: [{ id: 1, name: 'Larkspur' }], projects: [{ id: 12, name: 'cloudecode', companyId: 1 }],
   showInactive: true, rowOf: (id) => (id ? ROWS[id] : undefined),
 });
-const book = colorBook(ROSTER, { companies: [{ id: 1, name: 'acme' }], projects: [{ id: 12, name: 'cloudecode', companyId: 1 }], sessions: [CV] });
+const book = colorBook(ROSTER, { companies: [{ id: 1, name: 'Larkspur' }], projects: [{ id: 12, name: 'cloudecode', companyId: 1 }], sessions: [CV] });
 const looks: NodeLooks = { of: (ref) => lookOf(floor, book, ref, NOW), pack: DEFAULT_PACK };
 
 const apps: object[] = [];
@@ -55,8 +55,8 @@ describe('one node, one look', () => {
     apps.push(mount(SwarmPanel, { target: panel, props: {
       floor, agents: ROSTER, density: 'expanded', now: NOW, colors: book, still: false, showInactive: true, onToggleInactive: vi.fn(), onOpen: vi.fn(),
     } }));
-    const agentAv = avatar({ agentId: 4 }, 'Mimir');
-    const cvAv = avatar({ sessionUuid: 'u-cv' }, 'bot-Layer1');
+    const agentAv = avatar({ agentId: 4 }, 'Echo');
+    const cvAv = avatar({ sessionUuid: 'u-cv' }, 'Cv-Layer1');
     flushSync();
 
     const tileAgent = face(panel.querySelector('[data-swarm-agent="4"]'));

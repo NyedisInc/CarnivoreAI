@@ -1,5 +1,5 @@
 
-export interface LegendItem { name: string; color: string; on: boolean }
+export interface LegendItem { name: string; color: string; on: boolean;  id?: string }
 
 export function legendPages(widths: readonly number[], roomPx: number, gapPx: number): number[] {
   const starts: number[] = [];

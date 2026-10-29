@@ -1,4 +1,3 @@
-/* position: fixed */
 
 console.log('[TerminalKeyBar Module] Loading...');
 
@@ -129,7 +128,7 @@ console.log('[TerminalKeyBar Module] Loading...');
         return (bar && bar._activeTmuxName) || null;
     }
 
-    /* already exists failed to load */
+    /* failed to load */
     function call(owner, method, args) {
         if (!owner || typeof owner[method] !== 'function') {
             console.warn('[TerminalKeyBar] destination unavailable:', method);

@@ -1,7 +1,8 @@
 <script lang="ts">
+  /* the history bar the notes panel the page frame */
   import { onMount, untrack } from 'svelte';
   import { activeThemeId, ApiError, markdownPlain, resourcePush, t } from '../sdk';
-  import { ConfirmPopup, Icon } from '../sdk/ui';
+  import { Button, ConfirmPopup, IconButton, Segmented } from '../sdk/ui';
   import { clearScratch, fetchBoard, fetchBoards, rescan } from './board-api';
   import AttachmentsKey from './AttachmentsKey.svelte';
   import NotesPanel from './NotesPanel.svelte';
@@ -62,6 +63,7 @@
   const loop = new ReviewLoop(() => load());
   const payloadLoop = new PayloadLoop(() => load(), (payload, save) => frameApi?.load(payload, save));
 
+  /* the page frame */
   const frameTheme = $derived(effectiveTheme(themeChoice, flatChoices(themeSet), appTheme));
 
   function refreshThemes(): void {
@@ -288,37 +290,34 @@
         <PayloadControls revision={payloadRevision} loop={payloadLoop} {noteOpen} onnote={() => (noteOpen = !noteOpen)} onsend={() => void sendPayload()}
                          onstep={(delta) => payloadLoop.step(payloadRevision, delta)} />
       {:else if latest}
-        <button type="button" class="modal-btn modal-btn-secondary rb-fold-key" aria-expanded={promptsOpen} title={t('cplug.reviewboard.fold.title')}
-                data-prompts-key onclick={() => (promptsOpen = !promptsOpen)}>{t('cplug.reviewboard.fold.prompts')}{#if promptsLeft > 0}<span class="rb-fold-count" data-prompts-count>{promptsLeft}</span>{/if}</button>
-        <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.notes.key')} title={t('cplug.reviewboard.notes.key')} aria-expanded={noteOpen}
-                data-filled={noteText.trim() !== ''} data-board-note-key onclick={() => (noteOpen = !noteOpen)}><Icon name="chat" size={16} /></button>
+        <Button size="sm" aria-expanded={promptsOpen} title={t('cplug.reviewboard.fold.title')}
+                data-prompts-key onclick={() => (promptsOpen = !promptsOpen)}>{t('cplug.reviewboard.fold.prompts')}{#if promptsLeft > 0}<span class="rb-fold-count" data-prompts-count>{promptsLeft}</span>{/if}</Button>
+        <IconButton label={t('cplug.reviewboard.notes.key')} icon="chat" variant="quiet" iconSize={16} aria-expanded={noteOpen}
+                    data-filled={noteText.trim() !== ''} data-board-note-key onclick={() => (noteOpen = !noteOpen)} />
       {/if}
       {#if sidecar && !isScratch(sidecar)}
         <AttachmentsKey slug={sidecar.board.slug} tick={boardsTick} />
       {/if}
       <span class="rb-tools">
-        <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.action.back')} title={t('cplug.reviewboard.action.back')}
-                disabled={!revision || revision.n <= 1} onclick={() => step(-1)}><Icon name="chevron-left" size={16} /></button>
-        <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.action.forward')} title={t('cplug.reviewboard.action.forward')}
-                disabled={!revision || onNewest} onclick={() => step(1)}><Icon name="chevron-right" size={16} /></button>
-        <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.action.flip')} title={t('cplug.reviewboard.action.flip')}
-                disabled={!previous} aria-pressed={flipped} data-board-flip onclick={() => (flipped = !flipped)}><Icon name="cycle" size={16} /></button>
-        <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.action.link')} title={t('cplug.reviewboard.action.link')}
-                disabled={!sidecar} data-board-link onclick={() => (relinking = !relinking)}><Icon name="link" size={16} /></button>
+        <IconButton label={t('cplug.reviewboard.action.back')} icon="chevron-left" variant="quiet" iconSize={16}
+                    disabled={!revision || revision.n <= 1} onclick={() => step(-1)} />
+        <IconButton label={t('cplug.reviewboard.action.forward')} icon="chevron-right" variant="quiet" iconSize={16}
+                    disabled={!revision || onNewest} onclick={() => step(1)} />
+        <IconButton label={t('cplug.reviewboard.action.flip')} icon="cycle" variant="quiet" iconSize={16}
+                    disabled={!previous} pressed={flipped} data-board-flip onclick={() => (flipped = !flipped)} />
+        <IconButton label={t('cplug.reviewboard.action.link')} icon="link" variant="quiet" iconSize={16}
+                    disabled={!sidecar} data-board-link onclick={() => (relinking = !relinking)} />
         {#if asksWidth}
-          <button type="button" class="rb-icon" aria-label={t(fullWidth ? 'cplug.reviewboard.action.width_max' : 'cplug.reviewboard.action.width_full')}
-                  title={t(fullWidth ? 'cplug.reviewboard.action.width_max' : 'cplug.reviewboard.action.width_full')} aria-pressed={fullWidth} data-board-width
-                  onclick={toggleWidth}><Icon name={fullWidth ? 'shrink' : 'expand'} size={16} /></button>
+          <IconButton label={t(fullWidth ? 'cplug.reviewboard.action.width_max' : 'cplug.reviewboard.action.width_full')} icon={fullWidth ? 'shrink' : 'expand'}
+                      variant="quiet" iconSize={16} pressed={fullWidth} data-board-width onclick={toggleWidth} />
         {/if}
-        <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.action.rescan')} title={t('cplug.reviewboard.action.rescan')}
-                onclick={() => void readAgain()}><Icon name="reset" size={16} /></button>
+        <IconButton label={t('cplug.reviewboard.action.rescan')} icon="reset" variant="quiet" iconSize={16} onclick={() => void readAgain()} />
         {#if isScratch(sidecar)}
-          <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.scratch.clear_key')} title={t('cplug.reviewboard.scratch.clear_key')}
-                  aria-pressed={clearing} data-board-clear bind:this={clearKey} onclick={() => { clearing = !clearing; clearFailed = false; }}><Icon name="trash" size={16} /></button>
+          <IconButton label={t('cplug.reviewboard.scratch.clear_key')} icon="trash" variant="danger" iconSize={16}
+                      pressed={clearing} data-board-clear bind:element={clearKey} onclick={() => { clearing = !clearing; clearFailed = false; }} />
         {/if}
         {#if framed}
-          <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.action.popout')} title={t('cplug.reviewboard.action.popout')}
-                  onclick={popOut}><Icon name="external" size={16} /></button>
+          <IconButton label={t('cplug.reviewboard.action.popout')} icon="external" variant="quiet" iconSize={16} onclick={popOut} />
         {/if}
       </span>
     </div>
@@ -348,14 +347,11 @@
       {#if revision.views.length > 1 || !onNewest}
         <div class="rb-views">
           {#if revision.views.length > 1}
-            <span class="rb-tools" role="group" aria-label={t('cplug.reviewboard.views.label')}>
-              {#each revision.views as one (one.id)}
-                <button type="button" class="rb-step" aria-current={one.id === shownView} onclick={() => (view = one.id)}>{one.label}</button>
-              {/each}
-            </span>
+            <Segmented label={t('cplug.reviewboard.views.label')} value={shownView} options={revision.views.map((one) => ({ value: one.id, label: one.label }))}
+                       onchange={(id) => (view = id)} />
           {/if}
           {#if !onNewest && latest}
-            <button type="button" class="rb-step rb-back" onclick={() => show(latest.id)}>{t('cplug.reviewboard.action.back_to_current')}</button>
+            <span class="rb-back"><Button size="sm" data-back-current onclick={() => show(latest.id)}>{t('cplug.reviewboard.action.back_to_current')}</Button></span>
           {/if}
         </div>
       {/if}

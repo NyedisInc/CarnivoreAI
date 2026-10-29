@@ -318,7 +318,7 @@ def test_wake_runs_the_recreate_action_under_the_rows_own_wrapper(state_dir, cli
     c, _ = client
     _insert(state_dir, lifecycle="stopped", source="slept_by_user", agent_type="claude-skip")
     monkeypatch.setattr("src.core.session_agent_choice.configured_wrapper_ids",
-                        lambda settings_obj: ["claude-skip", "keyc"])
+                        lambda settings_obj: ["claude-skip", "cld"])
     called = []
 
     async def _recreate(session_uuid, agent_type, *, get_manager, row_overrides=None):

@@ -148,3 +148,37 @@ def test_a_file_scoped_server_is_still_judged_when_the_log_cannot_speak_for_the_
     table = ProcessTable.from_rows([Proc(20, 1, LSTART, "-zsh"), Proc(21, 20, LSTART, "claude")])
     got = measure_target(target, table, str(config_dir), NOW, ClientLogReader(root=str(tmp_path / "cache")))
     assert "late" in [s.key for s in got.specs] and got.alive.get("late") is False
+
+
+def test_the_loop_survives_an_unexpected_error_and_never_overlaps_a_slow_cycle(tmp_path):
+    import asyncio
+    import threading
+
+    mon = McpMonitor(cycle=0.01)
+    mon.register([Target("ses_z", "carnivore_z", "codex", pane_pid=10, working_dir=str(tmp_path))])
+    calls = []
+
+    def boom(targets, profiles):
+        calls.append(1)
+        raise KeyError("odd shape")
+
+    mon._cycle_locked = boom
+
+    async def drive():
+        async def profiles(targets, socket):
+            return {}
+        mon._profiles_for = profiles
+        task = asyncio.create_task(mon.run(lambda: "s", lambda: None))
+        for _ in range(100):
+            await asyncio.sleep(0.01)
+            if len(calls) >= 2:
+                break
+        alive = not task.done()
+        task.cancel()
+        return alive
+
+    assert asyncio.run(drive()) and len(calls) >= 2
+    held = threading.Lock()
+    held.acquire()
+    mon._cycle_gate = held
+    assert mon._cycle_sync([], {}) is False

@@ -20,7 +20,6 @@ PROBLEM_CODES: Tuple[str, ...] = (
     "blob_corrupt", "missing_blob", "extra_blob", "chain_mismatch", "content_mismatch", "rows_mismatch",
     "content_id_mismatch", "needs_identity", "wrong_key", "age_corrupt", "no_space",
 )
-# could not
 COULD_NOT_CHECK: Tuple[str, ...] = ("no_expected_hash", "too_new", "needs_identity", "wrong_key", "no_space")
 
 
@@ -128,13 +127,16 @@ def verify(path: Path, level: str = LEVEL_FULL, expected_sha256: Optional[str] =
         report.add(exc.code, None, str(exc))
         return report
     with reader:
-        report.format_version = reader.format_version
-        report.content_id = reader.manifest.content_id
-        _member_set(reader, report)
-        if level != LEVEL_QUICK:
-            verify_full.run(reader, report, progress)
-        if level == LEVEL_DRILL and report.ok:
-            verify_full.drill(reader, report, Path(scratch))
+        try:
+            report.format_version = reader.format_version
+            report.content_id = reader.manifest.content_id
+            _member_set(reader, report)
+            if level != LEVEL_QUICK:
+                verify_full.run(reader, report, progress)
+            if level == LEVEL_DRILL and report.ok:
+                verify_full.drill(reader, report, Path(scratch))
+        except CrateError as exc:
+            report.add(exc.code, None, str(exc))
     return report
 
 

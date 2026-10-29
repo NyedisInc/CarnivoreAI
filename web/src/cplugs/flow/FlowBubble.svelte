@@ -1,5 +1,6 @@
 <script lang="ts">
   import { renderMarkdown, t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import { clockTime, laneColor, type FeedItem, type FeedLane } from './flow-model';
 
   interface Props {
@@ -30,8 +31,8 @@
   </div>
   <div class="flw-text flw-md" bind:this={host}></div>
   {#if long}
-    <button type="button" class="flw-more" aria-expanded={open} onclick={() => (open = !open)}>
+    <Button variant="quiet" size="sm" data-flow-more aria-expanded={open} onclick={() => (open = !open)}>
       {t(open ? 'cplug.flow.chat.less' : 'cplug.flow.chat.more')}
-    </button>
+    </Button>
   {/if}
 </div>

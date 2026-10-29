@@ -20,7 +20,7 @@ from src.core.claude_title_sync import (
     read_tail_records,
 )
 
-SESSION_UUID = "f226580c-c43b-4e40-8679-c6e70c6e8543"
+SESSION_UUID = "916c846d-db44-472a-8e50-65999798ee3c"
 
 
 def _title_record(name: str) -> str:

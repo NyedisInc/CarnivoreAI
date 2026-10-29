@@ -7,6 +7,7 @@ from typing import Dict, List
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from src.api.error_response import soft_failure
 from src.api import blueprints_launch as steps
 from src.api.auth import require_auth
 from src.api.blueprints_reuse import live_sessions
@@ -113,8 +114,7 @@ async def launch(blueprint_uuid: str, body: LaunchRequest, request: Request) -> 
             saved_layout = await asyncio.to_thread(steps.save_layout, saved.spec, launched,
                                                    existing_layout)
         except layouts_store.LayoutError as exc:
-            layout_detail = f"the launched sessions could not be saved as a layout: {exc}"
-            logger.warning("blueprint_layout_failed", error=str(exc))
+            layout_detail = soft_failure("layout_not_saved", exc, status=500, step="save_layout")
         else:
             from src.api.layouts_routes import NOTICE_REASON, to_model
 

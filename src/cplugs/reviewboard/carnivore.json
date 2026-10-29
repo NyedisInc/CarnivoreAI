@@ -5,7 +5,7 @@
   "version": "0.6.0",
   "api_version": 1,
   "min_app_version": "1.16.1",
-  "author": "Carnivore contributors",
+  "author": "Carnivore",
   "license": "MIT",
   "tier": "builtin",
   "scope": [
@@ -96,7 +96,7 @@
       "policy": {
         "own": "carried",
         "share": "excluded",
-        "reason": "needed for this plugin to work",
+        "reason": "the review boards of a Task Manager item are the owner's own work and travel with the item; a share does not carry them; a purge keeps the folder and every board in it; the save plugin backs it up into its vault (policy.backup vault), .git history included",
         "purge": "kept",
         "backup": "vault"
       }
@@ -109,7 +109,7 @@
       "policy": {
         "own": "carried",
         "share": "excluded",
-        "reason": "needed for this plugin to work",
+        "reason": "the owner's half-typed ticks and notes for the next round of a board; small, and a share does not carry them; the save plugin backs it up into its vault (policy.backup vault), .git history included",
         "backup": "vault"
       }
     },

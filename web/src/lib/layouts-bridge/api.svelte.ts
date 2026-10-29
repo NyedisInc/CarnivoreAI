@@ -31,7 +31,6 @@ export interface LayoutStyle {
   animation: string;
 }
 
-/* could not */
 interface LayoutsResponse {
   status: 'ok' | 'unavailable';
   layouts: Layout[];

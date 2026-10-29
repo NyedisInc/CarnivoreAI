@@ -7,10 +7,10 @@
   import { accountChip, closeAccountMenu } from '../../lib/drawer-hud/account-menu.svelte';
 
   const VERSION = { text: 'v1.13.0', preview: false, previewText: 'preview', href: null };
-  const signedIn: BarView = { crown: false, version: VERSION, identity: { kind: 'member', name: 'sam', provider: 'github' } };
+  const signedIn: BarView = { crown: false, version: VERSION, identity: { kind: 'member', name: 'joe', provider: 'github' } };
   const signedOut: BarView = { crown: false, version: VERSION, identity: { kind: 'lurker', name: '', provider: null } };
-  const lit: BarView = { crown: true, version: { ...VERSION, text: 'v1.13.0', preview: true }, identity: { kind: 'member', name: 'sam', provider: 'github' } };
-  accountChip.identity = { kind: 'member', name: 'sam', provider: 'github' };
+  const lit: BarView = { crown: true, version: { ...VERSION, text: 'v1.13.0', preview: true }, identity: { kind: 'member', name: 'joe', provider: 'github' } };
+  accountChip.identity = { kind: 'member', name: 'joe', provider: 'github' };
 
   onDestroy(() => closeAccountMenu());
 

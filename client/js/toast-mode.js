@@ -9,8 +9,7 @@ console.log('[ToastMode Module] Loading...');
     var DETAILED = 'detailed';
 
     function t(key, params) {
-        var i18n = globalThis.CloudeI18n;
-        return (i18n && typeof i18n.t === 'function') ? i18n.t(key, params) : key;
+        return globalThis.CloudeTr(key, params);
     }
 
     function current() {
@@ -111,7 +110,6 @@ console.log('[ToastMode Module] Loading...');
     var HYDRATION_POLL_MS = 250;
     var HYDRATION_WAIT_MS = 60000;
 
-    /*  hidden  */
     function repaintOnHydration() {
         var waited = 0;
         var timer = setInterval(function () {

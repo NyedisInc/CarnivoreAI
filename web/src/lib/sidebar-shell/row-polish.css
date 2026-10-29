@@ -3,12 +3,6 @@
   border-color: color-mix(in oklab, var(--oc-orange) 35%, var(--oc-line-panel));
 }
 
-.session-sidebar-row-provider[data-dnd] .session-sidebar-row-provider__dnd {
-  top: -1px;
-  bottom: auto;
-  right: -3px;
-}
-
 .session-sidebar-row[role="option"],
 .session-sidebar-row[role="option"] :where(:not(input, textarea)) {
   cursor: pointer;

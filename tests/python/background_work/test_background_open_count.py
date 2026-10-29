@@ -11,8 +11,8 @@ from src.api.parked_work_listing import background_open_for
 from src.core.attention.transcript_facts import read_transcript_facts
 from src.core.background_work.open_count import BackgroundCountReader
 
-UUID = "c45140e9-528c-44ba-81ad-f56ce9c2a37e"
-CLAUDE_PID = 4558
+UUID = "42ca16a6-dc08-4b7a-bea1-1413f2b7e232"
+CLAUDE_PID = 94708
 NOW = datetime(2026, 9, 28, 16, 34, 0, tzinfo=timezone.utc)
 PROCESS_START = NOW - timedelta(hours=26)
 
@@ -87,15 +87,15 @@ def _conversation(root: Path) -> Path:
     ]
     records += [_text(early + timedelta(seconds=i), 10 + i, 20000) for i in range(21)]
     records += [_notice("bi96omv3n", NOW - timedelta(minutes=40), 90),
-                _notice("21ab01df72ae2f11c", NOW - timedelta(minutes=58), 91)]
+                _notice("44e43ce4d8e20fc8d", NOW - timedelta(minutes=58), 91)]
     _write(parent, records)
     agents = root / UUID / "subagents"
-    _write(agents / "agent-21ab01df72ae2f11c.jsonl", [
-        _shell_launch("bn4jqda82", NOW - timedelta(minutes=67), 1, "21ab01df72ae2f11c",
+    _write(agents / "agent-44e43ce4d8e20fc8d.jsonl", [
+        _shell_launch("bn4jqda82", NOW - timedelta(minutes=67), 1, "44e43ce4d8e20fc8d",
                       timed_out=True)])
-    _write(agents / "agent-11949fccaacc73d6e.jsonl", [
-        _shell_launch("bi96omv3n", NOW - timedelta(minutes=45), 1, "11949fccaacc73d6e"),
-        _shell_launch("bdmulccqj", NOW - timedelta(minutes=4), 2, "11949fccaacc73d6e")])
+    _write(agents / "agent-41cfdff7e503b6d5f.jsonl", [
+        _shell_launch("bi96omv3n", NOW - timedelta(minutes=45), 1, "41cfdff7e503b6d5f"),
+        _shell_launch("bdmulccqj", NOW - timedelta(minutes=4), 2, "41cfdff7e503b6d5f")])
     return parent
 
 

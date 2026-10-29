@@ -8,6 +8,7 @@
   import ApprovalReview from '../approvals/ApprovalReview.svelte';
   import { approvals } from '../approvals/approvals.svelte';
   import Icon from '../../opscenter/ui/Icon.svelte';
+  import { Button, IconButton } from '../base';
   import { attentionKinds } from '../attention-kinds/kinds';
   import { openAttention } from '../attention-kinds/open';
   import { bellRows, startAttentionSources } from '../attention-kinds/read.svelte';
@@ -73,10 +74,7 @@
   <div class="pl-titlebar">
     <h2 class="pl-title">{t('app_alert.panel.title')}</h2>
     <span class="aa-spacer"></span>
-    <button type="button" class="aa-close" aria-label={t('app_alert.panel.close')}
-      onclick={() => onClose()}>
-      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
-    </button>
+    <IconButton variant="close" icon="close" label={t('app_alert.panel.close')} onclick={() => onClose()} />
   </div>
 
   <div class="aa-body">
@@ -90,7 +88,8 @@
       {@const kind = kindList.find((k) => k.id === row.kindId)}
       {@const review = row.source === 'approval' ? approvals.items.find((i) => `approval:${i.id}` === row.key) : undefined}
       <div class="aa-wait-wrap">
-      <button type="button" class="aa-row aa-wait" data-bell-row={row.key} data-bell-kind={row.kindId} onclick={() => void openRow(row)}>
+      <Button variant="row" data-bell-row={row.key} data-bell-kind={row.kindId} onclick={() => void openRow(row)}>
+        <span class="aa-row aa-wait">
         <span class="aa-mark aa-mark--{row.severity}"></span>
         <span class="aa-text">
           <span class="aa-meta">
@@ -99,7 +98,8 @@
           <span class="aa-title">{row.what}</span>
           {#if row.where}<span class="aa-detail">{row.where}</span>{/if}
         </span>
-      </button>
+        </span>
+      </Button>
       {#if review}<div class="aa-wait-open" data-bell-open-row={row.key}><ApprovalReview item={review} title={row.what} /></div>{/if}
       </div>
     {/each}
@@ -126,10 +126,10 @@
                 <p class="aa-explain-text">{t(action.explain_key, alert.params)}</p>
                 <div class="aa-actions">
                   {#each action.actions ?? [] as inner, i (inner.id)}
-                    <button type="button" class="modal-btn {inner.tone === 'danger' ? 'modal-btn-danger' : i === 0 ? 'modal-btn-confirm' : 'modal-btn-secondary'}" disabled={busy}
-                      data-app-alert-action={inner.id} onclick={() => act(() => runAction(alert, inner))}>{t(inner.label_key)}</button>
+                    <Button size="sm" variant={inner.tone === 'danger' ? 'danger' : i === 0 ? 'confirm' : 'secondary'} disabled={busy}
+                      data-app-alert-action={inner.id} onclick={() => act(() => runAction(alert, inner))}>{t(inner.label_key)}</Button>
                   {/each}
-                  <button type="button" class="modal-btn modal-btn-secondary" onclick={() => toggleExplain(alert)}>{t('app_alert.row.explain_hide')}</button>
+                  <Button size="sm" onclick={() => toggleExplain(alert)}>{t('app_alert.row.explain_hide')}</Button>
                 </div>
               </div>
             {/if}
@@ -141,23 +141,23 @@
           </div>
           <div class="aa-actions">
             {#each alert.actions as action (action.id)}
-              {@const tone = action.tone === 'danger' ? 'modal-btn-danger' : action === primary ? 'modal-btn-confirm' : 'modal-btn-secondary'}
+              {@const tone = action.tone === 'danger' ? 'danger' : action === primary ? 'confirm' : 'secondary'}
               {#if action.explain_key}
-                <button type="button" class="modal-btn {tone}" aria-expanded={!!explaining[alert.id]} disabled={busy}
-                  data-app-alert-action={action.id} onclick={() => toggleExplain(alert)}>{t(action.label_key)}</button>
+                <Button size="sm" variant={tone} aria-expanded={!!explaining[alert.id]} disabled={busy}
+                  data-app-alert-action={action.id} onclick={() => toggleExplain(alert)}>{t(action.label_key)}</Button>
               {:else if action.href}
-                <a class="modal-btn {tone}" href={action.href} data-app-alert-action={action.id} onclick={() => onClose()}>{t(action.label_key)}</a>
+                <Button size="sm" variant={tone} href={action.href} data-app-alert-action={action.id} onclick={() => onClose()}>{t(action.label_key)}</Button>
               {:else}
-                <button type="button" class="modal-btn {tone}" disabled={busy}
-                  data-app-alert-action={action.id} onclick={() => act(() => runAction(alert, action))}>{t(action.label_key)}</button>
+                <Button size="sm" variant={tone} disabled={busy}
+                  data-app-alert-action={action.id} onclick={() => act(() => runAction(alert, action))}>{t(action.label_key)}</Button>
               {/if}
             {/each}
             {#if alert.state === 'active'}
-              <button type="button" class="modal-btn modal-btn-secondary" disabled={busy}
-                onclick={() => act(() => snoozeAlert(alert.id, SNOOZE_MINUTES))}>{t('app_alert.row.snooze')}</button>
+              <Button size="sm" disabled={busy}
+                onclick={() => act(() => snoozeAlert(alert.id, SNOOZE_MINUTES))}>{t('app_alert.row.snooze')}</Button>
             {/if}
-            <button type="button" class="modal-btn modal-btn-secondary" disabled={busy}
-              onclick={() => act(() => dismissAlert(alert.id))}>{t('app_alert.row.dismiss')}</button>
+            <Button size="sm" disabled={busy}
+              onclick={() => act(() => dismissAlert(alert.id))}>{t('app_alert.row.dismiss')}</Button>
           </div>
         </div>
       </div>
@@ -165,11 +165,11 @@
 
     {#if sections.resolved.length > 0}
       <div class="aa-fold">
-        <button type="button" class="oc-btn pl-label" aria-expanded={showResolved}
-          onclick={() => (showResolved = !showResolved)}>{t('app_alert.panel.resolved', { count: sections.resolved.length })}</button>
+        <Button size="sm" aria-expanded={showResolved}
+          onclick={() => (showResolved = !showResolved)}>{t('app_alert.panel.resolved', { count: sections.resolved.length })}</Button>
         <span class="aa-spacer"></span>
-        <button type="button" class="modal-btn modal-btn-secondary" disabled={busy}
-          onclick={() => act(() => dismissResolvedAlerts())}>{t('app_alert.panel.dismiss_resolved')}</button>
+        <Button size="sm" disabled={busy}
+          onclick={() => act(() => dismissResolvedAlerts())}>{t('app_alert.panel.dismiss_resolved')}</Button>
       </div>
       {#if showResolved}
         {#each sections.resolved as alert (alert.id)}
@@ -201,18 +201,6 @@
     border-radius: var(--pl-radius-sm);
   }
   .aa-spacer { flex: 1; }
-  .aa-close {
-    width: 24px;
-    height: 24px;
-    padding: 4px;
-    background: transparent;
-    border: var(--oc-border, 1px) solid transparent;
-    border-radius: var(--pl-radius-sm);
-    color: var(--pl-muted);
-    cursor: pointer;
-  }
-  .aa-close:hover { color: var(--pl-text); border-color: var(--pl-line); }
-  .aa-close svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
   .aa-body { overflow-y: auto; min-height: 0; }
   .aa-empty { margin: 0; padding: 14px 12px; color: var(--pl-muted); font-size: 12px; }
   .aa-row {
@@ -223,7 +211,7 @@
     box-shadow: inset 0 -1px 0 0 var(--pl-line-quiet);
   }
   .aa-row--resolved { opacity: 0.7; }
-  .aa-wait { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .aa-wait { width: 100%; color: inherit; font: inherit; text-align: left; }
   .aa-wait-wrap { box-shadow: inset 0 -1px 0 0 var(--pl-line-quiet); }
   .aa-wait-wrap .aa-wait { box-shadow: none; }
   .aa-wait-open { display: flex; padding: 0 12px 8px; }
@@ -266,11 +254,6 @@
   .aa-chip--question { color: var(--oc-cyan); border-color: var(--oc-cyan); }
   .aa-explain { margin: 4px 0; padding: 8px 0; box-shadow: inset 0 1px 0 0 var(--pl-line-quiet), inset 0 -1px 0 0 var(--pl-line-quiet); }
   .aa-explain-text { margin: 0; font-size: 11px; color: var(--pl-text); line-height: 1.5; }
-  .aa-actions .modal-btn,
-  .aa-fold .modal-btn { padding: var(--oc-space-1) 10px; font-size: var(--oc-fs-label); }
-  .aa-actions a.modal-btn { display: inline-flex; align-items: center; text-decoration: none; }
-  .aa-actions .modal-btn:disabled,
-  .aa-fold .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .aa-fold {
     display: flex;
     align-items: center;

@@ -77,7 +77,7 @@ beforeEach(async () => {
   server.groups = GROUPS();
   statusFolds.choices = {};
   clearViewFilter();
-  try { localStorage.removeItem(FOLDS_KEY); } catch {  }
+  try { localStorage.removeItem(FOLDS_KEY); } catch { /* storage may be unavailable */ }
   huddle.selected = AGGREGATE;
   huddle.groups = null;
   huddle.openId = null;
@@ -96,6 +96,7 @@ afterEach(() => {
 const alpha = (host: HTMLElement): HTMLElement => host.querySelector<HTMLElement>('[data-task-manager-level="project"]')!;
 const slot = (host: HTMLElement, kind: string): HTMLElement | null => host.querySelector<HTMLElement>(`[data-task-manager-tail="12"] [data-task-manager-tail-slot="${kind}"]`);
 
+/** Whether a comes before b in document order. */
 const before = (a: Element, b: Element): boolean => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 describe('the project row', () => {
@@ -131,7 +132,7 @@ describe('the project row', () => {
 
 const shown = (host: HTMLElement): number[] => [...host.querySelectorAll<HTMLElement>('[data-huddle-item]')].map((el) => Number(el.dataset.huddleItem)).sort((x, y) => x - y);
 
-describe('a status badge filters the tree and lights up', () => {
+describe('a status badge filters the tree and lights up (Part 4, #1709, ruling 3)', () => {
   test('pressing the review badge shows only reviews in every project with all open; the badge is lit; a second press clears', async () => {
     const host = await mountBody(false);
     expect(shown(host)).toEqual([11, 12, 13, 14, 15, 21]);

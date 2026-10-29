@@ -1,4 +1,3 @@
-/*  hidden  */
 import { watchVisible } from '../../viz/visible';
 
 export function watchOnScreen(node: Element, set: (onScreen: boolean) => void): () => void {

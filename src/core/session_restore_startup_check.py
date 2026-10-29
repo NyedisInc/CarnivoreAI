@@ -8,11 +8,8 @@ import structlog
 
 from src.core.attention.pane_markers import RESTING_PROMPT_MARKER
 from src.core.attention.pane_prompt_box import input_box_drawn
-from src.core.attention.registry_read import (
-    REG_OK,
-    read_registry_index,
-    registry_for_session,
-)
+from src.core.attention.registry_record import REG_OK
+from src.core.attention.registry_index import read_registry_index, registry_for_session
 from src.core.session_startup_gate import detect_startup_prompt
 from src.core.session_startup_gate_ledger import capture_pane_tail
 

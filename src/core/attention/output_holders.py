@@ -1,32 +1,3 @@
-"""Is a task's output file held open by a live child of this claude?
-
-A MONITOR CANNOT BE MEASURED THIS WAY, AND THE CALLER KNOWS IT. The same
-measurement found a Monitor's command running with its stdout and stderr
-on PIPES to claude, and its output file did not exist until claude wrote
-the summary at the end. So this module is only ever asked about shells.
-
-WHY DESCENDANTS AND NOT ANY PROCESS. A shell that re-parented itself to
-launchd (``nohup cmd &``) is not this session's work any more, and the
-root (claude itself, hundreds of fds) is excluded: claude opens the file
-to write a summary, which is not the task running.
-
-THREE ANSWERS, NEVER TWO. ``held``, ``not_held``, and ``unmeasured`` for
-anything we could not look at: a platform with neither libproc nor
-``/proc``, a descendant whose descriptors the kernel refused, a process
-table we do not have, a probe past its budget or unable to get a slot. An
-unmeasured task is never read as running and never as finished.
-
-MATCHED BY (device, inode), NOT BY PATH. ``/tmp`` is a symlink to
-``/private/tmp`` on macOS and the kernel reports the resolved path, so a
-string compare is a trap; the identity of the open vnode is not.
-
-BOUNDED. At most :data:`MAX_CONCURRENT_PROBES` run at once across all
-sessions, a probe waits at most :data:`SLOT_WAIT_SECONDS` for a slot and
-gives up after :data:`PROBE_BUDGET_SECONDS`, and it looks at no more than
-:data:`MAX_PROBED_PROCESSES` descendants. Each look is one ``proc_pidinfo``
-call per process plus one ``proc_pidfdinfo`` per vnode descriptor, so a
-shell costs a handful of syscalls and no subprocess.
-"""
 
 from __future__ import annotations
 
@@ -39,6 +10,8 @@ import time
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
 import structlog
+
+from src.core.attention.parent_map import descendants
 
 logger = structlog.get_logger(__name__)
 
@@ -143,7 +116,7 @@ _LIBPROC = _load_libproc()
 
 
 class _Unmeasurable(Exception):
-    """One process's descriptors could not be read (not: it exited)."""
+    pass
 
 
 def _vnodes_libproc(pid: int) -> Optional[Set[Tuple[int, int]]]:
@@ -178,11 +151,6 @@ def _vnodes_libproc(pid: int) -> Optional[Set[Tuple[int, int]]]:
 
 
 def _vnodes_procfs(pid: int) -> Optional[Set[Tuple[int, int]]]:
-    """(dev, ino) of every file ``pid`` holds open, via ``/proc``.
-
-    Output: set, or None when the process no longer exists.
-    Raises: _Unmeasurable - its fd directory could not be listed.
-    """
     base = "/proc/%d/fd" % pid
     try:
         names = os.listdir(base)
@@ -222,24 +190,6 @@ def open_file_path(pid: int, fd: int) -> Optional[str]:
         return os.readlink("/proc/%d/fd/%d" % (pid, fd))
     except OSError:
         return None
-
-
-def descendants(root_pid: int, process_parents: Mapping[int, int]) -> List[int]:
-    children: Dict[int, List[int]] = {}
-    for pid, ppid in process_parents.items():
-        if pid != ppid:
-            children.setdefault(ppid, []).append(pid)
-    found: List[int] = []
-    queue = list(children.get(root_pid, ()))
-    seen = {root_pid}
-    while queue:
-        pid = queue.pop(0)
-        if pid in seen:
-            continue
-        seen.add(pid)
-        found.append(pid)
-        queue.extend(children.get(pid, ()))
-    return found
 
 
 def _dev_key(dev: int) -> int:

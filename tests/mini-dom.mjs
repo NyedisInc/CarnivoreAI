@@ -1,3 +1,4 @@
+// Not a test file: the suites are `tests/*.node.mjs`, this is `.mjs`.
 
 class Selector {
     constructor(text) {
@@ -125,6 +126,7 @@ class MiniElement {
         this._listeners = new Map();
         this.classList = new MiniTokenList(this);
         this.innerHTML = '';
+        // with a plain
         this.style = {
             setProperty(name, value) { this[name] = String(value); },
             getPropertyValue(name) {

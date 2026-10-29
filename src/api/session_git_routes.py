@@ -32,7 +32,7 @@ def watch_for(app_state: Any) -> GitStatusWatch:
 async def _session_directory(manager: Any, info: Any) -> Optional[Path]:
     tmux_name = getattr(info, "tmux_session", None)
     if tmux_name:
-        facts = await read_pane_facts(manager._tmux_socket_name(), tmux_name)
+        facts = await read_pane_facts(manager.tmux_socket_name(), tmux_name)
         if facts.cwd:
             return Path(facts.cwd)
     stored = getattr(getattr(info, "session", None), "working_dir", None)

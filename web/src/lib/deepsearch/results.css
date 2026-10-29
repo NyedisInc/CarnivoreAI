@@ -29,12 +29,6 @@
     flex: 0 0 auto;
   }
 
-  .dps__seg .oc-seg__item {
-    font-size: var(--oc-fs-micro);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
   .dps__status,
   .dps__ingest {
     margin: 0;
@@ -82,25 +76,6 @@
     gap: var(--oc-space-1);
     padding: 2px 12px 6px;
     box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
-  }
-
-  .dps__chip {
-    height: 20px;
-    padding: 0 7px;
-    border: var(--oc-border) solid var(--oc-line-rule);
-    border-radius: 2px;
-    background: transparent;
-    color: var(--oc-text-dim);
-    font: inherit;
-    font-size: var(--oc-fs-micro);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-  }
-
-  .dps__chip.is-on {
-    border-color: var(--oc-line-frame);
-    color: var(--oc-text-primary);
   }
 
   .dps__mark {
@@ -151,17 +126,6 @@
 
   .dps__tag--exported {
     color: var(--oc-text-secondary);
-  }
-
-  .dps__linkbtn {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--oc-text-dim);
-    font: inherit;
-    font-size: var(--oc-fs-hint);
-    cursor: pointer;
-    box-shadow: inset 0 -1px 0 0 var(--oc-line-frame);
   }
 
 

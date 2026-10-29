@@ -1,4 +1,3 @@
-/* running sessions */
 console.log('[TerminalEmptyEntry Module] Loading...');
 
 (function () {
@@ -12,8 +11,7 @@ console.log('[TerminalEmptyEntry Module] Loading...');
     }
 
     function label(key) {
-        var i18n = globalThis.CloudeI18n;
-        return i18n && typeof i18n.t === 'function' ? i18n.t(key) : key;
+        return globalThis.CloudeTr(key);
     }
 
     function syncUrl() {

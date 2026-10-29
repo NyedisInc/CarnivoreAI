@@ -19,11 +19,12 @@ async function openPosted(page: { item: number; title: string }): Promise<boolea
 
 export const reviewboardCplug: CplugWeb = {
   id: 'reviewboard', manifest: manifest as CplugManifest, tabs: [reviewboardTab], start: () => {
-    registerRoundOpener(openRound);
-    registerPostedPageOpener(openPosted);
+    const on = (): boolean => cplugEnabled(reviewboardCplug.manifest);
+    registerRoundOpener(openRound, on);
+    registerPostedPageOpener(openPosted, on);
     registerProjectPanel({
       id: CLOSED_PANEL_ID, labelKey: 'cplug.reviewboard.closed.group', hintKey: 'cplug.reviewboard.closed.hint', component: ClosedReviews,
-      enabled: () => cplugEnabled(reviewboardCplug.manifest),
+      enabled: on,
     });
   },
 };

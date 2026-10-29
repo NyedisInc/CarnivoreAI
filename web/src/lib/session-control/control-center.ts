@@ -125,7 +125,6 @@ function scrollBox(root: HTMLElement): HTMLElement | null {
     return candidates.find((box): box is HTMLElement => !!box && box.scrollHeight > box.clientHeight) ?? null;
 }
 
-/*  hidden  overflow: hidden */
 export function revealInside(root: HTMLElement, el: HTMLElement): void {
     const box = scrollBox(root);
     if (!box) return;

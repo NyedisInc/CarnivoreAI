@@ -1,9 +1,3 @@
-"""Read-only rule-file checks for the Scrooge recipe: sizes, estimated tokens and line overlap.
-
-Nothing here writes. A rule file is opened for reading only, must be a regular file, and a symlink whose
-target leaves the project folder and the home folder is never followed. Files over the stats store's own
-``MAX_RULE_BYTES`` are reported ``oversize`` and not read.
-"""
 from __future__ import annotations
 
 import os
@@ -37,11 +31,6 @@ def _inside(path: Path, roots: Sequence[Path]) -> bool:
 
 
 def read_rule_file(path: Path, label: str, allowed_roots: Sequence[Path]) -> Optional[RuleFile]:
-    """Read one rule file, or None when it is absent, not a regular file, unreadable or points outside the roots.
-
-    Inputs: path (file to read), label (name to report), allowed_roots (resolved folders a symlink may land in).
-    Output: RuleFile | None. Example: read_rule_file(Path("/p/CLAUDE.md"), "CLAUDE.md", [Path("/p")])
-    """
     try:
         real = path.resolve(strict=True)
     except (OSError, RuntimeError):

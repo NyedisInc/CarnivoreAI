@@ -16,6 +16,7 @@ function createUpdateEngineControl({
     setSystemQuit(true);
   }
 
+  /* after the install */
   async function restartAfterFailedInstall() {
     const serverManager = getServerManager();
     if (!serverManager) return;

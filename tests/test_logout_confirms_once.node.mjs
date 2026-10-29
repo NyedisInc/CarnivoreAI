@@ -1,3 +1,4 @@
+// of its own -
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,6 +11,11 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passes = 0;
 let failures = 0;
 
+/**
+ * Description: run one named assertion block, recording rather than
+ *   throwing so one failure does not hide the rest.
+ * Inputs: name (string), fn (function). Output: Promise<void>.
+ */
 async function test(name, fn) {
     try {
         await fn();

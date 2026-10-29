@@ -31,7 +31,7 @@ class UploadImageResponse(BaseModel):
     """Response model for ``POST /sessions/upload-file`` (and its alias).
 
     Returned after a validated upload has been persisted into the active
-    session's ``.cloude_uploads/`` bucket. ``path`` is the absolute on-disk
+    session's ``.carnivore_uploads/`` bucket. ``path`` is the absolute on-disk
     location the client injects into the terminal: Claude Code's CLI
     auto-attaches an absolute image path, and reads any other absolute path
     with its own file tools. ``filename`` is the saved

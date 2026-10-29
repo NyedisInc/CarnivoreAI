@@ -1,8 +1,17 @@
 <script lang="ts">
-    import { t } from '../i18n/index.svelte';
-  import { RAIL_HELP_LINKS, type RailItem } from '../../opscenter/shell/rail-items';
+  import { t } from '../i18n/index.svelte';
+  import MiniRailFooter from '../mini-rail/MiniRailFooter.svelte';
+  import MiniRailUsage from '../mini-rail/MiniRailUsage.svelte';
+  import { type RailItem } from '../../opscenter/shell/rail-items';
   import { closeDrawerAfterSwitch, handleMenuHotkey } from '../drawer-tabs/menu-hotkeys';
-  import { railDestinations, menuLeadItems, menuSettings } from '../drawer-tabs/menu-rows';
+  import { menuLeadItems, railZoneItems } from '../drawer-tabs/menu-rows';
+  import { onMount, tick } from 'svelte';
+  import { saveRailOrder, startMenuOrder } from '../drawer-tabs/menu-order.svelte';
+  import { RAIL_SPLIT, zoneSequence } from './rail-zones';
+  import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
+  import EditCell from '../zone-shell/EditCell.svelte';
+  import { onMenuMoveKey, onMenuPointerDown, type MenuDragHost } from '../drawer-tabs/menu-drag';
+  import { railIconHidden, railIconsShown, setRailIconHidden, startRailIcons } from './rail-icons.svelte';
   import { menuPageState } from '../menu-page/menu-page-shell.svelte';
   import { menuPage } from '../menu-page/menu-pages';
   import { motionReduced } from '../motion/motion';
@@ -15,14 +24,33 @@
   import { barPinned } from '../widget-bars/bar-pin-action';
   import type { Snippet } from 'svelte';
 
-  let { pin }: { pin?: Snippet } = $props();
+  let { pin, pinName, stats = false }: { pin?: Snippet; pinName?: string; stats?: boolean } = $props();
 
-  const lead = $derived(menuLeadItems());
-  const destinations = $derived(railDestinations());
-  const settings = $derived(menuSettings());
-  const items = $derived<RailItem[]>([...lead, ...destinations, ...RAIL_HELP_LINKS, ...(settings ? [settings] : [])]);
+  const editing = $derived(layoutEditor.active);
+  const zones = $derived(railZoneItems());
+  const top = $derived(railIconsShown(zones.top));
+  const bottom = $derived(railIconsShown(zones.bottom));
+  const items = $derived<RailItem[]>([...top, ...bottom]);
+  onMount(() => {
+    startRailIcons();
+    return startMenuOrder();
+  });
+
+  function refocusAfterPaint(id: string): void {
+    void tick().then(() => focusKey(id));
+  }
+
+  const dragHost: MenuDragHost = {
+    ids: () => zoneSequence({ top: zones.top.map((i) => i.id).filter((id) => id !== 'warroom'), bottom: zones.bottom.map((i) => i.id).filter((id) => id !== 'warroom') }),
+    commit: (ids) => {
+      saveRailOrder(ids);
+      const moved = document.activeElement instanceof HTMLElement ? document.activeElement.closest<HTMLElement>('[data-rail-key]')?.dataset.railKey : undefined;
+      if (moved) refocusAfterPaint(moved);
+    },
+    marker: RAIL_SPLIT,
+  };
   const keyIds = $derived(items.map((i) => i.id));
-  const leadIds = $derived(new Set(lead.map((i) => i.id)));
+  const leadIds = $derived(new Set(menuLeadItems().map((i) => i.id)));
   const activeRow = $derived(menuPageState.open ? (menuPage(menuPageState.open)?.railItem ?? null) : null);
   let nav = $state<HTMLElement | null>(null);
   let focused = $state<string | null>(null);
@@ -41,6 +69,9 @@
   function press(item: RailItem, event: MouseEvent): void {
     if (leadIds.has(item.id)) {
       item.run?.();
+      if (item.pressed && document.body.classList.contains('session-sidebar-railed')) {
+        (globalThis as { SessionSidebar?: { open?: () => void } }).SessionSidebar?.open?.();
+      }
       if (activeFlyout() !== null && event.detail === 0) {
         queueMicrotask(() => document.querySelector<HTMLElement>(`#${FLYOUT_CONTAINER_ID} [data-flyout-close]`)?.focus());
       }
@@ -62,6 +93,7 @@
     if (handleFlyoutEscape(event, document.getElementById(FLYOUT_CONTAINER_ID))) return;
     const id = keyOf(event);
     if (id === null) return;
+    if (editing && onMenuMoveKey(event, dragHost)) return;
     if (handleMenuHotkey(event)) return;
     const item = items.find((i) => i.id === id);
     if (event.key === 'Delete' && item?.close) {
@@ -128,32 +160,56 @@
 
   const cellOf = (target: EventTarget | null): HTMLElement | null => (target as HTMLElement | null)?.closest<HTMLElement>('[data-dock-name]') ?? null;
 
-  const pinLabel = $derived(t(barPinned('rail') ? 'sidebar.rail.menu.unpin' : 'sidebar.rail.menu.pin'));
+  const pinLabel = $derived(pinName ?? t(barPinned('rail') ? 'sidebar.rail.menu.unpin' : 'sidebar.rail.menu.pin'));
 </script>
+
+{#snippet railKey(item: RailItem)}
+  <TabKey
+    id={item.id}
+    variant="rail"
+    face={faceOf(item)}
+    iconPx={17}
+    state={item.pressed ? 'pressed' : null}
+    active={item.pressed?.() ?? false}
+    tabbable={stop === item.id}
+    attrs={{ 'data-rail-widget': item.widgetId, 'data-rail-key': item.id, 'aria-current': !leadIds.has(item.id) && activeRow === item.id ? 'page' : undefined }}
+    close={item.close ? { label: t('drawer.tabs.close', { name: t(item.labelKey) }), run: () => item.close?.(), attrs: { 'data-rail-close': item.id } } : undefined}
+    onfocus={() => (focused = item.id)}
+    onpress={(_id, event) => press(item, event)}
+  />
+{/snippet}
 
 {#snippet railButton(item: RailItem)}
   <span class="sbr-rail__cell" data-dock-name={t(item.labelKey)}>
-    <TabKey
-      id={item.id}
-      variant="rail"
-      face={faceOf(item)}
-      iconPx={17}
-      state={item.pressed ? 'pressed' : null}
-      active={item.pressed?.() ?? false}
-      tabbable={stop === item.id}
-      attrs={{ 'data-rail-widget': item.widgetId, 'data-rail-key': item.id, 'aria-current': !leadIds.has(item.id) && activeRow === item.id ? 'page' : undefined }}
-      close={item.close ? { label: t('drawer.tabs.close', { name: t(item.labelKey) }), run: () => item.close?.(), attrs: { 'data-rail-close': item.id } } : undefined}
-      onfocus={() => (focused = item.id)}
-      onpress={(_id, event) => press(item, event)}
-    />
+    <span class="oc-nav-label" hidden>{t(item.labelKey)}</span>
+    {#if editing}
+      <EditCell hidden={railIconHidden(item.id)} name={t(item.labelKey)} ontoggle={() => void setRailIconHidden(item.id, !railIconHidden(item.id))}>
+        {@render railKey(item)}
+      </EditCell>
+    {:else}
+      {@render railKey(item)}
+    {/if}
   </span>
+{/snippet}
+
+
+{#snippet zone(name: string, list: RailItem[], end: string | undefined)}
+  <ul class="sbr-rail__zone" data-menu-zone data-rail-zone={name} data-menu-end={end} data-empty={list.length === 0 ? '' : undefined}>
+    {#each list as item, i (item.id)}
+      {#if i > 0 && leadIds.has(list[i - 1]!.id) && !leadIds.has(item.id)}<li class="sbr-rail__sep" aria-hidden="true"></li>{/if}
+      <li data-menu-row={item.id}>{@render railButton(item)}</li>
+    {/each}
+  </ul>
 {/snippet}
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <nav
   class="sbr-rail"
-  aria-label={t('sidebar.rail.label')}
+  aria-label={t(editing ? 'sidebar.rail.edit.label' : 'sidebar.rail.label')}
+  data-editing={editing ? '' : undefined}
   bind:this={nav}
+  data-menu-zones
+  onpointerdowncapture={(event) => { if (editing) onMenuPointerDown(event, dragHost); }}
   onkeydown={onKeydown}
   onpointerenter={measure}
   onpointermove={onPointerMove}
@@ -162,14 +218,14 @@
   onfocusin={(event) => { if ((event.target as HTMLElement).matches(':focus-visible')) showLabel(cellOf(event.target)); }}
   onfocusout={() => (labelOn = false)}
 >
-  {#each lead as item (item.id)}{@render railButton(item)}{/each}
-  <span class="sbr-rail__sep" aria-hidden="true"></span>
-  {#each destinations as item (item.id)}{@render railButton(item)}{/each}
-  <span class="sbr-rail__sep" aria-hidden="true"></span>
-  {#each RAIL_HELP_LINKS as item (item.id)}{@render railButton(item)}{/each}
+  {@render zone('top', top, RAIL_SPLIT)}
   <span class="sbr-rail__fill" aria-hidden="true"></span>
-  {#if settings}{@render railButton(settings)}{/if}
+  {@render zone('bottom', bottom, undefined)}
   {#if pin}<span class="sbr-rail__cell" data-dock-name={pinLabel}>{@render pin()}</span>{/if}
+  {#if stats}
+    <MiniRailFooter railed />
+    <MiniRailUsage />
+  {/if}
 </nav>
 <span class="sbr-rail__label" class:sbr-rail__label--on={labelOn} aria-hidden="true" bind:this={label}><span class="sbr-rail__label-text">{labelText}</span></span>
 
@@ -207,6 +263,51 @@
         width: 28px;
         height: 28px;
       }
+    }
+
+    .sbr-rail__zone {
+      display: flex;
+      flex: none;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--oc-space-0-5);
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sbr-rail__zone > li {
+      display: flex;
+      flex: none;
+    }
+
+    .sbr-rail[data-editing] .sbr-rail__zone[data-empty] {
+      width: 28px;
+      min-height: 28px;
+      border: var(--oc-border) dashed var(--oc-cyan);
+      border-radius: var(--oc-radius-sm);
+      box-sizing: border-box;
+    }
+
+    .sbr-rail[data-editing] .sbr-rail__zone > li[data-menu-row] {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .sbr-rail__zone > li:global([data-menu-lifted]) {
+      opacity: 0.5;
+    }
+
+    .sbr-rail__zone > li:global([data-menu-drop='before']) {
+      box-shadow: 0 calc(-1 * var(--oc-border)) 0 0 var(--oc-orange);
+    }
+
+    .sbr-rail__zone > li:global([data-menu-drop='after']) {
+      box-shadow: 0 var(--oc-border) 0 0 var(--oc-orange);
+    }
+
+    .sbr-rail__zone:global([data-menu-drop]) {
+      box-shadow: 0 var(--oc-border) 0 0 var(--oc-orange);
     }
 
     .sbr-rail__sep {

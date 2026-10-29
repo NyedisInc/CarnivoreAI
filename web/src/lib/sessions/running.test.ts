@@ -1,3 +1,4 @@
+/* could not determine */
 import { describe, expect, test } from 'vitest';
 
 import { emptyListing } from './listing';
@@ -22,6 +23,9 @@ function stale(over: Partial<RunningSessionRow> = {}): RunningSessionRow {
         session_row_id: 7,
         parent_session_id: 'ses_parent',
         pinned_theme: 'amber',
+        parked_summary: 'a stale parked task',
+        usage_limit: { kind: 'session', resets_at: 'later', message: 'limit', since: 'now' } as unknown as RunningSessionRow['usage_limit'],
+        host_state: 'offline',
         ...over,
     };
 }
@@ -66,6 +70,9 @@ describe('the six fields a live row overwrites UNCONDITIONALLY', () => {
         ['activity_hint', { activity_hint: null }],
         ['session_row_id', { session_row_id: null }],
         ['parent_session_id', { parent_session_id: null }],
+        ['parked_summary', { parked_summary: null }],
+        ['usage_limit', { usage_limit: null }],
+        ['host_state', { host_state: null }],
     ];
 
     test.each(CASES)('a null %s replaces the stale value on an existing row', (field, patch) => {
@@ -98,6 +105,7 @@ describe('the six fields a live row overwrites UNCONDITIONALLY', () => {
     });
 
     test('an ABSENT field also becomes null, so a stale guess cannot survive', () => {
+        // could not determine
         const rows = [stale()];
         mergeLiveSession(rows, {
             tmux_session: 'cloude_a', activity_status: 'working', session: { id: 'x' },
@@ -280,6 +288,7 @@ describe('the attachable body, and what a non-array means', () => {
     });
 
     test('an EMPTY array is a measured zero and raises no alarm', () => {
+        // NEGATIVE CONTROL for
         const listing = emptyListing();
         expect(rowsFromAttachable([], listing, 'detail')).toEqual([]);
         expect(listing.ok).toBe(true);

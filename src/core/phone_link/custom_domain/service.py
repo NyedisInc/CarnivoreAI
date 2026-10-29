@@ -184,10 +184,11 @@ class CustomDomainService:
 
     async def _adopt(self, view: Dict[str, Any]) -> None:
         await self._repair.enforce(int(view.get("repair") or 0))
+        was_pending = self.state == "pending"
         if view.get("state") != "live":
             self._claim_sent = False
             self._live_since, self._order_fails = None, 0
-        if view.get("state") == "pending":
+        if view.get("state") == "pending" and not was_pending:
             self._pending_polls = 0
         self._commit(view)
         self._schedule_status()

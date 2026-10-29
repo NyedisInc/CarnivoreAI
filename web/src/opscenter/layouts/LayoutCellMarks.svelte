@@ -1,6 +1,6 @@
-<!-- border-color: -->
+
 <script lang="ts">
-    import Icon from '../ui/Icon.svelte';
+    import IconButton from '../../lib/base/IconButton.svelte';
     import { t } from '../../lib/i18n/index.svelte';
     import { layoutActive, layoutMode, memberForRow } from './mode.svelte';
     import { broadcastOn, toggleBroadcast } from './broadcast.svelte';
@@ -27,11 +27,9 @@
         {#if layoutSearch.query}
             <span class="lcm__count" class:lcm__count--current={current} data-layout-count={count ?? ''}>{count ?? '-'}</span>
         {/if}
-        <button type="button" class="lcm__toggle" data-broadcast-toggle={member.session_row_id}
-            aria-pressed={on}
-            title={refused ? t('layout.broadcast.failed', { reason: refused }) : on ? t('layout.broadcast.on') : t('layout.broadcast.off')}
-            aria-label={on ? t('layout.broadcast.on') : t('layout.broadcast.off')}
-            onclick={() => void flip()}><Icon name="chevron-right" size={15} /></button>
+        <IconButton label={refused ? t('layout.broadcast.failed', { reason: refused }) : on ? t('layout.broadcast.on') : t('layout.broadcast.off')}
+            variant="quiet" pressed={on} iconSize={15} icon="chevron-right" data-broadcast-toggle={member.session_row_id}
+            onclick={() => void flip()} />
     </span>
 {/if}
 
@@ -44,27 +42,15 @@
           flex: none;
       }
 
-      .lcm__toggle {
-          display: flex;
-          align-items: center;
-          justify-content: center;
+      :global(.oc-frame-strip) .lcm {
+          align-self: stretch;
+          box-sizing: border-box;
+          border-bottom: calc(var(--oc-border) + 5px) solid transparent;
+      }
+
+      :global(.oc-frame-strip) .lcm > :global([data-broadcast-toggle]) {
           width: 26px;
-          height: 26px;
-          padding: 0;
-          border: 1px solid transparent;
-          border-radius: 3px;
-          background: transparent;
-          color: var(--oc-orange);
-          cursor: pointer;
-      }
-
-      .lcm__toggle:hover {
-          border-color: var(--oc-orange);
-          background: var(--oc-ground-hover);
-      }
-
-      .lcm__toggle[aria-pressed='false'] {
-          color: var(--oc-text-dim);
+          height: 100%;
       }
 
       .lcm__count {
@@ -83,12 +69,5 @@
           border-color: var(--oc-orange);
           color: var(--oc-orange);
       }
-
-      @media (pointer: coarse) {
-          .lcm__toggle {
-              width: 44px;
-              height: 44px;
-          }
-  }
   }
 </style>

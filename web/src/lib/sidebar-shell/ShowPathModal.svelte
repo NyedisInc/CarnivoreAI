@@ -2,6 +2,7 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
     import ModalShell from '../launchpad/ModalShell.svelte';
+    import Button from '../base/Button.svelte';
     import IconButton from '../base/IconButton.svelte';
     import { t } from '../i18n/index.svelte';
     import { copyText } from '../settings-page/mcp-panel/api';
@@ -45,13 +46,13 @@
     {/snippet}
     <div class="sp-field" data-show-path-modal>
         <code class="sp-path" data-show-path-value>{path}</code>
-        <button type="button" class="modal-btn modal-btn-secondary sp-copy" data-show-path-copy
+        <Button data-show-path-copy
             onclick={() => void copy()}
-            >{state === 'copied' ? t('sidebar.show_path.copied') : state === 'failed' ? t('sidebar.show_path.copy_failed') : t('sidebar.show_path.copy')}</button>
+            >{state === 'copied' ? t('sidebar.show_path.copied') : state === 'failed' ? t('sidebar.show_path.copy_failed') : t('sidebar.show_path.copy')}</Button>
     </div>
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" data-show-path-close
-            onclick={() => close(null)}>{t('modal.close')}</button>
+        <Button data-show-path-close
+            onclick={() => close(null)}>{t('modal.close')}</Button>
     {/snippet}
 </ModalShell>
 
@@ -79,7 +80,7 @@
           user-select: all;
       }
 
-      .sp-copy {
+      [data-show-path-copy] {
           flex: none;
       }
   }

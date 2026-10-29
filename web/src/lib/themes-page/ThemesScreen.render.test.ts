@@ -112,7 +112,7 @@ describe('the themes page', () => {
         (document.querySelector('[data-theme-card="rogue"] .catalog-card__open') as HTMLButtonElement).click();
         await settle();
         expect(document.querySelector('[data-inspector]')?.getAttribute('data-inspector')).toBe('rogue');
-        const link = document.querySelector('.oc-page__bar button.themes-now') as HTMLButtonElement;
+        const link = document.querySelector('.oc-page__bar [data-themes-now]') as HTMLButtonElement;
         expect(link.textContent?.trim()).toBe('Matrix');
         link.click();
         await settle();
@@ -131,7 +131,7 @@ describe('the themes page', () => {
         (document.querySelector('[data-theme-card="rogue"] [data-act="card-star"]') as HTMLButtonElement).click();
         await settle();
         expect(themeFavorites.ids).toEqual(['rogue']);
-        (document.querySelector('.oc-chip[aria-pressed="false"]:nth-child(2)') as HTMLButtonElement).click();
+        (document.querySelector('[data-theme-filter][aria-checked="false"]:nth-child(2)') as HTMLButtonElement).click();
         await settle();
         expect(names()).toEqual(['Rogue']);
     });
@@ -180,12 +180,12 @@ describe('the themes page on the shared frame', () => {
         expect(document.querySelector('.oc-page.themes-screen')).not.toBeNull();
         expect(document.querySelector('.oc-titlebar .oc-titlebar__title')?.textContent).toBe('themes');
         expect(document.querySelector('.oc-page__bar input.oc-field[type="search"]')).not.toBeNull();
-        expect(document.querySelectorAll('.oc-page__chips .oc-chip')).toHaveLength(5);
+        expect(document.querySelectorAll('.oc-page__bar [data-theme-filter]')).toHaveLength(5);
         expect(document.querySelector('[class*="tp-"]')).toBeNull();
     });
 
     test('library and guide are shared buttons in the bar, the strip has no close button', async () => {
-        expect(document.querySelectorAll('.oc-page__tools button.oc-btn')).toHaveLength(2);
+        expect(document.querySelectorAll('.oc-page__tools > [data-btn]')).toHaveLength(2);
         expect(document.querySelector('[data-page-close]')).toBeNull();
         button('get more on warez').click();
         expect(openCatalogScreen).toHaveBeenCalledWith({ kind: 'theme' });
@@ -199,7 +199,7 @@ describe('the themes page on the shared frame', () => {
         await settle();
         const body = document.querySelector('.themes-body') as HTMLElement;
         expect(body.classList.contains('themes-body--detail')).toBe(true);
-        (document.querySelector('.themes-back') as HTMLButtonElement).click();
+        (document.querySelector('[data-themes-back]') as HTMLButtonElement).click();
         await settle();
         expect(body.classList.contains('themes-body--detail')).toBe(false);
     });

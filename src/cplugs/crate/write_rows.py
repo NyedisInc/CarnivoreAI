@@ -93,7 +93,6 @@ class _Parts:
         return len(data)
 
     def close(self) -> int:
-        """Write what is left: one unnumbered part when nothing was written yet, else the next numbered one."""
         if not self.buf:
             return 0
         return self._flush(None if not self.names else len(self.names))

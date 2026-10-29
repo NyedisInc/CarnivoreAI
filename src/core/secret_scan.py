@@ -81,19 +81,6 @@ def _excerpt_for(
     text: str, starts: Sequence[int], target: SecretFinding,
     all_findings: Iterable[SecretFinding],
 ) -> str:
-    """Build a masked, truncated excerpt of the line holding a match.
-
-    Description: EVERY finding that overlaps the line is masked, not only
-      the target, so a line carrying two credentials cannot print one of
-      them while reporting the other. The window is then cut to
-      EXCERPT_CONTEXT_CHARS either side of the mask, which bounds how
-      much unexamined neighbouring text is shown.
-    Inputs: text (str - the whole file), starts (from _line_starts),
-      target (SecretFinding being rendered), all_findings (every finding
-      in this file).
-    Output: str - safe to print.
-    Example: masked output looks like 'token = "***"'
-    """
     line_index = _locate(starts, target.offset)[0] - 1
     begin = starts[line_index]
     end = starts[line_index + 1] - 1 if line_index + 1 < len(starts) else len(text)
@@ -205,13 +192,6 @@ def iter_candidate_files(root: Path) -> Iterator[Path]:
 
 
 def _git_tracked_files(root: Path) -> Optional[List[Path]]:
-    """Files git tracks under a root, or None when it is not a work tree.
-
-    Inputs: root (Path).
-    Output: list[Path] or None. None is "git could not answer", which the
-      caller turns into a filesystem walk rather than into an empty list.
-    Example: _git_tracked_files(Path("/tmp")) -> None
-    """
     if not git_guard.git_available():
         return None
     try:

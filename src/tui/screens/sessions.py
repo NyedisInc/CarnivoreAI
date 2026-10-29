@@ -17,6 +17,8 @@ from src.tui.api_client import AuthRequired, ServerUnavailable
 from src.tui.led import led_for, use_ascii
 from src.tui.screens import session_actions as act
 from src.tui.screens import session_rows as sr
+from src.tui.offline.tmux_cmd import NO_CONFIG, TmuxCommandFailed, TmuxNotRunning, clean_env, probe_session
+from src.tui.plain import plain
 from src.tui.strings import t
 
 logger = structlog.get_logger(__name__)
@@ -154,8 +156,8 @@ class SessionsPane(Vertical):
             led = led_for(row, transport=self._transport)
             where = (row.get("host_label") or row.get("host_key") or "") if sr.is_remote(row) else ""
             table.add_row(
-                Text(led.glyph(self._ascii), style=theme.active().hue(led.hue)), sr.row_name(row), row.get("project_name") or "",
-                row.get("agent_family") or "", led.label, where, key=sr.row_key(row) or str(id(row)),
+                Text(led.glyph(self._ascii), style=theme.active().hue(led.hue)), plain(sr.row_name(row)), plain(row.get("project_name")),
+                plain(row.get("agent_family")), led.label, plain(where), key=sr.row_key(row) or str(id(row)),
             )
         if keep is not None:
             for i, row in enumerate(self.shown):
@@ -195,7 +197,10 @@ class SessionsPane(Vertical):
             self.app.notify(t("tui.action.no_tmux"))
             return
         socket = attach.socket_name()
-        plan = attach.plan_attach(name, socket, os.environ, read_only=read_only)
+        prefix = (*attach.tmux_argv_prefix(socket), *NO_CONFIG)
+        plan = attach.plan_attach(name, socket, os.environ, prefix=prefix, read_only=read_only)
+        if plan.suspend and not self._server_answers(prefix, name):
+            return
         if plan.suspend:
             size = attach.read_pane_size(plan.argvs[0][:3], name)
             preamble = attach.attach_preamble(size, resize_terminal=True, read_only=read_only)
@@ -211,6 +216,18 @@ class SessionsPane(Vertical):
             return
         if rc != 0:
             self.app.notify(t("tui.action.attach_failed"), severity="error")
+
+    def _server_answers(self, prefix: tuple[str, ...], name: str) -> bool:
+        try:
+            probe_session(prefix, name, clean_env(os.environ))
+        except TmuxNotRunning:
+            self.app.notify(t("tui.offline.not_running"), severity="error")
+        except TmuxCommandFailed as err:
+            logger.info("tui_attach_probe_failed", detail=err.detail)
+            self.app.notify(t("tui.action.attach_failed"), severity="error")
+        else:
+            return True
+        return False
 
     def arm_selected(self) -> None:
         row = self._local_row()
@@ -251,7 +268,7 @@ class SessionsPane(Vertical):
         except ServerUnavailable:
             self.app.notify(t("tui.action.unreachable"), severity="error")
             return
-        self.app.notify(result[1], severity="information" if result[0] else "error")
+        self.app.notify(result[1], severity="information" if result[0] else "error", markup=False)
 
     async def new_session(self) -> None:
         client = self.app.client  # type: ignore[attr-defined]
@@ -270,7 +287,7 @@ class SessionsPane(Vertical):
         except ServerUnavailable:
             self.app.notify(t("tui.action.unreachable"), severity="error")
             return
-        self.app.notify(message, severity="information" if ok else "error")
+        self.app.notify(message, severity="information" if ok else "error", markup=False)
 
     @on(DataTable.RowHighlighted)
     def _cursor_moved(self) -> None:

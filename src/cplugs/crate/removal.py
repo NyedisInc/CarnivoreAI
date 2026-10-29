@@ -60,10 +60,6 @@ def _check_name(name: str) -> None:
 
 
 def _file_in(env: CrateEnv, folder: str, name: str) -> Path:
-    """The crate file ``name`` in a crate folder, proved to be a regular file directly inside it.
-
-    Raises CrateApiError: 409 ``folder_unavailable``; 422 ``bad_crate_name``, ``crate_refused``; 404 ``crate_not_found``.
-    """
     _check_name(name)
     try:
         base = folders.resolve(env, folder)
@@ -167,7 +163,6 @@ def remove_blocking(env: CrateEnv, body: RemoveBody) -> Dict[str, Any]:
                 record.mark_removed(env, bundle_id)
                 local_removed = True
         except (sx.MainDbUnreadable, sqlite3.Error, sx.BundleNotFound, CrateApiError) as exc:
-            # could not
             logger.warning("crate_remove_unmarked", bundle_id=bundle_id, error=type(exc).__name__)
             skipped.append({"folder": folder, "name": name, "reason": "record_not_marked"})
     return {"removed": removed, "bundle_id": bundle_id, "local_removed": local_removed, "skipped": skipped}

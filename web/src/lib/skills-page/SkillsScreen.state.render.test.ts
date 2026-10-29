@@ -62,7 +62,7 @@ describe('the full state of a skill', () => {
         const prov = root.querySelector('[data-skill-section="provenance"]')!.textContent!;
         expect(prov).toContain('1.2.0');
         expect(prov).toContain('one click, no sheet');
-        expect(prov).toContain('acme');
+        expect(prov).toContain('ADOOMKEY01');
         expect(prov).toContain('abcdef01');
         expect(root.querySelector('[data-skill-section="contents"] [data-skill-md-toggle]')).not.toBeNull();
     });

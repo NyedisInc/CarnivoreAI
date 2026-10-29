@@ -1,3 +1,4 @@
+// WHY THIS FILE EXISTS
 
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -166,7 +167,7 @@ test('the published URL prefers the MEASURED bind over the configured one', () =
       port: 8000,
       configuredHost: '0.0.0.0',
       measuredHost: '127.0.0.1',
-      lanIp: '192.0.2.12',
+      lanIp: '10.0.1.5',
     }),
     'http://127.0.0.1:8000',
     'the configured host beat the measured one, so the menu would print an ' +
@@ -197,7 +198,7 @@ test('the health probe also tries loopback, so the lockdown cannot look dead', (
 });
 
 test('a failed exposure read clears the cached bind rather than keeping it', () => {
-  const start = managerSrc.indexOf('async getHealth()');
+  const start = managerSrc.indexOf('async getHealth(');
   const end = managerSrc.indexOf('\n  getEffectiveBindHost() {');
   assert.ok(start !== -1 && end > start, 'could not locate getHealth');
   const fn = managerSrc.slice(start, end);
@@ -228,6 +229,7 @@ test('the wizard posts to the auth endpoint that actually exists', () => {
 
 import vm from 'node:vm';
 
+/* context with a */
 function loadWizard(fetchImpl) {
   const els = new Map();
   const el = (id) => {

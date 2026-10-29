@@ -43,11 +43,13 @@ async def transcribe(target: Target, key: Optional[str], audio: bytes, mime: str
         body = response.json()
     except ValueError:
         body = {"text": response.text}
+    if not isinstance(body, dict):
+        body = {"text": response.text}
     return Transcript(text=str(body.get("text") or ""), language=body.get("language"), raw=body)
 
 
 async def list_models(connection: Connection, key: Optional[str]) -> List[ModelInfo]:
-    body = (await transport.request(connection, key, "GET", "/v1/models")).json()
+    body = (await transport.request_json(connection, key, "GET", "/v1/models"))
     return [ModelInfo(id=m["id"], capabilities=guess_capabilities(
                 m["id"], ("magpie", "tts", "fastpitch"), ("parakeet", "asr", "canary", "whisper")))
             for m in body.get("data", []) if isinstance(m, dict) and m.get("id")]

@@ -53,7 +53,6 @@ MAX_MINISIG_BYTES = 4 * 1024
 
 _MINISIG_LINES = 4
 
-# already running
 _SHUTDOWN_GRACE_SECONDS = 5.0
 
 
@@ -94,26 +93,6 @@ async def init(
     timeout: Optional[httpx.Timeout] = None,
     verify: Any = True,
 ) -> None:
-    """Build the module-level client, closing any previous one.
-
-    Description: idempotent in the strong sense. Asking for the pool that
-      is ALREADY BUILT AND OPEN, with the options it was built with, is a
-      no-op: the previous version closed and rebuilt unconditionally,
-      which meant a second init() pulled the transport out from under
-      every fetch already running on the first. A genuine change of
-      options still closes the old pool, and that close now waits for
-      those fetches. The app itself never calls this with arguments; both
-      exist so a test can point the client at a server it started, with
-      the timeout it wants and its own certificate authority. NOTHING IN
-      THE APP EVER DISABLES VERIFICATION, and ``verify`` is httpx's own
-      parameter passed straight through rather than a mode this module
-      implements.
-    Inputs: timeout (httpx.Timeout | None) - overall and connect budget;
-      :data:`DEFAULT_TIMEOUT` when None. verify (Any) - httpx's ``verify``
-      argument; True means certifi.
-    Output: None.
-    Example: await init()
-    """
     global _client, _client_options
 
     options: Dict[str, Any] = {
@@ -163,6 +142,14 @@ async def _ensure_client() -> httpx.AsyncClient:
 
 async def shared_client() -> httpx.AsyncClient:
     return await _ensure_client()
+
+
+def sibling_url(index_url: str, file_name: str) -> str:
+    parts = urlsplit(index_url)
+    directory = parts.path.rsplit("/", 1)[0]
+    return urlunsplit(
+        parts._replace(path=f"{directory}/{file_name}", query="", fragment="")
+    )
 
 
 def minisig_url(index_url: str) -> str:

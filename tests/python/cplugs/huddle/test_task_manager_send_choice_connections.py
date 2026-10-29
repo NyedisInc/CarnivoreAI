@@ -20,23 +20,32 @@ def count_opens(ctx, monkeypatch) -> list:
     return opened
 
 
+def go_cold(ctx) -> None:
+    ctx.storage._reads.forget(ctx.storage.db_path)
+
+
 def test_send_choice_opens_one_connection_and_answers_the_same(app, monkeypatch):
     ctx = runtime.host_for(app).context("huddle")
     service.store(ctx).add("12", "seed the database", actor="joe")
+    go_cold(ctx)
     opened = count_opens(ctx, monkeypatch)
 
     scoped = service.send_choice(ctx, ROWS, "12")
-    assert opened == [False], "one read connection for the whole call"
+    assert opened == [False], "a cold call opens ONE read connection for the whole call, none per helper"
 
     opened.clear()
+    warm = service.send_choice(ctx, ROWS, "12")
+    assert opened == [], "a warm call borrows the thread's kept read connection: nothing is opened"
+
     unscoped = service._send_choice(ctx, ROWS, "12")
-    assert len(opened) <= 1, "no connection per helper: the thread's reused read connection serves them all"
-    assert scoped == unscoped
+    assert len(opened) <= 1, "no connection per helper"
+    assert scoped == warm == unscoped
 
 
 def test_a_write_inside_a_read_scope_still_gets_its_own_connection(app, monkeypatch):
     ctx = runtime.host_for(app).context("huddle")
     service.store(ctx).add("12", "seed", actor="joe")
+    go_cold(ctx)
     opened = count_opens(ctx, monkeypatch)
     with ctx.storage.read_scope():
         ctx.storage.connect(False).close()

@@ -129,7 +129,7 @@ describe('init(): following a live change', () => {
     });
 });
 
-describe('the carnivore timers icon (a task item, shown by default since #1639)', () => {
+describe('the carnivore timers icon (huddle item 454, shown by default since #1639)', () => {
     it('is shown at every density until a stored false hides it', () => {
         setDrawerEnv({});
         expect(defaultFor('compact', 'automations')).toBe(true);

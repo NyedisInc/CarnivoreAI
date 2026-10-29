@@ -69,3 +69,10 @@ test('a plain F10 is not ours', () => {
   tabOf(root, 'terminal:a').dispatchEvent(new KeyboardEvent('keydown', { key: 'F10', bubbles: true, cancelable: true }));
   expect(onTabMenu).not.toHaveBeenCalled();
 });
+
+test('the icon button is not a Tab stop: the strip stays one (u164-02)', () => {
+  const root = draw(() => true);
+  const icons = [...root.querySelectorAll('.oc-tab-icon--action')];
+  expect(icons.length).toBeGreaterThan(0);
+  for (const icon of icons) expect(icon.getAttribute('tabindex')).toBe('-1');
+});

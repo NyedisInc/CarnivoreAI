@@ -1,5 +1,3 @@
-"""Which agent dialog answers the beast mode grid's ``agent_writes`` row may approve on its own: a plain yes or no on a permission prompt.
-"""
 
 from __future__ import annotations
 

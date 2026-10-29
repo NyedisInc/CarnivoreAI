@@ -41,6 +41,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
     { id: 'advanced', icon: 'cpu' },
 ];
 
+/* A titled GROUP */
 export type GroupId =
     | 'appearance.colors'
     | 'appearance.sidebar'

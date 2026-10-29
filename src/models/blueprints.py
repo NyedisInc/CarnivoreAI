@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from src.core.agent_wrappers import WRAPPER_ID_PATTERN
 from src.models.catalog_api import InstallConsent
 from src.models.model_ids import describe_model_id_rejection, is_valid_model_id
+from src.models.terminal_dims import TermCols, TermRows
 
 SPEC_VERSION = 1
 
@@ -48,20 +49,6 @@ def _no_controls(value: str, what: str) -> str:
 
 
 def check_opening_prompt(value: Optional[str]) -> Optional[str]:
-    """Check an opening prompt can travel as ONE literal argument.
-
-    Description: the prompt reaches the agent CLI as a single
-      shlex-quoted positional argument, so the shell never interprets it;
-      what is left to refuse is what the CLI's OWN parser would read as
-      something other than a prompt. A leading ``-`` is an option
-      (``--dangerously-skip-permissions`` is a flag, not a prompt), and a
-      lone bare word can be a subcommand (``update``, ``login``). NUL
-      cannot cross an exec boundary at all. Blank reads as absent.
-    Inputs: value (str | None).
-    Output: str | None - the prompt unchanged, or None when blank.
-    Raises: ValueError - with the reason, for the 400/422 body.
-    Example: check_opening_prompt("run /review on the diff")
-    """
     if value is None or not value.strip():
         return None
     if "\x00" in value:
@@ -342,8 +329,8 @@ class LaunchRequest(BaseModel):
 
     consents: Optional[Dict[str, InstallConsent]] = None
     members: Optional[List[int]] = Field(None, max_length=SESSIONS_MAX)
-    cols: Optional[int] = Field(None, ge=10, le=1000)
-    rows: Optional[int] = Field(None, ge=5, le=1000)
+    cols: Optional[TermCols] = None
+    rows: Optional[TermRows] = None
     overwrite_layout: bool = Field(
         False,
         description="Update the Layout this blueprint already saved, in place. Without "

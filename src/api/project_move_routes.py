@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.concurrency import run_in_threadpool
 
 from src.api import projects_service
@@ -18,6 +18,7 @@ from src.core.project_move.apply import MoveBusy, MoveFailed, MoveRefused, apply
 from src.core.project_move.fingerprint import FingerprintError, require_quoted
 from src.core.project_move.plan import MovePlan, PaneListing, build_plan
 from src.models import ProjectMoveRequest, ProjectMoveResponse
+from src.api.error_response import api_error, soft_failure
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -26,13 +27,6 @@ NOTICE_REASON = "project_moved"
 
 
 def read_live_panes() -> PaneListing:
-    """Every live pane on Carnivore's tmux socket, with its folder. One ``list-panes -a``.
-
-    Description: a listing that did not answer is ``ok=False`` (the plan then
-      refuses), never an empty "no panes".
-    Inputs: none. Output: PaneListing.
-    Example: read_live_panes().ok
-    """
     from src.core.session_backend import build_backend
     from src.core.tmux_listing import coerce_listing
 
@@ -42,8 +36,7 @@ def read_live_panes() -> PaneListing:
             return PaneListing(ok=False, reason="this backend cannot list panes")
         listing = coerce_listing(probe.list_pane_status_all(fresh=True))
     except (OSError, ValueError, RuntimeError) as exc:
-        logger.warning("project_move_pane_listing_failed", error=str(exc))
-        return PaneListing(ok=False, reason=type(exc).__name__)
+        return PaneListing(ok=False, reason=soft_failure("pane_listing_failed", exc, step="project_move_panes"))
     if not listing.ok:
         return PaneListing(ok=False, reason=str(listing.reason or "no answer"))
     rows = tuple((r.get("name"), r.get("created_at_epoch"), r.get("pane_current_path")) for r in listing.sessions or ())
@@ -70,7 +63,7 @@ def _plan_and_maybe_apply(project_name: str, body: ProjectMoveRequest) -> Projec
         with one_move_at_a_time():
             return _plan_then_apply(project_name, body)
     except MoveBusy as exc:
-        raise HTTPException(status_code=409, detail={"message": str(exc)})
+        raise api_error(409, "move_busy", exc) from exc
 
 
 def _plan_then_apply(project_name: str, body: ProjectMoveRequest) -> ProjectMoveResponse:
@@ -84,16 +77,15 @@ def _plan_then_apply(project_name: str, body: ProjectMoveRequest) -> ProjectMove
         try:
             require_quoted(plan, body.plan_fingerprint)
         except FingerprintError as exc:
-            raise HTTPException(status_code=exc.status, detail={
-                "message": str(exc), "plan": _response(plan).model_dump()})
+            code = "plan_fingerprint_required" if exc.status == 428 else "plan_changed"
+            raise api_error(exc.status, code, exc, extra={"plan": _response(plan).model_dump()}) from exc
         try:
             done = apply_plan(conn, plan, state_dir=Path(settings.get_state_dir()))
         except MoveRefused as exc:
-            raise HTTPException(status_code=409, detail={
-                "message": f"move refused: {exc}", "plan": _response(plan).model_dump()})
+            raise api_error(409, "move_refused", exc, extra={"plan": _response(plan).model_dump()}) from exc
         except MoveFailed as exc:
-            raise HTTPException(status_code=500, detail={
-                "message": str(exc), "step": exc.step, "undone": exc.undone, "undo_errors": exc.undo_errors})
+            raise api_error(500, "move_failed", exc, extra={"step": exc.step, "undone": exc.undone},
+                            undo_errors=exc.undo_errors) from exc
     return _response(plan, done)
 
 

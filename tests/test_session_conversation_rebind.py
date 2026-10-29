@@ -21,12 +21,8 @@ os.environ.setdefault("TOTP_SECRET", "testsecretnotreal")
 os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
 # ruff: noqa: E402
-from src.core.attention.registry_read import (
-    REG_OK,
-    REG_STALE,
-    parse_registry_record,
-    registry_for_session,
-)
+from src.core.attention.registry_record import REG_OK, REG_STALE, parse_registry_record
+from src.core.attention.registry_index import registry_for_session
 from src.core.db import connect, db_path_for, transaction
 from src.core.db_models import (
     SESSION_CLAUDE_UUID_SOURCE_REGISTRY,
@@ -203,7 +199,7 @@ class RebindManager:
     def _writable_datastore_connection(self):
         return connect(db_path_for(self._state_dir))
 
-    def _tmux_socket_name(self) -> str:
+    def tmux_socket_name(self) -> str:
         return TEST_SOCKET
 
 

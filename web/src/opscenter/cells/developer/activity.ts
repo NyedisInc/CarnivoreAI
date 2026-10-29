@@ -1,4 +1,3 @@
-/* waiting on you */
 import type { Automation, RunSummary } from '../../../lib/automations/api';
 import { nextWords, runTimeWords } from '../../lib/run-chart';
 import { cap, type ActivityRow, type Capped } from '../../lib/run-queue';

@@ -70,7 +70,7 @@ def register(router: APIRouter, ctx_dep: Any) -> None:
     async def post_build(slug: str, ctx: CplugContext = ctx_dep) -> Dict[str, Any]:
         """Start the draft's preview build. Output: the summary (state ``building``). Errors: 404, 409 (a build is running), 503."""
         try:
-            return service.build_draft(storage(ctx), slug)
+            return await service.build_draft(storage(ctx), slug)
         except LabError as exc:
             raise _http(exc) from exc
 

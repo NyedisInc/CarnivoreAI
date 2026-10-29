@@ -1,4 +1,3 @@
-/* nothing waiting */
 import { epochAgo, MIN } from './clock';
 import { sessionList } from './made-up';
 import type { WidgetFixtures } from './types';

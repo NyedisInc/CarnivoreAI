@@ -5,7 +5,6 @@ import {
     type AiConfig, type Feature, type Fetcher, type LedgerAccount, type ModelInfo, type Preset, type RecentModel,
 } from './api';
 
-/* could not */
 export const ai = $state<{
     presets: Preset[];
     config: AiConfig | null;
@@ -18,14 +17,26 @@ export const ai = $state<{
 
 let fetcherInUse: Fetcher | undefined;
 let inflight: Promise<void> | null = null;
+let rereadAfter = false;
 let attached = 0;
 let detach: Array<() => void> = [];
 
 export const presetOf = (id: string): Preset | undefined => ai.presets.find((p) => p.id === id);
 
 export function refresh(): Promise<void> {
-    inflight ??= read().finally(() => { inflight = null; });
+    if (inflight) {
+        rereadAfter = true;
+        return inflight;
+    }
+    inflight = readThenCatchUp().finally(() => { inflight = null; });
     return inflight;
+}
+
+async function readThenCatchUp(): Promise<void> {
+    do {
+        rereadAfter = false;
+        await read();
+    } while (rereadAfter);
 }
 
 async function read(): Promise<void> {

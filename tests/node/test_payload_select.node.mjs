@@ -218,7 +218,7 @@ test('payload: Reinstall Server Environment leaves the payload python alone and 
     getState: () => 'stopped', isProcessRunning: () => false, findPython: () => '/opt/homebrew/bin/python3',
     resetSupervisor() {}, async start() { started = true; },
   };
-  const ctx = { serverManager: sm, fs: { existsSync: () => true, renameSync() { throw new Error('moved a venv'); } }, refresh() {},
+  const ctx = { serverManager: sm, t: (key) => key, fs: { existsSync: () => true, renameSync() { throw new Error('moved a venv'); } }, refresh() {},
     dialog: { showErrorBox: (...a) => boxes.push(a), showMessageBox: async (o) => { boxes.push(o); return { response: 1 }; } } };
   await reinstallEnv(ctx);
   assert.equal(sm.pythonPath, '/P/python/bin/python3');

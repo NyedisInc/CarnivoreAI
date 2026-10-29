@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 
+from src.config import startup_error_log
 from src.config.session import SessionConfig
 from src.core.diagnostics import launchd_facts, log_tails, tmux_facts
 from src.core.stream_redactor import redact_whole
@@ -23,7 +24,7 @@ logger = structlog.get_logger()
 SCHEMA = 2
 MAX_LOG_ENTRIES = 20
 MAX_BANNER_BYTES = 4096
-STARTUP_ERROR_FILE = Path("/tmp/cloude-code-startup-error.log")
+STARTUP_ERROR_FILE = startup_error_log.STARTUP_ERROR_FILE
 CHILD_TIMEOUT_S = 3
 
 _SECTION_ERRORS = (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError, ImportError)
@@ -116,12 +117,8 @@ def _startup_errors() -> Dict[str, Any]:
     from src.core.server_log.tail import read_entries
 
     entries = read_entries(server_log_path(), ("error", "warn"), MAX_LOG_ENTRIES)
-    banner: Optional[str] = None
-    try:
-        if STARTUP_ERROR_FILE.is_file() and not STARTUP_ERROR_FILE.is_symlink():
-            banner = STARTUP_ERROR_FILE.read_bytes()[-MAX_BANNER_BYTES:].decode("utf-8", errors="replace")
-    except OSError:
-        banner = None
+    tail = log_tails.read_tail(STARTUP_ERROR_FILE, MAX_BANNER_BYTES)
+    banner: Optional[str] = tail["text"] if tail["status"] == "ok" else None
     return {"log_entries": [dict(e) for e in entries], "banner_tail": banner}
 
 
@@ -133,11 +130,6 @@ def _log_location() -> Dict[str, Any]:
 
 
 def locate_state_dir() -> Optional[Path]:
-    """Description: where the state directory is, READ-ONLY: creates and renames nothing.
-
-    Order: the explicit override, then the current-named directory, then the legacy-named one (which the
-    server renames forward at boot; the CLI must not). Output: Path | None - None when none exists yet.
-    """
     from src.config import settings
     from src.core import product_identity
 

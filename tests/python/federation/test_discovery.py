@@ -97,9 +97,9 @@ def test_pin_and_identity_changed(tmp_path, lib):
     d = make(tmp_path, lib)
     discovery.write_pin(tmp_path / "config.json", "Peer", "AAA")
     d._peers["Peer"] = {"name": "Peer", "host": "Peer.local.", "port": 22,
-                        "addresses": ["192.0.2.15"], "p": "1", "fid": "AAA", "mid": "m"}
-    assert d.discovered(["acme@peer"])[0]["state"] == "pinned"
-    assert d.discovered(["acme@peer"])[0]["known_host"] is True
+                        "addresses": ["192.168.1.9"], "p": "1", "fid": "AAA", "mid": "m"}
+    assert d.discovered(["alex@peer"])[0]["state"] == "pinned"
+    assert d.discovered(["alex@peer"])[0]["known_host"] is True
     d._peers["Peer"]["fid"] = "BBB"
     assert d.discovered()[0]["state"] == "identity_changed"
     d._peers["Peer"]["name"] = "Other"

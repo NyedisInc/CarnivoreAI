@@ -1,19 +1,3 @@
-"""
-Each tool is a :class:`route_adapters.RouteTool` over the route the UI already calls, and resolves ``target`` through
-the shared resolver (``session_target``), so an asleep session is reachable wherever the route accepts one:
-
-- ``session_rename``: ``PATCH /sessions/{id}/name`` (the label; the tmux name never moves). ARRANGE.
-- ``session_theme_set``: ``PATCH /sessions/{name}/theme`` (pin or clear a session's theme). ARRANGE.
-- ``session_unread_set``: ``PATCH /sessions/{name}/unread`` (mark for follow-up or read). ARRANGE.
-- ``session_notifications_set``: ``PATCH /sessions/records/{uuid}/notifications`` (mute one session). ARRANGE.
-- ``session_wake``: ``POST /sessions/{uuid}/wake`` (resume an asleep session), or, for a CLOSED row with a known
-  conversation (a reboot's ``tmux_missing``, #1980) named by its ``session_uuid``, ``POST /sessions/recreate``, the
-  UI's reopen. ACT: waits unless Beast Mode is armed.
-- ``session_mcp_reconnect``: ``POST /sessions/{id}/mcp/reconnect`` (type ``/mcp reconnect`` into an idle claude whose
-  MCP servers dropped). ACT: waits unless Beast Mode is armed; refuses a busy session and writes nothing.
-- ``session_interrupt``: ``POST /sessions/{id}/interrupt`` (one Escape). The ``session_send_keys`` gate: your own
-  session runs at once, another waits (``mcp.gate_cross_session_actions``) unless Beast Mode is armed.
-"""
 
 from __future__ import annotations
 

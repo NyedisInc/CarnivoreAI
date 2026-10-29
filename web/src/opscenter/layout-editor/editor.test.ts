@@ -139,15 +139,15 @@ describe('every change is final when made (issue #1776)', () => {
 describe('a plugin panel view is one copy per page (#2379)', () => {
   test('a second copy is refused even when the first is a leftover cell of an earlier install', async () => {
     const { setPanels } = await import('../../lib/cplug-ui/panel-views.svelte');
-    const row = (key: string) => ({ id: 'bubblepop', runtime: 'sidecar', enabled: true, state: 'active', name: 'Bubble Pop', install_key: key,
+    const row = (key: string) => ({ id: 'pillpanic', runtime: 'sidecar', enabled: true, state: 'active', name: 'Pill Panic', install_key: key,
       views: [{ name: 'game', surfaces: ['panel'] }] }) as never;
     setPanels([row('aaaaaaaa11')]);
     enterLayoutEditor();
-    expect(addPanelWidget('bubblepop.game')).toBe(true);
-    expect(placed().filter((id) => id.startsWith('bubblepop.game:'))).toEqual(['bubblepop.game:panel-aaaaaaaa']);
+    expect(addPanelWidget('pillpanic.game')).toBe(true);
+    expect(placed().filter((id) => id.startsWith('pillpanic.game:'))).toEqual(['pillpanic.game:panel-aaaaaaaa']);
     setPanels([row('bbbbbbbb22')]);
-    expect(addPanelWidget('bubblepop.game')).toBe(false);
-    expect(placed().filter((id) => id.startsWith('bubblepop.game:'))).toEqual(['bubblepop.game:panel-aaaaaaaa']);
+    expect(addPanelWidget('pillpanic.game')).toBe(false);
+    expect(placed().filter((id) => id.startsWith('pillpanic.game:'))).toEqual(['pillpanic.game:panel-aaaaaaaa']);
     setPanels([]);
   });
 });

@@ -33,7 +33,7 @@ class HostError(Exception):
 
 
 class HostsUnavailable(HostError):
-    """The table is absent: CANNOT DETERMINE, never an empty list."""
+    pass
 
 
 class HostNotFound(HostError):
@@ -301,17 +301,6 @@ PROBE_COLUMNS = ("probe_state", "probe_detail", "login_shell", "login_path", "tm
 
 def record_probe(conn: sqlite3.Connection, key: str, columns: Dict[str, Optional[str]], *,
                  now: Optional[str] = None) -> Host:
-    """Write one probe's findings over a remote host's previous ones, stamped.
-
-    Description: every probe column is written, a None included, so a
-      field the new probe could not measure never keeps an old value.
-    Inputs: key (str); columns (dict) - exactly :data:`PROBE_COLUMNS`;
-      now (str | None) - the stamp for ``probed_at`` and ``updated_at``.
-    Output: Host - the row as written.
-    Raises: HostsUnavailable, HostNotFound, HostLocalFixed; ValueError -
-      columns other than :data:`PROBE_COLUMNS`.
-    Example: record_probe(conn, 'hosta', result.host_columns()).probe_state == 'ok'
-    """
     if set(columns) != set(PROBE_COLUMNS):
         raise ValueError(f"a probe writes exactly {PROBE_COLUMNS}, got {sorted(columns)}")
     require_table(conn)

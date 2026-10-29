@@ -10,8 +10,7 @@ import structlog
 
 from src.core.automations import models as m
 from src.core.automations import recipes
-from src.core.app_alerts import constants as alert_const
-from src.core.automations.targets.recipe import FAILED_TYPE, REPORT_TYPE, _tell, _wants
+from src.core.automations import notify_policy
 from src.core.swarm import switch as swarm_switch
 from src.core.swarm.cards import ops
 from src.cplugs.sdk.cards import CardRefused
@@ -46,10 +45,9 @@ async def run(ctx: Any, automation: Dict[str, Any], run_row: Dict[str, Any]) -> 
         return m.RunOutcome(status=m.SKIPPED, reason=R_SWARM_OFF)
     outcome = await _create(ctx, automation, run_row)
     failed = outcome.status != m.SUCCEEDED
-    delivery = {**automation["delivery"], "notify_on": automation["delivery"].get("notify_on") or "failure"}
-    if _wants({**automation, "delivery": delivery}, failed):
-        _tell(FAILED_TYPE if failed else REPORT_TYPE, automation, run_row["run_id"], alert_const.SEV_WARN if failed else alert_const.SEV_INFO,
-              ctx.store)
+    notice = notify_policy.decide(automation, failed)
+    if notice:
+        notify_policy.tell(notice, automation, run_row["run_id"], ctx.store)
     return outcome
 
 

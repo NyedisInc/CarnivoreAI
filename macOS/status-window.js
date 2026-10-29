@@ -1,4 +1,3 @@
-/* default-src 'self' */
 
 'use strict';
 

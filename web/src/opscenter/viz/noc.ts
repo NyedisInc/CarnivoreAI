@@ -94,7 +94,6 @@ export function vitalsModel(live: LivePayload | null, rows: readonly VitalsRow[]
 
 export interface HotRow {
   key: string;
-  /* conversation id */
   conversationId: string;
   project: string | null;
   model: string | null;
@@ -113,13 +112,11 @@ export function hotRows(live: LivePayload | null): HotRow[] {
   }));
 }
 
-/* conversation id */
 export function hotTag(row: HotRow, rows: readonly HotRow[], title: string | null | undefined): string {
   if (rows.filter((other) => other.project === row.project).length < 2) return '';
   return title?.trim() || row.conversationId.slice(0, 6);
 }
 
-/* conversation id */
 export function liveSessionFor<T extends { activity_status?: string | null; claude_session_uuid?: string | null }>(
   conversationId: string | null, sessions: readonly T[] | null,
 ): T | null {

@@ -1,6 +1,6 @@
 <script lang="ts">
-  /* pop-out window */
   import { t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import type { FrameReport, LabIcon, LabSize, SidebarView } from '../sdk/widget-lab';
   import type { FixtureChoice } from './frame-url';
   import { sizeLine } from './lab-model';
@@ -24,7 +24,7 @@
     showCurrent: boolean;
     sidebar?: SidebarView;
     scale: number;
-    onreport: (host: string, size: string, side: 'current' | 'draft', report: FrameReport | null) => void;
+    onreport: (host: string, dock: string, size: string, side: 'current' | 'draft', report: FrameReport | null) => void;
   }
 
   const { host, dock = 'left', size, widget, title, icon, theme, fixture, page, showCurrent, sidebar, scale, onreport }: Props = $props();
@@ -55,7 +55,7 @@
   <figcaption class="dwl-preview-cap">
     <span class="dwl-cap-text">{capName}</span>
     <span class="dwl-dims" data-resized={resized ? 'yes' : 'no'} data-testid="dims">{t('cplug.devwidgetlab.resize.readout', { w: now.w, h: now.h })}</span>
-    {#if resized}<button type="button" class="oc-btn oc-btn--sm dwl-reset" onclick={reset}>{fb.docked ? t('cplug.devwidgetlab.resize.reset_dock') : t('cplug.devwidgetlab.resize.reset', { size: size.name })}</button>{/if}
+    {#if resized}<Button size="sm" data-reset onclick={reset}>{fb.docked ? t('cplug.devwidgetlab.resize.reset_dock') : t('cplug.devwidgetlab.resize.reset', { size: size.name })}</Button>{/if}
   </figcaption>
   <div class="dwl-pair-sides">
     {#each sides as side (side)}
@@ -68,7 +68,7 @@
                 <ResizeBox box={shown} {live} {scale} mode={fb.mode} onchange={changed} onreset={reset}>
                   {#key `${custom?.w ?? ''}x${custom?.h ?? ''}`}
                     <LabFrame spec={side === 'draft' ? { ...base, page } : base} size={fb.size} scenario={null} title={`${title} / ${t(`cplug.devwidgetlab.compare.${side}`)} / ${host} / ${size.name}`}
-                      onreport={(report) => onreport(host, size.name, side, report)} onbox={(next) => (shown = next)} />
+                      onreport={(report) => onreport(host, dock, size.name, side, report)} onbox={(next) => (shown = next)} />
                   {/key}
                 </ResizeBox>
               </HostChrome>

@@ -5,11 +5,11 @@
     {
       "name": "the screenshot case: 8% weekly with the soonest reset beats two untouched accounts",
       "accounts": [
-        {"id": "claude-code-beta", "windows": [["five_hour", 0, 18000, 4], ["seven_day", 0, 604800, 150]]},
-        {"id": "claude-code-gamma", "windows": [["five_hour", 0, 18000, 4], ["seven_day", 0, 604800, 140]]},
-        {"id": "claude-code-delta", "windows": [["five_hour", 0, 18000, 3], ["seven_day", 8, 604800, 20]]}
+        {"id": "claude-code-acme", "windows": [["five_hour", 0, 18000, 4], ["seven_day", 0, 604800, 150]]},
+        {"id": "claude-code-dgai", "windows": [["five_hour", 0, 18000, 4], ["seven_day", 0, 604800, 140]]},
+        {"id": "claude-code-beta", "windows": [["five_hour", 0, 18000, 3], ["seven_day", 8, 604800, 20]]}
       ],
-      "order": ["claude-code-delta", "claude-code-gamma", "claude-code-beta"]
+      "order": ["claude-code-beta", "claude-code-dgai", "claude-code-acme"]
     },
     {
       "name": "weekly percent left per hour to the weekly reset decides",

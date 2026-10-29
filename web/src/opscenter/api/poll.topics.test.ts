@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+/** A localStorage that holds a token, so the auth gate reads signed in. */
 function signedInStorage() {
   const map = new Map<string, string>([['claude_tunnel_token', 'an-access-token']]);
   return {
@@ -37,7 +38,7 @@ describe('a resource that answers a pushed topic', () => {
 
     store.hello({ resource_topics: ['layouts', 'toasts'] });
     await vi.advanceTimersByTimeAsync(0);
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(2); // the resync read
     expect(poll.listPollers().map((p) => p.name)).not.toContain('layouts');
 
     await vi.advanceTimersByTimeAsync(60_000);
@@ -59,7 +60,7 @@ describe('a resource that answers a pushed topic', () => {
     const res = poll.resource(fetcher, { intervalMs: 5000, name: 'browsers', topics: ['browsers'] });
     await vi.advanceTimersByTimeAsync(0);
 
-    store.hello({ resource_topics: [] });
+    store.hello({ resource_topics: [] }); // an older server: nothing announced
     await vi.advanceTimersByTimeAsync(10_000);
     expect(fetcher).toHaveBeenCalledTimes(3);
 

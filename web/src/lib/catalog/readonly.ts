@@ -1,4 +1,3 @@
-/*  hidden  */
 import { getContext, setContext } from 'svelte';
 
 const KEY = Symbol('catalog-readonly');

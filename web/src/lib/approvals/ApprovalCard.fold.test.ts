@@ -23,7 +23,7 @@ afterEach(() => {
 });
 
 const TRUST: ApprovalItem = {
-  id: 'dlg:ses_9:fold', source: 'dialog', host: 'local', session_id: 'ses_9', session_name: 'omega', project: 'storefront',
+  id: 'dlg:ses_9:fold', source: 'dialog', host: 'local', session_id: 'ses_9', session_name: 'omega', project: 'shelving',
   family: 'claude', kind: 'folder_trust', startup_kind: 'trust', fingerprint: 'a'.repeat(64),
   question: 'Quick safety check: Is this a project you created or one you trust?', body: 'Accessing workspace:\n/tmp/x',
   rows: [{ label: 'No, exit', role: 'option' }, { label: 'Yes, I trust this folder', role: 'option' }],
@@ -121,7 +121,7 @@ describe('a foldable card', () => {
 describe('the go-to-session button', () => {
   test('wears the pop-out icon (the arrow out of a square) and keeps its label and tooltip', () => {
     const card = draw({ ...TRUST, id: 'dlg:ses_9:jump' });
-    const jump = card.querySelector<HTMLButtonElement>('.ap-jump')!;
+    const jump = card.querySelector<HTMLButtonElement>('[data-ap-jump]')!;
     expect(jump.getAttribute('title')).toBe(t('approvals.open_session'));
     expect(jump.getAttribute('aria-label')).toBe(t('approvals.open_session'));
     const reference = document.createElement('div');

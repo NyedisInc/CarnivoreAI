@@ -38,13 +38,12 @@
         if (!text) return;
         window.CopyCompat.copyText(text).then((result) => {
             if (!result.ok) {
-                report(term, 'copy blocked by browser - use the system copy shortcut', 'error');
+                report(term, globalThis.CloudeTr('terminal.clipboard.copy_blocked'), 'error');
             }
         });
     }
 
 
-    /*  hidden  */
     function wireFileInput(term, input) {
         if (!input || input._clipboardWired) return;
         input._clipboardWired = true;
@@ -60,7 +59,7 @@
 
 
     async function uploadAndInject(term, blob, filename, ticket) {
-        report(term, window.CloudeI18n.t('terminal.upload.progress'), 'info');
+        report(term, globalThis.CloudeTr('terminal.upload.progress'), 'info');
         try {
             const sessionId = typeof term._sessionId === 'function' ? term._sessionId() : null;
             const result = await window.API.uploadFile(blob, filename || '', sessionId);
@@ -74,13 +73,13 @@
                     filename: result.filename,
                 });
             } else {
-                report(term, window.CloudeI18n.t('terminal.upload.attached', { name: result.filename }), 'success');
+                report(term, globalThis.CloudeTr('terminal.upload.attached', { name: result.filename }), 'success');
             }
         } catch (err) {
             console.error('[FILE-PASTE] upload failed', err);
             const reason = err && typeof err.message === 'string' && err.message
-                ? err.message : window.CloudeI18n.t('terminal.upload.reason_unknown');
-            report(term, window.CloudeI18n.t('terminal.upload.failed', { reason }), 'error');
+                ? err.message : globalThis.CloudeTr('terminal.upload.reason_unknown');
+            report(term, globalThis.CloudeTr('terminal.upload.failed', { reason }), 'error');
         }
     }
 
@@ -121,10 +120,9 @@
                         return;
                     }
                 }
-                report(term, 'clipboard is empty', 'info');
+                report(term, globalThis.CloudeTr('terminal.clipboard.empty'), 'info');
                 return;
             } catch (err) {
-                // Permission denied
             }
         }
 
@@ -134,11 +132,10 @@
                 if (text) {
                     injectText(term, text, own);
                 } else {
-                    report(term, 'clipboard is empty', 'info');
+                    report(term, globalThis.CloudeTr('terminal.clipboard.empty'), 'info');
                 }
                 return;
             } catch (err) {
-                // Permission denied
             }
         }
 
@@ -151,7 +148,7 @@
             return;
         }
         report(term,
-            'paste unavailable on this connection - use cmd+v / ctrl+v in the terminal',
+            globalThis.CloudeTr('terminal.clipboard.paste_unavailable'),
             'error');
     }
 
@@ -160,15 +157,15 @@
         if (window.TerminalInputOwnership
             && !window.TerminalInputOwnership.deliver(term, ticket)) return;
         if (!text) {
-            report(term, 'clipboard is empty', 'info');
+            report(term, globalThis.CloudeTr('terminal.clipboard.empty'), 'info');
             return;
         }
         if (!term.ws || term.ws.readyState !== WebSocket.OPEN) {
-            report(term, 'terminal not connected', 'error');
+            report(term, globalThis.CloudeTr('terminal.clipboard.not_connected'), 'error');
             return;
         }
         term.insertText(text);
-        report(term, 'pasted from clipboard', 'success');
+        report(term, globalThis.CloudeTr('terminal.clipboard.pasted'), 'success');
     }
 
     window.ClipboardTools = {

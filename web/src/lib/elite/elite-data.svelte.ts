@@ -17,10 +17,10 @@ export interface EliteData {
     /* could not be read */
     readonly computer: string | null;
     readonly listing: readonly CatalogItem[];
+    /** The listing's rows. */
     readonly cards: readonly CardView[];
     readonly installed: Record<string, InstalledItem[]>;
     readonly installs: ReadonlyMap<string, number>;
-    /* first published */
     readonly fresh: ReadonlySet<string>;
     readonly marked: ReadonlySet<string>;
     readonly lastCall: string | null;

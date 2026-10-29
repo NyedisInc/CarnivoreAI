@@ -1,6 +1,4 @@
 <script lang="ts">
-  /*  hidden
- */
   import type { PhoneSummary } from '../engine/types';
 
   let { summary }: { summary: PhoneSummary } = $props();

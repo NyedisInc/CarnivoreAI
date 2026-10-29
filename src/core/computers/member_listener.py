@@ -122,10 +122,6 @@ class MemberListener:
         return True
 
     async def set_pins(self, pins: Sequence[LinkCert]) -> None:
-        """Accept only these certs (main's cert, plus its next one). No pins: connections are aborted before TLS.
-
-        Raises: ssl.SSLError / ValueError - the context could not be built (nothing changes). Example: await l.set_pins([main_cert])
-        """
         ctx = await asyncio.to_thread(server_link_ctx, self._identity, pins) if pins else None
         if ctx is not None:
             ctx.sslobject_class = AlertingSSLObject

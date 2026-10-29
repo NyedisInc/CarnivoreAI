@@ -9,6 +9,7 @@ import { activeTabFor, resetTabCache, setGroups } from '../engine/tab-groups.sve
 import { PRIMARY_SLOT } from '../engine/model';
 import { installPopoverPolyfill } from '../../lib/popover-jsdom-polyfill';
 
+// layer (issue #860 / #875); jsdom has neither method.
 installPopoverPolyfill();
 
 const started: Array<{ slot: string; disposed: boolean }> = [];

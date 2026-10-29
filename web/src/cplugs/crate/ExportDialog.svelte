@@ -2,7 +2,7 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
     import { t as reactiveT, type Translate } from '../sdk';
-    import { Check, ModalShell } from '../sdk/ui';
+    import { Button, Checkbox, Field, IconButton, ModalShell, Radio, RadioGroup, Tag } from '../sdk/ui';
     import {
         bytesText,
         changedPlan,
@@ -164,48 +164,29 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">{t('cplug.crate.export.title', { subject })}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')} onclick={() => close(null)}>×</button>
+            <IconButton label={t('modal.close')} icon="close" variant="close" iconSize={14} onclick={() => close(null)} />
         </div>
     {/snippet}
     {#if jobId === null}
         <p class="modal-description">{t(`cplug.crate.export.explain.${scope}`)}</p>
         <div class="crt-form" data-crt-form>
-            <span class="pl-label">{t('cplug.crate.export.copy')}</span>
-            
-            <div class="tm__choices" role="radiogroup" aria-label={t('cplug.crate.export.copy')}>
+            <RadioGroup label={t('cplug.crate.export.copy')} disabled={busy} bind:value={() => variant, (next) => { variant = next as typeof variant; invalidate(); }}>
                 {#each VARIANTS as value (value)}
-                    <button type="button" role="radio" class="oc-choice" aria-checked={variant === value} data-crt-variant={value}
-                        disabled={busy} onclick={() => { variant = value; invalidate(); }}>
-                        <span class="oc-choice__top">
-                            <span class="oc-radio"></span>
-                            <span class="oc-choice__name">{t(`cplug.crate.export.${value}`)}</span>
-                        </span>
-                        <span class="oc-choice__desc">{t(`cplug.crate.export.${value}_hint`)}</span>
-                    </button>
+                    <Radio {value} label={t(`cplug.crate.export.${value}`)} hint={t(`cplug.crate.export.${value}_hint`)} data-crt-variant={value} />
                 {/each}
-            </div>
+            </RadioGroup>
             {#if variant === 'own'}
-                <Check role="checkbox" label={t('cplug.crate.export.encrypt')}
-                    hint={recipients > 0 ? t('cplug.crate.export.encrypt_hint', { count: recipients }) : t('cplug.crate.export.encrypt_none')}
-                    checked={encrypt} disabled={busy || recipients === 0} onToggle={(next) => { encrypt = next; invalidate(); }} data-crt-encrypt="" />
-                <Check role="checkbox" label={t('cplug.crate.export.project_files')} hint={t('cplug.crate.export.project_files_hint')}
-                    checked={projectFiles} disabled={busy} onToggle={(next) => { projectFiles = next; invalidate(); }} data-crt-project-files="" />
-                <Check role="checkbox" label={t('cplug.crate.export.include_backups')} hint={backupsAvailable === false ? t('cplug.crate.export.include_backups_off') : t('cplug.crate.export.include_backups_hint')}
-                    checked={includeBackups && backupsAvailable !== false} disabled={busy || backupsAvailable === false} onToggle={(next) => { includeBackups = next; invalidate(); }} data-crt-include-backups="" />
+                <Checkbox bind:checked={() => encrypt, (next) => { encrypt = next; invalidate(); }} label={t('cplug.crate.export.encrypt')} hint={recipients > 0 ? t('cplug.crate.export.encrypt_hint', { count: recipients }) : t('cplug.crate.export.encrypt_none')} disabled={busy || recipients === 0} data-crt-encrypt="" />
+                <Checkbox bind:checked={() => projectFiles, (next) => { projectFiles = next; invalidate(); }} label={t('cplug.crate.export.project_files')} hint={t('cplug.crate.export.project_files_hint')} disabled={busy} data-crt-project-files="" />
+                <Checkbox bind:checked={() => includeBackups && backupsAvailable !== false, (next) => { includeBackups = next; invalidate(); }} label={t('cplug.crate.export.include_backups')} hint={backupsAvailable === false ? t('cplug.crate.export.include_backups_off') : t('cplug.crate.export.include_backups_hint')} disabled={busy || backupsAvailable === false} data-crt-include-backups="" />
                 {#each families as family (family.unit)}
-                    <Check role="checkbox" label={t('cplug.crate.export.include_folder_backups', { name: familyName(family) })}
-                        hint={family.state === 'ok' ? t('cplug.crate.export.include_folder_backups_hint', { name: familyName(family) }) : t(`cplug.crate.export.backup_folder_${family.state}`, { name: familyName(family), plugin: pluginName(family) })}
-                        checked={family.state === 'ok' && ticked.includes(family.unit)} disabled={busy || family.state !== 'ok'}
-                        onToggle={(next) => tick(family.unit, next)} data-crt-backup-folder={family.unit} />
+                    <Checkbox bind:checked={() => family.state === 'ok' && ticked.includes(family.unit), (next) => { tick(family.unit, next); }} label={t('cplug.crate.export.include_folder_backups', { name: familyName(family) })} hint={family.state === 'ok' ? t('cplug.crate.export.include_folder_backups_hint', { name: familyName(family) }) : t(`cplug.crate.export.backup_folder_${family.state}`, { name: familyName(family), plugin: pluginName(family) })} disabled={busy || family.state !== 'ok'} data-crt-backup-folder={family.unit} />
                 {/each}
             {:else}
                 <p class="tm__sub" data-crt-share-note>{t('cplug.crate.export.share_note')}</p>
             {/if}
-            <label class="crt-form__row">
-                <span class="pl-label">{t('cplug.crate.export.label')}</span>
-                <input class="oc-field" type="text" maxlength={LABEL_MAX} bind:value={label} disabled={busy} autocomplete="off"
-                    oninput={invalidate} data-crt-label />
-            </label>
+            <Field label={t('cplug.crate.export.label')} maxlength={LABEL_MAX} bind:value={label} disabled={busy} autocomplete="off"
+                oninput={invalidate} data-crt-label />
         </div>
         {#if waiting || plan}
             <TtyBox label={t('cplug.crate.box.label')} fit>
@@ -218,7 +199,7 @@
                             <span class="crt-measure__figs" data-crt-elapsed>{t('cplug.crate.export.elapsed', { seconds: elapsed })}</span>
                         </span>
                     {:else if plan}
-                        <span class={`crt-tty__tag crt-tty__tag--${plan.ok ? 'ok' : 'bad'}`}>{t(plan.ok ? 'cplug.crate.box.ready' : 'cplug.crate.box.blocked')}</span>
+                        <Tag tone={plan.ok ? 'ok' : 'danger'}>{t(plan.ok ? 'cplug.crate.box.ready' : 'cplug.crate.box.blocked')}</Tag>
                     {/if}
                 {/snippet}
                 {#if plan}
@@ -269,16 +250,16 @@
     {#if problem}<p class="tm__problem" role="alert" data-crt-problem>{problem}</p>{/if}
     {#snippet footer()}
         {#if jobId === null}
-            <button type="button" class="modal-btn modal-btn-secondary" disabled={busy} onclick={() => close(null)}>{t('cplug.crate.export.cancel')}</button>
+            <Button variant="secondary" disabled={busy} onclick={() => close(null)}>{t('cplug.crate.export.cancel')}</Button>
             {#if plan?.ok}
-                <button type="button" class="modal-btn modal-btn-confirm" data-crt-go disabled={!canExport} onclick={() => void go()}>{t('cplug.crate.export.go')}</button>
+                <Button variant="confirm" data-crt-go disabled={!canExport} onclick={() => void go()}>{t('cplug.crate.export.go')}</Button>
             {:else}
-                <button type="button" class="modal-btn modal-btn-confirm" data-crt-preview disabled={busy} onclick={() => void preview()}>{t(waiting === 'preview' ? 'cplug.crate.export.previewing' : 'cplug.crate.export.preview')}</button>
+                <Button variant="confirm" data-crt-preview disabled={busy} onclick={() => void preview()}>{t(waiting === 'preview' ? 'cplug.crate.export.previewing' : 'cplug.crate.export.preview')}</Button>
             {/if}
         {:else}
-            <button type="button" class="modal-btn modal-btn-secondary" data-crt-close onclick={() => close(finished?.state === 'done' ? jobId : null)}>
+            <Button variant="secondary" data-crt-close onclick={() => close(finished?.state === 'done' ? jobId : null)}>
                 {finished ? t('cplug.crate.export.done') : t('cplug.crate.export.hide')}
-            </button>
+            </Button>
         {/if}
     {/snippet}
 </ModalShell>

@@ -1,20 +1,3 @@
-"""One session's timers: the family dispatch, the transcript, the process.
-
-Takes the same three facts the subagent and token-usage reads take
-(``SessionSubject``) plus a :class:`~src.core.timers.reader.ProcessFact`,
-so the route projects a row once and handles gotcha 1 there.
-
-FOUR OUTCOMES, NEVER FOLDED (same vocabulary as the subagent read):
-
-  ``not_applicable``  a family that records no timer calls (codex): NO
-                      COUNT, not a zero.
-  ``absent``          no conversation yet, or no transcript yet: a
-                      measured zero.
-  ``unchecked``       the corpus could not be read, or the process
-                      holding the conversation could not be measured,
-                      so whether any timer is live is not known.
-  ``ok``              read and decided; see ``reader``.
-"""
 
 from __future__ import annotations
 
@@ -23,7 +6,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from src.core.agent_families import DEFAULT_FAMILY
-from src.core.attention.registry_read import REG_ABSENT, REG_OK, REG_STALE
+from src.core.attention.registry_record import REG_ABSENT, REG_OK, REG_STALE
 from src.core.session_token_usage import claude_reader
 from src.core.session_token_usage.reader import SessionSubject
 from src.core.session_transcript_presence import CONVERSATION_ABSENT, CONVERSATION_PRESENT

@@ -1,12 +1,12 @@
 
 import structlog
-from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
 from src.api.peer_auth import require_peer_sessions
 from src.api.remote_route_guard import routed_remote
 from src.core.agent_family_display import resolve_family_for_display
 from src.api.session_name_known import known_tmux_names, strip_adopted_prefix
-from src.core.session_manager import _configured_wrappers
+from src.config import wrapper_reader
+from src.models.utc_time import utc_now
 from src.models import (
     Session,
     SessionInfo,
@@ -63,7 +63,7 @@ async def _apply_session_theme(
     matched_sid: Optional[str] = None
     matched_working_dir: Optional[str] = None
     for sid, b in registry.backends.items():
-        if getattr(b, "tmux_session", None) == session_name:
+        if b.tmux_session == session_name:
             matched_sid = sid
             sess_obj = registry.get_session(sid)
             if sess_obj is not None:
@@ -89,12 +89,12 @@ async def _apply_session_theme(
         pty_pid=None,
         working_dir=matched_working_dir or "",
         status=SessionStatus.STOPPED,
-        created_at=datetime.utcnow(),
-        last_activity=datetime.utcnow(),
+        created_at=utc_now(),
+        last_activity=utc_now(),
         pinned_theme=theme_id,
     )
     placeholder_family, placeholder_family_source = resolve_family_for_display(
-        None, _configured_wrappers()
+        None, wrapper_reader.configured_wrappers()
     )
     return SessionInfo(
         session=placeholder_session,
@@ -172,6 +172,9 @@ async def set_session_unread(
     tab while it is at rest.
     """
     session_manager = request.app.state.session_manager
+    session_name = strip_adopted_prefix(session_name)
+    if body.unread and session_name not in known_tmux_names(session_manager, request.app.state.services.owned_tmux):
+        raise HTTPException(status_code=404, detail=f"Unknown session {session_name!r}")
     session_manager.set_manual_unread(session_name, body.unread)
     return SuccessResponse(
         success=True,

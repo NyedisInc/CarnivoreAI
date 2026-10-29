@@ -1,40 +1,9 @@
-"""Re-attributing session rows whose project could not be determined.
-
-WHY A BACKFILL IS REQUIRED AND NOT OPTIONAL.
-
-So this module is the repair path, and it is written to be safe to run
-on every boot rather than as a one-shot script, because a session can
-also become attributable later: a project created after the session
-started, a volume mounted, a tmux server that was down at boot.
-
-WHAT IT MAY AND MAY NOT TOUCH, which is the whole safety argument.
-
-  MAY    rows whose ``project_attribution`` is ``unknown``. That value
-         means "we could not tell", so replacing it with a measurement
-         destroys nothing.
-  MAY NOT rows whose attribution is ``derived_deepest`` or ``none``.
-         Both are answers somebody already measured. ``none`` in
-         particular is a complete answer - "read it, belongs to no
-         project" - and re-deriving it every boot would let a transient
-         probe change a settled fact.
-
-AND IT NEVER WRITES ``unknown`` OVER ANYTHING. A row that is still
-unprobeable is LEFT ALONE: no write, no timestamp bump, no
-``updated_at`` churn. The absence of an answer is not a new fact, and
-recording it as one would make a permanently-broken probe look like
-fresh activity every single boot.
-
-THE THIRD OUTCOME REACHES THE CALLER. :class:`BackfillResult` counts
-what could not be determined SEPARATELY from what was determined to
-belong to no project. A caller that logs only "attributed 7" over a
-population of nine has reproduced the defect this module repairs.
-"""
 
 from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, FrozenSet, Iterable, List, Optional, Tuple
 
 import structlog
 
@@ -42,9 +11,11 @@ from src.core.db_models import (
     SESSION_ATTRIBUTION_NONE,
     SESSION_ATTRIBUTION_UNKNOWN,
 )
+from src.core.hosts.ddl import host_scope
 from src.core.project_attribution import attribute, unresolved_roots
 from src.core.session_import_mapping import _project_roots
 from src.core.session_store import sessions_table_ready
+from src.core.tmux_listing import TmuxListing
 from src.core.trail_entry import utc_now
 
 logger = structlog.get_logger()
@@ -52,21 +23,6 @@ logger = structlog.get_logger()
 
 @dataclass(frozen=True)
 class BackfillResult:
-    """What one :func:`backfill_attribution` pass measured and wrote.
-
-    Description: three counts, not two. ``still_unknown`` is reported
-      separately from ``attributed_none`` because "could not read this
-      session's directory" and "read it, and it is in no project" are
-      different facts, and a summary that adds them together is the
-      false green this module exists to remove.
-    Inputs (constructor): considered (int) - rows examined.
-      attributed_project (int) - rows given a project id.
-      attributed_none (int) - rows definitively in no known project.
-      still_unknown (int) - rows whose directory could not be
-      determined. unmatchable_roots (list[str]) - project roots that
-      could not take part in matching at all.
-    Output: a BackfillResult instance.
-    """
 
     considered: int = 0
     attributed_project: int = 0
@@ -79,11 +35,40 @@ class BackfillResult:
         return self.attributed_project + self.attributed_none
 
 
+_RUNNING_LIFECYCLE = "running"
+
+InstanceKey = Tuple[str, str, int]
+
+
+def live_instance_keys(socket: str, listing: TmuxListing) -> FrozenSet[InstanceKey]:
+    keys = set()
+    if not listing.ok:
+        return frozenset()
+    for row in listing.sessions:
+        if not isinstance(row, dict):
+            continue
+        try:
+            keys.add((socket, str(row["name"]), int(row["created_at_epoch"])))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return frozenset(keys)
+
+
+def _may_probe(row: Iterable[Any], socket_hint: Optional[FrozenSet[InstanceKey]]) -> bool:
+    name, lifecycle, sock, epoch = row
+    if not name or lifecycle != _RUNNING_LIFECYCLE:
+        return False
+    if socket_hint is None:
+        return True
+    return epoch is not None and (str(sock), str(name), int(epoch)) in socket_hint
+
+
 def backfill_attribution(
     conn: sqlite3.Connection,
     *,
     working_dir_probe: Optional[Callable[[str], Optional[str]]] = None,
     now: Optional[str] = None,
+    live_instances: Optional[FrozenSet[InstanceKey]] = None,
 ) -> BackfillResult:
     if not sessions_table_ready(conn):
         return BackfillResult()
@@ -98,10 +83,11 @@ def backfill_attribution(
         )
 
     stamp = now or utc_now()
+    scope_sql, scope_params = host_scope(conn)
     rows = conn.execute(
-        "SELECT id, tmux_name, working_dir FROM sessions "
-        "WHERE project_attribution = ?",
-        (SESSION_ATTRIBUTION_UNKNOWN,),
+        "SELECT id, tmux_name, working_dir, lifecycle, tmux_socket, tmux_created_epoch FROM sessions "
+        "WHERE project_attribution = ?" + scope_sql,
+        (SESSION_ATTRIBUTION_UNKNOWN, *scope_params),
     ).fetchall()
 
     considered = len(rows)
@@ -113,12 +99,11 @@ def backfill_attribution(
         row_id = int(row[0])
         tmux_name = row[1]
         working_dir = row[2]
-        if not working_dir and working_dir_probe is not None and tmux_name:
+        if not working_dir and working_dir_probe is not None and _may_probe(row[1:2] + row[3:6], live_instances):
             working_dir = working_dir_probe(str(tmux_name))
 
         project_id, attribution = attribute(working_dir, roots)
         if attribution == SESSION_ATTRIBUTION_UNKNOWN:
-            # cannot determine
             still_unknown += 1
             continue
 

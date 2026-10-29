@@ -1,15 +1,3 @@
-"""Own-list guard: an agent writes to ITS project's Task Manager list; another project's list needs ``cross_project`` (#1510).
-
-**ONE GUARD, EVERY WRITE.** :func:`guard` wraps the inner handler of each Task Manager write tool (add, update, reply, ask, move,
-mark_answered, delete, fork, progress, group create and update, focus), and the batch ops run those same handlers, so a batch
-op is judged on its own and a refused op fails alone (``batch.py`` reports per op). It compares the calling session's project
-(the one ``list: mine`` resolves to) with the project of every list the call touches: the ``list`` argument, and the list of
-each ``item`` / ``items`` / group the call names. Differing and no ``cross_project: true``: a :class:`ToolError` warning.
-
-**Not guarded:** reads, an external token or an unbound caller (no session), and a list that is not a project's (``all``,
-``agent:<id>``). **Unknown never blocks:** a session with no project is allowed and the answer carries
-``warning: "could not tell your project"``.
-"""
 
 from __future__ import annotations
 
@@ -42,7 +30,6 @@ class Verdict:
 
     extra: Dict[str, Any]
     crossing: Optional[Tuple[str, str]] = None
-    # own project
     source: Optional[Tuple[str, str]] = None
 
 
@@ -52,10 +39,6 @@ def refusal(subject: str, mine: str, other: str) -> str:
 
 
 async def own_project(ctx: CplugContext, caller: AgentCaller) -> Optional[str]:
-    """The calling session's project id as a list key (what ``list: mine`` resolves to), or None when it has none.
-
-    Inputs: ctx; caller. Output: str | None. An external token has no session: None.
-    """
     if caller.external or not caller.current_session_id:
         return None
     own = next((i for i in await ctx.sessions.list() if i.session.id == caller.current_session_id), None)
@@ -138,7 +121,6 @@ def guard(fn: Callable[[CplugContext, AgentCaller, dict], Awaitable[Any]], *, cr
           group_is_id: bool = False, dnd: bool = False) -> Callable[[CplugContext, AgentCaller, dict], Awaitable[Any]]:
     @functools.wraps(fn)
     async def wrapper(ctx: CplugContext, caller: AgentCaller, args: dict) -> Any:
-        """Judge, run, annotate. Raises ToolError for a refused crossing."""
         clean = {k: v for k, v in args.items() if k != FIELD and not (dnd and k == dnd_gate.FIELD)}
         verdict = await judge(ctx, caller, await targets(ctx, clean, group_is_id=group_is_id), flags.flag(args, FIELD, False))
         if dnd:

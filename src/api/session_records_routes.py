@@ -1,4 +1,7 @@
 
+import sqlite3
+from contextlib import closing
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from src.api import asleep_wake_listing
@@ -14,14 +17,34 @@ from src.models import (
     SessionRecord,
     SuccessResponse,
 )
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
-from src.api.session_record_payload import _session_record_payload
+from src.api.session_record_payload import _session_record_payload, attach_host_labels
 
 from fastapi.concurrency import run_in_threadpool
+from src.api.error_response import api_error
+from src.core import session_store
+from src.core.db import DatastoreUnreadableError, connect, db_path_for
 
 logger = structlog.get_logger()
 router = APIRouter()
+
+_T = TypeVar("_T")
+
+
+async def _run_on_store(work: Callable[[sqlite3.Connection], _T], *, step: str) -> _T:
+    db_path = db_path_for(settings.get_state_dir())
+    if not db_path.exists():
+        raise api_error(503, "datastore_unavailable", step=step, reason="no datastore file")
+
+    def _on_thread() -> _T:
+        with closing(connect(db_path, create=False)) as conn:
+            return work(conn)
+
+    try:
+        return await run_in_threadpool(_on_thread)
+    except DatastoreUnreadableError as exc:
+        raise api_error(503, "datastore_unavailable", exc, step=step) from exc
 
 
 @router.get(
@@ -36,7 +59,8 @@ async def list_session_records(
         description=(
             "Include rows classified kind='automated' - a scheduler run "
             "or a headless `claude -p` probe. DEFAULTS FALSE, because "
-            "lists show only your own sessions by default. There is no UI "
+            "the owner's rule is 'lists should always just be mine. the "
+            "rest can be found in the archive explorer.' There is no UI "
             "for this flag; it exists so a caller that wants the "
             "complete set can ask for it. Rows with kind NULL or "
             "'unknown' are returned EITHER WAY - not having looked is "
@@ -50,7 +74,7 @@ async def list_session_records(
             "Return ONLY archived rows (``archived_at`` set), narrowed "
             "before projection. A CLOSED row is not archived (#1845) and "
             "rides the pushed records instead. The agents drawer's \"show archived\" "
-            "toggle reads this while it is "
+            "toggle (Joe (ccsliinc), 2026-10-09) reads this while it is "
             "on and never otherwise, so the pushed listing stays small. "
             "Combines with include_automated as usual."
         ),
@@ -78,33 +102,39 @@ def is_archived_row(row: dict) -> bool:
     return bool(row.get("archived_at"))
 
 
+def read_stored_rows(db_path: Any, include_automated: bool) -> List[Dict[str, Any]]:
+    from src.core import session_store
+    from src.core.db_reuse.change_cache import HOT_READS
+    from src.core.db_reuse.core_read import lend_pooled_or_raise
+
+    def load() -> List[Dict[str, Any]]:
+        with closing(lend_pooled_or_raise(db_path)) as conn:
+            found = session_store.list_sessions(conn, include_automated=include_automated)
+            attach_host_labels(conn, found)
+        return found
+
+    return [dict(row) for row in HOT_READS.fetch(db_path, ("stored_session_rows", include_automated), load)]
+
+
 async def stored_record_rows(app_state: Any, *, include_automated: bool = False,
                              keep: Optional[Callable[[dict], bool]] = None,
                              infos: Optional[List[Any]] = None, wake_shared: Optional[Dict[str, Any]] = None) -> List[SessionRecord]:
-    from contextlib import closing
-
-
-    from src.core import session_store
-    from src.core.db import DatastoreUnreadableError, connect, db_path_for
-
     db_path = db_path_for(settings.get_state_dir())
     if not db_path.exists():
         return []
 
-    def _read() -> list:
-        with closing(connect(db_path, create=False)) as conn:
-            return session_store.list_sessions(
-                conn, include_automated=include_automated
-            )
+    store = getattr(getattr(app_state, "session_manager", None), "_unread_store", None)
 
-    try:
-        rows = await run_in_threadpool(_read)
+    def project() -> List[SessionRecord]:
+        rows = read_stored_rows(db_path, include_automated)
         if keep is not None:
             rows = [row for row in rows if keep(row)]
+        return [_session_record_payload(row, store) for row in rows]
+
+    try:
+        records = await run_in_threadpool(project)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
-    store = getattr(getattr(app_state, "session_manager", None), "_unread_store", None)
-    records = [_session_record_payload(row, store) for row in rows]
+        raise api_error(503, "datastore_unavailable", exc, step="project") from exc
     await asleep_wake_listing.stamp_next_wake(app_state, records, infos, wake_shared)
     return records
 
@@ -117,10 +147,16 @@ async def stored_record_rows(app_state: Any, *, include_automated: bool = False,
 async def delete_session_record(request: Request, session_uuid: str, confirm_name: Optional[str] = None):
     """DELETE one stored session from every listing. KEEP the row.
 
+    Description: a SOFT delete - it stamps ``sessions.archived_at`` and
+      nothing else. The row is retained deliberately, because session
+      history and transcripts are built on it; "delete" here means "take
+      it off my screen", never "remove it from the database".
+
       THIS IS NOT THE KILL PATH AND THE TWO MUST NOT BE CONFLATED.
       ``DELETE /sessions`` (and ``DELETE /sessions/external/{name}``)
       stop a running process, and the first of them also rmtrees the
-      session's ``.cloude_uploads`` bucket - real user content. This
+      session's project-folder upload buckets (``.carnivore_uploads`` and the
+      legacy ``.cloude_uploads``) - real user content. This
       route does none of that. Deleting a row for a session that is
       still running is allowed and merely unlists it; the lifecycle
       reconciler keeps updating it underneath, unseen.
@@ -140,31 +176,12 @@ async def delete_session_record(request: Request, session_uuid: str, confirm_nam
       HTTPException 503 - the datastore is absent or unreadable.
     """
     await swarm_leaders.require_confirm(session_uuid=session_uuid, confirm_name=confirm_name)
-    from contextlib import closing
-
-
-    from src.core import session_store
-    from src.core.db import DatastoreUnreadableError, connect, db_path_for
-
-    db_path = db_path_for(settings.get_state_dir())
-    if not db_path.exists():
-        raise HTTPException(
-            status_code=503,
-            detail="no datastore: sessions cannot be archived on this install",
-        )
-
-    def _write() -> bool:
-        with closing(connect(db_path, create=False)) as conn:
-            return session_store.archive_session(conn, session_uuid)
-
     try:
-        performed = await run_in_threadpool(_write)
+        performed = await _run_on_store(lambda conn: session_store.archive_session(conn, session_uuid), step="_write")
     except session_store.SessionNotFoundError:
         raise HTTPException(
             status_code=404, detail=f"no session record {session_uuid}"
         )
-    except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
 
     if performed:
         save_triggers.schedule_for_uuid(session_uuid, save_triggers.EVENT_REMOVE)
@@ -229,34 +246,17 @@ async def set_session_notification_policy(
       named, so the list it was clicked from was stale.
       HTTPException 503 - the datastore is absent or unreadable.
     """
-    from contextlib import closing
-
-
-    from src.core import session_store
-    from src.core.db import DatastoreUnreadableError, connect, db_path_for
-
-    db_path = db_path_for(settings.get_state_dir())
-    if not db_path.exists():
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "no datastore: notification settings cannot be saved on "
-                "this install"
-            ),
+    def _write(conn: sqlite3.Connection) -> dict:
+        return session_store.set_notification_mute(
+            conn,
+            session_uuid,
+            muted=body.muted,
+            expected_tmux_name=body.expected_tmux_name,
+            expected_tmux_created_epoch=body.expected_tmux_created_epoch,
         )
 
-    def _write() -> dict:
-        with closing(connect(db_path, create=False)) as conn:
-            return session_store.set_notification_mute(
-                conn,
-                session_uuid,
-                muted=body.muted,
-                expected_tmux_name=body.expected_tmux_name,
-                expected_tmux_created_epoch=body.expected_tmux_created_epoch,
-            )
-
     try:
-        committed = await run_in_threadpool(_write)
+        committed = await _run_on_store(_write, step="_write")
     except session_store.SessionInstanceMismatchError:
         raise HTTPException(
             status_code=409,
@@ -269,8 +269,6 @@ async def set_session_notification_policy(
         raise HTTPException(
             status_code=404, detail=f"no session record {session_uuid}"
         )
-    except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
 
     session_manager = request.app.state.session_manager
     store = getattr(session_manager, "_notification_policy_store", None)
@@ -322,32 +320,24 @@ async def unarchive_session_record(request: Request, session_uuid: str):
       the launchpad UI has relied on restart rather than a dedicated
       control; this route gives the same restore WITHOUT requiring a live
       tmux to restart into.
+
+      IDEMPOTENT. Unarchiving a row that is not archived is a 200, not a
+      404 or a 409 - the caller asked for a state (visible again) and
+      that state already holds. The message says which of the two
+      happened rather than flattening both into "ok".
+    Inputs: request (Request) - unused beyond auth. session_uuid (str,
+      path) - the row to restore.
+    Output: SuccessResponse - ``message`` says whether this call
+      performed the restore or found the row already live.
+    Raises: HTTPException 404 - no row carries that uuid, so nothing was
+      restored. HTTPException 503 - the datastore is absent or unreadable.
     """
-    from contextlib import closing
-
-
-    from src.core import session_store
-    from src.core.db import DatastoreUnreadableError, connect, db_path_for
-
-    db_path = db_path_for(settings.get_state_dir())
-    if not db_path.exists():
-        raise HTTPException(
-            status_code=503,
-            detail="no datastore: sessions cannot be restored on this install",
-        )
-
-    def _write() -> bool:
-        with closing(connect(db_path, create=False)) as conn:
-            return session_store.unarchive_session(conn, session_uuid)
-
     try:
-        performed = await run_in_threadpool(_write)
+        performed = await _run_on_store(lambda conn: session_store.unarchive_session(conn, session_uuid), step="_write")
     except session_store.SessionNotFoundError:
         raise HTTPException(
             status_code=404, detail=f"no session record {session_uuid}"
         )
-    except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
 
     return SuccessResponse(
         message=(

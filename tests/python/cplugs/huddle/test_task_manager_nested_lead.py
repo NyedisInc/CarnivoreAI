@@ -18,7 +18,7 @@ URL = f"{BASE}/lists/12/lead"
 
 @pytest.fixture
 def world(app, monkeypatch):
-    monkeypatch.setattr(service, "project_names", lambda ctx: {"10": "Mac", "11": "Harbor", "12": "Harbor Docker", "20": "Other"})
+    monkeypatch.setattr(service, "project_names", lambda ctx: {"10": "Mac", "11": "Fleet", "12": "Fleet Docker", "20": "Other"})
     monkeypatch.setattr(capabilities.Projects, "enclosing", lambda self: {"12": ["11", "10"], "11": ["10"]})
     give_asleep(monkeypatch, [])
     give_rows(app, [aged("ses_fleet", 11, 5), aged("ses_other", 20, 5), aged("ses_dock", 12, 1)])
@@ -72,9 +72,9 @@ def test_the_enclosing_agent_seat_is_not_gone_and_loses_that_only_when_the_nesti
 
 
 def test_the_retrofit_reports_already_agent_for_a_nested_project_the_enclosing_agent_leads(client, world):
-    before = {r["project"]: r for r in client.get(f"{BASE}/leads/retrofit").json()["plan"]}["Harbor Docker"]
+    before = {r["project"]: r for r in client.get(f"{BASE}/leads/retrofit").json()["plan"]}["Fleet Docker"]
     assert before["action"] == retrofit.PROMOTE and before["session"] == "ses_dock"
     client.put(URL, json={"session": "ses_fleet"})
-    after = {r["project"]: r for r in client.get(f"{BASE}/leads/retrofit").json()["plan"]}["Harbor Docker"]
+    after = {r["project"]: r for r in client.get(f"{BASE}/leads/retrofit").json()["plan"]}["Fleet Docker"]
     assert after["action"] == retrofit.ALREADY_AGENT and "session" not in after
     assert lead.BY_OWNER == RoleStore(store_of(client.app)).seat("12").lead_by

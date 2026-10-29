@@ -6,7 +6,6 @@ import { projects as demoProjects } from '../data/projects';
 
 export const PROJECTS_POLL_MS = 15000;
 
-/* own project */
 function demoList(): ProjectResponse[] {
   const now = Date.now();
   return demoProjects.map((row, index) => ({

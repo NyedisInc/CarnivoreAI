@@ -24,9 +24,9 @@ from src.core.trail_entry import utc_now
 from src.core.tmux_listing import TmuxListing
 
 SKIP = AgentWrapper(id="claude-skip-permissions", label="skip", script="claude", default=True)
-CLX = AgentWrapper(id="keyc", label="keyc", script="claude")
+CLD = AgentWrapper(id="cld", label="cld", script="claude")
 CODEX = AgentWrapper(id="codex-yolo", family="codex", label="codex", script="codex")
-WRAPPERS = [CLX, SKIP, CODEX]
+WRAPPERS = [CLD, SKIP, CODEX]
 
 
 
@@ -41,7 +41,7 @@ def test_nothing_named_records_the_default_wrapper_too():
 
 
 def test_a_named_wrapper_records_itself():
-    assert launch_record("keyc", WRAPPERS).agent_type == "keyc"
+    assert launch_record("cld", WRAPPERS).agent_type == "cld"
     assert launch_record("codex-yolo", WRAPPERS).family == "codex"
 
 
@@ -55,8 +55,8 @@ def test_with_no_wrapper_for_the_family_the_family_name_is_what_ran():
 
 
 def test_the_family_default_follows_list_order_when_none_is_marked():
-    plain = [CLX, AgentWrapper(id="clxor", label="clxor", script="claude")]
-    assert launch_record("claude", plain).agent_type == "keyc"
+    plain = [CLD, AgentWrapper(id="cldor", label="cldor", script="claude")]
+    assert launch_record("claude", plain).agent_type == "cld"
 
 
 
@@ -122,10 +122,10 @@ def test_a_recreate_records_the_wrapper_it_launched_on_the_reused_row(conn):
 
 def test_a_recreate_replaces_an_inference_with_the_launch_fact(conn):
     row_id = _insert(conn, agent_family_source="inferred_process")
-    _reuse(conn, row_id, agent_type="keyc")
+    _reuse(conn, row_id, agent_type="cld")
     row = conn.execute("SELECT agent_type, agent_family_source FROM sessions WHERE id = ?",
                        (row_id,)).fetchone()
-    assert (row["agent_type"], row["agent_family_source"]) == ("keyc", "launched")
+    assert (row["agent_type"], row["agent_family_source"]) == ("cld", "launched")
 
 
 def test_a_bare_shell_recreate_records_no_agent(conn):
@@ -137,10 +137,10 @@ def test_a_bare_shell_recreate_records_no_agent(conn):
 
 
 def test_a_caller_that_did_not_say_writes_nothing(conn):
-    row_id = _insert(conn, agent_type="keyc")
+    row_id = _insert(conn, agent_type="cld")
     _reuse(conn, row_id, agent_type=None, agent_family=None, agent_launched=None)
     assert conn.execute("SELECT agent_type FROM sessions WHERE id = ?",
-                        (row_id,)).fetchone()[0] == "keyc"
+                        (row_id,)).fetchone()[0] == "cld"
     assert record_launch_on_row(conn, row_id=row_id, agent_type="x", agent_family="y",
                                 family_source=None) is False
 
@@ -171,7 +171,7 @@ async def test_create_with_nothing_named_records_the_default_wrapper(env, tmp_pa
 
     monkeypatch.setattr(type(settings), "get_agent_command",
                         lambda self, a, model=None, extra_args=None, **_kw: _command(a, model, extra_args))
-    monkeypatch.setattr(sm, "_configured_wrappers", lambda: WRAPPERS)
+    monkeypatch.setattr("src.core.sessions.wrapper_source.configured_wrappers", lambda **_kw: WRAPPERS)
     work = tmp_path / "wd"
     work.mkdir()
     token = uuid.uuid4().hex[:8]

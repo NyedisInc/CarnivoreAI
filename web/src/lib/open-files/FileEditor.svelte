@@ -1,5 +1,4 @@
 <script lang="ts">
-    /* could not */
     import { onMount } from 'svelte';
     import { loadCodeMirror, type CodeEditor } from './codemirror';
 

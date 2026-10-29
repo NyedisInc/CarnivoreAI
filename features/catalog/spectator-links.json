@@ -29,7 +29,14 @@
     "redaction",
     "secrets"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The share read only dialog opened from a session's options menu, with the expiry and label fields and the create link button",
+      "caption": "Creating a read-only share link",
+      "file": "share.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Read-only spectator links",
   "since": "2026-09-26",
   "status": "stable",
@@ -38,6 +45,5 @@
   "updated": "2026-09-27",
   "where": [
     "A session's options menu in the terminal head (the three dots at the top right), actions, share read only (S)."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

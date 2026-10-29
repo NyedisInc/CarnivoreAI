@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { t } from '../i18n/index.svelte';
+    import { Button, Field, RadioGroup } from '../base';
     import SkillsPicker from './SkillsPicker.svelte';
     import type { AccountOption, ProfileRow } from '../launch-profiles-page/api';
     import LaunchProfileDropdown from '../launch-picker/LaunchProfileDropdown.svelte';
@@ -55,18 +56,15 @@
         
         <span class="oc-label">{t('blueprint.session.family')} {index + 1}</span>
         {#if removable}
-            <button type="button" class="modal-btn modal-btn-secondary bp-row__remove" onclick={onRemove}>
-                {t('blueprint.session.remove')}
-            </button>
+            <Button variant="danger" size="sm" data-bp-session-remove onclick={onRemove}>{t('blueprint.session.remove')}</Button>
         {/if}
     </div>
 
     <div class="bp-row__grid">
         <label class="modal-label" for={`${idPrefix}-label`}>{t('blueprint.session.label')}</label>
-        <input
+        <Field
+            block
             id={`${idPrefix}-label`}
-            type="text"
-            class="modal-input"
             maxlength={120}
             value={session.label}
             oninput={(e) => patch({ label: (e.currentTarget as HTMLInputElement).value })}
@@ -87,10 +85,9 @@
         </div>
 
         <label class="modal-label" for={`${idPrefix}-model`}>{t('blueprint.session.model')}</label>
-        <input
+        <Field
+            block
             id={`${idPrefix}-model`}
-            type="text"
-            class="modal-input"
             placeholder={t('blueprint.session.model.placeholder')}
             value={session.model ?? ''}
             oninput={(e) => patch({ model: (e.currentTarget as HTMLInputElement).value.trim() || null })}
@@ -98,41 +95,32 @@
 
         <span class="modal-label">{t('blueprint.session.folder')}</span>
         <div class="bp-row__folder-mode">
-            <label>
-                <input
-                    type="radio"
-                    name={`${idPrefix}-folder-mode`}
-                    checked={session.folder.mode === 'existing'}
-                    onchange={() => setFolderMode('existing')}
-                />
-                {t('blueprint.session.folder.existing')}
-            </label>
-            <label>
-                <input
-                    type="radio"
-                    name={`${idPrefix}-folder-mode`}
-                    checked={session.folder.mode === 'worktree'}
-                    onchange={() => setFolderMode('worktree')}
-                />
-                {t('blueprint.session.folder.worktree')}
-            </label>
+            <RadioGroup
+                label={t('blueprint.session.folder')}
+                orientation="horizontal"
+                name={`${idPrefix}-folder-mode`}
+                value={session.folder.mode}
+                onchange={(mode) => setFolderMode(mode === 'worktree' ? 'worktree' : 'existing')}
+                options={[
+                    { value: 'existing', label: t('blueprint.session.folder.existing') },
+                    { value: 'worktree', label: t('blueprint.session.folder.worktree') },
+                ]}
+            />
         </div>
 
         {#if session.folder.mode === 'existing'}
             <label class="modal-label" for={`${idPrefix}-path`}>{t('blueprint.session.folder.path')}</label>
-            <input
+            <Field
+                block
                 id={`${idPrefix}-path`}
-                type="text"
-                class="modal-input"
                 value={session.folder.path}
                 oninput={(e) => patch({ folder: { mode: 'existing', path: (e.currentTarget as HTMLInputElement).value } })}
             />
         {:else}
             <label class="modal-label" for={`${idPrefix}-repo`}>{t('blueprint.session.folder.repo')}</label>
-            <input
+            <Field
+                block
                 id={`${idPrefix}-repo`}
-                type="text"
-                class="modal-input"
                 value={session.folder.repo_path}
                 oninput={(e) =>
                     patch({
@@ -141,10 +129,9 @@
             />
 
             <label class="modal-label" for={`${idPrefix}-base`}>{t('blueprint.session.folder.base_branch')}</label>
-            <input
+            <Field
+                block
                 id={`${idPrefix}-base`}
-                type="text"
-                class="modal-input"
                 value={session.folder.base_branch}
                 oninput={(e) =>
                     patch({
@@ -153,10 +140,9 @@
             />
 
             <label class="modal-label" for={`${idPrefix}-branch`}>{t('blueprint.session.folder.branch')}</label>
-            <input
+            <Field
+                block
                 id={`${idPrefix}-branch`}
-                type="text"
-                class="modal-input"
                 value={session.folder.branch}
                 oninput={(e) =>
                     patch({
@@ -169,17 +155,18 @@
         <SkillsPicker skills={session.skills} onChange={(skills) => patch({ skills })} {idPrefix} />
 
         {#if session.family !== 'shell'}
-            <!-- hidden -->
+            
             <label class="modal-label" for={`${idPrefix}-prompt`}>{t('blueprint.session.prompt')}</label>
-            <textarea
+            <Field
+                block
+                multiline
                 id={`${idPrefix}-prompt`}
-                class="modal-input bp-row__prompt"
-                rows="2"
+                rows={2}
                 maxlength={8192}
                 placeholder={t('blueprint.session.prompt.placeholder')}
                 value={session.opening_prompt ?? ''}
-                oninput={(e) => patch({ opening_prompt: (e.currentTarget as HTMLTextAreaElement).value || null })}
-            ></textarea>
+                oninput={(e) => patch({ opening_prompt: (e.currentTarget as HTMLInputElement).value || null })}
+            />
         {/if}
     </div>
 </div>
@@ -201,11 +188,6 @@
         margin-bottom: 6px;
     }
 
-    .bp-row__remove {
-        padding: 2px 8px;
-        font-size: 11px;
-    }
-
     .bp-row__grid {
         display: grid;
         grid-template-columns: 120px 1fr;
@@ -222,25 +204,7 @@
         gap: 14px;
         align-items: center;
         padding-top: 6px;
-        font-size: 12px;
-        color: var(--oc-text-primary);
-    }
-
-    .bp-row__folder-mode label {
-        display: flex;
-        align-items: center;
-        gap: 4px;
     }
 
     .bp-row__picker { min-width: 0; }
-
-    .bp-row__folder-mode input[type='radio'] {
-        accent-color: var(--oc-orange);
-    }
-
-    .bp-row__prompt {
-        resize: vertical;
-        font-family: var(--font-mono);
-        font-size: 12px;
-    }
 </style>

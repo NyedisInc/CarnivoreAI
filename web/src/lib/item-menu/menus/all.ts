@@ -6,3 +6,4 @@ import './leader';
 import './widget';
 import './row';
 import './pagerow';
+import './grouppick';

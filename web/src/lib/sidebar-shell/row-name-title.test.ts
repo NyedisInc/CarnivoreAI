@@ -9,7 +9,7 @@ const LONG = 'a very long session name that the drawer will certainly truncate w
 type NameAttrs = { name: { attrs: Record<string, string | undefined> } };
 const attrsOf = (plan: unknown): Record<string, string | undefined> => (plan as NameAttrs).name.attrs;
 
-describe('a drawer row name carries no tooltip, cut off or not', () => {
+describe('a drawer row name carries no tooltip, cut off or not (Alex (Example-owner), 2026-10-01)', () => {
     for (const density of ['compact', 'cozy', 'detailed']) {
         it(`session row, ${density}`, () => {
             const plan = buildRowPlan({ name: LONG, status: 'idle', agent_family: 'claude' }, density, undefined, null, {} as RowHost);
@@ -23,7 +23,7 @@ describe('a drawer row name carries no tooltip, cut off or not', () => {
     });
 });
 
-describe('a cut-off row name reveals its words, a name that fits does not', () => {
+describe('a cut-off row name reveals its words, a name that fits does not (Joe (ccsliinc), 2026-10-14)', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         document.body.innerHTML = '';

@@ -1,10 +1,10 @@
 import * as G from './group-store';
 import * as S from './store';
 import { drawerEnv } from './env';
+import { refreshGroups } from '../sidebar-shell/interaction-globals';
 
 interface OrderGlobals {
     API?: { reorderSessionGroupMembers?(groupUuid: string, order: string[]): Promise<unknown> };
-    SessionSidebarGroupActions?: { refresh?(): unknown };
 }
 
 export function nextOrder(visibleUuids: readonly string[], stored: readonly string[] | undefined): string[] {
@@ -12,7 +12,6 @@ export function nextOrder(visibleUuids: readonly string[], stored: readonly stri
     return visibleUuids.concat((stored || []).filter((u) => !seen.has(u)));
 }
 
-/* not usable */
 export async function commitMemberOrder(name: string): Promise<boolean> {
     const gl = drawerEnv() as OrderGlobals;
     const api = gl.API;
@@ -35,8 +34,7 @@ export async function commitMemberOrder(name: string): Promise<boolean> {
         return true;
     } catch (err) {
         console.warn('SessionSidebarGroupOrder: member order not saved:', (err as Error)?.message);
-        const actions = gl.SessionSidebarGroupActions;
-        if (actions && typeof actions.refresh === 'function') actions.refresh();
+        void refreshGroups();
         return false;
     }
 }

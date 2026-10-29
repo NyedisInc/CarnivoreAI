@@ -14,7 +14,6 @@ NAME_CHARS: int = 120
 
 
 def main_db_path() -> Path:
-    """This install's carnivore.db (read when called, so a test's state directory applies). Output: Path."""
     from src.config import settings
     from src.core.db import db_path_for
 

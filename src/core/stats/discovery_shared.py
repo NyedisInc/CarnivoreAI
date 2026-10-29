@@ -7,11 +7,12 @@ from pathlib import Path
 from typing import Iterable
 
 from src.core.codex_corpus_discover import discover_codex_detailed
-from src.core.transcript_corpus_discover import DiscoveryOutcome, discover_corpus_detailed
+from src.core.transcript_corpus_discover import DirListingCache, DiscoveryOutcome, discover_corpus_detailed
 
 _TTL_SECONDS = 30
 _LOCK = threading.RLock()
 _CACHE: dict[tuple[str, str], tuple[float, DiscoveryOutcome]] = {}
+_DIR_LISTINGS = DirListingCache()
 
 
 def shared_discovery(provider: str, root: Path, *, fresh: bool = False) -> DiscoveryOutcome:
@@ -23,7 +24,7 @@ def shared_discovery(provider: str, root: Path, *, fresh: bool = False) -> Disco
         cached = _CACHE.get(key)
         if not fresh and cached and time.monotonic() - cached[0] < _TTL_SECONDS:
             return cached[1]
-        outcome = (discover_corpus_detailed(path) if provider == "claude"
+        outcome = (discover_corpus_detailed(path, _DIR_LISTINGS) if provider == "claude"
                    else discover_codex_detailed(path))
         if outcome.unreadable_count == 0:
             _CACHE[key] = (time.monotonic(), outcome)

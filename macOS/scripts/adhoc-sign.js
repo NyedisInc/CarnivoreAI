@@ -1,5 +1,6 @@
 'use strict';
 
+/* codesign --verify --deep --strict */
 
 const { execFileSync, spawnSync } = require('child_process');
 const fs = require('fs');
@@ -14,7 +15,6 @@ function run(cmd, args) {
   return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 }
 
-/* could not */
 function runBothStreams(cmd, args) {
   const result = spawnSync(cmd, args, { encoding: 'utf8' });
   if (result.error) {
@@ -26,7 +26,7 @@ function runBothStreams(cmd, args) {
   return `${result.stdout || ''}\n${result.stderr || ''}`.trim();
 }
 
-const FORBIDDEN_TEAM_ID = 'XXXXXXXXXX';
+const FORBIDDEN_TEAM_ID = 'MDH8UQ6H46';
 
 function isForbiddenIdentityName(name) {
   return String(name).trimEnd().endsWith(` (${FORBIDDEN_TEAM_ID})`);
@@ -71,7 +71,6 @@ function chooseIdentity() {
   return exact.sha1;
 }
 
-/* a regular file */
 function isMachO(filePath) {
   let fd;
   try {
@@ -178,7 +177,6 @@ function requirementIsStable(requirement) {
   );
 }
 
-/* Electron Framework */
 async function flipFusesBeforeSigning(context) {
   const fuses = context.packager.config && context.packager.config.electronFuses;
   if (fuses == null) {

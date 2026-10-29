@@ -1,31 +1,3 @@
-"""Read one codex thread's token usage out of its rollout file.
-
-WHAT IT READS. Codex writes one thread as
-``~/.codex/sessions/<y>/<m>/<d>/rollout-<stamp>-<uuid>.jsonl``, and it
-records its own running totals rather than leaving them to be summed:
-every ``event_msg`` record whose ``payload.type`` is ``token_count``
-carries ``payload.info`` with ``total_token_usage`` (the session so far),
-``last_token_usage`` (that one turn) and ``model_context_window``. The
-LAST such record is the answer, so nothing here adds anything up.
-
-The same trap sits on the context bar. ``last_token_usage`` read input
-143,351 with cached 138,112 against a 258,400 window; adding them gives
-281,463, which is MORE THAN THE WHOLE WINDOW for a conversation that had
-used just over half of it. The prompt size of the last turn is the
-inclusive ``input_tokens`` alone.
-
-THE ZERO THAT IS REAL, AND THE ZERO THAT IS NOT. A thread whose rollout
-has a ``session_meta`` record but no ``token_count`` yet has genuinely
-spent nothing: it started and has not completed a turn. That is
-``absent`` - a MEASURED absence, same as a row with no rollout at all -
-never ``ok`` with zeros, because ``ok`` promises a model, an effort and
-a window that a thread with no completed turn cannot honestly report.
-``CodexUsage.has_usage`` is what tells the two zeros apart: True only
-when a ``token_count`` record was found. A rollout path that resolves
-to nothing, or a file that cannot be opened, is ``absent`` or
-``unchecked`` respectively, and neither may be painted as a free
-session.
-"""
 
 from __future__ import annotations
 
@@ -84,17 +56,6 @@ def _payload_of(record: Dict[str, Any], record_type: str) -> Optional[Dict[str, 
 
 
 def read_codex_usage(path: str) -> Optional[CodexUsage]:
-    """Read the last token count and model out of one rollout file.
-
-    Description: reads a bounded tail for the last ``token_count`` event
-      and the last ``turn_context`` model, then the head for
-      ``session_meta`` when the tail could not answer whether the thread
-      has run or what model it uses. Returns None when the file cannot be
-      opened, which the caller reports as ``unchecked``.
-    Inputs: path (str) - the rollout jsonl path.
-    Output: CodexUsage | None.
-    Example: read_codex_usage("/x/rollout-....jsonl").output_tokens
-    """
     try:
         size = os.path.getsize(path)
         with open(path, "rb") as handle:

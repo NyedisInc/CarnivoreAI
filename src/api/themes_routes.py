@@ -188,6 +188,12 @@ async def list_themes(request: Request) -> List[ThemeManifest]:
     The client has its own Claude fallback, so an empty list is acceptable
     in degraded states.
 
+    Cross-root id collision rule (Phase 9): a user theme whose id matches
+    a bundled theme id is silently dropped with a warning. Bundled wins.
+    Rationale: lets us ship breaking-change updates to bundled themes
+    without a stale user-cloned copy shadowing them, and avoids ambiguity
+    in the selector UI.
+
     EVERY MANIFEST IS STAMPED WITH THE CATALOG ITEM IT CAN BE RATED AND
     SENT A NOTE ABOUT (``feedbackItemId``, ``publisher``), through
     :func:`src.core.theme_feedback_ids.stamp`. A bundled theme always gets

@@ -22,7 +22,6 @@ console.log('[AttachmentToast Module] Loading...');
         return data.split('\x1b\r').join('').indexOf('\r') !== -1;
     }
 
-    /* label:' */
     function thumbSpecFor(filename, mimeType) {
         var mime = String(mimeType == null ? '' : mimeType).toLowerCase();
         var ext = extensionOf(filename);
@@ -157,8 +156,7 @@ console.log('[AttachmentToast Module] Loading...');
     }
 
     function catalogText(key, params) {
-        var i18n = window.CloudeI18n;
-        return i18n && typeof i18n.t === 'function' ? i18n.t(key, params) : key;
+        return globalThis.CloudeTr(key, params);
     }
 
     function headerSessionLabel() {

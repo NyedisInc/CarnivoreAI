@@ -1,4 +1,3 @@
-/* and writes nothing */
 import type { HuddleItem, TaskManagerItemGroup } from './huddle-model';
 import type { FoldTargets } from './task-manager-fold-cascade';
 import { statusSections, type TaskManagerViewMode } from './task-manager-status-sections';

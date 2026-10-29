@@ -22,7 +22,6 @@ export function headParts(groups: readonly boolean[], closable: boolean): HeadPa
   return out;
 }
 
-/* pop-out window */
 export type HeadSurface = 'grid' | 'drawer' | 'rail' | 'popout';
 
 export const HEADER_OPTION = 'show_header';

@@ -90,12 +90,12 @@ def test_the_rule_can_fail_the_old_status_like_colors_are_refused():
 
 
 def test_remap_lands_on_the_palette_and_keeps_siblings_apart():
-    live = [("Harbor", "#7bbbc1"), ("Harbor Docker", "#7bc1aa"), ("Harbor Monitoring", "#7bc187"),
-            ("Storefront", "#7b89c1"), ("Storefront Catalog", "#c1897b"), ("Storefront catalog site", "#c1a57b"),
-            ("Media", "#c1897b"), ("Media Studio", "#7ba4c1"), ("NFLOW", "cyan"), ("Ledgerbot", None)]
+    live = [("Fleet", "#7bbbc1"), ("Fleet Docker", "#7bc1aa"), ("Fleet Monitoring", "#7bc187"),
+            ("Shelving", "#7b89c1"), ("Shelving Catalog", "#c1897b"), ("Shelving catalog site", "#c1a57b"),
+            ("Media", "#c1897b"), ("Media Pipeline", "#7ba4c1"), ("N8N", "cyan"), ("Trader", None)]
     mapping = assign_calm_colors(live)
     assert set(mapping) == {n for n, _ in live} and set(mapping.values()) <= set(SOFT_PALETTE)
-    for prefix in ("harbor", "storefront", "media"):
+    for prefix in ("fleet", "shelving", "media"):
         colors = [c for n, c in mapping.items() if sibling_key(n) == prefix]
         assert len(colors) == len(set(colors)) > 1
     assert assign_calm_colors(live) == mapping

@@ -46,7 +46,6 @@
         display: contents;
     }
 
-    /* padding */
 
     .sp-rail [data-btn='row'] {
         display: flex;

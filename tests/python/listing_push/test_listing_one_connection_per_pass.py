@@ -56,11 +56,11 @@ def test_peer_list_is_read_once_until_the_database_is_written(tmp_path: Path) ->
     peer_listing._PEERS_CACHE = None
     try:
         for _ in range(5):
-            assert peer_listing._read_peers(open_db) == []
+            assert peer_listing.read_peers(open_db) == []
         assert len(opened) == 1, "an unchanged database must not be reopened"
         with sqlite3.connect(db) as conn:
             conn.execute("INSERT INTO hosts VALUES ('x')")
-        peer_listing._read_peers(open_db)
+        peer_listing.read_peers(open_db)
         assert len(opened) == 2, "a write must invalidate the cached peer list"
     finally:
         peer_hosts.list_peers = real

@@ -1,4 +1,3 @@
-/* popUpContextMenu() */
 
 'use strict';
 

@@ -1,4 +1,3 @@
-/*  hidden  */
 import { subscribe } from '../../api/events.svelte';
 import type { EventFrame } from '../../api/types';
 import type { StatsChanged } from './state.svelte';
@@ -36,7 +35,6 @@ export function followStatsFrames(deps: FrameDeps): () => void {
   let pending: Pending = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
 
-  /*  hidden  */
   function flush(): void {
     timer = null;
     if (pending === null || hidden()) return;

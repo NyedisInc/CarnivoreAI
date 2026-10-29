@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.svelte';
+import { releaseThisTab } from '../drawer/row-menu-sleep';
 import { companySource } from './company-source.svelte';
 import { closeItemMenu } from '../item-menu/open.svelte';
 import { headingDrawn, openHeadingRename } from './heading-rename.svelte';
@@ -41,14 +42,14 @@ export function projectNameFor(key: string): string | null {
     return row ? (row.project_name as string) : (companySource().projectNameOf?.(key.slice(BAND_PROJECT_PREFIX.length)) ?? null);
 }
 
-/* no working directory own project */
+/* no working directory */
 export async function newAgentInProject(key: string): Promise<void> {
     const lp = hg().CloudeWeb?.launchpad;
     if (!lp || typeof lp.selectProject !== 'function') {
-        announceFailure('cannot start a new agent: the launcher did not load');
+        announceFailure(t('sidebar.project.launcher_missing'));
         return;
     }
-    const found = await projectFolderFor(key, 'no agent was started');
+    const found = await projectFolderFor(key, 'sidebar.project.outcome.no_agent');
     if (!found) return;
     await lp.selectProject(found);
 }
@@ -57,13 +58,13 @@ async function projectFolderFor(key: string, outcome: string): Promise<{ name: s
     const name = projectNameFor(key);
     if (!name) { announceFailure(t('sidebar.project.no_name')); return null; }
     const anyRow = projectRows(key)[0];
-    const projectId = anyRow ? anyRow.project_id : null;
+    const projectId = anyRow ? anyRow.project_id : key.slice(BAND_PROJECT_PREFIX.length);
     let path: string | null = null;
     const api = hg().API;
     if (projectId != null && api) {
         try {
             const projects = await api.getProjects();
-            const match = projects.find((p) => p && p.id === projectId);
+            const match = projects.find((p) => p && String(p.id) === String(projectId));
             path = (match && match.path) || null;
         } catch (err) {
             announceFailure(t('sidebar.project.list_read_failed', { reason: reasonOf(err) }));
@@ -71,19 +72,19 @@ async function projectFolderFor(key: string, outcome: string): Promise<{ name: s
         }
     }
     if (!path) {
-        announceFailure(`CANNOT DETERMINE the folder for "${name}": no project record names one, so ${outcome}`);
+        announceFailure(t('sidebar.project.folder_unknown', { name, outcome: t(outcome) }));
         return null;
     }
     return { name, path };
 }
 
 export async function showProjectPath(key: string): Promise<void> {
-    const found = await projectFolderFor(key, 'nothing was shown');
+    const found = await projectFolderFor(key, 'sidebar.project.outcome.nothing_shown');
     if (found) await showPath(found.path, found.name);
 }
 
 function releaseIfThisTab(row: Row): void {
-    hg().SessionRowMenuSleep?.releaseThisTab?.({ name: row.name });
+    releaseThisTab({ name: row.name });
 }
 
 export async function sleepRows(rows: Row[], label: string): Promise<{ slept: number; failed: number }> {

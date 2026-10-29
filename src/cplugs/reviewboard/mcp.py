@@ -63,7 +63,20 @@ async def task_manager_board_get(ctx: CplugContext, caller: AgentCaller, args: d
     return tool_result(scrub(service.with_saves(answer, saves)))
 
 
-def file_pages(args: Dict[str, Any]) -> Dict[str, Any]:
+PANE_ONLY = ("file_path",)
+
+
+def refuse_token_paths(caller: AgentCaller, args: Dict[str, Any]) -> None:
+    if not caller.from_token:
+        return
+    views = args.get("views")
+    nested = isinstance(views, list) and any(isinstance(v, dict) and "file_path" in v for v in views)
+    if "file_path" in args or nested:
+        raise ToolError("file_path names a file on this computer, so only a session running here may pass it; send the page as html instead")
+
+
+def file_pages(args: Dict[str, Any], caller: AgentCaller) -> Dict[str, Any]:
+    refuse_token_paths(caller, args)
     def page(holder: Dict[str, Any], where: str) -> Dict[str, Any]:
         main = where == "the page"
         both, neither = "html" in holder and "file_path" in holder, "html" not in holder and "file_path" not in holder
@@ -99,7 +112,7 @@ async def _write(ctx: CplugContext, caller: AgentCaller, args: dict, creating: b
             args["task"] = {"item_id": args["task"]}
     elif not isinstance(slug, str) or not slug:
         raise ToolError("board is required: a slug from task_manager_boards_list")
-    args = await asyncio.to_thread(file_pages, args)
+    args = await asyncio.to_thread(file_pages, args, caller)
     try:
         body = CreateBody.model_validate(args) if creating else ReviseBody.model_validate(args)
     except ValidationError as exc:
@@ -137,16 +150,16 @@ async def task_manager_board_focus(ctx: CplugContext, caller: AgentCaller, args:
     return tool_result(scrub(await _blocking(lambda: opener.open_board(root, slug, revision, color, icon))))
 
 
-PROMPTS = {"type": "array", "maxItems": MAX_PROMPTS, "description": "What you want the owner to answer on this revision. Reuse an id to ask the same question again.", "items": {
+PROMPTS = {"type": "array", "maxItems": MAX_PROMPTS, "description": "What you want Joe to answer on this revision. Reuse an id to ask the same question again.", "items": {
     "type": "object", "required": ["id", "kind", "label"], "additionalProperties": False,
     "properties": {"id": {"type": "string", "description": "lowercase id, letters digits - _"},
-                   "kind": {"type": "string", "enum": ["choice", "multi", "check", "question"], "description": "choice: one option; multi: any; check: one box; question: their words"},
+                   "kind": {"type": "string", "enum": ["choice", "multi", "check", "question"], "description": "choice: one option; multi: any; check: one box; question: his words"},
                    "label": {"type": "string", "maxLength": 300},
                    "options": {"type": "array", "maxItems": MAX_OPTIONS, "description": "for choice and multi", "items": {
                        "type": "object", "required": ["id", "label"], "additionalProperties": False,
                        "properties": {"id": {"type": "string"}, "label": {"type": "string", "maxLength": 120}}}},
                    "anchor": {"type": "string", "description": "an anchor id this prompt is about"}}}}
-ANCHORS = {"type": "array", "maxItems": MAX_ANCHORS, "description": "Named parts of the page the owner may point at; tag each in the HTML with data-rb-anchor=\"<id>\".", "items": {
+ANCHORS = {"type": "array", "maxItems": MAX_ANCHORS, "description": "Named parts of the page Joe may point at; tag each in the HTML with data-rb-anchor=\"<id>\".", "items": {
     "type": "object", "required": ["id", "label"], "additionalProperties": False,
     "properties": {"id": {"type": "string"}, "label": {"type": "string", "maxLength": 120}}}}
 VIEWS = {"type": "array", "maxItems": 6, "description": "More pages of the same revision (the main page is html or file_path).", "items": {
@@ -159,12 +172,12 @@ REVISION_PROPERTIES: Dict[str, Any] = {
     "file_path": {"type": "string", "description": "Instead of html: an ABSOLUTE path to an .html file you wrote (not a symlink)."},
     "viewport": {"type": "integer", "minimum": 240, "maximum": 2560, "description": "The design width in CSS px, stated truthfully (a sidebar mockup 300, a pop-out 520, a page 1400). Required for the first revision; later ones keep the last."},
     "views": VIEWS, "prompts": PROMPTS, "anchors": ANCHORS, "layer": tool_schema.LAYER,
-    "inline_picks": {"type": "boolean", "description": "true: the board draws each prompt that names an anchor right under that anchored part of the page (the answers stay in the owner's tray, never in the page); prompts with no anchor stay in the tray's list. Tag each part with data-rb-anchor and list it in anchors, and give the prompt that anchor."},
-    "max_width": {"type": "integer", "minimum": 480, "maximum": 2400, "description": "Optional, canvas pages only: hold the page to this width in CSS px, centered (480 to 2400). Leave it out for full width. the owner gets a key in the board bar to switch between this width and full width. Questions and rows layers have their own fixed width."},
-    "answers_round": {"type": "string", "description": "The round (n1, n2, ...) of the owner's this revision answers; always name it when you are replying to one."},
+    "inline_picks": {"type": "boolean", "description": "true: the board draws each prompt that names an anchor right under that anchored part of the page (the answers stay in Joe's tray, never in the page); prompts with no anchor stay in the tray's list. Tag each part with data-rb-anchor and list it in anchors, and give the prompt that anchor."},
+    "max_width": {"type": "integer", "minimum": 480, "maximum": 2400, "description": "Optional, canvas pages only: hold the page to this width in CSS px, centered (480 to 2400). Leave it out for full width. Joe gets a key in the board bar to switch between this width and full width. Questions and rows layers have their own fixed width."},
+    "answers_round": {"type": "string", "description": "The round (n1, n2, ...) of Joe's this revision answers; always name it when you are replying to one."},
     "source_commit": {"type": "string", "description": "The commit the mockup was built from, if any."},
-    "payload_mode": {"type": "boolean", "description": "true: the page owns its controls and posts its state (rb payload message, docs/reviewboard.md, Payload pages). The board autosaves it as revision.draft and the owner's Send only nudges you to review it. No prompt list."},
-    "request_review": {"type": "boolean", "description": "Default true: the task goes to review so it reaches the owner. false: post the card only."},
+    "payload_mode": {"type": "boolean", "description": "true: the page owns its controls and posts its state (rb payload message, docs/reviewboard.md, Payload pages). The board autosaves it as revision.draft and Joe's Send only nudges you to review it. No prompt list."},
+    "request_review": {"type": "boolean", "description": "Default true: the task goes to review so it reaches Joe. false: post the card only."},
     CROSS_PROJECT: {"type": "boolean", "description": "Only to publish on a task of ANOTHER project's list (refused by default)."}}
 
 
@@ -174,50 +187,50 @@ LOOK: Dict[str, Any] = {
 
 TOOLS: dict[str, Any] = {
     "task_manager_boards_list": ToolSpec(
-        description=("List the review boards (mockups under review): slug, title, linked task, revisions, rounds the owner has sent, and the state "
-                     "(your_turn: the owner has not answered the newest revision; with_claude: the owner's newest round waits for a revision; "
+        description=("List the review boards (mockups under review): slug, title, linked task, revisions, rounds Joe has sent, and the state "
+                     "(your_turn: Joe has not answered the newest revision; with_claude: Joe's newest round waits for a revision; "
                      "undelivered: a round never reached its task; closed: its task is done, with closed_at and task_title). Each row names "
                      "its project (a list key). Newest activity first; state closed runs newest closed first. Filter by task, state, project. Read only."),
-        properties={"task": {"type": "integer", "minimum": 1, "description": "Only boards linked to this huddle item id."},
+        properties={"task": {"type": "integer", "minimum": 1, "description": "Only boards linked to this task manager item id."},
                     "state": {"type": "string", "enum": list(board_states.STATES), "description": "Only boards in this state."},
                     "project": {"type": "string", "minLength": 1, "maxLength": service.MAX_PROJECT_KEY,
                                 "description": "Only boards of this project: its list key (the project id as digits)."}},
         required=[], handler=task_manager_boards_list, gate="read"),
     "task_manager_board_get": ToolSpec(
-        description=("Read one review board: sidecar (revisions with prompts and anchors; the owner's rounds), state, etag, revision_dir. "
+        description=("Read one review board: sidecar (revisions with prompts and anchors; Joe's rounds), state, etag, revision_dir. "
                      "Never returns HTML. since_round returns only newer rounds. A payload page (payload_mode) shows numbered saves in "
-                     "revision.saves, the autosaved working state in revision.draft, and the owner's sends as rounds with payload, save, diff; "
+                     "revision.saves, the autosaved working state in revision.draft, and Joe's sends as rounds with payload, save, diff; "
                      "saves narrows them (all, latest, none). A board running as a LIVE session shows sidecar.live: the working draft (seq, summary, views, prompts), who "
-                     "opened it, and the owner's recent live sends (live.sends, newest last; read them here after the wake that told you). Read only."),
+                     "opened it, and Joe's recent live sends (live.sends, newest last; read them here after the wake that told you). Read only."),
         properties={"board": {"type": "string", "description": "The board slug from task_manager_boards_list."},
                     "since_round": {"type": "integer", "minimum": 0, "description": "Only rounds numbered above this."},
                     "saves": {"type": "string", "enum": ["all", "latest", "none"], "description": "Payload saves per revision: all (default), only the newest, or none."}},
         required=["board"], handler=task_manager_board_get, gate="read"),
     "task_manager_board_create": ToolSpec(
-        description=("Start a review board for a task: the owner reviews your mockup in rounds, ticking choices, checking boxes and writing notes on it, "
-                     "and their send comes back to you on the task as their reply. Posts revision r1 (a page, a summary and the prompts you want answered) "
+        description=("Start a review board for a task: Joe reviews your mockup in rounds, ticking choices, checking boxes and writing notes on it, "
+                     "and his send comes back to you on the task as his reply. Posts revision r1 (a page, a summary and the prompts you want answered) "
                      "into the boards folder and a card on the task, and by default puts the task in review. Revisions are immutable: change the "
                      "mockup with task_manager_board_revision_add. Read docs/reviewboard.md for the page contract. Optional color and icon style the "
                      "board's sidebar row when it is opened. Needs the boards folder set."),
         properties={"name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,47}$", "description": "Lowercase words joined by hyphens; the board is dated today."},
                     "title": {"type": "string", "minLength": 1, "maxLength": 120, "description": "The board's title."},
                     "kind": {"type": "string", "enum": ["mockup", "flowchart", "copy", "other"], "description": "Default mockup."},
-                    "task": {"type": "integer", "minimum": 1, "description": "The huddle item id (on this computer) the owner's rounds go to."},
+                    "task": {"type": "integer", "minimum": 1, "description": "The task manager item id (on this computer) Joe's rounds go to."},
                     **LOOK, **REVISION_PROPERTIES},
-        required=["name", "title", "task", "summary", "viewport"], handler=task_manager_board_create, gate="agent"),
+        required=["name", "title", "task", "summary", "viewport"], handler=task_manager_board_create, gate="agent", pane_only_args=PANE_ONLY),
     "task_manager_board_revision_add": ToolSpec(
         description=("Add the next revision to a review board (the tool you use most): a new page, a summary, and the prompts for this round. Name "
-                     "answers_round when you are answering one of the owner's rounds (read it first with task_manager_board_get). Posts the card on the "
+                     "answers_round when you are answering one of Joe's rounds (read it first with task_manager_board_get). Posts the card on the "
                      "task and by default puts it in review. An older revision never changes. base_etag is optional: a revision only appends, but "
                      "pass the etag you read to refuse a write over a change you have not seen."),
         properties={"board": {"type": "string", "description": "The board slug from task_manager_boards_list."},
                     "base_etag": {"type": "string", "description": "The etag you read; a different current etag refuses the write."},
                     **REVISION_PROPERTIES},
-        required=["board", "summary"], handler=task_manager_board_revision_add, gate="agent"),
+        required=["board", "summary"], handler=task_manager_board_revision_add, gate="agent", pane_only_args=PANE_ONLY),
     "task_manager_board_focus": ToolSpec(
-        description=("Open a review board on the owner's screen: a row in their browser list, shown full size in their center screen at that revision (or "
-                     "the newest). Use it to point the owner at a revision you just posted. Optional color and icon style the row "
-                     "(restyle later with sidebar_row_look_set). Changes only what is on their screen."),
+        description=("Open a review board on Joe's screen: a row in his browser list, shown full size in his center screen at that revision (or "
+                     "the newest). Use it to point him at a revision you just posted. Optional color and icon style the row "
+                     "(restyle later with sidebar_row_look_set). Changes only what is on his screen."),
         properties={"board": {"type": "string", "description": "The board slug from task_manager_boards_list."},
                     "revision": {"type": "string", "pattern": "^r[1-9][0-9]*$", "description": "A revision id like r2; leave out to follow the newest."},
                     **LOOK},

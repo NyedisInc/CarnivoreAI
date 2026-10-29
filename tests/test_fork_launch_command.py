@@ -17,14 +17,14 @@ import pytest
 
 from src.core.agent_wrappers import AgentWrapper, render_wrapper_invocation
 
-UUID = "a056d849-9c48-4eef-8586-b3c49d8fac3d"
+UUID = "0199aa11-bbbb-cccc-dddd-eeeeeeeeeeee"
 FORK_ARGS = ["--resume", UUID, "--fork-session"]
 
 
 def _wrapper(**kw):
     base = dict(
-        id="keyc", label="keyc", script="keyc() { command claude \"$@\"; }",
-        entry="keyc", default=True, accepts_model=False, family="claude",
+        id="cld", label="cld", script="cld() { command claude \"$@\"; }",
+        entry="cld", default=True, accepts_model=False, family="claude",
     )
     base.update(kw)
     return AgentWrapper(**base)
@@ -73,7 +73,7 @@ def test_a_modelless_wrapper_still_receives_the_fork_args(tmp_path):
         auth_config_file=str(config_path),
     )
 
-    out = s.get_agent_command("keyc", model="vendor/m-1", extra_args=FORK_ARGS)
+    out = s.get_agent_command("cld", model="vendor/m-1", extra_args=FORK_ARGS)
     assert "vendor/m-1" not in out, "a modelless wrapper was handed a model"
     assert f"--resume {UUID} --fork-session" in out
 

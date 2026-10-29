@@ -294,3 +294,13 @@ describe('a reused tmux name is a new session', () => {
     stop();
   });
 });
+
+describe('isBareTerminal keeps a hidden pane header (u161-04)', () => {
+  test('a layout whose only change is headerOff is not bare', async () => {
+    const { isBareTerminal } = await import('./session-layouts');
+    const base = resetLayout(META, 'terminal');
+    expect(isBareTerminal(base)).toBe(true);
+    expect(isBareTerminal({ ...base, headerOff: [PRIMARY_SLOT] })).toBe(false);
+    expect(isBareTerminal({ ...base, headerOff: [] })).toBe(true);
+  });
+});

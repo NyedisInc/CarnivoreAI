@@ -11,12 +11,10 @@
 
     interface Props {
         item: ManagerItem;
-        /* the detail pane */
         selected: boolean;
         switchable: boolean;
         toggle?: ManagerToggleState;
         t: Translate;
-        /* the detail pane */
         onOpen?: (id: string) => void;
         onToggle?: (id: string, next: boolean) => void;
         extra?: Snippet<[ManagerItem]>;

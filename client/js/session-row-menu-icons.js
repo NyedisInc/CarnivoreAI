@@ -67,7 +67,6 @@ console.log('[SessionRowMenuIcons Module] Loading...');
             '<path d="M8 14s4.25-3.9 4.25-7.25a4.25 4.25 0 0 0-8.5 0C3.75 10.1 8 14 8 14z" '
             + 'stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'
             + '<circle cx="8" cy="6.75" r="1.5" stroke="currentColor" stroke-width="1.3"/>',
-        // conversation id
         'copy-session-id':
             '<rect x="5.5" y="5.5" width="8" height="8" rx="1.2" stroke="currentColor" stroke-width="1.3"/>'
             + '<path d="M10.5 3.5v-.3A.7.7 0 0 0 9.8 2.5H3.7a.7.7 0 0 0-.7.7v6.1a.7.7 0 0 0 .7.7h.3" '
@@ -136,7 +135,7 @@ console.log('[SessionRowMenuIcons Module] Loading...');
         'lock-star': 'star',
         'keep-awake': 'coffee',
         'huddle-project-lead': 'star',
-        'huddle-do-not-disturb': 'do-not-disturb',
+        // Move to folder the project folder
         'move-to-folder': 'folder',
     };
 

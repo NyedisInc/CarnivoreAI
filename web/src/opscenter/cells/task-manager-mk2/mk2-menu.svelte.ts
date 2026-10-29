@@ -1,3 +1,4 @@
+/* list, so the */
 import type { ActionBindings, WidgetDefinition } from '../../widgets/shell/define-widget.svelte';
 import { setAccordion, setHideCompleted, setView, taskManagerPrefs } from '../../../cplugs/huddle/task-manager-prefs.svelte';
 import { completedLists, removeCompleted } from '../../../cplugs/huddle/huddle.svelte';
@@ -41,6 +42,7 @@ export function closedCount(view: string): number {
   return completedLists(view).reduce((n, row) => n + row.count, 0);
 }
 
+/* nothing is deleted */
 export async function confirmDeleteClosed(view: string): Promise<void> {
   const count = closedCount(view);
   if (count === 0) return;

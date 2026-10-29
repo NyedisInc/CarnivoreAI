@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from textual import on
 from textual.app import App, ComposeResult
@@ -150,6 +150,7 @@ class CarnivoreTui(App[None]):
         self.apply_palette(theme.load_palette(theme.DEFAULT_THEME))
         self.client = client
         self.events = events or EventsClient(client, client.base_url, self._set_banner, self._auth_lost)
+        self._unsubscribe_theme: Optional[Callable[[], None]] = None
 
     def get_css_variables(self) -> dict[str, str]:
         return {**super().get_css_variables(), **theme.active().css_variables()}
@@ -188,10 +189,19 @@ class CarnivoreTui(App[None]):
             self.push_screen(LoginScreen())
 
     def show_main(self) -> None:
-        self.switch_screen(MainScreen()) if len(self.screen_stack) > 1 else self.push_screen(MainScreen())
+        self._show_only(MainScreen())
         self.events.start()
-        self.events.on_topics(lambda topics: LIVENESS in topics and self.run_worker(self.load_theme(), group="theme"))
+        if self._unsubscribe_theme is not None:
+            self._unsubscribe_theme()
+        self._unsubscribe_theme = self.events.on_topics(
+            lambda topics: LIVENESS in topics and self.run_worker(self.load_theme(), group="theme")
+        )
         self.run_worker(self.load_theme(), exclusive=True, group="theme")
+
+    def _show_only(self, screen: Screen[Any]) -> None:
+        while len(self.screen_stack) > 1:
+            self.pop_screen()
+        self.push_screen(screen)
 
     def _set_banner(self, down: bool) -> None:
         for banner in self.screen.query("#server-down-banner"):
@@ -215,7 +225,7 @@ class CarnivoreTui(App[None]):
         self.show_login()
 
     def show_login(self) -> None:
-        self.switch_screen(LoginScreen(t("tui.login.expired")))
+        self._show_only(LoginScreen(t("tui.login.expired")))
 
     async def on_unmount(self) -> None:
         await self.events.stop()

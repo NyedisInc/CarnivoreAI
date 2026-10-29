@@ -139,14 +139,14 @@ describe('detailed: the triage stack', () => {
 
     it('stacks every active flag, loudest first, in its hue; the hairline takes the loudest', () => {
         const el = draw(row({
-            status: 'question', host_key: 'peer-hosta', host_label: 'hosta', host_state: 'disconnected',
+            status: 'question', host_key: 'peer-studio', host_label: 'studio', host_state: 'disconnected',
             agent_update: { running: '2.1.290', installed: '2.1.301', ready: true }, running_context_used_pct: 83,
         }), 'detailed');
         const flags = Array.from(el.querySelectorAll('.session-row-body__flag'));
         expect(flags.map((f) => f.getAttribute('data-flag'))).toEqual(['permission', 'host', 'update', 'context']);
         expect(flags.map((f) => f.getAttribute('data-tone'))).toEqual(['warn', 'bad', 'info', 'ctx4']);
         expect(flags.map((f) => text(f))).toEqual([
-            'your turn - the agent needs your permission', 'hosta offline',
+            'your turn - the agent needs your permission', 'studio offline',
             'update ready 2.1.290 to 2.1.301', 'context 83% full',
         ]);
         expect(el.getAttribute('data-row-flag')).toBe('warn');
@@ -171,7 +171,7 @@ describe('the rank tag', () => {
         expect(idx.workerRank?.({ name: 'x', session_row_id: 7 })).toBe('task');
         expect(idx.workerRank?.({ name: 'x', session_row_id: 8 })).toBeNull();
         for (const density of ['cozy', 'detailed']) {
-            const el = draw(row({ host_key: 'peer-hosta', host_label: 'hosta' }), density, (p) => { p.body!.rankTag = 'task'; });
+            const el = draw(row({ host_key: 'peer-studio', host_label: 'studio' }), density, (p) => { p.body!.rankTag = 'task'; });
             const main = Array.from(el.querySelector('.session-sidebar-row-main')!.children).map((c) => c.className);
             const at = (cls: string) => main.findIndex((c) => c.includes(cls));
             expect(at('session-row-body__rank')).toBeGreaterThan(at('session-sidebar-row-name'));

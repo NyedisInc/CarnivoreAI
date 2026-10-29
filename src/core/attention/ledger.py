@@ -1,63 +1,3 @@
-"""The edge detector: which verdicts are NEWS, and which are the weather.
-
-FIVE RULES, AND EVERY ONE OF THEM EXISTS BECAUSE OF A MEASURED DEFECT.
-
-**FIRST SIGHT OF COMPLETED WORK IS A BASELINE.** An initial busy or done
-observation records and returns no transition. An outstanding blocking
-prompt still alerts once after its required confirmation. This is what stops the restart toast storm: on
-boot the app re-adopts every surviving session and reads each one for the
-first time, and a dozen sessions that have been sitting finished since
-last night are not a dozen new pieces of news. The state was already true
-before we looked.
-
-**A SETTLE-REQUIRED VERDICT MUST BE SEEN TWICE.** The pane and the
-end-of-transcript shape are both read mid-render: ``capture-pane`` can
-catch a dialog half-drawn, and the transcript's own turn-end record lands
-25 ms after the model stops and 7 ms before claude updates its status, so
-a single read inside that gap is a read before the source settled. A
-verdict the resolver marked :attr:`~AttentionVerdict.settle_required`
-must therefore be observed twice, at least :data:`SETTLE_SECONDS` apart,
-and a DIFFERENT verdict arriving in between resets the settle.
-
-**``done_idle`` ALSO NEEDS QUIET.** A turn end followed immediately by
-another append is not a finished turn, it is the gap between two records.
-The caller passes the transcript's newest append time; the ledger holds
-the transition until :data:`DONE_QUIET_SECONDS` have passed since it. THE
-LEDGER READS NO FILES: the timestamp is an argument, which is what lets
-the replay suite drive years of history in milliseconds.
-
-**A FLICKER THROUGH ``unknown`` FREEZES THE ENTRY.** ``unknown`` is a
-failure to observe, not an observation of a different state, so it
-changes nothing at all: not the confirmed verdict, not a settle in
-progress, not the emitted set. Without this, a session that answered
-``busy``, then ``unknown`` for one tick because a file was being
-rewritten, then ``busy`` again, would produce a second ``busy`` edge out
-of nothing. The way back must not manufacture an edge.
-
-**ONE EDGE PER (key, state, reason) UNTIL THE STATE MOVES.** A session
-that sits in ``needs_user(permission)`` for ten minutes is one ask, not
-three hundred. The emitted set is cleared the moment the STATE changes to
-something else, so the same ask after a real detour is news again. A
-reason change inside one state IS news, on purpose: ``needs_user`` going
-from ``input`` to ``permission`` is a different question for the user.
-
-IT ALSO HOLDS TWO EVIDENCE BASELINES, and :meth:`note_transcript` is
-where they live: the newest user prompt and the newest append this key
-has already been shown. They are not verdicts, but they are memory, and
-putting them anywhere else would give the package a second thing that
-remembers. They are what the watcher's side-effect layer reads instead of
-a ``UserPromptSubmit`` hook.
-
-KEYED ON THE INSTANCE, NOT THE SESSION ID. The key is
-``UnreadStore.compose_key(tmux_name, epoch)``, the same identity the
-unread flag already uses, for two reasons the project has already paid
-for. Gotcha 4b: a session id is not a tmux name and deriving one from
-the other loses sessions. Gotcha 10: ``CLOUDECODE_SESSION_ID`` is fixed
-into a pane at spawn, so after a re-adopt the row id and the id the pane
-believes in can diverge, and a flag keyed on the row id is one the pane's
-own agent can never clear. The tmux name plus ``#{session_created}``
-cannot diverge from the pane, because it IS the pane.
-"""
 
 from __future__ import annotations
 
@@ -159,7 +99,6 @@ class AttentionLedger:
             self._entries[key] = entry
         pair = (verdict.state, verdict.reason)
 
-        # SETTLE_SECONDS
         if verdict.settle_required:
             if entry.candidate != pair:
                 entry.candidate = pair

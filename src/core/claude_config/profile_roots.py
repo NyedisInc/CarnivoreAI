@@ -96,10 +96,10 @@ def profile_subdir_roots(
 
 
 def claude_registry_roots(config_path: Optional[Path] = None) -> Tuple[Path, ...]:
-    from src.core.attention import registry_read
+    from src.core.attention import registry_index
 
     return profile_subdir_roots(
-        Path(registry_read.default_registry_directory()), SESSIONS_DIRNAME, config_path
+        Path(registry_index.default_registry_directory()), SESSIONS_DIRNAME, config_path
     )
 
 

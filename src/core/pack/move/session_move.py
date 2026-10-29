@@ -14,6 +14,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Mapping, Optional, Tupl
 import structlog
 from fastapi import HTTPException
 
+from src.core.pack import progress
 from src.core.pack.identity import home
 from src.core.pack.migrate import transcripts
 from src.core.pack.migrate.manifest import SESSION_COLUMNS
@@ -120,6 +121,7 @@ async def move_session(env: SourceEnv, hooks: Hooks, request: Request, *, subjec
                                         target_install_id=target_install_id, detail={"machine": target_label, "name": row.get("title"), "mode": mode,
                                                                                     "target_session_uuid": target_uuid}))
     step, slept, interrupted, target_dir = "check", False, False, None
+    progress.bind(op_id)
 
     async def at(name: str) -> None:
         nonlocal step

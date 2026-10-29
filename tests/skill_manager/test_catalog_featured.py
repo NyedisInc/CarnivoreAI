@@ -25,7 +25,7 @@ def _verify(tmp_path, featured, newer_first: bool = False) -> VerifiedIndex:
     (tmp_path / "p").mkdir(parents=True, exist_ok=True)
     index_kp = generate_keypair(tmp_path / "i")
     pub_kp = generate_keypair(tmp_path / "p")
-    items = [skill_item(n, "acme", "ab" * 32) for n in ("a", "b", "c")]
+    items = [skill_item(n, "alex", "ab" * 32) for n in ("a", "b", "c")]
     old = items[0]["versions"][0]
     newer = copy.deepcopy(old)
     newer["v"] = "2.0.0"
@@ -50,13 +50,13 @@ def _snap(v: VerifiedIndex) -> IndexSnapshot:
 
 
 def test_featured_rank_first_published_fingerprint_and_tool(tmp_path):
-    v = _verify(tmp_path, ["acme/b", "acme/a"])
-    assert v.featured == ("acme/b", "acme/a")
+    v = _verify(tmp_path, ["alex/b", "alex/a"])
+    assert v.featured == ("alex/b", "alex/a")
     snap = _snap(v)
     views = {i.id: item_view(i, installed=None, snapshot=snap, untrusted=False) for i in v.items}
-    assert (views["acme/b"].featured_rank, views["acme/a"].featured_rank, views["acme/c"].featured_rank) == (0, 1, None)
-    assert views["acme/a"].first_published_at == "2026-09-01T12:00:00+00:00"
-    v2 = _verify(tmp_path / "x", ["acme/b", "acme/a"], newer_first=True)
+    assert (views["alex/b"].featured_rank, views["alex/a"].featured_rank, views["alex/c"].featured_rank) == (0, 1, None)
+    assert views["alex/a"].first_published_at == "2026-09-01T12:00:00+00:00"
+    v2 = _verify(tmp_path / "x", ["alex/b", "alex/a"], newer_first=True)
     assert item_view(v2.items[0], installed=None, snapshot=_snap(v2), untrusted=False).first_published_at == "2026-09-01T12:00:00+00:00"
 
     none = _verify(tmp_path / "n", None)
@@ -71,7 +71,7 @@ def test_featured_rank_first_published_fingerprint_and_tool(tmp_path):
 
 def test_fingerprint_moves_when_only_featured_changes():
     base = _verify_stub(())
-    assert content_fingerprint(_snap(base)) != content_fingerprint(_snap(_verify_stub(("acme/a",))))
+    assert content_fingerprint(_snap(base)) != content_fingerprint(_snap(_verify_stub(("alex/a",))))
 
 
 def _verify_stub(featured):

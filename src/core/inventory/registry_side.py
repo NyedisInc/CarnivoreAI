@@ -170,7 +170,7 @@ EXCLUDED_STORES: Tuple[ExcludedStore, ...] = (
     ExcludedStore("recovered-transcripts/*", K.GLOBAL, "transcripts recovered from foreign archives, filed by their own paths; not a session's files"),
     ExcludedStore("row_looks.json", K.GAP, "sidebar row colors and icons keyed by an opaque look id that derives from the row"),
     ExcludedStore("session_metadata.json", K.GAP, "a legacy single-session snapshot (id, pid, working directory)"),
-    ExcludedStore("lineage-live.json", K.GAP, "the live lineage scan's index, keyed by conversation id; rebuilt by the scan"),
+    ExcludedStore("lineage-live.json", K.GAP, "the live lineage scan's index, keyed by transcript path; rebuilt by the scan"),
     ExcludedStore("company_images/*", K.GAP, "generated company images, keyed by company id"),
     ExcludedStore("project_images/*", K.GAP, "generated project images, keyed by project id"),
 )

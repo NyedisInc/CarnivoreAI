@@ -92,6 +92,8 @@ async def get_event_window(scope: str = Query("sysop", pattern=r"^(sysop|project
                            filter: str = Query("all", pattern="^(all|mine)$"),
                            since: float = Query(..., ge=0), until: float = Query(..., gt=0)) -> dict:
     """Every card event of the board's scope in ``[since, until)`` (at most 8 days), oldest first, the newest 5000 kept; 422 ``bad_window``.
+
+    The board's calendar view reads it (``docs/swarm-board.md``); ``filter=mine`` keeps the owner's own cards, as the board does.
     """
     if until <= since or until - since > EVENT_WINDOW_MAX_S:
         raise HTTPException(status_code=422, detail={"code": "bad_window", "message": "until must be after since, at most 8 days later"})
@@ -115,6 +117,7 @@ async def get_event_window(scope: str = Query("sysop", pattern=r"^(sysop|project
 
 @router.post("/", response_model=CardView, status_code=201)
 async def create_card(request: Request, req: CardCreate) -> dict:
+    """Make a card as the owner (a project's queue or a named list). 422 for a bad title, 404 for a parent that is no card."""
     return await _named(await _owner(ops.create(request.app.state, None, req.model_dump(), by="owner")))
 
 
@@ -184,6 +187,7 @@ async def get_events(card_id: int) -> dict:
 
 @router.post("/{card_id}/done", response_model=CardView)
 async def post_done(request: Request, card_id: int, req: CardDone) -> dict:
+    """Move a Review card to Done as the owner; its agent-accepted children are approved with it. 409 ``not_in_review`` / ``stale``."""
     return await _named(await _owner(ops.done(request.app.state, card_id, req.model_dump(), by="owner")))
 
 
@@ -195,6 +199,7 @@ async def post_send_back(request: Request, card_id: int, req: CardSendBack) -> d
 
 @router.post("/{card_id}/move", response_model=CardView)
 async def post_move(request: Request, card_id: int, req: CardMove) -> dict:
+    """Move a waiting card above ``before_id`` (null = the bottom); the owner's move always lands."""
     return await _named(await _owner(ops.move(request.app.state, card_id, req.model_dump(), by="owner")))
 
 
@@ -232,6 +237,8 @@ async def post_pin(request: Request, card_id: int, req: CardPinRequest) -> dict:
 
 @router.post("/{card_id}/column", response_model=CardView)
 async def post_column(request: Request, card_id: int, req: CardColumnMove) -> dict:
+    """Move a card to any column as the owner: pause (in progress to todo), mark done (review to done, as it stands), reclassify (any), with a note
+    for the agent that picks it up next. Saved at once; the agent hears the final state about 15 s after the last move, or nothing when it ends where it began."""
     return await _named(await _owner(ops.set_column(request.app.state, card_id, req.model_dump(), by="owner")))
 
 

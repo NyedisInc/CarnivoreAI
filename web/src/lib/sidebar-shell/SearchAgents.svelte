@@ -14,7 +14,7 @@
 
     const folded = $derived(searchD.folded.agents);
     $effect(() => {
-        searchD.agentNames = folded ? [] : s.rows.map((r) => (r.type === 'legacy' ? r.key : (r.attrs['data-name'] ?? r.key)));
+        searchD.agentNames = folded ? [] : s.rows.map((r) => (r.type === 'layout' ? r.key : (r.attrs['data-name'] ?? r.key)));
         return () => { searchD.agentNames = []; searchD.folded.agents = false; };
     });
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../i18n/index.svelte';
+  import { Button } from '../base';
   import Check from '../../opscenter/ui/Check.svelte';
   import PackMarks from '../pack-machines/PackMarks.svelte';
   import PackMeter from '../pack-machines/PackMeter.svelte';
@@ -42,13 +43,13 @@
       {#if computer.transport === 'ssh'}<span class="cmp-state" data-cmp="transport">{t('computers.row.over_ssh')}</span>{/if}
     {/if}
     {#if !isSelf && machine?.paired && !machine.is_master}
-      <button type="button" class="modal-btn modal-btn-secondary pk-act" disabled={packActivity.busy !== null}
-        onclick={() => void makeMaster(machine.install_id)} data-pm="make-master">{t('pack.machines.make_master')}</button>
+      <Button size="sm" disabled={packActivity.busy !== null}
+        onclick={() => void makeMaster(machine.install_id)} data-pm="make-master">{t('pack.machines.make_master')}</Button>
     {/if}
     {#if computer && !confirming}
-      <button type="button" class="modal-btn modal-btn-danger pk-act" data-cmp="remove" disabled={busy} onclick={() => (confirming = true)}>
+      <Button variant="danger" size="sm" data-cmp="remove" disabled={busy} onclick={() => (confirming = true)}>
         {t('computers.row.remove')}
-      </button>
+      </Button>
     {/if}
   </div>
   {#if machine && !computer && stateWord && machine.state !== 'self' && machine.state !== 'connected'}<p class="cmp-note" data-pm="state-word">{stateWord}</p>{/if}
@@ -95,9 +96,9 @@
       <div class="cmp-confirm" data-cmp="remove-confirm">
         <p class="cmp-note">{t('computers.row.remove_confirm', { label: computer.label })}</p>
         <div class="cmp-actions">
-          <button type="button" class="modal-btn modal-btn-secondary" onclick={() => (confirming = false)}>{t('computers.row.cancel')}</button>
-          <button type="button" class="modal-btn modal-btn-danger" data-cmp="remove-yes" disabled={busy}
-            onclick={() => void remove(computer.install_id, computer.label).then(() => (confirming = false))}>{t('computers.row.remove')}</button>
+          <Button onclick={() => (confirming = false)}>{t('computers.row.cancel')}</Button>
+          <Button variant="danger" data-cmp="remove-yes" disabled={busy}
+            onclick={() => void remove(computer.install_id, computer.label).then(() => (confirming = false))}>{t('computers.row.remove')}</Button>
         </div>
       </div>
     {/if}

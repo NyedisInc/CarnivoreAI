@@ -1,4 +1,3 @@
-/* nothing at all */
 import { hostWindow } from '../sessions/env';
 import { withNav, type NavToken } from './nav-generation';
 import { t } from '../i18n/index.svelte';
@@ -21,6 +20,8 @@ export interface ProviderChoice {
     model?: string | null;
     accountId?: string | null;
     pinAccount?: boolean;
+    name?: string | null;
+    pinned?: boolean;
     [key: string]: unknown;
 }
 
@@ -86,7 +87,6 @@ interface LegacyLaunchpad {
     showProviderModal(opts?: { projectDefault?: string | null; remote?: { key: string; label: string } | null; goLabel?: string | null }): Promise<ProviderChoice | null>;
 }
 
-/* CANNOT DETERMINE */
 export function browserCreateHost(): CreateHost {
     const win = () => hostWindow() as unknown as Record<string, unknown> | undefined;
     const api = (): LegacyApi => (win()?.API as LegacyApi);
@@ -108,7 +108,6 @@ export function browserCreateHost(): CreateHost {
                 const body = await authFetch<HostsListResponse>(HOSTS_ROUTE);
                 return body?.status === 'ok' ? [...body.hosts] : [];
             } catch (error) {
-                // CANNOT DETERMINE
                 console.warn('CloudeWeb: hosts unavailable for the launch picker:', error);
                 return [];
             }
@@ -125,7 +124,6 @@ export function browserCreateHost(): CreateHost {
                 const res = await api().browseDirectory();
                 return (res && res.path) || null;
             } catch (error) {
-                // CANNOT DETERMINE
                 console.warn('CloudeWeb: default project folder unavailable:', error);
                 return null;
             }
@@ -135,7 +133,6 @@ export function browserCreateHost(): CreateHost {
             try {
                 return await authFetch<RemoteFolderAnswer>(`/filesystem/computer/${encodeURIComponent(hostKey)}/browse${query}`);
             } catch (error) {
-                // CANNOT DETERMINE
                 console.warn('CloudeWeb: a paired computer\'s folders are unavailable:', error);
                 return { status: 'unavailable', reason: 'unreachable' };
             }

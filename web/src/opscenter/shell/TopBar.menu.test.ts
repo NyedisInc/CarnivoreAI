@@ -19,6 +19,8 @@ afterEach(async () => {
   for (const c of mounted.splice(0)) await unmount(c);
   document.body.replaceChildren();
   delete g.SessionSidebar;
+  // Restore the module's own default so an earlier test's width can never
+  // leak into a later, unrelated suite that imports the same singleton.
   viewport.wide = true;
   viewport.phone = false;
 });

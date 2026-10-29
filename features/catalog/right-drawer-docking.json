@@ -16,7 +16,14 @@
     "drawer",
     "docking"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "A terminal shrunk to fit beside a docked notes drawer",
+      "caption": "The notes drawer docked on the right",
+      "file": "docked.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Right drawer docking",
   "since": "2026-09-24",
   "status": "stable",
@@ -27,6 +34,5 @@
   "updated": "2026-10-21",
   "where": [
     "The right edge of a session: the files and notes drawers open there."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

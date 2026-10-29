@@ -21,7 +21,7 @@ let mounted: ReturnType<typeof mount> | null = null;
 beforeEach(() => {
     document.body.innerHTML = '<div id="session-sidebar-bar-slot"></div><div id="acct"></div>';
     Bar.reset();
-    accountChip.identity = { kind: 'member', name: 'the owner', provider: 'github' };
+    accountChip.identity = { kind: 'member', name: 'Joe', provider: 'github' };
     authFetch.mockClear();
 });
 

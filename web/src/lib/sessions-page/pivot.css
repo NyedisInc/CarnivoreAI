@@ -1,4 +1,3 @@
-/* .sp-pv-chip [data-cb] */
 @layer components {
     .sp-host[data-host='pivot'] {
         display: flex;

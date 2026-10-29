@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
@@ -65,7 +67,7 @@ def main():
     tray_icon(template2, 44).save(HERE / "iconUpdate@2x.png")
     menu_icon(16).save(HERE / "iconUpdateMenu.png")
     menu_icon(32).save(HERE / "iconUpdateMenu@2x.png")
-    preview(Path(sys.argv[1]) if len(sys.argv) > 1 else Path("~/work"))
+    preview(Path(sys.argv[1]) if len(sys.argv) > 1 else Path(os.environ.get("UPDATE_ICON_PREVIEW") or Path(tempfile.gettempdir()) / "update-icon-preview.png"))
 
 
 if __name__ == "__main__":

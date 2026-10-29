@@ -5,7 +5,6 @@ export type Surface = 'settings' | 'glance';
 
 export interface SurfaceAnswer {
     surface: string;
-    /* could not */
     stale: boolean;
     reason?: string;
     document: unknown;

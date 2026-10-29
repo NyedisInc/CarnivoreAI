@@ -4,7 +4,6 @@ import { expect } from 'vitest';
 
 const FILE = join(process.cwd(), 'src/lib/zone-shell/__goldens__/dom.json');
 
-/* <button type="button" class="bar-handle bar-handle--side" ...> */
 export function normalized(el: Element): string {
   return el.outerHTML
     .replace(/\s?svelte-[a-z0-9]+/g, '')

@@ -13,7 +13,7 @@ describe('code spans are literal', () => {
     expect(JSON.stringify(blocks)).toContain(JSON.stringify({ t: 'code', v: src }));
   });
 
-  test('the review description of a task keeps its code span literal', () => {
+  test('the review description of item 222 keeps its code span literal', () => {
     const src = '**Markdown everywhere in the huddle**\n- Rows, titles, the latest line and every field in the answer popup now use one markdown renderer.\n- A cut line is trimmed after rendering, so bold, italic and code hold right up to the ellipsis. `***x***` renders as bold italic.\n\n**One bubble base**\n- All eight message types (info, look, question, answer, claude, owner, approval, review) draw from one base.\n- A new type is one entry in the `BUBBLES` registry. The style guide shows every type.\n\nLive in 1.15.1. A tick pushes it.';
     expect(JSON.stringify(parseMarkdown(src))).toContain('{"t":"code","v":"***x***"}');
   });

@@ -9,7 +9,7 @@ from fastapi import UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse
 
-from src.cplugs.huddle import files, service, task_files
+from src.cplugs.huddle import file_removal, files, service, task_files, task_sweep
 from src.cplugs.huddle.routes import Ctx, router, run_store
 from src.cplugs.sdk import CplugContext
 from src.cplugs.sdk.uploads import read_validated_upload
@@ -22,11 +22,12 @@ SAFE_HEADERS = {"X-Content-Type-Options": "nosniff", "Content-Security-Policy": 
 
 @router.post("/items/{item_id}/files")
 async def upload_file(item_id: int, file: UploadFile, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Store one file for an item's next reply, as joe. Output: {id, name, mime, size}. Errors: 400, 404 (no such item), 413."""
     await run_store(lambda: service.store(ctx).item(item_id))
     data, name = await read_validated_upload(file)
     saved = await run_store(lambda: files.save(ctx.storage, item_id, name, data))
     try:
-        await run_in_threadpool(files.sweep_orphans, ctx.storage)
+        await run_in_threadpool(task_sweep.sweep_all, ctx.storage)
     except (OSError, sqlite3.Error) as exc:
         logger.warning("task_manager_orphan_sweep_failed", error=str(exc))
     logger.info("task_manager_file_uploaded", item=item_id, size=saved["size"])
@@ -40,3 +41,9 @@ async def get_file(item_id: int, file_id: str, ctx: CplugContext = Ctx) -> FileR
     name = files.name_of(path.name)
     return FileResponse(path, media_type=files.mime_of(name),
                         headers={**SAFE_HEADERS, "Content-Disposition": f'{files.disposition(name)}; filename="{name}"'})
+
+
+@router.delete("/items/{item_id}/files/{file_id}")
+async def delete_file(item_id: int, file_id: str, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Delete one file from a task, as the owner. Inputs: item_id; file_id. Output: see the module docstring. Errors: 404, 409, 503."""
+    return await run_store(lambda: file_removal.remove(ctx, item_id, file_id))

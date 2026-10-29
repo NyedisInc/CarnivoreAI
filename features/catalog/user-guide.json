@@ -26,7 +26,26 @@
     "screenshots",
     "click marks"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The home screen with the drawer on the left and the operations center, charts and cards on the right",
+      "caption": "The home screen, as marked in the guide",
+      "file": "home.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "A claude session's terminal with its tab strip and toolbar on top, the drawer on the left and the status bar along the bottom",
+      "caption": "A session with the drawer, as marked in the guide",
+      "file": "session.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The settings page on its appearance section, with the section list on the left and the theme tiles on the right",
+      "caption": "The settings page, as marked in the guide",
+      "file": "settings.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Documentation user guide",
   "since": "2026-09-29",
   "status": "stable",
@@ -41,6 +60,5 @@
   "where": [
     "Menu tab, documentation; the question mark at the foot of the drawer.",
     "The #docs link, or #docs/lights, #docs/start, #docs/terminals and #docs/settings for the pictures."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

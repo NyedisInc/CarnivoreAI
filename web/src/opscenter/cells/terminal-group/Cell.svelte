@@ -5,7 +5,6 @@
 </script>
 
 <script lang="ts">
-  /*  hidden  */
   import { untrack } from 'svelte';
   import type { CellProps } from '../../lib/cell';
   import TerminalCell from '../terminal/Cell.svelte';

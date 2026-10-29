@@ -9,6 +9,7 @@ from typing import Any, Callable, Optional, Set
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core.attention.evidence import REASON_INPUT, STATE_BUSY, STATE_DONE_IDLE, STATE_NEEDS_USER
 from src.core.attention_history import store as S
 
@@ -35,7 +36,7 @@ def resolve_from_datastore(db: Path, key: str, session_id: str) -> Optional[str]
     if epoch.isdigit():
         sql, params = sql + " AND tmux_created_epoch = ?", params + [int(epoch)]
     try:
-        with closing(sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=5.0)) as conn:
+        with closing(connect_readonly(db, timeout=READONLY_TIMEOUT_DEFAULT_S)) as conn:
             row = conn.execute(sql + " ORDER BY id DESC LIMIT 1", params).fetchone()
     except sqlite3.Error as exc:
         logger.warning("attention_history_uuid_unread", error=type(exc).__name__)

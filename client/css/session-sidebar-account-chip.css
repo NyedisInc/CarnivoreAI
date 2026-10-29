@@ -1,4 +1,3 @@
-/*  hidden  */
 @layer components {
 [data-bar-indicator] {
     color: var(--oc-coral);
@@ -55,19 +54,15 @@
 }
 
 
-/*  hidden  */
 .session-sidebar-bar__avatar .spiral-turn {
     overflow: visible;
     transform-origin: 50% 50%;
-    animation: session-sidebar-spiral-turn 6s linear infinite;
-}
-
-@keyframes session-sidebar-spiral-turn {
-    to { transform: rotate(360deg); }
+    transform: rotate(calc(var(--amb-step, 0) * 15deg));
+    animation: amb-join-avatar-spiral 1ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .session-sidebar-bar__avatar .spiral-turn { animation: none; }
+    .session-sidebar-bar__avatar .spiral-turn { transform: none; }
 }
 
 .session-sidebar-bar__account:hover .session-sidebar-bar__avatar {
@@ -93,7 +88,6 @@
     transform: none;
 }
 
-/*  hidden  */
 .session-sidebar-bar__signin {
     --_bd: var(--oc-yellow-bright);
     --_btn-h: 22px;
@@ -112,6 +106,12 @@
 .session-sidebar-bar__avatar[data-kind='lurker'] {
     position: relative;
     overflow: visible;
+    border-color: transparent;
+    background: none;
+}
+
+.session-sidebar-bar__account:hover .session-sidebar-bar__avatar[data-kind='lurker'] {
+    border-color: transparent;
 }
 
 .mr-footer .session-sidebar-bar__signin {

@@ -41,7 +41,7 @@ describe('the separator rule: the header draws them, between non-empty groups an
 });
 
 describe('the show header tick default, per surface', () => {
-  test('a grid copy, a drawer card and a pop-out start on; a widget bar slide-out starts off', () => {
+  test('a grid copy, a drawer card and a pop-out start on; a widget bar slide-out starts off (Alex, 2026-10-11)', () => {
     expect(headerShown('grid', undefined)).toBe(true);
     expect(headerShown('drawer', undefined)).toBe(true);
     expect(headerShown('popout', undefined)).toBe(true);

@@ -1,8 +1,8 @@
-/* <script */
 
 (function () {
     'use strict';
 
+    /** @type {string} Nothing has been asked for yet. */
     var STATUS_UNLOADED = 'unloaded';
     /** @type {string} A loadFamily() call is in flight. */
     var STATUS_LOADING = 'loading';
@@ -18,13 +18,22 @@
 
     var _families = {};
 
-    /* <script */
+    var _executed = {};
+
     function _loadOneScript(url, maxRetries, retryDelayMs) {
+        if (_executed[url]) return Promise.resolve({ ok: true, url: url, attempts: 0 });
         return new Promise(function (resolve) {
             var attempts = 0;
-            var script = document.createElement('script');
-            script.src = url;
-            script.async = false;
+            var script = null;
+
+            function make(src) {
+                var el = document.createElement('script');
+                el.src = src;
+                el.async = false;
+                el.addEventListener('load', onLoad);
+                el.addEventListener('error', onError);
+                return el;
+            }
 
             function cleanup() {
                 script.removeEventListener('load', onLoad);
@@ -33,29 +42,32 @@
 
             function onLoad() {
                 cleanup();
+                _executed[url] = true;
                 resolve({ ok: true, url: url, attempts: attempts });
             }
 
             function onError() {
                 attempts += 1;
-                if (attempts <= maxRetries) {
-                    setTimeout(function () {
-                        var sep = url.indexOf('?') === -1 ? '?' : '&';
-                        script.src = url + sep + '_retry=' + attempts;
-                    }, retryDelayMs * attempts);
+                cleanup();
+                if (attempts > maxRetries) {
+                    resolve({ ok: false, url: url, attempts: attempts });
                     return;
                 }
-                cleanup();
-                resolve({ ok: false, url: url, attempts: attempts });
+                setTimeout(function () {
+                    var sep = url.indexOf('?') === -1 ? '?' : '&';
+                    var failed = script;
+                    script = make(url + sep + '_retry=' + attempts);
+                    var parent = failed.parentNode || document.head;
+                    parent.insertBefore(script, failed.nextSibling || null);
+                    if (failed.parentNode) failed.parentNode.removeChild(failed);
+                }, retryDelayMs * attempts);
             }
 
-            script.addEventListener('load', onLoad);
-            script.addEventListener('error', onError);
+            script = make(url);
             document.head.appendChild(script);
         });
     }
 
-    /* could not */
     function loadFamily(name, urls, opts) {
         var existing = _families[name];
         if (existing && existing.status === STATUS_LOADED) {

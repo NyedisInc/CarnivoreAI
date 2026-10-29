@@ -42,13 +42,6 @@ def _overlaps(a: Path, b: Path) -> bool:
 
 
 def plan_folder(unit: str, root: Path, vault_root: Path, unreadable: Optional[List[str]] = None) -> Optional[UnitPlan]:
-    """The files of one folder unit, or None when the folder is not there (absent, unmounted, not a folder). Blocking.
-
-    Inputs: unit (``<plugin>.<data id>``); root (the declared folder); vault_root (refused when the two overlap); unreadable (when given,
-      collects the folders that could not be listed: their files are then NOT read as deleted, see ``store.Vault.capture_folder``).
-    Output: UnitPlan (kind ``folder``; an empty folder plans no files). Raises: FolderRefused.
-    Example: plan_folder('reviewboard.boards', Path('/x/boards'), Path('/s/vault')).files[0].rel -> 'board-1/board.json'
-    """
     try:
         check_unit(unit)
     except ManifestError as exc:

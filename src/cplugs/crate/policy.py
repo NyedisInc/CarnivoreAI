@@ -250,13 +250,6 @@ def line_mode(role: str, name: str) -> bool:
 
 
 def conversation_for(role: Optional[str], path: str, is_dir: bool, scope_ids: Sequence[str]) -> Optional[str]:
-    """The conversation an artifact belongs to, read from its own name: a transcript, copy or conversation folder by the
-    layout rule, a file-history folder by its name, a todo or a Codex rollout by the scope id its name carries. Pure.
-
-    Inputs: role (the artifact's role; None for a conversation folder); path (the artifact's path); is_dir; scope_ids
-      (every conversation id in scope). Output: the id, or None for a file that belongs to no conversation.
-    Example: conversation_for('todo', '/h/todos/c1-agent-c1.json', False, ['c1']) -> 'c1'
-    """
     name = os.path.basename(path)
     if role in (None, R_TRANSCRIPT, R_ORPHAN, *COPY_ROLES):
         found = cs.conversation_form(name, is_dir)

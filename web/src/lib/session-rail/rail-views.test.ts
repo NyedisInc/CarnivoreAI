@@ -20,10 +20,12 @@ import { RAIL_FIELD } from './rail-model';
 import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
 import { follow, keyIn, mountRails, unmountRails, written } from './rail-test-harness';
 
+// jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};
 
+/** The stored v2 value of a one-section rail. */
 const one = (...items: Record<string, unknown>[]) => ({ v: 2, sections: [{ items }] });
 
 function rightClick(el: HTMLElement): MouseEvent {
@@ -54,7 +56,7 @@ describe('the right-click view menu', () => {
     expect(looks.map((item) => item.getAttribute('aria-checked'))).toEqual(['true', 'false']);
   });
 
-  test('a widget with one face opens the same menu: no looks, the rest of the list', () => {
+  test('a widget with one face opens the same menu (item 685, Q2 a): no looks, the rest of the list', () => {
     follow(RAIL_FIELD, one({ widget: 'core.notes' }));
     const event = rightClick(keyIn('side', 'core.notes'));
     expect(event.defaultPrevented).toBe(true);
@@ -103,7 +105,7 @@ describe('the drawn view', () => {
 });
 
 describe('right-click on any key, in either mode', () => {
-  test('normal mode: every key opens its menu; settings wait for edit layout (Q3 b), the session | all switch does not', () => {
+  test('normal mode: every key opens its menu; settings wait for edit layout (Q3 b), the session | all switch does not (item 1048)', () => {
     follow(RAIL_FIELD, one({ widget: 'core.files' }, { widget: 'core.crosstalk' }, { widget: 'core.tasks' }));
     for (const id of ['core.files', 'core.crosstalk', 'core.tasks']) {
       expect(rightClick(keyIn('side', id)).defaultPrevented).toBe(true);

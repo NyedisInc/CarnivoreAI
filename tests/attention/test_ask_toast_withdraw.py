@@ -8,7 +8,7 @@ from typing import Optional
 
 import pytest
 
-from src.core.attention.registry_read import parse_registry_record
+from src.core.attention.registry_record import parse_registry_record
 from src.core.attention.transcript_facts import FACTS_FOUND, TranscriptFacts
 from src.core.attention_wiring import build_attention_watcher
 from src.core.sessions import toast_inbox as toast_inbox_module

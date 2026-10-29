@@ -266,6 +266,62 @@ describe('opening a project', () => {
         expect(payload.working_dir).toBe('/a');
     });
 
+    async function prefillOf(project: Record<string, unknown>, rows: RunningSessionRow[] = []): Promise<unknown> {
+        const host = fakeHost({ rows });
+        let seen: unknown = 'not asked';
+        host.chooseProvider = async (_d, _a, prefill) => {
+            seen = prefill;
+            return null;
+        };
+        await selectProject(project as never, host, t);
+        return seen;
+    }
+
+    test('the picker starts on the project name, unpinned', async () => {
+        expect(await prefillOf({ name: 'Carnivore', path: '/a' })).toEqual({ name: 'Carnivore', pinned: false });
+    });
+
+    test('a session source gets the next free name and its pinned state', async () => {
+        const rows = [row({ name: 'cloude_a', label: 'Carnivore' }), row({ name: 'cloude_b', label: 'Carnivore 2' })];
+        const project = { name: 'Carnivore', path: '/a', launch_from: { kind: 'session', name: 'Carnivore', pinned: true } };
+        expect(await prefillOf(project, rows)).toEqual({ name: 'Carnivore 3', pinned: true });
+    });
+
+    test('a task source gets a short form of its title', async () => {
+        const project = { name: 'p', path: '/a', launch_from: { kind: 'task', title: 'New agent: prefilled name and pinned box under the agent chooser' } };
+        const got = (await prefillOf(project)) as { name: string; pinned: boolean };
+        expect(got.name.length).toBeLessThanOrEqual(40);
+        expect(got.pinned).toBe(false);
+    });
+
+    test('no source item is an empty name, the server default', async () => {
+        expect(await prefillOf({ path: '/a' })).toEqual({ name: '', pinned: false });
+    });
+
+    test('the typed name becomes the label and a ticked box pins the new session', async () => {
+        const pinned: string[] = [];
+        const host = fakeHost({ pinSession: (n: string) => { pinned.push(n); } });
+        host.chooseProvider = async () => ({ name: 'Carnivore 2', pinned: true });
+        host.createSession = async (payload) => {
+            host.calls.push({ method: 'createSession', arg: payload });
+            return { tmux_session: 'carnivore_x' } as SessionLike;
+        };
+        await selectProject({ name: 'Carnivore', path: '/a' }, host, t);
+        const payload = host.calls.find((c) => c.method === 'createSession')?.arg as Record<string, unknown>;
+        expect(payload.label).toBe('Carnivore 2');
+        expect(payload.project_name).toBe('Carnivore');
+        expect(pinned).toEqual(['carnivore_x']);
+    });
+
+    test('an unticked box pins nothing', async () => {
+        const pinned: string[] = [];
+        const host = fakeHost({ pinSession: (n: string) => { pinned.push(n); } });
+        host.chooseProvider = async () => ({ name: '', pinned: false });
+        host.createSession = async () => ({ tmux_session: 'carnivore_y' } as SessionLike);
+        await selectProject({ name: 'Carnivore', path: '/a' }, host, t);
+        expect(pinned).toEqual([]);
+    });
+
     test('"already running" SWAPS: it detaches and retries, it does not refuse', async () => {
         const host = fakeHost({ createThrows: new Error('a session is already running') });
         let attempts = 0;

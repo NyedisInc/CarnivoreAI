@@ -1,8 +1,4 @@
 #!/bin/bash
-#
-#
-#
-#
 
 set -uo pipefail
 
@@ -80,7 +76,6 @@ if [ "${CURRENT}" = "${TAG}" ]; then
     exit 0
 fi
 
-#
 
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP_ROOT="${INSTALL_DIR}/.upgrade-backups"
@@ -99,7 +94,6 @@ confirm_or_die "Proceed with this upgrade?"
 
 require_clean_tree "${INSTALL_DIR}"
 
-#
 
 TRAIL_OPENED=0
 TRAIL_UUID=""

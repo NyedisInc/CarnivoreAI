@@ -9,6 +9,13 @@ import pytest
 from src.core.dev_tools import git_guard
 
 
+@pytest.fixture(autouse=True)
+def forget_cached_answers():
+    yield
+    git_guard._git_probe.drop()
+    git_guard._usr_bin_probe.drop()
+
+
 @pytest.fixture
 def stock_mac(monkeypatch):
     execs: list = []
@@ -53,8 +60,8 @@ def test_every_caller_degrades_without_running_git(stock_mac, monkeypatch, tmp_p
 
     monkeypatch.setattr(subprocess, "Popen", boom)
     monkeypatch.setattr(subprocess, "run", boom)
-    git_guard.git_available.__globals__["_cached"] = False
-    git_guard.git_available.__globals__["_checked_at"] = git_guard.time.monotonic()
+    monkeypatch.setattr(git_guard, "_probe", lambda: False)
+    git_guard._git_probe.drop()
 
     assert rules._git(tmp_path, ["rev-parse", "HEAD"]) == ""
     body_create.ensure_repo(str(tmp_path / "sysop"))
@@ -83,7 +90,7 @@ def test_a_hung_xcode_select_does_not_stall_concurrent_callers(monkeypatch):
     monkeypatch.setattr(git_guard.shutil, "which", lambda name: "/usr/bin/git")
     monkeypatch.setattr(git_guard, "_developer_dir_has_git", lambda d: False)
     monkeypatch.setattr(git_guard.subprocess, "run", hang)
-    git_guard.recheck.__globals__["_cached"] = None
+    git_guard._git_probe.drop()
     first = threading.Thread(target=git_guard.git_available)
     first.start()
     assert started.wait(2)
@@ -123,8 +130,8 @@ def test_the_remaining_user_action_callers_degrade_without_running_git(stock_mac
     monkeypatch.setattr(subprocess, "Popen", boom)
     monkeypatch.setattr(subprocess, "run", boom)
     monkeypatch.setattr(asyncio, "create_subprocess_exec", boom)
-    git_guard.git_available.__globals__["_cached"] = False
-    git_guard.git_available.__globals__["_checked_at"] = git_guard.time.monotonic()
+    monkeypatch.setattr(git_guard, "_probe", lambda: False)
+    git_guard._git_probe.drop()
 
     assert secret_scan._git_tracked_files(tmp_path) is None
     with pytest.raises(project_worktree.GitUnavailable):
@@ -135,3 +142,93 @@ def test_the_remaining_user_action_callers_degrade_without_running_git(stock_mac
         git_check._git(str(tmp_path), "status")
     with pytest.raises(definition.SwarmFileError):
         definition.exclude_file(tmp_path)
+
+
+def test_usr_bin_git_is_asked_about_itself_not_about_path(stock_mac, monkeypatch):
+    monkeypatch.setattr(git_guard.shutil, "which", lambda name: "/opt/homebrew/bin/git")
+    assert git_guard.recheck() is True
+    assert git_guard.usr_bin_git_available() is False
+    monkeypatch.setattr(git_guard, "_developer_dir_has_git", lambda d: d == "/Library/Developer/CommandLineTools")
+    git_guard.recheck()
+    assert git_guard.usr_bin_git_available() is True
+    assert not [a for a in stock_mac if not a[0].endswith("xcode-select")]
+
+
+def test_usr_bin_git_answer_is_cached_so_five_calls_probe_once(stock_mac):
+    git_guard.recheck()
+    stock_mac.clear()
+    for _ in range(5):
+        git_guard.usr_bin_git_available()
+    assert len(stock_mac) <= 1
+
+
+def test_usr_bin_git_ignores_developer_dir(stock_mac, monkeypatch):
+    monkeypatch.setenv("DEVELOPER_DIR", "/somewhere/dev")
+    monkeypatch.setattr(git_guard, "_developer_dir_has_git", lambda d: d == "/somewhere/dev")
+    assert git_guard.recheck() is True
+    assert git_guard.usr_bin_git_available() is False
+
+
+def test_two_threads_on_a_cold_probe_both_get_the_real_answer():
+    import threading
+    import time
+
+    started, results = threading.Event(), []
+
+    def slow_probe() -> bool:
+        started.set()
+        time.sleep(0.3)
+        return True
+
+    probe = git_guard._TtlProbe(slow_probe)
+    first = threading.Thread(target=lambda: results.append(probe.get()))
+    first.start()
+    assert started.wait(2)
+    results.append(probe.get())
+    first.join(5)
+    assert results == [True, True]
+    assert probe._probe_lock.acquire(blocking=False)
+    probe._probe_lock.release()
+
+
+def test_a_hung_cold_probe_does_not_stall_a_second_caller_forever(monkeypatch):
+    import threading
+
+    monkeypatch.setattr(git_guard, "_COLD_WAIT_S", 0.2)
+    started, release = threading.Event(), threading.Event()
+
+    def hung_probe() -> bool:
+        started.set()
+        release.wait(5)
+        return True
+
+    probe = git_guard._TtlProbe(hung_probe)
+    first = threading.Thread(target=probe.get)
+    first.start()
+    assert started.wait(2)
+    assert probe.get() is False
+    release.set()
+    first.join(5)
+
+
+def test_an_expired_answer_is_still_served_at_once_while_a_probe_hangs(monkeypatch):
+    import threading
+    import time
+
+    started, release = threading.Event(), threading.Event()
+
+    def hung_probe() -> bool:
+        started.set()
+        release.wait(5)
+        return False
+
+    probe = git_guard._TtlProbe(hung_probe)
+    probe._cached, probe._checked_at = True, time.monotonic() - 2 * git_guard._YES_TTL_S
+    first = threading.Thread(target=probe.get)
+    first.start()
+    assert started.wait(2)
+    began = time.monotonic()
+    assert probe.get() is True
+    assert time.monotonic() - began < git_guard._COLD_WAIT_S / 2
+    release.set()
+    first.join(5)

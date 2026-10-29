@@ -156,7 +156,7 @@ def _measure(tab: object, html: str, width: int) -> dict:
 
 @pytest.mark.parametrize("width", [w for w in ROW_WIDTHS if w >= 220])
 def test_a_quiet_row_keeps_its_timers_icon(page: object, width: int) -> None:
-    got = _measure(page, _row("Garden Planner 2026", ["timers"], cup=False), width)
+    got = _measure(page, _row("Fantasy Football 2026", ["timers"], cup=False), width)
     assert got["painted"] == {"timers": True}, (
         f"a {width}px row hid its only icon although it had room: {got}")
     assert got["pin"] and got["kebab"], got

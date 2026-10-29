@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Sequence, Tuple
 
+from src.core.attention.registry_record import format_version
 from src.core.sessions.agent_update_warn import warn_once
 
 DEFAULT_INSTALLED_CLAUDE_LINK = os.path.expanduser("~/.local/bin/claude")
@@ -86,21 +87,10 @@ def _newest_version_in(directory: str) -> Optional[str]:
 def version_text(version: Optional[Sequence[int]]) -> Optional[str]:
     if version is None or len(version) != 3:
         return None
-    return ".".join(str(part) for part in version)
+    return format_version(version)
 
 
 def _proc_pidpath(pid: int) -> Optional[str]:
-    """The absolute path of ``pid``'s own executable, via ``libproc`` (macOS).
-
-    Description: one ``ctypes`` call, no subprocess. Fails soft (returns
-      None) on a missing library, a dead or unauthorized pid, or a path
-      too long for the buffer - the same refusal shape as every other
-      process probe in this codebase (gotcha 11: a probe that could not
-      run is not evidence of anything).
-    Inputs: pid (int).
-    Output: str | None.
-    Example: _proc_pidpath(38011) -> "/Users/example/.local/share/claude/versions/2.1.283"
-    """
     try:
         libproc = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
     except OSError as exc:
@@ -133,6 +123,8 @@ def running_claude_version(
         return version
     if path:
         warn_once("agent_update_running_path_unversioned", path, pid=pid, path=path)
+        _RUNNING_VERSION_CACHE.pop(pid, None)
+        return None
     return _RUNNING_VERSION_CACHE.get(pid)
 
 
@@ -155,20 +147,6 @@ def agent_update_status(
     running_reader: Callable[[int], Optional[str]] = running_claude_version,
     installed_reader: Callable[[], Optional[str]] = installed_claude_version,
 ) -> Optional[AgentUpdate]:
-    """The ``agent_update`` wrapper fact for one row, or None (not measurable).
-
-    Description: null when there is no known claude pid for this row, or
-      either version could not be read. Both readers are injected so this
-      stays pure for tests: no filesystem, no ctypes, no session manager.
-    Inputs: pid (int | None) - the session's registered claude pid, from
-      the same registry record the attention watcher already read.
-      registry_version (str | None) - that record's ``version`` as
-      ``x.y.z`` text (:func:`version_text`); preferred over the path.
-      running_reader, installed_reader - injectable; default to the real
-      probes.
-    Output: AgentUpdate | None.
-    Example: agent_update_status(pid=38011) -> AgentUpdate("2.1.283", "2.1.284", True)
-    """
     if pid is None:
         return None
     running = registry_version or running_reader(pid)

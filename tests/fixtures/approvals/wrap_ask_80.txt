@@ -1,0 +1,21 @@
+ ▐▛███▛█   Claude Code v2.1.285
+▝▜██████▀  rig-model[1m] · API Usage Billing
+ ▝▝   ▝▝   /…/var/folders/zz/0000000000000000000000000000gp/T/tmprigwkkkk/cw
+
+
+❯ RIG:ask80 please
+────────────────────────────────────────────────────────────────────────────────
+ ☐ Env
+
+│ Which deployment environment should the release candidate be promoted to first
+│ this week?
+
+❯ 1. Staging cluster in the east region
+     Safest option, mirrors production traffic patterns closely
+  2. Production canary at five percent
+     Fastest feedback but touches real customers right away
+  3. Type something.
+────────────────────────────────────────────────────────────────────────────────
+  4. Chat about this
+
+Enter to select · ↑/↓ to navigate · Esc to cancel

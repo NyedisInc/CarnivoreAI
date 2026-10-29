@@ -84,7 +84,7 @@ def _wanted(scope: str, row: store.LiveFile) -> Optional[bool]:
     if row.base_point_id == K.VAULT_MARK:
         try:
             head = open_source(row.path, row.base_point_id, row.conversation_id, row.file_kind).read(0, TS.ENTRYPOINT_SCAN_BYTES)
-        except OSError as exc:  # no longer holds
+        except OSError as exc:
             logger.warning("deepsearch_scope_vault_head_unreadable", conversation_id=row.conversation_id, error=str(exc)[:200])
             return None
         return in_scope(scope, spec, head)

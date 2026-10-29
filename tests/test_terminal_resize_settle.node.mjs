@@ -1,3 +1,4 @@
+// `ESC[?1000h ESC[?1002h ESC[?1003h ESC[?1006h ESC[?2026h ESC[2J ESC[H`
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -34,6 +35,8 @@ function loadSettle() {
     return sandbox.TerminalResizeSettle;
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 await test('positive control: the module loads', () => {
     const s = loadSettle();
@@ -118,6 +121,8 @@ await test('the culprit description never throws and never blocks', () => {
         'the log must name what was on screen, and skip #terminal itself');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 function ruleBody(selector) {
     const css = fs.readFileSync(path.join(CLIENT, 'css', 'styles.css'), 'utf8');
@@ -154,6 +159,9 @@ await test('.terminal-container still fills the available height with nothing ov
         'the terminal container must still fill the space it is given');
 });
 
+// ---------------------------------------------------------------------
+// there is nothing
+// ---------------------------------------------------------------------
 
 await test('.info has no CSS rule any more, and neither does the token that reserved its height', () => {
     assert.equal(ruleBody('.info'), '', 'the bar was removed; its CSS rule must not linger');
@@ -177,6 +185,9 @@ await test('the bottom-bar watch is gone from terminal-layout.js - nothing left 
     assert.doesNotMatch(src, /TERM-BAR/, 'its log tag must not linger either');
 });
 
+// ---------------------------------------------------------------------
+// Load order.
+// ---------------------------------------------------------------------
 
 await test('index.html loads the guard BEFORE terminal-layout.js', () => {
     const html = fs.readFileSync(path.join(CLIENT, 'index.html'), 'utf8');
@@ -190,6 +201,37 @@ await test('terminal-layout.js actually consults the guard on both paths', () =>
     const src = fs.readFileSync(path.join(CLIENT, 'js', 'terminal-layout.js'), 'utf8');
     assert.match(src, /settleMsFor\(/, 'requestFit must ask how long to wait');
     assert.match(src, /skip_transient/, 'flush must honour the verdict');
+});
+
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+
+function requestFitReasons() {
+    const found = new Set();
+    const walk = (dir) => {
+        for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+            const full = path.join(dir, e.name);
+            if (e.isDirectory()) { if (e.name !== 'node_modules') walk(full); continue; }
+            if (!/\.(js|ts|svelte)$/.test(e.name) || /\.(test|spec)\./.test(e.name)) continue;
+            const text = fs.readFileSync(full, 'utf8');
+            for (const m of text.matchAll(/\brequestFit\(\s*(['"])([^'"]+)\1/g)) found.add(m[2]);
+        }
+    };
+    walk(path.join(CLIENT, 'js'));
+    walk(path.join(ROOT, 'web', 'src'));
+    const foot = fs.readFileSync(path.join(ROOT, 'web', 'src', 'lib', 'terminal-foot-bar', 'mount-terminal-foot.ts'), 'utf8');
+    const id = foot.match(/TERMINAL_FOOT_CONTAINER_ID\s*=\s*'([^']+)'/);
+    if (id) found.add(id[1]);
+    return [...found];
+}
+
+await test('every requestFit reason is announced or the ResizeObserver tag', () => {
+    const s = loadSettle();
+    const reasons = requestFitReasons();
+    assert.ok(reasons.includes('ResizeObserver') && reasons.includes('agent-drawer-dock') && reasons.includes('terminal-foot-bar'),
+        'the scan found nothing, so the check below is vacuous: ' + reasons.join(','));
+    const orphans = reasons.filter((r) => r !== 'ResizeObserver' && !s.isAnnounced(r));
+    assert.deepEqual(orphans, [], 'these reasons get observer treatment (500 ms settle, skippable): ' + orphans.join(','));
 });
 
 console.log(`\n${passes} passed, ${failures} failed`);

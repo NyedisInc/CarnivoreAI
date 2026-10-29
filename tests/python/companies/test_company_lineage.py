@@ -47,24 +47,24 @@ def test_lineage_rules_are_pure():
 
 
 def test_routes_create_nest_refuse_and_delete_moves_children_up(client):  # noqa: F811
-    initech = client.post(BASE, json={"name": "INITECH"}).json()
-    assert initech["parent_id"] is None and initech["hq_project_id"] is None
-    childco = client.post(BASE, json={"name": "Brightfund", "parent_id": initech["id"]}).json()
-    assert childco["parent_id"] == initech["id"]
-    sub = client.post(BASE, json={"name": "Support", "parent_id": childco["id"]}).json()
+    imc = client.post(BASE, json={"name": "IMC"}).json()
+    assert imc["parent_id"] is None and imc["hq_project_id"] is None
+    amf = client.post(BASE, json={"name": "Amerifund", "parent_id": imc["id"]}).json()
+    assert amf["parent_id"] == imc["id"]
+    sub = client.post(BASE, json={"name": "Support", "parent_id": amf["id"]}).json()
     assert client.post(BASE, json={"name": "Nope", "parent_id": 4242}).status_code == 404
-    cycle = client.patch(f"{BASE}/{initech['id']}", json={"parent_id": sub["id"]})
+    cycle = client.patch(f"{BASE}/{imc['id']}", json={"parent_id": sub["id"]})
     assert cycle.status_code == 409 and "cannot be its parent" in cycle.json()["detail"]
     deep = client.post(BASE, json={"name": "L4", "parent_id": sub["id"]}).json()
     too_deep = client.post(BASE, json={"name": "L5", "parent_id": deep["id"]})
     assert too_deep.status_code == 422 and "at most 4 levels" in too_deep.json()["detail"]
-    assert client.patch(f"{BASE}/{childco['id']}", json={"parent_id": None}).json()["parent_id"] is None
-    assert client.patch(f"{BASE}/{childco['id']}", json={"parent_id": initech["id"]}).status_code == 200
-    gone = client.delete(f"{BASE}/{childco['id']}").json()
+    assert client.patch(f"{BASE}/{amf['id']}", json={"parent_id": None}).json()["parent_id"] is None
+    assert client.patch(f"{BASE}/{amf['id']}", json={"parent_id": imc["id"]}).status_code == 200
+    gone = client.delete(f"{BASE}/{amf['id']}").json()
     assert gone == {"deleted": True, "orphaned": 0, "children_moved": 1}
     listed = {c["name"]: c for c in client.get(BASE).json()["companies"]}
-    assert listed["Support"]["parent_id"] == initech["id"] and listed["L4"]["parent_id"] == sub["id"]
-    gone = client.delete(f"{BASE}/{initech['id']}").json()
+    assert listed["Support"]["parent_id"] == imc["id"] and listed["L4"]["parent_id"] == sub["id"]
+    gone = client.delete(f"{BASE}/{imc['id']}").json()
     assert gone["children_moved"] == 1
     assert {c["name"]: c["parent_id"] for c in client.get(BASE).json()["companies"]}["Support"] is None
 

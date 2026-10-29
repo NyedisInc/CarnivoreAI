@@ -11,7 +11,7 @@ class WrapperNotFoundError(ValueError):
 
 
 class DuplicateWrapperError(ValueError):
-    """A wrapper with that id already exists."""
+    pass
 
 
 class ReservedWrapperIdError(ValueError):

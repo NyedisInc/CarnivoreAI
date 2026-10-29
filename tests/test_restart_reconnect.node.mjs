@@ -1,3 +1,4 @@
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -135,6 +136,9 @@ function makeSandbox({
     vm.createContext(context);
     vm.runInContext(watchSrc, context, { filename: 'server-restart-watch.js' });
     vm.runInContext(policySrc, context, { filename: 'terminal-reconnect-policy.js' });
+    // terminal.js's boot line is one call into the terminal client
+    // factory, so the factory has to be in this sandbox first, exactly
+    // as index.html loads it first.
     vm.runInContext(fs.readFileSync(
         path.join(CLIENT_JS, 'terminal-client-factory.js'), 'utf8'),
         context, { filename: 'terminal-client-factory.js' });
@@ -198,6 +202,8 @@ function makeSandbox({
     };
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('outage signature excludes 4400/4401/4404, includes ordinary close codes', async () => {
     const sb = makeSandbox();
     const Watch = sb.context.window.ServerRestartWatch;
@@ -213,6 +219,8 @@ await test('outage signature excludes 4400/4401/4404, includes ordinary close co
     assert.equal(Watch.isOutageCloseCode(undefined), false);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('4400 close never triggers the health loop', async () => {
     const sb = makeSandbox({ failCount: Infinity });
 
@@ -224,6 +232,8 @@ await test('4400 close never triggers the health loop', async () => {
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('server restart: polls health until it answers, then re-adopts by tmux name', async () => {
     const sb = makeSandbox({ failCount: 3 });
 
@@ -250,6 +260,8 @@ await test('server restart: polls health until it answers, then re-adopts by tmu
         `expected the server-back status, got ${JSON.stringify(sb.statuses)}`);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('server still answering: falls back to the ordinary bounded retry', async () => {
     const sb = makeSandbox({ failCount: 0 });
 
@@ -262,6 +274,8 @@ await test('server still answering: falls back to the ordinary bounded retry', a
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('deliberately detached session is not revived', async () => {
     const sb = makeSandbox({ failCount: Infinity });
     sb.terminal.sessionActive = false;
@@ -276,6 +290,8 @@ await test('deliberately detached session is not revived', async () => {
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('detach during the health wait aborts before re-adopting', async () => {
     let sb = null;
     sb = makeSandbox({
@@ -294,6 +310,8 @@ await test('detach during the health wait aborts before re-adopting', async () =
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('health polling gives up at the ceiling without creating anything', async () => {
     const sb = makeSandbox({ failCount: Infinity });
     const Watch = sb.context.window.ServerRestartWatch;
@@ -313,6 +331,8 @@ await test('health polling gives up at the ceiling without creating anything', a
     assert.equal(sb.terminal._restartWatchActive, false, 'the watch must not stay armed');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('4404 close still uses the existing by-name recovery, not the health loop', async () => {
     const sb = makeSandbox({ failCount: Infinity });
     let byName = 0;
@@ -325,6 +345,8 @@ await test('4404 close still uses the existing by-name recovery, not the health 
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('adopt guard refuses a name this tab is not bound to, and refuses an empty name', async () => {
     const sb = makeSandbox();
     assert.throws(() => sb.terminal._assertAdoptTargetUnchanged('cloude_some-other-project'),
@@ -335,6 +357,8 @@ await test('adopt guard refuses a name this tab is not bound to, and refuses an 
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('server back but tmux session gone: ends the session, creates nothing', async () => {
     const sb = makeSandbox({ failCount: 2, attachable: [], live: [] });
 
@@ -347,6 +371,8 @@ await test('server back but tmux session gone: ends the session, creates nothing
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('a tab client (not the page owner) ends quietly: no session-destroyed', async () => {
     const sb = makeSandbox({ failCount: 2, attachable: [], live: [], pageOwner: false });
 
@@ -360,6 +386,8 @@ await test('a tab client (not the page owner) ends quietly: no session-destroyed
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('client offline: sends no probe, says so honestly, recovers when the link returns', async () => {
     const online = { value: false };
     const sb = makeSandbox({ failCount: 0, online });
@@ -381,6 +409,8 @@ await test('client offline: sends no probe, says so honestly, recovers when the 
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('offline time does not consume the server-unreachable ceiling', async () => {
     const sb = makeSandbox();
     const online = { value: false };
@@ -400,6 +430,8 @@ await test('offline time does not consume the server-unreachable ceiling', async
     assert.equal(health.calls.length, 1, 'exactly one probe, sent after the link returned');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('adopt guard blocks a re-adopt when the tab rebound during the wait', async () => {
     let sb = null;
     sb = makeSandbox({
@@ -420,6 +452,8 @@ await test('adopt guard blocks a re-adopt when the tab rebound during the wait',
     sb.assertNoCreate();
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('lazy _serverRestartWatch() builds a real watch from ambient globals and memoizes it', async () => {
     const sb = makeSandbox({ failCount: 0, lazyWatch: true });
     const Watch = sb.context.window.ServerRestartWatch;
@@ -437,6 +471,8 @@ await test('lazy _serverRestartWatch() builds a real watch from ambient globals 
     assert.equal(await built.probe(), true, 'probes through the ambient global fetch');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 await test('a close with no pre-built watch constructs one and takes the live-server fallback', async () => {
     const sb = makeSandbox({ failCount: 0, lazyWatch: true });
 

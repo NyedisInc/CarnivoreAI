@@ -1,3 +1,4 @@
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,10 +12,12 @@ let failures = 0;
 let passes = 0;
 const queue = [];
 
+/** Queue one named assertion block. Inputs: name, fn. Output: void. */
 function test(name, fn) {
     queue.push([name, fn]);
 }
 
+/** Run every queued test in order. Inputs: none. Output: Promise<void>. */
 async function runQueue() {
     for (const [name, fn] of queue) {
         try {
@@ -106,6 +109,7 @@ test('TERMINAL.JS ACTUALLY WRITES IT - all three transitions', () => {
 });
 
 test('THE READERS ACTUALLY READ IT - both session surfaces', () => {
+    // the legacy twin
     const shell = (f) => fs.readFileSync(
         path.join(__dirname, '..', 'web', 'src', 'lib', 'sidebar-shell', f), 'utf8');
     assert.ok(shell('row-host.ts').includes('SessionTransport'),
@@ -118,11 +122,6 @@ test('THE READERS ACTUALLY READ IT - both session surfaces', () => {
             'running-host.ts'), 'utf8');
     assert.ok(host.includes('SessionTransport'),
         'the running-sessions host must read the transport state');
-    const row = fs.readFileSync(
-        path.join(__dirname, '..', 'web', 'src', 'lib', 'launchpad',
-            'RunningSessionRow.svelte'), 'utf8');
-    assert.ok(/<SessionFace[^>]*transport=\{[^}]*transportFor/.test(row),
-        'the running-sessions card must pass it into the LED');
 });
 
 test('the module is SERVED - a file nobody loads is dead code', () => {
@@ -131,6 +130,7 @@ test('the module is SERVED - a file nobody loads is dead code', () => {
     assert.ok(html.includes('/static/js/session-transport.js'));
     const me = html.indexOf('<script src="/static/js/session-transport.js"></script>');
     assert.ok(me > -1, 'the script tag itself is present');
+    // the home screen
     for (const after of ['<script src="/static/js/terminal.js"></script>',
         '<script type="module" src="/static/dist/app.js"></script>']) {
         const at = html.indexOf(after);

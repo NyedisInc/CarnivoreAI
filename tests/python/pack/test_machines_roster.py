@@ -14,7 +14,7 @@ from src.core.pack.machines.roster import PeerInfo
 from src.core.pack.reserve import model as reserve_model
 
 IDS = {"a": "install-a", "b": "install-b", "c": "install-c"}
-LABELS = {"a": "mac", "b": "hosta", "c": "third"}
+LABELS = {"a": "mac", "b": "studio", "c": "third"}
 
 
 class FakeCollector:

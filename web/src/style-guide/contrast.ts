@@ -1,15 +1,3 @@
-/**
- * The design base's contrast roles and the WCAG arithmetic the style guide's "contrast" section reports with
- * (issue #2033, slice 1; plan section 5).
- *
- * WHAT THIS IS. A ROLE matrix, not a list of hand-picked screens: every text role on every ground role, plus the
- * non-text pairs a base system must guarantee (a control's boundary, the accent's own ink, a state layer's step).
- * The guide measures each pair on REAL elements under a theme scope (`ContrastMatrix.svelte`), so `color-mix` and
- * `oklch(from ...)` resolve exactly as the browser paints them; this file holds only the data and the pure math.
- *
- * REPORT ONLY. Nothing here fails a build or a test suite. A failing pair is flagged on the page for a person to
- * read; the gate that holds bundled themes to these minimums is a later slice (plan section 7, G2).
- */
 
 export interface Role {
     token: string;
@@ -113,16 +101,6 @@ export function verdict(ratio: number, kind: PairKind, min: number): Verdict {
     return 'fail';
 }
 
-/**
- * The inline custom properties that paint one theme onto a scope, with every name some OTHER theme sets reset to
- * `initial` so the scope reads the base's own fallback for it instead of inheriting the page's theme (the #995
- * leak, measured the way a GLOBAL paint of that theme would resolve).
- *
- * Inputs: cssVars (Record<string, string>) - the theme's manifest values; allNames (Iterable<string>) - every name
- *   any listed theme sets. Output: Record<string, string>.
- * Example: scopeVars({'--color-fg': '#fff'}, ['--color-fg', '--color-bg-hover'])
- *   // {'--color-fg': '#fff', '--color-bg-hover': 'initial'}
- */
 export function scopeVars(cssVars: Record<string, string>, allNames: Iterable<string>): Record<string, string> {
     const out: Record<string, string> = {};
     for (const name of allNames) out[name] = 'initial';

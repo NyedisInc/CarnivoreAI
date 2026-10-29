@@ -1,12 +1,3 @@
-"""
-There is no fixed body cap by default. Before a new body starts (a spawn, or a wake that needs a body) the server measures the
-machine: the CPU busy cores (measured from the CPU tick counters, ``machine_stats/cpu_busy.py``; the load average only
-when no tick delta exists yet, because it counts I/O-blocked threads and read far above the core count on a mostly idle machine), and the memory still available. When it cannot take another body the answer
-is "system is pegged, try later" with a ``retry_after``. A measure that cannot be taken is unknown, and unknown never blocks
-(the capacity governor's rule, ``docs/swarm-cards.md`` 10). The live body count rides along in the sentence so the caller sees
-what is already running. Pure stdlib: ``os.getloadavg``, ``os.cpu_count``, ``sysctlbyname`` through ``ctypes`` on macOS and
-``/proc/meminfo`` on Linux, so a check forks nothing.
-"""
 
 from __future__ import annotations
 

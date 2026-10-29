@@ -1,66 +1,3 @@
-"""Version and release self-check routes.
-
-Exposes the installed release tag and the cached result of the background
-update check. Both are cheap reads: the update endpoint NEVER performs a
-network call in the request path, it returns whatever the background thread
-last stored, with its timestamp, so a stale answer is visibly stale.
-
-CONSUMER CONTRACT. ``GET /api/v1/version`` returns exactly this shape, and it
-is the documented feed for the home bottom bar's version chip:
-
-    {
-      "version": "0.8.1",          # installed tag, "" if it did not resolve
-      "update": {
-        "status": "current" | "update_available" | "unknown",
-        "current_version": "0.8.1",
-        "latest_version": "0.9.0", # "" unless status is update_available
-        "remote": "https://github.com/...",
-        "checked_at": 1755000000.0,  # unix seconds; 0 means never checked
-        "reason": "",              # non-empty ONLY when status is unknown
-        "upgrade_command": "open https://github.com/.../releases/latest"
-      }
-    }
-
-``update`` IS ``null`` WHEN THE TAG CHECK DOES NOT APPLY: a packaged install (no ``.git`` under the source root, no
-``updates.remote``) updates through the desktop app's updater, so nothing asked a remote. ``null`` means "not
-applicable", never "up to date"; once a packaged app reports, its verdict fills the block (see ``_folded_update``).
-
-THE PATH IS ``/api/v1/version`` AND THERE IS NO SECOND ONE. An explicit
-three-value ``status`` string cannot be accidentally collapsed to two the way
-``null`` versus ``false`` can.
-
-THE COPY, all three states, lowercase to match the rest of the ui:
-
-``unknown`` must render as its own thing. It is NOT "up to date". Anything
-that collapses it into the current state is a false green.
-
-THE ``data`` BLOCK, added by feat/datastore-and-trail, is ADDITIVE - nothing
-above it was removed. It answers a DIFFERENT question from ``version``:
-``version`` says which CODE is running, ``data`` says which DATA version this
-install's state is at. A user attempting a rollback needs both answered at
-once, because rolling back code without knowing the data version is exactly
-how old code ends up reading a newer schema.
-
-``state_dir_note`` IS ADDITIVE TOO. None on every steady-state boot - a
-fresh install, an install already living under the current-named state
-directory, or one with an explicit CLOUDE_STATE_DIR override. Only set to
-a one-sentence string when ``state_dir()`` (src/config/state_paths.py)
-fell back to running out of the legacy-named directory because its own
-rename attempt could not complete; see
-``state_paths.state_dir_legacy_note()``.
-
-TWO FIELDS, BECAUSE THERE ARE TWO FACTS. ``verdict`` is what the check
-found; ``freshness`` is whether anybody has looked recently. ``verdict`` is
-only ever "ok" when a check actually ran AND its result is inside the
-freshness window, so "never checked" reports ``cannot_determine`` and can
-never be mistaken for a clean bill of health. That collapse would be a
-false green manufactured by the check meant to prevent one.
-
-A cached ``failed`` verdict ALSO degrades ``data.status`` to
-``degraded_db_unreadable``, exactly as the per-request pragma used to. A
-``cannot_determine`` verdict does not touch ``data.status`` at all: not
-having looked is not a fault.
-"""
 
 from __future__ import annotations
 
@@ -98,19 +35,6 @@ def set_datastore_state(state: Optional[DatastoreState]) -> None:
 
 
 def _datastore_block() -> dict:
-    """Build the ``data`` block, re-probing the database right now.
-
-    Description: never raises - a status endpoint that 500s tells the user
-      less than one that says "I could not read it". Any unexpected error
-      is converted by live_state into the named unreachable verdict.
-
-      THE RE-PROBE IS CHEAP ON PURPOSE: one connect, one small SELECT and
-      one read of a small JSON file. No pragma walks the database here.
-      The ``integrity`` sub-block is the cached verdict of the daily
-      background check plus its age - see this module's docstring.
-    Inputs: none.
-    Output: dict - see this module's docstring for the shape.
-    """
     from src.config import settings, state_paths
 
     try:

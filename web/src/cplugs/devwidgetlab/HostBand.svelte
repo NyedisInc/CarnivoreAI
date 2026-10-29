@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
+  import { Segmented, Select } from '../sdk/ui';
   import type { FrameReport, LabHost, LabIcon, SidebarView } from '../sdk/widget-lab';
   import { frameVerdict, type FitTable } from './lab-model';
   import { dockBox, drawnWidth, sizesOnShow } from './dock-box';
@@ -37,11 +38,9 @@
   /* the real left sidebar */
   const switches = $derived(docked || isLeft ? [] : host.sizes.filter((one) => MAIN_SIZES.includes(one.name)));
   const more = $derived(docked || isLeft ? [] : host.sizes.filter((one) => !MAIN_SIZES.includes(one.name)));
-  let moreOpen = $state(false);
   const lit = $derived(drawn[0]?.name ?? '');
 
   function choose(name: string): void {
-    moreOpen = false;
     onsize(host.zone, name);
   }
   const bandDock = $derived(host.zone === 'drawer' ? dock : undefined);
@@ -53,20 +52,14 @@
     <span class="dwl-host-name">{host.zone === 'drawer' ? t(`cplug.devwidgetlab.dock.${dock}`) : t(`cplug.devwidgetlab.host.${host.zone}`)}</span>
     {#if switches.length + more.length > 1}
       <div class="dwl-band-sizes" role="group" aria-label={t('cplug.devwidgetlab.size')}>
-        {#each switches as one (one.name)}
-          <button type="button" class="oc-btn oc-btn--sm dwl-size-key" aria-pressed={lit === one.name} data-on={lit === one.name ? 'yes' : 'no'} data-size={one.name}
-            onclick={() => choose(one.name)}>{one.name}</button>
-        {/each}
+        <Segmented label={t('cplug.devwidgetlab.size')} value={lit} onchange={choose}
+          options={switches.map((one) => ({ value: one.name, label: one.name, attrs: { 'data-size-name': one.name } }))} />
         {#if more.length > 0}
-          <details class="dwl-size-more" bind:open={moreOpen} data-lit={more.some((one) => one.name === lit) ? 'yes' : 'no'}>
-            <summary class="oc-btn oc-btn--sm">{more.some((one) => one.name === lit) ? lit : t('cplug.devwidgetlab.sizes.more_menu')}</summary>
-            <div class="dwl-size-more-list">
-              {#each more as one (one.name)}
-                <button type="button" class="oc-btn oc-btn--sm dwl-size-key" aria-pressed={lit === one.name} data-on={lit === one.name ? 'yes' : 'no'} data-size={one.name}
-                  onclick={() => choose(one.name)}>{one.name}</button>
-              {/each}
-            </div>
-          </details>
+          <Select size="sm" data-size-more data-lit={more.some((one) => one.name === lit) ? 'yes' : 'no'} aria-label={t('cplug.devwidgetlab.sizes.more_menu')}
+            value={more.some((one) => one.name === lit) ? lit : ''} onchange={(event) => choose(event.currentTarget.value)}>
+            <option value="" disabled>{t('cplug.devwidgetlab.sizes.more_menu')}</option>
+            {#each more as one (one.name)}<option value={one.name} data-size-name={one.name}>{one.name}</option>{/each}
+          </Select>
         {/if}
       </div>
     {/if}

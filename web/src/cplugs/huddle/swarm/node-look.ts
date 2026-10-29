@@ -39,10 +39,6 @@ export function shapeFor(item: FloorItem): HomeShape {
   return own && own in HOME_SHAPES ? HOME_SHAPES[own as HomeShapeName] : homeShapeOf(item.agent?.rank ?? item.rank);
 }
 
-/**
- * A node's tile background (the node menu, #1452): its series slot mixed toward transparent so the body still reads on it, or
- * null for none. Tokens only. Inputs: item. Output: CSS color | null. Example: backgroundFor(item) // 'color-mix(... var(--oc-series-3) ...)'
- */
 export function backgroundFor(item: FloorItem): string | null {
   return tileCss(item.ordinary ? null : item.agent?.tile_bg);
 }

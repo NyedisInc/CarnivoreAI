@@ -17,7 +17,7 @@ from src.core.mcp import beast_mode, pending, tools  # noqa: E402
 from src.core.mcp.caller import AgentCaller  # noqa: E402
 from tests.python.beast_mode.grid import arm as arm_beast  # noqa: E402
 
-ASLEEP_UUID = "2c1d6510-966a-4ef2-8a91-bb3f0dc3b2dd"
+ASLEEP_UUID = "12d67d84-9428-4105-90d0-12b01f2d8670"
 PANE = AgentCaller("ses_a", "cloude_a", "ses_a")
 READ_ONLY = AgentCaller("ses_a", "cloude_a", "ses_a", scope="read")
 

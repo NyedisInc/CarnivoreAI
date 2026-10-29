@@ -22,7 +22,6 @@ _COLUMNS = ("grant_id, peer_install_id, public_key, fid, label, scopes, remote_g
 
 
 class GrantError(Exception):
-    """A grant could not be made or found. ``code`` is the wire code."""
 
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
@@ -68,15 +67,6 @@ def decode_public_key(public_key: object) -> bytes:
 def create_grant(conn: sqlite3.Connection, *, peer_install_id: str, public_key: str, label: str,
                  scopes: Tuple[str, ...] = (SCOPE_SESSIONS,), remote_grant_id: Optional[str] = None,
                  grant_id: Optional[str] = None) -> Grant:
-    """Issue a grant to one peer; one live grant per peer install id.
-
-    Inputs: the peer's install id, its public key (b64url), a label (trimmed to 64),
-      scopes, the grant id the peer issued to us when known, and ``grant_id`` when the
-      caller had to name it before the peer's key was known (the pairing driver).
-    Output: Grant. Raises: GrantError - ``public_key_invalid`` / ``scope_unknown`` /
-      ``peer_id_invalid`` / ``grant_exists`` (a live grant for that peer already exists).
-    Example: create_grant(conn, peer_install_id=iid, public_key=pk, label="hosta")
-    """
     fid = fid_for(decode_public_key(public_key))
     if not peer_install_id or len(peer_install_id) > 64 or not peer_install_id.isprintable():
         raise GrantError("peer_id_invalid", "the peer install id is not usable")

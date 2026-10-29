@@ -13,8 +13,8 @@ async function load(envelope: Record<string, unknown>) {
 
 const LIVE = [
     { name: 'carnivore_Mac', session_uuid: 'U-MAC' },
-    { name: 'carnivore_NFLOW', session_uuid: 'U-NFLOW' },
-    { name: 'carnivore_Kitchen', session_uuid: 'U-H' },
+    { name: 'carnivore_N8N', session_uuid: 'U-N8N' },
+    { name: 'carnivore_Hockey', session_uuid: 'U-H' },
 ];
 
 describe('the rebind', () => {
@@ -24,13 +24,13 @@ describe('the rebind', () => {
     });
 
     it('cloude_* pins against live carnivore_* rows come back pinned, in the same order', async () => {
-        const { S, R, storage } = await load({ v: 1, pinned: ['cloude_NFLOW', 'cloude_Mac'],
-            order: ['cloude_NFLOW', 'cloude_Kitchen', 'cloude_Mac', 'cloude_gone'], collapsed: [] });
+        const { S, R, storage } = await load({ v: 1, pinned: ['cloude_N8N', 'cloude_Mac'],
+            order: ['cloude_N8N', 'cloude_Hockey', 'cloude_Mac', 'cloude_gone'], collapsed: [] });
         const moved = R.reconcile(LIVE);
         expect(moved.length).toBe(3);
-        expect([...S.current().pinned]).toEqual(['carnivore_NFLOW', 'carnivore_Mac']);
+        expect([...S.current().pinned]).toEqual(['carnivore_N8N', 'carnivore_Mac']);
         expect([...S.current().order], 'the order holds, and an entry naming nothing live keeps its slot')
-            .toEqual(['carnivore_NFLOW', 'carnivore_Kitchen', 'carnivore_Mac', 'cloude_gone']);
+            .toEqual(['carnivore_N8N', 'carnivore_Hockey', 'carnivore_Mac', 'cloude_gone']);
         expect(S.isPinned('carnivore_Mac')).toBe(true);
         const saved = JSON.parse(storage.getItem(KEY) as string);
         expect(saved.v, "additive field, no version bump (the file's own versioning rule)").toBe(1);
@@ -57,9 +57,9 @@ describe('the rebind', () => {
     });
 
     it('a live name already saved after the rename merges into the old slot', async () => {
-        const { S, R } = await load({ v: 1, pinned: ['cloude_Mac'], order: ['cloude_Mac', 'carnivore_NFLOW', 'carnivore_Mac'], collapsed: [] });
+        const { S, R } = await load({ v: 1, pinned: ['cloude_Mac'], order: ['cloude_Mac', 'carnivore_N8N', 'carnivore_Mac'], collapsed: [] });
         R.reconcile(LIVE);
-        expect([...S.current().order]).toEqual(['carnivore_Mac', 'carnivore_NFLOW']);
+        expect([...S.current().order]).toEqual(['carnivore_Mac', 'carnivore_N8N']);
         expect([...S.current().pinned]).toEqual(['carnivore_Mac']);
     });
 
@@ -72,15 +72,15 @@ describe('the rebind', () => {
         expect(S.current().status).toBe('ok');
     });
 
-    it("a per-band order (merged from the team's line) follows a rename, and its ids survive the prune", async () => {
+    it("a per-band order (merged from Alex's line) follows a rename, and its ids survive the prune", async () => {
         const { S, R, storage } = await load({ v: 1, pinned: [], order: [], collapsed: [],
-            bands: { 'p:7': ['cloude_Kitchen', 'cloude_Mac'] }, ids: { carnivore_NFLOW: 'U-NFLOW' } });
+            bands: { 'p:7': ['cloude_Hockey', 'cloude_Mac'] }, ids: { carnivore_N8N: 'U-N8N' } });
         const moved = R.reconcile(LIVE);
         expect(moved.length, 'both band-only names moved').toBe(2);
-        expect([...S.bandOrder('p:7')]).toEqual(['carnivore_Kitchen', 'carnivore_Mac']);
+        expect([...S.bandOrder('p:7')]).toEqual(['carnivore_Hockey', 'carnivore_Mac']);
         const saved = JSON.parse(storage.getItem(KEY) as string);
         expect(saved.ids.carnivore_Mac, 'a band-only name keeps its uuid for the next rename').toBe('U-MAC');
         R.reconcile([{ name: 'carnivore_Mac-2', session_uuid: 'U-MAC' }, LIVE[2]!]);
-        expect([...S.bandOrder('p:7')], 'the next rename resolves by uuid').toEqual(['carnivore_Kitchen', 'carnivore_Mac-2']);
+        expect([...S.bandOrder('p:7')], 'the next rename resolves by uuid').toEqual(['carnivore_Hockey', 'carnivore_Mac-2']);
     });
 });

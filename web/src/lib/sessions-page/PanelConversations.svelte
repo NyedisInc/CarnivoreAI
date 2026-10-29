@@ -1,4 +1,4 @@
-<!-- conversation id -->
+<!-- the current session -->
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import List from '../base/List.svelte';

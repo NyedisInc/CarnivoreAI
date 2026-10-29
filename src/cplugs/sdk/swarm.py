@@ -55,6 +55,12 @@ class ThreadPort(Protocol):
     async def post_card(self, thread_key: str, kind: str, title: str, text: str, swarm_ref: str) -> int:
         pass
 
+    async def check_form(self, questions: Any) -> str:
+        pass
+
+    async def stage_form(self, question_id: int, questions: Any) -> None:
+        pass
+
     async def post_owner_message(self, thread_key: str, text: str) -> str:
         pass
 
@@ -88,7 +94,7 @@ class ThreadPort(Protocol):
     async def archive_thread(self, thread_key: str) -> None:
         pass
 
-    async def read_thread(self, thread_key: str, limit: int) -> List[Dict[str, Any]]:
+    async def read_thread(self, thread_key: str, limit: int, *, cards: bool = True) -> List[Dict[str, Any]]:
         pass
 
     async def tell(self, thread_key: str, session_id: str, text: str, *, message: Messenger) -> Any:
@@ -146,7 +152,8 @@ class SwarmCapability(Protocol):
     def discard_delivery(self, delivery_id: int, refusal: Any) -> None:
         pass
 
-    async def card_decided(self, swarm_ref: str, decision: str, note: str, owner_message_ref: str) -> None:
+    async def card_decided(self, swarm_ref: str, decision: str, note: str, owner_message_ref: str, *,
+                           structured: Optional[Dict[str, Any]] = None) -> None:
         pass
 
     def thread_changed(self, list_key: str) -> None:

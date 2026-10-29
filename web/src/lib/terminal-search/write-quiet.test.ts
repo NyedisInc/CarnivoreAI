@@ -38,7 +38,7 @@ test('a pane that never goes quiet still runs at the cap, once', () => {
     expect(work).toHaveBeenCalledTimes(1);
 });
 
-test('cancel never runs the work and fenmont of the listener', () => {
+test('cancel never runs the work and lets go of the listener', () => {
     const work = vi.fn();
     const cancel = whenWritesQuiet(term, work);
     cancel();

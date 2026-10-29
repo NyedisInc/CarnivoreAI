@@ -14,7 +14,6 @@ vi.mock('./pack-source.svelte', () => ({ packSource: () => roster, watchPack: ()
 
 function stubs(over: Partial<LegacyDrawer> = {}): LegacyDrawer {
     return {
-        groups: {},
         projectHeader: {
             ledHtml: (_r, collapsed, show) => (collapsed && show !== false ? '<led>' : ''),
             iconHtml: (n) => (n ? `<i ${n}>` : ''),
@@ -124,7 +123,6 @@ describe('buildListPlan', () => {
     });
 
     it('declines (null) when a render helper it cannot draw without is missing', () => {
-        expect(buildListPlan(stubs({ groups: undefined }), input([A]))).toBeNull();
         expect(buildListPlan(stubs({ projectHeader: undefined }), input([A]))).toBeNull();
         expect(buildListPlan(stubs(), input([A]))).not.toBeNull();
     });

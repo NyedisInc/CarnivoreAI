@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
+    import { Button } from '../base';
     import { fetchFeatureMediaBlob } from '../help/feature-media';
     import { t as appT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
@@ -46,6 +47,7 @@
                 <button
                     type="button"
                     class="shot__mark"
+                    data-base-exempt="a numbered hotspot dot pinned on a screenshot, positioned by percent, not a labelled control"
                     data-guide-mark={i + 1}
                     style="left: {mark.x}%; top: {mark.y}%"
                     aria-label="{i + 1}. {mark.title}. {mark.text}"
@@ -80,10 +82,10 @@
         <ol class="shot__list" aria-label={t('docs.shot.marks')}>
             {#each hotspots as mark, i (i)}
                 <li>
-                    <button type="button" class="shot__item" data-guide-item={i + 1} onclick={() => followGuideTarget(mark.target)}>
+                    <Button variant="row" data-guide-item={i + 1} onclick={() => followGuideTarget(mark.target)}>
                         <span class="shot__num">{i + 1}</span>
                         <span class="shot__words"><strong>{mark.title}</strong> {mark.text}</span>
-                    </button>
+                    </Button>
                 </li>
             {/each}
         </ol>
@@ -138,8 +140,84 @@
         cursor: pointer;
     }
 
-    .shot__mark:hover,
-    .shot__item:hover .shot__num {
+    .shot__mark:hover {
+        background: var(--oc-orange);
+        color: var(--oc-ground-titlerow);
+    }
+
+    .shot__tip {
+        position: absolute;
+        z-index: 2;
+        width: max-content;
+        max-width: min(260px, 60%);
+        margin: var(--oc-space-4) 0 0 calc(var(--oc-space-2) * -1);
+        padding: var(--oc-space-1-5) var(--oc-space-2);
+        border: var(--oc-border, 1px) solid var(--oc-line-rule);
+        background: var(--oc-ground-titlerow);
+        color: var(--oc-text-secondary);
+        font-size: var(--oc-fs-body, 12px);
+        line-height: 1.4;
+        pointer-events: none;
+    }
+
+    .shot__tip--left {
+        margin-left: 0;
+        transform: translateX(calc(-100% + 8px));
+    }
+
+    .shot__tip--up {
+        margin-top: 0;
+        transform: translateY(calc(-100% - 16px));
+    }
+
+    .shot__tip--left.shot__tip--up {
+        transform: translate(calc(-100% + 8px), calc(-100% - 16px));
+    }
+
+    .shot__tip strong {
+        display: block;
+        color: var(--oc-text-primary);
+    }
+
+    .shot__tip em {
+        display: block;
+        margin-top: var(--oc-space-0-5);
+        color: var(--oc-cyan);
+        font-style: normal;
+    }
+
+    .shot__list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: var(--oc-space-1-5) var(--oc-space-4);
+        margin: var(--oc-space-2) 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .shot__num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: var(--oc-border, 1px) solid var(--oc-orange);
+        border-radius: 2px;
+        background: var(--oc-ground-titlerow);
+        color: var(--oc-orange);
+        font: 600 11px/1 var(--font-mono);
+    }
+
+    .shot__mark {
+        --_bd: var(--oc-orange);
+        position: absolute;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+    }
+
+    .shot__mark:hover {
         background: var(--oc-orange);
         color: var(--oc-ground-titlerow);
     }

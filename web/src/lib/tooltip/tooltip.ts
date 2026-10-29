@@ -27,7 +27,6 @@ let describedByAdded = false;
 const parked = new Set<Element>();
 let watcher: MutationObserver | null = null;
 
-/* title="pin to top" */
 function textOf(el: Element): string {
     const own = el.getAttribute('data-tooltip');
     if (own !== null) return own.trim();
@@ -46,21 +45,24 @@ function squash(s: string): string {
 
 const SHOWS_SPILL = new Set(['', 'visible']);
 
-/* -webkit-line-clamp:2 overflow:hidden */
 function cutsOff(n: HTMLElement): boolean {
     if (n.scrollWidth > n.clientWidth) return true;
     return n.scrollHeight > n.clientHeight && !SHOWS_SPILL.has(getComputedStyle(n).overflowY);
 }
 
-/*  hidden  */
+const CLIP_WALK_CAP = 40;
+
 function isClipped(el: Element): boolean {
-    for (const n of [el, ...el.querySelectorAll('*')]) {
+    if (el instanceof HTMLElement && cutsOff(el)) return true;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_ELEMENT);
+    for (let seen = 0; seen < CLIP_WALK_CAP; seen += 1) {
+        const n = walker.nextNode();
+        if (!n) return false;
         if (n instanceof HTMLElement && cutsOff(n)) return true;
     }
     return false;
 }
 
-/* <button> */
 function repeatsVisibleText(el: Element, words: string): boolean {
     const shown = squash(el.textContent ?? '');
     if (!shown) return false;
@@ -242,7 +244,6 @@ function hide(): void {
     }
 }
 
-/* something else */
 function schedule(target: Element, source: Source): void {
     hide();
     pending = target;

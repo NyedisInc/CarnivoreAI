@@ -26,7 +26,7 @@ def dismiss(ctx: CplugContext, item_id: int) -> int:
         return 0
     try:
         dismiss_toast = ctx.toast_dismiss
-    except AttributeError as exc:  # could not
+    except AttributeError as exc:
         logger.warning("task_manager_question_toast_dismiss_unavailable", item=item_id, error=str(exc))
         return 0
     cleared = sum(1 for _, ref in refs if dismiss_toast(ref))

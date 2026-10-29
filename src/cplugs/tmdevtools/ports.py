@@ -28,5 +28,5 @@ class DevToolsPort(Protocol):
 def get() -> DevToolsPort:
     port = ports.get(NAME)
     if port is None:
-        raise TaskManagerOff("the huddle is off, so the task manager cannot be read")
+        raise TaskManagerOff("the task manager is off, so it cannot be read")
     return port

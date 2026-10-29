@@ -58,11 +58,6 @@ class _File:
 
 
 def check_name(declared: Any) -> str:
-    """A file name a post may use, refused unless it is already a plain safe name.
-
-    Input: declared (Any). Output: str. Raises: BadRequest (not a string, a path separator, ``..``, or characters the app would rewrite).
-    Example: check_name("dog.jpg") -> "dog.jpg"; check_name("../dog.jpg") raises
-    """
     if not isinstance(declared, str) or not declared:
         raise BadRequest("each file needs a name")
     if "/" in declared or "\\" in declared or ".." in declared:

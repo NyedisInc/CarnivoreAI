@@ -35,6 +35,7 @@ function plan(key: string): HeadingPlan {
 let target: HTMLElement;
 let handle: Record<string, unknown>;
 let saves = 0;
+// One listener for the file: onSaved has no unsubscribe, so registering per test would count twice.
 onSaved(() => { saves += 1; });
 
 beforeEach(() => {

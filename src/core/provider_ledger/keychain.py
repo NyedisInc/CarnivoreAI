@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import subprocess
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import structlog
 
 logger = structlog.get_logger()
 
 TIMEOUT_SECONDS = 5.0
+
+_last_failure: Dict[Tuple[str, Optional[str]], int] = {}
 
 
 def read_password(
@@ -17,18 +19,6 @@ def read_password(
     account: Optional[str] = None,
     timeout: float = TIMEOUT_SECONDS,
 ) -> Optional[str]:
-    """Read one generic password, or report that it could not be read.
-
-    Description: shells out to ``security find-generic-password``. The
-      account is omitted when it is not given, because some items carry
-      no account and a service-only lookup is the one that finds them.
-    Inputs: service (str) - the keychain service name; account (str |
-      None) - the account name, keyword only, omitted when None; timeout
-      (float) - seconds, keyword only.
-    Output: str | None - the password as written, or None when the item
-      is absent, unreadable, or the read did not finish.
-    Example: read_password("Claude Code-credentials")
-    """
     argv: List[str] = ["security", "find-generic-password", "-s", service]
     if account is not None:
         argv += ["-a", account]
@@ -52,10 +42,13 @@ def read_password(
         return None
 
     if completed.returncode != 0:
-        logger.info(
-            "keychain_read_failed", service=service, status=completed.returncode
-        )
+        key = (service, account)
+        level = logger.debug if _last_failure.get(key) == completed.returncode else logger.info
+        _last_failure[key] = completed.returncode
+        level("keychain_read_failed", service=service, status=completed.returncode)
         return None
+
+    _last_failure.pop((service, account), None)
 
     password = (completed.stdout or "").strip()
     return password or None

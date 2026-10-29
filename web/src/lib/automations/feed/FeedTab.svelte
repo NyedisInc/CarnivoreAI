@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { t } from '../../i18n/index.svelte';

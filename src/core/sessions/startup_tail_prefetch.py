@@ -1,14 +1,3 @@
-"""Read the startup gate's pane tails OFF the event loop, before the row builder needs them.
-
-WHY THIS EXISTS. ``SessionManager._startup_gate_for`` captured a pane tail with a synchronous
-``tmux capture-pane`` subprocess in the middle of the per-row listing loop, so every capture
-blocked the whole event loop (10 ms p50, 100 ms p99 under load), the same loop that spawns
-``send-keys`` for a keystroke and reads the echo. :func:`prefetch` runs the SAME cost gate
-(``should_capture_tail``) for the rows about to be built, captures the tails that gate wants in
-ONE worker-thread hop, and stashes them in the ledger; :func:`take_tail` hands the stashed tail
-to ``_startup_gate_for`` and falls back to the synchronous capture when nothing was stashed (a
-single-session caller, a row the prefetch could not predict), so behavior never degrades.
-"""
 
 import asyncio
 from dataclasses import dataclass
@@ -46,7 +35,6 @@ def gate_inputs(
         except (TypeError, ValueError):
             age = None
     return GateInputs(
-        # could not
         pane_alive=True if liveness == LIVENESS_LIVE else None,
         first_hook_at=ledger.first_hook_at(tmux_name),
         age_seconds=age,

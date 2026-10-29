@@ -103,13 +103,13 @@ describe('the notes widget in a slide-out', () => {
 
 describe('the letter on a pinned key', () => {
   test('letters are unique and stay put while an agent stays pinned', () => {
-    const arbor = { row: 1, name: 'Arbor' };
+    const argent = { row: 1, name: 'Argent' };
     const alpha = { row: 2, name: 'Alpha' };
-    const both = allocateLetters(new Map(), [arbor, alpha]);
+    const both = allocateLetters(new Map(), [argent, alpha]);
     expect([both.get(1), both.get(2)]).toEqual(['A', 'L']);
     const afterRemove = allocateLetters(both, [alpha]);
     expect(afterRemove.get(2)).toBe('L');
-    const again = allocateLetters(afterRemove, [alpha, arbor]);
+    const again = allocateLetters(afterRemove, [alpha, argent]);
     expect([again.get(1), again.get(2)]).toEqual(['A', 'L']);
     const crowd = allocateLetters(new Map(), [{ row: 1, name: 'a' }, { row: 2, name: 'a' }, { row: 3, name: 'a' }]);
     expect(new Set(crowd.values()).size).toBe(3);

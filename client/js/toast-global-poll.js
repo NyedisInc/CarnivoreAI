@@ -40,6 +40,7 @@
                 var r = ring();
                 var fresh = r ? r.filter(list) : list;
                 if (fresh.length) window.ToastManager.backfill(fresh);
+                // the launchpad, the archive, a terminal attached
                 // look smaller than the server said
                 if (typeof window.ToastManager.reconcileOpen === 'function') {
                     window.ToastManager.reconcileOpen(list, { since: startedAt });

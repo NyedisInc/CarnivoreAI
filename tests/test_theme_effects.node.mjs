@@ -10,6 +10,12 @@ import {
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion, recording the outcome.
+ * @param {string} name Test name shown in the output
+ * @param {function(): void} fn Body; throws to fail
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -22,6 +28,7 @@ function test(name, fn) {
     }
 }
 
+// ---------------------------------------------------------------------
 
 console.log(`discovered effect themes: ${effectThemes.join(', ')}`);
 
@@ -64,6 +71,38 @@ for (const themeId of effectThemes) {
                 `unexpected input listener: ${t}`,
             );
         }
+        mod.destroy();
+    });
+
+    test(`${themeId}: holds while data-calm is set and follows it live`, () => {
+        const env = installEnv({ attrs: { 'data-calm': 'blur' } });
+        mod.init();
+        assert.equal(env.rafPending.size, 0, 'init under data-calm must not start the loop');
+        assert.equal(mod.getStatus().status, 'paused');
+        const obs = env.observers.find((o) => o.live);
+        assert.ok(obs, 'a mutation observer should be watching <html>');
+        assert.ok(obs.options.attributeFilter.includes('data-calm'), 'filter must include data-calm');
+        env.setAttr('data-calm', null);
+        env.fire();
+        assert.ok(env.rafPending.size > 0, 'clearing calm must start the loop');
+        assert.equal(mod.getStatus().status, 'running');
+        env.setAttr('data-calm', 'blur');
+        env.fire();
+        assert.equal(env.rafPending.size, 0, 'setting calm must stop the loop');
+        assert.equal(mod.getStatus().status, 'paused');
+        mod.destroy();
+    });
+
+    test(`${themeId}: a resize while data-calm holds the backdrop repaints one frame and starts no loop`, () => {
+        const env = installEnv({ attrs: { 'data-calm': 'blur' } });
+        mod.init();
+        const c = env.canvas();
+        const before = c.getContext().drawCalls;
+        env.win.innerWidth = 1000;
+        for (const l of env.winListeners.filter((x) => x.type === 'resize')) l.fn();
+        assert.ok(c.getContext().drawCalls > before, 'resize under calm must leave a drawn frame');
+        assert.equal(env.rafPending.size, 0, 'the repaint must not start the loop');
+        assert.equal(mod.getStatus().status, 'paused');
         mod.destroy();
     });
 
@@ -195,6 +234,8 @@ for (const themeId of effectThemes) {
     void env0;
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 installEnv();
 const base = await loadHarness();
@@ -247,6 +288,25 @@ test('harness: turning reduced motion on mid-session stops the loop', () => {
     assert.ok(mq, 'the harness must watch for a motion-preference change');
     mq.fn({ matches: true });
     assert.equal(env.rafPending.size, 0);
+    assert.equal(effect.getStatus().status, 'skipped');
+    effect.destroy();
+});
+
+test('harness: reduced motion turned on mid-session survives a tab hide and show', () => {
+    const env = installEnv();
+    const effect = base.createEffect({ id: 'x', setup: () => ({}), draw: () => {} });
+    effect.init();
+    env.flush(0);
+    env.mql.matches = true;
+    env.mqlListeners.find((l) => l.type === 'change').fn({ matches: true });
+    assert.equal(effect.getStatus().status, 'skipped');
+
+    const vis = env.docListeners.find((l) => l.type === 'visibilitychange');
+    env.doc.hidden = true;
+    vis.fn();
+    env.doc.hidden = false;
+    vis.fn();
+    assert.equal(env.rafPending.size, 0, 'a tab switch must not restart the loop while reduced motion is on');
     assert.equal(effect.getStatus().status, 'skipped');
     effect.destroy();
 });

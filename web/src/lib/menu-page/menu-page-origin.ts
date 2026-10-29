@@ -1,4 +1,3 @@
-/* navigation generation */
 
 export type Origin =
     | { readonly kind: 'drawer'; readonly tab: string }
@@ -7,7 +6,6 @@ export type Origin =
 
 export interface OriginDeps {
     drawerTab: () => string | null;
-    /* navigation generation */
     generation: () => number;
 }
 

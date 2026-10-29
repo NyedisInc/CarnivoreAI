@@ -4,7 +4,7 @@
 </script>
 
 <div class="session-sidebar-heading">
-  <button type="button" id="session-sidebar-brand" class="session-sidebar-brand" aria-label={t('drawer.header.brand')}>
+  <button data-base-exempt="the brand wordmark picture is the button" type="button" id="session-sidebar-brand" class="session-sidebar-brand" aria-label={t('drawer.header.brand')}>
     <img src="/static/img/carnivore/carnivore-wordmark.png" srcset="/static/img/carnivore/carnivore-wordmark.png 1x, /static/img/carnivore/carnivore-wordmark@2x.png 2x" alt="" />
   </button>
   <div id="session-sidebar-topbar-controls" class="sbr-controls-slot"></div>

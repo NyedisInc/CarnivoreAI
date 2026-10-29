@@ -1,5 +1,7 @@
 
 <script lang="ts">
+    import Button from '../base/Button.svelte';
+    import IconButton from '../base/IconButton.svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
@@ -20,12 +22,12 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">&raquo; {title}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')} onclick={() => close(null)}>&times;</button>
+            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => close(null)} />
         </div>
     {/snippet}
     <p class="modal-description" data-fed-confirm-body>{body}</p>
     {#snippet footer()}
-        <button class="modal-btn modal-btn-secondary" data-fed-confirm-cancel onclick={() => close(null)}>{t('hosts.fed.cancel')}</button>
-        <button class="modal-btn {calm ? 'modal-btn-confirm' : 'modal-btn-danger'}" data-fed-confirm-go onclick={() => close(true)}>{confirmLabel}</button>
+        <Button data-fed-confirm-cancel onclick={() => close(null)}>{t('hosts.fed.cancel')}</Button>
+        <Button variant={calm ? 'confirm' : 'danger'} data-fed-confirm-go onclick={() => close(true)}>{confirmLabel}</Button>
     {/snippet}
 </ModalShell>

@@ -11,7 +11,6 @@
     part?: 'ready' | 'loading' | 'error' | 'empty';
     t?: Translate;
     refuseToggle?: boolean;
-    /* the detail pane */
     share?: boolean;
     limits?: boolean;
   }

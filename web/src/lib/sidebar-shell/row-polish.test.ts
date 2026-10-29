@@ -48,14 +48,12 @@ describe('sidebar row polish', () => {
         expect(asleep).toEqual(awake);
     });
 
-    it('a do-not-disturb row marks the provider, and the badge shares the star corner', () => {
+    it('do not disturb draws no badge (#2604); a lead still draws the star', () => {
         const root = render({ do_not_disturb: true }, false);
-        expect(root.querySelector('.session-sidebar-row-provider[data-dnd]')).not.toBeNull();
-        expect(root.querySelector('.session-sidebar-row-provider__dnd')).not.toBeNull();
-        expect(css).toMatch(/\[data-dnd\] \.session-sidebar-row-provider__dnd \{[^}]*top: -1px;[^}]*bottom: auto;[^}]*right: -3px;/);
-        expect(css).not.toMatch(/\[data-dnd\]\[data-role-lead\]/);
+        expect(root.querySelector('.session-sidebar-row-provider[data-dnd], .session-sidebar-row-provider__dnd')).toBeNull();
+        expect(css).not.toMatch(/data-dnd|__dnd/);
         const both = render({ do_not_disturb: true, task_lead: true }, false);
-        expect(both.querySelector('.session-sidebar-row-provider[data-role-lead]')).not.toBeNull();
+        expect(both.querySelector('.session-sidebar-row-provider[data-role-lead] .session-sidebar-row-provider__lead')).not.toBeNull();
         expect(both.querySelector('.session-sidebar-row-provider[data-dnd], .session-sidebar-row-provider__dnd')).toBeNull();
     });
 

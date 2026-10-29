@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
     import FoldChevron from '../../opscenter/ui/FoldChevron.svelte';
     import HeadingRenameEditor from './HeadingRenameEditor.svelte';

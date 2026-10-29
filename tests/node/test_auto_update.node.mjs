@@ -21,7 +21,7 @@ function cfg(obj, raw) {
   return p;
 }
 
-await test('no env and no config means the public default feed', () => {
+await test('no env and no config means the public default feed (Alex, 2026-10-22)', () => {
   const want = { url: A.DEFAULT_FEED_URL, source: 'default', error: null, channel: 'stable' };
   assert.equal(A.DEFAULT_FEED_URL, 'https://github.com/NyedisInc/CarnivoreAI/releases/latest/download');
   assert.deepEqual(A.selectFeed({ configPath: null, env: {} }), want);
@@ -297,7 +297,7 @@ await test('packaged: only the two exact feeds are accepted, everything else is 
   const bad = [
     'https://evil.example/x', 'http://127.0.0.1:9/x', 'http://localhost:9/x',
     STABLE + '?x=1', STABLE + '#f', STABLE + '/x', STABLE + '/../x', BETA + '/x', BETA + '?x=1',
-    'https://github.com/NyedisInc/CarnivoreAI/releases/latest/download',
+    'https://github.com/example-owner/example-repo/releases/latest/download',
     'https://github.com:443/NyedisInc/CarnivoreAI/releases/latest/download',
     'https://u:p@github.com/NyedisInc/CarnivoreAI/releases/latest/download',
     'https://github.com.evil.example/NyedisInc/CarnivoreAI/releases/latest/download',
@@ -328,7 +328,7 @@ await test('packaged: only the two exact feeds are accepted, everything else is 
 
 await test('an update-proof build, and only it, accepts the loopback feed; nothing else widens (F9)', () => {
   const loop = ['http://127.0.0.1:9/x', 'http://localhost:51234/feed', 'http://127.0.0.1:8123', 'http://127.0.0.1:8123/'];
-  const nope = ['https://evil.example/x', 'http://203.0.113.11:8000/', 'http://127.0.0.1/x', 'http://127.0.0.1:9/x?y=1',
+  const nope = ['https://evil.example/x', 'http://192.168.1.5:8000/', 'http://127.0.0.1/x', 'http://127.0.0.1:9/x?y=1',
     'http://127.0.0.1:9/x#f', 'http://u:p@127.0.0.1:9/x', 'http://127.0.0.1.evil.example:9/x', 'https://127.0.0.1:9/x',
     'http://127.0.0.1:99999/x', 'http://127.0.0.1:9/../x', 'http://[::1]:9/x', 'http://0.0.0.0:9/x', 'http://LOCALHOST:9/x',
     'http://127.0.0.1:9\\@evil.example/x', 'ftp://127.0.0.1:9/x'];

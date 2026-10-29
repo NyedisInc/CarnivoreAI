@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import threading
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -32,25 +33,29 @@ FAMILY_CODEX = "codex"
 _LOCATION_CACHE_MAX = 256
 _CLAUDE_LOCATION_CACHE: "OrderedDict[tuple, Path]" = OrderedDict()
 _CODEX_LOCATION_CACHE: "OrderedDict[tuple, str]" = OrderedDict()
+_LOCATION_LOCK = threading.Lock()
 
 
 def _cached_location(cache: "OrderedDict[tuple, Any]", key: tuple) -> Optional[Any]:
-    value = cache.get(key)
-    if value is not None:
-        cache.move_to_end(key)
-    return value
+    with _LOCATION_LOCK:
+        value = cache.get(key)
+        if value is not None:
+            cache.move_to_end(key)
+        return value
 
 
 def _remember_location(cache: "OrderedDict[tuple, Any]", key: tuple, value: Any) -> None:
-    cache[key] = value
-    cache.move_to_end(key)
-    while len(cache) > _LOCATION_CACHE_MAX:
-        cache.popitem(last=False)
+    with _LOCATION_LOCK:
+        cache[key] = value
+        cache.move_to_end(key)
+        while len(cache) > _LOCATION_CACHE_MAX:
+            cache.popitem(last=False)
 
 
 def reset_location_caches_for_tests() -> None:
-    _CLAUDE_LOCATION_CACHE.clear()
-    _CODEX_LOCATION_CACHE.clear()
+    with _LOCATION_LOCK:
+        _CLAUDE_LOCATION_CACHE.clear()
+        _CODEX_LOCATION_CACHE.clear()
 
 
 @dataclass(frozen=True)

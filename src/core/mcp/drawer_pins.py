@@ -11,7 +11,7 @@ from src.core.mcp.write_tools import _detail
 FIELD = "drawer_arrangement"
 
 
-async def _read(request: Any) -> tuple[int, dict]:
+async def read_arrangement(request: Any) -> tuple[int, dict]:
     from src.api import preferences_routes
 
     try:
@@ -25,7 +25,7 @@ async def write_pinned(request: Any, change: Callable[[list], list]) -> list:
     from src.api import preferences_routes
 
     for attempt in (1, 2):
-        revision, arrangement = await _read(request)
+        revision, arrangement = await read_arrangement(request)
         pinned = change(list(arrangement.get("pinned") or []))
         body = preferences_routes.PreferencesUpdateRequest(
             changes={FIELD: {**arrangement, "pinned": pinned}}, expected_revision=revision)

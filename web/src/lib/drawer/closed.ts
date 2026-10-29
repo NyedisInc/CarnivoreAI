@@ -1,4 +1,3 @@
-/* not asleep */
 
 interface ClosedRecord {
     closed?: boolean;

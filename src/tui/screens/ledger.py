@@ -8,6 +8,7 @@ from rich.text import Text
 
 from src.tui import keys
 from src.tui.screens.read_board import Board, ReadBoardPane
+from src.tui.plain import plain
 from src.tui.strings import t
 
 LEDGER_PATH = "/api/v1/provider-ledger"
@@ -61,9 +62,9 @@ class LedgerPane(ReadBoardPane):
             windows = acct.get("windows") or []
             resets = min((w["resets_at"] for w in windows if w.get("resets_at")), default=None)
             board.add_row(
-                acct.get("name") or acct.get("id") or "", acct.get("provider") or "", acct.get("plan") or "",
+                plain(acct.get("name") or acct.get("id")), plain(acct.get("provider")), plain(acct.get("plan")),
                 Text(t(f"tui.ledger.state.{state}"), style=STATE_STYLE.get(state, "ansi_white")),
-                _usage(windows) or t("tui.ledger.never"), _when(resets), acct.get("error") or "",
+                _usage(windows) or t("tui.ledger.never"), _when(resets), plain(acct.get("error")),
                 key=str(acct.get("id") or id(acct)),
             )
         total = data.get("total") or {}

@@ -2,6 +2,7 @@ import { t } from '../../i18n/index.svelte';
 import { ECHO_KEYS, isEmpty, isObj, isScalar, normalizeSlot, payload } from './diff';
 import { isMarkdown, stripAnsi } from './markdown';
 import { wordKind, type WordKind } from './marks';
+import { REPORT_NEAR_CAP_BYTES } from './report-cap';
 import { firstMetric, metricIn } from './signals';
 import type { ReportSlot } from './types';
 import { bytesWords, type Clock, countWords, fmtNum, humanKey, reasonWords, skipReason, skipSentence, tileLabel } from './words';
@@ -424,6 +425,6 @@ export function bodyPlan(run: { status: string; report_bytes: number | null }, r
     h.push({ kind: 'section', key: k, heading: humanKey(k), count: n, value: v });
   }
   if (!h.length || (isEmpty(report) && !tiles.length)) return [];
-  if ((run.report_bytes ?? 0) >= 524288) h.push({ kind: 'cap', note: t('automations.page.report.cap', { size: bytesWords(run.report_bytes) }) });
+  if ((run.report_bytes ?? 0) >= REPORT_NEAR_CAP_BYTES) h.push({ kind: 'cap', note: t('automations.page.report.cap', { size: bytesWords(run.report_bytes) }) });
   return h;
 }

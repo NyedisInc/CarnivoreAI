@@ -11,11 +11,13 @@
   "how_to": [
     "Open settings, advanced, and press export config: a json file downloads.",
     "On the other install press import config, choose the file, read the list of what would change, pick merge or replace, then press apply import.",
+    "If the file carries agent wrapper or launch profile commands, or other settings that run (a shell, editor, environment variables, browser program, account folders, slash commands or a template folder), the preview shows them under contains commands; tick each one after reading it, and only then does apply import turn on.",
     "The file never holds a password, token, api key or webhook, and an import never replaces one this install already has."
   ],
   "id": "config-export-import",
   "issues": [
-    658
+    658,
+    2557
   ],
   "keywords": [
     "export",
@@ -31,9 +33,10 @@
   "status": "stable",
   "summary": "save your whole configuration to one file and load it on another computer, or restore it later, with a preview of every change before anything is written.",
   "surfaces": [
-    "web/src/lib/settings-page/ConfigBundlePanel.svelte"
+    "web/src/lib/settings-page/ConfigBundlePanel.svelte",
+    "web/src/lib/settings-page/config-bundle/CommandConsent.svelte"
   ],
-  "updated": "2026-09-29",
+  "updated": "2026-10-28",
   "where": [
     "Settings, advanced, export and import config."
   ]

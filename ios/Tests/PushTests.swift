@@ -123,10 +123,10 @@ final class PushTests: XCTestCase {
         }
         let relay = try computer(.relay, "aaaaaaaaaaaaaaaaaaaaaaaaaa.link.carnivore.ai")
         XCTAssertTrue(ShellBridge(computer: relay).canPush)
-        XCTAssertFalse(ShellBridge(computer: try computer(.lan, "198.51.100.10:8000")).canPush)
+        XCTAssertFalse(ShellBridge(computer: try computer(.lan, "192.168.1.10:8000")).canPush)
         XCTAssertFalse(ShellBridge(computer: try computer(.https, "https://example.com")).canPush)
         var plain = relay
-        plain.origin = try AddressParser.parse("http://198.51.100.10", kind: .lan).get()
+        plain.origin = try AddressParser.parse("http://192.168.1.10", kind: .lan).get()
         XCTAssertFalse(ShellBridge(computer: plain).canPush)
     }
 

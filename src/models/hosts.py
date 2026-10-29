@@ -48,6 +48,10 @@ class HostsResponse(BaseModel):
 
 class CreateHostRequest(BaseModel):
     """Add a machine by its ssh target. Stores it; nothing is contacted yet.
+
+    ``key`` is not a field here (the owner, 2026-09-28): the server
+    generates it, so a body carrying one is rejected as an unknown field
+    (``extra="forbid"``) rather than silently ignored.
     """
 
     model_config = ConfigDict(extra="forbid")

@@ -5,6 +5,7 @@ export interface Chip {
   key: number;
   name: string;
   size: number;
+  file?: File;
   status: 'uploading' | 'ready' | 'failed';
   ref?: UploadedFile;
   error?: string;
@@ -22,7 +23,7 @@ export function createAttachments(upload: (file: File) => Promise<UploadedFile>)
   let next = 0;
 
   function start(file: File): void {
-    const chip: Chip = { key: next++, name: file.name, size: file.size, status: 'uploading' };
+    const chip: Chip = { key: next++, name: file.name, size: file.size, file, status: 'uploading' };
     chips.push(chip);
     const key = chip.key;
     const settle = (change: Partial<Chip>): void => {

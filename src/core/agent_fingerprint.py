@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import logging
 import re
 from typing import Optional, Pattern, Union
+
+import structlog
 
 AGENT_FINGERPRINTS: dict[str, list[Union[str, Pattern[str]]]] = {
     "openclaw": [
@@ -34,7 +35,7 @@ AGENT_FINGERPRINTS: dict[str, list[Union[str, Pattern[str]]]] = {
 }
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 def _matching_families(tail: str) -> set[str]:
@@ -57,9 +58,8 @@ def _resolve(tail: str) -> Optional[str]:
         return next(iter(hits))
     if len(hits) > 1:
         logger.warning(
-            "agent_fingerprint: ambiguous match across families %s - "
-            "returning None rather than guessing",
-            ", ".join(sorted(hits)),
+            "agent_fingerprint_ambiguous_match",
+            families=sorted(hits),
         )
     return None
 

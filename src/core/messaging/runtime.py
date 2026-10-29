@@ -181,10 +181,6 @@ def _clock(epoch: float) -> str:
 
 
 async def install(app: Any) -> Optional[MessagingRuntime]:
-    """Boot wiring from ``main.py``'s lifespan: build, start and publish ``app.state.messaging``. Fail soft.
-
-    Output: the runtime, or None when the datastore could not be read (logged).
-    """
     import sqlite3
 
     from src.core.db import DatastoreUnreadableError

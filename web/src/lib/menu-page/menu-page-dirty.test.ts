@@ -9,6 +9,7 @@ let closers: Record<string, ReturnType<typeof vi.fn>>;
 let confirm: ReturnType<typeof vi.fn<ConfirmFn>>;
 let answer: boolean;
 
+/** Wait for the shell's MutationObserver. */
 async function settle(): Promise<void> {
     await Promise.resolve();
     await Promise.resolve();

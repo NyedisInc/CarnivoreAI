@@ -6,9 +6,10 @@ import re
 import unicodedata
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Mapping, Tuple
+from typing import Any, Mapping, Optional, Tuple
 
 from src.cplugs.host.identity import RESERVED_ROUTES
+from src.cplugs.host.sidecar_page import parse_page, parse_topics
 from src.cplugs.host.preview_check import PreviewError, check_preview_path, read_preview
 from src.cplugs.runtime.process import FEED_GRANTS
 from src.cplugs.runtime.integrity import IntegrityError, tree_digest
@@ -76,6 +77,9 @@ class SidecarManifest:
     views: Tuple[Mapping[str, Any], ...] = ()
     trust: str = ""
     preview: str = ""
+    page: Optional[Mapping[str, str]] = None
+    page_problem: str = ""
+    topics: Tuple[str, ...] = ()
 
 
 def clean_text(value: Any, limit: int) -> str:
@@ -273,18 +277,13 @@ def with_sidecar_facts(manifest: SidecarManifest, code_root: Path) -> SidecarMan
         return manifest
     if not isinstance(side, dict):
         return manifest
-    return replace(manifest, author=clean_text(side.get("author", ""), 80), icon=clean_text(side.get("icon", ""), 40) or manifest.icon,
+    page, page_problem = parse_page(side.get("page"), manifest.views)
+    return replace(manifest, page=page, page_problem=page_problem, topics=parse_topics(side.get("topics")), author=clean_text(side.get("author", ""), 80), icon=clean_text(side.get("icon", ""), 40) or manifest.icon,
                    min_app_version=clean_text(side.get("min_app_version", ""), 20),
                    permission_reasons={k: clean_text(v, 300) for k, v in sidecar_reasons(side).items()})
 
 
 def load_sidecar_manifest(code_root: Path, item_name: str) -> SidecarManifest:
-    """Read, digest and validate the manifest in ``code_root``. Blocking. Output: SidecarManifest. Raises SidecarManifestError.
-
-    Description: the digest is taken first and over the whole tree (``tree_digest`` refuses symlinks and bytecode); the entry
-      file must exist as a regular file.
-    Example: load_sidecar_manifest(Path(state) / "cplug-code" / "clock", "clock").entry -> "main.py"
-    """
     try:
         digest = tree_digest(code_root)
         raw = json.loads((Path(code_root) / MANIFEST_FILE).read_text(encoding="utf-8"))

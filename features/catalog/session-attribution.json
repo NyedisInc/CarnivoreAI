@@ -1,7 +1,5 @@
 {
-  "api_routes": [
-    "src/api/session_attribution_routes.py"
-  ],
+  "api_routes": [],
   "area": "sessions",
   "docs": [
     "docs/session-attribution-import.md"

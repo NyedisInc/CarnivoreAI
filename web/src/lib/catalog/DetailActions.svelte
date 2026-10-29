@@ -26,7 +26,6 @@
     interface Props {
         files?: number | null;
         card: CardView;
-        /* is not installed */
         installed: InstalledItem | null;
         rowState: InstallState;
         host: CatalogHost;
@@ -280,7 +279,7 @@
     {/if}
 
     {#if installed && installed.drift}
-        
+        <!-- and the three -->
         <DriftFacts {installed} {t} />
         <div class="acts__row" data-acts="drift">
             {#if installed.drift.state === 'drifted'}

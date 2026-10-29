@@ -1,4 +1,4 @@
-<!-- padding -->
+
 <script lang="ts">
     import Band from './Band.svelte';
     import Button from '../base/Button.svelte';

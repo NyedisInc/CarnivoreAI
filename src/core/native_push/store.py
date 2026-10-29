@@ -1,10 +1,3 @@
-"""Native push devices, one JSON file in the state directory (0600).
-
-A row is an APNs device token (platform ``ios``) bound to ONE paired link device. ``device_id`` is set server-side
-only, from the link gate's verified device (never from a request body). The per-phone AES-256-GCM payload key is NOT
-here: it lives in the login Keychain under its own service (``wiring.secrets_for``, apart from the notification
-destination secrets), under the row's own id, which has the destination id shape ``d_`` plus 12 lowercase hex characters.
-"""
 
 from __future__ import annotations
 
@@ -33,7 +26,6 @@ def now_iso() -> str:
 class NativeDeviceStore:
 
     def __init__(self, state_dir: Path) -> None:
-        """Input: the state directory. The file is created on the first write."""
         self._path = Path(state_dir) / FILE_NAME
         self._lock = threading.Lock()
 

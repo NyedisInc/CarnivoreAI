@@ -1,12 +1,3 @@
-"""Stamping the session listing with each session's Carnivore timers status (#1639, the row's timers icon and the stats bar).
-
-The rule is ``src/core/automations/timer_status.py`` (one place); this module reads the store and the sessions table in ONE
-off-loop pass per listing build, then COPIES the word onto the ``/sessions/list`` WRAPPER (gotcha 1). It never fails the listing.
-
-NULL IS NOT "NONE". ``automations_state`` is ``none`` when the store was read and nothing is aimed at the session, and null
-only when the store, the datastore or a registered plugin's schedules could not be read (or the row is a paired computer's,
-which that computer stamps).
-"""
 
 from __future__ import annotations
 
@@ -99,7 +90,7 @@ async def mark_automation_timers(app_state: Any, infos: Iterable[Any], asleep: O
         try:
             schedules = await plugin_schedules.read(owned, asleep)
         except plugin_schedules.PluginSchedulesUnreadable:
-            schedules = None  # could not
+            schedules = None
     for info in owned:
         if snapshot is None or schedules is None:
             _clear(info)

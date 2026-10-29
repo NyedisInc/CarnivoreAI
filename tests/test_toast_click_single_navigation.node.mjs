@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,6 +12,7 @@ const ROOT = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..'
 const NAVIGATE_SRC = fs.readFileSync(path.join(ROOT, 'client/js/toast-navigate.js'), 'utf8');
 
 const tests = [];
+/** Description: register one named case. Inputs: name, fn. Output: None. */
 function test(name, fn) { tests.push([name, fn]); }
 
 function clickBubbling(el) {
@@ -44,6 +46,7 @@ function makeNavEnv(activeTmuxName, rows) {
 
     const navigations = [];
     const listCalls = [];
+    const activateRowCalls = [];
 
     w.App = {
         returnToExistingTerminal(info) { navigations.push(info); },
@@ -53,10 +56,7 @@ function makeNavEnv(activeTmuxName, rows) {
         _activeSessionId: null,
         _activeTmuxName: activeTmuxName || null,
         activeTmuxName() { return this._activeTmuxName; },
-    };
-    const activateRowCalls = [];
-    w.SessionSidebarClicks = {
-        activateRow(ctrl, row) { activateRowCalls.push(row); },
+        activateRow(row) { activateRowCalls.push(row); },
     };
 
     vm.runInContext(NAVIGATE_SRC, sandbox, { filename: 'toast-navigate.js' });
@@ -103,7 +103,7 @@ test('clicking the session name navigates EXACTLY ONCE', async () => {
         + 'and the card handler both ran, and each one closes the live '
         + 'WebSocket and opens another');
     assert.equal(activateRowCalls.length, 0,
-        'the name handler must no longer reach SessionSidebarClicks.activateRow: '
+        'the name handler must no longer reach SessionSidebar.activateRow: '
         + 'that was the duplicate, and it ran with a fabricated controller '
         + 'whose null _activeTmuxName disabled the already-here guard');
 });
@@ -319,6 +319,7 @@ test('a local card action runs once and retires the card; a card without one dra
     assert.equal(cards(container).some((c) => c.dataset && c.dataset.toastId === 'loc1'), false, 'the card is retired');
 });
 
+// ----------------------------------------------------------------- run
 
 let failed = 0;
 for (const [name, fn] of tests) {

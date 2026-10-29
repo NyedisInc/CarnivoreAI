@@ -35,13 +35,6 @@ def count_lines(path: Path) -> Optional[int]:
 
 
 def open_target(path: Optional[str], working_dir: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
-    """The (root, relative path) the Files tab opens this item's file by, or (None, None) when it cannot.
-
-    Inputs: path - the item's file or folder; working_dir - the session's folder. Output: (``workdir`` | ``user`` | None, str | None).
-    The editor's own guard (``config_files.resolve_safe_path``: containment, hide list, the user root's allow list) has the last
-    word, so a file it would refuse is never offered. Only a regular file qualifies.
-    Example: open_target("/w/p/.claude/commands/a.md", "/w/p")  # ("workdir", ".claude/commands/a.md")
-    """
     if not path:
         return None, None
     roots = config_files.resolve_roots(working_dir)

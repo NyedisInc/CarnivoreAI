@@ -49,7 +49,8 @@ class ConfigSettingsUpdateRequest(BaseModel):
     """Request body for ``PATCH /api/v1/config/settings``.
 
     Top-level keys are the writable blocks the settings screen exposes
-    (``notifications``, ``workspace``, ``server_prefs``) - HOST/server bind is
+    (``workspace`` and ``server_prefs``; notification settings have their own route,
+    ``notification_settings_routes.py``) - HOST/server bind is
     deliberately absent: it lives in ``.env``, not ``config.json``, has
     no atomic-write convention in this codebase, and a bad value can
     strand the server (the launchd wrapper refuses to boot on a

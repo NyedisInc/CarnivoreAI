@@ -1,4 +1,4 @@
-/* at the gesture */
+/* and the three */
 import { ensurePanel, unmountPanel } from '../mount';
 import { hostDocument, hostWindow } from '../sessions/env';
 import SearchPanel from './SearchPanel.svelte';

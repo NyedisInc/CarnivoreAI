@@ -74,7 +74,7 @@ def test_the_sql_rule_and_the_python_rule_agree_on_every_provenance(tmp_path: Pa
         assert lane.for_new(list_key=list_key, created_key=created_key, swarm_ref=swarm_ref, card_origin=origin) == expected, (list_key, created_key, swarm_ref, origin)
 
 
-def test_owners_real_file_loses_no_row_and_every_task_stays_in_his_lane(tmp_path: Path):
+def test_joes_real_file_loses_no_row_and_every_task_stays_in_his_lane(tmp_path: Path):
     path = real_copy(tmp_path, at_most=37)
     walk(path, 37)
     before = rows_without_lane_before(path)

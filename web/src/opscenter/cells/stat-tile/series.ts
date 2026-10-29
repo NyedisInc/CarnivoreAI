@@ -4,10 +4,8 @@ import { history } from '../../api';
 import { SPARK_BOX_PX, stats, type Figure, type Figures, type SparkBar, type StatCard } from '../../data/stats';
 import { t } from '../../../lib/i18n/index.svelte';
 
-/* running sessions */
 export const PRIORITY: readonly string[] = stats.map((card) => card.id);
 
-/* running sessions */
 export function visibleCards(count: number): StatCard[] {
   const keep = new Set(PRIORITY.slice(0, Math.max(1, Math.min(PRIORITY.length, count))));
   return stats.filter((card) => keep.has(card.id));

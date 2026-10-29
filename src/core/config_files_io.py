@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from src.core.test_write_guard import assert_test_write_allowed
-from src.core.unique_tmp_path import unique_tmp_path
+from src.core.safe_io.atomic_write import atomic_write_bytes as _atomic_write_bytes, atomic_write_text
 from src.core.config_files_constants import (
     READONLY_COLLAPSED_DIRS,
     SENSITIVE_NAMES,
@@ -24,20 +23,6 @@ def is_sensitive_name(name: str) -> bool:
 
 
 def classify(root: Path, path: Path) -> tuple[bool, bool, bool]:
-    """
-    Description: compute (is_executable, is_sensitive, read_only) for one
-      path relative to its root. The SINGLE source of these three
-      judgements - read, write and create all call this, so a file cannot
-      be treated as ordinary by one path and executable by another.
-
-      Note ``is_executable`` and ``is_sensitive`` are False for a path
-      that does not exist yet in the ``path.is_file()`` sense; creation
-      therefore evaluates them on NAME and LOCATION only, which is
-      deliberate - a hook that does not exist yet is still going to run
-      once it does.
-    Inputs: root (Path); path (Path) - must be inside root.
-    Output: tuple[bool, bool, bool].
-    """
     try:
         rel_parts = path.relative_to(root).parts
     except ValueError:
@@ -56,26 +41,9 @@ def classify(root: Path, path: Path) -> tuple[bool, bool, bool]:
 def atomic_write(path: Path, content: str, mode: int | None = None) -> None:
     assert_test_write_allowed(path)
 
-    tmp_path = unique_tmp_path(path)
-    try:
-        if mode is None:
-            handle = open(tmp_path, "w", encoding="utf-8")
-        else:
-            fd = os.open(tmp_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
-            try:
-                os.fchmod(fd, mode)
-            except OSError:
-                os.close(fd)
-                raise
-            handle = os.fdopen(fd, "w", encoding="utf-8")
-        with handle as f:
-            f.write(content)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp_path, path)
-    except OSError:
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except OSError:
-            pass
-        raise
+    atomic_write_text(path, content, mode=mode)
+
+
+def atomic_write_bytes(path: Path, data: bytes, mode: int) -> None:
+    assert_test_write_allowed(path)
+    _atomic_write_bytes(path, data, mode=mode)

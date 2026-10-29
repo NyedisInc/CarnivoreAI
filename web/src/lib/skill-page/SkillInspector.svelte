@@ -1,9 +1,10 @@
 
 <script lang="ts">
-    import { CLAUDE_STATE_KEYS, targetFile, type ContextChoice } from '../skills-page/skills-model';
+    import { CLAUDE_STATE_KEYS, type ContextChoice } from '../skills-page/skills-model';
     import type { SkillGroupRow, SkillLocationRow } from '../skills-page/skills-types';
     import type { Translate } from '../sessions/types';
     import { canSwitchHarness, deciderOf, shapeOf } from './model';
+    import { originOf, whyNot, writesNote } from './skill-words';
     import StateShape from './StateShape.svelte';
 
     interface Props {
@@ -41,36 +42,14 @@
     const shown = $derived(showAll ? group.locations : group.locations.slice(0, 1));
     const restHarnesses = $derived([...new Set(group.locations.slice(1).map((l) => l.harness))].join(', '));
 
-    function writesNote(harness: 'claude' | 'codex'): string {
-        const file = targetFile(context, harness);
-        if (harness === 'codex') return t(file === 'project' ? 'skills.detail.writes_codex_project' : 'skills.detail.writes_codex_user');
-        return t(file === 'local' ? 'skills.detail.writes_local' : 'skills.detail.writes_user');
-    }
-
     function effectOf(state: string): string {
         if (state === 'name-only') return t('skp.eff.name_only');
         if (state === 'user-invocable-only') return t('skp.eff.on_demand', { name: group.name });
         return t(state === 'off' ? 'skp.eff.off' : 'skp.eff.on');
     }
 
-    function whyNot(harness: 'claude' | 'codex'): string {
-        const loc = deciderOf(group, harness);
-        if (harness === 'codex' && loc && loc.toggle.kind !== 'none' && !loc.read_only) return t('skills.detail.codex_global_only');
-        return t('skills.detail.not_switchable', { reason: loc?.toggle.reason ?? loc?.scope ?? '' });
-    }
-
-    function originOf(loc: SkillLocationRow): string {
-        if (loc.scope === 'plugin') return t('skills.loc.origin_plugin', { plugin: loc.plugin ?? '' });
-        if (loc.scope === 'system') return t('skills.loc.origin_system');
-        const managed = loc.managed;
-        if (!managed) return t('skills.loc.origin_foreign');
-        const params = { item: managed.item_id ?? '', version: managed.version ?? '' };
-        if (managed.source === 'sidecar') return t('skills.loc.origin_sidecar', params);
-        return t(managed.update_available ? 'skills.loc.origin_catalog_update' : 'skills.loc.origin_catalog', params);
-    }
-
     function metaOf(loc: SkillLocationRow): string {
-        const parts = [`${t(`skills.loc.scope.${loc.scope}`)}, ${originOf(loc)}`];
+        const parts = [`${t(`skills.loc.scope.${loc.scope}`)}, ${originOf(loc, t)}`];
         if (loc.is_symlink && loc.link_target) parts.push(`${t('skills.loc.link')} ${loc.link_target}`);
         return parts.join('; ');
     }
@@ -114,7 +93,7 @@
                                 </div>
                             </div>
                             <div class="skp-eff" data-skill-eff>{effectOf(deciderOf(group, harness)?.state ?? 'off')}</div>
-                            {#if !can}<div class="skp-sc__write" data-skill-locked>{whyNot(harness)}</div>{/if}
+                            {#if !can}<div class="skp-sc__write" data-skill-locked>{whyNot(group, harness, t)}</div>{/if}
                             {#if harness === 'codex'}<div class="skp-sc__write" data-skill-codex-note>{t('skills.detail.codex_note')}</div>{/if}
                         </div>
                     {/each}
@@ -152,14 +131,14 @@
                 </div>
                 {#if art.routed === false}<p class="skp-note" data-skill-art-note>{t('skp.art.no_route')}</p>
                 {:else if art.message}<p class="skp-note" role="status" data-skill-art-note>{art.message}</p>{/if}
-                {#each harnesses as harness (harness)}<p class="skp-note">{harnessWord(harness)}: {writesNote(harness)}</p>{/each}
+                {#each harnesses as harness (harness)}<p class="skp-note">{harnessWord(harness)}: {writesNote(context, harness, t)}</p>{/each}
             </section>
         {/if}
     </div>
     {#if harnesses.length > 0 && group.locations.length === 0}
         <div class="skp-insp__quiet">
             <section class="skp-sec skp-writes" aria-label={t('skp.insp.writes')}>
-                {#each harnesses as harness (harness)}<p class="skp-note">{harnessWord(harness)}: {writesNote(harness)}</p>{/each}
+                {#each harnesses as harness (harness)}<p class="skp-note">{harnessWord(harness)}: {writesNote(context, harness, t)}</p>{/each}
             </section>
         </div>
     {/if}

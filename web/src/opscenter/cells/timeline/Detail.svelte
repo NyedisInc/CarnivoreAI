@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the widget menu */
   import Glyph from '../../../lib/Glyph.svelte';
   import { Button, Card, Checkbox, IconButton } from '../../../lib/base';
   import BookmarkPreviewList from '../../../lib/bookmarks/BookmarkPreviewList.svelte';

@@ -17,7 +17,7 @@ ILLEGAL_NAME_CHARS = ("/", "\\", "\x00")
 RESERVED_NAMES = (".", "..")
 
 FALLBACK_PROJECTS_RELATIVE = (
-    "carnivore-projects"
+    "Library/Mobile Documents/com~apple~CloudDocs/Sync/Development"
 )
 
 
@@ -55,14 +55,6 @@ def within_roots(path: str, roots: Sequence[str]) -> bool:
 
 
 def enclosing_projects(paths: Mapping[str, str]) -> Dict[str, List[str]]:
-    """Map each project to the projects whose root folder strictly encloses its own, nearest first.
-
-    Description: both sides are canonicalised with :func:`_real` (symlinks resolved), and containment is component-wise, so a sibling
-      with a longer name is never an ancestor and a project never encloses itself or another project at the SAME folder (issue #1789:
-      Harbor Docker and Harbor Monitoring live inside the Harbor repo). A path that cannot be canonicalised is left out.
-    Inputs: paths ({project key: root folder}). Output: {project key: [enclosing project keys, nearest first]}, only for projects with one.
-    Example: enclosing_projects({'1': '/r/harbor', '2': '/r/harbor/docker'}) -> {'2': ['1']}
-    """
     real: Dict[str, str] = {}
     for key, path in paths.items():
         try:

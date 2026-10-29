@@ -1,3 +1,4 @@
+// (client/css/terminal-tools.css, `.cloude-session-theme__item`).
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,6 +22,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read a CSS file from the client.
+ * @param {string} name  File name under client/css.
+ * @returns {string} File contents.
+ */
 function css(name) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', 'css', name), 'utf8');
 }
@@ -94,6 +100,9 @@ function hoverOverflow(itemWidth, scaleFactor, containerWidth) {
     return Math.max(0, itemWidth * scaleFactor - containerWidth);
 }
 
+// ---------------------------------------------------------------------
+// The CSS contract - the actual regression guard
+// ---------------------------------------------------------------------
 
 const stylesSrc = css('styles.css');
 const terminalToolsSrc = css('terminal-tools.css');
@@ -166,6 +175,8 @@ test('the weaker, pre-fix selector form would NOT have been enough (proves the t
         'the specificity model itself may be wrong');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('scale(1.05) on a full-width row overflows a clamped container', () => {
     const before = hoverOverflow(188, 1.05, 188);

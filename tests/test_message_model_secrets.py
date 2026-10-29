@@ -18,7 +18,7 @@ from src.core.message_model_secrets import (
 
 FAKE_OP_TOKEN = "ops_" + "eyJzaWduSW5BZGRyZXNzIjoiRVhBTVBMRSIsInVzZXIiOiJ4In0K" * 2
 
-FAKE_API_KEY = "sk9Q" "vR2mXt7ZbL4nHw8KdJ3aYcE6fUgP"
+FAKE_API_KEY = "sk9QvR2mXt7ZbL4nHw8KdJ3aYcE6fUgP"
 
 
 def test_an_ops_token_is_detected():
@@ -32,7 +32,7 @@ def test_one_credential_produces_one_finding_not_two():
 
 
 def test_the_literal_word_ops_in_prose_does_not_match():
-    assert scan_text("we moved ops_ into the firridge") == []
+    assert scan_text("we moved ops_ into the runbook") == []
 
 
 def test_a_high_entropy_credential_assignment_is_detected():
@@ -41,7 +41,7 @@ def test_a_high_entropy_credential_assignment_is_detected():
 
 
 def test_every_credential_word_fires_the_assignment_detector():
-    for name in ("TOKEN", "SECRET", "KEY", "PASSWORD", "GITSERVER_API_TOKEN"):
+    for name in ("TOKEN", "SECRET", "KEY", "PASSWORD", "GOGS_API_TOKEN"):
         findings = scan_text(f"{name}={FAKE_API_KEY}")
         assert findings, f"{name} did not fire the assignment detector"
 

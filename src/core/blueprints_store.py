@@ -25,7 +25,7 @@ class BlueprintError(Exception):
 
 
 class BlueprintsUnavailable(BlueprintError):
-    """The table is absent: CANNOT DETERMINE, never an empty list."""
+    pass
 
 
 class BlueprintNotFound(BlueprintError):

@@ -25,7 +25,7 @@ describe('mergeLiveRow carries the Task Manager roles', () => {
 
     const live = (over: Record<string, unknown>): LiveInfo => ({ tmux_session: 'cloude_a', agent_family: 'claude', ...over }) as LiveInfo;
 
-    it('a built row and an existing row draw the one role mark: the star on a lead, the badge on a non-lead', () => {
+    it('a built row and an existing row draw the one role mark: the star on a lead, nothing for do not disturb', () => {
         const built: DrawerRow[] = [];
         mergeLiveRow(built, live({ task_lead: true, do_not_disturb: true }));
         const lead = provider(built[0]!);
@@ -36,9 +36,9 @@ describe('mergeLiveRow carries the Task Manager roles', () => {
         const existing: DrawerRow[] = [{ name: 'cloude_a', agent_family: 'claude' }];
         mergeLiveRow(existing, live({ task_lead: false, do_not_disturb: true }));
         const dnd = provider(existing[0]!);
-        expect(dnd.querySelector('.session-sidebar-row-provider__dnd svg')).not.toBeNull();
+        expect(dnd.querySelector('.session-sidebar-row-provider__dnd')).toBeNull();
         expect(dnd.querySelector('.session-sidebar-row-provider__lead')).toBeNull();
-        expect(dnd.getAttribute('data-dnd')).toBe('1');
+        expect(dnd.getAttribute('data-dnd')).toBeNull();
         expect(dnd.getAttribute('data-role-lead')).toBeNull();
     });
 
@@ -68,7 +68,7 @@ describe('mergeLiveRow carries the Task Manager roles', () => {
         };
         store.frame({ type: 'listing.delta', stream: 's', seq: 2, changes: { list: { upsert: [{ key: 'ses_a', fields: { do_not_disturb: true } }] } } });
         let p = draw();
-        expect(p.querySelector('.session-sidebar-row-provider__dnd')).not.toBeNull();
+        expect(p.querySelector('.session-sidebar-row-provider__dnd')).toBeNull();
         expect(p.querySelector('.session-sidebar-row-provider__lead')).toBeNull();
         unmount(component as never); component = null; container.remove();
         store.frame({ type: 'listing.delta', stream: 's', seq: 3, changes: { list: { upsert: [{ key: 'ses_a', fields: { task_lead: true, do_not_disturb: false } }] } } });

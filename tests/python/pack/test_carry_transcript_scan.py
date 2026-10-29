@@ -13,7 +13,7 @@ def _use(name: str, **inp) -> str:
 
 def test_the_transcript_since_the_last_compaction_is_classified(tmp_path: Path) -> None:
     home = tmp_path / "home"
-    root, scratch, old = home / "proj", home / "~/work" / "bubblepop", home / "oldscratch"
+    root, scratch, old = home / "proj", home / "scratch-lab" / "pillpanic", home / "oldscratch"
     other_wt, secrets = home / "wt" / "other-feature", home / ".carnivore" / "state"
     for d in (root, scratch, old, other_wt, secrets, home / "other"):
         d.mkdir(parents=True)

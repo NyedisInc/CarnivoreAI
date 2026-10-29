@@ -1,5 +1,4 @@
 @layer legacy {
-/* --color- */
 
 .cloude-copy-sheet {
     position: fixed;
@@ -88,7 +87,6 @@
     width: 100%;
 }
 
-/* min-width: 0 width: auto */
 .cloude-copy-row .cloude-copy-chip {
     flex: 1 1 auto;
     width: auto;
@@ -220,7 +218,6 @@
     flex-wrap: wrap;
 }
 
-/* border-radius: var(--radius-full) flex: 0 1 auto */
 .cloude-copy-sheet__action {
     flex: 0 0 auto;
     display: inline-flex;

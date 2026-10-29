@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from src.core import conversation_writers as cw
-from src.core.attention import registry_read
+from src.core.attention import registry_index
 from src.core.claude_config import profile_roots
 from src.core.claude_transcript_correlate import (
     CORRELATE_MATCHED,
@@ -31,7 +31,7 @@ def install(tmp_path, monkeypatch):
     (home / ".claude" / "projects").mkdir(parents=True)
     (home / ".claude" / "sessions").mkdir(parents=True)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
-    monkeypatch.setattr(registry_read, "default_registry_directory",
+    monkeypatch.setattr(registry_index, "default_registry_directory",
                         lambda: str(home / ".claude" / "sessions"))
     profile = tmp_path / "accounts" / "work"
     (profile / "projects").mkdir(parents=True)

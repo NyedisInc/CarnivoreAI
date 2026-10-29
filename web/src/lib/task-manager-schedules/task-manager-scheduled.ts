@@ -48,7 +48,6 @@ export function taskManagerSchedules(body: ScheduledViewBody | null): TaskManage
 
 export const TASK_MANAGER_TOPICS = [`${TASK_MANAGER_FAMILY}:${ALL_LIST}`];
 
-/* a network failure */
 export async function readTaskManagerSchedules(): Promise<TaskManagerSchedule[]> {
   return taskManagerSchedules(await authFetch<ScheduledViewBody>(TASK_MANAGER_SCHEDULED_ROUTE));
 }

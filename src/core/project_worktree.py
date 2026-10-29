@@ -18,7 +18,7 @@ logger = structlog.get_logger()
 CONFIG_KEY = "blueprints"
 ROOT_FIELD = "worktree_root"
 
-DEFAULT_ROOT = "worktrees"
+DEFAULT_ROOT = "~/dev-worktrees"
 
 GIT_TIMEOUT_SECONDS = 180
 

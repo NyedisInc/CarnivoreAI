@@ -105,7 +105,6 @@ export function delivery(status: string, to: string): Delivery | null {
   }
 }
 
-/* label: ' */
 export function scopeCaption(scope: HistoryScope, subject: string): { label: string; subject: string } {
   if (scope === 'all') return { label: t('crosstalk.widget.scope_all'), subject: '' };
   return { label: t(scope === 'project' ? 'crosstalk.widget.scope_project' : 'crosstalk.widget.scope_session'), subject };

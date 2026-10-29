@@ -32,12 +32,11 @@ describe('drawer row role marks', () => {
         expect(p.querySelector('.session-sidebar-row-provider__dnd')).toBeNull();
     });
 
-    it('do not disturb: the badge alone', () => {
+    it('do not disturb: no badge (#2604)', () => {
         const p = provider({ task_lead: false, do_not_disturb: true });
-        expect(p.getAttribute('data-dnd')).toBe('1');
+        expect(p.hasAttribute('data-dnd')).toBe(false);
         expect(p.hasAttribute('data-role-lead')).toBe(false);
-        expect(p.querySelector('.session-sidebar-row-provider__dnd')?.getAttribute('title')).toBe('do not disturb: takes no new tasks');
-        expect(p.querySelector('.session-sidebar-row-provider__lead')).toBeNull();
+        expect(p.querySelector('[class*="session-sidebar-row-provider__"]')).toBeNull();
     });
 
     it.each([[null, null], [false, false], [undefined, undefined]])('task_lead %s, do_not_disturb %s: no mark at all', (lead, dnd) => {
@@ -47,14 +46,14 @@ describe('drawer row role marks', () => {
         expect(p.hasAttribute('data-dnd')).toBe(false);
     });
 
-    it.each(['compact', 'cozy', 'detailed'] as const)('%s: one slot - lead shows the star only (even with dnd on), non-lead dnd shows the badge only, dnd off shows nothing, no crown', (density) => {
+    it.each(['compact', 'cozy', 'detailed'] as const)('%s: lead shows the star only (even with dnd on), non-lead dnd shows nothing, dnd off shows nothing, no crown', (density) => {
         const marks = (over: Record<string, unknown>): string[] =>
             [...provider(over, density).querySelectorAll('[class*="session-sidebar-row-provider__"]')].map((m) => m.className);
         const again = (): void => { unmount(component as never); container.remove(); component = null; };
         expect(marks({ task_lead: true, do_not_disturb: true })).toEqual(['session-sidebar-row-provider__lead']);
         expect(container.querySelector('[data-dnd]')).toBeNull();
         again();
-        expect(marks({ task_lead: false, do_not_disturb: true })).toEqual(['session-sidebar-row-provider__dnd']);
+        expect(marks({ task_lead: false, do_not_disturb: true })).toEqual([]);
         again();
         expect(marks({ task_lead: false, do_not_disturb: false })).toEqual([]);
         expect(container.querySelector('[data-off], [data-size-master], .session-sidebar-row-provider__master')).toBeNull();

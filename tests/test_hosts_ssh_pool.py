@@ -18,7 +18,7 @@ from src.core.hosts.ssh_pool import (
 )
 from tests.helpers.fake_ssh import FakeSshHost, fake_ssh_host_fixture
 
-DEST = SshDestination("acme@fakehost")
+DEST = SshDestination("alex@fakehost")
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def host() -> Iterator[FakeSshHost]:
 
 
 def make_pool(host: FakeSshHost, **options) -> SshMasterPool:
-    settings = dict(login_shell="/bin/sh", control_dir=host.control_dir, instance_tag="5f4cec3f",
+    settings = dict(login_shell="/bin/sh", control_dir=host.control_dir, instance_tag="0123abcd",
                     ssh_binary=host.ssh_binary, connect_timeout=5.0, check_interval=0.5,
                     delay=lambda attempt: 0.05, idle_slot_linger=0.2)
     settings.update(options)

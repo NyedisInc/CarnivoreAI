@@ -1,6 +1,5 @@
 import type { Automation, ProjectChoice, RunCounts, SessionChoice, Targets } from '../../lib/automations/api';
 import type { FeedRun } from '../../lib/automations/logic/types';
-import type { HuddleItem } from '../../cplugs/huddle/huddle-model';
 import type { TaskManagerSchedule } from '../../lib/task-manager-schedules/task-manager-scheduled';
 
 export const nowSec = (): number => Math.floor(Date.now() / 1000);
@@ -11,7 +10,7 @@ const run = (n: number, status: string, ago: number) => ({
 });
 
 const base = {
-  trigger: { cron: '0 9 * * *', timezone: 'UTC' }, delivery: { notify: true, notify_on: null }, revision: 1, last_run: null,
+  trigger: { cron: '*/15 * * * *', timezone: 'America/New_York' }, delivery: { notify: true, notify_on: null }, revision: 1, last_run: null,
   description: '', project_id: null, misfire: 'run_once', retry_max: 0, retry_backoff_s: 300, max_runtime_s: null, retry_due_at: null,
   files_under: { session_uuid: null, project_id: null }, created_by: 'app', updated_by: 'app', created_at: nowSec() - 9000, updated_at: nowSec() - 100,
   created_actor: { kind: 'app' }, updated_actor: { kind: 'app' }, spends: false,
@@ -21,7 +20,7 @@ export function fixtureAutomations(): Automation[] {
   const recent = Array.from({ length: 12 }, (_, i) => run(12 - i, 'succeeded', 900 * (i + 1) - 300));
   return [
     {
-      ...base, automation_id: 'aut_scrooge', name: 'harbor willow', enabled: false, trigger: { cron: '0 9 * * *', timezone: 'UTC' },
+      ...base, automation_id: 'aut_scrooge', name: 'scrooge weekly', enabled: false, trigger: { cron: '0 7 * * 1', timezone: 'America/New_York' },
       next_fire_at: null, target: { kind: 'recipe', recipe: 'scrooge', params: {} }, recent: [], median_took_s: null, newest_output_empty: false,
       run_count: 0, newest_number: null, spends: true,
     },
@@ -42,32 +41,32 @@ export function fixtureCounts(): RunCounts {
 }
 
 export const fixtureProjects: ProjectChoice[] = [
-  { id: 1, name: 'meadow harbor', folder: '/x/meadow' },
-  { id: 2, name: 'pebble meadow', folder: '/x/notes' },
-  { id: 3, name: 'lantern harbor', folder: '/x/willow' },
+  { id: 1, name: 'amerifund', folder: '/x/amerifund' },
+  { id: 2, name: 'daily briefing', folder: '/x/briefing' },
+  { id: 3, name: 'fantasy hockey 2026', folder: '/x/hockey' },
 ];
 
 export const fixtureSessions: SessionChoice[] = [
-  { id: 1, session_uuid: 'u-meadow', label: 'meadow pebble', name: 'meadow pebble', lifecycle: 'running', project_id: 1 },
-  { id: 2, session_uuid: 'u-notes', label: 'pebble meadow', name: 'pebble meadow', lifecycle: 'running', project_id: 2 },
-  { id: 3, session_uuid: 'u-willow', label: 'lantern harbor', name: 'lantern harbor', lifecycle: 'running', project_id: 3 },
+  { id: 1, session_uuid: 'u-amerifund', label: 'agent - amerifund', name: 'agent - amerifund', lifecycle: 'running', project_id: 1 },
+  { id: 2, session_uuid: 'u-briefing', label: 'daily briefing', name: 'daily briefing', lifecycle: 'running', project_id: 2 },
+  { id: 3, session_uuid: 'u-hockey', label: 'fantasy hockey 2026', name: 'fantasy hockey 2026', lifecycle: 'running', project_id: 3 },
 ];
 
 const hour = 3600;
 const item = (id: number, title: string, inHours: number, sessionKey: string, projectId: number, repeat: TaskManagerSchedule['repeat'], over: Partial<TaskManagerSchedule> = {}): TaskManagerSchedule => ({
-  list: 'main', item: id, title, fireAt: nowSec() + inHours * hour, paused: false, state: 'pending', sessionKey, projectId, repeat, source: { id, revision: 1 } as unknown as HuddleItem, ...over,
+  list: 'main', item: id, title, fireAt: nowSec() + inHours * hour, paused: false, state: 'pending', sessionKey, projectId, repeat, source: { id, revision: 1 } as unknown as NonNullable<TaskManagerSchedule['source']>, ...over,
 });
 
 export function fixtureSchedules(): TaskManagerSchedule[] {
   return [
-    item(1, 'clean up stale branches and temp folders', 120, 'u-meadow', 1, null),
-    item(2, 'verify the backup finished and is readable', 120.1, 'u-meadow', 1, null),
-    item(3, 'prepare the release notes for the next build', 5, 'u-notes', 2, { freq: 'daily', time: '08:00' }),
-    item(4, 'rotate the staging credentials after the freeze ends', 170, 'u-notes', 2, null),
-    item(5, 'check the nightly sync and report gaps', 7, 'u-willow', 3, { freq: 'daily', time: '09:15' }),
-    item(6, 'check the nightly sync and report gaps', 9, 'u-willow', 3, { freq: 'weekly', time: '18:45', byweekday: [1] }),
-    item(7, 'check the nightly sync and report gaps', 3, 'u-willow', 3, { freq: 'hourly', interval: 6 }),
-    item(8, 'update the onboarding checklist', 0, 'u-willow', 3, { freq: 'daily', time: '14:20' }, { paused: true }),
+    item(1, 'AMF-022: retire the 26 disabled Amerifund AD accounts, after the watch ends 26 Oct', 120, 'u-amerifund', 1, null),
+    item(2, 'AMF-022: bring Joe a night for VH3 BitLocker, once a week of normal-sized backups is proven', 120.1, 'u-amerifund', 1, null),
+    item(3, 'Daily 08:00 briefing pass: triage, fix, and ask Joe what needs him', 5, 'u-briefing', 2, { freq: 'daily', time: '08:00' }),
+    item(4, 'Office NVR RAID 5 at risk of failure: HDD 2 and HDD 3 failing, bad blocks', 170, 'u-briefing', 2, null),
+    item(5, 'GM plan 10:00 AM', 7, 'u-hockey', 3, { freq: 'daily', time: '10:00' }),
+    item(6, 'Waiver claim deadline', 9, 'u-hockey', 3, { freq: 'weekly', time: '23:00', byweekday: [1] }),
+    item(7, 'Every 6 hours: sync and worktree cleanup', 3, 'u-hockey', 3, { freq: 'hourly', interval: 6 }),
+    item(8, 'Early lineup 11:30 AM', 0, 'u-hockey', 3, { freq: 'daily', time: '11:30' }, { paused: true }),
   ];
 }
 

@@ -6,6 +6,8 @@ from typing import Any, Dict, FrozenSet, Mapping, Optional
 HOLDER_OPS: FrozenSet[str] = frozenset({"start", "handoff", "finish", "release"})
 DEALER_OPS: FrozenSet[str] = frozenset({"deal", "reorder", "swap", "auto_promote"})
 PROJECT_OPS: FrozenSet[str] = frozenset({"queue"})
+CLOSER_OPS: FrozenSet[str] = frozenset({"close"})
+CURATOR_OPS: FrozenSet[str] = frozenset({"agent_archive", "agent_delete"})
 OWNER_ONLY: FrozenSet[str] = frozenset({"done", "send_back", "pause", "resume", "pin", "move", "settle_suggestion", "set_rules",
                                         "set_column", "archive", "delete"})
 
@@ -36,6 +38,14 @@ def check(agent: Optional[Dict[str, Any]], op: str, card: Optional[Mapping[str, 
         if agent.get("rank") == "project" and str(agent.get("thread_key")) == str(card["list_key"]):
             return None
         return "only the project agent of this card's own project queues it"
+    if op in CLOSER_OPS:
+        if _is_dealer(agent, card, company_id):
+            return None
+        return "only the project agent of this card's project, its company agent or Alpha closes it"
+    if op in CURATOR_OPS:
+        if _is_dealer(agent, card, company_id):
+            return None
+        return "only the project agent of this card's project, its company agent or Alpha archives or deletes it"
     if op in DEALER_OPS:
         if _is_dealer(agent, card, company_id):
             return None

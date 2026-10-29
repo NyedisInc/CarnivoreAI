@@ -7,6 +7,7 @@ import structlog
 from fastapi import HTTPException
 
 from src.core.automations import session_tree
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -29,7 +30,7 @@ async def resolve_session(request: Any, text: str, rows: List[Dict[str, Any]]) -
         target = await resolver.resolve({"target": text}, reach=STORED, tool="automations_list")
         uuid = await resolver.uuid_of(target)
     except ToolError as exc:
-        raise HTTPException(404, detail={"code": "session_not_found", "message": str(exc)[:300]}) from exc
+        raise api_error(404, "session_not_found", exc) from exc
     row = next((r for r in rows if r.get("session_uuid") == uuid), None)
     project_id = row.get("project_id") if row else (target.row or {}).get("project_id")
     return uuid, project_id

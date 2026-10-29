@@ -19,7 +19,7 @@ describe('the where note at the address bar', () => {
         document.body.appendChild(target);
         const app = mount(BrowserView, { target, props: { browserId: BROWSER_ID } });
         flushSync();
-        const field = target.querySelector<HTMLInputElement>('.bv-address')!;
+        const field = target.querySelector<HTMLInputElement>('[data-bv-address]')!;
         const note = (): HTMLElement | null => target.querySelector('[data-browser-where]');
 
         expect(note()).toBeNull();

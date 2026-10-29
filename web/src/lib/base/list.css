@@ -1,4 +1,4 @@
-/*  hidden  */
+/* reserved 1px border */
 @layer patterns {
   .oc-list {
     --oc-state-hover: color-mix(in srgb, var(--_on, var(--oc-ground-content)), var(--oc-text-primary) 6%);
@@ -52,6 +52,16 @@
 
   .oc-list__row[data-interactive] {
     cursor: pointer;
+  }
+
+  .oc-list__row[aria-disabled='true'] {
+    color: var(--oc-text-dim);
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .oc-list__row[aria-disabled='true'] :is(.oc-list__primary, .oc-list__secondary, .oc-list__meta) {
+    color: inherit;
   }
 
   .oc-list__row:is([data-selected], [aria-selected='true'], [aria-current]:not([aria-current='false'])) {

@@ -1,4 +1,4 @@
-/* the real left sidebar */
+/* and the real the real left sidebar */
 import { ago } from './clock';
 import type { FixtureKind, RouteTable } from './types';
 

@@ -16,7 +16,6 @@ export interface GoldenEntry {
     children?: GoldenEntry[];
 }
 
-/* label: ' */
 export function goldenOfNodes(nodes: readonly MenuNode[], shallow = false): GoldenEntry[] {
     const keys = assignMenuKeys(nodes.map((n) => ({ id: n.id, label: n.label, skip: !!n.blocked || !!n.swatches })));
     return nodes.map((n, i) => {

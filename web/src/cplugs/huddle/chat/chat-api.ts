@@ -44,7 +44,7 @@ interface Authored {
 export type SwarmEntry =
   | ({ kind: 'owner'; id: string; at: number; text: string } & Authored)
   | ({ kind: 'agent'; id: string; at: number; text: string; draft?: 'writing' | 'stopped' | null } & Authored)
-  | ({ kind: 'card'; id: string; at: number; card: 'done' | 'question' | 'review' | 'info'; item: HuddleItem; question?: SwarmQuestion | null } & Authored)
+  | ({ kind: 'card'; id: string; at: number; card: 'done' | 'question' | 'review' | 'info'; item: HuddleItem; question?: SwarmQuestion | null; waits_on_owner?: boolean } & Authored)
   | (SwarmTrafficEntry & Authored)
   | (SwarmEventEntry & Authored);
 
@@ -68,23 +68,6 @@ export interface SwarmTrafficEntry {
   receipt?: SwarmTrafficReceipt | null;
 }
 
-export interface ReceiptFact {
-  id: string;
-  title: string;
-  scope: 'craft' | 'project';
-  origin: 'owner' | 'agent' | 'handwritten';
-  owner_message_ref: string | null;
-  taught_at: string;
-  state: 'live' | 'held' | 'killed';
-}
-
-export interface SwarmReceipt {
-  kind: 'owner_fact' | 'agent_fact' | 'judgment' | 'owner_answer';
-  rendered: string;
-  owner_message_ref: string | null;
-  facts: ReceiptFact[];
-}
-
 export interface SwarmEventEntry {
   kind: 'event';
   id: string;
@@ -92,7 +75,6 @@ export interface SwarmEventEntry {
   event: string;
   ref: string;
   text: string;
-  receipt?: SwarmReceipt;
 }
 
 export interface SwarmConversationPage {
@@ -123,7 +105,6 @@ export async function sleepAgent(id: number): Promise<void> {
   await authFetch(`/swarm/agents/${id}/sleep`, { method: 'POST' });
 }
 
-/* project leader */
 export async function turnOffAgent(id: number, confirmName?: string): Promise<void> {
   await authFetch(`/swarm/agents/${id}/turn-off`, { method: 'POST', body: confirmName === undefined ? undefined : JSON.stringify({ confirm_name: confirmName }) });
 }
@@ -147,15 +128,6 @@ export async function exportAgent(id: number, name: string): Promise<void> {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
-export async function killFact(factId: string): Promise<number[]> {
-  const done = await authFetch<{ reopened_question_ids: number[] }>(`/swarm/facts/${factId}`, { method: 'DELETE' });
-  return done.reopened_question_ids ?? [];
-}
-
-export async function retagFact(factId: string, scope: 'craft' | 'project'): Promise<void> {
-  await authFetch(`/swarm/facts/${factId}`, { method: 'PATCH', body: JSON.stringify({ scope }) });
 }
 
 export interface SwarmCheckpoint {

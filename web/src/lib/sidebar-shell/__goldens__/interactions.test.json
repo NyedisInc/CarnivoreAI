@@ -23,11 +23,11 @@
   "events": [
    [
     "live",
-    "g:g1 group collapsed"
+    "work stuff group collapsed"
    ],
    [
     "live",
-    "g:g1 group expanded"
+    "work stuff group expanded"
    ]
   ],
   "shell": null
@@ -719,7 +719,7 @@
     "confirm",
     "remove project",
     "remove the project \"Studio\"?",
-    "its 3 sessions are closed first: running processes are terminated and files uploaded to them are removed from the project's .cloude_uploads folder. then the project leaves the list and can be restored from show archived projects. the folder on disk and the transcripts are kept.",
+    "its 3 sessions are closed first: running processes are terminated and the project's uploads folder is deleted with every file in it. then the project leaves the list and can be restored from show archived projects. the folder on disk and the transcripts are kept.",
     "remove",
     "cancel",
     "danger"
@@ -778,7 +778,7 @@
     "confirm",
     "remove project",
     "remove the project \"Studio\"?",
-    "its 3 sessions are closed first: running processes are terminated and files uploaded to them are removed from the project's .cloude_uploads folder. then the project leaves the list and can be restored from show archived projects. the folder on disk and the transcripts are kept.",
+    "its 3 sessions are closed first: running processes are terminated and the project's uploads folder is deleted with every file in it. then the project leaves the list and can be restored from show archived projects. the folder on disk and the transcripts are kept.",
     "remove",
     "cancel",
     "danger"
@@ -836,7 +836,7 @@
   "events": [
    [
     "live",
-    "g:g1 group collapsed"
+    "work stuff group collapsed"
    ]
   ],
   "shell": null

@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -28,12 +27,6 @@ REASON_CONSENT = "consent_sent"
 REASON_COLLISION = "name_collision"
 REASON_REPLACE = "replace"
 REASON_NO_SHEET_PROOF = "no_sheet_proof"
-
-SCRIPT_EXTENSIONS = frozenset({
-    ".py", ".sh", ".bash", ".zsh", ".fish", ".js", ".mjs", ".cjs", ".ts",
-    ".rb", ".pl", ".php", ".ps1", ".bat", ".cmd", ".lua", ".r", ".tcl",
-    ".awk", ".command",
-})
 
 _DETAILS = {
     REASON_KIND: "only a plain skill installs in one click; this kind shows the sheet",
@@ -99,20 +92,3 @@ def plan_needs_sheet(verdict: InstallPlan) -> Optional[str]:
     if verdict.exec_paths:
         return REASON_SCRIPTS
     return None
-
-
-def staged_has_script_members(root: Path) -> bool:
-    for dirpath, _dirs, files in os.walk(root, followlinks=False):
-        for name in files:
-            if os.path.splitext(name)[1].lower() in SCRIPT_EXTENSIONS:
-                return True
-            full = os.path.join(dirpath, name)
-            if os.path.islink(full):
-                continue
-            try:
-                with open(full, "rb") as handle:
-                    if handle.read(2) == b"#!":
-                        return True
-            except OSError:
-                return True
-    return False

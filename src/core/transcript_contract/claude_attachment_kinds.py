@@ -21,7 +21,7 @@ def _kind(first_seen: str, measured: int,
 
 
 ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
-    "agent_listing_delta": _kind("2.1.170", 0, {
+    "agent_listing_delta": _kind("2.1.170", 1604, {
         "addedLines": (ARR, True),
         "addedTypes": (ARR, True),
         "builtInTypes": (ARR, False),
@@ -29,43 +29,43 @@ ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
         "removedTypes": (ARR, True),
         "showConcurrencyNote": (BOOL, True),
     }),
-    "auto_mode": _kind("2.1.181", 0, {
+    "auto_mode": _kind("2.1.181", 1317, {
         "autoModeConsentFlow": (BOOL, False),
         "bashFirst": (BOOL, False),
         "bashFirstSteer": (STR, False),
         "bypass": (BOOL, False),
         "steerOnly": (BOOL, False),
     }),
-    "auto_mode_exit": _kind("2.1.278", 0, {
+    "auto_mode_exit": _kind("2.1.278", 2, {
         "bashFirst": (BOOL, True),
         "steerOnly": (BOOL, True),
     }),
-    "bash_output_audience_note": _kind("2.1.263", 0, {
+    "bash_output_audience_note": _kind("2.1.263", 132, {
         "toolUseID": (STR, True),
     }),
-    "batching_reminder_sent": _kind("2.1.263", 0, {
+    "batching_reminder_sent": _kind("2.1.263", 806, {
         "clearAt": (STR, False),
         "model": (STR, True),
         "text": (STR, True),
     }),
-    "command_permissions": _kind("2.1.111", 0, {
+    "command_permissions": _kind("2.1.111", 1511, {
         "allowedTools": (ARR, True),
     }),
-    "compact_file_reference": _kind("2.1.111", 0, {
+    "compact_file_reference": _kind("2.1.111", 208, {
         "displayPath": (STR, True),
         "filename": (STR, True),
     }),
-    "credential_org": _kind("2.1.281", 0, {
+    "credential_org": _kind("2.1.281", 488, {
         "organizationUuid": (STR, True),
     }),
-    "date": _kind("2.1.260", 0, {
+    "date": _kind("2.1.260", 861, {
         "changed": (BOOL, False),
         "date": (STR, True),
     }),
-    "date_change": _kind("2.1.111", 0, {
+    "date_change": _kind("2.1.111", 1340, {
         "newDate": (STR, True),
     }),
-    "deferred_tools_delta": _kind("2.1.92", 0, {
+    "deferred_tools_delta": _kind("2.1.92", 12528, {
         "addedLines": (ARR, True),
         "addedNames": (ARR, True),
         "failedMcpServers": (ARR, False),
@@ -78,45 +78,45 @@ ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
         "surfacedNames": (ARR, False),
         "wireHiddenNames": (ARR, False),
     }),
-    "deferred_tools_record": _kind("2.1.260", 0, {
+    "deferred_tools_record": _kind("2.1.260", 2406, {
         "entries": (ARR, True),
         "nameOnlyAnnouncements": (ARR, False),
         "strippedReferences": (ARR, False),
         "toolInputCopies": (ARR, False),
     }),
-    "directory": _kind("2.1.209", 0, {
+    "directory": _kind("2.1.209", 4, {
         "content": (STR, True),
         "displayPath": (STR, True),
         "path": (STR, True),
     }),
-    "edited_text_file": _kind("2.1.101", 0, {
+    "edited_text_file": _kind("2.1.101", 1533, {
         "displayPath": (STR, False),
         "filename": (STR, True),
         "snippet": (STR, True),
     }),
-    "environment": _kind("2.1.260", 0, {
+    "environment": _kind("2.1.260", 599, {
         "changes": (ARR, False),
         "snapshot": (OBJ, True),
     }),
-    "file": _kind("2.1.111", 0, {
+    "file": _kind("2.1.111", 621, {
         "content": (OBJ, True),
         "displayPath": (STR, True),
         "filename": (STR, True),
     }),
-    "hook_additional_context": _kind("2.1.111", 0, {
+    "hook_additional_context": _kind("2.1.111", 327, {
         "content": (ARR, True),
         "hookEvent": (STR, True),
         "hookName": (STR, True),
         "toolUseID": (STR, True),
     }),
-    "hook_cancelled": _kind("2.1.119", 0, {
+    "hook_cancelled": _kind("2.1.119", 19, {
         "command": (STR, False),
         "durationMs": (INT, False),
         "hookEvent": (STR, True),
         "hookName": (STR, True),
         "toolUseID": (STR, True),
     }),
-    "hook_non_blocking_error": _kind("2.1.101", 0, {
+    "hook_non_blocking_error": _kind("2.1.101", 59981, {
         "command": (STR, True),
         "durationMs": (INT, True),
         "exitCode": (INT, True),
@@ -126,12 +126,12 @@ ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
         "stdout": (STR, True),
         "toolUseID": (STR, True),
     }),
-    "hook_permission_decision": _kind("2.1.223", 0, {
+    "hook_permission_decision": _kind("2.1.223", 1, {
         "decision": (STR, True),
         "hookEvent": (STR, True),
         "toolUseID": (STR, True),
     }),
-    "hook_success": _kind("2.1.101", 0, {
+    "hook_success": _kind("2.1.101", 87241, {
         "command": (STR, True),
         "content": (STR, True),
         "durationMs": (INT, True),
@@ -142,59 +142,59 @@ ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
         "stdout": (STR, True),
         "toolUseID": (STR, True),
     }),
-    "hook_system_message": _kind("2.1.111", 0, {
+    "hook_system_message": _kind("2.1.111", 281, {
         "content": (STR, True),
         "hookEvent": (STR, True),
         "hookName": (STR, True),
         "toolUseID": (STR, True),
     }),
-    "inlined_image_paths": _kind("2.1.263", 0, {
+    "inlined_image_paths": _kind("2.1.263", 1, {
         "paths": (ARR, True),
     }),
-    "instructions": _kind("2.1.260", 0, {
+    "instructions": _kind("2.1.260", 822, {
         "changed": (BOOL, False),
         "files": (ARR, True),
         "reason": (STR, False),
         "removed": (ARR, False),
     }),
-    "invoked_skills": _kind("2.1.111", 0, {
+    "invoked_skills": _kind("2.1.111", 37, {
         "skills": (ARR, True),
     }),
-    "mcp_instructions_delta": _kind("2.1.128", 0, {
+    "mcp_instructions_delta": _kind("2.1.128", 1907, {
         "addedBlocks": (ARR, True),
         "addedNames": (ARR, True),
         "removedNames": (ARR, True),
     }),
-    "model": _kind("2.1.260", 0, {
+    "model": _kind("2.1.260", 568, {
         "identity": (OBJ, True),
         "text": (STR, True),
     }),
-    "nested_memory": _kind("2.1.138", 0, {
+    "nested_memory": _kind("2.1.138", 63, {
         "content": (OBJ, True),
         "displayPath": (STR, True),
         "path": (STR, True),
     }),
-    "pdf_reference": _kind("2.1.154", 0, {
+    "pdf_reference": _kind("2.1.154", 1, {
         "displayPath": (STR, True),
         "fileSize": (INT, True),
         "filename": (STR, True),
         "pageCount": (INT, True),
     }),
-    "plan_file_reference": _kind("2.1.111", 0, {
+    "plan_file_reference": _kind("2.1.111", 176, {
         "planContent": (STR, True),
         "planFilePath": (STR, True),
     }),
-    "plan_mode": _kind("2.1.165", 0, {
+    "plan_mode": _kind("2.1.165", 8, {
         "isSubAgent": (BOOL, True),
         "planExists": (BOOL, True),
         "planFilePath": (STR, True),
         "reminderType": (STR, True),
     }),
-    "plan_mode_exit": _kind("2.1.165", 0, {
+    "plan_mode_exit": _kind("2.1.165", 11, {
         "planExists": (BOOL, True),
         "planFilePath": (STR, True),
     }),
-    "prompt_snapshot": _kind("2.1.260", 0, {
+    "prompt_snapshot": _kind("2.1.260", 1130, {
         "cliPrefix": (STR, False),
         "contextRendering": (STR, False),
         "echoWireToolInputs": (BOOL, False),
@@ -207,7 +207,7 @@ ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
         "toolChangeHeader": (BOOL, False),
         "tools": (ARR, False),
     }),
-    "queued_command": _kind("2.1.101", 0, {
+    "queued_command": _kind("2.1.101", 6566, {
         "commandMode": (STR, False),
         "delivery_id": (STR, False),
         "humanTurn": (BOOL, False),
@@ -219,11 +219,11 @@ ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
         "timestamp": (STR, False),
         "usage": (OBJ, False),
     }),
-    "read_truncation_notice": _kind("2.1.205", 0, {
+    "read_truncation_notice": _kind("2.1.205", 59, {
         "banner": (STR, True),
         "toolUseID": (STR, True),
     }),
-    "remote_session_change": _kind("2.1.255", 0, {
+    "remote_session_change": _kind("2.1.255", 1331, {
         "commit": (STR, True),
         "managedCommit": (BOOL, False),
         "managedPr": (BOOL, False),
@@ -231,25 +231,25 @@ ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
         "sendUserFileHint": (BOOL, True),
         "url": (NULL + STR, True),
     }),
-    "session_context": _kind("2.1.260", 0, {
+    "session_context": _kind("2.1.260", 808, {
         "changed": (BOOL, False),
         "context": (OBJ, True),
         "reason": (STR, False),
     }),
-    "silent_turn_reminder": _kind("2.1.263", 0, {
+    "silent_turn_reminder": _kind("2.1.263", 191, {
         "text": (STR, True),
     }),
-    "skill_listing": _kind("2.1.101", 0, {
+    "skill_listing": _kind("2.1.101", 9798, {
         "content": (STR, True),
         "isInitial": (BOOL, True),
         "names": (ARR, False),
         "skillCount": (INT, True),
     }),
-    "task_reminder": _kind("2.1.142", 0, {
+    "task_reminder": _kind("2.1.142", 9925, {
         "content": (ARR, True),
         "itemCount": (INT, True),
     }),
-    "task_status": _kind("2.1.111", 0, {
+    "task_status": _kind("2.1.111", 242, {
         "deltaSummary": (NULL + STR, True),
         "description": (STR, True),
         "outputFilePath": (STR, True),
@@ -258,7 +258,7 @@ ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
         "taskId": (STR, True),
         "taskType": (STR, True),
     }),
-    "thinking_drop": _kind("2.1.280", 0, {
+    "thinking_drop": _kind("2.1.280", 15, {
         "blockHashes": (ARR, True),
         "clientChange": (OBJ, True),
         "firstReportForThreadInProcess": (BOOL, True),
@@ -269,14 +269,14 @@ ATTACHMENT_KINDS: Dict[str, AttachmentKind] = {
         "thinkingBlocksSent": (INT, True),
         "thinkingTurnsSent": (INT, True),
     }),
-    "thinking_stripped": _kind("2.1.263", 0, {
+    "thinking_stripped": _kind("2.1.263", 2, {
         "scope": (STR, True),
     }),
-    "todo_reminder": _kind("2.1.101", 0, {
+    "todo_reminder": _kind("2.1.101", 6823, {
         "content": (ARR, True),
         "itemCount": (INT, True),
     }),
-    "total_tokens_reminder": _kind("2.1.223", 0, {
+    "total_tokens_reminder": _kind("2.1.223", 110113, {
         "text": (STR, True),
     }),
 }

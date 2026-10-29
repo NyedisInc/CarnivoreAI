@@ -77,11 +77,11 @@ def _unattributed(conn):
 def test_a_created_pipe_imports_the_session_as_OURS(conn, tmp_path):
     run_first_run_import(
         conn,
-        listing=TmuxListing.answered([_live("carnivore_ses_dc491ea8", 1000)]),
+        listing=TmuxListing.answered([_live("carnivore_ses_1a2b3c4d", 1000)]),
         owned_tmux_names=set(),
-        log_dir=_logdir(tmp_path, "tmux_ses_dc491ea8.pipe"),
+        log_dir=_logdir(tmp_path, "tmux_ses_1a2b3c4d.pipe"),
     )
-    row = _row(conn, "carnivore_ses_dc491ea8")
+    row = _row(conn, "carnivore_ses_1a2b3c4d")
     assert row["origin"] == SESSION_ORIGIN_CREATED
     assert row["lifecycle_source"] == "import:created_pipe"
     assert _unattributed(conn) == []
@@ -105,15 +105,15 @@ def test_an_ext_pipe_ALONE_leaves_the_session_unattributed(conn, tmp_path):
 def test_both_pipes_is_OURS_by_the_created_pipe(conn, tmp_path):
     run_first_run_import(
         conn,
-        listing=TmuxListing.answered([_live("carnivore_ses_2a5a4495", 1000)]),
+        listing=TmuxListing.answered([_live("carnivore_ses_ec5bf2a3", 1000)]),
         owned_tmux_names=set(),
         log_dir=_logdir(
             tmp_path,
-            "tmux_ses_2a5a4495.pipe",
-            "tmux_ext_carnivore_ses_2a5a4495.pipe",
+            "tmux_ses_ec5bf2a3.pipe",
+            "tmux_ext_carnivore_ses_ec5bf2a3.pipe",
         ),
     )
-    assert _row(conn, "carnivore_ses_2a5a4495")["origin"] == SESSION_ORIGIN_CREATED
+    assert _row(conn, "carnivore_ses_ec5bf2a3")["origin"] == SESSION_ORIGIN_CREATED
 
 
 def test_an_unreadable_log_directory_is_could_not_evaluate_not_no_evidence(
@@ -274,41 +274,41 @@ def test_a_second_run_at_the_SAME_version_is_already_done(conn, tmp_path):
 def test_a_version_bump_PROMOTES_an_observed_row_the_new_ladder_can_prove(
     conn, tmp_path
 ):
-    _first_pass(conn, tmp_path, [("carnivore_ses_dc491ea8", 1000)])
-    assert _row(conn, "carnivore_ses_dc491ea8")["origin"] == SESSION_ORIGIN_OBSERVED
+    _first_pass(conn, tmp_path, [("carnivore_ses_1a2b3c4d", 1000)])
+    assert _row(conn, "carnivore_ses_1a2b3c4d")["origin"] == SESSION_ORIGIN_OBSERVED
 
     out = run_first_run_import(
         conn,
-        listing=TmuxListing.answered([_live("carnivore_ses_dc491ea8", 1000)]),
+        listing=TmuxListing.answered([_live("carnivore_ses_1a2b3c4d", 1000)]),
         owned_tmux_names=set(),
-        log_dir=_logdir(tmp_path, "tmux_ses_dc491ea8.pipe"),
+        log_dir=_logdir(tmp_path, "tmux_ses_1a2b3c4d.pipe"),
     )
     assert out.outcome == IMPORT_RERUN_COMPLETED
     assert out.promoted == 1
-    row = _row(conn, "carnivore_ses_dc491ea8")
+    row = _row(conn, "carnivore_ses_1a2b3c4d")
     assert row["origin"] == SESSION_ORIGIN_CREATED
     assert row["lifecycle_source"] == "import:rerun:created_pipe"
     assert _unattributed(conn) == []
 
 
 def test_a_DECLINED_row_survives_a_latch_version_bump(conn, tmp_path):
-    _first_pass(conn, tmp_path, [("carnivore_ses_dc491ea8", 1000)])
+    _first_pass(conn, tmp_path, [("carnivore_ses_1a2b3c4d", 1000)])
     assert (
         record_decline(
-            conn, name="carnivore_ses_dc491ea8", epoch=1000, now="2026-08-23T00:00:00Z"
+            conn, name="carnivore_ses_1a2b3c4d", epoch=1000, now="2026-08-23T00:00:00Z"
         )
         == "applied"
     )
 
     out = run_first_run_import(
         conn,
-        listing=TmuxListing.answered([_live("carnivore_ses_dc491ea8", 1000)]),
+        listing=TmuxListing.answered([_live("carnivore_ses_1a2b3c4d", 1000)]),
         owned_tmux_names=set(),
-        log_dir=_logdir(tmp_path, "tmux_ses_dc491ea8.pipe"),
+        log_dir=_logdir(tmp_path, "tmux_ses_1a2b3c4d.pipe"),
     )
     assert out.outcome == IMPORT_RERUN_COMPLETED
     assert out.promoted == 0
-    row = _row(conn, "carnivore_ses_dc491ea8")
+    row = _row(conn, "carnivore_ses_1a2b3c4d")
     assert row["origin"] == SESSION_ORIGIN_OBSERVED
     assert row["user_declined_at"] == "2026-08-23T00:00:00Z"
     assert _unattributed(conn) == []
@@ -318,19 +318,19 @@ def test_an_OURS_row_is_NEVER_demoted_by_a_re_run(conn, tmp_path):
     _first_pass(
         conn,
         tmp_path,
-        [("carnivore_ses_dc491ea8", 1000)],
-        log_files=("tmux_ses_dc491ea8.pipe",),
+        [("carnivore_ses_1a2b3c4d", 1000)],
+        log_files=("tmux_ses_1a2b3c4d.pipe",),
     )
-    assert _row(conn, "carnivore_ses_dc491ea8")["origin"] == SESSION_ORIGIN_CREATED
+    assert _row(conn, "carnivore_ses_1a2b3c4d")["origin"] == SESSION_ORIGIN_CREATED
 
     out = run_first_run_import(
         conn,
-        listing=TmuxListing.answered([_live("carnivore_ses_dc491ea8", 1000)]),
+        listing=TmuxListing.answered([_live("carnivore_ses_1a2b3c4d", 1000)]),
         owned_tmux_names=set(),
         log_dir=_logdir(tmp_path / "empty"),
     )
     assert out.outcome == IMPORT_RERUN_COMPLETED
-    assert _row(conn, "carnivore_ses_dc491ea8")["origin"] == SESSION_ORIGIN_CREATED
+    assert _row(conn, "carnivore_ses_1a2b3c4d")["origin"] == SESSION_ORIGIN_CREATED
 
 
 def test_an_ADOPTED_row_is_never_touched_by_a_re_run(conn, tmp_path):

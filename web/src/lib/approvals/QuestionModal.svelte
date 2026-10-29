@@ -1,8 +1,8 @@
 <script lang="ts">
-  /* nothing waiting permission prompt */
   import { onDestroy, type Snippet } from 'svelte';
   import '../ledger/ledger-chrome.css';
   import ModalShell from '../launchpad/ModalShell.svelte';
+  import { Button, IconButton } from '../base';
   import { t } from '../i18n/index.svelte';
   import { approvals, inboxFocus, noticeKey, refreshApprovals } from './approvals.svelte';
   import ApprovalCard from './ApprovalCard.svelte';
@@ -88,15 +88,14 @@
       <span class="text-prompt-modal__verb">&raquo; {t('approvals.title')}</span>
       {#if items.length > 1}
         <div class="pledger aq-pager" data-approval-pager>
-          <button type="button" class="modal-btn modal-btn-secondary" disabled={index === 0}
-            aria-label={t('approvals.pager.previous')} onclick={() => step(-1)}>&lsaquo;</button>
+          <Button size="sm" disabled={index === 0}
+            aria-label={t('approvals.pager.previous')} onclick={() => step(-1)}>&lsaquo;</Button>
           <span class="pl-label" data-approval-position>{t('approvals.pager.position', { n: index + 1, total: items.length })}</span>
-          <button type="button" class="modal-btn modal-btn-secondary" disabled={index >= items.length - 1}
-            aria-label={t('approvals.pager.next')} onclick={() => step(1)}>&rsaquo;</button>
+          <Button size="sm" disabled={index >= items.length - 1}
+            aria-label={t('approvals.pager.next')} onclick={() => step(1)}>&rsaquo;</Button>
         </div>
       {/if}
-      <button type="button" class="modal-close" aria-label={t('approvals.close')}
-        onclick={() => onClose()}>&times;</button>
+      <IconButton variant="close" icon="close" label={t('approvals.close')} onclick={() => onClose()} />
     </div>
   {/snippet}
   <div class="pledger" data-approval-inbox>
@@ -122,7 +121,6 @@
   :global(.modal-overlay.ask-modal .modal-footer) {
     padding: 10px 14px max(var(--oc-space-3), env(safe-area-inset-bottom)); box-shadow: inset 0 1px 0 0 var(--oc-line-rule);
   }
-  /* nothing waiting */
   :global(.modal-overlay.ask-modal .modal-footer:empty) { display: none; }
   @media (max-width: 700px) {
     :global(.modal-overlay.ask-modal) { align-items: stretch; padding: 0; }
@@ -131,6 +129,4 @@
   .aq-empty { margin: 0; padding: 18px 14px; color: var(--pl-muted); font-size: var(--oc-fs-run-title); }
   .aq-foot { display: flex; flex: 1; min-width: 0; }
   .aq-pager { display: flex; align-items: center; gap: var(--oc-space-2); margin-left: auto; }
-  .aq-pager :global(.modal-btn) { padding: 0 10px; font-size: var(--oc-fs-card-name); line-height: 1.4; }
-  .aq-pager :global(.modal-btn:disabled) { opacity: 0.45; cursor: not-allowed; }
 </style>

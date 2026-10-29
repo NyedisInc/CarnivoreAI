@@ -1,4 +1,3 @@
-/* could not */
 
 export interface RecentRow {
     id?: number | string | null;
@@ -11,6 +10,7 @@ export interface LiveSession {
     session_row_id?: number | string | null;
 }
 
+/* too rather than */
 export function rowIdOf(live: LiveSession | null | undefined): number | null {
     if (!live) return null;
     const raw = live.session_row_id;

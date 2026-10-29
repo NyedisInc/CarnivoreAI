@@ -48,7 +48,7 @@ from tests.helpers.catalog_fixture import (
 )
 from tests.helpers.minisign_keys import Keypair, generate_keypair, require_minisign
 
-PUBLISHER = "acme"
+PUBLISHER = "alex"
 SKILL = "work"
 ITEM_ID = f"{PUBLISHER}/{SKILL}"
 DIGEST = "ab" * 32
@@ -751,7 +751,7 @@ def test_the_verifier_holds_no_clock(module: str) -> None:
 def test_an_id_that_is_not_publisher_and_name_is_refused(
     tmp_path: Path, keys: Keys, trust_root: TrustRoot
 ) -> None:
-    item = skill_item(SKILL, PUBLISHER, DIGEST, item_id="acme/something-else")
+    item = skill_item(SKILL, PUBLISHER, DIGEST, item_id="alex/something-else")
     signed = good_index(tmp_path, keys, items=[item])
 
     index = verified(run(signed, trust_root))
@@ -774,7 +774,7 @@ def test_a_renamed_id_cannot_dodge_a_sticky_version_revocation(
             )
         }
     )
-    renamed = skill_item(SKILL, PUBLISHER, DIGEST, item_id="acme/work-v2")
+    renamed = skill_item(SKILL, PUBLISHER, DIGEST, item_id="alex/work-v2")
     signed = good_index(tmp_path, keys, items=[renamed])
     index = verified(run(signed, trust_root, seen=sticky))
     assert index.items == ()

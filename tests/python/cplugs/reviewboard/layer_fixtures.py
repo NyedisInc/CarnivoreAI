@@ -25,10 +25,10 @@ QUESTIONS: Dict[str, Any] = {
 }
 
 ROWS: Dict[str, Any] = {
-    "kind": "rows", "v": 1, "title": "acme watch", "placement": "float", "pick": "one",
+    "kind": "rows", "v": 1, "title": "alex watch", "placement": "float", "pick": "one",
     "choices": [{"id": "ok", "label": "ok", "tone": "ok"}, {"id": "later", "label": "later", "tone": "later"}],
     "rows": [
-        {"id": "aw-001", "title": "first row", "tag": "NEW", "lines": [{"label": "now", "text": "it works"}], "meta": "8ff51de", "group": "NEW (2)",
+        {"id": "aw-001", "title": "first row", "tag": "NEW", "lines": [{"label": "now", "text": "it works"}], "meta": "e9f0976", "group": "NEW (2)",
          "anchor": "send", "suggest": "ok"},
         {"id": "aw-002", "title": "second row", "choices": [{"id": "keep", "label": "keep"}, {"id": "drop", "label": "drop", "tone": "push"}], "default": "keep"},
     ],

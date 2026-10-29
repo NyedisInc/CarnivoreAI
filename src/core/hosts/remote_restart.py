@@ -16,7 +16,6 @@ logger = structlog.get_logger()
 
 ALREADY_RUNNING_CODE = "session_already_running"
 
-# could not
 HOST_UNMEASURED_CODE = "host_unmeasured"
 
 
@@ -28,13 +27,6 @@ class RemoteRestartRefused(Exception):
 
 
 async def preview_remote(manager: Any, remote_id: str) -> Any:
-    """What restarting a live remote session would do, changing nothing.
-
-    Inputs: manager (SessionManager); remote_id (str) - ``remote:<host>:<name>``.
-    Output: RestartPreview - ``name`` echoes ``remote_id``.
-    Raises: ValueError - malformed, or no such session registered on the host.
-    Example: (await preview_remote(mgr, 'remote:hosta:carnivore_api')).unchanged.kind
-    """
     from src.core.hosts.remote_resume import _row, remote_backend_for
     from src.core.session_respawn import resume_uuid_in
     from src.core.session_restart_preview import build_restart_preview

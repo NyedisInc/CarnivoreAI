@@ -85,7 +85,7 @@ TABLE: Mapping[str, Tuple[str, str]] = {
     "launch_accounts_list": ("sessions.launch.accounts.list",
                              "List the claude accounts session_create can launch on, and the default one."),
     "agents_lookup": ("crosstalk.agents.lookup",
-                      "Look up agents by name (\"@bot-Misc UI\") on this computer and paired ones: id, provider, model, host, "
+                      "Look up agents by name (\"@Cv-Misc UI\") on this computer and paired ones: id, provider, model, host, "
                       "project, status; view roster lists sessions with descriptions and family."),
     "crosstalk_send": ("crosstalk.send",
                        "Send a durable peer message to another agent by handle or id; wakes an asleep one. The receipt says "

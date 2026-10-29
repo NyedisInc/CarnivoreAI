@@ -18,6 +18,7 @@ from src.core.swarm.cards import phone, port as card_port
 from src.core.swarm.question_events import learned_events, question_events
 from src.core.trail_entry import utc_now
 from src.core.swarm.names import shown_name
+from src.cplugs.sdk.swarm import SwarmError
 
 logger = structlog.get_logger()
 
@@ -121,11 +122,11 @@ def _join_target(conn: sqlite3.Connection, text: str) -> Optional[int]:
 
 
 def _create_or_join(conn: sqlite3.Connection, agent: Dict[str, Any], text: str, summary: Optional[str] = None,
-                    task: Optional[str] = None) -> Dict[str, Any]:
+                    task: Optional[str] = None, *, joinable: bool = True) -> Dict[str, Any]:
     now = utc_now()
     path = json.dumps(author_path.path_for_agent(conn, agent))
     with transaction(conn):
-        target = _join_target(conn, text)
+        target = _join_target(conn, text) if joinable else None
         if target is not None:
             conn.execute("INSERT OR IGNORE INTO swarm_question_askers (question_id, agent_id, asked_at, author_path) VALUES (?, ?, ?, ?)",
                          (target, agent["id"], now, path))
@@ -195,10 +196,21 @@ async def ask(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict[str,
     if refusal:
         raise QuestionRefused(refusal)
     task = _plain_line(args, "task", MAX_TASK_CHARS) or await _derived_task(agent)
-    if thread_port.get() is None:
+    port = thread_port.get()
+    if port is None:
         raise QuestionRefused("the huddle plugin is off, so a question has nowhere to go")
+    form = args.get("questions")
+    if form is not None:
+        try:
+            flat = await port.check_form(form)
+            memory.refuse_secrets(flat, "questions")
+        except (SwarmError, memory.SwarmFileError) as exc:
+            raise QuestionRefused(str(exc)) from None
+        text = f"{text}\n\n{flat}"
     try:
-        made = await body.run_db(lambda c: _create_or_join(c, agent, text, summary, task))
+        made = await body.run_db(lambda c: _create_or_join(c, agent, text, summary, task, joinable=form is None))
+        if form is not None:
+            await _stage_form(port, made["question_id"], form)
         if not made["joined"]:
             await advance(view.app.state, made["question_id"])
         state = await body.run_db(lambda c: c.execute("SELECT state FROM swarm_questions WHERE id = ?",
@@ -209,6 +221,13 @@ async def ask(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict[str,
     await asyncio.to_thread(push.notify_agent, agent["id"])
     logger.info("swarm_asked", question_id=made["question_id"], agent_id=agent["id"], joined=made["joined"])
     return {"question_id": made["question_id"], "state": state, "joined": made["joined"]}
+
+
+async def _stage_form(port: Any, question_id: int, form: Any) -> None:
+    try:
+        await port.stage_form(question_id, form)
+    except (SwarmError, OSError) as exc:
+        logger.warning("swarm_ask_form_not_staged", question_id=question_id, error_type=type(exc).__name__)
 
 
 def _add_hop(conn: sqlite3.Connection, question_id: int, agent_id: int, coverage: Optional[float], outcome: str,

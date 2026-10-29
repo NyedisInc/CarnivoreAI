@@ -27,7 +27,7 @@
   "name": "Transcript archive",
   "since": "2026-08-31",
   "status": "deprecated",
-  "summary": "",
+  "summary": "a byte-exact archive of past conversations; retired 2026-09-30 and off by default, the live copy is the harness own transcript files and the save pipeline restore points.",
   "surfaces": [],
   "updated": "2026-10-12",
   "where": [

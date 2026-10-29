@@ -38,7 +38,7 @@ beforeEach(() => {
     setCacheBackend(backend);
     sub = 'alice';
     vi.stubGlobal('localStorage', { getItem: () => token(sub) });
-    vi.stubGlobal('location', { origin: 'https://mac.local:8000' });
+    vi.stubGlobal('location', { origin: 'https://mini.local:8000' });
 });
 afterEach(() => {
     setCacheBackend(null);

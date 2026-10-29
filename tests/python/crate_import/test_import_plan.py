@@ -293,7 +293,7 @@ def test_an_open_reopen_offer_naming_a_crate_session_blocks(tmp_path: Path) -> N
 
 
 
-def test_a_new_destination_quinwick_ashmont_the_fingerprint(tmp_path: Path) -> None:
+def test_a_new_destination_file_changes_the_fingerprint(tmp_path: Path) -> None:
     crate = export_crate(tmp_path)
     install = target(tmp_path, crate)
     first = plan_of(crate, install.env)

@@ -1,3 +1,4 @@
+/* the widget menu */
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import { DENSITY_MODES, setDensity, type DensityMode } from '../drawer-tabs/density-mode';
 import { archivedShown, setArchivedShown } from '../drawer/archived-visibility';

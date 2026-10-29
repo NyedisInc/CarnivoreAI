@@ -9,7 +9,7 @@ from typing import Optional
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 
-CONVERSATION = "deab833f-3c01-4d80-8340-84d081bb38fa"
+CONVERSATION = "2629dba5-1111-4222-8333-444455556666"
 
 
 @dataclass

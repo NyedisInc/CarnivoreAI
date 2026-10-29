@@ -22,6 +22,10 @@ LIVE_INFOS_KEY = "live_infos"
 WAKE_SHARED_KEY = "asleep_wake_shared"
 
 
+async def _dump(models: List[Any]) -> List[Dict[str, Any]]:
+    return await asyncio.to_thread(lambda: [m.model_dump(mode="json") for m in models])
+
+
 def _failure(exc: HTTPException) -> CollectionResult:
     return CollectionResult(ok=False, status=exc.status_code, detail=exc.detail)
 
@@ -33,7 +37,7 @@ def _names(context: Dict[str, Any]) -> set:
 async def build_list(app_state: Any, context: Dict[str, Any]) -> CollectionResult:
     infos = await build_owner_listing(app_state)
     infos = await peer_listing.for_caller(infos, is_peer=False, open_db=peer_auth.open_db)
-    rows = [info.model_dump(mode="json") for info in infos]
+    rows = await _dump(infos)
     _names(context).update(r.get("tmux_session") for r in rows if r.get("tmux_session"))
     context[LIVE_INFOS_KEY] = infos
     return CollectionResult(rows=rows)
@@ -64,7 +68,7 @@ async def build_records(app_state: Any, context: Dict[str, Any]) -> CollectionRe
                                            wake_shared=context.setdefault(WAKE_SHARED_KEY, {}))
     except HTTPException as exc:
         return _failure(exc)
-    return CollectionResult(rows=[r.model_dump(mode="json") for r in records])
+    return CollectionResult(rows=await _dump(records))
 
 
 async def build_asleep(app_state: Any, context: Dict[str, Any]) -> CollectionResult:
@@ -72,17 +76,17 @@ async def build_asleep(app_state: Any, context: Dict[str, Any]) -> CollectionRes
         records = await asleep_record_rows(app_state, context.get(LIVE_INFOS_KEY), context.setdefault(WAKE_SHARED_KEY, {}))
     except HTTPException as exc:
         return _failure(exc)
-    return CollectionResult(rows=[r.model_dump(mode="json") for r in records])
+    return CollectionResult(rows=await _dump(records))
 
 
 async def build_companions(app_state: Any, context: Dict[str, Any]) -> CollectionResult:
     infos = await companion_infos(app_state)
-    return CollectionResult(rows=[info.model_dump(mode="json") for info in infos])
+    return CollectionResult(rows=await _dump(infos))
 
 
 async def build_recent(app_state: Any, context: Dict[str, Any]) -> CollectionResult:
     try:
-        body = (await recent_response(app_state)).model_dump(mode="json")
+        body = (await _dump([await recent_response(app_state)]))[0]
     except HTTPException as exc:
         return _failure(exc)
     rows = body.pop("sessions", []) or []

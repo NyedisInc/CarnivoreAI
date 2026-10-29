@@ -2,6 +2,7 @@
 <script lang="ts">
     import { loadOnce } from './load-once.svelte.js';
     import Button from '../lib/base/Button.svelte';
+    import Field from '../lib/base/Field.svelte';
     import type { AdminHost } from './admin-host.svelte.js';
     import type { CommunityHost } from './community-host.svelte.js';
     import { ApiRefusal, seenAtText, type AdminApi, type UserRow } from './admin.js';
@@ -92,11 +93,9 @@
                                 <label class="admin-field" for={'disable-' + row.user_id}>
                                     {t(ADMIN_KEYS.usersDisableReasonLabel)}
                                 </label>
-                                <input
-                                    id={'disable-' + row.user_id}
-                                    class="admin-input"
-                                    type="text"
-                                    maxlength="200"
+                                <Field
+                                    id={'disable-' + row.user_id} data-admin-grow
+                                    maxlength={200}
                                     value={host.disableReason}
                                     oninput={(event) => host.setDisableReason(event.currentTarget.value)}
                                 />

@@ -1,15 +1,3 @@
-"""Refusing to let the file browser overwrite this app's OWN config.json.
-
-IT IS SCOPED TO ONE PATH, NEVER TO A NAME. The obvious implementation is
-to add ``config.json`` to the hide-list that already exists a file away,
-and it is wrong: ``config.json`` is an ordinary, common file name, so a
-name rule would refuse every project's own ``config.json`` as well and
-take a real capability away from every user in order to protect one file.
-The comparison is ``os.path.realpath`` on both sides, so a symlink, a
-relative spelling, ``~``, and the ``/tmp`` to ``/private/tmp`` pair on
-macOS all reduce to the same answer, and only the single real file is
-refused.
-"""
 
 from __future__ import annotations
 

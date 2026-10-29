@@ -38,6 +38,9 @@ class _StubSettings:
         self._log_dir = log_dir
         self.port = port
 
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
+
     def get_pinned_themes_path(self) -> Path:
         return self._pin_path
 

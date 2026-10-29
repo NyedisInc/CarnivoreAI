@@ -59,7 +59,7 @@ async def _resolve(app_state: Any, wanted: Dict[Key, str]) -> None:
         accounts = poller_scan.with_auto_default(
             await asyncio.to_thread(accounts_store.list_accounts, _config_path())
         )
-        socket = app_state.session_manager._tmux_socket_name()
+        socket = app_state.session_manager.tmux_socket_name()
         gate = asyncio.Semaphore(pane_account.READ_CONCURRENCY)
 
         async def one(key: Key, provider: str) -> None:

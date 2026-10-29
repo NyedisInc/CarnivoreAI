@@ -28,7 +28,7 @@ class LayoutError(Exception):
 
 
 class LayoutsUnavailable(LayoutError):
-    """The tables are absent: CANNOT DETERMINE, never an empty list."""
+    pass
 
 
 class LayoutNotFound(LayoutError):

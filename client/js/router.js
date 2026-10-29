@@ -1,44 +1,3 @@
-/**
- * Deep-link router (Item 9).
- *
- * Reads the URL on page load. When the path matches `/session/<project>`,
- * validates the slug against a strict client-side regex, and - once the
- * user has authenticated - hands the project name to the launchpad so
- * it can auto-open that session.
- *
- * Security posture:
- * - The SERVER route `/session/{project}` intentionally serves the SPA
- *   shell for ANY single-path-segment value. The meaningful validation
- *   happens here, in the browser, so we can show a visible error rather
- *   than a 404 when a user pastes a malformed link.
- * - We REJECT invalid names (show a banner + clear the URL), we do NOT
- *   silently strip - silent stripping turns a bad link into a working
- *   one pointing at an unintended project, which is worse than failing
- *   loudly.
- * - The allow-list used to be `[A-Za-z0-9_\- ]` only, which rejected a
- *   name the app itself produces: a fork label is `<parent title>(fork)`
- *   (src/core/session_fork.py `fork_label`), and both project names and
- *   session titles are free-form - unicode, punctuation, digits - per
- *   the two server-side sources of truth: `validate_project_dir_name()`
- *   (src/core/project_directory.py) for a project name and
- *   `name_is_pushable()` (src/core/claude_rename.py) for a session
- *   title. Between them, the only things either one refuses are `/`,
- *   `\`, a null byte, other control characters, and the bare `.` / `..`
- *   segments - so that is exactly what `isLegalDeepLinkName()` below
- *   refuses too. Everything else either side can produce is accepted.
- *
- * Flow:
- * 1. `initRouter()` is called on page load from index.html.
- * 2. If the current path is `/session/<raw>`, we URL-decode + validate.
- * 3. Invalid → show banner, `history.replaceState` back to `/`, done.
- * 4. Valid → stash the target name on `window.DeepLinkTarget`.
- * 5. On the `authenticated` event (fired by auth.js after login), we
- *    hand the stashed name to `window.Launchpad.openProjectByName()`
- *    if the method exists; otherwise we fall back to firing a custom
- *    `deep-link-project` event that launchpad can listen for.
- * 6. We also listen for `popstate` so browser back/forward re-triggers
- *    the same flow.
- */
 (function () {
     'use strict';
 
@@ -163,7 +122,6 @@
 
     var dismissTimerId = null;
 
-    // navigation generation
     // could not be determined
     var bannerGeneration = null;
 
@@ -215,7 +173,6 @@
         }
     }
 
-    /* navigation generation */
     function showError(message) {
         var el = document.getElementById('deep-link-error');
         if (!el) {
@@ -238,7 +195,6 @@
         }, AUTO_DISMISS_MS);
     }
 
-    /* could not */
     function rejectTarget(name) {
         showError(`session not found: "${name}" - returned to home.`);
         try {
@@ -247,11 +203,14 @@
         }
     }
 
+    /* there is nothing */
     function clearError(token) {
         var el = document.getElementById('deep-link-error');
         if (!el) return;
         if (typeof token === 'number' && typeof bannerGeneration === 'number') {
             if (!(bannerGeneration < token)) {
+                // Same generation as the one that raised this message
+                // (or, impossibly, a newer one) - refuse. See doc comment.
                 return;
             }
         }

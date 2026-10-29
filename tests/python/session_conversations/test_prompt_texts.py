@@ -3,7 +3,7 @@ import json
 
 from src.core.session_conversations.prompt_texts import read_prompt_texts
 
-UUID = "deab833f-3c01-4d80-8340-84d081bb38fa"
+UUID = "2629dba5-1111-4222-8333-444455556666"
 
 
 def _user(text, **extra):

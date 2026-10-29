@@ -7,17 +7,14 @@ import re
 import sqlite3
 import time
 from collections import defaultdict, deque
-from contextlib import closing
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Mapping, NamedTuple, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Mapping, NamedTuple, Optional, Sequence
 
 import structlog
 
-from src.core.db_reuse.change_cache import ChangeCache, main_file
+from src.cplugs.host.session_uuid_reads import session_uuids
 
 logger = structlog.get_logger()
-
-_UUID_READS = ChangeCache()
 
 TOAST_KIND = "Notification"
 
@@ -87,41 +84,25 @@ class Sessions:
         return await asyncio.to_thread(session_rows.read, keys)
 
 
-class RestrictedSessions(Sessions):
+_RESTRICTED_ACTIONS = ("message", "deliver", "booted", "asleep", "wake")
 
-    async def list(self) -> List[Dict[str, Any]]:  # type: ignore[override]
-        return await self.list_allowed()
+
+class RestrictedSessions:
+
+    def __init__(self, infos: Infos, request: Optional[Any] = None, may_message: bool = False, *,
+                 may_control: bool = False) -> None:
+        inner = Sessions(infos, request, may_message, may_create=False, may_control=may_control)
+        self._sessions = inner
+        for name in _RESTRICTED_ACTIONS:
+            action = getattr(inner, name, None)
+            if action is not None:
+                setattr(self, name, action)
+
+    async def list(self) -> List[Dict[str, Any]]:
+        return await self._sessions.list_allowed()
 
     async def get(self, ref: str) -> Optional[Dict[str, Any]]:
-        return await self.get_allowed(ref)
-
-    async def durable_keys(self, infos: Optional[List[Any]] = None) -> Dict[str, str]:
-        raise PermissionError("permission_denied: durable session keys are not readable here")
-
-    async def asleep_read(self) -> Optional[List[Dict[str, Any]]]:
-        raise PermissionError("permission_denied: the asleep sessions are not readable here")
-
-    async def stored_rows(self, keys: List[str]) -> Dict[str, Any]:
-        raise PermissionError("permission_denied: stored session rows are not readable here")
-
-
-def session_uuids(row_ids: List[int]) -> Dict[int, str]:
-    if not row_ids:
-        return {}
-    from src.api.peer_auth import open_db  # noqa: PLC0415
-
-    try:
-        every = _UUID_READS.fetch_opened(open_db, "session_uuids", lambda: _read_session_uuids(open_db))
-    except sqlite3.Error as exc:
-        logger.warning("cplug_session_uuids_unreadable", error_type=type(exc).__name__, error=str(exc))
-        return {}
-    return {rid: every[rid] for rid in row_ids if rid in every}
-
-
-def _read_session_uuids(open_db: Callable[[], sqlite3.Connection]) -> tuple:
-    with closing(open_db()) as conn:
-        rows = conn.execute("SELECT id, session_uuid FROM sessions").fetchall()
-        return {int(r[0]): str(r[1]) for r in rows if r[1]}, main_file(conn)
+        return await self._sessions.get_allowed(ref)
 
 
 async def _recorded_delivery_known(request: Any, target: str, recorded: Optional[int]) -> bool:
@@ -185,11 +166,6 @@ class Projects:
                                            "default_launch_profile": found.default_launch_profile}
 
     def list(self, *, include_archived: bool = False, strict: bool = False) -> List[Dict[str, Any]]:
-        """Every live project with a row id (archived ones too when asked). Output: list of {id, name}.
-
-        Inputs: include_archived (bool); strict (bool): raise instead of answering an empty list when the project datastore cannot be read.
-        Raises: OSError, only when ``strict`` and the datastore could not be read.
-        """
         from src.api import projects_service  # noqa: PLC0415
         from src.config import settings  # noqa: PLC0415
         from src.models import ProjectResponse  # noqa: PLC0415
@@ -311,7 +287,8 @@ def toast_dismisser(cplug_id: str, app_state: Any) -> Callable[[ToastRef], bool]
 
 
 def alerter(cplug_id: str, third_party: bool = False) -> Callable[..., Optional[Dict[str, Any]]]:
-    def alert(key: str, severity: str, title_key: str, params: Optional[Mapping[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def alert(key: str, severity: str, title_key: str, params: Optional[Mapping[str, Any]] = None, *,
+              detail_key: Optional[str] = None, actions: Sequence[Mapping[str, Any]] = ()) -> Optional[Dict[str, Any]]:
         from src.core.app_alerts.service import raise_alert  # noqa: PLC0415
 
         if third_party:
@@ -319,11 +296,28 @@ def alerter(cplug_id: str, third_party: bool = False) -> Callable[..., Optional[
                 raise ValueError("alert key must match ^[a-z0-9_]{1,32}$")
             if not isinstance(title_key, str) or not title_key.startswith(f"cplug.{cplug_id}."):
                 raise ValueError(f"alert title_key must start with cplug.{cplug_id}.")
+            if detail_key is not None and not (isinstance(detail_key, str) and detail_key.startswith(f"cplug.{cplug_id}.")):
+                raise ValueError(f"alert detail_key must start with cplug.{cplug_id}.")
+            if actions:
+                raise ValueError("a third-party alert carries no actions")
             key = f"p.{key}"
         return raise_alert(f"cplug.{cplug_id}.{key}", source=f"cplug.{cplug_id}", severity=severity,
-                           title_key=title_key, params=params)
+                           title_key=title_key, params=params, detail_key=detail_key, actions=actions)
 
     return alert
+
+
+def alert_resolver(cplug_id: str, third_party: bool = False) -> Callable[[str], Any]:
+    def alert_resolve(key: str) -> Any:
+        from src.core.app_alerts.service import resolve  # noqa: PLC0415
+
+        if third_party:
+            if not isinstance(key, str) or not _ALERT_KEY.match(key):
+                raise ValueError("alert key must match ^[a-z0-9_]{1,32}$")
+            key = f"p.{key}"
+        return resolve(f"cplug.{cplug_id}.{key}")
+
+    return alert_resolve
 
 
 def swarm_capability(state_dir: Path, infos: Infos, app_state: Any = None) -> Any:

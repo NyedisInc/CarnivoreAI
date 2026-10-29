@@ -70,7 +70,7 @@ def _read(conn: sqlite3.Connection, session_uuid: str, project_id: int, kind: Ag
             "existing": kind.existing(conn, project_id)}
 
 
-async def _stop_if_running(app_state: Any, session: Dict[str, Any]) -> bool:
+async def stop_if_running(app_state: Any, session: Dict[str, Any]) -> bool:
     from src.api.session_sleep_routes import sleep_by_uuid
 
     if await body.live_info(app_state, {"session_row_id": session["id"]}) is None:
@@ -95,10 +95,6 @@ async def _free_old_body(app_state: Any, existing: Dict[str, Any]) -> None:
 
 
 def _write(conn: sqlite3.Connection, found: Dict[str, Any], state_dir: Path, kind: AgentKind) -> Dict[str, Any]:
-    """Bind the session's row to the project's agent in one transaction and write a NEW agent's files (blocking).
-
-    Output: the agent row. Raises: PromoteRefused (another agent holds the row, or the agent's files could not be written: the new row is tombstoned).
-    """
     session, existing = found["session"], found["existing"]
     try:
         if existing is not None:
@@ -138,7 +134,7 @@ async def promote_session(app_state: Any, session_uuid: str, project_id: int, ki
         await asyncio.to_thread(project_agent._ensure_project_repo, found["project"]["root"])
     else:
         await _free_old_body(app_state, existing)
-    was_running = await _stop_if_running(app_state, session)
+    was_running = await stop_if_running(app_state, session)
     state_dir = app_settings.get_state_dir()
     agent = await body.run_db(lambda c: _write(c, found, state_dir, kind))
     port = thread_port.get()

@@ -22,7 +22,6 @@ logger = structlog.get_logger(__name__)
 
 RETRY_PUSH_REFUSED: str = "push_refused"
 
-# could not
 RETRY_NO_BINARY: str = "no_binary"
 
 RETRY_DISABLED: str = "disabled"
@@ -125,19 +124,6 @@ def _push(
     at: float,
     where: Optional[Path],
 ) -> RetryDecision:
-    """Run the out-of-band rename for an authorised decision.
-
-    Description: the impure half, split out so the function above reads
-      as the three-step shape it is. Reaches ``claude_rename`` for every
-      part of the push, including the version probe, so this module owns
-      no policy about what claude accepts.
-    Inputs: session_id (str), key (str) - the ledger key. decision
-      (RetryDecision) - already :data:`RETRY_PUSH`. claude_uuid (str).
-      agent_family (str | None). mark (RenameMark | None). at (float) -
-      unix seconds. where (Path | None) - the state directory.
-    Output: RetryDecision.
-    Example: see :func:`run_rename_retry`.
-    """
     from src.core.claude_rename import (
         PUSH_SENT,
         decide_push,

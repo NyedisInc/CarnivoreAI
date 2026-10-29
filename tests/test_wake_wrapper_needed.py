@@ -20,7 +20,7 @@ from src.core.session_recreate_presence import TMUX_PRESENT
 from src.core.session_restore_offer import NEVER_OFFERED
 from src.core.session_wake_choice import recorded_wake_agent
 
-IDS = ["claude-skip-permissions", "keyc", "clxor", "cldl", "claude-chrome"]
+IDS = ["claude-skip-permissions", "cld", "cldor", "cldl", "claude-chrome"]
 
 
 def _ids(monkeypatch, ids):
@@ -54,10 +54,10 @@ def _set_source(state_dir, source):
 
 @pytest.mark.parametrize("row, ids, expected", [
     ({"agent_type": "claude", "agent_family_source": "launched"}, IDS, None),
-    ({"agent_type": "keyc", "agent_family_source": "inferred_process"}, IDS, None),
+    ({"agent_type": "cld", "agent_family_source": "inferred_process"}, IDS, None),
     ({"agent_type": "", "agent_family_source": "not_launched"}, IDS, None),
-    ({"agent_type": "keyc", "agent_family_source": "launched"}, IDS, "keyc"),
-    ({"agent_type": "keyc", "agent_family_source": "not_launched"}, IDS, "keyc"),
+    ({"agent_type": "cld", "agent_family_source": "launched"}, IDS, "cld"),
+    ({"agent_type": "cld", "agent_family_source": "not_launched"}, IDS, "cld"),
     ({"agent_type": "claude", "agent_family_source": "launched"}, None, "claude"),
 ])
 def test_recorded_wake_agent(row, ids, expected):
@@ -85,7 +85,7 @@ def test_a_family_name_row_asks_for_a_wrapper_instead_of_failing(state_dir, clie
 
 def test_an_inferred_wrapper_is_not_launched_unasked(state_dir, client, monkeypatch):
     c, _ = client
-    _insert(state_dir, lifecycle="stopped", source="slept_by_user", agent_type="keyc")
+    _insert(state_dir, lifecycle="stopped", source="slept_by_user", agent_type="cld")
     _set_source(state_dir, "inferred_process")
     _ids(monkeypatch, IDS)
     called = _recorder(monkeypatch)
@@ -110,12 +110,12 @@ def test_the_pick_comes_back_through_wake_as_the_choice(state_dir, client, monke
 
 def test_a_configured_recorded_wrapper_wakes_without_asking(state_dir, client, monkeypatch):
     c, _ = client
-    _insert(state_dir, lifecycle="stopped", source="slept_by_user", agent_type="keyc")
+    _insert(state_dir, lifecycle="stopped", source="slept_by_user", agent_type="cld")
     _set_source(state_dir, "launched")
     _ids(monkeypatch, IDS)
     called = _recorder(monkeypatch)
     assert c.post(f"/api/v1/sessions/{ROW_UUID}/wake").json()["status"] == "started"
-    assert called == [(ROW_UUID, "keyc")]
+    assert called == [(ROW_UUID, "cld")]
 
 
 def test_a_row_with_no_recorded_wrapper_asks_rather_than_409(state_dir, client, monkeypatch):
@@ -131,9 +131,9 @@ def test_a_row_with_no_recorded_wrapper_asks_rather_than_409(state_dir, client, 
 
 def test_a_row_that_is_not_asleep_still_refuses_even_with_a_pick(state_dir, client, monkeypatch):
     c, _ = client
-    _insert(state_dir, lifecycle="stopped", source="closed_by_user", agent_type="keyc")
+    _insert(state_dir, lifecycle="stopped", source="closed_by_user", agent_type="cld")
     called = _recorder(monkeypatch)
-    r = c.post(f"/api/v1/sessions/{ROW_UUID}/wake", json={"agent_type": "keyc"})
+    r = c.post(f"/api/v1/sessions/{ROW_UUID}/wake", json={"agent_type": "cld"})
     assert r.status_code == 409
     assert called == []
 

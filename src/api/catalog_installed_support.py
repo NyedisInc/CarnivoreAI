@@ -51,17 +51,6 @@ INCOMING_SUFFIX = "-carnivore-incoming-"
 
 
 def stale_409(current: InstalledItem) -> HTTPException:
-    """The 409 a revision mismatch is answered with, carrying the row.
-
-    Description: the row goes out in full, rendered by
-      :func:`src.core.skills.ledger_types.as_dict` so its field names come
-      from the table's own column list and cannot drift. A bare revision
-      number would tell a client it had lost a race without telling it
-      what it lost to, so it could not re-render.
-    Inputs: current (InstalledItem) - the row as it now stands.
-    Output: HTTPException with status 409.
-    Example: raise stale_409(exc.current)
-    """
     return refuse_409(
         STALE_REVISION,
         f"install {current.install_id!r} is at revision {current.revision}",

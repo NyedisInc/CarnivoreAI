@@ -33,7 +33,6 @@ const listArchivedSessionRecords = vi.fn(async () => ARCHIVED_SESSIONS);
 
 function stubs(): LegacyDrawer {
     return {
-        groups: {},
         projectHeader: { ledHtml: () => '', iconHtml: () => '', iconForBand: () => null },
     };
 }

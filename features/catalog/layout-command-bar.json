@@ -41,6 +41,7 @@
     "Type in the box: search mode (the magnifying glass, the default) finds the text in every terminal at once; each terminal shows its own count and the bar shows the total.",
     "Press Enter or Shift+Enter to walk the matches from one terminal into the next; the prompt icon limits the search to prompts you sent, the same switch as a single terminal's search.",
     "Click the mode toggle to switch to command mode: its icon swaps from the magnifying glass to \">\".",
+    "Turn a terminal's \">\" off in its title bar to leave it out, type a command and press Enter: it runs in every live terminal whose \">\" is on, with no confirmation beyond the send itself.",
     "Escape clears the box, and a second Escape leaves it.",
     "In command mode, start the line with \"/\" (Claude Code) or \"$\" (Codex) to list skills: every global skill plus the project skills each receiving terminal shares. Keep typing to filter, Up and Down to move, Tab or Enter to insert, Escape to close, or click a row."
   ],
@@ -48,6 +49,32 @@
     "Three agents on one repo: search \"error\" to see which of them hit a failure, then send \"git status\" to all three at once.",
     "Leave a long-running session's \">\" off so a broadcast \"npm test\" only reaches the other terminals."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "search.png",
+      "caption": "search mode: one query counted in every terminal",
+      "alt": "the Layout command bar searching error, with a match count in each terminal's title bar and 1 of 4 in the bar"
+    },
+    {
+      "kind": "screenshot",
+      "file": "command.png",
+      "caption": "command mode: the line goes to the terminals whose > is on",
+      "alt": "the bar in command mode with a typed command, one terminal's own > toggle dimmed off"
+    },
+    {
+      "kind": "icon",
+      "file": "toggle-on.png",
+      "state": "on",
+      "caption": "a terminal's > toggle, on",
+      "alt": "a small right-pointing chevron in an accent outline"
+    },
+    {
+      "kind": "icon",
+      "file": "toggle-off.png",
+      "state": "off",
+      "caption": "a terminal's > toggle, off",
+      "alt": "a dimmed right-pointing chevron with no outline"
+    }
+  ]
 }

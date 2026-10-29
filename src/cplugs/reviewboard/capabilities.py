@@ -12,16 +12,19 @@ TABLE: Mapping[str, Tuple[str, str]] = {
                                "and its sends. Never returns HTML."),
     "task_manager_board_create": ("task_manager.boards.create",
                                   "Create a review board for a task: post revision r1 (page, summary, prompts) the owner reviews in "
-                                  "rounds; their send comes back on the task."),
+                                  "rounds; his send comes back on the task."),
     "task_manager_board_revision_add": ("task_manager.boards.revisions.add",
                                         "Add the next revision to a review board (new page, summary, prompts), optionally answering "
                                         "one of the owner's rounds. Older revisions never change."),
     "task_manager_board_focus": ("task_manager.boards.focus",
-                                 "Open a review board on the owner's screen at a revision (default newest) to point the owner at it. "
+                                 "Open a review board on the owner's screen at a revision (default newest) to point him at it. "
                                  "Screen only."),
     "task_manager_board_attachment_add": ("task_manager.boards.attachments.add",
                                           "Attach files (spec, PDF, screenshot, notes) to a review board's task, inline base64 or, "
                                           "from a local pane, by path. At most 10 files."),
+    "task_manager_board_attachment_remove": ("task_manager.boards.attachments.remove",
+                                             "Take an attachment off a review board (a removed entry stays in its index). The file stays on the "
+                                             "task and its thread still links it."),
     "task_manager_board_live_set": ("task_manager.boards.live.set",
                                     "Run a review board as a live session: each call overwrites the working draft the owner sees "
                                     "update in place; starts the session on the first call."),
@@ -35,6 +38,6 @@ TABLE: Mapping[str, Tuple[str, str]] = {
                                   "Post a page and its files to a scratch board (a temporary review board) as one revision; the "
                                   "first post creates the board and its Scratch task. Runs at once."),
     "task_manager_scratch_clear": ("task_manager.scratch.clear",
-                                   "Ask the owner to clear a scratch board for good (folder, pages, files). Always waits for their "
+                                   "Ask the owner to clear a scratch board for good (folder, pages, files). Always waits for his "
                                    "approval; the Scratch task stays."),
 }

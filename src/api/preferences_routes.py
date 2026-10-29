@@ -51,17 +51,6 @@ class PreferencesUpdateRequest(BaseModel):
 
 
 def _store(request: Request) -> ui_preferences_store.UiPreferencesStore:
-    """Return the process's preference store.
-
-    Description: resolved off ``app.state``, which is where ``main.py``
-      mounts it at startup. A request arriving before the mount is a
-      genuine server error rather than something to paper over with an
-      empty block: answering "no preferences are stored" would invite a
-      client to save its defaults over the user's real settings.
-    Inputs: request (Request).
-    Output: UiPreferencesStore.
-    Raises: HTTPException 503 when the store is not mounted.
-    """
     store = getattr(request.app.state, "ui_preferences_store", None)
     if store is None:
         raise HTTPException(

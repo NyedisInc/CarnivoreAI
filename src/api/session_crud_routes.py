@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.concurrency import run_in_threadpool
 from src.api import session_rejoin_capture
 from src.api import (
-    agent_update_listing, asleep_brief, automation_listing, automation_timers_listing, description_listing, mcp_health_listing, messaging_listing, parked_work_listing, session_account_listing, session_roles_listing, skill_fire_listing, spectator_listing,
+    agent_update_listing, asleep_brief, automation_listing, automation_timers_listing, description_listing, mcp_health_listing, swarm_member_listing, messaging_listing, parked_work_listing, session_account_listing, session_roles_listing, skill_fire_listing, spectator_listing,
     sleep_hold_listing, subagent_listing, timer_listing,
 )
 from src.api.auth import require_auth
@@ -17,13 +17,15 @@ from src.core.federation import peer_listing
 from src.config import settings
 from src.core import session_change_notice
 from src.core import single_flight
+from src.core.ttl_flight import TtlFlight
 from src.core.account_switch import create_account
 from src.core.launch_profiles import create_seam
+from src.core.sessions.errors import SessionCreateFailed, TmuxError
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.launch_profiles.secrets import SecretError
 from src.core.pipeline import triggers as save_triggers
 from src.core.hosts.ddl import LOCAL_HOST_KEY
-from src.core.hosts.identity import backend_host_key
+from src.core.hosts.identity import RemoteRootConflict, backend_host_key, resolve_create_target
 from src.core.hosts.registry import HostUnavailable
 from src.models import (
     CreateSessionRequest,
@@ -34,6 +36,9 @@ from src.models import (
 from typing import Any, Dict, List, Optional
 
 from src.core.swarm import leaders as swarm_leaders
+from src.core.swarm import membership
+from src.api.launch_profile_errors import gone_profile_error
+from src.api.error_response import api_error, refusal_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -51,7 +56,7 @@ def _refuse_packed_folder(working_dir: str) -> None:
         with closing(projects_service.open_db_or_503(settings)) as conn:
             name = packed_project_name(conn, os.path.realpath(working_dir))
     except (HTTPException, sqlite3.Error):
-        return  # could not be read
+        return
     if name:
         raise HTTPException(status_code=409, detail=f"{PACKED_MESSAGE} ({name})")
 
@@ -67,8 +72,7 @@ def _refuse_unsafe_project_root(settings, path: str) -> None:
         with closing(projects_service.open_db_or_503(settings)) as conn:
             refuse_unsafe_root(conn, normalize_root(path))
     except ProjectRootRefused as exc:
-        logger.warning("project_root_check_refused", path=path, error=str(exc))
-        raise HTTPException(status_code=409, detail=str(exc))
+        raise api_error(409, "project_root_refused", exc, path=path) from exc
 
 
 @router.post("/sessions", response_model=Session, status_code=201, dependencies=[Depends(require_peer_sessions)])
@@ -82,6 +86,10 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
                                     claude_account: Optional[str] = None,
                                     extra_env: Optional[Dict[str, str]] = None,
                                     session_id: Optional[str] = None):
+    try:
+        body.host_key, body.working_dir = resolve_create_target(body.host_key, body.working_dir)
+    except RemoteRootConflict as exc:
+        raise api_error(400, "remote_root_conflict", exc, step="resolve_create_target") from exc
     host_key = body.host_key or LOCAL_HOST_KEY
     if body.account_id and claude_account:
         raise HTTPException(status_code=400, detail="account_id and claude_account are two ways to name one account; pass one")
@@ -92,7 +100,7 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
             is_peer=getattr(getattr(request, "state", None), "peer_grant", None) is not None,
             is_local=host_key == LOCAL_HOST_KEY)
     except create_account.CreateAccountRefused as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "account_refused", exc, account_id=body.account_id) from exc
     claude_account = account_plan.account_id or claude_account
     if body.working_dir and host_key == LOCAL_HOST_KEY:
         _refuse_packed_folder(os.path.expanduser(body.working_dir))
@@ -165,26 +173,34 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
             model=body.model,
         )
 
-        session = await session_manager.create_session(
-            session_id=session_id,
-            working_dir=body.working_dir,
-            auto_start_claude=body.auto_start_claude,
-            copy_templates=body.copy_templates,
-            initial_cols=body.cols,
-            initial_rows=body.rows,
-            project_name=body.project_name,
-            agent_type=body.agent_type,
-            model=body.model,
-            agent_extra_args=(agent_extra_args or []) + (prompt_args or []),
-            label=(body.label or "").strip() or None,
-            host_key=host_key,
-            claude_account=claude_account,
-            extra_env=extra_env,
-        )
+        member = (await membership.new_session_member(body.working_dir, body.label, body.agent_type)
+                  if host_key == LOCAL_HOST_KEY and body.auto_start_claude and not agent_extra_args else None)
+        try:
+            session = await session_manager.create_session(
+                session_id=session_id,
+                working_dir=body.working_dir,
+                auto_start_claude=body.auto_start_claude,
+                copy_templates=body.copy_templates,
+                initial_cols=body.cols,
+                initial_rows=body.rows,
+                project_name=body.project_name,
+                agent_type=body.agent_type,
+                model=body.model,
+                agent_extra_args=(agent_extra_args or []) + (member["argv"] if member else []) + (prompt_args or []),
+                label=(body.label or "").strip() or None,
+                host_key=host_key,
+                claude_account=claude_account,
+                extra_env=extra_env,
+            )
+        except BaseException:
+            if member:
+                await membership.drop_new_session_member(member)
+            raise
+        if member:
+            await membership.bind_new_session(request.app.state, member, session.id)
 
         await create_account.pin_after_create(session_manager, session.tmux_session, account_plan)
 
-        # could not
         if session.working_dir and host_key == LOCAL_HOST_KEY:
             from src.api import projects_service
 
@@ -203,25 +219,20 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
         raise
     except HostUnavailable as e:
         logger.warning("session_creation_host_unavailable", host=host_key, code=e.code)
-        raise HTTPException(status_code=e.status, detail={"code": e.code, "detail": str(e)})
+        raise refusal_error(e, host=host_key) from e
     except LaunchProfileNotFound as e:
-        logger.warning("session_creation_unknown_launch_profile", agent_type=e.profile_id)
-        raise HTTPException(status_code=400, detail={
-            "code": e.codes[0], "codes": list(e.codes), "detail": str(e),
-            "wrapper_options": getattr(e, "available", []),
-        })
+        raise gone_profile_error(e, getattr(e, "available", [])) from e
     except SecretError as e:
         logger.warning("session_creation_launch_secret_unavailable", error=str(e))
-        raise HTTPException(status_code=409, detail={"code": "launch_secret_unavailable", "detail": str(e)})
+        raise api_error(409, "launch_secret_unavailable", e)
+    except SessionCreateFailed as e:
+        raise api_error(502, "session_launch_failed", e, step="spawn", session_id=session_id) from e
     except ValueError as e:
-        logger.error("session_creation_failed_validation", error=str(e))
-        raise HTTPException(status_code=400, detail=str(e))
-    except RuntimeError as e:
-        logger.error("session_creation_failed_backend", error=str(e))
-        raise HTTPException(status_code=502, detail=str(e))
-    except Exception as e:
-        logger.error("session_creation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to create session: {str(e)}")
+        raise api_error(400, "session_create_invalid", e, step="validation") from e
+    except TmuxError as e:
+        raise api_error(502, "session_launch_failed", e, step="backend", session_id=session_id) from e
+    except Exception as e:  # noqa: BLE001
+        raise api_error(500, "session_create_failed", e, session_id=session_id) from e
 
 
 @router.get("/sessions", response_model=SessionInfo, dependencies=[Depends(require_peer_sessions)])
@@ -241,6 +252,14 @@ async def get_session(
     ``session_id`` (query, optional) selects a specific session; omitted
     returns the current (most-recently-created) one. Back-compat: existing
     clients call ``GET /sessions`` with no params and get "the" session.
+
+    ``include_scrollback`` (query, optional, default False) - when True
+    and the resolved session has a live tmux backend, the response's
+    ``initial_scrollback_b64`` field is populated with base64-encoded
+    pane-capture bytes. Used by the launchpad's "return to running
+    session" path so the client can paint pre-existing history into
+    xterm before the WS opens, mirroring the adopt path. Off by default
+    so existing callers see no change.
 
     ``cols`` / ``rows`` (query, optional) - when ``include_scrollback`` is
     True AND both are positive ints, the pane is pre-resized to the
@@ -308,7 +327,14 @@ async def list_sessions(request: Request):
         infos, is_peer=getattr(request.state, "peer_grant", None) is not None, open_db=peer_auth.open_db)
 
 
+OWNER_LISTING_CACHE: TtlFlight = TtlFlight("owner_listing", 1.0)
+
+
 async def build_owner_listing(app_state: Any) -> List[SessionInfo]:
+    return list(await OWNER_LISTING_CACHE.get(lambda: _assemble_owner_listing(app_state)))
+
+
+async def _assemble_owner_listing(app_state: Any) -> List[SessionInfo]:
     session_manager = app_state.session_manager
     if hasattr(session_manager, "list_session_infos"):
         flight = single_flight.flight_on(
@@ -335,6 +361,7 @@ async def build_owner_listing(app_state: Any) -> List[SessionInfo]:
     automation_listing.mark_automation(app_state, infos)
     messaging_listing.mark_messaging(app_state, infos)
     description_listing.mark_descriptions(app_state, infos)
+    await swarm_member_listing.mark_swarm_members(infos)
     return infos
 
 
@@ -353,24 +380,6 @@ async def _mark_closed_in_datastore(
     socket: Optional[str], name: Optional[str], epoch: Optional[int] = None,
     host_key: str = LOCAL_HOST_KEY,
 ) -> int:
-    """Write the just-closed tmux instance's row to ``stopped``.
-
-    Description: the datastore half of ``DELETE /sessions``. Runs on one
-      pooled thread (connections are thread-affine) and swallows only the
-      two datastore conditions that are not this request's business - an
-      install with no database yet, and one whose database cannot be read
-      - because the session is already destroyed by the time this runs
-      and a bookkeeping failure must not be reported as a failed
-      teardown. Both are logged; neither is silent.
-    Inputs: socket (str | None) - the tmux socket that was torn down.
-      name (str | None) - the tmux session name that was killed. Either
-      being None means the backend could not name what it closed, and
-      nothing is written. epoch (int | None) - the instance's creation
-      epoch read before the kill; see :func:`_instance_epoch`. host_key
-      (str) - the machine the socket is on (issue #162).
-    Output: int - rows moved to ``stopped``; 0 when nothing was written.
-    Example: await _mark_closed_in_datastore('cloude', 'cloude_api')
-    """
     from contextlib import closing
 
     from src.core import session_close_lifecycle
@@ -460,10 +469,9 @@ async def destroy_session(request: Request, session_id: Optional[str] = None, co
     except HTTPException:
         raise
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error("session_destruction_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to destroy session: {str(e)}")
+        raise api_error(404, "session_not_found", e) from e
+    except Exception as e:  # noqa: BLE001
+        raise api_error(500, "session_destroy_failed", e) from e
 
 
 @router.post(

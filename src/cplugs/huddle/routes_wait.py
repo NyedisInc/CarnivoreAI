@@ -14,6 +14,7 @@ RATE_LIMIT = "20/minute"
 
 
 class ResolveRequest(BaseModel):
+    """The callback body. ``token`` is optional only because the owner's bearer is the other way in."""
 
     model_config = ConfigDict(extra="forbid")
     token: Optional[str] = Field(default=None, max_length=200)

@@ -38,7 +38,7 @@ test('every row has its buttons at rest; hover changes nothing; an arrow key mov
     const opened: number[] = [];
     const controller = new DeepSearchController({ search: async () => answer() }, async () => 'switched', 'deepsearch.no_matches',
         (props) => { opened.push((props.request as { line?: number }).line ?? -1); });
-    controller.showActions = true;
+    controller.showActions = true; // the context mode draws the buttons
     await controller.run('flux', 0);
     mounted = mount(DeepSearchResults, { target: host, props: { controller } });
     await settle();
@@ -60,7 +60,7 @@ test('every row has its buttons at rest; hover changes nothing; an arrow key mov
     await settle();
     expect(selected()).toHaveLength(0);
     expect(controller.active).toBe(-1);
-    expect(host.innerHTML).toBe(before);
+    expect(host.innerHTML).toBe(before);  // nothing at all
 
     controller.move(1);
     await settle();

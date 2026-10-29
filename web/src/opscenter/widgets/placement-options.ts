@@ -6,6 +6,8 @@ export type PlacementOptions = Readonly<Record<string, PlacementOptionValue>>;
 
 export const PLACEMENT_OPTION_WIDGETS: ReadonlySet<string> = new Set(['core.questions', 'core.task-list', 'core.session-contents']);
 
+export const SINGLE_COPY_OPTION_WIDGETS: ReadonlySet<string> = new Set(['core.running-sessions']);
+
 export interface PlacementHead {
   icon: string;
   title: string;
@@ -21,6 +23,10 @@ export interface PlacementOptionsDeclaration {
 const declarations = new Map<string, PlacementOptionsDeclaration>();
 
 export function hasPlacementOptions(widgetId: string): boolean {
+  return PLACEMENT_OPTION_WIDGETS.has(widgetId) || SINGLE_COPY_OPTION_WIDGETS.has(widgetId);
+}
+
+export function hasRepeatableOptions(widgetId: string): boolean {
   return PLACEMENT_OPTION_WIDGETS.has(widgetId);
 }
 

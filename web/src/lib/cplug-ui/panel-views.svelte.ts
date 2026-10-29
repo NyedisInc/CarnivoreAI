@@ -38,7 +38,7 @@ export const panels = $state<{ list: PanelEntry[] }>({ list: [] });
 const MANIFESTS = new Map<string, WidgetManifest>();
 const PANEL_KINDS = new Set<string>();
 
-function word(raw: string): string {
+export function word(raw: string): string {
     return raw.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || 'x';
 }
 
@@ -80,7 +80,7 @@ export function panelEntries(rows: readonly CplugRow[]): PanelEntry[] {
     return out;
 }
 
-function titleKeyOf(kind: string, title: string): string {
+export function titleKeyOf(kind: string, title: string): string {
     let hash = 5381;
     for (const ch of title) hash = ((hash * 33) ^ ch.charCodeAt(0)) >>> 0;
     return `cplug.${STRING_OWNER}.${kind.replace('.', '-')}.${hash.toString(36)}`;

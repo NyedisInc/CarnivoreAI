@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* pop-out window */
   import CascadeMenu from '../drawer-tabs/CascadeMenu.svelte';
   import type { WidgetMenuCtx } from '../widget-menu/model';
   import { widgetMenuNodes } from '../item-menu/widget-nodes';

@@ -1,7 +1,10 @@
 
 from __future__ import annotations
 
+import errno
+import os
 import re
+import stat
 import threading
 import time
 from dataclasses import dataclass
@@ -30,6 +33,15 @@ _CACHE_MAX_ENTRIES = 512
 
 _cache_lock = threading.Lock()
 _cache: Dict[Tuple[str, str, str], Tuple[float, "ConversationPresence"]] = {}
+
+
+_LOCATE_MAX_ENTRIES = 2048
+
+_RACY_WINDOW_NS = 2_000_000_000
+
+_locate_lock = threading.Lock()
+_found_paths: Dict[Tuple[str, str], Tuple[int, Path]] = {}
+_root_listings: Dict[str, Tuple[int, Tuple[Path, ...]]] = {}
 
 
 @dataclass(frozen=True)
@@ -81,6 +93,77 @@ def conversation_presence(
     return result
 
 
+def _is_racy(stamp_ns: int) -> bool:
+    return time.time_ns() - stamp_ns < _RACY_WINDOW_NS
+
+
+def _remembered_path(root: Path, filename: str) -> Optional[Path]:
+    key = (str(root), filename)
+    with _locate_lock:
+        entry = _found_paths.get(key)
+    if entry is None:
+        return None
+    try:
+        if os.stat(root).st_mtime_ns == entry[0] and entry[1].is_file():
+            return entry[1]
+    except OSError as exc:
+        logger.debug("conversation_presence_remembered_unreadable", path=str(entry[1]), error=str(exc))
+    with _locate_lock:
+        _found_paths.pop(key, None)
+    return None
+
+
+def _remember_path(root: Path, filename: str, path: Path) -> None:
+    try:
+        stamp = os.stat(root).st_mtime_ns
+    except OSError:
+        return
+    if _is_racy(stamp):
+        return
+    with _locate_lock:
+        if len(_found_paths) >= _LOCATE_MAX_ENTRIES:
+            _found_paths.clear()
+        _found_paths[(str(root), filename)] = (stamp, path)
+
+
+def _forget_root_listing(root: Path) -> None:
+    with _locate_lock:
+        _root_listings.pop(str(root), None)
+
+
+def _root_children(root: Path) -> Tuple[Tuple[Path, ...], bool]:
+    stamp = os.stat(root).st_mtime_ns
+    key = str(root)
+    with _locate_lock:
+        hit = _root_listings.get(key)
+    if hit is not None and hit[0] == stamp:
+        return hit[1], True
+    children = tuple(sorted(root.iterdir()))
+    if not _is_racy(stamp):
+        with _locate_lock:
+            if len(_root_listings) >= _LOCATE_MAX_ENTRIES:
+                _root_listings.clear()
+            _root_listings[key] = (stamp, children)
+    return children, False
+
+
+def _scan_children(
+    children: Tuple[Path, ...], filename: str, root: Path
+) -> Tuple[Optional[Path], bool]:
+    unreadable = False
+    for child in children:
+        candidate = child / filename
+        try:
+            if stat.S_ISREG(os.stat(candidate).st_mode):
+                _remember_path(root, filename, candidate)
+                return candidate, unreadable
+        except (FileNotFoundError, NotADirectoryError):
+            continue
+        except OSError:
+            unreadable = True
+    return None, unreadable
+
+
 def _measure_presence(
     claude_session_uuid: Optional[str],
     *,
@@ -116,25 +199,28 @@ def _measure_presence(
                 error=str(exc),
             )
 
-    try:
-        children = sorted(root.iterdir())
-    except OSError as exc:
-        return ConversationPresence(
-            CONVERSATION_UNCHECKED,
-            detail=(
-                f"the transcript corpus at {root} could not be read "
-                f"({exc.strerror or exc}), so whether this conversation "
-                "still exists could not be determined"
-            ),
-        )
+    remembered = _remembered_path(root, filename)
+    if remembered is not None:
+        return ConversationPresence(CONVERSATION_PRESENT, path=remembered)
 
-    for child in children:
-        candidate = child / filename
+    for _attempt in (0, 1):
         try:
-            if candidate.is_file():
-                return ConversationPresence(CONVERSATION_PRESENT, path=candidate)
-        except OSError:
-            continue
+            children, from_cache = _root_children(root)
+        except OSError as exc:
+            return ConversationPresence(
+                CONVERSATION_UNCHECKED,
+                detail=(
+                    f"the transcript corpus at {root} could not be read "
+                    f"({exc.strerror or exc}), so whether this conversation "
+                    "still exists could not be determined"
+                ),
+            )
+        found, unreadable = _scan_children(children, filename, root)
+        if found is not None:
+            return ConversationPresence(CONVERSATION_PRESENT, path=found)
+        if not (unreadable and from_cache):
+            break
+        _forget_root_listing(root)
 
     return ConversationPresence(
         CONVERSATION_ABSENT,
@@ -161,7 +247,10 @@ def codex_rollout_presence(
     home = codex_home or codex_gather.DEFAULT_CODEX_HOME
     sessions = Path(home) / "sessions"
     try:
-        next(sessions.iterdir(), None)
+        if not stat.S_ISDIR(os.stat(sessions).st_mode):
+            raise NotADirectoryError(errno.ENOTDIR, "not a directory")
+        if not os.access(sessions, os.R_OK | os.X_OK):
+            raise PermissionError(errno.EACCES, "permission denied")
     except OSError as exc:
         return ConversationPresence(
             CONVERSATION_UNCHECKED,

@@ -45,7 +45,6 @@ export const APP_THEME_SOURCE: ThemeSource = {
 
 const sources: ThemeSource[] = [APP_THEME_SOURCE];
 
-/* label: ' */
 export function registerThemeSource(source: ThemeSource): () => void {
   const at = sources.findIndex((s) => s.id === source.id);
   if (at >= 0) sources[at] = source;

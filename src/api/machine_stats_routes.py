@@ -32,7 +32,6 @@ class MachineStats(BaseModel):
 
 
 def _state_dir() -> str:
-    """The state directory, whose volume's free space the disk figure reports."""
     from src.config import settings
 
     return str(settings.get_state_dir())

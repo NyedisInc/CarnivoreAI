@@ -9,6 +9,7 @@ from typing import Any, Callable, Optional, Sequence, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.conversation_writers import MeasureError, Writer, live_writers, read_process_table
 from src.core.project_move.plan import PaneListing
 
@@ -18,14 +19,10 @@ DB_FILE = "carnivore.db"
 
 
 class EnvUnreadable(RuntimeError):
-    """``carnivore.db`` cannot be opened, so nothing about this install can be measured (never read as "empty")."""
+    pass
 
 
 def measure_writers() -> Optional[Tuple[Writer, ...]]:
-    """Every live claude process, or None when the process table could not be read (an empty answer would read as "no writers").
-
-    Blocking (one ``ps``). Example: measure_writers() -> (Writer(pid=41, conversation='abc', ...),)
-    """
     from src.core.claude_resume_argv import is_claude_command
 
     try:
@@ -113,7 +110,7 @@ class ImportEnv:
     def connect(self) -> sqlite3.Connection:
         path = Path(self.db_file) if self.db_file else Path(self.state) / DB_FILE
         try:
-            conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+            conn = connect_readonly(path)
         except sqlite3.Error as exc:
             raise EnvUnreadable(f"{path.name} cannot be opened: {exc}") from exc
         conn.row_factory = sqlite3.Row

@@ -21,7 +21,6 @@ Call = Callable[..., Awaitable[hosted_api.HostedAnswer]]
 
 
 class CustomDomainError(Exception):
-    """The control plane refused, or could not be reached. ``code`` is its refusal code (``unreachable`` when none)."""
 
     def __init__(self, status: int, code: str, detail: str = "") -> None:
         super().__init__(f"{status} {code}")

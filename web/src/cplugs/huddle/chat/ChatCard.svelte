@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { t } from '../../sdk';
-  import { setApproved, saveNote } from '../huddle.svelte';
+  import { setApproved, approveWithNote } from '../huddle.svelte';
   import type { HuddleItem } from '../huddle-model';
   import { reviewOf } from '../huddle-review';
   import ChatMarkdown from './ChatMarkdown.svelte';
@@ -9,6 +9,8 @@
   import HuddleThread from '../HuddleThread.svelte';
   import SwarmDecisionKeys from '../SwarmDecisionKeys.svelte';
   import AuthorPath from './AuthorPath.svelte';
+  import ChatAskForm from './ChatAskForm.svelte';
+  import { formQuestion } from './chat-ask-rows';
   import type { SwarmQuestion } from './chat-api';
   import { cardVariant, decisionKeys, decisionOf } from './chat-model';
 
@@ -18,6 +20,7 @@
 
   let detailsOpen = $state(false);
   const others = $derived(question?.askers?.slice(1) ?? []);
+  const form = $derived(variant === 'ask' ? formQuestion(item) : null);
 
   let noting = $state(false);
   let note = $state('');
@@ -30,8 +33,9 @@
   async function approve(withNote: boolean): Promise<void> {
     if (busy) return;
     busy = true;
-    const saved = withNote && note.trim() ? await saveNote(item, note.trim()) : true;
-    if (saved && (await setApproved(item, true))) {
+    const text = note.trim();
+    const done = withNote && text ? await approveWithNote(item, text) : await setApproved(item, true);
+    if (done) {
       noting = false;
       note = '';
     }
@@ -68,7 +72,8 @@
   {/if}
   {#if review}<HuddleReview block={review} id={item.id} />{/if}
   
-  <HuddleThread {item} {agentName} noSend closed />
+  {#if form}<ChatAskForm {item} message={form} />{/if}
+  <HuddleThread {item} {agentName} noSend closed skip={form?.id ?? null} />
   <SwarmDecisionKeys {item} />
   {#if decision && !decisionKeys(item)}
     <p class="hdc-card-decision" data-chat-decision={decision}>{t(`cplug.huddle.chat.decided.${decision}`)}</p>

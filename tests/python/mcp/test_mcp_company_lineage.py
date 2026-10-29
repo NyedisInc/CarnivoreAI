@@ -24,33 +24,33 @@ def _companies() -> dict:
 
 
 def test_every_company_write_waits_then_goes_through_the_route(world, gate):  # noqa: F811
-    assert "pending" in str(_call("company_create", {"name": "INITECH"}))
+    assert "pending" in str(_call("company_create", {"name": "IMC"}))
     assert _companies() == {}
     _approve_last()
-    initech = _companies()["INITECH"]
-    _call("company_create", {"name": "Brightfund", "parent_id": initech["id"]})
+    imc = _companies()["IMC"]
+    _call("company_create", {"name": "Amerifund", "parent_id": imc["id"]})
     _approve_last()
-    childco = _companies()["Brightfund"]
-    assert childco["parent_id"] == initech["id"]
+    amf = _companies()["Amerifund"]
+    assert amf["parent_id"] == imc["id"]
 
-    _call("company_rename", {"company_id": childco["id"], "name": "Brightfund LLC"})
+    _call("company_rename", {"company_id": amf["id"], "name": "Amerifund LLC"})
     _approve_last()
-    _call("company_parent_set", {"company_id": childco["id"], "parent_id": None})
+    _call("company_parent_set", {"company_id": amf["id"], "parent_id": None})
     _approve_last()
-    assert _companies()["Brightfund LLC"]["parent_id"] is None
-    _call("company_parent_set", {"company_id": childco["id"], "parent_id": initech["id"]})
+    assert _companies()["Amerifund LLC"]["parent_id"] is None
+    _call("company_parent_set", {"company_id": amf["id"], "parent_id": imc["id"]})
     _approve_last()
-    _call("company_hq_set", {"company_id": childco["id"], "project_id": world.ids["alpha"]})
+    _call("company_hq_set", {"company_id": amf["id"], "project_id": world.ids["alpha"]})
     _approve_last()
-    assert _companies()["Brightfund LLC"]["hq_project_id"] == world.ids["alpha"]
+    assert _companies()["Amerifund LLC"]["hq_project_id"] == world.ids["alpha"]
 
-    _call("company_parent_set", {"company_id": initech["id"], "parent_id": childco["id"]})
+    _call("company_parent_set", {"company_id": imc["id"], "parent_id": amf["id"]})
     _approve_last()
-    assert _companies()["INITECH"]["parent_id"] is None
+    assert _companies()["IMC"]["parent_id"] is None
 
-    _call("company_delete", {"company_id": initech["id"]})
+    _call("company_delete", {"company_id": imc["id"]})
     _approve_last()
-    assert set(_companies()) == {"Brightfund LLC"} and _companies()["Brightfund LLC"]["parent_id"] is None
+    assert set(_companies()) == {"Amerifund LLC"} and _companies()["Amerifund LLC"]["parent_id"] is None
 
 
 def test_bad_arguments_never_park_and_read_scope_cannot_see_them(world, gate):  # noqa: F811

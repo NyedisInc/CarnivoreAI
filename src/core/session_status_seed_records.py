@@ -15,8 +15,6 @@ TAIL_NO_MARKER: str = "no_marker"
 
 TAIL_ABSENT: str = "absent"
 
-# could not
-# could not be read
 TAIL_UNREADABLE: str = "unreadable"
 
 

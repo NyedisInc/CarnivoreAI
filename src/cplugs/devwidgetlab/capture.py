@@ -60,7 +60,6 @@ def command_for(request: Dict[str, Any], out_dir: Path, scenario_file: Optional[
 
 
 def result_from(stdout: str, code: int, stderr: str) -> Dict[str, Any]:
-    """Read the capture script's answer. Output: its metadata, with ``ok`` false when it failed or could not run."""
     if code == EXIT_CANNOT_DETERMINE:
         return {"ok": False, "determined": False, "failures": [stderr.strip().splitlines()[-1] if stderr.strip() else "the capture could not run"]}
     try:

@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from src.api.auth import require_auth
 from src.core.deepsearch import index_scope, reader, scope_settings, service
 from src.core.deepsearch.reader import ContextNotFound, ConversationsUnavailable, InvalidSearch
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/deepsearch", tags=["deepsearch"], dependencies=[Depe
 
 
 def _unavailable(exc: Exception) -> HTTPException:
-    return HTTPException(status_code=503, detail={"code": "deepsearch_unavailable", "detail": str(exc)[:300]})
+    return api_error(503, "deepsearch_unavailable", exc)
 
 
 @router.get("/search")
@@ -37,7 +38,7 @@ async def search(q: str = Query(..., min_length=1, max_length=service.MAX_QUERY_
                                     conversation_id=conversation_id, limit=limit, offset=offset, per_group=per_group,
                                     scope=scope)
     except InvalidSearch as exc:
-        raise HTTPException(status_code=422, detail={"code": "deepsearch_invalid", "detail": str(exc)}) from exc
+        raise api_error(422, "deepsearch_invalid", exc) from exc
     except ConversationsUnavailable as exc:
         raise _unavailable(exc) from exc
 
@@ -57,7 +58,7 @@ async def context(conversation_id: str = Query(..., min_length=1, max_length=128
         return await service.context(reader.default_index(), conversation_id, file_kind=file_kind, line=line, at=at, before_line=before_line,
                                      after_line=after_line, before=before, after=after, host_key=host_key)
     except ContextNotFound as exc:
-        raise HTTPException(status_code=404, detail={"code": "context_not_found", "detail": str(exc)}) from exc
+        raise api_error(404, "context_not_found", exc) from exc
     except ConversationsUnavailable as exc:
         raise _unavailable(exc) from exc
 
@@ -69,7 +70,7 @@ async def suggest(q: str = Query(..., max_length=service.SUGGEST_QUERY_MAX),
     try:
         return await service.suggest(reader.default_index(), q, limit=limit)
     except InvalidSearch as exc:
-        raise HTTPException(status_code=422, detail={"code": "deepsearch_invalid", "detail": str(exc)}) from exc
+        raise api_error(422, "deepsearch_invalid", exc) from exc
     except ConversationsUnavailable as exc:
         raise _unavailable(exc) from exc
 
@@ -84,6 +85,7 @@ async def status() -> Dict[str, Any]:
 
 
 class ScopeSetting(BaseModel):
+    """The owner's desired index scope. Example: {"indexScope": "human"}"""
 
     model_config = ConfigDict(extra="forbid")
 

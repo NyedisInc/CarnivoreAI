@@ -14,7 +14,7 @@ vi.mock('./scheduled-store.svelte', () => ({
 }));
 vi.mock('./page-store.svelte', () => ({
   data: { projects: [{ id: 1, name: 'beta', folder: '/b' }, { id: 2, name: 'alpha', folder: '/a' }], sessionsWanted: true, notice: '' },
-  sessionOptions: () => [{ session_uuid: 'u-1', label: 'orchard', project_id: 2 }, { session_uuid: 'u-2', label: 'bare' }],
+  sessionOptions: () => [{ session_uuid: 'u-1', label: 'argent', project_id: 2 }, { session_uuid: 'u-2', label: 'bare' }],
   wantSessions: vi.fn(async () => undefined),
 }));
 
@@ -26,7 +26,7 @@ const item = (n: number, over: Partial<TaskManagerSchedule> = {}): TaskManagerSc
 
 test('items file by session, then project, then unassigned, and empty nodes are left out', () => {
   const projects = [{ id: 1, name: 'beta', folder: '/b' }, { id: 2, name: 'alpha', folder: '/a' }, { id: 3, name: 'empty', folder: '/e' }];
-  const sessions = [{ session_uuid: 'u-1', label: 'orchard', project_id: 2 }, { session_uuid: 'u-2', label: 'bare' }, { session_uuid: 'u-3', label: 'idle', project_id: 2 }];
+  const sessions = [{ session_uuid: 'u-1', label: 'argent', project_id: 2 }, { session_uuid: 'u-2', label: 'bare' }, { session_uuid: 'u-3', label: 'idle', project_id: 2 }];
   const tree = buildScheduledTree(projects, sessions, [
     item(1, { sessionKey: 'u-1' }),
     item(2, { projectId: 1 }),
@@ -34,7 +34,7 @@ test('items file by session, then project, then unassigned, and empty nodes are 
     item(4, { sessionKey: 'gone', projectId: 99 }),
   ]);
   expect(tree.map((n) => n.key)).toEqual(['project:2', 'project:1', 'unassigned']);
-  expect(tree[0]!.children.map((c) => [c.label, c.schedules.map((s) => s.item)])).toEqual([['orchard', [1]]]);
+  expect(tree[0]!.children.map((c) => [c.label, c.schedules.map((s) => s.item)])).toEqual([['argent', [1]]]);
   expect(tree[1]!.schedules.map((s) => s.item)).toEqual([2]);
   expect(tree[2]!.schedules.map((s) => s.item)).toEqual([4]);
   expect(tree[2]!.children.map((c) => [c.label, c.schedules.map((s) => s.item)])).toEqual([['bare', [3]]]);

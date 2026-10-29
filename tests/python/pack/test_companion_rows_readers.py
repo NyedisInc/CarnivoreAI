@@ -90,7 +90,7 @@ def test_receive_name_check_ignores_a_peer_mirror_but_not_a_real_project(tmp_pat
     assert ensure_db_migrated(tmp_path).status == "ok"
     with closing(connect(db_path_for(tmp_path), create=False)) as conn:
         conn.execute("INSERT INTO projects (root, raw_path, display_name, source, host_key, created_at, updated_at, uid) "
-                     "VALUES ('peer://peer-ab12/Users/a/mailRelay', 'x', 'mailRelay', 'adoption', 'peer-ab12', '2026-10-01T00:00:00Z', '2026-10-01T00:00:00Z', 'mirror-uid')")
+                     "VALUES ('peer://peer-ab12/Users/a/mailSorter', 'x', 'mailSorter', 'adoption', 'peer-ab12', '2026-10-01T00:00:00Z', '2026-10-01T00:00:00Z', 'mirror-uid')")
         conn.commit()
 
     def env():
@@ -98,11 +98,11 @@ def test_receive_name_check_ignores_a_peer_mirror_but_not_a_real_project(tmp_pat
             open_db=lambda: connect(db_path_for(tmp_path), create=False), state_dir=str(tmp_path), inbox=blobs.Inbox(tmp_path / "inbox"),
             install_id="me", restrictions=lambda: restrict.Restrictions(may_receive_projects=True), projects_dir=str(tmp_path / "projects"))
 
-    body = {"op_id": "op-1", "project_uid": "real-uid", "name": "mailRelay", "bytes_needed": 0, "dry_run": True}
+    body = {"op_id": "op-1", "project_uid": "real-uid", "name": "mailSorter", "bytes_needed": 0, "dry_run": True}
     assert receive.prepare(env(), "sender-1", body)["case"] == "new"
     with closing(connect(db_path_for(tmp_path), create=False)) as conn:
         conn.execute("INSERT INTO projects (root, raw_path, display_name, source, created_at, updated_at) "
-                     "VALUES ('/tmp/er', '/tmp/er', 'mailRelay', 'created', '2026-10-01T00:00:00Z', '2026-10-01T00:00:00Z')")
+                     "VALUES ('/tmp/er', '/tmp/er', 'mailSorter', 'created', '2026-10-01T00:00:00Z', '2026-10-01T00:00:00Z')")
         conn.commit()
     with pytest.raises(receive.MigrateRefused) as refused:
         receive.prepare(env(), "sender-1", body)

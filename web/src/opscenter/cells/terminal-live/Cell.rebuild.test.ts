@@ -27,6 +27,8 @@ const built: string[] = [];
 const builtPanes: (string | null)[] = [];
 let disposed = 0;
 
+// The cell's heavy collaborators. None of them is what this file measures, and
+// each one builds or holds something real: an xterm on a div, a socket, a
 vi.mock('./client', () => ({
   startLiveTerminal: (_host: HTMLElement, _slot: string, session: unknown) => {
     const row = session as FakeRow;

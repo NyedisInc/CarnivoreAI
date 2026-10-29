@@ -1,6 +1,6 @@
 {
   "source_url": "https://code.claude.com/docs/en/commands.md",
-  "scraped_at": "",
+  "scraped_at": "2026-08-14T17:55:57Z",
   "command_count": 106,
   "commands": [
     {
@@ -314,7 +314,7 @@
     {
       "command": "/insights",
       "args": "",
-      "description": "Not available in cloud sessions. See Analyze your usage patterns for the report location, retention, and cost",
+      "description": "Generate an HTML report analyzing your recent sessions on this machine: which projects you work in, how you use Claude Code, where things go wrong, and features to try. Not available in cloud sessions. See Analyze your usage patterns for the report location, retention, and cost",
       "type": "builtin",
       "alias_of": null
     },
@@ -496,7 +496,7 @@
     {
       "command": "/rename",
       "args": "[name]",
-      "description": "Rename the current session and show the name on the prompt bar. Without a name, auto-generates one from conversation history. Also available in non-interactive mode (-p); requires Claude Code v2.1.205 or later. From every rename surface, including claude.ai and the desktop app, Claude Code replaces control and invisible characters in the new name with spaces and caps the name at 200 characters. If the name is empty once invisible characters are removed, Claude Code rejects it and shows That name is empty once invisible characters are removed. Usage: /rename <name>. The character replacement and length cap require Claude Code v2.1.221 or later.",
+      "description": "Rename the current session and show the name on the prompt bar. Without a name, auto-generates one from conversation history. Also available in non-interactive mode (-p); requires Claude Code v2.1.205 or later. From every rename surface, including claude.ai and the desktop app, Claude Code replaces control and invisible characters in the new name with spaces and caps the name at 200 characters. If the name is empty once invisible characters are removed, Claude Code rejects it and shows That name is empty once invisible characters are removed. Usage: /rename <name>. The character replacement and length cap require Claude Code v2.1.221 or later. If another live session on this machine already uses a name you pass, Claude Code applies a variant of it instead",
       "type": "builtin",
       "alias_of": null
     },

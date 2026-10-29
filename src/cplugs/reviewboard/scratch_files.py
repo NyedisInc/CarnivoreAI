@@ -52,10 +52,6 @@ def named_files(sidecar: Sidecar) -> Set[str]:
 
 
 def member(folder: Path, rel: str) -> Optional[Path]:
-    """The stored file at ``rel`` inside the board folder, or None. Description: ``rel`` must be ``files/r<nnn>/<name>``, and ``files``,
-      the revision folder and the file must each be real (a folder, a folder, a regular file; never a symlink).
-    Inputs: folder (the board folder); rel. Output: Path | None.
-    """
     if not MEMBER.fullmatch(rel):
         return None
     path = folder

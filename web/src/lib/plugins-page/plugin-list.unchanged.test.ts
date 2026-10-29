@@ -14,14 +14,14 @@ en.extendCatalog('mcphealth', MCPHEALTH_STRINGS);
 const t: Translate = (key, params) => en.t(key, params);
 
 const ROWS: CplugRow[] = [
-    { id: 'unread', name_key: 'cplug.unread.name', description_key: 'cplug.unread.description', version: '1.0.0', tier: 'builtin', icon: 'bell', author: 'Nyedis Inc', surfaces: { plugins: ['session-card-action'] }, enabled: true, state: 'active', permissions: { app: [] } },
+    { id: 'unread', name_key: 'cplug.unread.name', description_key: 'cplug.unread.description', version: '1.0.0', tier: 'builtin', icon: 'bell', author: 'Alex (Example-owner)', surfaces: { plugins: ['session-card-action'] }, enabled: true, state: 'active', permissions: { app: [] } },
     {
-        id: 'mcphealth', name_key: 'cplug.mcphealth.name', description_key: 'cplug.mcphealth.description', version: '1.0.0', tier: 'builtin', icon: 'plug', author: 'Nyedis Inc', surfaces: {}, enabled: false, state: 'disabled',
+        id: 'mcphealth', name_key: 'cplug.mcphealth.name', description_key: 'cplug.mcphealth.description', version: '1.0.0', tier: 'builtin', icon: 'plug', author: 'Joe (ccsliinc)', surfaces: {}, enabled: false, state: 'disabled',
         permissions: { app: ['sessions.read', 'notify'] }, grants: { app: [] }, risks: { 'sessions.read': 'low', notify: 'low' },
         settings_schema: { version: 1, fields: { notify: { kind: 'boolean', labelKey: 'cplug.mcphealth.settings.notify', default: false } } },
     },
-    { id: 'huddle', name_key: 'cplug.huddle.name', description_key: 'cplug.huddle.description', version: '1.0.0', tier: 'builtin', icon: 'list', author: 'Nyedis Inc', surfaces: { tabs: ['huddle'], mcp_tools: ['huddle_list'] }, enabled: true, state: 'needs_approval', permissions: { app: ['sessions.message'] }, grants: { app: [] }, risks: { 'sessions.message': 'high' } },
-    { id: 'flow', name_key: 'cplug.flow.name', description_key: 'cplug.flow.description', version: '1.0.0', tier: 'builtin', icon: 'plug', author: 'Nyedis Inc', enabled: true, state: 'unavailable', permissions: { app: [] } },
+    { id: 'huddle', name_key: 'cplug.huddle.name', description_key: 'cplug.huddle.description', version: '1.0.0', tier: 'builtin', icon: 'list', author: 'Joe (ccsliinc)', surfaces: { tabs: ['huddle'], mcp_tools: ['huddle_list'] }, enabled: true, state: 'needs_approval', permissions: { app: ['sessions.message'] }, grants: { app: [] }, risks: { 'sessions.message': 'high' } },
+    { id: 'flow', name_key: 'cplug.flow.name', description_key: 'cplug.flow.description', version: '1.0.0', tier: 'builtin', icon: 'plug', author: 'Joe (ccsliinc)', enabled: true, state: 'unavailable', permissions: { app: [] } },
     { id: 'share', name_key: 'cplug.share.name', description_key: 'cplug.share.description', version: '1.0.0', tier: 'core', icon: 'search', enabled: true, state: 'active', permissions: { app: [] } },
     { id: 'gone', enabled: false, state: 'removed' },
 ];
@@ -52,6 +52,7 @@ async function show(): Promise<HTMLElement> {
 
 const MOUNT_IDS = /\b(info-tip|mgr)-[a-z0-9]{6,}\b/g;
 
+/* the reading pane */
 function listSide(root: HTMLElement): string {
     const copy = root.cloneNode(true) as HTMLElement;
     copy.querySelectorAll('.oc-page__detail').forEach((pane) => pane.remove());

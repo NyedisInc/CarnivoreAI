@@ -7,7 +7,6 @@ function labelOf(record: SessionChoice): string {
   return (resolved ?? '').trim();
 }
 
-/* label: ' */
 export function sessionChoices(records: readonly SessionChoice[], automations: readonly Automation[]): SessionChoice[] {
   const targeted = new Set(automations.map((a) => (a.target.kind === 'session_message' ? String(a.target.session_uuid ?? '') : '')));
   const live = (r: SessionChoice): boolean => r.lifecycle === 'running' || r.asleep === true;

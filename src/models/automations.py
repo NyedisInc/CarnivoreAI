@@ -9,7 +9,8 @@ UNATTENDED_PHRASE = "run unattended with no permission prompts"
 
 
 class AutomationCreate(BaseModel):
-    """
+    """``POST /automations``: a name, a cron, one target and how the owner hears of runs.
+
     ``acknowledge_unattended`` must equal :data:`UNATTENDED_PHRASE` when the target is an agent with ``permission: unattended``.
     """
 

@@ -13,7 +13,15 @@
   "keywords": [
     "global theme"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "A terminal and drawer painted in the Alien theme after the global theme changed",
+      "caption": "A session following a non-default global theme",
+      "file": "follow.png",
+      "kind": "screenshot",
+      "theme": "alien"
+    }
+  ],
   "name": "Global theme follow",
   "since": "2026-09-20",
   "status": "stable",
@@ -24,6 +32,5 @@
   "updated": "2026-09-27",
   "where": [
     "Settings, general tab, theme; or the themes screen."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

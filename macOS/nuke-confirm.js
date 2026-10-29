@@ -4,7 +4,6 @@
 const RESULT_CONFIRMED = 'cloude-nuke:confirmed';
 const RESULT_CANCELLED = 'cloude-nuke:cancelled';
 
-/* could not state directory */
 function buildConfirmHtml(stateDirLabel) {
   const stateLine = stateDirLabel
     ? `<li>The state directory, <b>including your stored login refresh tokens</b>:<br><code>${escapeHtml(

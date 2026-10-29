@@ -1,8 +1,8 @@
 {
   "id": "keep-awake-widget",
   "name": "Keep awake widget",
-  "summary": "",
-  "description": "The widget shows exactly that state: a count of the sessions kept awake, one line saying whether the computer is held awake (read from mac_awake on GET /auto-sleep, which reports whether the server's caffeinate child is running), and one row per kept-awake session with its status light, its name and, when the widget is wide enough, its project. Each row's cup turns keep awake off through the same route the terminal bar and the drawer use. There is no since-when column because nothing records when keep awake was turned on. The widget is hidden by default, so no saved layout changes; add it from the Widgets list on either page. The drawer also always shows the cup on every kept-awake row, in every density.",
+  "summary": "A home screen widget listing every session kept awake, whether this computer is being held awake for them, and a cup on each row to turn keep awake off.",
+  "description": "Keep awake stops a session auto-sleeping and, while any session has it on, holds this computer awake with a caffeinate assertion. The widget shows exactly that state: a count of the sessions kept awake, one line saying whether the computer is held awake (read from mac_awake on GET /auto-sleep, which reports whether the server's caffeinate child is running), and one row per kept-awake session with its status light, its name and, when the widget is wide enough, its project. Each row's cup turns keep awake off through the same route the terminal bar and the drawer use. There is no since-when column because nothing records when keep awake was turned on. The widget is hidden by default, so no saved layout changes; add it from the Widgets list on either page. The drawer also always shows the cup on every kept-awake row, in every density.",
   "area": "home",
   "status": "stable",
   "since": "2026-09-27",
@@ -36,12 +36,19 @@
   "how_to": [
     "Open the drawer's menu tab and choose Widgets.",
     "Pick keep awake; the widget lands on the page.",
+    "Read the line under the title to see whether this computer is being held awake.",
     "Click a row's cup to turn keep awake off for that session."
   ],
   "examples": [
     "Before leaving for the night, check which sessions are still holding the computer awake.",
     "Turn off keep awake on a session you forgot about, without opening it."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "widget.png",
+      "caption": "The keep awake widget on the home screen",
+      "alt": "A home screen cell titled keep awake with a count of one, a line reading this computer is held awake, and one session row with a lit coffee cup"
+    }
+  ]
 }

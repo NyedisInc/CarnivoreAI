@@ -1,12 +1,12 @@
 {
   "id": "save-pipeline-widget",
   "name": "Save pipeline widget",
-  "summary": "",
-  "description": "Retired. The widget showed queued, running, done and dead counts for the old save pipeline. A saved dashboard that still holds the widget drops it silently on read, with no migration write. The status line (caught up, behind, stalled, rebuilding) lives in settings, pipeline, next to a rebuild button for each plugin.",
+  "summary": "Retired 2026-10-12: the save pipeline widget is gone; settings, pipeline shows one status line and a rebuild button per plugin.",
+  "description": "Retired. The widget showed queued, running, done and dead counts for the old save pipeline. The other operator, 2026-10-12, answer O3 on #1682: one status line instead of the two pipeline widgets. A saved dashboard that still holds the widget drops it silently on read, with no migration write. The status line (caught up, behind, stalled, rebuilding) lives in settings, pipeline, next to a rebuild button for each plugin.",
   "area": "home",
   "status": "removed",
   "since": "2026-09-30",
-  "updated": "2026-10-12",
+  "updated": "2026-10-29",
   "surfaces": [
     "home screen",
     "drawer widget area",

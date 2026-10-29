@@ -46,7 +46,7 @@
     gap: 10px;
 }
 
-:is(.mgr, .oc-wso, .wp-screen) .sf__input {
+:is(.mgr, .oc-wso, .wp-screen) :is(.sf__input, [data-sf-input]) {
     min-width: 0;
     max-width: 320px;
     flex: 1 1 160px;
@@ -194,13 +194,13 @@
 }
 
 @media (max-width: 1023px) {
-    :is(.mgr, .oc-wso, .wp-screen) .sf__input,
-    :is(.mgr, .oc-wso, .wp-screen) .sf__reset,
+    :is(.mgr, .oc-wso, .wp-screen) :is(.sf__input, [data-sf-input]),
+    :is(.mgr, .oc-wso, .wp-screen) [data-sf-reset],
     :is(.mgr, .oc-wso, .wp-screen) .sf-matrix__cell .oc-check {
         min-height: 44px;
     }
 
-    :is(.mgr, .oc-wso, .wp-screen) .sf__input {
+    :is(.mgr, .oc-wso, .wp-screen) :is(.sf__input, [data-sf-input]) {
         max-width: none;
     }
 }

@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { t } from '../../../sdk';
   import { packClock, watchVisibility } from './clock';
   import { bodyMorph, ensureDefs } from './dom';
@@ -62,6 +61,7 @@
   });
   $effect(() => {
     void st;
+    void isStill;
     if (el) packClock.reset(el);
   });
   $effect(() => {

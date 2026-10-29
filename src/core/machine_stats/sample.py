@@ -2,84 +2,44 @@
 from __future__ import annotations
 
 import os
-import platform
-import subprocess
 import threading
 import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-import structlog
-
 from src.core import host_metrics
+from src.core.machine_stats import cpu_busy
 
-logger = structlog.get_logger()
-
-PS_TIMEOUT_SECONDS: float = 3.0
 CACHE_SECONDS: float = 2.0
-
-
-def _linux_cpu_times() -> Optional[Tuple[int, int]]:
-    try:
-        with open("/proc/stat", "r", encoding="utf-8") as handle:
-            fields = [int(part) for part in handle.readline().split()[1:]]
-    except (OSError, ValueError):
-        return None
-    if len(fields) < 5:
-        return None
-    total = sum(fields[:8])
-    idle = fields[3] + fields[4]
-    return total - idle, total
-
-
-def _darwin_cpu_percent() -> Optional[float]:
-    try:
-        done = subprocess.run(
-            ["ps", "-A", "-o", "%cpu="], capture_output=True, text=True, timeout=PS_TIMEOUT_SECONDS, check=False
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        logger.debug("machine_stats_ps_failed", error=str(exc))
-        return None
-    if done.returncode != 0:
-        return None
-    try:
-        total = sum(float(line) for line in done.stdout.split())
-    except ValueError:
-        return None
-    return min(100.0, total / max(1, os.cpu_count() or 1))
+MIN_CPU_INTERVAL_SECONDS: float = 1.0
 
 
 class MachineSampler:
 
-    def __init__(self, state_dir: Callable[[], str], *, clock: Callable[[], float] = time.monotonic) -> None:
-        """Inputs: state_dir - returns the state directory whose volume's free space is reported;
-        clock - monotonic seconds (tests pass a fake)."""
+    def __init__(self, state_dir: Callable[[], str], *, clock: Callable[[], float] = time.monotonic,
+        read_ticks: Callable[[], Optional[Tuple[int, int]]] = cpu_busy.read_ticks,
+    ) -> None:
         self._state_dir = state_dir
         self._clock = clock
         self._lock = threading.Lock()
         self._cached: Optional[Dict[str, Any]] = None
         self._cached_at = 0.0
-        self._last_times: Optional[Tuple[int, int]] = None
+        self._read_ticks = read_ticks
+        self._last_ticks: Optional[Tuple[float, int, int]] = None
+
+    def reset_cpu_baseline(self) -> None:
+        with self._lock:
+            self._last_ticks = None
 
     def _cpu_percent(self) -> Optional[float]:
-        system = platform.system()
-        if system == "Darwin":
-            return _darwin_cpu_percent()
-        if system == "Linux":
-            now = _linux_cpu_times()
-            previous, self._last_times = self._last_times, now
-            if now is None or previous is None or now[1] <= previous[1]:
-                return None
-            return 100.0 * (now[0] - previous[0]) / (now[1] - previous[1])
-        return None
+        ticks = self._read_ticks()
+        now = self._clock()
+        previous = self._last_ticks
+        self._last_ticks = None if ticks is None else (now, ticks[0], ticks[1])
+        if ticks is None or previous is None or now - previous[0] < MIN_CPU_INTERVAL_SECONDS or ticks[1] <= previous[2]:
+            return None
+        return 100.0 * (ticks[0] - previous[1]) / (ticks[1] - previous[2])
 
     def read(self, max_age: float = CACHE_SECONDS) -> Dict[str, Any]:
-        """The current vitals, re-measured only when the cached one is older than ``max_age``.
-
-        Output: dict ``{cpu_percent, cpu_count, memory_percent, memory_used_bytes, memory_total_bytes,
-        disk_percent, disk_free_bytes, disk_total_bytes, load_1, load_5, load_15, uptime_seconds}``;
-        any figure that could not be measured is None. Thread-safe.
-        Example: MachineSampler(lambda: "/").read()["cpu_count"]  # 10
-        """
         with self._lock:
             if self._cached is not None and self._clock() - self._cached_at < max_age:
                 return dict(self._cached)

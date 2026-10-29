@@ -2,6 +2,8 @@ import { companies } from '../../lib/companies';
 import { floorFeedRows } from '../../lib/drawer/floor-feed.svelte';
 import { isAgentKind, type BucketRow } from '../../lib/drawer/bucketing';
 import { rowHost } from '../../lib/sidebar-shell/row-host';
+import { drawerController } from '../../lib/drawer/click-env';
+import { activateRow } from '../../lib/drawer/row-switch';
 import { hostDocument, hostWindow } from '../../lib/sessions/env';
 import { projects } from '../../opscenter/api/projects.svelte';
 import { openSession, sessionRow, type ListingRow } from './sessions.svelte';
@@ -87,15 +89,14 @@ export function floorSource(): FloorSource {
   };
 }
 
-/* nothing opened */
 export async function openFloorSession(session: FloorSession): Promise<boolean> {
   if (!session.asleep && session.sessionId) return openSession(session.sessionId, session.name);
-  const g = hostWindow() as unknown as { SessionSidebar?: unknown; SessionSidebarClicks?: { activateRow(ctrl: unknown, row: Element): Promise<void> }; SessionSidebarWakeClick?: { onAsleepClick(ctrl: unknown, row: Element, open: unknown): Promise<boolean> } } | undefined;
+  const g = hostWindow() as unknown as { SessionSidebarWakeClick?: { onAsleepClick(ctrl: unknown, row: Element, open: unknown): Promise<boolean> } } | undefined;
+  const ctl = drawerController();
   const name = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(session.name) : session.name;
   const row = hostDocument()?.querySelector?.(`.session-sidebar-row[data-name="${name}"]`) ?? null;
-  if (!row || !g?.SessionSidebar || !g.SessionSidebarClicks) return false;
-  const clicks = g.SessionSidebarClicks;
-  if (session.asleep && g.SessionSidebarWakeClick) await g.SessionSidebarWakeClick.onAsleepClick(g.SessionSidebar, row, clicks.activateRow);
-  else await clicks.activateRow(g.SessionSidebar, row);
+  if (!row || !ctl) return false;
+  if (session.asleep && g?.SessionSidebarWakeClick) await g.SessionSidebarWakeClick.onAsleepClick(ctl, row, activateRow);
+  else await activateRow(ctl, row);
   return false;
 }

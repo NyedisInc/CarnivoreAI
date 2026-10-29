@@ -1,3 +1,5 @@
+// WHY THIS FILE EXISTS
+//     }
 
 import assert from 'node:assert/strict';
 import path from 'node:path';

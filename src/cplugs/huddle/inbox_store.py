@@ -80,7 +80,7 @@ class InboxStore:
             return conn.execute(f"SELECT EXISTS(SELECT 1 FROM work_inbox WHERE {inbox.ACTIVE_SQL})").fetchone()[0] == 1
 
     def mark_stuck(self, entry_id: int) -> Optional[str]:
-        with closing(self._store._connect(True)) as conn, conn:
+        with self._store._immediate() as conn:
             row = conn.execute(f"SELECT list_key, status FROM work_inbox WHERE id = ? AND {inbox.ACTIVE_SQL}", (entry_id,)).fetchone()
             if row is None or conn.execute(f"UPDATE work_inbox SET status = ? WHERE id = ? AND {inbox.ACTIVE_SQL}", (inbox.STUCK, entry_id)).rowcount == 0:
                 return None
@@ -146,7 +146,7 @@ class InboxStore:
         return bool(done)
 
     def claim(self, entry_id: int, final: str, now: float, error: Optional[str] = None) -> str:
-        with closing(self._store._connect(True)) as conn, conn:
+        with self._store._immediate() as conn:
             row = conn.execute(f"SELECT {_COLS} FROM work_inbox WHERE id = ?", (entry_id,)).fetchone()
             if row is None:
                 raise TaskManagerNotFound(f"no inbox entry {entry_id}")
@@ -165,7 +165,7 @@ class InboxStore:
             self._store._commit_notify(row["list_key"])
 
     def link_item(self, entry_id: int, item_id: int) -> None:
-        with closing(self._store._connect(True)) as conn, conn:
+        with self._store._immediate() as conn:
             entry = conn.execute("SELECT list_key, item_ids FROM work_inbox WHERE id = ?", (entry_id,)).fetchone()
             if entry is None:
                 raise TaskManagerNotFound(f"no inbox entry {entry_id}")

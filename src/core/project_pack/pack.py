@@ -44,6 +44,10 @@ def unlink_created(root: str, names: List[str]) -> None:
             pass
 
 
+CHANGED_AFTER_PROOF = ("the folder changed after the archive was proven (an edit, or iCloud delivered a change); "
+                       "the originals were put back, nothing was removed, plan again")
+
+
 def move_entries(src_dir: str, dst_dir: str, names: List[str]) -> List[Tuple[str, str]]:
     moved: List[Tuple[str, str]] = []
     try:
@@ -78,6 +82,7 @@ class JobState:
     files: int = 0
     bytes: int = 0
     trashed: bool = False
+    signature: str = ""
 
     @property
     def partial(self) -> str:
@@ -124,6 +129,7 @@ def _write_and_prove(conn: sqlite3.Connection, plan: PackPlan, env: PackEnv, pro
     if inventory.stat_signature(inventory.walk(root, own).entries) != before:
         raise PackError("the folder changed while it was being packed (an edit, or iCloud delivered a change); "
                         "nothing was removed, plan again")
+    job.signature = before
     job.sha256 = inventory.sha256_file(partial)
     fd = os.open(partial, os.O_RDONLY)
     try:
@@ -142,8 +148,13 @@ def _retire(conn: sqlite3.Connection, plan: PackPlan, env: PackEnv, progress: Pr
     store.put(conn, pid, state=K.STATE_RETIRING, archive_name=job.name, archive_sha256=job.sha256,
               archive_bytes=st.st_size, archive_mtime_ns=st.st_mtime_ns, logical_bytes=job.bytes, file_count=job.files)
     progress.set_phase("moving originals to trash")
+    if inventory.stat_signature(inventory.walk(root, set(job.created)).entries) != job.signature:
+        raise PackError(CHANGED_AFTER_PROOF)
     os.mkdir(job.staging)
     moved = move_entries(root, job.staging, job.names)
+    if inventory.stat_signature(inventory.walk(job.staging).entries) != job.signature:
+        reverse_moves(moved)
+        raise PackError(CHANGED_AFTER_PROOF)
     try:
         env.trash([job.staging])
     except TrashError:

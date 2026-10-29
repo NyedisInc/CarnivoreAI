@@ -104,6 +104,7 @@ async def view_ticket(slug: str, revision: str, body: Optional[TicketBody] = Non
 
 @router.post("/boards/{slug}/open")
 async def open_board(slug: str, body: Optional[OpenBody] = None, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Open a board on the owner's screen. Inputs: slug; body {revision?}. Output: {page, select} as ``POST /browsers/open`` answers."""
     try:
         return await asyncio.to_thread(lambda: opener.open_board(wire.board_root(ctx), slug, (opened := body or OpenBody()).revision, opened.color, opened.icon))
     except BoardError as exc:
@@ -112,6 +113,7 @@ async def open_board(slug: str, body: Optional[OpenBody] = None, ctx: CplugConte
 
 @router.get("/boards/{slug}/draft")
 async def get_draft(slug: str, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Joe's draft of the next round. Input: slug. Output: {draft: {...} | null}."""
     try:
         wire.board_root(ctx)
         return {"draft": await asyncio.to_thread(drafts.read, ctx.storage.path, slug)}
@@ -146,6 +148,7 @@ async def delete_draft(slug: str, ctx: CplugContext = Ctx) -> Response:
 
 @router.post("/boards/{slug}/rounds")
 async def send_round(slug: str, body: RoundBody, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Send Joe's round: write it, post it on the task as his reply. Output: see the module docstring."""
     try:
         return await rounds.send_round(ctx, slug, body)
     except BoardError as exc:
@@ -181,6 +184,7 @@ async def resend_round(slug: str, round_id: str, body: Optional[ResendBody] = No
 
 @router.patch("/boards/{slug}/task")
 async def relink_task(slug: str, body: RelinkBody, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Link the board to another task on this computer. Inputs: slug; body. Output: {task, etag, state}."""
     try:
         return await relink.relink(ctx, slug, body)
     except BoardError as exc:

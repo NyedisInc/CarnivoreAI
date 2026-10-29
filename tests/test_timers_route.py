@@ -14,7 +14,7 @@ os.environ.setdefault("LOG_DIRECTORY", tempfile.mkdtemp(prefix="cc_tmr_logs_"))
 os.environ.setdefault("TOTP_SECRET", "testsecretnotreal")
 os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
-from src.core.attention.registry_read import REG_ABSENT, REG_OK, REG_UNREADABLE  # noqa: E402
+from src.core.attention.registry_record import REG_ABSENT, REG_OK, REG_UNREADABLE  # noqa: E402
 from src.core.attention.transcript_facts import FACTS_FOUND  # noqa: E402
 from src.core.timers import index as index_mod  # noqa: E402
 from src.core.timers.tally import TimerTallyCache  # noqa: E402
@@ -48,7 +48,7 @@ class _Manager:
     async def get_session_info(self, session_id=None):
         return self._rows.get(session_id)
 
-    def _claude_uuid_for_tmux_name(self, tmux_name):
+    def claude_uuid_for_tmux_name(self, tmux_name):
         return CONV
 
 
@@ -63,7 +63,7 @@ def corpus(tmp_path, monkeypatch):
     t = Transcript()
     t.prompt(at(9, 0))
     t.wakeup(at(10, 0), "toolu_w1", delay=1800)
-    t.cron(at(10, 0), "toolu_c1", "49759e95", "*/5 * * * *")
+    t.cron(at(10, 0), "toolu_c1", "ab12cd34", "*/5 * * * *")
     t.cron(at(10, 1), "toolu_c2", "ef56ab78", "*/30 * * * *")
     t.cron_delete(at(10, 2), "toolu_d1", "ef56ab78")
     t.write(projects)
@@ -100,7 +100,7 @@ def test_the_route_lists_live_and_cancelled_timers(corpus):
     assert body["counts"]["live"] == 2 and body["counts"]["cancelled"] == 1
     assert body["next_fire_at"] == "2026-09-27T10:10:00Z"
     statuses = {row["id"]: row["status"] for row in body["timers"]}
-    assert statuses == {"toolu_w1": "live", "49759e95": "live", "ef56ab78": "cancelled"}
+    assert statuses == {"toolu_w1": "live", "ab12cd34": "live", "ef56ab78": "cancelled"}
     assert body["background"]["open"] == 2 and "floor" in body["background"]["detail"]
     assert body["contract_versions"] == {"timer_call": 1, "timer_result": 1}
     assert watcher.asked == ["ses_1"]

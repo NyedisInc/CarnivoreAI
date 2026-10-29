@@ -53,7 +53,6 @@ export interface LabIcon {
 export interface IdleReport {
   shown: { requests: number };
   hidden: { requests: number };
-  /*  hidden  */
   shell: number;
   hiddenRoutes: Record<string, number>;
   failures: string[];
@@ -61,7 +60,6 @@ export interface IdleReport {
 
 export interface FrameReport {
   ready: boolean;
-  /* could not */
   error: string;
   misses: string[];
   result?: {

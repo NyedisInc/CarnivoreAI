@@ -143,6 +143,10 @@ class SessionRecord(BaseModel):
             "global theme"
         ),
     )
+    swarm_agent_id: Optional[int] = Field(default=None)
+    swarm_rank: Optional[str] = Field(default=None)
+    swarm_character_seed: Optional[int] = Field(default=None)
+    swarm_color_slot: Optional[int] = Field(default=None)
     next_wake_at: Optional[float] = Field(
         default=None,
         description=(
@@ -160,6 +164,11 @@ class SessionRecord(BaseModel):
         default=None, description="ASLEEP ROWS ONLY: those switched on; null when not measured.")
     automations_next: Optional[List[ScheduledMark]] = Field(
         default=None, description="ASLEEP ROWS ONLY: the scheduled things counted, soonest first, capped; null when not measured.")
+    host_key: Optional[str] = Field(
+        default=None,
+        description="The computer that owns this row: 'local' or null for this one, a paired computer's host key for its shadow row (its asleep agents, #2591)",
+    )
+    host_label: Optional[str] = Field(default=None, description="That computer's name for the host marker; null for this computer")
     notifications_muted: bool = Field(
         default=False,
         description=(

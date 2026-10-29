@@ -8,6 +8,17 @@ from typing import Callable, Optional
 
 PERF_SOCKET_PREFIX: str = "cloudeperf_"
 
+LIVE_SOCKET_NAMES = ("carnivore", "cloude")
+
+
+class LiveSocketRefused(RuntimeError):
+    pass
+
+
+def refuse_live_socket(name: str) -> None:
+    if not name or name in LIVE_SOCKET_NAMES:
+        raise LiveSocketRefused(f"refusing to use tmux socket {name!r}: it is (or may be) the live socket; use a throwaway name")
+
 
 def tmux_socket_dir() -> Path:
     return Path(os.environ.get("TMUX_TMPDIR") or "/tmp") / f"tmux-{os.getuid()}"

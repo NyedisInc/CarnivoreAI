@@ -10,8 +10,7 @@ from fastapi import HTTPException
 
 from src.core.automations import models as m
 from src.core.automations import scheduler_log
-from src.core.automations.targets.recipe import _tell, _wants
-from src.core.app_alerts import constants as alert_const
+from src.core.automations import notify_policy
 from src.core.session_delivery import bring_up
 
 logger = structlog.get_logger()
@@ -121,9 +120,9 @@ async def run(ctx: Any, automation: Dict[str, Any], run_row: Dict[str, Any]) -> 
 
 def _finish(store: Any, automation: Dict[str, Any], run_row: Dict[str, Any], outcome: m.RunOutcome) -> m.RunOutcome:
     failed = outcome.status == m.FAILED
-    delivery = automation["delivery"]
-    if failed and delivery.get("notify", True) and (delivery.get("notify_on") or "failure") in ("failure", "always"):
-        _tell("automation_failed", automation, run_row["run_id"], alert_const.SEV_WARN, store)
-    elif not failed and delivery.get("notify_on") == "always" and _wants(automation, False):
-        _tell("automation_report", automation, run_row["run_id"], alert_const.SEV_INFO, store)
+    if not failed and automation["delivery"].get("notify_on") != notify_policy.DEFAULT_ALWAYS:
+        return outcome
+    notice = notify_policy.decide(automation, failed)
+    if notice:
+        notify_policy.tell(notice, automation, run_row["run_id"], store)
     return outcome

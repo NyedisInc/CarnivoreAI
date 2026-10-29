@@ -138,7 +138,6 @@ console.log('[TerminalReadiness Module] Loading...');
     var XTERM_LOAD_TIMEOUT_MS = 10000;
     var XTERM_POLL_MS = 50;
 
-    /* something else */
     function xtermLoaded(shadowed) {
         var missing = [];
         if (typeof global.Terminal === 'undefined'

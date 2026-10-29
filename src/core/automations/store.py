@@ -75,7 +75,7 @@ class AutomationStore(ClaimMixin):
             self.on_change()
 
     def _read(self) -> sqlite3.Connection:
-        return self._storage.connect(False)
+        return self._storage.connect_read()
 
     @staticmethod
     def _next_fire(cron: str, enabled: bool, after: float) -> Optional[float]:
@@ -87,8 +87,6 @@ class AutomationStore(ClaimMixin):
                project_id: Optional[int] = None, misfire: str = contract.MISFIRE_NEW_DEFAULT, retry_max: int = 0,
                retry_backoff_s: int = contract.RETRY_BACKOFF_DEFAULT_S, max_runtime_s: Optional[int] = None,
                actor: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Save a new automation and log the create. Output: the automation dict.
-        """
         name = (name or "").strip()
         if not 1 <= len(name) <= 80:
             raise m.AutomationInvalid("name_invalid", "1 to 80 characters")

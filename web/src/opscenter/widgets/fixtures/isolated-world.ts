@@ -44,7 +44,6 @@ function realStorage(name: 'localStorage' | 'sessionStorage'): Storage | null {
   }
 }
 
-/* localStorage.getItem('claude_tunnel_token') */
 export function isolateStorage(seed: boolean): void {
   for (const name of ['localStorage', 'sessionStorage'] as const) {
     Object.defineProperty(globalThis, name, { value: new MemoryStorage(seed ? realStorage(name) : null), configurable: true });

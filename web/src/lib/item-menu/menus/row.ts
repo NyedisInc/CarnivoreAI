@@ -8,6 +8,7 @@ import { pluginItemsFor, runPluginItem } from '../row-plugins';
 import { defineItemMenu } from '../registry';
 import type { ItemMenuEnv } from '../types';
 import { groupFor, ROW_ITEMS } from './row-items';
+import { joinSwarm, leaveSwarm } from '../../swarm-membership/membership';
 
 export interface ResolvedRowItem {
     id: string;
@@ -17,6 +18,7 @@ export interface ResolvedRowItem {
     reason: string;
     separatorBefore: boolean;
     tone?: 'update';
+    danger?: boolean;
     locked?: string;
     plugin?: boolean;
 }
@@ -40,7 +42,7 @@ export function rowMenuItems(ctx: RowMenuCtx): ResolvedRowItem[] {
         const ok = !!item.enabled(ctx);
         return {
             id: item.id, order: item.order, separatorBefore: false, label: item.label(ctx), enabled: ok,
-            reason: ok ? '' : item.reason(ctx) || '', ...(item.tone ? { tone: item.tone } : {}),
+            reason: ok ? '' : item.reason(ctx) || '', ...(item.tone ? { tone: item.tone } : {}), ...(item.danger ? { danger: true } : {}),
         };
     });
     const captured = String(ctx.pluginItems || '').split(',');
@@ -76,7 +78,6 @@ function sendToNodes(ctx: RowMenuCtx, env: ItemMenuEnv): MenuNode[] {
         sessionUuid: ctx.sessionUuid,
         name: ctx.label || ctx.name,
         projectName: async (): Promise<string | null> => {
-            // own project
             const listed = pushedProject(ctx.sessionUuid, ctx.name);
             const projectId = ctx.projectId ?? listed.id;
             if (projectId == null && listed.name) return listed.name;
@@ -116,6 +117,7 @@ export function rowNodes(ctx: RowMenuCtx, env: ItemMenuEnv): MenuNode[] {
         if (item.separatorBefore) node.sep = true;
         if (!item.enabled) node.blocked = item.reason;
         if (item.tone) node.tone = item.tone;
+        if (item.danger) node.danger = true;
         if (item.locked) node.locked = item.locked;
         if (BRANCH_ITEM_IDS.includes(item.id)) {
             node.children = item.enabled ? branchChildren(item.id, ctx, env).map((child) => withClose(child, env.close)) : [];
@@ -126,6 +128,11 @@ export function rowNodes(ctx: RowMenuCtx, env: ItemMenuEnv): MenuNode[] {
                 done: t('session.menu.copy_session_id.done'),
                 run: () => g().SessionRowMenuActions?.runCopySessionId?.(ctx) ?? Promise.resolve(false),
             };
+            return node;
+        }
+        if (item.id === 'swarm-join' || item.id === 'swarm-leave') {
+            const verb = item.id === 'swarm-join' ? joinSwarm : leaveSwarm;
+            node.run = () => { env.close(); void verb(ctx.sessionUuid); };
             return node;
         }
         node.run = item.plugin

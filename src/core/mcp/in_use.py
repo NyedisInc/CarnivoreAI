@@ -1,8 +1,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any, Optional
+
+from src.models.utc_time import as_aware_utc
 
 WORKING_STATES = frozenset({"working", "working_subagent"})
 LIVE_SOURCES = frozenset({"registry", "pane"})
@@ -23,8 +24,7 @@ def summarize(info: Any, registry: Any = None) -> Optional[dict]:
         if source in LIVE_SOURCES:
             signals.append({"key": "working", "params": {"source": source}})
         else:
-            seen = info.session.last_activity
-            seen = seen.astimezone(timezone.utc).replace(tzinfo=None) if seen.tzinfo else seen
+            seen = as_aware_utc(info.session.last_activity)
             signals.append({"key": "stale_working", "params": {"since": seen.date().isoformat(), "source": source}})
     viewers = len(registry.subscribers.get(info.session.id) or ()) if registry is not None else 0
     if viewers:

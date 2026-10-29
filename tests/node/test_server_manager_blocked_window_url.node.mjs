@@ -6,6 +6,7 @@ import Module, { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const macDir = path.join(import.meta.dirname, '..', '..', 'macOS');
 
+/** Load ServerManager with electron stubbed. */
 function load() {
   const realLoad = Module._load;
   Module._load = function (request, ...rest) { return request === 'electron' ? { app: { getPath: () => '/tmp', getVersion: () => '0.0.0', isPackaged: false } } : realLoad.call(this, request, ...rest); };

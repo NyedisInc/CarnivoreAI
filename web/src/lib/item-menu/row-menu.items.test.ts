@@ -256,7 +256,7 @@ describe('schedule this (test_row_menu_schedule_this)', () => {
 });
 
 describe('the kebab round trip (test_session_row_menu_agent_family, test_session_row_menu_copy_session_id)', () => {
-    const CONVERSATION = 'c562a11e-9a01-4bac-8cae-bad879006dbd';
+    const CONVERSATION = '6f1c2d3e-aaaa-4bbb-8ccc-0123456789ab';
     const ROW_KEY = '11111111-2222-4333-8444-555555555555';
     const row = (over: Record<string, unknown> = {}) => ({ name: 'cloude_api', label: 'api', status: 'idle', session_id: 'ses_1', session_uuid: ROW_KEY, ...over });
     const opened = (r: Record<string, unknown>) => contextFromTrigger(triggerFrom(triggerHtml(contextFromRow(r, { surface: 'sidebar', renameable: true }))))!;
@@ -314,7 +314,7 @@ describe('a locked plugin item (test_row_menu_locked)', () => {
     });
 });
 
-describe('pin is always offered on a session row (#2528)', () => {
+describe('pin is always offered on a session row (#2528, Joe 2026-10-26)', () => {
     const LIVE = ctxOf({ sessionUuid: 'u-1', sessionId: 's-1' });
     test('offers pin while the inline pin icon is visible, and unpin when pinned', () => {
         const store = { isPinned: (n: string) => n === 'pinned_one' };
@@ -322,5 +322,20 @@ describe('pin is always offered on a session row (#2528)', () => {
         const labels = (name: string): string[] => itemsOf(ctxOf({ ...LIVE, name })).map((i) => i.label);
         expect(labels('plain_one')).toContain('pin');
         expect(labels('pinned_one')).toContain('unpin');
+    });
+});
+
+describe('the destructive item wears the danger tone from its declaration', () => {
+    test('kill (id close) is drawn danger at rest on a session, a browser and a layout row; no other item is', () => {
+        const rows = [
+            ctxOf({ groupable: true, renameable: true, forkable: true, sessionUuid: 'u-1' }),
+            ctxOf({ name: 'b1', kind: 'browser' }),
+            ctxOf({ name: 'layout:1', kind: 'layout', groupable: true, renameable: true, groupUuid: 'g-1' }),
+        ];
+        for (const ctx of rows) {
+            const nodes = nodesOf(ctx);
+            expect(nodes.find((n) => n.id === 'close')?.danger, `${ctx.kind}: close is danger`).toBe(true);
+            expect(nodes.filter((n) => n.danger).map((n) => n.id)).toEqual(['close']);
+        }
     });
 });

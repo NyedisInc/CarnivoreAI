@@ -1,4 +1,6 @@
 <h2 class="sg-h2">progress bars and meters</h2>
+<p class="sg-lead">Carnivore draws progress three ways, each shown here as the real component on fixed data: the segmented quota meter, the limit gauge with its pace marker and the bottom bar meter. A new meter copies
+one of them (Alex (example-owner), 2026-09-25, #637: "ours are like this").</p>
 
 <h3 class="sg-h3" id="meters-segmented">segmented quota meter</h3>
 <div class="sg-specimen">
@@ -36,6 +38,15 @@
         mini rail and the settings strips). No reset instant, or a reset already past, or a window length nobody stated,
         means NO marker; nothing is guessed.</dd>
     <dt>colour</dt>
+    <dd>The USAGE BAR is coloured by usage amount alone, the
+        absolute window ladder (<code>data-scale</code>: green, cyan from 50%, yellow from 60%, orange from 75%, coral
+        from 90%); pace never touches it. The PACE MARKER (<code>.oc-gauge__pace</code>) is always
+        white, the <code>--oc-text-bright</code> token, in every state (Alex (example-owner), 2026-10-02); in the bottom status
+        line it stays inside the 7px bar instead of reaching above and below it. The pace state (<code>data-pace</code>:
+        on, ahead, over) is still computed, once, in the pure module
+        <code>client/js/labels/pace.js</code>; the spoken
+        sentence (&quot;5h window, 32 percent used, 60 percent of the window elapsed, on pace&quot;) is
+        <code>windowMeterText</code> in <code>usage-panel.js</code>, also the hover title.</dd>
 </dl>
 
 <h3 class="sg-h3" id="meters-foot">bottom bar meter</h3>
@@ -51,17 +62,43 @@
     <dd>The same ladder. Context steps at 25, 50, 80 and 95% (<code>SCALE_STOPS</code>), a window on the drawer's stops.
         Every step comes from <code>sessionUsageLabels</code>; no component keeps its own thresholds.</dd>
     <dt>narrow</dt>
+    <dd>What the collapsed bar holds is planned by priority from measured widths (<code>foot-plan.ts</code>, reading a
+        hidden measuring copy, <code>.oc-tf-measure</code>). Highest first: the three percents and the short work
+        segments (never dropped), then the model name, the effort, the context fraction, the three bars (all or none),
+        the long labels' full form, the 5h reset, the 7d reset and the work segments' full form. Each piece is taken when it still
+        fits, so a piece too wide for what is left never stops a smaller, lower one using that room. Once the bars
+        are dropped this way, the percent (<code>.oc-tf-pct</code>) keeps the scale colour its bar would have shown;
+        the label (<code>.oc-tf-label</code>) is the bright text token at every width (Alex (example-owner), 2026-10-02),
+        so only the percent says how much is used.</dd>
     <dt>account tag</dt>
     <dd>At the right edge (<code>.oc-tf-acct</code>, <code>foot-account.ts</code>) the short name of the provider
         account the session's pane runs under, from the listing wrapper's <code>account_id</code>; nothing when it
         is not measured. A yellow hazard triangle (<code>.oc-tf-acct-warn</code>, <code>--oc-yellow-bright</code>) with a
         tooltip sits beside it when that account is not the provider's active one. It replaces the agents count.</dd>
     <dt>layout</dt>
+    <dd>Option A, meters first (Joe (ccsliinc), 2026-09-28, <code>docs/terminal-foot-bar-proposal.md</code>), one
+        layout at every width: the three meters are one left-aligned group (<code>.oc-tf-meters</code>) with a
+        hairline in the space between each present meter, and the model (<code>.oc-tf-model</code>) sits on the
+        right against the work segments, so the free width collects in one place. All three bars share ONE size
+        (Alex, 2026-09-28: "Make all of them even progress bar size"), feathered with the row from 48px to 90px
+        (<code>footSpacing</code>).</dd>
     <dt>context percent</dt>
     <dd>The context percent (<code>.oc-tf-pct</code>) wears the same scale step as its bar, so the number alone says how
         full the conversation is once a narrow cell has dropped the bar.</dd>
     <dt>reset countdown</dt>
+    <dd>A window's reset (<code>.oc-tf-reset</code>) is a recycle icon (<code>&lt;Icon name="recycle" /&gt;</code>)
+        beside the bare duration, never the word "reset"/"reset in" (Alex, 2026-09-28). The duration is always
+        relative - "53m" under an hour, "3h 53m" under a day, "4d 3h" (days and hours only, no minutes) a day or
+        more out - never a clock date, even far out. The icon's <code>title</code>/<code>aria-label</code> carries
+        the full "resets in 4d 3h" sentence for a hover or a screen reader.</dd>
     <dt>work segments</dt>
+    <dd>Right of the usage bar, in the same row (<code>.oc-tf-line</code>), <code>FootWork.svelte</code> draws up to two
+        segments (<code>.oc-tfw</code>, <code>.oc-tfw-seg</code>) on the bar's own ground and rule: the running agents
+        and open background shells and monitors, in working green ("agents 2 sh 1", short "ag 2 sh 1"; one name per kind, Joe (ccsliinc), 2026-09-28), and a clock with the
+        live timer count and the time to the next fire ("3 next 32m", short "3·32m"). Each is drawn only when it has
+        something to count, measures both of its forms (<code>.oc-tfw-measure</code>), and opens the session control
+        center on its own section (cells section). They are siblings of the usage button, never inside it, because the
+        usage bar is itself a button.</dd>
     <dt>no data</dt>
     <dd>Absent (nothing spent yet) draws hollow bars; unchecked (could not tell) draws hatched bars. Never a zero.</dd>
 </dl>

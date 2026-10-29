@@ -25,6 +25,7 @@ export function lockFromPayload(payload: unknown): TickLock | null {
   return { subtasks: detail.blocking.subtasks ?? [], blockers: detail.blocking.blockers ?? [] };
 }
 
+/* 'wire the route' */
 export function lockReason(lock: TickLock, say: (key: string, args?: Record<string, unknown>) => string): string {
   const parts: string[] = [];
   if (lock.subtasks.length) {

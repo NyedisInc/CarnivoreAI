@@ -69,14 +69,6 @@ def render_prompt(messages: Tuple[ChatMessage, ...]) -> str:
 
 async def spawn(argv: List[str], env: dict, *, stdin: bytes, cwd: Optional[str], timeout: float,
                 what: str) -> refresh_poke.ChildResult:
-    """Run one CLI call through the ledger's spawn and return its captured result.
-
-    Inputs: argv, env (the allow-listed environment), stdin (the prompt bytes), cwd,
-      timeout (seconds), what (a log label such as ``claude``).
-    Raises: ByoaiUnreachable (binary missing or not runnable), ProviderTimeout (the
-      process group was stopped), ByoaiError (the working directory is not a directory).
-    Example: result = await spawn(argv, env, stdin=b"say ok", cwd=None, timeout=60.0, what="claude")
-    """
     if cwd is not None and not os.path.isdir(cwd):
         raise ByoaiError("the working directory does not exist")
     result = await refresh_poke.run_child(argv, env, timeout=timeout, stdin=stdin, cwd=cwd)

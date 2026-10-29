@@ -14,7 +14,6 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const EXTRA = [
     'session-key.js', 'session-restart-live.js', 'session-restart-options.js',
     'session-restart-picker.js', 'session-restart-direct.js',
-    'session-sidebar-restart-click.js', 'session-row-menu-actions.js',
 ];
 
 const PANEL = '#session-row-menu-panel';
@@ -38,7 +37,6 @@ beforeAll(() => {
     } finally {
         console.log = log;
     }
-    win.SessionSidebarClicks = { runRestart: win.SessionSidebarRestartClick.runRestart };
     win.SessionSidebar = { _closeAfterSwitch: vi.fn(), _fetchAndRender: vi.fn(async () => {}) };
     win.SessionRestartReturn = { reopen: vi.fn(async () => ({ status: 'reopened' })) };
     drawList([{ name: NAME, created_by_cloude: true, status: 'idle', is_active: true, project_id: null }]);

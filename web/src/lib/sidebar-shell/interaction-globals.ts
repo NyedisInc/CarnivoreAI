@@ -1,5 +1,6 @@
 import type { SidebarRow } from './legacy';
 import * as GroupStoreModule from '../drawer/group-store';
+import { drawerEnv } from '../drawer/env';
 import { t } from '../i18n/index.svelte';
 
 export interface SessionGroup {
@@ -38,6 +39,8 @@ export interface ProjectRow {
 
 export interface HeadingApi {
     listSessionGroups(): Promise<GroupsBody>;
+    createSessionGroup(name: string): Promise<GroupsBody>;
+    assignSessionGroup(name: string, uuid: string | null): Promise<GroupsBody>;
     renameSessionGroup(uuid: string, name: string): Promise<GroupsBody>;
     reorderSessionGroups(order: string[]): Promise<GroupsBody>;
     deleteSessionGroup(uuid: string): Promise<GroupsBody>;
@@ -53,18 +56,14 @@ export interface HeadingApi {
 
 export interface DrawerController {
     _rows?: SidebarRow[];
-    _lastSig?: string | null;
     repaint?(): void;
     _fetchAndRender?(): Promise<void>;
 }
 
 export interface HeadingGlobals {
     SessionSidebar?: DrawerController;
-    SessionSidebarGroupActions?: { closeMenu?(): void };
     SessionSidebarGroupColour?: { open(anchor: Element, uuid: string): void; openFull?(anchor: Element, kind: string, id: string): void };
     SessionSidebarGroupIcon?: { open(anchor: Element, uuid: string): void };
-    SessionSidebarRename?: { isEditing?(): boolean };
-    SessionRowMenuSleep?: { releaseThisTab?(o: { name: string }): void };
     SessionRowMenuIcons?: { svg(id: string, size?: number): string };
     SessionLabel?: {
         validate?(raw: string): { ok: boolean; value?: string; reason?: string };
@@ -95,7 +94,7 @@ export interface HeadingGlobals {
 }
 
 export function hg(): HeadingGlobals {
-    return globalThis as unknown as HeadingGlobals;
+    return drawerEnv() as HeadingGlobals;
 }
 
 export function usableGroups(): GroupStore | null {
@@ -126,7 +125,6 @@ export function repaintDrawerRows(): void {
 export async function refetchDrawer(): Promise<void> {
     const ctrl = hg().SessionSidebar;
     if (ctrl && typeof ctrl._fetchAndRender === 'function') {
-        ctrl._lastSig = null;
         await ctrl._fetchAndRender();
     }
 }

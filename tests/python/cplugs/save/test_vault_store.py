@@ -103,7 +103,7 @@ def test_a_line_still_being_written_is_not_stored_torn(tmp_path):
 def test_a_file_that_is_a_placeholder_is_refused_not_recorded_short(tmp_path, monkeypatch):
     world = World(tmp_path)
     main = world.write_conversation(jsonl(10), subagents=0, tool_results=0)
-    monkeypatch.setattr("src.cplugs.save.vault.ingest.dataless.is_dataless_file", lambda p: Path(p) == main)
+    monkeypatch.setattr("src.cplugs.save.vault.ingest.dataless.is_dataless_stat", lambda st: st.st_ino == main.stat().st_ino)
     with pytest.raises(DatalessSource):
         ingest_file(world.vault.blobs, main, role="transcript", home="claude", rel="projects/x/a.jsonl")
     outcome = world.capture()
@@ -124,7 +124,7 @@ def test_a_file_replaced_while_it_is_read_is_retried_then_refused(tmp_path, monk
         st = real(path, *a, **k)
         if str(path) == str(main):
             calls["n"] += 1
-            if calls["n"] % 3 == 0:
+            if calls["n"] % 2 == 0:
                 fields = {n: getattr(st, n) for n in dir(st) if n.startswith("st_")}
                 return types.SimpleNamespace(**{**fields, "st_size": 1})
         return st

@@ -74,8 +74,8 @@ def _usage(raw: Any, base: Optional[Usage] = None) -> Usage:
 
 async def chat(target: Target, key: Optional[str], request: ChatRequest) -> ChatResult:
     body = build_body(_shared.require_model(target), request)
-    data = (await transport.request(target.connection, key, "POST", _path(target.connection, "messages"),
-                                    json=body, headers=VERSION_HEADER, timeout=request.timeout_s)).json()
+    data = (await transport.request_json(target.connection, key, "POST", _path(target.connection, "messages"),
+                                    json=body, headers=VERSION_HEADER, timeout=request.timeout_s))
     if data.get("type") == "error":
         raise ByoaiError("the provider reported an error")
     text = "".join(b.get("text") or "" for b in data.get("content") or [] if b.get("type") == "text")
@@ -117,8 +117,8 @@ async def chat_stream(target: Target, key: Optional[str], request: ChatRequest) 
 
 
 async def list_models(connection: Connection, key: Optional[str]) -> List[ModelInfo]:
-    data = (await transport.request(connection, key, "GET", _path(connection, "models"),
-                                    params={"limit": 1000}, headers=VERSION_HEADER)).json()
+    data = (await transport.request_json(connection, key, "GET", _path(connection, "models"),
+                                    params={"limit": 1000}, headers=VERSION_HEADER))
     return [_shared.infer_model(str(e["id"]), e) for e in data.get("data") or [] if isinstance(e, dict) and e.get("id")]
 
 

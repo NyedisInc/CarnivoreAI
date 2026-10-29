@@ -50,6 +50,16 @@ class LastSwitch(BaseModel):
 
 class AccountSwitchState(BaseModel):
     """`GET /provider-ledger/switch`: everything the three surfaces draw.
+
+    Fields:
+        auto_switch: the toggle. False unless the owner turned it on.
+        threshold_percent: the used percent that triggers a move.
+        active: one entry per provider, claude first.
+        last_switch: the most recent switch this process made, or None.
+        restarts_running_sessions: whether auto-switch restarts running
+            sessions right now: True while it is on, and then ONLY a claude
+            session whose transcript's last turn is its account's limit record
+            (#521, reworked by #2035; ``account_switch/auto_restart.py``).
     """
 
     auto_switch: bool

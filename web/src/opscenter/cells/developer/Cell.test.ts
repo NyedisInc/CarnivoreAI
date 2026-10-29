@@ -164,6 +164,7 @@ describe('the developer widget tabs', () => {
     const target = await scheduled();
     const failed = [...target.querySelectorAll('[data-scheduled-chart] .oc-rc-name')].find((el) => el.textContent?.includes('weekly audit'));
     expect(failed?.querySelector('[data-outcome-words]')?.textContent?.trim()).toBe('failed');
+    // The tooltip names what the mark means, on the mark (a tooltip only says what an icon shows, #1209), never the name.
     expect(failed?.getAttribute('title')).toBeNull();
     expect(failed?.querySelector('.oc-rc-mark')?.getAttribute('title')).toBe('failed');
   });

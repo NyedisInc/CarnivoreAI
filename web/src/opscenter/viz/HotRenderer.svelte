@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* conversation id */
   import EmptyState from './EmptyState.svelte';
   import { framedTitle } from '../shell/frame-header.svelte';
   import { emptyLine } from './empty';

@@ -35,6 +35,7 @@ class SettingsBody(BaseModel):
 
 
 class TracksMasterBody(BaseModel):
+    """Whether THIS machine refreshes its own install when the master's code lands."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -110,8 +111,12 @@ async def get_machines(request: Request, agents: bool = Query(False)) -> Dict[st
     ``agents`` is accepted for P10 (per-agent load) and ignored until it ships. A machine whose link is down, or whose
     snapshot is older than 30 s, shows ``snapshot: null``, never zeros.
     """
+    _wired().runtime.touch()
+    return await machines_view()
+
+
+async def machines_view() -> Dict[str, Any]:
     wired = _wired()
-    wired.runtime.touch()
     peers = await asyncio.to_thread(wired.peers)
     return await asyncio.to_thread(wired.runtime.view, peers)
 
@@ -126,6 +131,7 @@ async def _edit(wired: Any, changes: Dict[str, Any]) -> None:
 
 @router.put("/master")
 async def put_master(body: MasterBody, request: Request) -> Dict[str, Any]:
+    """Make one machine the Pack master (an owner action here; it reaches the other machines by the exchange)."""
     wired = _wired()
     peers = await asyncio.to_thread(wired.peers)
     target = _resolve(wired, body.machine, peers)
@@ -156,13 +162,15 @@ async def put_settings(body: SettingsBody, request: Request) -> Dict[str, Any]:
 
 @router.get("/tracks-master")
 async def get_tracks_master(request: Request) -> Dict[str, Any]:
+    """Whether this machine follows the master's code (on by default): a landing worker's refresh reaches it only when on."""
     wired = _wired()
     return {"tracks_master": await asyncio.to_thread(wired.state.tracks_master)}
 
 
 @router.put("/tracks-master")
 async def put_tracks_master(body: TracksMasterBody, request: Request) -> Dict[str, Any]:
-    """
+    """Turn this machine's follow-the-master refresh on or off. It also needs the machine's own ``may_update_carnivore`` rule.
+
     Applies at once: the refresh scope granted to every paired machine is re-derived. Example: PUT /api/v1/pack/tracks-master {"tracks_master": false}
     """
     wired = _wired()
@@ -176,6 +184,7 @@ async def put_tracks_master(body: TracksMasterBody, request: Request) -> Dict[st
 
 @router.get("/machines/{machine}/reserve")
 async def get_reserve(machine: str, request: Request) -> Dict[str, Any]:
+    """One machine's reserve settings and the level in force there now."""
     wired = _wired()
     peers = await asyncio.to_thread(wired.peers)
     target = _resolve(wired, machine, peers)
@@ -203,6 +212,7 @@ async def put_reserve(machine: str, body: ReserveBody, request: Request) -> Dict
 
 @router.get("/machines/{machine}/restrictions")
 async def get_restrictions(machine: str, request: Request) -> Dict[str, Any]:
+    """One machine's restrictions as that machine last reported them."""
     wired = _wired()
     peers = await asyncio.to_thread(wired.peers)
     target = _resolve(wired, machine, peers)
@@ -215,6 +225,8 @@ async def get_restrictions(machine: str, request: Request) -> Dict[str, Any]:
 
 @router.put("/machines/{machine}/restrictions")
 async def put_restrictions(machine: str, body: RestrictionsBody, request: Request) -> Dict[str, Any]:
+    """Change a machine's restrictions. On THIS machine any change; on a peer only a tightening (that machine refuses a
+    loosening with ``403 pack_restricted``: restrictions protect a machine from its peers, so only its own owner loosens)."""
     wired = _wired()
     peers = await asyncio.to_thread(wired.peers)
     target = _resolve(wired, machine, peers)
@@ -233,6 +245,7 @@ async def put_restrictions(machine: str, body: RestrictionsBody, request: Reques
 
 @router.post("/machines/self/rescan")
 async def rescan_self(request: Request) -> Dict[str, Any]:
+    """Re-probe this machine's toolchain now (it is otherwise read once per boot)."""
     wired = _wired()
     toolchain = await asyncio.to_thread(wired.runtime.collector.rescan)
     return {"toolchain": toolchain}

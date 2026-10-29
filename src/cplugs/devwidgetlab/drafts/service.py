@@ -32,8 +32,8 @@ def get_draft(storage: Path, slug: str) -> Dict[str, Any]:
     return store.summary(store.existing_dir(storage, slug))
 
 
-def build_draft(storage: Path, slug: str) -> Dict[str, Any]:
-    return preview.start_build(storage, slug)
+async def build_draft(storage: Path, slug: str) -> Dict[str, Any]:
+    return await preview.start_build_off_loop(storage, slug)
 
 
 def ticket(storage: Path, slug: str) -> Dict[str, Any]:
@@ -49,7 +49,7 @@ async def open_page(storage: Path, slug: str) -> Dict[str, Any]:
     if not answer["rebuild"]:
         return answer
     try:
-        preview.start_build(storage, slug)
+        await preview.start_build_off_loop(storage, slug)
     except BuildBusy:
         logger.info("widget_lab_stale_rebuild_deferred", slug=slug, building=preview.building_slug())
         return {**answer, "rebuild": False}

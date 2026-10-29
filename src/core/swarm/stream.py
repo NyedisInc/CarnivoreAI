@@ -1,13 +1,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import sqlite3
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence
 
 import structlog
 
 from src.core import db
-from src.core.swarm import author_path, body, stream_sources, thread_port
+from src.core.swarm import author_path, body, owner_wait, settings as swarm_settings, stream_sources, thread_port
 from src.cplugs.sdk import chat_category
 
 logger = structlog.get_logger()
@@ -38,7 +39,8 @@ async def page(agent: Dict[str, Any], *, since: Optional[str] = None, limit: int
                muted: Optional[Sequence[str]] = None) -> Dict[str, Any]:
     limit = max(1, min(int(limit), MAX_LIMIT))
     port = thread_port.get()
-    thread = await port.read_thread(agent["thread_key"], MAX_LIMIT) if port is not None else []
+    cards = (await asyncio.to_thread(swarm_settings.read_current)).chat_card_bodies
+    thread = await port.read_thread(agent["thread_key"], MAX_LIMIT, cards=cards) if port is not None else []
     extra = [await source(agent, MAX_LIMIT) for source in EXTRA_SOURCES]
     merged = merge(thread, *extra)
     for entry in merged:
@@ -47,10 +49,11 @@ async def page(agent: Dict[str, Any], *, since: Optional[str] = None, limit: int
     keep = None if view == "all" else (lambda e: chat_category.is_shown(e["category"], muted))
     entries = window(merged, since, limit, keep)
     try:
-        await body.run_db(lambda c: author_path.annotate(c, agent, entries))
+        await body.run_db(lambda c: (author_path.annotate(c, agent, entries), owner_wait.annotate(c, entries)))
     except (sqlite3.Error, db.DatastoreUnreadableError) as exc:
         logger.warning("swarm_author_path_unreadable", agent_id=agent.get("id"), error_type=type(exc).__name__)
         for entry in entries:
             entry.setdefault("author_path", [])
             entry.pop("peer_key", None)
+            entry.pop("author_agent_id", None)
     return {"entries": entries, "cursor": entries[-1]["id"] if entries else None}

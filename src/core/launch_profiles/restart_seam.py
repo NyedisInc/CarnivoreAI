@@ -74,6 +74,7 @@ async def replay(
 
 async def resolve_replay(
     settings: Any, agent_type: str, *, model: Optional[str], extra_args: Optional[Sequence[str]], preview: bool = False,
+    record_only: bool = False,
 ) -> Optional[ReplayedLaunch]:
     sink: List[Any] = []
     command = settings.pane_launch_command(
@@ -83,6 +84,8 @@ async def resolve_replay(
     plan = sink[0]
     if preview:
         return ReplayedLaunch(command=command, display=plan.display)
+    if record_only:
+        return ReplayedLaunch(command=command, record=await create_seam.record_for(plan), display=plan.display)
     prepared = await create_seam.prepare(plan)
     return ReplayedLaunch(command=command, staged=prepared.staged, record=prepared.record, display=plan.display)
 
@@ -118,16 +121,9 @@ async def write_record(
     session_uuid: Optional[str], *, model: Optional[str], extra_args: Optional[Sequence[str]],
     account_id: Optional[str] = None,
 ) -> bool:
-    """Persist the launch record of the restart that just ran (a picked profile resolves its own); best effort.
-
-    Inputs: conn (a WRITABLE cloude.db connection or None, closed here); replayed (the stored rung's launch);
-      chosen_type (the picked profile id, else None); session_uuid; model; extra_args (the resume argv);
-      account_id (the pin or choice the restart launched on; None keeps the active account the replay recorded).
-    Output: bool - True iff a row was written. The restart already happened, so nothing here raises.
-    """
     try:
         if chosen_type:
-            replayed = await resolve_replay(settings, chosen_type, model=model, extra_args=extra_args)
+            replayed = await resolve_replay(settings, chosen_type, model=model, extra_args=extra_args, record_only=True)
         if conn is None or replayed is None or not replayed.record or not session_uuid:
             return False
         record = replayed.record if account_id is None else await asyncio.to_thread(_with_account, replayed.record, account_id)

@@ -37,6 +37,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
+/** Mount the terminal surface at a stated size. */
 function mountSurface(): HTMLElement {
   const target = document.createElement('div');
   document.body.appendChild(target);
@@ -50,6 +51,7 @@ function mountSurface(): HTMLElement {
   return target;
 }
 
+/** A pointer event jsdom can carry: a MouseEvent wearing the two pointer members. */
 function pointer(type: string, x: number, y: number): PointerEvent {
   const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 });
   Object.defineProperty(event, 'pointerId', { value: 1 });

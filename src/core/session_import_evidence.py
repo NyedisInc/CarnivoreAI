@@ -1,19 +1,3 @@
-"""Gather the evidence the ladder reasons from. Filesystem and tmux side.
-
-Kept apart from :mod:`src.core.session_import_ladder` so the RULES stay
-pure and testable without a filesystem, and so the failure modes of
-READING live in one place. Every function here answers with a value or
-with None, and None always means the same thing: THE MEASUREMENT COULD
-NOT BE TAKEN. It never means "nothing found" - an empty log directory
-returns an empty set, an unreadable one returns None, and the ladder
-treats those two very differently.
-
-That distinction is the whole reason this module exists as its own file.
-``_load_session_metadata`` gets it wrong today: it logs and carries on
-with an empty owned set, so "we could not read your ownership record" and
-"you own nothing" produce identical behaviour, and the identical
-behaviour is "everything you made is external".
-"""
 
 from __future__ import annotations
 
@@ -35,19 +19,6 @@ PIPE_SUFFIX = ".pipe"
 def scan_pipe_files(
     log_dir: Optional[Path],
 ) -> Tuple[Optional[frozenset], Optional[frozenset]]:
-    """Read LOG_DIRECTORY and split the pipe files into created and ext.
-
-    Description: THREE OUTCOMES. A readable directory returns two sets,
-      either of which may legitimately be empty. An absent or unreadable
-      one returns ``(None, None)`` - the ladder then reports tier 3 as
-      unevaluated rather than as a miss, because "there is no created
-      pipe for this session" and "we could not look for one" are
-      different claims and only the first is evidence.
-    Inputs: log_dir (Path | None) - the resolved LOG_DIRECTORY.
-    Output: tuple[frozenset | None, frozenset | None] - created-pipe
-      slugs, then ext-pipe slugs.
-    Example: scan_pipe_files(Path('~/Library/Logs/cloude-code'))
-    """
     if log_dir is None:
         return (None, None)
     try:
@@ -90,23 +61,6 @@ def probe_origin_markers(
     live_names: Sequence[str],
     probe: Optional[Callable[[str], Optional[str]]],
 ) -> Tuple[Dict[str, str], frozenset]:
-    """Read ``CLOUDECODE_ORIGIN`` per session, separating absent from unreadable.
-
-    Description: a probe that returns None means the variable is NOT SET
-      on that session, which is a measured absence and a tier-4 miss. A
-      probe that RAISES means we could not ask, which is a tier-4
-      unevaluated. Collapsing the second into the first would report a
-      broken measurement as a clean negative.
-
-      NO PROBE AT ALL returns two empty answers, not a failure set: an
-      install that cannot read tmux environments has nothing to measure
-      here and every session misses tier 4 on the same honest grounds as
-      one whose sessions simply carry no marker.
-    Inputs: live_names (Sequence[str]). probe (callable | None) -
-      name -> marker value or None.
-    Output: tuple[dict[str, str], frozenset[str]] - markers read, then
-      the names whose probe could not be run.
-    """
     if probe is None:
         return ({}, frozenset())
     markers: Dict[str, str] = {}

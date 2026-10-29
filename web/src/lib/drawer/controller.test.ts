@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import * as Clicks from './clicks';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -77,6 +78,7 @@ describe('closing the drawer releases focus (from test_session_sidebar_focus_rel
         row.focus();
         ctrl.close();
         assert.equal(document.activeElement, toggleBtn, 'focus still leaves the panel');
+        // nothing at all
         assert.notEqual(panel.inert, true, 'and no unsupported attribute is asserted');
         assert.equal(panel.hasAttribute('inert'), false);
     });
@@ -95,9 +97,7 @@ describe('closing the drawer releases focus (from test_session_sidebar_focus_rel
 
 describe('a row pick shows at once (from test_sidebar_immediate_selection)', () => {
     beforeAll(() => {
-        for (const file of ['navigation-generation.js', 'session-sidebar-restart-click.js', 'session-sidebar-clicks.js']) {
-            loadClassic(file);
-        }
+        loadClassic('navigation-generation.js');
     });
 
     function deferred<T = unknown>() {
@@ -114,10 +114,10 @@ describe('a row pick shows at once (from test_sidebar_immediate_selection)', () 
         const alerts: unknown[] = [];
         const entered: string[] = [];
         win.API = {};
+        win.CloudeTerminal = { SCROLLBACK_ROWS: 5000 };
         win.App = {};
         win.SessionHeaderLed = { beginRequest() {}, update() {} };
         win.alert = (x: unknown) => alerts.push(x);
-        delete win.SessionSidebarRename;
         delete win.CloudeWeb;
         const ctrl = new SessionSidebarController();
         win.SessionSidebar = ctrl;
@@ -129,7 +129,7 @@ describe('a row pick shows at once (from test_sidebar_immediate_selection)', () 
         ctrl.listEl = { querySelectorAll: () => rows } as unknown as HTMLElement;
         ctrl._activeTmuxName = 'old';
         ctrl._closeAfterSwitch = () => {};
-        ctrl.repaint = () => win.SessionSidebarClicks.paintSelection(ctrl);
+        ctrl.repaint = () => Clicks.paintSelection(ctrl);
         win.API.getSession = (id: string, opts: { includeScrollback: boolean }) => {
             assert.equal(opts.includeScrollback, true);
             const d = deferred();
@@ -150,9 +150,8 @@ describe('a row pick shows at once (from test_sidebar_immediate_selection)', () 
 
     it('name click highlights and starts network synchronously, retaining actual input/action identity', async () => {
         const { ctrl, rows, requests } = harness();
-        win.SessionSidebarRename = { onListClick: () => false, deferActivation() { throw Error('delay used'); } };
         const target = { closest: (selector: string) => (selector === '.session-sidebar-row' ? rows[1] : null) };
-        const run = win.SessionSidebarClicks.onRowClick(ctrl, { target, detail: 1 });
+        const run = Clicks.onRowClick(ctrl, { target, detail: 1 } as never);
         assert.equal(requests.length, 1);
         assert.equal(rows[1]!.selected, true);
         assert.equal(rows[0]!.selected, false);
@@ -238,10 +237,10 @@ describe('a row pick shows at once (from test_sidebar_immediate_selection)', () 
         win.SessionRowActions = { ATTR_NAME: 'name', ATTR_ACTION: 'action', ACTION_CLOSE: 'close' };
         win.TerminalController = { destroySession: async (action: string) => destroyed.push(action) };
         const pending = ctrl.activateRow(rows[1] as unknown as Element);
-        await win.SessionSidebarClicks.onRowActionClick(ctrl, {
+        await Clicks.onRowActionClick(ctrl, {
             getAttribute: (key: string) => (key === 'name' ? 'old' : 'close'),
             closest: () => rows[0],
-        });
+        } as never);
         assert.deepEqual(destroyed, ['close']);
         requests[0]!.resolve(null);
         await pending;
@@ -261,10 +260,10 @@ describe('a row pick shows at once (from test_sidebar_immediate_selection)', () 
         const widthWas = window.innerWidth;
         try {
             window.innerWidth = 1400;
-            await win.SessionSidebarClicks.onRowActionClick(ctrl, btn);
+            await Clicks.onRowActionClick(ctrl, btn as never);
             assert.deepEqual(closes, [], 'a docked drawer is not closed (that stores "closed" and the sidebar stays folded)');
             window.innerWidth = 600;
-            await win.SessionSidebarClicks.onRowActionClick(ctrl, btn);
+            await Clicks.onRowActionClick(ctrl, btn as never);
             assert.equal(closes.length, 1, 'an overlay still gets out of the way');
         } finally {
             window.innerWidth = widthWas;
@@ -288,10 +287,10 @@ describe('a row pick shows at once (from test_sidebar_immediate_selection)', () 
         try {
             window.innerWidth = 1400;
             ctrl.open();
-            await win.SessionSidebarClicks.onRowActionClick(ctrl, {
+            await Clicks.onRowActionClick(ctrl, {
                 getAttribute: (key: string) => (key === 'name' ? 'old' : 'close'),
                 closest: () => rows[0],
-            });
+            } as never);
             assert.equal(ctrl.isOpen, true, 'the drawer is still open');
             assert.equal(document.body.classList.contains('session-sidebar-pinned'), true, 'still docked');
             assert.equal(document.body.classList.contains('session-sidebar-railed'), false, 'the icon rail never appears');
@@ -354,5 +353,16 @@ describe('the last main view record (#1542)', () => {
         assert.equal(readLastView(), null);
         bare({ active: true, holds: false }).setActiveSession('ses_x', 'carnivore_x');
         assert.deepEqual(readLastView(), { kind: 'session', sessionId: 'ses_x', tmuxName: 'carnivore_x' });
+    });
+});
+
+describe('forceRefresh repaints past an unchanged poll signature', () => {
+    it('clears the signature, then re-reads once', async () => {
+        const ctrl = new SessionSidebarController();
+        ctrl._lastSig = 'same';
+        const seen: Array<string | null> = [];
+        ctrl._fetchAndRender = async () => { seen.push(ctrl._lastSig); };
+        await ctrl.forceRefresh();
+        assert.deepEqual(seen, [null]);
     });
 });

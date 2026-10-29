@@ -46,7 +46,6 @@
 
   let boundSession = $state(primarySessionId());
 
-  /* already exists */
   $effect(() => {
     boundSession = primarySessionId();
     const onBind = (event: Event): void => {
@@ -169,7 +168,7 @@
       measured={boundRow !== null}
       agentFamily={boundRow?.agent_family ?? null}
     />
-    <!-- padding -->
+    
     
     <div class="oc-tl-stage">
       <div
@@ -200,7 +199,6 @@
 
 <style>
   @layer components {
-    /* flex: 0 0 auto */
     .oc-tl {
       display: flex;
       flex-direction: column;
@@ -209,7 +207,6 @@
       gap: 0;
     }
 
-    /* padding position: relative */
     .cc-pane {
       display: flex;
       flex-direction: column;
@@ -218,7 +215,6 @@
       min-height: 0;
     }
 
-    /* display: flex */
     .cc-pane[hidden] {
       display: none;
     }

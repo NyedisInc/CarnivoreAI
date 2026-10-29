@@ -60,7 +60,7 @@ def test_a_successful_rename_broadcasts_session_renamed(recording_app) -> None:
 
     client.patch(
         "/api/v1/sessions/ses_live/name",
-        json={"new_name": "Image Tool"},
+        json={"new_name": "Media Compression"},
     )
 
     assert len(recorder.sent) == 1, (
@@ -79,7 +79,7 @@ def test_a_successful_rename_broadcasts_session_renamed(recording_app) -> None:
         "literal 'session.renamed' and would silently stop handling it."
     )
     assert frame["session_id"] == "ses_live"
-    assert frame["new_name"] == "Image Tool", (
+    assert frame["new_name"] == "Media Compression", (
         "the frame carries a different label than the one written, so tabs "
         "would update to the wrong name"
     )
@@ -133,11 +133,11 @@ def hub_app(monkeypatch):
 
 def test_the_notice_and_the_socket_frame_are_the_same_shape() -> None:
     notice = session_change_notice.build_rename_notice(
-        session_id="ses_live", new_name="Image Tool"
+        session_id="ses_live", new_name="Media Compression"
     )
     on_the_socket = json.loads(
         SessionRenamedMessage(
-            session_id="ses_live", new_name="Image Tool"
+            session_id="ses_live", new_name="Media Compression"
         ).model_dump_json()
     )
 
@@ -154,7 +154,7 @@ def test_a_successful_rename_also_reaches_the_events_channel(hub_app) -> None:
 
     client.patch(
         "/api/v1/sessions/ses_live/name",
-        json={"new_name": "Image Tool"},
+        json={"new_name": "Media Compression"},
     )
 
     renames = [f for f in hub.frames if f.get("type") == WSMessageType.SESSION_RENAMED]
@@ -165,7 +165,7 @@ def test_a_successful_rename_also_reaches_the_events_channel(hub_app) -> None:
         "rename." % len(renames)
     )
     assert renames[0]["session_id"] == "ses_live"
-    assert renames[0]["new_name"] == "Image Tool"
+    assert renames[0]["new_name"] == "Media Compression"
     assert registered.stream.queued_items == 1, (
         "the notice was published but no connected client accepted it"
     )

@@ -1,4 +1,3 @@
-/*  hidden  */
 import { companyImageUrl, projectImageUrl, type Company } from '../companies';
 import type { HistoryGroup, HistorySession } from './history-api';
 import { ORPHANED } from './route';
@@ -73,7 +72,6 @@ export function projectRow(group: HistoryGroup, showHidden: boolean, fallbackNam
     };
 }
 
-/*  hidden  */
 export function projectRows(
     groups: readonly HistoryGroup[],
     options: { query: string; showHidden: boolean; showArchived?: boolean; sort: ProjectSort; dir?: SortDir; fallbackName: string },
@@ -104,13 +102,11 @@ export function sortProjectRows(rows: readonly ProjectRow[], sort: ProjectSort, 
     });
 }
 
-/*  hidden  */
 export const hiddenProjectCount = (groups: readonly HistoryGroup[]): number =>
     groups.filter((g) => !g.project?.archived_at && isAutomatedOnly(g)).length;
 
 export const archivedProjectCount = (groups: readonly HistoryGroup[]): number => groups.filter((g) => Boolean(g.project?.archived_at)).length;
 
-/*  hidden  */
 export function isHiddenSession(session: HistorySession, projectAutomatedOnly: boolean): boolean {
     if (session.state === 'removed') return true;
     return session.kind === 'automated' && !projectAutomatedOnly;
@@ -138,7 +134,6 @@ export function sessionGroups(
     return out;
 }
 
-/*  hidden  */
 export function hiddenSessionCount(group: HistoryGroup): number {
     const automatedOnly = isAutomatedOnly(group);
     return group.sessions.filter((s) => isHiddenSession(s, automatedOnly)).length;
@@ -247,7 +242,6 @@ export interface CompanyCardRow {
     readonly hasImage: boolean;
 }
 
-/*  hidden  */
 export function companyCards(
     companies: readonly Company[],
     groups: readonly HistoryGroup[],
@@ -281,8 +275,10 @@ export function projectPassesState(r: ProjectRow, state: string): boolean {
     return true;
 }
 
+export const SWARM_NEW_SESSIONS = 'swarm-new-sessions';
+
 export function projectActions(
-    project: { readonly archived_at: string | null; readonly root?: string | null; readonly company_id?: number | null; readonly has_image?: boolean; readonly storage?: { readonly state: string; readonly packed_in?: number | null } | null; readonly pack_state?: string | null },
+    project: { readonly archived_at: string | null; readonly root?: string | null; readonly company_id?: number | null; readonly has_image?: boolean; readonly storage?: { readonly state: string; readonly packed_in?: number | null } | null; readonly pack_state?: string | null; readonly id?: number | null; readonly new_sessions_join_swarm?: boolean },
     companies: readonly Company[] = [],
     withColor = false,
     agentOffered = false,
@@ -295,6 +291,7 @@ export function projectActions(
     if (project.root) out.push({ id: 'copy-path', labelKey: 'projects.page.action.copy_path' });
     if (!hidden) out.push({ id: 'load-blueprint', labelKey: 'layout.row.load_blueprint' });
     if (agentOffered && !hidden) out.push({ id: 'turn-on-agent', labelKey: 'projects.page.action.turn_on_agent' });
+    if (typeof project.id === 'number' && !hidden) out.push({ id: SWARM_NEW_SESSIONS, labelKey: 'projects.page.action.new_sessions_join_swarm', checked: project.new_sessions_join_swarm === true });
     if (project.pack_state === 'moved_away') out.push({ id: 'migrate-back', labelKey: 'projects.page.action.move_back' });
     else if (!hidden) out.push({ id: 'migrate-project', labelKey: 'projects.page.action.move_computer' });
     out.push({ id: 'set-image', labelKey: 'projects.page.action.set_image' });
@@ -310,7 +307,6 @@ export function projectActions(
         ],
     });
     if (typeof project.company_id === 'number') out.push({ id: 'remove-from-company', labelKey: 'projects.page.action.remove_from_company' });
-    //  hidden 
     const state = project.storage?.state ?? 'unpacked';
     const packed = state === 'packed';
     const busy = !packed && state !== 'unpacked';
@@ -333,7 +329,6 @@ export function companyActions(hasImage = false): readonly MenuItem[] {
     ];
 }
 
-/*  hidden  */
 export function projectLead(project: { readonly archived_at: string | null; readonly storage?: { readonly state: string; readonly packed_in?: number | null } | null }): ProjectAction {
     if (project.storage?.state === 'packed' && !project.storage.packed_in) return { id: 'unpack-folder', labelKey: 'projects.page.action.unpack_folder' };
     return project.archived_at

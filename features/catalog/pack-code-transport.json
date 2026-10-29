@@ -2,7 +2,7 @@
   "id": "pack-code-transport",
   "name": "Pack code transport",
   "summary": "Move a project's code between paired computers without GitHub: carried git bundles, a tar fallback, chunked blobs, per-project GitHub account, private publish, and a gh login carry.",
-  "description": "Code reaches another paired computer by the ladder: git remote clone, then incremental git bundles carried over the Pack link into refs/carnivore/<install>/..., then a one-way tar.zst that includes uncommitted work. An air-gapped project never contacts GitHub. Each project resolves which GitHub account to use, and every gh or git call names it. A gh login can be carried to a paired computer whose owner allowed it.",
+  "description": "Code reaches another paired computer by the ladder: git remote clone, then incremental git bundles carried over the Pack link into refs/carnivore/<install>/..., then a one-way tar.zst that includes uncommitted work. An air-gapped project never contacts GitHub. Each project resolves which GitHub account to use, and every gh or git call names it. A private repo can be published on the owner's click. A gh login can be carried to a paired computer whose owner allowed it.",
   "area": "sessions",
   "status": "beta",
   "since": "2026-10-10",
@@ -37,13 +37,16 @@
     "transport",
     "publish"
   ],
-  "where": [],
+  "where": [
+    "The owner API routes POST /api/v1/projects/{name}/sync, GET and PUT /api/v1/projects/{name}/github-account, GET and POST /api/v1/projects/{name}/publish-repo and POST /api/v1/pack/gh-login."
+  ],
   "how_to": [
     "POST /api/v1/projects/{name}/sync with a paired computer to carry the project's code.",
     "POST /api/v1/projects/{name}/publish-repo to create a private repo."
   ],
   "examples": [
-    "Send a commit to another computer with no remote at all."
+    "Send a commit to another computer with no remote at all.",
+    "Carry the example-owner gh login to studio so it can pull private repos."
   ],
   "media_exempt": "No screen yet; the cards ship with the P9 UI slice."
 }

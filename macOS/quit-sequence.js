@@ -1,5 +1,4 @@
 
-/* could not */
 function createQuitHandler({ teardown, quit, log, onError, defer = setImmediate }) {
   if (typeof teardown !== 'function') {
     throw new TypeError('createQuitHandler requires a teardown function');
@@ -10,6 +9,7 @@ function createQuitHandler({ teardown, quit, log, onError, defer = setImmediate 
   const note = typeof log === 'function' ? log : () => {};
   const report = typeof onError === 'function' ? onError : () => {};
 
+  // teardown.
   let phase = 'idle';
 
   return async function onBeforeQuit(event) {

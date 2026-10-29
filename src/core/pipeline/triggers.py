@@ -60,12 +60,6 @@ def fetch_row(conn: sqlite3.Connection, *, row_id: Optional[int] = None,
 
 
 def conversation_of(row: Dict[str, Any], conversation_id: Optional[str] = None) -> Optional[str]:
-    """The local conversation id a session row's milestone is about, or None when it has none.
-
-    ``conversation_id`` names a conversation that is no longer the row's current one (the pre-/clear
-    conversation); by default the row's ``claude_session_uuid`` is used. A remote row has none.
-    Example: conversation_of({"claude_session_uuid": "c1"})  # 'c1'
-    """
     conv = conversation_id or row.get("claude_session_uuid")
     if not conv or (row.get("host_key") or "local") != "local":
         return None

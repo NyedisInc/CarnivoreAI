@@ -3,6 +3,18 @@
 A pre-commit hook that refuses a commit staging credential material, and
 an audit mode for checking the tree as it stands.
 
+## Why this exists
+
+On 2026-08-30 a Cloudflare API token was flagged in a public GitHub
+repository. It came from commits made by the project's original author in
+2025, was carried along by a fork, and surfaced only when a pull request
+replicated the history into an account where a scanner was watching. The
+repository was public the whole time, so the exposure was old and only the
+detection was new. Separately, a full-corpus scan the same day found 731
+distinct credentials across 6,080 transcript message bodies.
+
+Two exposure classes in one day, and nothing looked at a commit before it
+was pushed. This is that look.
 
 ## Install and uninstall
 
@@ -40,6 +52,9 @@ block you. That is a deliberate limit, not an oversight: blocking on
 somebody else's old line is the fastest way to get a hook uninstalled,
 and the audit mode below is the tool for pre-existing content.
 
+Timing on this repository, measured: a three-file commit scans in 0.084
+seconds, and a full-tree audit of 907 files takes 1.02 seconds.
+
 ## Second gate: gitleaks
 
 The hook runs a second scanner after the python one passes:
@@ -47,6 +62,24 @@ The hook runs a second scanner after the python one passes:
 ```sh
 gitleaks git --staged <repo> --config .gitleaks.toml --redact --no-banner
 ```
+
+the same tool and the same `.gitleaks.toml` config CI runs
+(`.github/workflows/secret-scan.yml`). The two are complementary, not
+redundant, measured 2026-08-31: the python scanner catches a 1Password
+`ops_` service account token, which gitleaks's default ruleset has no
+rule for at all; gitleaks names roughly 170 vendor formats (stripe,
+sendgrid, twilio, npm, and more) the python scanner would only ever
+catch through its generic entropy heuristic, which is off by default
+because it is unusable over source (see above). Running only one of
+them locally is what let a commit pass this hook and then fail CI.
+
+Install it with `brew install gitleaks`. Installed on the dev mini
+(192.0.2.6) via Homebrew, 2026-09-10, version 8.30.1, matching the
+version CI pins by version and sha256 in
+`.github/workflows/secret-scan.yml`. The hook reads that pinned version
+out of the workflow file and compares it against the local
+`gitleaks version` on every run, printing a NOTE, never a refusal, on a
+mismatch, since rules can differ between versions.
 
 A missing `gitleaks` binary or a missing `.gitleaks.toml` does not
 refuse the commit. Both print a NOTE that the second gate did not run
@@ -100,13 +133,14 @@ Vendor-marker detectors, run by default on files:
 | `aws_secret_access_key` | 40 base64 chars beside a name saying AWS |
 | `google_api_key` | `AIza` plus 35 url-safe base64 |
 | `slack_token` | `xoxb` `xoxa` `xoxp` `xoxr` `xoxs` plus a payload |
-| `stripe_key` `huggingface_token` `npm_token` `gitlab_token` `sendgrid_key` `slack_app_token` | vendor prefix plus the issued length and charset (archive and redaction only, not the file scanner) |
+| `stripe_key` `huggingface_token` `npm_token` `gitlab_token` `sendgrid_key` `slack_app_token` | vendor prefix plus the issued length and charset (#1215; archive and redaction only, not the file scanner) |
 | `pem_private_key` | a PRIVATE KEY header followed by real base64 body |
 | `cloudflare_api_token` | 37 to 40 chars beside a name saying Cloudflare |
 | `minisign_secret_key` | the minisign secret key header followed by a base64 line |
 | `anthropic_api_key` | `sk-ant-api03-` / `sk-ant-admin01-` / `sk-ant-oat01-` / `sk-ant-ort01-` plus 32 to 255 url-safe chars |
 | `openai_api_key` | `sk-proj-` / `sk-svcacct-` / `sk-admin-` plus 40 to 255 url-safe chars |
 | `carnivore_api_key` | `cak_` plus exactly 43 url-safe chars: Carnivore's own script API key (`docs/api-keys.md`) |
+| `catalog_bot_token` | `cbt_` plus exactly 43 url-safe chars: the catalog publish bot's service token (`hosted/catalog/api/bot_tokens.py`) |
 
 Two of these are **contextual** rather than prefix-matched, because the
 credential itself carries no marker. An AWS secret access key is 40
@@ -118,10 +152,60 @@ that says AWS or Cloudflare. That trades recall for a false-positive rate
 low enough to survive contact with a real repository, and the trade is
 the honest one: a scanner nobody keeps installed detects nothing at all.
 
+**Scan cost is bounded** (#2687, #2691). The AWS name is matched as one run and its `aws` ... `secret`/`access` shape is checked on the
+run's last 145 characters (`aws_name_ok` in `src/core/secret_scanning/aws_name.py`; exact to the old pattern, including the redaction delimiter's eight `.`/`-`), so crafted `awssecret` floods cost the same per byte as plain text. `scan_text` takes an
+optional `deadline` (`src/core/secret_scanning/deadline.py`): past it the scan raises `ScanTimeout`, which a caller treats as could-not-scan and
+never as clean. The default is no deadline, so redaction always finishes. One regex call over a huge text cannot be interrupted, so a
+caller that scans untrusted files also caps the text it hands in. Bare JWTs chained with `-` or `_`, preceded by a decoy `eyJ` part, or
+with a short JWE ciphertext are matched whole. Known residual: a joiner plus `eyJ` and eight characters inside a token's SIGNATURE cuts it there, since locally it looks like a chain.
+
 The PEM detector matches only the **header** and requires base64 body by
 lookahead. The finding therefore carries a hash of the header, never of
 key material, so the finding record cannot become a second place a
 private key partially lives.
+
+### The generic detector, and why it is off by default
+
+`high_entropy_assignment` fires on any high-entropy value assigned to a
+name ending in a credential word. It is excellent over transcript bodies
+and unusable over source. Measured across this working tree:
+
+- default vendor detectors: **0 findings** over 907 files, 1.02s
+- `--all-detectors`: **47 findings** over the same files, 4.77s
+
+Every one of the 47 was a false positive. They were things like
+`const STORAGE_KEY = 'cloude.sidebar.arrangement'`, `token = secrets.token_hex(32)`
+and `guard let token = keychain() else {`. A 100 percent false-positive
+rate is a scanner nobody reads, so it is available behind an explicit
+flag and it is not what the hook runs.
+
+## The inline pragma, and why it is not a path allowlist
+
+A line carrying `secret-scan: allow <reason>` is not reported. The reason
+is required; a bare `secret-scan: allow` suppresses nothing.
+
+Something in this repository has to contain credential-shaped strings,
+because a detector's positive control cannot exist otherwise, and a
+detector with no positive control is one nobody has shown can fire. The
+obvious fix is to exclude the test files by path. That is the wrong fix:
+it blinds the scanner to an entire file forever, including to whatever
+gets added to that file next year. A pragma is per line, sits in the diff
+where a reviewer sees it, and demands a written reason.
+
+Suppressions are **counted and printed**, in both modes and in the JSON,
+so a suppression can never become invisible:
+
+```
+clean: 907 files scanned, 111 skipped, 6 suppressed by inline pragma, 8 detectors, 1.02s
+```
+
+Those 6 are the synthetic fixtures in `tests/test_secret_detectors.py`
+and `tests/test_secret_scan_files.py`, and nothing else. `--no-pragma`
+lists them, which is how you audit the suppressions themselves.
+
+The pragma lives in `src/core/secret_scan.py`, not in the detector
+module. That is deliberate: a transcript body quoting the comment must
+not be able to suppress its own flagging.
 
 ## What is never printed
 
@@ -139,16 +223,66 @@ test would pass against a scanner that printed nothing at all.
 
 ## Secrets never ride on a command line
 
+Any local process of any user can read every process's argv on macOS
+(`ps -axww`); a process's environment and pipes are readable only by its
+own user. So the app never passes a credential as an argument: the hook
+token reaches tmux through `source-file -` on stdin
+(`TmuxBackend._run_tmux_private`, `set_session_environment`), Keychain
+writes go through `security -i` on stdin (`relay_keychain.write_password`),
+and the MCP config names `${CLOUDECODE_HOOK_TOKEN}` for claude to expand
+itself. Record and the measured leak it fixed: `docs/tmux-launch-history.md`,
+"No secret on a command line".
+
 ## Placeholders, references and indirection
 
 The scanner must not fire on the correct way to handle a credential.
 Three classes are excluded, in `is_placeholder()`:
 
+- **1Password references**: `op://<vault>/GitHub/token`, and the
+  `vault://` and `keychain://` equivalents. This fleet nearly rotated a
+  correct credential on 2026-08-24 because an `op://` reference, which is
+  exactly 31 characters, was mistaken for a dead API token. Flagging a
+  reference teaches people to stop using references.
 - **Environment indirection**: `${CF_API_TOKEN}`, `%VAR%`,
   `os.environ["X"]`, `process.env.X`, `{{template}}`, `<your-token>`.
 - **Documentation padding**: a placeholder word (`example`, `your`,
   `changeme`, `redacted`, and the rest of `PLACEHOLDER_MARKERS`), or a
   run of more than four identical characters.
+
+## Tuning already applied
+
+Two false positives were measured on this tree and fixed at the pattern,
+not by an ignore list:
+
+1. `ops_` matched inside the python function name
+   `test_router_drops_emit_when_all_three_channels_unconfigured`, where
+   `drops_` supplies the prefix and the rest supplies 41 characters of
+   payload. Fixed with a lookbehind requiring `ops_` to start a word,
+   plus a mixed-alphabet requirement (an uppercase letter and a digit)
+   that a snake_case identifier can never satisfy and a base62 payload
+   effectively always does.
+   The stream redactor reads `ops_` with no left boundary, so the
+   same identifier came back there (issue #813: wrapped at 31 columns it
+   starred a whole row). Its redaction shape now requires a capital letter
+   in the body, the half of the mixed-alphabet rule a base64 body keeps
+   with near certainty; the digit half is not required there, since a
+   random 40-character body lacks a digit about once in 700.
+2. A bare `-----BEGIN OPENSSH PRIVATE KEY-----` header in a test fixture,
+   with no key after it. Fixed by requiring base64 body via lookahead.
+
+An ignore list would have hidden both without saying anything true about
+either. If the scanner fires on something correct, fix the pattern.
+
+## Office attachments (docx, xlsx, pptx)
+
+Files attached to Task Manager tasks are scanned by the same detector set (`sdk/file_secrets.credential_counts`). A docx, xlsx or pptx is a zip,
+so `src/cplugs/reviewboard/office_text.py` reads its parts BY CONTENT, not by name (markup, nested zips up to 4 deep, images and fonts skipped,
+anything else as printable runs), `office_xml.py` pulls out the text, attribute values, comments and CDATA, and the file is scanned in two readings
+(runs joined, and every tag a separator) keeping the higher count per detector. The XML is not parsed (`xml.etree` expands entities); a declared
+entity is refused. Hostile or unreadable files fail closed: more than 2000 entries, over 100 MiB inflated (64 MiB per part), over 16 MiB of
+extracted text, an inflation ratio over 100 times, more than 30 s of extraction per attach, an unsafe or repeated entry name, an odd compression
+method, an encrypted member, a corrupt archive or a zip nested too deep are refused with 422 `reviewboard_file_unscannable`, never treated as clean.
+Limit: an old-style OLE `.bin` embedding is not unpacked. Details: `docs/reviewboard.md`, "The content secret scan".
 
 ## Adding a detector
 
@@ -160,3 +294,7 @@ not. The parametrised tests pick it up automatically, and
 `test_every_declared_detector_has_a_case_or_is_the_generic_one` fails if
 you skip that step.
 
+
+## Full docs-index description (moved from CLAUDE.md catalog table)
+
+You are touching the pre-commit hook, `.gitleaks.toml`, or `scripts/scan_secrets.py`. Carries the incident that caused all three. 

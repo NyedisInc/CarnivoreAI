@@ -133,6 +133,9 @@ async function flush(): Promise<void> {
   }
   const ops = [...pending];
   pending.clear();
+  const requeue = (): void => {
+    for (const [key, entry] of ops) if (!pending.has(key)) pending.set(key, entry);
+  };
   const replay = (base: Arrangement): Arrangement => ops.reduce((map, [key, entry]) => upsertEntry(map, key, entry), base);
   const next = replay(synced);
   inflight = true;
@@ -143,9 +146,13 @@ async function flush(): Promise<void> {
     } else if (result.status === 'committed' || result.status === 'unchanged') {
       synced = next;
     } else if (result.status === 'refused') {
-      for (const [key, entry] of ops) if (!pending.has(key)) pending.set(key, entry);
+      requeue();
       scheduleWrite(RETRY_DELAY * 4);
     }
+  } catch (error) {
+    console.warn('[terminal tabs] arrangement write failed', error);
+    requeue();
+    scheduleWrite(RETRY_DELAY * 4);
   } finally {
     inflight = false;
   }
@@ -270,6 +277,9 @@ async function migrate(api: PreferencesApi): Promise<void> {
     else if (result.status === 'stale_revision') {
       applyArrangement(parseArrangement(api.committedValue(FIELD)) ?? emptyArrangement());
     }
+  } catch (error) {
+    console.warn('[terminal tabs] arrangement migration failed', error);
+    synced = null;
   } finally {
     inflight = false;
   }

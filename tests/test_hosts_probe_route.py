@@ -49,7 +49,7 @@ def _client(tmp_path: Path, monkeypatch, host: FakeSshHost, *, owner: bool = Tru
 
 def _add(client: TestClient, key: str = "fake") -> None:
     with mock.patch.object(hosts_store, "generate_key", return_value=key):
-        res = client.post(API, json={"label": "Fake", "ssh_target": "acme@fakehost"})
+        res = client.post(API, json={"label": "Fake", "ssh_target": "alex@fakehost"})
     assert res.status_code == 200, res.text
 
 
@@ -113,7 +113,7 @@ def test_only_an_owner_access_token_may_probe(tmp_path, monkeypatch, host) -> No
         _add_as = {"Authorization": f"Bearer {create_access_token()[0]}"}
         with mock.patch.object(hosts_store, "generate_key", return_value="fake"):
             assert client.post(API, json={"label": "Fake",
-                                          "ssh_target": "acme@fakehost"}, headers=_add_as).status_code == 200
+                                          "ssh_target": "alex@fakehost"}, headers=_add_as).status_code == 200
         refresh, _, _ = create_refresh_token()
         assert client.post(f"{API}/fake/probe").status_code == 401
         assert client.post(f"{API}/fake/probe", headers={

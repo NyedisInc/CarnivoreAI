@@ -30,7 +30,6 @@ _CODE_RE = re.compile(r"[A-Z0-9]{8}")
 
 
 class PairingFailed(Exception):
-    """The pairing could not finish. ``code`` is a wire code (``pair_code_invalid`` ...)."""
 
     def __init__(self, code: str, message: str = "") -> None:
         super().__init__(message or code)
@@ -228,11 +227,6 @@ async def activate(*, pending: PairPending, dest: SshDestination, back_kind: str
 
 
 async def finish(*, transport: InitiatorTransport, key: "fed_key.DeviceKey", nonce: str, accept: bool) -> str:
-    """
-    Output: the peer's state (``active``, ``awaiting_owner``, ``cancelled``).
-    Raises: PairingFailed ``pair_pending_gone`` (the peer no longer holds that pairing), LinkDown.
-    Example: await finish(transport=t, key=k, nonce=n, accept=True)
-    """
     route = await transport.up_local()
     client = PeerClient(route, grant_id="", peer_install_id="", sign=lambda _m: "")
     try:

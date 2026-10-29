@@ -62,11 +62,6 @@ def any_running() -> bool:
 
 
 def start(project_id: int, work: Callable[[Progress], None]) -> Progress:
-    """Run ``work(progress)`` on a worker thread, refusing when a job is already running.
-
-    Inputs: project_id (int); work - the job body (it records its own outcome in ``project_storage``).
-    Output: Progress. Raises: JobBusy.
-    """
     with _LOCK:
         if _CURRENT:
             raise JobBusy("another pack or unpack job is running; ask for a new plan when it has finished")

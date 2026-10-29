@@ -1,20 +1,3 @@
-"""Fold one measurement of the live session set into the journal. PURE.
-
-Description: the background pass (``session_journal_task``) measures - one
-  tmux listing, one process table, one database read - and hands the facts
-  here. This decides what changed, what the human log should say about it,
-  and whether the journal needs writing at all.
-
-  A SESSION IS ONLY MARKED GONE ON A MEASURED ABSENCE. An incomplete or
-  failed listing leaves every entry as it was: a listing that did not answer
-  is not evidence that anything ended, and marking the whole fleet gone on a
-  tmux hiccup would raise an offer to reopen sessions that are running.
-
-  THE INSTANCE, NOT THE NAME, IS THE KEY. ``<tmux_name>@<session_created>``,
-  the same identity the ``sessions`` row is keyed on. A name is reused - this
-  app re-mints them - so a name-keyed journal would merge a killed session
-  with its successor and report neither correctly.
-"""
 
 from __future__ import annotations
 
@@ -148,7 +131,6 @@ def observe(
             fresh["gone_at"] = now_iso
         else:
             fresh["gone_at"] = prior.get("gone_at") if fresh["state"] == STATE_GONE else None
-        # could not
         if fresh["conversation_measured"] is None and prior.get("conversation_measured") and not pane.dead:
             for f in ("conversation_measured", "conversation_measured_source"):
                 fresh[f] = prior.get(f)

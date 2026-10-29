@@ -80,9 +80,9 @@ def test_changes_since_a_cursor_and_the_read_is_remembered_for_tell(manager):
     ok, listed = call(manager, "task_manager_tasks_list", {"list": "all"})
     cursor = listed["cursor"]
     assert store.last_read("ses_1", "all") == cursor
-    owner_item = store.add("all", "fix this", actor="joe")
+    joes = store.add("all", "fix this", actor="joe")
     ok, moved = call(manager, "task_manager_changes", {"since": cursor, "list": "all"})
-    assert ok and [i["id"] for i in moved["items"]] == [owner_item["id"]]
+    assert ok and [i["id"] for i in moved["items"]] == [joes["id"]]
     ok, empty = call(manager, "task_manager_changes", {"since": moved["cursor"], "list": "all"})
     assert empty["items"] == [] and empty["messages"] == []
     assert store.last_read("ses_1", "all") == moved["cursor"]

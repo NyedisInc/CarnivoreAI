@@ -11,11 +11,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from src.api.peer_auth import require_peer_sessions
 from src.api.remote_route_guard import refuse_remote
 from src.core.agent_families import DEFAULT_FAMILY
+from src.core.attention.evidence import observed_conversation_uuid
 from src.core.attention.transcript_facts import FACTS_FOUND
 from src.core.attention.turn_counts import KIND_SHELL
 from src.core.session_token_usage.reader import SessionSubject
 from src.core.subagents.parked_work import MAX_WIRE_ENTRIES, describe_entry
 from src.core.timers.reader import UNKNOWN_PROCESS, iso
+from src.core.attention.fresh_observation import fresh_observation, watcher_of
 from src.core.timers.session import process_fact_for, read_session_timers
 from src.models.timers import BackgroundTasks, ParkedEntry, SessionTimers
 
@@ -24,13 +26,7 @@ router = APIRouter()
 
 
 def _observation(session_manager: Any, row_id: str) -> Optional[Any]:
-    watcher = getattr(session_manager, "_attention_watcher", None)
-    if watcher is None:
-        return None
-    observation = watcher.observation_for(row_id, now=datetime.now(timezone.utc))
-    if observation is None or observation.stale:
-        return None
-    return observation
+    return fresh_observation(watcher_of(session_manager), row_id, datetime.now(timezone.utc))
 
 
 def _parked_entries(observation: Optional[Any]) -> list[ParkedEntry]:
@@ -95,14 +91,14 @@ async def get_session_timers(request: Request, session_id: str) -> SessionTimers
     tmux_name = info.tmux_session
     working_dir = info.session.working_dir if info.session is not None else None
     conversation_uuid = (
-        session_manager._claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
+        session_manager.claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
     )
     row_id = info.session.id if info.session is not None else session_id
     observation = _observation(session_manager, row_id)
     process = UNKNOWN_PROCESS
     if observation is not None:
         registry = getattr(observation.evidence, "registry", None)
-        observed_uuid = (getattr(observation.evidence, "identity", None) or (None,) * 5)[4]
+        observed_uuid = observed_conversation_uuid(observation.evidence)
         conversation_uuid = observed_uuid or conversation_uuid
         process = process_fact_for(registry, conversation_uuid)
     subject = SessionSubject(agent_family=info.agent_family,

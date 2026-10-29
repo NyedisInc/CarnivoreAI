@@ -97,7 +97,7 @@ def test_a_claude_too_old_for_rename_gets_no_flag():
     [
         "Punchlist Test",
         "Refactor spike (round 2)",
-        "Garden Planner 2026",
+        "Fantasy Football 2026",
     ],
 )
 def test_real_project_names_survive_as_one_argv_element(label):
@@ -150,4 +150,4 @@ def test_a_shell_wrapper_id_never_gets_the_name_flag(installed_claude_supports_n
     from src.core import session_manager
 
     source = inspect.getsource(session_manager.SessionManager.create_session)
-    assert "wrappers=_configured_wrappers()" in source
+    assert "wrappers=self._wrappers_reader()" in source

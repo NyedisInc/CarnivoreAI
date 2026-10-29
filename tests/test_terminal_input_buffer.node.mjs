@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -12,6 +13,13 @@ const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const BUFFER_SRC = read('client/js/terminal-input-buffer.js');
 const TERM_SRC = read('client/js/terminal.js');
 const INDEX_HTML = read('client/index.html');
+// The boot line is one call into client/js/terminal-client-factory.js
+// now, and the register() that hands it the class is the first of the
+// two lines, so it is what a loader cuts at to get the class alone.
+// The boot below that line does more than construct: it refuses by
+// name when the client factory did not load. A loader that wants the
+// class alone has to cut above the whole boot, so terminal.js carries
+// this marker line and says in place that it does not move.
 const TERM_SINGLETON = '// THE CLASS ENDS ABOVE.';
 
 function makeBuffer() {
@@ -73,6 +81,26 @@ test('THE CASE THIS EXISTS FOR: input typed before ready is held, then delivered
 
     assert.equal(Buf.send(c, bytes(1, 3)), true);
     assert.equal(c.ws.sent.length, 3);
+});
+
+test('input typed between a dropped socket and the next connect is announced once, not lost silently (u007-16)', () => {
+    const { Buf } = makeBuffer();
+    const c = fakeController(fakeSocket());
+    Buf.begin(c, 'connectToSession');
+    Buf.flushOnReady(c, { startup_command: 'none' });
+    Buf.abandon(c, 'socket closed');
+    c.ws = fakeSocket(false);
+    c.told.length = 0;
+    assert.equal(Buf.send(c, bytes(1)), false);
+    assert.equal(Buf.send(c, bytes(1)), false);
+    assert.deepEqual(c.told, [Buf.RETYPE_MESSAGE], 'one notice for the whole gap');
+    c.ws = fakeSocket();
+    Buf.begin(c, 'connectToSession');
+    Buf.flushOnReady(c, { startup_command: 'none' });
+    assert.equal(Buf.send(c, bytes(1)), true);
+    c.ws = fakeSocket(false);
+    Buf.send(c, bytes(1));
+    assert.equal(c.told.length, 2, 'a later gap is announced again');
 });
 
 test('NO LOCAL ECHO: holding input writes nothing to the terminal', () => {
@@ -323,7 +351,7 @@ test('every keystroke-shaped path goes through the ONE seam', () => {
     for (const site of [
         'this._sendUserBytes(new TextEncoder().encode(data))',
         'this._sendUserBytes(bytes)',
-        'this._sendUserBytes(new TextEncoder().encode(keyData))',
+        'this._sendUserBytes(new TextEncoder().encode(keyData))',    // the d-pad
     ]) {
         assert.ok(src.includes(site), `an input path stopped using the seam: ${site}`);
     }

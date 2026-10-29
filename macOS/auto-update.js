@@ -50,7 +50,6 @@ function isMissingManifest(err) {
   return /ERR_UPDATER_CHANNEL_FILE_NOT_FOUND|Cannot find channel|latest[-\w]*\.yml.*(404|not found)/i.test(text);
 }
 
-/* <path> */
 function isLoopbackFeed(url) {
   const m = /^http:\/\/(?:127\.0\.0\.1|localhost):(\d{1,5})((?:\/[\w.~-]+)*)$/.exec(url);
   return m !== null && Number(m[1]) >= 1 && Number(m[1]) <= 65535 && !m[2].split('/').includes('..');
@@ -68,7 +67,6 @@ function createFeedSelector({ configPath = () => null, env, packaged, buildPurpo
   };
 }
 
-/* <path> */
 function selectFeed({ configPath, env, packaged = true, buildPurpose = null } = {}) {
   const e = env || process.env;
   const fromEnv = typeof e[ENV_FEED_URL] === 'string' ? e[ENV_FEED_URL].trim() : '';

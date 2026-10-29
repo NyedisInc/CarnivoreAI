@@ -22,7 +22,7 @@ export interface ClosedSession {
 export const running: RunningSession[] = [
   { id: 'C1', task: 'provider_accounts config..', agent: 'Opus 5', project: 'cloudecode', elapsedSeconds: 683, status: 'Running' },
   { id: 'C2', task: 'move session to project', agent: 'Haiku 4.5', project: 'cloudecode-newui', elapsedSeconds: 312, status: 'Running' },
-  { id: 'C3', task: 'test suite + fixes', agent: 'Sonnet 3.5', project: 'Example App', elapsedSeconds: 161, status: 'Running' },
+  { id: 'C3', task: 'test suite + fixes', agent: 'Sonnet 3.5', project: 'Lantern App', elapsedSeconds: 161, status: 'Running' },
 ];
 
 export const closed: ClosedSession[] = [

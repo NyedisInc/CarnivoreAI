@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 import threading
 import time
 from dataclasses import replace
@@ -55,12 +56,6 @@ class Engine:
                  lifecycle_writer: Optional[Callable[..., str]] = None,
                  recent_runs: Optional[recent.RecentRuns] = None,
                  notify: Callable[[], None] = push_status) -> None:
-        """Inputs: state_dir - where ``pipeline-plugins/`` lives; db_path - carnivore.db (None: no manifest scan,
-        lineage, milestone write or area names); plugins - default the registry's; clock, wall - monotonic and wall
-        seconds; wait - how a thread waits on an event (a test replaces it); refresh_fn - the manifest walk (a test
-        hands a fake); scan_interval - seconds between scans; lineage_fn - conversation id -> Lineage;
-        lifecycle_writer; recent_runs - the recent-runs record (default one resolving names from db_path); notify -
-        called when the status changed (default ``push_status``)."""
         self.state_dir = Path(state_dir)
         self.db_path = Path(db_path) if db_path is not None else None
         self.plugins = tuple(registry.plugins() if plugins is None else registry.plugins(plugins))
@@ -207,12 +202,11 @@ class Engine:
                     continue
                 try:
                     with plugin_db.lock_for(plugin.id):
-                        conn = plugin_db.open_db(self.state_dir, plugin)
-                        try:
-                            plugin.on_caught_up(conn)
-                        finally:
-                            conn.close()
+                        conn = plugin_db.pooled_db(self.state_dir, plugin)
+                        plugin.on_caught_up(conn)
                 except Exception as exc:  # noqa: BLE001
+                    if isinstance(exc, (sqlite3.Error, plugin_db.PluginUnavailable)):
+                        plugin_db.discard_pooled(self.state_dir, plugin)
                     log_error("pipeline_caught_up_failed", plugin=plugin.id, error=exc)
         return True
 

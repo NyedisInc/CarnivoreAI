@@ -143,6 +143,8 @@ SKIP_JOE = "not sent: the item is waiting on you"
 SKIP_WAITING = "not sent: the item is waiting"
 
 
+REMINDER_DUE = "reminder came due"
+
 SKIP_REASONS = (SKIP_PARKED, SKIP_JOE, SKIP_WAITING)
 
 _local = threading.local()
@@ -167,6 +169,10 @@ def resume_on_move(conn: sqlite3.Connection, row: Mapping[str, Any], new_state: 
     if new_state != rules.WAITING:
         reasons.append(SKIP_WAITING)
     return resume_skipped(conn, row["id"], now, reasons)
+
+
+def refusal_line(reason: str) -> str:
+    return f"scheduled wake-up {reason}" if reason.startswith("not sent") else f"scheduled wake-up failed: {reason}"
 
 
 def record_error(conn: sqlite3.Connection, item_id: int, message: str, now: float) -> None:

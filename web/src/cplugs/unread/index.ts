@@ -1,4 +1,3 @@
-/* could not */
 import manifest from '../../../../src/cplugs/unread/cplug.json';
 import { t } from '../sdk';
 import type { CplugManifest, CplugWeb, Contribution } from '../sdk';
@@ -24,6 +23,7 @@ const contribution: Contribution<'session-card-action'> = {
   payload: {
     shortcut: 'U',
     label: (row) => t(row.unread ? 'cplug.unread.clear' : 'cplug.unread.set'),
+    /* what the row shows */
     async run(row, context): Promise<void> {
       const api = unreadApi();
       if (!api) {

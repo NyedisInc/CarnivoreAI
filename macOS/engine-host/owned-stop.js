@@ -1,5 +1,4 @@
 'use strict';
-// could not
 
 const { normalizeVersion } = require('../adoption-decision');
 

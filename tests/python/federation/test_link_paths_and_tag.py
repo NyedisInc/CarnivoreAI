@@ -220,10 +220,10 @@ def test_a_prove_signature_is_checked_against_the_pinned_key():
 
 
 def test_forward_argv_clears_no_forwardings_but_the_master_keeps_clearing_them():
-    dest = ssh_exec.SshDestination("hosta")
+    dest = ssh_exec.SshDestination("studio")
     argv = ssh_forward.forward_argv(dest, "/tmp/cm/x-1a2b3c4d-0", "-L", "/tmp/a.sock:127.0.0.1:8000")
     assert "ClearAllForwardings=no" in argv and "ClearAllForwardings=yes" not in argv
-    assert argv[argv.index("-O") + 1] == "forward" and argv[-2:] == ["--", "hosta"]
+    assert argv[argv.index("-O") + 1] == "forward" and argv[-2:] == ["--", "studio"]
     assert "ClearAllForwardings=yes" in ssh_exec.master_argv(dest, "/tmp/cm/x-1a2b3c4d-0")
 
 

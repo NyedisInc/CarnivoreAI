@@ -142,10 +142,6 @@ async def _prepare(request: Request, loc: Dict[str, Any], version: str) -> publi
 
 
 def _sends(request: Request) -> publish_sends.PublishSends:
-    """The send and check records under this app's state directory.
-
-    Inputs: request (Request). Output: PublishSends.
-    """
     return publish_sends.PublishSends(request.app.state.services.settings_reader.state_dir())
 
 
@@ -361,7 +357,8 @@ async def submission_report(submission_id: str, request: Request) -> Dict[str, A
     dependencies=[Depends(require_auth)],
 )
 async def publish_item_facts(request: Request, location: str) -> ItemFactsResponse:
-    """
+    """What only this computer knows about one folder: files, license, grade, version, changes since the last send, records.
+
     TALKS TO NOBODY, except a cplug, which asks the catalog once for your publisher handle. The body holds
     relative paths only and no filesystem path. The folder is read as a send would read it, at the version of
     the newest send, else the declared one, else 1.0.0.

@@ -95,7 +95,7 @@ def test_severity_defaults_by_family() -> None:
     assert copy.effective_severity(ev("session.finished", severity="error")) == "error"
 
 
-def test_catalog_reloads_when_quinwick_ashmont(tmp_path, monkeypatch) -> None:
+def test_catalog_reloads_when_file_changes(tmp_path, monkeypatch) -> None:
     f = tmp_path / "catalog.en.js"
     f.write_text("    'notify.copy.session.finished.title': 'one',\n    'notify.copy.session.finished.body': 'b',\n")
     monkeypatch.setattr(copy, "catalog_path", f)
@@ -121,7 +121,7 @@ def test_defang_bypass_cases_are_closed() -> None:
         ("evil.click", "evil[.]click"), ("evil.xn--p1ai/login", "evil[.]xn--p1ai/login"),
         ("пример.рф/login", "пример[.]рф/login"), ("evil\u3002com/x", "evil[.]com/x"),
         ("EVIL.COM/LOGIN", "EVIL[.]COM/LOGIN"), ("evil.com./login", "evil[.]com./login"),
-        ("203.0.113.11/admin", "203[.]0[.]113[.]11/admin"), ("xn--e1afmkfd.xn--p1ai", "xn--e1afmkfd[.]xn--p1ai"),
+        ("192.168.1.5/admin", "192[.]168[.]1[.]5/admin"), ("xn--e1afmkfd.xn--p1ai", "xn--e1afmkfd[.]xn--p1ai"),
     ):
         assert copy.defang_urls(raw) == want, raw
     assert copy.defang_urls("v1.2.3.4 build") == "v1.2.3.4 build"

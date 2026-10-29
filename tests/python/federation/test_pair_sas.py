@@ -180,7 +180,7 @@ async def _held(initiator: Mac, acceptor: Mac, monkeypatch, *, match_calls):
     pending = pair_driver.PairPending("nn", "typed", answer, "mine", pair_sas.compute_sas(_pub(initiator), _pub(acceptor), "nn"))
     from src.core.hosts.ssh_exec import SshDestination
     pair_sas.INITIATING.add("nn", proof="typed", sas=pending.sas, label="acc", fid=answer["fid"], pending=pending,
-                            dest=SshDestination("hosta"), remote_port=8000, same_user=True)
+                            dest=SshDestination("studio"), remote_port=8000, same_user=True)
     return links
 
 

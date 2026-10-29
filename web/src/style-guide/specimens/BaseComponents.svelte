@@ -7,6 +7,7 @@
   import OptionList, { type OptionItem } from '../../lib/base/OptionList.svelte';
   import Tag from '../../lib/base/Tag.svelte';
   import List, { type ListDensity } from '../../lib/base/List.svelte';
+  import MenuItem from '../../lib/base/MenuItem.svelte';
   import ListRow from '../../lib/base/ListRow.svelte';
   import Toolbar from '../../lib/base/Toolbar.svelte';
   import State from '../../lib/base/State.svelte';
@@ -82,6 +83,7 @@
     <Field variant="search" label="search agents" placeholder="search agents" hint="/" clearLabel="clear search" />
     <Field variant="search" label="search agents" value="carn" hintFilled="esc" clearLabel="clear search" />
     <Field variant="search" label="search agents" value="carn" hintFilled="esc" clearLabel="clear search">
+      {#snippet lead()}in: crate{/snippet}
       {#snippet trailing()}<Button size="sm" variant="quiet" aria-label="search mode: names">names</Button>{/snippet}
     </Field>
     <div class="sg-row" role="listbox" aria-orientation="horizontal" aria-label="similar terms">
@@ -132,12 +134,28 @@
   </div>
 
   <div class="sg-bc__group">
+    <span class="sg-bc__label">menu item: the item menu's row look, enabled with a key word and a reason line, then disabled (the reason is the tooltip)</span>
+    <div class="session-row-menu" role="group" aria-label="menu item specimen" style="position: static; z-index: auto">
+      <MenuItem label="add to home" keyHint="widget" reason="goes in the first free slot" />
+      <MenuItem label="add to work" disabled reason="already in this place" />
+    </div>
+  </div>
+
+  <div class="sg-bc__group">
+    <span class="sg-bc__label">list row, disabled (aria-disabled="true"): dimmed through tokens, no pointer action</span>
+    <List density="roomy" label="disabled specimen">
+      <ListRow primary="restore from backup" secondary="needs a connected drive" aria-disabled="true" onclick={() => {}} />
+      <ListRow primary="open the folder" secondary="available" onclick={() => {}} />
+    </List>
+  </div>
+
+  <div class="sg-bc__group">
     <span class="sg-bc__label">list row with a below block: one head line (lead, name, meta, actions), the excerpt under it at the full row width, wrapping, nothing changes on hover</span>
     <List density="roomy" label="below specimen">
       <ListRow primary="release notes review" meta="you, 3h">
         {#snippet lead()}<StatusLed status="idle" unread={false} startupGate={null} statusSource={null} transport={null} />{/snippet}
         {#snippet actions()}<button type="button" class="oc-ibtn oc-ibtn--bare" aria-label="open release notes review"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3l8 5-8 5z" fill="currentColor" /></svg></button>{/snippet}
-        {#snippet below()}can you re-run the pebble backup against the offsite target and tell me whether the snapshot count matches what we had before the move, the whole excerpt shows and wraps at the row's edge{/snippet}
+        {#snippet below()}can you re-run the restic backup against the offsite target and tell me whether the snapshot count matches what we had before the move, the whole excerpt shows and wraps at the row's edge{/snippet}
       </ListRow>
     </List>
   </div>
@@ -170,7 +188,7 @@
     <Card title="cloudecode" meta="3 running">
       {#snippet children()}<p>a plain card: raised surface, surface edge, panel corner, one border.</p>{/snippet}
     </Card>
-    <Card title="lantern" meta="compact" compact>
+    <Card title="argent" meta="compact" compact>
       {#snippet children()}<p>a compact card: the small padding step.</p>{/snippet}
     </Card>
     <Card title="keep awake" meta="foldable" foldable>

@@ -2,6 +2,8 @@
 <script lang="ts">
     import { onDestroy, onMount, tick } from 'svelte';
     import { t } from '../i18n/index.svelte';
+    import { Button, Field } from '../base';
+    import FirstRunAgent from './FirstRunAgent.svelte';
     import CopyField from '../settings-page/CopyField.svelte';
     import PackOffers from '../pack-offers/PackOffers.svelte';
     import {
@@ -21,7 +23,7 @@
         finishFirstRun(): void;
     }
 
-    type Sub = 'join' | 'pick' | 'joining' | 'join_error' | 'joined';
+    type Sub = 'join' | 'pick' | 'joining' | 'join_error' | 'joined' | 'agent';
 
     let {
         start = 'join',
@@ -47,7 +49,8 @@
     let loginTimer: ReturnType<typeof setTimeout> | undefined;
     let loginTries = 0;
     let gone = false;
-    let cells: HTMLInputElement[] = [];
+    let cellsBox = $state<HTMLElement | null>(null);
+    const cell = (i: number): HTMLInputElement | undefined => cellsBox?.querySelectorAll<HTMLInputElement>('[data-first-run="cell"]')[i];
 
     const auth = (): AuthHost => (window as unknown as { Auth: AuthHost }).Auth;
     const code = $derived(digits.join(''));
@@ -109,7 +112,7 @@
         if (gone) return;
         if (tokens) {
             auth().acceptLogin(tokens);
-            auth().finishFirstRun();
+            sub = 'agent';
             return;
         }
         if (loginTries < LOCAL_LOGIN_TRIES) loginTimer = setTimeout(() => void tryLocalLogin(), 1000);
@@ -155,7 +158,7 @@
     function accept(candidate: Pick<Candidate, 'fid'>): void {
         picked = candidate.fid;
         linkMode = false;
-        void tick().then(() => cells[0]?.focus());
+        void tick().then(() => cell(0)?.focus());
     }
 
     function decline(candidate: Pick<Candidate, 'fid'>): void {
@@ -181,12 +184,12 @@
         const digit = field.value.replace(/[^0-9]/g, '').slice(-1);
         field.value = digit;
         digits[index] = digit;
-        if (digit && index < 5) cells[index + 1]?.focus();
+        if (digit && index < 5) cell(index + 1)?.focus();
         if (code.length === 6) void go();
     }
 
     function onKey(index: number, event: KeyboardEvent): void {
-        if (event.key === 'Backspace' && !digits[index] && index > 0) cells[index - 1]?.focus();
+        if (event.key === 'Backspace' && !digits[index] && index > 0) cell(index - 1)?.focus();
     }
 
     function onPaste(event: ClipboardEvent): void {
@@ -194,7 +197,7 @@
         if (!text) return;
         event.preventDefault();
         digits = CELLS.map((i) => text[i] ?? '');
-        cells[Math.min(text.length, 5)]?.focus();
+        cell(Math.min(text.length, 5))?.focus();
         if (text.length === 6) void go();
     }
 
@@ -224,26 +227,26 @@
     {#if setup}<p class="first-run__text" data-first-run="warning-setup">{t('first_run.join.warning_setup')}</p>{/if}
     <form class="first-run__form" onsubmit={go}>
         {#if linkMode}
-            <input class="oc-field first-run__link" type="text" bind:value={link} autocomplete="off" autocorrect="off" spellcheck="false"
+            <Field bind:value={link} autocomplete="off" autocorrect="off" spellcheck={false}
                 aria-label={t('first_run.join.paste_link')} data-first-run="link" disabled={busy} />
         {:else}
-            <div class="first-run__cells" role="group" aria-label={t('first_run.join.label')}>
+            <div class="first-run__cells" role="group" aria-label={t('first_run.join.label')} bind:this={cellsBox}>
                 {#each CELLS as i (i)}
-                    <input class="oc-field first-run__cell" bind:this={cells[i]} value={digits[i]} oninput={(e) => onCell(i, e)}
-                        onkeydown={(e) => onKey(i, e)} onpaste={onPaste} maxlength="1" inputmode="numeric" pattern="[0-9]*"
-                        autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-first-run="cell" disabled={busy} />
+                    <Field value={digits[i]} oninput={(e) => onCell(i, e)}
+                        onkeydown={(e) => onKey(i, e)} onpaste={onPaste} maxlength={1} inputmode="numeric" pattern="[0-9]*"
+                        autocomplete="one-time-code" autocorrect="off" spellcheck={false} data-first-run="cell" aria-label={`${t('first_run.join.label')} ${i + 1}`} disabled={busy} />
                 {/each}
             </div>
         {/if}
         <PackOffers {offers} {picked} {busy} attr="data-first-run" onLook={look} onYes={accept} onNo={decline} />
-        <button type="button" class="oc-btn" data-first-run="toggle-link" onclick={() => (linkMode = !linkMode)}>
+        <Button data-first-run="toggle-link" onclick={() => (linkMode = !linkMode)}>
             {linkMode ? t('first_run.back') : t('first_run.join.paste_link')}
-        </button>
+        </Button>
         <div class="first-run__actions">
-            <button type="button" class="oc-btn" data-first-run="back" disabled={busy} onclick={onBack}>{t('first_run.back')}</button>
-            <button type="submit" class="oc-btn oc-btn--confirm" data-first-run="join-go" disabled={busy || (linkMode ? link.trim() === '' : code.length !== 6)}>
+            <Button data-first-run="back" disabled={busy} onclick={onBack}>{t('first_run.back')}</Button>
+            <Button type="submit" variant="confirm" data-first-run="join-go" disabled={busy || (linkMode ? link.trim() === '' : code.length !== 6)}>
                 {t('first_run.join.go')}
-            </button>
+            </Button>
         </div>
     </form>
 {:else if sub === 'pick'}
@@ -252,9 +255,9 @@
     <ul class="first-run__packs">
         {#each status?.candidates ?? [] as candidate (candidate.fid)}
             <li>
-                <button type="button" class="oc-btn first-run__pack" data-first-run="pack" disabled={busy} onclick={() => pick(candidate)}>
+                <Button data-first-run="pack" disabled={busy} onclick={() => pick(candidate)}>
                     {candidate.label}
-                </button>
+                </Button>
             </li>
         {/each}
     </ul>
@@ -267,7 +270,9 @@
     {#if error === 'helper_not_started'}
         <CopyField value={HELPER_LINE} {t} label={t('first_run.join.helper_line_label')} valueAttrs={{ 'data-first-run': 'helper-line' }} />
     {/if}
-    <button type="button" class="oc-btn" data-first-run="retry" onclick={again}>{t('first_run.retry')}</button>
+    <Button data-first-run="retry" onclick={again}>{t('first_run.retry')}</Button>
+{:else if sub === 'agent'}
+    <FirstRunAgent onContinue={() => auth().finishFirstRun()} />
 {:else}
     <p class="first-run__text" role="status" data-first-run="joined">{t('first_run.join.done', { name: packName })}</p>
     {#if !bridge}<p class="first-run__text" data-first-run="joined-browser">{t('first_run.join.done_browser', { name: packName })}</p>{/if}

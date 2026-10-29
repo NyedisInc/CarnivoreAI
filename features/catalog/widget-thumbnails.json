@@ -37,6 +37,60 @@
   "examples": [
     "Check what the files widget looks like before adding it to the home screen."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "running-sessions.png",
+      "caption": "The running sessions widget",
+      "alt": "The running sessions widget as it looks on the home screen"
+    },
+    {
+      "kind": "screenshot",
+      "file": "closed-sessions.png",
+      "caption": "The closed sessions widget",
+      "alt": "The closed sessions widget as it looks on the home screen"
+    },
+    {
+      "kind": "screenshot",
+      "file": "projects.png",
+      "caption": "The projects widget",
+      "alt": "The projects widget as it looks on the home screen"
+    },
+    {
+      "kind": "screenshot",
+      "file": "skills.png",
+      "caption": "The skills widget",
+      "alt": "The skills widget as it looks on the home screen"
+    },
+    {
+      "kind": "screenshot",
+      "file": "plugins.png",
+      "caption": "The plugins widget",
+      "alt": "The plugins widget as it looks on the home screen"
+    },
+    {
+      "kind": "screenshot",
+      "file": "themes.png",
+      "caption": "The themes widget",
+      "alt": "The themes widget as it looks on the home screen"
+    },
+    {
+      "kind": "screenshot",
+      "file": "activity-log.png",
+      "caption": "The activity log widget",
+      "alt": "The activity log widget as it looks on the home screen"
+    },
+    {
+      "kind": "screenshot",
+      "file": "notes.png",
+      "caption": "The notes widget",
+      "alt": "The notes widget as it looks on the home screen"
+    },
+    {
+      "kind": "screenshot",
+      "file": "files.png",
+      "caption": "The files widget",
+      "alt": "The files widget as it looks on the home screen"
+    }
+  ]
 }

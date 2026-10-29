@@ -10,10 +10,13 @@ from fastapi import (
 )
 from src.api.auth import require_auth
 from src.api.peer_auth import require_peer_sessions
+from src.api.capped_reads import read_capped_upload
 from src.api.remote_route_guard import refuse_remote
 from src.api.uploads import save_upload_to_session_dir, validate_upload
 from src.config import settings
+from src.core.sessions.errors import SessionInputFailed, SessionNotRunning
 from src.models import CommandRequest, SuccessResponse, UploadImageResponse
+from src.api.error_response import api_error
 from typing import Optional
 
 logger = structlog.get_logger()
@@ -39,6 +42,11 @@ async def send_command(request: Request, body: CommandRequest):
     """
     Send a command to the active session.
 
+    THE DIALOG GATE (issue #1499, Joe (ccsliinc), 2026-10-09: "keep it, add the dialog check"): the target pane is
+    asked :func:`src.core.approvals.dialog_gate.dialog_verdict` first, so a command can never become keystrokes into
+    a permission, question, trust or startup dialog. The check is in the handler, so a request forwarded from the
+    paired Mac is gated too. A plain shell pane has no dialog to read and passes.
+
     Args:
         body: Command to send
 
@@ -58,11 +66,14 @@ async def send_command(request: Request, body: CommandRequest):
 
         return SuccessResponse(message="Command sent successfully")
 
+    except SessionInputFailed as e:
+        raise api_error(502, "session_input_failed", e) from e
+    except SessionNotRunning as e:
+        raise api_error(409, "session_not_running", e) from e
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error("send_command_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to send command: {str(e)}")
+        raise api_error(404, "session_not_found", e) from e
+    except Exception as e:  # noqa: BLE001
+        raise api_error(500, "session_input_failed", e) from e
 
 
 @router.post(
@@ -92,7 +103,7 @@ async def upload_file(
     See ``src/api/uploads.py`` for the full validation contract.
 
     The validated file is written to
-    ``<working_dir>/.cloude_uploads/<uuid8>-<safe_name>`` with mode 0o600
+    ``<working_dir>/.carnivore_uploads/<uuid8>-<safe_name>`` with mode 0o600
     (directory 0o700), via ``O_EXCL`` so nothing is silently overwritten. The
     client then injects the returned absolute ``path`` into the terminal.
 
@@ -128,7 +139,9 @@ async def upload_file(
     refuse_remote(session_manager, session.id, "a file upload")
 
     declared_filename = file.filename or ""
-    data = await file.read()
+    uploads_cfg = settings.load_auth_config().uploads
+    data = await read_capped_upload(
+        file, max(uploads_cfg.max_size_mb, uploads_cfg.max_file_size_mb) * 1024 * 1024, what="file")
 
     logger.info(
         "api_upload_file_request",
@@ -137,7 +150,6 @@ async def upload_file(
         content_type=file.content_type,
     )
 
-    uploads_cfg = settings.load_auth_config().uploads
     validated_bytes, safe_name = validate_upload(
         data,
         declared_filename,
@@ -152,8 +164,7 @@ async def upload_file(
     except HTTPException:
         raise
     except OSError as e:
-        logger.error("upload_file_save_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+        raise api_error(500, "file_save_failed", e, step="upload") from e
 
     logger.info(
         "api_upload_file_saved",

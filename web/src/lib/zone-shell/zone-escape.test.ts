@@ -20,10 +20,12 @@ import { railSlideout } from '../session-rail/slideout.svelte';
 import { BOTTOM_FIELD, follow, keyIn, mountRails, unmountRails } from '../session-rail/rail-test-harness';
 import { barLead } from '../widget-bars/bar-lead.svelte';
 
+// jsdom has no popover API; the key menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};
 
+/** A real Escape keydown from a target; returns the event. */
 function escapeFrom(target: Element): KeyboardEvent {
   const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
   target.dispatchEvent(event);
@@ -35,7 +37,9 @@ const nav = (edge: RailEdge): HTMLElement => document.getElementById(RAIL_SPECS[
 const stateOf = (edge: RailEdge): string | undefined => nav(edge).dataset['barState'];
 const handle = (edge: RailEdge): HTMLElement => nav(edge).querySelector<HTMLElement>('[data-bar-handle]')!;
 const panel = (): HTMLElement => document.querySelector<HTMLElement>('[data-rail-edge="side"]')!;
+/** A mouse click on the handle (detail 1: a click with no detail is the keyboard's): an unpinned bar comes out. */
 const pressHandle = (edge: RailEdge): void => { handle(edge).dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 })); flushSync(); };
+/** A terminal's input, as xterm draws it. */
 function terminalInput(parent: Element): HTMLTextAreaElement {
   const screen = document.createElement('div');
   screen.className = 'xterm';

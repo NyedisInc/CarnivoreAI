@@ -1,12 +1,12 @@
 <script lang="ts">
-  /*  hidden  */
+  /* the home screen */
   import Icon from '../../opscenter/ui/Icon.svelte';
   import IconButton from '../base/IconButton.svelte';
   import ComponentsPopover from '../../opscenter/engine/ComponentsPopover.svelte';
   import { navAnchors } from '../../opscenter/engine/navAnchors.svelte';
   import { homeLayout } from '../../opscenter/engine/layout.svelte';
   import { viewport } from '../../opscenter/engine/viewport.svelte';
-  import { RAIL_HELP_LINKS, WARROOM_ROW, railItemVisible, type RailItem } from '../../opscenter/shell/rail-items';
+  import { WARROOM_ROW, railItemVisible, type RailItem } from '../../opscenter/shell/rail-items';
   import { closeDrawerAfterSwitch, handleMenuHotkey } from './menu-hotkeys';
   import { drawerSurface, storeFor } from './drawer-surface.svelte';
   import { t } from '../i18n/index.svelte';
@@ -18,7 +18,7 @@
   import { onMount } from 'svelte';
   import { saveMenuOrder, startMenuOrder } from './menu-order.svelte';
   import BarPin from '../widget-bars/BarPin.svelte';
-  import { menuDestinations, menuLeadItems, menuSettings } from './menu-rows';
+  import { menuDestinations, menuHelpLinks, menuLeadItems, menuSettings } from './menu-rows';
   import { onMenuMoveKey, onMenuPointerDown, type MenuDragHost } from './menu-drag';
   import {
     hideMenuPreview,
@@ -78,7 +78,7 @@
     {#each leadRows as item (item.id)}
       {@const count = item.badge?.() ?? null}
       <li class="oc-nav-line" data-menu-lead={item.id}>
-        <button type="button" class="oc-nav-item" aria-pressed={item.pressed?.() ?? false}
+        <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" aria-pressed={item.pressed?.() ?? false}
                 data-rail-item={item.id} onclick={() => item.run?.()}>
           <span class="oc-nav-icon"><Icon name={item.icon} size={17} /></span>
           <span class="oc-nav-label">{t(item.labelKey)}</span>
@@ -91,7 +91,7 @@
     {#each rows as item (item.id)}
       {@const popOut = menuRowPopout(item.id)}
       <li class="oc-nav-line" data-menu-row={item.id}>
-        <button type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === item.id}
+        <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === item.id}
                 aria-current={activeRow === item.id ? 'page' : undefined}
                 data-rail-item={item.id} onclick={() => activate(item)}>
           <span class="oc-nav-icon"><Icon name={item.icon} size={17} /></span>
@@ -111,7 +111,7 @@
         {#if railItemVisible(WARROOM_ROW)}
           {@const warPopOut = menuRowPopout(WARROOM_ROW.id)}
           <li class="oc-nav-line oc-nav-sub" data-menu-row={WARROOM_ROW.id}>
-            <button type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === WARROOM_ROW.id}
+            <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === WARROOM_ROW.id}
                     aria-current={activeRow === WARROOM_ROW.id ? 'page' : undefined}
                     data-rail-item={WARROOM_ROW.id} onclick={() => activate(WARROOM_ROW)}>
               <span class="oc-nav-icon"><Icon name={WARROOM_ROW.icon} size={13} /></span>
@@ -125,7 +125,7 @@
         {/if}
         {#each dashboardRows as row (row.id)}
           <li class="oc-nav-line oc-nav-sub">
-            <button type="button" class="oc-nav-item" class:oc-nav-item--active={row.viewing}
+            <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={row.viewing}
                     aria-current={row.viewing ? 'page' : undefined} data-menu-dashboard={row.id}
                     aria-label={t(row.home ? 'opscenter.nav.dashboard_home' : 'opscenter.nav.dashboard_open', { name: row.name })}
                     onpointerenter={(event) => showMenuPreview(row.id, lineOf(event))}
@@ -145,14 +145,14 @@
           </li>
         {/each}
         <li class="oc-nav-line oc-nav-sub">
-          <button type="button" class="oc-nav-item oc-nav-edit" data-menu-dashboards-edit onclick={editMenuDashboards}>
+          <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item oc-nav-edit" data-menu-dashboards-edit onclick={editMenuDashboards}>
             <span class="oc-nav-label oc-nav-label--name">{t('opscenter.nav.dashboards_edit')}</span>
           </button>
         </li>
       {/if}
       {#if item.id === 'widgets' && !viewport.wide}
       <li class="oc-nav-components">
-        <button
+        <button data-base-exempt="rail-nav-row-base-has-no-nav-row"
           type="button"
           class="oc-nav-item"
           data-rail-item="components"
@@ -185,9 +185,9 @@
 
   <h2 class="oc-sidebar-head">{t('opscenter.nav.help')}</h2>
   <ul class="oc-nav oc-nav-quick">
-    {#each RAIL_HELP_LINKS as item (item.id)}
+    {#each menuHelpLinks() as item (item.id)}
       <li>
-        <button type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === item.id}
+        <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === item.id}
                 aria-current={activeRow === item.id ? 'page' : undefined}
                 data-rail-item={item.id} onclick={() => activate(item)}>
           <span class="oc-nav-icon"><Icon name={item.icon} size={15} /></span>
@@ -200,7 +200,7 @@
   {#if settingsRow}
     <ul class="oc-nav oc-nav-settings">
       <li>
-        <button type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === settingsRow.id}
+        <button data-base-exempt="rail-nav-row-base-has-no-nav-row" type="button" class="oc-nav-item" class:oc-nav-item--active={activeRow === settingsRow.id}
                 aria-current={activeRow === settingsRow.id ? 'page' : undefined}
                 data-rail-item={settingsRow.id} onclick={() => activate(settingsRow)}>
           <span class="oc-nav-icon"><Icon name={settingsRow.icon} size={17} /></span>
@@ -250,7 +250,6 @@
       position: relative;
     }
 
-    /* padding */
     .oc-nav-settings .oc-nav-item {
       padding-right: calc(var(--oc-space-5) + var(--oc-space-4));
     }
@@ -270,7 +269,6 @@
     .oc-nav-item {
       display: flex;
       align-items: center;
-      /* padding */
       gap: 20px;
       width: 100%;
       height: 33px;

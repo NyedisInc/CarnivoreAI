@@ -107,7 +107,7 @@ async def run_once(app: Any, gone_names: Iterable[str] = (), *, measure_agents: 
     except (DatastoreError, sqlite3.Error, OSError) as exc:
         logger.warning("companion_reconcile_unread", error=type(exc).__name__)
         return 0
-    if not index.loaded:  # could not
+    if not index.loaded:
         index.apply({int(r["companion_of"]): int(r["id"]) for r in rows},
                     {int(r["id"]): str(r["tmux_name"]) for r in rows if r["tmux_name"]})
     closed = 0

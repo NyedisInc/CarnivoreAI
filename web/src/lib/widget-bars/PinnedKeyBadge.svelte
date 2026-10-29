@@ -8,7 +8,6 @@
   @layer components {
     .pinned-key-badge {
       position: absolute;
-      /* padding */
       bottom: calc(-4px - var(--oc-border, 1px));
       left: calc(-4px - var(--oc-border, 1px));
       display: inline-flex;

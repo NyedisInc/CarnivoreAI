@@ -38,6 +38,14 @@ def record_event(provider_id: str, event_id: int, rows: Sequence[Dict[str, Any]]
         return inserted
 
 
+def original_bindings(provider_id: str, provider_message_id: str) -> List[str]:
+    with closing(base._conn()) as conn:
+        rows = conn.execute("SELECT DISTINCT binding_id FROM messaging_messages WHERE provider_id = ? AND "
+                            "provider_message_id = ? AND direction = 'in' AND kind = 'message' AND binding_id != ''",
+                            (provider_id, provider_message_id)).fetchall()
+    return [r["binding_id"] for r in rows]
+
+
 def supersede(provider_id: str, event_id: int, provider_message_id: str, *, unsent: bool, new_text: str,
               note_for: Any) -> List[str]:
     touched: List[str] = []
@@ -162,7 +170,7 @@ def last_traffic(provider_id: str) -> Dict[str, Optional[float]]:
 
 def count_since(*, since: float, direction: str, conversation_id: Optional[str] = None,
                 binding_id: Optional[str] = None, provider_id: Optional[str] = None,
-                accepted_only: bool = False) -> int:
+                accepted_only: bool = False, distinct_messages: bool = False) -> int:
     clauses, args = ["direction = ?", "received_at >= ?", "kind = 'message'"], [direction, since]
     for col, val in (("conversation_id", conversation_id), ("binding_id", binding_id), ("provider_id", provider_id)):
         if val is not None:
@@ -172,7 +180,8 @@ def count_since(*, since: float, direction: str, conversation_id: Optional[str] 
         clauses.append("(status != 'failed' OR reason NOT IN ('wrong_conversation','not_owner','weak_identity',"
                        "'not_routable','provider_disabled','no_inbound_binding','empty','rate_limited','no_target'))")
     with closing(base._conn()) as conn:
-        return int(conn.execute(f"SELECT COUNT(*) FROM messaging_messages WHERE {' AND '.join(clauses)}", args).fetchone()[0])
+        counted = "COUNT(DISTINCT COALESCE(NULLIF(provider_message_id, ''), id))" if distinct_messages else "COUNT(*)"
+        return int(conn.execute(f"SELECT {counted} FROM messaging_messages WHERE {' AND '.join(clauses)}", args).fetchone()[0])
 
 
 def list_messages(*, binding_id: Optional[str] = None, status: Optional[str] = None, before: Optional[float] = None,

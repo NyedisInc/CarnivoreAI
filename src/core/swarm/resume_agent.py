@@ -17,10 +17,6 @@ _AGENT_SETTING_MARKER = b'"agent-setting"'
 
 
 def resume_uuid(args: Optional[Sequence[str]]) -> Optional[str]:
-    """The conversation id after ``--resume`` in argv, or None.
-
-    Example: resume_uuid(["--resume", "abc"]) -> "abc"
-    """
     items = list(args or [])
     for i, token in enumerate(items[:-1]):
         if token == RESUME_FLAG:

@@ -187,7 +187,7 @@ def test_assigning_a_name_with_no_stored_session_is_a_409(app_env):
         json={"tmux_name": "cloude_never_seen", "group_uuid": a["group_uuid"]},
     )
     assert r.status_code == 409
-    assert "cloude_never_seen" in r.json()["detail"]
+    assert r.json()["detail"]["code"] == "session_not_stored"
 
 
 def test_member_order_round_trips_over_http(app_env):

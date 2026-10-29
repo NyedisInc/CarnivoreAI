@@ -120,5 +120,5 @@ export async function dismissResolvedAlerts(): Promise<void> {
 export async function runAlertAction(action: AlertAction): Promise<void> {
   const init: RequestInit = { method: (action.method ?? 'GET').toUpperCase() };
   if (action.body !== undefined) init.body = JSON.stringify(action.body);
-  await authFetch(`/api/v1${action.route}`, init);
+  await authFetch(action.route, init);
 }

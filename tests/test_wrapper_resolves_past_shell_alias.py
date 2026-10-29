@@ -68,7 +68,7 @@ def _run_body_with_shadow(
 
     stub = bin_dir / "claude"
     if shadow == "alias":
-        shadow_stmt = f"alias claude='true && {stub}'"
+        shadow_stmt = f"alias claude='security unlock-keychain /dev/null && {stub}'"
     elif shadow == "function":
         shadow_stmt = f'claude() {{ "{stub}" "$@"; }}'
     elif shadow == "none":
@@ -83,7 +83,7 @@ def _run_body_with_shadow(
     program = (
         f"{prelude}\n{shadow_stmt}\n"
         f'source "{script}"\n'
-        f'clxor "$@"\n'
+        f'cldor "$@"\n'
         f"rc=$?\n{epilogue}\nexit $rc\n"
     )
     cmd = [shell, "-c", program, "_"]

@@ -1,27 +1,3 @@
-"""What one session has spent, and how full its context is.
-
-ONE READ-ONLY ENDPOINT. It opens a transcript and reports numbers out of
-it. It does not shell out, does not touch tmux, spawns nothing and
-writes nothing - asking what a session has cost can never change what
-the session is doing.
-
-TWO SCOPES IN ONE ANSWER, AND THEY ARE NOT MIXED UP. The counts are one
-CONVERSATION's, read out of its transcript. The ``account`` block is the
-whole ACCOUNT's, taken from the ledger poller's in-memory snapshot, and
-every session running under the same login shares it. It rides this
-endpoint rather than a second fetch so the panel makes one request, and
-it is resolved by ``session_token_usage/account_resolve.py``, which
-answers ``None`` rather than guessing when it cannot tell which account
-a session spends from. NOTHING HERE CALLS A PROVIDER OR REFRESHES A
-TOKEN: Claude's refresh token is single use, and a second client
-refreshing it logs the user's own CLI out.
-
-A REFUSAL IS STILL A 200, with one exception. The response's ``state``
-field carries the three outcomes, so "could not read this session's
-transcript" is a measured answer the panel renders, not a server fault.
-The one 404 is an UNKNOWN SESSION ID: there is no session to report on,
-which is a different fact from a session whose usage we could not read.
-"""
 
 from __future__ import annotations
 
@@ -81,7 +57,7 @@ async def get_session_token_usage(
     working_dir = info.session.working_dir if info.session is not None else None
 
     conversation_uuid = (
-        session_manager._claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
+        session_manager.claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
     )
 
     subject = SessionSubject(
@@ -97,7 +73,7 @@ async def get_session_token_usage(
     provider = pane_account.FAMILY_PROVIDER.get(info.agent_family or "")
     if provider and tmux_name:
         pane = await pane_account.read_pane_profile(
-            session_manager._tmux_socket_name(), tmux_name, PROFILE_ENV_VARS[provider]
+            session_manager.tmux_socket_name(), tmux_name, PROFILE_ENV_VARS[provider]
         )
         profile_dir = pane.value if pane.readable else None
         unattributable = not pane.readable and await asyncio.to_thread(
@@ -121,12 +97,6 @@ async def get_session_token_usage(
 
 
 def _switched_in(config_path: Path, provider: str) -> bool:
-    """Has an account been switched in for this provider? Never raises.
-
-    Inputs: config_path (Path); provider (str).
-    Output: bool - False when config.json cannot be read, which keeps the
-      pre-switch behaviour (the default-login deduction).
-    """
     try:
         return store.read_switch(config_path).active_for(provider) is not None
     except (FileNotFoundError, ValueError, OSError):

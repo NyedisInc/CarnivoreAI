@@ -82,6 +82,7 @@ describe('a healthy tick', () => {
     });
 
     test('a measured zero is a measured zero, not an alarm', () => {
+        // NEGATIVE CONTROL for
         sessionStore.useHost(host({ attachable: [], live: [] }));
         return sessionStore.loadRunningSessions(t).then(() => {
             expect(sessionStore.runningSessions).toEqual([]);
@@ -170,6 +171,19 @@ describe('the live merge not answering', () => {
         }));
         await sessionStore.loadRunningSessions(t);
         expect(sessionStore.runningSessions.map((r) => r.name)).toEqual(['cloude_live']);
+    });
+
+    test('a malformed (non-array) live body latches the listing unknown and asks for no current session (u149-02)', async () => {
+        const current = vi.fn(async () => liveRow());
+        const built = host({ attachable: [attachable()], live: { nope: true } });
+        built.getCurrentSession = current;
+        sessionStore.useHost(built);
+        await sessionStore.loadRunningSessions(t);
+        expect(current).not.toHaveBeenCalled();
+        expect(sessionStore.runningSessionsListing.ok).toBe(false);
+        expect(sessionStore.runningSessionsListing.sources).toEqual(['live']);
+        expect(sessionStore.runningSessionsListing.reason).toBe('malformed_response');
+        expect(sessionStore.runningSessions).toHaveLength(1);
     });
 
     test('an EMPTY live list is an answer and never asks for the current session (#1974)', async () => {
@@ -328,12 +342,12 @@ describe('the two project sidecars', () => {
         sessionStore.useHost(host({
             presence: {
                 status: 'ok',
-                projects: [{ raw_path: '~/Development/x', root: '/Users/example/iCloud/x' }],
+                projects: [{ raw_path: '~/Development/x', root: '/Users/j/iCloud/x' }],
             },
         }));
         await sessionStore.loadProjectPresence();
         expect(sessionStore.projectPresence.get('~/Development/x')).toBeTruthy();
-        expect(sessionStore.projectPresence.get('/Users/example/iCloud/x')).toBeTruthy();
+        expect(sessionStore.projectPresence.get('/Users/j/iCloud/x')).toBeTruthy();
     });
 
     test('a failed presence fetch leaves the map EMPTY rather than throwing', async () => {
@@ -394,6 +408,7 @@ describe('reset puts every latch back to NEVER ASKED, not to empty', () => {
 });
 
 describe('the ui-flags probe, which is issue 110', () => {
+    /* nothing at all */
     const realWindow = (globalThis as { window?: unknown }).window;
 
     afterEach(() => {
@@ -505,5 +520,55 @@ describe('a superseded running reload hands its caller the newest rows (issue #5
         finish([liveRow()]);
         await expect(load).resolves.toBeUndefined();
         expect(sessionStore.runningSessions).toHaveLength(0);
+    });
+});
+
+
+describe('newest-request guards on the side loaders (u149-03)', () => {
+    function gate<T>(): { promise: Promise<T>; resolve: (v: T) => void } {
+        let resolve!: (v: T) => void;
+        const promise = new Promise<T>((r) => { resolve = r; });
+        return { promise, resolve };
+    }
+
+    test('an older loadProjects response never overwrites a newer one', async () => {
+        const first = gate<ProjectRow[]>();
+        const second = gate<ProjectRow[]>();
+        const queue = [first, second];
+        const built = host();
+        built.getProjects = () => queue.shift()!.promise;
+        sessionStore.useHost(built);
+        const a = sessionStore.loadProjects(false, t);
+        const b = sessionStore.loadProjects(false, t);
+        second.resolve([{ id: 2, name: 'new' } as unknown as ProjectRow]);
+        await b;
+        first.resolve([{ id: 1, name: 'old' } as unknown as ProjectRow]);
+        await a;
+        expect(sessionStore.projects.map((p) => p.name)).toEqual(['new']);
+    });
+
+    test('a loadProjects answer that lands after reset() refills nothing', async () => {
+        const slow = gate<ProjectRow[]>();
+        const built = host();
+        built.getProjects = () => slow.promise;
+        sessionStore.useHost(built);
+        const pending = sessionStore.loadProjects(false, t);
+        sessionStore.reset();
+        sessionStore.useHost(built);
+        slow.resolve([{ id: 1, name: 'late' } as unknown as ProjectRow]);
+        await pending;
+        expect(sessionStore.projects).toEqual([]);
+    });
+
+    test('an older refreshRecent response never overwrites a newer one', async () => {
+        const first = gate<{ state: string; sessions: never[]; notice: null }>();
+        const second = gate<{ state: string; sessions: never[]; notice: null }>();
+        const a = sessionStore.refreshRecent(() => first.promise as never, false, t as never);
+        const b = sessionStore.refreshRecent(() => second.promise as never, false, t as never);
+        second.resolve({ state: 'ok', sessions: [], notice: null });
+        await b;
+        first.resolve({ state: 'probe_unavailable', sessions: [], notice: null });
+        await a;
+        expect(sessionStore.recentPayload?.state).toBe('ok');
     });
 });

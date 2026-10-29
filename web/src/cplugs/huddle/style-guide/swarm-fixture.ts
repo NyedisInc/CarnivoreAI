@@ -6,15 +6,15 @@ export const mk = (id: number, display_name: string, rank: string, over: Partial
   ({ id, display_name, rank, state: 'awake', thread_key: `agent:${id}`, session_id: `sg_${id}`, harness: 'claude', job: `${display_name} job`, effort: 'medium', ...over });
 export const AGENTS: PanelAgent[] = [
   mk(1, 'Alpha', 'alpha', { thread_key: 'all' }),
-  mk(2, 'acme', 'company', { thread_key: 'company:1', company_id: 1 }),
+  mk(2, 'Larkspur', 'company', { thread_key: 'company:1', company_id: 1 }),
   mk(3, 'Nyedis', 'company', { thread_key: 'company:2', company_id: 2, question_waiting: true }),
   mk(4, 'Carnivore', 'company', { thread_key: 'company:3', company_id: 3, harness: 'codex' }),
   mk(5, 'cloudecode', 'project', { thread_key: '1', project_id: 1 }),
-  mk(6, 'orchard-docs', 'project', { thread_key: '2', project_id: 2 }),
+  mk(6, 'argent-docs', 'project', { thread_key: '2', project_id: 2 }),
   mk(7, 'portal', 'project', { thread_key: '3', project_id: 3, alert: 'priority' }),
   mk(8, 'coffee-site', 'project', { thread_key: '4', project_id: 4, harness: 'codex' }),
   mk(9, 'analytics', 'project', { thread_key: '5', project_id: 5, state: 'asleep', session_id: null }),
-  mk(10, 'Dormont (galcrest ravstone)', 'task', { parent_id: 5 }),
+  mk(10, 'Quill (model swap)', 'task', { parent_id: 5 }),
   mk(11, 'Rook (drawer polish)', 'task', { parent_id: 5 }),
   mk(12, 'Tully (migrations)', 'feature', { activity: 'talking', activity_at: NOW / 1000, talking_with: 13 }),
   mk(13, 'Ivy (schema review)', 'feature', { activity: 'talking', activity_at: NOW / 1000, talking_with: 12, harness: 'codex' }),
@@ -46,9 +46,9 @@ export const SESSIONS: FloorSession[] = [
   ses('dead', 'crashed run', 7, 'dead'),
   ses('nap', 'old spike', 7, 'asleep', { sessionId: null, asleep: true, listing: { activity_status: 'asleep' } }),
   ];
-export const COMPANIES = [{ id: 1, name: 'acme' }, { id: 2, name: 'Nyedis' }, { id: 3, name: 'Carnivore' }, { id: 4, name: 'Side Projects' }];
+export const COMPANIES = [{ id: 1, name: 'Larkspur' }, { id: 2, name: 'Nyedis' }, { id: 3, name: 'Carnivore' }, { id: 4, name: 'Side Projects' }];
 export const PROJECTS = [
-  { id: 1, name: 'cloudecode', companyId: 3 }, { id: 2, name: 'orchard-docs', companyId: 2 }, { id: 3, name: 'portal', companyId: 2 },
+  { id: 1, name: 'cloudecode', companyId: 3 }, { id: 2, name: 'argent-docs', companyId: 2 }, { id: 3, name: 'portal', companyId: 2 },
   { id: 4, name: 'coffee-site', companyId: 1 }, { id: 5, name: 'analytics', companyId: 2 }, { id: 6, name: 'nightly', companyId: null },
   { id: 7, name: 'spike', companyId: null },
   ];

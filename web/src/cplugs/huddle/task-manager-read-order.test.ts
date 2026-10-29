@@ -61,7 +61,7 @@ afterEach(async () => {
   vi.useRealTimers();
 });
 
-describe('a stale read never resurrects what the owner just cleared', () => {
+describe('a stale read never resurrects what Joe just cleared', () => {
   test('marking a post read: the post stays gone through a read that left before the write', async () => {
     const first = refreshList();
     await answer(LIST, 'GET', body(unreadInfo()));

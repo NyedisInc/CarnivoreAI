@@ -22,5 +22,10 @@ def storage_view(row: Dict[str, Any], root: Optional[str], progress: Optional[Di
 
 def storage_by_project(conn: sqlite3.Connection, roots: Dict[int, str],
                        progress_of: Any = None) -> Dict[int, Dict[str, Any]]:
+    return storage_from_rows(store.all_rows(conn), roots, progress_of)
+
+
+def storage_from_rows(rows: Dict[int, Dict[str, Any]], roots: Dict[int, str],
+                      progress_of: Any = None) -> Dict[int, Dict[str, Any]]:
     return {pid: storage_view(row, roots.get(pid), progress_of(pid) if progress_of else None)
-            for pid, row in store.all_rows(conn).items()}
+            for pid, row in rows.items()}

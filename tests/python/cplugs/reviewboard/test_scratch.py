@@ -20,7 +20,7 @@ from src.cplugs.reviewboard import scan, scratch
 from src.cplugs.reviewboard.errors import TooLarge
 from src.cplugs.sdk import ToolError, signed_links, uploads as sdk_uploads
 from src.cplugs.sdk.local_files import read_local_file
-from tests.python.cplugs.reviewboard.harness import BASE, PANE, Env, huddle_on, huddle_store, make_env
+from tests.python.cplugs.reviewboard.harness import BASE, PANE, Env, task_manager_on, task_manager_store, make_env
 
 TOKEN = AgentCaller("mcp-token:7", "mcp-token:7", "mcp-token:7", token_name="phone", scope="write")
 APPROVED_TOKEN = AgentCaller("mcp-token:7", "mcp-token:7", "mcp-token:7")
@@ -53,7 +53,7 @@ def caps(monkeypatch) -> UploadsConfig:
 @pytest.fixture
 def env(tmp_path: Path, monkeypatch, caps) -> Env:
     made = make_env(tmp_path)
-    huddle_on(made, monkeypatch)
+    task_manager_on(made, monkeypatch)
     yield made
     board_port.unregister()
 
@@ -115,7 +115,7 @@ def test_a_second_post_by_name_is_the_next_revision_on_the_same_task(env: Env, c
     ok, second = post(env, TOKEN, html="<img src=\"files/c.png\">", files=[{"name": "c.png", "content_base64": b64(png((1, 2, 3)))}])
     assert ok and not second["created"] and second["slug"] == first["slug"] and second["revision"] == "r2"
     assert second["task"] == first["task"]
-    item = huddle_store(env).item(first["task"])
+    item = task_manager_store(env).item(first["task"])
     assert item["state"] == "todo" and item["list"] == "all" and item["title"].startswith("scratch: ")
     assert f"data:image/png;base64,{b64(png((1, 2, 3)))}" in served(client, first["slug"], "r2")
 
@@ -185,11 +185,11 @@ def test_a_review_board_name_takes_no_scratch_post(env: Env, client):
     sidecar = json.loads((folder / "sidecar.json").read_text())
     sidecar["ext"] = {}
     (folder / "sidecar.json").write_text(json.dumps(sidecar, indent=2) + "\n")
-    home = huddle_store(env).item(answer["task"])["list"]
-    tasks = len(huddle_store(env).list_items(home)["items"])
+    home = task_manager_store(env).item(answer["task"])["list"]
+    tasks = len(task_manager_store(env).list_items(home)["items"])
     ok, text = post(env, name="mock")
     assert not ok and "reviewboard_not_scratch" in text, text
-    assert len(huddle_store(env).list_items(home)["items"]) == tasks
+    assert len(task_manager_store(env).list_items(home)["items"]) == tasks
     assert client.delete(f"{BASE}/boards/{answer['slug']}").json()["detail"]["code"] == "reviewboard_not_scratch"
     assert folder.is_dir()
 
@@ -219,8 +219,8 @@ def test_the_reader_itself_refuses_an_approved_tokens_path(tmp_path: Path, caps)
     assert read_local_file(PANE, str(shot)) == (png(), "shot.png")
 
 
-def test_huddle_reply_attaches_a_panes_path_and_refuses_a_tokens(env: Env, tmp_path: Path):
-    item = huddle_store(env).add("12", "a task", actor="claude")["id"]
+def test_task_manager_reply_attaches_a_panes_path_and_refuses_a_tokens(env: Env, tmp_path: Path):
+    item = task_manager_store(env).add("12", "a task", actor="claude")["id"]
     shot = tmp_path / "shot.png"
     shot.write_bytes(png())
     for caller in (TOKEN, APPROVED_TOKEN):
@@ -228,7 +228,7 @@ def test_huddle_reply_attaches_a_panes_path_and_refuses_a_tokens(env: Env, tmp_p
         assert not ok and "only a session running here" in text, text
     ok, answer = env.call("task_manager_reply", {"item": item, "text": "look", "file_paths": [str(shot)]}, PANE)
     assert ok, answer
-    files = huddle_store(env).item(item)["thread"][-1]["files"]
+    files = task_manager_store(env).item(item)["thread"][-1]["files"]
     assert [f["name"] for f in files] == ["shot.png"] and files[0]["image"]
     ok, text = env.call("task_manager_reply", {"item": item, "text": "x", "file_paths": [str(tmp_path / "missing.png")]}, PANE)
     assert not ok and "cannot be opened" in text
@@ -245,7 +245,7 @@ def test_a_tokens_scratch_post_runs_at_once_and_a_board_create_still_waits(env: 
     monkeypatch.setattr(write_tools, "park", park)
     ok, answer = post(env, TOKEN)
     assert ok and answer["revision"] == "r1" and parked == []
-    item = huddle_store(env).add("all", "a task", actor="claude")["id"]
+    item = task_manager_store(env).add("all", "a task", actor="claude")["id"]
     ok, pending = env.call("task_manager_board_create", {"name": "mock", "title": "m", "task": item, "summary": "s", "viewport": 320,
                                                          "html": "<p>x</p>"}, TOKEN)
     assert ok and pending["status"] == "pending"
@@ -275,5 +275,5 @@ def test_the_clear_removes_the_board_and_every_file(env: Env, client):
     assert answer.status_code == 200 and answer.json() == {"slug": first["slug"], "revisions": 2, "files": 4,
                                                             "bytes": 2 * (len(png()) + len(png((10, 200, 10))))}
     assert not folder.exists() and not list(folder.parent.glob(f".gone-{first['slug']}-*"))
-    assert huddle_store(env).item(first["task"])["id"] == first["task"]
+    assert task_manager_store(env).item(first["task"])["id"] == first["task"]
     assert client.delete(f"{BASE}/boards/{first['slug']}").status_code == 404

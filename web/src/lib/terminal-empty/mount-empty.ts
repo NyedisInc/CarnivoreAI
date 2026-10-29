@@ -1,3 +1,4 @@
+/* the empty state */
 import { mountPanel, unmountPanel } from '../mount';
 import { hostDocument } from '../sessions/env';
 import TerminalEmpty from './TerminalEmpty.svelte';

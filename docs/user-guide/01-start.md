@@ -1,5 +1,8 @@
 # getting started
 
+carnivore runs your coding agents (claude, codex and others) as sessions on this mac and shows them in your browser. each session belongs to a project, which is a folder.
+
+
 :::shot user-guide/home.png
 alt: the home screen with the drawer on the left and the operations center, charts and cards on the right
 - 20.5 8.9 | #docs/start | new session | the plus at the top of the drawer starts a session: pick an agent, then a project folder.

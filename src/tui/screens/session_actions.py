@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any, Mapping, Optional
+from urllib.parse import quote
 
 import httpx
 from textual import on
@@ -31,17 +32,24 @@ def _detail(resp: httpx.Response) -> str:
     return str(detail) if detail else str(resp.status_code)
 
 
+def _json_object(resp: httpx.Response) -> dict[str, Any]:
+    try:
+        body = resp.json()
+    except ValueError:
+        return {}
+    return body if isinstance(body, dict) else {}
+
+
 async def mark_read(client: Any, tmux_name: str) -> tuple[bool, str]:
-    resp = await client.request("PATCH", f"{API}/sessions/{tmux_name}/unread", json={"unread": False})
+    resp = await client.request("PATCH", f"{API}/sessions/{quote(tmux_name, safe='')}/unread", json={"unread": False})
     return (True, t("tui.action.marked_read")) if resp.status_code == 200 else (False, _detail(resp))
 
 
 async def stop(client: Any, session_uuid: str) -> tuple[bool, str]:
-    """Stop (sleep) the session: its agent and tmux session end, the row stays asleep; the server's gates may refuse."""
-    resp = await client.request("POST", f"{API}/sessions/{session_uuid}/sleep")
+    resp = await client.request("POST", f"{API}/sessions/{quote(session_uuid, safe='')}/sleep")
     if resp.status_code != 200:
         return False, _detail(resp)
-    body = resp.json()
+    body = _json_object(resp)
     if body.get("status") == "asleep":
         return True, t("tui.action.stopped")
     return False, str(body.get("detail") or t("tui.action.refused"))
@@ -53,7 +61,7 @@ async def restart(client: Any, tmux_name: str, *, live_confirmed: bool) -> tuple
     )
     if resp.status_code != 200:
         return False, _detail(resp)
-    body = resp.json()
+    body = _json_object(resp)
     return bool(body.get("ok")), str(body.get("detail") or t("tui.action.restarted"))
 
 

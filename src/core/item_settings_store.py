@@ -1,34 +1,3 @@
-"""The hierarchical widget and plugin settings object, read and written (issues #727, #888).
-
-ONE OBJECT, THREE LEVELS: kind, item id, field key.
-
-    {"widget": {"core.activity-log": {"enabled": false,
-                                      "values": {"showSystem": false},
-                                      "revision": 4}},
-     "plugin": {}}
-
-A stored key is addressed ``<kind>.<item id>.<field>`` in prose; on the
-wire it is nested, because a widget id itself contains a dot
-(``core.activity-log``) and a flat dotted key could not be split back.
-
-ABSENT IS NOT A DEFAULT (``docs/ui-preferences-inventory.md``). Only what a
-person chose is stored and answered. An item nobody touched is missing
-from the object, an ``enabled`` nobody set is missing (``None`` on the
-per-item read), and an untouched field is missing from ``values``. The
-defaults stay in each item's schema, which the per-item read hands back
-so a client resolves them itself.
-
-A STORED VALUE THE CURRENT SCHEMA REFUSES IS DROPPED, NEVER REPAIRED. The
-read runs ``item_settings_schema.migrate`` and names the dropped keys, and
-the next write to that item leaves them out.
-
-CONCURRENCY. Every write is one ``BEGIN IMMEDIATE`` transaction: read the
-item's row, check the caller's ``expected_revision`` against it (409 on a
-mismatch, carrying the current item), merge the patch, and write only when
-something actually changed. Revisions are document-monotonic (see
-``item_settings_ddl.py``), so two writes to DIFFERENT items never refuse
-each other, and the object's revision is ``MAX(revision)``.
-"""
 
 from __future__ import annotations
 
@@ -251,13 +220,6 @@ def write_item(
 
 
 def widget_rows(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
-    """Every declared widget with its EFFECTIVE on/off state, for ``GET /widgets``.
-
-    Description: a switchable widget nobody switched reads ON, the same
-      fail-open rule the plugins page carries (an unknown choice is never
-      "hide it"); a per-target kind reads ``None`` (no switch).
-    Inputs: conn. Output: list[dict] - ``{id, instancing, enabled, has_settings}``.
-    """
     out = []
     for decl in item_catalog.items_of(item_catalog.KIND_WIDGET):
         state = _state_from(decl, _row(conn, decl.kind, decl.id))

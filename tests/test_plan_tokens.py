@@ -33,7 +33,7 @@ class StillClock:
         return 1000.0
 
 
-def _one_plan(store: StagedPlanStore, name: str = "acme/sme"):
+def _one_plan(store: StagedPlanStore, name: str = "alex/sme"):
     plan, dropped = store.put(
         staging=Path("/nonexistent/staging") / name.replace("/", "-"),
         staged=object(),
@@ -77,7 +77,7 @@ def test_a_claimed_token_is_gone_for_good():
 
 def test_over_the_cap_the_oldest_is_evicted_and_handed_back():
     store = StagedPlanStore(clock=StillClock())
-    plans = [_one_plan(store, f"acme/skill-{index}") for index in range(20)]
+    plans = [_one_plan(store, f"alex/skill-{index}") for index in range(20)]
 
     assert store.outstanding() == MAX_OUTSTANDING_TOKENS
     survivors = {entry.token for entry in plans[-MAX_OUTSTANDING_TOKENS:]}

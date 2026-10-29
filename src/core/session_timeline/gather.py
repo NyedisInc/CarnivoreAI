@@ -79,10 +79,6 @@ def _db_path() -> Path:
 
 
 def _stats_db(db: Path) -> Path:
-    """The stats plugin's database beside a datastore (both live in the state directory). Inputs: db. Output: Path.
-
-    Resolved through the core pipeline (``pipeline.plugin_db``, #1682), the one that owns the plugin's file now.
-    """
     from src.core.pipeline import plugin_db  # noqa: PLC0415
     from src.core.stats.plugin.pipeline_plugin import STATS  # noqa: PLC0415
 

@@ -54,6 +54,8 @@ function loadApi({ status, body }) {
     vm.createContext(sandbox);
     const src = fs.readFileSync(path.join(ROOT, 'client/js/api.js'), 'utf8');
     vm.runInContext(src, sandbox, { filename: 'api.js' });
+    vm.runInContext(fs.readFileSync(path.join(ROOT, 'client/js/api-provider-ledger.js'), 'utf8'),
+        sandbox, { filename: 'api-provider-ledger.js' });
     const Ctor = sandbox.APIClient || (sandbox.API && sandbox.API.constructor);
     assert.ok(Ctor, 'api.js did not expose an APIClient constructor into the sandbox');
     return { api: new Ctor(), errors, quiet };

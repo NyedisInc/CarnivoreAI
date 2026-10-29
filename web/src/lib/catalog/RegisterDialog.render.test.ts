@@ -14,6 +14,7 @@ const ACCOUNT: PublishAccount = {
     registered: false, terms_version: '2026-10-01', terms_url: '',
 };
 
+/* the api client */
 function refusal(code: string, detail: string): Error {
     const err = new Error(detail) as Error & { detail: unknown; body: unknown };
     err.detail = { code, detail };

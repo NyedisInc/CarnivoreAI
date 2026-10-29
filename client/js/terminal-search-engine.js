@@ -149,7 +149,6 @@ console.log('[TerminalSearchEngine Module] Loading...');
         }
     }
 
-    /* already running */
     function next() {
         var o = Object.assign({}, lastOptions || {}, { incremental: false });
         return find(lastQuery, o, 'next');

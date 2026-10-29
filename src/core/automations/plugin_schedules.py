@@ -14,7 +14,7 @@ _PORT_ERRORS = (OSError, RuntimeError, ValueError, LookupError, AttributeError, 
 
 
 class PluginSchedulesUnreadable(Exception):
-    """A plugin offered its schedules and could not read them: the icon's word is then not measured, never a partial count."""
+    pass
 
 
 async def read(infos: Iterable[Any], asleep: Optional[List[Dict[str, Any]]] = None) -> Dict[str, List[Dict[str, Any]]]:

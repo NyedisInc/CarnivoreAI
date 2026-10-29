@@ -62,19 +62,6 @@ class ReadoptPlan:
 
 @dataclass(frozen=True)
 class ReadoptReport:
-    """What one pass actually did, including the failures.
-
-    Description: ``outcome`` carries the third answer. ``ran`` means the
-      datastore was read and the plan below is a measurement; on
-      ``cannot_determine`` every list is empty because nothing was
-      decided, which is NOT the same as deciding to hold nothing.
-    Inputs (constructor): outcome (str) - ``READOPT_RAN`` or
-      ``READOPT_CANNOT_DETERMINE``. held (list[str]) - session ids now
-      registered. failed (list[tuple[str, str]]) - ``(tmux name, error)``
-      for attaches that raised. plan (ReadoptPlan | None). detail
-      (str | None) - why the pass could not run.
-    Output: a ReadoptReport.
-    """
 
     outcome: str
     held: List[str] = field(default_factory=list)
@@ -175,9 +162,7 @@ def plan_readopt(
 
 
 def session_for(target: ReadoptTarget) -> Session:
-    born = datetime.fromtimestamp(target.epoch, tz=timezone.utc).replace(
-        tzinfo=None
-    )
+    born = datetime.fromtimestamp(target.epoch, tz=timezone.utc)
     return Session(
         id=target.session_id,
         working_dir=target.working_dir,

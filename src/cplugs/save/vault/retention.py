@@ -46,11 +46,6 @@ def original_gone(newest: Union[Manifest, PointSummary]) -> bool:
 
 
 class ExportTimes(Dict[str, float]):
-    """``{conversation_id: exported_at}`` for the exported conversations among those asked about.
-
-    ``unreadable`` is True when the pointers could not be read (a database that exists but failed), so an absent id
-    means "unknown", not "not exported".
-    """
 
     unreadable: bool = False
 
@@ -81,13 +76,6 @@ def conversation_of(unit: str, newest: Union[Manifest, PointSummary]) -> str:
 
 def protection(vault: "Vault", unit: str, newest: Union[Manifest, PointSummary],
                exported: Optional[Mapping[str, float]] = None) -> Optional[str]:
-    """Why every point of a unit is protected: ``original_gone``, ``export_unknown``, ``exported`` or None.
-
-    ``exported`` alone (a legacy marker on a unit with no conversation) protects whole; a conversation's export protects
-    only its source point (:func:`export_time`). ``export_unknown`` is a conversation whose pointers could not be read.
-    Inputs: vault; unit; newest (its newest point, a manifest or its summary); exported (:func:`exported_conversations`,
-    read once by the caller; None reads this unit's pointer now). Output: str | None.
-    """
     conversation = conversation_of(unit, newest)
     if exported is None:
         exported = exported_conversations([conversation])
@@ -220,12 +208,6 @@ def _walk_unit(vault: "Vault", unit: str, exported: Mapping[str, float], max_poi
 
 def thin_unit(vault: "Vault", unit: str, max_points: int = K.MAX_POINTS_PER_UNIT, *,
               exported: Optional[Mapping[str, float]] = None) -> List[str]:
-    """Drop a unit's oldest droppable points beyond ``max_points``. Output: the point ids dropped.
-
-    Description: never the newest, never a pinned point, nothing at all from a protected unit (original gone, or export unknown; a conversation's export source stays:
-      ``exported`` as :func:`protection` takes it). Lifecycle points (kill, remove, sleep, restart) outlive
-      ``follow`` points of the same age.
-    """
     if exported is None:
         newest, _at = _newest_of(vault.manifests, unit, vault.manifests.point_ids(unit))
         if newest is None:
@@ -312,7 +294,7 @@ def collect_garbage(vault: "Vault", *, grace: float = K.GC_GRACE_SECONDS, now: O
                 result["kept"] += 1
                 result["blob_bytes"] += st.st_size
                 continue
-            path.unlink(missing_ok=True)
+            vault.blobs.remove(sha, path=path)
             result["removed"] += 1
             result["bytes"] += st.st_size
         for temp in list(vault.blobs.temp_files()):

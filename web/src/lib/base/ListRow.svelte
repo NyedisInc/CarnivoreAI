@@ -1,4 +1,4 @@
-<!-- trailing actions -->
+
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
@@ -48,7 +48,7 @@
   data-selected={selected || undefined}
   data-wrap={wrap || undefined}
   data-below={below ? '' : undefined}
-  data-interactive={rest.onclick ? '' : undefined}
+  data-interactive={rest.onclick && rest['aria-disabled'] !== 'true' && rest['aria-disabled'] !== true ? '' : undefined}
 >
   {#if below}
     <span class="oc-list__head">{@render parts()}</span>

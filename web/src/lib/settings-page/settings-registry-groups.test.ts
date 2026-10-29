@@ -71,7 +71,7 @@ describe('settings groups', () => {
         expect(settingsInGroup('sessions.agents').map((s) => s.id)).toEqual(['agent_commands', 'agent_gate', 'mcp_server']);
     });
 
-    test('notifications groups: the owner specified delivery then channels; web push (#164) follows them', () => {
+    test('notifications groups: Joe specified delivery then channels; web push (#164) follows them', () => {
         expect(groupsIn('notifications')).toEqual(['notifications.delivery', 'notifications.channels', 'notifications.routing', 'notifications.web_push', 'notifications.messaging']);
         expect(settingsInGroup('notifications.routing').map((s) => s.id)).toEqual(['notification_link', 'notification_matrix', 'notification_mutes', 'notification_sync']);
         expect(settingsInGroup('notifications.web_push').map((s) => s.id)).toEqual(['web_push']);
@@ -83,7 +83,7 @@ describe('settings groups', () => {
         ]);
     });
 
-    test('appearance groups: colors, agent rows, status bar, control center, motion; the header shortcuts are gone', () => {
+    test('appearance groups: colors, agent rows, status bar, control center, motion; the header shortcuts are gone (Alex (Example-owner), 2026-10-03)', () => {
         expect(groupsIn('appearance')).toEqual([
             'appearance.colors', 'appearance.sidebar', 'appearance.status_bar', 'appearance.control_center', 'appearance.motion',
         ]);

@@ -14,7 +14,7 @@ import structlog
 from src.core.companion_shell.rows import exclude_clause
 from src.core.pack.carry import scan
 from src.core.pack.identity import home
-from src.core.pack.migrate import code, live_agents, manifest as manifest_mod, transcripts
+from src.core.pack.migrate import code, live_agents, manifest as manifest_mod, ops, task_manager_side, transcripts
 from src.core.pack.transport import blobs, github_account, ladder, publish
 
 logger = structlog.get_logger()
@@ -118,6 +118,31 @@ def choose(project: Mapping[str, Any], described: Mapping[str, Any], override: O
     return chosen
 
 
+def _task_files_probe(manifest: Mapping[str, Any], target_caps: Collection[str]) -> Tuple[Dict[str, Any], int, bool]:
+    if task_manager_side.CAP_TASK_FILES_PLAN not in target_caps:
+        return {}, 0, False
+    try:
+        parts, left_out = task_manager_side.task_file_parts(manifest["huddle"])
+    except (KeyError, TypeError, AttributeError, RecursionError) as exc:
+        logger.warning("pack_plan_task_files_probe_skipped", error=type(exc).__name__)
+        return {}, 0, True
+    return ({"task_file_parts": parts} if parts else {}), left_out, False
+
+
+def _task_files_check(prep: Mapping[str, Any], label: str, unchecked: int = 0, failed: bool = False) -> List[Dict[str, Any]]:
+    names, more = ops.listed_dropped_files({"task_files_not_copied": prep.get("task_files_not_copied")})
+    broken = failed or bool(prep.get("task_files_check_failed"))
+    if not names and not broken and not unchecked:
+        return []
+    parts: List[str] = []
+    if names:
+        parts.append(f"{len(names) + more} attached task file(s) will not be carried: {label} does not have them, and each one gets a note in its task thread")
+    if broken or unchecked:
+        parts.append("some task files could not be checked, so there may be more" if names else "some task files could not be checked, so some may not be carried")
+    return [{**_check("task_files_not_carried", False, "; ".join(parts), blocking=False), "files": names, "files_more": more, "files_unchecked": unchecked,
+             "files_check_failed": broken}]
+
+
 def build_manifest(env: SourceEnv, project: Mapping[str, Any]) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     with closing(env.open_db()) as conn:
         manifest = manifest_mod.collect(conn, project, env.state_dir)
@@ -169,9 +194,10 @@ async def plan_project(env: SourceEnv, project: Dict[str, Any], target_install_i
     shells, screen_blockers = await live_agents.classify(agents, env.find_live, stop_running)
     blockers += screen_blockers
     size = sum(f["size"] for f in files) + (meta.get("stats") or {}).get("bytes", 0)
+    probe, unchecked, probe_failed = _task_files_probe(manifest, target_caps)
     prep = await call(request, PREPARE, {
         "op_id": "dry", "dry_run": True, "project_uid": project["uid"], "name": project["display_name"], "root_hint": root_hint,
-        "company_uid": manifest["company"]["uid"] if manifest["company"] else None, "bytes_needed": size, "parent_id": parent_id}, "prepare")
+        "company_uid": manifest["company"]["uid"] if manifest["company"] else None, "bytes_needed": size, "parent_id": parent_id, **probe}, "prepare")
     use = chosen
     if chosen.rung == ladder.RUNG_GIT and prep["case"] != "new":
         use = ladder.Choice(ladder.RUNG_CARRIED, "the other computer already holds this project, so carnivore carries the commits over the link")
@@ -182,6 +208,7 @@ async def plan_project(env: SourceEnv, project: Dict[str, Any], target_install_i
         _check("uncommitted_changes", not (use.rung != ladder.RUNG_TAR and described["dirty"]),
                f"{described['dirty']} uncommitted file(s) stay in the old folder, which is kept" if described["dirty"] else "the working tree is clean", blocking=False),
     ]
+    checks += _task_files_check(prep, label, unchecked, probe_failed)
     if agents:
         checks.append(_check("live_agents", True, live_agents.sentence(len(agents), shells, label), blocking=False))
     if found is not None and use.rung == ladder.RUNG_UNITS:

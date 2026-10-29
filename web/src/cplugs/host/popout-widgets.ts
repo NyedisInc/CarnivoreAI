@@ -1,3 +1,4 @@
+/* list, so the */
 import { POPOUT_CPLUGS } from '../popout';
 import type { CplugWidget } from '../sdk';
 import { cplugEnablement, cplugEnabled } from './enablement.svelte';

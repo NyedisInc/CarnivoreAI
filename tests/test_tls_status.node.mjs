@@ -1,3 +1,4 @@
+// WHY THIS FILE EXISTS
 
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -12,6 +13,13 @@ const tls = require(path.join(repoRoot, 'macOS', 'tls-status.js'));
 let passed = 0;
 const failures = [];
 
+/**
+ * Run one named assertion block.
+ *
+ * @param {string} name - Description of the behaviour.
+ * @param {() => void} fn - Assertions.
+ * @returns {void}
+ */
 function test(name, fn) {
   try {
     fn();
@@ -37,13 +45,13 @@ function cert(sans, daysLeft, commonName) {
 console.log('tls-status: plaintext is never secure');
 
 test('a plain HTTP binding is insecure, not unknown', () => {
-  const r = tls.evaluateBinding({ url: 'http://192.0.2.12:8000', now: NOW });
+  const r = tls.evaluateBinding({ url: 'http://10.0.1.5:8000', now: NOW });
   assert.equal(r.level, tls.LEVEL_INSECURE);
   assert.ok(!/secure \(HTTPS\)/.test(r.label), r.label);
 });
 
 test('the insecure detail names what is actually at risk', () => {
-  const r = tls.evaluateBinding({ url: 'http://192.0.2.12:8000', now: NOW });
+  const r = tls.evaluateBinding({ url: 'http://10.0.1.5:8000', now: NOW });
   assert.ok(/unencrypted/i.test(r.detail), r.detail);
 });
 
@@ -61,8 +69,8 @@ console.log('tls-status: identity is checked BEFORE expiry');
 
 test('a perfectly in-date certificate for the WRONG name is insecure', () => {
   const r = tls.evaluateBinding({
-    url: 'https://host.example.ts.net',
-    cert: cert(['host2.example.com'], 80),
+    url: 'https://joe-mbp-m1.taild90287.ts.net',
+    cert: cert(['nix2.infinitemediacorp.com'], 80),
     now: NOW,
   });
   assert.equal(
@@ -84,8 +92,8 @@ test('the wrong-name detail names the certificate it actually got', () => {
 
 test('a matching name and a live date is secure', () => {
   const r = tls.evaluateBinding({
-    url: 'https://host.example.ts.net',
-    cert: cert(['host.example.ts.net'], 60),
+    url: 'https://joe-mbp-m1.taild90287.ts.net',
+    cert: cert(['joe-mbp-m1.taild90287.ts.net'], 60),
     now: NOW,
   });
   assert.equal(r.level, tls.LEVEL_SECURE);
@@ -140,7 +148,7 @@ console.log('tls-status: the third outcome');
 
 test('a bare IP binding is cannot-determine, not a mismatch', () => {
   const r = tls.evaluateBinding({
-    url: 'https://192.0.2.12:8000',
+    url: 'https://10.0.1.5:8000',
     cert: cert(['whatever.ts.net'], 30),
     now: NOW,
   });
@@ -178,7 +186,7 @@ test('an unparseable URL is cannot-determine, not secure', () => {
 
 test('every verdict carries a detail sentence saying what was measured', () => {
   const cases = [
-    { url: 'http://192.0.2.12:8000' },
+    { url: 'http://10.0.1.5:8000' },
     { url: 'https://host.ts.net' },
     { url: 'https://host.ts.net', cert: cert(['other.ts.net'], 10) },
     { url: 'https://host.ts.net', cert: cert(['host.ts.net'], 10) },

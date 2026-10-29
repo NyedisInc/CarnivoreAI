@@ -1,25 +1,25 @@
 <script lang="ts" module>
-  import { note as heldNote, save as saveNote } from '../../api/notes.svelte';
+  import type { NoteStore } from '../../api/notes.svelte';
 
-  export function pressSave(onConflict: () => void): void {
-    if (heldNote.conflict || heldNote.save === 'conflict') {
+  export function pressSave(store: NoteStore, onConflict: () => void): void {
+    if (store.note.conflict || store.note.save === 'conflict') {
       onConflict();
       return;
     }
-    void saveNote();
+    void store.save();
   }
 </script>
 
 <script lang="ts">
   import { t } from '../../../lib/i18n/index.svelte';
-  import { note } from '../../api/notes.svelte';
   import EditorControls from '../../../lib/editor-controls/EditorControls.svelte';
   import Icon from '../../ui/Icon.svelte';
   import { Button, IconButton } from '../../../lib/base';
   import { saveLight } from './save-light';
   import type { NotesMode } from './notes-mode';
 
-  let { mode, onMode, onConflict, diskOnly = false, corner = false }: {
+  let { store, mode, onMode, onConflict, diskOnly = false, corner = false }: {
+    store: NoteStore;
     mode: NotesMode;
     onMode: (next: NotesMode) => void;
     onConflict: () => void;
@@ -27,12 +27,14 @@
     corner?: boolean;
   } = $props();
 
+  const note = $derived(store.note);
+
   const KEYS = { edit: 'opscenter.cell.notes.edit', preview: 'opscenter.cell.notes.preview' } as const;
 
   const light = $derived(saveLight(note.load, note.save, note.dirty));
 
   function pressDisk(): void {
-    pressSave(onConflict);
+    pressSave(store, onConflict);
   }
 
   function keepFocus(event: MouseEvent): void {

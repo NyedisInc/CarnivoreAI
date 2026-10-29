@@ -11,6 +11,7 @@ from typing import Any, Callable, Optional
 
 import structlog
 
+from src.core.notifications.kind_specs import MAX_EMAIL_RECIPIENTS
 from src.core.notifications.http import (
     GuardNetworkError,
     Resolver,
@@ -22,7 +23,7 @@ from src.core.notifications.http import (
 
 log = structlog.get_logger(__name__)
 
-MAX_RECIPIENTS = 10
+MAX_RECIPIENTS = MAX_EMAIL_RECIPIENTS
 DEFAULT_PORTS = {"starttls": 587, "tls": 465, "plain": 25}
 SECURITY_MODES = tuple(DEFAULT_PORTS)
 _LOCAL_HELO = "localhost"

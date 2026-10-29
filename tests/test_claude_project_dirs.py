@@ -13,12 +13,12 @@ from src.core.claude_transcript_correlate import slugify_project_dir
 
 def test_slugify_maps_spaces_tildes_and_underscores():
     working = (
-        "/Users/example/Library/Mobile Documents/com~apple~CloudDocs"
-        "/projects/team/app"
+        "/Users/sam/Library/Mobile Documents/com~apple~CloudDocs"
+        "/Sync/Development/Assistants/BHPP"
     )
     assert slugify_project_dir(working) == (
-        "-Users-example-Library-Mobile-Documents-com-apple-CloudDocs"
-        "-projects-team-app"
+        "-Users-sam-Library-Mobile-Documents-com-apple-CloudDocs"
+        "-Sync-Development-Assistants-BHPP"
     )
 
 

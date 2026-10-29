@@ -27,7 +27,7 @@ function account(overrides: Partial<AccountUsage>): AccountUsage {
     short_name: null,
     provider: 'claude',
     plan: 'max 20x',
-    identity: 'acme',
+    identity: 'alex',
     credential_state: 'ok',
     fetched_at: null,
     next_poll_at: null,

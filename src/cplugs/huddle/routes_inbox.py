@@ -57,6 +57,7 @@ async def _renudge_stuck(inboxes: InboxStore, key: str) -> None:
 
 @router.post("/lists/{key}/inbox")
 async def add_box(key: str, body: AddBoxRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """The add box. Queue the raw text for the project's session, or (switch off, or a list with no session) add the item at once, as joe."""
     key, _name = await known_list(ctx, key)
     store = service.store(ctx)
     inboxes = InboxStore(store)
@@ -102,6 +103,7 @@ async def nudge_entry(entry_id: int, ctx: CplugContext = Ctx) -> Dict[str, Any]:
 
 @router.post("/inbox/{entry_id}/file")
 async def file_entry(entry_id: int, body: FileRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """File an open entry as one or more of the owner's items (open or todo), each linked to the entry. Output: {entry, items}."""
     specs = await run_store(lambda: inbox_filing.parse_specs(body.items, allowed_states=inbox_filing.OWNER_STATES))
     return await run_store(lambda: inbox_filing.file_as_owner(ctx, entry_id, specs))
 

@@ -1,24 +1,3 @@
-"""Does a claude session's own evidence say it stopped on its usage limit?
-
-PURE. No file, no tmux, no clock: the caller hands in records or text.
-
-    You've hit your session limit · resets 4pm (America/New_York)
-    You've hit your session limit · resets 10:30pm (America/New_York) · progress saved
-    You've hit your weekly limit · resets 1am (America/New_York)
-
-(1,300 or so records, all this shape.) Older builds wrote
-``Claude AI usage limit reached|<epoch>``; it is matched too, so a session
-running an older binary is not missed. The same sentence is what the pane
-shows.
-
-A TRANSCRIPT SAYS "BLOCKED" ONLY WHEN THE LIMIT STOP IS THE LAST TURN. The
-tail is walked back to the most recent main-thread ``user`` or ``assistant``
-record, skipping bookkeeping records (system, attachment, summary and the
-like) and subagent records (``isSidechain``); that record must be the limit
-stop, carrying both the sentence and, for current builds, the
-``quotaLimits`` object with status ``rejected`` (:func:`usage_limit.is_limit_stop` is the one predicate; a transient
-429 has none). A user message after it, or any later model turn, means the session moved on and is not blocked.
-"""
 
 from __future__ import annotations
 

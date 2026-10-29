@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
 import PluginsScreen from './PluginsScreen.svelte';
-import { toCplugItem, type CplugRow } from './cplugs-adapter';
+import { toCplugItem, type CplugRow, type CplugSheet } from './cplugs-adapter';
 import { bytesText, paneReason, paneTabs, purgeBlocked, surfaceChips, type PurgePrice } from './plugin-pane';
 import type { ManagerAdapter } from '../manager-frame/types';
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
@@ -16,7 +16,7 @@ const t: Translate = (key, params) => en.t(key, params);
 
 const MCP: CplugRow = {
     id: 'mcphealth', name_key: 'cplug.mcphealth.name', description_key: 'cplug.mcphealth.description', version: '1.0.0', tier: 'builtin',
-    author: 'Nyedis Inc', surfaces: {}, enabled: false, state: 'disabled', storage_bytes: 12_700,
+    author: 'Joe (ccsliinc)', surfaces: {}, enabled: false, state: 'disabled', storage_bytes: 12_700,
     permissions: { app: ['sessions.read', 'notify'] }, grants: { app: [] }, needs: ['sessions.read', 'notify'], risks: { 'sessions.read': 'low', notify: 'low' },
     settings: { warnMode: 'all', servers: '', notify: false },
     settings_schema: {
@@ -148,6 +148,15 @@ describe('the reason strip', () => {
         expect(root.querySelector('.mgr__detail-bar [data-plugin-state]')?.textContent).toBe('held');
     });
 
+    test('a plugin waiting with nothing to grant says its code changed and points at approve (#2541)', async () => {
+        const waiting: CplugRow = { ...SWARM, state: 'needs_approval', permissions: { app: [] }, grants: { app: [] }, needs: [] };
+        const root = await openPane([waiting], 'huddle');
+        const strip = root.querySelector<HTMLElement>('[data-plugin-reason="grant"]')!;
+        expect(strip.textContent).toContain('on, waiting for approval.');
+        expect(strip.textContent).toContain('its code changed since you approved it');
+        expect(strip.textContent).not.toContain('it asks for');
+    });
+
     test('a plugin waiting for a grant names what is not granted, and review opens the permissions tab', async () => {
         const waiting: CplugRow = { ...SWARM, state: 'needs_approval', grants: { app: ['sessions.read'] }, needs: ['sessions.message'] };
         const root = await openPane([waiting], 'huddle');
@@ -213,7 +222,7 @@ describe('the data tab', () => {
         const box = root.querySelector<HTMLElement>('[data-purge-confirm]')!;
         expect(box.textContent).toContain('this deletes 3 files, 12.4 kb, from the folder of mcp health');
         const go = box.querySelector<HTMLButtonElement>('[data-purge-go]')!;
-        expect(go.classList.contains('modal-btn-danger')).toBe(true);
+        expect(go.getAttribute('data-btn') === 'danger').toBe(true);
         expect(go.textContent?.trim()).toBe('delete 3 files');
         box.querySelector<HTMLButtonElement>('[data-purge-cancel]')!.click();
         await settle();
@@ -281,5 +290,91 @@ describe('the pane model', () => {
         expect(purgeBlocked(toCplugItem(MCP, t), t)).toBeNull();
         expect(purgeBlocked(toCplugItem({ id: 'gone', enabled: false, state: 'removed' }, t), t)).toBeNull();
         expect(purgeBlocked(toCplugItem({ ...SWARM, tier: 'core', name_key: undefined }, t), t)).toContain('part of the app');
+    });
+});
+
+describe('an off plugin that needs the owner\'s consent (#2572)', () => {
+    const SIDELOAD: CplugRow = {
+        ...MCP, id: 'flowview', tier: 'sideload', consent_required: true, permissions: { app: ['flow.read'] }, needs: ['flow.read'],
+        risks: { 'flow.read': 'medium' },
+    };
+    const sheetOf = (names: string[]): CplugSheet => ({
+        digest: 'seen-digest', body_sha: 'b', grants_sha: 'g', permissions: names.map((name) => ({ name, risk: 'medium', granted: false })),
+    });
+    const loadSheet = async (): Promise<CplugSheet> => sheetOf(['flow.read']);
+
+    async function openPermissions(root: HTMLElement): Promise<void> {
+        tabs(root).find((tab) => tab.dataset.tab === 'permissions')!.click();
+        await settle();
+    }
+
+    test('the sheet draws an untouched tick and a grant button that stays off until the owner ticks, then sends the tick, the sheet read and turn-on', async () => {
+        const grant = vi.fn(async () => ({}));
+        const root = await openPane([SIDELOAD], 'flowview', { grant, loadSheet });
+        await openPermissions(root);
+        const tick = root.querySelector<HTMLInputElement>('[data-perm-tick="flow.read"]')!;
+        const button = root.querySelector<HTMLButtonElement>('[data-cplug-grant]')!;
+        expect(tick.checked, 'never pre-ticked').toBe(false);
+        expect(button.disabled).toBe(true);
+        expect(button.textContent).toBe('grant 1 and turn on');
+        tick.click();
+        await settle();
+        button.click();
+        await settle();
+        expect(grant).toHaveBeenCalledExactlyOnceWith('flowview', ['flow.read'], { enable: true, seen: sheetOf(['flow.read']) });
+    });
+
+    test('new code under the same plugin clears the ticks: a re-read sheet with another digest leaves the button off (#2572)', async () => {
+        let n = 0;
+        const reads = vi.fn(async (): Promise<CplugSheet> => ({ ...sheetOf(['flow.read']), digest: `digest-${(n += 1)}` }));
+        const grant = vi.fn(async () => ({}));
+        const root = await openPane([SIDELOAD], 'flowview', { grant, loadSheet: reads });
+        await openPermissions(root);
+        root.querySelector<HTMLInputElement>('[data-perm-tick="flow.read"]')!.click();
+        await settle();
+        root.querySelector<HTMLButtonElement>('[data-cplug-grant]')!.click();
+        await settle();
+        expect(reads.mock.calls.length).toBeGreaterThan(1);
+        expect(root.querySelector<HTMLInputElement>('[data-perm-tick="flow.read"]')!.checked).toBe(false);
+        expect(root.querySelector<HTMLButtonElement>('[data-cplug-grant]')!.disabled).toBe(true);
+    });
+
+    test('with two medium permissions the button stays off until both are ticked', async () => {
+        const two: CplugRow = { ...SIDELOAD, permissions: { app: ['flow.read', 'flow.write'] }, needs: ['flow.read', 'flow.write'], risks: { 'flow.read': 'medium', 'flow.write': 'medium' } };
+        const root = await openPane([two], 'flowview', { grant: vi.fn(), loadSheet });
+        await openPermissions(root);
+        const button = root.querySelector<HTMLButtonElement>('[data-cplug-grant]')!;
+        root.querySelector<HTMLInputElement>('[data-perm-tick="flow.read"]')!.click();
+        await settle();
+        expect(button.disabled).toBe(true);
+        root.querySelector<HTMLInputElement>('[data-perm-tick="flow.write"]')!.click();
+        await settle();
+        expect(button.disabled).toBe(false);
+    });
+
+    test('a refused grant shows the refusal in the pane, holds the button while it runs and frees it after', async () => {
+        let reject: (e: Error) => void = () => {};
+        const grant = vi.fn(() => new Promise<never>((_, no) => { reject = no; }));
+        const root = await openPane([SIDELOAD], 'flowview', { grant, loadSheet });
+        await openPermissions(root);
+        root.querySelector<HTMLInputElement>('[data-perm-tick="flow.read"]')!.click();
+        await settle();
+        const button = root.querySelector<HTMLButtonElement>('[data-cplug-grant]')!;
+        button.click();
+        await settle();
+        expect(button.disabled, 'held while in flight').toBe(true);
+        button.click();
+        expect(grant).toHaveBeenCalledTimes(1);
+        reject(new Error('cannot be turned on: needs task manager, which this build lacks'));
+        await settle();
+        expect(root.querySelector('[data-plugin-pane-error]')?.textContent).toContain('needs task manager');
+        expect(button.disabled).toBe(false);
+    });
+
+    test('a first-party plugin that is off draws no tick and no grant button', async () => {
+        const root = await openPane([MCP], 'mcphealth', { loadSheet });
+        await openPermissions(root);
+        expect(root.querySelector('[data-perm-tick]')).toBeNull();
+        expect(root.querySelector('[data-cplug-grant]')).toBeNull();
     });
 });

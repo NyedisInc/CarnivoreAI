@@ -1,4 +1,4 @@
-/* could not the page terminal */
+/* the page terminal */
 
 export const WIDTH_KEY = 'carnivore.rightDrawer.width';
 
@@ -41,7 +41,6 @@ export const rightDrawer = $state<{ kind: DrawerKind | null; last: DrawerKind | 
 let lastPushed = '';
 let watching = false;
 
-/*  hidden  */
 export function clampWidth(px: number, viewport: number): number {
     const share = viewport > 0 ? Math.floor(viewport * MAX_SHARE) : MAX_WIDTH;
     const cap = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, share));

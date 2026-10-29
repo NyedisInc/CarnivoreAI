@@ -1,4 +1,3 @@
-/*  hidden  */
 import * as api from '../api';
 import { refusalText } from '../format';
 import { reports } from '../feed-store.svelte';

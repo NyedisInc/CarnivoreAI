@@ -42,12 +42,14 @@ function styleSources(dir) {
 const SHARED = 'client/css/popup-focus.css';
 const LOOK = /(^|\n)\s*(background|background-color|border|box-shadow)\s*:/;
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('the shared file registers one angle and declares one keyframes', () => {
     const css = noComments(read(SHARED));
     assert.equal((css.match(/@property\s+--pf-angle\b/g) || []).length, 1);
     assert.equal((css.match(/@keyframes\s+popup-focus-orbit\b/g) || []).length, 1);
-    assert.equal((css.match(/@keyframes\s+/g) || []).length, 2, 'the registered-angle lap and the compositor turn, nothing else');
+    assert.equal((css.match(/@keyframes\s+/g) || []).length, 1, 'only the registered-angle lap of the short lived menus; the selected cell steps on the ambient ticker');
     const body = ruleBody(css, '.popup-focus');
     assert.ok(body, 'expected the .popup-focus rule');
     assert.match(body, /animation:\s*popup-focus-orbit\s+6s\s+linear\s+infinite/);
@@ -78,6 +80,8 @@ test('reduced motion stops the lap and shows no sheen at all', () => {
     assert.match(body, /--pf-sheen:\s*transparent/, 'a parked sheen is a bright stub at 0deg; it must be cleared');
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('the shared file is the last stylesheet the page links', () => {
     const html = read('client/index.html');
@@ -87,6 +91,8 @@ test('the shared file is the last stylesheet the page links', () => {
     assert.equal(links.filter((h) => h.endsWith('/popup-focus.css')).length, 1);
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 const LEGACY = [
     ['client/js/header-menu.js', /panel\.className = 'header-menu-panel popup-focus'/,
@@ -95,8 +101,6 @@ const LEGACY = [
         'client/css/terminal-tools.css', '.fab-menu'],
     ['client/js/session-theme-menu.js', /pickerEl\.className = 'cloude-session-theme popup-focus'/,
         'client/css/terminal-tools.css', '.cloude-session-theme'],
-    ['client/js/session-sidebar-group-actions.js', /menu\.className = 'session-sidebar-group-menu popup-focus'/,
-        'client/css/session-sidebar-groups.css', '.session-sidebar-group-menu'],
 ];
 
 for (const [js, pattern, cssFile, selector] of LEGACY) {
@@ -141,6 +145,8 @@ for (const [file, renders] of [
     });
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 const FRAME = 'web/src/opscenter/shell/CellFrame.svelte';
 
@@ -184,11 +190,7 @@ test('the selected frame turns its sheen on the compositor and the bare one keep
     assert.match(src, /class:popup-focus-ring=\{selected && meta\.chrome === 'bare'\}/);
     assert.match(src, /<span class="pf-sheen" aria-hidden="true"><\/span>/);
     const shared = noComments(read(SHARED));
-    const keys = (shared.match(/@keyframes\s+popup-focus-turn\s*\{([\s\S]*?\})\s*\}/) || [])[1];
-    assert.ok(keys, 'expected @keyframes popup-focus-turn');
-    assert.match(keys, /transform:\s*rotate\(0deg\)/);
-    assert.match(keys, /transform:\s*rotate\(360deg\)/);
-    assert.doesNotMatch(keys, /--pf-angle|background|mask|width|height/, 'only transform may animate (issue #1809)');
+    assert.doesNotMatch(shared, /@keyframes\s+popup-focus-turn/, 'the ring has no keyframes: client/js/ambient-ticker.js steps it (Carnivore round 3, B12)');
     const turn = ruleBody(shared, '.popup-focus.popup-focus-turn');
     assert.match(turn, /animation:\s*none/, 'the frame itself no longer animates the registered angle');
     assert.doesNotMatch(turn, /conic-gradient/, 'the frame border is static');
@@ -196,13 +198,15 @@ test('the selected frame turns its sheen on the compositor and the bare one keep
     assert.match(host, /position:\s*absolute/);
     assert.match(host, /pointer-events:\s*none/);
     assert.match(host, /mask-composite:\s*exclude/, 'a static mask clips the sheen to the 1px band');
-    assert.doesNotMatch(host, /animation/, 'the host never animates, only its ::before');
+    assert.match(host, /animation:\s*amb-join-dialog-glow\s+1ms;/, 'the host only carries the one millisecond join the ticker listens for');
+    assert.doesNotMatch(host, /infinite/, 'nothing on the ring runs forever');
     const turner = ruleBody(shared, '.popup-focus-turn > .pf-sheen::before');
-    assert.match(turner, /animation:\s*popup-focus-turn\s+6s\s+linear\s+infinite/);
+    assert.match(turner, /transform:\s*rotate\(calc\(var\(--amb-step, 0\) \* 15deg\)\)/, 'one step is 15deg: 24 steps are the old 6s lap');
+    assert.doesNotMatch(turner, /animation|transition/, 'no animation and no easing between steps');
     assert.match(turner, /will-change:\s*transform/);
     assert.match(turner, /conic-gradient\(\s*from 0deg/);
-    assert.match(shared, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.popup-focus-turn > \.pf-sheen::before \{\s*animation: none;/,
-        'reduced motion stops the turning sheen as well');
+    assert.match(shared, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.popup-focus-turn > \.pf-sheen::before \{\s*transform: none;/,
+        'reduced motion parks the sheen as well');
     const base = ruleBody(shared, '.popup-focus.popup-focus-turn.popup-focus-ring');
     assert.match(base, /border:\s*0/, 'the bare frame keeps no border: its rectangle is the session size');
 });

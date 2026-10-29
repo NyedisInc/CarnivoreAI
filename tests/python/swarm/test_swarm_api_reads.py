@@ -77,7 +77,7 @@ def world(tmp_path, monkeypatch):
 
     class Port:
         async def ensure_thread(self, key, title): ...
-        async def read_thread(self, key, limit): return []
+        async def read_thread(self, key, limit, cards=True): return []
         async def open_cards(self): return []
 
     thread_port.register(Port())
@@ -151,7 +151,7 @@ async def test_create_roster_detail_mcp_and_validation(world, tmp_path):
                     {"animations": {"idle": "moonwalk"}}, {"animations": {"napping": "none"}}):
             assert (await c.put("/swarm/settings", json=bad)).status_code == 422
 
-    thread_port.register(SimpleNamespace(read_thread=lambda key, limit: asyncio.sleep(0, result=[]),
+    thread_port.register(SimpleNamespace(read_thread=lambda key, limit, cards=True: asyncio.sleep(0, result=[]),
                                          open_cards=lambda: asyncio.sleep(0, result=[])))
     caller = AgentCaller("ses_1", "cloude_a", "ses_1", scope="read")
 
@@ -177,3 +177,26 @@ def test_notify_thread_names_the_agent_topic_of_its_thread(world, monkeypatch):
     push.notify_thread(agent["thread_key"])
     push.notify_thread("12")
     assert seen == [f"swarm_agent:{agent['id']}"]
+
+
+@pytest.mark.asyncio
+async def test_roster_polls_share_the_owner_listing_cache_not_a_pass_each(world):
+    from src.api.swarm_routes import ROSTER_BODIES_CACHE
+
+    passes = []
+    real = type(world.manager).list_session_infos
+
+    async def counted(self):
+        passes.append(1)
+        return await real(self)
+
+    type(world.manager).list_session_infos = counted
+    ROSTER_BODIES_CACHE.invalidate()
+    try:
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=world.app), base_url="http://t/api/v1") as c:
+            for _ in range(4):
+                assert (await c.get("/swarm/roster")).status_code == 200
+    finally:
+        type(world.manager).list_session_infos = real
+        ROSTER_BODIES_CACHE.invalidate()
+    assert len(passes) == 1

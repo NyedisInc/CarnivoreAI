@@ -1,8 +1,6 @@
 <h3 class="sg-h3" id="ledger-crate-group">crate plugin: the crates group on a project page</h3>
 <p>The crates plugin's CRATES group (<code>web/src/cplugs/crate/ProjectCrates.svelte</code>) is the second group of its kind: an action line
-        (<code>.crt-pacts</code>) holding the confirming outline "export this project", then one <code>.crt-prow</code> per crate
-        that holds the project or one of its sessions, the closed review row's twin on <code>.ph-scols</code> (its parts
-        <code>.crt-prow__lead</code>, <code>.crt-prow__name</code>, <code>.crt-prow__meta</code> with the scope and copies as
-        <code>.ph-tag</code>s, <code>.crt-prow__when</code>, <code>.crt-prow__act</code> holding a quiet verify, and
-        <code>.crt-prow__pad</code> for the kebab column on a phone), "show all" (<code>.crt-pmore</code>) and a started verify's
-        progress under the rows (<code>.crt-pjob</code>). It never folds itself when empty, because its action lives inside it.</p>
+        (<code>.crt-pacts</code>) holding the confirming "export this project" button, then one base list row per crate that holds the project
+        or one of its sessions (name, then the age at the right), with a line under it holding the scope and copies as base tags and a line
+        of quiet buttons (verify, restore, download and a coral remove; <code>.crt-pacts__line</code> wraps them), "show all" and a started
+        verify's progress under the rows (<code>.crt-pjob</code>). It never folds itself when empty, because its action lives inside it.</p>

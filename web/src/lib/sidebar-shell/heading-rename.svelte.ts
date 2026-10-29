@@ -1,5 +1,5 @@
-/* Escape cancels */
 import { t } from '../i18n/index.svelte';
+import { isEditing as isLegacyEditorOpen } from '../drawer/rename';
 import { announce, hg } from './interaction-globals';
 
 export interface HeadingRenameSpec {
@@ -33,7 +33,7 @@ export function labelMax(): number {
 }
 
 export function openHeadingRename(spec: HeadingRenameSpec): boolean {
-    if (headingRename.spec || hg().SessionSidebarRename?.isEditing?.()) return false;
+    if (headingRename.spec || isLegacyEditorOpen()) return false;
     headingRename.settled = false;
     headingRename.value = spec.seed;
     headingRename.error = '';

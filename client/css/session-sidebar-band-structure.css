@@ -87,7 +87,6 @@
     pointer-events: none;
 }
 
-/* padding */
 .session-sidebar-company + .session-sidebar-company::before,
 .session-sidebar-company .session-sidebar-group + .session-sidebar-company::before {
     left: 0;

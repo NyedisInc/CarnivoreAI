@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from src.api.peer_auth import require_peer_sessions
 from src.api.remote_route_guard import refuse_remote
 from src.core.attention.codex_gather import DEFAULT_CODEX_HOME, rollout_path_in_sessions
-from src.core.attention.evidence import FAMILY_CODEX
+from src.core.attention.evidence import FAMILY_CODEX, observed_conversation_uuid
 from src.core.session_token_usage import claude_reader
 from src.core.session_transcript_presence import CONVERSATION_PRESENT
 from src.core.skill_fires.tally import SkillTallyCache, STATE_MEASURED, default_store
@@ -52,12 +52,12 @@ async def locate_conversation(request: Request, session_id: str, what: str) -> T
         raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
     tmux_name = info.tmux_session
     working_dir = info.session.working_dir if info.session is not None else None
-    uuid: Optional[str] = session_manager._claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
+    uuid: Optional[str] = session_manager.claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
     row_id = info.session.id if info.session is not None else session_id
     watcher = getattr(session_manager, "_attention_watcher", None)
     observation = watcher.observation_for(row_id, now=datetime.now(timezone.utc)) if watcher else None
     if observation is not None and not observation.stale:
-        uuid = (getattr(observation.evidence, "identity", None) or (None,) * 5)[4] or uuid
+        uuid = observed_conversation_uuid(observation.evidence) or uuid
     return info, uuid, working_dir
 
 

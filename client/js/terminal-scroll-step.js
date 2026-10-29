@@ -39,11 +39,11 @@
         if (!ev || !ev.deltaY) return 0;
         var rows;
         if (ev.deltaMode === 1) {
-            rows = ev.deltaY * GESTURE_GAIN;
+            rows = ev.deltaY * GESTURE_GAIN;          // lines
         } else if (ev.deltaMode === 2) {
-            rows = ev.deltaY * ((term && term.rows) || 1);
+            rows = ev.deltaY * ((term && term.rows) || 1);  // pages
         } else {
-            rows = rowsForPixels(ev.deltaY, term, root);
+            rows = rowsForPixels(ev.deltaY, term, root);    // pixels
         }
         var dir = ev.deltaY > 0 ? 1 : -1;
         return Math.trunc(rows) || dir;

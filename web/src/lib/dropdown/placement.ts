@@ -5,7 +5,6 @@ export interface Placement { style: string; sheet: boolean; room: number }
 
 export const SHEET_MAX_WIDTH = 767;
 
-/* height:400px width:300px */
 export function placePanel(box: FieldBox, view: { width: number; height: number }, sheet: boolean, widthFor: (boxWidth: number) => number): Placement {
     const below = view.height - box.bottom - 8;
     const above = box.top - 8;

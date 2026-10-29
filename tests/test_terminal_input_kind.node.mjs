@@ -1,3 +1,4 @@
+// Same harness style as the other *.node.mjs tests in this directory: no
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,6 +25,7 @@ function test(name, fn) {
     }
 }
 
+/** Fresh module instance with a bare window/console. */
 function loadModule() {
     const sandbox = { window: {}, console: { warn() {}, log() {} } };
     sandbox.globalThis = sandbox;
@@ -32,6 +34,8 @@ function loadModule() {
     return sandbox.window.TerminalInputKind;
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 const MOTION_REPORTS = [
     '\x1b[<35;6;3M',
     '\x1b[<35;16;6M',
@@ -92,6 +96,8 @@ test('malformed and non-string payloads fail open to user input', () => {
     }
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 test('terminal.js onData guards pinToBottom on the mouse-report check', () => {
     const terminalSrc = fs.readFileSync(path.join(CLIENT_JS, 'terminal.js'), 'utf8');
     const start = terminalSrc.indexOf('this.term.onData(');
@@ -106,6 +112,25 @@ test('terminal.js onData guards pinToBottom on the mouse-report check', () => {
         'the altscreen typing quiet-period must not be armed by mouse motion');
     assert.match(body, /this\._sendUserBytes\(new TextEncoder\(\)\.encode\(data\)\)/,
         'mouse reports must still be forwarded to the session');
+});
+
+test('currency symbols become Enter, Tab and Shift+Tab on a coarse pointer only (u008-01)', () => {
+    const api = loadModule();
+    assert.equal(api.softKeyboardShortcut('\u00a5', true), '\n');
+    assert.equal(api.softKeyboardShortcut('\u20ac', true), '\t');
+    assert.equal(api.softKeyboardShortcut('\u00a3', true), '\x1b[Z');
+    for (const sym of ['\u00a5', '\u20ac', '\u00a3', '\uffe1']) {
+        assert.equal(api.softKeyboardShortcut(sym, false), sym, 'a desktop keyboard types the symbol: ' + sym);
+    }
+    assert.equal(api.softKeyboardShortcut('a', true), 'a');
+    assert.equal(api.softKeyboardShortcut('\u00a3 5', true), '\u00a3 5', 'only a lone symbol is a shortcut');
+    assert.equal(api.isCoarsePointer(), false, 'no matchMedia reads as a fine pointer');
+});
+
+test('terminal.js routes onData through the gated shortcut, with no inline remap left (u008-01)', () => {
+    const term = fs.readFileSync(path.join(CLIENT_JS, 'terminal.js'), 'utf8');
+    assert.match(term, /softKeyboardShortcut\(data\)/);
+    assert.doesNotMatch(term, /data = '\\x1b\[Z'/, 'the unconditional remap must stay gone');
 });
 
 test('index.html loads terminal-input-kind.js before terminal.js', () => {

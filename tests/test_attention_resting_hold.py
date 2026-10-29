@@ -14,7 +14,7 @@ from src.core.attention.evidence import (
 )
 from src.core.attention.ledger import AttentionLedger
 from src.core.attention.pane_markers import classify_pane_tail
-from src.core.attention.registry_read import parse_registry_record
+from src.core.attention.registry_record import parse_registry_record
 from src.core.attention.resolve import resolve_attention
 from src.core.attention.transcript_facts import FACTS_FOUND, TranscriptFacts
 from src.core.attention.watcher import (
@@ -26,7 +26,7 @@ from src.core.session_status import LIVENESS_LIVE
 
 START = datetime(2026, 9, 18, 6, 0, 0, tzinfo=timezone.utc)
 
-KEY = "cloude_Orchard@1788294271"
+KEY = "cloude_Argent@1788294271"
 
 RESTING = classify_pane_tail(
     [
@@ -34,7 +34,7 @@ RESTING = classify_pane_tail(
         "─" * 40,
         "❯ ",
         "─" * 40,
-        "  TEAM-Docs | Opus 5 (1M context)",
+        "  ALEX-Docs | Opus 5 (1M context)",
     ]
 )
 
@@ -50,14 +50,14 @@ WORKING = classify_pane_tail(
 BLANK = classify_pane_tail([])
 
 REGISTRY_PAYLOAD = {
-    "sessionId": "cf49c43f-3b58-4ead-866c-4fb931488260",
-    "cwd": "/Users/example/projects/acme-docs",
-    "pid": 4619,
+    "sessionId": "90c5c356-e7d1-4151-b385-78eab7f60f4d",
+    "cwd": "/Users/alex/Projects/Acme/ALEX-Docs",
+    "pid": 91992,
     "startedAt": 1788294281973,
     "version": "2.1.266",
     "kind": "interactive",
     "entrypoint": "cli",
-    "tmux": "cloude_Orchard:@3.%3",
+    "tmux": "cloude_Argent:@3.%3",
     "status": "busy",
     "updatedAt": 1788857113338,
     "statusUpdatedAt": 1788857113338,
@@ -92,7 +92,7 @@ class _Harness:
         self.now = START
         self.pane = RESTING
         self.verdicts: List[object] = []
-        self.target = WatchTarget(session_id="ses_orchard", key=KEY)
+        self.target = WatchTarget(session_id="ses_argent", key=KEY)
         self.watcher = AttentionWatcher(
             list_targets=lambda: [self.target],
             read_evidence=self._read,

@@ -20,7 +20,6 @@ export function snapBar(edge: RailEdge, extent: number): BarPreview {
 
 const placeOf = (bar: BarSettings): BarPreview => (bar.mode === 'pinned' ? bar.size : 'closed');
 
-/*  hidden  */
 export function dragLook(look: BarVisual, preview: BarPreview | null): BarVisual {
   if (preview === null || look === 'absent' || look === 'edit' || look === 'held') return look;
   return preview === 'closed' ? 'handle' : 'pinned';

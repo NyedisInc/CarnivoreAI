@@ -39,7 +39,9 @@ def uninstall() -> None:
 
 
 def frame_of(message: Mapping[str, Any]) -> Dict[str, Any]:
-    text = str(message.get("text") or "")
+    from src.core.crosstalk.history import redact
+
+    text = str(redact(str(message.get("text") or "")))
     preview = text if len(text) <= PREVIEW_CHARS else text[: PREVIEW_CHARS - 1] + "…"
     return {
         "type": WSMessageType.CROSSTALK_CARD.value,
@@ -72,7 +74,6 @@ def announce(message: Mapping[str, Any]) -> None:
     except RuntimeError as exc:
         logger.debug("crosstalk_card_loop_closed", error=str(exc))
     except OSError as exc:
-        # could not be read
         logger.warning("crosstalk_card_gate_failed", error=str(exc), error_type=type(exc).__name__)
 
 

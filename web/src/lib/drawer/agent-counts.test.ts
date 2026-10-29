@@ -24,12 +24,12 @@ test('browser, layout and shell rows are not agents', () => {
 
 test('a paired computer counts while up; one that is not up is left out and named', () => {
   const out = c([
-    { status: 'working', host_state: 'up', host_label: 'hosta' },
-    { status: 'working', host_state: 'down', host_label: 'hostb' },
-    { status: 'idle', unread: true, host_state: 'degraded', host_label: 'hostb' },
+    { status: 'working', host_state: 'up', host_label: 'studio' },
+    { status: 'working', host_state: 'down', host_label: 'mini' },
+    { status: 'idle', unread: true, host_state: 'degraded', host_label: 'mini' },
   ]);
   expect(out).toMatchObject({ active: 1, working: 1, unread: 0 });
-  expect(out.offline).toEqual(['hostb']);
+  expect(out.offline).toEqual(['mini']);
 });
 
 test('the nested session.unread is never read', () => {

@@ -13,6 +13,7 @@ from src.core.server_log import LEVELS, ServerLogWatch, read_entries
 from src.core.server_log.locate import server_log_path
 from src.core.server_log.records import parse_cursor, read_page
 from src.core.server_log.tail import DEFAULT_LINES, MAX_LINES
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -92,7 +93,7 @@ async def get_server_log(
     try:
         since_at, before_at = parse_cursor(since), parse_cursor(before)
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_request", exc, step="get_server_log") from exc
     if since_at is not None and before_at is not None:
         raise HTTPException(status_code=422, detail="name since or before, not both")
     watch_for(request.app.state).touch()

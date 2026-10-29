@@ -1,3 +1,4 @@
+// WHY THIS FILE EXISTS
 
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -25,7 +26,7 @@ function test(name, fn) {
 
 const { resolvePublishedUrl } = require(path.join(repoRoot, 'macOS', 'published-url.js'));
 
-function stub({ port = 8000, configured = '0.0.0.0', measured = null, lan = '192.0.2.12' }) {
+function stub({ port = 8000, configured = '0.0.0.0', measured = null, lan = '10.0.1.5' }) {
   return { port, configuredHost: configured, measuredHost: measured, lanIp: lan };
 }
 
@@ -47,7 +48,7 @@ test('MEASURED 0.0.0.0 still yields the LAN address, which is the point of measu
   const url = resolvePublishedUrl(stub({ measured: '0.0.0.0', configured: '0.0.0.0' }));
   assert.equal(
     url,
-    'http://192.0.2.12:8000',
+    'http://10.0.1.5:8000',
     `a measured 0.0.0.0 bind produced ${url}; the LAN address is real here ` +
     `and is what the user shares with another device`
   );
@@ -59,8 +60,8 @@ test('MEASURED loopback (the lockdown, once reported) yields loopback', () => {
 });
 
 test('a measured specific LAN bind is used verbatim', () => {
-  const url = resolvePublishedUrl(stub({ measured: '192.0.2.11', configured: '192.0.2.11' }));
-  assert.equal(url, 'http://192.0.2.11:8000');
+  const url = resolvePublishedUrl(stub({ measured: '192.168.1.250', configured: '192.168.1.250' }));
+  assert.equal(url, 'http://192.168.1.250:8000');
 });
 
 test('no LAN interface plus a measured 0.0.0.0 still yields loopback', () => {

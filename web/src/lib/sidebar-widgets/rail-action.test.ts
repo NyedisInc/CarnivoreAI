@@ -19,6 +19,10 @@ import { registerTab, tabRegistry } from '../dynamic-tabs/registry';
 import { setLocale } from '../i18n/index.svelte';
 import { activeFlyout, closeFlyout } from './flyout.svelte';
 import { railOn, railBtn, rail, flyout, press, setupRail, settle, teardownRail } from './fixtures/rail-harness';
+import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+
+// The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
+registerSwarmFlyout();
 import { tabFlyoutId } from './tab-flyouts';
 import FlyoutBodyFixture from './fixtures/FlyoutBodyFixture.svelte';
 
@@ -67,7 +71,7 @@ test('the lab viewer lies over the main area while its slide-out is open, with n
   expect(viewer(), 'the viewer is over the main area').not.toBeNull();
   expect(openPage, 'no browser tab or page is opened').not.toHaveBeenCalled();
   expect(document.querySelector('.dwl-strip')!.textContent, 'no "widget lab" page title').not.toMatch(/widget lab/i);
-  const pick = flyout().querySelector<HTMLButtonElement>('.dwl-leaf[data-key]:not([data-key="core.notes"])')!;
+  const pick = flyout().querySelector<HTMLButtonElement>('[data-tree-leaf][data-key]:not([data-key="core.notes"])')!;
   pick.click();
   await settle();
   const picked = JSON.parse(localStorage.getItem(SELECTION_KEY)!).selection.widget as string;
@@ -82,7 +86,7 @@ test('the lab viewer lies over the main area while its slide-out is open, with n
   await settle();
   expect(viewer(), 'reopening brings it back').not.toBeNull();
   expect(document.querySelector('.dwl-strip-name')!.textContent).toBe(
-    flyout().querySelector('.dwl-leaf[aria-current="true"] .dwl-leaf-name')!.textContent,
+    flyout().querySelector('[data-tree-leaf][aria-current="true"] .dwl-leaf-name')!.textContent,
   );
   expect(JSON.parse(localStorage.getItem(SELECTION_KEY)!).selection.widget).toBe(picked);
 });

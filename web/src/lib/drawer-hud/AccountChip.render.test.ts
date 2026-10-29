@@ -31,10 +31,11 @@ afterEach(() => {
 const slot = (): HTMLElement => document.getElementById('session-sidebar-bar-slot')!;
 
 describe('the account chip', () => {
-    test('the spiral turns in CSS and stops under reduced motion', () => {
+    test('the spiral steps on the ambient ticker (no infinite animation) and rests under reduced motion', () => {
         const css = readFileSync(resolve(__dirname, '../../../../client/css/session-sidebar-account-chip.css'), 'utf8');
-        expect(css).toMatch(/\.spiral-turn\s*\{[^}]*animation:[^;]*linear infinite/);
-        expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*\.spiral-turn\s*\{\s*animation: none/);
+        expect(css).toMatch(/\.spiral-turn\s*\{[^}]*transform: rotate\(calc\(var\(--amb-step, 0\) \* 15deg\)\)/);
+        expect(css).not.toMatch(/\.spiral-turn\s*\{[^}]*infinite/);
+        expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*\.spiral-turn\s*\{\s*transform: none/);
     });
 
     test('signed out: SysOp with the turning spiral, no identicon, no status dot', () => {
@@ -59,9 +60,9 @@ describe('the account chip', () => {
     });
 
     test('signed in: the handle and its identicon, never the provider tier or the email', () => {
-        accountChip.identity = accountIdentity({ signedIn: true, handle: 'acme', login: 'acme@example.com', provider: 'email' });
+        accountChip.identity = accountIdentity({ signedIn: true, handle: 'example-owner', login: 'alex@example.com', provider: 'email' });
         Bar.paint();
-        expect(slot().querySelector('.session-sidebar-bar__account-name')!.textContent).toBe('acme');
+        expect(slot().querySelector('.session-sidebar-bar__account-name')!.textContent).toBe('example-owner');
         const avatar = slot().querySelector('.session-sidebar-bar__avatar')!;
         expect(avatar.getAttribute('data-kind')).toBe('member');
         expect(avatar.querySelector('svg.ident rect')).not.toBeNull();
@@ -72,7 +73,7 @@ describe('the account chip', () => {
     });
 
     test('no handle yet: the email local part, never the address; a github login is used as is', () => {
-        expect(displayName('', 'acme@example.com')).toBe('acme');
+        expect(displayName('', 'alex@example.com')).toBe('alex');
         expect(displayName('', 'octocat')).toBe('octocat');
         expect(accountIdentity({ signedIn: true, handle: '', login: null, provider: 'email' }).kind).toBe('lurker');
         expect(accountIdentity({ signedIn: false, handle: 'x', login: 'x', provider: null }).kind).toBe('lurker');
@@ -93,7 +94,7 @@ describe('the sign in pill (#1200)', () => {
     });
 
     test('signed in: no pill', () => {
-        accountChip.identity = accountIdentity({ signedIn: true, handle: 'acme', login: null, provider: 'email' });
+        accountChip.identity = accountIdentity({ signedIn: true, handle: 'example-owner', login: null, provider: 'email' });
         Bar.paint();
         expect(slot().querySelector('[data-bar-action="signin"]')).toBeNull();
     });

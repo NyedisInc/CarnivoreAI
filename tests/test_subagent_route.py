@@ -14,7 +14,7 @@ os.environ.setdefault("LOG_DIRECTORY", tempfile.mkdtemp(prefix="cc_sub_logs_"))
 os.environ.setdefault("TOTP_SECRET", "testsecretnotreal")
 os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
-from src.core.attention.registry_read import REG_OK  # noqa: E402
+from src.core.attention.registry_record import REG_OK  # noqa: E402
 from src.core.subagents import files  # noqa: E402
 
 from tests.helpers.subagent_fixture import CONV, build_corpus  # noqa: E402
@@ -44,7 +44,7 @@ class _Manager:
     async def get_session_info(self, session_id=None):
         return self._rows.get(session_id)
 
-    def _claude_uuid_for_tmux_name(self, tmux_name):
+    def claude_uuid_for_tmux_name(self, tmux_name):
         return self._uuid
 
 

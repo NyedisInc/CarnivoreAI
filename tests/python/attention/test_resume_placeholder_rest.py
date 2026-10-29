@@ -8,7 +8,7 @@ from src.core.attention.transcript_facts import (
     classify_transcript_records,
 )
 
-SESSION = "c45140e9-528c-44ba-81ad-f56ce9c2a37e"
+SESSION = "42ca16a6-dc08-4b7a-bea1-1413f2b7e232"
 
 
 def _turn_end(ts: str) -> Dict[str, Any]:

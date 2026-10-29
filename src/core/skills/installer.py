@@ -1,49 +1,3 @@
-"""Perform an install plan, and manage the staging area it is built in.
-
-:mod:`src.core.skills.install_plan` decided. This acts, and it makes no
-decisions of its own: every path it writes to was composed by the planner
-through :func:`src.core.skills.roots.target_dir`, and every filesystem
-operation goes through :mod:`src.core.skills.targets`, which is where the
-write guard lives.
-
-**THE SIDECAR IS WRITTEN INTO THE STAGED COPY, BEFORE THE FIRST TARGET.**
-Writing it into each installed folder afterwards would mean two folders
-that are supposed to be identical passing through a window where they are
-not, and a crash inside that window leaves one harness with provenance and
-the other without. Writing it once, into the source of every copy, makes
-the two copies identical by construction.
-
-**IT IS WRITTEN AFTER THE DIGEST WAS CHECKED, AND THAT IS ON PURPOSE.**
-The sidecar is this app's own file; it is not part of what the publisher
-signed, so adding it changes the folder's digest. The digest is verified
-against the signature BEFORE this function runs (the planner does it), and
-what is recorded in the ledger is the digest of the SIGNED bytes, not of
-the folder with the sidecar in it. Recomputing it afterwards would record
-a number that matches no signature anywhere.
-
-**A FAILURE AFTER THE FIRST COPY REMOVES WHAT THIS CALL WROTE.** Half an
-install is worse than none: a skill folder in one harness root is a skill
-that harness loads, and there would be no ledger row saying it is there.
-So every directory this call created is removed and the original error is
-re-raised.
-
-**WHAT IS NOT PUT BACK IS A FOLDER THIS CALL DISPLACED.** When the user
-chose ``replace``, their folder was renamed into that harness's trash
-before the copy. If a later target fails, the displaced folder STAYS in
-the trash and its path is logged at WARNING. Moving it back would need a
-rename this module is not allowed to perform (every rename lives in
-``targets.py``, and the only one it exposes for this shape is half of a
-swap). The trash is kept for a fortnight by
-:class:`src.core.skills.sweeper.SkillSweeper`, the folder is intact, and
-the log line names exactly where it is. An interrupted UPDATE is the case
-that gets the full journal treatment, in
-:mod:`src.core.skills.updates`.
-
-**THE STAGING CAP IS A REFUSAL, NOT A QUEUE.** A bounded staging area with
-no bound on how long a caller may hold one is a disk that fills. The cap
-and the reaper are one decision, which is why the number lives in the
-sweeper module.
-"""
 
 from __future__ import annotations
 
@@ -87,17 +41,6 @@ def iso_from(clock: Clock) -> str:
 
 
 def trash_stamp(clock: Clock) -> str:
-    """A compact uniquifier for a displaced folder's name.
-
-    Description: ``move_to_trash`` joins this to a directory name and
-      refuses a separator in it, so the format deliberately carries none:
-      ``20260915T120000Z``. Second resolution is enough because the mover
-      refuses a destination that already exists rather than overwriting
-      one, so a collision is a loud failure and never a lost folder.
-    Inputs: clock (Clock).
-    Output: str.
-    Example: trash_stamp(SystemClock())  # '20260915T120000Z'
-    """
     moment = datetime.fromtimestamp(clock.now(), tz=timezone.utc)
     return moment.strftime("%Y%m%dT%H%M%SZ")
 

@@ -12,7 +12,7 @@ from src.cplugs.reviewboard.live_requests import LiveBody, LiveCreateBody, LiveE
 from src.cplugs.sdk import AgentCaller, CplugContext, ToolError, ToolSpec, scrub, tool_result
 
 _BOARD = {"type": "string", "description": "The board slug from task_manager_boards_list."}
-_REQUEST_REVIEW = {"type": "boolean", "description": "Default true: the task goes to review so it reaches the owner. false: post the card only."}
+_REQUEST_REVIEW = {"type": "boolean", "description": "Default true: the task goes to review so it reaches Joe. false: post the card only."}
 
 
 def _slug(args: Dict[str, Any]) -> str:
@@ -34,7 +34,7 @@ async def task_manager_board_live_set(ctx: CplugContext, caller: AgentCaller, ar
             args["task"] = {"item_id": args["task"]}
     elif not isinstance(slug, str) or not slug:
         raise ToolError("board must be a slug from task_manager_boards_list (leave it out to create a board that starts live)")
-    args = await asyncio.to_thread(mcp.file_pages, args)
+    args = await asyncio.to_thread(mcp.file_pages, args, caller)
     try:
         body = LiveCreateBody.model_validate(args) if creating else LiveBody.model_validate(args)
     except ValidationError as exc:
@@ -83,26 +83,26 @@ _CROSS = {"type": "boolean", "description": "Only to write on a task of ANOTHER 
 TOOLS: Dict[str, Any] = {
     "task_manager_board_live_set": ToolSpec(
         description=("Run a review board as a LIVE session: each call OVERWRITES the board's one working draft (no new revision, no card, the task's state "
-                     "stays put), and the board the owner has open follows the draft as it changes (pushed). Use it for a demo or a back-and-forth. The first call "
-                     "starts the session and puts the board on the owner's screen. Pass board (a slug) to go live on an existing board, or leave board out and "
+                     "stays put), and the board Joe has open follows the draft as it changes (pushed). Use it for a demo or a back-and-forth. The first call "
+                     "starts the session and puts the board on Joe's screen. Pass board (a slug) to go live on an existing board, or leave board out and "
                      "pass name, title, task and viewport to create a board that starts live with no revision at all. Same page rules as a revision "
                      "(docs/reviewboard.md): summary, html or file_path, viewport, views, prompts, anchors, max_width, inline_picks. No layer, no payload page. "
-                     "When the owner sends from the board your session is woken directly with their answers (read them in task_manager_board_get, sidecar.live.sends). "
-                     "Freeze the draft with task_manager_board_milestone_add when the owner says \"bookmark that\"; end with task_manager_board_live_stop."),
+                     "When Joe sends from the board your session is woken directly with his answers (read them in task_manager_board_get, sidecar.live.sends). "
+                     "Freeze the draft with task_manager_board_milestone_add when Joe says \"bookmark that\"; end with task_manager_board_live_stop."),
         properties={"board": {**_BOARD, "description": "The board slug; leave out to create a board that starts live (then name, title, task, viewport are required)."},
                     "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,47}$", "description": "Creating only: lowercase words joined by hyphens; the board is dated today."},
                     "title": {"type": "string", "minLength": 1, "maxLength": 120, "description": "Creating only: the board's title."},
                     "kind": {"type": "string", "enum": ["mockup", "flowchart", "copy", "other"], "description": "Creating only. Default mockup."},
-                    "task": {"type": "integer", "minimum": 1, "description": "Creating only: the huddle item id (on this computer) the board belongs to."},
+                    "task": {"type": "integer", "minimum": 1, "description": "Creating only: the task manager item id (on this computer) the board belongs to."},
                     "summary": mcp.REVISION_PROPERTIES["summary"], "html": mcp.REVISION_PROPERTIES["html"], "file_path": mcp.REVISION_PROPERTIES["file_path"],
                     "viewport": mcp.REVISION_PROPERTIES["viewport"], "views": mcp.VIEWS, "prompts": mcp.PROMPTS, "anchors": mcp.ANCHORS,
                     "max_width": mcp.REVISION_PROPERTIES["max_width"], "inline_picks": mcp.REVISION_PROPERTIES["inline_picks"],
-                    "open": {"type": "boolean", "description": "Default true: the call that STARTS the session puts the board on the owner's screen."},
+                    "open": {"type": "boolean", "description": "Default true: the call that STARTS the session puts the board on Joe's screen."},
                     **mcp.LOOK, mcp.CROSS_PROJECT: _CROSS},
-        required=["summary"], handler=task_manager_board_live_set, gate="agent"),
+        required=["summary"], handler=task_manager_board_live_set, gate="agent", pane_only_args=mcp.PANE_ONLY),
     "task_manager_board_milestone_add": ToolSpec(
         description=("Bookmark the live board's working draft: freeze it as a named revision, like a git commit. Only milestones are kept on disk. Call it when "
-                     "the owner says \"bookmark that\" (or any such words). By default the task goes to review with the milestone's card (a milestone hands the "
+                     "Joe says \"bookmark that\" (or any such words). By default the task goes to review with the milestone's card (a milestone hands the "
                      "task to review). The session goes on; the draft stays as it is. Asking again with nothing changed adds nothing."),
         properties={"board": _BOARD, "name": {"type": "string", "minLength": 1, "maxLength": 120, "description": "The milestone's name; default \"milestone <n>\"."},
                     "summary": {"type": "string", "minLength": 1, "maxLength": 2000, "description": "Default: the draft's summary."},

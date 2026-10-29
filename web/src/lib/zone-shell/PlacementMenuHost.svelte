@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import CascadeMenu from '../drawer-tabs/CascadeMenu.svelte';
   import AnchoredPopup from '../dialog-frame/AnchoredPopup.svelte';
   import ItemSettingsPanel from '../item-settings/ItemSettingsPanel.svelte';
@@ -115,7 +114,6 @@
 
   const heading = $derived(copyHeading ?? (declaredOptions?.menuHeadingKey ? t(declaredOptions.menuHeadingKey) : undefined));
   const scope = $derived(pinRowId != null ? pinnedScopeFor(cell, pinRowId) : activeScopeFor(cell));
-  /* pop-out window */
   const popOut = $derived('popOut' in extras ? extras.popOut : popOutFor(manifest, cell, view, scope, options));
 
   const root = $derived(placementMenu({ host, editing, onClose, options: optionInput, declared, copyHeading: heading, lead, copyTail, ...extras, popOut }));

@@ -1,4 +1,3 @@
-/* scheduled tasks */
 import { authFetch } from './auth.svelte';
 import { resource, type Resource } from './poll.svelte';
 

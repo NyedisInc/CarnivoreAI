@@ -59,6 +59,15 @@ def _channels(block: Mapping[str, Any]) -> List[Dict[str, Any]]:
     return out
 
 
+class ScrubRefused(RuntimeError):
+    pass
+
+
+def _require_written(outcome: config_writer.CommitOutcome, what: str) -> None:
+    if not outcome.wrote and outcome.status != config_writer.UNCHANGED:
+        raise ScrubRefused(f"{what} not written: {outcome.status}")
+
+
 def _scrub(config_path: Path, keys: Sequence[str]) -> bool:
     state = {"retired": False}
 
@@ -77,12 +86,12 @@ def _scrub(config_path: Path, keys: Sequence[str]) -> bool:
             changed = True
         return {**data, "notifications": new} if changed else None
 
-    config_writer.commit(config_path, mutate)
+    _require_written(config_writer.commit(config_path, mutate), "scrub")
     return state["retired"]
 
 
 def _rewrite_bak(config_path: Path) -> None:
-    config_writer.commit(config_path, lambda data: dict(data))
+    _require_written(config_writer.commit(config_path, lambda data: dict(data)), "backup rewrite")
 
 
 def _read_block(config_path: Path) -> Dict[str, Any]:
@@ -168,8 +177,8 @@ async def migrate(
         return result
     try:
         block = await asyncio.to_thread(_read_block, config_path)
-    except (OSError, ValueError):
-        log.warning("notification_migration_config_unreadable")
+    except (OSError, ValueError) as exc:
+        log.warning("notification_migration_config_unreadable", error=str(exc), error_type=type(exc).__name__)
         return result
     doc = await asyncio.to_thread(docs.update, lambda d, me: doc_model.set_local(d, doc_model.local_key("migration_started"), True))
     install_id = doc["local"]["local/install_id"]
@@ -202,15 +211,20 @@ async def migrate(
             continue
         scrub_keys += channel["scrub"]
         result.migrated.append(kind)
-    retired = await asyncio.to_thread(_scrub, config_path, scrub_keys)
-    if retired:
-        log.info("notification_public_base_url_retired")
-    if scrub_keys or retired:
-        await asyncio.to_thread(_rewrite_bak, config_path)
+    scrub_refused = False
+    try:
+        retired = await asyncio.to_thread(_scrub, config_path, scrub_keys)
+        if retired:
+            log.info("notification_public_base_url_retired")
+        if scrub_keys or retired:
+            await asyncio.to_thread(_rewrite_bak, config_path)
+    except ScrubRefused as exc:
+        log.warning("notification_migration_scrub_refused", reason=str(exc))
+        scrub_refused = True
     result.push_devices = await asyncio.to_thread(_push_ticks, docs, list(subscription_ids))
     if newly_abandoned:
         await _raise_skip_alert(newly_abandoned)
-    if not [k for k in result.skipped if k not in newly_abandoned]:
+    if not scrub_refused and not [k for k in result.skipped if k not in newly_abandoned]:
         await asyncio.to_thread(docs.update, lambda d, me: doc_model.set_local(d, MIGRATED_KEY, True))
         result.complete = True
     log.info("notification_migration_done", migrated=result.migrated, skipped=result.skipped,

@@ -8,7 +8,6 @@ export interface ButtonAttrs {
     'data-size'?: 'sm' | 'icon';
 }
 
-/* <button> */
 export function buttonAttrs(variant: ButtonVariant, size: ButtonSize): ButtonAttrs {
     return size === 'md' ? { 'data-btn': variant } : { 'data-btn': variant, 'data-size': size };
 }
@@ -31,13 +30,6 @@ export interface StatTileLook {
     editing: boolean;
 }
 
-/**
- * The class list of a stat tile.
- *
- * Inputs: look (StatTileLook). Output: string.
- * Example: statTileClass({ size: 'compact', mode: 'line', kind: 'value', framed: true, display: false, editing: false })
- *   === 'oc-stat-tile oc-stat-tile--compact oc-stat-tile--line oc-stat-tile--framed'
- */
 export function statTileClass(look: StatTileLook): string {
     const parts = ['oc-stat-tile'];
     if (look.size === 'compact') parts.push('oc-stat-tile--compact');

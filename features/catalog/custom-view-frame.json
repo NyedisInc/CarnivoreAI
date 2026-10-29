@@ -4,7 +4,7 @@
     "GET /api/v1/cplugs/{id}/view/{name}/{ticket}/{file}"
   ],
   "area": "settings",
-  "description": "A plugin's own script runs only inside a sandboxed frame with no network, no cookies, no storage and no access to the app around it. It talks to its own plugin through a small bridge that reaches only the routes the plugin declared. The overlay surface is live: one transparent layer under every popover that is clipped to a few declared rectangles and never covers the terminal.",
+  "description": "A plugin's own script runs only inside a sandboxed frame with no network, no cookies, no storage and no access to the app around it. It talks to its own plugin through a small bridge that reaches only the routes the plugin declared. The overlay surface is live: one transparent layer under every popover that is clipped to a few declared rectangles and never covers the terminal. The panel surface (a view as a widget or tab) is not offered yet because it needs the layout owner's hooks.",
   "docs": [
     "docs/cplug-platform.md",
     "docs/cplug-runtime.md",

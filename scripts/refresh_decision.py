@@ -1,21 +1,4 @@
 #!/usr/bin/env python3
-"""Decide whether a merge's changed files need a full app restart, or can be
-synced into the running local install with no restart at all.
-
-THE RULE, TWO STAGES, DENYLIST FIRST.
-
-An empty path list is not a legitimate "nothing changed" answer here: the
-caller could not read a diff, which is "could not determine" and must never
-be read as a pass. `classify_paths([])` raises `CouldNotDetermine`; the CLI
-translates that to exit 2, matching every other "could not determine" gate
-in this codebase (`scripts/run_test_tier.py`, `scripts/web-build-check.sh`).
-
-Example:
-    >>> classify_paths(["client/js/app.js", "docs/DECISIONS.md"])
-    'hot-sync'
-    >>> classify_paths(["src/core/session_manager.py"])
-    'restart'
-"""
 
 from __future__ import annotations
 

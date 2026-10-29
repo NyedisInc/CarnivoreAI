@@ -17,7 +17,7 @@ export interface AskOutcome {
   ok: boolean;
   error: string;
   code: string | null;
-  /* did not answer */
+  /* the server did not answer */
   kept?: boolean;
 }
 
@@ -32,7 +32,7 @@ export async function readAsk(messageId: number): Promise<AskRead | null> {
   }
 }
 
-/* did not answer */
+/* the server did not answer */
 export async function submitAsk(messageId: number, answers: Record<string, Record<string, unknown>>, where: AskWhere = { list: null, item: null, title: '' }): Promise<AskOutcome> {
   try {
     const out = await trackWrite(() => outboxPost({

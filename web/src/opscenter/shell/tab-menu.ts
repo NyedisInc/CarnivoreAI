@@ -1,4 +1,3 @@
-/* running sessions */
 import type { ProjectResponse, SessionInfo } from '../api/types';
 import { bucketByProject, type MenuNode } from '../../lib/drawer-tabs/add-component-menu';
 import { t } from '../../lib/i18n/index.svelte';

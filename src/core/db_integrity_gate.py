@@ -1,55 +1,3 @@
-"""The boot gate: may this start trust the cached integrity verdict?
-
-This is the same move ``src/core/db_health.py`` already made when the
-pragma came off ``GET /api/v1/version``, and it is made the same way: the
-expensive walk stays a MAINTENANCE OPERATION on a schedule, and the
-cheap path reads the verdict it produced.
-
-THE ONE RULE. ONLY A POSITIVE, FRESH, ``ok`` VERDICT TAKEN ON THIS
-DATABASE MAY SKIP THE PRAGMA. Everything else runs it. There is no rung
-that trades a little safety for a little speed, because the two sides of
-that trade are not comparable: skipping wrongly means migrating a corrupt
-database or telling the user a corrupt one is sound, and running
-needlessly costs 20 to 50 seconds of a startup that already happened.
-Every refusal is therefore free, and the ladder is written to refuse on
-anything it cannot positively establish.
-
-THAT WAS A ONE-TIME COST AND IT WAS MEASURED SETTLING. The artifact it
-wrote carries archive coverage, so the next boot skipped the pragma and
-bound in 7 s, back to baseline. What remains is the DAILY check walking
-the archive, roughly 20 s of disk once a day.
-
-WHICH DATABASE THE VERDICT DESCRIBES. The artifact used to record only
-``db_path``, which is derived from the state directory on both sides and
-therefore always matches and proves nearly nothing: a restored file lands
-at the same path. It now also records ``meta.install_id`` and the file's
-size, following ``src/core/corpus_ingest_scan.py``, which already
-invalidates its own cache on a changed ``install_id`` ("this is a
-different or restored database") and on a counter going backwards. So the
-gate checks three identity facts, and refuses on any of them:
-
-  * ``db_path``       - the verdict is for the file being opened
-  * ``install_id``    - the same logical install, not a different one
-                        dropped in at that path. An artifact written
-                        before this field existed carries None and is
-                        REFUSED, which is why the first boot after this
-                        ships still runs the pragma.
-  * ``db_size_bytes`` - the file is not SMALLER than when it was
-                        verified. SQLite does not shrink in normal
-                        operation, so a smaller file has been replaced,
-                        restored from an older backup, truncated or
-                        VACUUMed. A VACUUM is the one false positive and
-                        it costs exactly one slow boot.
-
-A RECORDED FAILURE RUNS THE LIVE PRAGMA; IT DOES NOT SHORT-CIRCUIT. The
-alternative - returning the degraded state straight from the cached
-complaint - looks stricter and is worse: it makes a stale failure
-permanent, so a user who restored a verified backup after a corruption
-would boot read-only forever, with a cached verdict outranking a live
-one. Running the pragma cannot be softer than today's behaviour, because
-it IS today's behaviour: a genuinely corrupt file produces exactly the
-same DatastoreState it always did.
-"""
 
 from __future__ import annotations
 
@@ -61,7 +9,7 @@ from typing import Any, Dict, NamedTuple, Optional
 
 import structlog
 
-from src.core.corpus_ingest_state import (
+from src.core.artifact_freshness.verdict import (
     FRESHNESS_CANNOT_DETERMINE,
     FRESHNESS_NEVER_RAN,
     FRESHNESS_STALE,
@@ -302,7 +250,6 @@ def boot_integrity_verdict(
         source=SOURCE_BOOT,
         parts=parts,
     )
-    # could not
     fresh = fold_pair(
         {"status": RUN_OK if verdict == PRAGMA_OK else RUN_FAILED,
          "detail": None if verdict == PRAGMA_OK else verdict,
@@ -314,7 +261,6 @@ def boot_integrity_verdict(
     elif verdict != PRAGMA_OK:
         answer = verdict
     else:
-        # something else
         answer = fresh["reason"]
     logger.info(
         "db_boot_integrity_ran",

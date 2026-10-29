@@ -1,0 +1,23 @@
+ ▐▛███▛█   Claude Code v2.1.285
+▝▜██████▀  rig-model[1m] · API Usage Billing
+ ▝▝   ▝▝   /tmp/work
+
+
+❯ RIG:q2 please
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☐ Top  ✔ Submit  →
+
+Which toppings?
+
+❯ 1. [ ] Cheese
+         a
+  2. [ ] Ham
+         b
+  3. [ ] Olives
+         c
+  4. [ ] Type something
+     Submit
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · ↑/↓ to navigate · Esc to cancel

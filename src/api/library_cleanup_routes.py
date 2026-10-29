@@ -5,7 +5,7 @@ from contextlib import closing
 from typing import Any, Callable, Dict
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
@@ -17,6 +17,7 @@ from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.library_cleanup import projects, sessions
 from src.core.library_cleanup.errors import CleanupNotFound, CleanupRefused
 from src.core.pipeline import triggers as save_triggers
+from src.api.error_response import api_error, refusal_error
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/library", tags=["library"], dependencies=[Depends(require_auth)])
@@ -33,7 +34,7 @@ class MergeBody(BaseModel):
 def _db_path():
     path = db_path_for(settings.get_state_dir())
     if not path.exists():
-        raise HTTPException(status_code=503, detail={"code": "no_datastore", "detail": str(path)})
+        raise api_error(503, "no_datastore", path)
     return path
 
 
@@ -47,12 +48,12 @@ async def _run(write: Callable[[sqlite3.Connection], Dict[str, Any]]) -> Dict[st
     try:
         return await run_in_threadpool(run)
     except CleanupNotFound as exc:
-        raise HTTPException(status_code=404, detail={"code": exc.code, "detail": exc.detail})
+        raise refusal_error(exc, status=404) from exc
     except CleanupRefused as exc:
-        raise HTTPException(status_code=409, detail={"code": exc.code, "detail": exc.detail})
+        raise refusal_error(exc, status=409) from exc
     except (DatastoreUnreadableError, sqlite3.Error) as exc:
         logger.error("library_cleanup_datastore_error", error=str(exc), error_type=type(exc).__name__)
-        raise HTTPException(status_code=503, detail={"code": "datastore_unavailable", "detail": str(exc)})
+        raise api_error(503, "datastore_unavailable", exc)
 
 
 @router.post("/projects/{source_id}/merge")

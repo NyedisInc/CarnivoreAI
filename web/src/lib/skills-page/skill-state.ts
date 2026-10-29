@@ -1,4 +1,3 @@
-/* could not */
 import type { InstalledItem, SkillAutopsy } from '../catalog/types';
 import type { Translate } from '../sessions/types';
 import type { Census, SkillGroupRow } from './skills-types';

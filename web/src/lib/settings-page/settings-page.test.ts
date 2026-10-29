@@ -52,7 +52,7 @@ describe('the registry', () => {
         }
     });
 
-    test('twelve sections, most reached-for first; launch profiles and keyboard shortcuts live inside; pack and plugins are not sections', () => {
+    test('twelve sections, most reached-for first; launch profiles and keyboard shortcuts live inside (Alex (Example-owner), 2026-10-03 and 2026-10-13); pack and plugins are not sections', () => {
         expect(SETTINGS_SECTIONS.map((s) => s.id)).toEqual([
             'account',
             'appearance',

@@ -1,19 +1,3 @@
-"""What a session still has running or scheduled, so auto-sleep never ends it.
-
-PURE: this module reads an :class:`~src.core.attention.evidence.Evidence`
-bundle and answers :class:`SleepHold` or None. It opens nothing. Two callers:
-
-* the listing stamp (``src/api/sleep_hold_listing.py``) judges the watcher's
-  cached observation, ``require_measured=False``: a field the reader did not
-  fill is simply not a reason there;
-* the auto-sleep pass (``sleeper.py``) judges a FRESH read taken right before
-  it acts, ``require_measured=True``: a claude whose timers, subagents or
-  process tree could not be measured is kept awake, because unknown is never
-  idle (fail safe). Codex records none of these and is never held here.
-
-Neither the coffee cup nor a pin changes the answer: the hold applies to every
-session.
-"""
 
 from __future__ import annotations
 

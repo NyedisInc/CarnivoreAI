@@ -1,4 +1,4 @@
-/* and writes nothing not allowed socket dropped the session underneath the whole conversation */
+/* and writes nothing the session underneath the whole conversation */
 (function () {
     'use strict';
 

@@ -79,6 +79,7 @@
     return read && read.status !== 'loading' ? 'failed' : 'loading';
   }
 
+  /* there is nothing */
   function viewOf(reads: readonly (Resource<unknown> | null)[]): 'loading' | 'unknown' | 'ready' {
     const states = reads.map(readState);
     if (states.length === 0 || states.includes('ready')) return 'ready';

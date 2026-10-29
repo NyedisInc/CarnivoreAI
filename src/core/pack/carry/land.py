@@ -1,12 +1,3 @@
-"""The RECEIVING half of a carry (S3; docs/pack.md 11.2): put one unit into ``<project root>/<rel>`` and never write over local work.
-
-``check_unit`` is a dry run. ``apply_repo`` lands a nested (or root) git repo: the carried bundle through ``bundles.apply_bundle`` (refs
-under ``refs/carnivore/<sender>/``, never the receiver's own branches), the carried branch checked out fast-forward only, then the work in
-progress restored. ``apply_files`` tops up non-repo content: the archive is unpacked into a scratch folder INSIDE the project root (so the
-final move is a same-volume link) with the tar rung's guards, and a file moves into place only where the target path is absent or
-byte-equal; any other file is ``target_has_own_changes`` and nothing at all is written. A peer-supplied ``rel`` is validated like
-``move/receive._working_dir`` plus: no ``.git`` component, no symlink on the way, nothing outside the root. No file content is logged.
-"""
 
 from __future__ import annotations
 

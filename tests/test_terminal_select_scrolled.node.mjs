@@ -237,9 +237,9 @@ test('terminal.js wires TerminalSelectScrolled from initTerminal', () => {
     assert.ok(defMatch, 'method definition not found');
     const at = defMatch.index;
     const body = terminalSrc.slice(at, at + 500);
-    assert.match(body, /window\.TerminalSelectScrolled\.init\(/,
+    assert.match(body, /sel\.init\(/,
         'the hook must actually call TerminalSelectScrolled.init');
-    assert.match(body, /if\s*\(\s*window\.TerminalSelectScrolled\s*\)\s*window\.TerminalSelectScrolled\.init\(/,
+    assert.match(body, /const sel = this\._m\('TerminalSelectScrolled'\);\s*if\s*\(\s*sel\s*\)\s*sel\.init\(/,
         'the call must be guarded on the module being loaded, and on nothing else - '
         + 'a constant-false guard disables the whole feature while still reading as wired');
 });
@@ -464,6 +464,37 @@ test('init wires all three capture-phase listeners on the container', () => {
         + 'own listeners on the descendant .xterm element');
 });
 
+test('every terminal gets its own instance: a second one wires too, and uninstall removes its listeners (u008-03)', () => {
+    const { api } = loadModuleReentrant({ pinned: true, mouseActive: true, altScreenState: 'transcript' });
+    assert.equal(typeof api.create, 'function', 'the module exposes the per-terminal factory');
+    const mkContainer = () => {
+        const c = { added: [], removed: [] };
+        c.addEventListener = (type) => c.added.push(type);
+        c.removeEventListener = (type) => c.removed.push(type);
+        return c;
+    };
+    const a = api.create();
+    const b = api.create();
+    const ca = mkContainer();
+    const cb = mkContainer();
+    const offA = a.init(ca, () => null);
+    b.init(cb, () => null);
+    assert.equal(ca.added.length, 3, 'the first terminal wires');
+    assert.equal(cb.added.length, 3, 'the second terminal wires too, it is not a no-op behind a shared flag');
+    offA();
+    assert.deepEqual(ca.removed.sort(), ['mousedown', 'mousemove', 'mouseup']);
+    assert.equal(cb.removed.length, 0, 'tearing one down leaves the other alone');
+    assert.equal(a._isForcedGesture(), false);
+});
+
+test('terminal.js resolves the select-while-scrolled module through _m, so a cell can carry its own (u008-03)', () => {
+    const term = fs.readFileSync(new URL('../client/js/terminal.js', import.meta.url), 'utf8');
+    assert.match(term, /this\._m\('TerminalSelectScrolled'\)/);
+    assert.doesNotMatch(term, /window\.TerminalSelectScrolled\.init/);
+});
+
 console.log(`\n${passes} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------

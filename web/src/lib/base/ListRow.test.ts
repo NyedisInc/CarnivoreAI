@@ -42,7 +42,19 @@ describe('the row never changes height on hover or focus', () => {
         expect(stateSizing(rules)).toEqual([]);
     });
 
-    test('a row has nothing on hover: no hover rule, no hover tint', () => {
+    test('aria-disabled="true" gets a base disabled look (dim token, no pointer action) and drops the pointer flag', () => {
+        const rule = cssRules(listCss).find((r) => r.selector === ".oc-list__row[aria-disabled='true']");
+        expect(rule?.decls['color']).toBe('var(--oc-text-dim)');
+        expect(rule?.decls['pointer-events']).toBe('none');
+        expect(rule?.decls['cursor']).toBe('default');
+        const root = document.createElement('div');
+        document.body.append(root);
+        mounted.push(mount(ListRow, { target: root, props: { primary: 'x', onclick: () => {}, 'aria-disabled': 'true' } }) as Record<string, unknown>);
+        flushSync();
+        expect(root.querySelector('.oc-list__row')!.hasAttribute('data-interactive')).toBe(false);
+    });
+
+    test('a row has nothing on hover (Joe (ccsliinc), 2026-10-26): no hover rule, no hover tint', () => {
         expect(rules.filter((r) => r.selector.includes(':hover'))).toEqual([]);
         const elementsCss = readFileSync(`${process.cwd()}/src/lib/base/elements.css`, 'utf8');
         const rowBtn = cssRules(elementsCss).find((r) => r.selector === ":where([data-btn='row'])")!;

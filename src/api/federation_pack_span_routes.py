@@ -26,7 +26,8 @@ logger = structlog.get_logger()
 router = APIRouter(prefix="/federation", tags=["federation"])
 
 _require_replica, _require_proxy, _require_refresh = require_peer("replica"), require_peer("swarm-proxy"), require_peer("refresh")
-pack_capabilities.register("swarm.remote_body", "swarm.proxy", "pack.refresh", pack_capabilities.CAP_TASK_MANAGER_NAMES)
+pack_capabilities.register("swarm.remote_body", "swarm.proxy", "pack.refresh", pack_capabilities.CAP_TASK_MANAGER_NAMES,
+                             pack_capabilities.CAP_SWARM_ADOPT)
 restrictions.set_agent_counter(body_host.hosted_count)
 
 
@@ -99,6 +100,9 @@ async def sleep_body(home_agent_id: int, body: SleepBody, principal: Principal =
 @router.post("/swarm/proxy")
 async def swarm_proxy(call: proxy_server.ProxyCall, request: Request, principal: Principal = Depends(_require_proxy)) -> Dict[str, Any]:
     """Run a remote body's Swarm or Task Manager tool call as the home's own action (F20). Output: ``{result}``. Raises: 403 ``proxy_binding_refused``, 409.
+
+    While this computer's Swarm switch is off a ``swarm_*`` tool is refused 409 ``swarm_off``, exactly the family a local pane
+    loses; ``huddle_*`` and ``task_manager_*`` calls run as they do for a local pane (docs/swarm.md 4.10).
     """
     peer = _peer(principal)
     family = tool_families.family_of(call.tool)
@@ -134,7 +138,8 @@ class BoardBody(BaseModel):
 
 @router.post("/pack/board/{verb}")
 async def board_verb(verb: str, body: BoardBody, request: Request, principal: Principal = Depends(_require_proxy)) -> Dict[str, Any]:
-    """
+    """A replica machine's owner reads or writes the home's board: one ``huddle_*`` tool, run here as an owner-token call (writes park in this machine's inbox).
+
     Raises: 403 ``proxy_binding_refused`` (the caller does not replicate that project), 409 ``tool_not_proxied`` or ``not_local``.
     """
     from src.config import settings as app_settings
@@ -160,6 +165,7 @@ async def board_verb(verb: str, body: BoardBody, request: Request, principal: Pr
 
 @router.post("/pack/refresh", status_code=202)
 async def refresh_install(principal: Principal = Depends(_require_refresh)) -> Any:
+    """Refresh this machine's install under its own lock, off the request path. Output: ``{op_id}`` (202). Raises: 501 ``no_refresh_script``, 409 ``refresh_running``."""
     _peer(principal)
     try:
         return await refresh_fanout.run_install_refresh()

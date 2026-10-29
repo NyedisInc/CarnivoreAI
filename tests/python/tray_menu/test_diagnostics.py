@@ -158,3 +158,16 @@ def test_config_is_never_loaded_through_the_settings_models(world, monkeypatch):
 @pytest.mark.parametrize("text,seconds", [("05:07", 307), ("01:02:03", 3723), ("2-00:00:01", 172801), ("bad", None)])
 def test_etime_parses_the_macos_format(text, seconds):
     assert builder.parse_etime(text) == seconds
+
+
+def test_a_hard_linked_startup_banner_is_not_read(tmp_path, monkeypatch):
+    from src.core.diagnostics import builder
+    from src.core.server_log import locate
+
+    banner = tmp_path / "banner.log"
+    banner.write_text("startup failed\n")
+    monkeypatch.setattr(builder, "STARTUP_ERROR_FILE", banner)
+    monkeypatch.setattr(locate, "server_log_path", lambda: tmp_path / "none.log")
+    assert builder._startup_errors()["banner_tail"] == "startup failed\n"
+    os.link(banner, tmp_path / "second-name.log")
+    assert builder._startup_errors()["banner_tail"] is None

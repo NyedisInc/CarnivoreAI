@@ -114,12 +114,13 @@ async def start_send(session_uuid: str, machine: str, wait_seconds: int, request
 
 @router.post("/sessions/{session_uuid}/move", dependencies=[Depends(require_peer_sessions)])
 async def move_session(session_uuid: str, body: MoveBody, request: Request) -> Dict[str, Any]:
-    """
+    """Move one running session of this computer to a paired computer, resumed in the same conversation.
+
     Inputs: session_uuid (the durable ``sessions.session_uuid``); body (MoveBody). Output: {op_id, state, machine}.
     Raises: 404 ``unknown_session`` / ``unknown_machine``, 409 ``session_not_movable`` / ``no_conversation`` / ``project_moved_away`` /
       ``move_in_progress`` and (from the op, on ``GET /pack/ops/{id}``) ``turn_not_ended`` / ``project_not_on_target`` / ``account_not_usable``,
       403 ``pack_restricted``, 502 ``machine_unreachable``.
-    Example: POST /api/v1/sessions/9f27394c-1111/move {"machine": "hosta"}
+    Example: POST /api/v1/sessions/0198c8f0-1111/move {"machine": "studio"}
     """
     answer = await start_send(session_uuid, body.machine, body.wait_seconds, request)
     return {k: answer[k] for k in ("op_id", "state", "machine")}

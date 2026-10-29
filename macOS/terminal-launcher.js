@@ -1,4 +1,5 @@
-// osascript -e 'tell application "Terminal
+// WHY THIS FILE EXISTS
+//   osascript -e 'tell application "Terminal" to do script "tail -f ..."'
 
 'use strict';
 

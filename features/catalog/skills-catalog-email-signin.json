@@ -16,7 +16,14 @@
     "sign in",
     "email"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The catalog's email sign in box",
+      "caption": "Signing in with an email address",
+      "file": "signin.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Catalog email sign-in",
   "since": "2026-09-16",
   "status": "stable",
@@ -25,6 +32,5 @@
   "updated": "2026-09-27",
   "where": [
     "The top of the skills catalog, EMAIL SIGN IN."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

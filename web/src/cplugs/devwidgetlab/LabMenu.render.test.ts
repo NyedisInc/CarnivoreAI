@@ -19,6 +19,7 @@ setLocale('en');
 
 const mounted: ReturnType<typeof mount>[] = [];
 
+/** Let promises, channel microtasks and effects settle. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 8; i += 1) {
     await Promise.resolve();
@@ -39,8 +40,8 @@ async function openBoth(): Promise<{ menu: HTMLElement; view: HTMLElement }> {
 const frames = (root: HTMLElement) => [...root.querySelectorAll<HTMLIFrameElement>('iframe.dwl-frame')];
 const param = (frame: HTMLIFrameElement, name: string) => new URL(frame.src, 'http://x.test').searchParams.get(name);
 const button = (root: HTMLElement, text: string) => [...root.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent?.trim() === text)!;
-const captureKey = (root: HTMLElement) => root.querySelector<HTMLButtonElement>('.dwl-foot-key')!;
-const leaf = (root: HTMLElement, key: string) => root.querySelector<HTMLButtonElement>(`.dwl-leaf[data-key="${key}"]`)!;
+const captureKey = (root: HTMLElement) => root.querySelector<HTMLButtonElement>('.dwl-foot > [data-btn]')!;
+const leaf = (root: HTMLElement, key: string) => root.querySelector<HTMLButtonElement>(`[data-tree-leaf][data-key="${key}"]`)!;
 
 beforeEach(() => {
   installLabBus();
@@ -62,7 +63,7 @@ describe('the menu', () => {
     const kids = [...menu.querySelector('.dwl-menu')!.children];
     expect(kids.map((node) => node.className)).toEqual(['dwl-scroll', 'dwl-links']);
     const scroll = menu.querySelector('.dwl-scroll')!;
-    const order = ['.dwl-filter', '.dwl-all', '.dwl-tree .dwl-group', '.dwl-rows', '.dwl-sec[data-open="no"]', '.dwl-foot', '.dwl-checks'].map((sel) => scroll.querySelector(sel));
+    const order = ['.dwl-filter', '[data-all-fit]', '.dwl-tree [data-tree-group]', '.dwl-rows', '.dwl-sec[data-open="no"]', '.dwl-foot', '.dwl-checks'].map((sel) => scroll.querySelector(sel));
     expect(order.every((node) => node !== null)).toBe(true);
     const all = [...scroll.querySelectorAll('*')];
     const at = order.map((node) => all.indexOf(node as Element));
@@ -76,7 +77,7 @@ describe('the menu', () => {
     expect(menu.querySelector('.dwl-toolbar')).toBeNull();
     expect(menu.querySelector('.dwl-status')).toBeNull();
     expect(menu.textContent).not.toContain('view only');
-    expect([...menu.querySelectorAll('.dwl-sec-head .dwl-sec-label')].map((one) => one.textContent)).toEqual(['preview', 'json scenario', 'capture', 'checks']);
+    expect([...menu.querySelectorAll('[data-sec-head] .dwl-sec-label')].map((one) => one.textContent)).toEqual(['preview', 'json scenario', 'capture', 'checks']);
   });
 
   it('picks each drawer as its own "show in" row (all on to start), one band each, and the viewer follows through the channel', async () => {
@@ -117,7 +118,7 @@ describe('the menu', () => {
 
   it('shows each folded section\'s current value in its header', async () => {
     const { menu } = await openBoth();
-    const heads = [...menu.querySelectorAll('.dwl-sec-head')].map((head) => head.querySelector('.dwl-sec-value')!.textContent);
+    const heads = [...menu.querySelectorAll('[data-sec-head]')].map((head) => head.querySelector('.dwl-sec-value')!.textContent);
     expect(heads[0]).toBe('6 places / normal');
     expect(heads[1]).toBe('none');
     expect(heads[2]).toBe('6 frames');
@@ -126,9 +127,11 @@ describe('the menu', () => {
 
   it('a pick and a band size flip change what the viewer draws, through the channel', async () => {
     const { menu, view } = await openBoth();
+    for (const head of menu.querySelectorAll<HTMLButtonElement>('[data-group-nested][aria-expanded="false"]')) head.click();
+    await settle();
     const first = labWidgets().find((w) => w.key !== 'core.notes' && w.hosts.every((h) => h.supported))!;
     expect(frames(view).length).toBe(6);
-    view.querySelector<HTMLButtonElement>('.dwl-host[data-host="home"] .dwl-size-key[data-size="l"]')!.click();
+    view.querySelector<HTMLButtonElement>('.dwl-host[data-host="home"] [data-size-name="l"]')!.click();
     await settle();
     expect(frames(view).length).toBe(6);
     expect(frames(view).map((f) => param(f, 'size')).sort()).toEqual(['l', 'm', 'm', 'm', 'm', 'm']);
@@ -155,7 +158,7 @@ describe('the menu', () => {
     await settle();
     expect(view.querySelector('.dwl-fit')).not.toBeNull();
     expect(menu.querySelector('.dwl-sec-value')!.textContent).toBeTruthy();
-    (view.querySelector('.dwl-fit-cell[data-state="red"]') as HTMLButtonElement).click();
+    (view.querySelector('[data-fit-cell][data-state="red"]') as HTMLButtonElement).click();
     await settle();
     expect(leaf(menu, 'core.notes').getAttribute('aria-current')).toBe('true');
     expect(view.querySelector('.dwl-preview[data-focused="yes"]')).not.toBeNull();
@@ -165,17 +168,17 @@ describe('the menu', () => {
   it('the find field narrows the tree and the results select keeps only widgets the last run failed', async () => {
     api.fitTableState.mockResolvedValue({ available: true, reason: '', running: false, started: null, exit: 1, table: SAMPLE_TABLE });
     const { menu } = await openBoth();
-    const select = menu.querySelector<HTMLSelectElement>('.dwl-result')!;
+    const select = menu.querySelector<HTMLSelectElement>('[data-result]')!;
     const failing = [...select.options].find((one) => one.value === 'failing')!;
     expect(failing.textContent).toBe('failing (2)');
     expect(failing.disabled).toBe(false);
     select.value = 'failing';
     select.dispatchEvent(new Event('change', { bubbles: true }));
     await settle();
-    expect([...menu.querySelectorAll('.dwl-leaf[data-key]')].map((one) => (one as HTMLElement).dataset['key'])).toEqual(['core.notes']);
+    expect([...menu.querySelectorAll('[data-tree-leaf][data-key]')].map((one) => (one as HTMLElement).dataset['key'])).toEqual(['core.notes']);
     select.value = 'all';
     select.dispatchEvent(new Event('change', { bubbles: true }));
-    const field = menu.querySelector('input[type="search"]') as HTMLInputElement;
+    const field = menu.querySelector('.dwl-search input') as HTMLInputElement;
     field.value = 'zzzz-nothing';
     field.dispatchEvent(new Event('input', { bubbles: true }));
     await settle();
@@ -184,7 +187,7 @@ describe('the menu', () => {
 
   it('turns the failing result off with no run yet, and keeps unchecked on', async () => {
     const { menu } = await openBoth();
-    const options = [...menu.querySelectorAll<HTMLOptionElement>('.dwl-result option')];
+    const options = [...menu.querySelectorAll<HTMLOptionElement>('[data-result] option')];
     expect(options.map((one) => one.textContent)).toEqual(['all results', 'failing (0)', `unchecked (${distinctWidgets(labWidgets())})`]);
     expect(options[1]!.disabled).toBe(true);
     expect(options[2]!.disabled).toBe(false);
@@ -195,7 +198,7 @@ describe('the menu', () => {
     const { menu } = await openBoth();
     expect(leaf(menu, 'core.notes').querySelector('.dwl-dot')!.getAttribute('data-verdict')).toBe('fail');
     expect(leaf(menu, 'core.notes').querySelector('.dwl-verdict')!.textContent).toMatch(/^fails \d+$|^fail$/);
-    const unjudged = [...menu.querySelectorAll<HTMLElement>('.dwl-leaf[data-key]')].find((one) => one.querySelector('.dwl-verdict')!.getAttribute('data-verdict') === 'none')!;
+    const unjudged = [...menu.querySelectorAll<HTMLElement>('[data-tree-leaf][data-key]')].find((one) => one.querySelector('.dwl-verdict')!.getAttribute('data-verdict') === 'none')!;
     expect(unjudged.querySelector('.dwl-verdict')!.textContent).toBe('not checked');
   });
 });
@@ -218,7 +221,7 @@ describe('the CHECKS block', () => {
   it('runs every widget by default and passes the catalog tick along', async () => {
     api.startMatrix.mockResolvedValue({ state: { ...idle, running: true }, refusal: '' });
     const { menu } = await openBoth();
-    [...menu.querySelectorAll<HTMLButtonElement>('.dwl-checks .dwl-choice')].find((one) => one.textContent?.includes('catalog'))!.click();
+    menu.querySelector<HTMLInputElement>('.dwl-checks [data-catalog-choice]')!.click();
     await settle();
     runKey(menu).click();
     await settle();
@@ -297,20 +300,12 @@ describe('the PREVIEW block', () => {
     expect(on().length).toBe(1);
   });
 
-  it('keeps the confirm-edge rule for a chosen option in the lab stylesheet (tokens only)', () => {
-    const css = readLabCss();
-    const on = css.slice(css.indexOf(".dwl-choice[data-on='yes'] {"), css.indexOf('}', css.indexOf(".dwl-choice[data-on='yes'] {")));
-    expect(on).toContain('border-color: var(--oc-green)');
-    expect(on).toContain('background: color-mix(');
-    expect(on).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(/i);
-  });
-
   it('no longer shows the width controls (each band\'s header switches its own size), and the header reads show in / sample data', async () => {
     const { menu } = await openBoth();
     expect(menu.querySelector('.dwl-field[aria-label="size"]')).toBeNull();
-    expect(menu.querySelector('.dwl-more-key')).toBeNull();
+    expect(menu.querySelector('[data-more-key]')).toBeNull();
     expect(menu.textContent).not.toMatch(/select one or more\s*S \//);
-    expect([...menu.querySelectorAll('.dwl-choice')].some((one) => /^[SML] \/ \d+/.test(one.textContent?.trim() ?? ''))).toBe(false);
+    expect([...menu.querySelectorAll('[data-width-choice]')].some((one) => /^[SML] \/ \d+/.test(one.textContent?.trim() ?? ''))).toBe(false);
     expect(menu.querySelector('.dwl-rows')!.closest('.dwl-sec')!.querySelector('.dwl-sec-value')!.textContent).toBe('6 places / normal');
     expect(PREVIEW_WIDTHS_SHOWN).toBe(false);
   });
@@ -366,7 +361,7 @@ describe('capture', () => {
     document.body.innerHTML = '';
     localStorage.setItem(SELECTION_KEY, JSON.stringify({ folds: { checks: false } }));
     const { menu } = await openBoth();
-    expect([...menu.querySelectorAll('.dwl-sec-head')].at(-1)!.getAttribute('aria-expanded')).toBe('false');
+    expect([...menu.querySelectorAll('[data-sec-head]')].at(-1)!.getAttribute('aria-expanded')).toBe('false');
     expect(menu.querySelector('.dwl-checks')).toBeNull();
   });
 
@@ -374,8 +369,8 @@ describe('capture', () => {
     const { menu } = await openBoth();
     const total = distinctWidgets(labWidgets());
     expect(total).toBeLessThan(labWidgets().length);
-    expect(menu.querySelector('.dwl-all .dwl-group-count')!.textContent).toBe(String(total));
-    const groups = [...menu.querySelectorAll('.dwl-tree .dwl-group--nested .dwl-group-count')].reduce((sum, node) => sum + Number.parseInt(node.textContent!, 10), 0);
+    expect(menu.querySelector('[data-all-fit] .dwl-group-count')!.textContent).toBe(String(total));
+    const groups = [...menu.querySelectorAll('.dwl-tree [data-group-nested] .dwl-group-count')].reduce((sum, node) => sum + Number.parseInt(node.textContent!, 10), 0);
     expect(groups).toBe(total);
   });
 });
@@ -385,11 +380,11 @@ describe('the lab keeps to its own storage', () => {
     api.fitTableState.mockResolvedValue({ available: true, reason: '', running: false, started: null, exit: 1, table: SAMPLE_TABLE });
     api.runCapture.mockResolvedValue({ ok: true, determined: true, failures: [] });
     const { menu, view } = await openBoth();
-    view.querySelector<HTMLButtonElement>('.dwl-host[data-host="home"] .dwl-size-key[data-size="l"]')!.click();
+    view.querySelector<HTMLButtonElement>('.dwl-host[data-host="home"] [data-size-name="l"]')!.click();
     await settle();
     captureKey(menu).click();
-    menu.querySelector<HTMLButtonElement>('.dwl-sec-head')!.click();
-    view.querySelector<HTMLElement>('.dwl-cap-key')!.click();
+    menu.querySelector<HTMLButtonElement>('[data-sec-head]')!.click();
+    view.querySelector<HTMLElement>('[data-cap-key]')!.click();
     await settle();
     const keys = Object.keys(localStorage);
     expect(keys.length).toBeGreaterThan(0);
@@ -403,10 +398,20 @@ describe('the lab keeps to its own storage', () => {
 });
 
 describe('the widget tree', () => {
+  it('keeps the Shift cascade cue on every fold row now that the rows are base buttons', async () => {
+    const { menu } = await openBoth();
+    const group = menu.querySelector<HTMLElement>('[data-tree-group][data-group-nested]')!;
+    group.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift', shiftKey: true }));
+    expect(group.getAttribute('data-cascade')).toBe('1');
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift', shiftKey: false }));
+    expect(group.hasAttribute('data-cascade')).toBe(false);
+  });
+
   const proto = HTMLElement.prototype as unknown as { showPopover?: () => void; hidePopover?: () => void };
   proto.showPopover ??= function () {};
   proto.hidePopover ??= function () {};
-  const groupHead = (menu: HTMLElement, id: string) => menu.querySelector<HTMLButtonElement>(`.dwl-group[data-group="${id}"]`)!;
+  const groupHead = (menu: HTMLElement, id: string) => menu.querySelector<HTMLButtonElement>(`[data-tree-group][data-group="${id}"]`)!;
 
   it('is a collapsible tree by the drawer\'s categories, each group a fold with its count, and the fit table is the entry above them', async () => {
     const { menu } = await openBoth();
@@ -420,12 +425,12 @@ describe('the widget tree', () => {
     expect(head.querySelector('.dwl-group-count')!.textContent).toBe(String(count));
     expect(head.getAttribute('aria-expanded')).toBe('true');
     expect(head.querySelector('.session-sidebar-group__chevron')).not.toBeNull();
-    const other = [...menu.querySelectorAll<HTMLButtonElement>('.dwl-tree .dwl-group--nested')].find((one) => one !== head)!;
+    const other = [...menu.querySelectorAll<HTMLButtonElement>('.dwl-tree [data-group-nested]')].find((one) => one !== head)!;
     expect(other.getAttribute('aria-expanded')).toBe('false');
   });
 
-  const rootHead = (menu: HTMLElement) => menu.querySelector<HTMLButtonElement>('.dwl-group--root')!;
-  const nested = (menu: HTMLElement) => [...menu.querySelectorAll<HTMLButtonElement>('.dwl-group--nested')];
+  const rootHead = (menu: HTMLElement) => menu.querySelector<HTMLButtonElement>('[data-group-root]')!;
+  const nested = (menu: HTMLElement) => [...menu.querySelectorAll<HTMLButtonElement>('[data-group-nested]')];
   const click = (node: HTMLElement, shiftKey = false) => node.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey }));
 
   it('has one top-level "widgets" fold above every group: it hides and shows all of them at once, and keeps each group\'s own fold underneath', async () => {
@@ -438,7 +443,7 @@ describe('the widget tree', () => {
     await settle();
     expect(rootHead(menu).getAttribute('aria-expanded')).toBe('false');
     expect(nested(menu)).toHaveLength(0);
-    expect(menu.querySelectorAll('.dwl-leaf').length).toBe(0);
+    expect(menu.querySelectorAll('[data-tree-leaf]').length).toBe(0);
     click(rootHead(menu));
     await settle();
     expect(nested(menu).map((one) => one.getAttribute('aria-expanded'))).toEqual(before);
@@ -465,7 +470,7 @@ describe('the widget tree', () => {
 
   it('opens a read-only row menu on a right-click (browser menu suppressed): show in viewer and copy key, nothing that writes', async () => {
     const { menu } = await openBoth();
-    const row = menu.querySelector<HTMLButtonElement>('.dwl-leaf[data-key="core.notes"]')!;
+    const row = menu.querySelector<HTMLButtonElement>('[data-tree-leaf][data-key="core.notes"]')!;
     const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 60 });
     row.dispatchEvent(event);
     await settle();
@@ -491,11 +496,11 @@ describe('the widget tree', () => {
 
   it('opens every group that still has a match while the filter is on, and leaves the stored folds alone', async () => {
     const { menu } = await openBoth();
-    const field = menu.querySelector('input[type="search"]') as HTMLInputElement;
+    const field = menu.querySelector('.dwl-search input') as HTMLInputElement;
     field.value = 'a';
     field.dispatchEvent(new Event('input', { bubbles: true }));
     await settle();
-    const heads = [...menu.querySelectorAll<HTMLButtonElement>('.dwl-tree .dwl-group')];
+    const heads = [...menu.querySelectorAll<HTMLButtonElement>('.dwl-tree [data-tree-group]')];
     expect(heads.length).toBeGreaterThan(2);
     expect(heads.every((head) => head.getAttribute('aria-expanded') === 'true')).toBe(true);
     expect(localStorage.getItem('devwidgetlab.tree.folds')).toBeNull();
@@ -509,12 +514,12 @@ describe('the widget tree', () => {
       return box;
     };
     const empty = await mountMenu([{ id: 'drafts', label: 'new items', leaves: [] }]);
-    expect(empty.querySelector('.dwl-group[data-group="drafts"]')!.getAttribute('aria-expanded')).toBe('false');
-    expect(empty.querySelector('.dwl-group[data-group="drafts"] .dwl-group-count')!.textContent).toBe('0');
+    expect(empty.querySelector('[data-tree-group][data-group="drafts"]')!.getAttribute('aria-expanded')).toBe('false');
+    expect(empty.querySelector('[data-tree-group][data-group="drafts"] .dwl-group-count')!.textContent).toBe('0');
     while (mounted.length) unmount(mounted.pop()!);
     document.body.innerHTML = '';
     const full = await mountMenu([{ id: 'drafts', label: 'new items', leaves: [{ key: 'draft.one', label: 'a draft' }] }]);
-    const heads = [...full.querySelectorAll('.dwl-tree .dwl-group--nested')];
+    const heads = [...full.querySelectorAll('.dwl-tree [data-group-nested]')];
     expect(heads.at(-1)!.getAttribute('data-group')).toBe('drafts');
     expect(heads.at(-1)!.textContent).toContain('new items');
     expect(heads.at(-1)!.querySelector('.dwl-group-count')!.textContent).toBe('1');

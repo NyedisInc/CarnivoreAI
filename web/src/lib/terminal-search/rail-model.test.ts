@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { RailModel } from './rail-model.svelte';
 import type { DisposableLike, MarkerLike, PromptScanApi, ScannedPrompt } from './types';
 
+/** One scanned prompt, as the scanner reports it. */
 function prompt(ordinal: number, line: number, text: string): ScannedPrompt {
     return { ordinal, line, text, full: text, preview: text.slice(0, 80) };
 }

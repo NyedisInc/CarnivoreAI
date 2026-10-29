@@ -28,7 +28,7 @@ from src.api.version_routes import router as version_router
 from src.core import db as db_module
 from src.core import db_health, db_integrity
 from src.core import db_integrity_status
-from src.core import corpus_ingest_state as freshness_vocab
+from src.core.artifact_freshness import verdict as freshness_vocab
 from src.core.db import db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.db_state import STATUS_DEGRADED_DB_UNREADABLE, STATUS_OK
@@ -203,7 +203,7 @@ def test_version_endpoint_runs_no_integrity_check(client, monkeypatch) -> None:
 
     def _boom(_conn):
         raise AssertionError(
-            "PRAGMA integrity_check ran inside a request. On a large "
+            "PRAGMA integrity_check ran inside a request. On a 4.5 GB "
             "cloude.db that blocks the event loop for seconds, three times "
             "a minute, forever - see src/core/db_integrity.py"
         )

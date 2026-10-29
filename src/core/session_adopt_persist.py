@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 import structlog
 
@@ -23,56 +23,26 @@ from src.core.session_project_binding import (
 from src.core.session_store import get_instance
 from src.core.tmux_listing import TmuxListing
 
+if TYPE_CHECKING:
+    from src.core.claude_session_correlate_ladder import LadderResult
+
 logger = structlog.get_logger()
 
 ADOPT_LIFECYCLE_SOURCE = "adopt"
 
-# the session is gone
 PERSIST_SESSION_GONE = "session_gone"
 
-# could not
 PERSIST_LISTING_UNAVAILABLE = "listing_unavailable"
 
 PERSIST_REFUSED = "refused"
 
 
 class AdoptTargetGoneError(RuntimeError):
-    """The target of an adopt was MEASURED gone, not merely un-probed.
-
-    Description: raised so the route can answer "that session is no
-      longer there" with a refresh instead of the 500 a genuine server
-      fault produces. It is deliberately a distinct type and not a bare
-      RuntimeError, because ``adopt_external_session`` also raises plain
-      RuntimeError for a probe that could not RUN (tmux timed out or
-      errored on the listing, or on the later ``#{pane_dead}`` check) and
-      for a failed pipe-pane setup, and those are genuine server faults
-      while this is a stale client view of a normal, expected race.
-    """
+    pass
 
 
 @dataclass(frozen=True)
 class AdoptPersistResult:
-    """What the persistence half of one adoption did.
-
-    Description: carries the outcome vocabulary of
-      :func:`src.core.session_identity.claim_instance` plus the three
-      failures that can happen before the UPDATE is even reachable. A
-      caller must test :attr:`persisted` rather than assuming, because
-      four of the possible outcomes look like success from a distance.
-    Inputs (constructor): outcome (str) - ``claimed`` or one of the
-      failure tokens. session_uuid (str | None) - the claimed row's
-      external identity. working_dir (str | None) - the directory probed
-      during this adoption, None when it could not be read.
-      project_id (int | None) and project_attribution (str | None) - the
-      attribution applied. epoch (int | None) - the instance's
-      ``#{session_created}``, present whenever the listing actually
-      located the live instance (i.e. whenever ``PERSIST_SESSION_GONE``
-      and ``PERSIST_LISTING_UNAVAILABLE`` do NOT apply), so a caller can
-      key a durable, instance-scoped write (e.g. ``activity_persist.
-      write_state``) off this adoption without a second tmux probe.
-      detail (str | None) - human-readable reason.
-    Output: an AdoptPersistResult instance.
-    """
 
     outcome: str
     session_uuid: Optional[str] = None
@@ -106,6 +76,7 @@ def persist_adoption(
     pane_pid_probe: Optional[Callable[[str], Optional[int]]] = None,
     pane_dead_probe: Optional[Callable[[str], Optional[bool]]] = None,
     now: Optional[str] = None,
+    correlate: bool = True,
 ) -> AdoptPersistResult:
     from src.core.session_identity import record_instance
 
@@ -231,16 +202,17 @@ def persist_adoption(
             detail=claim.detail,
         )
 
-    pane_pid = pane_pid_probe(name) if pane_pid_probe is not None else None
-    _try_correlate_claude_session(
-        conn,
-        socket=socket,
-        name=name,
-        epoch=epoch,
-        working_dir=working_dir,
-        pane_pid=pane_pid,
-        now=now,
-    )
+    if correlate:
+        pane_pid = pane_pid_probe(name) if pane_pid_probe is not None else None
+        _try_correlate_claude_session(
+            conn,
+            socket=socket,
+            name=name,
+            epoch=epoch,
+            working_dir=working_dir,
+            pane_pid=pane_pid,
+            now=now,
+        )
 
     logger.info(
         "adopt_persisted",
@@ -272,16 +244,23 @@ def _try_correlate_claude_session(
     pane_pid: Optional[int],
     now: Optional[str],
 ) -> None:
+    ladder = measure_claude_correlation(
+        name=name, socket=socket, epoch=epoch, working_dir=working_dir, pane_pid=pane_pid
+    )
+    if ladder is not None:
+        bind_claude_correlation(conn, ladder, socket=socket, name=name, epoch=epoch, now=now)
+
+
+def measure_claude_correlation(
+    *,
+    name: str,
+    socket: str,
+    epoch: int,
+    working_dir: Optional[str],
+    pane_pid: Optional[int],
+) -> Optional["LadderResult"]:
     try:
-        from src.core.claude_session_correlate_ladder import (
-            LADDER_METHOD_PANE_ARGV,
-            correlate_adopted_session_ladder,
-        )
-        from src.core.db_models import (
-            SESSION_CLAUDE_UUID_SOURCE_CORRELATED,
-            SESSION_CLAUDE_UUID_SOURCE_CORRELATED_ARGV,
-        )
-        from src.core.session_claude_correlate_bind import bind_correlated_uuid
+        from src.core.claude_session_correlate_ladder import correlate_adopted_session_ladder
 
         ladder = correlate_adopted_session_ladder(
             pane_pid=pane_pid, working_dir=working_dir, tmux_created_epoch=epoch
@@ -293,7 +272,34 @@ def _try_correlate_claude_session(
                 outcome=ladder.outcome,
                 detail=ladder.detail,
             )
-            return
+            return None
+        return ladder
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "adopt_claude_uuid_correlate_failed",
+            tmux_name=name,
+            tmux_socket=socket,
+            error=str(exc),
+        )
+        return None
+
+
+def bind_claude_correlation(
+    conn: sqlite3.Connection,
+    ladder: "LadderResult",
+    *,
+    socket: str,
+    name: str,
+    epoch: int,
+    now: Optional[str],
+) -> None:
+    try:
+        from src.core.claude_session_correlate_ladder import LADDER_METHOD_PANE_ARGV
+        from src.core.db_models import (
+            SESSION_CLAUDE_UUID_SOURCE_CORRELATED,
+            SESSION_CLAUDE_UUID_SOURCE_CORRELATED_ARGV,
+        )
+        from src.core.session_claude_correlate_bind import bind_correlated_uuid
 
         source = (
             SESSION_CLAUDE_UUID_SOURCE_CORRELATED_ARGV
@@ -331,3 +337,28 @@ def _try_correlate_claude_session(
             tmux_socket=socket,
             error=str(exc),
         )
+
+
+def correlate_after_commit(
+    conn: sqlite3.Connection,
+    result: AdoptPersistResult,
+    *,
+    socket: str,
+    name: str,
+    pane_pid: Optional[int],
+    now: Optional[str] = None,
+) -> None:
+    if result.outcome != ADOPT_CLAIMED or result.epoch is None:
+        return
+    ladder = measure_claude_correlation(
+        name=name, socket=socket, epoch=result.epoch, working_dir=result.working_dir, pane_pid=pane_pid
+    )
+    if ladder is None:
+        return
+    from src.core.db import transaction
+
+    try:
+        with transaction(conn):
+            bind_claude_correlation(conn, ladder, socket=socket, name=name, epoch=result.epoch, now=now)
+    except sqlite3.Error as exc:
+        logger.warning("adopt_claude_uuid_correlate_failed", tmux_name=name, tmux_socket=socket, error=str(exc))

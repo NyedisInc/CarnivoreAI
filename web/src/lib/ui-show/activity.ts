@@ -40,7 +40,6 @@ export function startActivityReport(
         });
     };
     for (const name of ACTIVITY_EVENTS) target.addEventListener(name, onInput, { capture: true, passive: true });
-    // restored from
     const onShow = (): void => {
         if (typeof document !== 'undefined' && document.hasFocus()) onInput();
     };

@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, NamedTuple, Optional
 
-from src.core.corpus_ingest_state import (
+from src.core.artifact_freshness.verdict import (
     FRESHNESS_CANNOT_DETERMINE,
     FRESHNESS_NEVER_RAN,
     FRESHNESS_STALE,
@@ -115,43 +115,10 @@ _INTEGRITY_BLOCK_KEYS = (
 
 
 def _base_integrity_fields() -> Dict[str, Any]:
-    """Return every ``data.integrity`` key defaulted to "not known".
-
-    Description: the single source of truth for the block's shape. Every
-      builder in this module starts from a copy of this dict and only
-      overrides the keys it can honestly answer, so ``integrity_block``
-      (the normal, artifact-backed path) and
-      ``unresolvable_integrity_block`` (the degraded path used when the
-      state directory itself could not be resolved) are structurally
-      incapable of publishing different key sets.
-    Inputs: none.
-    Output: dict - one entry per name in ``_INTEGRITY_BLOCK_KEYS``, each
-      set to ``None``.
-    Example: sorted(_base_integrity_fields()) == sorted(_INTEGRITY_BLOCK_KEYS)
-      -> True
-    """
     return {key: None for key in _INTEGRITY_BLOCK_KEYS}
 
 
 def unresolvable_integrity_block(reason: str) -> Dict[str, Any]:
-    """Build ``data.integrity`` for when the state directory itself failed.
-
-    Description: this is the path taken before ``integrity_block`` could
-      even be called - there is no state_dir to read an artifact from, so
-      most fields genuinely are not known and stay ``None``. It publishes
-      the SAME key set as :func:`integrity_block` (via
-      :func:`_base_integrity_fields`) so a consumer reading
-      ``.enabled``, ``.artifact``, ``.last_run_status``,
-      ``.duration_seconds`` or ``.interval_seconds`` gets an honest
-      ``None`` here instead of ``undefined``. ``verdict`` and
-      ``freshness`` are still meaningful even without a state_dir, and
-      both are ``cannot_determine`` - not having looked is not a fault,
-      the same rule :func:`_classify` applies on the normal path.
-    Inputs: reason (str - one sentence naming why the state directory
-      could not be resolved).
-    Output: dict - see this module's docstring for the full shape.
-    Example: unresolvable_integrity_block("boom")["enabled"] -> None
-    """
     fields = _base_integrity_fields()
     fields["verdict"] = VERDICT_CANNOT_DETERMINE
     fields["freshness"] = FRESHNESS_CANNOT_DETERMINE
@@ -162,22 +129,6 @@ def unresolvable_integrity_block(reason: str) -> Dict[str, Any]:
 def integrity_block(
     state_dir: Path, *, now: Optional[datetime] = None,
 ) -> Dict[str, Any]:
-    """Build the ``data.integrity`` block for GET /api/v1/version.
-
-    Description: a pure read of one small JSON file. Runs NO pragma, and
-      that is the entire point of this module - the request path costs a
-      file read, not a walk of every page in the database. Never raises:
-      an unreadable artifact is a named ``cannot_determine``, because a
-      status endpoint that 500s tells the user less than one that says
-      "I could not read it".
-    Inputs: state_dir (Path), now (datetime | None - injected by tests so
-      staleness can be exercised without sleeping).
-    Output: dict carrying ``verdict``, ``freshness``, ``age_seconds``,
-      ``checked_at``, ``detail``, ``reason``, ``enabled``,
-      ``interval_seconds``, ``stale_after_seconds`` and ``artifact``.
-    Example: integrity_block(Path("/nonexistent"))["verdict"]
-      -> 'cannot_determine'
-    """
     interval = resolve_interval_seconds()
     stale_after = resolve_stale_after_seconds(interval)
     record = read_verdict(state_dir)

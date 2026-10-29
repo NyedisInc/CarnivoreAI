@@ -21,7 +21,7 @@ def _drain(engine: Engine) -> None:
 
 def test_conversations_in_a_container_folder_are_captured_with_their_path_kept(tmp_path):
     world = World(tmp_path)
-    other = "5440f51e-018d-47a4-8fdf-c52dbf80f162"
+    other = "99999999-aaaa-bbbb-cccc-1234567890ab"
     world.write_conversation(jsonl(30), conv=other, enc=f"_hold-for-archive/{ENC}")
     world.write_conversation(jsonl(30))
     _drain(_engine(world))
@@ -61,7 +61,7 @@ def test_a_name_that_cannot_be_a_unit_id_counts_as_on_disk_and_uncovered(tmp_pat
 
 def test_a_pass_lists_each_folder_once_whatever_the_number_of_conversations(tmp_path, monkeypatch):
     world = World(tmp_path)
-    ids = [f"{n:08d}-810d-e10e-fb30-4f4c6232a9c6" for n in range(1, 41)]
+    ids = [f"{n:08d}-aaaa-bbbb-cccc-1234567890ab" for n in range(1, 41)]
     for conv in ids:
         world.write_conversation(jsonl(2), conv=conv, enc=f"-Users-x-p{int(conv[:8]) % 4}", subagents=0, tool_results=0)
     folders = [str(world.projects)] + [str(p) for p in world.projects.iterdir()]
@@ -83,13 +83,13 @@ def test_a_pass_lists_each_folder_once_whatever_the_number_of_conversations(tmp_
 
 def test_codex_rollouts_are_walked_once_per_pass_and_archived_ones_are_found(tmp_path):
     world = World(tmp_path)
-    world.write_codex(jsonl(5), thread="0b984f74-cd8c-44ce-8b76-d8a10b8f7ab7")
-    archived = world.codex / "archived_sessions" / "rollout-2026-03-01T10-00-00-bb608d2c-d1d8-4557-8d26-3be8c1493c05.jsonl"
+    world.write_codex(jsonl(5), thread="0199aaaa-bbbb-7ccc-8ddd-eeeeffff0001")
+    archived = world.codex / "archived_sessions" / "rollout-2026-03-01T10-00-00-0199aaaa-bbbb-7ccc-8ddd-eeeeffff0002.jsonl"
     archived.parent.mkdir(parents=True)
     archived.write_bytes(jsonl(5))
     (world.codex / "auth.json").write_text("{}")
     scanner = units.Scanner(world.sources)
     plans = units.scan_all(world.sources, scanner)
-    assert sorted(plans) == ["0b984f74-cd8c-44ce-8b76-d8a10b8f7ab7", "bb608d2c-d1d8-4557-8d26-3be8c1493c05"]
-    assert plans["bb608d2c-d1d8-4557-8d26-3be8c1493c05"].files[0].rel.startswith("archived_sessions/")
-    assert units.plan_codex(world.sources, "0b984f74-cd8c-44ce-8b76-d8a10b8f7ab7", scanner) is plans["0b984f74-cd8c-44ce-8b76-d8a10b8f7ab7"]
+    assert sorted(plans) == ["0199aaaa-bbbb-7ccc-8ddd-eeeeffff0001", "0199aaaa-bbbb-7ccc-8ddd-eeeeffff0002"]
+    assert plans["0199aaaa-bbbb-7ccc-8ddd-eeeeffff0002"].files[0].rel.startswith("archived_sessions/")
+    assert units.plan_codex(world.sources, "0199aaaa-bbbb-7ccc-8ddd-eeeeffff0001", scanner) is plans["0199aaaa-bbbb-7ccc-8ddd-eeeeffff0001"]

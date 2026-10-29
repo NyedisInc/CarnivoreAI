@@ -5,69 +5,34 @@
   "description_key": "cplug.flow.description",
   "version": "1.0.0",
   "icon": "swarm",
-  "author": "Carnivore contributors",
+  "author": "Carnivore",
   "min_app_version": "1.16.0",
   "tier": "builtin",
   "default_enabled": false,
-  "requires": [
-    "huddle"
-  ],
-  "requires_core": [
-    "crosstalk",
-    "activity_read",
-    "transcript_events"
-  ],
-  "permissions": {
-    "app": [
-      "activity.read"
-    ]
-  },
+  "requires": ["huddle"],
+  "requires_core": ["crosstalk", "activity_read", "transcript_events"],
+  "permissions": { "app": ["activity.read"] },
   "surfaces": {
     "routes": true,
-    "mcp_tools": [
-      "flow_get"
-    ],
-    "topics": [
-      "feed"
-    ],
-    "tabs": [
-      "flow"
-    ],
+    "mcp_tools": ["flow_get"],
+    "topics": ["feed"],
+    "tabs": ["flow"],
     "page_section": "review",
     "page_section_label_key": "cplug.flow.page_section",
     "page_section_icon": "eye",
     "storage": true
   },
   "owns": {
-    "routes": [
-      "/feed",
-      "/run"
-    ],
-    "strings": [
-      "cplug.flow."
-    ],
-    "styles": [
-      "flow.css"
-    ],
-    "tests": [
-      "tests/python/cplugs/flow/",
-      "web/src/cplugs/flow/"
-    ],
-    "style_guide": [
-      "web/src/cplugs/flow/FlowBody.svelte",
-      "web/src/cplugs/flow/FlowBubble.svelte",
-      "web/src/cplugs/flow/FlowCard.svelte",
-      "web/src/cplugs/flow/flow.css"
-    ]
+    "routes": ["/feed", "/run"],
+    "strings": ["cplug.flow."],
+    "styles": ["flow.css"],
+    "tests": ["tests/python/cplugs/flow/", "web/src/cplugs/flow/"],
+    "style_guide": ["web/src/cplugs/flow/FlowBody.svelte", "web/src/cplugs/flow/FlowBubble.svelte", "web/src/cplugs/flow/FlowCard.svelte", "web/src/cplugs/flow/flow.css"]
   },
   "settings_schema": {
     "version": 1,
     "fields": {
-      "showTab": {
-        "kind": "boolean",
-        "labelKey": "cplug.flow.settings.show_tab",
-        "default": false
-      }
+      "showTab": { "kind": "boolean", "labelKey": "cplug.flow.settings.show_tab", "default": false }
     }
   },
   "css_prefix": "flw"

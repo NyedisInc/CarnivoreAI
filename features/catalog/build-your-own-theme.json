@@ -19,7 +19,14 @@
   "keywords": [
     "custom theme"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The themes screen with the build your own guide open on the right",
+      "caption": "The build your own theme guide",
+      "file": "guide.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Build your own theme",
   "since": "2026-09-22",
   "status": "stable",
@@ -30,6 +37,5 @@
   "updated": "2026-09-30",
   "where": [
     "Themes screen, BUILD YOUR OWN, SUBMIT A THEME."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

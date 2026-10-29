@@ -38,7 +38,7 @@ class InvalidFields(SecretError):
 
 
 class SecretTooLarge(SecretError):
-    """The encoded value exceeds MAX_ENCODED_BYTES."""
+    pass
 
 
 class CorruptSecret(SecretError):
@@ -46,7 +46,7 @@ class CorruptSecret(SecretError):
 
 
 class SecretStoreUnavailable(SecretError):
-    """The Keychain could not be read (locked, timed out, refused) or written."""
+    pass
 
 
 class KeychainBackend(Protocol):
@@ -119,6 +119,10 @@ class DestinationSecrets:
         self._service = service
         self._check = check_id
         self._event = event
+        self._locks: dict[str, asyncio.Lock] = {}
+
+    def lock_for(self, dest_id: str) -> asyncio.Lock:
+        return self._locks.setdefault(dest_id, asyncio.Lock())
 
     async def put(self, dest_id: str, fields: Mapping[str, str]) -> None:
         self._check(dest_id)

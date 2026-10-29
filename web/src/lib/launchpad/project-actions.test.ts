@@ -1,3 +1,4 @@
+/* THE THROWN SENTENCE */
 import { describe, expect, test } from 'vitest';
 
 import { enT, modals, recorder } from './create-harness';

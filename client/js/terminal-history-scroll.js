@@ -29,7 +29,6 @@
         return st;
     }
 
-    /* nothing was written */
     async function fetchOlder(ctl, now) {
         var term = ctl && ctl.term;
         var buf = term && term.buffer && term.buffer.active;

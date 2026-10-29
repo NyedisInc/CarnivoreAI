@@ -305,3 +305,24 @@ def test_unreadable_project_directory_reports_error(tmp_path):
         os.chmod(project_dir, 0o755)
     assert result.outcome == CORRELATE_ERROR
     assert not result.matched
+
+
+def test_a_symlinked_working_dir_finds_the_transcript_under_its_resolved_spelling(tmp_path):
+    import os
+
+    real = tmp_path / "real" / "proj"
+    real.mkdir(parents=True)
+    (tmp_path / "link").symlink_to(tmp_path / "real")
+    session_id = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    projects = tmp_path / "projects"
+    _write_transcript(
+        projects / slugify_project_dir(os.path.realpath(real)),
+        session_id,
+        [_record(session_id=session_id, timestamp="2027-01-15T10:00:05Z")],
+    )
+    result = correlate_adopted_session(
+        working_dir=str(tmp_path / "link" / "proj"),
+        tmux_created_epoch=EPOCH,
+        projects_dir=projects,
+    )
+    assert result.matched and result.claude_session_uuid == session_id

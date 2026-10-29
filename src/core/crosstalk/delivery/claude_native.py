@@ -11,7 +11,8 @@ from typing import Any
 
 import structlog
 
-from src.core.attention.registry_read import REG_ABSENT, REG_STALE, registry_for_session
+from src.core.attention.registry_record import REG_ABSENT, REG_STALE
+from src.core.attention.registry_index import registry_for_session
 from src.core.conversation_writers import MeasureError, read_pid_record, read_process_table, same_process_start
 from src.core.session_transcript_presence import conversation_presence
 from src.core.crosstalk.delivery.identity import conversation_id

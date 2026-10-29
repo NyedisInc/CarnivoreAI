@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import sqlite3
 import time
 from contextlib import closing
 from pathlib import Path
@@ -28,7 +29,7 @@ INTERVAL_SECONDS: float = 6 * 3600.0
 
 
 def ladder_consumed(state_dir: Path) -> bool:
-    from src.core.db import connect, db_path_for
+    from src.core.db import DatastoreError, connect, db_path_for
     from src.core.session_import import (
         EVIDENCE_LADDER_VERSION,
         ImportLatchUnreadable,
@@ -36,9 +37,9 @@ def ladder_consumed(state_dir: Path) -> bool:
     )
 
     try:
-        with closing(connect(db_path_for(state_dir))) as conn:
+        with closing(connect(db_path_for(state_dir), create=False)) as conn:
             version = sessions_stage_version(conn)
-    except (ImportLatchUnreadable, OSError) as exc:
+    except (ImportLatchUnreadable, DatastoreError, sqlite3.Error, OSError) as exc:
         logger.warning("pipe_prune_ladder_state_unreadable", error=str(exc))
         return False
     return version is not None and version >= EVIDENCE_LADDER_VERSION
@@ -82,7 +83,6 @@ def prune_once(
 
 
 def _delete(decision: Decision) -> bool:
-    """Unlink one orphan and log it. False when the file could not be removed."""
     try:
         decision.path.unlink()
     except FileNotFoundError:
@@ -117,7 +117,7 @@ class PipePruner:
                 await asyncio.to_thread(self._pass, ROTATE_AGE_HOURS * 3600.0)
             except asyncio.CancelledError:
                 raise
-            except (OSError, ValueError) as exc:
+            except (OSError, ValueError, RuntimeError, sqlite3.Error) as exc:
                 logger.warning("pipe_prune_pass_failed", error=str(exc))
 
     def _pass(self, min_age_seconds: float) -> dict:

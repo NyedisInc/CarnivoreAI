@@ -1,12 +1,3 @@
-"""The usage store: its own small SQLite file, ``mcp_usage.db`` in the state directory (#1752).
-
-``carnivore.db`` takes no schema change for this. ONE table, ``mcp_tool_daily``: per UTC day, tool, caller kind and
-outcome, the number of calls. **NOTHING ELSE IS STORED**: no argument, result, target id, session id or tmux name,
-so the file can be kept long and shared without a privacy review. Rows are kept :data:`RETENTION_DAYS` days.
-
-A third table, ``view_reset`` (#1824), holds the ONE reset of the dev tab's counts: when it was pressed (UTC ISO), that UTC day,
-and each tool's count for that day at that moment (JSON). It zeroes the VIEW only; the two count tables are never touched by it.
-"""
 
 from __future__ import annotations
 
@@ -22,7 +13,6 @@ import structlog
 
 logger = structlog.get_logger()
 
-# state directory
 DB_FILENAME = "mcp_usage.db"
 RETENTION_DAYS = 90
 Row = Tuple[str, str, str, str, int]

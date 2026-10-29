@@ -1,4 +1,3 @@
-/*  hidden  */
 
 import { repairSpans } from './spans';
 import type { LayoutPage, SlotId } from './types';

@@ -2,6 +2,7 @@
 <script lang="ts">
     import { loadOnce } from './load-once.svelte.js';
     import Button from '../lib/base/Button.svelte';
+    import Field from '../lib/base/Field.svelte';
     import type { AdminHost } from './admin-host.svelte.js';
     import { t } from './text.js';
     import SubmissionDetail from './SubmissionDetail.svelte';
@@ -97,11 +98,9 @@
                         <label class="admin-field" for={'reason-' + row.submission_id}>
                             {t(ADMIN_KEYS.queueRejectLabel)}
                         </label>
-                        <input
-                            id={'reason-' + row.submission_id}
-                            class="admin-input"
-                            type="text"
-                            maxlength="500"
+                        <Field
+                            id={'reason-' + row.submission_id} data-admin-grow
+                            maxlength={500}
                             value={host.rejectReason}
                             oninput={(event) =>
                                 host.setRejectReason(event.currentTarget.value)}

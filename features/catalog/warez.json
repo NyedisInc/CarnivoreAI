@@ -54,6 +54,30 @@
     "Menu tab, Warez (hotkey r), under Themes.",
     "Also at /#warez, /#catalog, /#warez/<handle>/<name> to open one item, and /#warez/store/... or /#warez/installed/... for a menu node."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "shelf.png",
+      "caption": "The warez shelf",
+      "alt": "The warez page showing catalog cards for skills and themes with filters above"
+    },
+    {
+      "kind": "screenshot",
+      "file": "detail.png",
+      "caption": "An item's detail panel",
+      "alt": "The warez page with a skill selected and its trust, signing and source details open on the right"
+    },
+    {
+      "kind": "screenshot",
+      "file": "list.png",
+      "caption": "The list view",
+      "alt": "The warez page in list view"
+    },
+    {
+      "kind": "screenshot",
+      "file": "phone.png",
+      "caption": "The shelf on a phone",
+      "alt": "The warez page at phone width"
+    }
+  ]
 }

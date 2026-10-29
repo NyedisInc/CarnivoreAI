@@ -8,6 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class SleepHoldInfo(BaseModel):
     """Why a session is kept awake because something of its is scheduled or running.
+
+    Joe (ccsliinc), 2026-10-01: a live timer, a running subagent or an open
+    background shell keeps a session from auto-sleeping, coffee cup or not,
+    because sleeping kills what lives inside its claude.
     """
 
     reasons: List[str] = Field(

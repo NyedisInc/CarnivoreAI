@@ -22,12 +22,12 @@ import { widgetDrawerView } from './drawer-view-pref.svelte';
 const real = { ...editorSeams };
 let app: ReturnType<typeof mount> | null = null;
 
-const cards = (): HTMLButtonElement[] => [...document.querySelectorAll<HTMLButtonElement>('.le-card[data-widget]')];
-const card = (widget: string): HTMLButtonElement | null => document.querySelector(`.le-card[data-widget="${widget}"]`);
+const cards = (): HTMLButtonElement[] => [...document.querySelectorAll<HTMLButtonElement>('[data-le-card][data-widget]')];
+const card = (widget: string): HTMLButtonElement | null => document.querySelector(`[data-le-card][data-widget="${widget}"]`);
 const toggle = (type: string): HTMLButtonElement => document.querySelector(`[data-drawer-type-toggle="${type}"]`)!;
 const search = (): HTMLInputElement => document.querySelector('[data-layout-editor-search]')!;
 const titles = (root: ParentNode = document): string[] =>
-  [...root.querySelectorAll('.le-card[data-widget] .le-card__name')].map((el) => el.textContent ?? '');
+  [...root.querySelectorAll('[data-le-card][data-widget] .le-card__name')].map((el) => el.textContent ?? '');
 const type = (value: string): void => {
   search().value = value;
   search().dispatchEvent(new Event('input', { bubbles: true }));
@@ -116,7 +116,7 @@ describe('the views', () => {
     toggle(first).click();
     flushSync();
     expect(toggle(first).getAttribute('aria-expanded')).toBe('false');
-    expect(document.querySelector(`[data-drawer-type="${first}"] .le-card`)).toBeNull();
+    expect(document.querySelector(`[data-drawer-type="${first}"] [data-le-card]`)).toBeNull();
     toggle(first).click();
     flushSync();
     expect(toggle(first).getAttribute('aria-expanded')).toBe('true');

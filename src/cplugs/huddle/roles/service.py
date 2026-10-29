@@ -21,20 +21,11 @@ LEAD_RANKS = ("project", "company")
 
 
 class RolesUnmeasured(Exception):
-    """The live or asleep sessions could not be read: nothing about who leads may be decided or shown from this pass."""
+    pass
 
 
 @dataclass(frozen=True)
 class Roster:
-    """What one measurement says, per project list key (digits): the ordinary agent sessions live now, and the stable keys asleep.
-
-    ``live`` maps a list key to its :class:`lead.Candidate` rows (a Swarm agent's body is left out, EXCEPT the project's own project
-    agent: that one leads, #1789); ``asleep`` maps a list key to the stable keys on the asleep list; ``labels`` maps a stable key to its
-    row's name; ``agents`` is every live Swarm agent (:class:`SeatRef`, ``ctx.swarm.agent_seats``); ``present`` maps a list key to the
-    lead keys that are neither live nor asleep in this pass but whose stored row still stands in the project (``lead.standing``);
-    ``enclosing`` maps a nested project's list key to the list keys of the projects whose folder encloses its own, nearest first
-    (``ctx.projects.enclosing``; measured only while a project agent exists).
-    """
 
     live: Dict[str, List[lead.Candidate]] = field(default_factory=dict)
     asleep: Dict[str, Set[str]] = field(default_factory=dict)
@@ -101,7 +92,7 @@ async def measure(ctx: CplugContext, infos: Optional[List[Any]] = None, asleep_r
         if project is None or not task_manager_service.is_agent(info):
             continue
         key = keys.get(info.session.id) or info.session.id
-        if key in bodies and leads.get(key) != str(project):  # own project
+        if key in bodies and leads.get(key) != str(project):
             continue
         created = getattr(info.session, "created_at", None)
         live.setdefault(str(project), []).append(lead.Candidate(key, created.timestamp() if created is not None else 0.0))
@@ -156,12 +147,12 @@ async def _present(ctx: CplugContext, live: Dict[str, List[lead.Candidate]], asl
     return present
 
 
-def evaluate(store: RoleStore, roster: Roster) -> Dict[str, lead.Seat]:
+def evaluate(store: RoleStore, roster: Roster, *, write_pick: bool = True) -> Dict[str, lead.Seat]:
     with store.read_scope():
-        return _evaluate(store, roster)
+        return _evaluate(store, roster, write_pick)
 
 
-def _evaluate(store: RoleStore, roster: Roster) -> Dict[str, lead.Seat]:
+def _evaluate(store: RoleStore, roster: Roster, write_pick: bool) -> Dict[str, lead.Seat]:
     dnd = store.dnd_keys()
     seats = store.seats()
     agents = roster.project_agents
@@ -177,6 +168,9 @@ def _evaluate(store: RoleStore, roster: Roster) -> Dict[str, lead.Seat]:
         seat = seats.get(list_key, lead.Seat(list_key))
         picked = lead.auto_pick(seat, [lead.Candidate(c.key, c.created, c.key in dnd) for c in candidates])
         if picked is None:
+            continue
+        if not write_pick:
+            seats[list_key] = lead.Seat(list_key, picked, lead.BY_AUTO, 0.0, True)
             continue
         try:
             seats[list_key] = store.take_if_vacant(list_key, picked, roster.live_keys(list_key), roster.asleep_keys(list_key), lead.BY_AUTO,

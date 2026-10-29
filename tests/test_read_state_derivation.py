@@ -22,7 +22,6 @@ if str(ROOT) not in sys.path:
 from src.core.activity_persist import write_state
 from src.core.session_activity import (
     EVENT_STOP,
-    SessionActivityTracker,
     map_tmux_fallback,
 )
 from src.core.session_manager import SessionManager
@@ -218,6 +217,9 @@ class _StubSettings:
         self._log_dir = log_dir
         self.port = port
 
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
+
     def get_pinned_themes_path(self) -> Path:
         return self._pin_path
 
@@ -242,11 +244,7 @@ class _FakeBackend:
 
 
 def _resting_evidence(now: datetime) -> tuple:
-    from src.core.attention.registry_read import (
-        REG_IDLE,
-        REG_OK,
-        RegistryRecord,
-    )
+    from src.core.attention.registry_record import REG_IDLE, REG_OK, RegistryRecord
     from src.core.attention.transcript_facts import (
         FACTS_FOUND,
         TranscriptFacts,
@@ -260,7 +258,7 @@ def _resting_evidence(now: datetime) -> tuple:
             waiting_for=None,
             pid=4321,
             session_uuid=None,
-            tmux_name="cloude_daily-bulletin",
+            tmux_name="cloude_daily-briefing",
             cwd=None,
             status_updated_at=ended,
             started_at=ended - timedelta(minutes=5),
@@ -291,14 +289,14 @@ def _manager_with_row_state(monkeypatch, tmp_path: Path, stored: str) -> Session
         pty_pid=None,
         working_dir=str(tmp_path),
         status=SessionStatus.RUNNING,
-        tmux_session="cloude_daily-bulletin",
+        tmux_session="cloude_daily-briefing",
     )
-    mgr._registry.backends["ses1"] = _FakeBackend("cloude_daily-bulletin")
+    mgr._registry.backends["ses1"] = _FakeBackend("cloude_daily-briefing")
     mgr._registry.subscribers.setdefault("ses1", [])
     monkeypatch.setattr(
         mgr,
         "_build_tmux_status_map",
-        lambda: {"cloude_daily-bulletin": {"status": STATUS_IDLE}},
+        lambda: {"cloude_daily-briefing": {"status": STATUS_IDLE}},
     )
     from types import SimpleNamespace
     from src.core.attention.evidence import AttentionVerdict
@@ -318,7 +316,7 @@ def test_a_row_recording_finished_unread_reads_idle_once_the_tab_is_opened(
 ):
     mgr = _manager_with_row_state(monkeypatch, tmp_path, STATUS_FINISHED_UNREAD)
 
-    mgr.set_manual_unread("cloude_daily-bulletin", True)
+    mgr.set_manual_unread("cloude_daily-briefing", True)
     info = mgr._session_info_for("ses1")
     assert info.unread is True
     assert info.activity_status == STATUS_FINISHED_UNREAD
@@ -335,7 +333,7 @@ def test_the_flag_transitions_are_idempotent_set_view_set_view(
     monkeypatch, tmp_path
 ):
     mgr = _manager_with_row_state(monkeypatch, tmp_path, STATUS_FINISHED_UNREAD)
-    name = "cloude_daily-bulletin"
+    name = "cloude_daily-briefing"
 
     for _ in range(2):
         mgr.set_manual_unread(name, True)
@@ -362,7 +360,7 @@ def test_a_row_recording_idle_reads_finished_unread_when_the_flag_is_set(
     monkeypatch, tmp_path
 ):
     mgr = _manager_with_row_state(monkeypatch, tmp_path, STATUS_IDLE)
-    mgr.set_manual_unread("cloude_daily-bulletin", True)
+    mgr.set_manual_unread("cloude_daily-briefing", True)
     info = mgr._session_info_for("ses1")
     assert info.activity_status == STATUS_FINISHED_UNREAD
 

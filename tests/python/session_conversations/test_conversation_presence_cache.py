@@ -5,7 +5,7 @@ import pytest
 
 from src.core import session_transcript_presence as presence
 
-UUID = "deab833f-3c01-4d80-8340-84d081bb38fa"
+UUID = "2629dba5-1111-4222-8333-444455556666"
 
 
 @pytest.fixture(autouse=True)

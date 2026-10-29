@@ -57,14 +57,6 @@ def find_repo_root(start: Path) -> Path:
 
 
 def render_pngs(source: Path, out_dir: Path) -> tuple[Path, Path]:
-    """Resample the source image to the 1x and 2x window sizes.
-
-    Returns:
-        (path to background.png, path to background@2x.png).
-
-    Raises:
-        ArtworkError: if the source image cannot be opened.
-    """
     try:
         image = Image.open(source).convert("RGB")
     except (OSError, ValueError) as exc:

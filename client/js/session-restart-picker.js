@@ -12,6 +12,8 @@ console.log('[SessionRestartPicker Module] Loading...');
 
     var choiceHandle = null;
 
+    var pendingResolve = null;
+
     function esc(value) {
         return Options.esc(value);
     }
@@ -69,6 +71,7 @@ console.log('[SessionRestartPicker Module] Loading...');
     }
 
     function dismiss(resolve, value) {
+        pendingResolve = null;
         if (overlayEl && overlayEl.parentNode) {
             overlayEl.parentNode.removeChild(overlayEl);
         }
@@ -80,11 +83,12 @@ console.log('[SessionRestartPicker Module] Loading...');
         resolve(value);
     }
 
-    /* at the gesture */
     function present(displayName, preview, status, mode, sessionUuid, focusWrapper, armedByGesture, busyWork, accounts) {
         mode = mode || 'restart';
         sessionUuid = sessionUuid || null;
+        if (overlayEl && pendingResolve) dismiss(pendingResolve, null);
         return new Promise(function (resolve) {
+            pendingResolve = resolve;
             var overlay = document.createElement('div');
             overlay.className = 'modal-overlay restart-picker';
             overlay.innerHTML =
@@ -93,7 +97,7 @@ console.log('[SessionRestartPicker Module] Loading...');
                 + 'aria-modal="true" aria-label="'
                 + esc(tr('session.restart.picker.aria', { name: displayName }))
                 + '">'
-                + '<div class="restart-picker__head">'
+                + '<div class="modal-titlerow restart-picker__head">'
                 + '<span class="restart-picker__verb">'
                 + esc(tr('session.restart.picker.title')) + '</span>'
                 + '<span class="restart-picker__name">' + esc(displayName)
@@ -112,6 +116,7 @@ console.log('[SessionRestartPicker Module] Loading...');
                 + 'aria-live="polite"></div>'
                 + '</div>'
                 + '<div class="modal-footer restart-picker__foot">'
+                // live pane.
                 + (preview.pane_state === 'alive' && window.SessionRestartLive
                     ? window.SessionRestartLive.armHtml(
                         armedByGesture === true ? { armedByGesture: true } : undefined)
@@ -134,7 +139,9 @@ console.log('[SessionRestartPicker Module] Loading...');
 
             var go = overlay.querySelector('#restart-picker-go');
             var why = overlay.querySelector('#restart-picker-why');
+            // there is nothing
             var arm = overlay.querySelector('#restart-picker-live');
+            // list, so the
             var allGone = Options.sharedDetail(preview).kind
                 === 'transcript_missing';
 
@@ -218,7 +225,6 @@ console.log('[SessionRestartPicker Module] Loading...');
         });
     }
 
-    /* could not */
     var lastErrorText = '';
 
     function open(tmuxName, displayName, status, sessionUuid, focusWrapper, armedByGesture, busyWork) {

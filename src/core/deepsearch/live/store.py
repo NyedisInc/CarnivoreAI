@@ -88,9 +88,3 @@ def folders_of(conn: sqlite3.Connection, live_ids: List[int]) -> Dict[int, Set[s
                 f"SELECT live_id, folder FROM {K.FOLDERS_TABLE} WHERE live_id IN ({marks})", chunk):
             out.setdefault(int(live_id), set()).add(folder)
     return out
-
-
-def delete_main(conn: sqlite3.Connection, conversation_id: str) -> None:
-    for (live_id,) in conn.execute(f"SELECT id FROM {K.LIVE_TABLE} WHERE conversation_id = ? AND file_kind = ?",
-                                   (conversation_id, K.FILE_CONVERSATION)).fetchall():
-        delete_file(conn, int(live_id))

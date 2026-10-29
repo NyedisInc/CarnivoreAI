@@ -15,12 +15,12 @@ from src.core.background_agents import (
 )
 
 FORK_AGENT = {
-    "pid": 4762,
-    "id": "deb83b29",
-    "cwd": "/x/Labbench",
+    "pid": 37457,
+    "id": "7c3dc773",
+    "cwd": "/x/ScratchLab",
     "kind": "background",
     "startedAt": 1787933593112,
-    "sessionId": "deb83b29-170b-4b8a-89de-9d3281309fba",
+    "sessionId": "7c3dc773-c7d5-4de6-bb47-201e5cf8ebe4",
     "name": "Base",
     "status": "idle",
     "state": "done",
@@ -51,16 +51,16 @@ def test_a_background_agent_is_found_and_parsed():
     assert r.measured is True
     assert len(r.agents) == 1
     a = r.agents[0]
-    assert a.short_id == "deb83b29"
+    assert a.short_id == "7c3dc773"
     assert a.name == "Base"
     assert a.state == "done"
-    assert a.pid == 4762
+    assert a.pid == 37457
 
 
 def test_interactive_sessions_are_excluded():
     with _run(json.dumps([INTERACTIVE_AGENT, FORK_AGENT])):
         r = list_background_agents(claude_path="/fake/claude")
-    assert [a.short_id for a in r.agents] == ["deb83b29"]
+    assert [a.short_id for a in r.agents] == ["7c3dc773"]
 
 
 def test_a_genuinely_empty_list_is_measured():

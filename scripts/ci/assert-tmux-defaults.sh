@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-#
-#
 set -uo pipefail
 
 readonly PROBE_SOCKET="cloude_ci_probe_$$"

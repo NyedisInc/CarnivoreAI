@@ -1,4 +1,3 @@
-/* permission prompt */
 (function () {
     'use strict';
 
@@ -31,7 +30,6 @@
         return !!active && active === name;
     }
 
-    /* could not */
     function go(toast) {
         var sessionId = toast && toast.session_id;
         if (!sessionId || !window.API || !window.App) return Promise.resolve(false);
@@ -44,7 +42,6 @@
             ? window.NavigationGeneration.begin('toast:' + sessionId) : null;
         return window.API.listSessions()
             .then(function (sessions) {
-                // could not the session is gone
                 if (!Array.isArray(sessions)) {
                     console.warn('[ToastNavigate] session listing was malformed, cannot confirm status');
                     return false;
@@ -70,7 +67,6 @@
                 }
                 if (window.NavigationGeneration
                     && !window.NavigationGeneration.keep(nav, 'toast jump')) {
-                    // could not
                     return true;
                 }
                 window.App.returnToExistingTerminal(info);

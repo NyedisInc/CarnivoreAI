@@ -17,7 +17,7 @@ const MEASURED: LedgerAccount = {
     name: 'Work Max',
     provider: 'claude',
     plan: 'max 20x',
-    identity: 'acme',
+    identity: 'alex',
     credential_state: 'ok',
     fetched_at: '2026-09-17T12:00:00Z',
     next_poll_at: '2026-09-17T12:03:00Z',
@@ -120,7 +120,7 @@ describe('the colour and the managed flag, which are CONFIGURED facts', () => {
     test('EVERY MEASURED FIELD IS UNTOUCHED BY THE OVERLAY', () => {
         const rows = mergeConfiguredRows([{ ...CONFIGURED, color: '#818cf8' }], [MEASURED]);
         expect(rows[0]?.plan).toBe('max 20x');
-        expect(rows[0]?.identity).toBe('acme');
+        expect(rows[0]?.identity).toBe('alex');
         expect(rows[0]?.credential_state).toBe('ok');
         expect(rows[0]?.windows).toEqual(MEASURED.windows);
     });

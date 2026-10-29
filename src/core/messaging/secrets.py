@@ -36,7 +36,7 @@ CorruptSecret = blob.CorruptSecret
 
 
 class OpReadError(Exception):
-    """An ``op://`` reference could not be read. ``str()`` is a fixed reason, never the value or the CLI's output."""
+    pass
 
 
 def check_provider_id(provider_id: str) -> str:
@@ -61,11 +61,9 @@ class ProviderSecrets:
         return out
 
     def with_conversation(self, conversation_id: str, conversation: str) -> "ProviderSecrets":
-        """A copy with one more conversation id. Output: ProviderSecrets."""
         return replace(self, conversations={**self.conversations, conversation_id: conversation})
 
     def without_conversation(self, conversation_id: str) -> "ProviderSecrets":
-        """A copy with one conversation id removed. Output: ProviderSecrets."""
         return replace(self, conversations={k: v for k, v in self.conversations.items() if k != conversation_id})
 
 
@@ -74,10 +72,6 @@ def new_match_key() -> str:
 
 
 def match_of(match_key: str, conversation: str) -> str:
-    """The HMAC a conversation row stores instead of the provider conversation id. Output: str (64 hex).
-
-    Example: match_of(key, "any;-;+15555550100") == match_of(key, "any;-;+15555550100")
-    """
     return hmac.new(match_key.encode("utf-8"), conversation.encode("utf-8"), hashlib.sha256).hexdigest()
 
 

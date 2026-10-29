@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { Button } from '../base';
     import ModalShell from '../launchpad/ModalShell.svelte';
 
     interface Props {
@@ -25,7 +26,7 @@
     {/snippet}
     <p class="modal-description" data-confirm-ok-message>{message}</p>
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" data-confirm-ok-cancel onclick={() => close(null)}>{cancelLabel}</button>
-        <button type="button" class="modal-btn modal-btn-confirm" data-confirm-ok-go onclick={() => close(true)} {@attach focusOk}>{okLabel}</button>
+        <Button data-confirm-ok-cancel onclick={() => close(null)}>{cancelLabel}</Button>
+        <Button variant="confirm" data-confirm-ok-go onclick={() => close(true)} {@attach focusOk}>{okLabel}</Button>
     {/snippet}
 </ModalShell>

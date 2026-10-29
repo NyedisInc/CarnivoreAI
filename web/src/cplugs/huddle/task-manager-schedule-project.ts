@@ -29,7 +29,6 @@ export function defaultProject(requested: string, lists: readonly Pick<TaskManag
   return keys.find((key) => key !== ALL_LIST) ?? keys[0] ?? requested;
 }
 
-/* label: " */
 export function listLabel(key: string, name: string | null): string {
   if (key === ALL_LIST) return t('cplug.huddle.list.shared');
   if (name) return name;

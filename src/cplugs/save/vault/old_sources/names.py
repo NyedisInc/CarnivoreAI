@@ -43,11 +43,6 @@ def after_projects(path: str) -> str:
 
 
 def classify(path: str) -> Optional[Ident]:
-    """The identity of the transcript at ``path`` (relative, export suffix already stripped), or None when it is none of the shapes, or when
-    its conversation id could not be a vault unit id (a Finder duplicate such as ``<id> 2.jsonl`` is no conversation of its own).
-
-    Example: classify('-Users-a/c1.jsonl').rel -> 'projects/-Users-a/c1.jsonl'
-    """
     found = _shape(path)
     if found is None:
         return None

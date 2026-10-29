@@ -2,6 +2,7 @@
   import type { ChartConfig } from '../cells/analytics/types';
   import { analytics } from '../cells/analytics/state.svelte';
   import { t } from '../../lib/i18n/index.svelte';
+  import Button from '../../lib/base/Button.svelte';
   import TripwireRow from './TripwireRow.svelte';
   import { seriesUnit } from './tripwire-model';
   import { tripwires } from './tripwires.svelte';
@@ -15,7 +16,7 @@
 
 <div class="tw-edit" aria-label={t('tripwire.title')} data-tripwire-editor="">
   <div class="tw-edit__head"><span>{t('tripwire.title')}</span>
-    {#if series && config.revision >= 1 && !adding}<button type="button" class="modal-btn modal-btn-secondary" onclick={() => { adding = true; }} data-tripwire-add="">{t('tripwire.add')}</button>{/if}
+    {#if series && config.revision >= 1 && !adding}<Button onclick={() => { adding = true; }} data-tripwire-add="">{t('tripwire.add')}</Button>{/if}
   </div>
   {#if !series}
     <p class="tw-edit__note">{t('tripwire.no_series')}</p>

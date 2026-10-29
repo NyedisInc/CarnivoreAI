@@ -14,7 +14,6 @@ ROOT = Path(__file__).resolve().parents[3]
 CATALOG = (ROOT / "client/js/i18n/catalog.en.js").read_text()
 CATALOG_KEYS = set(re.findall(r"^\s*'(app_alert\.[^']+)':", CATALOG, re.M))
 TITLES = sorted(k for k in CATALOG_KEYS if k.endswith(".title") and k != "app_alert.panel.title")
-TM_TITLE = "app_alert.backup_health.tm_unknown.title"
 
 
 def _key_for(title: str) -> str:
@@ -48,26 +47,8 @@ def test_an_alert_with_no_fix_says_so_in_its_body() -> None:
             assert declared.default_detail_key in CATALOG_KEYS, f"{title}: no action and no explaining body"
 
 
-def test_time_machine_cannot_tell_leads_with_check_access_then_recheck() -> None:
-    out = _described(TM_TITLE, "backup_health.time_machine", {"reason": "access"})
-    assert out["kind"] == kinds.NEEDS_YOU
-    first = out["actions"][0]
-    assert first["id"] == "check_access"
-    assert first["explain_key"] == "app_alert.backup_health.tm_unknown.explain.access"
-    assert [a["id"] for a in first["actions"]] == ["open_privacy", "recheck"]
-    assert first["actions"][0]["body"] == {"pane": "full_disk_access"}
-    assert first["actions"][1]["route"] == "/alerts/7/recheck"
-    assert out["actions"][1]["id"] == "recheck"
-
-
-@pytest.mark.parametrize("reason", ["access", "no_destination", "unreadable"])
-def test_every_time_machine_reason_has_an_explainer_and_a_body(reason: str) -> None:
-    out = _described(TM_TITLE, "backup_health.time_machine", {"reason": reason})
-    assert out["actions"][0]["explain_key"] in CATALOG_KEYS
-
-
 def test_stale_and_unplugged_backups_offer_recheck_then_open_backups() -> None:
-    for title in ("usb_stale", "usb_missing", "tm_stale"):
+    for title in ("usb_stale", "usb_missing"):
         out = _described(f"app_alert.backup_health.{title}.title", "backup_health.usb_backup")
         assert [a["id"] for a in out["actions"]] == ["recheck", "open_backups"]
 
@@ -83,8 +64,8 @@ def test_source_label_icon_and_name() -> None:
                          {"plugin": "obsidian-export"}, [], None)
     assert out["source_label_key"] == "app_alert.source.backup_health" and out["source_icon"] == "database"
     assert out["source_name"] == "obsidian-export"
-    agent = kinds.describe(2, "k", "mystery", "info", "app_alert.x.title", {"agent": "bot-Misc UI"}, [], None)
-    assert agent["source_name"] == "bot-Misc UI" and agent["source_label_key"] == "app_alert.source.other"
+    agent = kinds.describe(2, "k", "mystery", "info", "app_alert.x.title", {"agent": "Cv-Misc UI"}, [], None)
+    assert agent["source_name"] == "Cv-Misc UI" and agent["source_label_key"] == "app_alert.source.other"
     assert agent["kind"] == kinds.FYI
 
 
@@ -92,7 +73,7 @@ def test_every_declared_string_is_in_the_catalog_and_every_action_is_valid() -> 
     declared = [d for d in kinds.BY_TITLE.values()] + [d for _, d in kinds.BY_KEY_PREFIX]
     for entry in declared:
         for action in _walk([dict(a) for a in entry.actions]):
-            validate_action(kinds._fill(action, 1, {}))
+            validate_action(kinds._fill(action, 1))
             assert action["label_key"] in CATALOG_KEYS, action["label_key"]
         if entry.default_detail_key:
             assert entry.default_detail_key in CATALOG_KEYS

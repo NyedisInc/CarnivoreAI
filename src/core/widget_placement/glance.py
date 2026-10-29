@@ -6,7 +6,6 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator
 
-# the glance area
 MAX_GLANCE_PLACEMENTS = 12
 
 MAX_PLACEMENT_OPTIONS = 8

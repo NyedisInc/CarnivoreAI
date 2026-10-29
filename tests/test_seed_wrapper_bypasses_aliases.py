@@ -41,7 +41,7 @@ def test_the_seeded_script_still_skips_permissions():
 
 def test_function_wrappers_do_NOT_use_command():
     for w in _seed(has_cld=True, has_cldor=True):
-        if w["id"] in ("keyc", "clxor"):
+        if w["id"] in ("cld", "cldor"):
             entry = (w.get("entry") or "")
             assert not entry.startswith("command "), (
                 f"{w['id']} calls a shell FUNCTION; `command` cannot find it"

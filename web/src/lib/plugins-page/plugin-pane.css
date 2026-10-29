@@ -97,7 +97,6 @@
     padding: 0 var(--oc-space-2, 8px);
 }
 
-/* padding */
 .wik .plp .plp-tabs .oc-ptab {
     gap: 4px;
     padding: 0 5px;
@@ -245,6 +244,10 @@
     background: var(--oc-ground-field);
     color: var(--oc-text-primary);
     overflow-wrap: anywhere;
+}
+
+.plp-danger {
+    color: var(--oc-coral);
 }
 
 .plp-chips {

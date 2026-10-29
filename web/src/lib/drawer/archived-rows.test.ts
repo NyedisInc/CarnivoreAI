@@ -1,3 +1,4 @@
+/* nothing at all */
 import { describe, expect, it } from 'vitest';
 import { ARCHIVED_NAME_PREFIX, archivedLast, archivedRows } from './archived-rows';
 

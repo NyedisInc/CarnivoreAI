@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LabHost, LabSize } from '../sdk/widget-lab';
-import { captureRequest, defaultSize, filterGroups, uncheckedCount, sizeChoices, sizeLine, sizesToDraw, treeGroups, widgetOf, widgetVerdict, distinctWidgets, type FitTable } from './lab-model';
+import { captureRequest, defaultSize, filterGroups, uncheckedCount, sizeChoices, sizeLine, sizesToDraw, treeGroups, frameVerdict, widgetOf, widgetVerdict, distinctWidgets, type FitTable } from './lab-model';
 
 const size = (name: string, w = 100, h: number | null = 50): LabSize => ({ name, w, h, viewport: 1600, declared: false, floor: name === 's' });
 const host = (sizes: LabSize[]): LabHost => ({ zone: 'home', supported: true, refusal: null, sizes });
@@ -160,5 +160,11 @@ describe('distinct widgets', () => {
     const table = { widgets: [{ widget: 'core.analytics', determined: true, failures: 0, cells: { 'home/m': { verdict: 'pass', red: false, draws: 1, reasons: [] } } }] } as unknown as FitTable;
     expect(widgetVerdict(table, 'core.analytics:kpi')).toBe('pass');
     expect(widgetVerdict(table, 'core.notes')).toBe('none');
+  });
+
+  it('gives a preset frame the verdict of its widget record too, so every verdict reader agrees', () => {
+    const table = { widgets: [{ widget: 'core.analytics', determined: true, failures: 0, cells: { 'home/m': { verdict: 'pass', red: false, draws: 1, reasons: [] } } }] } as unknown as FitTable;
+    expect(frameVerdict(table, 'core.analytics:kpi', 'home', 'm')).toEqual({ verdict: 'pass', reasons: [] });
+    expect(frameVerdict(table, 'core.notes', 'home', 'm')).toBeNull();
   });
 });

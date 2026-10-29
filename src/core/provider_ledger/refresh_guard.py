@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple
 
 import structlog
 
-from src.core.attention.registry_read import pid_is_running
+from src.core.attention.registry_index import pid_is_running
 from src.config.provider_accounts import DEFAULT_CLAUDE_CONFIG_DIR
 
 logger = structlog.get_logger()
@@ -71,18 +71,6 @@ def _lock_is_fresh(path: str, now_epoch: float) -> bool:
 
 
 def _pid_config_dir(pid: int) -> Optional[str]:
-    """The config dir one process runs with, read from that pid's env only.
-
-    Why: since b178d3e0 every managed profile's ``sessions`` is a symlink
-      to ``~/.claude/sessions``, which registers EVERY live claude, so the
-      registry alone cannot say whose process it is (the record carries no
-      config dir). Only the one variable is extracted, never printed.
-    Inputs: pid (int).
-    Output: str | None - the realpath of ``CLAUDE_CONFIG_DIR`` (the default
-      ``~/.claude`` when the process has none); None when the env could not
-      be measured (ps failed, or the process is not ours to read).
-    Example: _pid_config_dir(51292)  # '/Users/a/.carnivore/accounts/c1'
-    """
     try:
         out = subprocess.run(
             ["ps", "eww", "-p", str(pid), "-o", "command="],
@@ -100,16 +88,6 @@ def _pid_config_dir(pid: int) -> Optional[str]:
 
 
 def live_claude_pids(claude_dir: str) -> List[int]:
-    """Pids of claude processes registered under this profile and not dead.
-
-    Description: a pid measured gone is dropped; one that could not be
-      measured is KEPT, per the module docstring. A pid whose config dir
-      is measured and is ANOTHER profile is dropped (the registry is
-      shared). A missing directory is an empty answer.
-    Inputs: claude_dir (str) - absolute.
-    Output: list[int].
-    Example: live_claude_pids("/Users/a/.carnivore/accounts/c1")  # [51292]
-    """
     base = os.path.join(claude_dir, SESSIONS_DIRNAME)
     try:
         names = sorted(

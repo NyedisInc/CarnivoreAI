@@ -51,10 +51,6 @@ def _revision_problems(rev: Revision, index: int, total: int) -> List[str]:
 
 
 def _layer_problems(rev: Revision, where: str, anchors: List[str]) -> List[str]:
-    """Problems with a revision's layer (#1832): a layer revision is payload mode, carries no prompts (one layer at a time), and its items check out.
-
-    Inputs: rev; where; anchors (the ids the revision declares). Output: list (empty for a revision with no layer).
-    """
     if rev.layer is None:
         return []
     out: List[str] = []

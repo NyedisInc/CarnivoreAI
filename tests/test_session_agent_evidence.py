@@ -47,11 +47,11 @@ def test_row_43_renders_a_solid_claude_family_and_names_its_wrapper():
 
 def test_an_in_memory_launch_outranks_the_row():
     got = choose_agent_evidence(
-        memory_agent_type="clxor",
+        memory_agent_type="cldor",
         memory_from_fingerprint=False,
         row_agent_type="claude-chrome",
     )
-    assert got.agent_type == "clxor"
+    assert got.agent_type == "cldor"
     assert got.from_fingerprint is False
     assert got.basis == BASIS_MEMORY_LAUNCH
 

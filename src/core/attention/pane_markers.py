@@ -1,47 +1,3 @@
-"""What the rendered pane shows, read off the LAST BLOCK of text only.
-
-IT IS A REFUSAL, NEVER A CLAIM. A True here lets the resolver take a busy
-verdict away and answer ``unknown``; it can never make one, and it can
-never say a turn finished. So the cost of a wrong True is a session that
-stops being described, and the cost of a wrong False is today's behaviour
-unchanged. Every rule below is written to fail toward False.
-
-WHERE THE MARKERS COME FROM, and there are two sources, both named
-because a regex without a provenance is a regex nobody can safely change:
-
-WHY THE WINDOW IS THE BOTTOM TWELVE NON-BLANK LINES AND NOT THE BLOCK.
-The block reduction below stops at two consecutive blank lines, and real
-claude screens use single blanks throughout, so the block is usually the
-whole capture - which would let a ``Waiting for 1 background agent`` line
-thirty lines up in stale scrollback hold a genuinely resting session grey
-for as long as it stayed on screen. ``cloude_REPORT-Agent`` was in exactly
-that state: that line 33 lines up, and ``done 11:16 PM`` under it.
-
-WHY THE BLOCK IS SPLIT ON TWO BLANK LINES AND NOT ONE. claude's own
-dialogs contain single blank lines: the captured permission prompt has
-one between the command echo and the rule explanation. Splitting on a
-single blank would cut a real dialog in half and drop the
-``Do you want to ...?`` question line above the split, which is one of
-the three markers. Two consecutive blanks is what actually separates the
-live region from what is left over above it.
-
-AN ALL-BLANK CAPTURE IS A FAILED READ, NOT A CLEAR SCREEN. ``capture-pane``
-against a full-screen TUI is documented to return only trailing blanks,
-and claude runs full-screen. So a capture with no text in it answers
-``None`` for every family: we did not manage to look. Answering False
-there would say "no dialog is open" about a screen we never saw, and a
-permission prompt reported as no-prompt is the failure this project has
-already paid for twice.
-
-THE MARKERS ARE IMPORTED, NOT COPIED. The permission set was read off two
-real dialogs and carries its own negative controls in
-``tests/test_session_permission_verify.py``; the folder-trust set was
-measured across three launches. Re-spelling either here would give this
-project two copies of a regex that has to stay identical, which is how
-the status LED ended up contracted to byte-identical output in two trees.
-Only the ``AskUserQuestion`` footer is new, and it is new because nothing
-in the codebase matched it before.
-"""
 
 from __future__ import annotations
 
@@ -91,7 +47,6 @@ RESTING_BUSY_MARKERS: Tuple[Union[str, Pattern[str]], ...] = (
         "|[1-9]\\d* dynamic workflows?) to finish\\s*$",
         re.M,
     ),
-    # bypass permissions on
     re.compile(
         "^[ \\t]+(?:[^\\n\u276f]*\\s\u00b7\\s+)?"
         "(?:[1-9]\\d* shells?(?:, [1-9]\\d* monitors?)?"
@@ -179,14 +134,6 @@ def _with_wrapped_lines_joined(block: Sequence[str]) -> str:
 
 
 def classify_pane_tail(lines: Optional[Sequence[str]]) -> PaneVerdict:
-    """Which dialog families are on screen in the last block of this pane?
-
-    Description: PURE, and it NEVER RAISES. Reduces the capture to its
-      trailing block and runs the three marker families over that block
-      alone. Each family answers True, False or None, and the three are
-      independent: a capture can show a permission prompt and no trust
-      dialog, and that is two measurements, not one.
-    """
     block = last_text_block(lines)
     if not block:
         return PaneVerdict(

@@ -1,9 +1,3 @@
-/**
- * A COMPANY heading's menu, declared once (issue #1338; wrapper package S-6): rename, color (the shared swatch row, plus clear
- * when it has one), delete alone and last in the destructive token. The orphaned-projects heading draws no kebab, so nothing
- * here reaches it; a key naming no company the store holds builds no menu. The writes are `sidebar-shell/company-actions.ts`'s
- * and `heading-color-actions.ts`'s.
- */
 import { t } from '../../i18n/index.svelte';
 import { companyById, setCompanyColor } from '../../companies';
 import { deleteCompanyConfirm, renameCompanyPrompt } from '../../sidebar-shell/company-actions';

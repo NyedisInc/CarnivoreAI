@@ -8,7 +8,7 @@
     "docs/swarm-cards.md"
   ],
   "examples": [
-    "Zeta's agent and Alpha's agent each deal their own child. When both are accepted the parent reads Review, 2 of 2 done, and shows in both project lanes on the company board.",
+    "A company agent makes the card 'launch the new line' and a child in project Zeta and another in project Alpha. Zeta's agent and Alpha's agent each deal their own child. When both are accepted the parent reads Review, 2 of 2 done, and shows in both project lanes on the company board.",
     "Company 2's agent tries to hang a child in its own project under company 1's card and is refused; Alpha (SysOp) may do it anywhere."
   ],
   "how_to": [

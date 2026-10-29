@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the same words */
   import StatusLed from '../../lib/StatusLed.svelte';
 
   interface LedCase {

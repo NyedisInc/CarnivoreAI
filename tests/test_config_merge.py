@@ -270,3 +270,18 @@ class TestTheCommandLineTool:
         )
         assert proc.returncode == 1
         assert config.read_text() == "{ this is not json", "corrupt file was overwritten"
+
+
+def test_a_deleted_default_stays_deleted_and_a_changed_one_is_a_conflict():
+    from src.core.config_merge import CONFLICT, KEPT_CUSTOM, merge_config
+
+    same = merge_config({}, {"a": 1}, base={"a": 1})
+    assert "a" not in same.merged
+    assert [d.outcome for d in same.decisions] == [KEPT_CUSTOM]
+
+    changed = merge_config({}, {"a": 2}, base={"a": 1})
+    assert "a" not in changed.merged
+    assert [d.outcome for d in changed.decisions] == [CONFLICT]
+
+    nobase = merge_config({}, {"a": 1})
+    assert nobase.merged == {"a": 1}

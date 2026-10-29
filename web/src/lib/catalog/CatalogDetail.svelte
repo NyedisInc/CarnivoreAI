@@ -1,4 +1,4 @@
-<!-- could not be read failed to load -->
+<!-- could not be read -->
 <script lang="ts">
     import { SKILL_KEYS } from '../../../../client/js/labels/skill.js';
     import type { Translate } from '../sessions/types';
@@ -41,7 +41,6 @@
     interface Props {
         card: CardView;
         item: CatalogItem | null;
-        /* is not installed */
         installed: readonly InstalledItem[];
         costTotal?: number | null;
         rowState: InstallState;
@@ -177,7 +176,6 @@
         fetched = null;
         loadFailure = null;
         if (!id) return;
-        // navigation generation
         let cancelled = false;
         loading = true;
         void (async () => {
@@ -303,7 +301,7 @@
         <div class="detail-sec detail-sec--acts" data-detail-sec="acts">{@render acts()}</div>
     {/if}
 
-    <!-- hidden -->
+    
     {#if !readonly}
     <div class="detail-sec" data-detail-sec="card-image" hidden={!cardImageOwner}>
         {#key card.id}
@@ -498,7 +496,6 @@
         padding-top: 40px;
     }
 
-    /* padding */
     .detail__tins > :global(.tins) {
         padding-top: 0;
     }
@@ -546,7 +543,6 @@
         overflow-wrap: anywhere;
     }
 
-    /* padding */
     .detail-sec {
         display: flex;
         flex-direction: column;

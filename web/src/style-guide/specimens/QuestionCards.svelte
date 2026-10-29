@@ -7,10 +7,10 @@
 
   const SAMPLES: ApprovalItem[] = [
     {
-      id: 'sg-qc-trust', source: 'dialog', host: 'local', session_id: 'sg-1', session_name: 'omega', project: 'harbor',
+      id: 'sg-qc-trust', source: 'dialog', host: 'local', session_id: 'sg-1', session_name: 'omega', project: 'shelving',
       family: 'claude', kind: 'folder_trust', startup_kind: 'trust', created_at: AGO - 360,
       question: 'Quick safety check: Is this a project you created or one you trust?',
-      body: 'update the onboarding checklist',
+      body: 'Accessing workspace:\n\n~/Development/Org/Ventures/Shelving/tooling/catalog\n\nQuick safety check: Is this a project you created or one you trust?',
       rows: [{ label: 'No, exit', role: 'option' }, { label: 'Yes, I trust this folder', role: 'option' }],
     },
     {

@@ -76,15 +76,15 @@ describe('alertRows', () => {
 
 describe('one copy lists only the kinds it checked', () => {
   const approvals = [approval('a', 1_700_000_100)];
-  const huddleGroups = groups([waiting(2, 1_700_000_200)]);
+  const taskManagerGroups = groups([waiting(2, 1_700_000_200)]);
   const alerts = [alert(5, { first_seen: '2023-11-14T22:17:30Z' })];
 
   test('with no options every source is listed, oldest first', () => {
-    expect(mergeQuestions(approvals, huddleGroups, alerts, say).map((r) => r.kindId)).toEqual(['approvals', 'huddle', 'alert_backup_health']);
+    expect(mergeQuestions(approvals, taskManagerGroups, alerts, say).map((r) => r.kindId)).toEqual(['approvals', 'huddle', 'alert_backup_health']);
   });
 
   test('while all is on the kind checks change nothing; with all off each kind is listed on its own and an alert never is', () => {
-    const keys = (options: Record<string, boolean>) => mergeQuestions(approvals, huddleGroups, alerts, say, options).map((r) => r.kindId);
+    const keys = (options: Record<string, boolean>) => mergeQuestions(approvals, taskManagerGroups, alerts, say, options).map((r) => r.kindId);
     expect(keys({ kind_approvals: false })).toEqual(['approvals', 'huddle', 'alert_backup_health']);
     expect(keys({ kind_all: false, kind_approvals: false })).toEqual(['huddle']);
     expect(keys({ kind_all: false, kind_huddle: false })).toEqual(['approvals']);
@@ -92,11 +92,11 @@ describe('one copy lists only the kinds it checked', () => {
   });
 
   test('keys of the earlier build are ignored', () => {
-    expect(mergeQuestions(approvals, huddleGroups, alerts, say, { s_approvals: false, s_alert_backup_health: false }).map((r) => r.kindId)).toEqual(['approvals', 'huddle', 'alert_backup_health']);
+    expect(mergeQuestions(approvals, taskManagerGroups, alerts, say, { s_approvals: false, s_alert_backup_health: false }).map((r) => r.kindId)).toEqual(['approvals', 'huddle', 'alert_backup_health']);
   });
 
   test('two copies with different options list different things from the same data', () => {
-    const rows = mergeQuestions(approvals, huddleGroups, alerts, say);
+    const rows = mergeQuestions(approvals, taskManagerGroups, alerts, say);
     const onlyApprovals = filterRows(rows, { kind_all: false, kind_huddle: false, kind_automations: false });
     const everything = filterRows(rows, undefined);
     expect(onlyApprovals.map((r) => r.key)).toEqual(['approval:a']);

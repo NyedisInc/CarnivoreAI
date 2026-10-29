@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* pop-out window */
   import TopBar from './shell/TopBar.svelte';
   import HomeOpenMenu from './shell/HomeOpenMenu.svelte';
   import GridSurface from './engine/GridSurface.svelte';
@@ -25,12 +24,11 @@
   import { onContextMenu, onMenuKey } from './layout-editor/empty-space-menu.svelte';
   import { readOnlyStore } from './engine/wallboard';
 
-  /* pop-out window */
+  /* the home screen */
   let { popout = false, wallboard = false }: { popout?: boolean; wallboard?: boolean } = $props();
 
   const surfaceStore = wallboard ? readOnlyStore(homeLayout, () => sizeOf('content').height) : homeLayout;
 
-  /* pop-out window */
   const showBar = $derived(!wallboard && (popout || viewport.phone));
 
   const showOpenMenu = $derived(!wallboard && !popout && !viewport.phone);
@@ -116,7 +114,6 @@
       color: var(--oc-coral);
     }
 
-    /* display: none */
     .oc-app-wallboard :global(.oc-gutter-band),
     .oc-app-wallboard :global(.oc-span-edge) {
       visibility: hidden;

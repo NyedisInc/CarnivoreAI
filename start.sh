@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#
-# CARNIVORE_LOG_FILE
 
 set -u
 

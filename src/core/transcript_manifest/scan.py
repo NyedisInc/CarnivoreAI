@@ -1,23 +1,3 @@
-"""One scan: compare what is on disk with the manifest rows and decide each file's outcome.
-
-STAT ONLY FOR AN UNCHANGED FILE. A file whose size and mtime match its row, and whose row already
-knows its last serial, is never opened. Anything else reads only its tail (``tail.read_last_line``):
-
-- added: a path with no row (or a row a previous scan marked gone, which is a new file again);
-- unchanged: same size and mtime as the row;
-- grown: larger, and the row's last serial is still at the row's last offset (that one line is read);
-- rewritten: the row's last serial is no longer where it was (a shrink, a rewrite, a replace);
-- removed: a present row whose path the walk did not list AND that ``lstat`` confirms is gone. A root
-  the walk could not read proves nothing, so rows under it are never marked removed;
-- dataless: an iCloud placeholder (``SF_DATALESS`` in ``st_flags``, checked with ``lstat`` BEFORE any
-  read). It is counted and its row keeps what it had; a new one gets a row with no serial;
-- unreadable: stat or the tail read failed with anything other than "gone".
-
-A same-size, new-mtime file whose serial is still in place is ``unchanged`` (touched, not changed).
-
-PURE OF SQL: :func:`scan` takes the prior rows and the observed files and returns the rows to write,
-so a dry run and a live run make exactly the same decisions (``store.persist`` writes them).
-"""
 
 from __future__ import annotations
 
@@ -81,9 +61,7 @@ class ScanResult:
     removed: List[Row] = field(default_factory=list)
     complete_roots: Set[str] = field(default_factory=set)
     unreadable_roots: Set[str] = field(default_factory=set)
-    # could not
     discovery_unreadable: int = 0
-    # could not be read
     unreadable_sample: List[Dict[str, str]] = field(default_factory=list)
 
     def summary(self) -> Dict[str, object]:

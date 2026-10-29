@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* something else */
   import { drawerSurface } from '../../lib/drawer-tabs/drawer-surface.svelte';
   import { viewport } from '../engine/viewport.svelte';
   import type { SlotId } from '../engine/types';

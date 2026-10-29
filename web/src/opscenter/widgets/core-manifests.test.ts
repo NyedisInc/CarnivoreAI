@@ -4,6 +4,7 @@ import type { CellMeta } from '../engine/types';
 import { pickState } from '../lib/states';
 import { CORE_MANIFESTS, coreWidgetId, manifestForSlot } from './core-manifests';
 import { resolveDensity } from './density';
+import { registerPluginDeclaration } from './fit-declarations';
 import { validateManifest } from './validate';
 import { WIDGET_TYPES } from './types';
 import enCatalog from '../../../../client/js/i18n/catalog.en.js';
@@ -108,5 +109,23 @@ describe('the manifest layer imports no component', () => {
       .map(([path]) => path);
     expect(Object.keys(sources).length).toBeGreaterThan(3);
     expect(offenders).toEqual([]);
+  });
+});
+
+describe('run-time manifests go through the validator (u166-01)', () => {
+  test('a plugin manifest that breaks the contract is refused, not registered', async () => {
+    const { registerPluginManifest, manifestForSlot: forSlot } = await import('./core-manifests');
+    const meta = { ...META['notes'], id: 'acme.bad' } as never;
+    registerPluginDeclaration({ id: 'acme.bad' as never, instancing: 'per-target', fits: { sizes: ['wide'], anySize: true } });
+    expect(() => registerPluginManifest('acme.bad' as never, meta, { category: 'nope', type: 'tool', capabilities: [] } as never, '1.0.0')).toThrow(/manifest refused \(category\)/);
+    expect(forSlot('acme.bad' as never)).toBeUndefined();
+  });
+
+  test('a loose plugin version still registers, read as major.minor.patch', async () => {
+    const { registerPluginManifest } = await import('./core-manifests');
+    const meta = { ...META['notes'], id: 'acme.loose' } as never;
+    registerPluginDeclaration({ id: 'acme.loose' as never, instancing: 'per-target', fits: { sizes: ['large'], anySize: true } });
+    const made = registerPluginManifest('acme.loose' as never, meta, { category: 'tools', type: 'tool', capabilities: [] }, '0.3');
+    expect(made.version).toBe('0.3.0');
   });
 });

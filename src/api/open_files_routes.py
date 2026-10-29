@@ -1,12 +1,3 @@
-"""
-STATUS CODES. 400 ``open_file_path_refused`` (traversal, absolute, an unavailable root, a diff naming ``user``),
-``open_file_is_diff`` (a diff row has no content route), ``open_file_refused`` (any other refusal of the editor's
-guards on a save: read-only root, unacknowledged executable or sensitive write, malformed JSON). 404
-``open_file_session_not_found``, ``open_file_not_found`` (no such row, or no regular file at the path). 409
-``file_changed_on_disk`` (``{sha256}`` is the file's revision now, null when it is gone; nothing was written),
-``app_config_protected`` (this server's own config.json), ``open_file_unavailable`` (the row's session is gone). 503 the
-datastore. 422 a malformed body.
-"""
 
 from __future__ import annotations
 
@@ -28,10 +19,12 @@ from src.models.open_files import (
     OpenFileInfo,
     OpenFileList,
     OpenFileRequest,
+    OpenFilePathRequest,
     OpenFileResponse,
     SaveOpenFileRequest,
     SaveOpenFileResponse,
 )
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -75,15 +68,30 @@ async def open_file(body: OpenFileRequest) -> OpenFileResponse:
     except SessionNotFound as exc:
         raise _refused(404, "open_file_session_not_found", "no session on this computer has that id") from exc
     except content.NothingToOpen as exc:
-        raise _refused(404, "open_file_not_found", str(exc)) from exc
+        raise api_error(404, "open_file_not_found", exc, kind=body.kind) from exc
     except content.OpenRefused as exc:
-        logger.info("open_file_refused", root=body.root, kind=body.kind, error=str(exc))
-        raise _refused(400, "open_file_path_refused", str(exc)) from exc
+        raise api_error(400, "open_file_path_refused", exc, root=body.root, kind=body.kind) from exc
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise api_error(503, "datastore_unavailable", exc, step="open_file") from exc
     row, reused = open_list.open_file(body.kind, body.root, path, body.session_uuid)
     row_looks.apply_on_open(row.id, body.color, body.icon)
     logger.info("open_file_row_opened", file_id=row.id, kind=row.kind, root=row.root, reused=reused)
+    return OpenFileResponse(file=_info(row), reused=reused)
+
+
+@router.post("/files/open/path", response_model=OpenFileResponse)
+async def open_file_by_path(body: OpenFilePathRequest) -> OpenFileResponse:
+    """Open an explicitly selected absolute local file without inventing a session."""
+    try:
+        path, scope_root = await run_in_threadpool(content.checked_absolute_path, _db_path(), body.path)
+    except content.NothingToOpen as exc:
+        raise api_error(404, "open_file_not_found", exc) from exc
+    except content.OpenRefused as exc:
+        raise api_error(400, "open_file_path_refused", exc) from exc
+    except DatastoreUnreadableError as exc:
+        raise api_error(503, "datastore_unavailable", exc, step="open_file_path") from exc
+    row, reused = open_list.open_file("file", "absolute", path, "", scope_root)
+    logger.info("open_file_path_opened", file_id=row.id, reused=reused)
     return OpenFileResponse(file=_info(row), reused=reused)
 
 
@@ -105,7 +113,7 @@ async def read_open_file(file_id: str) -> OpenFileContent:
     try:
         result = await run_in_threadpool(content.read, _db_path(), row)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise api_error(503, "datastore_unavailable", exc, step="read_open_file") from exc
     return OpenFileContent(**result)
 
 
@@ -119,17 +127,15 @@ async def save_open_file(file_id: str, body: SaveOpenFileRequest) -> SaveOpenFil
                                   overwrite=body.overwrite, acknowledge_executable=body.acknowledge_executable,
                                   acknowledge_sensitive=body.acknowledge_sensitive))
     except content.RowNotEditable as exc:
-        raise _refused(400, "open_file_is_diff", str(exc)) from exc
+        raise api_error(400, "open_file_is_diff", exc, file_id=row.id) from exc
     except SessionNotFound as exc:
         raise _refused(409, "open_file_unavailable", "the session this file was opened from is gone") from exc
     except config_files.FileChangedOnDiskError as exc:
-        logger.info("open_file_save_stale", file_id=row.id)
-        raise HTTPException(status_code=409, detail=exc.as_detail()) from exc
+        raise api_error(409, exc.CODE, exc, extra={"sha256": exc.current_sha256}, file_id=row.id) from exc
     except app_config_guard.AppConfigProtectedError as exc:
-        raise HTTPException(status_code=409, detail={"code": app_config_guard.APP_CONFIG_PROTECTED, "detail": str(exc)}) from exc
+        raise api_error(409, app_config_guard.APP_CONFIG_PROTECTED, exc, file_id=row.id) from exc
     except config_files.ConfigFileError as exc:
-        logger.info("open_file_save_refused", file_id=row.id, error=str(exc))
-        raise _refused(400, "open_file_refused", str(exc)) from exc
+        raise api_error(400, "open_file_refused", exc, file_id=row.id) from exc
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise api_error(503, "datastore_unavailable", exc, step="save_open_file") from exc
     return SaveOpenFileResponse(**result)

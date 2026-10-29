@@ -19,7 +19,7 @@ from src.core.session_claude_correlate_bind import bind_correlated_uuid
 from src.core.session_identity import record_instance
 from tests.s7_helpers import TEST_SOCKET, migrated_connection, session_row
 
-PARENT = "117f4a03-6c4f-43dd-84a8-9f85e646f1ce"
+PARENT = "5c2b9059-0000-4000-8000-000000000000"
 CHILDREN = [f"{n}{n}{n}{n}{n}{n}{n}{n}-0000-4000-8000-00000000000{n}" for n in range(1, 6)]
 COMPACTED = "cccccccc-0000-4000-8000-000000000000"
 BOUNDARY = {"type": "system", "subtype": "compact_boundary", "sessionId": COMPACTED, "uuid": "u-boundary",

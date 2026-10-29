@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { Button, IconButton, Segmented, Switch, type SegmentedOption } from '../base';
     import type { Translate } from '../sessions/types';
     import type { PreviewMode } from '../../widget-preview/protocol';
     import ItemSettingsPanel from '../item-settings/ItemSettingsPanel.svelte';
@@ -10,7 +11,6 @@
     import { infoKeys } from '../../opscenter/widgets/info/widget-info';
     import { sizeNameKey, type WidgetSizeName } from '../../opscenter/widgets/named-sizes';
     import { viewWidgetId, viewsOf } from '../../opscenter/widgets/views';
-    import Icon from '../../opscenter/ui/Icon.svelte';
     import WidgetTile from './WidgetTile.svelte';
     import { factKey, type WidgetItem } from './widgets-adapter';
     import WidgetHero from './WidgetHero.svelte';
@@ -73,6 +73,17 @@
         void removeFromPlace(item.id, item.name, row.place, row.key, row.board, boardCell(manifest), t);
     }
 
+    const modeOptions = $derived<SegmentedOption[]>(
+        (['sample', 'real'] as const).map((option) => ({ value: option, label: t(option === 'sample' ? 'widgets.places.pane.sample' : 'widgets.places.pane.mine'), attrs: { 'data-preview-toggle': option } })),
+    );
+    const viewOptions = $derived<SegmentedOption[]>(views.map((one) => ({ value: one.id, label: t(one.titleKey), attrs: { 'data-view': one.id } })));
+    const sizeOptions = $derived<SegmentedOption[]>(
+        SIZE_ORDER.map((name) => {
+            const has = declared.includes(name);
+            return { value: name, label: name, disabled: !has, attrs: { 'data-pane-size': name, title: has ? t(sizeNameKey(name)) : t('widgets.places.pane.size_missing', { size: name }) } };
+        }),
+    );
+
     function flip(): void {
         const next = !enabled;
         if (!next) for (const row of placed) remove(row);
@@ -86,44 +97,22 @@
     <div class="pn-hero" style={`height: ${heroH}px`}>
         <div class="pn-hero__top">
             {#if realOk}
-                <div class="oc-seg" role="radiogroup" aria-label={t('widgets.page.preview.data')}>
-                    {#each ['sample', 'real'] as const as option (option)}
-                        <button type="button" class="oc-seg__item" role="radio" aria-checked={shownMode === option} data-preview-toggle={option} onclick={() => (mode = option)}>{t(option === 'sample' ? 'widgets.places.pane.sample' : 'widgets.places.pane.mine')}</button>
-                    {/each}
-                </div>
+                <Segmented label={t('widgets.page.preview.data')} value={shownMode} options={modeOptions} onchange={(next) => (mode = next === 'real' ? 'real' : 'sample')} />
             {:else}
                 <span class="pn-note" data-preview-sample-only>{t('widgets.page.preview.sample_only')}</span>
             {/if}
-            <button type="button" class="pn-close" aria-label={t('widgets.places.pane.close')} data-k="close" onclick={onClose}><Icon name="close" size={12} /></button>
+            <IconButton variant="close" icon="close" label={t('widgets.places.pane.close')} data-k="close" onclick={onClose} />
         </div>
         {#if previews}<WidgetHero manifest={drawn} {size} mode={shownMode} {t} />{/if}
     </div>
     {#if views.length > 0}
         <div class="pn-views">
             <span class="oc-label">{t('widgets.places.pane.view')}</span>
-            <div class="oc-seg" role="radiogroup" aria-label={t('widgets.places.pane.view')}>
-                {#each views as one, index (one.id)}
-                    <button type="button" class="oc-seg__item" role="radio" aria-checked={(viewId ?? views[0]?.id) === one.id} data-view={one.id} onclick={() => (viewId = index === 0 ? null : one.id)}>{t(one.titleKey)}</button>
-                {/each}
-            </div>
+            <Segmented label={t('widgets.places.pane.view')} value={viewId ?? views[0]?.id ?? ''} options={viewOptions} onchange={(next) => (viewId = next === views[0]?.id ? null : next)} />
         </div>
     {/if}
     <div class="pn-sizes">
-        <div class="oc-seg" role="radiogroup" aria-label={t('widgets.places.pane.size')}>
-            {#each SIZE_ORDER as name (name)}
-                {@const has = declared.includes(name)}
-                <button
-                    type="button"
-                    class="oc-seg__item"
-                    role="radio"
-                    data-size={name}
-                    aria-checked={name === size}
-                    aria-disabled={has ? undefined : 'true'}
-                    title={has ? t(sizeNameKey(name)) : t('widgets.places.pane.size_missing', { size: name })}
-                    onclick={() => has && (size = name)}
-                >{name}</button>
-            {/each}
-        </div>
+        <Segmented label={t('widgets.places.pane.size')} value={size} options={sizeOptions} onchange={(next) => (size = next as WidgetSizeName)} />
     </div>
     {#if size === 'glance'}
         <p class="pn-note">{glancePx !== null ? t('widgets.places.pane.glance_declared', { px: glancePx }) : t('widgets.places.pane.glance_none')}</p>
@@ -136,7 +125,7 @@
     <div class="pn-sec" data-sec="placed">
         <div class="pn-sec__head">
             <span class="oc-label">{t('widgets.places.pane.placed')}</span>
-            {#if enabled}<button type="button" class="oc-btn oc-btn--sm" aria-haspopup="menu" data-k="add" onclick={(event) => onMenu(event.currentTarget as HTMLElement, item.id)}>{t('widgets.places.pane.add_to')}</button>{/if}
+            {#if enabled}<Button size="sm" aria-haspopup="menu" data-k="add" onclick={(event) => onMenu(event.currentTarget as HTMLElement, item.id)}>{t('widgets.places.pane.add_to')}</Button>{/if}
         </div>
         {#if placed.length === 0}<p class="pn-none">{enabled ? t('widgets.places.pane.none') : t('widgets.places.pane.off_nowhere')}</p>{/if}
         {#each placed as row (`${row.place}:${row.key ?? row.board}`)}
@@ -144,7 +133,7 @@
                 <span class="wp-pmark" data-pl={row.place}>{PLACES.find((def) => def.id === row.place)?.mark}</span>
                 <span class="pn-place__name">{row.label}</span>
                 <span class="pn-place__sub">{row.sub}</span>
-                <button type="button" class="oc-btn oc-btn--sm" aria-label={t('widgets.places.pane.remove_label', { name: item.name, place: row.label })} onclick={() => remove(row)}>{t('widgets.places.pane.remove')}</button>
+                <Button size="sm" variant="danger" aria-label={t('widgets.places.pane.remove_label', { name: item.name, place: row.label })} onclick={() => remove(row)}>{t('widgets.places.pane.remove')}</Button>
             </div>
         {/each}
     </div>
@@ -160,7 +149,7 @@
         <div class="pn-sec__head">
             <span class="oc-label">{t('widgets.places.pane.switch')}</span>
             {#if switchable}
-                <button type="button" class="pn-toggle" role="switch" aria-checked={enabled} aria-label={t('widgets.places.pane.switch_label', { name: item.name })} disabled={toggle?.busy} onclick={flip}>{enabled ? t('widgets.places.pane.on') : t('widgets.places.pane.off')}</button>
+                <Switch label={enabled ? t('widgets.places.pane.on') : t('widgets.places.pane.off')} bind:checked={() => enabled, () => {}} aria-label={t('widgets.places.pane.switch_label', { name: item.name })} disabled={toggle?.busy} onchange={flip} data-pane-toggle />
             {/if}
         </div>
         <p class="pn-switch-note">{!switchable ? t('widgets.places.pane.always_on') : enabled ? t('widgets.places.pane.note_on') : t('widgets.places.pane.note_off')}</p>

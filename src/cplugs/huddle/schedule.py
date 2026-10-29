@@ -9,6 +9,7 @@ from typing import Any, Callable, List, Optional
 import structlog
 
 from src.cplugs.huddle import fire, inbox, inbox_delivery, service, triggers
+from src.cplugs.huddle.roles import port as roles_port
 from src.cplugs.huddle.wait_runner import WaitRunner
 from src.cplugs.huddle.inbox_store import InboxStore
 from src.cplugs.huddle.rules import TaskManagerInvalid
@@ -101,6 +102,7 @@ class Scheduler:
             await self._ctx.sessions.booted()
         except (OSError, RuntimeError, AttributeError) as exc:
             logger.warning("task_manager_schedule_boot_wait_failed", error=str(exc))
+        await roles_port.settle(self._ctx)
         while True:
             self._wake.clear()
             try:
@@ -108,8 +110,8 @@ class Scheduler:
                 await self.inbox_due()
                 await self.waits_due()
                 timeout = await asyncio.to_thread(self._timeout)
-            except (OSError, RuntimeError, sqlite3.Error) as exc:
-                logger.error("task_manager_schedule_pass_failed", error_type=type(exc).__name__, error=str(exc)[:200])
+            except Exception as exc:  # noqa: BLE001
+                logger.exception("task_manager_schedule_pass_failed", error_type=type(exc).__name__, error=str(exc)[:200])
                 timeout = MAX_SLEEP_S
             try:
                 await asyncio.wait_for(self._wake.wait(), timeout)

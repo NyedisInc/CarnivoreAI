@@ -83,13 +83,6 @@ def _ensure(conn: sqlite3.Connection) -> Dict[str, Any]:
 
 
 async def ensure_alpha() -> Optional[Dict[str, Any]]:
-    """Make Alpha exist (docs/swarm.md 4.1): folder, repo, project row, one asleep agent. Safe to call at every boot.
-
-    Description: runs when the Swarm is on (the huddle plugin registers its thread port, boot or a later turn-on). Never raises:
-      a datastore or disk failure is logged and the next call tries again; a taken folder is logged and posts one info card.
-    Output: Alpha's row dict, None when she does not exist yet. While the global Swarm switch is off it makes nothing and
-      answers None; the turn-on (``switch.resume``) calls it again.
-    """
     if not switch.is_on():
         logger.info("swarm_alpha_ensure_skipped_off")
         return None

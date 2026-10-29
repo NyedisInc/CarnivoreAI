@@ -7,12 +7,12 @@ from typing import Any, Mapping, Optional
 from src.cplugs.huddle import actor_log, lineage, rules
 from src.cplugs.huddle.cards import state_log
 
-REPLIED = "owner replied"
+REPLIED = "joe replied"
 BACK_TO_REVIEW, BACK_TO_DONE = "answered, back to review", "answered, back to done"
 NOT_ANSWERED = "turn ended unanswered, back"
 NOT_ANSWERED_TEXT = "the session's turn ended and it did not answer; this task went back to {state}. the owner's reply is still the last word here."
 OWNER_REPLIED_HINT = ("the owner replied on these tasks and each is open again: answer a question with task_manager_reply, then return the task with "
-                      "task_manager_update state review (a task the owner had ticked returns to done the same way, state done); for changes, work them and set review")
+                      "task_manager_update state review (a task he had ticked returns to done the same way, state done); for changes, work them and set review")
 
 
 def replied_from(conn: sqlite3.Connection, row: Mapping[str, Any]) -> Optional[str]:

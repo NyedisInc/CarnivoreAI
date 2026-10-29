@@ -217,11 +217,10 @@ def test_the_analyser_can_tell_two_derivations_apart() -> None:
 
 
 def test_main_derives_one_state_dir_for_both_sites() -> None:
-    main_py = Path(__file__).resolve().parents[1] / "src" / "main.py"
-    tree = ast.parse(main_py.read_text())
+    boot_dir = Path(__file__).resolve().parents[1] / "src" / "core" / "boot"
 
-    reader = _first_arg_source(tree, "ensure_db_migrated")
-    writer = _first_arg_source(tree, "DatabaseIntegrityScheduler")
+    reader = _first_arg_source(ast.parse((boot_dir / "config_chain.py").read_text()), "ensure_db_migrated")
+    writer = _first_arg_source(ast.parse((boot_dir / "schedulers.py").read_text()), "DatabaseIntegrityScheduler")
 
     assert reader == "settings.get_state_dir()", (
         f"the boot gate's state dir is derived as {reader!r}"

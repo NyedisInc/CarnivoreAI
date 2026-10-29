@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 
-from src.api.subagent_listing import _fresh_claude_observation
+from src.api.subagent_listing import fresh_claude_observation
 from src.core.agent_families import DEFAULT_FAMILY
 from src.core.attention.codex_gather import DEFAULT_CODEX_HOME, rollout_path_for
 from src.core.attention.evidence import FAMILY_CODEX
@@ -27,7 +27,7 @@ def agent_update_for(
         return _codex_update_for(info, table)
     if family is not None and family != DEFAULT_FAMILY:
         return None
-    observation = _fresh_claude_observation(watcher, info, now)
+    observation = fresh_claude_observation(watcher, info, now)
     if observation is None:
         return None
     registry = getattr(observation.evidence, "registry", None)

@@ -9,7 +9,6 @@ from src.core.lineage import graph
 
 
 def _held_conversations(conn: sqlite3.Connection, session_uuid: str) -> Optional[List[str]]:
-    """The conversations a session holds (current first), or None when no such session row exists."""
     row = conn.execute("SELECT claude_session_uuid FROM sessions WHERE session_uuid = ?", (session_uuid,)).fetchone()
     if row is None:
         return None
@@ -20,14 +19,6 @@ def _held_conversations(conn: sqlite3.Connection, session_uuid: str) -> Optional
 
 
 def neighbourhood(conn: sqlite3.Connection, node_type: str, node_id: str) -> Optional[Dict[str, Any]]:
-    """Everything linked to one node, or None for a session that does not exist.
-
-    Inputs: conn; node_type (``session``, ``conversation`` or ``subagent``); node_id.
-    Output: dict ``{node: {type, id}, levels, conversations, parents, children, siblings, subagents}``; ``conversations``
-      is the session's held conversations (empty for another node type); edges keep their kind and basis.
-    Raises: graph.LineageValueError for an unknown node type.
-    Example: neighbourhood(conn, 'session', 's1')['siblings']
-    """
     if node_type not in K.NODE_TYPES:
         raise graph.LineageValueError(f"node type must be one of {K.NODE_TYPES}")
     held: List[str] = []

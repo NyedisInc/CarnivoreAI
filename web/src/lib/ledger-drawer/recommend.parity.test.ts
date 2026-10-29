@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 import type { AccountUsage } from '../../opscenter/api/types';
 import { recommend } from './recommend';
 
+/** Where the shared fixture lives, from this file. */
 const FIXTURE = fileURLToPath(new URL('../../../../tests/fixtures/account_switch_star_parity.json', import.meta.url));
 
 type FixtureWindow = [string, number, number, number];

@@ -31,7 +31,7 @@ describe('normal mode', () => {
     expect(breaks(menu)).toEqual(['view-all', 'extend-row', 'pop-out', 'edit-layout', 'close-widget']);
   });
 
-  test('extend a row and pull back a row are back in normal mode; pull back only once it covers two rows', () => {
+  test('extend a row and pull back a row are back in normal mode (Alex (Example-owner), 2026-10-22); pull back only once it covers two rows', () => {
     const extend = vi.fn();
     const pull = vi.fn();
     const arrange = [{ item: 'extendRow' as const, run: extend }, { item: 'pullBackRow' as const, run: pull }, { item: 'moveToDrawer' as const, run: () => {} }];
@@ -43,7 +43,7 @@ describe('normal mode', () => {
     expect(ids(buildWidgetMenu(ctx()))).not.toContain('pull-back-row');
   });
 
-  test('the selected session | all sessions switch is in BOTH modes, after the content', () => {
+  test('the selected session | all sessions switch is in BOTH modes, after the content (Joe (ccsliinc), 2026-10-19, item 1048)', () => {
     const scopeViews = [leaf('session', { checked: true }), leaf('all', { checked: false })];
     const normal = buildWidgetMenu(ctx({ views: undefined, scopeViews }));
     expect(ids(normal).slice(0, 5)).toEqual(['sort:name', 'sort:recent', 'view-all', 'session', 'all']);
@@ -168,7 +168,7 @@ describe('the letters (client/js/menu-keys.js): a verb has one letter in every m
   });
 });
 
-describe('bar sizes live on the bar, not on a widget', () => {
+describe('bar sizes live on the bar, not on a widget (Joe (ccsliinc), 2026-10-21)', () => {
   test('a widget menu carries no compact, cozy or detailed rows even when handed a bar size; the bar empty-area menu has them', () => {
     const widget = ids(buildWidgetMenu(ctx({ barSize: { current: 'cozy', set: () => {} } } as Partial<WidgetMenuCtx>)));
     expect(widget.filter((id) => id.startsWith('bar-size'))).toEqual([]);

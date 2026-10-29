@@ -1,7 +1,7 @@
 <script lang="ts">
-  /* could not */
   import { onDestroy, onMount } from 'svelte';
   import { t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import { fitTableState } from './lab-api';
   import { cellState, fitColumns, type MatrixState } from './lab-model';
 
@@ -66,12 +66,12 @@
         <tbody>
           {#each table.widgets as row (row.widget)}
             <tr>
-              <th class="dwl-fit-widget" scope="row"><button type="button" class="dwl-fit-name" onclick={() => onpick(row.widget)}>{row.widget}</button></th>
+              <th class="dwl-fit-widget" scope="row"><Button variant="quiet" size="sm" data-fit-name onclick={() => onpick(row.widget)}>{row.widget}</Button></th>
               {#each columns as col (col.key)}
                 {@const kind = cellState(row, col.key)}
                 <td>
-                  <button type="button" class="dwl-fit-cell" data-state={kind} aria-label={`${row.widget} ${col.key} ${kind}`} disabled={kind === 'unsupported'}
-                    onclick={() => onpick(row.widget, col.host, col.size)}>{t(`cplug.devwidgetlab.fit.cell.${kind}`)}</button>
+                  <Button variant="quiet" size="sm" data-fit-cell data-state={kind} aria-label={`${row.widget} ${col.key} ${kind}`} disabled={kind === 'unsupported'}
+                    onclick={() => onpick(row.widget, col.host, col.size)}>{t(`cplug.devwidgetlab.fit.cell.${kind}`)}</Button>
                 </td>
               {/each}
             </tr>

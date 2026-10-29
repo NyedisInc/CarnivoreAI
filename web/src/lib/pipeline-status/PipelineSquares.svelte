@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
     import { t as reactiveT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
@@ -19,7 +19,6 @@
 
     const uid = $props.id();
     const detailId = `ps-sq-detail-${uid}`;
-    /*  hidden  */
     const descId = (id: string): string => `ps-sq-desc-${uid}-${id}`;
 
     let root: HTMLDivElement | undefined = $state();
@@ -41,7 +40,6 @@
         return t('pipeline.square.label', { plugin: nameOf(square.id), state });
     }
 
-    /*  hidden  */
     function described(square: PluginSquare): string {
         return detailLines(square, nowS).map((line) => t(line.key, line.params)).join('; ');
     }
@@ -94,7 +92,7 @@
                 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                 <li class="ps-sq__item" data-ps-square={square.id} onpointerenter={(event) => pointerEnter(event, square.id)}
                     onfocusin={(event) => focusIn(event, square.id)}>
-                    <button type="button" class="ps-sq__square" data-ps="square" data-state={square.state} data-rebuilding={square.rebuilding}
+                    <button data-base-exempt="a status square: the state color is the button" type="button" class="ps-sq__square" data-ps="square" data-state={square.state} data-rebuilding={square.rebuilding}
                         data-selected={filterable && selected === square.id ? 'true' : undefined}
                         aria-label={label(square)} aria-describedby={descId(square.id)}
                         aria-expanded={filterable ? undefined : openId === square.id}

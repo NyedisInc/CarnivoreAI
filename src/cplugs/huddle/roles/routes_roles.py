@@ -17,6 +17,9 @@ from src.cplugs.sdk.swarm import SwarmError
 
 
 class LeadRequest(BaseModel):
+    """The owner's lead pick. ``session`` is required: a stable key to seat, or null to empty the seat (a missing key is not a silent clear).
+    ``agent`` true also makes the session the project's Swarm project agent where the project has none; ``seat_only`` true pins the Task
+    Manager seat to the session and leaves the Swarm agent alone (null releases the pin)."""
 
     model_config = ConfigDict(extra="forbid")
     session: Optional[str]
@@ -32,6 +35,7 @@ class DndRequest(BaseModel):
 
 
 class RetrofitRequest(BaseModel):
+    """The retrofit: projects to leave alone, the owner's picks, and whether this is only the plan (the default)."""
 
     model_config = ConfigDict(extra="forbid")
     skip: List[str] = []
@@ -40,6 +44,7 @@ class RetrofitRequest(BaseModel):
 
 
 class TagRequest(BaseModel):
+    """The owner's tag pick. ``session`` is required: a session to tag, or null to clear (a missing key is not a silent clear)."""
 
     model_config = ConfigDict(extra="forbid")
     session: Optional[str]
@@ -55,7 +60,7 @@ async def read_roles(ctx: CplugContext) -> Dict[str, Any]:
     except roles_service.RolesUnmeasured as exc:
         raise HTTPException(status_code=503, detail={"code": "task_manager_roles_unmeasured", "detail": str(exc)}) from exc
     store = RoleStore(service.store(ctx))
-    seats = await run_store(lambda: roles_service.evaluate(store, roster))
+    seats = await run_store(lambda: roles_service.evaluate(store, roster, write_pick=False))
     return {"leads": {key: roles_service.seat_view(seat, roster) for key, seat in seats.items() if seat.ever_led},
             "dnd": sorted(await run_store(store.dnd_keys))}
 
@@ -68,7 +73,8 @@ async def get_roles(ctx: CplugContext = Ctx) -> Dict[str, Any]:
 
 @router.put("/lists/{key}/lead")
 async def put_lead(key: str, body: LeadRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """The owner seats a session as a project's lead, or empties the seat (null). Output: {list, seat, agent, dnd_cleared} (``set_lead.py``).
+
     Raises: 400 ``task_manager_invalid`` (not a project's list, a bad key, a session that is not an agent session of this project, a promotion
       the Swarm refused, clearing a project that has a Swarm project agent, or ``agent`` with ``seat_only``), 404 (unknown list), 503 (sessions unreadable).
     """

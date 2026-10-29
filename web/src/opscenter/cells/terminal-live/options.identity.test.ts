@@ -7,6 +7,7 @@ import { describe, expect, test } from 'vitest';
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const read = (rel: string): string => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
+/** terminal.js's own marker line; see the comment on it in that file. */
 const CLASS_END = '// THE CLASS ENDS ABOVE.';
 
 function world(): {

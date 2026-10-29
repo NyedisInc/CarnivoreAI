@@ -75,12 +75,6 @@ class PointRestore:
 
 
 def restore_point(vault: Vault, unit: str, point_id: str, homes: Dict[str, Path]) -> PointRestore:
-    """Put a point's files back. The main transcript first and strictly, then everything else, skipping what differs.
-
-    Inputs: vault; unit; point_id; homes ({'claude': ~/.claude, ...}; ``codex`` and ``state`` default to this install's).
-    Output: PointRestore. Raises: UnknownPoint; ManifestError; restore.RestoreConflict (a different transcript of this
-    conversation is already on disk; nothing was written); restore.RestoreError; OSError.
-    """
     manifest = read_point(vault, unit, point_id)
     full = {"codex": tf.default_codex_home(), "state": Path(tf.state_dir()), **{k: Path(v) for k, v in homes.items()}}
     projects = full.get("claude/projects", full["claude"] / "projects")
@@ -115,9 +109,9 @@ class SessionIndex:
             if self._root != vault.root or self._clock() - self._at > SESSION_INDEX_TTL:
                 mapping: Dict[str, List[str]] = {}
                 for unit in vault.manifests.units():
-                    for point in vault.manifests.points(unit):
-                        if point.session_uuid and unit not in mapping.setdefault(point.session_uuid, []):
-                            mapping[point.session_uuid].append(unit)
+                    point = vault.manifests.newest(unit)
+                    if point is not None and point.session_uuid and unit not in mapping.setdefault(point.session_uuid, []):
+                        mapping[point.session_uuid].append(unit)
                 self._map, self._root, self._at = mapping, vault.root, self._clock()
             return list(self._map.get(session_uuid, []))
 

@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
     import { loadOnce } from './load-once.svelte.js';
     import Button from '../lib/base/Button.svelte';

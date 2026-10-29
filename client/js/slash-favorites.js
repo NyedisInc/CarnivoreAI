@@ -1,7 +1,3 @@
-/* border-radius: 50% }` element rule
- * in styles.css exists for the round header icons and reaches every
- * button that does not opt out. Nine user-visible bugs have come from
- * that rule; height: 36px padding width: 36px */
 
 console.log('[SlashFavorites Module] Loading...');
 
@@ -19,12 +15,14 @@ console.log('[SlashFavorites Module] Loading...');
     }
 
     function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.textContent = str == null ? '' : String(str);
-        return div.innerHTML;
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
-    /* <button> */
     function starButton(command, on) {
         var safe = escapeHtml(command);
         return (
@@ -54,10 +52,11 @@ console.log('[SlashFavorites Module] Loading...');
                 }).catch(function (err) {
                     console.error('[SlashFavorites] toggle failed', err);
                     btn.disabled = false;
-                    window.alert(
-                        'could not update favorites: ' +
-                        (err && err.message ? err.message : 'unknown error')
-                    );
+                    var tr = window.CloudeI18n && window.CloudeI18n.t ? window.CloudeI18n.t.bind(window.CloudeI18n) : function (k) { return k; };
+                    var detail = err && err.message ? err.message : tr('slash.favorites.unknown_error');
+                    if (window.Router && typeof window.Router.showError === 'function') {
+                        window.Router.showError(tr('slash.favorites.toggle_failed', { detail: detail }));
+                    }
                 });
             });
         });

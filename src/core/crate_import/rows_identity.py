@@ -95,7 +95,7 @@ def write_sessions(ctx: rw.WriteCtx, a: Analysis, project_id: int) -> None:
         return
     counts, parents = ctx.table_counts(SESSIONS), []
     rows = (a.rows.sanitized.get(SESSIONS, []) if a.rows else [])
-    project_old = (a.rows.project_rows[0].get("id") if a.rows and a.rows.project_rows else None)  # own project
+    project_old = (a.rows.project_rows[0].get("id") if a.rows and a.rows.project_rows else None)
     for source in rows:
         row = dict(source)
         old_id, parent_old = row.pop("id", None), row.pop("parent_session_id", None)
@@ -107,7 +107,6 @@ def write_sessions(ctx: rw.WriteCtx, a: Analysis, project_id: int) -> None:
             continue
         for column in SESSION_RESET:
             row.pop(column, None)
-        # own project
         own_project = row.get("project_id") is None or project_old is None or row["project_id"] == project_old
         mapped_project = None if own_project else ctx.idmap.get(PROJECTS, row["project_id"])
         row.update(IMPORTED_ROW_CONSTANTS)

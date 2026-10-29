@@ -42,7 +42,6 @@ export interface ImportRows {
 }
 
 export interface ImportProject {
-    /* could not */
     readonly action: string | null;
     readonly name: string | null;
     readonly rootFrom: string | null;
@@ -88,10 +87,8 @@ export interface ImportProjectFolder {
     readonly path: string;
     /* does not exist yet */
     readonly create: boolean;
-    /* project files */
     readonly files: string | null;
     readonly side: string | null;
-    /* project files */
     readonly matching: number | null;
     readonly differing: number | null;
 }

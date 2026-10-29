@@ -37,8 +37,7 @@
     }
 
     function tr(key, params) {
-        var i18n = typeof window !== 'undefined' ? window.CloudeI18n : null;
-        return i18n && typeof i18n.t === 'function' ? i18n.t(key, params) : key;
+        return globalThis.CloudeTr(key, params);
     }
 
     function bridgeWith(name) {
@@ -91,7 +90,6 @@
         }
     }
 
-    /* navigation generation */
     function bind(info, rebind) {
         var sesId = info.session.id;
         var NG = window.NavigationGeneration;

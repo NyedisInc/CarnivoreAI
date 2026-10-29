@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 
+from src.api.error_response import refusal_error
 from src.api.auth import require_auth
 from src.config import settings
 from src.core import cross_session_search as search
@@ -73,10 +74,8 @@ async def scrollback_search(
     try:
         query = search.normalize_query(q)
     except search.QueryRejected as exc:
-        raise HTTPException(
-            status_code=422, detail={"code": exc.code, "message": str(exc)}
-        ) from exc
+        raise refusal_error(exc, status=422) from exc
     manager = request.app.state.session_manager
-    targets = search.collect_targets(manager, manager._tmux_socket_name())
+    targets = search.collect_targets(manager, manager.tmux_socket_name())
     answer = await search.search_targets(targets, query, lines=_scrollback_depth())
     return ScrollbackSearchResult(**answer)

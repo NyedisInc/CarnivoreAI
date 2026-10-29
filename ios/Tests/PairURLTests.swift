@@ -20,15 +20,15 @@ final class PairURLTests: XCTestCase {
 
     func testKnownComputerAcceptedIncludingCustomDomainAndLan() throws {
         let custom = Origin(url: URL(string: "https://box.example.com")!)!
-        let lan = Origin(url: URL(string: "http://198.51.100.10:8000")!)!
+        let lan = Origin(url: URL(string: "http://192.168.1.10:8000")!)!
         let a = try parse("https://box.example.com/pair#\(secret)", known: [custom]).get()
         XCTAssertTrue(a.isKnown)
         XCTAssertEqual(a.kind, .https)
-        XCTAssertTrue(try parse("http://198.51.100.10:8000/pair#\(secret)", known: [lan]).get().isKnown)
+        XCTAssertTrue(try parse("http://192.168.1.10:8000/pair#\(secret)", known: [lan]).get().isKnown)
     }
 
     func testCustomNameAsksForConfirmation() throws {
-        let text = "https://agents.example.com/pair#\(secret)"
+        let text = "https://agents.harbor.nyc/pair#\(secret)"
         let target = try parse(text).get()
         XCTAssertTrue(target.needsConfirm)
         XCTAssertFalse(target.isKnown)
@@ -47,7 +47,7 @@ final class PairURLTests: XCTestCase {
     func testHostsRefusedOutright() {
         for text in ["http://box.example.com/pair#\(secret)", "http://\(host)/pair#\(secret)",
                      "https://\(host):8443/pair#\(secret)", "https://box.example.com:8443/pair#\(secret)",
-                     "https://198.51.100.10/pair#\(secret)", "https://localhost/pair#\(secret)",
+                     "https://192.168.1.10/pair#\(secret)", "https://localhost/pair#\(secret)",
                      "https://[::1]/pair#\(secret)"] {
             XCTAssertEqual(parse(text), .failure(.unknownHost), text)
         }
@@ -55,12 +55,12 @@ final class PairURLTests: XCTestCase {
 
     func testManualAddressFollowsTheSameHostRules() throws {
         let link = Origin(url: URL(string: "https://\(host)")!)!
-        let custom = Origin(url: URL(string: "https://agents.example.com")!)!
-        let lan = Origin(url: URL(string: "http://198.51.100.10:8000")!)!
+        let custom = Origin(url: URL(string: "https://agents.harbor.nyc")!)!
+        let lan = Origin(url: URL(string: "http://192.168.1.10:8000")!)!
         XCTAssertFalse(try PairURL.manual(link, known: []).get().needsConfirm)
         let t = try PairURL.manual(custom, known: []).get()
         XCTAssertTrue(t.needsConfirm)
-        XCTAssertEqual(t.url.absoluteString, "https://agents.example.com/pair")
+        XCTAssertEqual(t.url.absoluteString, "https://agents.harbor.nyc/pair")
         XCTAssertFalse(try PairURL.manual(custom, known: [custom]).get().needsConfirm)
         XCTAssertEqual(PairURL.manual(lan, known: []), .failure(.unknownHost))
     }
@@ -68,7 +68,7 @@ final class PairURLTests: XCTestCase {
     func testNonPairingQrNeverClaimsAnUnknownComputer() {
         XCTAssertEqual(parse("https://box.example.com/"), .failure(.notAPairingCode))
         XCTAssertEqual(parse("https://box.example.com/pair"), .failure(.badSecret))
-        XCTAssertEqual(parse("http://198.51.100.10:8000/pair#short"), .failure(.badSecret))
+        XCTAssertEqual(parse("http://192.168.1.10:8000/pair#short"), .failure(.badSecret))
     }
 
     func testNotAPairingCodeRefused() {
@@ -86,7 +86,7 @@ final class PairURLTests: XCTestCase {
     }
 
 
-    private let custom = "https://agents.example.com/pair"
+    private let custom = "https://agents.harbor.nyc/pair"
     private let linkId = "abcdefghijklmnopqrstuvwxy2"
 
     func testValidLinkParameterPairsThroughTheLinkHost() throws {
@@ -106,7 +106,7 @@ final class PairURLTests: XCTestCase {
             let t = try parse("\(custom)?link=\(value)#\(secret)").get()
             XCTAssertTrue(t.needsConfirm, value)
             XCTAssertEqual(t.kind, .https, value)
-            XCTAssertEqual(t.origin.host, "agents.example.com", value)
+            XCTAssertEqual(t.origin.host, "agents.harbor.nyc", value)
         }
         XCTAssertEqual(parse("\(custom)?link=\(linkId)&x=1#\(secret)"), .failure(.notAPairingCode))
         XCTAssertEqual(parse("\(custom)?other=\(linkId)#\(secret)"), .failure(.notAPairingCode))
@@ -146,6 +146,6 @@ final class PairURLTests: XCTestCase {
     }
 
     func testTrailingDotHostRefused() {
-        XCTAssertEqual(parse("https://agents.example.com./pair#\(secret)"), .failure(.unknownHost))
+        XCTAssertEqual(parse("https://agents.harbor.nyc./pair#\(secret)"), .failure(.unknownHost))
     }
 }

@@ -16,7 +16,14 @@
     "projects",
     "presence"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The projects card with running projects highlighted",
+      "caption": "Projects with running sessions",
+      "file": "projects.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Project presence",
   "since": "2026-09-10",
   "status": "stable",
@@ -25,6 +32,5 @@
   "updated": "2026-09-27",
   "where": [
     "Home screen, the PROJECTS card: a project with a running session is marked."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

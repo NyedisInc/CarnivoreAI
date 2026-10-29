@@ -86,6 +86,40 @@
             }
           }
         },
+        "page": {
+          "type": "object",
+          "required": [
+            "menu",
+            "main"
+          ],
+          "description": "The page surface (#2562): the cplug.json views, each declaring the panel surface, drawn in the slide-out (menu) and over the main area (main). They may be the same view. An app that does not know this key ignores it and the view stays a panel widget.",
+          "propertyNames": {
+            "enum": [
+              "menu",
+              "main"
+            ]
+          },
+          "properties": {
+            "menu": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+            },
+            "main": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+            }
+          }
+        },
+        "topics": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 8,
+          "description": "The push topics the plugin may publish (#2562); each rides as cplug_topic:<install uuid>:<name> and names a change, never data.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,23}$"
+          }
+        },
         "network_hosts": {
           "type": "array",
           "uniqueItems": true,

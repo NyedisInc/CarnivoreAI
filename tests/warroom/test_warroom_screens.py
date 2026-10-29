@@ -33,7 +33,7 @@ class _Manager:
     def __init__(self, backends):
         self._registry = _Registry(backends)
 
-    def _tmux_socket_name(self):
+    def tmux_socket_name(self):
         return TEST_SOCKET_NAME
 
 

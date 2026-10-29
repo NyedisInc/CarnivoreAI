@@ -8,11 +8,6 @@ from src.core.notifications.sources import common
 
 
 def auto_slept(session_id: str, session_uuid: str, name: Optional[str], info: Any) -> None:
-    """Emit ``session.auto_slept``. ``info`` is the SessionInfo read before the sleep (None when unreadable).
-
-    Inputs: session_id, session_uuid (str); name (display name | None); info (SessionInfo | None, for the
-    tmux name and project, which the registry no longer holds once the session sleeps).
-    """
     contracts.emit(contracts.NotifyEvent(
         type_id="session.auto_slept", kind="session.auto_slept", title=common.type_title("session.auto_slept"),
         ts=common.now(), instance_key=f"auto_slept:{session_uuid}:{common.now():.0f}", session_id=session_id,

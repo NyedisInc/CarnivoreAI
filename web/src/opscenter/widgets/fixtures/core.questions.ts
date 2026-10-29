@@ -1,4 +1,3 @@
-/* nothing waiting */
 import { epochAgo, MIN } from './clock';
 import { approvalsFixtures } from './approval-items';
 import type { WidgetFixtures } from './types';

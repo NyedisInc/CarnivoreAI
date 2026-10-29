@@ -15,7 +15,7 @@ TrashFn = Callable[[Sequence[str]], None]
 
 
 class TrashError(Exception):
-    """A path could not be moved to the Trash (the tool is missing, it refused, or the path is still there)."""
+    pass
 
 
 def trash_paths(paths: Sequence[str]) -> None:

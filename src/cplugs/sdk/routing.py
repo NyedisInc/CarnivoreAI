@@ -1,12 +1,3 @@
-"""``cplug_router`` and ``cplug_context``: how a plugin's routes reach the host (``docs/cplugs.md`` 2.1).
-
-``cplug_router("<id>")`` is an ``APIRouter(prefix="/cplugs/<id>")`` with two
-dependencies: ``require_auth`` and the host's enabled check, so a disabled
-plugin's routes answer ``409 {code: "cplug_disabled"}`` and one whose storage
-could not open answers ``503 {code: "cplug_unavailable"}``. A plugin never
-builds its own router. ``Depends(cplug_context("<id>"))`` hands a route the
-plugin's ``ctx``, bound to the request (``ctx.sessions.message`` needs one).
-"""
 
 from __future__ import annotations
 

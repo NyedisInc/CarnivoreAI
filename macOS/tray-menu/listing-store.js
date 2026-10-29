@@ -27,6 +27,7 @@ class ListingStore {
     this.seq = 0;
     this.live = false;
     this.syncing = null;
+    this.generation = 0;
     this.buffered = [];
     this.cols = new Map();
     this.listeners = new Set();
@@ -57,6 +58,7 @@ class ListingStore {
   closed() {
     this.socketOpen = false;
     this.cancelRetry();
+    this.generation += 1;
     this.syncing = null;
     this.buffered = [];
     this.setLive(false);
@@ -82,16 +84,18 @@ class ListingStore {
   resync() {
     if (this.syncing) return this.syncing;
     this.buffered = [];
-    const me = this.runResync();
+    this.generation += 1;
+    const me = this.runResync(this.generation);
     this.syncing = me;
     return me;
   }
 
-  async runResync() {
+  async runResync(generation) {
     let snap;
     try {
       snap = await this.fetch();
     } catch (error) {
+      if (generation !== this.generation) return;
       this.lastError = String((error && error.message) || error);
       this.syncing = null;
       this.setLive(false);
@@ -99,8 +103,8 @@ class ListingStore {
       this.scheduleRetry();
       return;
     }
+    if (generation !== this.generation || !this.syncing) return;
     this.retryAttempt = 0;
-    if (!this.syncing) return;
     this.load(snap);
     const pending = this.buffered
       .filter((f) => f.stream === snap.stream && f.seq > Number(snap.seq || 0))

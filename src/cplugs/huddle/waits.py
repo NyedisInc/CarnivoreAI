@@ -16,7 +16,7 @@ import structlog
 from pydantic import BaseModel
 
 from src.cplugs.huddle import rules, wait_checks
-from src.cplugs.huddle.rules import TaskManagerInvalid
+from src.cplugs.huddle.rules import TaskManagerInvalid, TaskManagerUseFireAt
 
 logger = structlog.get_logger()
 
@@ -33,7 +33,7 @@ MAX_RECENT_PARKS = 2
 COUNTED = ("ended", "expired", "escalated")
 ESCALATION_BACKSTOP_S = 24 * 3600
 CHECK_BACKOFF_FIRST_S, CHECK_BACKOFF_MAX_S = 60.0, 1800.0
-_OWNER_WORDS = re.compile(r"\b(joe|owner|contributor|the user|the human)\b", re.IGNORECASE)
+_OWNER_WORDS = re.compile(r"\b(joe|owner|ccsliinc|the user|the human)\b", re.IGNORECASE)
 
 ACTIVE, ESCALATED = "active", "escalated"
 LIVE = (ACTIVE, ESCALATED)
@@ -44,7 +44,7 @@ SELECT_COL = ("(SELECT json_object('waiting_on', w.waiting_on, 'kind', w.kind, '
               "ORDER BY w.id DESC LIMIT 1) AS wait_json")
 FIELD = "wait"
 TOKEN_KEY = "wait_token"
-ARGS = ("waiting_on", "wait_kind", "expect_by", "wait_check", "extend_reason")
+ARGS = ("waiting_on", "wait_kind", "expect_by", "wait_check", "extend_reason", "wait_until")
 
 
 @dataclass(frozen=True)
@@ -92,6 +92,20 @@ def parse_expect_by(value: object, now: float) -> float:
     return at
 
 
+def refuse_known_time(value: object) -> None:
+    if value in (None, ""):
+        return
+    if not isinstance(value, str):
+        raise TaskManagerInvalid("wait_until must be an ISO 8601 time with a UTC offset, e.g. 2026-10-13T20:00:00-04:00")
+    try:
+        moment = datetime.fromisoformat(value.strip())
+    except ValueError:
+        raise TaskManagerInvalid("wait_until must be an ISO 8601 time with a UTC offset, e.g. 2026-10-13T20:00:00-04:00") from None
+    if moment.tzinfo is None:
+        raise TaskManagerInvalid("wait_until needs a UTC offset (a time with no offset means a different moment on each machine)")
+    raise TaskManagerUseFireAt(moment.isoformat())
+
+
 def names_owner(text: str) -> bool:
     return _OWNER_WORDS.search(text) is not None
 
@@ -103,7 +117,7 @@ def clean_spec(args: Mapping[str, Any], now: float, *, extending: bool = False) 
         raise TaskManagerInvalid(f"a task goes to waiting only with waiting_on (what it waits on, short) and wait_kind ({', '.join(KINDS)}); "
                             "waiting on the owner is a question: use task_manager_ask (task_manager_guide topic: 31)")
     if kind in (PERSON, OTHER) and names_owner(on):
-        raise TaskManagerInvalid("waiting on the owner is a question, not a wait: ask it with task_manager_ask (the owner answers in the Task Manager), "
+        raise TaskManagerInvalid("waiting on the owner is a question, not a wait: ask it with task_manager_ask (he answers in the Task Manager), "
                             "or set review when your part is done")
     if args.get("expect_by"):
         expect = parse_expect_by(args["expect_by"], now)
@@ -150,7 +164,7 @@ def park_plan(conn: sqlite3.Connection, row: Mapping[str, Any], now: float) -> D
         current = live(conn, row["id"])
         if current is not None and not current["legacy"]:
             if current["status"] == ESCALATED:
-                plan["blocked"] = "the owner has been asked about this wait; it is their to answer (push, drop or wait longer)"
+                plan["blocked"] = "the owner has been asked about this wait; it is his to answer (push, drop or wait longer)"
             elif current["extended"]:
                 plan["blocked"] = "this wait was already extended once: clear it, finish what you can yourself, or ask the owner with task_manager_ask"
             else:
@@ -199,6 +213,7 @@ class Park:
 
 
 def prepare_park(conn: sqlite3.Connection, row: Mapping[str, Any], args: Mapping[str, Any], set_by: str, now: float) -> Optional[Park]:
+    refuse_known_time(args.get("wait_until"))
     given = any(args.get(name) for name in ARGS)
     plan = park_plan(conn, row, now)
     if row["state"] == rules.WAITING and not given:
@@ -242,6 +257,12 @@ class WaitStore:
                                (status, self._store._clock(), note[:MAX_REASON], wait_id))
             return cur.rowcount == 1
 
+    def reopen(self, wait_id: int, retry_at: float) -> bool:
+        with closing(self._store._connect(True)) as conn, conn:
+            cur = conn.execute("UPDATE work_item_waits SET status = 'active', ended_at = NULL, ended_note = '', deadline = ? WHERE id = ? AND status IN ('cleared', 'failed', 'expired')",
+                               (retry_at, wait_id))
+            return cur.rowcount == 1
+
     def due_expiries(self, now: float) -> List[Dict[str, Any]]:
         with closing(self._store._read_connection()) as conn:
             rows = conn.execute("SELECT w.* FROM work_item_waits w JOIN work_items i ON i.id = w.item_id WHERE w.status IN ('active', 'escalated') AND i.deleted = 0 "
@@ -270,13 +291,17 @@ class WaitStore:
 
     def claim_due_checks(self, now: float, limit: int) -> List[Dict[str, Any]]:
         out: List[Dict[str, Any]] = []
-        with closing(self._store._connect(True)) as conn, conn:
+        with closing(self._store._read_connection()) as conn:
             rows = conn.execute("SELECT w.* FROM work_item_waits w JOIN work_items i ON i.id = w.item_id WHERE w.status = 'active' AND i.deleted = 0 AND w.check_json != '' "
                                 "AND w.check_next_at IS NOT NULL AND w.check_next_at <= ? ORDER BY w.check_next_at LIMIT ?", (now, limit)).fetchall()
+        if not rows:
+            return out
+        with closing(self._store._connect(True)) as conn, conn:
             for row in rows:
                 runs = row["check_runs"] + 1
-                conn.execute("UPDATE work_item_waits SET check_runs = ?, check_last_at = ?, check_next_at = ? WHERE id = ?", (runs, now, now + backoff_s(runs), row["id"]))
-                out.append({k: row[k] for k in row.keys() if k != "token_hash"})
+                if conn.execute("UPDATE work_item_waits SET check_runs = ?, check_last_at = ?, check_next_at = ? WHERE id = ? AND status = 'active' AND check_next_at = ?",
+                                (runs, now, now + backoff_s(runs), row["id"], row["check_next_at"])).rowcount == 1:
+                    out.append({k: row[k] for k in row.keys() if k != "token_hash"})
         return out
 
     def record_result(self, wait_id: int, status: str) -> None:

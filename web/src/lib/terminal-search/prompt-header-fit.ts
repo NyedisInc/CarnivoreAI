@@ -1,5 +1,4 @@
 
-/* text-overflow: ellipsis */
 export function isCutOff(el: HTMLElement | null): boolean {
     if (!el) return false;
     return el.scrollWidth > el.clientWidth;

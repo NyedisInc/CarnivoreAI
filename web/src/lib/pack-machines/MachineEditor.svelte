@@ -2,6 +2,7 @@
   import './pack-machines.css';
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
+  import NumberField from '../base/NumberField.svelte';
   import ReserveForm from './ReserveForm.svelte';
   import { saveRestrictions, type PackMachine, type Restrictions } from './pack-machines-store.svelte';
 
@@ -14,16 +15,9 @@
   const snap = $derived(machine.snapshot);
   const rules = $derived(RULES.filter((rule) => !(machine.is_self && rule === 'may_receive_credentials')));
 
-  function intOf(event: Event, low: number, high: number): number | null {
-    const value = Number((event.currentTarget as HTMLInputElement).value);
-    return Number.isInteger(value) && value >= low && value <= high ? value : null;
-  }
-
-  function setCap(event: Event): void {
-    const raw = (event.currentTarget as HTMLInputElement).value.trim();
-    if (raw === '') return void saveRestrictions(machine.install_id, { max_agents: null });
-    const value = intOf(event, 0, 10000);
-    if (value !== null) void saveRestrictions(machine.install_id, { max_agents: value });
+  function setCap(value: number | null): void {
+    if (value === null) return void saveRestrictions(machine.install_id, { max_agents: null });
+    if (Number.isInteger(value) && value >= 0 && value <= 10000) void saveRestrictions(machine.install_id, { max_agents: value });
   }
 
   function ruleLocked(on: boolean): boolean {
@@ -48,8 +42,7 @@
           onToggle={(next) => void saveRestrictions(machine.install_id, { [rule]: next })} />
       {/each}
     </div>
-    <label class="pm-field"><span class="oc-sub">{t('pack.machines.max_agents')}</span>
-      <input class="oc-field pk-field" type="number" min="0" max="10000" placeholder={t('pack.machines.no_cap')}
-        value={snap.restrictions.max_agents ?? ''} onchange={setCap} /></label>
+    <NumberField label={t('pack.machines.max_agents')} min={0} max={10000} placeholder={t('pack.machines.no_cap')}
+      value={snap.restrictions.max_agents ?? null} onchange={setCap} />
   </div>
 {/if}

@@ -1,4 +1,4 @@
-
+<!-- your active dashboard is your home screen -->
 <script lang="ts">
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import ManagerFrame from '../manager-frame/ManagerFrame.svelte';
@@ -8,6 +8,7 @@
     import { MAX_BOARDS } from '../../opscenter/engine/home-boards';
     import { openHome } from '../../opscenter/api/host';
     import Icon from '../../opscenter/ui/Icon.svelte';
+    import { Button } from '../base';
     import DashboardList from './DashboardList.svelte';
     import { addDashboard, dashboardsFull, dashboardsUi, sayDashboards } from './dashboard-actions.svelte';
     import { t } from '../i18n/index.svelte';
@@ -39,7 +40,6 @@
         return open;
     }
 
-    /*  hidden  */
     function editHome(): void {
         close();
         void viewBoard(null);
@@ -66,23 +66,21 @@
         {t}
     >
         {#snippet actions()}
-            <button
-                type="button"
-                class="oc-btn oc-btn--confirm"
+            <Button
+                variant="confirm"
                 data-dashboard-new
                 disabled={full || dashboardsUi.busy}
                 title={fullTitle}
-                onclick={() => void addDashboard(false)}><Icon name="plus" size={12} />{t('dashboards.new')}</button
+                onclick={() => void addDashboard(false)}><Icon name="plus" size={12} />{t('dashboards.new')}</Button
             >
         {/snippet}
         {#snippet toolbar()}
-            <button
-                type="button"
-                class="oc-btn oc-btn--sm"
+            <Button
+                size="sm"
                 data-dashboard-duplicate
                 disabled={full || dashboardsUi.busy}
                 title={fullTitle}
-                onclick={() => void addDashboard(true)}>{t('dashboards.duplicate')}</button
+                onclick={() => void addDashboard(true)}>{t('dashboards.duplicate')}</Button
             >
             <BoardTransfer announce={sayDashboards} />
         {/snippet}

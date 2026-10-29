@@ -1,16 +1,3 @@
-"""
-THE SWITCH IS A FILE, NOT A PREFERENCE, and it is its own switch: ``<state_dir>/cplugs/sideload.json`` holds
-``{"enabled_at": <epoch seconds>, "items": {...}}``. It is on only while ``enabled_at`` is less than twelve hours old, so
-it turns itself off, and it is separate from ``developer_mode`` and from the third-party switch (which must also be on for
-anything to run). A missing, unreadable or malformed file reads as off. The routes are under ``/cplug-owner`` and so on
-the API key fence; no MCP tool and no owner-token path reaches them.
-
-Each consent COPIES the folder into the immutable code root ``<state_dir>/cplug-code/<name>``; the source folder is never
-executed in place. The install is id ``local/<name>`` (an install name is never a reserved or catalog name:
-``identity.register_install``), tier ``local``, and the plugins page marks it unverified. ``items`` remembers each
-sideload's per-file hashes, so a re-sync names the files that changed; the changed tree digest is what drops the row to
-``needs_approval`` (the host compares it with the digest the grants were consented for).
-"""
 
 from __future__ import annotations
 
@@ -23,7 +10,8 @@ import threading
 import time
 from dataclasses import replace
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from types import MappingProxyType
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 import structlog
 
@@ -35,7 +23,9 @@ from src.cplugs.runtime.integrity import SIDECAR_NAME
 logger = structlog.get_logger()
 
 FILE_NAME = "sideload.json"
-TTL_SECONDS = 12 * 60 * 60
+DURATION_HOURS = (1, 12, 24, 168)
+DEFAULT_HOURS = 12
+TTL_SECONDS = DEFAULT_HOURS * 60 * 60
 LOCAL_PUBLISHER = "local"
 TIER_LOCAL = "local"
 MAX_FILES = 2000
@@ -44,6 +34,8 @@ _SKIP_DIRS = frozenset({"__pycache__", ".git"})
 _SKIP_SUFFIXES = (".pyc", ".pyo")
 
 _lock = threading.RLock()
+_snapshots: Dict[Path, Tuple[Tuple[int, int, int, int], Mapping[str, Any]]] = {}
+_EMPTY: Mapping[str, Any] = MappingProxyType({})
 
 
 def wall() -> float:
@@ -73,35 +65,98 @@ def code_root_of(state_dir: Path, name: str) -> Path:
     return Path(state_dir) / CPLUG_CODE_DIR_NAME / name
 
 
-def _read(state_dir: Path) -> Dict[str, Any]:
+def _load(state_dir: Path) -> Optional[Dict[str, Any]]:
     try:
         data = json.loads(switch_path(state_dir).read_text(encoding="utf-8"))
     except FileNotFoundError:
         return {}
     except (OSError, ValueError) as exc:
         logger.warning("cplug_sideload_unreadable", error_type=type(exc).__name__)
-        return {}
+        return None
     return data if isinstance(data, dict) else {}
 
 
+def _read(state_dir: Path) -> Dict[str, Any]:
+    data = _load(state_dir)
+    return {} if data is None else data
+
+
 def _write(state_dir: Path, data: Dict[str, Any]) -> bool:
-    return atomic_write_json(switch_path(state_dir), data, log_event="cplug_sideload_write_failed")
+    try:
+        return atomic_write_json(switch_path(state_dir), data, log_event="cplug_sideload_write_failed")
+    finally:
+        _snapshots.pop(switch_path(state_dir), None)
+
+
+def _snapshot(state_dir: Path) -> Mapping[str, Any]:
+    path = switch_path(state_dir)
+    try:
+        st = path.stat()
+    except OSError:
+        _snapshots.pop(path, None)
+        return _EMPTY
+    signature = (st.st_ino, st.st_ctime_ns, st.st_mtime_ns, st.st_size)
+    cached = _snapshots.get(path)
+    if cached is not None and cached[0] == signature:
+        return cached[1]
+    data = _load(state_dir)
+    if data is None:
+        _snapshots.pop(path, None)
+        return _EMPTY
+    view = MappingProxyType(data)
+    _snapshots[path] = (signature, view)
+    return view
+
+
+def valid_duration(hours: object) -> bool:
+    return hours is None or (type(hours) is int and hours in DURATION_HOURS)
+
+
+def _hours_in(data: Mapping[str, Any]) -> Optional[int]:
+    if "hours" not in data:
+        return DEFAULT_HOURS
+    found = data["hours"]
+    return found if valid_duration(found) else DEFAULT_HOURS
+
+
+def _enabled_in(data: Mapping[str, Any]) -> Optional[float]:
+    stamp = data.get("enabled_at")
+    return float(stamp) if isinstance(stamp, (int, float)) and not isinstance(stamp, bool) else None
+
+
+def _expiry_in(data: Mapping[str, Any]) -> Optional[float]:
+    stamp, hours = _enabled_in(data), _hours_in(data)
+    return stamp + hours * 3600 if stamp is not None and hours is not None else None
+
+
+def duration_hours(state_dir: Path) -> Optional[int]:
+    return _hours_in(_snapshot(state_dir))
+
+
+def _enabled_at(state_dir: Path) -> Optional[float]:
+    return _enabled_in(_snapshot(state_dir))
 
 
 def expires_at(state_dir: Path) -> Optional[float]:
-    stamp = _read(state_dir).get("enabled_at")
-    return float(stamp) + TTL_SECONDS if isinstance(stamp, (int, float)) and not isinstance(stamp, bool) else None
+    return _expiry_in(_snapshot(state_dir))
 
 
 def is_on(state_dir: Path, now: Optional[Callable[[], float]] = None) -> bool:
-    end = expires_at(state_dir)
-    return end is not None and (now or wall)() < end
+    data = _snapshot(state_dir)
+    if _enabled_in(data) is None:
+        return False
+    end = _expiry_in(data)
+    return end is None or (now or wall)() < end
 
 
-def set_switch(state_dir: Path, on: bool, now: Optional[Callable[[], float]] = None) -> bool:
+def set_switch(state_dir: Path, on: bool, now: Optional[Callable[[], float]] = None, hours: Optional[int] = DEFAULT_HOURS) -> bool:
+    if on and not valid_duration(hours):
+        raise SideloadRefused("duration_invalid", f"the duration is one of {list(DURATION_HOURS)} hours, or null for until turned off", 422)
     with _lock:
         data = _read(state_dir)
         data["enabled_at"] = (now or wall)() if on else None
+        if on:
+            data["hours"] = hours
         data.setdefault("items", {})
         return _write(state_dir, data)
 

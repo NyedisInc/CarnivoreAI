@@ -21,7 +21,7 @@ SPECS = (
                     "install": {"type": "boolean", "description": "also ask tracking computers to refresh their install"}},
         invoke=_refresh,
         summary=lambda args, _t: f"refresh the Pack (project {str(args.get('project') or '-')[:60]}, install {bool(args.get('install'))})",
-        example={"project": "ledgerbot", "install": True},
+        example={"project": "trader", "install": True},
     ),
 )
 

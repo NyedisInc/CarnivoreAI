@@ -96,15 +96,15 @@ def test_subject_config(tmp_path: Path) -> None:
     ("http://fcm.googleapis.com/x", False),
     ("https://127.0.0.1/x", False),
     ("https://localhost/x", False),
-    ("https://example.net/fcm.googleapis.com", False),
-    ("https://fcm.googleapis.com.example.net/x", False),
+    ("https://evil.com/fcm.googleapis.com", False),
+    ("https://fcm.googleapis.com.evil.com/x", False),
     ("https://evilpush.apple.com/x", False),
     ("https://user:pw@fcm.googleapis.com/x", False),
     ("https://fcm.googleapis.com:8443/x", False),
     ("https://fcm.googleapis.com\n/x", False),
     ("https://fcm.googleapis.com/x y", False),
     ("https://fcm.googleapis.com:443/x", False),
-    ("https://fcm.googleapis.com\\@example.net/x", False),
+    ("https://fcm.googleapis.com\\@evil.com/x", False),
     ("", False),
 ])
 def test_endpoint_allow_list(endpoint: str, ok: bool) -> None:

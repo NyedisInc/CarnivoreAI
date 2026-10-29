@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-#
-#
-#
-# could not
 set -uo pipefail
 
 ROOT=""
@@ -63,12 +59,70 @@ LOGS="$(mktemp -d "${TMPDIR:-/tmp}/top-down.XXXXXX")" || cannot_run "mktemp fail
 # shellcheck disable=SC2064  # expand now: remove THIS directory
 trap "rm -rf '${LOGS}'" EXIT
 
-( cd "${ROOT}/web" && "${VITEST}" run --reporter=default "${VITEST_FILES[@]}" ) > "${LOGS}/vitest.log" 2>&1 &
+VPID=""
+PPID_=""
+
+stop_runners() {
+    local grace="${CARNIVORE_GATE_GRACE_S:-5}" i=0 groups=() pid
+    for pid in "${VPID}" "${PPID_}"; do [ -n "${pid}" ] && groups+=("-${pid}"); done
+    [ ${#groups[@]} -gt 0 ] || return 0
+    kill -TERM -- "${groups[@]}" 2>/dev/null
+    while [ -n "$(jobs -r)" ] && [ "${i}" -lt "${grace}" ]; do sleep 1; i=$((i + 1)); done
+    sleep 1
+    kill -KILL -- "${groups[@]}" 2>/dev/null
+    { wait "${VPID}" "${PPID_}"; } 2>/dev/null
+}
+
+interrupted() {
+    trap '' INT TERM HUP
+    stop_runners
+    exit "$1"
+}
+trap 'interrupted 130' INT
+trap 'interrupted 143' TERM
+trap 'interrupted 129' HUP
+
+RUN_STARTED=$(date +%s)
+set -m
+( cd "${ROOT}/web" && exec "${VITEST}" run --reporter=default --testTimeout=0 --hookTimeout=0 "${VITEST_FILES[@]}" ) < /dev/null > "${LOGS}/vitest.log" 2>&1 &
 VPID=$!
 XDIST=()
 "${PY}" -c "import xdist" >/dev/null 2>&1 && XDIST=(-n 4)
-( cd "${ROOT}" && PYTHONDONTWRITEBYTECODE=1 "${PY}" -m pytest -q -p no:cacheprovider -rf ${XDIST[@]+"${XDIST[@]}"} "${PYTEST_FILES[@]}" ) > "${LOGS}/pytest.log" 2>&1 &
+( cd "${ROOT}" && PYTHONDONTWRITEBYTECODE=1 exec "${PY}" -m pytest -v -p no:cacheprovider -rf ${XDIST[@]+"${XDIST[@]}"} "${PYTEST_FILES[@]}" ) < /dev/null > "${LOGS}/pytest.log" 2>&1 &
 PPID_=$!
+set +m
+
+still_running() {
+    local f names=""
+    for f in "${VITEST_FILES[@]}"; do grep -qF -- " ${f} (" "${LOGS}/vitest.log" || names+=" ${f}"; done
+    echo "  still running (vitest, no result yet):${names:- none}"
+    names=" $(awk '
+        function trim(x) { sub(/[ \t]+$/, "", x); return x }
+        /^(\[gw[0-9]+\] \[ *[0-9]+%\] )?(PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS) [^ ]+::/ {
+            id = $0; sub(/^(\[gw[0-9]+\] \[ *[0-9]+%\] )?[A-Z]+ /, "", id); done[trim(id)] = 1; next }
+        /^[^ \[=][^ ]*::/ {
+            if (match($0, / (PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)( |$)/)) done[trim(substr($0, 1, RSTART - 1))] = 1
+            else started[trim($0)] = 1 }
+        END { for (id in started) if (!(id in done)) print id }' "${LOGS}/pytest.log" | sort | tr '\n' ' ')"
+    for f in "${PYTEST_FILES[@]}"; do grep -qF -- "${f}::" "${LOGS}/pytest.log" || names+="${f} "; done
+    echo "  still running (pytest, no result yet):${names% }"
+}
+
+DEADLINE_S="${CARNIVORE_GATE_DEADLINE_S:-900}"
+while [ -n "$(jobs -r)" ]; do
+    if [ $(( $(date +%s) - RUN_STARTED )) -ge "${DEADLINE_S}" ]; then
+        stop_runners
+        running="$(still_running)"
+        {
+            echo "== TOP-DOWN GATE COULD NOT RUN ($(( $(date +%s) - STARTED ))s) =="
+            echo "  the runners were stopped at the ${DEADLINE_S}s deadline; a hang is exit 2, never a red."
+            printf '%s\n' "${running}"
+            tail -15 "${LOGS}/vitest.log" "${LOGS}/pytest.log" 2>/dev/null | sed 's/^/    | /'
+        } >&2
+        cannot_run "the runners took more than ${DEADLINE_S}s (CARNIVORE_GATE_DEADLINE_S) and were stopped; $(printf '%s' "${running}" | tr '\n' ';' | tr -s ' ' | sed 's/^ //')"
+    fi
+    sleep 1
+done
 wait "${VPID}"; VRC=$?
 wait "${PPID_}"; PRC=$?
 
@@ -89,7 +143,7 @@ elif [ "${v_ran}" -ne ${#VITEST_FILES[@]} ]; then
 fi
 
 p_failed="$(grep -E '^(FAILED|ERROR) ' "${LOGS}/pytest.log" | sed -E 's/ - .*//' | sort -u)"
-p_passed="$(grep -E '[0-9]+ passed' "${LOGS}/pytest.log" | tail -1 | sed -nE 's/.*[^0-9]?([0-9]+) passed.*/\1/p')"
+p_passed="$(grep -oE '[0-9]+ passed' "${LOGS}/pytest.log" | tail -1 | grep -oE '^[0-9]+')"
 if [ "${PRC}" -eq 1 ] && [ -n "${p_failed}" ]; then
     while IFS= read -r line; do RED+=("pytest: ${line}"); done <<< "${p_failed}"
 elif [ "${PRC}" -ne 0 ]; then
@@ -120,7 +174,7 @@ if [ ${#RED[@]} -gt 0 ]; then
     printf '  %s\n' "${RED[@]}" >&2
     [ ${#UNRUN[@]} -gt 0 ] && printf '  also could not run: %s\n' "${UNRUN[@]}" >&2
     paths="$(cat "${LOGS}/vitest.log" "${LOGS}/pytest.log" \
-        | grep -oE '(web/src/|client/|tests/fixtures/)?(lib|opscenter|cplugs|widget-harness|style-guide|popout|admin|spectate|public-site|js|css)/[A-Za-z0-9_./-]+\.(svelte|ts|css|js|html|json)' \
+        | grep -oE '(web/src/|client/|tests/fixtures/)?(lib|opscenter|cplugs|widget-harness|style-guide|popout|admin|spectate|js|css)/[A-Za-z0-9_./-]+\.(svelte|ts|css|js|html|json)' \
         | grep -vE '\.(test|spec)\.[a-z]+$' | sort -u | head -40)"
     shown=0
     echo "  offenders and the commit that last touched each:" >&2

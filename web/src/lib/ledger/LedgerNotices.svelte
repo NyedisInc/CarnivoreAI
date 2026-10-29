@@ -9,6 +9,7 @@
         loop: LedgerLoop | null;
         failure: string | null;
         loading: boolean;
+        /* there is nothing */
         isEmpty: boolean;
         now: number;
         t: Translate;

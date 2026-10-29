@@ -10,7 +10,8 @@
   "examples": [
     "Scan the QR, type your authenticator code on the phone, and you are in; from then on only the authenticator code is asked whenever the login expires.",
     "A scan alone creates no device: a photographed QR without the authenticator code yields nothing. Five wrong codes kill that pairing and the phone says to scan again.",
-    "Revoke a mobile device and its next request is sent back to the pair page."
+    "Revoke a mobile device and its next request is sent back to the pair page.",
+    "A proxied or flattened record shows a plain reason ('turn the orange cloud off') and the light stays amber until the record resolves to your link name."
   ],
   "how_to": [
     "Open Settings > remote & security > mobile sync and switch it on (off by default; relay.enabled false kills it).",
@@ -41,7 +42,7 @@
   "name": "Mobile sync",
   "since": "2026-09-30",
   "status": "beta",
-  "summary": "",
+  "summary": "reach this computer from a mobile device over the internet with no inbound port: a certificate only this computer holds, an outbound tunnel through the relay, a paired-device cookie and then your normal authenticator login. You can also reach it on a name of your own, with a short-lived certificate minted on this computer.",
   "surfaces": [],
   "updated": "2026-10-02",
   "where": [

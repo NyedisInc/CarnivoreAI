@@ -1,4 +1,3 @@
-/*  hidden  flex: 0 0 auto height: 100% */
 @layer components {
   html[data-popout], html[data-popout] body { height: 100%; margin: 0; overflow: hidden; }
   #popout-screen {

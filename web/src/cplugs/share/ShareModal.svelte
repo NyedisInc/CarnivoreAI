@@ -1,6 +1,5 @@
 <script lang="ts">
-    /* could not */
-    import { ModalShell, Glyph } from '../sdk/ui';
+    import { Button, ModalShell, Glyph } from '../sdk/ui';
     import { isAccountLoaded, isSignedIn, requireAccount, t } from '../sdk';
     import {
         DEFAULT_TTL_SECONDS,
@@ -57,7 +56,6 @@
 
     let urlEl = $state<HTMLInputElement | null>(null);
 
-    /* could not */
     const rowUrl = $derived(
         current === null
             ? null
@@ -268,23 +266,21 @@
                         aria-label={t('cplug.share.link')}
                     />
                     
-                    <button
-                        type="button"
-                        class="modal-btn modal-btn-secondary share-copy"
+                    <Button
+                        data-share-copy
                         aria-label={copied ? t('cplug.share.copied') : t('cplug.share.copy')}
                         data-copied={copied}
                         onclick={copy}
                     >
                         {#if copied}{t('cplug.share.copied')}{:else}<Glyph name="copy" />{/if}
-                    </button>
+                    </Button>
                 {/if}
-                <button
-                    type="button"
-                    class="modal-btn modal-btn-danger share-revoke"
+                <Button
+                    variant="danger"
                     data-share-revoke={current.id}
                     disabled={revoking}
                     onclick={() => revoke(current!.id)}
-                >{t('cplug.share.revoke')}</button>
+                >{t('cplug.share.revoke')}</Button>
             </div>
         </div>
         
@@ -295,28 +291,24 @@
         
         <div class="share-all" data-share-all>
             <span class="share-all-text">{t('cplug.share.all_count', { count: totalLinks })}</span>
-            <button
-                type="button"
-                class="modal-btn modal-btn-danger share-revoke-all"
+            <Button
+                variant="danger"
                 data-share-revoke-all
                 data-armed={armed}
                 disabled={revoking}
                 onclick={revokeAll}
-            >{armed ? t('cplug.share.revoke_all_confirm') : t('cplug.share.revoke_all')}</button>
+            >{armed ? t('cplug.share.revoke_all_confirm') : t('cplug.share.revoke_all')}</Button>
         </div>
     {/if}
 
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={() => close(null)}>
-            {t('cplug.share.close')}
-        </button>
+        <Button onclick={() => close(null)}>{t('cplug.share.close')}</Button>
         
         {#if locked}
-        <button type="button" class="modal-btn modal-btn-primary" data-share-signin onclick={signIn}>{t('account.lock.cta')}</button>
+        <Button variant="confirm" data-share-signin onclick={signIn}>{t('account.lock.cta')}</Button>
         {:else}
-        <button
-            type="button"
-            class="modal-btn modal-btn-primary"
+        <Button
+            variant="confirm"
             disabled={minting || revoking || !relayAvailable}
             data-share-create
             onclick={create}
@@ -324,7 +316,7 @@
                 ? t('cplug.share.creating')
                 : current
                   ? t('cplug.share.replace')
-                  : t('cplug.share.create')}</button>
+                  : t('cplug.share.create')}</Button>
         {/if}
     {/snippet}
 </ModalShell>
@@ -341,7 +333,6 @@
     .share-select {
         appearance: none;
         -webkit-appearance: none;
-        /* padding */
         line-height: normal;
         padding-right: 34px;
         cursor: pointer;
@@ -409,21 +400,12 @@
         text-overflow: ellipsis;
     }
 
-    .share-copy {
-        flex: 0 0 auto;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 12px;
-    }
-
-    .share-revoke {
+    .share-row-link :global([data-btn]) {
         flex: 0 0 auto;
     }
 
     @media (max-width: 1023px) {
-        .share-copy,
-        .share-revoke {
+        .share-row-link :global([data-btn]) {
             min-height: 44px;
             min-width: 44px;
         }

@@ -36,5 +36,5 @@
 .cmp-offers { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
 .cmp-packname { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .cmp-packname__field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.cmp-packname__row .oc-field { flex: 1 1 14rem; max-width: 24rem; }
+.cmp-packname__row > [data-field] { flex: 1 1 14rem; max-width: 24rem; }
 .cmp-packname__row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; min-width: 0; }

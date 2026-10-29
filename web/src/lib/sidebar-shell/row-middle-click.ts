@@ -47,7 +47,9 @@ async function closeThroughMenu(rowEl: Element): Promise<void> {
     const g = rg() as unknown as CloseGlobals;
     const ctx = contextFromTrigger(rowEl.querySelector('[data-row-menu]'))
         || { name: dataOf(rowEl, 'name'), kind: dataOf(rowEl, 'kind') || 'layout', label: '' };
-    await g.SessionRowMenuActions?.run?.('close', ctx);
+    const run = g.SessionRowMenuActions?.run;
+    if (typeof run !== 'function') throw new Error(t('sidebar.row.close_unavailable'));
+    await run.call(g.SessionRowMenuActions, 'close', ctx);
 }
 
 export async function middleClickRow(rowEl: Element): Promise<boolean> {
@@ -63,7 +65,10 @@ export async function middleClickRow(rowEl: Element): Promise<boolean> {
         }
         if (action === 'close-sleeping') {
             if (!(await ask('close_sleeping', label))) return false;
-            await (rg() as unknown as CloseGlobals).API?.killAsleepSession?.((row as DrawerRow).session_uuid as string);
+            const globals = rg() as unknown as CloseGlobals;
+            const kill = globals.API?.killAsleepSession;
+            if (typeof kill !== 'function') throw new Error(t('sidebar.row.close_unavailable'));
+            await kill.call(globals.API, (row as DrawerRow).session_uuid as string);
             await refetchDrawer();
             return true;
         }

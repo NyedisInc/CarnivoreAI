@@ -215,7 +215,7 @@ def test_the_route_answers_409_session_gone_rather_than_500():
 
     assert response.status_code == 409, response.text
     body = response.json()["detail"]
-    assert body["error"] == "session_gone"
+    assert body["code"] == "session_gone"
     assert body["refresh"] is True
     assert body["session_name"] == NAME
 

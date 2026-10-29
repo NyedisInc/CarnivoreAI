@@ -1,0 +1,41 @@
+{
+ "questions": [
+  {
+   "question": "Which layout?",
+   "header": "Layout",
+   "multiSelect": false,
+   "options": [
+    {
+     "label": "Grid",
+     "description": "cards in a grid",
+     "preview": "+-----+-----+\n| one | two |\n+-----+-----+\n| tri | for |\n+-----+-----+"
+    },
+    {
+     "label": "List",
+     "description": "rows in a list",
+     "preview": "- one\n- two\n- tri\n- for"
+    },
+    {
+     "label": "Table",
+     "description": "a plain table",
+     "preview": "id | name\n1  | one\n2  | two"
+    }
+   ]
+  },
+  {
+   "question": "Which mode?",
+   "header": "Mode",
+   "multiSelect": false,
+   "options": [
+    {
+     "label": "Fast",
+     "description": "quick"
+    },
+    {
+     "label": "Safe",
+     "description": "careful"
+    }
+   ]
+  }
+ ]
+}

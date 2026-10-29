@@ -81,14 +81,14 @@ const ids = (host: HTMLElement): string[] => [...host.querySelectorAll('[data-ta
 const seenCalls = () => server.calls.filter((c) => c.path === '/cplugs/huddle/items/1/seen' && c.body);
 
 describe('order', () => {
-  test('pure: only Claude posts newer than their latest reply show; their own reply never does', () => {
+  test('pure: only Claude posts newer than his latest reply show; his own reply never does', () => {
     expect(rowFeed({ thread: THREAD() } as never).map((m) => m.id)).toEqual([10, 11, 12, 14]);
     const answered = [...THREAD(), msg(13, 'reply', 'the first', { author: 'joe' })];
     expect(rowFeed({ thread: answered } as never).map((m) => m.id)).toEqual([14]);
     expect(rowFeed({ thread: [msg(1, 'reply', 'x', { author: 'joe' })] } as never)).toEqual([]);
   });
 
-  test('the row draws one list of Claude posts, in time order, with none of their', async () => {
+  test('the row draws one list of Claude posts, in time order, with none of his', async () => {
     const host = await mountBody();
     expect(ids(host)).toEqual(['10', '11', '12', '14']);
     expect(host.querySelector('[data-by="joe"]')).toBeNull();

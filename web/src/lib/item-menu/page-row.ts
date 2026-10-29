@@ -11,13 +11,11 @@ export type PageRowMenu =
 
 export type PageRowSource = () => PageRowMenu | null;
 
-/* nothing opened */
 export function openPageRowMenu(menu: PageRowMenu, anchor: Element, at: { x: number; y: number }): boolean {
     menu.onOpen?.();
     return menu.type === 'session' ? openRowMenu(menu.ctx, anchor, at) : openItemMenu('pagerow', menu.ctx, anchor, at);
 }
 
-/* label: ' */
 export function pageRowMenu(source: PageRowSource): Record<string, (event: never) => void> {
     return {
         oncontextmenu(event: MouseEvent): void {
@@ -40,6 +38,11 @@ export function pageRowMenu(source: PageRowSource): Record<string, (event: never
         onpointercancel: cancelPress,
         onclickcapture: onClickCapture,
     };
+}
+
+export function rightClickMenu(source: PageRowSource): Record<string, (event: never) => void> {
+    const { oncontextmenu } = pageRowMenu(source);
+    return { oncontextmenu };
 }
 
 export function forwardMenuKey(event: KeyboardEvent, row: Element | null): boolean {

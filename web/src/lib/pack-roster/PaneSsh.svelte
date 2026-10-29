@@ -1,5 +1,7 @@
 
 <script lang="ts">
+  import Button from '../base/Button.svelte';
+  import Switch from '../base/Switch.svelte';
   import { onMount } from 'svelte';
   import { openModal } from '../modal';
   import { t } from '../i18n/index.svelte';
@@ -58,12 +60,11 @@
 
 {#if !h}
   <p class="pp-hint">{t('roster.ssh.not_reached')}</p>
-  <div class="pp-acts" data-act="reach"><button type="button" class="oc-btn oc-btn--confirm" onclick={() => void reach()}>{t('roster.ssh.reach')}</button></div>
+  <div class="pp-acts" data-act="reach"><Button variant="confirm" onclick={() => void reach()}>{t('roster.ssh.reach')}</Button></div>
 {:else}
   <section class="m1-sec pp-ssh" data-host-key={h.key}>
     <div class="pp-ssh__head"><div class="pp-swrow"><span class="pp-swrow__label">{t('roster.ssh.enabled')}</span>
-      <button type="button" class="pp-sw" role="switch" aria-checked={h.enabled} aria-label={t('roster.ssh.enable_for', { name: c.name })} data-act="enable" disabled={busy || h.local}
-        onclick={() => void setHostEnabled(h.key, !h.enabled)}><i></i></button></div></div>
+      <Switch bare label="" bind:checked={() => h.enabled, (next) => void setHostEnabled(h.key, next)} aria-label={t('roster.ssh.enable_for', { name: c.name })} data-act="enable" disabled={busy || h.local} /></div></div>
     <dl class="pp-facts">
       <dt>{t('roster.link.key')}</dt><dd>{h.key}</dd>
       <dt>{t('roster.fact.ssh_target')}</dt><dd>{fact(loginOf(h))}</dd>
@@ -79,16 +80,16 @@
       <dt>{t('roster.ssh.remote_carnivore')}</dt><dd>{h.remote_carnivore ? t('roster.ssh.yes') : t('roster.ssh.no')}</dd>
     </dl>
     <div class="pp-ssh__acts">
-      <button type="button" class="oc-btn oc-btn--sm" data-act="probe" disabled={busy} onclick={() => void probeHost(h.key)}>
-        {rosterActivity.busy === `probe:${h.key}` ? t('roster.ssh.probing') : t('roster.ssh.probe')}</button>
-      <button type="button" class="oc-btn oc-btn--sm pp-destroy" data-act="remove-host" disabled={busy || why !== null} title={why ?? undefined} onclick={() => void remove(h)}>{t('roster.ssh.remove')}</button>
+      <Button size="sm" data-act="probe" disabled={busy} onclick={() => void probeHost(h.key)}>
+        {rosterActivity.busy === `probe:${h.key}` ? t('roster.ssh.probing') : t('roster.ssh.probe')}</Button>
+      <Button variant="danger" size="sm" data-act="remove-host" disabled={busy || why !== null} title={why ?? undefined} onclick={() => void remove(h)}>{t('roster.ssh.remove')}</Button>
     </div>
     {#if why}<p class="pp-hint">{t('roster.ssh.refused', { why })}</p>{/if}
     {#if rosterActivity.error}<p class="pp-err" role="alert">{rosterActivity.error}</p>{/if}
   </section>
   {#if !h.local}
     <div class="m1-copyssh" data-act="copyssh"><code class="pp-wrap">{sshCommand(h)}</code>
-      <button type="button" class="oc-btn oc-btn--sm" onclick={() => void copy(h)}>{t('roster.ssh.copy')}</button></div>
+      <Button size="sm" onclick={() => void copy(h)}>{t('roster.ssh.copy')}</Button></div>
     {#if copied}<p class="pp-hint" role="status">{copied}</p>{/if}
     <div class="m1-match" data-act="match"><span class="pp-k">{t('roster.match.k')}</span>
       <FacetSelect label={t('roster.census.col_computer')} value={current} {options} onChange={(v) => void pick(h, v)} />
@@ -96,6 +97,6 @@
   {/if}
   {#if c.kind === 'ssh-only'}
     <div class="m1-install" data-act="install"><p class="pp-hint">{t('roster.ssh.install_note')}</p>
-      <button type="button" class="oc-btn oc-btn--confirm" onclick={() => install(h)}>{t('roster.ssh.install')}</button></div>
+      <Button variant="confirm" onclick={() => install(h)}>{t('roster.ssh.install')}</Button></div>
   {/if}
 {/if}

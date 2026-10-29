@@ -1,4 +1,7 @@
 import { pluginItemsFor } from './row-plugins';
+import { swarmRosterAgents } from '../../cplugs/sdk/swarm-roster.svelte';
+import { memberOf } from '../swarm-membership/member-face';
+import { escHtml } from '../drawer/row-controls';
 
 export interface RowMenuCtx {
     name: string;
@@ -39,6 +42,7 @@ export interface RowMenuCtx {
     updateBusy: boolean;
     updateBusyReason: string;
     menuHidden?: boolean;
+    swarmRank?: string;
     shiftHeld?: boolean;
 }
 
@@ -58,9 +62,7 @@ export const FORK_REASON = 'cannot fork: carnivore did not create this agent, so
 interface RowContextGlobals {
     CloudeI18n?: { t(key: string, vars?: Record<string, unknown>): string };
     SessionRowActions?: { actionsFor(status: string, o: { owned: boolean }): string[]; ACTION_RESTART?: string };
-    SessionSidebarGroupActions?: unknown;
     SessionSidebarGroupStore?: { groupUuidOf?(band: string): string | null; groupByUuid?(uuid: string): { name?: string } | null };
-    SessionSidebarRowControls?: { escHtml?(value: unknown): string };
     SessionRowMenuIcons?: { svg(id: string, size?: number): string };
     KebabIcon?: { svg(size: number, stroke: number): string };
 }
@@ -143,7 +145,7 @@ export function contextFromRow(r: Record<string, unknown> | null | undefined, op
     const asleep = !!row.asleep;
     const pluginItems = asleep || row.archived === true ? '' : pluginItemsFor(row).map((i) => i.id).join(',');
     const surface = opts.surface || 'sidebar';
-    const groupable = surface === 'sidebar' && !!G.SessionSidebarGroupActions;
+    const groupable = surface === 'sidebar';
     const store = G.SessionSidebarGroupStore;
     let groupUuid = groupable && store && typeof store.groupUuidOf === 'function' ? store.groupUuidOf(opts.band || '') : null;
     const groupRecord = groupUuid && store && typeof store.groupByUuid === 'function' ? store.groupByUuid(groupUuid) : null;
@@ -187,6 +189,7 @@ export function contextFromRow(r: Record<string, unknown> | null | undefined, op
         updateBusy: busy.length > 0,
         updateBusyReason: busy.length > 0 ? `cannot update and restart: ${busy.join(', ')} - a restart would end it` : '',
         menuHidden: !!opts.menuHidden,
+        swarmRank: memberOf(row, swarmRosterAgents())?.rank ?? '',
     };
 }
 
@@ -243,6 +246,7 @@ export function triggerSpec(c: Partial<RowMenuCtx>): RowTriggerSpec {
         'data-row-menu-update-installed': str(c.agentUpdateInstalled || ''),
         'data-row-menu-update-busy': c.updateBusy ? '1' : '0',
         'data-row-menu-update-busy-reason': str(c.updateBusyReason || ''),
+        'data-row-menu-swarm-rank': c.swarmRank ? str(c.swarmRank) : undefined,
         'data-tooltip': str(title),
         tabindex: '-1',
         'aria-haspopup': 'menu',
@@ -259,12 +263,9 @@ export function triggerSpec(c: Partial<RowMenuCtx>): RowTriggerSpec {
 }
 
 function esc(value: string): string {
-    const controls = g().SessionSidebarRowControls;
-    if (controls && typeof controls.escHtml === 'function') return controls.escHtml(value);
-    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return escHtml(value);
 }
 
-/* <button> */
 export function triggerHtml(c: Partial<RowMenuCtx>): string {
     const spec = triggerSpec(c);
     const parts = Object.keys(spec.attrs).filter((k) => spec.attrs[k] !== undefined).map((k) => `${k}="${esc(spec.attrs[k] as string)}"`);
@@ -312,6 +313,7 @@ export function contextFromTrigger(el: Element | null | undefined): RowMenuCtx |
         agentUpdateInstalled: attr('data-row-menu-update-installed'),
         updateBusy: flag('data-row-menu-update-busy'),
         updateBusyReason: attr('data-row-menu-update-busy-reason'),
+        swarmRank: attr('data-row-menu-swarm-rank'),
     };
 }
 

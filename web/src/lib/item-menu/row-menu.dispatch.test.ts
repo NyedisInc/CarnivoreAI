@@ -1,4 +1,7 @@
 /** @vitest-environment jsdom */
+import enCatalog from '../../../../client/js/i18n/catalog.en.js';
+import * as Clicks from '../drawer/clicks';
+import * as Rename from '../drawer/rename';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +14,22 @@ vi.mock('../plugins/session-card-actions', () => ({
         registry.ran.push([id, row.name, row.unread]);
         return false;
     }),
+}));
+
+const restart = vi.hoisted(() => ({ override: null as null | ((...a: unknown[]) => unknown) }));
+vi.mock('../drawer/restart-click', async (orig) => {
+    const real = await orig<typeof import('../drawer/restart-click')>();
+    return { ...real, runRestart: (...a: Parameters<typeof real.runRestart>) => (restart.override ? restart.override(...a) : real.runRestart(...a)) };
+});
+
+const picker = vi.hoisted(() => ({ opened: [] as Array<[boolean, string]> }));
+vi.mock('../drawer/group-actions', () => ({
+    openPickerFor: (anchor: unknown, name: string) => { picker.opened.push([!!anchor, name]); },
+}));
+
+const pinning = vi.hoisted(() => ({ toggled: [] as string[] }));
+vi.mock('../sidebar-shell/row-reorder', () => ({
+    togglePinRow: (name: string) => { pinning.toggled.push(name); return true; },
 }));
 
 import { contextFromRow, triggerHtml } from './row-context';
@@ -33,6 +52,11 @@ function loadScripts(files: string[], fresh = false): void {
     }
 }
 
+function freshRename(): void {
+    document.body.replaceChildren();
+    Rename.afterRender();
+}
+
 function drawRow(shown = true): { rowEl: HTMLElement; nameEl: HTMLElement } {
     const rowEl = document.createElement('div');
     rowEl.className = 'session-sidebar-row';
@@ -51,12 +75,12 @@ let calls: unknown[][];
 
 beforeEach(() => {
     calls = [];
+    picker.opened = [];
     registry.ran = [];
+    restart.override = (ctrl: unknown, name: unknown, el: unknown) => { calls.push(['runRestart', ctrl, name, !!el]); };
     bench({
         SessionLabel: { LABEL_MAX_CHARS: 200 },
         SessionSidebar: { id: 'the-controller' },
-        SessionSidebarClicks: { runRestart: (ctrl: unknown, name: string, el: unknown) => { calls.push(['runRestart', ctrl, name, !!el]); } },
-        SessionSidebarGroupActions: { openPickerFor: (anchor: unknown, name: string) => { calls.push(['openPickerFor', !!anchor, name]); } },
         CloudeWeb: {
             launchpad: { createConsoleSession: (options: unknown) => { calls.push(['createConsoleSession', options]); return Promise.resolve(); } },
             addToMenu: {
@@ -69,7 +93,7 @@ beforeEach(() => {
     vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => { calls.push(['warn', ...args]); });
     delete win.SessionSidebarLayouts;
     loadRunTable();
-    loadScripts(['session-sidebar-rename.js'], true);
+    freshRename();
 });
 
 afterEach(() => {
@@ -78,20 +102,20 @@ afterEach(() => {
 });
 
 describe('rename: one implementation, two doors', () => {
-    test('double-click rename stays retired (2026-09-20 the decision)', () => {
-        expect(win.SessionSidebarRename.onDblClick).toBeUndefined();
-        expect(win.SessionSidebarRename.deferActivation).toBeUndefined();
+    test('double-click rename stays retired (2026-09-20 owner decision)', () => {
+        expect((Rename as Record<string, unknown>).onDblClick).toBeUndefined();
+        expect((Rename as Record<string, unknown>).deferActivation).toBeUndefined();
     });
 
     test('F2 and the menu reach the row\'s own editor, not a copy of it', () => {
         const a = drawRow();
-        expect(win.SessionSidebarRename.onRowKeydown({ key: 'F2', preventDefault() {} }, a.rowEl)).toBe(true);
-        expect(win.SessionSidebarRename.isEditing()).toBe(true);
-        loadScripts(['session-sidebar-rename.js'], true);
+        expect(Rename.onRowKeydown(new KeyboardEvent('keydown', { key: 'F2' }), a.rowEl)).toBe(true);
+        expect(Rename.isEditing()).toBe(true);
+        freshRename();
         document.body.replaceChildren();
         const b = drawRow();
         void win.SessionRowMenuActions.run('rename', ctx());
-        expect(win.SessionSidebarRename.isEditing()).toBe(true);
+        expect(Rename.isEditing()).toBe(true);
         expect(b.rowEl.getAttribute('data-editing')).toBe('1');
     });
 
@@ -111,13 +135,13 @@ describe('rename: one implementation, two doors', () => {
 
     test('both doors refuse a row that cannot be renamed, identically', () => {
         for (const drive of ['f2', 'menu']) {
-            loadScripts(['session-sidebar-rename.js'], true);
+            freshRename();
             document.body.replaceChildren();
             const { rowEl } = drawRow();
             rowEl.setAttribute('data-rename-state', 'adopting');
-            if (drive === 'f2') win.SessionSidebarRename.onRowKeydown({ key: 'F2', preventDefault() {} }, rowEl);
+            if (drive === 'f2') Rename.onRowKeydown(new KeyboardEvent('keydown', { key: 'F2' }), rowEl);
             else void win.SessionRowMenuActions.run('rename', ctx());
-            expect(win.SessionSidebarRename.isEditing(), drive).toBe(false);
+            expect(Rename.isEditing(), drive).toBe(false);
             expect(rowEl.getAttribute('data-rename-refused'), drive).toBe('1');
         }
     });
@@ -125,7 +149,7 @@ describe('rename: one implementation, two doors', () => {
 
 describe('restart and update restart', () => {
     const recordRestart = (): void => {
-        win.SessionSidebarClicks.runRestart = (...args: unknown[]) => { calls.push(['runRestart', args[0], args[1], !!args[2], args[4], args[5], args[6]]); };
+        restart.override = (...args: unknown[]) => { calls.push(['runRestart', args[0], args[1], !!args[2], args[4], args[5], args[6]]); };
     };
 
     test('restart goes to the picker through the row\'s own handler, never armed', () => {
@@ -148,7 +172,8 @@ describe('restart and update restart', () => {
     });
 
     test('the restart flow reads the status the kebab actually stamped, the measured one for each', async () => {
-        loadScripts(['session-status-ui.js', 'session-row-actions-confirm.js', 'session-row-actions.js', 'session-sidebar-restart-click.js', 'session-sidebar-clicks.js']);
+        loadScripts(['session-status-ui.js', 'session-row-actions-confirm.js', 'session-row-actions.js']);
+        restart.override = null;
         for (const status of ['working', 'idle', 'question', 'notice']) {
             document.body.replaceChildren();
             const holder = document.createElement('div');
@@ -158,9 +183,18 @@ describe('restart and update restart', () => {
             document.body.appendChild(holder);
             const seen: unknown[] = [];
             win.SessionRestartPicker = { open: (_n: string, _l: string, st: unknown) => { seen.push(st); return Promise.resolve(null); }, lastError: () => null };
-            await win.SessionSidebarClicks.runRestart(win.SessionSidebar, 'cloude_api', null);
+            await Clicks.runRestart(win.SessionSidebar, 'cloude_api', null);
             expect(seen, `status ${status} must reach the picker`).toEqual([status]);
         }
+    });
+});
+
+describe('pin and unpin on a session row (#2674)', () => {
+    test('the pin item runs the drawer\'s one pin path for the row\'s name, and never the plugin registry', async () => {
+        pinning.toggled.length = 0;
+        await win.SessionRowMenuActions.run('pin', ctx());
+        expect(pinning.toggled).toEqual(['cloude_api']);
+        expect(registry.ran).toEqual([]);
     });
 });
 
@@ -189,7 +223,7 @@ describe('filing and add to', () => {
     test('move to group opens the group module\'s own picker on the row\'s kebab', () => {
         drawRow();
         void win.SessionRowMenuActions.run('move-to-group', ctx());
-        expect(calls[0]).toEqual(['openPickerFor', true, 'cloude_api']);
+        expect(picker.opened).toEqual([[true, 'cloude_api']]);
     });
 
     test('add to opens the session branch with the tmux name and uuid; on a Layout row, the Layout branch', () => {
@@ -202,12 +236,12 @@ describe('filing and add to', () => {
     test('a missing collaborator does nothing and throws nothing', () => {
         drawRow();
         win.CloudeWeb = {};
-        delete win.SessionSidebarClicks;
-        delete win.SessionSidebarGroupActions;
+        restart.override = null;
+        const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
         void win.SessionRowMenuActions.run('add-to', ctx());
         void win.SessionRowMenuActions.run('restart', ctx());
-        void win.SessionRowMenuActions.run('move-to-group', ctx());
         expect(calls).toEqual([]);
+        quiet.mockRestore();
     });
 });
 
@@ -225,10 +259,11 @@ describe('new terminal here', () => {
     });
 
     test('NEGATIVE CONTROL: no folder anywhere refuses by name; a missing launcher refuses too', async () => {
+        win.CloudeI18n = { t: (k: string, p?: Record<string, string>) => String((enCatalog as Record<string, string>)[k] ?? k).replace(/\{(\w+)\}/g, (_m, n: string) => p?.[n] ?? '') };
         await win.SessionRowMenuActions.run('new-terminal-here', ctx());
         expect(calls).toHaveLength(1);
         expect(calls[0]![0]).toBe('warn');
-        expect(String(calls[0]![2])).toMatch(/CANNOT DETERMINE the folder for "api"/);
+        expect(String(calls[0]![2])).toMatch(/cannot determine the folder for "api"/);
         calls.length = 0;
         win.CloudeWeb = {};
         await win.SessionRowMenuActions.run('new-terminal-here', ctx());

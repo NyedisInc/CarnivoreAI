@@ -1,5 +1,7 @@
 
 <script lang="ts">
+    import RowActionButton from './RowActionButton.svelte';
+    import ProjectChip from './ProjectChip.svelte';
     import { runCplug } from '../item-menu/row-plugins';
     import { glyphSvg } from '../../../../client/js/icons/glyphs.js';
     import Icon from '../../opscenter/ui/Icon.svelte';
@@ -12,8 +14,6 @@
     import type { SessionListItem, Translate } from '../sessions/types';
     import { agentsIconPlan, automationsIconPlan, shellsIconPlan, sharePlan, timersIconPlan, workflowIconPlan } from '../sidebar-shell/row-chips';
     import type { SidebarRow } from '../sidebar-shell/legacy';
-    import { projectColorOf } from '../project-colors/store.svelte';
-    import { projectColorVar } from '../project-colors/palette';
     import { openSessionAutomationsFor } from '../sidebar-shell/row-controls';
     import type { PageRow } from './filters';
     import { isClosedRow, rowAction, type PanelAction } from './row-action';
@@ -71,7 +71,7 @@
                 <span class="sp-pic {m.attrs.class === 'session-sidebar-row-agents-icon' || m.attrs.class === 'session-sidebar-row-shells-icon' ? 'sp-pic-ok' : 'sp-pic-dim'}" role="img" title={m.attrs.title} aria-label={m.attrs['aria-label']}>{@html m.svg}</span>
             {/each}
             {#if automations}
-                <button type="button" class="sp-pic {automations.attrs.class}" data-state={automations.attrs['data-state']} data-automations-session-uuid={automations.attrs['data-automations-session-uuid']} title={automations.attrs.title} aria-label={automations.attrs['aria-label']} onclick={(e) => openSessionAutomationsFor(e.currentTarget)}>{@html automations.svg}</button>
+                <button data-base-exempt="a status glyph that is also a key: a picture, not a labelled control" type="button" class="sp-pic {automations.attrs.class}" data-state={automations.attrs['data-state']} data-automations-session-uuid={automations.attrs['data-automations-session-uuid']} title={automations.attrs.title} aria-label={automations.attrs['aria-label']} onclick={(e) => openSessionAutomationsFor(e.currentTarget)}>{@html automations.svg}</button>
             {/if}
             {#if asleep}
                 <span class="sp-pic sp-pic-dim" role="img" title={t('sessions.page.state.asleep')} aria-label={t('sessions.page.state.asleep')}>{@html glyphSvg('sleeping-agent', 13)}</span>
@@ -90,7 +90,7 @@
     <h2 class="sp-pn-name">{name}</h2>
     <div class="sp-pn-meta">
         <span class="sp-pn-proj">
-            <span class="sp-pchip" style:--pc={projectColorVar(projectColorOf(row.projectRef?.id ?? null))}>{(row.project.charAt(0) || '?').toUpperCase()}</span>{row.project}
+            <ProjectChip name={row.project} projectId={row.projectRef?.id ?? null} />{row.project}
         </span>
         {#if row.company}
             <span class="sp-pn-mi" data-meta="company"><span class="sp-pn-mic">{@html glyphSvg('building', 14)}</span><span>{row.company}</span></span>
@@ -101,10 +101,7 @@
     {#if action || putBack || removable}
         <div class="sp-pn-actions">
             {#if action}
-                <Button data-go={action} data-pn-act={action} disabled={busy} aria-label={t(`sessions.page.act.${action}.label`, { name })} onclick={() => onAct(action, row)}>
-                    {#if action === 'open'}<Icon name="prompt-open" size={14} />{:else if action === 'wake'}<Icon name="bolt" size={14} />{/if}
-                    <span>{t(`sessions.page.act.${action}`)}</span>
-                </Button>
+                <RowActionButton {action} {name} {t} size="md" data-pn-act={action} disabled={busy} onclick={() => onAct(action, row)} />
             {/if}
             {#if putBack}
                 <Button size="sm" data-pn-act="put-back" disabled={busy} onclick={() => onAct('put-back', row)}>{t('projects.page.action.put_back')}</Button>

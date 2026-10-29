@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { Button, Select } from '../base';
     import ArtDensity from '../../opscenter/art/ArtDensity.svelte';
     import { t } from '../i18n/index.svelte';
 
@@ -55,6 +56,7 @@
     let choice = $state('theme');
     let dimPercent = $state(90);
     let saving = $state(false);
+    let queuedWrite = false;
     let failed = $state(false);
     let hasUpload = $state(false);
     let busy = $state(false);
@@ -63,7 +65,6 @@
     const api = backgroundApi();
     const themes = themesApi();
 
-    /* the bottom bar */
     let session: string | null = $state(null);
 
     const withImages: ThemeManifestLike[] = (themes?.listAll() ?? []).filter(
@@ -121,7 +122,11 @@
     const canPaint = $derived(hasUpload || withImages.length > 0);
 
     async function commit(): Promise<void> {
-        if (!api || !session || saving) return;
+        if (!api || !session) return;
+        if (saving) {
+            queuedWrite = true;
+            return;
+        }
         saving = true;
         failed = false;
         const isDefaultDim = dimPercent === Math.round((api.DEFAULT_DIM ?? 0.9) * 100);
@@ -135,6 +140,10 @@
             failed = true;
         } finally {
             saving = false;
+            if (queuedWrite) {
+                queuedWrite = false;
+                void commit();
+            }
         }
     }
 
@@ -183,7 +192,7 @@
     {#if !session}
         <div class="tbg__note">{t('terminal.background.needs_session')}</div>
     {:else}
-        <!-- display: none -->
+        
         <div class="tbg__row">
             <span class="tbg__label">{t('terminal.background.source')}</span>
             <label class="tbg__file oc-focus-host">
@@ -201,9 +210,9 @@
         {#if hasUpload}
             <div class="tbg__row">
                 <span class="tbg__label">{t('terminal.background.source.uploaded')}</span>
-                <button class="tbg__btn" type="button" disabled={busy} onclick={useThemeImage}>
+                <Button data-tbg="use-theme" style="flex: 1; min-width: 0" disabled={busy} onclick={useThemeImage}>
                     {t('terminal.background.use_theme')}
-                </button>
+                </Button>
             </div>
         {/if}
 
@@ -214,13 +223,13 @@
         {#if withImages.length > 0}
             <label class="tbg__row tbg__row--stacked">
                 <span class="tbg__label">{t('terminal.background.source.theme')}</span>
-                <select class="tbg__select" bind:value={choice} onchange={commit}>
-                    <option value="theme">{t('terminal.background.source.theme')}</option>
-                    <option value="none">{t('terminal.background.source.none')}</option>
-                    {#each withImages as manifest (manifest.id)}
-                        <option value={manifest.id}>{(manifest.name || manifest.id).toLowerCase()}</option>
-                    {/each}
-                </select>
+                <Select id="tbg-source" bind:value={choice} onchange={commit} aria-label={t('terminal.background.source.theme')}
+                    style="flex: 1; min-width: max-content; max-width: 100%"
+                    options={[
+                        { value: 'theme', label: t('terminal.background.source.theme') },
+                        { value: 'none', label: t('terminal.background.source.none') },
+                        ...withImages.map((manifest) => ({ value: manifest.id, label: (manifest.name || manifest.id).toLowerCase() })),
+                    ]} />
             </label>
         {/if}
 
@@ -298,20 +307,6 @@
           gap: 3px;
       }
 
-      /* max-width: 100% */
-      .tbg__select {
-          flex: 1;
-          min-width: max-content;
-          max-width: 100%;
-          background: var(--oc-ground-raised);
-          color: var(--oc-text-primary);
-          border: 1px solid var(--oc-line-panel);
-          border-radius: var(--oc-radius-sm);
-          font-family: inherit;
-          font-size: inherit;
-          padding: 3px var(--oc-space-1);
-      }
-
       .tbg__range {
           flex: 1;
           min-width: 0;
@@ -334,8 +329,7 @@
           color: var(--oc-coral);
       }
 
-      .tbg__file,
-      .tbg__btn {
+      .tbg__file {
           flex: 1;
           min-width: 0;
           box-sizing: border-box;
@@ -353,18 +347,10 @@
           cursor: pointer;
       }
 
-      .tbg__file:hover,
-      .tbg__btn:hover {
+      .tbg__file:hover {
           border-color: var(--oc-coral);
       }
 
-      .tbg__btn:disabled {
-          cursor: default;
-          color: var(--oc-text-secondary);
-      }
-
-      /*  hidden
- display: none */
       .tbg__fileinput {
           position: absolute;
           width: 1px;
@@ -377,10 +363,8 @@
           border: 0;
       }
 
-      /* display: none */
       @media (pointer: coarse) {
-          .tbg__file,
-          .tbg__btn {
+          .tbg__file {
               min-height: 44px;
           }
 

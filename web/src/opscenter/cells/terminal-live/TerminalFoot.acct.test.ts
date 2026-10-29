@@ -22,7 +22,7 @@ vi.mock('../../api', async () => {
   };
 });
 vi.mock('../../api/ledger.svelte', () => ({
-  ledger: { data: { accounts: [{ id: 'acct-1', name: 'Claude Code - Studio', short_name: 'Studio' }] } },
+  ledger: { data: { accounts: [{ id: 'acct-1', name: 'Claude Code - Acme', short_name: 'Nyedis' }] } },
 }));
 
 vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -39,7 +39,7 @@ test('the account tag is a descendant of the bar element, not a sibling past its
   mounted.push(mount(TerminalFoot, { target, props: { sessionId: 'ses_1', width: 900 } }));
   flushSync();
   const tag = target.querySelector('.oc-tf-acct');
-  expect(tag?.textContent).toContain('Studio');
+  expect(tag?.textContent).toContain('Nyedis');
   const bar = tag?.closest('[data-foot-bar]');
   expect(bar).not.toBeNull();
   expect(bar?.querySelector('button.oc-tf')).not.toBeNull();

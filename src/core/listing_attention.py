@@ -8,7 +8,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 import structlog
 
-from src.core.attention import registry_read
+from src.core.attention import registry_index
 from src.core.attention.absent_transcript_cache import ABSENT_TRANSCRIPTS
 from src.core.attention.display import (
     activity_hint_for,
@@ -17,7 +17,8 @@ from src.core.attention.display import (
 )
 from src.core.attention.evidence import FAMILY_CODEX, Evidence, PaneVerdict
 from src.core.attention.process_scope import evidence_process_floor
-from src.core.attention.registry_read import RegistryRecord, registry_for_session
+from src.core.attention.registry_record import RegistryRecord
+from src.core.attention.registry_index import registry_for_session
 from src.core.attention.registry_pane import (
     ProcessParents,
     falls_back_to_pane,
@@ -32,7 +33,9 @@ from src.core.attention.transcript_facts import (
 
 logger = structlog.get_logger()
 
-_READ_ERRORS = (OSError, ValueError, TypeError, AttributeError, KeyError)
+_READ_ERRORS = (OSError, ValueError)
+
+_PROGRAMMING_ERRORS = (TypeError, AttributeError, KeyError)
 
 _FACTS_MEMO: Dict[str, Tuple[int, int, TranscriptFacts]] = {}
 
@@ -68,6 +71,18 @@ def transcript_facts_for(
             uuid=str(claude_session_uuid),
             error=str(exc),
             error_type=type(exc).__name__,
+        )
+        return TranscriptFacts(
+            verdict=FACTS_UNREADABLE,
+            detail="the transcript could not be located: %s" % exc,
+        )
+    except _PROGRAMMING_ERRORS as exc:
+        logger.error(
+            "listing_attention_presence_bug",
+            uuid=str(claude_session_uuid),
+            error=str(exc),
+            error_type=type(exc).__name__,
+            exc_info=True,
         )
         return TranscriptFacts(
             verdict=FACTS_UNREADABLE,
@@ -149,28 +164,6 @@ def attention_reads_for_name(
     return (registry, transcript)
 
 
-def pane_verdict_from_permission(verdict: Optional[str]) -> Optional[PaneVerdict]:
-    from src.core.session_permission_verify import (
-        PERMISSION_CLEARED_NO_DIALOG,
-        PERMISSION_KEPT_DIALOG,
-    )
-
-    if verdict == PERMISSION_KEPT_DIALOG:
-        return PaneVerdict(
-            permission_dialog=True,
-            detail="the permission re-verify read a dialog on this pane",
-        )
-    if verdict == PERMISSION_CLEARED_NO_DIALOG:
-        return PaneVerdict(
-            permission_dialog=False,
-            detail=(
-                "the permission re-verify read this pane and matched no "
-                "permission dialog; no other dialog family was looked for"
-            ),
-        )
-    return None
-
-
 def resolve_row_status(
     *,
     registry: RegistryRecord,
@@ -222,7 +215,7 @@ def resolve_row_status_live(
     is_codex = family == FAMILY_CODEX
     registry, transcript = attention_reads_for_name(
         tmux_name,
-        registry_index=registry_read.read_registry_index(),
+        registry_index=registry_index.read_registry_index(),
         session_started_epoch=epoch,
         claude_session_uuid=None if is_codex else uuid,
         working_dir=row_cwd or working_dir,
@@ -265,6 +258,9 @@ def conversation_for_instance(
     try:
         row = reader(tmux_name, epoch)
     except _READ_ERRORS:
+        return (None, None)
+    except _PROGRAMMING_ERRORS as exc:
+        logger.error("listing_attention_seed_row_bug", error_type=type(exc).__name__, exc_info=True)
         return (None, None)
     if not row:
         return (None, None)

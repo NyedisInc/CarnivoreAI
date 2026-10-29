@@ -1,7 +1,7 @@
 {
   "id": "crate",
   "name": "Crates",
-  "summary": "",
+  "summary": "export a session or a project to one crate file you can verify for years and read back without carnivore: byte exact, optionally encrypted with age, copied and verified at a second folder, marked exported in deep search; a separate share copy is redacted and resumes only as a fork; a crate restores into this computer with every session asleep. off by default.",
   "description": "The crate plugin writes a session or a project, its conversations, their side files and Carnivore's own records into one file. An own crate is byte exact and never redacted; it is fully verified before it is kept, recorded as an export (deep search tags each conversation), and copied and verified at an optional second folder. Encryption is optional and standard age v1 to the public keys in the plugin's settings; the private key stays in 1Password. A share crate is separate: secrets starred, images removed, the home folder hidden, never recorded, and it resumes only as a fork. Every build reads every crate version ever written, and python3 -m src.core.crate_format verifies or extracts one offline.",
   "area": "archive",
   "status": "beta",
@@ -68,6 +68,7 @@
     "The Plugins page: turn on crates, then press its gear for the folders, public keys and the recorded crates.",
     "The Projects page, inside a project: the crates group after the session groups, while the plugin is on.",
     "The restore button on a recorded crate (the plugin's settings and a project's crates group) opens the restore dialog: a preview of what restoring would do, then the restore itself with its progress and a done screen listing the sessions that came back asleep, each with a wake button.",
+    "Under the recorded crates in the plugin's settings: \"found in this folder\" lists crate files in the crates folders that this computer did not export (copied from another Mac), each with a restore button, and \"open a crate file\" picks a crate from anywhere on disk and puts it in the first folder.",
     "Under the found crates in the plugin's settings: \"restored\" lists the finished restores, each with an undo."
   ],
   "how_to": [
@@ -83,9 +84,11 @@
     "Put every session of the project to sleep first: a running session blocks the export.",
     "Press verify on a crate to check every copy again; a pass records when it was verified.",
     "Press restore on a recorded crate, press preview to see which folders it lands in and what blocks it (nothing is written yet), then press restore: the project, its sessions (all asleep), conversation files and records come back, and the done screen has a wake button per session. A crate encrypted with age asks for its private key in the dialog.",
+    "Restore a crate that came from another Mac: copy it into the crates folder (or press \"open a crate file\" and pick it, with its .sha256 file if you have one), press restore on its row under \"found in this folder\", then preview and restore as for a recorded crate.",
     "Under include backups in the export dialog, tick conversations and any plugin folder listed there (review boards: this project's boards); a folder switched off in the save plugin's backup menu shows greyed. On import, a crate from another computer shows one tick per backup family, on by default."
   ],
   "examples": [
+    "Export a finished project to a crate on /Volumes/Backup before clearing it off this computer.",
     "Move a finished project to another disk with its code, its conversations and its git state (branch, commit and uncommitted changes) in one file.",
     "Send a coworker a share copy of one conversation with its secrets starred.",
     "Verify a two year old crate with python3 -m src.core.crate_format verify, with no Carnivore server running.",

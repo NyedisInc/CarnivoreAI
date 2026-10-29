@@ -67,13 +67,14 @@ export function forgetSession(name: string): void {
   if (names.includes(name)) writeIndex(names.filter((one) => one !== name));
 }
 
-/*  hidden  */
+/* there is nothing */
 export function isBareTerminal(layout: Layout): boolean {
   const base = resetLayout(META, 'terminal');
   const [row] = layout.rows;
   if (layout.rows.length !== 1 || !row || row.slots.length !== 1) return false;
   if (row.slots[0]?.id !== PRIMARY_SLOT || (row.slots[0]?.span ?? 1) > 1) return false;
   if (layout.collapsed.length !== 0) return false;
+  if ((layout.headerOff?.length ?? 0) !== 0) return false;
   const hidden = [...layout.hidden].sort();
   const wanted = [...base.hidden].sort();
   return hidden.length === wanted.length && hidden.every((id, at) => id === wanted[at]);

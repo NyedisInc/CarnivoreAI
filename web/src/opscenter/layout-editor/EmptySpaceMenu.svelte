@@ -1,5 +1,5 @@
 <script lang="ts">
-  /*  hidden  */
+  /* the home screen */
   import CascadeMenu from '../../lib/drawer-tabs/CascadeMenu.svelte';
   import { t } from '../../lib/i18n/index.svelte';
   import { emptyMenu, emptyMenuNodes, type MenuSurface } from './empty-space-menu.svelte';

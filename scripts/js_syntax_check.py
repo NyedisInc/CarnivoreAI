@@ -1,23 +1,4 @@
 #!/usr/bin/env python3
-"""Syntax check JavaScript files with the parser goal node would actually use.
-
-This script classifies each file first and then checks it with the matching
-parser goal: ``node --input-type=module --check`` reading the file on stdin for
-a module, ``node --check <file>`` for a classic script. A green result here has
-been proved able to go red (see tests/test_js_syntax_check.py, case 4).
-
-Usage::
-
-    python3 scripts/js_syntax_check.py client/js
-    python3 scripts/js_syntax_check.py client/js/app.js client/js/i18n
-
-Exit codes:
-    0  every file parsed
-    1  at least one file failed to parse
-    2  could not check: node is missing, or zero files were found
-
-Exit 2 is NOT a pass. A check that looked at nothing has not checked anything.
-"""
 
 from __future__ import annotations
 
@@ -25,6 +6,8 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+_PRUNED_DIRS = frozenset({"node_modules", "node_modules.nosync", "vendor"})
 
 _ESM_KEYWORD = re.compile(r"^\s*(?:import|export)\b")
 
@@ -63,7 +46,7 @@ def collect(paths: list[str]) -> list[Path]:
             continue
         for candidate in p.rglob("*.js"):
             parts = candidate.parts
-            if "node_modules" in parts:
+            if _PRUNED_DIRS.intersection(candidate.relative_to(p).parts[:-1]):
                 continue
             if "dist" in parts and parts[parts.index("dist") - 1] == "client":
                 continue

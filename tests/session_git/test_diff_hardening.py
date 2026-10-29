@@ -25,7 +25,7 @@ def test_secret_names_show_name_only(tmp_path: Path, name: str) -> None:
 
 def test_renamed_secret_and_vendor_backstop(tmp_path: Path) -> None:
     repo = make_repo(tmp_path / "r")
-    (repo / "n.txt").write_text("k=ghp_" + "a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8" + "\n")  # synthetic test value, never issued
+    (repo / "n.txt").write_text("k=ghp_" + "a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8" + "\n")
     d = read_file_diff(repo, GitFile(path="n.txt", kind="untracked"), staged=False, unborn=False)
     assert d.sensitive and not d.text
     e = GitFile(path="plain.txt", orig_path=".env", kind="renamed")

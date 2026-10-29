@@ -12,7 +12,6 @@ interface RowMenuGlobals {
       closeRow(): void;
     };
   };
-  SessionSidebarGroupActions?: object;
   SessionSidebarGroupMembership?: { uuidOfName(tmuxName: string): string | null };
 }
 
@@ -72,10 +71,9 @@ export type BrowserItemKind = 'browser' | 'page' | 'file';
 export function openBrowserItemMenu(
   kind: BrowserItemKind, id: string, label: string, anchor: HTMLElement, options: RowMenuOptions = {},
 ): boolean {
-  const g = globalThis as unknown as RowMenuGlobals;
   const ctx = browserMenuContext(
     { name: `browser:${id}`, label, page: kind === 'page', file: kind === 'file' },
-    !!g.SessionSidebarGroupActions,
+    true,
   ) as unknown as RowMenuCtx;
   return openContextMenu(ctx, anchor, options, null);
 }

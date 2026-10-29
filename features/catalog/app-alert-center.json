@@ -7,7 +7,7 @@
     "docs/save-pipeline.md"
   ],
   "examples": [
-    "The Local server and a test machine are both unreachable while conversations close: a red badge appears on the bell beside the Carnivore mark in the agents drawer, a card says no summary server reachable, and the panel shows how many summaries are waiting. The alert resolves by itself on the first summary that succeeds.",
+    "The Spark and the mini are both unreachable while conversations close: a red badge appears on the bell beside the Carnivore mark in the agents drawer, a card says no summary server reachable, and the panel shows how many summaries are waiting. The alert resolves by itself on the first summary that succeeds.",
     "You already know a server is down: dismiss the alert and it stays quiet until the condition clears, or snooze it for an hour.",
     "You want a Slack message when the save pipeline stops, but no pop-up card: tick save pipeline under the Slack destination and untick it on screen."
   ],
@@ -30,6 +30,7 @@
     "badge",
     "bell",
     "llm down",
+    "spark",
     "summary server",
     "warning"
   ],

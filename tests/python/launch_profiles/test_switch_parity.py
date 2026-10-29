@@ -21,7 +21,7 @@ from tests.python.launch_profiles import legacy_render  # noqa: E402
 from tests.python.launch_profiles.test_config_migration_v7 import _config  # noqa: E402
 from tests.python.launch_profiles.test_resolve_parity import APP_ARGS, _run, _stubs  # noqa: E402
 
-IDS = ["claude", "keyc", "clxor", "codex-yolo", "hermes-default", "openclaw-default", "local-default",
+IDS = ["claude", "cld", "cldor", "codex-yolo", "hermes-default", "openclaw-default", "local-default",
        "shell-default", "codex", "shell", "hermes", "openclaw", "local", "no-such-legacy-value", None]
 
 
@@ -35,7 +35,7 @@ def _settings(tmp_path: Path, data: dict) -> Settings:
 
 def _v6(alt: bool = False) -> dict:
     data = _config()
-    data["providers"] = {"local_host": "192.0.2.13:1234"}
+    data["providers"] = {"local_host": "10.0.0.5:1234"}
     data["session"] = {"disable_alternate_screen": alt}
     return data
 
@@ -116,7 +116,7 @@ def test_env_is_applied_after_the_rc_and_an_endpoint_unsets_what_it_owns(tmp_pat
     env = _run(s.get_agent_command("cld-env"), tmp_path, "env")["env"]
     assert env["RC_SET"] == "from profile"
     env = _run(s.get_agent_command("claude-lms"), tmp_path, "lms")["env"]
-    assert env["ANTHROPIC_BASE_URL"] == "http://192.0.2.13:1234" and "OPENROUTER_API_KEY" not in env
+    assert env["ANTHROPIC_BASE_URL"] == "http://10.0.0.5:1234" and "OPENROUTER_API_KEY" not in env
     assert env["ANTHROPIC_DEFAULT_SONNET_MODEL"] == "qwen3"
     native = _run(s.get_agent_command("claude"), tmp_path, "native")["env"]
     assert native["ANTHROPIC_BASE_URL"] == "https://rc.invalid"
@@ -137,4 +137,4 @@ def test_explicit_unknown_pick_is_refused_and_a_secret_profile_needs_the_create_
     with pytest.raises(ValueError, match="Keychain secrets"):
         s.get_agent_command("claude-key")
     from src.api.session_sleep_routes import _wrapper_needed
-    assert _wrapper_needed({"session_uuid": "u"}, ["keyc"]).codes == ["wrapper_needed", "launch_profile_needed"]
+    assert _wrapper_needed({"session_uuid": "u"}, ["cld"]).codes == ["wrapper_needed", "launch_profile_needed"]

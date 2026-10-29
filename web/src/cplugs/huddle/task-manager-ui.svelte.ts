@@ -1,4 +1,3 @@
-/*  hidden  */
 
 export const TASK_MANAGER_SEEN_KEY = 'carnivore.huddle.seen';
 

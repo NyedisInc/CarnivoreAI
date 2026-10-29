@@ -68,17 +68,4 @@ def session_from_refresh(
 
 
 def is_session_revoked(status: int, body: Dict[str, Any]) -> bool:
-    """Whether a hosted answer says this device's session was signed out remotely.
-
-    Description: the hosted api answers 401 ``session_revoked`` when the
-      session named by the access or refresh token was revoked from another
-      device, signed out, expired at its 180 day end or reused after
-      rotation. The stored pair is then worthless, so the caller clears it
-      and reads as signed out rather than retrying a credential that can
-      never work again. A plain 401 ``unauthorized`` is NOT this: it may be
-      a token the host merely could not verify.
-    Inputs: status (int); body (dict) the hosted answer body.
-    Output: bool.
-    Example: is_session_revoked(401, {"code": "session_revoked"})  # True
-    """
     return status == 401 and isinstance(body, dict) and body.get("code") == "session_revoked"

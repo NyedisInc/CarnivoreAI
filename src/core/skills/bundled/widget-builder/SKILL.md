@@ -1,5 +1,11 @@
+---
+name: widget-builder
+description: How to build a new Carnivore dashboard widget end to end (named sizes, cell, manifest, push data source, fixtures, fit harness, style guide, i18n, pop-out, feature catalog, ratchets). Use when asked to "build a widget", "new dashboard widget", "add a widget", "make a home cell", or when changing any file under web/src/opscenter/widgets or web/src/opscenter/cells.
+---
 
 # widget-builder: ship a widget that fits every size it names
+
+Repo: the Carnivore checkout (a worktree only when a parallel worker needs isolation; the repo CLAUDE.md says where new worktrees go). The widget system has a named owner in `docs/DECISIONS.md` (2026-09-30); ask the operator before changing its rules. Read `docs/widget-spec.md` sections 1, 6, 10, 11 and 13 once before you start; this skill is the order of work, that file is the rule book. Where the two disagree, the code wins (see "Stale spots" at the end).
 
 Reference widgets to copy, never invent:
 - Simple, pushed, two layouts: `web/src/opscenter/cells/machine-stats/` (`Cell.svelte`, `meta.ts`, `store.svelte.ts`, `Cell.test.ts`), route `src/api/machine_stats_routes.py`, sampler `src/core/machine_stats/`.
@@ -13,6 +19,7 @@ Reference widgets to copy, never invent:
 - Read the style guide (`client/style-guide.html`, sections under `client/style-guide/sections/`, especially `18-cells.html`) and the closest worked example above.
 
 ## 1. Pick or declare the named sizes
+Sizes are NAMES, never numbers, in every menu, plate and spec (ruled 2026-10-04, `docs/DECISIONS.md`: hide the numbers for the size). The names and their grid units (96 x 64 px per unit) live in `web/src/opscenter/widgets/named-sizes.ts` (`NAMED_SIZE_UNITS`):
 
 | Name | Units | Box | What the widget must show there |
 |---|---|---|---|
@@ -46,6 +53,7 @@ One new cell id `<id>` (kebab-case). Touch exactly these, in this order (copy ma
 A third-party or plugin widget does not edit 1 to 3, 5, 6: it goes through the cplug seam (`docs/cplugs.md` section 2.7, `docs/cplug-platform.md`, first example `huddle.chat`): the `widgets.<name>` block in its `cplug.json` carries the `widgets.json` row, and the web contribution is `CplugWidget { name, meta, component, extras }` registered by `web/src/cplugs/host/widgets.ts`. Plugins still need fixtures and the same fit pass.
 
 ## 3. Data source: one authenticated route, one push topic, no timer
+PUSH, NOT PULL is the standing performance rule (CLAUDE.md; `docs/DECISIONS.md`, 2026-09-30, the widget system and its standing performance rule): zero timed polling at idle, one broadcast per update, the backend orchestrates.
 
 1. Every action and read is a documented, authenticated route (`Depends(require_auth)`), mounted in `src/api/routes.py` (an aggregator: add only the import and `include_router` lines). Model: `src/api/machine_stats_routes.py`. Unmeasured values are `None`, never zero.
 2. A new topic: add a constant in `src/core/resource_push/topics.py` and its tuple entry. ADDING A TOPIC IS A PROMISE THAT EVERY WRITER OF THAT RESOURCE CALLS `resource_push.notify(<topic>)` at its one mutation point (clients stop polling for any advertised topic). Compare `src/core/machine_stats/watch.py` (viewer-gated: nothing samples with no viewer).
@@ -59,9 +67,10 @@ A third-party or plugin widget does not edit 1 to 3, 5, 6: it goes through the c
 - Layout rules that make any box safe: `min-width: 0` on every flex or grid child holding text; one long line gets `overflow: hidden; text-overflow: ellipsis; white-space: nowrap` (the fit check accepts only an ellipsis); lists scroll vertically inside the body; a sideways scroller says `data-fit-scroll-x`; a deliberate clip says `data-fit-clip`.
 - Floors: the cell's `minPx`/`minHeight`; a chart's renderer floor is `VIZ_SPECS[viz].min` (`viz/specs.ts`) and a preset drawn below it shows the plate, not a slipping chart. The floor must hold at the smallest declared name, with the title row (`titleHeight`) counted.
 - Empty state: one calm muted line naming what will appear and when (shared `EmptyState.svelte` or a catalog line), never a big "no data" headline, never zeros standing in for unmeasured. Loading and signed-out are sentences, as machine stats does.
+- Military Terminal look (CLAUDE.md, "Every UI surface wears the Military Terminal look"): `--oc-*` tokens only, `--font-mono`, tracked uppercase labels, 1 px hairlines, square corners, one accent. Copy `cells/machine-stats/Cell.svelte`'s `<style>` shape (`@layer components`). No raw px for padding, margin, gap or font size when a scale token exists; no hex, rgb or named color.
 
 ## 5. Fit tests at every declared size
-The harness (`docs/widget-spec.md` section 6; a commit) draws the REAL cell host and frame from a made-up fixture: `Date` pinned to the frozen clock (`widgets/fixtures/clock.ts`, `ago(seconds)`), `fetch` under `/api/` answered from the fixture route table, `WebSocket` that never opens. A route the widget asks that the fixture does not answer is recorded as a FIXTURE MISS and fails.
+The harness (`docs/widget-spec.md` section 6; commit 1a315bf7b) draws the REAL cell host and frame from a made-up fixture: `Date` pinned to the frozen clock (`widgets/fixtures/clock.ts`, `ago(seconds)`), `fetch` under `/api/` answered from the fixture route table, `WebSocket` that never opens. A route the widget asks that the fixture does not answer is recorded as a FIXTURE MISS and fails.
 
 What it does to your widget (`web/src/widget-harness/fit-probe.ts`, `web/src/opscenter/widgets/standard-sizes.ts`): draws it in home, terminal, sidebar widget area and glance row, at `s` (the floor), `m`, `l`, `phone`, EVERY named size you declared, and three odd boxes (`odd-wide`, `odd-tall`, `odd-mid`), under three themes, with `data` and `empty`, settled (fonts loaded, 600 ms quiet, reduced motion). Findings that fail: `overflow-x`, `overflow-y`, `scrollbar-x`, `clipped-text` (no ellipsis), `overlap`, `bad-text` (unknown, undefined, NaN, raw ids), `catalog-key` (a visible missing translation). ANY finding fails. Fix the widget's layout; never loosen the check; never narrow the claim to dodge a real bug (narrowing is allowed only honestly, by dropping a name from `fits.sizes` and setting `anySize: false`).
 
@@ -92,6 +101,7 @@ Every singleton may open alone in its own window: `client/popout.html?widget=cor
 ## 9. Feature catalog plus capture
 A new widget is a product change (CLAUDE.md "Every product-changing change"):
 - `features/catalog/<id>-widget.json`: id, name, summary, description, `area`, `status`, `surfaces`, `api_routes`, `docs`, `issues`, `keywords`, `where`, `how_to`, `examples`, and `media` or `media_exempt` (copy `features/catalog/machine-stats-widget.json`).
+- `features/changes/<date>-<slug>.json` (copy `features/changes/2026-10-01-machine-stats-widget.json`; `type: "added"`).
 - `features/capture/<id>-widget.json`: the steps that regenerate its image (copy `features/capture/keep-awake-widget.json`: seed, goto, add from the Components list, target `.oc-frame[data-cell='<id>']`). Images are reproduced by `python3 scripts/feature_capture.py <id>-widget` against a leased test slot, never hand-taken. Capture and `scripts/features.py check` run only right before a version bump; commit the capture JSON now.
 - Never hand-edit `FEATURES.md`, `features/index.json`, `features/schema.json`, and never stage `client/dist` on a branch.
 - Name the push topic in the cell's header comment and in the catalog entry (spec section 1).
@@ -121,9 +131,11 @@ The two ratchet directories are the design gate: `tests/python/design_system` (l
 - [ ] Renders in the pop-out; writes no layout.
 - [ ] `features/catalog`, `features/changes`, `features/capture` files added; no generated file edited.
 - [ ] `tests/python/design_system`, `tests/python/drawer`, `tests/test_docs_index.py` green.
+- [ ] Docs updated in the same change (`docs/widget-spec.md` if a rule moved, `docs/INDEX.md` row for any new doc); security review run; commit by explicit path; push only through the lean pipeline and only when the operator has said to push.
 
 ## Mistakes we've made (do not repeat)
 - **Resize hint flip.** The guide aimed at a box grown to the floor, not a declared size, so chevrons pointed at a size no row could reach and flipped drag-right to drag-left. Fixed in `widgets/chrome/resize-hint.ts`: the target is always a declared size the box can reach, held until another is nearer by `SWITCH_MARGIN` (2 units). Keep your floors and names honest or the guide misleads; never write a widget-local hint.
+- **Names that fall below their own floor.** The first named sizes were one or two rows tall, so lists showed a header and no rows and charts drew the plate at every size they declared (huddle item 51). A declared name must be at or above the floor and tall enough for what it claims (chart renderer floor `VIZ_SPECS[viz].min`, measured WITH the title row).
 - **Renderer floors measured on the body only.** A chart's floor was compared without its title row and rounded down to "arrived" 13 px short. Count `titleHeight`.
 - **Raw px and color literals.** Padding, margin, gap on the 4/8/12/16/24/32 scale or 10/11/12 px fonts must be tokens; hex, rgb() and `var(--color-*)` are refused by the ratchets (`tests/python/design_system`). Rules outside `@layer components` raise the unlayered count.
 - **Timer polls.** The save pipeline widget's 15 s poll is on the conversion list. A widget that polls needs a server push first.

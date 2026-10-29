@@ -1,5 +1,5 @@
-/* project or rogue agents */
 import { announce } from './interaction-globals';
+import { commitAssignment } from './group-assign';
 import { bandNames, ownsOrder, repaintKeepingFocus, rowEls, visibleNames } from './row-focus';
 import { closestTo, drawer, listElement, rg } from './row-globals';
 import { movedSentence } from './row-reorder';
@@ -140,7 +140,6 @@ function onPointerMove(e: PointerEvent): void {
     }
     const overKey = bandKeyAt(e.clientY);
     if (overKey !== null && overKey === d.band && reorderInBand(d, e.clientY)) return;
-    // project or rogue agents
     if (overKey !== null && !G.isFilingBand(overKey)) return;
     const beforeName = beforeNameAt(rowEls(), e.clientY, d.name);
     const intent = overKey !== null
@@ -176,9 +175,8 @@ function onPointerUp(): void {
         announce(movedSentence(d.name, bandNames(d.band)));
         return;
     }
-    const commit = g.SessionSidebarGroupActions?.commitAssignment;
-    if (d.groupChanged && typeof commit === 'function') {
-        void commit(d.name, d.group === undefined ? null : d.group);
+    if (d.groupChanged) {
+        void commitAssignment(d.name, d.group === undefined ? null : d.group);
         return;
     }
     announce(movedSentence(d.name, visibleNames(), d.crossed));

@@ -1,13 +1,3 @@
-"""Find the session a blueprint member already is (issues #1320, #1327).
-
-Loading a blueprint pulls in sessions that are already running, wakes the
-ones that are asleep, and only creates the ones that exist nowhere. The
-match is on IDENTITY, never a tmux name or a ``ses_`` id (a row joins on
-``session_uuid``): a member saved from a session carries that session's
-uuid. An older member has none, so it falls back to label plus canonical
-folder, and only when EXACTLY ONE session matches (a live one wins over an
-asleep one); an ambiguous match creates, it never guesses.
-"""
 
 from __future__ import annotations
 
@@ -98,11 +88,12 @@ async def wake_member(request: Request, session: LaunchedSession) -> LaunchedSes
 
     from src.api import session_sleep_routes
     from src.api.blueprints_launch import StepFailed
+    from src.api.error_response import sentence_of
 
     try:
         result = await session_sleep_routes.wake_session(request, str(session.session_uuid), None)
     except HTTPException as exc:
-        raise StepFailed("session", f"wake_{exc.status_code}", str(exc.detail)) from None
+        raise StepFailed("session", f"wake_{exc.status_code}", sentence_of(exc.detail)) from None
     if result.status != "started":
         raise StepFailed("session", result.code or "wake_refused",
                          result.detail or "the asleep session could not be woken")

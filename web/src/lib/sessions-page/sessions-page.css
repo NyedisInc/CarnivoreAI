@@ -287,7 +287,6 @@
         min-height: 0;
     }
 
-    /*  hidden  */
     .sp-hosts > .sp-host[hidden] {
         display: none;
     }

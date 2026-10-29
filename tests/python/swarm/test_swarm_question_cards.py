@@ -23,7 +23,7 @@ from src.core.swarm.cards import port as card_port
 from src.models.swarm import SwarmConversationPage
 
 VIEW = SimpleNamespace(app=SimpleNamespace(state=object()))
-QUESTION = ("NOTE 1 red proof as ordered is impossible because the guard in delivery.py line 412 never runs. "
+QUESTION = ("P7c card 195, NOTE 1 red proof as ordered is impossible because the guard in delivery.py line 412 never runs. "
             "Should I drop the red proof or rewrite the guard first?")
 SUMMARY = "Can the agent skip the failing-first proof on the trust fix, or must it rewrite the guard first?"
 
@@ -39,7 +39,7 @@ class Port:
 
     async def settle_cards(self, ref, **kw): ...
 
-    async def read_thread(self, key, limit):
+    async def read_thread(self, key, limit, cards=True):
         return list(self.thread)
 
 
@@ -64,7 +64,7 @@ def env(tmp_path, monkeypatch):
     conn = connect(db_path_for(tmp_path / "state"))
     conn.execute("INSERT INTO companies (id, name, created_at, updated_at) VALUES (1, 'Nyedis', 'x', 'x')")
     conn.execute("INSERT INTO projects (id, root, raw_path, display_name, source, created_at, updated_at, company_id) "
-                 "VALUES (4, '/tmp/qc-4', '/tmp/qc-4', 'Orchardco', 'test', 'x', 'x', 1)")
+                 "VALUES (4, '/tmp/qc-4', '/tmp/qc-4', 'Cobalt', 'test', 'x', 'x', 1)")
     conn.commit()
 
     def mk(slug, rank, name, parent=None, **extra):
@@ -72,9 +72,9 @@ def env(tmp_path, monkeypatch):
                                   repo_dir=str(tmp_path / slug), parent_id=parent, **extra)
 
     alpha = mk("alpha", "alpha", "SysOp")
-    boss = mk("nyedis", "company", "Corvale elmhaven", alpha["id"], company_id=1)
-    lead = mk("orchard", "project", "Orchardco agent", boss["id"], project_id=4)
-    research = mk("research", "feature", "Orchard-Research", lead["id"], project_id=4)
+    boss = mk("acme", "company", "Acme agent", alpha["id"], company_id=1)
+    lead = mk("argent", "project", "Cobalt agent", boss["id"], project_id=4)
+    research = mk("research", "feature", "Argent-Research", lead["id"], project_id=4)
     for a in (alpha, boss, lead, research):
         memory.ensure_layout(memory.memory_dir(Path(a["repo_dir"]), a["slug"], a["memory_scope"]))
     current = {"agent": research}
@@ -104,8 +104,8 @@ def card_entry(question_id: int) -> dict:
 
 def research_path(env, live=True):
     return [{"kind": "company", "name": "Nyedis", "agent_id": env.boss["id"]},
-            {"kind": "project", "name": "Orchardco", "agent_id": env.lead["id"]},
-            {"kind": "agent", "name": "Orchard-Research", "agent_id": env.research["id"] if live else None}]
+            {"kind": "project", "name": "Cobalt", "agent_id": env.lead["id"]},
+            {"kind": "agent", "name": "Argent-Research", "agent_id": env.research["id"] if live else None}]
 
 
 def test_ask_stores_summary_task_and_path_and_the_card_reads_them_after_teardown(env):
@@ -115,7 +115,7 @@ def test_ask_stores_summary_task_and_path_and_the_card_reads_them_after_teardown
     row = env.conn.execute("SELECT summary, task FROM swarm_questions WHERE id = ?", (qid,)).fetchone()
     assert (row["summary"], row["task"]) == (SUMMARY, "Researching new DLP providers")
     card = env.port.cards[-1]
-    assert card.ref == f"question:{qid}" and card.text == f"Orchard-Research: {SUMMARY} (task: Researching new DLP providers)"
+    assert card.ref == f"question:{qid}" and card.text == f"Argent-Research: {SUMMARY} (task: Researching new DLP providers)"
     assert "Nobody above them" not in card.text and "word for word" not in card.text
 
     env.port.thread = [{"kind": "owner", "id": "msg:1", "at": 0.5, "text": "hi"},
@@ -129,7 +129,7 @@ def test_ask_stores_summary_task_and_path_and_the_card_reads_them_after_teardown
     assert q["author_path"] == research_path(env)
     block = q["question"]
     assert (block["summary"], block["task"], block["details"]) == (SUMMARY, "Researching new DLP providers", QUESTION)
-    assert block["askers"] == [{"agent_id": env.research["id"], "name": "Orchard-Research", "author_path": research_path(env)}]
+    assert block["askers"] == [{"agent_id": env.research["id"], "name": "Argent-Research", "author_path": research_path(env)}]
     assert "routing" not in block and isinstance(block["asked_at"], float)
     assert all("author_path" in e for e in shown)
 
@@ -140,11 +140,11 @@ def test_ask_stores_summary_task_and_path_and_the_card_reads_them_after_teardown
     assert block["task"] == "Researching new DLP providers"
 
     env.conn.execute("UPDATE swarm_agents SET torn_down_at = 'x', state = 'torn_down' WHERE id = ?", (env.lead["id"],))
-    again = store.create_agent(env.conn, slug="orchard2", rank="project", job="j", display_name="Orchardco agent", effort="high",
-                               repo_dir=str(Path(env.lead["repo_dir"]).parent / "orchard2"), parent_id=env.boss["id"], project_id=4)
+    again = store.create_agent(env.conn, slug="argent2", rank="project", job="j", display_name="Cobalt agent", effort="high",
+                               repo_dir=str(Path(env.lead["repo_dir"]).parent / "argent2"), parent_id=env.boss["id"], project_id=4)
     env.conn.commit()
     block = next(e for e in run(stream.page(env.alpha))["entries"] if e["id"] == f"item:{qid}")["question"]
-    assert block["askers"][0]["author_path"][1] == {"kind": "project", "name": "Orchardco", "agent_id": again["id"]}
+    assert block["askers"][0]["author_path"][1] == {"kind": "project", "name": "Cobalt", "agent_id": again["id"]}
 
 
 def test_task_override_and_job_fallback(env):
@@ -181,11 +181,11 @@ def test_ask_with_a_summary_the_owner_cannot_read_is_refused_and_saves_nothing(e
 def test_event_entries_carry_the_path_of_who_acted(env):
     lead = dict(env.conn.execute("SELECT * FROM swarm_agents WHERE id = ?", (env.lead["id"],)).fetchone())
     entries = [{"kind": "event", "id": "ev:reported:report:1", "at": 1.0, "event": "reported", "ref": "report:1",
-                "text": "Orchard-Research reported to Orchardco agent", "agent_id": env.research["id"], "report_id": 1},
+                "text": "Argent-Research reported to Cobalt agent", "agent_id": env.research["id"], "report_id": 1},
                {"kind": "event", "id": "ev:answered:question:1", "at": 2.0, "event": "answered", "ref": "question:1",
                 "text": "the owner answered", "question_id": 1, "answered_by": "owner"},
                {"kind": "event", "id": "ev:answered:question:2", "at": 3.0, "event": "answered", "ref": "question:2",
-                "text": "Corvale elmhaven answered", "question_id": 2, "answered_by": f"agent:{env.boss['id']}"}]
+                "text": "Acme agent answered", "question_id": 2, "answered_by": f"agent:{env.boss['id']}"}]
     author_path.annotate(env.conn, lead, entries)
     assert [e["author_path"] for e in entries] == [
         research_path(env), [{"kind": "owner", "name": "you", "agent_id": None}],
@@ -194,15 +194,15 @@ def test_event_entries_carry_the_path_of_who_acted(env):
 
 def test_traffic_entries_carry_the_peer_session_uuid_both_ways(env):
     lead = dict(env.conn.execute("SELECT * FROM swarm_agents WHERE id = ?", (env.lead["id"],)).fetchone())
-    entries = [{"kind": "traffic", "id": "xt:1", "at": 1.0, "direction": "in", "peer": "bot-Layer1", "peer_key": "uuid-cv",
+    entries = [{"kind": "traffic", "id": "xt:1", "at": 1.0, "direction": "in", "peer": "Cv-Layer1", "peer_key": "uuid-cv",
                 "text": "hi"},
-               {"kind": "traffic", "id": "xt:2", "at": 2.0, "direction": "out", "peer": "bot-Layer1", "peer_key": "uuid-cv",
+               {"kind": "traffic", "id": "xt:2", "at": 2.0, "direction": "out", "peer": "Cv-Layer1", "peer_key": "uuid-cv",
                 "text": "yo"},
                {"kind": "traffic", "id": "xt:3", "at": 3.0, "direction": "in", "peer": "ghost", "peer_key": None, "text": "?"}]
     author_path.annotate(env.conn, lead, entries)
     assert [e.get("peer_session_uuid") for e in entries] == ["uuid-cv", "uuid-cv", None]
     assert all("peer_key" not in e for e in entries)
-    assert entries[0]["author_path"] == [{"kind": "agent", "name": "bot-Layer1", "agent_id": None}]
+    assert entries[0]["author_path"] == [{"kind": "agent", "name": "Cv-Layer1", "agent_id": None}]
 
 
 def test_a_question_with_no_summary_task_or_path_falls_back(env):
@@ -224,7 +224,7 @@ def test_summary_fallback_takes_the_first_sentence_and_cuts_at_a_word():
 
 def test_swarm_ask_schema_carries_summary_and_task():
     desc, props, required, _ = swarm_tools.TOOLS["swarm_ask"]
-    assert set(props) == {"question", "summary", "task"} and required == ["question", "summary"]
+    assert set(props) == {"question", "summary", "task", "questions"} and required == ["question", "summary"]
     assert "no file names, line numbers or code" in props["summary"]["description"]
     assert "changes for the owner" in props["summary"]["description"]
     assert "summary" in desc

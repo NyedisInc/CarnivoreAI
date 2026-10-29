@@ -8,7 +8,8 @@
   "examples": [
     "Close the laptop lid, open it an hour later, and the session is there as you left it.",
     "Click a running session in the sidebar: the prompt is live at once, and the saved history paints in underneath before the first new line of output.",
-    "Run a command that prints a huge amount of output: the pane keeps moving, no reconnect notice appears, and the screen is correct afterwards."
+    "Run a command that prints a huge amount of output: the pane keeps moving, no reconnect notice appears, and the screen is correct afterwards.",
+    "A long build scrolled past the 5000 rows the pane keeps: scroll up and the older output comes back, searchable and copyable like the rest."
   ],
   "how_to": [
     "Nothing to do: the terminal reconnects and repaints itself. The connection mark in the top bar shows the state.",

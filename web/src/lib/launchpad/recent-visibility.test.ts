@@ -10,19 +10,19 @@ describe('the regression: a name is not an identity', () => {
     test('an archived row is kept when a live session reused its tmux name', () => {
         const recent: RecentRow[] = [
             { id: 9, tmux_name: 'cloude_Mac', archived_at: '2026-09-03T19:20:11.638508Z' },
-            { id: 10, tmux_name: 'cloude_Larkspur', archived_at: '2026-09-03T19:20:11.685805Z' },
+            { id: 10, tmux_name: 'cloude_Hirschfeld', archived_at: '2026-09-03T19:20:11.685805Z' },
             { id: 41, tmux_name: 'cloude_CloudeCode', archived_at: '2026-09-07T13:31:01.049755Z' },
         ];
         const live = [
             { name: 'cloude_Mac', session_row_id: 11 },
-            { name: 'cloude_Larkspur', session_row_id: 12 },
+            { name: 'cloude_Hirschfeld', session_row_id: 12 },
         ];
         expect(ids(visibleRecentRows(recent, live))).toEqual([9, 10, 41]);
     });
 
     test('a live row is never excluded on a name match alone', () => {
-        const recent: RecentRow[] = [{ id: 30, tmux_name: 'cloude_RAVCRESTRAVVALE', archived_at: null }];
-        const live = [{ name: 'cloude_RAVCRESTRAVVALE', session_row_id: 31 }];
+        const recent: RecentRow[] = [{ id: 30, tmux_name: 'cloude_BHPP', archived_at: null }];
+        const live = [{ name: 'cloude_BHPP', session_row_id: 31 }];
         expect(ids(visibleRecentRows(recent, live))).toEqual([30]);
     });
 });
@@ -30,10 +30,10 @@ describe('the regression: a name is not an identity', () => {
 describe('the guard still does its job, on identity', () => {
     test('a stopped row the reaper has not caught up with is suppressed', () => {
         const recent: RecentRow[] = [
-            { id: 20, tmux_name: 'cloude_RAVCRESTRAVVALE', archived_at: null },
+            { id: 20, tmux_name: 'cloude_BHPP', archived_at: null },
             { id: 21, tmux_name: 'cloude_Other', archived_at: null },
         ];
-        expect(ids(visibleRecentRows(recent, [{ name: 'cloude_RAVCRESTRAVVALE', session_row_id: 20 }])))
+        expect(ids(visibleRecentRows(recent, [{ name: 'cloude_BHPP', session_row_id: 20 }])))
             .toEqual([21]);
     });
 });
@@ -41,22 +41,22 @@ describe('the guard still does its job, on identity', () => {
 describe('degraded identity is named, not silent', () => {
     test('with no session_row_id anywhere, the name key is used for live rows', () => {
         const recent: RecentRow[] = [
-            { id: 40, tmux_name: 'cloude_RAVCRESTRAVVALE', archived_at: null },
+            { id: 40, tmux_name: 'cloude_BHPP', archived_at: null },
             { id: 41, tmux_name: 'cloude_Keep', archived_at: null },
         ];
-        expect(ids(visibleRecentRows(recent, [{ name: 'cloude_RAVCRESTRAVVALE' }]))).toEqual([41]);
+        expect(ids(visibleRecentRows(recent, [{ name: 'cloude_BHPP' }]))).toEqual([41]);
     });
 
     test('with no session_row_id anywhere, an archived row is STILL kept', () => {
         const recent: RecentRow[] = [
-            { id: 42, tmux_name: 'cloude_RAVCRESTRAVVALE', archived_at: '2026-09-07T21:30:00.000000Z' },
+            { id: 42, tmux_name: 'cloude_BHPP', archived_at: '2026-09-07T21:30:00.000000Z' },
         ];
-        expect(ids(visibleRecentRows(recent, [{ name: 'cloude_RAVCRESTRAVVALE' }]))).toEqual([42]);
+        expect(ids(visibleRecentRows(recent, [{ name: 'cloude_BHPP' }]))).toEqual([42]);
     });
 
     test('a PARTIAL payload does not demote the whole list to the name key', () => {
-        const recent: RecentRow[] = [{ id: 50, tmux_name: 'cloude_RAVCRESTRAVVALE', archived_at: null }];
-        const live = [{ name: 'cloude_RAVCRESTRAVVALE' }, { name: 'cloude_Elsewhere', session_row_id: 99 }];
+        const recent: RecentRow[] = [{ id: 50, tmux_name: 'cloude_BHPP', archived_at: null }];
+        const live = [{ name: 'cloude_BHPP' }, { name: 'cloude_Elsewhere', session_row_id: 99 }];
         expect(ids(visibleRecentRows(recent, live))).toEqual([50]);
     });
 });

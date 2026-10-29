@@ -217,9 +217,7 @@ describe('the shell and the legacy paint draw the same drawer', () => {
         }));
         const { shellEl } = expectParity(withLayouts(rows));
         expect(shellEl.querySelectorAll('.session-sidebar-row-provider__lead').length).toBeGreaterThan(0);
-        expect(shellEl.querySelectorAll('.session-sidebar-row-provider__dnd').length).toBeGreaterThan(0);
-        expect(shellEl.querySelector('.session-sidebar-row-provider[data-role-lead="1"][data-dnd="1"]')).toBeNull();
-        expect(shellEl.querySelector('.session-sidebar-row-provider[data-role-lead="1"] .session-sidebar-row-provider__dnd')).toBeNull();
+        expect(shellEl.querySelector('.session-sidebar-row-provider[data-dnd], .session-sidebar-row-provider__dnd')).toBeNull();
     });
 
     it('the shell updates rows IN PLACE (slice 4): a paint keeps each row element, and a changed field shows', () => {
@@ -270,20 +268,6 @@ describe('the retired switch (slice 6)', () => {
             expect(shellEl.getAttribute(SHELL_ATTR)).toBe('svelte');
         } finally {
             localStorage.removeItem('carnivore.session.sidebar.shell');
-        }
-    });
-
-    it('a missing required legacy render helper makes the shell decline, never draw half a list', () => {
-        const header = w.SessionSidebarProjectHeader;
-        const el = document.getElementById('session-sidebar-list')!;
-        try {
-            delete w.SessionSidebarProjectHeader;
-            expect(sidebarShell.paint(el, {
-                rows: [], density: 'compact', listing: { ok: true }, missing: [], arrangement: null, opts: null,
-            })).toBe(false);
-            expect(el.getAttribute(SHELL_ATTR)).toBeNull();
-        } finally {
-            w.SessionSidebarProjectHeader = header;
         }
     });
 

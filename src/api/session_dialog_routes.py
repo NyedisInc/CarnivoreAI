@@ -83,6 +83,12 @@ async def answer_session_dialog(request: Request, session_id: str,
 async def answer_session_questions(request: Request, session_id: str,
                                    body: QuestionsAnswerRequest) -> QuestionsAnswerResponse:
     """Answer EVERY question of the session's open AskUserQuestion and submit once (issue #1548).
+
+    Inputs: session_id (str); body (QuestionsAnswerRequest) - the ``questions_fingerprint`` served on the dialog
+      and one answer per question, in order. Output: QuestionsAnswerResponse. Raises: 404 unknown session;
+      409 ``{reason}`` (any AnswerRefused reason; the driver stops at the first drift and presses nothing more);
+      422 bad body. A startup screen is never answered here: only the owner's own click answers it.
+    Example: POST .../dialog/answer-all {"questions_fingerprint": "<64 hex>", "answers": [{"option": "Blue"}, {"options": ["Cheese"]}]}
     """
     manager, info = await _info(request, session_id)
     answers = [QuestionAnswer(option=a.option, options=None if a.options is None else tuple(a.options),

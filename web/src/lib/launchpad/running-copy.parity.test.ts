@@ -9,8 +9,10 @@ import { registerPluginSlices } from '../i18n/plugin-fragments';
 import { glyphSvg } from '../../../../client/js/icons/glyphs.js';
 import { RUNNING_SESSION_KEYS } from '../../../../client/js/labels/running-session.js';
 
+// The plugins' slices of the catalog are part of the table these assertions read.
 registerPluginSlices();
 
+/** Repo root, four levels up from web/src/lib/launchpad. */
 const repoRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 
 function message(key: string): string {

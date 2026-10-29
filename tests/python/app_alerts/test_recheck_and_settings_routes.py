@@ -38,27 +38,27 @@ def world(tmp_path: Path, monkeypatch):
     service.configure(None, None)
 
 
-def _tm_alert(world) -> dict:
-    return service.raise_alert("backup_health.time_machine", source="backup_health", severity="warn",
-                               title_key="app_alert.backup_health.tm_unknown.title", params={"reason": "access"}, db_path=world.db)
+def _usb_alert(world) -> dict:
+    return service.raise_alert("backup_health.usb_backup", source="backup_health", severity="warn",
+                               title_key="app_alert.backup_health.usb_stale.title", db_path=world.db)
 
 
 def test_the_listing_carries_source_kind_and_declared_actions(world):
-    row = _tm_alert(world)
+    row = _usb_alert(world)
     listed = world.client.get(BASE).json()["alerts"][0]
     assert listed["id"] == row["id"] and listed["kind"] == "needs_you"
     assert listed["source_label_key"] == "app_alert.source.backup_health"
-    assert [a["id"] for a in listed["actions"]] == ["check_access", "recheck"]
-    assert listed["actions"][1]["route"] == f"/alerts/{row['id']}/recheck"
+    assert [a["id"] for a in listed["actions"]] == ["recheck", "open_backups"]
+    assert listed["actions"][0]["route"] == f"/alerts/{row['id']}/recheck"
 
 
 def test_recheck_runs_the_producer_and_answers_the_alert_as_it_stands(world, monkeypatch):
-    row = _tm_alert(world)
+    row = _usb_alert(world)
     ran: List[tuple] = []
 
     def fake_run_checks(state_dir, db_path, **_kw):
         ran.append((state_dir, db_path))
-        service.resolve("backup_health.time_machine", db_path=db_path)
+        service.resolve("backup_health.usb_backup", db_path=db_path)
 
     from src.core.backup_health import runner
 

@@ -1,24 +1,3 @@
-"""Per-connection extra request body fields for the OpenAI chat wire (Task Manager 50).
-
-A connection may carry ``options["extra_body"]``: a JSON OBJECT, stored as its
-JSON TEXT, merged into every ``/chat/completions`` body sent to that connection.
-The worked example is vLLM serving a reasoning model whose output is only
-usable with thinking off::
-
-    {"chat_template_kwargs": {"enable_thinking": false}}
-
-Why the text lives in ``options`` as a string rather than as a new field: the
-byoai block is ``extra="forbid"`` and options accept scalars only, so an older
-build reading a config that carries this option still loads the whole block
-(a string option passes its validator). That is the downgrade-safety argument
-and the reason no ``config_version`` bump goes with it.
-
-NEVER A SECRET: a name that looks like a credential (``authorization``,
-``api_key``, ``token``, ...) is refused at ANY depth, as is a string value that
-looks like one, because config.json is not the Keychain. The fields the wire
-itself owns (``model``, ``messages``, ``stream``, ``stream_options``) are
-refused too, so the box cannot break the call it rides on.
-"""
 
 from __future__ import annotations
 

@@ -131,3 +131,96 @@ def test_tmux_runs_on_the_given_socket_and_returns_stdout(monkeypatch) -> None:
     monkeypatch.setattr(vh.subprocess, "run", fake_run)
     assert vh.tmux("sock", "list-sessions") == "out"
     assert seen["argv"] == ["tmux", "-L", "sock", "list-sessions"] and seen["kw"]["check"] is False
+
+
+
+def test_refuse_live_refuses_live_port_socket_and_state(tmp_path, monkeypatch) -> None:
+    live = tmp_path / "Library" / "Application Support" / "Carnivore"
+    live.mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    with pytest.raises(vh.LiveInstallRefused):
+        vh.refuse_live("http://127.0.0.1:8000/")
+    for sock in ("cloude", "carnivore"):
+        with pytest.raises(vh.LiveInstallRefused):
+            vh.refuse_live("http://127.0.0.1:8102", sock)
+    with pytest.raises(vh.LiveInstallRefused):
+        vh.refuse_live("http://127.0.0.1:8102", "cloude-test2", str(live / "carnivore.db"))
+
+
+def test_refuse_live_lets_a_slot_through(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    vh.refuse_live("http://127.0.0.1:8102", "cloude-test2", str(tmp_path / "slot" / "state"), None)
+
+
+def test_exit_code_is_two_when_nothing_was_measured() -> None:
+    assert (vh.exit_code(0, 0), vh.exit_code(3, 0), vh.exit_code(3, 1), vh.exit_code(0, 1)) == (2, 0, 1, 1)
+
+
+def test_cleanup_ledger_deletes_newest_first_and_reports_failures() -> None:
+    order: list[str] = []
+
+    def delete(path: str) -> None:
+        order.append(path)
+        if path == "/b":
+            raise OSError("boom")
+
+    ledger = vh.CleanupLedger(delete)
+    for p in ("/a", "/b", "/c"):
+        ledger.record(p)
+    left = ledger.run()
+    assert order == ["/c", "/b", "/a"]
+    assert len(left) == 1 and left[0].startswith("/b")
+    assert ledger.run() == []
+
+
+def test_slot_db_refuses_a_directory_outside_a_leased_slot(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(vh, "SLOT_ROOT", tmp_path / "slots")
+    outside = tmp_path / "elsewhere"
+    outside.mkdir()
+    (outside / "carnivore.db").write_bytes(b"")
+    with pytest.raises(vh.LiveInstallRefused):
+        vh.slot_db(str(outside))
+
+
+def test_slot_db_opens_the_canonical_file_with_a_busy_timeout(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(vh, "SLOT_ROOT", tmp_path / "slots")
+    state = tmp_path / "slots" / "slot3" / "state"
+    state.mkdir(parents=True)
+    (state / "cloude.db").write_bytes(b"")
+    conn = vh.slot_db(str(state))
+    try:
+        assert conn.execute("PRAGMA busy_timeout").fetchone()[0] == vh.BUSY_TIMEOUT_MS
+    finally:
+        conn.close()
+    with pytest.raises(RuntimeError):
+        vh.slot_db(str(tmp_path / "slots" / "slot4"))
+
+
+def test_refuse_live_db_file_refuses_a_live_wal_and_passes_a_clean_copy(tmp_path) -> None:
+    clean = tmp_path / "copy.db"
+    clean.write_bytes(b"x")
+    vh.refuse_live_db_file(str(clean))
+    (tmp_path / "copy.db-wal").write_bytes(b"live")
+    with pytest.raises(vh.LiveInstallRefused):
+        vh.refuse_live_db_file(str(clean))
+
+
+def test_run_main_maps_a_harness_crash_to_exit_two_but_not_a_logic_bug() -> None:
+    def crash() -> int:
+        raise OSError("socket closed")
+
+    def bug() -> int:
+        raise KeyError("typo")
+
+    assert vh.run_main(lambda: 1) == 1
+    assert vh.run_main(crash) == 2
+    with pytest.raises(KeyError):
+        vh.run_main(bug)
+
+
+def test_require_slot_reads_the_options_a_script_has() -> None:
+    vh.require_slot(types.SimpleNamespace(base="http://127.0.0.1:8102", socket="cloude-test2"))
+    with pytest.raises(vh.LiveInstallRefused):
+        vh.require_slot(types.SimpleNamespace(base="http://127.0.0.1:8102", socket="cloude"))
+    with pytest.raises(vh.LiveInstallRefused):
+        vh.require_slot(types.SimpleNamespace(base="http://127.0.0.1:8000"))

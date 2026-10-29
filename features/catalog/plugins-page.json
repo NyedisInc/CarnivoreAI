@@ -4,7 +4,7 @@
     "src/cplugs/host/sideload_routes.py"
   ],
   "area": "settings",
-  "description": "Every plugin built into this app, on the shared manager frame, one kind of row with one switch each. A plugin that is switched off stops contributing to every surface it adds to (the session row menu, a tab, a menu link). Mark unread and share read only are plugins that ship on; huddle ships on for a clean install and keeps an existing install's choice. The choice is stored on the server, so every device agrees. Built-in plugins are part of the app, so none of those can be installed or removed here. Store plugins from the catalog sit on the same page as the same card warez draws (hero image on top, same order as warez): a plugin that is not installed shows the same add control as warez (add, with its caret to pick global or a project), a plugin with an update due shows update, and only an installed plugin shows its switch, which turns it off for the picked project. A plugin that runs a program (an MCP server) prints the full command on its card; add goes through warez's one-click route and opens the install sheet when the server asks for consent. Turning one on grants what it asks, listed in its details. The details are tabbed: overview, settings, permissions and data, with the state and switch always at the top and a plain reason when a plugin is held or waiting for a grant. Each permission is shown by risk tier, a plugin that asks for something dangerous in combination carries a warning, and a plugin's recent permission use is listed in its details. An agent can turn a plugin off or revoke grants over MCP, never turn one on or add a grant.",
+  "description": "Every plugin built into this app, on the shared manager frame, one kind of row with one switch each. A plugin that is switched off stops contributing to every surface it adds to (the session row menu, a tab, a menu link). Mark unread and share read only are plugins that ship on; task manager ships on for a clean install and keeps an existing install's choice. The choice is stored on the server, so every device agrees. Built-in plugins are part of the app, so none of those can be installed or removed here. Store plugins from the catalog sit on the same page as the same card warez draws (hero image on top, same order as warez): a plugin that is not installed shows the same add control as warez (add, with its caret to pick global or a project), a plugin with an update due shows update, and only an installed plugin shows its switch, which turns it off for the picked project. A plugin that runs a program (an MCP server) prints the full command on its card; add goes through warez's one-click route and opens the install sheet when the server asks for consent. Turning one on grants what it asks, listed in its details. The details are tabbed: overview, settings, permissions and data, with the state and switch always at the top and a plain reason when a plugin is held or waiting for a grant. Each permission is shown by risk tier, a plugin that asks for something dangerous in combination carries a warning, and a plugin's recent permission use is listed in its details. An agent can turn a plugin off or revoke grants over MCP, never turn one on or add a grant.",
   "docs": [
     "docs/cplugs.md",
     "docs/manager-frame.md",
@@ -13,7 +13,8 @@
   "examples": [
     "Turn off share read only on a computer where nobody should hand out spectator links.",
     "Turn off mark unread if you never use it and want a shorter session menu.",
-    "Turn on huddle to get the shared list between you and claude.",
+    "Turn on task manager to get the shared list between you and claude.",
+    "Search 'joe' to find the plugins Joe wrote, or 'tab' to find the plugins that add a tab.",
     "On a phone the page is one bar: the back arrow at the left, the title over the search in one frame, the filters that fit and one grid/list flip at the right.",
     "Turn on flow chart while the swarm plugin is off and see it wait for it: turn the swarm plugin on and it starts.",
     "Open mcp health, press the data tab and purge it while it is off: its folder, settings, grants and stored secrets go, and a plugin that ships on comes back on.",
@@ -58,7 +59,14 @@
     "catalog",
     "project"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The plugins page: every plugin listed as one kind of row with its switch",
+      "caption": "The plugins page",
+      "file": "plugins.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Plugins page",
   "since": "2026-09-27",
   "status": "stable",
@@ -74,6 +82,5 @@
     "Menu tab, Plugins.",
     "The plugins card's view all.",
     "The #plugins link."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

@@ -1,5 +1,6 @@
 
 from __future__ import annotations
+from src.core.sessions import errors as session_errors
 
 
 class BookmarkError(Exception):
@@ -32,7 +33,7 @@ class BookmarkNotFound(BookmarkError):
     code = "bookmark_not_found"
 
 
-class SessionNotFound(BookmarkError):
+class SessionNotFound(BookmarkError, session_errors.SessionNotFound):
 
     status = 404
     code = "session_not_found"

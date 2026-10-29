@@ -12,16 +12,17 @@ from typing import Dict, List, Optional, Tuple
 import structlog
 
 from src.core.attention.transcript_records import (
-    _is_interrupt,
-    _is_local_command,
-    _is_real_user_prompt,
-    _record_text,
+    is_interrupt,
+    is_local_command,
+    is_real_user_prompt,
+    record_text,
 )
 from src.core.bookmarks.errors import TranscriptUnavailable
 
 logger = structlog.get_logger()
 
-MAX_TRANSCRIPT_BYTES: int = 512 * 1024 * 1024
+MAX_TRANSCRIPT_BYTES: int = 2 * 1024 * 1024 * 1024
+MAX_TRANSCRIPT_LABEL: str = f"{MAX_TRANSCRIPT_BYTES // (1024 * 1024 * 1024)} GB"
 SNIPPET_CHARS: int = 200
 CHAIN_TYPES = frozenset({"user", "assistant", "attachment", "system", "progress"})
 SKIPPED_IN_COPY = "progress"
@@ -79,14 +80,14 @@ class TranscriptIndex:
 
 
 def is_turn_prompt(record: dict) -> bool:
-    if not _is_real_user_prompt(record) or _is_interrupt(record) or _is_local_command(record):
+    if not is_real_user_prompt(record) or is_interrupt(record) or is_local_command(record):
         return False
     if record.get("isCompactSummary") or record.get("isVisibleInTranscriptOnly"):
         return False
     content = (record.get("message") or {}).get("content")
     if isinstance(content, list) and any(isinstance(b, dict) and b.get("type") == "tool_result" for b in content):
         return False
-    return bool(_record_text(record).strip())
+    return bool(record_text(record).strip())
 
 
 def peer_turn_text(record: dict) -> Optional[str]:
@@ -96,7 +97,7 @@ def peer_turn_text(record: dict) -> Optional[str]:
     if record.get("isSidechain") is True or record.get("toolUseResult") is not None:
         return None
     body = origin.get("body")
-    text = body if isinstance(body, str) and body.strip() else _record_text(record)
+    text = body if isinstance(body, str) and body.strip() else record_text(record)
     return text if text.strip() else None
 
 
@@ -116,7 +117,7 @@ def node_from_record(record: dict, offset: int, length: int) -> Optional[Node]:
     if kind not in CHAIN_TYPES or not isinstance(uuid, str) or record.get("isSidechain") is True:
         return None
     prompt = kind == "user" and is_turn_prompt(record)
-    opener = _record_text(record) if prompt else peer_turn_text(record)
+    opener = record_text(record) if prompt else peer_turn_text(record)
     uses, results = _tool_ids(record)
     message = record.get("message")
     return Node(
@@ -130,7 +131,7 @@ def node_from_record(record: dict, offset: int, length: int) -> Optional[Node]:
         tool_uses=uses,
         tool_results=results,
         prompt=prompt,
-        stop=prompt or (kind == "user" and _is_local_command(record)),
+        stop=prompt or (kind == "user" and is_local_command(record)),
         turn_start=opener is not None,
         snippet=" ".join(opener.split())[:SNIPPET_CHARS] if opener is not None else "",
         timestamp=str(record.get("timestamp") or ""),
@@ -143,7 +144,7 @@ def build_index(path: Path) -> TranscriptIndex:
     except OSError as exc:
         raise TranscriptUnavailable(f"the transcript could not be read: {exc.strerror or exc}") from exc
     if size > MAX_TRANSCRIPT_BYTES:
-        raise TranscriptUnavailable("the transcript is over the 512 MB bookmark limit")
+        raise TranscriptUnavailable(f"the transcript is over the {MAX_TRANSCRIPT_LABEL} bookmark limit")
     index = TranscriptIndex(path=path, size=size)
     offset = 0
     try:

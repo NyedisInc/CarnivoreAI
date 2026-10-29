@@ -26,6 +26,7 @@ import { setLocale } from '../i18n/index.svelte';
 setLocale('en');
 installPopoverPolyfill();
 
+/** The stored v2 value of a one-section rail. */
 const one = (...items: Record<string, unknown>[]) => ({ v: 2, sections: [{ items }] });
 
 const section = (): HTMLElement => document.querySelector<HTMLElement>('[data-rail-out-widget="core.notes"]')!;

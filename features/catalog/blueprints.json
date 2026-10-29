@@ -28,7 +28,14 @@
     "blueprints",
     "team"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The new blueprint dialog: a name, and per session a label, agent, model, folder, skills and opening prompt",
+      "caption": "Writing a new blueprint",
+      "file": "editor.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Blueprints",
   "since": "2026-09-26",
   "status": "stable",
@@ -40,6 +47,5 @@
   "updated": "2026-10-04",
   "where": [
     "Menu tab, Blueprints."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

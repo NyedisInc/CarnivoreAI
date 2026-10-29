@@ -1,3 +1,4 @@
+// and the three
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -112,13 +113,4 @@ export function resetSessionStore(cloudeWeb) {
     if (cloudeWeb && cloudeWeb.launchpad && cloudeWeb.launchpad.sessions) {
         cloudeWeb.launchpad.sessions.reset();
     }
-}
-
-export function stubPanelMounts(cloudeWeb) {
-    const counts = { recent: 0, attribution: 0, projectTree: 0 };
-    if (!cloudeWeb || !cloudeWeb.launchpad) return counts;
-    cloudeWeb.launchpad.mountRecentSessions = () => { counts.recent++; };
-    cloudeWeb.launchpad.mountAttributionPrompt = () => { counts.attribution++; };
-    cloudeWeb.launchpad.mountProjectTree = () => { counts.projectTree++; };
-    return counts;
 }

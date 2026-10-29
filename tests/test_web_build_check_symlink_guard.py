@@ -16,6 +16,7 @@ def _build_repo(tmp_path):
     dst = repo / "scripts" / "web-build-check.sh"
     shutil.copy(REAL_SCRIPT, dst)
     dst.chmod(dst.stat().st_mode | stat.S_IEXEC)
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True, capture_output=True)
     return repo
 
 

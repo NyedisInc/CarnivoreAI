@@ -12,6 +12,7 @@
     _cellThemeManifest?(): { xterm?: Record<string, string> } | null;
     term?: { options?: { theme?: Record<string, string> } };
   }
+  /* there is nothing */
   let { sessionId, controller, slot, width = 0, showsConnection = true, agentFamily = null, groupSlot = null, inHeader = false }:
     { sessionId: string; controller: unknown; slot: string; width?: number; showsConnection?: boolean; inHeader?: boolean;
       agentFamily?: string | null; groupSlot?: string | null } = $props();

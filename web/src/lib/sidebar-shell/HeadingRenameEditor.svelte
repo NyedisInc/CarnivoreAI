@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
     import {
         cancelHeadingRename, commitHeadingRename, headingRename, labelMax,

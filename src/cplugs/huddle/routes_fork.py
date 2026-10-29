@@ -32,6 +32,7 @@ class ForkRequest(BaseModel):
 
 @router.post("/items/{item_id}/fork")
 async def fork_item(item_id: int, body: ForkRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Fork one item, as joe: the copy and either or both states in one transaction. Output: {fork, parent}."""
     key = (await known_list(ctx, body.list))[0] if body.list is not None else None
     group = body.group if "group" in body.model_fields_set else UNSET
     return await run_store(lambda: service.store(ctx).fork(

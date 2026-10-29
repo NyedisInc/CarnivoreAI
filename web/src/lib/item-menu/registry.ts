@@ -1,4 +1,3 @@
-/* the contributions */
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import { closing } from '../widget-menu/model';
 import type {

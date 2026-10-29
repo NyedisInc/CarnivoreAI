@@ -1,3 +1,6 @@
+// the home screen
+// It is NOT a browser and computes NO layout.
+// Not a test file: the suites are `tests/*.node.mjs`, this is `.mjs`.
 
 
 import fs from 'node:fs';
@@ -15,6 +18,12 @@ const counts = { passes: 0, failures: 0 };
 
 export function results() { return counts; }
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => (void|Promise<void>)} fn  Body; throwing marks it failed.
+ * @returns {Promise<void>}
+ */
 export async function test(name, fn) {
     try {
         await fn();

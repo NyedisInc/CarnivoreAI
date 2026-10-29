@@ -16,6 +16,7 @@ from src.core.session_move import files as move_files
 from src.core.session_move.plan import SessionMovePlan, build_plan, read_row
 from src.core.session_move.record import MovedRow, SessionMoveRecordError, write_moved_row
 from src.core.session_move.source import SOURCE_TEMP
+from src.core.sessions import errors as session_errors
 
 logger = structlog.get_logger()
 
@@ -29,7 +30,7 @@ class SessionMoveError(Exception):
     pass
 
 
-class SessionNotFound(SessionMoveError):
+class SessionNotFound(SessionMoveError, session_errors.SessionNotFound):
     pass
 
 
@@ -90,7 +91,6 @@ async def plan_move(manager: Any, open_conn: Callable[[], sqlite3.Connection], s
 
 
 async def _preview(manager: Any, row: Dict[str, Any]) -> Any:
-    """``SessionManager.restart_preview`` for the row, None when it could not be taken (the plan then refuses)."""
     if not row.get("tmux_name"):
         return None
     try:
@@ -101,8 +101,6 @@ async def _preview(manager: Any, row: Dict[str, Any]) -> Any:
 
 
 def pane_folder(tmux_name: str, socket_name: str) -> Optional[str]:
-    """Measure the folder the session's pane runs in now, canonical; None when it could not be read. BLOCKING.
-    """
     from src.core.tmux_session_cwd import PANE_PATH_FORMAT, probe_session_working_dir
 
     found = probe_session_working_dir(tmux_name, socket=socket_name, fmt=PANE_PATH_FORMAT)

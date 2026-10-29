@@ -55,9 +55,11 @@ class Env:
 OWN_PROJECT = 12
 
 
-def huddle_on(env: Env, monkeypatch: Any) -> Any:
-    async def infos() -> list:
+def task_manager_on(env: Env, monkeypatch: Any, infos: Any = None) -> Any:
+    async def one_session() -> list:
         return [SimpleNamespace(tmux_session=None, label=None, session=SimpleNamespace(id="ses_1"), project_id=OWN_PROJECT, host_key="local")]
+
+    infos = infos or one_session
 
     monkeypatch.setattr(task_manager_service, "project_names", lambda ctx: {"12": "carnivore", "13": "blog"})
     ctx = env.host.context("huddle", infos=infos, background=True)
@@ -65,7 +67,7 @@ def huddle_on(env: Env, monkeypatch: Any) -> Any:
     return ctx
 
 
-def huddle_store(env: Env) -> TaskManagerStore:
+def task_manager_store(env: Env) -> TaskManagerStore:
     return TaskManagerStore(env.host.storage("huddle"), notify=lambda key: None)
 
 

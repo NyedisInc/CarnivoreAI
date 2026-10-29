@@ -12,7 +12,6 @@ import GlyphSet from './specimens/GlyphSet.svelte';
 import TabsDemo from './specimens/TabsDemo.svelte';
 import PageTabsDemo from './specimens/PageTabsDemo.svelte';
 import OpsPrimitives from './specimens/OpsPrimitives.svelte';
-import Pills from './specimens/Pills.svelte';
 import Modals from './specimens/Modals.svelte';
 import AnchoredPopupDemo from './specimens/AnchoredPopupDemo.svelte';
 import Catalog from './specimens/Catalog.svelte';
@@ -38,7 +37,6 @@ import { specimenSettingsFor, widgetsSpecimenAdapter } from './specimens/widgets
 import SettingsFormDemo from './specimens/SettingsFormDemo.svelte';
 import PickerDemo from './specimens/PickerDemo.svelte';
 import LaunchChoiceDemo from './specimens/LaunchChoiceDemo.svelte';
-import CrosstalkCard from '../lib/crosstalk/CrosstalkCard.svelte';
 import ApprovalCards from './specimens/ApprovalCards.svelte';
 import QuestionCards from './specimens/QuestionCards.svelte';
 import AskFormSpecimen from './specimens/AskForm.svelte';
@@ -68,13 +66,6 @@ function as(component: unknown): Component<Record<string, unknown>> {
 }
 
 export const SPECIMENS: readonly Specimen[] = [
-    { id: 'sg-live-crosstalk-card', component: as(CrosstalkCard), props: { sessionId: 'receiver-1', message: {
-        id: 'sg-message-1', source: 'crosstalk', thread: 'sg-thread-1', sender_id: 'sender-1', sender_uuid: null,
-        sender_name: 'build-agent', sender_provider: 'claude', sender_model: 'sonnet',
-        receiver_id: 'receiver-1', receiver_uuid: null, receiver_name: 'test-agent', receiver_provider: 'codex', receiver_model: 'gpt-6-sol',
-        text: 'check the browser behavior after the build.\nconfirm the terminal line is still readable.\nreport any theme contrast issue.\nthen send the result.',
-        status: 'delivered', created_at: 1780462800,
-    } } },
     { id: 'sg-live-question-cards', component: as(QuestionCards) },
     { id: 'sg-live-approval-cards', component: as(ApprovalCards) },
     { id: 'sg-live-ask-form', component: as(AskFormSpecimen) },
@@ -99,7 +90,6 @@ export const SPECIMENS: readonly Specimen[] = [
     { id: 'sg-live-sparkline', component: as(OpsPrimitives), props: { part: 'spark' } },
     { id: 'sg-live-sort', component: as(OpsPrimitives), props: { part: 'sort' } },
     { id: 'sg-live-table', component: as(OpsPrimitives), props: { part: 'table' } },
-    { id: 'sg-live-family-pills', component: as(Pills) },
     { id: 'sg-live-modals', component: as(Modals) },
     { id: 'sg-live-anchored-popup', component: as(AnchoredPopupDemo) },
     { id: 'sg-live-catalog-toolbar', component: as(Catalog), props: { part: 'toolbar' } },

@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { ApiError } from '../../opscenter/api/auth.svelte';
+    import Button from '../base/Button.svelte';
     import type { Translate } from '../sessions/types';
     import type { CplugItem } from './cplugs-adapter';
     import { bytesText, purgeBlocked, purgeCplug, type PurgePrice } from './plugin-pane';
@@ -79,17 +80,17 @@
     {#if !price}
         <div class="plp-actions">
             {#if blocked}<span class="plp-actions__note" data-purge-blocked>{blocked}</span>{/if}
-            <button type="button" class="modal-btn modal-btn-danger" data-purge-price disabled={busy || blocked !== null} onclick={() => void askPrice()}
-                >{t('plugins.page.data.purge_button')}</button
+            <Button variant="danger" data-purge-price disabled={busy || blocked !== null} onclick={() => void askPrice()}
+                >{t('plugins.page.data.purge_button')}</Button
             >
         </div>
     {:else}
         <div class="plp-price" data-purge-confirm role="group" aria-label={t('plugins.page.data.purge')}>
             <p class="plp-brief">{t('plugins.page.data.price', { count: price.files, size: bytesText(price.bytes, t), name: plugin.name })}</p>
             <div class="plp-actions">
-                <button type="button" class="modal-btn modal-btn-secondary" data-purge-cancel disabled={busy} onclick={() => (price = null)}>{t('plugins.page.disable.cancel')}</button>
-                <button type="button" class="modal-btn modal-btn-danger" data-purge-go disabled={busy || blocked !== null} onclick={() => void confirm()}
-                    >{t('plugins.page.data.delete_files', { count: price.files })}</button
+                <Button data-purge-cancel disabled={busy} onclick={() => (price = null)}>{t('plugins.page.disable.cancel')}</Button>
+                <Button variant="danger" data-purge-go disabled={busy || blocked !== null} onclick={() => void confirm()}
+                    >{t('plugins.page.data.delete_files', { count: price.files })}</Button
                 >
             </div>
         </div>

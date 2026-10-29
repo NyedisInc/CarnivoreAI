@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { Button, Field, IconButton } from '../base';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import { t } from '../i18n/index.svelte';
 
@@ -14,7 +15,7 @@
     let { name, rank, verb, close }: Props = $props();
 
     let typed = $state('');
-    let cancelButton: HTMLButtonElement | undefined = $state();
+    let cancelButton: HTMLElement | null = $state(null);
     const matches = $derived(typed === name);
 
     onMount(() => cancelButton?.focus());
@@ -28,8 +29,7 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">&raquo; {t('leader.confirm.title', { verb })}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')}
-                onclick={() => close(null)}>&times;</button>
+            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => close(null)} />
         </div>
     {/snippet}
     <div data-leader-confirm>
@@ -41,15 +41,13 @@
         </ul>
         <div class="modal-input-group">
             <label class="modal-label" for="leader-confirm-name">{t('leader.confirm.type', { name })}</label>
-            <input id="leader-confirm-name" class="modal-input" type="text" autocomplete="off" spellcheck="false"
+            <Field id="leader-confirm-name" block type="text" autocomplete="off" spellcheck="false"
                 autocapitalize="off" bind:value={typed} onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); confirm(); } }} />
         </div>
     </div>
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" bind:this={cancelButton}
-            onclick={() => close(null)}>{t('leader.confirm.cancel')}</button>
-        <button type="button" class="modal-btn modal-btn-danger" disabled={!matches} data-leader-confirm-go
-            onclick={confirm}>{verb}</button>
+        <Button bind:element={cancelButton} onclick={() => close(null)}>{t('leader.confirm.cancel')}</Button>
+        <Button variant="danger" disabled={!matches} data-leader-confirm-go onclick={confirm}>{verb}</Button>
     {/snippet}
 </ModalShell>
 

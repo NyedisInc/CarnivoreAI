@@ -1,3 +1,4 @@
+// Same harness style as the other *.node.mjs tests in this directory: no
 
 import assert from 'node:assert/strict';
 

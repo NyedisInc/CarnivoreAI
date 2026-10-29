@@ -73,6 +73,11 @@ V94_INDEXES = (
 )
 
 
+DDL_V102 = (
+    "CREATE INDEX IF NOT EXISTS ix_crosstalk_in_reply_to ON crosstalk_messages(in_reply_to,sender_key) WHERE in_reply_to IS NOT NULL",
+)
+
+
 def apply_v94(conn: sqlite3.Connection) -> None:
     for table, column, statement in V94_COLUMNS:
         present = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
@@ -85,4 +90,9 @@ def apply_v94(conn: sqlite3.Connection) -> None:
 
 def apply_v57(conn: sqlite3.Connection) -> None:
     for statement in DDL_V57:
+        conn.execute(statement)
+
+
+def apply_v102(conn: sqlite3.Connection) -> None:
+    for statement in DDL_V102:
         conn.execute(statement)

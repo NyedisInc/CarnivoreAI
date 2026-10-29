@@ -75,15 +75,15 @@ def test_one_password_token_puts_only_the_reference_on_the_childs_argv() -> None
         calls.append(list(argv))
         return Done()
 
-    source = OnePasswordToken("op://Vault/carnivore/credential", runner)
+    source = OnePasswordToken("op://Claude/carnivore-m4/credential", runner)
     assert source.token() == SECRET
-    assert calls == [["op", "read", "--no-newline", "op://Vault/carnivore/credential"]] and SECRET not in repr(source)
+    assert calls == [["op", "read", "--no-newline", "op://Claude/carnivore-m4/credential"]] and SECRET not in repr(source)
 
     class Failed:
         returncode, stdout, stderr = 1, "", f"[ERROR] could not read {SECRET}"
 
     with pytest.raises(AuthError) as bad:
-        OnePasswordToken("op://Vault/x/y", lambda argv, timeout: Failed()).token()
+        OnePasswordToken("op://Claude/x/y", lambda argv, timeout: Failed()).token()
     assert SECRET not in str(bad.value)
     with pytest.raises(AuthError):
         OnePasswordToken("not-a-reference")

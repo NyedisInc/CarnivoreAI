@@ -1,0 +1,45 @@
+{
+  "api_routes": [],
+  "area": "sessions",
+  "description": "Public review links is a plugin, off by default, that will let people outside your network open one review board through your own reverse proxy, look at it, and leave answers and comments, and nothing else. This first version only builds the guarded door. When you turn it on and fill in a port, a bind address, your public host name and your proxy's address, it opens a second small listener that answers not found to every request, because no links exist yet. Before a request is looked at, the door checks that it comes from your proxy, names your host, has a plain path with no encodings, dot segments or query, and matches an exact route; websockets and protocol upgrades are never accepted, bodies and headers are capped, and every answer carries the strict security headers. Turning the plugin off closes the socket.",
+  "docs": [
+    "docs/cplugs.md"
+  ],
+  "examples": [
+    "With the plugin on and a proxy address set, any request from another computer gets a 403 and a request with the wrong host name gets a 421.",
+    "A request for any path, even a valid-looking one, gets the same empty 404 until links ship in a later version."
+  ],
+  "how_to": [
+    "Turn on the review board plugin, then public review links, on the plugins page.",
+    "Set the port, the one address to listen on, your public host name and your reverse proxy's exact address in the plugin's settings.",
+    "Point your proxy at that address and port. Turning the plugin off closes the port."
+  ],
+  "id": "publicboard",
+  "issues": [
+    2696
+  ],
+  "keywords": [
+    "public review links",
+    "publicboard",
+    "review board",
+    "public listener",
+    "reverse proxy",
+    "security"
+  ],
+  "media_exempt": "slice 1 has no screen: it is a settings-only plugin whose listener answers 404 to everything, which a still image cannot show",
+  "name": "Public review links",
+  "since": "2026-10-29",
+  "status": "beta",
+  "summary": "off by default: opens a guarded second port for your own reverse proxy; it answers not found to everything until links ship.",
+  "surfaces": [
+    "src/cplugs/publicboard/edge.py",
+    "src/cplugs/publicboard/service.py",
+    "src/cplugs/publicboard/settings.py",
+    "src/cplugs/publicboard/headers.py",
+    "src/cplugs/sdk/public_listener.py"
+  ],
+  "updated": "2026-10-29",
+  "where": [
+    "The public review links plugin on the plugins page, with its settings."
+  ]
+}

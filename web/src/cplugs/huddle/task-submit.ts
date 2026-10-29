@@ -3,7 +3,7 @@ import { sendLists } from './huddle-send-many.svelte';
 import { setApproved } from './huddle.svelte';
 import type { HuddleItem } from './huddle-model';
 
-/* did not answer */
+/* the server did not answer */
 export async function submitNow(list: string, save: () => Promise<boolean | 'kept'>, options: { immediate?: boolean } = {}): Promise<boolean> {
   const saved = await save();
   if (!saved) return false;

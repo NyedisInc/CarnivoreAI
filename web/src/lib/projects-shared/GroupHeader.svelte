@@ -1,6 +1,6 @@
 
 <script lang="ts">
-    import Icon from '../../opscenter/ui/Icon.svelte';
+    import { Button, IconButton } from '../base';
 
     interface Props {
         label: string;
@@ -18,11 +18,11 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="ph-ghead" class:ph-ghead--muted={muted} {title} data-group-header onclick={onToggle}>
-    <button type="button" class="ph-ghead__chev" aria-expanded={!folded} aria-label={toggleLabel} onclick={(e) => { e.stopPropagation(); onToggle(); }}>
-        <Icon name={folded ? 'chevron-right' : 'chevron-down'} size={10} />
-    </button>
+    <IconButton label={toggleLabel} variant="quiet" icon={folded ? 'chevron-right' : 'chevron-down'} iconSize={10} aria-expanded={!folded}
+        data-group-chevron style="--_btn-ink: var(--oc-text-dim)" onclick={(e) => { e.stopPropagation(); onToggle(); }} />
     {#if onOpen}
-        <button type="button" class="ph-ghead__name ph-ghead__open" data-open-project onclick={(e) => { e.stopPropagation(); onOpen(); }}>{label}</button>
+        <Button variant="quiet" size="sm" data-open-project style="min-height: 0; padding: 0; font-weight: 700; letter-spacing: var(--oc-tracking-label, 0.6px); text-transform: uppercase; max-width: 100%; min-width: 0"
+            onclick={(e) => { e.stopPropagation(); onOpen(); }}>{label}</Button>
     {:else}
         <span class="ph-ghead__name">{label}</span>
     {/if}
@@ -43,18 +43,6 @@
             cursor: pointer;
         }
 
-        .ph-ghead__chev {
-            display: inline-grid;
-            place-items: center;
-            width: 16px;
-            height: 16px;
-            padding: 0;
-            border: 1px solid transparent;
-            background: none;
-            color: var(--oc-text-dim);
-            cursor: pointer;
-        }
-
         .ph-ghead__name {
             padding: 0;
             border: 1px solid transparent;
@@ -67,14 +55,6 @@
             color: var(--oc-text-secondary);
         }
 
-        .ph-ghead__open {
-            cursor: pointer;
-        }
-
-        .ph-ghead__open:hover {
-            color: var(--oc-text-bright);
-        }
-
         .ph-ghead__tally {
             color: var(--oc-text-dim);
         }
@@ -83,14 +63,13 @@
             color: var(--oc-text-dim);
         }
 
+        .ph-ghead--muted [data-open-project] {
+            --_btn-ink: var(--oc-text-dim);
+        }
+
         @media (max-width: 1023px) {
             .ph-ghead {
                 min-height: 32px;
-            }
-
-            .ph-ghead__chev {
-                width: 28px;
-                height: 28px;
             }
         }
     }

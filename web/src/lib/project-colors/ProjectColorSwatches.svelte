@@ -48,6 +48,7 @@
     {#if allowNone}
         <button
             type="button"
+            data-base-exempt="a color swatch: the button is the color it picks, no base look"
             class="pc-swatch pc-swatch--none"
             role="radio"
             aria-checked={value === ''}
@@ -59,6 +60,7 @@
     {#each SOFT_PROJECT_COLORS as swatch (swatch.hex)}
         <button
             type="button"
+            data-base-exempt="a color swatch: the button is the color it picks, no base look"
             class="pc-swatch"
             role="radio"
             aria-checked={current === swatch.hex}
@@ -71,6 +73,7 @@
     {/each}
     <button
         type="button"
+        data-base-exempt="a color swatch: the button is the color it picks, no base look"
         class="pc-swatch pc-swatch--custom"
         class:pc-swatch--set={custom !== null}
         role="radio"

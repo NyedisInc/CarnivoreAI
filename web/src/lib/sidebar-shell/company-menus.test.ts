@@ -37,6 +37,11 @@ async function nodesOf(type: Extract<ItemMenuType, 'company' | 'project'>, key: 
     return itemMenu(type, { key, anchor: {} as Element }, { close: () => {}, glyph: (icon) => icon ?? '' })?.nodes ?? null;
 }
 
+/**
+ * The item menu's module graph is large and first imported by whichever test builds a menu, so on a loaded machine that cold import
+ * ate the first test's own 5 s budget and failed it in a whole-directory run while it passed alone. Loaded here, under the hook's
+ * longer timeout, no test pays for it.
+ */
 beforeAll(async () => {
     await import('../item-menu/menus/all');
     await import('../item-menu/registry');

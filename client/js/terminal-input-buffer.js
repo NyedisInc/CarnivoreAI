@@ -1,4 +1,4 @@
-/* navigation generation reconnect to the SAME session socket dropped */
+/* reconnect to the SAME session */
 
 console.log('[TerminalInputBuffer Module] Loading...');
 
@@ -9,7 +9,6 @@ console.log('[TerminalInputBuffer Module] Loading...');
 
     var READY_TIMEOUT_MS = 4000;
 
-    /* connection generation */
     function createTerminalInputBuffer(deps) {
         var wiring = deps || {};
 
@@ -107,8 +106,12 @@ console.log('[TerminalInputBuffer Module] Loading...');
             return heldBytes;
         }
 
+        // ------------------------------------------------------------------
+        // ------------------------------------------------------------------
 
         var RETYPE_MESSAGE = 'input dropped, the session was not ready yet. type it again.';
+
+        var gapReported = false;
 
         function report(controller, text) {
             if (controller && typeof controller._showStatusPill === 'function') {
@@ -120,6 +123,7 @@ console.log('[TerminalInputBuffer Module] Loading...');
 
         function begin(controller, what) {
             cancelBackstop();
+            gapReported = false;
             discard('a new connection to the pane is starting');
             var gen = arm(what);
             if (controller) controller._connGen = gen;
@@ -131,7 +135,14 @@ console.log('[TerminalInputBuffer Module] Loading...');
             if (verdict === 'rejected_overflow') report(controller, RETYPE_MESSAGE);
             if (verdict !== 'send_now') return false;
             var ws = controller && controller.ws;
-            if (!ws || ws.readyState !== 1 ) return false;
+            if (!ws || ws.readyState !== 1 ) {
+                if (!gapReported) {
+                    gapReported = true;
+                    report(controller, RETYPE_MESSAGE);
+                }
+                return false;
+            }
+            gapReported = false;
             ws.send(bytes);
             return true;
         }
@@ -154,7 +165,6 @@ console.log('[TerminalInputBuffer Module] Loading...');
             if (r.outcome !== 'flushed') return r.outcome;
             var ws = controller && controller.ws;
             if (!ws || ws.readyState !== 1 ) {
-                // could not
                 report(controller, RETYPE_MESSAGE);
                 return 'socket_gone';
             }
@@ -165,7 +175,6 @@ console.log('[TerminalInputBuffer Module] Loading...');
             return 'flushed';
         }
 
-        /* the socket closed */
         function abandon(controller, reason) {
             cancelBackstop();
             var r = discard(reason);

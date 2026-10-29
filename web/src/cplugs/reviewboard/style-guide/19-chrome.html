@@ -1,17 +1,82 @@
 <h3 class="sg-h3" id="chrome-review-plugin">review board plugin: the page, header, notes, layer, attachments and tray</h3>
 <dl class="sg-facts">
     <dt id="chrome-review-board">review board page</dt>
+    <dd>The review board plugin's page (Joe (ccsliinc), Part 2, <code>docs/reviewboard.md</code> slice 4): a mockup under review, read only. It is the
+        pop-out page's <code>reviewboard</code> tab, shown in the center screen as a page row or in a tab of its own. <code>web/src/cplugs/reviewboard/BoardScreen.svelte</code>
+        (<code>.rb</code>) owns it and copies the flow chat view and the ledger chrome: a title strip (<code>.rb-strip</code>, fixed height, a hairline
+        under it via <code>box-shadow</code>) with the board's title in mono (<code>.rb-name</code>), whose turn it is (<code>.rb-state</code>, small tracked
+        capitals, <code>--oc-coral</code> when a round was not delivered) and icons only (<code>.rb-tools</code>, the base quiet <code>IconButton</code>: its reserved 1px
+        hairline lights with the shared focus rule; a thumb target on a touch screen). The ONE accent-colored label is the pop-out title row's
+        "review" (<code>--oc-orange</code>); the strip adds none.
+        <code>HistoryBar.svelte</code> (<code>.rb-history</code>, <code>.rb-track</code>) is the board's spine: a revision is a small square carrying its number
+        (the base small <code>Button</code>, the one on screen outlined in the confirm token <code>--oc-orange</code>; the dashed
+        <code>r1 to r12</code> chip past 20 revisions), a round Joe sent is a diamond between them (<code>.rb-diamond</code> inside a base quiet <code>IconButton</code>, a rotated hairline square,
+        <code>--oc-coral</code> when undelivered), and <code>.rb-count</code> says <code>r3 of 3</code>. The pages of one revision are
+        <code>.rb-views</code>, a base <code>Segmented</code> picker, with <code>.rb-back</code> (a base small <code>Button</code>, back to current) at the right.
+        <code>BoardFrame.svelte</code> is the mockup: <code>.rb-stage</code> is the room, <code>.rb-box</code> sizes it (<code>.rb-box--capped</code> holds it to a width, centered: <code>BOARD_MAX_WIDTH</code>, 760px, on a layer board always, and on a canvas board the <code>max_width</code> its agent asked for; a capped box is laid out at that width and never scaled; the strip shows a width key on every capped board (titled <code>full width</code> / <code>set width</code>), an <code>IconButton</code> showing <code>expand</code> or <code>shrink</code>, to switch to full width), <code>.rb-frame</code> is the iframe, always
+        <code>sandbox="allow-scripts"</code> and NEVER <code>allow-same-origin</code>, on the light <code>Canvas</code> ground like the artifact frame (an
+        agent's page is not themed by the app). <code>actual</code> shows the design width inside a scroller, <code>fit</code> scales it down by a CSS
+        transform. Under it <code>.rb-readout</code> says what the reader pointed at (<code>.rb-label</code>, the small tracked caption), the theme warning
+        (<code>.rb-chip</code> in <code>--oc-yellow</code>) and the revision's summary. <code>BoardPicker.svelte</code> is the list shown when the address names
+        no board: a base <code>List</code> of <code>ListRow</code>s, each holding one whole-row base button (<code>.rb-row-line</code>, <code>.rb-row-title</code>, <code>.rb-row-meta</code>), no cards. Notes
+        (<code>.rb-note</code>, <code>.rb-note--error</code> in <code>--oc-coral</code>). Tokens only; focus is the shared rule.
+        A live board (issue #1725) adds a <code>live</code> state word in <code>.rb-state</code>, a draft mark at the end of the history track, and
+        <code>LiveBar.svelte</code>: a quiet row of <code>IconButton</code> keys (bookmark, end) that opens one inline form (<code>.rb-live-form</code>, a
+        base <code>Field</code> name box plus base <code>Button</code>s go and cancel). <code>InlineLayer.svelte</code> draws the tray's prompts
+        right under their anchored row over the page: <code>.rb-inline</code> is the layer, <code>.rb-inline-block</code> one block (hairline, dark fill, no card).</dd>
     <dt id="chrome-review-payload">review board header controls</dt>
     <dd>The board has NO sidebar (issue #1760, <code>docs/reviewboard.md</code>, "Payload pages"): its controls live in the title strip (<code>.rb-strip</code>, which wraps onto a
         second row on a narrow board) and the page frame takes the full width under it. Styled in <code>web/src/cplugs/reviewboard/header.css</code>. They are OUTSIDE the sandboxed
-        frame, so the page can only supply its state and never press a key. <code>ThemePicker.svelte</code> is the shared <code>.oc-field</code> select (<code>.rb-theme</code>): it repaints only
+        frame, so the page can only supply its state and never press a key. <code>ThemePicker.svelte</code> is the base <code>Select</code>: it repaints only
         the page frame in another theme. For a revision that declares <code>payload_mode</code>, <code>PayloadControls.svelte</code> (<code>.rb-controls</code>) adds the save disk (the notepad widget's own <code>EditorControls</code> disk: <code>--oc-yellow</code> while the state is unsaved or <code>saving</code>, <code>--oc-green</code> once saved, <code>--oc-coral</code> with a short word when the write was refused; pressing it saves now), the save stepper
-        (<code>.rb-saves</code>: older and newer <code>.rb-icon</code> keys around <code>.rb-position</code>, the <code>.rb-label</code> reading <code>save 3 of 5</code> or <code>draft</code>), a note key
-        (an <code>.rb-icon</code>, accent while a note waits) opening the notes panel below, and Send (<code>.rb-send</code> on the Task Manager's own send key,
-        <code>.oc-btn.oc-btn--sm</code>: <code>.oc-btn--confirm</code> once there is a state to send, <code>.oc-btn--ghost</code> before). <code>PayloadNotices.svelte</code> (<code>.rb-notices</code>) is the one quiet row under the strip: the
+        (<code>.rb-saves</code>: older and newer <code>IconButton</code> keys around <code>.rb-position</code>, the <code>.rb-label</code> reading <code>save 3 of 5</code> or <code>draft</code>), a note key
+        (an <code>IconButton</code>, accent while a note waits) opening the notes panel below, and Send (a base small <code>Button</code>: confirm once there is a state to send, secondary before). <code>PayloadNotices.svelte</code> (<code>.rb-notices</code>) is the one quiet row under the strip: the
         confirm line after a send (<code>.rb-confirm</code>, <code>.rb-warn</code>) and the note of the save on show. Tokens only; focus is the shared rule; 40px keys on a touch screen.</dd>
     <dt id="chrome-review-notes">review board notes panel</dt>
+    <dd>Joe (ccsliinc), 2026-10-14, issue #1788: "notes field bigger and a md editor with overlay and hints, it can sit up in the top right corner".
+        <code>NotesPanel.svelte</code> (<code>.rb-notes</code>, styled in <code>web/src/cplugs/reviewboard/header.css</code>) is opened by the header's note key, a payload
+        board's or the one beside a prompt board's prompts key, and is PINNED TOP RIGHT over the board body: a 1px <code>--oc-line-frame</code> hairline on
+        <code>--oc-ground-page</code>, small square corners, no shadow (a frame of hairlines, as the tray's cards over the board). Its title strip (<code>.rb-notes-head</code>) copies <code>.rb-strip</code>: the titlerow
+        ground, a hairline under it by <code>box-shadow</code>, the quiet <code>.rb-label</code> caption (<code>.rb-notes-title</code>, no second accent), a counter that
+        shows only near the 8000 character cap (<code>.rb-notes-count</code>, <code>--oc-text-muted</code>, <code>--oc-coral</code> at the cap) and the close
+        <code>IconButton</code>. The body (<code>.rb-notes-body</code>, inside <code>.rb-notes-inner</code>) is the one markdown editor of the cells section with its
+        toggle and hints key, drawn <code>framed</code> so the text box shows its bounds and lights its own hairline on focus. It opens at 440 by 380, takes <code>resize: both</code> with its grip at the bottom left (the corner that moves, since the right edge is
+        pinned), stays within the room and the viewport, and remembers its size per device; below 700px it is a bottom sheet across the body with no grip.
+        A payload board's words are kept in this browser and follow the note (a send or an emptied note forgets them); a prompt board's live in its server
+        draft. Escape closes it.</dd>
     <dt id="chrome-review-layer">review board questions layer</dt>
+    <dd>Joe (ccsliinc), 2026-10-15, issue #1832: a questions layer is drawn INSIDE the page frame by plain JavaScript, not by the bundle, because the frame loads no app stylesheet
+        (<code>docs/reviewboard.md</code>, "Layers"; the exception to "all new UI goes in web/" is in <code>docs/DECISIONS.md</code>). Its look is copied from this guide, not invented:
+        <code>src/cplugs/reviewboard/frame/layer.css</code> restates the title strip (the titlerow ground, a hairline by <code>box-shadow</code>, ONE accent-colored uppercase label), the
+        hairline-separated items, mono type, square 4px corners, quiet outlined controls with the picked one in the confirm outline (the accent border on a transparent fill, tinted on hover,
+        as <code>.modal-btn-confirm</code>), the small tracked <code>note</code> key, and the shared focus rule (the control's own border a little brighter, no outline). Every color is an
+        <code>--oc-*</code> token with a system-color fallback for the instant before the board's theme message arrives, so the theme picker repaints it. Its classes carry the
+        <code>rbl-</code> prefix so an agent page's own stylesheet cannot hit them by accident, and none is registered in the registry because that stylesheet is a plugin file served into the sandbox, not a bundle stylesheet.</dd>
     <dt id="chrome-review-attachments">review board attachments key</dt>
+    <dd>Joe (ccsliinc), 2026-10-14, issue #1788: "a way for you to attach items to a board, paperclip icon". <code>AttachmentsKey.svelte</code> is the
+        <code>paperclip</code> icon on an <code>IconButton</code> key in the title strip (inside <code>.rb-clipwrap</code>) with the file count in the
+        accent (<code>.rb-clip-count</code>, as the prompts key's <code>.rb-fold-count</code>). A press opens a small fold under it (<code>.rb-clippop</code>, a free-floating
+        popup, so it wears the one popup look, <code>popup-focus</code>, and declares no border, ground or shadow of its own), headed by the quiet <code>.rb-label</code>
+        (<code>.rb-clippop-head</code>, a hairline under it), then one base <code>ListRow</code> per file, newest first (no cards): the
+        name in mono, its size, date and revision (<code>.rb-clip-error</code> in <code>--oc-coral</code> when a
+        read failed; <code>.rb-clip-offline</code> when the file has no route), and two <code>IconButton</code> keys, open in a new tab (<code>external</code>) and download (<code>import</code>), both reading the bytes with the
+        app's own login. An empty or failed list is one quiet line (<code>.rb-note-text</code>, <code>.rb-note</code>). Below 700px the fold is a sheet across the
+        screen; 40px keys on a touch screen. The list is read again on every boards push.</dd>
     <dt id="chrome-review-tray">review board tray</dt>
+    <dd>Joe's review loop (Joe (ccsliinc), Part 2, <code>docs/reviewboard.md</code> slice 5): where he ticks, checks, writes notes and sends on a board that still asks prompts. <code>Tray.svelte</code>
+        (<code>.rb-fold</code>, styled in <code>web/src/cplugs/reviewboard/tray.css</code>) is a FOLD-DOWN under the header, closed until the header's prompts key (a base <code>Button</code> with the
+        count still unanswered, <code>.rb-fold-count</code>) opens it: it takes at most 55% of the room and scrolls inside itself (<code>.rb-fold-body</code>), with the sticky footer
+        <code>.rb-fold-foot</code>: the clear key (a danger <code>IconButton</code>), the unanswered count (<code>.rb-count</code>) and send (a confirm icon <code>Button</code>). There is no column and no splitter: the mockup frame has the full width. <code>PromptRow.svelte</code>
+        (<code>.rb-prompt</code>, a hairline between prompts, no cards) draws a <code>choice</code> or <code>multi</code> as option pills
+        (<code>.rb-pills</code> of base small <code>Button</code>s; the chosen one outlined in <code>--oc-orange</code>, the calm confirm token), a <code>check</code> with the shared
+        <code>Check</code>, a <code>question</code> as a base multiline <code>Field</code>. The ghost line
+        (<code>.rb-ghost</code>) shows an earlier answer to the same prompt id with a copy key and is NEVER pre-ticked. <code>.rb-changed</code> is what changed,
+        <code>.rb-notice</code> the "landed while you wrote" notice (<code>--oc-yellow</code>), <code>.rb-confirm</code> the one line after a send
+        (<code>--oc-green</code>, <code>--oc-coral</code> through <code>.rb-warn</code> when it was not delivered), the answered-round link a quiet base <code>Button</code>,
+        <code>.rb-anchors</code> the pinned-note chips and fields, <code>.rb-note-text</code> small secondary text. <code>RoundView.svelte</code> and
+        <code>RelinkPicker.svelte</code> are base <code>Card</code>s laid over the tray (<code>.rb-over</code>,
+        <code>.rb-sent</code>, <code>.rb-sent-note</code>, <code>.rb-actions</code>): a round as sent, with resend and link to task when it was not delivered, and the board's task list
+        as base list rows. <code>.rb-body</code> and <code>.rb-main</code> are the board's layout shell. On the task's thread a round draws as
+        <code>TaskManagerRoundCard.svelte</code> (<code>.hdrc</code>, <code>.hdrc-text</code>, <code>.hdrc-title</code>, <code>.hdrc-line</code>, <code>.hdrc-open</code>),
+        the sibling of the artifact card, with an icon that opens the board at that revision. Tokens only; the base gives every control its thumb target on a touch screen.</dd>
 </dl>

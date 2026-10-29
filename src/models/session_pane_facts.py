@@ -1,11 +1,3 @@
-"""Where a session's pane is right now: its folder, what it runs, its size.
-
-FLAT, ONE LEVEL, NO WRAPPER, for the same gotcha-1 reason as
-``session_token_usage.py``. EVERY FIELD IS OPTIONAL AND ``None`` MEANS
-"could not be read", never a default: a pane tmux did not answer for has
-no cwd, not an empty one. The shell foot bar under a terminal component
-(issue #623) draws only the fields that are present.
-"""
 
 from __future__ import annotations
 

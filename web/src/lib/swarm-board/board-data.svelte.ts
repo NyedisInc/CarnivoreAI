@@ -119,7 +119,6 @@ export function createBoardData(query: () => BoardQuery, search: () => string): 
     }, COALESCE_MS);
   }
 
-  // new read
   $effect(() => {
     const q = query();
     const next = new URLSearchParams({ scope: scopeParam(q.scope), filter: q.filter, done_limit: String(DONE_LIMIT), archived: q.archived ?? 'hide' }).toString();

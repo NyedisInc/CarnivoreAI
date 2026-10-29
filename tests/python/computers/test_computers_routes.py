@@ -206,13 +206,13 @@ async def test_removal_hook_drops_a_tls_row_and_ssh_pairing_is_refused(world, mo
 
 @pytest.mark.asyncio
 async def test_mcp_invite_result_carries_no_code_and_only_one_way_is_open():
-    secret = {"id": "49759e95", "code": "123456", "link": "carnivore://join/v1?x", "expires_at": "2026-10-11T00:00:00Z", "attempts_left": 3}
+    secret = {"id": "ab12cd34", "code": "123456", "link": "carnivore://join/v1?x", "expires_at": "2026-10-11T00:00:00Z", "attempts_left": 3}
 
     async def route(request):
         return secret
 
     result = await computers_tools._invite(ra.Call(route=route, request=None, args={}))
-    assert result == {"id": "49759e95", "expires_at": "2026-10-11T00:00:00Z", "attempts_left": 3, "shown_on": computers_tools.SHOWN_ON}
+    assert result == {"id": "ab12cd34", "expires_at": "2026-10-11T00:00:00Z", "attempts_left": 3, "shown_on": computers_tools.SHOWN_ON}
     assert "123456" not in json.dumps(result) and "carnivore://" not in json.dumps(result)
     with pytest.raises(ToolError):
         computers_tools._direction(ra.Call(route=route, request=None, args={"computer": "x", "direction": "both"}))

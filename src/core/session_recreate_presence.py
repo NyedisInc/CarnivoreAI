@@ -11,7 +11,6 @@ TMUX_GONE: str = "gone"
 
 TMUX_PRESENT: str = "present"
 
-# COULD NOT EVALUATE
 TMUX_UNKNOWN: str = "unknown"
 
 ALL_TMUX_PRESENCE: frozenset[str] = frozenset(

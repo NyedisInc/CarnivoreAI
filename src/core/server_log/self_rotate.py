@@ -1,19 +1,3 @@
-"""The engine keeps its own log file bounded while no parent is alive (R1-03b, issue #2320).
-
-THE METHOD IS COPY-TRUNCATE, because the engine cannot rename its own file out from under its stdout descriptor. When the
-file passes the cap: shift ``.4 -> .5`` ... ``.1 -> .2``, copy the live file to ``server.log.1`` (a private temp file, then
-an atomic rename; mode 0600), then ``ftruncate`` the live file to zero. An ``O_APPEND`` writer repositions to the new end on
-every write, so the engine's own stdout (and the shell's later banner lines) keep appending cleanly at offset 0.
-
-ACCEPTED LOSS. Lines written between the copy's last read and the truncate are lost (microseconds; the copy reads until
-end of file, so lines written DURING the copy are kept). The file is a diagnostic log, so this is documented, not fenced.
-
-WHICH FILES. Only ``server.log`` in the Electron userData logs folder (``locate.menubar_log_files``). The launch agent's
-``launchd.log`` is rotated by newsyslog and a dev run's log is a terminal tee; rotating either here would be a second rotator.
-The path comes from ``locate.own_log_path`` (validated once), is opened ``O_NOFOLLOW`` and must be a regular file we own.
-
-The viewer's cursor (``records.py``) is ``<inode>-<offset>``; a truncated file reads as shrunk and answers ``reset`` with a fresh tail.
-"""
 
 from __future__ import annotations
 

@@ -1,5 +1,5 @@
-/*  hidden  */
 
+(function () {
 console.log('[HeaderMenu Module] Loading...');
 
 const HEADER_MENU_CONTROL_IDS = [
@@ -8,7 +8,7 @@ const HEADER_MENU_CONTROL_IDS = [
     'headerMasterAllBtn'
 ];
 
-/*  hidden  */
+/* the drawer toggle */
 const HEADER_TOOL_CONTROL_IDS = [
     'configEditorBtn',
     'sessionNotesBtn',
@@ -73,7 +73,6 @@ class HeaderMenu {
         console.log('[HeaderMenu] initialized');
     }
 
-    /* <button> */
     _buildChrome() {
         const toggle = document.createElement('button');
         toggle.type = 'button';
@@ -118,7 +117,6 @@ class HeaderMenu {
             isOpen: () => this.isOpen
         });
 
-        // padding
         this.panel.addEventListener('click', (e) => {
             if (e.target === this.panel) return;
             this.close();
@@ -133,6 +131,7 @@ class HeaderMenu {
         }
     }
 
+    /* there is nothing */
     _buildSessionRows() {
         const t = catalogText;
         const shared = globalThis.CloudeLabels;
@@ -313,7 +312,6 @@ class HeaderMenu {
         else this._unfold();
     }
 
-    /* file editor */
     setStripOwnsBar(on) {
         this._stripOwnsBar = !!on;
         if (this.panel) this.applyLayout();
@@ -331,6 +329,7 @@ class HeaderMenu {
         this.isFolded = true;
     }
 
+    /* there is nothing */
     _unfold() {
         this.close();
         for (const id of foldOrder()) {
@@ -373,3 +372,4 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[HeaderMenu Module] Exported as window.HeaderMenu');
+})();

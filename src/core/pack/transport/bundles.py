@@ -18,7 +18,6 @@ _SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 
 
 class BundleError(Exception):
-    """A bundle could not be made or applied; ``code`` is the stable reason. The message never carries file content."""
 
     def __init__(self, code: str, detail: str) -> None:
         super().__init__(detail)
@@ -88,6 +87,17 @@ def make_bundle(repo: str, dest: str, *, known_tips: Sequence[str], air_gap: boo
     raise BundleError("bundle_failed", "git could not make the bundle")
 
 
+def _has_prerequisites(bundle: str) -> bool:
+    with open(bundle, "rb") as fh:
+        for raw in fh:
+            line = raw.rstrip(b"\n")
+            if not line:
+                return False
+            if line.startswith(b"-"):
+                return True
+    return False
+
+
 def apply_bundle(repo: str, bundle: str, sender_install_id: str, *, air_gap: bool) -> int:
     if not _INSTALL_RE.match(sender_install_id or "") or ".." in sender_install_id:
         raise BundleError("bad_sender", "the sender's install id is not usable in a ref name")
@@ -98,7 +108,8 @@ def apply_bundle(repo: str, bundle: str, sender_install_id: str, *, air_gap: boo
     if verified.returncode != 0:
         raise BundleError("bundle_unverified", "the bundle does not verify against this checkout")
     ns = f"refs/carnivore/{sender_install_id}"
-    done = _git(repo, "fetch", "--no-tags", "--force", "--prune", bundle,
+    prune = [] if _has_prerequisites(bundle) else ["--prune"]
+    done = _git(repo, "fetch", "--no-tags", "--force", *prune, bundle,
                 f"+refs/heads/*:{ns}/heads/*", f"+refs/tags/*:{ns}/tags/*", air_gap=air_gap, timeout=600.0)
     if done.returncode != 0:
         logger.warning("pack_bundle_apply_failed", status=done.returncode, stderr_bytes=len(done.stderr))

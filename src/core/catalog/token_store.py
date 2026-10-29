@@ -13,7 +13,6 @@ from src.core.db import connect
 
 logger = structlog.get_logger()
 
-# state directory
 TOKEN_DB_FILENAME = "catalog_tokens.db"
 
 _ROW_ID = 1
@@ -40,12 +39,6 @@ CREATE TABLE IF NOT EXISTS catalog_guest (
 
 
 def token_db_path(state_dir: Path) -> Path:
-    """Where the catalog sign in is stored, inside a state directory.
-
-    Inputs: state_dir (Path) - as resolved by ``SettingsReader.state_dir``.
-    Output: Path - ``state_dir / "catalog_tokens.db"``.
-    Example: token_db_path(Path("/s"))  # /s/catalog_tokens.db
-    """
     return Path(state_dir) / TOKEN_DB_FILENAME
 
 
@@ -185,22 +178,6 @@ class CatalogTokenStore:
 
 @contextlib.contextmanager
 def open_token_store(state_dir: Path) -> Iterator[CatalogTokenStore]:
-    """The store, on a connection this call opens and closes.
-
-    Description: creates the file if it is not there, holds it to
-      ``DELETE`` journalling so no ``-wal`` sidecar carries the same
-      bytes, and tightens the permissions to 0600 every time rather than
-      only at creation - idempotent, and it repairs a file that was
-      created before this rule existed. A chmod that cannot be applied is
-      logged rather than swallowed, and does not fail the request: a
-      read-only or unusually owned state directory is an operator
-      problem, and refusing to read a sign in over it would be a worse
-      outcome than reporting it.
-    Inputs: state_dir (Path).
-    Output: Iterator[CatalogTokenStore].
-    Raises: src.core.db.DatastoreUnreadableError - sqlite refused the file.
-    Example: with open_token_store(state) as store: store.read()
-    """
     path = token_db_path(state_dir)
     with contextlib.closing(connect(path)) as conn:
         conn.execute("PRAGMA journal_mode=DELETE")

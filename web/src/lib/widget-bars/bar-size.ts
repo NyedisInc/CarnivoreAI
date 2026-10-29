@@ -1,4 +1,4 @@
-/* the bottom bar */
+/* a little larger the bottom bar */
 import type { RailEdge } from '../session-rail/rail-model';
 import type { BarSize } from './bar-settings.svelte';
 import { t } from '../i18n/index.svelte';
@@ -18,7 +18,6 @@ export interface BarMetrics {
   readonly keyH: number | null;
   readonly keyMinW: number;
   readonly keyMinH: number;
-  /* padding */
   readonly keyPad: string;
   readonly icon: number;
   readonly gap: number;
@@ -50,7 +49,6 @@ export function barLabel(manifest: { titleKey: string }): string {
 
 const px = (n: number | null): string => (n === null ? 'auto' : `${n}px`);
 
-/* padding */
 export function barVars(edge: RailEdge, size: BarSize): string {
   const m = BAR_SIZES[size][edge];
   return `${edge === 'side' ? '--rail-w' : '--rail-h'}:${m.bar}px;--rail-key-w:${px(m.keyW)};--rail-key-h:${px(m.keyH)};`

@@ -24,21 +24,25 @@ async def _may_write(request: Request, principal: peer_auth.Principal = Depends(
 
 @served.get("", dependencies=[Depends(_peer)])
 async def served_status() -> Dict[str, Any]:
+    """This computer's updater status, as the owner's ``GET /app-update`` answers it."""
     return await app_update_routes.get_status()
 
 
 @served.put("/auto-update", dependencies=[Depends(_may_write)])
 async def served_auto_update(body: app_update_routes.AutoUpdateSetting) -> Dict[str, Any]:
+    """Turn this computer's automatic updates on or off. Example: PUT {"enabled": true}."""
     return await app_update_routes.set_auto_update(body)
 
 
 @served.post("/check", dependencies=[Depends(_may_write)])
 async def served_check() -> Dict[str, Any]:
+    """Ask this computer's app to check the feed now."""
     return await app_update_routes.check_now()
 
 
 @served.post("/install", dependencies=[Depends(_may_write)])
 async def served_install() -> Dict[str, Any]:
+    """Ask this computer's app to download if needed and restart into the update (409 when there is none)."""
     return await app_update_routes.install_now()
 
 

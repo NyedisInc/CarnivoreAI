@@ -4,7 +4,7 @@ import pytest
 
 from src.cplugs.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
 
-BASE = {"schema": 1, "id": "bubblepop", "name": "Bubble Pop", "description": "d", "version": "1.0.0", "entry": "main.py", "tools": [],
+BASE = {"schema": 1, "id": "pillpanic", "name": "Pill Panic", "description": "d", "version": "1.0.0", "entry": "main.py", "tools": [],
         "permissions": {"app": []}, "default_enabled": False, "routes": []}
 
 
@@ -12,7 +12,7 @@ def views(fits=None, omit=False):
     view = {"name": "game", "surfaces": ["panel"], "files": ["index.html"]}
     if not omit:
         view["fits"] = fits
-    return parse_sidecar_manifest({**BASE, "views": [view]}, "bubblepop", "d").views[0]
+    return parse_sidecar_manifest({**BASE, "views": [view]}, "pillpanic", "d").views[0]
 
 
 def test_a_clean_fits_is_kept_ordered_and_an_absent_one_is_the_default():

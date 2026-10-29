@@ -21,8 +21,8 @@ from src.api.host_guard import (
 GOOD_HOSTS = [
     "127.0.0.1:8000",
     "[::1]:8000",
-    "198.51.100.18:8000",
-    "100.101.0.77:8000",
+    "192.168.1.50:8000",
+    "100.64.1.2:8000",
     "0.0.0.0:8000",
     "localhost:8000",
     "localhost",
@@ -46,14 +46,14 @@ BAD_HOSTS = [
 
 @pytest.fixture
 def policy() -> HostPolicy:
-    return HostPolicy("*.ts.net, hosta")
+    return HostPolicy("*.ts.net, studio")
 
 
 @pytest.mark.parametrize("value,expected", [
-    ("203.0.113.11:8000", ("203.0.113.11", 8000)),
+    ("192.168.1.5:8000", ("192.168.1.5", 8000)),
     ("[::1]:8000", ("::1", 8000)),
     ("[fe80::1]", ("fe80::1", None)),
-    ("Hosta.Local.", ("hosta.local", None)),
+    ("Studio.Local.", ("studio.local", None)),
     ("::1", ("::1", None)),
     ("host:", None),
     ("[::1]x", None),
@@ -88,27 +88,27 @@ def test_local_hostname_from_scutil_trusted(monkeypatch):
     monkeypatch.setattr(host_guard.sys, "platform", "darwin")
     monkeypatch.setattr(
         host_guard.subprocess, "run",
-        lambda *a, **k: SimpleNamespace(stdout="Example-MacBook\n"),
+        lambda *a, **k: SimpleNamespace(stdout="Mac\n"),
     )
-    assert HostPolicy(None).host_trusted("example-macbook.local:8000")
+    assert HostPolicy(None).host_trusted("mac.local:8000")
 
 
 def test_dotted_hostname_short_label_trusted(monkeypatch):
-    monkeypatch.setattr(host_guard.socket, "gethostname", lambda: "hostb.example.test")
+    monkeypatch.setattr(host_guard.socket, "gethostname", lambda: "mac.example.com")
     monkeypatch.setattr(host_guard.sys, "platform", "linux")
     names = host_guard.machine_names()
-    assert {"hostb", "hostb.local"} <= names
+    assert {"mac", "mac.local"} <= names
     policy = HostPolicy(None)
-    assert policy.host_trusted("hostb:8000")
-    assert not policy.host_trusted("hostb.example.net:8000")
+    assert policy.host_trusted("mac:8000")
+    assert not policy.host_trusted("mac.evil.com:8000")
 
 
 def test_configured_names_are_additive(policy):
-    assert policy.host_trusted("host.example.ts.net")
-    assert policy.host_trusted("hosta:8000")
+    assert policy.host_trusted("studio.tailnet.ts.net")
+    assert policy.host_trusted("studio:8000")
     assert policy.host_trusted("localhost:8000")
-    assert policy.host_trusted("192.0.2.21:8000")
-    assert not HostPolicy(None).host_trusted("host.example.ts.net")
+    assert policy.host_trusted("10.0.0.5:8000")
+    assert not HostPolicy(None).host_trusted("studio.tailnet.ts.net")
 
 
 def test_wildcard_disables_check_and_logs():
@@ -120,18 +120,18 @@ def test_wildcard_disables_check_and_logs():
 
 def test_malformed_entry_ignored_and_logged():
     with capture_logs() as logs:
-        p = HostPolicy("hosta:8000, http://x/, *bad, ok.example")
+        p = HostPolicy("studio:8000, http://x/, *bad, ok.example")
     assert p.host_trusted("ok.example")
-    assert not p.host_trusted("hosta")
+    assert not p.host_trusted("studio")
     ignored = [e["entry"] for e in logs if e["event"] == "allowed_hosts_entry_ignored"]
-    assert ignored == ["hosta:8000", "http://x/", "*bad"]
+    assert ignored == ["studio:8000", "http://x/", "*bad"]
 
 
 def test_settings_reads_the_prefixed_key(monkeypatch):
     from src.config.settings import Settings
-    monkeypatch.setenv("CLOUDE_ALLOWED_HOSTS", "hosta")
+    monkeypatch.setenv("CLOUDE_ALLOWED_HOSTS", "studio")
     monkeypatch.delenv("CARNIVORE_ALLOWED_HOSTS", raising=False)
-    assert Settings(_env_file=None, default_working_dir="/tmp").allowed_hosts_extra == "hosta"
+    assert Settings(_env_file=None, default_working_dir="/tmp").allowed_hosts_extra == "studio"
     assert ALLOWED_HOSTS_KEY == "CARNIVORE_ALLOWED_HOSTS"
 
 
@@ -157,7 +157,7 @@ def test_real_app_refuses_foreign_host(real_app, host):
     assert any(e["event"] == "host_rejected" and e["host"] == host for e in logs)
 
 
-@pytest.mark.parametrize("host", ["127.0.0.1:8000", "[::1]:8000", "198.51.100.18:8000", "localhost:8000"])
+@pytest.mark.parametrize("host", ["127.0.0.1:8000", "[::1]:8000", "192.168.1.50:8000", "localhost:8000"])
 def test_real_app_answers_trusted_host(real_app, host):
     r = TestClient(real_app).get("/health", headers={"host": host})
     assert r.status_code == 200

@@ -4,6 +4,7 @@ export interface RowItem {
     id: string;
     order: number;
     tone?: 'update';
+    danger?: boolean;
     label(ctx: RowMenuCtx): string;
     available(ctx: RowMenuCtx): boolean;
     enabled(ctx: RowMenuCtx): boolean;
@@ -30,6 +31,8 @@ const isRemote = (c: RowMenuCtx): boolean => !!c.hostKey && c.hostKey !== 'local
 
 const SLEEPABLE_FAMILIES = ['claude', 'codex'];
 
+const SWARM_FAMILIES = ['claude', 'codex'];
+
 function keptAwake(c: RowMenuCtx): boolean | null {
     const store = g().CloudeWeb?.autoSleep;
     return store ? store.isKeptAwake(c.name) : null;
@@ -37,7 +40,6 @@ function keptAwake(c: RowMenuCtx): boolean | null {
 
 const blueprints = (): boolean => !!g().SessionSidebarLayouts?.blueprintsEnabled();
 
-/* keep awake */
 export const GROUP_STARTS: readonly number[] = [0, 100, 190, 400, 500, 700, 900];
 
 export function groupFor(order: number): number {
@@ -149,7 +151,6 @@ export const ROW_ITEMS: readonly RowItem[] = [
         enabled: always, reason: noReason,
     },
     {
-        //  hidden 
         id: 'copy-session-id', order: 420,
         label: () => tr('session.menu.copy_session_id'),
         available: (c) => !isSessionless(c) && !!c.conversationId,
@@ -187,7 +188,20 @@ export const ROW_ITEMS: readonly RowItem[] = [
         enabled: always, reason: noReason,
     },
     {
-        // conversation id
+        id: 'swarm-join', order: 720,
+        label: () => tr('session.menu.swarm_join'),
+        available: (c) => !isSessionless(c) && !c.archived && !c.closed && !c.swarmRank && SWARM_FAMILIES.includes(c.agentFamily),
+        enabled: (c) => !!c.sessionUuid,
+        reason: () => tr('session.swarm.no_uuid'),
+    },
+    {
+        id: 'swarm-leave', order: 720,
+        label: () => tr('session.menu.swarm_leave'),
+        available: (c) => !isSessionless(c) && !c.archived && !c.closed && c.swarmRank === 'feature',
+        enabled: (c) => !!c.sessionUuid,
+        reason: () => tr('session.swarm.no_uuid'),
+    },
+    {
         id: 'sleep', order: 750,
         label: () => tr('session.menu.sleep'),
         available: (c) => !isSessionless(c) && !c.asleep && !c.archived && !c.closed && !isRemote(c),
@@ -248,7 +262,7 @@ export const ROW_ITEMS: readonly RowItem[] = [
         enabled: always, reason: noReason,
     },
     {
-        id: 'close', order: 900,
+        id: 'close', order: 900, danger: true,
         label: (c) => {
             if (c.kind === 'browser') {
                 if (c.isFile) return tr('files.menu.close');

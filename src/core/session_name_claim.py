@@ -79,7 +79,6 @@ def claim_tmux_name(
     )
 
 
-# could not
 TMUX_FORBIDDEN_CHARS = re.compile(r"[.:|\x00-\x08\x0e-\x1f\x7f]")
 WHITESPACE_RUN = re.compile(r"\s+")
 

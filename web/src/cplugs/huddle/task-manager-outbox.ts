@@ -13,7 +13,6 @@ export interface OutboxPost {
   item: number | null;
 }
 
-/* did not answer */
 export type OutboxPostResult = { kept: false; answer: unknown } | { kept: true };
 
 export async function outboxPost(post: OutboxPost): Promise<OutboxPostResult> {

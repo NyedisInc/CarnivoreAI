@@ -12,15 +12,8 @@ vi.mock('../../opscenter/api/auth.svelte', async (original) => ({
 
 import { auth } from '../../opscenter/api/auth.svelte';
 import { setLocale } from '../i18n/index.svelte';
-import { indent, recordedParts, recording, reframed, snapshot } from '../dialog-frame/goldens';
+import { recorded, snapshot } from '../dialog-frame/goldens';
 
-const FRAME = { addClasses: ['modal-overlay', 'stm-modal'], removeClasses: ['popup-focus', 'stm'], attrs: { 'aria-modal': 'true' } };
-
-function onShell(name: string): string {
-  const { frame, children: [title = '', body = '', foot = ''] } = recordedParts(recording(name));
-  return `${reframed(frame, FRAME)}  <div class="modal-content popup-focus stm" data-oc-base="">\n${indent(title, 2)}`
-    + `    <div class="modal-body">\n${indent(body, 3)}    <div class="modal-footer">\n${indent(foot, 3)}`;
-}
 import MoveFolderModal from './MoveFolderModal.svelte';
 
 setLocale('en');
@@ -39,6 +32,5 @@ test('the dialog renders its recorded markup', async () => {
   await new Promise((r) => setTimeout(r, 0));
   flushSync();
   const now = snapshot(root.querySelector('[data-move-modal]')!);
-  expect(recordedParts(recording('move-folder')).children).toHaveLength(3);
-  expect(now).toBe(onShell('move-folder'));
+  expect(now).toBe(recorded('move-folder', now));
 });

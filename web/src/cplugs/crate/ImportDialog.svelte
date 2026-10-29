@@ -2,7 +2,7 @@
 <script lang="ts">
     import { onDestroy, onMount, untrack } from 'svelte';
     import { t as reactiveT, type Translate } from '../sdk';
-    import { Check, ModalShell } from '../sdk/ui';
+    import { Button, Checkbox, Field, IconButton, ModalShell, Tag } from '../sdk/ui';
     import { bytesText, errorCode, errorSentence, type Fetcher, type JobView } from './crate-api';
     import { unitLabel } from './store-label';
     import { changedImportPlan, hasConflicts, previewImport, provenanceSentence, skipSentence, startImport, type ImportPlanView, type ImportRequest, type ImportSource } from './import-api';
@@ -24,7 +24,6 @@
     const { source, subject, originalRoot = null, close, t = reactiveT, fetcher }: Props = $props();
 
     const openedWith = untrack(() => originalRoot?.trim() || null);
-    /* could not */
     let restoreInto = $state(openedWith ?? '');
     let original = $state<string | null>(openedWith);
     let fieldTouched = false;
@@ -73,7 +72,6 @@
         workInRestoredCopy: showFiles && showCopy && includeProjectFiles && workInRestoredCopy,
         includePluginData,
     });
-    /* project files */
     const filesHint = $derived.by(() => {
         const folder = shown?.projectFolder;
         if (folder?.files === 'into_project_folder') return t('cplug.crate.import.project_files_into', { folder: folder.path });
@@ -116,7 +114,6 @@
         pending = setTimeout(() => { pending = null; void previewNow(); }, delay);
     }
 
-    /* already running */
     async function previewNow(): Promise<void> {
         cancelPending();
         if (busy) {
@@ -218,7 +215,7 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">{t('cplug.crate.import.title', { subject })}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')} onclick={() => close(null)}>×</button>
+            <IconButton label={t('modal.close')} icon="close" variant="close" iconSize={14} onclick={() => close(null)} />
         </div>
     {/snippet}
     {#if jobId === null}
@@ -237,73 +234,52 @@
             <dd class={totals ? 'crt-sum__val' : 'crt-sum__val crt-sum__val--unread'} data-crt-import-counts>{totals ?? t('cplug.crate.import.sum.unread')}</dd>
         </dl>
         <div class="crt-form" data-crt-form>
-            <label class="crt-form__row">
-                <span class="pl-label">{t('cplug.crate.import.restore_into')}</span>
-                <input class="oc-field" type="text" maxlength="1024" bind:value={restoreInto} disabled={busy} autocomplete="off" spellcheck="false"
-                    oninput={() => { fieldTouched = true; touch(); }} onblur={commit} onkeydown={(e) => { if (e.key === 'Enter') commit(); }} data-crt-import-new-root />
-                <span class="tm__sub">{t('cplug.crate.import.restore_into_hint')}</span>
-            </label>
+            <Field label={t('cplug.crate.import.restore_into')} help={t('cplug.crate.import.restore_into_hint')} maxlength={1024} bind:value={restoreInto} disabled={busy} autocomplete="off" spellcheck="false"
+                oninput={() => { fieldTouched = true; touch(); }} onblur={commit} onkeydown={(e) => { if (e.key === 'Enter') commit(); }} data-crt-import-new-root />
             {#if existingFolder}
                 <p class="tm__sub" role="status" data-crt-import-existing-folder>{t('cplug.crate.import.existing_folder', { folder: existingFolder })}</p>
             {/if}
             {#if rootUnusable}
                 <p class="tm__problem" role="status" data-crt-root-unusable>{t('cplug.crate.import.root_unusable', { folder: original ?? '' })}</p>
                 {#if suggested && into !== suggested}
-                    <button type="button" class="modal-btn modal-btn-secondary" data-crt-import-suggested disabled={busy} onclick={useSuggested}>
+                    <Button variant="secondary" data-crt-import-suggested disabled={busy} onclick={useSuggested}>
                         {t('cplug.crate.import.use_suggested', { folder: suggested })}
-                    </button>
+                    </Button>
                 {/if}
             {/if}
             {#if askKey}
-                <label class="crt-form__row">
-                    <span class="pl-label">{t('cplug.crate.import.key')}</span>
-                    <input class="oc-field" type="password" bind:value={identity} disabled={busy} autocomplete="off" spellcheck="false"
-                        oninput={invalidate} onblur={commit} onkeydown={(e) => { if (e.key === 'Enter') commit(); }} data-crt-import-key />
-                    <span class="tm__sub">{t('cplug.crate.import.key_hint')}</span>
-                </label>
+                <Field label={t('cplug.crate.import.key')} help={t('cplug.crate.import.key_hint')} type="password" bind:value={identity} disabled={busy} autocomplete="off" spellcheck="false"
+                    oninput={invalidate} onblur={commit} onkeydown={(e) => { if (e.key === 'Enter') commit(); }} data-crt-import-key />
             {/if}
             <div class="crt-ticks">
                 {#if showFiles}
-                    <Check role="checkbox" label={t('cplug.crate.import.project_files')} hint={filesHint}
-                        checked={includeProjectFiles} disabled={busy} onToggle={(next) => { includeProjectFiles = next; touch(); }} data-crt-import-project-files="" />
+                    <Checkbox bind:checked={() => includeProjectFiles, (next) => { includeProjectFiles = next; touch(); }} label={t('cplug.crate.import.project_files')} hint={filesHint} disabled={busy} data-crt-import-project-files="" />
                 {/if}
                 {#if showFiles && showCopy}
-                    <Check role="checkbox" label={t('cplug.crate.import.work_in_copy')} hint={t('cplug.crate.import.work_in_copy_hint')}
-                        checked={workInRestoredCopy} disabled={busy || !includeProjectFiles} onToggle={(next) => { workInRestoredCopy = next; touch(); }} data-crt-import-work-in-copy="" />
+                    <Checkbox bind:checked={() => workInRestoredCopy, (next) => { workInRestoredCopy = next; touch(); }} label={t('cplug.crate.import.work_in_copy')} hint={t('cplug.crate.import.work_in_copy_hint')} disabled={busy || !includeProjectFiles} data-crt-import-work-in-copy="" />
                 {/if}
                 {#if showPlugins}
-                    <Check role="checkbox" label={t('cplug.crate.import.plugin_data')} hint={t('cplug.crate.import.plugin_data_hint')}
-                        checked={includePluginData} disabled={busy} onToggle={(next) => { includePluginData = next; touch(); }} data-crt-import-plugin-data="" />
+                    <Checkbox bind:checked={() => includePluginData, (next) => { includePluginData = next; touch(); }} label={t('cplug.crate.import.plugin_data')} hint={t('cplug.crate.import.plugin_data_hint')} disabled={busy} data-crt-import-plugin-data="" />
                 {/if}
                 {#if showBackups}
-                    <Check role="checkbox" label={t('cplug.crate.import.file_backups')}
-                        hint={backupsOff ? t('cplug.crate.import.file_backups_off') : t('cplug.crate.import.file_backups_hint')}
-                        checked={fileBackups && !backupsOff} disabled={busy || backupsOff} onToggle={(next) => { fileBackups = next; touch(); }} data-crt-import-file-backups="" />
+                    <Checkbox bind:checked={() => fileBackups && !backupsOff, (next) => { fileBackups = next; touch(); }} label={t('cplug.crate.import.file_backups')} hint={backupsOff ? t('cplug.crate.import.file_backups_off') : t('cplug.crate.import.file_backups_hint')} disabled={busy || backupsOff} data-crt-import-file-backups="" />
                 {/if}
                 {#if showBackups || (shown?.provenance === 'foreign' && backupFolders.length)}
                     {#each backupFolders.filter(() => shown?.provenance === 'foreign') as f (f.unit)}
-                        <Check role="checkbox" label={t('cplug.crate.import.file_backups_family', { family: unitLabel(f.unit, t) })}
-                            hint={backupsOff ? t('cplug.crate.import.file_backups_off') : folderLocked(f) ? skipSentence(f.reason ?? '', t) : t('cplug.crate.import.file_backups_hint')}
-                            checked={!folderLocked(f) && !unticked.includes(f.unit)} disabled={busy || folderLocked(f)}
-                            onToggle={(next) => { unticked = next ? unticked.filter((u) => u !== f.unit) : [...unticked, f.unit]; touch(); }} data-crt-import-backup-family={f.unit} />
+                        <Checkbox bind:checked={() => !folderLocked(f) && !unticked.includes(f.unit), (next) => { unticked = next ? unticked.filter((u) => u !== f.unit) : [...unticked, f.unit]; touch(); }} label={t('cplug.crate.import.file_backups_family', { family: unitLabel(f.unit, t) })} hint={backupsOff ? t('cplug.crate.import.file_backups_off') : folderLocked(f) ? skipSentence(f.reason ?? '', t) : t('cplug.crate.import.file_backups_hint')} disabled={busy || folderLocked(f)} data-crt-import-backup-family={f.unit} />
                     {/each}
                 {/if}
                 {#if showKeep}
-                    <Check role="checkbox" label={t('cplug.crate.import.keep_conversations')}
-                        hint={t('cplug.crate.import.keep_conversations_hint', { period: shown?.cleanup?.periodDays ?? 30 })}
-                        checked={keepConversations} disabled={busy} onToggle={(next) => { keepConversations = next; touch(); }} data-crt-import-keep-conversations="" />
+                    <Checkbox bind:checked={() => keepConversations, (next) => { keepConversations = next; touch(); }} label={t('cplug.crate.import.keep_conversations')} hint={t('cplug.crate.import.keep_conversations_hint', { period: shown?.cleanup?.periodDays ?? 30 })} disabled={busy} data-crt-import-keep-conversations="" />
                 {/if}
                 {#if foreign && (shown?.heldBack || includeInstructions)}
-                    <Check role="checkbox" label={t('cplug.crate.import.instructions')} hint={t('cplug.crate.import.instructions_hint')}
-                        checked={includeInstructions} disabled={busy} onToggle={(next) => { includeInstructions = next; touch(); }} data-crt-import-instructions="" />
+                    <Checkbox bind:checked={() => includeInstructions, (next) => { includeInstructions = next; touch(); }} label={t('cplug.crate.import.instructions')} hint={t('cplug.crate.import.instructions_hint')} disabled={busy} data-crt-import-instructions="" />
                 {/if}
                 {#if claimsHere || madeHere}
-                    <Check role="checkbox" label={t('cplug.crate.import.made_here')} hint={t('cplug.crate.import.made_here_hint')}
-                        checked={madeHere} disabled={busy} onToggle={(next) => { madeHere = next; touch(); }} data-crt-import-made-here="" />
+                    <Checkbox bind:checked={() => madeHere, (next) => { madeHere = next; touch(); }} label={t('cplug.crate.import.made_here')} hint={t('cplug.crate.import.made_here_hint')} disabled={busy} data-crt-import-made-here="" />
                 {/if}
                 {#if hasConflicts(shown) || skipConflicts}
-                    <Check role="checkbox" label={t('cplug.crate.import.skip_conflicts')} hint={t('cplug.crate.import.skip_conflicts_hint')}
-                        checked={skipConflicts} disabled={busy} onToggle={(next) => { skipConflicts = next; touch(); }} data-crt-import-skip-conflicts="" />
+                    <Checkbox bind:checked={() => skipConflicts, (next) => { skipConflicts = next; touch(); }} label={t('cplug.crate.import.skip_conflicts')} hint={t('cplug.crate.import.skip_conflicts_hint')} disabled={busy} data-crt-import-skip-conflicts="" />
                 {/if}
             </div>
         </div>
@@ -316,7 +292,7 @@
                         <span class="crt-measure__figs" data-crt-elapsed>{t('cplug.crate.import.elapsed', { seconds: elapsed })}</span>
                     </span>
                 {:else if plan}
-                    <span class={`crt-tty__tag crt-tty__tag--${plan.ok ? 'ok' : 'bad'}`}>{t(plan.ok ? 'cplug.crate.box.ready' : 'cplug.crate.box.blocked')}</span>
+                    <Tag tone={plan.ok ? 'ok' : 'danger'}>{t(plan.ok ? 'cplug.crate.box.ready' : 'cplug.crate.box.blocked')}</Tag>
                 {/if}
             {/snippet}
             {#if plan}
@@ -335,16 +311,16 @@
     {#if problem}<p class="tm__problem" role="alert" data-crt-problem>{problem}</p>{/if}
     {#snippet footer()}
         {#if jobId === null}
-            <button type="button" class="modal-btn modal-btn-secondary" disabled={busy} onclick={() => close(null)}>{t('cplug.crate.import.cancel')}</button>
+            <Button variant="secondary" disabled={busy} onclick={() => close(null)}>{t('cplug.crate.import.cancel')}</Button>
             {#if plan?.ok || shown?.ok}
-                <button type="button" class="modal-btn modal-btn-confirm" data-crt-go disabled={!canRestore} onclick={() => void go()}>{t('cplug.crate.import.go')}</button>
+                <Button variant="confirm" data-crt-go disabled={!canRestore} onclick={() => void go()}>{t('cplug.crate.import.go')}</Button>
             {:else}
-                <button type="button" class="modal-btn modal-btn-confirm" data-crt-preview disabled={busy} onclick={() => void preview()}>{t(waiting === 'preview' ? 'cplug.crate.import.previewing' : 'cplug.crate.import.preview')}</button>
+                <Button variant="confirm" data-crt-preview disabled={busy} onclick={() => void preview()}>{t(waiting === 'preview' ? 'cplug.crate.import.previewing' : 'cplug.crate.import.preview')}</Button>
             {/if}
         {:else}
-            <button type="button" class="modal-btn modal-btn-secondary" data-crt-close onclick={() => close(finished?.state === 'done' ? jobId : null)}>
+            <Button variant="secondary" data-crt-close onclick={() => close(finished?.state === 'done' ? jobId : null)}>
                 {finished ? t('cplug.crate.import.done') : t('cplug.crate.import.hide')}
-            </button>
+            </Button>
         {/if}
     {/snippet}
 </ModalShell>

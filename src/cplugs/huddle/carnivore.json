@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "api_version": 1,
   "min_app_version": "1.12.20",
-  "author": "Carnivore contributors",
+  "author": "Joe (ccsliinc)",
   "license": "MIT",
   "tier": "builtin",
   "scope": [
@@ -14,24 +14,12 @@
   "icon": "chat",
   "default_enabled": true,
   "permissions": [
-    {
-      "name": "sessions.read"
-    },
-    {
-      "name": "sessions.message"
-    },
-    {
-      "name": "notify"
-    },
-    {
-      "name": "agent_writes"
-    },
-    {
-      "name": "swarm"
-    },
-    {
-      "name": "work"
-    }
+    { "name": "sessions.read" },
+    { "name": "sessions.message" },
+    { "name": "notify" },
+    { "name": "agent_writes" },
+    { "name": "swarm" },
+    { "name": "work" }
   ],
   "owns": {
     "strings": [

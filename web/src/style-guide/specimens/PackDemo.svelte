@@ -20,13 +20,13 @@
     }) as unknown as NonNullable<PackMachine['snapshot']>;
   const machine = (id: string, over: Partial<PackMachine>): PackMachine => ({
     install_id: id, label: id, is_self: false, is_master: false, paired: true, state: 'connected', capabilities: [],
-    specs: { model: 'Laptop1,1', cores: 8, mem_total_gb: 32 }, snapshot: snap(5, 58, 76), age_seconds: 2, ...over,
+    specs: { model: 'MacBookPro18,2', cores: 10, mem_total_gb: 64 }, snapshot: snap(5, 58, 76), age_seconds: 2, ...over,
   });
-  const willow = machine('willow', { is_self: true, is_master: true, state: 'self' });
-  const orchard = machine('orchard', { snapshot: snap(8, 81, 93), specs: { model: 'Desktop1,1', cores: 12, mem_total_gb: 48 } });
-  const orchardPair = {
-    install_id: 'orchard', label: 'orchard willow', host_key: null, transport: 'tls', role: 'member', state: 'connected', direction: 'both',
-    fid: 'orchardfid', fid_short: 'a1b2c3', cert_sha256: null, joined_at: null, last_link_at: null, possible_duplicate_of: null,
+  const nostromo = machine('nostromo', { is_self: true, is_master: true, state: 'self' });
+  const studio = machine('studio', { snapshot: snap(8, 81, 93), specs: { model: 'Mac16,10', cores: 10, mem_total_gb: 16 } });
+  const thorPair = {
+    install_id: 'studio', label: 'studio', host_key: null, transport: 'tls', role: 'member', state: 'connected', direction: 'both',
+    fid: 'thorfid', fid_short: 'a1b2c3', cert_sha256: null, joined_at: null, last_link_at: null, possible_duplicate_of: null,
   } as const;
 </script>
 
@@ -34,8 +34,8 @@
   <section class="cmp-panel pl-panel pledger">
     <div class="cmp-body">
       <ul class="cmp-list">
-        <ComputerRow machine={willow} nowMs={Date.now()} busy={false} />
-        <ComputerRow machine={orchard} computer={orchardPair} nowMs={Date.now()} busy={false} />
+        <ComputerRow machine={nostromo} nowMs={Date.now()} busy={false} />
+        <ComputerRow machine={studio} computer={thorPair} nowMs={Date.now()} busy={false} />
       </ul>
     </div>
   </section>
@@ -53,6 +53,6 @@
     <PackMarks link="connecting" />
     <PackMarks link="down" />
     <PackMarks link="error" />
-    <span><MachineBadge hostKey="orchard" label="orchard" /> <MachineBadge hostKey="workbench" label="workbench" state="offline" /></span>
+    <span><MachineBadge hostKey="studio" label="studio" /> <MachineBadge hostKey="studio" label="studio" state="offline" /></span>
   </div></section>
 {/if}

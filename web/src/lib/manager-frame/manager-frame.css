@@ -35,7 +35,6 @@
     text-overflow: ellipsis;
 }
 
-/* padding */
 .mgr .oc-page__detail-body.mgr__detail-body--fill {
     display: flex;
     flex-direction: column;

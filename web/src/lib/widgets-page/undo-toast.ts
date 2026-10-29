@@ -31,7 +31,6 @@ export function closeToast(): void {
     shownId = null;
 }
 
-/* label: ' */
 export function showToast(spec: ToastSpec): void {
     closeToast();
     const found = surface();

@@ -17,7 +17,6 @@ router = APIRouter(tags=["features"])
 
 _FEATURE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
-# running server.
 _MEDIA_FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:png|webp|gif|svg)$")
 
 _CONTENT_TYPES = {

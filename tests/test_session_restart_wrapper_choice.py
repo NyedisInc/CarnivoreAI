@@ -78,8 +78,8 @@ def test_a_picked_wrapper_replaces_the_stored_one():
     plan = resolve_respawn_plan(
         probe_ok=True,
         pane_dead="1",
-        pane_start_command='"keyc"',
-        agent_command="keyc",
+        pane_start_command='"cld"',
+        agent_command="cld",
         chosen_agent_command="run-claude-chrome",
         chosen_agent_type="claude-chrome",
     )
@@ -122,7 +122,7 @@ def test_no_choice_leaves_the_ladder_byte_for_byte_as_it_was():
             probe_ok=True,
             pane_dead="1",
             pane_start_command="",
-            agent_command="keyc",
+            agent_command="cld",
         ).kind
         == RESPAWN_SHELL
     )
@@ -130,7 +130,7 @@ def test_no_choice_leaves_the_ladder_byte_for_byte_as_it_was():
         resolve_respawn_plan(
             probe_ok=True,
             pane_dead="1",
-            pane_start_command='"keyc"',
+            pane_start_command='"cld"',
             agent_command=None,
         ).kind
         == "replay"
@@ -140,7 +140,7 @@ def test_no_choice_leaves_the_ladder_byte_for_byte_as_it_was():
             probe_ok=True,
             pane_dead="1",
             pane_start_command="",
-            agent_command="keyc",
+            agent_command="cld",
             chosen_agent_command="   ",
         ).kind
         == RESPAWN_SHELL
@@ -163,11 +163,13 @@ def test_persisting_a_pick_heals_a_stale_not_launched_row(tmp_path, monkeypatch)
     with closing(migrated_connection(db_dir)):
         pass
 
-    monkeypatch.setattr(sm, "_configured_wrappers", lambda: [_FakeFamilyWrapper(
+    from src.config import wrapper_reader
+
+    monkeypatch.setattr(wrapper_reader, "configured_wrappers", lambda: [_FakeFamilyWrapper(
         "claude-chrome", "claude"
     )])
 
-    name = "carnivore_Garden Planner 2026-2"
+    name = "carnivore_Fantasy Football 2026-2"
     with closing(connect(db_path_for(db_dir))) as conn:
         record_instance(
             conn,
@@ -240,7 +242,7 @@ def test_preview_marks_the_current_wrapper_without_reordering():
         name="cloude_api",
         probe_ok=True,
         pane_dead="1",
-        pane_start_command='"keyc"',
+        pane_start_command='"cld"',
         stored_agent_type="cldl",
         stored_agent_command="cl",
         offers=[
@@ -306,9 +308,9 @@ def test_preview_of_a_live_session_offers_nothing_actionable():
         name="a",
         probe_ok=True,
         pane_dead="0",
-        pane_start_command='"keyc"',
-        stored_agent_type="keyc",
-        stored_agent_command="keyc",
+        pane_start_command='"cld"',
+        stored_agent_type="cld",
+        stored_agent_command="cld",
         offers=[WrapperOffer(agent_type="claude-chrome", command="cc")],
     )
     assert preview.unchanged.kind == RESPAWN_NOT_DEAD
@@ -727,7 +729,7 @@ def _preview_for_current(offer_command: str, stored_command: str):
         name="cloude_api",
         probe_ok=True,
         pane_dead="0",
-        pane_start_command='"keyc"',
+        pane_start_command='"cld"',
         stored_agent_type="cldl",
         stored_agent_command=stored_command,
         offers=[

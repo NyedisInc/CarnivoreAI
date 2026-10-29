@@ -136,6 +136,7 @@ export function widthCap(revision: Pick<BoardRevision, 'layer' | 'max_width'> | 
   return revision.max_width || null;
 }
 
+/* the page frame */
 export function cappedRoom(room: number, cap: number | null): number {
   return cap !== null && room > cap ? cap : room;
 }

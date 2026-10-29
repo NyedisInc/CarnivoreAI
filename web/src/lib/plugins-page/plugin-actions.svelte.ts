@@ -1,11 +1,13 @@
 import type { ManagerController } from '../manager-frame/manager-controller.svelte';
 import type { ManagerAdapter } from '../manager-frame/types';
-import type { CplugItem, CplugsAdapter } from './cplugs-adapter';
+import type { CplugItem, CplugSheet, CplugsAdapter } from './cplugs-adapter';
+import type { GrantOptions } from './cplug-grant';
 
 export function createPluginActions(opts: {
     ctl: ManagerController;
     adapter: ManagerAdapter & Partial<CplugsAdapter>;
-    grant: (cplugId: string, ticks: string[]) => Promise<unknown>;
+    grant: (cplugId: string, ticks: string[], options: GrantOptions) => Promise<unknown>;
+    seenSheet?: (cplugId: string) => CplugSheet | undefined;
     onAsk?: (id: string) => void;
 }): {
     readonly pendingOff: string | null;
@@ -14,7 +16,7 @@ export function createPluginActions(opts: {
     cancel(): void;
     grantFromSheet(plugin: CplugItem, ticks: string[]): Promise<void>;
 } {
-    const { ctl, adapter, grant, onAsk } = opts;
+    const { ctl, adapter, grant, seenSheet, onAsk } = opts;
     let pendingOff = $state<string | null>(null);
 
     return {
@@ -40,8 +42,10 @@ export function createPluginActions(opts: {
         },
         async grantFromSheet(plugin, ticks): Promise<void> {
             if (!plugin.consentRequired) return ctl.toggle(plugin.id, true);
-            await grant(plugin.cplugId, ticks);
-            await ctl.load();
+            await ctl.guard(plugin.id, async () => {
+                await grant(plugin.cplugId, ticks, { enable: !plugin.enabled, seen: seenSheet?.(plugin.cplugId) });
+                await ctl.load();
+            });
         },
     };
 }

@@ -121,7 +121,6 @@ export function titlelessHost(): boolean {
 
 const TAB_PANE = Symbol('tab-pane');
 
-/*  hidden  */
 export interface TabPane {
   readonly active: boolean;
   readonly visible: ZoneVisibility;

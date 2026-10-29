@@ -18,15 +18,6 @@ NONE = "none"
 
 @dataclass(frozen=True)
 class ActiveAccount:
-    """One provider's active account and how it was decided.
-
-    Fields:
-        provider: 'claude' or 'codex'.
-        account_id: the account new sessions launch under, or None.
-        source: 'pointer', 'default_login' or 'none'.
-        pointer: the stored pointer, even when it was not honoured, so a
-            screen can tell a stale pointer from no pointer.
-    """
 
     provider: str
     account_id: Optional[str]
@@ -46,17 +37,6 @@ def find_account(
 
 
 def pointer_for(account: ProviderAccount) -> Optional[str]:
-    """The value to store in ``active_<provider>`` to make this account active.
-
-    Description: THE BUILT-IN DEFAULT LOGIN IS "NO POINTER". Its row is
-      synthesized (`poller_scan.with_auto_default`), never in config.json,
-      and new panes on it are launched with ``CLAUDE_CONFIG_DIR`` REMOVED,
-      which is exactly what an absent pointer means. Storing its synthetic
-      id would leave a pointer at an account the file does not hold.
-    Inputs: account (ProviderAccount) - the row being activated.
-    Output: str | None - the account id, or None for the built-in login.
-    Example: pointer_for(default_login_row())  # None
-    """
     return None if account.id == AUTO_DEFAULT_ACCOUNT_ID else account.id
 
 
@@ -65,13 +45,6 @@ def effective_active(
     switch: ProviderAccountSwitchConfig,
     provider: str,
 ) -> ActiveAccount:
-    """Resolve one provider's active account. See the module docstring.
-
-    Inputs: accounts (list[ProviderAccount]) - the configured rows;
-      switch (ProviderAccountSwitchConfig); provider (str).
-    Output: ActiveAccount.
-    Example: effective_active(rows, switch, 'claude').account_id
-    """
     pointer = switch.active_for(provider)
     if find_account(accounts, pointer, provider) is not None:
         return ActiveAccount(provider, pointer, POINTER, pointer)

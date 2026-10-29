@@ -4,7 +4,7 @@ import type { CardView } from './card';
 import type { CatalogHost } from './catalog';
 import ConfirmSheet from './ConfirmSheet.svelte';
 import { refusalCodeOf } from './install-actions';
-import { consentSheetOf, consentTextOf, ledgerFailure, revisionOf, updateConsentSheet, updateSheet } from './installed-actions';
+import { consentTextOf, ledgerFailure, revisionOf, updateConsentSheet, updateSheet } from './installed-actions';
 import type { InstalledItem, UpdateConsent } from './types';
 
 export type LedgerOutcome = ReturnType<typeof ledgerFailure>;
@@ -29,34 +29,13 @@ export async function acceptNewText(
     send: (body: { expected_revision: number; consent: UpdateConsent }) => Promise<InstalledItem>,
 ): Promise<UpdateResult> {
     const { host, t, name, card, installed } = ctx;
-    const carried = consentTextOf(error);
-    let text = carried.body;
-    let sha = carried.sha;
-    let digest = carried.digest;
-    let scripts = carried.scripts;
-    const diff = carried.diff;
-    if (!text || !sha) {
-        try {
-            const preview = await host.previewInstall({
-                item_id: card.id || '',
-                scope: installed?.scope === 'project' ? 'project' : 'global',
-                project_path: installed?.project_path ?? null,
-            });
-            const fresh = consentSheetOf(preview as Record<string, unknown>);
-            if (!text) text = fresh.body;
-            if (!sha) sha = fresh.sha;
-            if (!digest) digest = fresh.digest;
-            if (!scripts.length) scripts = fresh.scripts;
-        } catch (readError) {
-            console.error('CloudeWeb: the update consent text could not be read', readError);
-        }
-    }
-    const agreed = await openModal(ConfirmSheet as never, updateConsentSheet(name, text, scripts, t, diff) as never);
+    const { body: text, sha, digest, scripts, diff, requiresConsent, cplugFacts } = consentTextOf(error);
+    const agreed = await openModal(ConfirmSheet as never, updateConsentSheet(name, text, scripts, t, diff, card.isCplug ? cplugFacts : undefined) as never);
     if (!agreed || !sha) return { kind: 'failed', outcome: { kind: 'refused', code: 'consent_required' } };
     try {
         const consent: UpdateConsent = { body_sha: sha };
         if (digest) consent.digest = digest;
-        if (scripts.length) consent.scripts = true;
+        if (requiresConsent || scripts.length) consent.scripts = true;
         return { kind: 'updated', row: await send({ expected_revision: revision, consent }) };
     } catch (retryError) {
         return { kind: 'failed', outcome: ledgerFailure(retryError) };

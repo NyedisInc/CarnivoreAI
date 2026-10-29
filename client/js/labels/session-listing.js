@@ -1,7 +1,7 @@
-/* did not answer */
+
+import { reasonOf } from './error-reason.js';
 
 export const LISTING_KEYS = {
-    /* CANNOT DETERMINE */
     detailUnauthorized: 'session.listing.detail.unauthorized',
     detailTmuxUnreadable: 'session.listing.detail.tmux_unreadable',
     detailHttpStatus: 'session.listing.detail.http_status',
@@ -20,7 +20,6 @@ export function serverDetail(err) {
     return null;
 }
 
-/* CANNOT DETERMINE */
 export function listingDetail(err, status, t) {
     const fromServer = serverDetail(err);
     if (fromServer) return fromServer;
@@ -42,13 +41,9 @@ export function recordsMalformedDetail(t) {
 }
 
 export function attributionFailedDetail(error, t) {
-    if (error && typeof error.message === 'string' && error.message) return error.message;
-    return t(LISTING_KEYS.unreachable);
+    return reasonOf(error, t);
 }
 
 export function projectsLoadFailed(error, t) {
-    const reason = (error && typeof error.message === 'string' && error.message)
-        ? error.message
-        : t(LISTING_KEYS.unreachable);
-    return t(LISTING_KEYS.projectsLoadFailed, { reason });
+    return t(LISTING_KEYS.projectsLoadFailed, { reason: reasonOf(error, t) });
 }

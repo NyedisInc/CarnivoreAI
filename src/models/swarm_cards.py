@@ -292,6 +292,7 @@ class CardPinRequest(_Request):
 
 
 class CardPauseResult(BaseModel):
+    """A pause or resume: the card and what the cascade reached (so the UI can say "also pauses 1 child card and agent 16")."""
 
     card: CardView
     cascaded: List[int] = []
@@ -304,6 +305,7 @@ class CardSuggestionAction(_Request):
 
 
 class CardSuggestionView(BaseModel):
+    """A reorder suggestion after the owner settled it (``state`` applied or dismissed), with the card as it reads now."""
 
     id: int
     list_key: str

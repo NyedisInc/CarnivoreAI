@@ -1,4 +1,6 @@
 
+import type { FeatureChangeEntry } from './features-grouping';
+
 export interface FeatureMediaItem {
   kind: 'screenshot' | 'gif' | 'icon';
   file: string;
@@ -31,6 +33,7 @@ export interface FeatureCatalogPayload {
   available: boolean;
   areas: FeatureAreaMeta[];
   catalog: FeatureCatalogItem[];
+  changes: FeatureChangeEntry[];
 }
 
 export interface FeatureAreaGroup {
@@ -39,7 +42,6 @@ export interface FeatureAreaGroup {
   features: FeatureCatalogItem[];
 }
 
-/*  hidden  */
 const HIDDEN_STATUSES = new Set(['removed']);
 
 export function groupFeaturesByArea(payload: FeatureCatalogPayload): FeatureAreaGroup[] {

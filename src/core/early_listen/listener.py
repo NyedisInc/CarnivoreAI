@@ -26,8 +26,6 @@ class EarlyListenError(Exception):
 
 
 class BindFailed(EarlyListenError):
-    """The server address could not be bound.
-    """
 
     def __init__(self, host: str, port: int, err_no: int, detail: str) -> None:
         super().__init__(f"could not bind {host}:{port}: {detail}")

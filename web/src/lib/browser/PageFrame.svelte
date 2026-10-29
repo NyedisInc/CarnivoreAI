@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* frame, and the */
   import { untrack } from 'svelte';
   import { t } from '../i18n/index.svelte';
   import { frameable } from './page-frame';

@@ -58,6 +58,7 @@ beforeEach(() => {
     terminal.id = 'terminal';
     surface.append(terminal);
     grid.append(surface);
+    // the bottom bar
     for (const edge of ['side', 'bottom']) {
         const rail = document.createElement('nav');
         rail.setAttribute('data-session-rail', '');

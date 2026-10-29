@@ -1,10 +1,10 @@
 import {
     forkFailureNotice,
     RECENT_KEYS,
-    reasonOf,
     restartNotice,
     unidentifiedRestartNotice,
 } from '../../../../client/js/labels/recent-session.js';
+import { reasonOf } from './failure-reason';
 import {
     restartPlan,
     type RestartPlan,
@@ -24,7 +24,6 @@ export interface ForkResponse {
 export interface RestartResponse {
     conversation?: string | null;
     title_carried?: string | null;
-    /* could not */
     row_reused?: boolean;
     detail?: string | null;
 }
@@ -85,7 +84,6 @@ export async function forkSession(
         return;
     }
     if (result && result.lineage_recorded === false) {
-        // could not
         const detail = typeof result.detail === 'string' ? result.detail.trim() : '';
         host.showError(detail || t(RECENT_KEYS.forkLineageUnrecorded));
     }
@@ -110,8 +108,8 @@ export async function restartRecentSession(
         if (host.toast) host.toast(openToast(step, name, reason, t));
     };
     say('opening');
+    let result: unknown;
     try {
-        let result: unknown;
         if (plan.mode === 'restart') {
             result = await host.restart(plan.sessionUuid);
             const notice = restartNotice(result as RestartResponse, t);
@@ -122,18 +120,30 @@ export async function restartRecentSession(
                 host.showError(unidentifiedRestartNotice((opts && opts.title) || '', t));
             }
         }
-        say('opened');
-        await host.refreshRunningSessions();
-        const opened = openedSession(result);
-        if (opened && host.openSession) await host.openSession(opened.id, opened.tmuxName);
-        await host.refreshRecent();
     } catch (error) {
         console.error('CloudeWeb: restart of recent session failed:', error);
         const reason = reasonOf(error, t);
         say('failed', reason);
         host.showError(t(RECENT_KEYS.restartFailed, { reason }));
+        RESTARTS_IN_FLIGHT.delete(key);
+        return;
+    }
+    try {
+        say('opened');
+        const opened = openedSession(result);
+        await followUp('refreshRunning', () => host.refreshRunningSessions());
+        if (opened && host.openSession) await followUp('openSession', () => host.openSession!(opened.id, opened.tmuxName));
+        await followUp('refreshRecent', () => host.refreshRecent());
     } finally {
         RESTARTS_IN_FLIGHT.delete(key);
+    }
+}
+
+async function followUp(step: string, run: () => Promise<unknown>): Promise<void> {
+    try {
+        await run();
+    } catch (error) {
+        console.error(`CloudeWeb: restarted session, but follow-up step failed: ${step}`, error);
     }
 }
 

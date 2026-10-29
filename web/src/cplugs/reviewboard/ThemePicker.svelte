@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
+  import { Select, type SelectChoice } from '../sdk/ui';
   import { flatChoices, type ThemeGroup } from './board-theme';
 
   interface Props {
@@ -13,22 +14,13 @@
   let { groups, value, active, onchange, onrefresh }: Props = $props();
 
   const activeName = $derived(flatChoices(groups).find((c) => c.id === active)?.name ?? active ?? '');
+  const choices = $derived<SelectChoice[]>([
+    { value: '', label: activeName ? t('cplug.reviewboard.theme.app_named', { name: activeName }) : t('cplug.reviewboard.theme.app') },
+    ...(groups.length > 1
+      ? groups.map((group) => ({ group: group.source.label, options: group.choices.map((one) => ({ value: one.id, label: one.name })) }))
+      : flatChoices(groups).map((one) => ({ value: one.id, label: one.name }))),
+  ]);
 </script>
 
-<select class="oc-field rb-theme" aria-label={t('cplug.reviewboard.theme.label')} title={t('cplug.reviewboard.theme.title')} data-theme-picker
-        {value} onfocus={onrefresh} onchange={(e) => onchange((e.currentTarget as HTMLSelectElement).value)}>
-  <option value="" selected={value === ''}>{activeName ? t('cplug.reviewboard.theme.app_named', { name: activeName }) : t('cplug.reviewboard.theme.app')}</option>
-  {#if groups.length > 1}
-    {#each groups as group (group.source.id)}
-      <optgroup label={group.source.label}>
-        {#each group.choices as one (one.id)}
-          <option value={one.id} selected={value === one.id}>{one.name}</option>
-        {/each}
-      </optgroup>
-    {/each}
-  {:else}
-    {#each flatChoices(groups) as one (one.id)}
-      <option value={one.id} selected={value === one.id}>{one.name}</option>
-    {/each}
-  {/if}
-</select>
+<Select size="sm" value={value} options={choices} aria-label={t('cplug.reviewboard.theme.label')} title={t('cplug.reviewboard.theme.title')} data-theme-picker
+          onfocus={onrefresh} onchange={(e) => onchange((e.currentTarget as HTMLSelectElement).value)} />

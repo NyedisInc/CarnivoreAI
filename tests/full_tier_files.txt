@@ -1,1 +1,6 @@
-
+tests/test_restart_picker_renders.py
+tests/test_restart_picker_geometry.py
+tests/test_theme_follows_navigation_renders.py
+tests/test_terminal_theme_survives_agent_renders.py
+tests/test_navigation_generation_renders.py
+tests/python/widgets/test_widget_fit_check.py

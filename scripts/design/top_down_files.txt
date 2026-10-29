@@ -1,3 +1,9 @@
+# The top-down gate's checks (scripts/design/check_top_down.sh; Joe (ccsliinc), 2026-10-21). One check per line:
+#   vitest <path>   a conformance vitest file, run from web/
+#   pytest <path>   a pytest file, run from the repo root with the venv
+# Every static (no browser) tests/python/design_system/test_*.py is run as well, without a line here; a file that drives a
+# browser (Playwright) is left to the pre-version-bump pipeline. A path listed here that does not exist is CANNOT RUN (exit 2),
+# never a pass. scripts/design/ratchet_guard.py reads this list too: every KNOWN list and ceiling in these files only goes down.
 vitest web/src/lib/zone-shell/zone-hosts.test.ts
 vitest web/src/lib/zone-shell/wrapper-rules.test.ts
 vitest web/src/opscenter/widgets/menu/menu-conformance.test.ts

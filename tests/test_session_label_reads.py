@@ -21,16 +21,16 @@ def _title(conn, uuid, title):
 
 def test_an_exact_instance_read_answers_that_instances_label(conn):
     add_row(conn, uuid="u1", name="cloude_a", epoch=1000)
-    _title(conn, "u1", "Image Tool")
+    _title(conn, "u1", "Media Compression")
     assert (
         label_for_instance(conn, socket=SOCKET, name="cloude_a", epoch=1000)
-        == "Image Tool"
+        == "Media Compression"
     )
 
 
 def test_an_exact_instance_read_refuses_a_different_epoch(conn):
     add_row(conn, uuid="u1", name="cloude_a", epoch=1000)
-    _title(conn, "u1", "Image Tool")
+    _title(conn, "u1", "Media Compression")
     assert (
         label_for_instance(conn, socket=SOCKET, name="cloude_a", epoch=2000)
         is None
@@ -39,7 +39,7 @@ def test_an_exact_instance_read_refuses_a_different_epoch(conn):
 
 def test_an_exact_instance_read_with_no_epoch_answers_none(conn):
     add_row(conn, uuid="u1", name="cloude_a", epoch=1000)
-    _title(conn, "u1", "Image Tool")
+    _title(conn, "u1", "Media Compression")
     assert (
         label_for_instance(conn, socket=SOCKET, name="cloude_a", epoch=None)
         is None

@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { Button } from '../base';
     import type { Translate } from '../sessions/types';
     import { PLACES, placeName, type PlaceId } from './places';
     import { drag } from './places-drag.svelte';
@@ -63,14 +64,15 @@
 <div class="wp-dockwrap" bind:this={wrap} data-docked={docked ? '' : undefined}>
     <div class="wp-dock">
         <span class="oc-label">{t('widgets.places.dock.label')}</span>
-        <div class="oc-seg" role="radiogroup" aria-label={t('widgets.places.dock.label')}>
+        <div class="oc-segmented" role="radiogroup" aria-label={t('widgets.places.dock.label')}>
             {#each ['any', ...PLACES.map((def) => def.id)] as id (id)}
                 {@const def = PLACES.find((one) => one.id === id)}
                 {@const verdict = def && drag.widget ? accept(def.id) : null}
-                <button
-                    type="button"
-                    class="oc-seg__item wp-chip"
-                    class:is-over={over === id}
+                <Button
+                    variant="quiet"
+                    size="sm"
+                    data-chip
+                    data-over={over === id ? '' : undefined}
                     role="radio"
                     aria-checked={place === id}
                     data-place={id}
@@ -92,7 +94,7 @@
                 >
                     {#if def}<span class="wp-pmark" data-pl={def.id}>{def.mark}</span>{/if}
                     <span>{name(id as 'any' | PlaceId)}</span>
-                </button>
+                </Button>
             {/each}
         </div>
     </div>

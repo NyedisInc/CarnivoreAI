@@ -1,4 +1,5 @@
-import { closestTo, refetch, rg, type RowController } from './row-globals';
+import { refetchDrawer } from './interaction-globals';
+import { closestTo, rg, type RowController } from './row-globals';
 import { openSessionAutomations } from '../automations/schedule-prefill';
 
 function titleFor(el: Element, attr: string): string | null {
@@ -16,7 +17,7 @@ export async function toggleKeepAwake(ctrl: RowController, el: Element): Promise
     ctrl.repaint?.();
 }
 
-export async function openShare(ctrl: RowController, el: Element): Promise<void> {
+export async function openShare(el: Element): Promise<void> {
     const run = rg().CloudeWeb?.rowMenu?.runCplug;
     if (typeof run !== 'function') {
         console.error('SessionSidebar: the row menu bridge (CloudeWeb.rowMenu) is not published, the share dialog cannot open');
@@ -26,7 +27,7 @@ export async function openShare(ctrl: RowController, el: Element): Promise<void>
         name: el.getAttribute('data-share-session') || '',
         sessionId: el.getAttribute('data-share-session-id') || null,
     });
-    await refetch(ctrl);
+    await refetchDrawer();
 }
 
 export function openSubagents(el: Element): void {

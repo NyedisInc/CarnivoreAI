@@ -15,6 +15,7 @@ _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 class Level(BaseModel):
+    """One reserve level: the share of cpu and memory kept for the owner."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -57,6 +58,7 @@ class KeyboardRule(BaseModel):
 
 
 class ReserveConfig(BaseModel):
+    """The whole ``reserve`` document of one machine."""
 
     model_config = ConfigDict(extra="forbid")
 

@@ -51,7 +51,7 @@ describe('the roster reads', () => {
     expect(reads.filter((p) => p === '/federation/discovered')).toHaveLength(1);
     push.frame({ topics: ['computers'] });
     await vi.advanceTimersByTimeAsync(0);
-    expect(reads).toHaveLength(3);
+    expect(reads).toHaveLength(3); // another topic reads nothing
   });
 
   it('poll on the slow timer while the server does not announce the topic', async () => {

@@ -7,12 +7,14 @@ import { AdminApi, type Fetcher } from './admin.js';
 import { createNotesHost, type NotesHost } from './notes-host.svelte.js';
 import type { NoteRow } from './notes.js';
 
+/** One recorded request. */
 interface Call {
     url: string;
     method: string;
     headers: Record<string, string>;
 }
 
+/** A fake fetch answering by path, recording every call. */
 function routed(answers: Record<string, { status: number; body: unknown }>): {
     fetcher: Fetcher;
     calls: Call[];
@@ -33,9 +35,9 @@ function routed(answers: Record<string, { status: number; body: unknown }>): {
 }
 
 const NOTE: NoteRow = {
-    note_id: '50fbdb5cd450436282c6b6bf2c7aa865',
+    note_id: 'ab12cd34ef56ab12cd34ef56ab12cd34',
     item_id: 'bundled/matrix',
-    text: 'the background is too bright on the orchard variant.\nplease darken it a shade.',
+    text: 'the background is too bright on the argent variant.\nplease darken it a shade.',
     sender_id: 'cognito:11111111-2222-3333-4444-555555555555',
     sender_login: 'a-theme-reader',
     created_at: '2026-09-20T10:00:00Z',
@@ -112,7 +114,7 @@ describe('marking a note', () => {
                 status: 200,
                 body: { status: 'unread', notes: [NOTE] },
             },
-            'POST https://api.carnivore.ai/v1/notes/50fbdb5cd450436282c6b6bf2c7aa865/read': {
+            'POST https://api.carnivore.ai/v1/notes/ab12cd34ef56ab12cd34ef56ab12cd34/read': {
                 status: 200,
                 body: { ...NOTE, status: 'read', read_at: '2026-09-22T00:00:00Z' },
             },
@@ -127,7 +129,7 @@ describe('marking a note', () => {
         const mark = calls.at(-1);
         expect(mark?.method).toBe('POST');
         expect(mark?.url).toBe(
-            'https://api.carnivore.ai/v1/notes/50fbdb5cd450436282c6b6bf2c7aa865/read',
+            'https://api.carnivore.ai/v1/notes/ab12cd34ef56ab12cd34ef56ab12cd34/read',
         );
         expect(mark?.headers.authorization).toBe('Bearer ACCESS-TOKEN');
         expect(target.textContent).not.toContain(NOTE.item_id);

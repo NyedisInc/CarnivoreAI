@@ -19,6 +19,7 @@ const i18n = createI18n({ locale: 'en' }) as {
 };
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
+/** A catalog host that answers empty and refuses every write. */
 function catalogHost(): CatalogHost {
     const refuse = () => Promise.reject(new Error('the test never calls this'));
     return {
@@ -38,6 +39,7 @@ function catalogHost(): CatalogHost {
     } as unknown as CatalogHost;
 }
 
+/** A ledger host that answers empty and refuses every write. */
 function ledgerHost(): LedgerHost {
     const refuse = () => Promise.reject(new Error('the test never calls this'));
     return {

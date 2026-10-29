@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Dict, List, Optional
 
 import structlog
@@ -120,7 +121,8 @@ async def get_server_status(request: Request) -> Dict[str, Any]:
             status_code=503, detail="session manager not available"
         )
 
-    snapshot = server_status.collect(
+    snapshot = await asyncio.to_thread(
+        server_status.collect,
         host=settings.host,
         port=settings.port,
         socket_name=resolve_socket_name(),

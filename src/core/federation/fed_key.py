@@ -6,14 +6,16 @@ import secrets
 import sqlite3
 from contextlib import closing
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional, Tuple
 
 import structlog
 
 from src.core import relay_keychain
 from src.core.db import DatastoreUnreadableError, connect, db_path_for, get_meta
 from src.core.db_models import META_INSTALL_ID
-from src.core.relay_identity.device_key import DeviceKey, DeviceKeyUnavailable, b64url, device_id_for, load_or_create, load_or_create_file
+from src.core.relay_identity.device_key import (
+    DeviceKey, DeviceKeyUnavailable, b64url, device_id_for, load_or_create, load_or_create_file, unb64url,
+)
 
 logger = structlog.get_logger()
 
@@ -25,18 +27,6 @@ SLOT_KEY_FILE = "federation-device.key"
 
 
 def load_key(install_id: str, **seams) -> DeviceKey:
-    """This install's federation key, minting one only when the Keychain says absent.
-
-    Description: a testsrv slot server (``relay_keychain.TEST_SLOT_ENV`` set; its private HOME has
-      no login Keychain) keeps the key in a 0600 file in its state dir instead, so slot-to-slot
-      pairing works. Production never takes that branch. A call with test seams stays on the
-      Keychain code path.
-
-    Inputs: install_id (str); seams - ``read``/``write`` test seams.
-    Output: DeviceKey.
-    Raises: DeviceKeyUnavailable - the Keychain did not answer or holds junk.
-    Example: key = load_key(install_id); key.sign(b"x")
-    """
     if not seams and os.environ.get(relay_keychain.TEST_SLOT_ENV):
         from src.config import settings
         try:
@@ -50,7 +40,15 @@ def load_key(install_id: str, **seams) -> DeviceKey:
 NEXT_SUFFIX = ".next"
 
 
-def begin_rotation(install_id: str, *, write=relay_keychain.write_password) -> DeviceKey:
+def begin_rotation(install_id: str, *, write: Callable[..., None] = relay_keychain.write_password,
+                   read: Callable[[str, str], Tuple[str, Optional[str]]] = relay_keychain.read_password_state) -> DeviceKey:
+    state, staged = read(relay_keychain.FEDERATION_KEY_SERVICE, install_id + NEXT_SUFFIX)
+    if state == relay_keychain.READ_OK and staged is not None:
+        resumed = unb64url(staged, 32)
+        if resumed is not None:
+            return DeviceKey.from_seed(resumed)
+    elif state != relay_keychain.READ_ABSENT:
+        raise DeviceKeyUnavailable("the login keychain did not answer")
     seed = secrets.token_bytes(32)
     try:
         write(relay_keychain.FEDERATION_KEY_SERVICE, install_id + NEXT_SUFFIX, b64url(seed), replace=True)

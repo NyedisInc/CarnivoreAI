@@ -79,3 +79,22 @@ def test_context_refuses_a_caller_who_is_not_signed_in(world):
     world["app"].dependency_overrides.clear()
     with TestClient(world["app"]) as client:
         assert client.get(f"{BASE}/context", params={"conversation_id": CONV, "line": 1}).status_code in (401, 403)
+
+
+def test_paging_scans_the_transcript_once_not_once_per_page(world, monkeypatch):
+    from src.core.deepsearch import context
+
+    context._spans_cache.clear()
+    scans = []
+    real = context.RangeReader
+
+    def counting(source, start, end):
+        scans.append((start, end))
+        return real(source, start, end)
+
+    monkeypatch.setattr(context, "RangeReader", counting)
+    with TestClient(world["app"]) as client:
+        for params in ({"line": 2}, {"before_line": 3}, {"after_line": 1}):
+            resp = client.get(f"{BASE}/context", params={"conversation_id": CONV, "before": 2, "after": 2, **params})
+            assert resp.status_code == 200
+    assert len(scans) == 1

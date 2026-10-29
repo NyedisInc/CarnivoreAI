@@ -3,7 +3,7 @@ import { ApiError, authFetch } from '../../opscenter/api/auth.svelte';
 
 export type Fetcher = typeof authFetch;
 
-export type Harness = 'claude' | 'codex' | 'shell' | 'hermes' | 'openclaw' | 'local';
+export type Harness = 'claude' | 'codex' | 'shell' | 'hermes' | 'openclaw' | 'local' | 'custom';
 export type Posture = 'harness_default' | 'ask' | 'accept_edits' | 'skip_all';
 
 export interface LaunchProfile {
@@ -28,6 +28,7 @@ export interface LaunchProfile {
 
 export interface ProfileRow extends LaunchProfile {
     summary: { permissions_badge: string; model: string; account: string; endpoint: string };
+    installed?: boolean;
 }
 
 export interface ProfileList { revision: number; profiles: ProfileRow[] }
@@ -62,7 +63,6 @@ export interface ImportPreview {
 }
 
 export interface ComputerLauncher { id: string; name: string; family: string }
-/* could not */
 export type ComputerLaunchers = { status: 'ok'; launchers: ComputerLauncher[] } | { status: 'ssh'; families: string[] } | { status: 'unavailable'; reason: string };
 export interface AccountOption { id: string; name: string; provider: string }
 export interface ConnectionOption { id: string; preset: string; label: string; enabled: boolean; has_key: boolean; key_hint: string }

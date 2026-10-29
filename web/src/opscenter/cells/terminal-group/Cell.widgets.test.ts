@@ -68,13 +68,11 @@ test('the plus menu lists widgets by category and picking one opens it as a tab 
   flushSync();
   item('widget').click();
   flushSync();
-  const category = [...document.querySelectorAll('[role="menuitem"][data-node^="widget/"]')].find(
-    (el) => !(el as HTMLElement).dataset.node?.startsWith('widget/core.'),
-  ) as HTMLButtonElement;
+  const category = document.querySelector('[role="menuitem"][data-node="widget/tools"]') as HTMLButtonElement;
   expect(category).toBeTruthy();
   category.click();
   flushSync();
-  item('widget/core.notes')?.click();
+  item('widget/core.notes').click();
   flushSync();
   expect(tabsFor(terminalLayout, A)).toEqual([A, NOTES]);
   expect(root.querySelector(`[data-tab="${NOTES}"]`)?.getAttribute('aria-selected')).toBe('true');

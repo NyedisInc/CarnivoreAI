@@ -168,3 +168,22 @@ def test_cli_check_tag_pass_when_tag_present():
         latest = _run("latest", "--install-dir", str(ROOT), "--remote", str(bare))
         assert latest.returncode == 0
         assert latest.stdout.strip() == "1.2.3"
+
+
+def test_tag_commands_only_map_remote_failures_to_exit_3(monkeypatch, capsys):
+    import argparse
+
+    args = argparse.Namespace(install_dir=str(ROOT), remote="x", tag="1.0.0")
+    for cmd in (version_probe._cmd_tags, version_probe._cmd_latest, version_probe._cmd_check_tag):
+        monkeypatch.setattr(
+            version_probe, "list_release_tags",
+            lambda *_a, **_k: (_ for _ in ()).throw(ValueError("programming error")),
+        )
+        with pytest.raises(ValueError):
+            cmd(args)
+        monkeypatch.setattr(
+            version_probe, "list_release_tags",
+            lambda *_a, **_k: (_ for _ in ()).throw(version_probe.TagListError("down")),
+        )
+        assert cmd(args) == 3
+    assert "could not list release tags" in capsys.readouterr().err

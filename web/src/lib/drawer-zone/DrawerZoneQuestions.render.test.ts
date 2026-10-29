@@ -23,6 +23,7 @@ import '../../opscenter/cells/questions/placement';
 
 setLocale('en');
 
+// the settings overlay
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};

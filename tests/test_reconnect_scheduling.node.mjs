@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -16,6 +17,13 @@ const ABANDON_SRC = read('client/js/terminal-socket-abandon.js');
 const SOCKET_AUTH_SRC = read('client/js/socket-auth-recovery.js');
 const TERM_SRC = read('client/js/terminal.js');
 const INDEX_HTML = read('client/index.html');
+// The boot line is one call into client/js/terminal-client-factory.js
+// now, and the register() that hands it the class is the first of the
+// two lines, so it is what a loader cuts at to get the class alone.
+// The boot below that line does more than construct: it refuses by
+// name when the client factory did not load. A loader that wants the
+// class alone has to cut above the whole boot, so terminal.js carries
+// this marker line and says in place that it does not move.
 const TERM_SINGLETON = '// THE CLASS ENDS ABOVE.';
 
 const CONNECTING = 0;
@@ -73,6 +81,12 @@ function makeController() {
     }
 
     const self = {
+        // THE THREE ACCESSORS every method reaches its collaborators, its
+        // own container and the page's chrome through, now that Terminal
+        // is instantiable. On a hand-built stand-in they have to come off
+        // the prototype like the methods do. Empty backing state means
+        // every collaborator resolves to this sandbox's own global, which
+        // is exactly what this world sets up.
         _wiring: {}, _pageChrome: {}, _host: null,
         _m: P._m, _chrome: P._chrome, _containerEl: P._containerEl,
         sessionActive: true,

@@ -229,7 +229,7 @@ def test_the_import_records_the_socket_it_was_GIVEN(conn):
 def test_MAIN_PASSES_THE_CONFIGURED_SOCKET_to_the_import():
     import ast
 
-    source = (ROOT / "src" / "main.py").read_text()
+    source = (ROOT / "src" / "core" / "boot" / "first_run.py").read_text()
     tree = ast.parse(source)
     calls = [
         node

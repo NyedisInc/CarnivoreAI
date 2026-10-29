@@ -25,6 +25,7 @@ vi.mock('../deepsearch/result-actions', async (importOriginal) => ({
 
 const REPO = path.resolve(process.cwd(), '..');
 
+/** The drawer's <aside>, exactly as shipped. */
 function drawerMarkup(): string {
     const source = fs.readFileSync(path.join(REPO, 'client', 'index.html'), 'utf8');
     const start = source.indexOf('<aside id="session-sidebar-panel"');
@@ -110,7 +111,7 @@ function render(mode: SearchModeDef | null | undefined, deep = true) {
     mounted.push(mount(DrawerSearch, { target, props }));
     flushSync();
     const input = target.querySelector<HTMLInputElement>('.oc-search > input')!;
-    const button = () => target.querySelector<HTMLButtonElement>('.ds-mode')!;
+    const button = () => target.querySelector<HTMLButtonElement>('[data-ds-mode]')!;
     const choose = (id: string) => {
         button().click();
         flushSync();

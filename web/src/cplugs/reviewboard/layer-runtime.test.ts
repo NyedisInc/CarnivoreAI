@@ -229,7 +229,7 @@ describe('rank, number and date (S3)', () => {
   const fire = (target: Element, type: string, extra: Json = {}): void => { target.dispatchEvent(Object.assign(new Event(type, { bubbles: true, cancelable: true }), { button: 0, pointerId: 1 }, extra)); };
   const layout = (id: string): void => entries(id).forEach((e) => { e.getBoundingClientRect = () => { const top = order(id).indexOf(e.getAttribute('data-rbl-id')!) * 20; return { top, height: 20, bottom: top + 20 } as DOMRect; }; });
 
-  it('draws a rank in the options order, with a position number on each entry, and posts nothing until the owner moves one', () => {
+  it('draws a rank in the options order, with a position number on each entry, and posts nothing until he moves one', () => {
     boot(S3);
     expect(order('order')).toEqual(['a', 'b', 'c', 'd']);
     expect(entries('order').map((e) => e.querySelector('.rbl-rank__n')!.textContent)).toEqual(['1', '2', '3', '4']);
@@ -353,7 +353,7 @@ describe('the rows layer (S4)', () => {
     { id: 'r2', title: 'sidebar colors', group: 'OPEN (2)', suggest: 'ok' },
     { id: 'r3', title: 'own picks', group: 'OPEN (2)', choices: [{ id: 'x', label: 'xray' }, { id: 'y', label: 'yankee' }] },
   ];
-  const RLAYER = { kind: 'rows', v: 1, title: 'acme watch', pick: 'one', choices: CHOICES, rows: ROWS };
+  const RLAYER = { kind: 'rows', v: 1, title: 'alex watch', pick: 'one', choices: CHOICES, rows: ROWS };
   const pick = (id: string, label: string): HTMLButtonElement => [...item(id).querySelectorAll<HTMLButtonElement>('.rbl-opt')].find((b) => b.querySelector('.rbl-opt__text')!.textContent === label)!;
   const values = (): Json => posted().at(-1)!.values as Json;
 
@@ -389,9 +389,9 @@ describe('the rows layer (S4)', () => {
     press(pick('r3', 'yankee'));
     let p = posted().at(-1)!;
     expect(p).toEqual({ layer: 'rows', v: 1, values: { r1: 'later', r3: 'y' } });
-    typeInto(item('r2').querySelector('textarea') as HTMLTextAreaElement, 'ask acme');
+    typeInto(item('r2').querySelector('textarea') as HTMLTextAreaElement, 'ask alex');
     p = posted().at(-1)!;
-    expect(p.notes).toEqual({ r2: 'ask acme' });
+    expect(p.notes).toEqual({ r2: 'ask alex' });
     press(pick('r3', 'yankee'));
     expect(values()).toEqual({ r1: 'later' });
   });
@@ -415,7 +415,7 @@ describe('the rows layer (S4)', () => {
     expect(posted()).toEqual([]);
   });
 
-  it('renders a 42 row board in the shape of the team watch page (four groups) and survives one edit', () => {
+  it('renders a 42 row board in the shape of the Alex watch page (four groups) and survives one edit', () => {
     const many = Array.from({ length: 42 }, (_, i) => ({
       id: `aw-${String(i + 1).padStart(3, '0')}`, title: `#${i + 1} entry ${i + 1}`, tag: 'changed', group: ['NEW (4) removed-partial', 'NEW (4) changed', 'OPEN (38) removed', 'OPEN (38) minor'][i % 4]!,
       lines: [{ label: 'you had', text: 'x' }, { label: 'now', text: 'y' }, { label: 'way back', text: 'none' }, { label: 'my take', text: 'fine with it: z' }], suggest: 'ok',

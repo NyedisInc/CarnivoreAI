@@ -130,12 +130,12 @@ test('showAuth() no longer carries a per-button hide list', () => {
 });
 
 test('every screen transition stamps the marker', () => {
-    const app = client('js/app.js');
+    const app = client('js/app.js') + client('js/app-screen-entry.js');
     for (const screen of ['auth', 'launchpad', 'terminal']) {
         assert.ok(app.includes(`ScreenChrome.apply('${screen}')`),
             `no ScreenChrome.apply('${screen}') in app.js`);
     }
-    const assigns = (app.match(/this\.currentScreen = '/g) || []).length;
+    const assigns = (app.match(/(?:this|app)\.currentScreen = '/g) || []).length;
     const stamps = (app.match(/ScreenChrome\.apply\('/g) || []).length;
     assert.equal(stamps, assigns,
         `${assigns} screen assignments but ${stamps} marker stamps`);

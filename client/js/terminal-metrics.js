@@ -1,4 +1,3 @@
-/* display:none */
 
 console.log('[TerminalMetrics Module] Loading...');
 
@@ -35,7 +34,6 @@ console.log('[TerminalMetrics Module] Loading...');
         }
     }
 
-    /* position: relative */
     function xtermStylesheetApplied(root) {
         const scope = root || document;
         let el = null;
@@ -52,7 +50,7 @@ console.log('[TerminalMetrics Module] Loading...');
         }
     }
 
-    /* could not */
+    /* could not measure */
     function proposalIsSane(proposal) {
         if (!proposal) return { ok: false, reason: 'no-proposal' };
         const { cols, rows } = proposal;
@@ -113,7 +111,6 @@ console.log('[TerminalMetrics Module] Loading...');
 
     const WIDTH_EPSILON_PX = 1;
 
-    /* padding */
     function availableWidth(controller) {
         try {
             const el = controller.term.element;
@@ -150,7 +147,6 @@ console.log('[TerminalMetrics Module] Loading...');
             out.reason = 'no-controller';
             return out;
         }
-        //  hidden 
         const vote = window.TerminalSizeVote;
         if (vote && typeof vote.showsPane === 'function' && vote.showsPane(controller)) {
             out.reason = 'following';
@@ -209,7 +205,6 @@ console.log('[TerminalMetrics Module] Loading...');
         }
     }
 
-    /* could not */
     function describeCellMetrics(controller) {
         try {
             const term = controller && controller.term;
@@ -234,7 +229,7 @@ console.log('[TerminalMetrics Module] Loading...');
         }
     }
 
-    /* could not */
+    /* the cell changed */
     function describeBoxHeights() {
         try {
             if (typeof document === 'undefined') return 'boxes=unreadable';

@@ -1,4 +1,3 @@
-/*  hidden  overflow: hidden */
 
 console.log('[LaunchpadHost Module] Loading...');
 
@@ -9,6 +8,7 @@ console.log('[LaunchpadHost Module] Loading...');
 
     var applied = false;
 
+    /* the home screen */
     function apply(onHome) {
         if (onHome === applied) return;
         applied = onHome;
@@ -28,7 +28,6 @@ console.log('[LaunchpadHost Module] Loading...');
         apply(true);
     }
 
-    /* something else */
     function exit() {
         apply(false);
     }

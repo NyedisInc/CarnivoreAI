@@ -103,7 +103,7 @@ def test_impact_refuses_a_future_marker_an_unknown_marker_and_a_bad_metric(store
     with pytest.raises(ValueError):
         insights.impact(store, annotation_id=marker, metric="working_seconds", days=7, now=NOW)
     with pytest.raises(config.NotFound):
-        insights.impact(store, annotation_id="e8213214-41aa-4fea-8c43-eb5ecb1234d9", metric="total_tokens", days=7, now=NOW)
+        insights.impact(store, annotation_id="550e8400-e29b-41d4-a716-446655440000", metric="total_tokens", days=7, now=NOW)
 
 
 def test_routes_are_authenticated_and_bounded(store, tmp_path):
@@ -120,6 +120,6 @@ def test_routes_are_authenticated_and_bounded(store, tmp_path):
     assert client.get("/api/v1/stats/conversations", params=span).json()["items"] == []
     assert client.get("/api/v1/stats/conversations", params={**span, "limit": 501}).status_code == 422
     assert client.get("/api/v1/stats/conversations", params={"from": span["to"], "to": span["from"]}).status_code == 422
-    assert client.get("/api/v1/stats/impact", params={"annotation_id": "e8213214-41aa-4fea-8c43-eb5ecb1234d9"}).status_code == 404
-    assert client.get("/api/v1/stats/impact", params={"annotation_id": "e8213214-41aa-4fea-8c43-eb5ecb1234d9", "days": 31}).status_code == 422
-    assert client.get("/api/v1/stats/impact", params={"annotation_id": "e8213214-41aa-4fea-8c43-eb5ecb1234d9", "metric": "working_seconds"}).status_code == 422
+    assert client.get("/api/v1/stats/impact", params={"annotation_id": "550e8400-e29b-41d4-a716-446655440000"}).status_code == 404
+    assert client.get("/api/v1/stats/impact", params={"annotation_id": "550e8400-e29b-41d4-a716-446655440000", "days": 31}).status_code == 422
+    assert client.get("/api/v1/stats/impact", params={"annotation_id": "550e8400-e29b-41d4-a716-446655440000", "metric": "working_seconds"}).status_code == 422

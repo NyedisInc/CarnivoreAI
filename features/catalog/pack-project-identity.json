@@ -46,7 +46,7 @@
   ],
   "examples": [
     "Keep the same project running on two computers under one uid.",
-    "See moved to hosta on a project that migrated, and be refused when something tries to start it here."
+    "See moved to studio on a project that migrated, and be refused when something tries to start it here."
   ],
   "media_exempt": "The badge reuses the archived badge and the Projects page tag; screenshots are captured before the next version bump."
 }

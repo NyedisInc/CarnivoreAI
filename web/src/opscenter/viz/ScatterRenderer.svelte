@@ -19,6 +19,7 @@
   import { scatterPath, scatterPoints, type ConversationsPayload } from './scatter';
   import { VIZ_SPECS } from './specs';
   import { watchVisible } from './visible';
+  import { escapeHtml } from './tooltip-html';
 
   let { config, tier }: { config: ChartConfig; tier: Tier } = $props();
   const framing = framedTitle();
@@ -57,7 +58,7 @@
       textStyle: { fontFamily },
       grid: insets,
       tooltip: { confine: true, trigger: 'item', backgroundColor: color('var(--oc-ground-raised)', '#10232b'), borderColor: color('var(--oc-line-rule)', '#42616a'), textStyle: { color: text, fontSize: 12 },
-        formatter: (info: { data: { value: number[]; project: string; model: string; tokens: number } }) => `${info.data.project} / ${info.data.model}<br>${formatDuration(info.data.value[0]! * 60)} · ${formatMetric(info.data.value[1]! * 1e9, 'nano_usd').text} · ${formatMetric(info.data.tokens, 'tokens').text}` },
+        formatter: (info: { data: { value: number[]; project: string; model: string; tokens: number } }) => `${escapeHtml(info.data.project)} / ${escapeHtml(info.data.model)}<br>${formatDuration(info.data.value[0]! * 60)} · ${formatMetric(info.data.value[1]! * 1e9, 'nano_usd').text} · ${formatMetric(info.data.tokens, 'tokens').text}` },
       xAxis: axis(t('scatter.x'), (value) => formatDuration(value * 60), counts.time),
       yAxis: axis(t('scatter.y'), (value) => formatMetric(value * 1e9, 'nano_usd').text, counts.value),
       series: [{

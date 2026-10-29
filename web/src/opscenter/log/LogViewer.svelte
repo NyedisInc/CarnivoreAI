@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { onDestroy } from 'svelte';
   import { t } from '../../lib/i18n/index.svelte';
   import { ApiLogSource } from './api-source';
@@ -8,6 +7,7 @@
   import { copyText, downloadJsonl, recordLine } from './export';
   import { readLevels, writeLevels } from './log-levels';
   import { msUntilReread } from './level-expiry';
+  import Button from '../../lib/base/Button.svelte';
   import LogList from './LogList.svelte';
   import LogToolbar from './LogToolbar.svelte';
   import type { LevelState, LogPage, LogRecord, LogSource } from './types';
@@ -18,7 +18,6 @@
 
   const { source }: Props = $props();
 
-  /*  hidden  */
   const FLUSH_FALLBACK_MS = 250;
 
   // svelte-ignore state_referenced_locally
@@ -51,6 +50,7 @@
   let frame = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let first = true;
+  let generation = 0;
 
   function flush(): void {
     if (frame) cancelAnimationFrame(frame);
@@ -62,6 +62,7 @@
     for (const got of pages) {
       if (got.reset) {
         buffer.clear();
+        generation += 1;
         expanded = new Set();
         notice = 'reset';
       } else if (got.gap) {
@@ -112,8 +113,10 @@
   async function loadOlder(): Promise<void> {
     if (!before || olderBusy) return;
     olderBusy = true;
+    const asked = generation;
     try {
       const got = await from.backfill(before);
+      if (asked !== generation) return;
       buffer.prepend(got.records);
       before = got.before;
       version += 1;
@@ -147,6 +150,7 @@
 
   function clearView(): void {
     buffer.clear();
+    generation += 1;
     expanded = new Set();
     unseen = 0;
     notice = '';
@@ -160,8 +164,8 @@
     onExport={() => downloadJsonl(records)} onClear={clearView} />
   <div class="oc-lv-status" role="status" data-log-status>
     {#if before}
-      <button type="button" class="oc-btn oc-btn--sm oc-btn--ghost" disabled={olderBusy} onclick={() => void loadOlder()} data-log-older>
-        {t(olderBusy ? 'opscenter.log.older.loading' : 'opscenter.log.older')}</button>
+      <Button size="sm" variant="quiet" disabled={olderBusy} onclick={() => void loadOlder()} data-log-older>
+        {t(olderBusy ? 'opscenter.log.older.loading' : 'opscenter.log.older')}</Button>
     {/if}
     <span class="oc-lv-count">{t('opscenter.log.count', { shown: records.length, held: buffer.records.length })}</span>
     {#if buffer.dropped}<span class="oc-lv-warn" data-log-dropped>{t('opscenter.log.dropped', { count: buffer.dropped })}</span>{/if}

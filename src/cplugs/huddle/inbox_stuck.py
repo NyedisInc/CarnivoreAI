@@ -1,18 +1,3 @@
-"""
-WHERE THE QUESTION LIVES. A question belongs to a task, and an entry has none yet, so the question rides a CARRIER: a parked (``todo``)
-task made by Carnivore from the entry's text and linked to the entry (``items.inbox_id``, NOT in its ``item_ids``). It exists only
-while the question is open: any way the entry ends removes it (``InboxStore.retire_questions``), and the entry's original text is the
-``inbox`` row, which no delete touches, so a task deleted later never deletes an original ask another task still links.
-
-THE THREE ANSWERS (carried out by ``inbox_stuck_answer.after_answer``, run by the answer route; the entry survives all of them):
-
-- ``file``: the entry is filed as ONE plain ``open`` task in the add box's own project, linked to the entry (``InboxStore.file_plain``).
-- ``session``: a session is woken or started in the project (``session_bring_up.wake_newest_or_start``) and the entry is offered to it
-  at once, with a fresh timer.
-- ``wait``: a fresh timer; the pass offers it again, and a second silence raises a second question.
-
-The timer is the scheduler's own (``schedule.py`` wakes while an entry waits for a session), never a UI one.
-"""
 
 from __future__ import annotations
 

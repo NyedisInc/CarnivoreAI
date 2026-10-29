@@ -1,7 +1,9 @@
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from src.models.utc_time import as_aware_utc, utc_now
 
 
 class ToastDetail(BaseModel):
@@ -70,7 +72,7 @@ class Toast(BaseModel):
     detail: Optional[ToastDetail] = Field(
         None, description="Reason, tool, target and snippet for the detailed toast mode"
     )
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utc_now)
     version: int = Field(
         1,
         description=(
@@ -93,6 +95,11 @@ class Toast(BaseModel):
             "up). None while the toast is still open."
         ),
     )
+
+    @field_validator("created_at", mode="after")
+    @classmethod
+    def _stamps_are_aware_utc(cls, value: datetime) -> datetime:
+        return as_aware_utc(value)
 
     class Config:
         json_encoders = {
@@ -121,6 +128,14 @@ class CreateToastRequest(BaseModel):
 
 class MuteNotificationsRequest(BaseModel):
     """Body of ``PATCH /sessions/records/{session_uuid}/notifications``.
+
+    ``muted`` IS A STATE, NOT A TOGGLE, and that is the whole reason this
+    carries a boolean rather than being two verbs. A menu can be clicked
+    twice, a request can be retried, and two tabs can be open on the same
+    session; a toggle would make every one of those flip the setting to
+    whatever the race decided. Sending the state the user asked for makes
+    the call idempotent, so a repeat is a no-op that reports the same
+    answer instead of undoing the first one.
     """
 
     muted: bool = Field(

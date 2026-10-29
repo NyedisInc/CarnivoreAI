@@ -16,7 +16,7 @@ const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, 
 const MOD: InstallPreview = {
     body: '{"name":"working-on"}',
     files: [{ path: '.claude-plugin/plugin.json', size: 20 }],
-    publisher: 'acme',
+    publisher: 'alex',
     version: '0.1.0',
     digest: 'abc123def456',
     digest_prefix: 'abc123',
@@ -56,7 +56,7 @@ async function open(preview: InstallPreview): Promise<void> {
     document.body.appendChild(target);
     sheet = mount(InstallSheet, {
         target,
-        props: { card: cardView({ id: 'acme/working-on', name: 'working-on', kind: 'mod' }, false), host, t, close: vi.fn() } as never,
+        props: { card: cardView({ id: 'alex/working-on', name: 'working-on', kind: 'mod' }, false), host, t, close: vi.fn() } as never,
     }) as never;
     await new Promise((resolve) => setTimeout(resolve, 0));
 }

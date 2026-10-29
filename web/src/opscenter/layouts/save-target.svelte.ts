@@ -25,6 +25,9 @@ let hooks: SaveHooks | null = null;
 let applying = false;
 let dirty = false;
 let inflight = false;
+let inflightWrite: Promise<void> | null = null;
+let failed = false;
+let settled: { uuid: string; revision: number } | null = null;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let stop: (() => void) | null = null;
 let lastShape = '';
@@ -54,6 +57,7 @@ export function whileApplying<T>(fn: () => T): T {
 function noteLocal(key: string): void {
   if (applying || !layoutMode.uuid || key !== layoutKeyOf(layoutMode.uuid)) return;
   dirty = true;
+  failed = false;
   schedule(WRITE_DELAY);
 }
 
@@ -78,12 +82,41 @@ export async function flushShape(): Promise<void> {
   if (json === lastShape) return;
   const uuid = layoutMode.uuid;
   inflight = true;
+  failed = false;
+  inflightWrite = send(uuid, shape, json, true);
   try {
-    await send(uuid, shape, json, true);
+    await inflightWrite;
   } finally {
     inflight = false;
+    inflightWrite = null;
   }
-  if (dirty) schedule(WRITE_DELAY);
+  if (dirty && !failed) schedule(WRITE_DELAY);
+}
+
+export async function flushShapeFinal(): Promise<void> {
+  const uuid = layoutMode.uuid;
+  const shape = uuid ? currentShape() : null;
+  if (!dirty || !uuid || !shape) return;
+  dirty = false;
+  const json = JSON.stringify(shape);
+  if (json === lastShape) return;
+  let revision = layoutMode.revision;
+  if (inflightWrite) await inflightWrite.catch(() => undefined);
+  if (settled?.uuid === uuid) revision = settled.revision;
+  try {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        await putShape(uuid, shape, revision);
+        return;
+      } catch (error) {
+        const refused = layoutError(error);
+        if (refused.code !== 'layout_stale' || !refused.current || attempt > 0) throw error;
+        revision = refused.current.revision;
+      }
+    }
+  } catch (error) {
+    console.warn('layouts: the last change before leaving could not be saved', { uuid, error: layoutError(error).detail });
+  }
 }
 
 async function send(uuid: string, shape: LayoutShape, json: string, replay: boolean): Promise<void> {
@@ -110,9 +143,11 @@ async function send(uuid: string, shape: LayoutShape, json: string, replay: bool
       return;
     }
     dirty = true;
+    failed = true;
     hooks?.announce('', 'failed', refused.detail);
     return;
   }
+  if (write.layout) settled = { uuid, revision: write.layout.revision };
   if (uuid !== layoutMode.uuid) return;
   if (write.deleted) {
     hooks?.deleted(write);
@@ -148,5 +183,8 @@ export function resetSaveTarget(): void {
   hooks = null;
   applying = false;
   inflight = false;
+  inflightWrite = null;
+  failed = false;
+  settled = null;
   dropPending();
 }

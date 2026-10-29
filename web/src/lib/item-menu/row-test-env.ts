@@ -1,11 +1,9 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import { assignMenuKeys } from '../menu-keys/menu-keys';
 import './menus/all';
 import { rowMenuItems, type ResolvedRowItem } from './menus/row';
 import { itemMenu } from './registry';
+import { publishRunTable } from './run';
 import { rowMenuBridge } from './row-bridge';
 import { rowMenuType, type RowMenuCtx } from './row-context';
 
@@ -13,7 +11,6 @@ export type Win = Record<string, any>; // eslint-disable-line @typescript-eslint
 
 export const win = globalThis as unknown as Win;
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 export function bench(extra: Win = {}, t: (key: string, vars?: Record<string, unknown>) => string = (key) => key): Win {
     win.CloudeI18n = { t };
@@ -31,9 +28,7 @@ export function loadRunTable(): Win {
     const log = console.log;
     console.log = () => {};
     try {
-        for (const f of ['session-row-menu-sleep.js', 'session-row-menu-actions.js']) {
-            new Function(fs.readFileSync(path.join(repoRoot, 'client', 'js', f), 'utf8'))();
-        }
+        publishRunTable(win);
     } finally {
         console.log = log;
     }

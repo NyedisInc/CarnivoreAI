@@ -32,6 +32,7 @@ vi.mock('../../opscenter/api/auth.svelte', async (importOriginal) => {
   return {
     ...real,
     authFetch: async (full: string) => {
+      // the live read adds a query string (live_only, hide_completed), so the path is matched without it
       const path = full.split('?')[0];
       if (path === '/cplugs/huddle/aggregate') return { cursor: 5, groups: [{ list: '1', name: 'p', project_id: 1, revision: 1, items: ITEMS }] };
       if (path === '/cplugs/huddle/lists') return { cursor: 0, lists: [{ key: '1', name: 'p', project_id: 1, items: 5, open: 5, review: 1, questions: 1, claude_seq: 5 }] };
@@ -93,9 +94,13 @@ describe('TM Mark II hosted by the session rail, view all', () => {
     const chip = rail.querySelector<HTMLElement>('[data-task-manager-mk2-chip="unread"] .mk2-chip-count')!;
     const chipN = chip.textContent!.match(/\d+/)![0];
     expect(chipN).toBe('2');
-    expect(rail.querySelector('[data-mk2-head-count="unread"] .mk2-head-words')?.textContent?.trim()).toBe(`${chipN} unread`);
-    for (const it of ITEMS as { unread?: boolean; info_unread?: number }[]) { it.unread = false; it.info_unread = 0; }
-    huddle.groups = huddle.groups!.map((g) => ({ ...g, items: [...g.items] }));
+    const head = rail.querySelector<HTMLElement>('[data-mk2-head-count="unread"]')!;
+    expect(head.querySelector('.mk2-head-ico svg')).not.toBeNull();
+    expect(head.querySelector('.mk2-head-num')?.textContent?.trim()).toBe(chipN);
+    expect(head.querySelector('.mk2-head-words')?.textContent?.trim()).toBe(`${chipN} unread`);
+    const needsChipN = rail.querySelector<HTMLElement>('[data-task-manager-mk2-chip="needs_you"] .mk2-chip-count')!.textContent!.match(/\d+/)![0];
+    expect(rail.querySelector('[data-mk2-head-count="needs-you"] .mk2-head-num')?.textContent?.trim()).toBe(needsChipN);
+    huddle.groups = huddle.groups!.map((g) => ({ ...g, items: g.items.map((it) => ({ ...it, unread: false, info_unread: 0 })) }));
     await settle();
     expect(rail.querySelector('[data-mk2-head-count="unread"]')).toBeNull();
   });

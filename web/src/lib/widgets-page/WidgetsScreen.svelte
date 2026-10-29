@@ -1,9 +1,9 @@
-<!-- the reading pane -->
+<!-- the page frame the reading pane -->
 <script lang="ts">
+    import { Button, IconButton } from '../base';
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import Page from '../../opscenter/ui/Page.svelte';
     import PageToolbar, { type ToolbarFacet } from '../../opscenter/ui/PageToolbar.svelte';
-    import Icon from '../../opscenter/ui/Icon.svelte';
     import SearchField from '../../opscenter/ui/SearchField.svelte';
     import { viewport } from '../../opscenter/engine/viewport.svelte';
     import { createManagerController } from '../manager-frame/manager-controller.svelte';
@@ -125,7 +125,7 @@
 {#snippet searchBox()}
     <span class="wp-find">
         <SearchField value={query} onInput={(next) => (query = next)} ariaLabel={t(MANAGER_KEYS.searchLabel)} placeholder={t('widgets.page.filter_placeholder')} />
-        {#if query !== ''}<button type="button" class="wp-find__clear" data-k="clear-find" aria-label={t(MANAGER_KEYS.clear)} onclick={() => (query = '')}><Icon name="close" size={10} /></button>{/if}
+        {#if query !== ''}<IconButton variant="close" icon="close" iconSize={10} data-k="clear-find" label={t(MANAGER_KEYS.clear)} onclick={() => (query = '')} />{/if}
     </span>
 {/snippet}
 
@@ -156,8 +156,8 @@
     >
         {#snippet sub()}{#if !narrow}{@render toolbar(true)}{/if}{/snippet}
         {#snippet actions()}
-            <button type="button" class="oc-btn oc-btn--sm" data-k="reset-bars" title={t('widgets.places.reset.title')} onclick={() => void resetBars(t)}>{t('widgets.places.reset.label')}</button>
-            <button type="button" class="oc-btn oc-btn--sm wp-help" data-k="help" title={t('widgets.places.help.title')} aria-label={t('widgets.places.help.title')} onclick={help}>{t('widgets.places.help.label')}</button>
+            <Button size="sm" data-k="reset-bars" title={t('widgets.places.reset.title')} onclick={() => void resetBars(t)}>{t('widgets.places.reset.label')}</Button>
+            <Button size="sm" data-k="help" title={t('widgets.places.help.title')} aria-label={t('widgets.places.help.title')} onclick={help}>{t('widgets.places.help.label')}</Button>
         {/snippet}
         <PlacesBody
             items={ctl.items as readonly WidgetItem[]}

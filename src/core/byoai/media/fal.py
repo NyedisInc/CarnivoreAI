@@ -67,7 +67,7 @@ async def _wait_completed(connection: Connection, key: Optional[str], status_pat
     deadline = time.monotonic() + _timeout_s(connection)
     wait = POLL_START_S
     while True:
-        status = (await transport.request(connection, key, "GET", status_path)).json()
+        status = (await transport.request_json(connection, key, "GET", status_path))
         failed = _failure(status, key)
         if failed:
             raise ByoaiError(failed)
@@ -118,15 +118,15 @@ async def generate(target: Target, key: Optional[str], prompt: str,
         raise NotConfigured("fal needs a model id such as fal-ai/flux/schnell")
     conn = target.connection
     path = "/" + "/".join(quote(seg, safe="") for seg in target.model.strip("/").split("/"))
-    submitted = (await transport.request(conn, key, "POST", path,
-                                         json={"prompt": prompt, **dict(input)})).json()
+    submitted = (await transport.request_json(conn, key, "POST", path,
+                                         json={"prompt": prompt, **dict(input)}))
     status_url, response_url = submitted.get("status_url"), submitted.get("response_url")
     if not (isinstance(status_url, str) and isinstance(response_url, str)):
         raise ByoaiError("fal did not return status and response urls")
     cancel_url = submitted.get("cancel_url")
     await _wait_completed(conn, key, _path_on_host(conn, status_url),
                           _path_on_host(conn, cancel_url) if isinstance(cancel_url, str) else None)
-    result = (await transport.request(conn, key, "GET", _path_on_host(conn, response_url))).json()
+    result = (await transport.request_json(conn, key, "GET", _path_on_host(conn, response_url)))
     failed = _failure(result, key) if isinstance(result, dict) else None
     if failed:
         raise ByoaiError(failed)

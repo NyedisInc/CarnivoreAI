@@ -21,7 +21,6 @@ DEADLINE_SECONDS = 4.0
 
 @dataclass(frozen=True)
 class PeerAnswer:
-    """One peer's part of a merged answer: ``data`` is its JSON, or None with a ``reason`` word when it could not answer."""
 
     host_key: str
     label: str
@@ -35,7 +34,6 @@ def is_peer_call(request: Any) -> bool:
 
 
 def unavailable_marker(answers: List[PeerAnswer]) -> List[Dict[str, str]]:
-    """The named ``peer_unavailable`` list: one ``{host_key, host_label, reason}`` per peer that did not answer. PURE."""
     return [{"host_key": a.host_key, "host_label": a.label, "reason": a.reason} for a in answers if a.data is None]
 
 

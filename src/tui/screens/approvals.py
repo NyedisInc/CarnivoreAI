@@ -12,6 +12,7 @@ from textual.widgets import DataTable, Label, Static
 from src.tui import keys
 from src.tui.api_client import AuthRequired, ServerUnavailable
 from src.tui.listing_store import LIVENESS
+from src.tui.plain import plain, plain_content
 from src.tui.strings import t
 
 logger = structlog.get_logger(__name__)
@@ -168,8 +169,8 @@ class ApprovalsPane(Vertical):
         for item in self.items:
             where = str(item.get("host") or "") if item.get("host") not in (None, "local") else ""
             name = item.get("session_name") or item.get("caller") or item.get("session_id") or ""
-            table.add_row(where, str(name), str(item.get("kind") or item.get("action") or ""),
-                          item_summary(item).replace("\n", " "), key=str(item.get("id") or id(item)))
+            table.add_row(plain(where), plain(name), plain(item.get("kind") or item.get("action") or ""),
+                          plain(item_summary(item).replace("\n", " ")), key=str(item.get("id") or id(item)))
         for i, item in enumerate(self.items):
             if keep is not None and item.get("id") == keep:
                 table.move_cursor(row=i)
@@ -180,7 +181,7 @@ class ApprovalsPane(Vertical):
     def _show_detail(self) -> None:
         row = self.query_one(ApprovalsTable).cursor_row
         self.query_one("#approvals-detail", Static).update(
-            item_detail(self.items[row]) if row < len(self.items) else "")
+            plain_content(item_detail(self.items[row]) if row < len(self.items) else ""))
 
     def on_data_table_row_highlighted(self) -> None:
         self._show_detail()
@@ -212,7 +213,7 @@ class ApprovalsPane(Vertical):
                     payload = resp.json()
                 except ValueError:
                     payload = None
-                self.app.notify(refusal_text(payload), severity="error")
+                self.app.notify(refusal_text(payload), severity="error", markup=False)
         finally:
             self._busy = False
         self.refresh_items()

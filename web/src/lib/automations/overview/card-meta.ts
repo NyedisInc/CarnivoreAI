@@ -1,6 +1,6 @@
 import { t } from '../../i18n/index.svelte';
 import type { Automation } from '../api';
-import { codeLabel } from '../format';
+import { codeWords } from '../logic/words';
 
 export function metaLine(a: Automation): string {
   const kind = t(`automations.simple.kind.${a.target.kind}`);
@@ -18,6 +18,6 @@ export function metaLine(a: Automation): string {
       .filter(Boolean)
       .join(' · ');
   }
-  const what = a.target.kind === 'recipe' && typeof a.target.recipe === 'string' ? codeLabel('automations.recipe', `${a.target.recipe}.label`) : '';
+  const what = a.target.kind === 'recipe' && typeof a.target.recipe === 'string' ? codeWords('automations.recipe', `${a.target.recipe}.label`) : '';
   return [label, what, t(a.spends ? 'automations.simple.card.plan_uses' : 'automations.simple.card.plan_none')].filter(Boolean).join(' · ');
 }

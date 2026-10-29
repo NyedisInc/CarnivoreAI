@@ -1,0 +1,7 @@
+  { name: 'requirements.txt', isDir: false },
+  { name: 'requirements.lock', isDir: false },
+  { name: 'setup_auth.py', isDir: false },
+  { name: 'config.example.json', isDir: false },
+  { name: '.env.example', isDir: false },
+  { name: 'nuke.sh', isDir: false },
+  { name: 'scripts/session_journal.py', isDir: false },

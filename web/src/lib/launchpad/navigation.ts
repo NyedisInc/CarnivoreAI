@@ -1,8 +1,11 @@
-/* CANNOT DETERMINE */
-import { HOME_KEYS, failureReason } from '../../../../client/js/labels/home-screen.js';
+/* the home screen */
+import { HOME_KEYS } from '../../../../client/js/labels/home-screen.js';
+import { reasonOf as failureReason } from './failure-reason';
 import { findRunningSessionBySlug } from './deep-link';
+import { refusedWith } from './refusal-shape';
 import { showError, updateStatus, explainRefusedProject } from './status-report';
-import { accountFields } from './create-flow';
+import { buildOpenProjectPayload, isRemoteRoot } from './create-flow';
+import { prefillFor, sourceOfProject } from '../launch-picker/prefill';
 import { beginNav, currentNav, keepNav, withNav } from './nav-generation';
 import type { NavHost, SessionLike } from './nav-host';
 import type { ProjectRow, RunningSessionRow } from '../sessions/types';
@@ -69,8 +72,7 @@ export async function attachRunningSession(
                     description: '',
                 });
             } catch (error) {
-                const message = error instanceof Error ? error.message : String(error ?? '');
-                if (!message.includes('already exists')) {
+                if (!refusedWith(error, { code: 'project_name_taken', phrase: 'already exists' })) {
                     console.error('CloudeWeb: failed to save the adopted project:', error);
                 }
             }
@@ -92,7 +94,6 @@ export async function attachRunningSession(
     }
 }
 
-/* CANNOT DETERMINE */
 export async function resolveDeepLink(
     target: string,
     host: NavHost,
@@ -105,7 +106,7 @@ export async function resolveDeepLink(
         }
         const match = findRunningSessionBySlug(host.runningSessions(), target);
         if (match) return match;
-        if (host.runningListingOk()) return null;
+        if (host.runningListingOk()) return null; // there is nothing
         console.warn(
             'CloudeWeb: session listing unavailable during deep-link resolve ' +
                 `(attempt ${attempt + 1}), reason=${host.runningListingReason() || 'unknown'}`,
@@ -160,30 +161,20 @@ export async function selectProject(
     try {
         let choice = providerChoice;
         if (choice === undefined) {
-            choice = await host.chooseProvider((project?.default_launch_profile as string | null | undefined) ?? null, !String(project?.path).startsWith('ssh://'));
+            const taken = host.runningSessions().flatMap((r) => [r.name, r.label ?? '']).filter(Boolean);
+            const prefill = prefillFor(sourceOfProject(project), taken);
+            choice = await host.chooseProvider((project?.default_launch_profile as string | null | undefined) ?? null, !isRemoteRoot(project?.path), prefill);
             if (!choice) return;
         }
         updateStatus(t(HOME_KEYS.statusOpening, { name }));
 
-        const payload: Record<string, unknown> = {
-            working_dir: project.path,
-            auto_start_claude: true,
-            copy_templates: false,
-            project_name: name,
-            label: name,
-            ...host.terminalDims(),
-        };
-        if (choice?.model) payload.model = choice.model;
-        Object.assign(payload, accountFields(choice ?? null, !String(project?.path).startsWith('ssh://')));
-        if (choice?.wrapperId) payload.agent_type = choice.wrapperId;
-        else if (choice?.agentType) payload.agent_type = choice.agentType;
-
+        const payload = buildOpenProjectPayload(name, String(project.path), choice ?? null, host.terminalDims());
         const session = await host.createSession(payload);
+        if (choice?.pinned === true && session?.tmux_session) host.pinSession?.(session.tmux_session);
         host.announceSessionCreated(withNav({ session, project }, nav));
     } catch (error) {
         console.error('CloudeWeb: failed to open project:', error);
-        const message = error instanceof Error ? error.message : String(error ?? '');
-        if (message.includes('already running')) {
+        if (refusedWith(error, { code: 'session_already_running', phrase: 'already running' })) {
             await detachAndOpenProject(project, host, t);
         } else {
             showError(t(HOME_KEYS.openFailed, { name, reason: failureReason(error, t) }), t);

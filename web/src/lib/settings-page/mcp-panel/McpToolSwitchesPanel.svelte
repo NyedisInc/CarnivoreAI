@@ -20,7 +20,6 @@
     const { t = reactiveT, fetcher }: Props = $props();
 
     const MIN_NAME_CH = 12;
-    /*  hidden  flex: none white-space: nowrap */
     const NAME_STYLE = 'flex: none; white-space: nowrap; overflow: visible; text-overflow: clip';
     const TEXT_STYLE = 'flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis';
 

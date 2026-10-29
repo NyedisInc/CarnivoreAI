@@ -1,7 +1,6 @@
 import { readMigrating } from '../browser-storage-migrate';
 import { POPOUT_PATH, featuresFor, parseGeometry, type PopoutGeometry } from '../../popout/popout';
 
-/* pop-out window */
 export const TAB_PARAM = 'tab';
 
 export const TAB_WINDOW_DEFAULT: Readonly<PopoutGeometry> = Object.freeze({ width: 440, height: 760 });

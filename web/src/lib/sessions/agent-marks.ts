@@ -14,6 +14,7 @@ export interface AgentMarkFacts {
   usageLimit?: string | null;
   parkedSummary?: string | null;
   hostOffline?: string | null;
+  icon?: string | null;
   transport: string | null;
 }
 
@@ -59,6 +60,7 @@ export function transportFor(tmuxName: string | null): string | null {
 
 export interface FaceRow {
   agent_family?: string | null;
+  agent_wrapper_icon?: string | null;
   activity_status?: string | null;
   status?: string | null;
   unread?: boolean | null;
@@ -86,6 +88,7 @@ export function faceFacts(row: FaceRow, opts: FaceOptions = {}): AgentMarkFacts 
   }
   return {
     family,
+    icon: row.agent_wrapper_icon ?? null,
     status: row.activity_status ?? row.status ?? null,
     unread: row.unread === true,
     startupGate: row.startup_gate ?? null,
@@ -125,6 +128,11 @@ export function wrapperMark(icon: string | null, family: string | null, size = 1
 
 export function showsStatusLight(family: string | null | undefined): boolean {
   return family !== 'shell' && family !== 'browser';
+}
+
+export function sessionMark(family: string | null, icon: string | null | undefined, size = 14): ProviderMark {
+  const base = providerMark(family, size);
+  return family === 'custom' && icon ? { ...base, svg: wrapperMark(icon, family, size).svg } : base;
 }
 
 export const LAUNCH_MARK_PX = 24;

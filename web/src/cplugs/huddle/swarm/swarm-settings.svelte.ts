@@ -26,6 +26,7 @@ export interface SwarmPageSettings {
   max_live_bodies: number | null;
   spawn_load_per_core: number | null;
   naming_family: boolean;
+  chat_card_bodies: boolean;
 }
 
 export const OPTIONAL_LIMITS = [
@@ -38,6 +39,7 @@ export type OptionalLimit = (typeof OPTIONAL_LIMITS)[number];
 const DEFAULTS: SwarmPageSettings = {
   page_default_view: 'tree', panel_default_density: 'expanded', character_pack: FOLLOW_THEME, upper_ranks_permissions: 'skip_all',
   closeout_window_minutes: 15, max_children_per_parent: null, max_live_bodies: null, spawn_load_per_core: null, naming_family: false,
+  chat_card_bodies: false,
 };
 
 export const swarmSettings = $state<SwarmPageSettings & { loaded: boolean }>({ ...DEFAULTS, loaded: false });
@@ -65,6 +67,7 @@ function adopt(answer: Partial<Record<keyof SwarmPageSettings, unknown>> | null 
   swarmSettings.upper_ranks_permissions = (UPPER_POSTURES as readonly unknown[]).includes(upper) ? (upper as UpperPosture) : DEFAULTS.upper_ranks_permissions;
   swarmSettings.closeout_window_minutes = typeof closeout === 'number' && Number.isInteger(closeout) && closeout >= 1 ? closeout : DEFAULTS.closeout_window_minutes;
   swarmSettings.naming_family = answer?.naming_family === true;
+  swarmSettings.chat_card_bodies = answer?.chat_card_bodies === true;
   for (const limit of OPTIONAL_LIMITS) {
     const value = answer?.[limit.key];
     swarmSettings[limit.key] = typeof value === 'number' && Number.isFinite(value) && value >= limit.min && value <= limit.max ? value : null;

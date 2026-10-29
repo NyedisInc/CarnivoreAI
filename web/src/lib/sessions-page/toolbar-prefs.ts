@@ -1,4 +1,3 @@
-/*  hidden  */
 
 export const PROJECT_SORTS = ['default', 'name', 'recent'] as const;
 export type ProjectSortKey = (typeof PROJECT_SORTS)[number];
@@ -6,12 +5,10 @@ export type ProjectSortKey = (typeof PROJECT_SORTS)[number];
 const HIDDEN_KEY = 'carnivore.sessions-page.show-hidden';
 const SORT_KEY = 'carnivore.sessions-page.project-sort';
 
-/*  hidden  */
 export function readShowHidden(): boolean {
     try {
         return globalThis.localStorage?.getItem(HIDDEN_KEY) === '1';
     } catch {
-        //  hidden 
         return false;
     }
 }

@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* position: relative */
   let { quiet = false }: { quiet?: boolean } = $props();
 </script>
 

@@ -14,12 +14,11 @@ const opened = vi.fn((ctx: Record<string, unknown>, _anchor: Element, _at: unkno
 
 beforeEach(() => {
   win.CloudeWeb = { rowMenu: { openRow: opened, isOpen: () => false, closeRow: () => {} } };
-  win.SessionSidebarGroupActions = {};
 });
 afterEach(() => {
   contexts.length = 0;
   opened.mockClear();
-  for (const k of ['CloudeWeb', 'SessionSidebarGroupActions']) delete win[k];
+  delete win.CloudeWeb;
   document.body.replaceChildren();
 });
 

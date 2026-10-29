@@ -21,7 +21,7 @@ CONNECTING = "connecting"
 UP = "up"
 RETRYING = "retrying"
 
-FAILURE_SPAWN = "spawn_failed"  # could not
+FAILURE_SPAWN = "spawn_failed"
 FAILURE_START = "tmux_start_failed"
 FAILURE_HANDSHAKE = "handshake_refused"
 FAILURE_EOF = "channel_closed"

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Select from '../../lib/base/Select.svelte';
+  import { measureOptions } from './settings-options';
   import EmptyState from './EmptyState.svelte';
   import { framedTitle } from '../shell/frame-header.svelte';
   import { emptyLine } from './empty';
@@ -17,6 +19,7 @@
   import type { RankRow } from './shape';
   import { VIZ_SPECS } from './specs';
   import { watchVisible } from './visible';
+  import { escapeHtml } from './tooltip-html';
 
   let { config, tier }: { config: ChartConfig; tier: Tier } = $props();
   const framing = framedTitle();
@@ -65,8 +68,8 @@
       textStyle: { fontFamily },
       tooltip: { confine: true, backgroundColor: color('var(--oc-ground-raised)', '#10232b'), borderColor: color('var(--oc-line-rule)', '#42616a'), textStyle: { color: text, fontSize: 12 },
         formatter: (info: { dataType: string; name: string; value: number; data: { source?: string; target?: string } }) => info.dataType === 'edge'
-          ? `${names.get(info.data.source ?? '')} > ${names.get(info.data.target ?? '')}: ${formatMetric(info.value, unit).text}`
-          : `${names.get(info.name) ?? info.name}: ${formatMetric(info.value, unit).text}` },
+          ? `${escapeHtml(names.get(info.data.source ?? ''))} > ${escapeHtml(names.get(info.data.target ?? ''))}: ${formatMetric(info.value, unit).text}`
+          : `${escapeHtml(names.get(info.name) ?? info.name)}: ${formatMetric(info.value, unit).text}` },
       series: [{
         type: 'sankey', left: FLOW_MARGIN_PX, right: tier === 'tile' ? FLOW_MARGIN_PX : labelPx + FLOW_MARGIN_PX, top: 4, bottom: 4, nodeWidth: FLOW_NODE_PX, nodeGap: 6, draggable: false, emphasis: { focus: 'adjacency' },
         lineStyle: { color: 'gradient', opacity: 0.4, curveness: 0.5 },
@@ -103,9 +106,7 @@
   <span bind:this={probe} hidden></span>
   {#if tier === 'full'}<p class="viz-flow__key">{t('flow.levels')}</p>{/if}
   <VizSettings {config} metric={false}>
-    <label>{t('viz.measure')} <select value={measure} onchange={(event) => { changeAnalyticsConfig({ ...config, options: { ...config.options, measure: event.currentTarget.value } }); }}>
-      <option value="tokens">{t('viz.measure_tokens')}</option><option value="cost">{t('viz.measure_cost')}</option>
-    </select></label>
+    <Select size="sm" label={t('viz.measure')} value={measure} options={measureOptions()} onchange={(event) => { changeAnalyticsConfig({ ...config, options: { ...config.options, measure: event.currentTarget.value } }); }} />
   </VizSettings>
 </section>
 

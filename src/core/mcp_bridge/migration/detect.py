@@ -15,14 +15,6 @@ FLAG_SCOPE: str = "mcp-config"
 
 
 def carnivore_transport(command: str) -> str:
-    """The transport of the carnivore server on one claude command line. PURE apart from reading a config file.
-
-    Description: the first ``--mcp-config`` value that defines ``carnivore`` wins, as in Claude Code's own merge.
-    Inputs: command (str) - the claude process's ps command line.
-    Output: str - ``http`` / ``sse`` / ``stdio`` / ``unknown`` (a spec of another type), or :data:`TRANSPORT_NONE`.
-    Example: carnivore_transport('claude --mcp-config={"mcpServers":{"carnivore":{"type":"http","url":"u"}}}')
-      -> "http"
-    """
     for value in mcp_config_values(command or ""):
         doc: Any = read_json(value) if isinstance(value, str) else value
         table = doc.get("mcpServers") if isinstance(doc, dict) else None

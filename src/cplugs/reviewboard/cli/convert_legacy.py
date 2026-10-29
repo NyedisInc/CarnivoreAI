@@ -1,4 +1,5 @@
-"""
+"""Convert a pre-board sidecar (step 0, Part 1) into a board folder (``docs/reviewboard.md``, "Converting the old sidecars").
+
 Usage: venv/bin/python3 -m src.cplugs.reviewboard.cli.convert_legacy <old sidecar> <board folder>
            --item <task item id> --computer <carnivore computer> --viewport <px> [--github-issue o/r#n] [--list <list>] [--write]
 
@@ -69,7 +70,7 @@ def main(argv: Optional[Sequence[str]] = None, out: TextIO = sys.stdout, now: Op
     parser.add_argument("--computer", required=True, help="the Carnivore computer that owns the task")
     parser.add_argument("--viewport", type=int, required=True, help="the design width in CSS px (240 to 2560)")
     parser.add_argument("--github-issue", default=None, help="owner/repo#n, the portable task identity")
-    parser.add_argument("--list", dest="task_list", default=None, help="the task's list, as the huddle names it")
+    parser.add_argument("--list", dest="task_list", default=None, help="the task's list, as the task manager names it")
     parser.add_argument("--write", action="store_true", help="write the board (default: dry run)")
     args = parser.parse_args(argv)
     stamp = now or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

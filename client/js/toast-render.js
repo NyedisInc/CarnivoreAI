@@ -9,7 +9,6 @@ if (typeof ToastManager !== 'function') {
 }
 
 Object.assign(ToastManager.prototype, {
-    /*  hidden  */
     _scheduleRender() {
       if (this._renderPending) return;
       this._renderPending = true;
@@ -32,8 +31,6 @@ Object.assign(ToastManager.prototype, {
       const cap = this._cap();
       const exemptCount = groups.filter((g) => g.severity >= CAP_EXEMPT_SEVERITY).length;
       const naturalCap = Math.max(cap, exemptCount);
-      //  hidden 
-      //  hidden 
       if (groups.length <= naturalCap) this._expanded = false;
 
       const effectiveCap = this._expanded ? groups.length : naturalCap;
@@ -94,6 +91,117 @@ Object.assign(ToastManager.prototype, {
       return row;
     },
 
+    _buildTitle(winner, el, badgeCount, detailed) {
+      const title = document.createElement('div');
+      title.className = 'toast__title';
+      if (winner.kind === AUTO_SLEEP_TOAST_KIND) {
+        const icon = document.createElement('span');
+        icon.className = 'toast__title-icon';
+        const glyphs = window.SessionRowMenuIcons;
+        icon.innerHTML = (glyphs && typeof glyphs.svg === 'function')
+          ? glyphs.svg('sleep', 13) : '';
+        title.appendChild(icon);
+      }
+      const titleText = document.createElement('span');
+      titleText.className = 'toast__title-text';
+      const mode = globalThis.ToastMode;
+      titleText.textContent = (detailed ? mode.headline(winner) : winner.title) || '(untitled)';
+      title.appendChild(titleText);
+      if (badgeCount > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'toast__count';
+        badge.textContent = `×${badgeCount}`;
+        badge.setAttribute('aria-label', `${badgeCount} occurrences`);
+        title.appendChild(badge);
+      }
+      if (window.ToastCollapse && typeof window.ToastCollapse.renderToggle === 'function') {
+        window.ToastCollapse.renderToggle(
+          title, el, !!winner.body || winner.kind === ATTACHMENT_KIND);
+      }
+      return title;
+    },
+
+    _buildSessionLine(winner, key) {
+      const canNavigate = !!winner.session_name;
+      const session = document.createElement(canNavigate ? 'button' : 'div');
+      session.className = 'toast__session';
+      if (canNavigate) session.type = 'button';
+      const resolved = window.SessionLabel
+        ? window.SessionLabel.resolveToast(winner)
+        : (winner.session_label || winner.session_name || null);
+      session.textContent = resolved
+        || (window.SessionLabel ? window.SessionLabel.UNKNOWN : 'unknown session');
+      if (!resolved) session.dataset.unknown = '1';
+      if (canNavigate) {
+        // closed.
+        // `pinned_theme` and `tmux_session` arrive on the wrapper where that
+        // already-in-this-session guard by construction.
+        session.addEventListener('click', () => {
+          this.dismissGroup(key);
+        });
+      }
+      return session;
+    },
+
+    _bindCardOpen(el, winner, key, detailed) {
+      el.dataset.sessionId = winner.session_id || '';
+      const openLocal = typeof winner.on_open === 'function' ? winner.on_open : null;
+      if ((winner.session_id && window.ToastNavigate) || openLocal) {
+        el.classList.add('toast--clickable');
+        el.setAttribute('tabindex', '0');
+        el._toastOpen = () => {
+          if (openLocal) {
+            openLocal();
+            this.dismissGroup(key);
+            return;
+          }
+          window.ToastNavigate.open(winner);
+          if (detailed || window.ToastNavigate.isAskToast(winner)) this.dismissGroup(key);
+        };
+        if (!el._toastOpenBound) {
+          el._toastOpenBound = true;
+          el.addEventListener('click', () => el._toastOpen && el._toastOpen());
+          el.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Enter' || evt.key === ' ') {
+              evt.preventDefault();
+              if (el._toastOpen) el._toastOpen();
+            }
+          });
+        }
+      }
+    },
+
+    _bindMiddleDismiss(el, key) {
+      if (el._toastMiddleBound) return;
+      el._toastMiddleBound = true;
+      el.addEventListener('mousedown', (evt) => {
+        if (evt.button === 1) evt.preventDefault();
+      });
+      el.addEventListener('auxclick', (evt) => {
+        if (evt.button !== 1) return;
+        evt.preventDefault();
+        this.dismissGroup(key);
+      });
+    },
+
+    _buildDismissButton(count, key) {
+      const dismissBtn = document.createElement('button');
+      dismissBtn.type = 'button';
+      dismissBtn.className = 'toast__dismiss';
+      const label = count > 1
+        ? `Dismiss ${count} notifications for this session`
+        : 'Dismiss notification';
+      dismissBtn.setAttribute('aria-label', label);
+      dismissBtn.setAttribute('title', label);
+      dismissBtn.textContent = '×';
+      dismissBtn.addEventListener('click', (evt) => {
+        // session it was about
+        if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
+        this.dismissGroup(key);
+      });
+      return dismissBtn;
+    },
+
     _renderCard(group, container) {
       const { winner, count, badgeCount, severity, key } = group;
       let el = container.querySelector(
@@ -118,54 +226,12 @@ Object.assign(ToastManager.prototype, {
 
       el.textContent = '';
 
-      const title = document.createElement('div');
-      title.className = 'toast__title';
-      if (winner.kind === AUTO_SLEEP_TOAST_KIND) {
-        const icon = document.createElement('span');
-        icon.className = 'toast__title-icon';
-        const glyphs = window.SessionRowMenuIcons;
-        icon.innerHTML = (glyphs && typeof glyphs.svg === 'function')
-          ? glyphs.svg('sleep', 13) : '';
-        title.appendChild(icon);
-      }
-      const titleText = document.createElement('span');
-      titleText.className = 'toast__title-text';
       const mode = globalThis.ToastMode;
       const detailed = !!(mode && typeof mode.isDetailed === 'function' && mode.isDetailed());
       el.dataset.mode = detailed ? 'detailed' : 'compact';
-      titleText.textContent = (detailed ? mode.headline(winner) : winner.title) || '(untitled)';
-      title.appendChild(titleText);
-      // permission prompt
-      if (badgeCount > 1) {
-        const badge = document.createElement('span');
-        badge.className = 'toast__count';
-        badge.textContent = `×${badgeCount}`;
-        badge.setAttribute('aria-label', `${badgeCount} occurrences`);
-        title.appendChild(badge);
-      }
-      if (window.ToastCollapse && typeof window.ToastCollapse.renderToggle === 'function') {
-        window.ToastCollapse.renderToggle(
-          title, el, !!winner.body || winner.kind === ATTACHMENT_KIND);
-      }
-      el.appendChild(title);
+      el.appendChild(this._buildTitle(winner, el, badgeCount, detailed));
 
-      // <button>
-      const canNavigate = !!winner.session_name;
-      const session = document.createElement(canNavigate ? 'button' : 'div');
-      session.className = 'toast__session';
-      if (canNavigate) session.type = 'button';
-      const resolved = window.SessionLabel
-        ? window.SessionLabel.resolveToast(winner)
-        : (winner.session_label || winner.session_name || null);
-      session.textContent = resolved
-        || (window.SessionLabel ? window.SessionLabel.UNKNOWN : 'unknown session');
-      if (!resolved) session.dataset.unknown = '1';
-      if (canNavigate) {
-        session.addEventListener('click', () => {
-          this.dismissGroup(key);
-        });
-      }
-      el.appendChild(session);
+      el.appendChild(this._buildSessionLine(winner, key));
 
       const bodyText = detailed ? mode.snippet(winner) : winner.body;
       if (bodyText) {
@@ -194,47 +260,10 @@ Object.assign(ToastManager.prototype, {
         window.AttachmentToast.renderThumbs(el, group.toasts);
       }
 
-      el.dataset.sessionId = winner.session_id || '';
-      const openLocal = typeof winner.on_open === 'function' ? winner.on_open : null;
-      if ((winner.session_id && window.ToastNavigate) || openLocal) {
-        el.classList.add('toast--clickable');
-        el.setAttribute('tabindex', '0');
-        el._toastOpen = () => {
-          if (openLocal) {
-            openLocal();
-            this.dismissGroup(key);
-            return;
-          }
-          window.ToastNavigate.open(winner);
-          if (detailed || window.ToastNavigate.isAskToast(winner)) this.dismissGroup(key);
-        };
-        if (!el._toastOpenBound) {
-          el._toastOpenBound = true;
-          el.addEventListener('click', () => el._toastOpen && el._toastOpen());
-          el.addEventListener('keydown', (evt) => {
-            if (evt.key === 'Enter' || evt.key === ' ') {
-              evt.preventDefault();
-              if (el._toastOpen) el._toastOpen();
-            }
-          });
-        }
-      }
+      this._bindCardOpen(el, winner, key, detailed);
+      this._bindMiddleDismiss(el, key);
 
-      const dismissBtn = document.createElement('button');
-      dismissBtn.type = 'button';
-      dismissBtn.className = 'toast__dismiss';
-      const label = count > 1
-        ? `Dismiss ${count} notifications for this session`
-        : 'Dismiss notification';
-      dismissBtn.setAttribute('aria-label', label);
-      dismissBtn.setAttribute('title', label);
-      dismissBtn.textContent = '×';
-      dismissBtn.addEventListener('click', (evt) => {
-        // session it was about
-        if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
-        this.dismissGroup(key);
-      });
-      el.appendChild(dismissBtn);
+      el.appendChild(this._buildDismissButton(count, key));
 
       if (window.NotifyMute && typeof window.NotifyMute.attach === 'function') window.NotifyMute.attach(el, winner);
 
@@ -246,7 +275,6 @@ Object.assign(ToastManager.prototype, {
       return el;
     },
 
-    /*  hidden  */
     _renderOverflow(hidden, container, prev) {
       let row = container.querySelector('.toast-overflow');
       if (hidden.length === 0 && !this._expanded) {
@@ -283,7 +311,6 @@ Object.assign(ToastManager.prototype, {
         if (worstLabel) {
           const w = document.createElement('span');
           w.className = 'toast-overflow__worst';
-          //  hidden 
           // waiting on the user
           w.textContent = '(' + worstLabel(
             this._countBySeverity(hidden, worst, true),

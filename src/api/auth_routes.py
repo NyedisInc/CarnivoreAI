@@ -60,7 +60,6 @@ async def redeem_totp_code(request: Request, code: str) -> AuthTokenResponse:
 
         logger.info("totp_verification_success")
 
-        # already exists
         try:
             sentinel = _totp_paired_sentinel_path()
             sentinel.parent.mkdir(parents=True, exist_ok=True)
@@ -260,6 +259,8 @@ class AuthStatusResponse(SuccessResponse):
 @status_router.get("/auth/status", response_model=AuthStatusResponse, dependencies=[Depends(require_auth)])
 async def check_auth_status() -> AuthStatusResponse:
     """
+    Check if user is authenticated (used by frontend to verify token), and name the owner.
+
     Returns:
         Success response if authenticated; ``owner_os_name`` is the operating-system account's
         full name for the drawer's account chip (the explicit ``ui_preferences.owner_display_name``

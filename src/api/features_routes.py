@@ -23,6 +23,18 @@ def _index_path() -> Path:
 @router.get("/feature-catalog", dependencies=[Depends(require_auth)])
 async def get_feature_catalog() -> dict[str, Any]:
     """Return the generated feature catalog, or an honest empty state.
+
+    Description: reads ``features/index.json`` verbatim. When the file is
+      absent, unreadable, or not valid JSON, logs the reason and answers
+      the same empty shape rather than raising - this endpoint backs a UI
+      panel, and a malformed or missing catalog file must never turn into
+      a 500 there.
+    Inputs: none.
+    Output: dict - ``{"available": bool, "areas": [...], "catalog": [...],
+      "changes": [...]}``. ``changes`` entries carry a ``release`` field
+      (``"Unreleased"`` or a ``vX.Y.Z`` tag) when the file was generated
+      after issue #844.
+    Example: GET /api/v1/feature-catalog
     """
     path = _index_path()
     empty: dict[str, Any] = {"available": False, "areas": [], "catalog": [], "changes": []}

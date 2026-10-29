@@ -65,6 +65,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from src.core import config_writer  # noqa: E402
 from src.core.config_defaults import (  # noqa: E402
     effective_shipped_defaults,
     supported_keys as model_supported_keys,
@@ -78,7 +79,6 @@ from src.core.config_merge import (  # noqa: E402
     merge_config,
 )
 
-# state directory
 BASE_FILENAME = "config-base.json"
 
 BACKUP_DIRNAME = "config-backups"
@@ -95,19 +95,6 @@ OUTCOME_LABELS = {
 
 
 def resolve_state_dir(override: str | None) -> Path:
-    """Resolve the durable state directory.
-
-    Mirrors ``Settings.get_state_dir()`` in src/config.py: an explicit
-    override wins, otherwise ``CLOUDE_STATE_DIR``, otherwise the macOS-native
-    per-user location.
-
-    Args:
-        override: Explicit path from the command line, or None.
-
-    Returns:
-        The resolved directory. Not created here; the caller creates what it
-        needs so a dry run never touches the filesystem.
-    """
     if override:
         return Path(override).expanduser()
 
@@ -118,23 +105,27 @@ def resolve_state_dir(override: str | None) -> Path:
     return Path.home() / "Library" / "Application Support" / "CloudeCode"
 
 
+def write_json_atomic(path: Path, data: dict) -> None:
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as handle:
+            handle.write(json.dumps(data, indent=2) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, path)
+    except OSError:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+def write_config(config_path: Path, merged: dict) -> None:
+    if config_path.exists():
+        config_writer.commit(config_path, lambda _fresh: merged)
+    else:
+        config_writer.create_if_absent(config_path, merged, file_mode=config_writer.PRIVATE_FILE_MODE)
+
+
 def back_up_config(config_path: Path, state_dir: Path) -> tuple[Path, str]:
-    """Copy the live config aside before it is rewritten.
-
-    Args:
-        config_path: The file about to be modified.
-        state_dir: Durable state directory.
-
-    Returns:
-        A tuple of (backup path or the intended path, manifest outcome). The
-        outcome is BACKED_UP when bytes were copied and verified, or
-        NOT_PRESENT when there was no config to copy.
-
-    Raises:
-        RuntimeError: The copy was attempted and the bytes did not land.
-            Treated as fatal for the same reason the shell helper treats
-            MISSING as fatal.
-    """
     backup_dir = state_dir / BACKUP_DIRNAME
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     target = backup_dir / f"config.{stamp}.json"
@@ -249,7 +240,6 @@ def main(argv: list[str] | None = None) -> int:
     except json.JSONDecodeError:
         base = None
 
-    # REMOVED UPSTREAM
     supported = model_supported_keys()
     effective_theirs = effective_shipped_defaults(theirs, mine)
     stale_roots = frozenset(k for k in effective_theirs if k not in theirs)
@@ -304,14 +294,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"config_upgrade: backup failed: {error}", file=sys.stderr)
         return 1
 
-    state_dir.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
-
-    # CANNOT DETERMINE
-    # CANNOT DETERMINE
-    base_path.write_text(
-        json.dumps(effective_theirs, indent=2) + "\n", encoding="utf-8"
-    )
+    try:
+        state_dir.mkdir(parents=True, exist_ok=True)
+        write_config(config_path, merged)
+        write_json_atomic(base_path, effective_theirs)
+    except (OSError, ValueError) as error:
+        print(f"config_upgrade: write failed: {error}", file=sys.stderr)
+        return 1
 
     print("")
     print(f"Wrote {config_path}")

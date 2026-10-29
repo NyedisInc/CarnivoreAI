@@ -9,13 +9,14 @@
     "docs/mcp-server.md"
   ],
   "examples": [
-    "Reorganizing Development: Team/Brightfund becomes INITECH/Brightfund and keeps its sessions, history and huddle list."
+    "Reorganizing Development: Assistants/Amerifund becomes IMC/Amerifund and keeps its sessions, history and task manager list.",
+    "A folder moved on the MacBook reaches this Mac by iCloud; re-point the project here without moving anything twice."
   ],
   "how_to": [
     "Stop every session running under the project's folder.",
     "Ask for the plan: send new_root with apply false (the default). Every check runs, so one failure never hides the rest: read the checks, child projects, sessions, transcript folder moves (each naming the folder spelling that found it) and the fingerprint.",
     "If the new folder's parent does not exist yet, add create_parents true (with move_folder): the plan lists the exact folders it will create.",
-    "If the folder already arrived at the new place (moved on another Mac or in Finder), send apply true with plan_fingerprint set to the plan's fingerprint. A move across the iCloud Drive line is refused: move it in Finder, then re-point.",
+    "If the folder already arrived at the new place (moved on another Mac or in Finder), send apply true with plan_fingerprint set to the plan's fingerprint. To rename the folder on this Mac as well, add move_folder true. A move across the iCloud Drive line is refused: move it in Finder, then re-point.",
     "To undo, run the call in the apply result's done.reverse the same way: plan it, then apply quoting its fingerprint."
   ],
   "id": "project-move",

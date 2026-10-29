@@ -52,23 +52,31 @@
   PerfWebSocket.CLOSED = NativeWebSocket.CLOSED;
   window.WebSocket = PerfWebSocket;
 
+  function viewportText(term) {
+    try {
+      const buf = term.buffer.active;
+      const rows = [];
+      for (let i = 0; i < term.rows; i++) {
+        const line = buf.getLine(buf.viewportY + i);
+        rows.push(line ? line.translateToString(true) : '');
+      }
+      return rows.join('\n');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function countOccurrences(text, needle) {
+    if (!needle) return 0;
+    return text.split(needle).length - 1;
+  }
+
   window.__armRenderHook = function () {
     const term = window.TerminalController && window.TerminalController.term;
     if (!term || term.__perfHooked) return !!term;
     term.__perfHooked = true;
     term.onRender(function () {
-      let text = '';
-      try {
-        const buf = term.buffer.active;
-        const rows = [];
-        for (let i = 0; i < term.rows; i++) {
-          const line = buf.getLine(buf.viewportY + i);
-          rows.push(line ? line.translateToString(true) : '');
-        }
-        text = rows.join('\n');
-      } catch (e) {
-        text = '';
-      }
+      const text = viewportText(term);
       window.__renderLog.push({ t: performance.now(), text: text, sessionId: window.TerminalController._sessionId() });
     });
     return true;
@@ -96,11 +104,14 @@
   window.__armEcho = function () {
     window.__wsLog = [];
     window.__renderLog = [];
+    const term = window.TerminalController && window.TerminalController.term;
+    window.__armedText = term ? viewportText(term) : '';
     return performance.now();
   };
 
   window.__echoSnapshot = function (needle) {
-    const hit = window.__renderLog.find(function (r) { return needle === '' || r.text.indexOf(needle) !== -1; });
+    const armedCount = countOccurrences(window.__armedText || '', needle);
+    const hit = window.__renderLog.find(function (r) { return needle === '' || countOccurrences(r.text, needle) > armedCount; });
     const sid = window.TerminalController && window.TerminalController._sessionId();
     const ownSocket = w => new URL(w.url).searchParams.get('session_id') === sid;
     const sends = window.__wsLog.filter(w => w.dir === 'send' && ownSocket(w));

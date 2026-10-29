@@ -8,11 +8,13 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from src.cplugs.huddle.rules import TaskManagerInvalid
 
 VERSION = 2
-TYPED_PREFIX = '{"v": 2'
-TYPED_SQL = "parts LIKE '{\"v\": 2%'"
+TYPED_PREFIX = f'{{"v": {VERSION}'
+TYPED_SQL = f"parts LIKE '{{\"v\": {VERSION}%'"
+ANSWERS_TO_PREFIX = f'{{"v": {VERSION}, "answers_to"'
 
 YES_NO, SINGLE, MULTI, RANK, SHORT_TEXT, LONG_TEXT = "yes_no", "single", "multi", "rank", "short_text", "long_text"
-TYPES = (YES_NO, SINGLE, MULTI, RANK, SHORT_TEXT, LONG_TEXT)
+DATETIME = "datetime"
+TYPES = (YES_NO, SINGLE, MULTI, RANK, SHORT_TEXT, LONG_TEXT, DATETIME)
 CHOICE_TYPES = (SINGLE, MULTI, RANK)
 TEXT_TYPES = (SHORT_TEXT, LONG_TEXT)
 
@@ -23,6 +25,7 @@ MAX_REASON = 300
 MAX_HELP = 300
 MAX_PLACEHOLDER = 100
 MAX_SHORT = 500
+MAX_DATETIME = 40
 MAX_COMMAND = 2000
 MAX_COMMAND_LANG = 20
 COMMAND_ALONE = (
@@ -30,7 +33,7 @@ COMMAND_ALONE = (
     "tapping a pill answers and sends the form at once; ask the other questions in a separate task_manager_ask"
 )
 MAX_LONG = 4000
-TEXT_LIMITS = {SHORT_TEXT: MAX_SHORT, LONG_TEXT: MAX_LONG}
+TEXT_LIMITS = {SHORT_TEXT: MAX_SHORT, LONG_TEXT: MAX_LONG, DATETIME: MAX_DATETIME}
 
 _ID = re.compile(r"^[a-z0-9_-]{1,32}$")
 _LANG = re.compile(r"^[A-Za-z0-9_+.-]+$")
@@ -125,6 +128,8 @@ def _command(raw: Any, qid: str, kind: str) -> Optional[Dict[str, str]]:
 def _recommend(raw: Any, qid: str, kind: str, options: Sequence[Mapping[str, Any]]) -> Optional[Dict[str, Any]]:
     if raw is None:
         return None
+    if kind == DATETIME:
+        raise _fail(qid, "a datetime question takes no recommendation")
     if kind in (SINGLE, MULTI):
         raise _fail(qid, "mark the recommended option with recommended: true, not recommend")
     if not isinstance(raw, Mapping):

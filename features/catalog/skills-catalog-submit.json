@@ -13,7 +13,14 @@
   "keywords": [
     "submit"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The submit a skill preview in the catalog",
+      "caption": "Previewing a skill before submitting it",
+      "file": "submit.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Submit to the catalog",
   "since": "2026-09-16",
   "status": "stable",
@@ -22,6 +29,5 @@
   "updated": "2026-09-28",
   "where": [
     "The skills catalog, PUBLISH A SKILL."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

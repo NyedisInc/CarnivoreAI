@@ -99,3 +99,23 @@ describe('refresh across windows', () => {
     expect(localStorage.getItem('claude_tunnel_token')).toBe('expired');
   });
 });
+
+describe('refresh answered by a restarting server', () => {
+  it.each([500, 502, 503, 429, 408])('a %i keeps the refresh token and reports unreachable, not signed-out', async (status) => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status })));
+    vi.stubGlobal('navigator', { ...navigator, locks: undefined });
+    const win = await openWindow();
+    await expect(win.refreshTokens()).resolves.toBe(false);
+    expect(localStorage.getItem('claude_refresh_token')).toBe('r0');
+    expect(win.auth.state).toBe('unreachable');
+  });
+
+  it('a 401 still clears the tokens', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 401 })));
+    vi.stubGlobal('navigator', { ...navigator, locks: undefined });
+    const win = await openWindow();
+    await expect(win.refreshTokens()).resolves.toBe(false);
+    expect(localStorage.getItem('claude_refresh_token')).toBeNull();
+    expect(win.auth.state).toBe('signed-out');
+  });
+});

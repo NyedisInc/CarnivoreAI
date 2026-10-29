@@ -1,6 +1,7 @@
 <script lang="ts">
-  /* permission prompt */
+  /* with a plain */
   import { t } from '../i18n/index.svelte';
+  import { Button } from '../base';
   import CodeReviewModal from '../code-review/CodeReviewModal.svelte';
   import { itemCode } from '../code-review/risk';
   import { answerDialog, decideAgentAction } from './approvals.svelte';
@@ -36,8 +37,8 @@
 </script>
 
 {#if code !== null}
-  <button type="button" class="modal-btn modal-btn-secondary ar-open" data-approval-open aria-label={t('code_review.open_label')}
-    onclick={() => (open = true)}>{t('code_review.open')}</button>
+  <Button size="sm" data-approval-open aria-label={t('code_review.open_label')}
+    onclick={() => (open = true)}>{t('code_review.open')}</Button>
   {#if open}
     <div class="ar-host" use:toBody>
     <CodeReviewModal title={title || item.summary || item.question || ''} {code} {danger} {busy} onClose={() => (open = false)}
@@ -48,8 +49,6 @@
 
 <style>
     @layer components {
-      .ar-open { flex: none; }
-
       .ar-host { display: contents; }
     }
 </style>

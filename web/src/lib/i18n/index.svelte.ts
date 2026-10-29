@@ -1,3 +1,4 @@
+/* there is nothing */
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
 import { registerPluginSlices } from './plugin-fragments';
 

@@ -6,6 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.concurrency import run_in_threadpool
 
+from src.api.error_response import refusal_error
 from src.api.auth import require_auth
 from src.core.bookmarks.errors import BookmarkError
 from src.core.session_timeline import constants as C
@@ -16,7 +17,7 @@ router = APIRouter(tags=["session-timeline"], dependencies=[Depends(require_auth
 
 
 def _http(exc: BookmarkError) -> HTTPException:
-    return HTTPException(status_code=exc.status, detail={"code": exc.code, "message": str(exc)})
+    return refusal_error(exc)
 
 
 @router.get("/sessions/{session_uuid}/timeline", response_model=SessionTimeline)
@@ -40,6 +41,10 @@ async def session_timeline_peek(session_uuid: str, conversation: str = Query(...
                                 entry_uuid: str = Query(..., min_length=1),
                                 turns: Optional[int] = Query(None, ge=1, le=C.MAX_PEEK_TURNS)) -> TimelinePeek:
     """The last ``turns`` chat messages up to a point of one of the session's conversations, oldest first.
+
+    404 ``entry_not_found`` when the point (or a conversation the session does not hold) is unknown, 409
+    ``transcript_unavailable`` when the transcript is not on this computer, 409 ``not_claude`` for a Codex session.
+    Example: GET /api/v1/sessions/7/timeline/peek?conversation=<uuid>&entry_uuid=<uuid>&turns=4
     """
     try:
         return TimelinePeek(**await run_in_threadpool(peek.peek, session_uuid, conversation, entry_uuid, turns))

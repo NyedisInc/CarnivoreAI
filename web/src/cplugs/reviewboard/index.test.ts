@@ -18,7 +18,7 @@ describe('reviewboard web plugin', () => {
         expect(manifest.settings_schema.fields.boardsRoot!.kind).toBe('string');
         expect(manifest.surfaces.mcp_tools).toEqual([
             'task_manager_boards_list', 'task_manager_board_get', 'task_manager_board_create', 'task_manager_board_revision_add', 'task_manager_board_focus',
-            'task_manager_scratch_post', 'task_manager_scratch_clear', 'task_manager_board_attachment_add',
+            'task_manager_scratch_post', 'task_manager_scratch_clear', 'task_manager_board_attachment_add', 'task_manager_board_attachment_remove',
             'task_manager_board_live_set', 'task_manager_board_milestone_add', 'task_manager_board_live_stop',
         ]);
         expect(manifest.surfaces.topics).toEqual(['boards', 'drafts']);

@@ -13,17 +13,6 @@ export interface SeriesLook { color: string; dashed: boolean }
 const SENTINEL = '#010203';
 const cache = new Map<string, string>();
 
-/**
- * Resolve any CSS colour the browser understands (oklch, color-mix, color()) to `rgb()`/`rgba()`.
- *
- * ECharts' renderer parses only sRGB-era syntax, so a theme token must be flattened first. The
- * result is cached by the input string, which changes whenever a theme changes the token.
- *
- * @param css - a computed CSS colour string.
- * @param ctx - a 2d context (a 1x1 canvas in the browser).
- * @param fallback - returned when the browser rejects `css`.
- * @returns e.g. `rgb(12, 34, 56)`.
- */
 export function toSrgb(css: string, ctx: ColorContext, fallback: string): string {
   const hit = cache.get(css);
   if (hit) return hit;

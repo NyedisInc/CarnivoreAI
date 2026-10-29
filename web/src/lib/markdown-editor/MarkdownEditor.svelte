@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* there is nothing */
   import { t } from '../i18n/index.svelte';
   import EditorControls from '../editor-controls/EditorControls.svelte';
   import IconButton from '../base/IconButton.svelte';

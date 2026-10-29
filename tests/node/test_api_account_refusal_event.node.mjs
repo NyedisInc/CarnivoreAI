@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 let failures = 0;
 
+/** Run one named block, recording failure instead of throwing. */
 async function test(name, fn) {
     try { await fn(); console.log(`ok - ${name}`); } catch (err) { failures++; console.error(`NOT OK - ${name}\n${err.stack || err}`); }
 }

@@ -21,10 +21,6 @@ _OUTPUT_CHARS = 300
 
 
 def harness_binary(harness: str) -> Optional[str]:
-    """The binary a harness launches, or None when it has no known one (or is not installed).
-
-    Example: harness_binary("shell") -> "/bin/zsh"
-    """
     if harness == "claude":
         found = claude_cli_path(None)
         return found if shutil.which(found) or os.path.isabs(found) else None

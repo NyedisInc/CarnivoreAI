@@ -1,4 +1,4 @@
-<!-- <button> -->
+
 <script lang="ts">
     import { t } from '../i18n/index.svelte';
     import IconButton from '../base/IconButton.svelte';
@@ -82,7 +82,6 @@
 
 <style>
   @layer components {
-      /* padding */
       :global([data-prompt-key]) {
           --oc-ibtn-size: 22px;
       }

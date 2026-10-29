@@ -1,4 +1,4 @@
-import { answerWords, EXTRA_KEY, type AskAnswer, type AskQuestion } from './ask/ask-model';
+import { answerWords, EXTRA_KEY, type AskAnswer, type AskQuestion, type Translate } from './ask/ask-model';
 import type { TaskManagerMessage } from './huddle-model';
 
 export type FormAnswerState = 'answered' | 'skipped' | 'dismissed';
@@ -11,7 +11,7 @@ export interface FormAnswerRow {
   note: string;
 }
 
-export function formAnswerRows(message: Pick<TaskManagerMessage, 'answers'>, form: readonly AskQuestion[] = []): FormAnswerRow[] {
+export function formAnswerRows(message: Pick<TaskManagerMessage, 'answers'>, tr: Translate, form: readonly AskQuestion[] = []): FormAnswerRow[] {
   const answers = message.answers ?? {};
   const named = new Map(form.map((q) => [q.id, q.prompt]));
   const ids = [...form.map((q) => q.id).filter((id) => id in answers),
@@ -19,7 +19,7 @@ export function formAnswerRows(message: Pick<TaskManagerMessage, 'answers'>, for
   return ids.map((id) => {
     const a: AskAnswer = answers[id] ?? {};
     const skipped = a.skipped === true;
-    const words = skipped ? '' : (answerWords(a) || (typeof a.value === 'boolean' ? (a.value ? 'yes' : 'no') : ''));
+    const words = skipped ? '' : (answerWords(a, tr) || (typeof a.value === 'boolean' ? tr(a.value ? 'cplug.huddle.ask.yes' : 'cplug.huddle.ask.no') : ''));
     const state: FormAnswerState = a.dismissed ? 'dismissed' : skipped || !words ? 'skipped' : 'answered';
     return { id, prompt: id === EXTRA_KEY ? '' : (a.prompt ?? named.get(id) ?? id), words, state, note: (a.note ?? '').trim() };
   });

@@ -37,7 +37,7 @@ class Rig:
 
         self.engine = eng.NotifyEngine(
             sender_lookup=lambda kind: self.sender, is_muted=lambda sid: sid in self.muted, secrets_lookup=secrets,
-            link_base=link_base, computer_name=lambda: "hostb", clock=self.clock, sleep=self.sleep,
+            link_base=link_base, computer_name=lambda: "mini", clock=self.clock, sleep=self.sleep,
             screens=self.screens, is_uuid_muted=lambda u: u in self.uuid_muted, sms_state_dir=sms_state_dir)
         routing_view.install_routing(lambda: self.view, self.writer)
 
@@ -66,7 +66,7 @@ async def test_delivers_with_computer_and_link():
     r = Rig([dest()])
     await r.send(ev())
     (event, config, secrets), = r.sender.calls
-    assert event.computer == "hostb" and event.link.startswith("https://x.example/session/")
+    assert event.computer == "mini" and event.link.startswith("https://x.example/session/")
     assert secrets == {"k": "v"}
 
 
@@ -364,6 +364,17 @@ async def test_send_test_bypasses_everything_and_is_limited():
     r.clock.now += 11
     assert not (await r.engine.send_test("d_000000000001")).limited
     assert (await r.engine.send_test("d_nope")).found is False
+
+
+async def test_sms_test_sends_are_charged_to_the_daily_cap():
+    r = Rig([dest(kind="twilio")])
+    r.secret = {"numbers": "+15550000001"}
+    await r.send(*[ev(instance_key=f"e{i}", session_id=f"s{i}") for i in range(20)])
+    assert len(r.sender.calls) == 20
+    r.clock.now += 11
+    out = await r.engine.send_test("d_000000000001")
+    assert out.found and not out.result.ok and out.result.failure == F.RATE_LIMITED
+    assert len(r.sender.calls) == 20
 
 
 async def test_status_published_and_provider_installed(_no_alert):

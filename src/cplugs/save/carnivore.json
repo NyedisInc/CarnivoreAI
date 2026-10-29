@@ -5,7 +5,7 @@
   "version": "1.1.0",
   "api_version": 1,
   "min_app_version": "1.12.20",
-  "author": "Carnivore contributors",
+  "author": "Carnivore",
   "license": "MIT",
   "tier": "builtin",
   "scope": [
@@ -89,7 +89,7 @@
         "own": "excluded",
         "share": "excluded",
         "purge": "kept",
-        "reason": "the backup vault: checked copies of every conversation, and of every plugin folder marked for the vault."
+        "reason": "the backup vault: checked copies of every conversation, and of every plugin folder marked for the vault. Copies meant to outlive the original, so a purge never touches it; it moves only when the owner sets a new location (nothing is copied, the old folder stays)"
       }
     },
     {

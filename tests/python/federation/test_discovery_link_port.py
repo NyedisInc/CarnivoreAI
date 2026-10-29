@@ -60,14 +60,14 @@ def resolve(d, name, fid, lp, addrs):
 def test_candidates_need_lp_carry_fid_short_and_exclude_self(tmp_path, lib, monkeypatch):
     d, _ = make(tmp_path, lib, None)
     monkeypatch.setattr(bonjour, "get_addr_info", lambda *a, **k: MagicMock(fd=5))
-    resolve(d, "alpha", "abcdef123456", "9443", ["192.0.2.13"])
-    resolve(d, "beta", "ffffff", "", ["192.0.2.17"])
-    resolve(d, "gamma", "123456789", "bad", ["198.51.100.13"])
+    resolve(d, "alpha", "abcdef123456", "9443", ["10.0.0.5"])
+    resolve(d, "beta", "ffffff", "", ["10.0.0.6"])
+    resolve(d, "gamma", "123456789", "bad", ["10.0.0.7"])
     d._on_resolve(0, "me", "me.local.", 22,
                   bonjour.encode_txt([("p", "1"), ("fid", "x"), ("mid", discovery.hash_machine_id(UUID)),
                                       ("lp", "9443")]))
     assert d.candidates() == [{"name": "alpha", "fid": "abcdef123456", "fid_short": "abcdef",
-                               "addresses": ["192.0.2.13"], "lp": 9443, "pack_name": None}]
+                               "addresses": ["10.0.0.5"], "lp": 9443, "pack_name": None}]
 
 
 def test_probe_picks_only_the_one_with_its_join_port_open():

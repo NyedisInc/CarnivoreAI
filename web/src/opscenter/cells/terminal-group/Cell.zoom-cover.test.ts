@@ -11,6 +11,7 @@ import type { SlotId } from '../../engine/types';
 const clients = vi.hoisted(() => ({ made: [] as Array<{ id: string; _tabHidden?: boolean }> }));
 vi.mock('../terminal-live/client', () => ({
   startLiveTerminal: (_el: unknown, instance: string) => {
+    // A class instance, like the real client: Svelte never proxies one.
     const client = new (class FakeClient { constructor(public id: string) {} })(instance);
     clients.made.push(client);
     return { client, dispose() {} };

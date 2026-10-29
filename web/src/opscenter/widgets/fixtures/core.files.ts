@@ -1,7 +1,7 @@
 import { sessionList, TERMINAL_ROW_ID } from './made-up';
 import type { RouteTable, WidgetFixtures } from './types';
 
-const SESSION_UUID = '0edffbc5-38a8-4edc-8c9a-e9bab14a8b5d';
+const SESSION_UUID = '8f1c2d3e-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
 
 const GIT_ROUTE = 'GET /sessions/ses_billingapi/git-status';
 

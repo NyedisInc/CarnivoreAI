@@ -8,7 +8,7 @@ import type { ApprovalItem } from './approvals-model';
 
 setLocale('en');
 
-const FOLDER = '/Users/me/Library/Mobile Documents/com~apple~CloudDocs/work/Org/Example/app/tooling/catalog';
+const FOLDER = '/Users/me/Sync/Development/Org/Ventures/Shelving/tooling/catalog';
 const ROWS: ListingRowLike[] = [
   { label: 'omega', tmux_session: 'carnivore_omega', session: { id: 'ses_1', tmux_session: 'carnivore_omega', working_dir: FOLDER } },
   { label: 'nova', tmux_session: 'carnivore_nova', session: { id: 'ses_2', tmux_session: 'carnivore_nova', working_dir: '/tmp/work' } },
@@ -17,7 +17,7 @@ const ROWS: ListingRowLike[] = [
 const TRUST_TEXT = 'Accessing workspace:\n\n' + FOLDER + '\n\nQuick safety check: Is this a project you created or one you trust?';
 
 const TRUST: ApprovalItem = {
-  id: 'dlg:ses_1:ab', source: 'dialog', host: 'local', session_id: 'ses_1', session_name: 'omega', project: 'storefront',
+  id: 'dlg:ses_1:ab', source: 'dialog', host: 'local', session_id: 'ses_1', session_name: 'omega', project: 'shelving',
   family: 'claude', kind: 'folder_trust', startup_kind: 'trust', fingerprint: 'a'.repeat(64),
   question: 'Quick safety check: Is this a project you created or one you trust?', body: TRUST_TEXT,
   rows: [{ label: 'No, exit', role: 'option' }, { label: 'Yes, I trust this folder', role: 'option' }],
@@ -42,7 +42,7 @@ describe('a startup screen with buttons (folder trust)', () => {
     expect(card.kind).toBe('startup');
     expect(card.tone).toBe('startup');
     expect(card.who).toBe('omega');
-    expect(card.where).toBe('storefront');
+    expect(card.where).toBe('shelving');
     expect(say(card.headline)).toBe('omega wants to know if you trust this folder before claude reads or runs anything in it.');
     expect(say(card.headline)).not.toContain('Quick safety check');
   });
@@ -207,11 +207,11 @@ describe('a plan, an unreadable prompt and any other dialog', () => {
 describe('an agent action', () => {
   const ACTION: ApprovalItem = {
     id: 'act_1', source: 'agent_action', caller: 'carnivore_nova', session_id: 'ses_1', tmux_session: 'carnivore_omega',
-    session_name: 'omega', action: 'project_move', summary: 'move ledgerbot',
+    session_name: 'omega', action: 'project_move', summary: 'move trader',
     display: {
-      verb: 'move', object: 'project', name: 'ledgerbot', tone: 'confirm',
-      consequences: [{ key: 'summary', params: { text: 'moves to ~/Development/Org/Personal/ledgerbot' } }],
-      detail: [{ key: 'new_folder', value: '/Users/x/Development/Org/Personal/ledgerbot' }],
+      verb: 'move', object: 'project', name: 'trader', tone: 'confirm',
+      consequences: [{ key: 'summary', params: { text: 'moves to ~/Development/Org/Personal/trader' } }],
+      detail: [{ key: 'new_folder', value: '/Users/x/Development/Org/Personal/trader' }],
     },
   };
 
@@ -220,7 +220,7 @@ describe('an agent action', () => {
     expect(card.kind).toBe('agent');
     expect(card.tone).toBe('agent');
     expect(card.who).toBe('nova');
-    expect(say(card.headline)).toBe('nova asks to move project ledgerbot.');
+    expect(say(card.headline)).toBe('nova asks to move project trader.');
     expect(card.facts.map((f) => f.id)).toEqual(['effect', 'target', 'tool']);
     expect(facts(card).target).toBe('omega');
     expect(facts(card).tool).toBe('project_move');
@@ -232,7 +232,7 @@ describe('an agent action', () => {
     const card = cardContract({ ...ACTION, display: null, external_client: 'phone' }, { rows: ROWS });
     expect(card.who).toBe('phone');
     expect(say(card.headline)).toBe('phone asks to run project_move.');
-    expect(facts(card).effect).toBe('move ledgerbot');
+    expect(facts(card).effect).toBe('move trader');
   });
 });
 

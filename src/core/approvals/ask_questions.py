@@ -15,6 +15,7 @@ import structlog
 
 from src.core.approvals.bounds import fit_text, one_line
 from src.core.approvals.extract import KIND_ASK, ROLE_OPTION, ROLE_OTHER, Dialog, squash
+from src.core.attention.evidence import observed_conversation_uuid
 from src.core.attention.turn_counts import content_blocks
 from src.core.timers.redact import redact
 
@@ -211,7 +212,7 @@ def locate_ask(info: Any, watcher: Optional[Any]) -> Tuple[Optional[AskQuestions
     uuid = info.claude_session_uuid
     observation = watcher.observation_for(info.session.id, now=datetime.now(timezone.utc)) if watcher is not None else None
     if observation is not None and not observation.stale:
-        uuid = (getattr(observation.evidence, "identity", None) or (None,) * 5)[4] or uuid
+        uuid = observed_conversation_uuid(observation.evidence) or uuid
     if not uuid:
         return None, False
     known, path = _cached_path(uuid)

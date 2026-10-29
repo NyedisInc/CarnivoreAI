@@ -4,6 +4,7 @@
   import { t } from '../../i18n/index.svelte';
   import { isObj } from '../logic/diff';
   import { runMarkName } from '../logic/marks';
+  import { REPORT_NEAR_CAP_BYTES } from '../logic/report-cap';
   import { skipReason, bytesWords, countWords, reasonWords, runStatusWord, tookWords } from '../logic/words';
   import type { RuleContext } from '../logic/report-rules';
   import { costLabel } from '../format';
@@ -63,7 +64,7 @@
   });
 
   const output = $derived.by(() => {
-    if ((run.report_bytes ?? 0) > 0) return (run.report_bytes ?? 0) >= 524288 ? t('automations.page.reader.size_cap', { size: bytesWords(run.report_bytes) }) : bytesWords(run.report_bytes);
+    if ((run.report_bytes ?? 0) > 0) return (run.report_bytes ?? 0) >= REPORT_NEAR_CAP_BYTES ? t('automations.page.reader.size_cap', { size: bytesWords(run.report_bytes) }) : bytesWords(run.report_bytes);
     if (run.status === 'succeeded') return run.has_report ? t('automations.page.head.output_zero') : t('automations.page.head.output_none');
     return null;
   });

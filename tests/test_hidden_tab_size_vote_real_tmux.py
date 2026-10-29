@@ -161,12 +161,12 @@ async def test_a_lone_hidden_tab_is_told_the_pane_it_did_not_choose(rig):
     from src.api.resize_negotiation import apply_negotiated_resize, release_client_resize
 
     socket, manager, connections = rig
-    wide_client, brave = FakeWebSocket(), FakeWebSocket()
-    await _send(manager, wide_client, 100, 39, hidden=False)
+    joe, brave = FakeWebSocket(), FakeWebSocket()
+    await _send(manager, joe, 100, 39, hidden=False)
     await _send(manager, brave, 105, 40, hidden=True)
     assert _pane_size(socket) == (100, 39)
 
-    await release_client_resize(manager, SESSION_ID, wide_client, connections)
+    await release_client_resize(manager, SESSION_ID, joe, connections)
     assert _pane_size(socket) == (100, 39)
 
     connections.frames.clear()

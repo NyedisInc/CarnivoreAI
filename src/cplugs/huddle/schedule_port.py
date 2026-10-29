@@ -1,9 +1,3 @@
-"""
-WHICH SESSION A SCHEDULE FIRES INTO is the delivery's own pick, never a second rule: ``fire.deliver`` tells
-``fire.pick_target`` over the item's LIST (a project's list: its picked or most recent calling agent session, else its most
-recently active one; the shared list and a project with no session of its own have none, because a fire there wakes or starts a
-session that does not exist yet). The item's ``owner_session_key`` is NOT consulted by a fire; its TAG is (``tagged_session_key``: the tag, else the project lead, ``roles/tag_send.item_target``).
-"""
 
 from __future__ import annotations
 
@@ -27,13 +21,6 @@ logger = structlog.get_logger()
 
 
 def entry_of(item: Dict[str, Any]) -> Dict[str, Any]:
-    """One scheduled item as core's schedule entry.
-
-    Inputs: item ({id, title, text, start_trigger}). Output: {name, next_fire_at (epoch s | None), enabled, failed, retrying}.
-    ``enabled`` is not paused; ``failed`` is a fire that could not be delivered (``last_error``); ``retrying`` is a repeat, which
-    carries on to its next occurrence after a failure, while a failed one-shot has no retry.
-    Example: entry_of({"id": 1, "title": "x", "text": "", "start_trigger": {"fire_at": 9.0, "paused": True, "repeat": None, "last_error": None}})["enabled"] -> False
-    """
     trigger = item[triggers.FIELD]
     return {"name": item.get(titles.FIELD) or lean_read.lead(item.get("text")) or f"item {item['id']}",
             "next_fire_at": trigger.get("fire_at"), "enabled": not trigger.get("paused"),
@@ -67,7 +54,7 @@ class SchedulePort:
             return
         try:
             mark = listing_mark(self._ctx)
-        except (sqlite3.Error, OSError) as exc:  # could not
+        except (sqlite3.Error, OSError) as exc:
             logger.warning("task_manager_listing_mark_unreadable", error_type=type(exc).__name__, error=str(exc)[:200])
             self.wake_listing()
             return

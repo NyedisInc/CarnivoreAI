@@ -4,6 +4,7 @@
     import SessionsPanel from '../catalog/SessionsPanel.svelte';
     import { browserCatalogHost, type CatalogHost } from '../catalog/catalog';
     import Check from '../../opscenter/ui/Check.svelte';
+    import { Button } from '../base';
     import Identicon from '../community/Identicon.svelte';
     import { displayName } from '../drawer-hud/account-identity';
     import { CATALOG_SESSION_EVENT, catalogAccount } from '../drawer-hud/catalog-account.svelte';
@@ -13,7 +14,7 @@
     import { refreshAccount } from './account-store.svelte';
     import { openRegisterModal } from './open-register';
     import { openSignInModal } from './open-signin';
-    import type { AccountFeature } from './features';
+    import { signOutOfAccount } from './sign-in-door';
 
     interface Props {
         host?: CatalogHost;
@@ -25,6 +26,7 @@
 
     let news = $state<boolean | null>(null);
     let newsNote = $state<string | null>(null);
+    let signOutNote = $state<string | null>(null);
     let working = $state(false);
 
     const facts = $derived(catalogAccount.facts);
@@ -33,9 +35,7 @@
     const handle = $derived(facts?.handle ?? '');
     const avatarSeed = $derived(displayName(handle, facts?.login ?? null) || 'carnivore');
 
-    async function load(): Promise<void> {
-        await refreshAccount();
-        if (!signedIn) return;
+    async function loadNews(): Promise<void> {
         try {
             news = await account.readNews();
         } catch {
@@ -44,7 +44,12 @@
     }
 
     $effect(() => {
-        void load();
+        void refreshAccount();
+    });
+
+    $effect(() => {
+        if (signedIn) void loadNews();
+        else news = null;
     });
 
     async function setNews(next: boolean): Promise<void> {
@@ -66,16 +71,16 @@
     async function signOut(): Promise<void> {
         if (working) return;
         working = true;
+        signOutNote = null;
         try {
-            await host.signOutOfCatalog();
+            if (!(await signOutOfAccount(host))) signOutNote = t('account.page.signout_failed');
         } finally {
             working = false;
-            window.dispatchEvent(new Event(CATALOG_SESSION_EVENT));
         }
     }
 
     function signIn(): Promise<void> {
-        return openSignInModal({ feature: '' as AccountFeature, src: 'account_page' });
+        return openSignInModal({ feature: null, src: 'account_page' });
     }
 
     function onDeleted(): void {
@@ -93,9 +98,9 @@
                     {#if handle}
                         <span class="acctpage__handle" data-account-handle>{handle}</span>
                     {:else}
-                        <button type="button" class="modal-btn modal-btn-secondary" data-account-pick-handle onclick={() => void openRegisterModal()}>
+                        <Button data-account-pick-handle onclick={() => void openRegisterModal()}>
                             {t('account.page.pick_handle')}
-                        </button>
+                        </Button>
                     {/if}
                     {#if facts?.email}
                         <span class="acctpage__email" data-account-email>{facts.email}</span>
@@ -127,17 +132,20 @@
         <AccountPanel {host} {t} {onDeleted} hasHandle={handle !== ''} />
 
         <section class="acctpage__sec">
-            <button type="button" class="modal-btn modal-btn-secondary" data-account-signout disabled={working} onclick={() => void signOut()}>
+            <Button data-account-signout disabled={working} onclick={() => void signOut()}>
                 {t('account.page.signout')}
-            </button>
+            </Button>
+            {#if signOutNote}
+                <p class="acctpage__note" role="status">{signOutNote}</p>
+            {/if}
         </section>
     {:else if guest}
         <section class="acctpage__sec" aria-label={t('account.guest.title')} data-account-guest>
             <h2 class="oc-label">{t('account.guest.title')}</h2>
             <p class="acctpage__lead">{t('account.guest.lead')}</p>
-            <button type="button" class="modal-btn modal-btn-secondary" data-account-signin onclick={() => void signIn()}>
+            <Button data-account-signin onclick={() => void signIn()}>
                 {t('account.guest.keep')}
-            </button>
+            </Button>
         </section>
         <AccountPanel {host} {t} {onDeleted} hasHandle={false} guest />
     {:else}
@@ -149,9 +157,9 @@
                 <li>{t('account.page.benefit_sync')}</li>
                 <li>{t('account.page.benefit_skills')}</li>
             </ul>
-            <button type="button" class="modal-btn modal-btn-secondary" data-account-signin onclick={() => void signIn()}>
+            <Button data-account-signin onclick={() => void signIn()}>
                 {t('account.page.signin')}
-            </button>
+            </Button>
         </section>
     {/if}
 </div>
@@ -223,10 +231,5 @@
         color: var(--oc-text-primary);
         font-size: 12px;
         line-height: 1.6;
-    }
-
-    .acctpage :global(.modal-btn) {
-        padding: 7px 16px;
-        font-size: 13px;
     }
 </style>

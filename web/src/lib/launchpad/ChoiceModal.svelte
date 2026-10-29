@@ -1,15 +1,19 @@
-<!-- CANNOT BE DETERMINED could not -->
+<!-- the home screen -->
 <script lang="ts">
     import { t as reactiveT } from '../i18n/index.svelte';
     import { PROJECT_CREATE_KEYS } from '../../../../client/js/labels/project-create.js';
     import type { Translate } from '../sessions/types';
     import type { ChoiceItem } from './modal-types';
     import ModalShell from './ModalShell.svelte';
+    import Button from '../base/Button.svelte';
+    import List from '../base/List.svelte';
+    import ListRow from '../base/ListRow.svelte';
 
     interface Props {
         title: string;
         hint?: string | null;
         items?: ChoiceItem[];
+        /* there is nothing */
         emptyMessage?: string | null;
         emptyKind?: string;
         t?: Translate;
@@ -90,42 +94,40 @@
 </script>
 
 <ModalShell {title} onCancel={() => close(null)}>
-    <div class="folder-picker-list" tabindex="-1">
+    <List class="folder-picker-list" tabindex={-1} label={title}>
         {#if items.length}
             {#each items as item, i (item.key)}
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div
-                    class="folder-picker-item"
-                    class:folder-picker-item-disabled={item.disabled}
-                    class:folder-picker-item-active={i === active}
+                
+                <ListRow
+                    wrap
+                    selected={i === active}
+                    primary={item.label}
+                    secondary={item.disabled && item.reason ? item.reason : item.sub || undefined}
                     data-choice-index={i}
                     aria-disabled={item.disabled ? 'true' : undefined}
-                    bind:this={rowEls[i]}
                     onclick={() => choose(i)}
-                >
-                    <div class="folder-picker-item-label">{item.label}</div>
-                    {#if item.disabled && item.reason}
-                        <div class="folder-picker-item-sub">{item.reason}</div>
-                    {:else if item.sub}
-                        <div class="folder-picker-item-sub">{item.sub}</div>
-                    {/if}
-                </div>
+                    {@attach (el: Element) => {
+                        rowEls[i] = el as HTMLDivElement;
+                        return () => {
+                            rowEls[i] = null;
+                        };
+                    }}
+                />
             {/each}
         {:else}
             <div class="folder-picker-empty folder-picker-empty--{emptyKind}">
                 {emptyMessage || t(PROJECT_CREATE_KEYS.choiceEmptyFallback)}
             </div>
         {/if}
-    </div>
+    </List>
     <div class="modal-description">
         {items.length
             ? hint || t(PROJECT_CREATE_KEYS.choiceHint)
             : t(PROJECT_CREATE_KEYS.choiceEmptyHint)}
     </div>
     {#snippet footer()}
-        <button class="modal-btn modal-btn-secondary" data-choice-cancel onclick={() => close(null)}>
+        <Button data-choice-cancel onclick={() => close(null)}>
             {items.length ? t(PROJECT_CREATE_KEYS.cancel) : t(PROJECT_CREATE_KEYS.choiceOk)}
-        </button>
+        </Button>
     {/snippet}
 </ModalShell>

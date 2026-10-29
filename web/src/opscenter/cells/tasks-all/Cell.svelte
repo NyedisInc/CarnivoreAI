@@ -5,7 +5,6 @@
 </script>
 
 <script lang="ts">
-  /* all session tasks */
   import { allSessionTasks, releaseAllSessionTasks, type AllSessionTasks } from '../../api/session-tasks.svelte';
   import type { Resource } from '../../api/poll.svelte';
   import { t } from '../../../lib/i18n/index.svelte';

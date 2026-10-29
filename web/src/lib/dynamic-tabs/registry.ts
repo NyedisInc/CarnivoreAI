@@ -22,7 +22,6 @@ export function refusalOf(def: DynamicTabDef, taken: readonly DynamicTabDef[]): 
   const hasComponent = !!body && typeof body.component === 'function';
   if (hasContainers === hasComponent) return 'body';
   if (!(WIDGET_AREA_STATES as readonly string[]).includes(def.widgetArea)) return 'widget-area';
-  // pop-out window
   if (def.popout && (!hasComponent || !(body as { titleKey?: unknown }).titleKey)) return 'popout';
   return null;
 }

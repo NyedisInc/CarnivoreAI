@@ -10,6 +10,12 @@ const root = path.join(__dirname, '..');
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();

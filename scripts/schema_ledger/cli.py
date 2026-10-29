@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Check or extend a schema rung ledger.
 
+    venv/bin/python3 scripts/schema_ledger/cli.py check [core|huddle]
+    venv/bin/python3 scripts/schema_ledger/cli.py write core --author joe
+
 ``check`` exits 0 when the ledger matches the code, 1 when it does not, 2 when it could not be read. ``write`` appends
 lines for rungs the ledger lacks and refuses to touch an existing line.
 """

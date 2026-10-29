@@ -8,9 +8,9 @@
   import Tag from '../../base/Tag.svelte';
   import * as api from '../api';
   import { cronWords } from '../cron-words';
-  import { actorLabel, codeLabel, valueLabel } from '../format';
+  import { actorLabel, valueLabel } from '../format';
   import { kindWords } from '../list-state.svelte';
-  import { secsWords } from '../logic/words';
+  import { codeWords, secsWords } from '../logic/words';
   import { data, pageClock, sessionOptions, wantSessions } from '../page-store.svelte';
   import { pane } from './pane-data.svelte';
 
@@ -78,8 +78,8 @@
   });
 
   function what(change: api.AutomationChange): string {
-    if (change.action !== 'update') return codeLabel('automations.change.action', change.action);
-    return change.changes.flatMap((f) => targetEdits(f) ?? [`${codeLabel('automations.field_name', f.field)}: ${changeValue(f.field, f.before)} ${t('automations.page.pane.ov.to')} ${changeValue(f.field, f.after)}`]).join('; ');
+    if (change.action !== 'update') return codeWords('automations.change.action', change.action);
+    return change.changes.flatMap((f) => targetEdits(f) ?? [`${codeWords('automations.field_name', f.field)}: ${changeValue(f.field, f.before)} ${t('automations.page.pane.ov.to')} ${changeValue(f.field, f.after)}`]).join('; ');
   }
 
   function targetEdits(f: { field: string; before: unknown; after: unknown }): string[] | null {
@@ -137,7 +137,7 @@
   <dt>{t('automations.page.pane.ov.delivery')}</dt>
   <dd>{delivery}</dd>
   <dt>{t('automations.page.pane.ov.missed')}</dt>
-  <dd>{codeLabel('automations.misfire', automation.misfire)}</dd>
+  <dd>{codeWords('automations.misfire', automation.misfire)}</dd>
   <dt>{t('automations.page.pane.ov.retries')}</dt>
   <dd>{automation.retry_max ? t('automations.page.pane.ov.retries_value', { retries: automation.retry_max === 1 ? t('automations.page.pane.ov.retry_one') : t('automations.page.pane.ov.retry_many', { n: automation.retry_max }), mins: Math.round(automation.retry_backoff_s / 60) }) : t('automations.page.pane.ov.retries_none')}</dd>
   <dt>{t('automations.page.pane.ov.max_runtime')}</dt>

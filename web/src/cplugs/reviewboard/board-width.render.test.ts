@@ -20,6 +20,7 @@ const ROOM = 1400;
 
 let app: ReturnType<typeof mount> | null = null;
 
+/** Let promises and effects settle. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 5; i += 1) {
     await Promise.resolve();

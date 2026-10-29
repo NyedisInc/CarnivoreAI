@@ -37,7 +37,7 @@ _running = threading.Lock()
 
 
 class ProfileBusyError(Exception):
-    """A profile is already running; only one runs at a time."""
+    pass
 
 
 @dataclass(frozen=True)

@@ -34,7 +34,7 @@ _FLOW_OPS: Dict[str, Callable[..., flow.FlowResult]] = {
     "complete_slot": lambda c, i, a, by, now: flow.complete_slot(c, i, now=now),
     "asked_refresh": lambda c, i, a, by, now: flow.asked_refresh(c, i, now=now),
     "set_lane": lambda c, i, a, by, now: flow.set_lane(c, i, queued=bool(a["queued"]), by=by, now=now),
-    "archive": lambda c, i, a, by, now: flow.archive(c, i, on=bool(a["on"]), by=by, now=now),
+    "archive": lambda c, i, a, by, now: flow.archive(c, i, on=bool(a["on"]), by=by, now=now, reason=a.get("reason", "")),
     "auto_promote": lambda c, i, a, by, now: flow.set_auto_promote(c, i, on=bool(a["on"]), by=by, now=now),
     "promote": lambda c, i, a, by, now: flow.promote(c, i, by=by, now=now),
     "queue": lambda c, i, a, by, now: queue.queue(c, i, by=by, reason=a.get("reason", ""), now=now),

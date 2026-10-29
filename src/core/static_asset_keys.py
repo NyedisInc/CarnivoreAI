@@ -62,22 +62,6 @@ def key_is_current(path: Path, key: str) -> bool:
 
 
 def cache_control_for(path: Optional[Path], requested_key: str) -> str:
-    """Decide the Cache-Control header for one static hit.
-
-    Args:
-        path: the file being served, or None when the URL could not be
-            resolved to one inside the static root.
-        requested_key: the ``v=`` query value, ``""`` when absent.
-
-    Returns:
-        ``IMMUTABLE`` only for a resolvable file whose current content key
-        equals ``requested_key``; ``REVALIDATE`` for everything else,
-        every failure to determine included.
-
-    Example:
-        >>> cache_control_for(Path("client/js/app.js"), "wrongkey")
-        'no-cache, must-revalidate'
-    """
     if path is None or not key_is_current(path, requested_key):
         return REVALIDATE
     return IMMUTABLE
@@ -102,17 +86,6 @@ def url_to_path(url: str, client_dir: Path) -> Optional[Path]:
 
 def render(html: str, client_dir: Path) -> str:
     def rewrite(match: "re.Match[str]") -> str:
-        """Key one matched tag, or hand it back untouched.
-
-        Args:
-            match: a ``_SRC_TAG`` or ``_LINK_TAG`` match, group 1 the URL.
-
-        Returns:
-            str: the tag with ``?v=<key>`` on its URL, or the original
-            text whenever a key cannot be determined - which is the
-            fail-soft direction, since an unkeyed URL still loads and
-            still revalidates.
-        """
         url = match.group(1)
         if "?" in url:
             return match.group(0)
@@ -140,23 +113,6 @@ def iter_static_urls(html: str) -> Iterable[str]:
 
 
 def warm(client_dir: Path, shell: Path) -> int:
-    """Hash every asset the shell references, once, at import time.
-
-    A cold pass reads and hashes each referenced file. That is real work
-    and it must not land on the first user request, which is the same
-    bargain - and the same remedy - as
-    ``static_serving.warm_static_gzip_cache`` beside the call site.
-
-    Args:
-        client_dir: filesystem root the ``/static/`` prefix maps to.
-        shell: the HTML template whose references should be pre-hashed.
-
-    Returns:
-        int: how many URLs were keyed, for the startup log line. ``0``
-        when the shell could not be read, which is not an error here: it
-        costs the optimisation only, the next request re-derives whatever
-        it can, and a boot must never fail over a cache warm.
-    """
     try:
         html = shell.read_text(encoding="utf-8")
     except OSError:

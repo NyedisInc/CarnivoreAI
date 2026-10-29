@@ -9,6 +9,7 @@ from typing import Any, Callable, Optional
 
 import structlog
 
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.account_notice import constants as C
 from src.core.app_alerts import conditions, service
 from src.core.app_alerts import constants as AK
@@ -22,7 +23,7 @@ _pairing_source: Callable[[], Any] = lambda: None  # noqa: E731
 
 
 class AccountNoticeNotInstalled(RuntimeError):
-    """The probe ran before :func:`install` named a state directory."""
+    pass
 
 
 def _phone_history(pairing: Any) -> bool:
@@ -34,7 +35,7 @@ def _share_history(state_dir: Path) -> bool:
     if not path.exists():
         return False
     try:
-        with closing(sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)) as conn:
+        with closing(connect_readonly(path)) as conn:
             return conn.execute("SELECT 1 FROM spectator_links LIMIT 1").fetchone() is not None
     except sqlite3.OperationalError as exc:
         logger.info("account_notice_share_history_unreadable", error=str(exc))

@@ -57,7 +57,7 @@ test('search: the page terminal toggles the page panel', () => {
 });
 
 test('files: a press opens this cell\'s files, the next press closes the drawer', () => {
-  const openWhenReady = vi.fn(() => foldFileDrawer({ open: true, mode: 'drawer', directory: null }));
+  const openWhenReady = vi.fn(() => foldFileDrawer({ open: true, directory: null }));
   const closeDrawer = vi.fn(() => foldFileDrawer({ open: false }));
   vi.stubGlobal('ConfigEditorLoader', { openWhenReady, closeDrawer });
   const box = document.createElement('div');
@@ -79,7 +79,7 @@ test('files: what the control saw at pointerdown wins over the state at the clic
   const closeDrawer = vi.fn();
   vi.stubGlobal('ConfigEditorLoader', { openWhenReady, closeDrawer });
   stops.push(registerTerminalActions('terminal:b', controller, document.createElement('div')));
-  foldFileDrawer({ open: true, mode: 'drawer', directory: null });
+  foldFileDrawer({ open: true, directory: null });
   filesDrawer.slot = 'terminal:b';
   terminalAction('terminal:b', 'files', anchor, false);
   expect(closeDrawer).not.toHaveBeenCalled();
@@ -98,7 +98,7 @@ test('the open browser follows the selected cell, and stays put when closed', ()
   expect(followSlot('terminal:b')).toBe(false);
   expect(retarget).not.toHaveBeenCalled();
 
-  foldFileDrawer({ open: true, mode: 'drawer', directory: null });
+  foldFileDrawer({ open: true, directory: null });
   filesDrawer.slot = 'terminal:a';
   expect(followSlot('terminal:b')).toBe(true);
   expect(retarget).toHaveBeenLastCalledWith(other, boxB);
@@ -120,7 +120,7 @@ test('selecting a terminal cell retargets the open browser, with no focus moved'
   const boxC = document.createElement('div');
   const third = { sessionActive: true, id: 'c' } as unknown as ControllerLike;
   stops.push(registerTerminalActions('terminal:c', third, boxC));
-  foldFileDrawer({ open: true, mode: 'cell', directory: null });
+  foldFileDrawer({ open: true, directory: null });
   const stop = followActiveTerminal();
   stops.push(stop);
   inputFocus.claim('terminal:c');

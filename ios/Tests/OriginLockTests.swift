@@ -28,15 +28,15 @@ final class OriginLockTests: XCTestCase {
     }
 
     func testLanHttpAcceptedAndTaggedUnencrypted() throws {
-        let o = try origin("198.51.100.11", .lan)
-        XCTAssertEqual(o.rootURL.absoluteString, "http://198.51.100.11:8000/")
+        let o = try origin("192.168.1.9", .lan)
+        XCTAssertEqual(o.rootURL.absoluteString, "http://192.168.1.9:8000/")
         XCTAssertFalse(o.isEncrypted)
         XCTAssertEqual(try origin("http://mac.local:5001", .lan).port, 5001)
         XCTAssertEqual(try origin("mac.local:9000", .lan).port, 9000)
     }
 
     func testArbitraryHttpsAcceptedAndHttpRefused() throws {
-        XCTAssertTrue(try origin("https://host.example.ts.net", .https).isEncrypted)
+        XCTAssertTrue(try origin("https://box.tailnet.ts.net", .https).isEncrypted)
         XCTAssertEqual(refusal("http://box.example.com", .https), .notHttps)
     }
 

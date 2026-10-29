@@ -1,3 +1,4 @@
+// WHY THIS FILE EXISTS
 
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -12,6 +13,13 @@ const net = require(path.join(repoRoot, 'macOS', 'network-interfaces.js'));
 let passed = 0;
 const failures = [];
 
+/**
+ * Run one named assertion block.
+ *
+ * @param {string} name - Description of the behaviour.
+ * @param {() => void} fn - Assertions.
+ * @returns {void}
+ */
 function test(name, fn) {
   try {
     fn();
@@ -28,12 +36,12 @@ const REAL_MAC = {
     { address: '127.0.0.1', family: 'IPv4', internal: true },
     { address: '::1', family: 'IPv6', internal: true },
   ],
-  en0: [{ address: '100.0.2.12', family: 'IPv4', internal: false }],
+  en0: [{ address: '10.0.1.5', family: 'IPv4', internal: false }],
   awdl0: [{ address: 'fe80::1c churn', family: 'IPv6', internal: false }],
   llw0: [{ address: 'fe80::2', family: 'IPv6', internal: false }],
   anpi0: [{ address: 'fe80::3', family: 'IPv6', internal: false }],
   ap1: [{ address: 'fe80::4', family: 'IPv6', internal: false }],
-  utun4: [{ address: '100.101.0.77', family: 'IPv4', internal: false }],
+  utun4: [{ address: '100.64.0.9', family: 'IPv4', internal: false }],
 };
 
 console.log('network-interfaces: the regression');
@@ -41,20 +49,20 @@ console.log('network-interfaces: the regression');
 test('the Tailscale address on utun4 IS offered', () => {
   const ips = net.listBindableIps(REAL_MAC).map((r) => r.ip);
   assert.ok(
-    ips.includes('100.101.0.77'),
+    ips.includes('100.64.0.9'),
     'utun4 carries a routable IPv4 and must be bindable; a name blocklist ' +
       'used to drop it silently. Got: ' + JSON.stringify(ips)
   );
 });
 
 test('the utun interface is reported under its real name', () => {
-  const row = net.listBindableIps(REAL_MAC).find((r) => r.ip === '100.101.0.77');
+  const row = net.listBindableIps(REAL_MAC).find((r) => r.ip === '100.64.0.9');
   assert.equal(row.iface, 'utun4');
 });
 
 test('the ordinary LAN address is still offered', () => {
   const ips = net.listBindableIps(REAL_MAC).map((r) => r.ip);
-  assert.ok(ips.includes('100.0.2.12'));
+  assert.ok(ips.includes('10.0.1.5'));
 });
 
 console.log('network-interfaces: what stays excluded, and WHY');
@@ -71,9 +79,9 @@ test('AirDrop and the internal radios are excluded by carrying no IPv4', () => {
 
 test('a pseudo-interface that DID carry a routable IPv4 would be offered', () => {
   const ips = net
-    .listBindableIps({ awdl0: [{ address: '198.51.100.16', family: 'IPv4', internal: false }] })
+    .listBindableIps({ awdl0: [{ address: '10.9.9.9', family: 'IPv4', internal: false }] })
     .map((r) => r.ip);
-  assert.deepEqual(ips, ['198.51.100.16']);
+  assert.deepEqual(ips, ['10.9.9.9']);
 });
 
 test('loopback is excluded because it is internal', () => {
@@ -97,9 +105,9 @@ test('IPv6 addresses are never offered as bind targets', () => {
 
 test('a numeric family of 4 is accepted, as newer Node reports it', () => {
   const ips = net
-    .listBindableIps({ en0: [{ address: '198.51.100.15', family: 4, internal: false }] })
+    .listBindableIps({ en0: [{ address: '10.1.2.3', family: 4, internal: false }] })
     .map((r) => r.ip);
-  assert.deepEqual(ips, ['198.51.100.15'], 'Node 18+ reports family as a number');
+  assert.deepEqual(ips, ['10.1.2.3'], 'Node 18+ reports family as a number');
 });
 
 test('a malformed or empty table yields an empty list, not a throw', () => {
@@ -111,8 +119,8 @@ test('a malformed or empty table yields an empty list, not a throw', () => {
 test('results are sorted by interface name for a stable menu', () => {
   const names = net
     .listBindableIps({
-      utun4: [{ address: '100.101.0.77', family: 'IPv4', internal: false }],
-      en0: [{ address: '100.0.2.12', family: 'IPv4', internal: false }],
+      utun4: [{ address: '100.64.0.9', family: 'IPv4', internal: false }],
+      en0: [{ address: '10.0.1.5', family: 'IPv4', internal: false }],
     })
     .map((r) => r.iface);
   assert.deepEqual(names, ['en0', 'utun4']);
@@ -121,20 +129,20 @@ test('results are sorted by interface name for a stable menu', () => {
 console.log('network-interfaces: Tailscale labelling');
 
 test('the CGNAT range 100.64.0.0/10 is recognised', () => {
-  for (const ip of ['100.64.0.0', '100.101.0.77', '100.127.255.255']) {
+  for (const ip of ['100.64.0.0', '100.64.0.9', '100.127.255.255']) {
     assert.equal(net.isTailscaleIp(ip), true, ip + ' should be Tailscale');
   }
 });
 
 test('addresses just outside the CGNAT range are NOT labelled Tailscale', () => {
-  for (const ip of ['100.63.255.255', '100.128.0.1', '100.0.2.12', '203.0.113.11']) {
+  for (const ip of ['100.63.255.255', '100.128.0.1', '10.0.1.5', '192.168.1.5']) {
     assert.equal(net.isTailscaleIp(ip), false, ip + ' should not be Tailscale');
   }
 });
 
 test('labelling never decides whether an address is offered', () => {
   const ips = net.listBindableIps(REAL_MAC).map((r) => r.ip).sort();
-  assert.deepEqual(ips, ['100.0.2.12', '100.101.0.77']);
+  assert.deepEqual(ips, ['10.0.1.5', '100.64.0.9']);
 });
 
 console.log('');

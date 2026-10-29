@@ -21,10 +21,6 @@ def current() -> Optional[Engine]:
 
 
 def ensure(state_dir: Optional[Path] = None, db_path: Optional[Path] = None) -> Engine:
-    """The engine, built but NOT started when it does not exist yet (a lifecycle trigger needs only its milestone writer). Output: Engine.
-
-    Inputs: state_dir, db_path - default this install's (settings, read now). A second call returns the same engine.
-    """
     global _engine
     with _lock:
         if _engine is None:

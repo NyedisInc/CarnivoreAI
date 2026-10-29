@@ -17,6 +17,7 @@
     "POST /api/v1/cplugs/huddle/items/{id}/artifacts/{file_id}/ticket",
     "GET /api/v1/cplugs/huddle/artifact-view/{ticket}",
     "GET /api/v1/cplugs/huddle/items/{id}/files/{file_id}",
+    "DELETE /api/v1/cplugs/huddle/items/{id}/files/{file_id}",
     "POST /api/v1/cplugs/huddle/items/{id}/seen",
     "GET /api/v1/cplugs/huddle/focus",
     "POST /api/v1/cplugs/huddle/focus",
@@ -42,7 +43,7 @@
     "GET /api/v1/cplugs/huddle/sent"
   ],
   "area": "drawers",
-  "description": "A two-way list you and claude both write to, in a tab of the left sidebar. There is one list per project and one shared all projects list. Claude adds items (done: this, need your call: that), marks them done and asks you a question on any item; you add items for claude, drag them into priority order, check the ones that are good, and leave a note where it is good but claude should read something. A checked item with a note reads good, read the note. Each item has a short thread: claude asks, you reply, and your reply answers its question. When claude posts, a notice fires and the tab's badge turns yellow while a question waits, without taking you away from the tab you are on; the tab sits in the strip while the show tab setting is on and has no close key. Tell carnivore in the tab's title row sends one line to a claude session of the project saying the list changed, picking the most recently active one or letting you choose. Claude reads only what changed through its huddle tools and can never approve, reorder or delete. The pop out key in the title row opens the huddle in its own window so it sits beside what you are working on.",
+  "description": "A two-way list you and claude both write to, in a tab of the left sidebar. There is one list per project and one shared all projects list. Claude adds items (done: this, need your call: that), marks them done and asks you a question on any item; you add items for claude, drag them into priority order, check the ones that are good, and leave a note where it is good but claude should read something. A checked item with a note reads good, read the note. Each item has a short thread: claude asks, you reply, and your reply answers its question. When claude posts, a notice fires and the tab's badge turns yellow while a question waits, without taking you away from the tab you are on; the tab sits in the strip while the show tab setting is on and has no close key. Tell carnivore in the tab's title row sends one line to a claude session of the project saying the list changed, picking the most recently active one or letting you choose. Claude reads only what changed through its task manager tools and can never approve, reorder or delete. The pop out key in the title row opens the task manager in its own window so it sits beside what you are working on.",
   "docs": [
     "docs/task-manager.md",
     "docs/dynamic-tab.md"
@@ -57,11 +58,12 @@
     "Claude marks an item done and it moves into ready to review; you write a reply on it and it moves out of ready to review into open, then to working once claude reads it.",
     "You screenshot a broken layout, paste it into the reply box and press reply; claude reads the picture from its path on the thread.",
     "Claude flags three items purple with the reason needs a decision; you see the purple stripes and one legend entry, and the flags clear as you tick each item.",
+    "Claude asks to rename the project 'api' to 'api-v2' for item 215; the row moves to needs you and says so, you press approve, the project is renamed and claude is told the result.",
     "You switch the nudge on for a project (the edit project modal or the bell on its bar); an open item goes quiet for an hour, carnivore wakes that project's idle agent about it, and after three nudges with no change the item asks you to unstick it.",
     "You reply on a task, press tell, and see sent to carnivore 14:31 then reply received 14:31 under your message; ten minutes later a bell on another task's row shows the agent never fetched your reply."
   ],
   "how_to": [
-    "The huddle is called swarm in the app. It ships on for a clean install and stays off on an existing install until you turn it on: open the plugins page from the menu tab, find swarm (marked plugin) and press its switch, which grants what it asks.",
+    "The task manager is called swarm in the app. It ships on for a clean install and stays off on an existing install until you turn it on: open the plugins page from the menu tab, find swarm (marked plugin) and press its switch, which grants what it asks.",
     "Open the menu tab and choose swarm: the plugins page opens on the swarm plugin's side pane, at its settings (link: #plugins/huddle/settings). The show tab switch (on by default) keeps the swarm tab in the strip with no close key; switch it off to hide the tab, on any browser. The swarm look and page fields are in the same section, below the switches.",
     "Pick a list at the top: all projects or one project.",
     "Type in the box at the bottom and press add to give claude an item.",
@@ -70,7 +72,7 @@
     "Click a row (or press Enter on it) to open it: the thread sits under the description, with claude's question and your reply box. A question or review row also carries its own reply box.",
     "Paste a picture or file into a reply box, or drop files on it: each uploads at once and shows as a chip (the x removes it); send posts them with your words, or alone.",
     "Press tell carnivore at the bottom right to tell a claude session the list changed now; your ordinary changes also go out on their own a few seconds after you stop. If the list has no session, a pop-up above the key offers start a new session, a running session, or stop.",
-    "Press the pop out key in the title row to open the huddle in its own window.",
+    "Press the pop out key in the title row to open the task manager in its own window.",
     "Press hide completed (the eye, icon only) in the bar to hide checked items (it stays off until you turn it on, on every device); the eye shows whether it is on, and unchecking an item brings it back.",
     "Press the count at the far left of the bar (the number of checked items), then the red delete key, to delete the checked items of the list on screen; the confirm says they are gone for good, not hidden.",
     "Press the lines key beside the add box to type several items at once, one per line.",
@@ -93,7 +95,7 @@
     "Press enter in a reply box or the one-line add box to save it; the tell about that list is queued and goes out after a few quiet seconds, or when you press tell carnivore (in the multiline box enter is a new line and cmd+enter adds).",
     "The list sorts itself by status (the default): needs you, question for you, ready to review, waiting to install, working, scheduled, open, todo and done (todo and done start folded); items move between them on their own. Each row wears its area as a small tag. Press by group at the top to see your groups instead and drag between them; the choice holds on every device.",
     "When claude asks typed questions (yes or no, pick one, pick many, rank, short or long text) the row shows one line, N questions, with an answer key. It opens a form with claude's recommendations marked: take one with its take recommendation key, or take all recommendations, add a note to any answer, and submit. Submit saves the answer and queues the tell like any other change. A plain reply on a typed ask is a comment: it does not answer the form.",
-    "In the swarm panel click an agent: its chat opens in a drawer on the right at the left drawer's width. Drag the drawer's left edge to resize it (the width is remembered on this device), press escape or the close key to shut it, or click another agent to swap it. The tasks viewer tab shows the huddle list of that one agent. A reply, add or tick is sent when you submit it: there is no send queue, and a tell to a busy agent shows as held until it is free.",
+    "In the swarm panel click an agent: its chat opens in a drawer on the right at the left drawer's width. Drag the drawer's left edge to resize it (the width is remembered on this device), press escape or the close key to shut it, or click another agent to swap it. The tasks viewer tab shows the task manager list of that one agent. A reply, add or tick is sent when you submit it: there is no send queue, and a tell to a busy agent shows as held until it is free.",
     "Prototype, off by default: turn on channel delivery with PUT /api/v1/mcp-admin/channels {\"enabled\": true}; each NEW claude session then starts with a development-channels warning you answer in its pane, and a tell reaches it as a channel event instead of typed text (the answer says delivered_via channel or paste).",
     "Open an item's move key and press fork...: pick a title and the fork's state (and, if you like, the original's), then fork. The new item is a copy beside the original and says where it came from; claude does the same with task_manager_fork.",
     "Claude can flag an item with a color and a short reason (purple, pink, teal or lime): the row's left stripe wears that color and the status icon stays.",
@@ -107,7 +109,8 @@
     1745,
     1795,
     1805,
-    2340
+    2340,
+    2660
   ],
   "keywords": [
     "huddle",
@@ -125,8 +128,8 @@
     "fold",
     "swarm"
   ],
-  "media_exempt": "the huddle's rows, chips and thread are shown in the style guide's chrome section (the huddle); no capture recipe yet",
-  "name": "Huddle",
+  "media_exempt": "the task manager's rows, chips and thread are shown in the style guide's chrome section (the task manager); no capture recipe yet",
+  "name": "Task Manager",
   "since": "2026-10-02",
   "status": "beta",
   "summary": "a shared list between you and claude: claude posts what is done and what needs your call, you approve, note, reorder and reply, and the tab surfaces when claude posts.",
@@ -136,11 +139,11 @@
     "src/cplugs/huddle/routes.py",
     "src/cplugs/huddle/mcp.py"
   ],
-  "updated": "2026-10-15",
+  "updated": "2026-10-28",
   "where": [
-    "The left sidebar's tab strip: the swarm tab (the huddle), a chat bubble icon, beside questions.",
+    "The left sidebar's tab strip: the swarm tab (the task manager), a chat bubble icon, beside questions.",
     "The menu tab: the swarm row.",
-    "The huddle tab's title row: tell carnivore and pop out.",
+    "The task manager tab's title row: tell carnivore and pop out.",
     "The list bar, beside the view and density switches: the status filter, one funnel key at the right end, which opens a small card of icon keys, one per status the list shows.",
     "The swarm panel: click an agent and its chat slides out as a drawer from under the Swarm drawer toward the right, with chat and tasks viewer tabs."
   ]

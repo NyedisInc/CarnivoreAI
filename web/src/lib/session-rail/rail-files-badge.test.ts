@@ -23,6 +23,7 @@ import './alert-count-sources.svelte';
 import { layOutRail, follow, mountRails, unmountRails } from './rail-test-harness';
 import { RAIL_FIELD } from './rail-model';
 
+/** The badge text on one rail key, or null when it draws none. */
 const badge = (widget: string): string | null =>
   document.querySelector(`[data-zone-item="${widget}"] [data-rail-badge]`)?.textContent ?? null;
 

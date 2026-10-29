@@ -94,7 +94,7 @@ RESERVED_PUBLISHER_HANDLES = frozenset({"bundled", "nyedis", "carnivore", "exter
 
 RESERVED_CLAIM_HANDLES = RESERVED_PUBLISHER_HANDLES | frozenset(
     {
-        "acme", "admin", "administrator", "anthropic", "api", "catalog", "claude", "codex",
+        "adoom666", "admin", "administrator", "anthropic", "api", "catalog", "claude", "codex",
         "curator", "me", "moderator", "official", "openai", "root", "security", "skills", "staff",
         "support", "system", "users",
     }

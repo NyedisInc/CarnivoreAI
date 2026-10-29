@@ -56,6 +56,7 @@ describe('which sessions are offered', () => {
     });
 
     test('NEGATIVE CONTROL: the filter can say yes', () => {
+        // could be passing because
         expect(oneShotTargets([row({ session_id: 'a', agent_type: 'claude' })])).toHaveLength(1);
     });
 });

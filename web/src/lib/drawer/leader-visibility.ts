@@ -1,4 +1,3 @@
-/*  hidden  */
 import { drawerController } from './controller-ref';
 import { readKey, writeKey } from './storage';
 import { drawerEnv } from './env';

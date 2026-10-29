@@ -1,3 +1,4 @@
+/* there is nothing */
 
 console.log('[SlashCommandsBoot Module] Loading...');
 
@@ -12,6 +13,8 @@ console.log('[SlashCommandsBoot Module] Loading...');
 
     /** @type {Promise|null} The in-flight fetch, so a second call can join. */
     var inFlight = null;
+
+    var requestSeq = 0;
 
     function insert(command, ticket) {
         if (global.TerminalController) {
@@ -28,35 +31,36 @@ console.log('[SlashCommandsBoot Module] Loading...');
             return;
         }
 
-        // already running
         if (inFlight && loadingFor === dir) {
             return;
         }
 
+        var mine = ++requestSeq;
         loadingFor = dir;
         var started;
         try {
             started = Promise.resolve(modal.init(insert, dir));
         } catch (err) {
-            loadingFor = null;
+            if (mine === requestSeq) loadingFor = null;
             console.warn('[slash-commands] palette could not be started', err);
             return;
         }
         inFlight = started
             .then(function () {
-                loadedFor = dir;
+                if (mine === requestSeq) loadedFor = dir;
             })
             .catch(function (err) {
-                loadedFor = null;
+                if (mine === requestSeq) loadedFor = null;
                 console.warn('[slash-commands] palette unavailable for now', err);
             })
             .then(function () {
+                if (mine !== requestSeq) return;
                 inFlight = null;
                 loadingFor = null;
             });
     }
 
-    // could not
+    // that does nothing
 
     function state() {
         return { loadedFor: loadedFor, loading: inFlight !== null };

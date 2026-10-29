@@ -11,6 +11,12 @@ const ROOT = path.join(__dirname, '..');
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks it failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -23,6 +29,10 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Load session-label.js in a bare vm sandbox.
+ * @returns {object} window.SessionLabel from the sandbox.
+ */
 function loadResolver() {
     const fakeWindow = {};
     fakeWindow.window = fakeWindow;

@@ -9,6 +9,10 @@
     import { generateMedia, testConnection, type Connection, type MediaItem, type ModelOverride, type Preset, type TestResult } from './api';
     import { playBase64 } from './audio';
     import { base64Bytes, offeredCapabilities } from './form-logic';
+    import Button from '../base/Button.svelte';
+    import Field from '../base/Field.svelte';
+    import Select from '../base/Select.svelte';
+    import State from '../base/State.svelte';
     import ModelPicker from './ModelPicker.svelte';
     import { defaultModelId, modelFacts, modelItems } from './picker-logic';
     import { ai, loadModels } from './store.svelte';
@@ -111,22 +115,18 @@
 
 <div class="ai-test" data-ai="test-panel">
     <div class="tm__srv-grid">
-        <label class="tm__field">
-            <span class="oc-key">{t('settings.ai.test.capability')}</span>
-            <select class="oc-field" bind:value={capability} disabled={busy || running} data-ai="test-capability" onchange={() => (customModel = false)}>
-                {#each capabilities as cap (cap)}<option value={cap}>{t(`settings.ai.capability.${cap}`)}</option>{/each}
-            </select>
-        </label>
-        <div class="tm__field">
-            <span class="oc-key">{t('settings.ai.test.model')}</span>
+        <Select label={t('settings.ai.test.capability')} bind:value={capability} disabled={busy || running} data-ai="test-capability" onchange={() => (customModel = false)}
+            options={capabilities.map((cap) => ({ value: cap, label: t(`settings.ai.capability.${cap}`) }))} />
+        <div class="oc-form-field">
+            <span class="oc-label">{t('settings.ai.test.model')}</span>
             <ModelPicker {t} items={choices} value={model} onChange={pickModel} label={t('settings.ai.test.model')} allowCustom loading={!listed}
                 disabled={busy || running} dataAi="test-model" />
         </div>
     </div>
     <div class="tm__actions">
-        <button type="button" class="oc-btn oc-btn--confirm" disabled={busy || running || !capability} data-ai="test-run" onclick={() => void runTest()}>
+        <Button variant="confirm" disabled={busy || running || !capability} data-ai="test-run" onclick={() => void runTest()}>
             {running ? t('settings.ai.test.running') : t('settings.ai.test.run')}
-        </button>
+        </Button>
     </div>
     {#if result}
         <p class="tm__srv-result" class:tm__srv-result--ok={result.ok} class:tm__srv-result--bad={!result.ok} role="status" data-ai="test-result" data-ok={result.ok}>
@@ -134,17 +134,14 @@
         </p>
         {#if result.audio}
             <div class="tm__actions">
-                <button type="button" class="oc-btn" disabled={playing} data-ai="test-play" onclick={() => void play()}>{t('settings.ai.test.play')}</button>
+                <Button disabled={playing} data-ai="test-play" onclick={() => void play()}>{t('settings.ai.test.play')}</Button>
             </div>
         {/if}
     {/if}
     {#if isMedia}
-        <div class="tm__field">
-            <span class="oc-key">{t('settings.ai.test.prompt')}</span>
-            <input class="oc-field" type="text" bind:value={prompt} disabled={busy || running} spellcheck="false" autocomplete="off" data-ai="try-prompt" />
-        </div>
+        <Field label={t('settings.ai.test.prompt')} bind:value={prompt} disabled={busy || running} spellcheck="false" autocomplete="off" data-ai="try-prompt" />
         <div class="tm__actions">
-            <button type="button" class="oc-btn" disabled={busy || running || !prompt.trim()} data-ai="try-run" onclick={() => void generate()}>{t('settings.ai.test.generate')}</button>
+            <Button disabled={busy || running || !prompt.trim()} data-ai="try-run" onclick={() => void generate()}>{t('settings.ai.test.generate')}</Button>
         </div>
         {#if items}
             <ul class="ai-test__links" data-ai="try-items">
@@ -163,10 +160,10 @@
             </ul>
         {/if}
     {/if}
-    {#if problem}<p class="tm__problem" role="alert" data-ai="test-problem">{problem}</p>{/if}
+    {#if problem}<State kind="error" inline title={problem} data-ai="test-problem" />{/if}
 
     <div class="tm__field" data-ai="models">
-        <span class="oc-key">{t('settings.ai.models.title')}</span>
+        <span class="oc-label">{t('settings.ai.models.title')}</span>
         {#if listed === 'error'}
             <p class="tm__sub" data-ai="models-error">{t('settings.ai.models.error')}</p>
         {:else if models.length === 0}
@@ -175,10 +172,10 @@
             <p class="tm__sub" data-ai="models-list">{models.slice(0, 6).map((m) => m.id).join(', ')}{models.length > 6 ? t('settings.ai.models.more', { n: models.length - 6 }) : ''}</p>
         {/if}
         <div class="tm__actions">
-            <input class="oc-field" type="text" bind:value={typed} disabled={busy} spellcheck="false" autocomplete="off"
+            <Field bind:value={typed} disabled={busy} spellcheck="false" autocomplete="off"
                 placeholder={t('settings.ai.models.typed_placeholder')} data-ai="model-typed" />
-            <button type="button" class="oc-btn" disabled={busy || !typed.trim()} data-ai="model-add" onclick={addTyped}>{t('settings.ai.models.add')}</button>
-            <button type="button" class="oc-btn" disabled={busy} data-ai="models-refresh" onclick={() => void refreshModels()}>{t('settings.ai.models.refresh')}</button>
+            <Button disabled={busy || !typed.trim()} data-ai="model-add" onclick={addTyped}>{t('settings.ai.models.add')}</Button>
+            <Button disabled={busy} data-ai="models-refresh" onclick={() => void refreshModels()}>{t('settings.ai.models.refresh')}</Button>
         </div>
     </div>
 </div>

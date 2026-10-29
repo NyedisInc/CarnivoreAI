@@ -15,7 +15,6 @@ NC='\033[0m'
 
 NEEDS_SETUP=false
 
-# Plan v3.2
 
 echo ""
 echo "Checking claude..."
@@ -103,9 +102,6 @@ ENV_COMPLETE=false
 if [ -f ".env" ]; then
     ENV_EXISTS=true
 
-    #
-    # CLOUDFLARE_*
-    # Plan v3.2
     if grep -q "^TOTP_SECRET=.\+" .env && \
        grep -q "^JWT_SECRET=.\+" .env; then
         ENV_COMPLETE=true

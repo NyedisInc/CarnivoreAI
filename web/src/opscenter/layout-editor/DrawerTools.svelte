@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Field from '../../lib/base/Field.svelte';
   import Select from '../../lib/base/Select.svelte';
   import { t } from '../../lib/i18n/index.svelte';
   import type { WidgetType } from '../widgets/types';
@@ -26,8 +27,7 @@
 
   <div class="le-tools">
     <div class="le-find">
-      <input
-        class="le-input"
+      <Field
         type="search"
         bind:value={query}
         aria-label={t('layout_editor.drawer.search_label')}
@@ -60,7 +60,7 @@
     min-width: 0;
   }
 
-  .le-find .le-input {
+  .le-find :global([data-layout-editor-search]) {
     flex: 1 1 auto;
     min-width: 0;
   }

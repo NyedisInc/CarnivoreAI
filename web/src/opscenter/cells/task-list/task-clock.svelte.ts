@@ -1,6 +1,6 @@
 import { clock, startClock } from '../../lib/frozen-clock.svelte';
 import { followTimeZone, readTimeZone } from '../../../lib/time-zone/time-zone';
-import type { TaskClock } from '../../../cplugs/huddle/task-manager-design/when';
+import type { TaskClock } from '../../../cplugs/sdk/task-clock';
 
 export class TaskAgeClock implements TaskClock {
   private readonly frozenAt = clock.frozen ? Date.now() : null;

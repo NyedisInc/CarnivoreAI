@@ -1,20 +1,3 @@
-"""The planner (S3): from every copy in the old sources and every copy already held, decide what to take in. PURE toward the vault: it
-reads bytes through the copies' openers (prefix comparison, the first bytes for the working folder) and writes nothing.
-
-1. Key = (family, conversation id). Versions of a key are grouped by sha256; identical bytes are one version.
-2. A version that is a strict byte prefix of another is COVERED and never imported.
-3. A version already in the vault or on disk is HELD (``held:*`` sources). Nothing is imported for held bytes.
-4. The CURRENT copy of a conversation is its held maximal version, else its longest maximal one (``import_current``). Any other maximal
-   version has diverged (lines were removed or rewritten): it is imported as a KEPT copy (``import_kept``). A version longer than a held
-   one that extends it is filed kept too: it never replaces the vault's newest point.
-5. Maximal versions whose folders share no encoded folder are different conversations sharing an id: each gets the unit id
-   ``<id>@<first 8 hex of sha256(folder)>`` (the held one keeps the plain id). An old version never splits from a lineage that holds a held
-   version: the vault's or the disk's folder is where a reorg put the conversation, so an old copy in the pre-reorg folder is a kept copy.
-6. Each imported point is stamped with the source's own capture time. A kept copy is never stamped later than the unit's newest point:
-   its stamp is capped one second before it, and the real time stays in the tags.
-7. Sub-agent files follow the same rule per (conversation, file name) and ride inside the current point; they are never imported for a held conversation.
-8. Labels (``labels.py``), the working folder and project (``attribution.py``) and the sources go in the tags.
-"""
 
 from __future__ import annotations
 

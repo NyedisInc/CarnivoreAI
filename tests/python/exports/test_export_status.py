@@ -25,7 +25,7 @@ from tests.python.deepsearch.helpers import build_world, drain, go_ready, scan, 
 from tests.python.transcript_source.helpers import CONV
 
 SHA = "ab" * 32
-CODEX = "0b984f74-cd8c-44ce-8b76-d8a10b8f7ab7"
+CODEX = "0199aaaa-bbbb-7ccc-8ddd-eeeeffff0001"
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ def test_the_topic_is_advertised():
 
 
 def test_a_bundle_and_its_pointers_round_trip(h):
-    locations = (store.Location("/Volumes/ExampleDrive/crates", 1_700_000_100.0), store.Location("remote:crates"))
+    locations = (store.Location("/Volumes/Backup/crates", 1_700_000_100.0), store.Location("nas:crates"))
     stored = store.record_bundle(h.conn, _bundle(project_uid="p-uid", session_uuid="s-uuid", label="october", locations=locations,
                                                   verified_at=1_700_000_200.0),
                                  [store.Pointer(CONV, "claude", "crate-1", 1_700_000_050.0, "wombat work"),

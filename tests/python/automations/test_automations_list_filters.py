@@ -127,9 +127,9 @@ def test_each_filter_narrows_and_mcp_returns_the_routes_body(world):
 def test_an_unknown_session_is_a_clear_error_on_the_route_and_over_mcp(world):
     got = world.client.get("/automations", params={"session": "cloude_nothing"})
     assert got.status_code == 404 and got.json()["detail"]["code"] == "session_not_found"
-    assert "cloude_nothing" in got.json()["detail"]["message"]
+    assert "cloude_nothing" not in got.text
     result, text = _mcp(world, {"session": "cloude_nothing"})
-    assert result.get("isError") and "cloude_nothing" in text
+    assert result.get("isError") and "not found" in text and "cloude_nothing" not in text
 
 
 def test_group_by_session_files_projects_sessions_and_unassigned(world):

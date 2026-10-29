@@ -10,6 +10,7 @@ export const CAP_MAX_GB = 32;
 
 export interface Usage {
     readonly used_bytes: number;
+    readonly history_bytes: number;
     readonly cap_bytes: number;
     readonly conversations: number;
     readonly points: number;
@@ -30,7 +31,7 @@ function hasNumbers(value: unknown, keys: readonly string[]): boolean {
 
 export async function fetchUsage(fetcher: Fetcher = authFetch): Promise<Usage> {
     const usage = await fetcher<Usage>(`${ROUTE}/summary`);
-    if (!hasNumbers(usage, ['used_bytes', 'cap_bytes', 'points', 'conversations', 'pinned'])) {
+    if (!hasNumbers(usage, ['used_bytes', 'history_bytes', 'cap_bytes', 'points', 'conversations', 'pinned'])) {
         throw new Error('restore points did not answer with usage');
     }
     return usage;
@@ -60,8 +61,8 @@ export function sliderMax(capGb: number): number {
     return Math.max(CAP_MAX_GB, Math.ceil(capGb));
 }
 
-export function dropsPoints(capGb: number, usedBytes: number): boolean {
-    return capGb * BYTES_PER_GB < usedBytes;
+export function dropsPoints(capGb: number, historyBytes: number): boolean {
+    return capGb * BYTES_PER_GB < historyBytes;
 }
 
 export function errorText(error: unknown): string {

@@ -34,8 +34,8 @@ afterEach(() => {
 });
 
 const ITEM = {
-  id: 'sp:ses_1:abcd', source: 'startup_prompt', host: 'local', session_id: 'ses_1', session_name: 'planner',
-  project: 'Garden Planner', kind: 'mcp_server', question: '', rows: [], options: [],
+  id: 'sp:ses_1:abcd', source: 'startup_prompt', host: 'local', session_id: 'ses_1', session_name: 'football',
+  project: 'Fantasy Football', kind: 'mcp_server', question: '', rows: [], options: [],
   body: 'New MCP server found in this project: probe-echo\n  Enter to confirm · Esc to cancel',
 };
 
@@ -53,10 +53,10 @@ describe('the startup-prompt card', () => {
     const card = target.querySelector<HTMLElement>('[data-approval-card="sp:ses_1:abcd"]');
     expect(card).not.toBeNull();
     expect(card?.dataset.source).toBe('startup_prompt');
-    expect(card?.querySelector('[data-qc-headline]')?.textContent).toBe('planner is stopped on a startup screen, so there are no buttons here.');
+    expect(card?.querySelector('[data-qc-headline]')?.textContent).toBe('football is stopped on a startup screen, so there are no buttons here.');
     expect(card?.querySelector('[data-qc-fact="screen"]')?.textContent).toBe('mcp server');
     expect(card?.querySelector('[data-qc-details] [data-approval-body]')?.textContent).toContain('probe-echo');
-    expect(target.querySelectorAll('[data-approval-card] .modal-btn:not([data-ap-jump])').length).toBe(0);
+    expect(target.querySelectorAll('[data-approval-card] [data-btn]:not([data-ap-jump])').length).toBe(0);
 
     calls.length = 0;
     target.querySelector<HTMLButtonElement>('[data-ap-jump]')?.click();

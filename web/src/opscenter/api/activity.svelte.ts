@@ -21,6 +21,7 @@ interface ToastHistory {
 export interface ActivityEntry {
   id: string;
   time: string;
+  at: number;
   tag: string;
   message: string;
   source: string;
@@ -44,11 +45,23 @@ export const seeded = $state<{
 
 let serial = 0;
 
-function clockOf(value: string | null | undefined): string {
+function epochOf(value: string | null | undefined): number {
   const at = value ? parseServerTime(value) : Number.NaN;
-  const when = Number.isFinite(at) ? new Date(at) : new Date();
+  return Number.isFinite(at) ? at : Date.now();
+}
+
+function clockOf(value: string | null | undefined): string {
+  const when = new Date(epochOf(value));
   const pad = (n: number): string => String(n).padStart(2, '0');
   return `${pad(when.getHours())}:${pad(when.getMinutes())}:${pad(when.getSeconds())}`;
+}
+
+function demoEpoch(time: string): number {
+  const parts = time.split(':').map(Number);
+  if (parts.length !== 3 || !parts.every(Number.isFinite)) return 0;
+  const day = new Date();
+  day.setHours(parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0, 0);
+  return day.getTime();
 }
 
 function push(entry: Omit<ActivityEntry, 'id'>): void {
@@ -80,6 +93,7 @@ function lineForToast(toast: Toast): Omit<ActivityEntry, 'id'> {
     : toast.title;
   return {
     time: clockOf(toast.created_at),
+    at: epochOf(toast.created_at),
     tag: tagForToast(toast.kind),
     message: body,
     source: sourceOf(toast),
@@ -132,6 +146,7 @@ export function startActivity(): () => void {
     const lines = demoLines.map((line, index) => ({
       id: `d${index}`,
       time: line.time,
+      at: demoEpoch(line.time),
       tag: line.tag,
       message: line.message,
       source: line.source,
@@ -148,6 +163,7 @@ export function startActivity(): () => void {
     subscribe('events.hello', () => {
       push({
         time: clockOf(null),
+        at: Date.now(),
         tag: 'system',
         message: t('opscenter.activity.channel_connected'),
         source: t('opscenter.activity.source_host'),
@@ -159,6 +175,7 @@ export function startActivity(): () => void {
     subscribe('toast.ack', () => {
       push({
         time: clockOf(null),
+        at: Date.now(),
         tag: 'system',
         message: t('opscenter.activity.toast_dismissed'),
         source: t('opscenter.activity.source_host'),
@@ -169,6 +186,7 @@ export function startActivity(): () => void {
       const status = frame.activity_status ?? t('opscenter.value.not_measured');
       push({
         time: clockOf(null),
+        at: Date.now(),
         tag: 'session',
         message: t('opscenter.activity.session_status', { name, status }).trim(),
         source: name,
@@ -177,6 +195,7 @@ export function startActivity(): () => void {
     subscribe('sessions.changed', (frame: EventFrame) => {
       push({
         time: clockOf(null),
+        at: Date.now(),
         tag: 'session',
         message: t('opscenter.activity.session_list', {
           reason: frame.reason ?? t('opscenter.activity.session_list_changed'),
@@ -188,6 +207,7 @@ export function startActivity(): () => void {
       const source = sourceForHandle(frame.tmux_session ?? frame.session_id);
       push({
         time: clockOf(null),
+        at: Date.now(),
         tag: 'project',
         message: t('opscenter.activity.renamed', { name: frame.new_name ?? source }),
         source,

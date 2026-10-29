@@ -194,6 +194,7 @@
         return () => data.stop();
     });
 
+    // list, so the
     $effect(() => {
         const id = route.session;
         if (id && list && view === 'list' && data.status === 'ready' && selected !== id) list.select(id);
@@ -207,7 +208,6 @@
         if (hit) filters = { ...filters, project: hit.name };
     });
 
-    // the overlay host
     onMount(() => {
         if (embedded && typeof window !== 'undefined') {
             route = sessionsRouteOfHash(window.location.hash) ?? SESSIONS_TOP;

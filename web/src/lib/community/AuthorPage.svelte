@@ -27,6 +27,7 @@
                 const answer = await host.profile(who);
                 if (!cancelled) profile = answer;
             } catch {
+                // its own sentence
                 if (!cancelled) failed = true;
             }
         })();

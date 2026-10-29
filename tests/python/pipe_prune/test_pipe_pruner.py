@@ -127,3 +127,41 @@ def test_pane_rows_incomplete_on_a_malformed_row():
     ok = parse_pane_rows("cloude_a\t/p/a.pipe\ncloude_b\t\n")
     assert ok.complete and ok.session_names == {"cloude_a", "cloude_b"}
     assert ok.owner_paths == {"/p/a.pipe"}
+
+
+def test_ladder_consumed_never_creates_the_database_and_answers_false(tmp_path):
+    from src.core.db import db_path_for
+    from src.core.pipe_prune.runner import ladder_consumed
+
+    assert ladder_consumed(tmp_path) is False
+    assert not db_path_for(tmp_path).exists()
+
+
+def test_run_survives_a_database_error_in_one_pass(tmp_path, monkeypatch):
+    import asyncio
+    import sqlite3
+
+    from src.core.pipe_prune import runner
+
+    monkeypatch.setattr(runner, "FIRST_PASS_DELAY_SECONDS", 0.0)
+    monkeypatch.setattr(runner, "INTERVAL_SECONDS", 0.0)
+    pruner = runner.PipePruner(log_dir=tmp_path, state_dir=tmp_path, socket_name="throwaway")
+    calls = []
+
+    def boom(_age):
+        calls.append(1)
+        raise sqlite3.OperationalError("database is locked")
+
+    pruner._pass = boom
+
+    async def drive():
+        task = asyncio.create_task(pruner.run())
+        for _ in range(50):
+            await asyncio.sleep(0.01)
+            if len(calls) >= 2:
+                break
+        alive = not task.done()
+        task.cancel()
+        return alive
+
+    assert asyncio.run(drive()) and len(calls) >= 2

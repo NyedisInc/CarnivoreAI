@@ -1,10 +1,8 @@
 (function () {
     'use strict';
 
-    /* APP_TMUX_PREFIX */
     var APP_TMUX_PREFIX = 'cloude_';
 
-    /* LABEL_MAX_CHARS */
     var LABEL_MAX_CHARS = 200;
 
     var CONTROL_CHARS = /[\x00-\x1f\x7f]/;
@@ -30,7 +28,6 @@
         return derived.length ? derived : null;
     }
 
-    /* label: ' */
     function resolve(row, options) {
         if (!row || typeof row !== 'object') return null;
         var label = cleanString(row.label);
@@ -53,27 +50,6 @@
         return String(value).trim();
     }
 
-    /**
-     * The server's label rule, mirrored so an obviously bad label is
-     * refused without a round trip. THE SERVER REMAINS AUTHORITATIVE -
-     * this is an early out, never the decision.
-     *
-     * WHAT IT DELIBERATELY DOES NOT REFUSE. The rename controls used to
-     * enforce ``^[A-Za-z0-9_-]{1,64}$``, the old TMUX NAME rule, against
-     * a field that is no longer a tmux name. That regex refused "Media
-     * Compression" - the feature's own worked example - before it could
-     * reach a server that would have accepted it happily. Spaces, ``:``,
-     * ``.``, quotes, ``$`` and non-ASCII are all legal in a label,
-     * because a label is never handed to tmux. Only the server's own two
-     * refusals are mirrored: empty, and control characters.
-     *
-     * Inputs: raw (string|null) - the value from an edit control.
-     * Output: object - ``{ok: true, value: string}`` with surrounding
-     *   whitespace stripped, or ``{ok: false, reason: string}`` carrying
-     *   a sentence fit to show the user.
-     * Example: SessionLabel.validate(' Image Tool ')
-     *   // {ok: true, value: 'Image Tool'}
-     */
     function validate(raw) {
         var cleaned = cleanString(raw);
         if (cleaned === null) {

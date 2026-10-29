@@ -15,6 +15,7 @@ const i18n = createI18n({ locale: 'en' }) as {
 };
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
+/** An installed global copy with an update waiting. */
 const ROW: InstalledItem = {
     install_id: 'i1',
     item_id: 'a/b',
@@ -31,12 +32,17 @@ function refusal(body: Record<string, unknown>): Error {
     return error;
 }
 
+/** Everything the update path was asked to send. */
 interface Recorder {
     host: CatalogHost;
     updates: UpdateInstalledRequest[];
     previews: number;
 }
 
+/**
+ * A host whose first update refuses `consent_required` and whose second
+ * succeeds, with the 409 optionally carrying the text and the sha.
+ */
 function hostFor(carried: Record<string, unknown>, previewBody?: Record<string, unknown>): Recorder {
     const refuse = () => Promise.reject(new Error('the test never calls this'));
     const recorder: Recorder = { host: null as never, updates: [], previews: 0 };
@@ -69,6 +75,7 @@ function hostFor(carried: Record<string, unknown>, previewBody?: Record<string, 
 
 let panel: Record<string, unknown> | null = null;
 
+/** Mount the action row over one host, with an update waiting. */
 function paint(host: CatalogHost, onLedgerChange = vi.fn()): void {
     const target = document.createElement('div');
     document.body.appendChild(target);
@@ -86,15 +93,18 @@ function paint(host: CatalogHost, onLedgerChange = vi.fn()): void {
     }) as never;
 }
 
+/** Let every microtask settle. */
 function settle(): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+/** The primary control of whichever modal is open. */
 function modalConfirm(): HTMLButtonElement {
     const buttons = [...document.querySelectorAll('.modal-btn-primary')];
     return buttons[buttons.length - 1] as HTMLButtonElement;
 }
 
+/** Press update and agree to the plain version confirm. */
 async function startUpdate(): Promise<void> {
     (document.querySelector('[data-act="update"]') as HTMLButtonElement).click();
     await settle();
@@ -102,6 +112,15 @@ async function startUpdate(): Promise<void> {
     await settle();
 }
 
+/**
+ * Close anything still open before the next case starts.
+ *
+ * TEARING THE DOM OUT DOES NOT RESOLVE A MODAL. `openModal` holds a
+ * promise and an open count that only its own `close` settles, so a case
+ * ending with a sheet up leaks that count into the next one, where the
+ * in-flight guard then refuses to open anything at all. Escape is how a
+ * person closes it, so it is how this closes it too.
+ */
 async function dismissEverything(): Promise<void> {
     for (let guard = 0; guard < 8; guard += 1) {
         const open = document.querySelector('.modal-overlay');

@@ -55,7 +55,7 @@ describe('add to project submenu', () => {
 
         const posted: Array<Record<string, unknown>> = [];
         const host = { install: async (body: Record<string, unknown>) => { posted.push(body); return {}; } } as unknown as CatalogHost;
-        await quickAdd(host, 'acme/deploy', 'project', '/work/gamma');
+        await quickAdd(host, 'alex/deploy', 'project', '/work/gamma');
         expect(posted[0]).toMatchObject({ scope: 'project', project_path: '/work/gamma', one_click: true });
     });
 });

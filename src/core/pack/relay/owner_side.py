@@ -1,10 +1,3 @@
-"""
-The ledger's existing keep-fresh step stays the ONLY refresher and is untouched. This module only LISTENS: the ledger
-tells it each time it reads a good Claude credential (``refresh_poke.add_credential_listener``), and it pushes when the
-expiry is newer than what a target last received. It reads the token in memory from that call, sends it in the body of
-one federation POST (scope ``credentials``, in the HTTP body over the federation link; stdin is only the target's own hop into ``security -i``), and keeps it nowhere: no argv, no file, no log line, no
-row. THE REFRESH TOKEN IS NOT EVEN A FIELD of what it is handed. An account with no enabled target does nothing at all.
-"""
 
 from __future__ import annotations
 

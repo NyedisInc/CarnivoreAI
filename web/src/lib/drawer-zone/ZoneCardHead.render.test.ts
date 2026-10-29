@@ -174,7 +174,7 @@ describe('a drawer card with its header off opens the widget menu by right-click
   });
 });
 
-describe('a right-click anywhere on the title row opens the icon menu; the body keeps the browser menu', () => {
+describe('a right-click anywhere on the title row opens the icon menu (item 685, Q6 a); the body keeps the browser menu', () => {
   test('the name opens it; a second right-click while it is open leaves it open; the body does not open it', () => {
     const head = card('core.activity-log').querySelector<HTMLElement>('[data-widget-head]')!;
     const name = head.querySelector<HTMLElement>('.oc-frame-name')!;

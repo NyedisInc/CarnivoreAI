@@ -1,6 +1,9 @@
 <script lang="ts">
+  /* run the project */
   import { t } from '../i18n/index.svelte';
   import { nonEmptyErrorMessageOr } from '../errors/failure-reason';
+  import Button from '../base/Button.svelte';
+  import Select from '../base/Select.svelte';
   import { packMachines } from '../pack-machines/pack-machines-store.svelte';
   import { replicasApi, type ReplicasApi, type ReplicasView } from './transport-api';
 
@@ -65,8 +68,8 @@
         {#each view.replicas as replica (replica.install_id)}
           <li class="pt-replica" data-replica={replica.install_id}>
             <span class="pt-line">{replica.label}</span>
-            <button type="button" class="modal-btn modal-btn-danger" disabled={busy} data-pt="replica-remove"
-              onclick={() => remove(replica.install_id)}>{armed === replica.install_id ? t('pack.replicas.remove_confirm') : t('pack.replicas.remove')}</button>
+            <Button variant="danger" disabled={busy} data-pt="replica-remove"
+              onclick={() => remove(replica.install_id)}>{armed === replica.install_id ? t('pack.replicas.remove_confirm') : t('pack.replicas.remove')}</Button>
           </li>
         {/each}
       </ul>
@@ -76,12 +79,12 @@
         <p class="pt-note" data-pt="replicas-no-target">{t('pack.replicas.no_target')}</p>
       {:else}
         <div class="pt-row">
-          <select class="oc-field" bind:value={pick} aria-label={t('pack.replicas.pick')} disabled={busy} data-pt="replica-pick">
+          <Select bind:value={pick} aria-label={t('pack.replicas.pick')} disabled={busy} data-pt="replica-pick">
             <option value="">{t('pack.replicas.pick')}</option>
             {#each targets as machine (machine.install_id)}<option value={machine.install_id}>{machine.label || machine.install_id.slice(0, 8)}</option>{/each}
-          </select>
-          <button type="button" class="modal-btn modal-btn-confirm" disabled={busy || !pick} data-pt="replica-add"
-            onclick={() => void change(() => api.add(name, pick))}>{t('pack.replicas.add')}</button>
+          </Select>
+          <Button variant="confirm" disabled={busy || !pick} data-pt="replica-add"
+            onclick={() => void change(() => api.add(name, pick))}>{t('pack.replicas.add')}</Button>
         </div>
       {/if}
     {/if}

@@ -6,10 +6,10 @@ from typing import Any, List, Optional, Protocol, Sequence
 
 import structlog
 
-from src.api.subagent_listing import _fresh_claude_observation
+from src.api.subagent_listing import fresh_claude_observation
 from src.config import settings as _settings
 from src.core.account_switch.pane_account import read_pane_profile
-from src.core.attention.registry_read import default_registry_directory
+from src.core.attention.registry_index import default_registry_directory
 from src.core.background_work.listing import SNAPSHOT_MARK
 from src.core.conversation_writers import MeasureError, ProcessTable, read_process_table
 from src.core.hosts.identity import is_remote_info
@@ -55,7 +55,7 @@ class McpHealthPort(Protocol):
 
 
 def fresh_claude_observation(watcher: Any, info: Any, now: datetime) -> Any:
-    return _fresh_claude_observation(watcher, info, now)
+    return fresh_claude_observation(watcher, info, now)
 
 
 def attention_watcher(app_state: Any) -> Any:
@@ -64,7 +64,7 @@ def attention_watcher(app_state: Any) -> Any:
 
 def tmux_socket(app_state: Any) -> Optional[str]:
     manager = getattr(app_state, "session_manager", None)
-    return manager._tmux_socket_name() if manager is not None else None
+    return manager.tmux_socket_name() if manager is not None else None
 
 
 def carnivore_mcp_enabled() -> bool:

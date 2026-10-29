@@ -1,4 +1,3 @@
-/* before terminal.js */
 
 console.log('[TerminalViewerResync Module] Loading...');
 

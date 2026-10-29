@@ -1,4 +1,4 @@
-<!-- could not -->
+
 <script lang="ts">
     import {
         SKILL_KEYS,
@@ -51,7 +51,7 @@
                 class:cat-review__status--out={view.shape === 'unavailable'}
             >{status}</span>
         {/if}
-        <!-- could not -->
+        
         
         {#if verdict && !view.overridden && (part === 'full' || view.verdict !== 'clean')}
             <span
@@ -120,12 +120,12 @@
                 {/each}
             </ul>
         {:else if part === 'full'}
-            
+            <!-- there is nothing -->
             <p class="cat-review__note">{t(SKILL_KEYS.reviewNoWarnings)}</p>
         {/if}
 
         {#if view.malformed}
-            <!-- could not -->
+            
             <p class="cat-review__note cat-review__note--out" role="status">
                 {t(SKILL_KEYS.reviewWarningsMalformed)}
             </p>

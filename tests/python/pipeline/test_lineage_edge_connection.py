@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import sqlite3
 import threading
+from contextlib import closing
 
 import pytest
 
 from src.core.db import connect
+from src.core.db_reuse import datastore_pool
 from src.core.lineage import constants as LN
 from src.core.pipeline import lineage_edge
 
@@ -23,22 +25,32 @@ def _db(tmp_path):
     return path, kind
 
 
-def test_lineage_of_opens_one_connection_per_thread_and_stays_read_only(tmp_path, monkeypatch):
+def test_lineage_of_opens_one_connection_per_thread(tmp_path, monkeypatch):
     path, kind = _db(tmp_path)
-    lineage_edge._drop_reader()
+    datastore_pool._POOL.close_this_thread()
     opens = []
     real = connect
-    monkeypatch.setattr("src.core.db.connect", lambda *a, **k: (opens.append(1), real(*a, **k))[1])
+    monkeypatch.setattr(datastore_pool, "connect", lambda *a, **k: (opens.append(1), real(*a, **k))[1])
     for _ in range(50):
         got = lineage_edge.lineage_of(path, "c2")
     assert opens == [1]
     assert (got.parent_conversation_id, got.edge_kind, got.fork_uuid) == ("c1", kind, "u-9")
     assert lineage_edge.lineage_of(path, "nobody") is None
     assert len(opens) == 1
-    with pytest.raises(sqlite3.OperationalError):
-        lineage_edge._reader(path).execute(f"DELETE FROM {LN.EDGES_TABLE}")
     seen = []
     worker = threading.Thread(target=lambda: seen.append(lineage_edge.lineage_of(path, "c2")))
     worker.start(); worker.join()
     assert len(opens) == 2 and seen[0] is not None
-    lineage_edge._drop_reader()
+    datastore_pool._POOL.close_this_thread()
+
+
+def test_lineage_read_is_query_only_and_restored(tmp_path):
+    path, _kind = _db(tmp_path)
+    datastore_pool._POOL.close_this_thread()
+    with closing(datastore_pool.lend(path)) as lent:
+        with datastore_pool.read_only(lent) as conn:
+            with pytest.raises(sqlite3.OperationalError):
+                conn.execute(f"DELETE FROM {LN.EDGES_TABLE}")
+        lent.execute(f"DELETE FROM {LN.EDGES_TABLE}")
+        lent.rollback()
+    datastore_pool._POOL.close_this_thread()

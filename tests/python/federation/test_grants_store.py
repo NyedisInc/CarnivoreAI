@@ -53,14 +53,14 @@ def test_the_step_is_idempotent_and_the_reversal_drops_it(conn):
 
 
 def test_create_get_revoke_and_regrant(conn):
-    g = grants.create_grant(conn, peer_install_id="iid-hosta", public_key=_key(), label=" hosta ")
-    assert g.label == "hosta" and g.allows("sessions") and grants.get_live(conn, g.grant_id) == g
+    g = grants.create_grant(conn, peer_install_id="iid-studio", public_key=_key(), label=" studio ")
+    assert g.label == "studio" and g.allows("sessions") and grants.get_live(conn, g.grant_id) == g
     with pytest.raises(grants.GrantError) as dup:
-        grants.create_grant(conn, peer_install_id="iid-hosta", public_key=_key(), label="x")
+        grants.create_grant(conn, peer_install_id="iid-studio", public_key=_key(), label="x")
     assert dup.value.code == "grant_exists"
     assert grants.revoke(conn, g.grant_id) is True and grants.revoke(conn, g.grant_id) is False
     assert grants.get_live(conn, g.grant_id) is None and grants.get_grant(conn, g.grant_id).revoked
-    again = grants.create_grant(conn, peer_install_id="iid-hosta", public_key=_key(2), label="hosta")
+    again = grants.create_grant(conn, peer_install_id="iid-studio", public_key=_key(2), label="studio")
     assert again.grant_id != g.grant_id and len(grants.list_grants(conn)) == 2
 
 

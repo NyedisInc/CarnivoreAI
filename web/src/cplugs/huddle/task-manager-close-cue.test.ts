@@ -143,7 +143,7 @@ describe('click folds and opens', () => {
   });
 });
 
-describe('a foldable post is one click target, opened or folded', () => {
+describe('a foldable post is one click target, opened or folded (Joe, 2026-10-05)', () => {
   const LONG = 'x'.repeat(300);
   const long = { ...item, thread: [msg(10, 'info', LONG + ' [a link](https://example.com/y)'), msg(12, 'info', 'short one'), msg(11, 'question', LONG)] };
   const click = (el: Element, shiftKey = false) => el.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey }));

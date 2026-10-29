@@ -2,7 +2,7 @@
   "id": "pack-migrate",
   "name": "Pack migrate",
   "summary": "Move a project or a whole company to another paired computer and back, verified before the switch.",
-  "description": "A migrate plans first (the code rung, what is blocking, what moves), then copies the code, Swarm agents with their memory, huddle threads and cards, and the conversation files to the other computer, which checks everything before it becomes the project's home. The old copy stays here, inactive and marked moved away, and one call brings the project back. Nothing runs while a session or agent is live under the project, and the other computer's own restrictions decide whether it accepts.",
+  "description": "A migrate plans first (the code rung, what is blocking, what moves), then copies the code, Swarm agents with their memory, task manager threads and cards, and the conversation files to the other computer, which checks everything before it becomes the project's home. The old copy stays here, inactive and marked moved away, and one call brings the project back. Nothing runs while a session or agent is live under the project, and the other computer's own restrictions decide whether it accepts.",
   "area": "sessions",
   "status": "beta",
   "since": "2026-10-10",
@@ -44,12 +44,12 @@
   ],
   "how_to": [
     "Open the wizard, pick the computer (one that refuses projects is listed disabled with the reason), read the plan (the transport, what moves, what blocks), then press move. A one-way archive move needs its own tick and a red confirm.",
-    "Watch the steps follow the move live; the old folder here stays, inactive, and the project's tag says moved to that computer.",
+    "Watch the steps follow the move live; the old folder here stays, inactive, and the project's tag says moved to that computer. If the other computer lacked some attached task files, the result screen lists them (the first 20, then \"and N more\").",
     "Press move back on that tag to bring the project home again.",
     "Over the API: plan a move with a project and a paired computer, read the checks, then apply it with the plan_fingerprint."
   ],
   "examples": [
-    "Move the ledgerbot project to hosta, keep working there, move it back tomorrow."
+    "Move the trader project to studio, keep working there, move it back tomorrow."
   ],
   "media_exempt": "Needs two paired computers; the test slot has none, so the wizard is driven from its vitest."
 }

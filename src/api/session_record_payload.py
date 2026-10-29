@@ -1,6 +1,6 @@
 
 from src.core.agent_family_display import resolve_family_for_display
-from src.core.session_manager import _configured_wrappers
+from src.config import wrapper_reader
 from src.models import SessionRecord
 from typing import Optional
 
@@ -15,12 +15,19 @@ def _family_name_for_row(row: dict) -> Optional[str]:
     agent_type = row.get("agent_type")
     if not agent_type:
         return None
-    try:
-        wrappers = _configured_wrappers()
-    except Exception:  # noqa: BLE001
-        wrappers = []
+    wrappers = wrapper_reader.configured_wrappers()
     family, _source = resolve_family_for_display(str(agent_type), wrappers)
     return family.name if family else None
+
+
+def attach_host_labels(conn, rows: list) -> None:
+    keys = sorted({r.get("host_key") for r in rows} - {None, "local"})
+    if not keys:
+        return
+    marks = ",".join("?" * len(keys))
+    labels = dict(conn.execute(f"SELECT key, label FROM hosts WHERE key IN ({marks})", keys).fetchall())
+    for row in rows:
+        row["host_label"] = labels.get(row.get("host_key"))
 
 
 def _session_record_payload(row: dict, unread_store=None, theme_store=None) -> SessionRecord:
@@ -62,6 +69,8 @@ def _session_record_payload(row: dict, unread_store=None, theme_store=None) -> S
             row.get("notification_policy_generation") or 0
         ),
         asleep=asleep,
+        host_key=row.get("host_key"),
+        host_label=row.get("host_label"),
         closed=is_closed(row),
         unread=asleep_flag(unread_store, row) if asleep else None,
         pinned_theme=(

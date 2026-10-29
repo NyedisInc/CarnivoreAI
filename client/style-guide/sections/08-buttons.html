@@ -1,4 +1,8 @@
 <h2 class="sg-h2">buttons</h2>
+<p class="sg-lead"><strong>Buttons copy the restart picker footer</strong> (Alex (example-owner), 2026-09-25): the shared
+<code>.modal-btn</code> family, lowercase mono labels, a small radius, no corner brackets. <strong>Calm by default</strong>: an
+outline for cancel, a tinted interior inside a 1px edge for confirm and for destroy. The filled block is the alert variant only
+(Alex, #637: "way too loud and agressive. should be for like SUPER ALERT buttons").</p>
 
 <h3 class="sg-h3" id="buttons-dialog">dialog and footer buttons, the reference shape</h3>
 <div class="sg-specimen">
@@ -42,6 +46,11 @@
         <code>--oc-orange-bright</code> edge. Same colours; <code>-confirm</code> also carries the picker's compact size. One per
         surface.</dd>
     <dt>destroy</dt>
+    <dd><code>.modal-btn-danger</code>: the same shape, an interior tinted with <code>--oc-coral</code> over
+        <code>--oc-ground-raised</code> (<code>color-mix(in oklab, ...)</code>, tokens only, no literal, #652), a
+        <code>--oc-coral</code> edge, an <code>--oc-text-bright</code> label. For an act that removes or kills. The restart
+        picker's go button wears it only once the arm box is ticked, and ticking never repaints the row (Alex, #592: "it
+        shouldnt turn the button red. that is indicating I need to do something").</dd>
     <dt>size</dt>
     <dd><code>.modal-btn</code>: 10px 24px, 0.95rem. In the picker (<code>.restart-picker .modal-btn</code>): 7px 16px, 13px,
         2px corners, a 44px floor at 600px or on a coarse pointer. Footer: <code>.modal-footer</code>, right-aligned.</dd>
@@ -137,6 +146,8 @@ the cell frame's controls (<a href="#cells">cells</a>). <code>.btn-icon</code> i
 
 <h3 class="sg-h3" id="buttons-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">
+    <li><strong>A filled block for an ordinary act.</strong> Too loud (#637); a filled red one reads as "you must do
+        something" (#592). Confirm and destroy are tinted interiors with a bright edge.</li>
     <li><strong>A pill or a rounded accent block.</strong> PR #598's "create" was rejected.</li>
     <li><strong>Corner targeting brackets.</strong> The public site's; app buttons have none.</li>
     <li><strong>Two accent buttons side by side.</strong> One confirm per surface; the rest are quiet.</li>

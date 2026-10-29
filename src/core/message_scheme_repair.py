@@ -17,14 +17,7 @@ NEW_CHECK: str = "CHECK (session_ref_scheme IN ('uuid', 'agent', 'opaque'))"
 
 
 class SchemeRepairError(RuntimeError):
-    """The CHECK could not be relaxed and the reason is not a sqlite error.
-
-    Description: raised when the stored schema text is neither the old
-      form this step knows how to edit nor the new form it produces, so
-      the step cannot act without guessing. Raising propagates out of the
-      migration's transaction and rolls the chain back, which is correct:
-      a half-relaxed constraint is worse than a refused migration.
-    """
+    pass
 
 
 def stored_table_sql(conn: sqlite3.Connection, table: str) -> str:
@@ -42,24 +35,6 @@ def check_allows_opaque(conn: sqlite3.Connection) -> bool:
 
 
 def relax_scheme_check(conn: sqlite3.Connection) -> bool:
-    """Widen the session_ref_scheme CHECK in place, rewriting no row.
-
-    Description: edits sqlite_master's CREATE TABLE text under
-      ``PRAGMA writable_schema`` and forces a reparse with RESET so the
-      SAME transaction can go on to write the new value. No DROP, no
-      CREATE, no INSERT SELECT, so the FK children described in this
-      module's header are never at risk. Does nothing at all when the
-      table is absent (a build with the message archive gated off) or
-      when the constraint has already been widened.
-    Inputs: conn (sqlite3.Connection) - inside the caller's transaction.
-    Output: bool - True when this call performed the edit, False when
-      there was nothing to do. False is not a failure; it is the
-      idempotent path and the archive-disabled path.
-    Raises: SchemeRepairError - the table exists but its stored text
-      matches neither the old constraint nor the new one, so the step
-      cannot edit it without guessing.
-    Example: relax_scheme_check(conn) -> True
-    """
     sql = stored_table_sql(conn, TRANSCRIPTS_TABLE)
     if sql == "":
         return False

@@ -1,4 +1,3 @@
-/* could not */
 import { drawerController } from './controller-ref';
 import { readKey, writeKey } from './storage';
 import { drawerEnv } from './env';
@@ -46,7 +45,6 @@ function g(): ArchivedGlobals {
     return drawerEnv() as ArchivedGlobals;
 }
 
-/*  hidden  */
 function loadLocal(): boolean {
     try {
         return readKey(STORAGE_KEY) === '1';
@@ -59,12 +57,10 @@ export function archivedShown(): boolean {
     return shown;
 }
 
-/*  hidden  */
 export function archivedRecords(): readonly unknown[] {
     return shown && records ? records : [];
 }
 
-/*  hidden  */
 export function archivedProjects(): readonly ArchivedProject[] {
     return shown && projects ? projects : [];
 }

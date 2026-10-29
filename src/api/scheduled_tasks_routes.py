@@ -1,10 +1,3 @@
-"""App-level scheduled tasks: ``GET /api/v1/scheduled-tasks`` (issue #893).
-
-ONE READ-ONLY, AUTHENTICATED ENDPOINT for the home screen's scheduled
-tasks widget and a future MCP tool. It reads ``~/.claude/scheduled-tasks``
-and the heads of the transcripts under ``~/.claude/projects``, bounded and
-cached (``src/core/scheduled_tasks.py``), off the event loop. No write.
-"""
 
 from __future__ import annotations
 
@@ -27,6 +20,16 @@ router = APIRouter()
 )
 async def list_scheduled_tasks(principal: Principal = Depends(require_peer_sessions)) -> ScheduledTasksList:
     """List the Claude desktop app's scheduled tasks, with what is recorded.
+
+    Description: name, description, the schedule only when the task file
+      records one, and the last recorded run. A missing folder is
+      ``absent``, an unreadable one ``unreadable``; both are 200s. For the
+      owner, each paired Mac's own tasks follow under its host; a peer
+      token gets this Mac's list only (one level, F8), and the owning Mac
+      is the only one that runs a task.
+    Inputs: none.
+    Output: ScheduledTasksList.
+    Example: GET /api/v1/scheduled-tasks
     """
     local = await asyncio.to_thread(scheduled_tasks.READER.read)
     if principal.is_peer:

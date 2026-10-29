@@ -32,6 +32,7 @@ async function makeSandbox({ width = 1280, throws = false } = {}) {
         resizeHandlers.forEach((fn) => fn());
     }
     return {
+        env: d.env,
         Pin: d.Pin as typeof d.Pin & Record<string, unknown>,
         sidebar,
         bodyClasses: { has: (c: string) => document.body.classList.contains(c) },
@@ -52,6 +53,7 @@ it('A WIDE VIEWPORT DOCKS, with nothing stored and nothing to store', async () =
 });
 
 it('NOTHING IS READ FROM STORAGE: storage that throws still docks', async () => {
+    // there is nothing
     const { Pin, bodyClasses } = await makeSandbox({ width: 1280, throws: true });
     Pin.init();
     assert.equal(bodyClasses.has('session-sidebar-pinned'), true);
@@ -148,3 +150,15 @@ it('init is idempotent - re-entering the terminal screen rewires nothing', async
     assert.equal(Pin.isEffectivelyPinned(), true);
 });
 
+
+it('DOCKING OR UNDOCKING REFITS THE TERMINAL ONCE PER CHANGE (the refit the retired pin script owned, FE-6)', async () => {
+    const { Pin, env, resizeTo } = await makeSandbox({ width: 1280 });
+    const requestFit = vi.fn();
+    env.TerminalLayout = { requestFit };
+    Pin.init();
+    assert.deepEqual(requestFit.mock.calls, [['sidebar-pin']], 'first dock refits');
+    resizeTo(1300);
+    assert.equal(requestFit.mock.calls.length, 1, 'same layout, no second refit');
+    resizeTo(390);
+    assert.equal(requestFit.mock.calls.length, 2, 'undocking refits');
+});

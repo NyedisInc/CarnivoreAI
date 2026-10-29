@@ -15,6 +15,16 @@ The sections below that say "tab" for the table and the run feed describe the su
         switch and the commands popover (<code>.ap-adv-head</code>, <code>.ap-adv-sum</code>) and the two sub-tabs table and run feed (<code>.ap-subtabs</code>).
         Deep links <code>#automations/advanced</code>, <code>#automations/run/&lt;id&gt;</code> and <code>#automations/session/&lt;uuid&gt;</code> land there.</dd>
     <dt>overview</dt>
+    <dd><code>OverviewTab</code>: four base <code>StatTile</code>s in a wrapping grid (<code>Tiles</code>, <code>.s-tiles</code>, <code>.s-tiles__item</code>;
+        the needs-you and failed tiles jump to the sessions tab with a pressed filter; the numeral is <code>.oc-stat-tile__figure</code> and ticks on change),
+        then two cadence columns (<code>CadenceColumn</code>, <code>.t-cols</code>, <code>.t-col</code>) under a small group label
+        (<code>.s-group__h</code>). A card (<code>AutoCard</code>) is the base <code>Card</code> (the whole card is clickable and its title is the one real button, the card's <code>onopen</code>, which lights the card's border on focus; no separate open button): the light and the name with a <code>Tag</code> and the
+        <code>Switch</code> in its head, the meta line (kind, model and effort), and a foot with the schedule and next run on the left
+        (<code>.t-card__when</code>) and ONE status word on the right (<code>.t-card__end</code>: off, paused, running, failed, needs you, skipped;
+        a healthy enabled card has none). The switch saves at once (optimistic, a refusal rolls back and says why). <code>FindBox</code>
+        (<code>.t-find</code>, a base <code>Field</code>) shows in the tab row only on the overview and only past 20 automations. The empty, read-failed and
+        paused states are the base <code>State</code>; <code>.t-chips</code> holds the template chips. Every box wears the one Card look
+        (Joe (ccsliinc), 2026-10-23, "all the cards should be the same").</dd>
     <dt>review feed</dt>
     <dd><code>ReviewTab</code> and <code>ReviewRow</code>: a time-ordered feed of runs (<code>.t-feed</code>, <code>.t-feedbar</code>, <code>.t-day</code>) with the
         filter segment to review or all (<code>.t-filt</code>) and mark all reviewed. A row (<code>.f-row</code>) is the time (<code>.f-time-in</code>), a
@@ -76,6 +86,17 @@ The sections below that say "tab" for the table and the run feed describe the su
         hollow square. <code>RunStrip</code> (<code>.ap-strip-box</code>, <code>.ap-strip-in</code>, <code>.ap-sm</code>) is the last twelve runs, oldest
         left; the run shown in the pane has an orange outline, a landed run slides the strip in over 200 ms unless motion is reduced.</dd>
     <dt>scheduled tree</dt>
+    <dd><code>ScheduledTree</code> (<code>.ap-st</code>) sits under the table and files the Task Manager's scheduled items the way the
+        sessions' automation settings are filed: a title-row strip (<code>.ap-st-title</code>) with the one accent label and the item count, ONE
+        column header (<code>.ap-st-cols</code>, the table header's micro tracked look), then a band per project
+        (<code>.ap-st-node</code>, uppercase tracked name <code>.ap-st-nm</code> and its count <code>.ap-st-n</code>) with its sessions as quiet sub-lines
+        (<code>.ap-st-kids</code>). <code>TreeScheduledRow</code> (<code>.ap-st-row</code>) is ONE line in fixed columns shared by every row
+        (<code>--st-cols</code>, a grid): the name button (a quiet base <code>Button</code>, one line with an ellipsis, opens the item in the
+        Task Manager), the owner tag (the base tag in <code>.ap-st-c-tag</code>, from 760 px of list width), the next run (<code>.ap-st-when</code>), the repeat in words (<code>.ap-st-rep</code> under the <code>.ap-st-c-rep</code> header, from 520 px of list width), and three 24 px bare icon
+        buttons (<code>.ap-st-acts</code>: pause or resume, edit, delete, each with a tooltip). Edit opens
+        <code>ScheduleItemEditor</code> under the row and delete opens a confirm with the base danger button, both in
+        <code>.auto-sched__panel</code> across the whole row. It draws only while the Task Manager plugin is on and an item is scheduled; while
+        the first read is out it draws its title strip with "reading" in the count's place, so a slow read never looks like no items.</dd>
     <dt>never ran</dt>
     <dd>An automation with no run shows a base <code>State</code> in the pane's output tab: the page's empty-state look (no frame, muted words), a
         hollow square mark, the words <b>never ran</b> in the small tracked label, the next run, and the one <code>run now</code> action, centered in the
@@ -84,6 +105,11 @@ The sections below that say "tab" for the table and the run feed describe the su
     <dd><code>NewestRunLine</code> (<code>.ap-pv</code>) reads the selected automation's newest run (or the run the pane is stepped to) as one
         line; <code>KeyHints</code> (<code>.ap-keys</code>) names the table's keys and hides on a phone.</dd>
     <dt>editor</dt>
+    <dd><code>AutomationEditor</code> is the mockup's pane editor, drawn by <code>PaneEditor</code> in place of the pane head (<code>.ap-pn-ed</code>, no title bar, not a dialog):
+        a heading, the four template chips on a new automation, then fields (<code>.ap-pn-f</code>) name, schedule, the live next five
+        (<code>.ap-pn-edfires</code>, or the refusal in <code>.ap-pn-bad</code>) and delivery, then description. The product's target block
+        (<code>.ap-pn-edb</code>: target forms and contract fields, the longest-run field on its own line, <code>.ap-pn-wide</code>) sits after the description,
+        then save and cancel (<code>.ap-pn-actions</code>). A refusal from the server is said in words above the buttons.</dd>
     <dt>target picker</dt>
     <dd><code>TargetPicker</code> offers a target kind only when the server lists a runner for it and a form exists in
         <code>target-forms.ts</code>. A later target adds one line there and its own form file. <code>TargetRecipe</code> draws
@@ -92,6 +118,11 @@ The sections below that say "tab" for the table and the run feed describe the su
         <code>TargetCard</code> picks a project board and takes the card's title, summary, text and how to validate (each with the board's
         length cap shown), plus one <code>Check</code> switch to start the card right away.</dd>
     <dt>cron agent form</dt>
+    <dd><code>AgentBuilder</code>: a project select, a prompt box (a base <code>Field</code>), three permission rows drawn
+        with <code>Choice</code> (read only is the default), the tool list, a login select, an optional API-key select and the three
+        caps. Choosing "run with no permission prompts" shows a base <code>State</code>, a hairline frame and text in the
+        coral token, and Save stays off until the exact phrase is typed; the server checks it again. An agent run's final text, how it ended and
+        what it cost are drawn by the generic report renderer (<code>RunSheet</code>) in the pane's output tab.</dd>
     <dt>page shell</dt>
     <dd><code>AutomationsScreen</code> draws its own title row (<code>.pl-titlebar</code>, the one accent label, then the live
         sentence <code>.ap-sum</code> and the actions <code>.ap-acts</code>): <code>scheduler log</code> and <code>commands</code>
@@ -136,11 +167,23 @@ The sections below that say "tab" for the table and the run feed describe the su
         minutes and saved as seconds. The search reads an automation's description and its project too, and the
         project is shown as an a base <code>Tag</code>.</dd>
     <dt>more targets</dt>
+    <dd><code>TargetSession</code> (a stored session picked by its durable uuid, the message, wake or skip when asleep, start
+        or fail when gone), <code>TargetCommand</code> (only the owner's allow-list from Settings; empty says where to add some)
+        and <code>TargetSequence</code> (two to four steps, <code>.auto-steps</code> with one base card
+        (<code>.oc-card</code>, compact) per step: the kind select and remove in its title strip, its kind's own form as the body). <code>TargetRecipe</code> now groups reports and
+        system actions and draws text params as text fields.</dd>
     <dt>scheduler log</dt>
     <dd><code>SchedulerLog</code> (<code>.auto-log</code>, a base <code>ListRow</code>): the scheduler's own lines, newest first, read on
         open and on the <code>automation_log</code> push topic. Above them the rotation settings: by size (with a size in MB) or
         daily, and how many old files to keep, saved through <code>PUT /automation-log/settings</code>.</dd>
     <dt>allowed commands</dt>
+    <dd><code>AutomationCommandsPanel</code> (moved here from settings, #1655), opened by the "allowed commands" button beside
+        "scheduler log" in a <code>.pl-panel</code>: the exact commands a scheduled command automation may run, empty until you
+        add some. One mono row per command (a base <code>List</code> of <code>ListRow</code>s, <code>.acmd__text</code>)
+        with a small base <code>Button</code> remove, and below them a base <code>Field</code> (<code>.acmd__fld</code>) with an
+        <code>.oc-btn--confirm</code> add (<code>.acmd__add</code>). Every add or remove saves the whole list through
+        <code>PUT /automation-commands</code> and shows what the server holds; the server's refusal is said in
+        <code>.tm__problem</code>. It follows the <code>automation_commands</code> push topic.</dd>
 </dl>
 
 <h3 class="sg-h3" id="automations-pane">the detail pane</h3>
@@ -154,10 +197,20 @@ The sections below that say "tab" for the table and the run feed describe the su
         off under reduced motion. A title row (<code>.ap-pn-bar</code>), the head or the editor, four tabs (<code>.ap-pn-tabs</code>)
         and the body. <code>[</code> steps to the older run, <code>]</code> to the newer one, Escape closes.</dd>
     <dt>head and editor</dt>
+    <dd><code>PaneHead</code>: the light and when it runs next, the kebab in its icon cluster (<code>.ap-pn-icons</code>), the name (<code>.ap-pn-name</code>), what it runs and the
+        schedule (<code>.ap-pn-meta</code>), then the switch, <code>run now</code> and <code>edit</code>, and the note "run now spends
+        plan usage" or "run now spends none". Delete is confirmed in a popup under the kebab (<code>ConfirmPopup.svelte</code>, the menus section's anchored popup).
+        <code>PaneEditor</code> wraps <code>AutomationEditor</code>: four template chips (small base buttons, <code>data-btn</code> pressed) on a new automation,
+        then the one editor with the live next five. A save that met a newer version reads again and says "changed elsewhere, reloaded".</dd>
     <dt>output</dt>
     <dd><code>OutputTab</code>: the run stepper (<code>.ap-pn-step</code>, a base <code>Button</code> with the neighbour's mark,
         <code>.ap-tri</code>), then <code>RunSheet</code> with its action row.</dd>
     <dt>runs</dt>
+    <dd><code>RunsTab</code>: rows <code>.ap-rr</code> in a box (a base <code>List</code>), a column header at a pane body of 700 px
+        and up (<code>.ap-rr-head</code>), two lines below. Identical consecutive runs fold under one <code>x&lt;n&gt;</code> toggle
+        (a base <code>Button</code>, wearing the shared fold chevron) and the folded members (a selected-looking <code>ListRow</code>) sit on the field ground.
+        A skipped row reads the skip sentence ("skipped 3 times, Oct 1 to Oct 3: ..."). A cost or a token count that was not measured
+        says "not measured", never a zero.</dd>
     <dt>overview and log</dt>
     <dd><code>OverviewTab</code>: a label and value grid (<code>.ap-pn-dl</code>), the next five runs (<code>.ap-pn-fires</code>), what
         ran in a base fold (<code>.oc-fold</code>; its settings are <code>.ap-pn-chip</code>), then the change log
@@ -183,6 +236,10 @@ The sections below that say "tab" for the table and the run feed describe the su
         (<code>.r-sec</code>), the items list (<code>.r-items</code>), the small fields (<code>.r-kv</code>) and one section
         per remaining key. A report with nothing in it says what happened (<code>.r-empty</code>), never a blank.</dd>
     <dt>rows</dt>
+    <dd>An array of same-shaped objects is ONE line, <code>RowsFold</code> (<code>.r-rows</code>): the tally ("1 ok, 1 fail"),
+        each not-ok row named (<code>.r-rows-bad</code>), and a "show n rows" button (a small base <code>Button</code>) that opens the
+        sortable <code>ReportTable</code> (<code>.r-table</code>). It is closed by default and closes again on any redraw.
+        Other values go through <code>ReportTree</code> (<code>.r-tree</code>, <code>.r-branch</code> holding a base fold, <code>.r-chips</code>).</dd>
     <dt>text</dt>
     <dd><code>LongText</code> clips a long string to its first 12 and last 3 lines (<code>.r-clipbar</code>);
         <code>Markdown</code> draws headings, lists, fences and pipe tables (<code>.r-md</code>, <code>.r-mh</code>,

@@ -25,6 +25,7 @@ pack_capabilities.register("pack.replica", "pack.identity", trust_wire.CAP_TRUST
 
 
 class ReplicaBody(BaseModel):
+    """The home's project as it asks this machine to hold an active copy. ``transport`` is accepted and ignored here (P3)."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -46,7 +47,8 @@ def _peer_only(principal: Principal) -> str:
 
 @router.post("/replica")
 async def register_replica(body: ReplicaBody, principal: Principal = Depends(_require_replica)) -> Dict[str, Any]:
-    """
+    """Register this machine as an ACTIVE replica of the caller's project, against the same uid. Idempotent.
+
     Inputs: body (ReplicaBody). Output: {project_uid, project_id, name, root, state, created}.
     Raises: HTTPException 403 not a peer, 409 ``project_uid_is_home`` or ``project_name_taken``.
     """
@@ -69,7 +71,8 @@ async def register_replica(body: ReplicaBody, principal: Principal = Depends(_re
 
 @router.delete("/replica/{project_uid}")
 async def detach_replica(project_uid: str, principal: Principal = Depends(_require_replica)) -> Dict[str, Any]:
-    """
+    """The home stops this machine being a replica: the project stays as a plain home project under a NEW uid, folder kept.
+
     Inputs: project_uid (str). Output: {detached: bool} (False when there was nothing to detach, never an error).
     Raises: HTTPException 403 not a peer.
     """

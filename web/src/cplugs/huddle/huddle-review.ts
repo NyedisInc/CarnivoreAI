@@ -47,7 +47,6 @@ export function summarize(text: string, stored: string = '', max: number = SUMMA
   return { summary, more };
 }
 
-/* the review card */
 export interface ReviewAnswer {
   id: number;
   summary: string;

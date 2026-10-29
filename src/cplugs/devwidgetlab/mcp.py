@@ -73,7 +73,7 @@ async def widget_lab_draft_file_delete(ctx: CplugContext, caller: AgentCaller, a
 async def widget_lab_draft_rebuild(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
     slug = _slug(args)
     try:
-        return tool_result(service.build_draft(Path(ctx.storage.path), slug))
+        return tool_result(await service.build_draft(Path(ctx.storage.path), slug))
     except LabError as exc:
         raise ToolError(f"refused ({exc.code}): {exc}") from exc
 

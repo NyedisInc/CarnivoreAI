@@ -158,7 +158,7 @@ def test_changes_never_thins_an_item_the_pane_was_not_sent(manager):
 def test_a_new_message_on_an_owner_reopened_item_comes_in_full(manager):
     (a,) = _items(manager, 1)
     store = huddle_store(manager)
-    assert call(manager, "task_manager_update", {"item": a, "state": "waiting", "waiting_on": "the owner runs the staging restart", "wait_kind": "install"})[0]
+    assert call(manager, "task_manager_update", {"item": a, "state": "waiting", "waiting_on": "Joe runs the staging restart", "wait_kind": "install"})[0]
     cursor = call(manager, "task_manager_tasks_list", {"list": "12"})[1]["cursor"]
     store.post(a, "not right", actor="joe")
     ok, body = call(manager, "task_manager_changes", {"since": cursor, "list": "12"})
@@ -195,3 +195,24 @@ def test_add_op_adds_across_lists_with_a_new_group_and_one_failure(manager, monk
     one, two, three = (store.item(r["item_id"]) for r in good)
     assert (one["list"], two["list"], three["list"]) == ("12", "12", "all")
     assert one["group"] == two["group"] and one["group"] is not None
+
+
+def test_a_store_error_in_one_op_is_that_ops_failure_not_the_calls():
+    import asyncio
+    import sqlite3
+
+    async def fine(args):
+        return {"id": 1, "state": "open", "revision": 1}
+
+    async def broken(args):
+        raise sqlite3.OperationalError("database is locked")
+
+    async def in_list(item_id):
+        return None
+
+    handlers = {name: fine for name in batch.OPS}
+    handlers["reply"] = broken
+    ops = [{"op": "update", "item_id": 1, "state": "open"}, {"op": "reply", "item_id": 2, "text": "x"}, {"op": "update", "item_id": 3, "state": "open"}]
+    body = asyncio.run(batch.run({"ops": ops}, handlers=handlers, in_list=in_list))
+    assert [r["ok"] for r in body["results"]] == [True, False, True]
+    assert "OperationalError" in body["results"][1]["error"] and (body["applied"], body["failed"]) == (2, 1)

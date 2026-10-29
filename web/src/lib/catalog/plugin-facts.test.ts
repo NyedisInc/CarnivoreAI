@@ -5,6 +5,7 @@ import { PLUGIN_PART_KEYS } from '../../../../client/js/labels/catalog-kind.js';
 import { parsePluginManifest, pluginFacts, pluginParts } from './plugin-facts';
 import type { PreviewFile } from './types';
 
+/** The catalog as a plain lookup, however the module exports it. */
 const catalog = enCatalog as unknown as Record<string, unknown>;
 
 const files = (...paths: string[]): PreviewFile[] =>

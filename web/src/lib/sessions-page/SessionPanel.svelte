@@ -1,4 +1,4 @@
-<!-- Escape closes it -->
+
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import { untrack } from 'svelte';
@@ -82,7 +82,7 @@
     });
 
     function pin(r: PageRow): void {
-        if (!r.s.tmux_name) return;
+        if (!r.s.tmux_name || r.computer !== null) return;
         togglePinRow(r.s.tmux_name);
         data.pinTick += 1;
     }

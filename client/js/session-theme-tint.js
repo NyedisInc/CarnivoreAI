@@ -1,4 +1,4 @@
-/* --color- */
+/* the home screen */
 (function () {
     'use strict';
 
@@ -49,14 +49,6 @@
         return value;
     }
 
-    /**
-     * Scrub a theme id down to what is safe to write into markup.
-     *
-     * @param {?string} themeId - the session's pinned theme id.
-     * @returns {string} the id reduced to [A-Za-z0-9_-], or '' when
-     *   nothing survives - which yields an untinted row rather than a
-     *   partially-escaped one.
-     */
     function safeThemeId(themeId) {
         return String(themeId).replace(/[^a-zA-Z0-9_-]/g, '');
     }

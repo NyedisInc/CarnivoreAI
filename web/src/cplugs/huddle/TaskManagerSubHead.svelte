@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* a fold chevron */
   import { FoldChevron, Icon } from '../sdk/ui';
   import { t } from '../sdk';
   import TaskManagerTail from './TaskManagerTail.svelte';

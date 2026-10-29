@@ -125,6 +125,7 @@ Object.assign(ToastManager.prototype, {
         this._scheduleRender();
       }
 
+      // no such record
       if (syncToServer && toast && toast.session_id && !toast.local) {
         this._ack(toastId, toast.session_id);
       }
@@ -145,7 +146,6 @@ Object.assign(ToastManager.prototype, {
       return true;
     },
 
-    /* permission prompt */
     dismissKindForSession(kind, sessionId) {
       if (!kind || !sessionId) return 0;
       const ids = [];
@@ -204,6 +204,7 @@ Object.assign(ToastManager.prototype, {
       return ids.length;
     },
 
+    /* no evidence at all */
     dismissForSessionActivity(sessionId, data) {
       if (!sessionId) return 0;
       if (data !== undefined && window.AttachmentToast

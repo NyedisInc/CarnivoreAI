@@ -1,8 +1,8 @@
 <div aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Shift+ArrowLeft Shift+ArrowRight Shift+ArrowUp Shift+ArrowDown" aria-label="shot.png" aria-modal="true" class="sidebar-help__lightbox-body" role="dialog" style="left: 150px; top: 100px; width: 700px; height: 600px;" tabindex="-1">
-  <div class="sidebar-help__lightbox-bar">
+  <div class="modal-titlerow sidebar-help__lightbox-bar">
     <p class="sidebar-help__lightbox-caption">
       "shot.png"
-    <button class="sidebar-help__lightbox-close" type="button">
+    <button data-btn="secondary" data-button-root="true" data-help-lightbox-close="true" data-size="sm" tabindex="0" type="button">
       "close"
   <div class="sidebar-help__lightbox-stage">
     <img alt="a" class="sidebar-help__lightbox-img" draggable="false" src="blob:x">

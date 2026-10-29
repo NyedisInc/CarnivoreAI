@@ -15,7 +15,7 @@ DATALESS_LIST_LIMIT = 20
 
 
 class InventoryError(Exception):
-    """The folder could not be read as a plain tree (an unreadable entry, a device file, a cloud-only file)."""
+    pass
 
 
 @dataclass
@@ -155,11 +155,6 @@ def sha256_file(path: str, progress: Optional[Callable[[int], None]] = None) -> 
 
 
 def hash_files(root: str, entries: List[Entry], progress: Optional[Callable[[int], None]] = None) -> None:
-    """Fill ``sha256`` on every regular file, reading it once. A cloud-only file is never read.
-
-    Inputs: root; entries (modified in place); progress(bytes) called per chunk.
-    Output: None. Raises: InventoryError - a file turned cloud-only, vanished or could not be read.
-    """
     for entry in entries:
         if entry.kind != KIND_FILE:
             continue

@@ -10,6 +10,12 @@ under the header with one scrolling box, a header row, a capped and centred colu
 </div>
 <dl class="sg-facts">
     <dt>pattern</dt>
+    <dd>One card per account, never a table (Alex, #535: "this layout ... is horrible. redo this and make it look like our
+        Military Terminal theme style."). A card: a title row with the colour swatch, the name and the switch or active button
+        right-justified; a words-first state chip; facts as <code>&lt;dl&gt;</code> with <code>.pl-label</code> terms; one meter
+        line per window with its percent and reset time on the SAME line (<code>LedgerUsageCell</code>); problems each on their
+        own line; the actions under a hairline. Long explanations fold shut by default. The grid caps and centres on a wide
+        screen and is one column on a phone.</dd>
     <dt>its meters</dt>
     <dd>The window table's bars are <a href="#meters-segmented">the shared segmented meter</a>
         (<code>SegmentedMeterBar.svelte</code>), the same component and colour ladder the agents drawer's PROVIDERS panel
@@ -42,7 +48,28 @@ under the header with one scrolling box, a header row, a capped and centred colu
         quiet note (<code>.ledger-tpick__note</code>) and is still stored. The palette hexes are data; every chrome colour is a
         token.</dd>
     <dt>drawer widget area</dt>
+    <dd>The drawer's bottom area is a widget zone, not a fixed panel (Joe (ccsliinc), 2026-09-29):
+        <code>web/src/lib/drawer-zone/</code>, an ordered list of widget instances that defaults to the providers panel.
+        <code>DrawerZone.svelte</code> is the list (<code>.dz</code>, the empty drop hint <code>.dz-empty</code> and the
+        insertion mark <code>.dz-mark</code>; while a widget drawer row is carried the area's widgets region shows it is a
+        drop area by its <code>data-drop</code> state, a faint cyan tint, deeper with a solid inner hairline under the pointer,
+        Joe (ccsliinc), 2026-10-03; nothing is drawn refused); <code>ZoneItem.svelte</code> wraps one widget and, only in edit layout, draws
+        its strip (<code>.dz-strip</code>: drag handle <code>[data-zone-handle]</code> (each strip key a base quiet <code>IconButton</code>, remove its close variant), name, look picker (a base <code>Segmented</code>),
+        up, down, remove); <code>zone-shell/PlacementBody.svelte</code> (<code>.dzc</code>) draws any other core widget's cell in the
+        same card look as <code>.ldp</code>; it is also the body of a bar slide-out (<code>.rail-body</code>) and of a pop-out window. Any one-copy widget drops here from the widget drawer's
+        one list (no zone list since 2026-10-03, Joe (ccsliinc): "anything can be dropped anywhere"); its
+        <code>looks</code> (compact, full) are chosen per instance.
+        Each card wears the one widget header (<code>PlacementHead.svelte</code>, the cells section's "the widget header"):
+        its gear and pop out key are gone from the bar (Joe (ccsliinc), 2026-10-14): both live in its icon menu, before the close x. The pop out key opens the widget alone in its own window (Joe (ccsliinc), 2026-10-01):
+        <code>web/src/popout/SingleWidget.svelte</code> (a one-tab zone: the same widget header, notice <code>.sw-notice</code>; its body is <code>PlacementBody.svelte</code>'s <code>.sw</code> and <code>.sw-body</code>, and a plugin widget's <code>web/src/popout/PluginTab.svelte</code> restates both, its menu <code>zone-shell/DeclaredTabMenu.svelte</code>) at <code>/static/popout.html?widget=core.&lt;cell&gt;</code>; it follows and never writes the Home layout.</dd>
     <dt>fold toggle</dt>
+    <dd>The drawer panel's one button (<code>[data-ldp-toggle]</code>, a base quiet <code>IconButton</code>) steps compact, expanded, total only, glance, and back, and so does a
+        click on the panel's header (the <code>.ldp-title</code> link, or empty header space). The total only view is the all accounts
+        total alone: <code>.ldp-total</code> (name <code>.ldp-total-label</code>, account count, head <code>.ldp-total-head</code>) over the
+        one 5h and 7d line (<code>.ldp-mini</code>) the compact rows wear. The glance view is the widget's own tiles
+        (<code>.ldp-glance</code>, each in <code>.ldp-glance-tile</code>, drawn by <code>ProviderGlanceTile</code>). The chevron alone shows
+        which view is current; no step dots sit beside it (Joe (ccsliinc), 2026-10-02). Its accessible name says the view, what a press
+        does and "view N of 4".</dd>
     <dt>provider mark</dt>
     <dd>Each account's name is led by its provider's mark, the same family icon the session rows wear, so a claude and a
         codex account read apart at a glance: <code>data-ledger="provider-mark"</code> in a card's title strip and
@@ -50,6 +77,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
         <code>web/src/lib/sessions/agent-marks.ts</code>. The drawer's is <code>aria-hidden</code>, because the name beside it
         already says whose account it is; the ledger card's is <code>role="img"</code> with the provider's label, because
         the card no longer prints the provider as a text fact.</dd>
+    <dt>provider card anatomy (2026-10-03)</dt>
     <dd>A ledger card reads like the reference card (R1/R2): the title strip holds the swatch, the provider mark and name, and
         the status as a base <code>Tag</code> (<code>data-ledger="chip"</code>, tone ok, warn, danger or neutral) in its right slot; the body holds the identity as a muted
         byline (<code>.ledger-card__byline</code>, with the login deadline) and the usage hero
@@ -80,6 +108,17 @@ under the header with one scrolling box, a header row, a capped and centred colu
         Auto sleep (#559) is two rows of the settings page now (a switch and the idle minutes). These are not mounted live
         here because they read and write real account settings.</dd>
     <dt>scopes and cost</dt>
+    <dd>The card shows <code>AddSplit</code>, an outlined orange split button: the main half adds to global, the caret opens the cascade menu (the app's one menu look) with "add to global" and "add to this project", a blocked one saying why.
+        Both call the install route with <code>one_click</code>; a <code>sheet_required</code> answer opens the consent sheet with the
+        same choice pre-filled and script consent never pre-ticked. In the detail pane <code>CostBadge</code> prints description and
+        body tokens labelled est. (nothing when the index has no cost), <code>InstalledWhere</code> is a hairline-ruled grid of
+        scope and harnesses whose rows choose the copy the controls act on, and <code>UsageFacts</code> prints "fired N times in
+        30 days on this computer" from <code>GET /skill-fires/usage</code> (null is "not measured", never zero). <code>AutopsyFacts</code> reads <code>GET /skills/{name}/autopsy</code>: runs read, tool
+        errors, interrupts, corrections, tokens (null when the transcript recorded none), risk categories the review did not disclose
+        (shown in the failure token, advisory only) and a short redacted excerpt. <code>DriftFacts</code> prints Sentinel's verdict on
+        the installed copy (clean, drifted, missing, unknown; changed files null is "not recorded"); the restore, uninstall and keep as
+        fork actions sit in <code>DetailActions</code> and use the same outlined primary, danger and quiet buttons. Mono type, hairlines,
+        <code>--cat-*</code> and <code>--oc-*</code> tokens only. Keys: <code>skill.browse.scope|add|cost|where|usage.*</code>.</dd>
     <dt>sectioned detail page</dt>
     <dd>THE WAREZ SKILL PAGE (<code>web/src/lib/skill-page/skill-page.css</code>) shows a four level hierarchy any dense detail page can copy. L1 is the title bar: the shared embedded <code>Page</code> strip (<code>.oc-titlebar</code> on <code>.skp-page</code>, retinted to <code>--skp-top</code> through the band token). L2 is a section head: a title-row strip (<code>.skp-tlabel</code>, <code>.skp-ctx__head</code>, <code>.skp-md__bar</code>) on <code>--skp-head</code> (the accent mixed into the title row ground, lifted toward <code>--oc-text-primary</code>) with a hairline under it and a 700 weight accent label, inside a section framed in <code>--skp-frame</code> on <code>--skp-body</code> (<code>.skp-sec</code>, <code>.skp-ctx</code>). L3 is a sub-label (<code>.skp-label</code>, <code>.skp-stat__l</code>, <code>.skp-kv</code> terms): secondary text, 600 weight, never the accent. L4 is the value in primary text, stat numbers brighter and larger, notes muted. Stat tiles and small buttons use <code>--skp-tile</code> borders. A group of tiles that must stay one row (<code>.skp-statgrp</code> FIRED) is a fixed three column grid.</dd>
     <dt>catalog keys</dt>
@@ -125,10 +164,24 @@ under the header with one scrolling box, a header row, a capped and centred colu
 </div>
 <dl class="sg-facts">
     <dt>mods page</dt>
+    <dd>THE MODS PAGE (<code>web/src/lib/mods/ModsScreen.svelte</code> with <code>ModRow.svelte</code>, the menu's mods row, hotkey m, <code>#mods</code>) is the installed-only list of Claude Code mods on the manager frame: a hairline list (<code>.mods-list</code>, <code>.mods-row</code>) copied from the automations list, each row with the name, version, a source tag (<code>.mods-mark</code>: catalog or local), a state word (on, off, or "on in 1 of 2"), the shared <code>Check</code> as the on/off switch, and remove (<code>.oc-btn--ghost</code>) that asks inline with the <code>.modal-btn-danger</code> confirm. Named states are said in <code>.mods-line</code> text, never hidden: a settings file missing, unreadable or unwritable, a claude that is too old, and an unreadable account list, which disables every switch and remove. The foot link "get more on warez" opens warez on the mod kind. Files: <code>web/src/lib/mods/</code> and <code>mods.css</code>.</dd>
     <dt>pack tab</dt>
+    <dd>THE PACK TAB (<code>web/src/lib/skills-hub/pack/PackSkillsTab.svelte</code>, the PACK tab of warez INSTALLED &gt; skills and the Pack page's skills tab, shown with two or more computers) is a hairline table and, on a phone, a per-skill list (<code>.lsk-table</code> scrolling inside <code>.lsk-scroll</code>, <code>.lsk-list</code>, <code>.lsk-item</code>): one row per skill NAME, a provider mark (<code>.pks-fam</code>, the drawer's family icon, named for screen readers) for every family that holds it, grouped with the name (<code>.pks-name</code>), a sticky header (<code>.pks-head</code> on the title-row strip, every label in the ledger's tracked uppercase label style, the table scrolling in <code>.lsk-scroll--pack</code>), each cell the worst state across the families, the switch and any held mark grouped as <code>.pks-controls</code>, a <code>global</code> switch (<code>.oc-btn</code> with <code>role="switch"</code>, <code>.pks-on</code> in <code>--oc-yellow</code> while on) and one column per computer, every cell a <code>.lsk-cell</code> state word with a shape mark (in sync, syncing in <code>--oc-yellow</code>, missing, differs, only here, same, missing on alpha, conflict with its reason, offline, older carnivore, alpha is one way here); off alpha it is read only. <code>PackConfirmSheet.svelte</code> is a <code>ModalShell</code> dialog (<code>.lsk-sheet</code>) that runs a dry run when it opens and shows <code>.modal-btn-confirm</code> only after the dry run answered (<code>.modal-btn-danger</code> for remove from the other computers); <code>PackDetailSheet.svelte</code> lists digests and files, never contents. Named states are said in <code>.lsk-line</code> text (<code>.lsk-line--warn</code>, <code>.lsk-line--error</code>). Files: <code>web/src/lib/skills-hub/pack/</code> and <code>web/src/lib/skills-hub/local/local-skills.css</code> (the rules the removed command center wrote, kept for this tab). TAKE IT FROM A COMPUTER (<code>web/src/lib/skills-hub/pack/PackTakeSheet.svelte</code>, alpha only, no new class): a differing cell of another computer carries one quiet <code>.oc-btn--sm</code> "take it" beside its word, and the <code>.modal-btn</code> sheet copies the confirm sheet (the dry run fetches and checks that computer's copy, says what lands and whether alpha's own copy is added, the same or replaced, and the confirm button is <code>.modal-btn-confirm</code> only after that answered); the "show what the others hold" switch beside it is the same <code>.pks-on</code> switch as the other toolbar switches.</dd>
 </dl>
 <dl class="sg-facts">
     <dt>pattern</dt>
+    <dd>WAREZ (<code>web/src/lib/catalog/WarezScreen.svelte</code>, the menu's warez row, hotkey r, <code>#warez</code> with <code>#catalog</code> as its alias) is the signed catalog as its own page: every item of every kind, installed ones marked, titled "warez". It is a thin wrapper over this screen in its standalone overlay mode that adds the title and re-reads the list on the <code>catalog</code> push topic; the Skills and Themes pages are INSTALLED-ONLY and link here ("get more on warez"). THE SKILLS LIST in warez (INSTALLED > skills, <code>InstalledKindScreen</code>) wears three page tabs (<a href="#page-tabs">page tabs</a>, <code>.wik__tabs</code>) above its filter row: INSTALLED (the skills manager, <a href="#skills-manager-page">below</a>, its highlights strip first), STATS (the census) and PACK (the Pack skills table, only with two or more computers; the same component is the Pack page's skills tab). The tab is in the address, <code>#warez/installed/skills/stats</code>. Warez's title strip (#1554, the faceted shelf) carries the status line (<code>WarezStatusLine</code>, <code>.warez-stat</code>:
+        serial, signer, count; stale, degraded and refused words), <code>WarezTools</code> (the desktop title strip's own tools, left of the acts: a small search about 200px wide, the sort picker, the grid/list pair; there is no second toolbar row) and <code>WarezActs</code> (refresh, publish a skill, and sign in while signed out), which the public browse page (catalog.carnivore.ai) leaves out together with every other write control when the screen is read only: its detail then swaps <code>DetailActions</code> for <code>ReadonlyActions</code> (an outlined <code>get carnivore</code> link, the item id as selectable text with a copy button, the source repository link when the index carries one) and the screen foot carries <code>TrustLine</code> (one quiet line: signed index serial, dates and signing key id, no trust mark) and the <code>?</code> keys menu (<code>KeyHelp</code>, <code>.keys-menu</code>,
+        an anchored menu of the shipped keys). WAREZ'S LEFT MENU (<code>WarezMenu</code>, <code>.wm</code>, #1904) replaces the filter rail on the warez page: no find field of its own on a desktop (the title strip's search narrows it), then groups STORE (everything, newest, updates, one row per kind with its count), INSTALLED (one row per kind, each expanding to its installed items with a right-aligned state word <code>.wm__word</code>; a count or word that changes washes its row once, <code>.wm__row--tint</code>, 600ms, reduced motion none; the phone's find field carries the magnifier <code>.wm__lens</code> over <code>.oc-field</code>) and NEEDS A LOOK when non-empty; a store node drives the grid, an installed kind (or an item under it) is that kind's real page embedded, in inset mode so it draws no second title bar (<code>InstalledKindScreen</code>, <code>.wik</code>: the Themes, Plugins, Skills and Mods screens), the item selected; the look pages and a catalog-installed item keep <code>InstalledPage</code> (<code>.wi</code>). The menu is as wide as its widest row (min 200px, max 300px). Its bottom-right corner holds a bare gray pi (<code>.wm__elite</code> in <code>.wm__foot</code>, no box, muted, a little brighter on hover, title and label ELITE ACCESS): the way into Elite Access, the BBS view of warez. On a phone the menu is the first screen and a node pushes its page under a back bar (<code>.screen__back</code>). The embedded skills tab still uses the older LEFT RAIL (<code>CatalogFilterRail</code>: <code>.cat-rail</code>, tracked <code>.cat-rail__label</code> over vertical <code>.cat-rail__row</code> toggles for KIND and STATE, the pressed row on the orange tint with a 2px orange left edge, publish a skill at the foot); the top bar (<code>CatalogToolbar</code>: search, sort, grid and list toggle) is ONE 44px bar. On a phone the toolbar draws <code>FilterGroup</code>s
+        <code>.filter-group</code> with a tracked label cell: KIND and STATE as <code>.oc-seg</code> segments, RISK, SOURCE and SORT as shared <code>.oc-facet</code> pickers, then the shared grid and list toggle <code>ViewToggle</code>, remembered per device as page "skills"; <code>.cat-rows</code> is the phone's layout group).
+        On a phone the bar is the scroll-away rows under the omnibar (<code>CatalogPhoneBar</code>, <code>.catalog-phonebar</code>). Every item wears a KIND MARK
+        (<code>KindMark</code>: mods red, skills purple, themes black, a glyph tile before the title) and a 3px kind band (<code>.kind-band</code>). Then a GRID of cards by default
+        (<code>WarezCard</code>, the ONE card every store and installed page draws (<code>CatalogCard</code>, the installed skills, themes, mods and plugins): a 16:9 frame, the theme miniature or the publisher art or the letter slab, the kind mark and name, the page's one state control top right, a brief clamped to three lines that are always reserved so a row of cards is one height; no meta line and no source line. A warning (untrusted key, a non-clean verdict, deprecated, writes instructions) adds a <code>.catalog-card__flags</code> row, an instructions-writing item shows <code>.catalog-card__warn</code>; the grid is <code>.warez-grid</code> and a favorite star beside a name is <code>.warez-star</code>.).
+        The list choice keeps the 40px rows
+        (<code>CatalogCard</code> with <code>list</code>: <code>.catalog-row</code>, <code>.catalog-row__lead</code>, name, version, verdict, brief, the act),
+        two lines at 56px when the list is narrower than 640px, then a reading pane for the chosen item (<code>CatalogDetail</code>). The screen root carries <code>.cat</code>, which declares
+        the <code>--cat-*</code> aliases from <code>--oc-*</code>, <code>:global</code> so the sheets it opens on
+        <code>document.body</code> can read them too.</dd>
     <dt>references</dt>
     <dd><code>.oc-field</code> is the reference text field; <code>.oc-btn--confirm</code> is an accent OUTLINE primary
         (the older reference for a quiet primary; dialog footers now follow the picker, <a href="#buttons">buttons</a>).
@@ -147,6 +200,13 @@ under the header with one scrolling box, a header row, a capped and centred colu
         <code>CostBadge</code>, <code>InstalledWhere</code>, <code>UsageFacts</code>, <code>AutopsyFacts</code>, <code>DriftFacts</code>, <code>AddSplit</code>, <code>ContentsBlock</code>, <code>UpdateDiffView</code>, <code>DeprecatedMark</code>. Trust model:
         <code>docs/catalog.md</code>.</dd>
     <dt>community</dt>
+    <dd><code>web/src/lib/community/</code> (issue #1171), painted under the catalog's <code>--cat-*</code> tokens, buttons are the shared <code>.modal-btn</code> family:
+        <code>CommentThread</code> (one reply level, a placeholder where a body is gone, an edited marker, and a comment held for review shown to its author alone with a held label),
+        <code>Composer</code> (plain text, 2000 characters, a counter), <code>ReportDialog</code> (spam, abuse, impersonation, security, copyright, other; send is <code>.modal-btn-danger</code>),
+        <code>AuthorLink</code> and <code>AuthorPage</code> (in-app profile: handle, joined, bio, links, published items, publisher badge), <code>Identicon</code> (inline SVG from the handle, never an image),
+        <code>LinkedText</code> (a stranger's text; http and https become links with <code>rel="nofollow ugc noopener noreferrer"</code>, every other scheme stays plain text, never raw html) and
+        <code>CommunitySettings</code> (reply email on or off, in <code>AccountPanel</code>).
+        A signed-out person goes to the carnivore account <code>SignInModal</code> first (dialogs section), then to the handle step. An unregistered account, read from its account state or from the hosted gate's 403, opens <code>RegisterGate</code> (<code>RegisterDialog</code> in a <code>ModalShell</code>) from every write: comment, reply, rating, report. Registering continues the write; closing cancels it.</dd>
     <dt>contents, update diff, deprecated</dt>
     <dd><code>ContentsBlock</code> (detail pane, on request) prints the file list and the SKILL.md text of the SIGNED latest version from
         <code>GET /catalog/contents/{id}</code>; the server fetches and digest-checks the tarball first, returns text only (binary files
@@ -158,6 +218,8 @@ under the header with one scrolling box, a header row, a capped and centred colu
         naming the replacement when the index does; it stays listed and installable and auto-update never moves an installed copy onto it.
         The skills manager shows a local skill's SKILL.md (<code>.sk-md</code>) through its opaque location id.</dd>
     <dt>publish view</dt>
+    <dd>The publish page is a node of the warez page (<code>#warez/publish</code>), not a modal: its components are filed under "the publish page" below. <code>RegisterDialog</code> is the registration form (an email account picks its handle; <code>RegisterFields</code> holds the handle field with a client-side suggestion and the claim's refusal inline; an account that accepted the terms at sign in sees no ticks and the call sends the handle alone, otherwise every account ticks the terms and the 16-or-older box and the button stays off until both are ticked); the page draws the same fields in <code>RegisterBlock.svelte</code>.
+        Keys: <code>skill.publish.*</code> and <code>publish.page.*</code>. Server: <code>docs/catalog.md</code>, "Publishing your own skills".</dd>
     <dt>browse blocks</dt>
     <dd><code>TrustBlock</code> and <code>CompatBadges</code> are thin bordered panels (1px hairline, mono uppercase label) that print
         only what the index carries, never a default. <code>TrySheet</code> is a <code>ModalShell</code> with the restart-picker footer
@@ -242,7 +304,18 @@ under the header with one scrolling box, a header row, a capped and centred colu
 </div>
 <dl class="sg-facts">
     <dt>pattern</dt>
+    <dd>THE ONE PAGE every "manage this kind of thing" screen is built on: plugins, widgets, wrappers, themes, skills and
+        accounts (issue #763). A title strip (the page name in the accent, a small tracked label for the item kind, a count,
+        at most one primary action, a quiet close), a toolbar (search field and filter chips, plus the page's own controls),
+        a grid or list of cards each with its enable switch, the loading, empty and error states in words, and a detail pane
+        for the open item. A new management page mounts this frame and hands it items and handlers; it does not build its
+        own list, search, switch or states. Contract: <code>docs/manager-frame.md</code>.</dd>
     <dt>presentational</dt>
+    <dd>The frame draws props and reports gestures; it never fetches or writes. State lives in
+        <code>web/src/lib/manager-frame/manager-controller.svelte.ts</code> over the page's <code>ManagerAdapter</code>
+        (<code>web/src/lib/manager-frame/types.ts</code>), each method one documented route. A switch shows what the route
+        answered, never what was asked for; an item whose <code>enabled</code> is not a boolean, or a page with no enable
+        route, draws no switch at all.</dd>
     <dt>copied from</dt>
     <dd>The root carries <code>.pledger</code>, so <code>.pl-panel</code>, <code>.pl-titlebar</code>,
         <code>.pl-title</code> and <code>.pl-label</code> apply unchanged. <code>.oc-page</code> is the shared page frame (<code>web/src/opscenter/page.css</code>), <code>.mgr</code> stays only as the scope the manager-frame and settings-form rules are written under, and <code>.oc-field</code> copies <code>.oc-field</code>,
@@ -278,7 +351,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <div class="sg-specimen__body"><div id="sg-live-manager-share"></div></div>
 </div>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>live</span><code>ManagerFrame.svelte</code></div>
+    <div class="sg-specimen__label"><span>live</span><code>ManagerFrame.svelte</code><span><code>limits</code>: what a build-time kind cannot do, said on the page</span></div>
     <div class="sg-specimen__body"><div id="sg-live-manager-limits"></div></div>
 </div>
 <dl class="sg-facts">
@@ -322,11 +395,22 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dt>overlaid skill card</dt>
     <dd>A grid card whose item sets <code>corner</code> (even empty) is overlaid: <code>.mgr-card__stage</code> holds the media band and, on a top scrim with a drop shadow, <code>.mgr-card__over--title</code> (the harness mark <code>.mgr-card__over-mark</code>, the name, and the star <code>.mgr-card__star</code>, solid yellow when starred) at the top left and <code>.mgr-card__over--corner</code> (the store rating and comment count, or "private") at the top right. No head row is drawn: the footer holds <code>.mgr-card__chips</code> (<code>.mgr-chip</code>, 22px hairline icon tiles named by tooltip) at the left and the figure, status word and switch at the right. The status word is dropped beside a drawn switch unless it warns. The brief clamps at three lines.</dd>
     <dt>card anatomy</dt>
+    <dd>A <code>ManagerItem</code> that carries <code>icon</code> (a name in <code>icons.ts</code>), <code>tags</code> (translated
+        labels, drawn as <code>.mgr-mark</code>) or <code>byline</code> (a translated "by joe") draws, in the grid, the reference
+        card (Supabase integrations, 2026-10-03): the <code>.oc-icon-tile</code> top left at 28px, the name beside it, the switch top
+        right, the brief clamped to two lines, and a footer pinned to the card bottom, tags left and byline right in muted mono.
+        Cards in one grid row share a height. The modifier is <code>.mgr-card--rich</code>; an item with none of the three fields
+        draws as before. Rules: <code>manager-card-rich.css</code>. Search matches tags and byline too.</dd>
     <dt>tile</dt>
     <dd><code>.oc-icon-tile</code> (<code>web/src/opscenter/ui/tile.css</code>): a square 1px hairline tile on the card ground, the glyph in
         <code>--oc-text-secondary</code>, 2px corners, sized by <code>--tile-size</code> (28px default, 20px in the ranked panel).
         Never a white tile, never a brand colour.</dd>
     <dt>grid and list toggle</dt>
+    <dd>A page opts in with <code>viewKey</code> (and <code>defaultView</code>): two framed <code>.oc-ibtn</code> with
+        <code>aria-pressed</code> (icons <code>grid</code> and <code>list</code>) at the right end of the bar, the choice remembered per
+        page per device in localStorage (<code>view-memory.ts</code>, same contract as <code>tab-memory.ts</code>). List is the 28px
+        row, untouched; in it the tags ride the marks column and the tile and byline are not drawn. The plugins page defaults to
+        the grid (Alex (example-owner), 2026-10-03).</dd>
     <dt>ranked panel</dt>
     <dd><code>RankPanel.svelte</code> (<code>web/src/opscenter/ui/</code>; reference: OpenRouter rankings): a framed panel,
         <code>.oc-rank</code>, with a small tracked uppercase label and an optional quiet "view all" (<code>.oc-btn--ghost</code>), a mono caps
@@ -351,7 +435,20 @@ under the header with one scrolling box, a header row, a capped and centred colu
 </div>
 <dl class="sg-facts">
     <dt>split button</dt>
+    <dd>A SPLIT BUTTON is <code>SplitButton.svelte</code> (<code>.oc-split</code>, Joe (ccsliinc), 2026-10-22, issue #1710 point 7): two base buttons joined, the main part runs
+        the picked action and the caret half (<code>.oc-split__caret</code>) carries an invisible native <code>select</code> (<code>.oc-split__select</code>) that changes which
+        action it is; the host holds the choice. TM Mark II's reply box uses it for reply and comment.</dd>
     <dt>page toolbar</dt>
+    <dd><code>PageToolbar.svelte</code> (<code>web/src/opscenter/ui/</code>; Alex (example-owner), 2026-10-04, canvas boards PageHead and Facet): ONE row in
+        one fixed order on every site page: search (fixed width, left), facets, then right-aligned sort and the ledger/cards toggle
+        (<code>ViewToggle</code>). A facet is <code>FacetSelect.svelte</code>, <code>.oc-facet</code>: a 1px frame around the muted
+        label, the bright value and a caret, with a native <code>select</code> underneath (<code>.oc-facet__select</code>), the frame the
+        focus host. Props: <code>query</code>, <code>onQuery</code>, <code>searchPlaceholder</code>, <code>showSearch</code>,
+        <code>facets</code>, <code>onFacet</code>, <code>sort</code>, <code>onSort</code>, <code>view</code>, <code>onView</code>, <code>t</code>.
+        Rules: <code>.oc-toolbar</code> and its parts in <code>page-kit.css</code>. On a phone the page passes
+        <code>showSearch={false}</code>, draws the search in the title row, and the facets, sort and one flip button scroll sideways in the
+        scroll-away bar row. The choice is remembered per page per device by <code>page-view.ts</code> (<code>readPageView</code>,
+        <code>writePageView</code>): sessions and projects default to the ledger, skills and plugins to cards.</dd>
     <dt>highlight tiles</dt>
     <dd><code>HighlightTiles.svelte</code>: up to five <code>.oc-tile</code>s in <code>.oc-tiles__grid</code> under a section label
         (<code>.oc-kit-label</code>): letter tile, name, rank "01", a big mono figure with its muted unit, a secondary line and the 14-day
@@ -365,6 +462,9 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dd><code>HighlightPair.svelte</code>, <code>.oc-pair</code>: the label over two <code>RankPanel</code>s (snippets <code>first</code>
         and <code>second</code>), two columns, one below 1024px.</dd>
     <dt>card grid</dt>
+    <dd><code>.oc-card-grid</code> (<code>page-kit.css</code>): the ONE grid every card page uses, tracks of at least 340px, 16px gap, 12px below
+        1024px (the providers page's grid, Alex, 2026-10-04: "the same responsive size positions ... aka bigger"). The manager frame's cards
+        and the skills catalog's cards wear it.</dd>
     <dt>toolbar extras</dt>
     <dd><code>.oc-toolbar__extras</code> (<code>PageToolbar</code>'s optional <code>extras</code> snippet, with <code>search</code> and
         <code>showView</code>): a page's own chips and acts between the facets and the right end; it scrolls sideways inside its room so the
@@ -372,7 +472,20 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dt>warez browse bands</dt>
     <dd>There are none: the faceted shelf (#1554) drops the featured, new arrivals and latest updates strips. The packs shelf (<code>PacksShelf</code>) is the only band, listed once.</dd>
     <dt>card media</dt>
+    <dd><code>.oc-card-media</code> (<code>page-kit.css</code>; <code>catalog-card__media</code> and <code>mgr-card__media</code> pull it to the
+        card's edges): a 96px band across a grid card's top on <code>--oc-surface-2</code>, with the mark BIG (a 40px icon, or the name's first letter
+        when the index names none). Alex, 2026-10-04: "Skills I want to have larger images in the card view". The skills manager's cards wear it.
+        When the signed index gives the item a hero (<code>card.media</code>, a sha-256 only), <code>CardMediaImg</code> paints it inside the band as
+        <code>.oc-card-media__img</code> (absolute, <code>object-fit: cover</code> from the centre, so the card's band and the detail hero's banner crop the one file),
+        fetched through <code>GET /api/v1/catalog/media/&lt;sha256&gt;</code> and shown only once it has loaded; the letter or icon stays when there is none.
+        No tint: a generated image shows as generated.</dd>
     <dt>publisher card image</dt>
+    <dd><code>CardImageRow.svelte</code>, <code>.card-image</code> (issue #1555, mockup mark m1.3): a row of the warez detail pane, after the acts, shown only to the
+        item's own publisher (the account's handle from <code>GET /api/v1/catalog/handle</code> equals <code>card.publisher</code>, and the kind is a skill, theme or plugin;
+        a failed read draws nothing). Choose is <code>.modal-btn-secondary</code> with the file input hidden over it, send is <code>.modal-btn-confirm</code>, discard or
+        clear preview is <code>.modal-btn-secondary</code>. The file is checked on this computer with the hosted rules (type from the header, 512 KiB, at least 1200x500, 3:2 to 3:1,
+        16 megapixels), then shown as a LOCAL preview on the grid card and the detail hero through <code>CardMediaImg</code>'s <code>previewUrl</code> (an object URL, held in memory only).
+        Send goes through the existing <code>POST /api/v1/catalog/submissions/media</code>; no other viewer sees anything until review and the next signed index. Every refusal names its reason in <code>.card-image__note--bad</code>.</dd>
     <dt>publish page foundation</dt>
     <dd>The publish page is a node of the warez page (<code>#warez/publish</code>, epic #2469): <code>WarezPane.svelte</code> picks <code>InstalledPage</code> or the publish page and hands the page its store the screen's own navigate,
         and the warez menu's <code>yours</code> group holds the one row <code>publish yours</code> (the <code>upload</code> icon, no count). The page's marks are the four stage shapes
@@ -389,9 +502,11 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dt>publish page frame</dt>
     <dd><code>PublishPage.svelte</code> lays the page out by the PANE's width (the root is the container <code>pp</code>): wide from 1100 (<code>.d-wrap</code>: list 300, the item, the card and steps 340; 340 and 380 from 1500), mid 720 to 1099 (list 220, the card and steps under the item), narrow under 720 (one column; <code>data-view</code> picks the list or the item). The strip (<code>PaneStrip.svelte</code>, <code>.pp-strip</code>, <code>.pp-strip__title</code>) copies the ledger title row in its own classes; the tabs and the three columns sit in one wrapper (<code>.d-body</code>, no padding, as the mockup's pane body); the five kind tabs are the shared <code>Tabs</code> (<code>KindTabs.svelte</code>, the waits mark is its orange dot). The list column (<code>ListColumn.svelte</code>, <code>.d-list</code>) holds a search field, groups (<code>.d-grp</code>) of rows (<code>ListRow.svelte</code>, <code>.d-row</code>: kind mark, name, a stage shape; selected wears the orange tint and a 2px inset accent) and the key (<code>StageKey.svelte</code>, <code>.d-key</code>) of exactly the four stages. A row changing stage flashes cyan once (<code>.d-row--changed</code>; none under reduced motion). An opened step sits in <code>OpenedStep.svelte</code> under a <code>.d-back</code> button. A failed read draws <code>.d-empty--fail</code> with a retry, never blank.</dd>
     <dt>publish page detail column</dt>
+    <dd><code>DossierHead.svelte</code> (<code>.d-head__row</code>, <code>.d-name</code>, <code>.d-harness</code>, <code>.d-kind</code>, <code>.d-vers</code>: the approved, sent and on this computer versions, <code>.d-changed</code>: the folder-changed note with a muted note shape) heads the item; <code>NextStep.svelte</code> is the one panel that holds a primary button (<code>.d-slot</code>: orange edge, its panel is <code>.d-slot__in</code> (the primary strip, its label <code>.d-slot__lab</code>, then the body), <code>.d-steps</code> the four steps with review as now, <code>.d-slot__state</code> and <code>.d-slot__why</code> the lead sentence and its reason, <code>.pp-foot</code> the button row, <code>.d-reason</code> an inline line, yellow when a call was refused). It decides its step in <code>next-step-model.ts</code> and draws wait (with <code>WithdrawConfirm.svelte</code>: a danger button that turns into an inline yes and keep it), fix (<code>FixList.svelte</code>: <code>.d-fixlist</code> lines with a yellow tabbed folder, <code>.d-link</code> to the 12 checks, <code>.d-field</code> for the version, <code>.d-act</code>), appeal (<code>AppealForm.svelte</code>) and live; the send steps are the wizard. <code>ItemPanels.svelte</code> draws "what it is" (<code>.d-desc</code>, <code>.d-facts</code>), "what is in it" (<code>.d-files</code>, <code>.d-det</code> fold, <code>.d-note</code>) and "versions sent" (<code>.d-vl</code> rows, <code>.d-vl__row</code> a button when that version has checks to open). A call that was refused draws its sentence under its buttons and the panel stays usable.</dd>
     <dt>publish page send wizard</dt>
     <dd><code>SendWizard.svelte</code> is the body of the next step panel while an item is checked and sent: <code>Stepper.svelte</code> (<code>.d-steps</code>, four steps check, image, send, review; the one you are on is underlined in the accent, the ones before it carry a check), then the page of the step (<code>.d-wiz</code>, <code>.d-wiz__t</code>, <code>.d-wiz__p</code>), the summary (<code>.d-sum</code>), the version <code>Field</code>, the buttons (<code>.pp-foot</code>: back, the confirm, a quiet secondary) and the reason a send is held, written beside the button (<code>.d-reason</code>; a failure wears <code>data-tone="yellow"</code>). <code>ImageStep.svelte</code> is the card image fieldset (<code>.d-hero</code>: a base <code>RadioGroup</code> for make one for me or use my own, a hint, a 3:2 preview <code>.pp-hero-frame</code> 150 wide) and <code>RegisterBlock.svelte</code> (<code>.d-regi</code>) wraps the catalog's registration fields under a hairline, restyled to the mockup: label row, 22ch field, 8 px ticks. A running check or send shows <code>.d-spin</code> (a turning refresh icon, still under reduced motion). All of it is in <code>wizard.css</code>.</dd>
     <dt>publish page, the 12 checks</dt>
+    <dd><code>ChecksView.svelte</code> (the step <code>&lt;submission id&gt;:gates</code>) draws a title and summary, "at a glance" (<code>CheckRail.svelte</code>, <code>.d-rail</code>: 12 cells, each a <code>CheckMark</code> shape and the check's name), "check by check" (<code>CheckRow.svelte</code>, <code>.d-chk__row</code>: a check that did not pass starts open with a 2px yellow edge, lists five findings then "show n more", and its fixed fix sentence) and, for a compiled in plugin, the "clean room run" mention (<code>.d-mention</code>, never drawn as a failure). While the run is on every cell shows running and the summary carries no count; the rail fills one cell per 380 ms only when the page watched the row leave gating (none under reduced motion). <code>LocalCheckView.svelte</code> is the check run on this computer: <code>.d-facts</code>, <code>.d-refuse</code>, <code>.d-files</code>; a stored record draws the same grade and files rows from what it kept. When the report cannot be read, the rail and rows give way to one line and a try again button (<code>.pp-ck__unread</code>). Every code, path and name in a sentence is one unbreakable <code>.pp-tok</code> (<code>Ident.svelte</code>; a path wraps only after a slash). An empty card picture draws the kind's icon at 36 px (<code>.pp-glyph</code>). On a phone every standalone control is 44 high.</dd>
     <dt>publish page, rules and empty page</dt>
     <dd><code>RulesView.svelte</code> (<code>.d-rules</code>) is the middle column while the rules are open: "close the rules" at the top and the foot (<code>.d-back</code>, <code>.d-rules__end</code>), the path, what you can send (a kind mark, the kind word and its sentence, or the closed sentence), the limits (<code>#d-rules-limits</code>: the day line, then one sentence each from the limits answer), the card image and your handle, all in the shared <code>.d-panel</code>. A failed rules or limits read shows its sentence in its panel (<code>.d-rules__fail</code>). <code>EmptyPage.svelte</code> is the same column when nothing of the author's was found: where carnivore looks and the four steps. Prose is <code>.d-lead</code>, lists <code>.d-plain</code>.</dd>
     <dt>skills highlights</dt>
@@ -429,9 +544,108 @@ under the header with one scrolling box, a header row, a capped and centred colu
         (<code>CatalogPluginFacts.svelte</code>: <code>.cpf</code> block, <code>.cpf__lead</code> the sentence, <code>.cpf__cmd</code> the mono command, <code>.cpf__note</code> and
         <code>.cpf__note--warn</code> the muted and yellow notes) BEFORE the switch: flipping it on with that command visible is the consent, recorded by the server
         from the same preview. If the command could not be read, the switch opens the install sheet instead.</dd>
+    <dt>the plugin pane, tabbed (item 536, issue #1696)</dt>
+    <dd>The right-hand side of the Plugins page, for the open plugin (Joe (ccsliinc) picked variant A2; the list on the left is the frame's,
+        unchanged). <b>The title strip</b> is the frame's own pane bar with two opt-in props: <code>detailKicker</code> draws a small accent word
+        (<code>.mgr__detail-kicker</code>, "plugin") before the name, which drops to plain text (<code>.mgr__detail-name</code>,
+        <code>.mgr__detail-title--kicked</code>) so the word stays the strip's one accent, and <code>detailBar</code> puts
+        <code>PluginPaneStrip.svelte</code> after the name: the state word with its dot (<code>.plp-state</code>, the restart picker's
+        <code>__state</code>: green on, yellow held, waiting for a grant or doing nothing) and the plugin's <code>.oc-check</code> switch with the state
+        in words. A core plugin and a removed folder have no switch. <code>detailFill</code> (<code>.mgr__detail-body--fill</code>) stops the pane body
+        padding and scrolling, so <code>PluginPane.svelte</code> (<code>.plp</code>) lays out its own fixed head and ONE scroll
+        (<code>.plp__panel</code>). <b>The reason strip</b> (<code>.plp__why</code>, <code>.plp__why-text</code>, <code>.plp__why-more</code>, the
+        restart picker's <code>__why</code> in yellow) shows ONLY while the plugin is held (it could not start; the host's own reason) or waiting for a
+        grant (what is not granted, and a <code>.modal-btn-confirm</code> review button that opens the permissions tab). A refused switch is said in
+        <code>.plp__error</code>. Switching OFF a plugin that enabled plugins need opens <code>DisableConfirm.svelte</code> (<code>.plp__confirm</code>,
+        <code>.plp__confirm-text</code>) under the strip, naming them, with a quiet <code>.modal-btn-secondary</code> cancel and a coral
+        <code>.modal-btn-danger</code> confirm; the confirm sends <code>confirm_dependents</code> on <code>PUT /api/v1/cplugs/{id}</code>.
+        <b>The tabs</b> are <code>Tabs.svelte</code> as it is (a tablist, roving tabindex, arrows wrap, Home and End), filling the width in the pane
+        (<code>.plp-tabs</code>, its waiting dot yellow); the chosen tab is remembered per device and follows the owner from plugin to plugin. Badges
+        are real figures only: the settings field count, the ask count, the stored size.
+        <b>Overview</b> (<code>PluginOverview.svelte</code>): the description, the state in words in <code>.mgr-facts</code>, what it adds as hairline
+        chips (<code>.plp-chips</code>, <code>.plp-chip</code>, <code>.plp-chip__count</code>), then <code>DependencyPanel.svelte</code>: what it
+        needs and what needs it in hairline rows (<code>.plp-rows</code>, <code>.plp-row</code>, <code>.plp-row__main</code>,
+        <code>.plp-row__sub</code>, an empty side in <code>.plp-row--empty</code>), each with a tracked word (<code>.plp-tag</code>: ok green, a
+        plugin that is off yellow, a missing feature or version coral, which refuses turning it on), then version, author and id.
+        <b>Settings</b>: <code>PluginSettings.svelte</code>, the schema-driven <code>SettingsForm</code> bound to the plugin's
+        <code>settings_schema</code> and written through <code>PUT /api/v1/cplugs/{id}</code>, plus a plugin's extra block
+        (<code>plugin-extras.ts</code>; Task Manager's is <code>HuddleSwarmSettings.svelte</code>); a plugin with nothing to set says so in one dim
+        <code>.plp-note</code>. <b>Permissions</b>: <code>PermissionSheet.svelte</code> lists every ask with its tier and whether it is granted
+        (<code>.plp-label__count</code> "1 of 2 granted"); combined warnings sit above in <code>.plp-warn</code>. While the plugin waits for a grant each
+        missing ask wears a yellow left rule (<code>.plp-row--missing</code>) and each medium and high one its OWN native checkbox, never pre-ticked,
+        with NO tick-all control; the <code>.modal-btn-confirm</code> grant stays off until every one is ticked by hand, and nothing grants until the
+        owner presses it. <code>ActivityLog.svelte</code> ("used lately", <code>.plp-log</code>, <code>.plp-log__row</code>,
+        <code>.plp-log__time</code>, <code>.plp-log__row--error</code>) lists the newest capability calls from
+        <code>GET /api/v1/cplugs/{id}/activity</code>; it holds no query, text or secret. <b>Data</b> (<code>PluginData.svelte</code>): the stored
+        size (<code>.plp-size</code>, <code>.plp-size__n</code>) and folder, and purge: a <code>.modal-btn-danger</code> that first PRICES
+        (<code>POST /api/v1/cplugs/{id}/purge</code>, a dry run), then a coral frame (<code>.plp-price</code>) with cancel and the deleting confirm;
+        blocked with a plain reason while the plugin is on (<code>.plp-actions</code>, <code>.plp-actions__note</code>), a refusal in
+        <code>.plp-fail</code>, the result in <code>.plp-done</code>. Regions are split by hairlines (<code>.plp-region</code>) under
+        <code>.pl-label</code> heads, with <code>.plp-brief</code> and <code>.plp-dim</code> for quieter text, never cards. Rules:
+        <code>plugin-pane.css</code>, global under <code>.plp</code>.
+        <b>The gear:</b> a plugin card whose schema has fields carries a bare icon button (<code>.oc-ibtn.oc-ibtn--bare</code>, a gear, <code>data-plugin-settings-open</code>) that opens its pane on the settings tab. <b>The deep link</b> is <code>#plugins/&lt;plugin id&gt;/settings</code> (the older <code>#swarm-settings</code> lands on Task Manager). <b>Do not</b> put a plugin's settings in the app Settings: there is no Settings &gt; plugins section (removed 2026-10-13); the gear is the only door.
+        <b>The needs-approval mark:</b> a plugin card whose state is <code>needs_approval</code> carries a yellow hairline chip (a small base <code>Button</code>, <code>data-plugin-approval-mark</code>, copying <code>.mgr-mark</code> in <code>--oc-yellow</code>) and a yellow "not active yet" status beside its switch, so it never reads as fully on. Pressing the mark opens the pane on its permissions tab; it only opens, the owner still ticks and presses grant.
+        Colour is <code>--oc-*</code> only, so every theme renders them.</dd>
     <dt>a third-party plugin's custom view frame (A15, #2174)</dt>
+    <dd>The ONE place a third party's own script runs in the browser: <code>ViewFrame.svelte</code> draws <code>&lt;iframe sandbox="allow-scripts"&gt;</code> (never
+        <code>allow-same-origin</code>: an opaque origin with no cookies, storage, network or parent access) for a view the plugin shipped under
+        <code>views/&lt;name&gt;/</code>. <b>When to use:</b> only when the declarative nodes cannot draw it (pixel pets, a drawn gauge); anything a document can say stays a document.
+        <b>A panel</b> (<code>.cu-view</code>) sits inside the host's frame (<code>HostFrame.svelte</code>), so the literal name and the third-party mark stay the host's.
+        A panel's frame sits behind a transparent host gate (<code>.cu-gate</code>, <code>.cu-gate__shield</code>): the owner's click on it hands the frame keyboard focus, and until then focus the script grabs is handed back.
+        <b>An overlay</b> (<code>.cu-overlay</code>, mounted once by <code>OverlayRoot.svelte</code>) is one transparent full-viewport frame under every popover and modal; the host clips it
+        to the rectangles the view declares (<code>clip-path</code> clips painting and clicks), minus every terminal grid, so a click elsewhere reaches the page and the terminal keeps focus and keystrokes.
+        The frame draws no chrome of its own; the only channel is <code>bridge.ts</code> (a per-mount nonce, four verbs).</dd>
     <dt>a third-party plugin's declarative view (A9b, #2166)</dt>
+    <dd>What a third-party plugin draws in the app: JSON the host re-validates and draws itself (<code>Renderer.svelte</code>), never markup or script.
+        <b>When to use:</b> only for a plugin installed from the catalog or sideloaded; a compiled-in plugin draws its own components.
+        <b>The host's frame</b> (<code>HostFrame.svelte</code>, <code>.cu-frame</code>, <code>.cu-frame__bar</code>) is a title strip with the install's
+        LITERAL name (<code>.cu-frame__name</code>) and a tracked uppercase mark (<code>.cu-frame__mark</code>, the accent: "third-party", or "unverified"
+        in yellow for a sideload), drawn BEFORE and OUTSIDE the plugin's box (<code>.cu-box</code>, clipped and isolated), so no document can hide,
+        cover or restyle it; the host's own quiet lines (<code>.cu-frame__note</code>: "could not draw this plugin's view", "this plugin is not running")
+        sit in the same zone. <b>The nodes</b>, one component each, are <code>Node.svelte</code> (the dispatcher), <code>Section.svelte</code>
+        (<code>.cu-section</code>, <code>.cu-section__title</code>, the shared <code>.pl-label</code>), <code>Layout.svelte</code> (row and column,
+        <code>.cu-layout</code>), <code>Text.svelte</code> (<code>.cu-text</code>), <code>Badge.svelte</code> (<code>.cu-badge</code>, the five hues of the
+        status lights), <code>Stat.svelte</code> (<code>.cu-stat</code>, <code>.cu-stat__label</code>, <code>.cu-stat__value</code>,
+        <code>.cu-stat__unit</code>, <code>.cu-stat__delta</code>), <code>List.svelte</code> (<code>.cu-list</code>, <code>.cu-list__item</code>,
+        <code>.cu-list__empty</code>), <code>Table.svelte</code> (<code>.cu-table-wrap</code>, <code>.cu-table</code>, <code>.cu-table__empty</code>),
+        <code>Meter.svelte</code> (<code>.cu-meter</code>, <code>.cu-meter__label</code>, <code>.cu-meter__track</code>, <code>.cu-meter__fill</code>) and
+        <code>Button.svelte</code> (the shared <code>.modal-btn</code> family; <code>.cu-action</code>, <code>.cu-action__ask</code>,
+        <code>.cu-action__line</code>); <code>.cu-root</code> pads the document. <b>Surfaces:</b> <code>CplugSurface.svelte</code> reads
+        <code>GET /api/v1/cplugs/{id}/ui/{surface}</code> and re-reads on the <code>cplug_ui</code> push, never polling; the settings tab of an active
+        third-party plugin is its <code>settings</code> document, and <code>StatusChip.svelte</code> draws the first badge of its <code>glance</code> document
+        on its row and detail strip, behind the host's own third-party mark (<code>.cu-chip</code> wraps the <code>.cu-frame__mark</code> and the badge); the bar tooltip leads with the same mark. Colour is <code>--oc-*</code> only; rules: <code>cplug-ui.css</code>.</dd>
+    <dt>a third-party plugin's page (issue #2562)</dt>
+    <dd>A plugin that asks for a <code>page</code> gets one rail key, a slide-out and a main view, all host-drawn around the plugin's own frames.
+        <b>When to use:</b> a sideloaded or catalog plugin with one view it wants as a menu plus a full-size page; a compiled-in plugin builds a tab.
+        <code>PageMenu.svelte</code> is the slide-out body (the <code>menu</code> role frame, inside the host's frame, opened armed), <code>PageMain.svelte</code>
+        the main view (the <code>page</code> role frame, behind the click shield), both on <code>.cu-page</code> (<code>.cu-page--main</code> pads the main view,
+        <code>.cu-page__step</code> holds one frame, <code>.cu-page__off</code> is the quiet "plugin is off" line). On a phone the slide-out is the whole screen,
+        so <code>PageMenu.svelte</code> mounts both frames and <code>PageSwitch.svelte</code> draws the host's <code>menu | view</code> choice (the base
+        segmented control) in the slide-out's actions row. The rail key's tooltip and the slide-out title lead with the host's third-party (or unverified) mark. A menu
+        drawn inside a frame is the author's business; the guide tells authors not to draw one.</dd>
     <dt>widgets page, the places podium (issues #1551, #2055)</dt>
+    <dd>The widgets page, rebuilt as a PLACES PODIUM (Alex (example-owner), 2026-10-21, r4 pick m3). <b>When to use:</b> a catalog of things you browse by
+        picture and put into several named places. A rail (<code>.wp-rail</code>, <code>.wp-rail__group</code>, base row Buttons) filters by
+        group, by what fits a place and by state; a section label (<code>.wp-sectionlabel</code>) leads the STICKY podium (<code>.wp-stick</code>) of five
+        Warez census panels (<code>.wp-podium</code>, <code>.wp-place</code>, the shared <code>.oc-rank</code>), one per place: right bar, bottom bar,
+        drawer cards, glance row, dashboards. A place has a heading (a base row Button, <code>data-place-pick</code>, and <code>.wp-place__name</code>) with its letter
+        (<code>.wp-pmark</code>, one hue per place: <code>--pl-right</code> to <code>--pl-board</code>, page tokens on <code>.wp-screen</code>) and a plus
+        (a base IconButton, <code>data-place-add</code>), then rows (<code>.wp-row</code>, a base close IconButton, <code>.wp-place__body</code>, <code>.wp-place__more</code>)
+        you can drag to reorder; a drag in flight tells every place whether it will take the card (<code>data-accept</code>: drop to add, already here, does not fit).
+        Under it the cards are grouped (<code>.wp-group</code>, <code>.wp-grid</code>, <code>.wp-card</code>), each the shared Warez card with a live
+        preview (<code>WidgetTilePreview.svelte</code>, <code>PreviewFrame.svelte</code>, <code>.wp-pframe</code>, 12 slots, <code>data-wp-preview-cap</code>),
+        a split add button (<code>.wp-add</code> framing a base Button and IconButton) and five place marks (<code>.wp-marks</code>,
+        <code>.wp-mk</code>). Each card wears its widget GROUP colour (<code>--wg-overview</code> to <code>--wg-live</code>, page tokens, set through <code>data-group</code>) and shows the
+        widget's own icon in a tile (<code>WidgetTile.svelte</code>, <code>.wp-tile</code>, <code>.wp-tile--board</code>) with the group word under the name
+        (<code>.wp-card__titles</code>); the rail rows and the board place lead with a line glyph (<code>GroupGlyph.svelte</code>). The page is one title strip
+        (search, sort, fits, reset bars and a help Button) over a body of three columns (<code>.wp-body</code>, <code>.wp-body--reading</code>, the pane's
+        <code>.wp-detail</code>), closed by a base close IconButton or Escape (one document-level handler, never the page). The title strip's find shows one clear x (<code>.wp-find</code>, a base close IconButton). At phone width a sticky strip of the five places (<code>PlaceDock.svelte</code>, <code>.wp-dockwrap</code>, <code>.wp-dock</code>, base quiet Buttons) shows under the title strip once the podium has scrolled away. The pane's yes/no settings are switch rows (the settings form, <code>.sf</code>, <code>.sf__row</code>, <code>.sf__label</code>, <code>.sf__control</code>, <code>.sf__title</code>, laid out under <code>.wp-screen</code> too). Every menu is <code>PlaceMenu.svelte</code> (<code>.wp-menu</code>, <code>.wp-menu__list</code>,
+        <code>.wp-menu__wicon</code>): the session row menu's look plus a find box, a heading line and an empty line, opaque, fixed on the viewport above the cards. The reading pane (the frame's detail pane, filled) is
+        <code>WidgetPane.svelte</code>: a live hero (<code>WidgetHero.svelte</code>, sample or my data), the views seg, the SIZE seg
+        (<code>.pn-sizes</code>), the title, brief, PLACED IN, OPTIONS and SWITCH sections (<code>.pn-detail</code>, <code>.pn-sec</code>, <code>.pn-place</code>).
+        <b>The size seg</b> (Alex, 2026-10-21, m3.1) is the base Segmented: one picked size, an undeclared size is disabled and says so in its tooltip.
+        <b>The toggle</b> (m3.2) is the base Switch, labelled on or off. Every placement is one existing route and answers with a toast and an undo from the app's one toast surface
+        (<code>undo-toast.ts</code>). Fits is advice: nothing is refused by the server. Sizes are shown by name, never as numbers.</dd>
     <dt>how</dt>
     <dd>Each page is a <code>ManagerFrame</code> over its adapter (<code>web/src/lib/plugins-page/cplugs-adapter.ts</code>,
         <code>web/src/lib/widgets-page/widgets-adapter.ts</code>), mounted as an overlay by the shared
@@ -443,6 +657,25 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dd>A detail pane lists an item's facts as <code>dl.mgr-facts</code> (<code>manager-frame.css</code>): small tracked
         uppercase terms, mono values, copied from this guide's own <code>.sg-facts</code>. Use it for any page's details
         rather than a table or a card inside the pane.</dd>
+    <dt>the Plugins page developer zone</dt>
+    <dd><code>DeveloperZone.svelte</code>: the Plugins page keeps one tight browse bar (find, state, project, sort, view) and folds the
+        developer controls into one quiet line under it (<code>.dev-zone__line</code>, hairline below, no box): the small uppercase accent
+        label (<code>.dev-zone__label</code>), while sideload is on the one small red "sideload on until ..." (<code>.dev-zone__warn</code>,
+        cut with an ellipsis so the line never wraps), "third-party on/off" (<code>.dev-zone__state</code>), and a quiet outline
+        <code>manage</code> button with a chevron (<code>.dev-zone__caret</code>, <code>aria-expanded</code>) at the right. Manage unfolds
+        the controls row beneath (<code>.dev-zone__row</code>, raised ground): third-party switch, developer sideload switch, duration, the
+        sideloaded count, and the two loaders at the right; the sandbox status shows only when it is not ok. The fold is a per-browser view
+        state, closed by default. Drawn into the manager frame's <code>zone</code> slot, outside the scrolling list.
+        <b>When to use:</b> controls for developers that browsing people do not need every day.</dd>
+    <dt>developer sideload's loud warning (#2541)</dt>
+    <dd>Turning the sideload switch on (<code>SideloadSwitch.svelte</code>) opens <code>SideloadConfirm.svelte</code> every time: the shared
+        <code>ModalShell</code> with the text prompt modal's head, the risk sentence as a danger strip, the base <code>Button</code> quiet
+        secondary cancel and its danger variant to turn on; only that button writes the switch, and turning off asks nothing. The danger strip
+        is <code>.plp-warn</code> plus <code>.plp-danger</code> (<code>plugin-pane.css</code>: the coral left rule and coral words). While on it
+        sits in the developer zone under the switch row (<code>.sideload-strip</code>, one small red line, "unreviewed code can run until" and when it turns off), in the load form
+        above the load button naming the folder or repository (<code>.sideload-form__warning</code>), and on a row after a re-sync that
+        brought new code (<code>.sideload-row__warning</code>). <b>When to use:</b> only where unreviewed code is about to run; never as a tooltip
+        or on hover. The words are the catalog's <code>plugins.page.sideload.warning.*</code>; the MCP tool reads the same risk sentence.</dd>
     <dt>catalog keys</dt>
     <dd><code>plugins.page.*</code>, the <code>cplug.&lt;id&gt;.name</code> and <code>cplug.&lt;id&gt;.description</code> keys (a plugin's row), <code>widgets.page.*</code>, <code>widgets.setting.*</code>.</dd>
 </dl>
@@ -450,7 +683,42 @@ under the header with one scrolling box, a header row, a capped and centred colu
 <h3 class="sg-h3" id="skills-manager-page">the skills manager page</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>Every skill on disk for one context (issue #1079): a switch per skill on the card, and a detail pane for the four
+        Claude states (on, compact, on demand, off), Codex on and off only, the locations with remove, where each came
+        from, and the description. The context picker (global, a profile group, a project) says where a change lands.
+        There is no standalone skills page (deleted 2026-10-20, #2025): this screen is embedded in warez as INSTALLED &gt; skills
+        (<code>InstalledKindScreen</code>) under three page tabs, INSTALLED (this manager), STATS (the census) and PACK (only with two or more computers; the
+        same table is the Pack page's skills tab). <code>SkillsScreen</code> takes a <code>tab</code> prop that
+        replaces its own chip group. <code>#skills</code>, <code>#skills-manager</code> and
+        <code>openSkillsManagerScreen</code> all land on it, on INSTALLED; the tab is in the address, <code>#warez/installed/skills/stats</code>.</dd>
     <dt>how</dt>
+    <dd><code>SkillsScreen.svelte</code> on <code>ManagerFrame</code> over <code>skills-adapter.ts</code>
+        (<code>web/src/lib/skills-page/</code>); every action is one route: <code>GET /api/v1/skills</code>,
+        <code>PUT /api/v1/skills/overrides</code>, <code>DELETE /api/v1/skills/locations/{id}</code>. The detail pane
+        (<code>SkillDetail.svelte</code>) reuses <code>.oc-chip</code> for the pressed state row and
+        <code>.mgr-actions__row</code> for the in-place remove question; its own rules are <code>.sk-detail</code>,
+        <code>.sk-section</code>, <code>.sk-harness</code>, <code>.sk-states</code>, <code>.sk-note</code>,
+        <code>.sk-text</code>, <code>.sk-loc</code>, <code>.sk-hint</code> and <code>.sk-context</code> in
+        <code>skills-page.css</code>. A plugin's skill draws no switch and says why. The list re-reads on
+        <code>skills.changed</code>. The tab strip (installed, stats) is a row of <code>.oc-chip</code> inside
+        The full state of a skill (issue #1099): the detail pane is five sections, each a <code>.sk-section</code> with a
+        <code>.pl-label</code> heading (where it lives and its state per harness, usage and cost, health, provenance and trust,
+        contents). Health is <code>.sk-health</code> (<code>.sk-health__row</code> per install) holding the catalog's own
+        drift, autopsy, trust, cost and usage blocks, reused and not restated, plus Tripwire's
+        <code>.sk-tripwire</code> line (<code>.sk-tripwire__heading</code>, <code>.sk-tripwire__fact</code>, and
+        <code>.sk-tripwire__fact--bad</code> when flagged); provenance is <code>.sk-prov</code>, a column of the ledger facts (<code>.mgr-facts</code>) over the trust and cost blocks; the pane root wears <code>cat</code> so those blocks read their
+        <code>--cat-*</code> tokens. A measured problem also rides the list card as a mark (drifted, files missing, flagged,
+        unused 30 d); nothing measured, nothing marked. Restore and keep-as-fork call the catalog's own routes.
+        <code>.sk-tabs</code>; a tab other than skills replaces the list through the frame's <code>body</code> snippet.
+        <code>CensusTab.svelte</code> is one ranked <code>RankPanel</code> (skills by 30 day fires, rank, harness tile, scope and
+        harness tags, mono "312 fires", two columns down the left first, the "where" select in the panel head); an unmeasured
+        count reads "not measured", never 0 and ranks last. First-party skills (Task Manager item 117): <code>RequiredSkills.svelte</code> draws one
+        <code>.sk-hint</code> line per carnivore skill that needs a word, led by <code>.sk-required__badge</code> (the one accent-colored
+        word, <code>--oc-orange</code>): "removed" with an <code>.oc-btn</code> offer, "blocked" (a folder of that name that is not
+        carnivore's is in the way, left alone) or "local edits" (the app leaves your edited copy as it is); a clean installed one draws
+        nothing and the list card wears a "carnivore" mark. The hints sit in the <code>.sk-required</code> strip, which on the Skills page
+        may shrink to the row (<code>min-width: 0</code>), beside the toolbar's wrapping <code>.oc-toolbar__extras</code> row, so the install
+        button is never clipped.</dd>
     <dt>catalog keys</dt>
     <dd><code>skills.page.*</code>, <code>skills.detail.*</code>, <code>skills.loc.*</code>, <code>skills.state.*</code>, <code>skills.tab.*</code>, <code>skills.census.*</code>, <code>skills.badge.*</code>, <code>skills.required.*</code>.</dd>
 </dl>
@@ -466,6 +734,12 @@ under the header with one scrolling box, a header row, a capped and centred colu
         this form in its manager page detail pane (issue #888). Never hand-build a settings panel for one item: declare
         the field in the schema and the form draws it.</dd>
     <dt>how</dt>
+    <dd><code>ItemSettingsPanel</code> reads <code>GET /api/v1/item-settings/{kind}/{id}</code> and draws
+        <code>SettingsForm</code> over the schema the SERVER answered; every change is one
+        <code>PATCH</code> naming one key, and the form then shows what the server answered, never what was typed. A
+        refusal stays beside its field with its reason; another device's newer write is adopted and said so. A field
+        nobody chose reads "default"; a chosen one offers "use default", which clears the choice.
+        Controller: <code>web/src/lib/item-settings/item-settings-controller.svelte.ts</code>.</dd>
     <dt>the four kinds</dt>
     <dd>boolean is the frame's switch (<code>.oc-check</code> with <code>role="switch"</code>, state in words); number is a
         <code>.oc-field</code> carrying min and max, committed on Enter or leaving the field; enum is a select whose
@@ -489,7 +763,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dd>Nothing new: <code>.oc-field</code>, <code>.oc-check</code> with <code>role="switch"</code>, <code>.oc-label</code> and <code>.oc-btn</code>
         from the frame. <code>web/src/lib/item-settings/settings-form.css</code> only lays rows out
         (<code>.sf</code>, <code>.sf__row</code>, <code>.sf__label</code>, <code>.sf__control</code>,
-        <code>.sf__input</code>, <code>.sf__input--number</code>, <code>.sf__default</code>, <code>.sf__reset</code>,
+        <code>.sf__input</code>, <code>.sf__input--number</code>, <code>.sf__default</code>, the use default <code>Button</code> (<code>data-sf-reset</code>),
         <code>.sf__hint</code>, <code>.sf__notice</code>, <code>.sf__empty</code>, <code>.sf__title</code>, and the matrix
         classes above under <code>.sf-matrix</code>), hairlines
         between rows, <code>.sf__error</code> as the card's copy of the base <code>State</code> error, and <code>.sf__warn</code>
@@ -504,6 +778,11 @@ under the header with one scrolling box, a header row, a capped and centred colu
 <h3 class="sg-h3" id="docs-page">documentation page</h3>
 <dl class="sg-facts">
     <dt>documentation</dt>
+    <dd>The title strip's "how wrappers work" link is <code>#docs/wrappers</code>, the wrappers section of the documentation
+        (<code>docs/user-guide/07-wrappers.md</code>): what a wrapper is, how a launch picks one, the <code>"$@"</code>
+        convention and four sample scripts as code blocks. The drawer's "?" opens the documentation page; its
+        "what the marks mean" section (<code>#docs/marks</code>, <code>docs/user-guide/03-marks.md</code>) has an
+        "open the legend" link (a base <code>Button</code>, quiet, small) to the status light and row icon legend panel.</dd>
     <dt>documentation guide</dt>
     <dd>The documentation page body is <code>web/src/lib/info-pages/DocsGuide.svelte</code>: a contents list
         (<code>.docs-guide__toc</code>, <code>.docs-guide__toc-list</code>) of <code>#docs/&lt;section&gt;</code> links, then
@@ -546,20 +825,33 @@ under the header with one scrolling box, a header row, a capped and centred colu
         and environment, and the actions: check, duplicate, make default, delete, export and a guarded import. On screen
         the words are "launch profile", never a bare "profile" (that word means an account folder).</dd>
     <dt>how</dt>
-    <dd><code>LaunchProfilesScreen.svelte</code> on the shared <code>Page</code> frame with the ledger's chrome
-        (<code>class="pledger"</code>, <code>.pl-panel</code>, <code>.pl-titlebar</code>, <code>.pl-label</code>), calling
-        <code>/api/v1/launch-profiles</code> through <code>launch-profiles-page/api.ts</code>. List rows are
-        <code>.lp-item</code> (hairlines between rows, <code>.lp-item--on</code> carries the accent edge) with
-        <code>.lp-split--solo</code> widening the list until a profile is selected and
-        <code>.lp-detail--none</code> hiding the empty editor,
-        <code>.lp-badge</code> for the permissions badge (<code>.lp-badge--warn</code> when it skips all checks) and
-        <code>.lp-badge--default</code>. <code>LaunchProfileEditor.svelte</code> (<code>.lp-edit</code>, copied from the ledger row
-        editor) has basic fields, then two folded sections, advanced (<code>.lp-fold</code>: flags, env rows, secret rows,
-        shell startup, before launch) and expert (a custom command; <code>.lp-warn</code> shows the missing <code>"$@"</code>
-        lint and its acknowledge box). A secret row is a name and a pick of a stored keychain item, never a value field.
-        The preview is <code>.lp-code</code> blocks, secrets as names and key hints only. A refused delete shows
-        <code>.lp-refusal</code> with a count per kind and a move-to picker. <code>ImportProfileModal.svelte</code>
-        (<code>.lp-import*</code>) is the two-step digest confirm. Delete wears <code>.lp-danger</code>, never the confirm colour.</dd>
+    <dd><code>LaunchProfilesScreen.svelte</code> on the shared <code>Page</code> frame, built from the design base, calling
+        <code>/api/v1/launch-profiles</code> through <code>launch-profiles-page/api.ts</code>. Every region is a base
+        <code>Card</code>: the template picker, the list, the editor (its tools, check, duplicate, make default, export and a
+        danger delete, in the card's head actions beside the title), the preview and the usage. The list is a base
+        <code>List</code> of <code>ListRow</code>s, each holding one whole-row <code>Button</code> (<code>[data-lp-row]</code>,
+        the selected row carries the accent edge) with <code>.lp-split--solo</code> widening the list until a profile is
+        selected and <code>.lp-detail--none</code> hiding the empty editor; the permissions badge and the default marker are
+        base <code>Tag</code>s (warn when it skips all checks). Every notice is a base <code>State</code> (the read failure,
+        a save or delete notice, the empty list). <code>LaunchProfileEditor.svelte</code> (<code>.lp-edit</code>) is base
+        <code>Field</code>s, <code>Select</code>s (a value field wears mono through <code>data-mono</code>), a horizontal
+        <code>RadioGroup</code> for permissions and <code>Checkbox</code>es, then two base <code>Fold</code>s in
+        <code>.lp-fold</code>, advanced (flags, env rows, secret rows, shell startup, before launch; a row's remove is the
+        danger <code>IconButton</code>, its column head ghost <code>.lp-ghost</code>) and expert (a custom command; a warn
+        <code>State</code> shows the missing <code>"$@"</code> lint and its acknowledge box). A secret row is a name and a
+        pick of a stored keychain item, never a value field. The check result is <code>.lp-result</code>, its lines
+        <code>.lp-line</code>. The preview is <code>.lp-code</code> blocks, secrets as names and key hints only. A refused
+        delete is an error <code>State</code> with a count per kind and a move-to picker (<code>.lp-refusal</code>).
+        #2669 adds three things. An agent that is not installed on this computer has its profile hidden from the list and the
+        agent pickers (the API's per-profile <code>installed</code> flag; nothing is removed): a base <code>Checkbox</code>
+        "show hidden" with a dim <code>.lp-hint-line</code> in <code>.lp-hidden</code> brings them back, each marked by a warn
+        <code>Tag</code>. The new-profile screen opens with <code>LaunchProfileExamples.svelte</code> (<code>.lp-examples</code>),
+        a base <code>Fold</code> shut by default: hairline rows (<code>.lp-examples__row</code>) of a bold name, one dim line of words,
+        the flags in mono (<code>.lp-examples__sets</code>) and a quiet small base <code>Button</code> that fills the form; the same
+        component is the first-run launch profile step (<code>FirstRunProfiles.svelte</code>, there open, its button adds the profile).
+        The agent type, model and permissions fields carry a one-line <code>help</code> / <code>.lp-hint</code> under them.
+        <code>ImportProfileModal.svelte</code> (<code>.lp-import*</code>) is the two-step digest confirm on base
+        <code>Field</code>, <code>Checkbox</code>, <code>State</code> and <code>Button</code>.</dd>
     <dt>theme</dt>
     <dd>Every colour is an <code>--oc-*</code> token through the ledger's <code>--pl-*</code> aliases; focus is the shared rule.</dd>
 </dl>
@@ -571,7 +863,34 @@ under the header with one scrolling box, a header row, a capped and centred colu
 </div>
 <dl class="sg-facts">
     <dt>when</dt>
+    <dd>The ONE control a launch is chosen with (issues #1257, #1641): a new session, the launchpad, a project's "+", an open
+        folder, a clone, the reopen offer's per-row choice and a blueprint member. Every path asks, or names the default it
+        will use (a line under the control: "will launch with: label &middot; account &middot; model", and why it started there). A
+        profile whose model is "ask" shows a model box. Never a bare "profile" on screen. The restart picker's option list
+        is still its own legacy markup until its slice.</dd>
     <dt>how</dt>
+    <dd><code>LaunchChoice.svelte</code> is the control: <code>LaunchProfileDropdown.svelte</code> (a
+        <a href="#forms-choice">choice dropdown</a>, <code>.lpd*</code>) and, under it, <code>LaunchAccountChoice.svelte</code>
+        (<code>.lac*</code>). The closed field and every option row are the same row: a 24px mark (<code>LAUNCH_MARK_PX</code>,
+        20px compact for a blueprint member), the label, <code>.lpd-tag--default</code>, the predicted outcome
+        <code>.lpd-tag--kind</code>, the account and model, the permissions badge (<code>.lpd-tag--warn</code> when it skips all
+        checks). The account line appears only for a claude profile that follows the active account, on this computer, when
+        <code>GET /api/v1/launch/accounts</code> lists something: collapsed it reads "account: name" with a dim
+        active or saved tag and a "choose account" link; expanded it is an account dropdown and the box "always launch this
+        agent under this account" (a base quiet <code>Button</code>, <code>.lac-panel</code>). Collapsed sends no account, so the server uses the
+        agent's saved account, else the active one; expanded sends <code>account_id</code>, and the box adds
+        <code>account_pinned</code>. On a phone (390px) the field is full width, the list is a full-width sheet and the link is a
+        44px row. <code>LaunchPickerModal.svelte</code> (<code>.lpm*</code>) is the modal over <code>ModalShell</code> with
+        <code>.modal-btn-secondary</code> and <code>.modal-btn-confirm</code>; legacy code calls
+        <code>CloudeWeb.openLaunchPicker(opts)</code> (<code>accounts: false</code> hides the account line). Rows come from
+        <code>GET /api/v1/launch-profiles</code> through <code>picker-model.ts</code>. A project's default is set in the
+        project edit modal (<code>PATCH /projects/{name}</code>, <code>default_launch_profile</code>) and preselected here.
+        The restart and wake
+        dialog keeps its panel, arm box and footer and mounts this same control (<code>CloudeWeb.mountLaunchChoice</code>,
+        <code>LaunchChoiceHost.svelte</code>): the dropdown starts on the "launched with" row, a refused row is listed, dimmed and
+        cannot be chosen, the predicted outcome is <code>.lpd-tag--kind</code> (coloured for replay, shell and a missing
+        transcript) and the server's sentence is its visually hidden description. A saved account opens the disclosure expanded,
+        ticked.</dd>
     <dt>theme</dt>
     <dd>Every colour is an <code>--oc-*</code> token; focus is the shared <code>oc-focus-host</code> rule.</dd>
 </dl>
@@ -579,7 +898,22 @@ under the header with one scrolling box, a header row, a capped and centred colu
 <h3 class="sg-h3" id="projects-shared">project marks and the project menu</h3>
 <dl class="sg-facts">
     <dt>when</dt>
+    <dd>The Projects page was removed (Alex (example-owner), 2026-10-21, #2045): the Sessions page, labelled "projects" in the menu, is the one
+        page for projects and sessions (its own section of this guide). What it and the plugin panels still share lives in
+        <code>web/src/lib/projects-shared/</code>.</dd>
     <dt>how</dt>
+    <dd>A PAGE ROW DRAWS NO MENU BUTTON (Joe (ccsliinc), 2026-10-22, <code>docs/DECISIONS.md</code>): not a kebab on a session row, a project or company
+        heading, a search hit or an automation row. The row's menu is its right click and Shift+F10 (or the menu key) on the selected or
+        highlighted row, opened in the one item menu by <code>web/src/lib/item-menu/page-row.ts</code> (<code>pageRowMenu</code> and
+        <code>forwardMenuKey</code>). The page declares the row's actions as engine nodes, the way a widget declares its actions to the one
+        widget menu: <code>projects-shared/menu-nodes.ts</code> for a heading, <code>deepsearch/hit-menu.ts</code> for a hit,
+        <code>automations/row-menu-nodes.ts</code> for an automation; a session row opens the drawer's own session menu
+        (<code>projects-shared/session-menu-context.ts</code>). The one menu button a page keeps is the side panel head's
+        (<code>SessionKebab.svelte</code>, the same trigger <code>triggerSpec</code> (<code>web/src/lib/item-menu/row-context.ts</code>) builds, <code>.ph-kebab-host</code>), the menu of the SELECTED session. A group head row is <code>GroupHeader.svelte</code> (<code>.ph-ghead</code>: a
+        chevron that folds the group, the name in tracked capitals, a dim tally). A state's mark is <code>StateMark.svelte</code>
+        (<code>.ph-page</code> and <code>.ph-table</code>: a plugin panel tool window body's container and row column; <code>.ph-led</code>: a dot running, a ring sleeping, a square closed, a dashed square removed; <code>.ph-word</code> the word beside it).
+        The small shared tags and tones (<code>.ph-tag</code>, <code>.ph-empty</code>, <code>.ph-sub</code>, <code>.ph-gone</code>,
+        <code>.ph-hint</code>) are in <code>projects-shared.css</code>.</dd>
     <dt>reading pages</dt>
     <dd>The menu's documentation and changelog are <code>InfoScreen.svelte</code> on
         the manager frame with <code>searchable={false}</code> (no search bar, a reading body), each in its own container
@@ -598,17 +932,12 @@ under the header with one scrolling box, a header row, a capped and centred colu
     paired computer are the same box); computers seen but not paired sit last under their own heading.</p>
 <dl class="sg-anatomy">
     <dt>on the pack page</dt>
-    <dt>link state</dt>
-    <dd><code>PeerState.svelte</code> draws the state in words, <code>.host-state</code> with one modifier per state
-        (<code>.host-state--connected</code>, <code>--connecting</code>, <code>--disconnected</code>, <code>--incompatible</code>,
-        <code>--unpaired</code>, <code>--identity_changed</code>): a hairline chip in small tracked capitals, green up, yellow down or
-        coming, coral when it needs you, muted when gone. The label is the state; the colour only repeats it.</dd>
-    <dt>detail pane</dt>
-    <dt>sessions</dt>
-    <dd><code>PeerSessions.svelte</code>, at the top of the detail pane: one hairline row per session on that computer
-        (<code>.host-sessions__row</code>: the shared status light, name, project), a click opens it as the drawer does. A down link
-        shows <code>.host-sessions__down</code>. A remote session's drawer row carries the machine's chip at every density.</dd>
+    <dd>The page lives in the Pack menu page (<code>PackScreen.svelte</code>, a drawer menu row under dashboards; it was a Settings section until 2026-10-13). <code>#pack</code>, the old <code>#hosts</code> and <code>#settings/hosts</code> fragments and the menu key h open the page. <code>PackScreen.svelte</code> wears the page frame and the settings page's tab strip (<code>.pk-tabs</code>) over a scrolling body (<code>.pk-body</code>, <code>.pk-screen</code>).</dd>
     <dt>dialogs</dt>
+    <dd><code>PairModal.svelte</code> (add by name, click to pair; becomes the typed-code screen only when the server answers
+        <code>typed_code_required</code>) and <code>ShowCodeModal.svelte</code> (the code this computer shows, in <code>.fed-code</code>) and <code>PairSas.svelte</code> (P10: the comparison code both computers show before a pairing takes effect, in <code>.fed-sas</code>, with a confirm <code>Button</code> "they match" and a danger <code>Button</code> "they differ")
+        wear AddHostModal's base <code>Field</code>s and footer <code>Button</code>s. <code>FedConfirmModal.svelte</code> is the one confirm for unpair, revoke and key
+        rotation: a secondary <code>Button</code> to back out, a danger <code>Button</code> to go on.</dd>
     <dt>catalog keys</dt>
     <dd><code>hosts.peer.*</code>, <code>hosts.found.*</code>, <code>hosts.fed.*</code>, <code>hosts.pair.*</code>,
         <code>hosts.code.*</code>, <code>hosts.sas.*</code>, <code>hosts.unpair.*</code>, <code>hosts.revoke.*</code>, <code>hosts.rotate.*</code>.</dd>
@@ -617,6 +946,10 @@ under the header with one scrolling box, a header row, a capped and centred colu
 <h3 class="sg-h3" id="elite-access">elite access (the BBS view of warez)</h3>
 <dl class="sg-facts">
     <dt>when</dt>
+    <dd>The one place that is NOT the Military Terminal look (Alex (example-owner), 2026-10-18, #1931, the exception entry in
+        <code>docs/DECISIONS.md</code>). The [ELITE ACCESS] act, the first button in the Warez title strip (<code>WarezActs.svelte</code>),
+        opens <code>#elite-screen</code>; <code>#elite</code> opens it with the dial-up and <code>#elite/board</code> straight to the board.
+        Everything outside that container, including every sheet the view opens, stays Military Terminal.</dd>
     <dt>how</dt>
     <dd><code>EliteScreen.svelte</code> is one <code>.oc-page</code> root wearing <code>.elite</code>. It paints its own dark ground,
         so it reads the same under a light theme. The IBM VGA 8x16 face and IBM Plex Mono load from <code>/static/fonts/</code>.

@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -24,6 +25,7 @@ function makeCollapseEnv() {
 }
 
 const tests = [];
+/** Description: register one named case. Inputs: name, fn. Output: None. */
 function test(name, fn) { tests.push([name, fn]); }
 
 
@@ -100,6 +102,7 @@ test('the toggle click does not also fire the card\'s navigate handler', () => {
     'the toggle must stop propagation before it reaches the card\'s own click handler');
 });
 
+// ----------------------------------------------------------------- runner
 
 let failed = 0;
 for (const [name, fn] of tests) {

@@ -7,20 +7,20 @@ const MANIFEST = JSON.stringify({
     schema: 'carnivore.catalog.loadout/1',
     name: 'python',
     description: 'the python working set',
-    members: [{ id: 'acme/sme', version: '1.0.0', digest: 'a'.repeat(64) }],
+    members: [{ id: 'alex/sme', version: '1.0.0', digest: 'a'.repeat(64) }],
 });
 
 const MEMBERS: LoadoutMemberPreview[] = [
-    { item_id: 'acme/sme', version: '1.0.0', kind: 'skill', title: 'sme', scripts: 0 },
+    { item_id: 'alex/sme', version: '1.0.0', kind: 'skill', title: 'sme', scripts: 0 },
     {
-        item_id: 'acme/toolbelt',
+        item_id: 'alex/toolbelt',
         version: '2.0.0',
         kind: 'plugin',
         title: 'toolbelt',
         scripts: 2,
     },
     {
-        item_id: 'acme/neon',
+        item_id: 'alex/neon',
         version: '1.1.0',
         kind: 'theme',
         title: 'neon',
@@ -55,9 +55,9 @@ describe('membership comes from the server, never from the list', () => {
     test('every resolved member is carried, in order', () => {
         const facts = loadoutFacts(MANIFEST, MEMBERS);
         expect(facts.members.map((m) => m.itemId)).toEqual([
-            'acme/sme',
-            'acme/toolbelt',
-            'acme/neon',
+            'alex/sme',
+            'alex/toolbelt',
+            'alex/neon',
         ]);
         expect(facts.members.map((m) => m.version)).toEqual(['1.0.0', '2.0.0', '1.1.0']);
     });
@@ -69,8 +69,8 @@ describe('membership comes from the server, never from the list', () => {
     });
 
     test('a member with no title falls back to its id, never to nothing', () => {
-        const fact = memberFact({ item_id: 'acme/x', version: '1.0.0' });
-        expect(fact?.title).toBe('acme/x');
+        const fact = memberFact({ item_id: 'alex/x', version: '1.0.0' });
+        expect(fact?.title).toBe('alex/x');
     });
 });
 
@@ -115,6 +115,7 @@ describe('nothing is invented when there is nothing to report', () => {
     });
 
     test('NEGATIVE CONTROL: the parser really can read a good document', () => {
+        // would pass for the wrong reason
         expect(parseLoadoutManifest(MANIFEST)).not.toBe(null);
         expect(loadoutFacts(MANIFEST, MEMBERS).name).toBe('python');
     });

@@ -1,38 +1,18 @@
-"""Local servers detector - replaces the old auto-tunnel orchestrator.
-
-Plan v3.2 demolition: Cloude Code used to spawn Cloudflare tunnels for any
-port number it scraped out of pane bytes. The detection regex was loose
-enough to match digits in unrelated TUI text (``"15.3k tokens"``, ``"31%"``)
-and the system started binding tunnels for nonsense privileged ports. The
-whole tunnel system is gone; this module is its detection-only replacement.
-
-Behavior:
-    - ``record(session_name, port)`` - gated through ``is_valid_dev_port``
-      and ``port_is_listening``. Adds a ``LocalServerInfo`` entry on success
-      and broadcasts ``local_server_detected`` to every WS subscriber.
-    - ``forget(session_name, port)`` - drops the entry and broadcasts
-      ``local_server_lost``.
-    - ``clear_session(session_name)`` - used when a session is destroyed;
-      forgets every entry owned by that session.
-    - ``list_for_session(session_name)`` - REST endpoint accessor.
-    - Async janitor (``_janitor_loop``) - sweeps every tracked port every
-      ``JANITOR_INTERVAL_SECONDS`` and forgets entries whose listener has
-      stopped responding.
-"""
 
 from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 import structlog
 
 from src.config import settings
+from src.core.graceful_shutdown.task_stop import cancel_and_await
 from src.core.auto_sleep.port_owner import MeasureError, find_port_owner
 from src.core.tmux_backend import DEFAULT_SOCKET_NAME
 from src.models import LocalServerInfo
+from src.models.utc_time import utc_now
 from src.utils.patterns import (
     PatternMatch,
     is_valid_dev_port,
@@ -71,6 +51,7 @@ class LocalServersTracker:
         self._subscribers: Set[asyncio.Queue] = set()
         self._janitor_task: Optional[asyncio.Task] = None
         self._lock = asyncio.Lock()
+        self._pattern_tasks: "Set[asyncio.Task[None]]" = set()
         self._log_monitor: Optional[Any] = None
         self._session_manager: Optional[Any] = None
 
@@ -114,7 +95,7 @@ class LocalServersTracker:
         bucket = self._state.get(session_name)
         if bucket and port in bucket:
             existing = bucket[port]
-            existing.last_seen = datetime.utcnow()
+            existing.last_seen = utc_now()
             return existing
 
         if not port_is_listening(port, timeout_ms=PROBE_TIMEOUT_MS):
@@ -125,7 +106,7 @@ class LocalServersTracker:
             )
             return None
 
-        now = datetime.utcnow()
+        now = utc_now()
         info = LocalServerInfo(
             port=port,
             url=_build_url(port),
@@ -209,13 +190,21 @@ class LocalServersTracker:
             "server_ready",
         ):
             log_monitor.register_pattern_callback(
-                pattern_name,
-                lambda match, _self=self: asyncio.create_task(
-                    _self._on_pattern_match(match)
-                ),
+                pattern_name, self._spawn_pattern_task
             )
 
         logger.info("local_servers_attached_to_log_monitor")
+
+    def _spawn_pattern_task(self, match: PatternMatch) -> None:
+        task = asyncio.create_task(self._on_pattern_match(match))
+        self._pattern_tasks.add(task)
+        task.add_done_callback(self._pattern_tasks.discard)
+
+    def _refresh_if_tracked(self, port: int) -> bool:
+        tracked = [bucket[port] for bucket in self._state.values() if port in bucket]
+        for info in tracked:
+            info.last_seen = utc_now()
+        return bool(tracked)
 
     async def _on_pattern_match(self, match: PatternMatch) -> None:
         if self._log_monitor is None or self._session_manager is None:
@@ -225,6 +214,8 @@ class LocalServersTracker:
             match.matched_text
         )
         if not port:
+            return
+        if self._refresh_if_tracked(port):
             return
 
         try:
@@ -256,13 +247,8 @@ class LocalServersTracker:
         logger.info("local_servers_janitor_started")
 
     async def stop(self) -> None:
-        if self._janitor_task is not None:
-            self._janitor_task.cancel()
-            try:
-                await self._janitor_task
-            except (asyncio.CancelledError, Exception):
-                pass
-            self._janitor_task = None
+        await cancel_and_await(self._janitor_task, "local_servers_janitor_crashed")
+        self._janitor_task = None
         self._subscribers.clear()
         logger.info("local_servers_janitor_stopped")
 

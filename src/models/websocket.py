@@ -9,7 +9,6 @@ from .sessions import SessionStatus
 
 class WSMessageType(str, Enum):
     LOG = "log"
-    # Plan v3.2
     LOCAL_SERVER_DETECTED = "local_server_detected"
     LOCAL_SERVER_LOST = "local_server_lost"
     SESSION_STATUS = "session_status"
@@ -25,11 +24,14 @@ class WSMessageType(str, Enum):
     SESSION_RENAMED = "session.renamed"
     TERMINAL_SIZE = "terminal_size"
     REPAINT = "repaint"
+    PAUSE = "pause"
+    RESUME = "resume"
     SIZE_MASTER = "size_master"
     EVENTS_HELLO = "events.hello"
     SESSION_STATUS_CHANGED = "session.status"
     SESSIONS_CHANGED = "sessions.changed"
     LISTING_DELTA = "listing.delta"
+    PEER_LISTING = "peer.listing"
     RESOURCES_CHANGED = "resources.changed"
     CPLUG_DATA = "cplug.data"
     APPROVALS = "approvals"
@@ -38,7 +40,6 @@ class WSMessageType(str, Enum):
     SESSION_NOTE_CHANGED = "session.note.changed"
     CROSSTALK_CARD = "crosstalk.card"
     PROVIDER_LEDGER_UPDATED = "provider_ledger.updated"
-    # active account
     PROVIDER_ACCOUNT_SWITCHED = "provider_account.switched"
     SESSION_AUTO_SLEPT = "session.auto_slept"
     RESTORE_OFFER_PROGRESS = "restore_offer.progress"

@@ -5,7 +5,6 @@ import type { Component } from 'svelte';
 import type { CellMeta } from '../../opscenter/engine/types';
 import type { CoreExtras } from '../../opscenter/widgets/core-manifests';
 
-/* the whole file */
 export interface CplugManifest {
   schema: number;
   id: string;
@@ -41,9 +40,9 @@ export interface CplugWeb {
   menuLinks?: RailItem[];
   widgets?: CplugWidget[];
   accountMenuItems?: AccountMenuItem[];
-  /* the bottom bar */
   barIndicators?: BarIndicator[];
   start?: () => void;
+  stop?: () => void;
 }
 
 export interface AccountMenuRun {

@@ -23,9 +23,11 @@ REQUIRED = (
     ("src/data/widgets.json", "src/data/widgets.json is missing"),
     (".git", "it is not a git repository"),
 )
-MAIN_CHECKOUT = os.path.join(os.path.expanduser("~"), "projects", "carnivore")
+MAIN_CHECKOUT = os.environ.get("CARNIVORE_REPO_ROOT") or str(
+    Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/Sync/Development/Org/Tooling/CloudeCode"
+)
 PREFERRED_BRANCH = "widget-lab-drafts"
-NEVER_PICKED = frozenset({"sam-staging"})
+NEVER_PICKED = frozenset({"joe-staging"})
 PICK_TTL_S = 20.0
 GIT_TIMEOUT_S = 5
 VERSION_SHA = re.compile(r"(?:^|[.-])g([0-9a-f]{7,40})$")
@@ -74,6 +76,8 @@ def never_picked(root: Path) -> bool:
 
 
 def _git(root: Path, *args: str) -> str:
+    if not app_info.git_available():
+        return ""
     try:
         done = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, timeout=GIT_TIMEOUT_S, check=False)
     except (OSError, subprocess.SubprocessError):

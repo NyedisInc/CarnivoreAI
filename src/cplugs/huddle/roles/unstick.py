@@ -7,7 +7,8 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 import structlog
 
 from src.cplugs.huddle import service, sending
-from src.cplugs.huddle.roles import ask, route
+from src.cplugs.huddle import rules
+from src.cplugs.huddle.roles import ask, route, tags, wait_stuck
 from src.cplugs.sdk import CplugContext, session_bring_up
 
 logger = structlog.get_logger()
@@ -27,16 +28,35 @@ def tag_key(store: Any, item_id: int) -> str:
     return (row[0] or "") if row else ""
 
 
+async def _list_name(ctx: CplugContext, run: Runner, list_key: str) -> Optional[str]:
+    return (await run(lambda: service.project_names(ctx))).get(list_key)
+
+
 async def send_session(ctx: CplugContext, run: Runner, key: str, list_key: str) -> Dict[str, Any]:
     found = await route.resolve(ctx, key) if key else None
     chosen = found.info.session.id if found is not None and found.ready else None
     infos = await ctx.sessions.list()
-    return await sending.send_one_of_many(ctx, run, list_key, service.project_names(ctx).get(list_key), infos, chosen)
+    return await sending.send_one_of_many(ctx, run, list_key, await _list_name(ctx, run, list_key), infos, chosen)
+
+
+NO_SESSION_LINE = "this task has no session now: its tagged agent is gone and no session took it over"
+
+
+async def retag_to(ctx: CplugContext, run: Runner, item_id: int, session_id: Optional[str]) -> bool:
+    infos = await ctx.sessions.list()
+    keys = await ctx.sessions.durable_keys(infos) if session_id else {}
+    key = keys.get(session_id, "") if session_id else ""
+    found = await route.resolve(ctx, key) if key else None
+    if found is not None and found.ready:
+        await run(lambda: tags.set_tag(service.store(ctx), item_id, key))
+        return True
+    await run(lambda: service.store(ctx).post(item_id, NO_SESSION_LINE, actor=rules.CLAUDE, kind="info"))
+    return False
 
 
 async def after_answer(ctx: CplugContext, run: Runner, posted: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     outcome = posted.get("carnivore")
-    if not outcome or outcome["choice"] not in (ask.UNSTICK, ask.PUSH):
+    if not outcome or outcome["choice"] not in (ask.UNSTICK, *wait_stuck.TELLS_AGENT):
         return None
     list_key, item_id = posted["item"]["list"], posted["item"]["id"]
     if outcome["category"] in (ask.STALL, ask.WAIT_STUCK):
@@ -47,11 +67,14 @@ async def after_answer(ctx: CplugContext, run: Runner, posted: Dict[str, Any]) -
             chosen = await session_bring_up.wake_newest_or_start(ctx.sessions, int(list_key))
         except session_bring_up.BringUpFailed as exc:
             logger.warning("task_manager_unstick_bring_up_failed", list=list_key, error=str(exc))
+            await retag_to(ctx, run, item_id, None)
             return None
+        await retag_to(ctx, run, item_id, chosen)
         infos = await ctx.sessions.list()
-        told = await sending.send_one_of_many(ctx, run, list_key, service.project_names(ctx).get(list_key), infos, chosen)
+        told = await sending.send_one_of_many(ctx, run, list_key, await _list_name(ctx, run, list_key), infos, chosen)
     else:
+        await retag_to(ctx, run, item_id, None)
         infos = await ctx.sessions.list()
-        told = await sending.send_one_of_many(ctx, run, list_key, service.project_names(ctx).get(list_key), infos, None)
+        told = await sending.send_one_of_many(ctx, run, list_key, await _list_name(ctx, run, list_key), infos, None)
     logger.info("task_manager_unstick_sent", list=list_key, item=item_id, category=outcome["category"], status=told["status"])
     return told

@@ -1,4 +1,3 @@
-"""A point as the plugin's API and the core ports show it (the shape the restore points tab and the timeline already read)."""
 
 from __future__ import annotations
 

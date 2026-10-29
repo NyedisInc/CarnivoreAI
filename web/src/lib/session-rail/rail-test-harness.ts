@@ -8,6 +8,7 @@ import { railSlideout } from './slideout.svelte';
 import { lastUsedKey, openKey } from './rail-open';
 import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
 
+const HIDDEN_ICONS_FIELD = 'rail_hidden_icons';
 export const BOTTOM_FIELD = RAIL_SPECS.bottom.field;
 
 /* the bottom rail */
@@ -109,14 +110,14 @@ export function mountRails(): void {
   (globalThis as { PreferenceBridge?: unknown }).PreferenceBridge = {
     read: () => null,
     write: async (field: string, value: unknown) => {
-      expect([RAIL_FIELD, BOTTOM_FIELD]).toContain(field);
+      expect([RAIL_FIELD, BOTTOM_FIELD, HIDDEN_ICONS_FIELD]).toContain(field);
       written.push({ field, value });
       batches.push([field]);
       return { status: 'committed' };
     },
     writeMany: async (entries: { field: string; value: unknown }[]) => {
       for (const { field, value } of entries) {
-        expect([RAIL_FIELD, BOTTOM_FIELD]).toContain(field);
+        expect([RAIL_FIELD, BOTTOM_FIELD, HIDDEN_ICONS_FIELD]).toContain(field);
         written.push({ field, value });
       }
       batches.push(entries.map((entry) => entry.field));

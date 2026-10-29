@@ -36,17 +36,17 @@ def _swarm(table: str, column: str, keys: Tuple[str, ...], paths: Tuple[str, ...
     return Claim(M, table, SP, via(M, "swarm_agents", column, "id"), keys=keys, paths=paths, note=note or "follows its agent")
 
 
-def _huddle(table: str, where: K.WhereFn, keys: Tuple[str, ...], paths: Tuple[str, ...] = (), scopes: Tuple[str, ...] = SP,
+def _task_manager(table: str, where: K.WhereFn, keys: Tuple[str, ...], paths: Tuple[str, ...] = (), scopes: Tuple[str, ...] = SP,
             ignored: Tuple[str, ...] = (), note: str = "", secret: Tuple[str, ...] = ()) -> Claim:
     return Claim(M, table, scopes, where, keys=keys, paths=paths, ignored=ignored, note=note, secret=secret)
 
 
 def _of_items(table: str, keys: Tuple[str, ...], note: str = "follows its item", secret: Tuple[str, ...] = ()) -> Claim:
-    return _huddle(table, via(M, T.ITEMS, "item_id", "id"), keys, note=note, secret=secret)
+    return _task_manager(table, via(M, T.ITEMS, "item_id", "id"), keys, note=note, secret=secret)
 
 
 def _of_list(table: str, keys: Tuple[str, ...], column: str = "list_key", scopes: Tuple[str, ...] = P, note: str = "") -> Claim:
-    return _huddle(table, col_in(column, LIST_KEYS), keys, scopes=scopes, note=note or "keyed by the project's list")
+    return _task_manager(table, col_in(column, LIST_KEYS), keys, scopes=scopes, note=note or "keyed by the project's list")
 
 
 CLAIMS: Tuple[Claim, ...] = (
@@ -184,7 +184,7 @@ CLAIMS: Tuple[Claim, ...] = (
                                               literal("session_uuid NOT IN (SELECT session_uuid FROM sessions)")),
           keys=("conversation_id", "session_uuid", "project_id"), paths=("working_dir", "files_touched_json"),
           note="the project's index rows whose session row is gone (the rest are the sessions' own)"),
-    _huddle(T.ITEMS, any_of(col_in("owner_session_key", SESSION_UUIDS), col_in("tagged_session_key", SESSION_UUIDS),
+    _task_manager(T.ITEMS, any_of(col_in("owner_session_key", SESSION_UUIDS), col_in("tagged_session_key", SESSION_UUIDS),
                             col_in("list_key", LIST_KEYS)),
             ("id", "list_key", "owner_session_key", "tagged_session_key", "created_key", "forked_from", "source_item_id",
              "from_project_id", "from_project_name", "group_id", "inbox_id", "card_parent", "card_holder", "card_last_holder",
@@ -192,7 +192,7 @@ CLAIMS: Tuple[Claim, ...] = (
             note="a session's items are the ones it owns or is tagged on; a project's are its list's. created_key (authorship, "
                  "set on most items) is deliberately not matched: authorship is project-owned, so a session's inventory does "
                  "not claim every item it merely wrote. card_ref columns in the Swarm tables point into these items"),
-    _huddle(T.MESSAGES, via(M, T.ITEMS, "item_id", "id"), ("item_id", "author_key"), ("parts#files[].path",),
+    _task_manager(T.MESSAGES, via(M, T.ITEMS, "item_id", "id"), ("item_id", "author_key"), ("parts#files[].path",),
             note="the files a message carries are stored under files/<item id>/ and named in parts"),
     _of_items(T.ITEM_LINEAGE, ("item_id", "list_key")),
     _of_items(T.CARD_EVENTS, ("item_id", "list_key")),
@@ -202,14 +202,14 @@ CLAIMS: Tuple[Claim, ...] = (
     _of_items(T.ITEM_WAITS, ("item_id",), note="follows its item; token_hash is the hash of the wait's answer token, never exported",
               secret=("token_hash",)),
     _of_items(T.MESSAGE_RECEIPTS, ("message_id", "item_id")),
-    _huddle(T.WRITE_ACTORS, any_of(via(M, T.ITEMS, "item_id", "id"), col_in("actor_session_id", SESSION_UUIDS), col_in("actor_session_id", APP_IDS)),
+    _task_manager(T.WRITE_ACTORS, any_of(via(M, T.ITEMS, "item_id", "id"), col_in("actor_session_id", SESSION_UUIDS), col_in("actor_session_id", APP_IDS)),
             ("item_id", "actor_key", "actor_session_id"), ignored=("cross_project",),
             note="who wrote each row; a session's writes count even on other items"),
-    _huddle(T.CALLERS, any_of(col_in("session_id", SESSION_UUIDS), col_in("session_id", APP_IDS), col_in("list_key", LIST_KEYS)), ("session_id", "list_key"),
+    _task_manager(T.CALLERS, any_of(col_in("session_id", SESSION_UUIDS), col_in("session_id", APP_IDS), col_in("list_key", LIST_KEYS)), ("session_id", "list_key"),
             note="the last Task Manager tool caller per list"),
-    _huddle(T.READS, any_of(col_in("session_id", SESSION_UUIDS), col_in("session_id", APP_IDS), col_in("list_key", LIST_KEYS)), ("session_id", "list_key"),
+    _task_manager(T.READS, any_of(col_in("session_id", SESSION_UUIDS), col_in("session_id", APP_IDS), col_in("list_key", LIST_KEYS)), ("session_id", "list_key"),
             note="how far each session has read each list"),
-    _huddle(T.SESSION_PREFS, col_in("session_uuid", SESSION_UUIDS), ("session_uuid",), scopes=S, note="per-session nudge and do-not-disturb"),
+    _task_manager(T.SESSION_PREFS, col_in("session_uuid", SESSION_UUIDS), ("session_uuid",), scopes=S, note="per-session nudge and do-not-disturb"),
     _of_list(T.LIST_PREFS, ("list_key",)),
     _of_list(T.CARD_RULES, ("list_key",)),
     _of_list(T.CARD_SUGGESTIONS, ("list_key", "card_id", "before_id", "by_agent")),
@@ -220,10 +220,10 @@ CLAIMS: Tuple[Claim, ...] = (
     _of_list(T.HELD_SENDS, ("list_key", "target"), note="a tell held back until its target can take it (#1890); keyed by the project's list, like tells"),
     _of_list(T.TELL_PICKS, ("list_key", "target_key")),
     _of_list(T.PROJECT_ROLES, ("list_key", "lead_key")),
-    _huddle(T.CARD_GRANTS, col_in("scope", GRANT_SCOPES), ("scope",), scopes=P, note="the project's card slots (scope project:<id>)"),
+    _task_manager(T.CARD_GRANTS, col_in("scope", GRANT_SCOPES), ("scope",), scopes=P, note="the project's card slots (scope project:<id>)"),
 )
 
-_REASON_RETIRED_CORPUS = ("the retired message archive corpus (schema kept dormant#1680): nothing "
+_REASON_RETIRED_CORPUS = ("the retired message archive corpus (schema kept dormant, Alex (example-owner) 2026-10-12, #1680): nothing "
                           "writes it, and purge handles the transcripts, appearances and bodies it hangs off")
 _REASON_RETIRED_SEARCH = ("the retired search schema (session_search_* in carnivore.db): the live index is deepsearch.db; "
                           "purge never touches these copies")

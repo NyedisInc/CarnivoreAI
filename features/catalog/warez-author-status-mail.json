@@ -33,7 +33,9 @@
   "status": "beta",
   "summary": "authors see where each submission stands in the app and get a short mail when a check fails or the item publishes.",
   "surfaces": [
-    "web/src/lib/publish-page/PublishPage.svelte"
+    "web/src/lib/publish-page/PublishPage.svelte",
+    "hosted/catalog/api/owner_report.py",
+    "hosted/catalog/api/routes_submit.py"
   ],
   "updated": "2026-10-22",
   "where": [

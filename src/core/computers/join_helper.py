@@ -289,7 +289,7 @@ async def _serve_waiting(out: Printer, status: Dict[str, Any]) -> int:
     except discovery.LocalNetworkBlocked:
         out.final(await _relay_failed(job, "local_network_blocked"))
         return 0
-    except OSError as exc:  # could not
+    except OSError as exc:
         log.info("join_helper_discovery_failed", error_type=type(exc).__name__)
         mains = []
     if look or len(mains) != 1 or not mains[0]["addresses"]:

@@ -1,4 +1,3 @@
-/* box-shadow */
 
 console.log('[StatusLed Module] Loading...');
 
@@ -72,7 +71,6 @@ console.log('[StatusLed Module] Loading...');
         return tail ? head + ', ' + tail : head;
     }
 
-    /* aria-label="working" box-shadow title="working" */
     function ledHtml(opts) {
         const o = opts || {};
         const inner = normalizeInner(o.inner);
@@ -95,7 +93,6 @@ console.log('[StatusLed Module] Loading...');
         );
     }
 
-    /* label: ' */
     function hostOffline(r) {
         if (!r || !r.host_key || r.host_key === 'local') return null;
         const state = r.host_state || 'up';
@@ -145,10 +142,12 @@ console.log('[StatusLed Module] Loading...');
             return { inner: 'waiting-permission', outer: 'active' };
         }
 
+        // response, then yellow. if it's still working but needs
         if (status === 'notice') {
             return { inner: 'notice', outer: 'active' };
         }
 
+        // A WORKING SESSION IS SOLID GREEN, unread flag or not
         if (
             status === 'working' ||
             status === 'working_subagent' ||

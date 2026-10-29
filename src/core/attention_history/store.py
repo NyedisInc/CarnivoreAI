@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sqlite3
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 import threading
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
@@ -56,7 +57,7 @@ def read_spans(path: Path, session_uuid: str) -> List[Dict[str, Any]]:
     if not Path(path).exists():
         return []
     try:
-        with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=5.0)) as conn:
+        with closing(connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)) as conn:
             rows = conn.execute("SELECT kind, at FROM attention_events WHERE session_uuid = ? "
                                 "ORDER BY at ASC, id ASC", (session_uuid,)).fetchall()
     except sqlite3.Error:
@@ -71,16 +72,10 @@ def read_spans(path: Path, session_uuid: str) -> List[Dict[str, Any]]:
 
 
 def has_events(path: Path, session_uuid: str) -> Optional[bool]:
-    """Does the history hold any event for this session? None when it could not be read.
-
-    Inputs: path (``attention_history.db``); session_uuid. Output: True / False, or None on an unreadable file.
-      A file that does not exist is False: nothing was ever recorded. Never creates the file.
-    Example: has_events(p, "u1")  # False on a fresh install
-    """
     if not Path(path).exists():
         return False
     try:
-        with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=5.0)) as conn:
+        with closing(connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)) as conn:
             return conn.execute("SELECT 1 FROM attention_events WHERE session_uuid = ? LIMIT 1",
                                 (session_uuid,)).fetchone() is not None
     except sqlite3.Error:

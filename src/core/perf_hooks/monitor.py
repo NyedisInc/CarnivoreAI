@@ -1,27 +1,3 @@
-"""The developer performance monitor: counters, the loop-lag sampler, the publisher.
-
-Description: OFF BY DEFAULT AND NEAR FREE WHILE OFF. Every recording seam in
-  the app (the request log, both socket writers, the terminal input path,
-  the attention watcher) calls one `record_*` method whose first statement
-  is `if not self.enabled: return`, and no task, timer or subprocess exists
-  until the monitor is enabled. Turning it off cancels the task and drops
-  every counter.
-
-  While ON it keeps a rolling minute of counters in twelve five-second
-  buckets and, every five seconds, PUSHES one `perf.sample` frame over
-  `/ws/events` (one broadcast for every connected browser, never a poll):
-
-  - event-loop lag: a coroutine asks to sleep `LAG_TICK_SECONDS` and
-    records how late it woke. Lateness is time the loop (or the GIL) was
-    held by something else, which is exactly the delay a keystroke frame
-    waits before its handler runs.
-  - HTTP requests per route template: count and total handler time.
-  - socket traffic per channel (`events`, `terminal_out`, `terminal_in`),
-    per topic (frame type) and per client: messages and bytes.
-  - CPU and memory of this process and of every tmux server
-    (`process_stats.py`).
-  - the attention watcher's pass duration, full and targeted apart.
-"""
 
 from __future__ import annotations
 

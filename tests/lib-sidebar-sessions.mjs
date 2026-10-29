@@ -1,3 +1,4 @@
+// Not a test file: the suites are `tests/*.node.mjs`, this is `.mjs`.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -211,7 +212,8 @@ export const MOVED_TO_BUNDLE = new Set([
     'session-sidebar-group-order.js', 'session-sidebar-search.js', 'session-sidebar-groups-search.js',
     'session-sidebar-kind-groups.js', 'session-sidebar-pin.js', 'session-sidebar-resize.js',
     'session-sidebar-density.js', 'session-sidebar-bar.js', 'session-sidebar-footer.js',
-    'session-sidebar-row-signature.js',
+    'session-sidebar-row-signature.js', 'session-sidebar-group-colour.js',
+    'session-sidebar-group-icon.js', 'session-sidebar-layouts.js', 'session-sidebar-row-controls.js',
 ]);
 
 export function loadModules(names, opts = {}) {

@@ -44,7 +44,7 @@ async def run(app_state: Any, leases: Sequence[Mapping[str, Any]], now: float) -
             continue
         _told_idle.add((card["id"], beat.busy_at))
         await deliver.tell(app_state, holder, f"Your turn ended while you hold card #{card['id']}. If its work is done, finish it with "
-                           "swarm_card_finish (result plus how-to-validate), which files your report; if not, write your handoff with "
+                           "swarm_card_finish (result, how-to-validate and needs_owner), which files your report; if not, write your handoff with "
                            "swarm_card_handoff and keep going, or give it up with swarm_card_release.", ref=f"card:{card['id']}", wake=False)
         told += 1
     for card in await card_port.get().cards(columns=["review"]):

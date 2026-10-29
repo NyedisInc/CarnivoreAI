@@ -1,33 +1,3 @@
-"""Sum one claude conversation's token usage out of its own transcript.
-
-WHAT IT READS. Claude Code writes one conversation as
-``<corpus>/<project-slug>/<uuid>.jsonl``, one JSON object per line. The
-lines that carry billing are the ones with ``type == "assistant"``, whose
-``message.usage`` object holds the four token classes the API billed:
-``input_tokens`` (FRESH input only), ``cache_creation_input_tokens``,
-``cache_read_input_tokens`` and ``output_tokens``. Those four are
-DISJOINT in claude's convention - the cached tokens are not also counted
-in ``input_tokens`` - which is why the sum of all four is the honest
-total and why no subtraction happens anywhere in this module.
-
-The de-duplication is a consecutive-run check, not a set of every id
-ever seen, and that is a measured decision rather than a shortcut: on
-the same transcript, ZERO message ids reappeared after a different id
-had intervened. A run check costs one string in memory; a set costs one
-entry per message and would have to survive the incremental cache.
-
-THREE OUTCOMES. A transcript that is found and read is ``ok``. A row with
-no conversation id, or an id with no file under the corpus, is
-``absent`` - nothing has run, so nothing was spent. A corpus we could not
-list, or a file we could not open, is ``unchecked``, and it never
-collapses into ``absent``: a relocated corpus would otherwise report
-every session as having cost nothing.
-
-A MALFORMED LINE IS SKIPPED AND COUNTED, NEVER ZEROED. A transcript
-being appended to while we read it ends in a half-written line by
-definition, so treating a parse failure as a fatal error would make the
-panel fail exactly while a session was busy.
-"""
 
 from __future__ import annotations
 
@@ -102,22 +72,6 @@ def locate_transcript(
     working_dir: Optional[str] = None,
     projects_dir: Optional[Path] = None,
 ) -> TranscriptLocation:
-    """Find the transcript for a conversation uuid, across every account.
-
-    Description: with an explicit ``projects_dir`` (tests) it searches that
-      one root. Without one it searches the default ``~/.claude/projects``
-      and then every configured claude account's own ``projects`` directory
-      (``claude_config.transcript_roots``), because a pane launched on a
-      managed account writes its transcript under ITS config directory
-      (issue #1102). First PRESENT wins. Otherwise the default root's answer
-      is kept, except that a root that could not be read (UNCHECKED) turns
-      an all-absent result into UNCHECKED: "not found" must never be
-      claimed over a directory that was not looked at.
-    Inputs: conversation_uuid (str | None). working_dir (str | None).
-      projects_dir (Path | None) - single-root override.
-    Output: TranscriptLocation.
-    Example: locate_transcript("deab833f-...", working_dir="/x").outcome
-    """
     if projects_dir is not None:
         return _locate_in_root(
             conversation_uuid, working_dir=working_dir, root=projects_dir
@@ -206,21 +160,6 @@ def read_transcript_totals(
     cache: Optional[IncrementalCache] = None,
     max_cold_bytes: Optional[int] = None,
 ) -> Optional[TranscriptTotals]:
-    """Sum one transcript, resuming from the cache when the file only grew.
-
-    Description: stats the file, asks the cache whether the bytes it
-      remembers are still the same bytes, and reads only the appended
-      tail when they are. Returns None when the file could not be stat'd
-      or opened, which the caller reports as ``unchecked`` - never as a
-      session that cost nothing.
-    Inputs: path (Path) - the transcript. cache (IncrementalCache | None)
-      - defaults to the process-wide cache; tests pass their own.
-      max_cold_bytes (int | None) - refuse a COLD parse of a file larger
-      than this, answering None. Default None caps nothing. See the
-      comment at the guard for the measurement behind it.
-    Output: TranscriptTotals | None.
-    Example: read_transcript_totals(Path("/a.jsonl")).output_tokens
-    """
     store = cache if cache is not None else TRANSCRIPT_CACHE
     key = os.path.abspath(str(path))
     try:

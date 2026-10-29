@@ -252,3 +252,53 @@
     background: transparent;
     color-scheme: normal;
 }
+
+.cu-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+}
+
+.cu-page--main {
+    padding: var(--oc-space-2);
+}
+
+.cu-page__step {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+}
+
+.cu-page__step[hidden] {
+    display: none;
+}
+
+.cu-page > .cu-frame,
+.cu-page__step > .cu-frame {
+    flex: 1;
+    min-height: 0;
+}
+
+.cu-page .cu-box {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+}
+
+.cu-page .cu-gate,
+.cu-page .cu-view {
+    height: 100%;
+}
+
+.cu-page .cu-page__off {
+    margin: 0;
+    padding: var(--oc-space-3);
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-body);
+}

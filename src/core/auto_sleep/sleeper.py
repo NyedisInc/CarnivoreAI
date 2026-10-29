@@ -1,31 +1,3 @@
-"""The auto-sleep pass: put agent sessions that have idled long enough to sleep.
-
-EVERY CONDITION MUST HOLD, AND EACH ONE ALONE BLOCKS
-(``tests/test_auto_sleep_sleeper.py`` breaks them one at a time):
-
-10. MEASURED: nothing of the session's runs under its claude (rule 11 below
-   judges it, with the timers and subagents, through :mod:`live_work`). The
-   watcher's own observation carries the process-tree answer
-   (``evidence.background_process``, ``src.core.background_work.measured``,
-   issue #1185): ``running`` (a live Claude Code tool shell, a background
-   Bash or a Monitor) keeps it awake, and so does ``unknown``, because an
-   unmeasured tree is never idle. A transcript claim with no process behind
-   it does not: it is retired upstream (``attention.background_claims``)
-   and never reaches this pass. Codex, which is not measured (None), is
-   judged by the rules above alone.
-
-12. A SWARM BODY follows its own rule (:mod:`swarm_rule`, docs/swarm.md 4.6): it idles for ``swarm.auto_sleep_idle_minutes``,
-   its pane's unread flag is ignored, nothing may be pending, its conversation id is not required, and it sleeps through
-   ``swarm.body.sleep`` so its memory commit runs. Every condition above that is not about unread, idle minutes or the
-   conversation id still applies to it, and the toggle in rule 1 governs it too.
-
-THE SLEEP IS THE EXISTING ONE. The injected ``sleep`` callable is the action
-``POST /sessions/{session_uuid}/sleep`` runs, so measured presence, the
-close, and the asleep marker are the same code; there is no second teardown.
-
-BOUNDED: at most :data:`MAX_SLEEPS_PER_PASS` sleeps per pass. A sleep that
-landed is published as ``session.auto_slept``, which the browser toasts.
-"""
 
 from __future__ import annotations
 
@@ -34,7 +6,7 @@ import json
 from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Awaitable, Callable, Dict, List, NamedTuple, Optional, Set, Tuple
 
 import structlog
 
@@ -101,6 +73,12 @@ def _default_db_path() -> Path:
     return db_path_for(settings.get_state_dir())
 
 
+class Eligible(NamedTuple):
+
+    session_uuid: str
+    swarm_member: Optional[swarm_rule.Member]
+
+
 class AutoSleeper:
 
     def __init__(
@@ -124,7 +102,6 @@ class AutoSleeper:
         self.pass_seconds = pass_seconds
         self._take_listeners = listeners or pane_listeners.take_snapshot
         self._running = False
-        self._swarm_member: Optional[swarm_rule.Member] = None
         self.holds: Dict[str, Tuple[str, live_work.SleepHold]] = {}
 
     async def run(self) -> None:
@@ -143,13 +120,14 @@ class AutoSleeper:
             await asyncio.sleep(self.pass_seconds)
 
     async def _route_questions(self) -> None:
-        from src.core.swarm import alerts, closeout, learning, routing, switch
+        from src.core.swarm import alerts, closeout, fact_life, learning, routing, switch
 
         if not switch.is_on():
             return
         try:
             await routing.sweep(self._app_state)
             await learning.sweep(self._app_state)
+            await fact_life.sweep(self._app_state)
             await alerts.sweep(self._app_state)
             await closeout.sweep(self._app_state)
         except asyncio.CancelledError:
@@ -186,6 +164,7 @@ class AutoSleeper:
             self._running = False
 
     async def _pass(self) -> List[str]:
+        self.holds = {}
         manager = getattr(self._app_state, "session_manager", None)
         if manager is None:
             return []
@@ -220,21 +199,19 @@ class AutoSleeper:
             logger.warning("auto_sleep_layout_leases_unreadable", error_type=type(exc).__name__)
             return []
         slept: List[str] = []
-        self.holds = {}
         snapshot = pane_listeners.PassSnapshot(self._take_listeners)
         for session_id in due:
             if len(slept) >= MAX_SLEEPS_PER_PASS:
                 break
-            uuid = await self._eligible(
+            chosen = await self._eligible(
                 manager, session_id, keep_awake, leased, snapshot, settings=settings, members=members,
                 swarm_cfg=swarm_cfg
             )
-            if uuid is None:
+            if chosen is None:
                 continue
-            member = self._swarm_member
-            outcome = await self._act(session_id, uuid, settings.idle_minutes, member)
+            outcome = await self._act(session_id, chosen.session_uuid, settings.idle_minutes, chosen.swarm_member)
             if outcome:
-                slept.append(uuid)
+                slept.append(chosen.session_uuid)
         return slept
 
     def _swarm_due(self, manager: Any, session_id: str, now: datetime, swarm_cfg: Any, swarm_names: Set[str]) -> bool:
@@ -255,10 +232,9 @@ class AutoSleeper:
         self, manager: Any, session_id: str, keep_awake: Set[str],
         leased: Optional[Set[int]], snapshot: pane_listeners.PassSnapshot,
         *, settings: AutoSleepConfig, members: Optional[swarm_rule.Members] = None, swarm_cfg: Any = None,
-    ) -> Optional[str]:
+    ) -> Optional[Eligible]:
         from src.core import session_sleep
 
-        self._swarm_member = None
         info = await manager.get_session_info(session_id)
         if info is None or info.session is None or not info.tmux_session:
             return None
@@ -317,8 +293,7 @@ class AutoSleeper:
             return None
         if await self._fresh_hold(manager, session_id, info):
             return None
-        self._swarm_member = swarm
-        return uuid
+        return Eligible(uuid, swarm)
 
     def _hold(self, session_id: str, info: Any, evidence: Any, *, require_measured: bool) -> bool:
         hold = live_work.hold_for(evidence, require_measured=require_measured)
@@ -351,13 +326,6 @@ class AutoSleeper:
     async def _serves(
         self, manager: Any, session_id: str, snapshot: pane_listeners.PassSnapshot,
     ) -> bool:
-        """True unless it is MEASURED that no process in the pane's tree listens on TCP.
-
-        Inputs: manager - carries the registry. session_id (str).
-          snapshot - this pass's shared listener snapshot.
-        Output: bool - True keeps the session awake: a listener was found,
-          or the answer could not be measured (logged).
-        """
         backend = manager._registry.backends.get(session_id)
         pane_pid = None
         if backend is not None:

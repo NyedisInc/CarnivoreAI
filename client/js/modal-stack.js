@@ -75,7 +75,6 @@ console.log('[ModalStack Module] Loading...');
 
     function onKeydown(e) {
         if (traps.length > 0) {
-            // could not
             const top = traps[traps.length - 1];
             if (e.key === 'Tab') {
                 routeTab(e, top);

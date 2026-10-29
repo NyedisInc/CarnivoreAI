@@ -19,7 +19,7 @@ from src.core.session_import_ladder import (
     decide,
 )
 
-SOCK_NAME = "carnivore_ses_dc491ea8"
+SOCK_NAME = "carnivore_ses_1a2b3c4d"
 
 
 def _evidence(**kw):
@@ -72,7 +72,7 @@ def test_tier2_cannot_be_expressed_as_a_tier_outcome_at_all():
 
 def test_both_pipes_is_ours_on_tier3_and_records_the_readopt_history():
     ev = _evidence(
-        created_pipe_slugs=frozenset({"ses_dc491ea8"}),
+        created_pipe_slugs=frozenset({"ses_1a2b3c4d"}),
         ext_pipe_names=frozenset({SOCK_NAME}),
     )
     v = decide(_session(), ev)
@@ -83,7 +83,7 @@ def test_both_pipes_is_ours_on_tier3_and_records_the_readopt_history():
 
 
 def test_tier3_created_pipe_maps_to_the_auto_named_session():
-    ev = _evidence(created_pipe_slugs=frozenset({"ses_dc491ea8"}))
+    ev = _evidence(created_pipe_slugs=frozenset({"ses_1a2b3c4d"}))
     v = decide(_session(), ev)
     assert v.verdict == LADDER_OURS
     assert v.reason == "created_pipe"
@@ -91,7 +91,7 @@ def test_tier3_created_pipe_maps_to_the_auto_named_session():
 
 
 def test_tier3_cannot_map_a_user_typed_name_and_says_so():
-    ev = _evidence(created_pipe_slugs=frozenset({"ses_dc491ea8"}))
+    ev = _evidence(created_pipe_slugs=frozenset({"ses_1a2b3c4d"}))
     v = decide(_session(name="cloude_scrolltest"), ev)
     assert v.verdict == LADDER_UNKNOWN
     assert v.reason == REASON_NO_EVIDENCE
@@ -182,7 +182,7 @@ def test_hints_are_words_not_a_score():
 
 
 def test_classify_unknown_list_is_exactly_what_the_ladder_could_not_resolve():
-    ev = _evidence(created_pipe_slugs=frozenset({"ses_dc491ea8"}))
+    ev = _evidence(created_pipe_slugs=frozenset({"ses_1a2b3c4d"}))
     report = classify(
         [_session(), _session(name="cloude_typed", epoch=2)], ev
     )

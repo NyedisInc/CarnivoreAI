@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Optional
 
 from src.core.attention.background_claims import standing_background_claims
 from src.core.attention.codex_reader import resolve_codex_evidence
@@ -25,9 +25,7 @@ from src.core.attention.evidence import (
     REASON_STREAMING,
     REASON_SUBAGENTS,
     REASON_TOOL,
-    REASON_TURN_ENDED,
     STATE_BUSY,
-    STATE_DONE_IDLE,
     STATE_NEEDS_USER,
     STATE_UNKNOWN,
     TIER_NONE,
@@ -38,7 +36,7 @@ from src.core.attention.evidence import (
     AttentionVerdict,
     Evidence,
 )
-from src.core.attention.registry_read import (
+from src.core.attention.registry_record import (
     REG_ABSENT,
     REG_BUSY,
     REG_IDLE,
@@ -57,12 +55,11 @@ from src.core.attention.resolve_verdicts import (
     _verdict,
     _busy_unless_resting,
     _blocked_tool_reason,
+    idle_turn_ended_verdict,
 )
 from src.core.attention.transcript_facts import (
     FACTS_FOUND,
     FACTS_SHAPE_UNRECOGNIZED,
-    TURN_END_INTERRUPT,
-    TURN_END_NO_MODEL_TURN,
 )
 from src.core.session_status import LIVENESS_GONE
 
@@ -88,8 +85,6 @@ WAITING_REASONS: Dict[str, str] = {
     WAITING_DIALOG_OPEN: REASON_INPUT,
 }
 
-AMBIGUOUS_PANE_DETAIL_MARKER: str = "two or more live registry records"
-
 _REGISTRY_REFUSAL_REASONS: Dict[str, str] = {
     REG_ABSENT: REASON_REGISTRY_ABSENT,
     REG_STALE: REASON_REGISTRY_STALE,
@@ -101,10 +96,7 @@ def resolve_attention(evidence: Evidence) -> AttentionVerdict:
     return with_question_hint(_resolve_rungs(evidence), evidence)
 
 
-def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
-    registry = evidence.registry
-    facts = evidence.transcript
-    pane = evidence.pane
+def _rung_pane_gone(evidence: Evidence) -> Optional[AttentionVerdict]:
 
     if evidence.tmux_liveness == LIVENESS_GONE:
         return _verdict(
@@ -115,7 +107,13 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             evidence=evidence,
         )
 
-    if AMBIGUOUS_PANE_DETAIL_MARKER in registry.detail:
+    return None
+
+
+def _rung_ambiguous_pane(evidence: Evidence) -> Optional[AttentionVerdict]:
+    registry = evidence.registry
+
+    if registry.ambiguous_pane:
         return _verdict(
             STATE_UNKNOWN,
             REASON_AMBIGUOUS_PANE,
@@ -124,7 +122,12 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             evidence=evidence,
         )
 
-    # could not
+    return None
+
+
+def _rung_other_family(evidence: Evidence) -> Optional[AttentionVerdict]:
+    pane = evidence.pane
+
     family = evidence.agent_family
     if family is not None and family != FAMILY_CLAUDE:
         if family == FAMILY_CODEX:
@@ -153,7 +156,13 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             evidence=evidence,
         )
 
-    previous_process_only = transcript_predates_process(evidence)
+    return None
+
+
+def _rung_blocked_or_dialog(evidence: Evidence, previous_process_only: bool) -> Optional[AttentionVerdict]:
+    facts = evidence.transcript
+    pane = evidence.pane
+
     if facts.blocked_on_tool is not None and not previous_process_only:
         return _verdict(
             STATE_NEEDS_USER,
@@ -177,6 +186,12 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             settle=True,
         )
 
+    return None
+
+
+def _rung_queued_reinvoke(evidence: Evidence, previous_process_only: bool) -> Optional[AttentionVerdict]:
+    facts = evidence.transcript
+
     if facts.queued_reinvoke and not previous_process_only:
         return _busy_unless_resting(
             REASON_QUEUED_REINVOKE,
@@ -184,6 +199,13 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             facts.detail,
             evidence=evidence,
         )
+
+    return None
+
+
+def _rung_background_work(evidence: Evidence, previous_process_only: bool) -> Optional[AttentionVerdict]:
+    registry = evidence.registry
+    facts = evidence.transcript
 
     trusted_count = (
         facts.pending_background_agents
@@ -213,9 +235,14 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             REASON_SUBAGENTS, TIER_TRANSCRIPT, parked.detail, evidence=evidence
         )
 
+    return None
+
+
+def _rung_registry_waiting(evidence: Evidence) -> Optional[AttentionVerdict]:
+    registry = evidence.registry
+    pane = evidence.pane
+
     if registry.known and registry.status == REG_WAITING:
-        # could not
-        # could not be read
         if (pane is None or pane.permission_dialog is None) and _turn_open_at_eof(
             evidence
         ):
@@ -250,8 +277,14 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             evidence=evidence,
         )
 
+    return None
+
+
+def _rung_registry_busy(evidence: Evidence) -> Optional[AttentionVerdict]:
+    registry = evidence.registry
+    facts = evidence.transcript
+
     if registry.known and registry.status == REG_BUSY:
-        # not allowed
         turn_end_newer = (
             facts.turn_end_at is not None
             and registry.status_updated_at is not None
@@ -279,6 +312,14 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             ),
             evidence=evidence,
         )
+
+    return None
+
+
+def _rung_registry_rest(evidence: Evidence, previous_process_only: bool) -> Optional[AttentionVerdict]:
+    registry = evidence.registry
+    facts = evidence.transcript
+    parked = None if previous_process_only else evidence.parked_work
 
     if registry.known and registry.status in (REG_IDLE, REG_SHELL):
         shell_note = (
@@ -310,44 +351,10 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
                 and not (parked is not None and parked.is_unmeasured)
             )
         ):
-            corroborated = (
-                ""
-                if fresh
-                else ", and that idle stamp is %.0fs old but the transcript "
-                "corroborates it" % (status_age or 0.0)
-            )
-            if quiet is None:
-                quiet_note = "there is no transcript to time"
-            elif quiet < DONE_QUIET_SECONDS:
-                quiet_note = (
-                    "the transcript appended %.1fs ago, which is the shell "
-                    "claude reports still running and not the turn" % quiet
-                )
-            else:
-                quiet_note = "the transcript has been quiet for %.1fs" % quiet
-            ended = {
-                TURN_END_INTERRUPT: "the turn was stopped with an interrupt "
-                "(Esc) with no agents pending",
-                TURN_END_NO_MODEL_TURN: "no model turn has run yet, only "
-                "local slash commands, so nothing is pending",
-            }.get(facts.turn_end_kind, "the turn ended with no agents pending")
-            if previous_process_only:
-                ended = (
-                    "this claude process has written nothing to the "
-                    "transcript since it started, so it has run no turn"
-                )
-            elif unprompted:
-                ended = (
-                    "no transcript exists yet and its status has not changed "
-                    "since it started, so it has never been prompted"
-                )
-            return _verdict(
-                STATE_DONE_IDLE,
-                REASON_TURN_ENDED,
-                TIER_REGISTRY,
-                "claude reports idle, %s and %s%s%s"
-                % (ended, quiet_note, corroborated, shell_note),
-                evidence=evidence,
+            return idle_turn_ended_verdict(
+                evidence, previous_process_only=previous_process_only, unprompted=unprompted, fresh=fresh,
+                status_age=status_age, quiet=quiet, shell_note=shell_note,
+                still_appending=quiet is not None and quiet < DONE_QUIET_SECONDS,
             )
 
         if (
@@ -370,7 +377,6 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             return _verdict(STATE_UNKNOWN, REASON_NO_EVIDENCE, TIER_TRANSCRIPT,
                             parked.detail, evidence=evidence)
 
-        # could not
         if not fresh and facts.verdict != FACTS_SHAPE_UNRECOGNIZED:
             return _verdict(
                 STATE_UNKNOWN,
@@ -392,6 +398,13 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             % (facts.detail, shell_note),
             evidence=evidence,
         )
+
+    return None
+
+
+def _rung_no_registry(evidence: Evidence, previous_process_only: bool) -> Optional[AttentionVerdict]:
+    registry = evidence.registry
+    facts = evidence.transcript
 
     if not registry.known:
         if previous_process_only:
@@ -428,6 +441,12 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
             evidence=evidence,
         )
 
+    return None
+
+
+def _rung_unrecognised_status(evidence: Evidence) -> AttentionVerdict:
+    registry = evidence.registry
+
     return _verdict(
         STATE_UNKNOWN,
         REASON_NO_EVIDENCE,
@@ -437,5 +456,27 @@ def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
         evidence=evidence,
     )
 
+
+
+
+def _resolve_rungs(evidence: Evidence) -> AttentionVerdict:
+    for rung in (_rung_pane_gone, _rung_ambiguous_pane, _rung_other_family):
+        verdict = rung(evidence)
+        if verdict is not None:
+            return verdict
+    previous_process_only = transcript_predates_process(evidence)
+    for scoped in (_rung_blocked_or_dialog, _rung_queued_reinvoke, _rung_background_work):
+        verdict = scoped(evidence, previous_process_only)
+        if verdict is not None:
+            return verdict
+    for rung in (_rung_registry_waiting, _rung_registry_busy):
+        verdict = rung(evidence)
+        if verdict is not None:
+            return verdict
+    for scoped in (_rung_registry_rest, _rung_no_registry):
+        verdict = scoped(evidence, previous_process_only)
+        if verdict is not None:
+            return verdict
+    return _rung_unrecognised_status(evidence)
 
 RESOLVED_STATES: frozenset = ALL_STATES

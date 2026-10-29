@@ -466,6 +466,7 @@ export default {
     'cplug.crate.import.warning.journal_not_rebased': 'the reopen list could not be updated for the new folder; the restored sessions still open from their own records.',
     'cplug.crate.import.warning.task_file_kept': 'a task file differs from the one already here, so the crate\'s copy was not written.',
     'cplug.crate.import.warning.task_file_failed': 'a task file could not be written; it stays in the crate.',
+    'cplug.crate.import.warning.task_file_not_copied': 'a file attached to a task was not on this computer, so the message keeps its text but not the file.',
     'cplug.crate.import.warning.side_store_absent': 'a database this crate carries does not exist on this computer yet, so its rows are not restored.',
     'cplug.crate.import.warning.entry_not_restored': 'some saved layout or setting entries were not restored.',
     'cplug.crate.import.warning.board_unlinked': 'a restored review board still points at its old task; link it to the restored task from the board screen.',

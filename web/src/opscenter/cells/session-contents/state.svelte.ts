@@ -5,7 +5,7 @@ import type { SessionContents } from './types';
 
 export type ContentsStatus = 'idle' | 'loading' | 'ok' | 'error';
 
-class ContentsStore {
+export class ContentsStore {
   status = $state<ContentsStatus>('idle');
   data = $state.raw<SessionContents | null>(null);
   errorCode = $state<string | null>(null);
@@ -47,8 +47,38 @@ class ContentsStore {
   }
 }
 
-export const contents = new ContentsStore();
+const held = new Map<number, { store: ContentsStore; users: number }>();
+
+const latest = $state<{ store: ContentsStore | null }>({ store: null });
+
+export interface ContentsLease {
+  store: ContentsStore;
+  release(): void;
+}
+
+export function acquireContents(rowId: number | null): ContentsLease {
+  if (rowId === null) {
+    const idle = new ContentsStore();
+    return { store: idle, release: () => undefined };
+  }
+  const entry = held.get(rowId) ?? { store: new ContentsStore(), users: 0 };
+  if (entry.users === 0) {
+    held.set(rowId, entry);
+    entry.store.follow(rowId);
+  }
+  entry.users += 1;
+  latest.store = entry.store;
+  return {
+    store: entry.store,
+    release(): void {
+      entry.users -= 1;
+      if (entry.users > 0) return;
+      held.delete(rowId);
+      if (latest.store === entry.store) latest.store = null;
+    },
+  };
+}
 
 export function contentsCount(): number | null {
-  return totalItems(contents.data);
+  return totalItems(latest.store?.data ?? null);
 }

@@ -21,7 +21,6 @@ async def import_session(data: bytes, *, conversation: str, cwd: str,
     source_name = str(uuid.UUID(conversation)) + '.jsonl'
     projects = Path.home() / '.claude' / 'projects'
     projects.mkdir(parents=True, exist_ok=True, mode=0o700)
-    # CLAUDE_CONFIG_DIR
     with tempfile.TemporaryDirectory(prefix='carnivore-fork-', dir='/tmp') as temporary, \
             tempfile.TemporaryDirectory(prefix='carnivore-fork-', dir=projects) as snapshot:
         directory = Path(temporary)

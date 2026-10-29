@@ -1,4 +1,3 @@
-/* position: fixed */
 import { terminalLayout } from './layout.svelte';
 
 let zoomed = $state<string | null>(null);
@@ -45,7 +44,6 @@ export const ZOOM_KEY_ROWS: readonly { keys: string; labelKey: string }[] = [
   { keys: 'shift esc', labelKey: 'keys.page.zoom.restore' },
 ];
 
-/*  hidden  */
 function focusedSlot(): string | null {
   const active = document.activeElement;
   const id = active instanceof Element ? active.closest<HTMLElement>('[data-slot]')?.dataset.slot : undefined;

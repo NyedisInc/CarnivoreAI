@@ -1,27 +1,3 @@
-"""Attach the terminal to a session's tmux pane: the argv, the plan and the one blocking run.
-
-The TUI is a plain terminal program, not a tmux window. Enter on a row suspends it and runs
-``tmux -L <socket> attach-session -t =<stored tmux name>``; detaching returns to the TUI. The name is the
-STORED ``tmux_session`` of the listing wrapper, never one derived from an id (CLAUDE.md gotcha 4b), and
-``=`` makes tmux match it exactly.
-
-PANE SIZE. The server sizes every pane itself: ``window-size manual`` plus ``resize-window`` (see
-``src/core/tmux_backend.py``, set on every session it creates or adopts), so only the web view's size
-negotiation moves it. Under ``manual`` an attached client never changes the window: a small ssh terminal shows
-the top-left of a larger pane and the browser's pane keeps its size (proven in tests/tui/test_session_actions.py,
-including after the terminal resizes). The client also attaches with the flag ``ignore-size``, so it never
-counts toward the size if another client or a session option change would make tmux compute one; the TUI sets
-no session option itself, because the server owns them.
-
-SEEING THE BOTTOM OF THE PANE. claude's input box and any permission prompt sit at the bottom of the pane, so
-before a suspended attach the client reads the pane's size and asks the terminal to match it with the xterm
-window op ``ESC [ 8 ; rows ; cols t`` (Terminal.app and iTerm2 honor it, others ignore it), then prints one
-line: how to detach, and that closing the window leaves the session running. Offline (no server, nobody else
-votes on the size) the user may instead FIT the pane to this window: the attach drops ``ignore-size`` and
-chains ``resize-window -A`` after it; the web view renegotiates when the server returns.
-
-WATCH. ``read_only`` attaches with ``-r``: only detach and switch keys work, nothing typed reaches the pane.
-"""
 
 from __future__ import annotations
 
@@ -41,7 +17,6 @@ logger = structlog.get_logger(__name__)
 
 IGNORE_SIZE = "ignore-size"
 RESIZE_OP = "\x1b[8;{rows};{cols}t"
-# could not be read
 DEFAULT_PREFIX_KEY = "C-b"
 
 

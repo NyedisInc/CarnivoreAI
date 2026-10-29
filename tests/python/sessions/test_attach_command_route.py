@@ -36,7 +36,7 @@ class FakeManager:
             return None
         return SimpleNamespace(session=SimpleNamespace(id=session_id), tmux_session=name, host_key="local")
 
-    def _tmux_socket_name(self) -> str:
+    def tmux_socket_name(self) -> str:
         return TEST_SOCKET_NAME
 
 

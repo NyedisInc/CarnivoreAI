@@ -1,9 +1,3 @@
-"""Pattern detection for Claude Code output.
-
-Plan v3.2: tunnel system was demolished and replaced with a detection-only
-"Local Servers" panel. This module is now the single source of truth for
-turning raw pane bytes into validated dev-server port numbers.
-"""
 
 import re
 import socket

@@ -10,7 +10,7 @@ from typing import Any, Dict, List
 BASE = datetime(2026, 10, 11, 18, 30, 0, tzinfo=timezone.utc).timestamp()
 B, F, D, M = ("b0000000-0000-4000-8000-00000000000b", "f0000000-0000-4000-8000-00000000000f",
               "d0000000-0000-4000-8000-00000000000d", "e0000000-0000-4000-8000-00000000000e")
-CONV = {B: "conv-briefing", F: "conv-harbor", D: "conv-docker", M: "conv-monitoring"}
+CONV = {B: "conv-briefing", F: "conv-fleet", D: "conv-docker", M: "conv-monitoring"}
 APP = {B: "ses_bbbbbbbb", F: "ses_ffffffff", D: "ses_dddddddd", M: "ses_eeeeeeee"}
 AGENT_ID = "a1e531fcc1deac32e"
 SPAWN_AT = BASE - 7 * 3600
@@ -64,7 +64,7 @@ def transcripts(root: Path) -> Dict[str, Path]:
         user(BASE + 255.3, envelope("t-qA4j", "m-N8jp"), promptId="p-f1", turnOrigin="peer", origin={"kind": "peer"}),
         call(BASE + 270, "tf1", "mcp__carnivore__huddle_add"),
         result(BASE + 270.5, "tf1", json.dumps({"item_id": 408})),
-        call(BASE + 290, "tf2", "Agent", {"description": "Fix NAS path", "subagent_type": "worker"}),
+        call(BASE + 290, "tf2", "Agent", {"description": "Fix QNAP path", "subagent_type": "worker"}),
         result(BASE + 290.01, "tf2", f"Async agent launched\nagentId: {AGENT_ID}"),
         call(BASE + 292, "tf3", "mcp__carnivore__crosstalk_reply"),
         result(BASE + 292.2, "tf3", json.dumps({"id": "m-xGDy", "thread": "t-qA4j", "status": "queued", "to": APP[B]})),
@@ -81,7 +81,7 @@ def transcripts(root: Path) -> Dict[str, Path]:
         call(BASE + 361, "ts2", "Write"), result(BASE + 361.5, "ts2", "ok"),
         rec("assistant", BASE + 2990, isSidechain=True, agentId=AGENT_ID, message={"content": [{"type": "text", "text": "done"}]}),
     ])
-    (sub_dir / f"agent-{AGENT_ID}.meta.json").write_text(json.dumps({"agentType": "worker", "description": "Fix nightly_backup path", "toolUseId": "tf2"}))
+    (sub_dir / f"agent-{AGENT_ID}.meta.json").write_text(json.dumps({"agentType": "worker", "description": "Fix QNAP nightly_backup path", "toolUseId": "tf2"}))
     write_jsonl(paths[D], [user(BASE + 3010.5, envelope("t-15FU", "m-6LGV"), promptId="p-d1", turnOrigin="peer", origin={"kind": "peer"}),
                            rec("system", BASE + 3040, subtype="turn_duration", durationMs=30000)])
     write_jsonl(paths[M], [user(BASE - 5, "unrelated", promptId="p-m1")])
@@ -110,12 +110,12 @@ def make_install(tmp: Path) -> Dict[str, Any]:
     paths = transcripts(tmp / "transcripts")
     core = sqlite3.connect(state / "carnivore.db")
     core.executescript(CORE_SCHEMA)
-    for n, (u, name) in enumerate({B: "Daily Bulletin", F: "Harbor", D: "Harbor Docker", M: "Harbor Monitoring"}.items(), 1):
+    for n, (u, name) in enumerate({B: "Daily Briefing", F: "Fleet", D: "Fleet Docker", M: "Fleet Monitoring"}.items(), 1):
         core.execute("INSERT INTO sessions VALUES (?,?,?,?,?,?,?,?,?,?)", (n, u, CONV[u], f"carnivore_{n}", name, "/w", 1, "created", "claude", iso(SPAWN_AT)))
         core.execute("INSERT INTO conversation_index VALUES (?,?,?,?,?)", (CONV[u], "claude", u, iso(SPAWN_AT), None))
-    rows = [("m-N8jp", "t-qA4j", B, F, "briefing asks harbor", None, BASE + 255.1, BASE + 255.3),
-            ("m-xGDy", "t-qA4j", F, B, "harbor answers", "m-N8jp", BASE + 292.2, BASE + 292.5),
-            ("m-6LGV", "t-15FU", F, D, "harbor hands docker a task", None, BASE + 3010.2, BASE + 3010.5),
+    rows = [("m-N8jp", "t-qA4j", B, F, "briefing asks fleet", None, BASE + 255.1, BASE + 255.3),
+            ("m-xGDy", "t-qA4j", F, B, "fleet answers", "m-N8jp", BASE + 292.2, BASE + 292.5),
+            ("m-6LGV", "t-15FU", F, D, "fleet hands docker a task", None, BASE + 3010.2, BASE + 3010.5),
             ("m-OLD0", "t-old0", F, M, "spawn task to the other child", None, SPAWN_AT + 0.5, SPAWN_AT + 1),
             ("m-OLD1", "t-old", F, D, "spawn task from the night before", None, SPAWN_AT + 1, SPAWN_AT + 2)]
     for mid, thread, s, r, text, reply, created, delivered in rows:
@@ -127,8 +127,8 @@ def make_install(tmp: Path) -> Dict[str, Any]:
     core.close()
     hud = sqlite3.connect(state / "carnivore.db")
     hud.executescript(TASK_MANAGER_SCHEMA)
-    hud.execute("INSERT INTO work_items VALUES (395,'8','fix the nightly job path',?,'review',?,?,0)", (B, BASE - 6 * 3600, BASE + 3400))
-    hud.execute("INSERT INTO work_items VALUES (408,'13','harbor copy',?,'review',?,?,0)", (F, BASE + 270.4, BASE + 3000))
+    hud.execute("INSERT INTO work_items VALUES (395,'8','qnap nightly backup broken',?,'review',?,?,0)", (B, BASE - 6 * 3600, BASE + 3400))
+    hud.execute("INSERT INTO work_items VALUES (408,'13','fleet copy',?,'review',?,?,0)", (F, BASE + 270.4, BASE + 3000))
     hud.execute("INSERT INTO work_messages VALUES (1913,395,'joe','owner','reply','do it',?,1)", (BASE + 249.9,))
     hud.execute("INSERT INTO work_messages VALUES (1914,395,'claude',?,'info','briefing note',?,2)", (B, BASE + 253.2))
     hud.execute("INSERT INTO work_card_events VALUES (1,395,'8',?,'created','','todo',?,'')", (BASE - 6 * 3600, B))

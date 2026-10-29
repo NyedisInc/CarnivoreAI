@@ -35,20 +35,6 @@ class TrailReadResult:
 
 
 def _recover_partial_line(raw: str) -> Optional[TrailEntry]:
-    """Rebuild what can be salvaged from a line cut off mid-write.
-
-    Description: implements design section 9.4 case 3. A process killed
-      during write() leaves a prefix of a line. Because entry_uuid and
-      kind are written FIRST (see FIELD_ORDER), that prefix usually still
-      carries both, which is enough to treat the record as an unclosed
-      ``started`` entry - identical handling to case 2. When the prefix is
-      too short to carry them, no entry is recovered and the caller
-      escalates that ONE line to the unreadable state.
-    Inputs: raw (str) - the incomplete final line, without a newline.
-    Output: TrailEntry | None - a synthetic entry with
-      ``recovered_partial=True`` and ``status='started'``, or None when
-      entry_uuid or kind could not be read out of the fragment.
-    """
     uuid_match = _UUID_RE.search(raw)
     kind_match = _KIND_RE.search(raw)
     if not uuid_match or not kind_match:
@@ -65,28 +51,6 @@ def _recover_partial_line(raw: str) -> Optional[TrailEntry]:
 
 
 def read_trail(path: Path) -> TrailReadResult:
-    """Parse migration_trail.jsonl into a three-outcome read result.
-
-    Description: implements design section 9.4 cases 1 to 4.
-
-      * File absent  -> TRAIL_READ_ABSENT (a genuine fresh install).
-      * Every line valid, file ends with a newline -> TRAIL_READ_OK.
-      * Every line valid except the last, which lacks a trailing newline
-        and is a recoverable fragment -> TRAIL_READ_TRUNCATED_TAIL. The
-        fragment becomes an unclosed ``started`` entry.
-      * Any structurally bad line that is NOT a recoverable tail (bad
-        JSON in the middle, a non-object line, a line missing a required
-        field, or an unrecoverable tail fragment) -> TRAIL_READ_UNREADABLE,
-        naming the 1-based line number. Every line that DID parse is
-        still returned, because "I could not read line 7" is not "I could
-        not read anything".
-
-      An OSError reading the file is also UNREADABLE, never ABSENT: a
-      permission error is not evidence that a user has no history.
-    Inputs: path (Path) - the migration_trail.jsonl path.
-    Output: TrailReadResult.
-    Example: read_trail(state_dir / "migration_trail.jsonl").status == "ok"
-    """
     if not path.exists():
         return TrailReadResult(status=TRAIL_READ_ABSENT)
 
@@ -192,6 +156,10 @@ def prior_interrupt_uuid(
     for entry in reversed(find_unclosed(read.entries)):
         if entry.entry_uuid == started.entry_uuid:
             continue
-        if entry.to_version == started.to_version:
+        if (
+            entry.kind == started.kind
+            and entry.from_version == started.from_version
+            and entry.to_version == started.to_version
+        ):
             return entry.entry_uuid
     return None

@@ -1,21 +1,3 @@
-"""What the ratings proxy answers: the hosted summary, relayed.
-
-EVERY FIELD IS OPTIONAL AND NOTHING HAS A FALSY DEFAULT, which is the
-rule ``src/models/catalog_api.py`` opens with and the one that matters
-most here. The hosted api answers ``count: 0`` for an item nobody has
-rated, and that is a MEASURED ZERO. An item whose ratings could not be
-read has no count at all. If this model defaulted ``count`` to 0, those
-two would arrive at the screen identical, and a reader would be told
-"nobody has rated this yet" about an outage.
-
-``text`` HAS ALREADY BEEN MADE SAFE TO RENDER, and not by this app. The
-hosted sanitiser replaces every Unicode control and format character with
-a space, collapses whitespace runs and cuts the result to 2,000
-characters, which is what removes newlines, ANSI escapes and the
-bidirectional overrides behind display spoofing. It is still somebody
-else's string, so the client bounds it again on the way to the document
-and renders it as text, never as markup.
-"""
 
 from __future__ import annotations
 

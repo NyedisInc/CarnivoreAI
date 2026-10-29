@@ -1,10 +1,3 @@
-"""Which card a dealer takes and whether the agent fits it (#1457, ``docs/swarm-cards.md`` 14): rules the server keeps, not the prompt.
-
-A ``swarm_card_deal`` with no card id deals the top queued card of the dealer's own project, picked here. The fit check reads the stored
-specialty of every live feature agent of the card's project: a card whose title or summary names one of those specialties goes to that
-specialist, and a deal to anyone else needs a ``reason`` (kept in the card's history). The board order rule itself lives in the plugin
-(``src/cplugs/huddle/cards/queue.py::deal``), inside the deal's own transaction.
-"""
 
 from __future__ import annotations
 
@@ -18,11 +11,6 @@ MIN_SPECIALTY_KEY = 4
 
 
 async def top_card(agent: Optional[Mapping[str, Any]]) -> Optional[Dict[str, Any]]:
-    """The top queued card of a project agent's own project (``dealer.queued_cards`` order), None when nothing is queued.
-
-    Inputs: agent (the dealer's row; only a project agent has a project of its own to pick from, anyone else gets None).
-    Output: CardView | None. Example: await top_card({"rank": "project", "thread_key": "17"}) -> {"id": 52, ...}
-    """
     if agent is None or agent.get("rank") != "project":
         return None
     cards = await card_port.get().cards(list_keys=[str(agent.get("thread_key"))], columns=["in_progress"])

@@ -4,14 +4,16 @@ from __future__ import annotations
 import hashlib
 import os
 import sqlite3
+from src.core.safe_io.readonly_db import connect_readonly
 import struct
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, NamedTuple, Optional
 
 import structlog
 
 from scripts.backup.errors import CopyFailed
+from scripts.backup.targets import PRIVATE_FILE_MODE
 
 logger = structlog.get_logger()
 
@@ -20,10 +22,8 @@ _TAG_NULL, _TAG_INT, _TAG_REAL, _TAG_TEXT, _TAG_BLOB = b"N", b"I", b"R", b"T", b
 
 
 def open_readonly(path: Path) -> sqlite3.Connection:
-    """Open a database read-only (never creates a file). Inputs: path. Output: Connection.
-    Raises: CopyFailed when SQLite refuses (missing file, not a database)."""
     try:
-        return sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+        return connect_readonly(path)
     except sqlite3.Error as exc:
         raise CopyFailed(f"cannot open {path} read-only: {exc}") from exc
 
@@ -120,6 +120,7 @@ def copy_database(source: Path, dest: Path) -> Dict[str, Any]:
         with closing(open_readonly(source)) as src, closing(sqlite3.connect(str(dest))) as out:
             src.backup(out)
             out.execute("PRAGMA journal_mode=DELETE")
+        os.chmod(dest, PRIVATE_FILE_MODE)
         with dest.open("rb") as handle:
             os.fsync(handle.fileno())
         described = describe_database(dest, check_integrity=True)
@@ -135,17 +136,23 @@ def copy_database(source: Path, dest: Path) -> Dict[str, Any]:
     return {**described, "bytes": dest.stat().st_size, "file_sha256": file_sha256(dest)}
 
 
-def diff_tables(expected: Dict[str, Dict[str, Any]], actual: Dict[str, Dict[str, Any]]) -> List[str]:
-    problems: List[str] = []
+class TableDiff(NamedTuple):
+
+    table: str
+    message: str
+
+
+def diff_tables(expected: Dict[str, Dict[str, Any]], actual: Dict[str, Dict[str, Any]]) -> List[TableDiff]:
+    problems: List[TableDiff] = []
     for name in sorted(set(expected) | set(actual)):
         want, got = expected.get(name), actual.get(name)
         if want is None:
-            problems.append(f"{name}: new table")
+            problems.append(TableDiff(name, "new table"))
         elif got is None:
-            problems.append(f"{name}: table is gone")
+            problems.append(TableDiff(name, "table is gone"))
         elif want.get("virtual") or got.get("virtual"):
             continue
         elif want["sha256"] != got["sha256"]:
-            problems.append(f"{name}: {want['rows']} rows -> {got['rows']} rows, content changed")
+            problems.append(TableDiff(name, f"{want['rows']} rows -> {got['rows']} rows, content changed"))
     return problems
 

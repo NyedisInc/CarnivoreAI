@@ -197,14 +197,6 @@ def clear_group(conn: sqlite3.Connection, group_id: int) -> int:
 
 
 def prune_missing(conn: sqlite3.Connection, live_names: Sequence[str]) -> int:
-    """Drop memberships for tmux sessions that no longer exist.
-
-    Description: NOT CALLED ON EVERY POLL, and the reason is unchanged
-      from v8: a tmux probe that fails, or one taken while a session is
-      being recreated, would otherwise erase the user's filing for every
-      row it could not see. This is explicit housekeeping for a caller
-      that KNOWS its list is complete, never a side effect of a read.
-    """
     require_tables(conn)
     if not live_names:
         return 0

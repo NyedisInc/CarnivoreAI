@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { openTabPopout, t } from '../sdk';
-  import { IconButton } from '../sdk/ui';
+  import { Button, IconButton, Segmented } from '../sdk/ui';
   import { labWidgets, type FrameReport, type LabHost, type SidebarView } from '../sdk/widget-lab';
   import { activeThemeId } from '../sdk/themes';
   import { fitTableState } from './lab-api';
@@ -23,7 +23,6 @@
   let width = $state(0);
   let phoneHost = $state<string | null>(null);
   let reportedFor = '';
-  /* pop-out window */
   const inPopout = globalThis.location?.pathname.endsWith('/popout.html') ?? false;
 
   const sel = $derived(link.selection);
@@ -99,7 +98,7 @@
     {/if}
     {#if !live.menuOpen}
       <div class="dwl-seg dwl-views">
-        <button type="button" class="oc-btn oc-btn--sm" data-lab-menu onclick={() => link.send({ intent: 'open-menu' })}>{t('cplug.devwidgetlab.viewer.menu')}</button>
+        <Button size="sm" data-lab-menu onclick={() => link.send({ intent: 'open-menu' })}>{t('cplug.devwidgetlab.viewer.menu')}</Button>
       </div>
     {/if}
   </header>
@@ -117,11 +116,9 @@
       <DraftCompare {sel} {widgets} refreshSeq={link.draftsSeq} scale={(frame) => frameScale(phone, width, frame)} />
     {:else if widget}
       {#if phone && bands.length > 1}
-        <div class="dwl-hosttabs" role="tablist">
-          {#each bands as host (host.zone)}
-            <button type="button" role="tab" class="oc-btn oc-btn--sm" aria-selected={activeHost === host.zone} data-on={activeHost === host.zone ? 'yes' : 'no'}
-              onclick={() => (phoneHost = host.zone)}>{t(`cplug.devwidgetlab.host.${host.zone}`)}</button>
-          {/each}
+        <div class="dwl-hosttabs">
+          <Segmented label={t('cplug.devwidgetlab.show_in')} value={activeHost} onchange={(zone) => (phoneHost = zone)}
+            options={bands.map((host) => ({ value: host.zone, label: t(`cplug.devwidgetlab.host.${host.zone}`), attrs: { 'data-host-tab': host.zone } }))} />
         </div>
       {/if}
       {#key `${widget.key}|${sel.fixture}`}

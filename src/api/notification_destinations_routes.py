@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
+from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.core.notifications import routing_view
 from src.core.notifications.destinations import extras as extras_mod
@@ -69,21 +70,22 @@ def _with_status(item: Dict[str, Any]) -> Dict[str, Any]:
 
 def _errors(exc: Exception) -> HTTPException:
     if isinstance(exc, validate.InvalidDestination):
-        return HTTPException(422, {"error": "invalid", "fields": exc.fields})
+        return api_error(422, "destination_invalid", exc, extra={"fields": exc.fields})
     if isinstance(exc, (store_mod.UnknownDestination, ticks.UnknownDestination)):
-        return HTTPException(404, {"error": "unknown_destination"})
+        return api_error(404, "destination_unknown", exc)
     if isinstance(exc, store_mod.DestinationLimit):
-        return HTTPException(409, {"error": "limit"})
+        return api_error(409, "destination_limit", exc)
     if isinstance(exc, store_mod.KeychainUnavailable):
-        return HTTPException(503, {"error": "keychain_unavailable"})
+        return api_error(503, "destination_keychain_unavailable", exc)
     if isinstance(exc, extras_mod.DetailsNotAllowed):
-        return HTTPException(422, {"error": "details_not_allowed"})
-    if isinstance(exc, (secrets_mod.SecretTooLarge, secrets_mod.InvalidFields)):
-        return HTTPException(422, {"error": "secret_too_large" if isinstance(exc, secrets_mod.SecretTooLarge)
-                                   else "invalid_secret_fields"})
+        return api_error(422, "destination_details_not_allowed", exc)
+    if isinstance(exc, secrets_mod.SecretTooLarge):
+        return api_error(422, "destination_secret_too_large", exc)
+    if isinstance(exc, secrets_mod.InvalidFields):
+        return api_error(422, "destination_invalid_secret_fields", exc)
     if isinstance(exc, ValueError):
-        return HTTPException(422, {"error": "bad_value"})
-    return HTTPException(503, {"error": "write_failed"})
+        return api_error(422, "destination_bad_value", exc)
+    return api_error(503, "destination_write_failed", exc)
 
 
 _HANDLED = (validate.InvalidDestination, store_mod.UnknownDestination, ticks.UnknownDestination,

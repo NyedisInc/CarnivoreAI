@@ -94,7 +94,7 @@ def _manager(monkeypatch, tmp_path: Path) -> SessionManager:
 @pytest.mark.asyncio
 async def test_failed_probe_does_not_prune_owned_sessions(monkeypatch, tmp_path, listing):
     mgr = _manager(monkeypatch, tmp_path)
-    owned = {"cloude_Test", "cloude_asd", "cloude_fs2", "cloude_ses_2a5a4495"}
+    owned = {"cloude_Test", "cloude_asd", "cloude_fs2", "cloude_ses_ec5bf2a3"}
     mgr._owned.names = set(owned)
     mgr._theme_store.pinned_themes = {"cloude_Test": "matrix"}
 

@@ -301,8 +301,6 @@ class ComputersRuntime:
             self._waiting_told = staged.sha
 
     async def _after_link_swap(self) -> None:
-        """The link identity changed: rebuild the listener context, close the join port (it reopens with the new cert), and make
-        every link redial so the other side sees the new cert (an old pin is dropped by the first handshake that presents it)."""
         await self.repin(force=True)
         if self.join_server is not None:
             await self.join_server.stop()
@@ -359,11 +357,6 @@ class ComputersRuntime:
         return next((r for r in store.CACHE.rows() if r.role == "main" and r.transport == "tls"), None)
 
     async def _sync_member_listener(self, force: bool) -> None:
-        """Run the member listener while a tls main row exists (pinned to main's cert and its next one), stop it when none does.
-
-        The stored port is bound as is, and a busy one is the state ``port_busy``, retried on every tick, never moved (main could not learn a
-        new one). A reservation held for a join in flight (:meth:`reserve_listen_port`) is kept while no main row exists yet.
-        """
         ml, main = self.member_listener, self._main_row()
         if ml is None or self.identity is None:
             return

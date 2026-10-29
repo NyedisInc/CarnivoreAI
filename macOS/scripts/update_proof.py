@@ -1,46 +1,4 @@
 #!/usr/bin/env python3
-"""N to N+1 auto-update proof for the Mac app (#660). Never run by tests or CI.
-
-GATES (exit 3, nothing launched, unless all hold):
-  1. Both builds are Developer ID signed (Squirrel.Mac refuses ad hoc) and carry the signed
-     Info.plist purpose update-proof (release-build.sh stamps it from CARNIVORE_BUILD_PURPOSE):
-     that purpose alone lets the packaged copy take the loopback feed below and install the
-     X+1 update-proof build.
-  2. CARNIVORE_PROOF_ISOLATION_VERIFIED=1: the operator accepts the isolation
-     in docs/mac-auto-update.md, "Isolation", including its UNPROVEN list.
-  3. Preflight: the copy's loopback port is free and no Squirrel ShipIt job for
-     the bundle id is loaded. Any failed precondition is exit 3.
-
-ISOLATION (evidence per path: docs/mac-auto-update.md): the copy gets a
-whitelisted environment, HOME and CFFIXED_USER_HOME in a scratch home,
-TMUX_TMPDIR and TMPDIR in the scratch dir, a pre-seeded server .env (free
-loopback port, HOST 127.0.0.1) and config.json (relay off, no notification
-destinations, own tmux socket name), CARNIVORE_SETTINGS_ENV_FILE (the server
-then refuses every production Keychain item), CARNIVORE_LEDGER_KEEPALIVE=0,
-and the switches --user-data-dir and --use-mock-keychain. The live state is
-fingerprinted before launch and compared after; any change is a FAIL.
-
-BUILDS: each release-build.sh run is its own process group. On timeout the
-group gets SIGTERM, then up to 60 s for the signing scripts' EXIT trap to lock
-and unlist the keychain, and SIGKILL only for what is still alive after that.
-
-ENV VALUES
-  CARNIVORE_PROOF_ISOLATION_VERIFIED=1   the gate above
-  CARNIVORE_PROOF_BUILD_TIMEOUT_S        per build, default 5400 (90 minutes)
-  CARNIVORE_PROOF_CLICK_WINDOW_S         wait for the click, default 3600
-  CARNIVORE_PROOF_AUTO_INSTALL=1         unattended run: the copy's seeded config turns updates.auto_update on, so the
-                                         app downloads X+1 and installs it at its first quiet moment (the same
-                                         quitAndInstall as the tray click) with nobody clicking
-
-Usage:
-  CARNIVORE_PROOF_ISOLATION_VERIFIED=1 python3 macOS/scripts/update_proof.py
-  CARNIVORE_PROOF_ISOLATION_VERIFIED=1 python3 macOS/scripts/update_proof.py --reuse <evidence dir>
---reuse skips both builds and re-runs only the launch-and-wait on an existing
-evidence directory (a fresh scratch home and a fresh copy of the built X), so a
-missed click costs no rebuild.
-
-Output: PASS or FAIL with the evidence directory. Exit 0 pass, 1 fail, 3 gated.
-"""
 
 import base64
 import functools

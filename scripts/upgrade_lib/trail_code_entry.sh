@@ -1,9 +1,4 @@
 #!/bin/bash
-#
-#
-#
-#
-#
 
 trail_file() {
     resolve_state_file "$1" "migration_trail.jsonl"
@@ -46,7 +41,6 @@ trail_json_value() {
     fi
 }
 
-# no trailing newline
 trail_append_line() {
     local install_dir="$1" path="$2" line="$3" python_bin
     python_bin="$(resolve_python "${install_dir}")"

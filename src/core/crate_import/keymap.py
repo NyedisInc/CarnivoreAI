@@ -7,6 +7,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.crate_import import ledger
 from src.core.crate_import.env import ImportEnv
 from src.core.crate_import.keyrules import LIST_KEY, NULL_FOREIGN, REF, SELF, rule_for
@@ -62,7 +63,7 @@ class LocalTables:
             conn: Optional[sqlite3.Connection] = None
             if path is not None and path.is_file():
                 try:
-                    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+                    conn = connect_readonly(path)
                     conn.row_factory = sqlite3.Row
                 except sqlite3.Error as exc:
                     logger.warning("crate_import_side_db_unreadable", store=store, error=str(exc))

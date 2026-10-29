@@ -1,15 +1,11 @@
 
-/* var(--color-bg) */
 
-/* padding */
 .header {
     padding-top: calc(var(--header-pad-y) + env(safe-area-inset-top));
-    /* padding */
     padding-left: calc(var(--dock-offset, 0px) + var(--header-pad-x) + env(safe-area-inset-left));
     padding-right: calc(var(--header-pad-x) + env(safe-area-inset-right));
 }
 
-/* padding */
 .screen {
     padding-bottom: env(safe-area-inset-bottom);
 }
@@ -23,9 +19,8 @@
 }
 
 
-/* padding-top: */
+/* there is nothing */
 
-/* position: fixed */
 
 .session-sidebar-panel,
 .config-editor-picker-content {

@@ -8,6 +8,7 @@
   import type { CellProps } from '../../lib/cell';
   import { atLeast } from '../../lib/states';
   import { activity, seeded, auth, type ActivityEntry } from '../../api';
+  import { newestFirst } from '../../api/activity-order';
   import { activity as demoLines } from '../../data/activity';
   import { columns, sourceFullMinPx, rowHeight, ROW_PAD_LEFT, ROW_PAD_RIGHT, ROW_GAP } from './meta';
   import { t } from '../../../lib/i18n/index.svelte';
@@ -56,9 +57,7 @@
   });
 
   const ordered = $derived(
-    [...activity.lines]
-      .filter((line) => showSystem || line.tag !== 'system')
-      .sort((a, b) => b.time.localeCompare(a.time)),
+    newestFirst(activity.lines).filter((line) => showSystem || line.tag !== 'system'),
   );
 
   const showSystem = $derived(widget.setting('showSystem'));
@@ -96,6 +95,7 @@
     return showsSeconds ? value : value.slice(0, 5);
   }
 
+  /* there is nothing */
   const notice = $derived.by((): string | null => {
     if (ordered.length > 0) return null;
     if (!seeded.loaded) return t('opscenter.activity.loading');

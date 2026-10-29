@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager
-from typing import AsyncIterator, Dict
+from contextlib import AbstractAsyncContextManager, asynccontextmanager, nullcontext
+from typing import Any, AsyncIterator, Dict, Optional
 
 
 class NameLocks:
@@ -28,3 +28,8 @@ class NameLocks:
     def held_names(self) -> int:
         return len(self._locks)
 
+
+
+def hold_adopt(manager: Any, name: Optional[str]) -> AbstractAsyncContextManager:
+    locks = getattr(manager, "_adopt_locks", None)
+    return locks.hold(name) if isinstance(locks, NameLocks) and name else nullcontext()

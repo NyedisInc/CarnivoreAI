@@ -37,7 +37,7 @@ async def paste_send(ctx: CplugContext, run: Runner, key: str, name: Optional[st
     text = lead + service.send_text(key, name, since, changed, items, replies)
     if told_at is None:
         told_at = await run(service.store(ctx).current_cursor)
-    told = service.told_lists(ctx, key, changed) if aggregate else [key]
+    told = await run(lambda: service.told_lists(ctx, key, changed)) if aggregate else [key]
     pairs = [(k, c) for k, _n, c in changed] if changed else [(key, since or 0)]
     delivery_id = await swarm_tell.record_before_paste(ctx, run, target, key, pairs, bool(lead))
     try:

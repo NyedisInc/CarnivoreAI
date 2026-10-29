@@ -1,4 +1,3 @@
-/* <script */
 import type { CellProps } from '../../lib/cell';
 import { activeTerminalSessionId } from '../../lib/active-terminal';
 import { pickState } from '../../lib/states';
@@ -60,7 +59,6 @@ export interface WidgetHandle<D extends WidgetDefinition = WidgetDefinition> {
 
 export const WIDGET_ACTION_SOURCE = 'widget';
 
-/* <script */
 export function defineWidget<const A extends readonly WidgetActionSpec[], const S extends Readonly<Record<string, WidgetSettingValue>> = Readonly<Record<never, WidgetSettingValue>>, const T extends StateSpec = StateSpec>(
   spec: WidgetSpec<A, S, T>,
 ): WidgetDefinition<A, S, T> {

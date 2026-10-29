@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from src.core.mcp import tools  # noqa: E402
 from src.core.mcp.caller import AgentCaller  # noqa: E402
 
-OTHER = "b33d7b05-a5e2-4173-8904-e48ff9b18778"
+OTHER = "87654321-dddd-eeee-ffff-ba0987654321"
 SECRET = "ghp_" + "aB3xY9" * 6
 PANE = AgentCaller("ses_1", "cloude_a", "ses_1")
 

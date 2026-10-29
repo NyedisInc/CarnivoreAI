@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """testsrv - a pool of always-available, isolated validation servers.
 
+A worker that needs a real browser check against unreleased code LEASES a
+ready slot instead of building a server: each slot is a real
+``python3 -m src.main`` on a fixed port (8101, 8102, ...), bound 0.0.0.0
+with TOTP login kept, and isolated by construction from the live install:
+
   - its own tmux socket, ``cloude-test<N>`` (``session.tmux_socket_name``);
     the live ``cloude`` socket is refused outright;
   - its own state dir, config.json, ``.totp_paired`` sentinel and private
-    HOME under ``worktrees/.testsrv/slot<N>/`` (0700, outside Dropbox);
+    HOME under ``~/dev-worktrees/.testsrv/slot<N>/`` (0700, outside Dropbox);
   - its secrets only in the slot's own ``.env`` (0600), read through
     ``CARNIVORE_SETTINGS_ENV_FILE``, never in the process environment;
   - a whitelisted process environment, so no inherited ``CARNIVORE_*`` /
@@ -22,6 +27,8 @@ Commands (full guide: docs/test-server-pool.md):
                                  legacy relay token off) and prints
                                  TESTSRV_LINK_HOST
   testsrv point [--slot N] WT    restart the slot's server from worktree WT
+  testsrv unpair [--slot N]      restart the slot UNPAIRED (no .totp_paired, no sign-in) to
+                                 see the first-run setup screen; reset and release undo it
   testsrv reset [--slot N]       wipe the slot's app state and tmux sessions
   testsrv release [--slot N]     give the slot back (the server keeps running)
   testsrv status                 one line per slot
@@ -54,14 +61,14 @@ from pathlib import Path
 from typing import Optional
 
 REPO = Path(__file__).resolve().parents[1]
-ROOT = Path("worktrees/.testsrv").expanduser()
+ROOT = Path("~/dev-worktrees/.testsrv").expanduser()
 SLOTS = int(os.environ.get("TESTSRV_SLOTS", "6"))
 BASE_PORT = 8100
 LEASE_MAX_S = 3600
 LIVE_SOCKET = "cloude"
 FORBIDDEN_PORTS = (5000, 8000)
 ENV_PASS = ("PATH", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "USER", "LOGNAME", "SHELL")
-WIPED = ("state", "home", "work", "logs", "config.json*", ".totp_paired", "link-mode", "bonjour-mode",
+WIPED = ("state", "home", "work", "logs", "config.json*", ".totp_paired", "link-mode", "bonjour-mode", "unpaired-mode",
          "auth-state.json", "server.log")
 SHELLS = ("sh", "bash", "zsh", "dash")
 LE_STAGING = "https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -92,6 +99,7 @@ class Slot:
         self.worktree_file = self.dir / "worktree"
         self.link_marker = self.dir / "link-mode"
         self.bonjour_marker = self.dir / "bonjour-mode"
+        self.unpaired_marker = self.dir / "unpaired-mode"
         self.device_key = self.dir / "state" / "relay-device.key"
 
 
@@ -181,7 +189,7 @@ def provision(slot: Slot) -> None:
         cfg["relay"] = relay_block(slot, False)
         write_private(slot.config, json.dumps(cfg, indent=2) + "\n")
     sentinel = slot.dir / ".totp_paired"
-    if not sentinel.exists():
+    if not sentinel.exists() and not slot.unpaired_marker.exists():
         write_private(sentinel, "")
 
 
@@ -253,7 +261,8 @@ def child_env(slot: Slot) -> dict:
     env = {k: os.environ[k] for k in ENV_PASS if k in os.environ}
     home = str(slot.dir / "home")
     env.update(HOME=home, ZDOTDIR=home, CARNIVORE_SETTINGS_ENV_FILE=str(slot.env_file),
-               CARNIVORE_LEDGER_KEEPALIVE="0")
+               CARNIVORE_LEDGER_KEEPALIVE="0",
+               CARNIVORE_TESTSRV_LEASE_DIR=str(slot.lease))
     if slot.bonjour_marker.exists():
         env["CARNIVORE_TESTSRV_BONJOUR"] = f"testslot_{slot.n}"
     return env
@@ -363,7 +372,7 @@ def auth_valid(slot: Slot) -> bool:
 
 
 def login(slot: Slot) -> None:
-    if auth_valid(slot):
+    if slot.unpaired_marker.exists() or auth_valid(slot):
         return
     secret = env_value(slot.env_file, "TOTP_SECRET")
     used_file = slot.dir / "totp-used.json"
@@ -453,6 +462,8 @@ def cmd_lease(args: argparse.Namespace) -> int:
         if not try_acquire(slot, holder):
             continue
         try:
+            if clear_unpaired_mode(slot):
+                stop(slot)
             changed = apply_link_config(slot, args.link)
             changed = apply_bonjour_mode(slot, args.bonjour) or changed
             if changed:
@@ -472,6 +483,37 @@ def cmd_lease(args: argparse.Namespace) -> int:
         return 0
     print("no free slot; see: scripts/testsrv status", file=sys.stderr)
     return 3
+
+
+def rotate_totp_secret(slot: Slot) -> None:
+    fresh = base64.b32encode(secrets.token_bytes(20)).decode()
+    lines = slot.env_file.read_text().splitlines()
+    if not any(ln.startswith("TOTP_SECRET=") for ln in lines):
+        raise Refused(f"slot {slot.n}: {slot.env_file} has no TOTP_SECRET line to rotate; the secret an unpaired "
+                      "session showed would stay live")
+    lines = [f"TOTP_SECRET={fresh}" if ln.startswith("TOTP_SECRET=") else ln for ln in lines]
+    write_private(slot.env_file, "\n".join(lines) + "\n")
+
+
+def clear_unpaired_mode(slot: Slot) -> bool:
+    had = slot.unpaired_marker.exists()
+    slot.unpaired_marker.unlink(missing_ok=True)
+    if had and slot.env_file.exists():
+        rotate_totp_secret(slot)
+    return had
+
+
+def cmd_unpair(args: argparse.Namespace) -> int:
+    slot = Slot(args.slot)
+    require_lease(slot)
+    worktree = pointed(slot)
+    stop(slot)
+    write_private(slot.unpaired_marker, "")
+    for leftover in (slot.dir / ".totp_paired", slot.auth):
+        leftover.unlink(missing_ok=True)
+    start(slot, worktree, args.timeout)
+    print(f"TESTSRV_UNPAIRED=1\nTESTSRV_BASE={slot.base}")
+    return 0
 
 
 def cmd_point(args: argparse.Namespace) -> int:
@@ -502,6 +544,7 @@ def cmd_reset(args: argparse.Namespace) -> int:
     t0 = time.monotonic()
     worktree = pointed(slot)
     stop(slot)
+    clear_unpaired_mode(slot)
     tmux(slot, "kill-server")
     for pattern in WIPED:
         for p in slot.dir.glob(pattern):
@@ -518,6 +561,8 @@ def cmd_release(args: argparse.Namespace) -> int:
         link_teardown(slot)
     if slot.bonjour_marker.exists() and lease_info(slot) is not None:
         apply_bonjour_mode(slot, False)
+        stop(slot)
+    if lease_info(slot) is not None and clear_unpaired_mode(slot):
         stop(slot)
     if slot.lease.is_dir():
         with open(slot.dir / ".lease.lock", "a") as lock:
@@ -562,14 +607,14 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     env_slot = int(os.environ["TESTSRV_SLOT"]) if os.environ.get("TESTSRV_SLOT") else None
-    for name, fn in (("lease", cmd_lease), ("point", cmd_point), ("reset", cmd_reset),
+    for name, fn in (("lease", cmd_lease), ("point", cmd_point), ("reset", cmd_reset), ("unpair", cmd_unpair),
                      ("release", cmd_release), ("status", cmd_status), ("down", cmd_down)):
         p = sub.add_parser(name)
         p.set_defaults(fn=fn)
-        if name in ("point", "reset", "release", "down"):
+        if name in ("point", "reset", "unpair", "release", "down"):
             p.add_argument("--slot", type=int, default=env_slot,
                            required=env_slot is None and name != "down")
-        if name in ("lease", "point", "reset"):
+        if name in ("lease", "point", "reset", "unpair"):
             p.add_argument("--timeout", type=float, default=90.0, help="health wait, seconds")
     sub.choices["lease"].add_argument("--pid", type=int, help="holder pid (default: the caller)")
     sub.choices["lease"].add_argument("--link", action="store_true",

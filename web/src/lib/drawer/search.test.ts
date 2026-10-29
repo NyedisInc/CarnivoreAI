@@ -13,12 +13,12 @@ async function makeSandbox(opts: { label?: (row: Record<string, unknown>) => str
 describe('the drawer search', () => {
     it('matchesRow: case-insensitive substring on the display and tmux names, the project and the folder', async () => {
         const { Search } = await makeSandbox({ label: (row) => (row.label as string) || null });
-        const row = { name: 'cloude_example_app', label: 'Example App', project_name: 'Studio-UI' };
-        expect(Search.matchesRow(row, Search.normalize('exam')), 'matches the display name').toBe(true);
-        expect(Search.matchesRow(row, Search.normalize('EXAMPLE_APP')), 'matches the tmux handle without its prefix, case-insensitively').toBe(true);
-        expect(Search.matchesRow(row, Search.normalize('studio')), 'a project name matches').toBe(true);
-        expect(Search.matchedField(row, Search.normalize('studio'))).toBe('project');
-        expect(Search.matchedField(row, Search.normalize('exam'))).toBe('name');
+        const row = { name: 'cloude_lantern_app', label: 'Lantern App', project_name: 'Atlas-UI' };
+        expect(Search.matchesRow(row, Search.normalize('lante')), 'matches the display name').toBe(true);
+        expect(Search.matchesRow(row, Search.normalize('LANTERN_APP')), 'matches the tmux handle without its prefix, case-insensitively').toBe(true);
+        expect(Search.matchesRow(row, Search.normalize('atlas')), 'a project name matches').toBe(true);
+        expect(Search.matchedField(row, Search.normalize('atlas'))).toBe('project');
+        expect(Search.matchedField(row, Search.normalize('lante'))).toBe('name');
         const placed = { ...row, working_dir: '/Users/x/dev/billing-api' };
         expect(Search.matchesRow(placed, Search.normalize('billing')), 'a folder matches').toBe(true);
         expect(Search.matchedField(placed, Search.normalize('billing'))).toBe('folder');
@@ -30,8 +30,8 @@ describe('the drawer search', () => {
 
     it('matchesRow falls back to the tmux name when SessionLabel is absent', async () => {
         const { Search } = await makeSandbox({});
-        const row = { name: 'cloude_orchard', label: 'ignored, no SessionLabel loaded', project_name: null };
-        expect(Search.matchesRow(row, Search.normalize('orchard'))).toBe(true);
+        const row = { name: 'cloude_argent', label: 'ignored, no SessionLabel loaded', project_name: null };
+        expect(Search.matchesRow(row, Search.normalize('argent'))).toBe(true);
     });
 
     it("a saved Layout matches on its members' names (D42)", async () => {
@@ -52,28 +52,28 @@ describe('the drawer search', () => {
 
     it('setQuery normalizes (trims, lowercases) before comparing and storing', async () => {
         const { Search } = await makeSandbox({});
-        Search.setQuery('  Example  ');
-        expect(Search.getQuery()).toBe('example');
+        Search.setQuery('  Lantern  ');
+        expect(Search.getQuery()).toBe('lantern');
     });
 
     it('setQuery repaints through the drawer controller on a real change', async () => {
         const { Search, Win } = await makeSandbox({});
         let calls = 0;
         Win.SessionSidebar = { repaint: () => { calls += 1; } };
-        Search.setQuery('orchard');
+        Search.setQuery('argent');
         expect(calls).toBe(1);
-        expect(Search.getQuery()).toBe('orchard');
+        expect(Search.getQuery()).toBe('argent');
     });
 
     it('setQuery is a no-op, and skips the repaint, when the normalized value is unchanged', async () => {
         const { Search, Win } = await makeSandbox({});
         let calls = 0;
         Win.SessionSidebar = { repaint: () => { calls += 1; } };
-        Search.setQuery('Orchard');
+        Search.setQuery('Argent');
         expect(calls).toBe(1);
-        Search.setQuery('orchard');
+        Search.setQuery('argent');
         expect(calls, 'retyping the same text (or an input firing twice) must not force a second repaint').toBe(1);
-        Search.setQuery('  ORCHARD  ');
+        Search.setQuery('  ARGENT  ');
         expect(calls, 'whitespace/case differences that normalize the same must not force a repaint either').toBe(1);
     });
 
@@ -87,8 +87,8 @@ describe('the drawer search', () => {
         const { Search: withI18n } = await makeSandbox({
             i18n: { t: (key: string, params: unknown) => `${key}:${JSON.stringify(params)}` },
         });
-        expect(withI18n.noMatchesHtml('orchard')).toMatch(/drawer\.search\.no_matches/);
-        expect(withI18n.noMatchesHtml('orchard')).toMatch(/"query":"orchard"/);
+        expect(withI18n.noMatchesHtml('argent')).toMatch(/drawer\.search\.no_matches/);
+        expect(withI18n.noMatchesHtml('argent')).toMatch(/"query":"argent"/);
 
         const { Search: bare } = await makeSandbox({});
         const html = bare.noMatchesHtml('<script>');

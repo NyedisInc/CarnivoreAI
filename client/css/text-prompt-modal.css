@@ -1,45 +1,3 @@
-/*
- * The text-prompt modal (currently "new group...", any future single-field
- * prompt built on client/js/text-prompt-modal.js) in the Military Terminal
- * look, issue #597.
-
- *   title row + label  web/src/lib/ledger/ledger-chrome.css `.pl-titlebar`,
- *                      `.pl-title`, `.pl-label`
- *   field              web/src/lib/catalog/CatalogToolbar.svelte
- *                      `.bar__input` (hairline rule, 13px, 7px 10px) and its
- *                      focus: the shared brightened edge (focus.css)
- *   cancel             `.restart-picker`'s cancel: the shared
- *                      `.modal-btn.modal-btn-secondary` from styles.css,
- *                      sized exactly like the picker's own footer buttons
- *                      (7px 16px, 13px) - a quiet 1px outline, no ornament.
- *   confirm ("create") the shared `.modal-btn-confirm` below, built to the
- *                      same shape as styles.css's `.modal-btn-danger` (a
- *                      tinted dark interior plus a bright 1px outline, the
- *                      picker's "kill and restart" look) but in the accent
- *                      (confirm) token family, never the destructive one -
- *                      creating a group destroys nothing. `.modal-btn-danger`
- *                      lives in styles.css, which is at its line-count cap
- *                      (CLAUDE.md), so its confirm counterpart is declared
- *                      here instead, unscoped, as the first consumer.
- *   focus              the picker's `.modal-btn:focus-visible`: 2px
- *                      `--oc-cyan`, offset 2px
- *   phone target        the picker's `.modal-btn` at `(pointer: coarse),
- *                      (max-width: 600px)`: 44px
-
- * No corner brackets, no targeting-bracket ornament: neither of the picker's
- * buttons wears one and neither does this dialog's now.
-
- * The picker's rules are scoped under `.restart-picker`, so they cannot be
- * reached from this dialog; the recipe is restated here, scoped under
- * `.text-prompt-modal` (buttons excepted, see above), and the shared
- * `.modal-*` classes stay on the markup so the chassis in
- * client/css/styles.css still supplies the overlay, the panel ground and its
- * hairline. No other legacy modal is touched.
-
- * EVERY COLOUR IS AN --oc-* TOKEN. web/src/opscenter/tokens.css re-derives
- * that palette from the active theme's --color-* manifest, so this dialog
- * repaints under every theme and holds no colour literal of its own.
- */
 
 .text-prompt-modal .modal-content {
     max-width: 380px;
@@ -50,14 +8,8 @@
 }
 
 .text-prompt-modal__head {
-    display: flex;
-    align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: var(--oc-titlerow-h, 37px);
-    padding: 0 14px;
-    background: var(--oc-ground-titlerow);
-    box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
 }
 
 .text-prompt-modal__verb {

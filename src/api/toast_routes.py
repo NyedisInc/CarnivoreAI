@@ -81,6 +81,22 @@ async def list_toast_history(
     offset: int = Query(0, description="How many records to skip."),
 ) -> Dict[str, Any]:
     """Page back through every toast this server run has recorded.
+
+    Description: read-only scrollback for punchlist item 8, so a
+        notification that was raised while the owner was elsewhere can
+        still be found afterwards. Dismissed and undismissed records are
+        both included - the whole point is to see what was missed - and
+        each carries ``acknowledged`` so the client can mark which.
+    Args:
+        request: the incoming request, for ``app.state``.
+        limit: page size; clamped into range rather than rejected.
+        offset: paging cursor. Negative is treated as 0.
+    Returns:
+        ``{'toasts': [...], 'total': int, 'limit': int, 'offset': int,
+        'next_offset': int | None, 'summary': {...}, 'storage': str}``.
+        ``next_offset`` is None on the last page, so a client advances by
+        reading a field rather than re-deriving the boundary arithmetic.
+        ``summary`` counts the WHOLE set, not the page.
     """
     records = toast_history.collect_toasts(_buckets(request), unacked_only=False)
     capped = toast_history.clamp_limit(limit)

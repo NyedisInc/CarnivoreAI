@@ -45,7 +45,6 @@ function figureOf(window: ReturnType<typeof shortWindow>, nowMs: number): Glance
   return { usedPct, pacerPct, amber, step };
 }
 
-/* active account */
 export function providerGlanceTiles(
   snapshot: LedgerSnapshot | null,
   nowMs: number,

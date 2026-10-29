@@ -82,6 +82,7 @@
       right: var(--oc-space-1);
     }
 
+    /* the same drawing */
     .oc-resize-guide-chevron--flip :global(svg) {
       transform: rotate(180deg);
     }

@@ -47,6 +47,7 @@ def _peer_only(principal: Principal) -> Principal:
 
 @router.post("/exchange")
 async def exchange(body: ExchangeBody, request: Request, principal: Principal = Depends(_require_settings)) -> JSONResponse:
+    """Merge the caller's bucket of its global map and answer with this computer's newer entries (or no_change)."""
     _peer_only(principal)
     service = get_service(request.app.state)
     try:

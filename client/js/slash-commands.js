@@ -13,6 +13,7 @@ class SlashCommandsModal {
         this.isOpen = false;
         this.onCommandSelect = null;
         this.projectPath = null;
+        this._initToken = 0;
 
         this.filter = new window.SlashCommandFilter();
     }
@@ -21,11 +22,15 @@ class SlashCommandsModal {
         console.log('[SlashCommands] Initializing (NOT creating modal yet)');
         this.onCommandSelect = onCommandSelect;
         this.projectPath = projectPath || null;
+        const token = ++this._initToken;
 
-        await Promise.all([
+        const [, groups] = await Promise.all([
             this._loadCommonCommands(),
-            this._loadGroups(),
+            this._fetchGroups(projectPath || null),
         ]);
+        if (token !== this._initToken) return;
+        this._setGroups(groups);
+        if (this.modal) this._refreshList();
 
         this.loaded = true;
         console.log('[SlashCommands] Initialization complete (modal will be created on demand)');
@@ -88,15 +93,20 @@ class SlashCommandsModal {
         });
     }
 
-    async _loadGroups() {
+    async _fetchGroups(projectPath) {
         try {
-            const response = await window.API.getSlashCommands(this.projectPath);
-            this.groups = Array.isArray(response.groups) ? response.groups : [];
-            console.log('[SlashCommands] Fetched', this.groups.length, 'command groups');
+            const response = await window.API.getSlashCommands(projectPath);
+            const groups = Array.isArray(response.groups) ? response.groups : [];
+            console.log('[SlashCommands] Fetched', groups.length, 'command groups');
+            return groups;
         } catch (error) {
             console.error('[SlashCommands] Failed to fetch slash command groups:', error);
-            this.groups = [];
+            return [];
         }
+    }
+
+    _setGroups(groups) {
+        this.groups = groups;
         this.commandIndex = new Map();
         for (const group of this.groups) {
             for (const cmd of (group.commands || [])) {
@@ -105,7 +115,16 @@ class SlashCommandsModal {
         }
     }
 
-    // display: flex
+    _refreshList() {
+        const list = this.modal.querySelector('#all-commands-list');
+        if (!list) return;
+        list.innerHTML = this.renderAllCommands();
+        this._wireListRows();
+        this.filter.index(this.modal);
+        const filterInput = this.modal.querySelector('#slash-command-filter');
+        this.filter.apply(filterInput ? filterInput.value : '');
+    }
+
 
     createModal() {
         console.log('[SlashCommands] createModal() called');
@@ -213,6 +232,26 @@ class SlashCommandsModal {
             .replace(/'/g, '&#39;');
     }
 
+    _wireListRows() {
+        const list = this.modal.querySelector('#all-commands-list') || this.modal;
+        const commandItems = list.querySelectorAll('.command-item');
+        commandItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const command = item.dataset.command;
+                this.selectCommand(command);
+            });
+        });
+
+        window.SlashFavorites.wire(list, (payload) => this._applyFavorites(payload));
+
+        list.querySelectorAll('.command-more').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._toggleFullDescription(btn);
+            });
+        });
+    }
+
     attachEventListeners() {
         if (!this.modal) return;
 
@@ -227,22 +266,7 @@ class SlashCommandsModal {
         }
 
 
-        const commandItems = this.modal.querySelectorAll('.command-item');
-        commandItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const command = item.dataset.command;
-                this.selectCommand(command);
-            });
-        });
-
-        window.SlashFavorites.wire(this.modal, (payload) => this._applyFavorites(payload));
-
-        this.modal.querySelectorAll('.command-more').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this._toggleFullDescription(btn);
-            });
-        });
+        this._wireListRows();
 
         const filterInput = this.modal.querySelector('#slash-command-filter');
         if (filterInput) {

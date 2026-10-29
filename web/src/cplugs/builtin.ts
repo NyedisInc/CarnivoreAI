@@ -1,6 +1,6 @@
 import type { CplugWeb } from './sdk';
 
-export const ORDER_HINT: readonly string[] = ['huddle', 'unread', 'share', 'save', 'flow', 'reviewboard', 'tmdevtools', 'crate', 'devwidgetlab'];
+export const ORDER_HINT: readonly string[] = ['huddle', 'unread', 'share', 'save', 'flow', 'reviewboard', 'publicboard', 'tmdevtools', 'crate', 'devwidgetlab'];
 
 const ENTRIES = import.meta.glob('./*/index.ts', { eager: true }) as Record<string, Record<string, unknown>>;
 const PLATFORM_FOLDERS: ReadonlySet<string> = new Set(['sdk', 'host']);

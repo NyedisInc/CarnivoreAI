@@ -23,10 +23,10 @@ from src.core.session_kind import (
 SCHEDULER_ENQUEUE = {
     "type": "queue-operation",
     "operation": "enqueue",
-    "sessionId": "00000000-0000-4000-8000-000000000001",
+    "sessionId": "94d7ab22-f546-46a6-9e1c-0002ca583503",
     "content": (
-        '<scheduled-task name="nightly-job" '
-        'file="/Users/x/.claude/scheduled-tasks/nightly-job/SKILL.md">\n'
+        '<scheduled-task name="hirsch-9pm-reboots" '
+        'file="/Users/x/.claude/scheduled-tasks/hirsch-9pm-reboots/SKILL.md">\n'
     ),
 }
 
@@ -69,7 +69,7 @@ PLAN_USER = {
 OLD_USER = {
     "type": "user",
     "userType": "external",
-    "cwd": "/Users/x/Development/app",
+    "cwd": "/Users/x/Development/CloudeCode",
     "sessionId": "0f0f",
     "version": "2.1.39",
     "isSidechain": False,
@@ -175,6 +175,6 @@ def test_the_vocabulary_is_exactly_three_words():
 def test_a_title_alone_would_miss_this_scheduler_run():
     verdict = classify_records([SCHEDULER_ENQUEUE, SCHEDULER_USER])
     assert verdict.kind == KIND_AUTOMATED, (
-        "the row whose title reads 'Nightlybackup completion proof' is a "
+        "the row whose title reads 'Urbackup completion proof' is a "
         "scheduler run and must be classified from the tag, not the title"
     )

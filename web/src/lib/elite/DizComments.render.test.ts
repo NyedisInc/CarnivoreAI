@@ -11,7 +11,7 @@ const i18n = createI18n({ locale: 'en' }) as { t(key: string, params?: Record<st
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
 const ITEMS: CatalogItem[] = [
-    { id: 'acme/deploy', name: 'deploy', kind: 'skill', publisher: 'acme', latest: '1.0', card: { title: 'Deploy Runner' }, versions: [] },
+    { id: 'alex/deploy', name: 'deploy', kind: 'skill', publisher: 'alex', latest: '1.0', card: { title: 'Deploy Runner' }, versions: [] },
     { id: 'zoe/dusk', name: 'dusk', kind: 'theme', publisher: 'zoe', latest: '1.0', card: { title: 'Dusk' }, versions: [] },
     { id: 'kim/lint', name: 'lint', kind: 'skill', publisher: 'kim', latest: '1.0', card: { title: 'Lint Rules' }, versions: [] },
 ] as unknown as CatalogItem[];
@@ -21,6 +21,7 @@ const EXISTING: Comment[] = [
     { id: 'c2', body: 'needs a readme', author: { handle: 'kim' } },
 ] as unknown as Comment[];
 
+/** A catalog host that answers the reads the board makes and refuses the rest. */
 function catalogHost(): CatalogHost {
     const refuse = () => Promise.reject(new Error('the test never calls this'));
     return {
@@ -28,7 +29,7 @@ function catalogHost(): CatalogHost {
         refreshIndex: refuse,
         opened: () => Promise.resolve({}),
         listInstalled: () => Promise.resolve({ items: [] }),
-        catalogSession: () => Promise.resolve({ signed_in: true, login: 'acme' }),
+        catalogSession: () => Promise.resolve({ signed_in: true, login: 'harbor' }),
         itemInstalls: refuse,
         installCounts: refuse,
         itemRatings: refuse,
@@ -83,11 +84,11 @@ afterEach(async () => {
 
 describe('Elite Access comment prompt', () => {
     test('shift+M opens the prompt, letters do not move the list, enter posts once and the comment heads the list', async () => {
-        const fresh = { id: 'c3', body: 'ship it', author: { handle: 'acme' } } as unknown as Comment;
+        const fresh = { id: 'c3', body: 'ship it', author: { handle: 'harbor' } } as unknown as Comment;
         const post = vi.fn(() => Promise.resolve({ comment: fresh }));
         await openBoard(post as never);
         const first = selected(elite);
-        expect(first).toBe('acme/deploy');
+        expect(first).toBe('alex/deploy');
         expect(rowsOf(elite)).toHaveLength(2);
         expect(elite.querySelector('.dz-cn')!.textContent).toBe('(2)');
 
@@ -108,7 +109,7 @@ describe('Elite Access comment prompt', () => {
         press('Enter', 'Enter', {}, input);
         await settle(20);
         expect(post).toHaveBeenCalledTimes(1);
-        expect(post).toHaveBeenCalledWith('acme/deploy', { body: 'ship it' });
+        expect(post).toHaveBeenCalledWith('alex/deploy', { body: 'ship it' });
         expect(rowsOf(elite)).toHaveLength(3);
         expect(rowsOf(elite)[0]).toContain('ship it');
         expect(elite.querySelector('.dz-cn')!.textContent).toBe('(3)');

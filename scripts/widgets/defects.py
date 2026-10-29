@@ -1,5 +1,13 @@
 """Sweep every widget for layout defects: every named size, three data shapes, three themes.
 
+Joe (ccsliinc), Task Manager item 51, 2026-10-07: "we are not doing a good job of
+looking for unreadable or overlapping sizes. id like to try to do it in
+testing." The fit check (``scripts/widgets/capture.py``) asks whether a widget
+stays in its box; this asks whether what is in the box can be read. Same
+harness, same fixtures, same themes; the detector is
+``web/src/widget-harness/layout-defects.ts`` (overlap, clipped, ellipsis,
+escape, tiny-text, low-contrast, wrap, no-text).
+
 For every widget the harness publishes (every core manifest and every
 analytics gallery preset), every NAMED size it calls out (``fits.sizes``) on
 the home grid, every data shape (data, empty, stress: ``fixtures/stress.ts``)
@@ -87,7 +95,7 @@ def sweep_widget(page, base: str, widget: dict, themes: list[str], shapes: list[
                 try:
                     render = show(page, widget["key"], shape, ZONE, size["name"], theme)
                     report = defects(page) if not render.error else None
-                except PlaywrightError as exc:  # the widget threw
+                except PlaywrightError as exc:
                     draws.append({**draw, "error": str(exc).splitlines()[0]})
                     return draws
                 if render.error:

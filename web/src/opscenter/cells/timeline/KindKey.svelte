@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { t } from '../../../lib/i18n/index.svelte';
   import { FILTER_KEYS } from './model';
   import type { FilterKey, Filters } from './types';

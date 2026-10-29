@@ -60,9 +60,9 @@ describe('identifiers never split (D28)', () => {
     });
 
     it('keeps a hyphenated name whole and lets a path break only after a slash', () => {
-        const parts = identParts('in the catalog as acme/bad-skill 1.0.0');
-        expect(parts.map((p) => p.text).join('')).toBe('in the catalog as acme/bad-skill 1.0.0');
-        expect(parts.filter((p) => p.tok).map((p) => p.text)).toEqual(['acme/bad-skill']);
+        const parts = identParts('in the catalog as harbor/bad-skill 1.0.0');
+        expect(parts.map((p) => p.text).join('')).toBe('in the catalog as harbor/bad-skill 1.0.0');
+        expect(parts.filter((p) => p.tok).map((p) => p.text)).toEqual(['harbor/bad-skill']);
         expect(parts.every((p) => !p.wbr)).toBe(true);
         expect(identParts('file-2.sh line 17').filter((p) => p.tok).map((p) => p.text)).toEqual(['file-2.sh']);
     });
@@ -70,8 +70,8 @@ describe('identifiers never split (D28)', () => {
 
 describe('X6 round: identifiers, phone targets, fold geometry, step glyph, retry bar', () => {
     it('X6-10: publisher/name is one token with no break, a real path still wraps after a slash, every token is nowrap', () => {
-        const pair = identParts('in the catalog as acme/old-notes 2.0.0');
-        expect(pair.filter((p) => p.tok)).toEqual([{ text: 'acme/old-notes', tok: true, wbr: false }]);
+        const pair = identParts('in the catalog as harbor/old-notes 2.0.0');
+        expect(pair.filter((p) => p.tok)).toEqual([{ text: 'harbor/old-notes', tok: true, wbr: false }]);
         const path = identParts('secret_found in scripts/render.sh');
         expect(path.filter((p) => p.tok).map((p) => p.text)).toEqual(['scripts/', 'render.sh']);
         expect(path.find((p) => p.text === 'scripts/')?.wbr).toBe(true);

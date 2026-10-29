@@ -10,6 +10,7 @@ from src.api.websocket import connection_manager
 from src.core import session_change_notice
 from src.core.swarm import leaders as swarm_leaders
 from src.models import RenameSessionRequest, SessionRenamedMessage
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -70,7 +71,7 @@ async def rename_session_endpoint(
             session_id=session_id,
             reason=str(exc),
         )
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "invalid_request", exc, step="rename_session_endpoint") from exc
 
     logger.info(
         "api_rename_session_request",

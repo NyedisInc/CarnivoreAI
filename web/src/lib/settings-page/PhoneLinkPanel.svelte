@@ -45,6 +45,7 @@
     let busy = $state(false);
     let problem = $state('');
     let note = $state('');
+    let confirmingRevoke = $state<string | null>(null);
     let overLink = $state(false);
 
     const locked = $derived(isAccountLoaded() && !isSignedIn());
@@ -73,7 +74,10 @@
         void closeWindow(fetcher).catch(() => undefined);
     }
 
+    let loading = false;
+
     async function load(): Promise<void> {
+        loading = true;
         try {
             status = await getStatus(fetcher);
             devices = await listDevices(fetcher);
@@ -89,10 +93,14 @@
                 return;
             }
             problem = errorText(error);
+        } finally {
+            loading = false;
         }
     }
     void load();
-    const timer = setInterval(() => void load(), REFRESH_MS);
+    const timer = setInterval(() => {
+        if (!loading && document.visibilityState !== 'hidden') void load();
+    }, REFRESH_MS);
     onDestroy(() => {
         clearInterval(timer);
         if (win) void closeWindow(fetcher, true).catch(() => undefined);
@@ -223,9 +231,18 @@
                     {#each devices as d (d.id)}
                         <ListRow wrap data-pl-device={d.id} primary={d.label}>
                             {#snippet actions()}
-                                <Button variant="danger" size="sm" data-pl="revoke" disabled={busy} onclick={() => void revoke(d.id)}>
-                                    {t('settings.phone_link.revoke')}
-                                </Button>
+                                {#if confirmingRevoke === d.id}
+                                    <Button size="sm" data-pl="revoke-keep" disabled={busy} onclick={() => (confirmingRevoke = null)}>
+                                        {t('settings.phone_link.revoke_keep')}
+                                    </Button>
+                                    <Button variant="danger" size="sm" data-pl="revoke-sure" disabled={busy} onclick={() => { confirmingRevoke = null; void revoke(d.id); }}>
+                                        {t('settings.phone_link.revoke_sure')}
+                                    </Button>
+                                {:else}
+                                    <Button variant="danger" size="sm" data-pl="revoke" disabled={busy} onclick={() => (confirmingRevoke = d.id)}>
+                                        {t('settings.phone_link.revoke')}
+                                    </Button>
+                                {/if}
                             {/snippet}
                             {#snippet below()}
                                 <span>{seenText(d)}</span>

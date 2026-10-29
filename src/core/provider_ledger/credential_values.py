@@ -1,21 +1,3 @@
-"""Coercing the scalars a credential store holds, without ever raising.
-
-The credential readers parse documents two other programs wrote and a
-human may have hand-edited, so every scalar arrives as "whatever was
-there". These helpers turn one of those into a typed value or into
-``None``, and ``None`` always means COULD NOT BE DETERMINED.
-
-**NONE IS NEVER ZERO AND NEVER NOW.** An expiry this app could not read
-is not an expiry that has passed, and a fabricated one would report a
-live account as logged out. So every helper here fails to ``None`` and
-the ladder above it decides what an absent value means.
-
-**THE TWO EPOCH UNITS ARE SEPARATE FUNCTIONS ON PURPOSE.** Claude Code
-writes ``expiresAt`` in MILLISECONDS and a JWT ``exp`` claim is in
-SECONDS. One function taking a unit argument is one call site away from
-putting every Claude expiry in 1970 and reporting every account expired,
-which is a failure that looks like a real finding.
-"""
 
 from __future__ import annotations
 
@@ -59,22 +41,6 @@ def parse_iso(value: Any) -> Optional[datetime]:
 
 
 def jwt_claims(token: Any) -> Dict[str, Any]:
-    """Decode a JWT's claims WITHOUT verifying its signature.
-
-    Description: decode only, which is exactly what Codex's own client
-      does with this token, and the only thing this app could do since it
-      holds no signing key. A token that will not decode answers with NO
-      CLAIMS rather than raising, because a token this app cannot read is
-      one it knows nothing from.
-
-      Sibling readers exist for two specific claims in
-      :mod:`src.core.provider_ledger.codex_usage`
-      (``account_id_from_id_token`` and ``plan_type_from_id_token``);
-      this is the general decode the other claims are read through.
-    Inputs: token (Any) - the JWT, or anything at all.
-    Output: dict - the claim set, empty when it could not be read.
-    Example: jwt_claims("not a jwt")  # {}
-    """
     if not isinstance(token, str):
         return {}
     parts = token.split(".")

@@ -20,6 +20,7 @@ import { BOTTOM_FIELD, follow, keyIn, mountRails, unmountRails } from './rail-te
 import { RAIL_FIELD } from './rail-model';
 import { registerDraftWidget, type DraftSpec } from '../../widget-harness/draft-register';
 
+// jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};

@@ -36,6 +36,7 @@
 
     let scope = $state<InstallScope>(prefill?.scope ?? 'global');
     let projects = $state<ProjectRow[]>([]);
+    /* the current session */
     let projectPath = $state<string | null>(prefill?.projectPath ?? null);
     let preview = $state<InstallPreview | null>(null);
     let choices = $state<InstallPreview['choices']>(null);

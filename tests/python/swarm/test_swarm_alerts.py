@@ -58,7 +58,7 @@ def world(tmp_path, monkeypatch):
     assert ensure_db_migrated(tmp_path).status == "ok"
     with closing(connect(db_path_for(tmp_path), create=False)) as conn:
         a = store.create_agent(conn, slug="loki", rank="feature", job="j", display_name="Loki", repo_dir=str(tmp_path), effort="high")
-        b = store.create_agent(conn, slug="hosta", rank="feature", job="j", display_name="Hosta", repo_dir=str(tmp_path), effort="high")
+        b = store.create_agent(conn, slug="studio", rank="feature", job="j", display_name="Studio", repo_dir=str(tmp_path), effort="high")
     inner = FakeInner()
     thread_port.register(alerts.AlertingPort(inner))
     sent, pushed = [], []
@@ -134,14 +134,14 @@ def test_the_immediate_prefixes_are_the_ones_the_cards_carry():
 async def test_rungs_from_open_cards_and_one_push_across_two_reads(world):
     port, key = thread_port.get(), world.a["thread_key"]
     await port.post_card(key, "done", "report", "finished", "report:1")
-    assert (await roster(world))[world.a["id"]]["alert"] == "routine"
+    assert (await roster(world))[world.a["id"]]["alert"] is None
     await port.post_card(key, "waiting", "naming family", "family: x", "naming:1")
     assert (await roster(world))[world.a["id"]]["alert"] == "priority"
     assert world.sent == []
     await port.post_card(key, "info", "wake failed", "boom", f"{body.WAKE_FAILED_PREFIX}{world.a['id']}:4")
     for _ in range(2):
         got = (await roster(world))[world.a["id"]]
-    assert got["alert"] == "immediate" and got["alert_reason"] == "wake failed"
+    assert got["alert"] == "priority" and got["alert_reason"] == "naming family"
     assert [e.type_id for e in world.sent] == ["swarm.alert"] and world.sent[0].session_ref == "Loki"
     assert (await roster(world))[world.b["id"]]["alert"] is None
 

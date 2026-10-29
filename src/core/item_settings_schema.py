@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
-FIELD_KEY_RE = re.compile(r"^[a-z][a-zA-Z0-9]{0,63}$")
+FIELD_KEY_RE = re.compile(r"^[a-z][a-zA-Z0-9_]{0,63}$")
 
 LABEL_KEY_RE = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_-]+)+$")
 
@@ -66,7 +66,7 @@ def _is_number(value: Any) -> bool:
 def _check_field(key: str, field: Any) -> None:
     where = f"settings.fields.{key}"
     if not FIELD_KEY_RE.match(key):
-        raise SettingsSchemaError(f"{where}: key must be camelCase letters and digits")
+        raise SettingsSchemaError(f"{where}: key must be letters, digits and underscores, starting with a lowercase letter")
     if not isinstance(field, dict):
         raise SettingsSchemaError(f"{where} must be an object")
     label = field.get("labelKey")

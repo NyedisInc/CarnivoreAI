@@ -25,9 +25,7 @@ LEVEL_BY_ENTRYPOINT: Dict[str, str] = {
 KIND_CLEAR: str = "clear"
 KIND_FORK: str = "fork"
 KIND_RESUME: str = "resume"
-# could not be read
 KIND_SWITCH: str = "switch"
-# conversation id
 KIND_COMPACT_CONTINUE: str = "compact_continue"
 KIND_SUBAGENT: str = "subagent"
 KIND_SPAWNED_BY: str = "spawned_by"
@@ -71,6 +69,7 @@ MILESTONE_SOURCES: Tuple[str, ...] = (SOURCE_PIPELINE, SOURCE_JSONL_SCAN, SOURCE
 
 COMPACT_SUBTYPE: str = "compact_boundary"
 SCAN_CHUNK_BYTES: int = 4 * 1024 * 1024
+RESUME_ANCHOR_BYTES: int = 4096
 HEAD_BYTES: int = 65536
 HEAD_RECORDS: int = 40
 SUBAGENT_TOOLS: Tuple[str, ...] = ("Task", "Agent")

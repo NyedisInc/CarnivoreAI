@@ -2,7 +2,6 @@
 @layer components {
 :root {
     --sidebar-dock-w: min(320px, 85vw);
-    /* padding */
     --drawer-field-h: 24px;
     --drawer-bar-h: calc(var(--drawer-field-h) + 2 * var(--oc-space-1) + var(--oc-border));
 }
@@ -69,7 +68,6 @@
     display: flex;
     flex-direction: column;
     transform: translateX(-100%);
-    /*  hidden  display: none */
     visibility: hidden;
     transition: transform 160ms ease, visibility 0s linear 160ms;
 }
@@ -81,15 +79,6 @@
 }
 
 
-/* padding */
-/* padding: 0 }`
- * (home-bar.css) and `.header { padding-left }` (ios-chrome.css) are still
- * unlayered, so the docked `padding-left` written here for those two
- * selectors LOST to them after design system slice 5 wrapped this file: the
- * home screen and its drawer-side content slid under the docked drawer
- * ("the homepage is not resizing. its falling
- * under the drawer"). A custom property is not a property those rules set,
- * so it cannot lose; */
 body.session-sidebar-pinned {
     --dock-offset: var(--sidebar-dock-w);
 }
@@ -107,7 +96,6 @@ body.session-sidebar-pinned .session-sidebar-panel {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* padding */
     padding: var(--oc-space-1) var(--oc-space-4);
     border-bottom: 1px solid var(--oc-line-faint);
     flex-shrink: 0;
@@ -118,6 +106,7 @@ body.session-sidebar-pinned .session-sidebar-panel {
     flex-shrink: 0;
 }
 
+/* the filter box */
 .session-sidebar-scroll {
     display: contents;
 }
@@ -137,23 +126,18 @@ body.session-sidebar-pinned .session-sidebar-panel {
         overflow-y: visible;
     }
 
-    /*  hidden  */
     .session-sidebar-scroll:has(> .session-sidebar-list[hidden]) {
         display: none;
     }
 }
 
-/* `display: flex` on the list, the filter box and the stats would otherwise
- * beat the user agent's `[hidden] { display: none }`, so the `[hidden]` rule
- * here is load bearing: `applyDrawerTab` hides them while another drawer
- * tab's body (edit layout) shows. */
+/* the filter box */
 .session-sidebar-list[hidden],
 .session-sidebar-search[hidden],
 .session-sidebar-stats[hidden] {
     display: none;
 }
 
-/* width: auto */
 .session-sidebar-brand {
     display: inline-flex;
     align-items: center;
@@ -197,29 +181,10 @@ body.session-sidebar-pinned .session-sidebar-panel {
 }
 
 .session-sidebar-heading .session-sidebar-brand {
-    flex-shrink: 1;
-    min-width: 0;
-}
-
-.session-sidebar-heading .session-sidebar-brand img {
-    max-width: 100%;
-}
-
-.session-sidebar-alerts {
-    display: inline-flex;
-    align-items: center;
-    flex: 0 0 auto;
-}
-
-.session-sidebar-alerts:empty {
-    display: none;
-}
-
-.session-sidebar-heading .session-sidebar-brand {
     margin-right: auto;
 }
 
-/* flex: 0 0 auto */
+/* the bottom bar */
 .session-sidebar-list {
     flex: 1;
     display: flex;
@@ -231,7 +196,6 @@ body.session-sidebar-pinned .session-sidebar-panel {
 
 .session-sidebar-list > * {
     flex: 0 0 auto;
-    /* align-items: stretch overflow: hidden; text-overflow: ellipsis */
     min-width: 0;
 }
 
@@ -258,7 +222,6 @@ body.session-sidebar-pinned .session-sidebar-panel {
     flex: 0 0 auto;
 }
 
-/* position: fixed */
 body.oc-layout-editing .session-sidebar-panel--open {
     transform: none;
 }
@@ -274,7 +237,7 @@ body.oc-layout-editing .session-sidebar-panel--open {
     }
 }
 
-/* padding */
+/* on the terminal screen */
 
 .session-sidebar-empty {
     padding: var(--oc-space-5) var(--oc-space-3);

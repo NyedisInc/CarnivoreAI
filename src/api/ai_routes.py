@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.api.error_response import api_error
 from src.api.ai_common import api_errors, connection_view, publish_changed
 from src.api.auth import require_auth
 from src.api.skill_card_art_backfill import queue_missing as queue_card_art
@@ -140,8 +141,8 @@ async def delete_connection(connection_id: str, request: Request,
     gw = gateway_module.get_gateway()
     try:
         using = await run_in_threadpool(_profiles_using, connection_id)
-    except (LaunchProfileError, ValueError) as exc:  # could not
-        raise HTTPException(503, {"error": "usage_unknown", "detail": f"which launch profiles use this connection could not be read: {exc}"})
+    except (LaunchProfileError, ValueError) as exc:
+        raise api_error(503, "byoai_usage_unknown", exc, connection=connection_id) from exc
     if using:
         names = ", ".join(f"{p.label} ({p.id})" for p in using)
         raise HTTPException(409, {"error": "in_use", "profiles": [{"id": p.id, "label": p.label} for p in using],
@@ -180,6 +181,9 @@ async def test_connection(connection_id: str, body: TestBody) -> Dict[str, Any]:
 
 @router.get("/connections/{connection_id}/models")
 async def connection_models(connection_id: str, refresh: bool = False, cached_only: bool = False) -> Dict[str, Any]:
+    """The connection's models (cached in byoai.db; ``refresh=true`` asks the provider again;
+    ``cached_only=true`` never asks it and answers an empty list on a cache miss). ``recent`` is what this
+    computer already called through the connection, newest first (the picker's "recent")."""
     gw = gateway_module.get_gateway()
     with api_errors(gw):
         fetched_at, models = await gw.list_models(connection_id, refresh=refresh, cached_only=cached_only)
@@ -189,6 +193,8 @@ async def connection_models(connection_id: str, refresh: bool = False, cached_on
 
 @router.get("/features")
 async def list_features() -> Dict[str, Any]:
+    """Every registered feature with the target it is pointed at (null when unset), its ``owner`` (null, or the
+    add-on whose settings choose its AI, with the deep link to that switch) and ``hidden`` (owner's override off)."""
     return await run_in_threadpool(_features_view)
 
 
@@ -211,8 +217,6 @@ async def set_default(capability: str, body: RouteBody, request: Request) -> Dic
     """Point a capability's default at a connection and model, or clear it (``target: null``)."""
     gw = gateway_module.get_gateway()
     await _write(gw, gw.store.set_default, capability, body.target, expected_revision=body.expected_revision)
-    if capability == "chat" and body.target is not None:
-        request.app.state.card_art_backfill = asyncio.create_task(queue_card_art(request.app))
     return _done(request)
 
 

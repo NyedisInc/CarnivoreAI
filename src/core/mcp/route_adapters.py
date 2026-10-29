@@ -60,10 +60,10 @@ class RouteTool:
     local_only: bool = True
     summary: Optional[Callable[[dict, Optional[session_target.SessionTarget]], str]] = None
     precheck: Optional[Callable[[dict, Optional[session_target.SessionTarget]], Awaitable[None]]] = None
+    request_check: Optional[Callable[[Any], None]] = None
     example: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Refuse a spec that could not run. Raises ValueError."""
         if self.gate not in _GATES:
             raise ValueError(f"{self.name}: unknown gate {self.gate!r}")
         if self.gate == ACT and self.summary is None:
@@ -127,6 +127,8 @@ def _handler(spec: RouteTool) -> Callable[[Any, AgentCaller, dict], Awaitable[di
         if spec.precheck is not None:
             await spec.precheck(args, target)
         request = route_request(manager)
+        if spec.request_check is not None:
+            spec.request_check(request)
 
         def run_call() -> Call:
             return Call(route=route_function(spec), request=request, args=args, target=target, session_uuid=uuid)

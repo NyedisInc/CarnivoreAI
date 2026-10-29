@@ -20,7 +20,6 @@
 
     const view = $derived(installsView(body));
 
-    // navigation generation
     $effect(() => {
         const id = itemId;
         body = null;

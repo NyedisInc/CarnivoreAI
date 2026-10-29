@@ -2,16 +2,15 @@
 from __future__ import annotations
 
 import json
-import os
 import threading
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import structlog
 
+from src.core.safe_io.atomic_write import atomic_write_bytes
 from src.config import settings
 from src.core.terminal_background import CONTENT_TYPES
-from src.core.unique_tmp_path import unique_tmp_path
 
 logger = structlog.get_logger()
 
@@ -188,15 +187,4 @@ def _pregenerate_thumbs(kind: str, row_id: int, original: Path) -> None:
 
 
 def atomic_write(target: Path, data: bytes) -> None:
-    target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    tmp = unique_tmp_path(target)
-    try:
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "wb") as handle:
-            handle.write(data)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(str(tmp), str(target))
-    except OSError:
-        tmp.unlink(missing_ok=True)
-        raise
+    atomic_write_bytes(target, data, mode=0o600, parent_mode=0o700)

@@ -22,7 +22,7 @@ afterEach(() => {
     delete (globalThis as Record<string, unknown>).API;
 });
 
-it('is hidden when never chosen, and reading writes nothing', () => {
+it('is hidden when never chosen (Alex (Example-owner), 2026-10-18: off by default), and reading writes nothing', () => {
     const writes: Array<[string, unknown]> = [];
     setDrawerEnv(bridge({}, writes));
     init();

@@ -14,10 +14,10 @@ from tests.python.computers.test_join_doors import _ask, _deps, _door, env  # no
 
 def test_the_door_path_check_accepts_only_the_fed_directory_door(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(join_helper, "fed_dir", lambda: tmp_path)
-    assert join_helper.door_path_ok(str(tmp_path / "door-225fde27.sock"))
-    for bad in (str(tmp_path / "door-1a2b3c4.sock"), str(tmp_path / "x" / "door-225fde27.sock"), "/etc/passwd", str(tmp_path / "door-225FDE27.sock")):
+    assert join_helper.door_path_ok(str(tmp_path / "door-1a2b3c4d.sock"))
+    for bad in (str(tmp_path / "door-1a2b3c4.sock"), str(tmp_path / "x" / "door-1a2b3c4d.sock"), "/etc/passwd", str(tmp_path / "door-1A2B3C4D.sock")):
         assert not join_helper.door_path_ok(bad)
-    assert join_helper.main(["--attach", "--door", "/tmp/door-225fde27.sock"]) == 2
+    assert join_helper.main(["--attach", "--door", "/tmp/door-1a2b3c4d.sock"]) == 2
 
 
 @pytest.mark.asyncio

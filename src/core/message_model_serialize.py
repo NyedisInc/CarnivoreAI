@@ -5,7 +5,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 SERIALIZER_STYLES: Tuple[Tuple[str, Tuple[str, str], bool], ...] = (
     ("compact", (",", ":"), False),
@@ -24,10 +24,6 @@ APPEARANCE_KEYS: Tuple[str, ...] = ("isSidechain", "agentId")
 
 KEY_ORDER_NOT_AN_OBJECT: str = "__not_an_object__"
 
-COMPACT_SUBTYPE_BOUNDARY: str = "compact_boundary"
-COMPACT_SUBTYPE_SUMMARY: str = "isCompactSummary"
-
-
 def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -35,25 +31,6 @@ def sha256_text(text: str) -> str:
 def render_with_style(value: Any, style: str) -> str:
     separators, ensure_ascii = _STYLE_BY_NAME[style]
     return json.dumps(value, separators=separators, ensure_ascii=ensure_ascii)
-
-
-def detect_style(value: Any, original: str) -> Optional[str]:
-    """Find which style, if any, reproduces ``original`` exactly.
-
-    Description: tries each registered style in order and returns the
-      first whose output is byte-identical to the original line. Returns
-      None when none of them do - the third outcome, which the caller
-      must handle by storing the raw line rather than by picking a style
-      that does not actually work.
-    Inputs: value (the parsed JSON value), original (str - the line's
-      exact text, without its trailing newline).
-    Output: str (a style name) or None.
-    Example: detect_style({"a": 1}, '{"a":1}') -> "compact"
-    """
-    for name in STYLE_NAMES:
-        if render_with_style(value, name) == original:
-            return name
-    return None
 
 
 def canonical_json(value: Any) -> str:
@@ -133,41 +110,6 @@ def parse_line(text: str) -> Tuple[str, Any]:
         return "invalid_json", None
 
 
-def scalar_fields(body: Any) -> Dict[str, Any]:
-    empty = {
-        "record_type": None, "role": None, "model": None,
-        "compact_subtype": None, "parent_uuid": None, "ts": None,
-        "origin_session_ref": None, "message_uuid": None,
-        "is_compact_boundary": 0,
-    }
-    if not isinstance(body, dict):
-        return empty
-    inner = body.get("message")
-    inner = inner if isinstance(inner, dict) else {}
-
-    def _s(value: Any) -> Optional[str]:
-        return value if isinstance(value, str) else None
-
-    subtype = _s(body.get("subtype"))
-    if subtype == COMPACT_SUBTYPE_BOUNDARY:
-        compact_subtype = COMPACT_SUBTYPE_BOUNDARY
-    elif body.get("isCompactSummary") is True:
-        compact_subtype = COMPACT_SUBTYPE_SUMMARY
-    else:
-        compact_subtype = None
-    return {
-        "record_type": _s(body.get("type")),
-        "role": _s(inner.get("role")),
-        "model": _s(inner.get("model")),
-        "compact_subtype": compact_subtype,
-        "parent_uuid": _s(body.get("parentUuid")),
-        "ts": _s(body.get("timestamp")),
-        "origin_session_ref": _s(body.get("sessionId")),
-        "message_uuid": _s(body.get("uuid")),
-        "is_compact_boundary": 1 if compact_subtype else 0,
-    }
-
-
 AGENT_REF_PREFIXES: Tuple[str, ...] = ("agent:", "agent-")
 
 _CANONICAL_UUID = re.compile(
@@ -189,17 +131,3 @@ def session_ref_scheme(session_ref: str) -> str:
     if _CANONICAL_UUID.match(session_ref):
         return UUID_SCHEME
     return OPAQUE_SCHEME
-
-
-def split_lines(text: str) -> Tuple[List[str], bool]:
-    if text == "":
-        return [], False
-    has_trailing = text.endswith("\n")
-    body = text[:-1] if has_trailing else text
-    return body.split("\n"), has_trailing
-
-
-def join_lines(lines: Sequence[str], has_trailing_newline: bool) -> str:
-    if not lines:
-        return ""
-    return "\n".join(lines) + ("\n" if has_trailing_newline else "")

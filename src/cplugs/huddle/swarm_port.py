@@ -5,12 +5,16 @@ import asyncio
 from contextlib import closing
 from typing import Any, Callable, Dict, List, Optional
 
-from src.cplugs.huddle import lane, lineage, repeat_card, swarm_stream, phone_mark, rules, service
+import structlog
+
+from src.cplugs.huddle import card_line, lane, lineage, repeat_card, rich_ask, swarm_forms, swarm_stream, phone_mark, rules, service
 from src.cplugs.huddle.cards import reads
 from src.cplugs.huddle.cards.projection import card_shaped
 from src.cplugs.huddle.rules import CLAUDE, JOE
 from src.cplugs.sdk import CplugContext, chat_category
 from src.cplugs.sdk.swarm import Messenger, SwarmError
+
+logger = structlog.get_logger()
 
 CHAT_REF = swarm_stream.CHAT_REF
 CHAT_TEXT = "chat"
@@ -45,7 +49,41 @@ class TaskManagerSwarmPort:
                 thread_key, text, actor=CLAUDE, kind=kind, title=title or None, created_key=rules.SWARM_KEY, swarm_ref=swarm_ref))
         except rules.TaskManagerError as exc:
             raise SwarmError(str(exc)) from exc
+        await self._post_form(int(item["id"]), swarm_ref)
         return int(item["id"])
+
+    async def check_form(self, questions: Any) -> str:
+        try:
+            flat, _parts = swarm_forms.check(questions)
+        except rules.TaskManagerError as exc:
+            raise SwarmError(str(exc)) from exc
+        return flat
+
+    async def stage_form(self, question_id: int, questions: Any) -> None:
+        try:
+            _flat, parts = swarm_forms.check(questions)
+        except rules.TaskManagerError as exc:
+            raise SwarmError(str(exc)) from exc
+        await self._run(lambda: swarm_forms.stage(self._ctx.storage, question_id, parts))
+
+    async def _post_form(self, item_id: int, swarm_ref: str) -> None:
+        head, _, raw = swarm_ref.partition(":")
+        if head != "question" or not raw.isdigit():
+            return
+        storage = self._ctx.storage
+        parts = await self._run(lambda: swarm_forms.take(storage, int(raw)))
+        if parts is None:
+            return
+        form = rich_ask.form_of(parts)
+        if not form:
+            logger.warning("swarm_form_unreadable", question_id=int(raw))
+            return
+        try:
+            await self._run(lambda: self._store().post(item_id, rich_ask.flatten("", form), actor=CLAUDE, kind=rules.QUESTION, parts=parts))
+        except rules.TaskManagerError as exc:
+            logger.warning("swarm_form_not_posted", question_id=int(raw), item=item_id, error=str(exc)[:200])
+            return
+        await self._run(lambda: swarm_forms.drop(storage, int(raw)))
 
     async def _chat_item(self, thread_key: str) -> int:
         def find() -> Optional[int]:
@@ -84,9 +122,10 @@ class TaskManagerSwarmPort:
 
     async def post_traffic(self, thread_key: str, text: str, swarm_ref: str) -> str:
         category = chat_category.category_of_ref(swarm_ref)
+        parts = card_line.parts_for(swarm_ref)
         item_id = await self._chat_item(thread_key)
         posted = await self._run(lambda: self._store().post(item_id, text, actor=CLAUDE, kind="info",
-                                                            author_key=rules.SWARM_KEY, category=category))
+                                                            author_key=rules.SWARM_KEY, category=category, parts=parts))
         return f"huddle:msg:{posted['message']['id']}"
 
     async def mark_phone_sent(self, item_id: int) -> None:
@@ -96,7 +135,7 @@ class TaskManagerSwarmPort:
         if state not in CLOSE_STATES:
             raise ValueError(f"state must be one of {CLOSE_STATES}, not {state!r}")
         if card_shaped(await self._run(lambda: self._store().item(item_id))):
-            raise SwarmError("this item is a swarm card; only the owner moves it to Done")
+            raise SwarmError("this item is a swarm card; it moves to Done through the board or the swarm card tools")
         if state == "flipped":
             title = str((await self._run(lambda: self._store().item(item_id)))["title"] or "")
             name = title.split(": ", 1)[-1] if title.startswith("promoted: ") else title
@@ -150,9 +189,9 @@ class TaskManagerSwarmPort:
 
         await self._run(archive)
 
-    async def read_thread(self, thread_key: str, limit: int) -> List[Dict[str, Any]]:
+    async def read_thread(self, thread_key: str, limit: int, *, cards: bool = True) -> List[Dict[str, Any]]:
         body = await self._run(lambda: self._store().list_items(thread_key))
-        return swarm_stream.entries(body)[-limit:]
+        return swarm_stream.entries(body, cards=cards)[-limit:]
 
     async def tell(self, thread_key: str, session_id: str, text: str, *, message: Messenger) -> Any:
         told_at = await self._run(self._store().current_cursor)

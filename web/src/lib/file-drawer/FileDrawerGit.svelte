@@ -1,5 +1,6 @@
 <script lang="ts">
   import { mount, unmount } from 'svelte';
+  import { Button, List, ListRow } from '../base';
   import Tabs, { panelAttrs } from '../../opscenter/ui/Tabs.svelte';
   import GitDiffView from '../../opscenter/cells/terminal-live/GitDiffView.svelte';
   import { workdirRelative } from '../open-files/paths';
@@ -85,26 +86,29 @@
     {#if shownTab === 'changed'}
       <div class="fdg-panel" {...panelAttrs('fdg', 'changed')} data-git-changes="" data-view={view}>
         {#if view === 'list' && data}
-          <ul class="fdg-list" aria-label={t('git.changes.list')}>
+          <List label={t('git.changes.list')}>
             {#each data.files as file (file.path + ':' + file.index + file.worktree)}
-              <li class="fdg-row" data-kind={file.kind} data-git-tone={GIT_TONES[file.kind]}
+              <ListRow data-git-row="" data-kind={file.kind} data-git-tone={GIT_TONES[file.kind]}
                 title={file.orig_path ? t('git.changes.renamed_from', { path: file.orig_path }) : file.path}>
-                <button type="button" class="fdg-hit" data-git-diff={file.path}
-                  onclick={() => openDiff(file.path)}>
-                  <bdi class="fdg-path">{file.path}</bdi>
-                  {#if file.submodule}<span class="fdg-tag">{t('git.changes.submodule')}</span>{/if}
-                  <span class="fdg-letter" data-git-letter={GIT_LETTERS[file.kind]}
-                    aria-label={t(`git.changes.kind.${file.kind}`)}>{GIT_LETTERS[file.kind]}</span>
-                </button>
-                {#if file.kind !== 'deleted' && data.repo_root}
-                  <button type="button" class="fdg-open" data-git-open={file.path}
-                    aria-label={t('git.changes.open_file', { path: file.path })}
-                    onclick={() => onOpenFile(file.path, data.repo_root ?? '', workdirRelative(file.path, data.repo_root, data.working_dir_real))}>{t('git.changes.open_file_short')}</button>
-                {/if}
-              </li>
+                {#snippet primary()}
+                  <Button variant="row" data-git-diff={file.path} onclick={() => openDiff(file.path)}>
+                    <bdi class="fdg-path" data-git-path="">{file.path}</bdi>
+                    {#if file.submodule}<span class="fdg-tag">{t('git.changes.submodule')}</span>{/if}
+                    <span class="fdg-letter" data-git-letter={GIT_LETTERS[file.kind]}
+                      aria-label={t(`git.changes.kind.${file.kind}`)}>{GIT_LETTERS[file.kind]}</span>
+                  </Button>
+                {/snippet}
+                {#snippet actions()}
+                  {#if file.kind !== 'deleted' && data.repo_root}
+                    <Button variant="quiet" size="sm" data-git-open={file.path}
+                      aria-label={t('git.changes.open_file', { path: file.path })}
+                      onclick={() => onOpenFile(file.path, data.repo_root ?? '', workdirRelative(file.path, data.repo_root, data.working_dir_real))}>{t('git.changes.open_file_short')}</Button>
+                  {/if}
+                {/snippet}
+              </ListRow>
             {/each}
-            {#if data.truncated > 0}<li class="fdg-more" data-git-more="">{t('git.changes.more', { n: data.truncated })}</li>{/if}
-          </ul>
+            {#if data.truncated > 0}<ListRow class="fdg-more" data-git-more="" primary={t('git.changes.more', { n: data.truncated })} />{/if}
+          </List>
         {:else}
           <p class="fdg-note" data-git-note={view} role="status">{t(`git.changes.${view}`)}</p>
         {/if}
@@ -121,33 +125,21 @@
 
     .fdg-panel:focus-visible { outline:none; box-shadow:inset 0 0 0 1px var(--oc-orange); }
 
-    .fdg-list { list-style:none; margin:0; padding:0; }
-
-    .fdg-row { display:flex; align-items:center; gap:2px; min-width:0; }
-
-    .fdg-hit, .fdg-open { display:flex; align-items:center; gap:6px; height:24px; min-height:0; padding:0 6px 0 4px; border:none; border-radius:var(--oc-radius-sm); background:transparent; color:inherit; font:inherit; line-height:16px; text-align:left; cursor:pointer; transform:none; box-shadow:none; }
-
-    .fdg-hit { flex:1 1 auto; min-width:0; }
-
-    .fdg-open { flex:0 0 auto; color:var(--oc-text-dim); }
-
-    .fdg-hit:hover:not(:disabled), .fdg-hit:focus-visible, .fdg-open:hover:not(:disabled), .fdg-open:focus-visible { background:var(--oc-ground-hover); outline:none; transform:none; box-shadow:none; }
-
-    .fdg-hit:focus-visible, .fdg-open:focus-visible { box-shadow:inset 0 0 0 1px var(--oc-orange); }
+    .fdg-panel :global([data-git-diff]) { flex:1 1 auto; min-width:0; flex-wrap:nowrap; padding:0 6px 0 4px; font:inherit; color:inherit; }
 
     .fdg-path { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     .fdg-letter { flex:0 0 auto; min-width:1em; text-align:right; }
 
-    .fdg-row[data-git-tone='green'] .fdg-path, .fdg-row[data-git-tone='green'] .fdg-letter { color:var(--oc-green); }
+    .fdg-panel :global([data-git-tone='green'] :is([data-git-path], [data-git-letter])) { color:var(--oc-green); }
 
-    .fdg-row[data-git-tone='yellow'] .fdg-path, .fdg-row[data-git-tone='yellow'] .fdg-letter { color:var(--oc-yellow); }
+    .fdg-panel :global([data-git-tone='yellow'] :is([data-git-path], [data-git-letter])) { color:var(--oc-yellow); }
 
-    .fdg-row[data-git-tone='coral'] .fdg-path, .fdg-row[data-git-tone='coral'] .fdg-letter { color:var(--oc-coral); }
+    .fdg-panel :global([data-git-tone='coral'] :is([data-git-path], [data-git-letter])) { color:var(--oc-coral); }
 
     .fdg-tag { flex:0 0 auto; color:var(--oc-text-dim); }
 
-    .fdg-note, .fdg-more { margin:0; padding:var(--oc-space-1) 6px; color:var(--oc-text-dim); }
+    .fdg-note, .fdg-panel :global(.fdg-more) { margin:0; padding:var(--oc-space-1) 6px; color:var(--oc-text-dim); }
 
     .fdg-note[data-git-note='unknown'] { color:var(--oc-coral); }
   }

@@ -1,41 +1,4 @@
 #!/usr/bin/env python3
-"""Does the EXTRACTED folder picker still build a working modal, in a real DOM.
-
-WHY A BROWSER AND NOT tests/mini-dom.mjs. The picker builds its body as
-an innerHTML string and then querySelector()s into it. mini-dom does not
-parse innerHTML into a tree, so every assertion would fail on the harness
-rather than on the code - a false FAIL manufactured inside the
-verification step. mini-dom's own header says anything past its surface
-belongs in a real browser. The structural half that node CAN answer
-lives in tests/test_folder_picker_modal.node.mjs.
-
-WHAT IS ASSERTED. Only behaviour the extraction could plausibly have
-broken: that it mounts and renders the listing it is given, that the
-escaper still runs on a hostile directory name (it is an injected
-argument now, not a `this` lookup, so that is the wire most likely to
-have been cut), that an injected escaper is actually preferred over the
-built-in, and that choosing an entry resolves the promise with that path.
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS  - the modal was driven and behaved
-  1  FAIL  - it was driven and misbehaved
-  2  CANNOT DETERMINE - it could not be driven at all (playwright
-             missing, no browser, the tab reported itself hidden, the
-             overlay never mounted). Never a pass.
-
---control loads the module with its escaper forced to the identity
-function, which is the shape the extraction would have had if the escape
-wire were cut, and inverts the verdict so 0 still means good news:
-  0  CONTROL OK     - the unescaped render reproduced, so the escape
-                      assertion is capable of failing
-  1  CONTROL BROKEN - it did not reproduce; that assertion is not
-                      evidence of anything
-  2  CANNOT DETERMINE - as above
-
-playwright is not importable under this project's venv. Run it with an
-interpreter that has it, e.g.
-    /opt/homebrew/bin/python3 scripts/verify_folder_picker.py
-"""
 
 from __future__ import annotations
 

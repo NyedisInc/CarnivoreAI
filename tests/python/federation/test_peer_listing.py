@@ -154,8 +154,8 @@ def test_the_uuid5_and_the_row_survive_a_restart_of_either_mac(macs):
 def _dirty(mac):
     imported = asyncio.run(mac.list_body(as_peer=False))
     mac.leak = [r for r in imported if r.host_key != "local"]
-    mac.leak.append(SessionInfo(session=Session(id="remote:hosta-ssh:ssh1", working_dir="/x", status=SessionStatus.RUNNING),
-                                tmux_session="ssh1", host_key="hosta-ssh"))
+    mac.leak.append(SessionInfo(session=Session(id="remote:studio-ssh:ssh1", working_dir="/x", status=SessionStatus.RUNNING),
+                                tmux_session="ssh1", host_key="studio-ssh"))
 
 
 def test_a_mac_never_reexports_imported_rows_and_the_two_import_guards_each_hold(macs, monkeypatch):

@@ -90,12 +90,6 @@ def check_preview_path(rel: object) -> str:
 
 
 def read_preview(code_root: Path, rel: object) -> Tuple[str, bytes]:
-    """The checked bytes of the declared preview file. Output: (format, bytes). Raises PreviewError.
-
-    Description: ``rel`` must be a plain relative path with an image suffix; no symlink on the way, a regular file inside ``code_root``, opened with
-      ``O_NOFOLLOW | O_NONBLOCK`` after a look (a FIFO must never be opened), read at most one byte past the cap, then :func:`check_preview`.
-    Example: read_preview(Path(code), "preview.png")  # ("png", b"\\x89PNG...")
-    """
     rel = check_preview_path(rel)
     root = Path(code_root)
     node = root

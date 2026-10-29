@@ -58,13 +58,23 @@ import { huddle } from '../../cplugs/huddle/huddle.svelte';
 import { AGGREGATE } from '../../cplugs/huddle/huddle-model';
 import HuddleReply from '../../cplugs/huddle/HuddleReply.svelte';
 import { openAgentDrawerHost } from './drawer-host';
-import { agentDrawer, AGENT_DRAWER_DOCKED_CLASS, AGENT_DRAWER_WIDTH_KEY, closeAgentDrawer, dockBesideTerminal, drawerAnchorLeft, keepsDrawerOpen, widthFromPointer, leftDrawerWidth, setDrawerWidth } from './agent-drawer.svelte';
+import { agentDrawer, AGENT_DRAWER_DOCKED_CLASS, AGENT_DRAWER_WIDTH_KEY, closeAgentDrawer, dockBesideTerminal, drawerAnchorLeft, widthFromPointer, leftDrawerWidth, setDrawerWidth } from './agent-drawer.svelte';
 import { STORAGE_KEY as LEFT_WIDTH_KEY } from '../drawer/resize';
+
+// jsdom has no popover API; the one item menu shows its levels through it (#2613).
+const popoverProto = HTMLElement.prototype as unknown as Record<string, unknown>;
+popoverProto.showPopover ??= function () {};
+popoverProto.hidePopover ??= function () {};
 
 setLocale('en');
 const mounted: object[] = [];
 const settle = async (): Promise<void> => { for (let i = 0; i < 6; i++) { flushSync(); await tick(); await new Promise((r) => setTimeout(r, 0)); } };
 const drawer = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-agent-drawer]');
+const escInside = (): void => {
+  const key = drawer()!.querySelector<HTMLButtonElement>('[data-agent-drawer-close]')!;
+  key.focus();
+  key.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+};
 
 beforeEach(() => {
   document.body.innerHTML = '<div id="huddle-agent-screen"></div><div id="huddle-agent-drawer"></div>';
@@ -108,7 +118,7 @@ describe('the agent drawer', () => {
     await settle();
     expect(drawer()?.getAttribute('data-agent-drawer-width')).toBe('500');
     expect(localStorage.getItem(AGENT_DRAWER_WIDTH_KEY)).toBe('500');
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    escInside();
     await settle();
     expect(drawer()).toBeNull();
     agentDrawer.width = null;
@@ -128,7 +138,7 @@ describe('the agent drawer', () => {
     openAgentPage(7);
     await settle();
     expect(agentPage.id).toBe(7);
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    escInside();
     await settle();
     expect(agentPage.id).toBeNull();
   });
@@ -150,68 +160,52 @@ describe('the agent drawer', () => {
   });
 });
 
-describe('a press outside hides the drawer (2026-10-07; pointerdown since #1404)', () => {
-  const press = (el: Element): void => { el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true })); };
+describe('only Escape inside it or its close key closes the drawer (Alex (Example-owner), 2026-10-27)', () => {
+  const press = (el: Element): void => {
+    el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+    el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    (el as HTMLElement).click();
+  };
 
-  test('outside closes on press (a click alone does not); inside, its menu, a popover it opened and an agent square keep it', async () => {
-    const outside = document.body.appendChild(document.createElement('main'));
-    const popover = document.body.appendChild(document.createElement('div'));
-    popover.setAttribute('role', 'menu');
-    const sidebar = document.body.appendChild(document.createElement('nav'));
-    sidebar.className = 'session-sidebar-panel session-sidebar-panel--open';
-    sidebar.innerHTML = '<button data-swarm-agent="6"><span class="sq"></span></button>';
+  test('an outside press leaves it open; Escape with focus outside leaves it; Escape inside closes; the X closes', async () => {
+    document.body.insertAdjacentHTML('beforeend', '<div id="terminal-screen"><textarea id="t"></textarea></div><main id="elsewhere"></main>');
+    const term = document.getElementById('t') as HTMLTextAreaElement;
     openAgentPage(5);
     await settle();
     const panel = drawer()!;
-    outside.click();
+    press(document.getElementById('elsewhere')!);
+    press(term);
     await settle();
     expect(drawer()).toBe(panel);
-    press(panel.querySelector('[data-agent-drawer-grip]')!);
-    press(popover);
+    term.focus();
+    term.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
     await settle();
     expect(drawer()).toBe(panel);
-    (panel.querySelector('[data-chat-menu]') as HTMLButtonElement).click();
-    await settle();
-    press(panel.querySelector('[data-chat-menu-extra]')!);
-    await settle();
-    expect(drawer()).toBe(panel);
-    press(sidebar.querySelector('.sq')!);
-    openAgentPage(6);
+    const eaten = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    eaten.preventDefault();
+    panel.querySelector<HTMLButtonElement>('[data-agent-drawer-close]')!.focus();
+    panel.dispatchEvent(eaten);
     await settle();
     expect(drawer()).toBe(panel);
-    expect(panel.getAttribute('data-agent-drawer')).toBe('6');
-    press(outside);
+    escInside();
+    await settle();
+    expect(drawer()).toBeNull();
+    openAgentPage(5);
+    await settle();
+    drawer()!.querySelector<HTMLButtonElement>('[data-agent-drawer-close]')!.click();
     await settle();
     expect(drawer()).toBeNull();
   });
 
-  test('a press on a ledger row or a chat crumb marked as an opener keeps the drawer for the in-place switch', async () => {
-    const row = document.body.appendChild(document.createElement('button'));
-    row.setAttribute('data-agent-drawer-opener', '');
-    openAgentPage(5);
-    await settle();
-    press(row);
-    await settle();
-    expect(drawer()).not.toBeNull();
-  });
-
-  test('focus goes back to the opener on Escape or the close key, never on an outside press', async () => {
+  test('focus goes back to the opener on Escape or the close key', async () => {
     const opener = document.body.appendChild(document.createElement('button'));
-    const outside = document.body.appendChild(document.createElement('main'));
     const focus = vi.spyOn(opener, 'focus');
     opener.focus();
     openAgentPage(5);
     await settle();
     focus.mockClear();
-    press(outside);
-    await settle();
-    expect(drawer()).toBeNull();
-    expect(focus).not.toHaveBeenCalled();
-    opener.focus();
-    openAgentPage(5);
-    await settle();
-    focus.mockClear();
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    escInside();
     await settle();
     expect(drawer()).toBeNull();
     expect(focus).toHaveBeenCalledTimes(1);
@@ -250,7 +244,7 @@ describe('a reply is sent, never queued', () => {
 
 describe('taking the chat out of the drawer (#1363 slice B)', () => {
   const placed = (): string[] => homeLayout.state.layout.rows.flatMap((row) => row.slots.map((slot) => slot.id));
-  const menu = async (): Promise<void> => { document.querySelector<HTMLElement>('[data-agent-drawer] [data-chat-menu]')!.click(); await settle(); };
+  const menu = async (): Promise<void> => { document.querySelector<HTMLElement>('[data-agent-drawer] [data-chat-bar]')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 10 })); await settle(); };
 
   beforeEach(() => {
     registerCplugWidgets(huddleCplug);
@@ -262,7 +256,7 @@ describe('taking the chat out of the drawer (#1363 slice B)', () => {
     openAgentPage(5);
     await settle();
     await menu();
-    document.querySelector<HTMLElement>('[data-chat-menu-extra="widget"]')!.click();
+    document.querySelector<HTMLElement>('[data-node="widget"]')!.click();
     await settle();
     expect(placed()).toContain('huddle.chat:agent:5');
     const rows = homeLayout.state.layout.rows;
@@ -271,7 +265,7 @@ describe('taking the chat out of the drawer (#1363 slice B)', () => {
     openAgentPage(5);
     await settle();
     await menu();
-    document.querySelector<HTMLElement>('[data-chat-menu-extra="widget"]')!.click();
+    document.querySelector<HTMLElement>('[data-node="widget"]')!.click();
     await settle();
     expect(placed().filter((id) => id === 'huddle.chat:agent:5')).toHaveLength(1);
     expect(drawer()).not.toBeNull();
@@ -291,7 +285,7 @@ describe('taking the chat out of the drawer (#1363 slice B)', () => {
     openAgentPage(6);
     await settle();
     await menu();
-    document.querySelector<HTMLElement>('[data-chat-menu-extra="popout"]')!.click();
+    document.querySelector<HTMLElement>('[data-node="popout"]')!.click();
     await settle();
     const [url, name, features] = open.mock.calls[0] as [string, string, string];
     expect(agentFromSearch(url.slice(url.indexOf('?')))).toBe(6);
@@ -308,7 +302,7 @@ describe('taking the chat out of the drawer (#1363 slice B)', () => {
     openAgentPage(5);
     await settle();
     await menu();
-    const item = document.querySelector<HTMLElement>('[data-chat-menu-extra="terminal"]')!;
+    const item = document.querySelector<HTMLElement>('[data-node="terminal"]')!;
     expect(item.textContent).toContain('agent terminal');
     item.click();
     await settle();
@@ -355,16 +349,5 @@ describe('#1408: the open drawer docks beside the terminal', () => {
     wide(820);
     expect(dockBesideTerminal(true, 360)).toBe(false);
     expect(document.body.classList.contains(AGENT_DRAWER_DOCKED_CLASS)).toBe(false);
-  });
-
-  test('docked, a press in the terminal keeps the chat; anywhere else outside still closes it; undocked the terminal closes it', () => {
-    document.body.insertAdjacentHTML('beforeend', '<div id="terminal-screen"><canvas id="t"></canvas></div><div id="elsewhere"></div>');
-    const term = document.getElementById('t');
-    wide(1440);
-    dockBesideTerminal(true, 360);
-    expect(keepsDrawerOpen(term)).toBe(true);
-    expect(keepsDrawerOpen(document.getElementById('elsewhere'))).toBe(false);
-    dockBesideTerminal(false, 360);
-    expect(keepsDrawerOpen(term)).toBe(false);
   });
 });

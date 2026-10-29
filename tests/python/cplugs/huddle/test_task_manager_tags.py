@@ -242,7 +242,7 @@ def test_cancel_and_park_send_no_tell_and_wake_nobody(client, world, pasted, cho
     assert world.woken == [] and len(pasted) == before
 
 
-def test_unstick_on_a_gone_tag_clears_it_wakes_the_projects_newest_sleeper_and_tells_it(client, world, pasted):
+def test_unstick_on_a_gone_tag_wakes_the_projects_newest_sleeper_tags_it_and_tells_it(client, world, pasted):
     item = add(client)
     told_once(client)
     from src.cplugs.huddle.roles import tags
@@ -252,5 +252,41 @@ def test_unstick_on_a_gone_tag_clears_it_wakes_the_projects_newest_sleeper_and_t
     world.sleeper()
     question = next(m["id"] for m in store_of(world.app).item(item)["thread"] if m["kind"] == "question" and not m["answered"])
     answer(client, question, "unstick")
-    assert store_of(world.app).item(item)[item_owner.TAG_COLUMN] == "" and world.woken == [SLEEPER]
+    assert store_of(world.app).item(item)[item_owner.TAG_COLUMN] == SLEEPER and world.woken == [SLEEPER]
     assert pasted[-1][0] == SLEEPER
+
+
+def _gone_tag_question(client, world, item: int) -> int:
+    from src.cplugs.huddle.roles import tags
+    told_once(client)
+    tags.set_tag(store_of(world.app), item, "ses_ghost")
+    joe_reply(client, item)
+    client.post(SEND, json={"lists": ["12"]})
+    return next(m["id"] for m in store_of(world.app).item(item)["thread"] if m["kind"] == "question" and not m["answered"])
+
+
+def test_unstick_on_a_gone_tag_re_tags_to_the_session_that_takes_the_task(client, world, pasted):
+    item = add(client)
+    world.sleeper()
+    answer(client, _gone_tag_question(client, world, item), "unstick")
+    assert store_of(world.app).item(item)[item_owner.TAG_COLUMN] == SLEEPER and world.woken == [SLEEPER]
+
+
+def test_the_next_fire_after_an_unstick_routes_to_the_session_that_took_the_task(client, world, pasted):
+    item = add(client)
+    world.sleeper()
+    answer(client, _gone_tag_question(client, world, item), "unstick")
+    joe_reply(client, item)
+    before = len(pasted)
+    assert client.post(SEND, json={"lists": ["12"]}).json()["results"][0]["status"] == "sent"
+    assert len(pasted) == before + 1 and pasted[-1][0] == SLEEPER
+
+
+def test_unstick_that_hands_the_task_to_no_one_leaves_it_untagged_and_says_so(client, world, pasted):
+    item = add(client)
+    world.sleeper()
+    world.refuse_wake = True
+    answer(client, _gone_tag_question(client, world, item), "unstick")
+    now = store_of(world.app).item(item)
+    infos = [m["text"] for m in now["thread"] if m["kind"] == "info"]
+    assert now[item_owner.TAG_COLUMN] == "" and any("no session" in t for t in infos)

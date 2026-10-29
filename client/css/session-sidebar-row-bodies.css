@@ -3,7 +3,6 @@
     padding-bottom: 2px;
 }
 
-/* :where() */
 :where(.session-row-body [data-tone], .session-row-body__right[data-tone], .session-sidebar-row[data-row-flag]) {
     --_tone: var(--oc-text-secondary);
 }

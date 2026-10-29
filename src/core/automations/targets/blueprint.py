@@ -9,9 +9,8 @@ import structlog
 from fastapi import HTTPException
 
 from src.core.automations import models as m
-from src.core.app_alerts import constants as alert_const
 from src.core.automations import run_sessions
-from src.core.automations.targets.recipe import FAILED_TYPE, _tell, _wants
+from src.core.automations import notify_policy
 from src.cplugs.host.session_actions import AppRequest
 
 logger = structlog.get_logger()
@@ -34,9 +33,8 @@ def validate_target(target: Dict[str, Any]) -> Optional[str]:
 
 def tell_failed(store: Any, run: Dict[str, Any]) -> None:
     automation = store.get(run["automation_id"])
-    delivery = {**automation["delivery"], "notify_on": automation["delivery"].get("notify_on") or "failure"}
-    if _wants({**automation, "delivery": delivery}, True):
-        _tell(FAILED_TYPE, automation, run["run_id"], alert_const.SEV_WARN, store)
+    if notify_policy.decide(automation, True):
+        notify_policy.tell(notify_policy.FAILED_TYPE, automation, run["run_id"], store)
 
 
 async def run(ctx: Any, automation: Dict[str, Any], run_row: Dict[str, Any]) -> m.RunOutcome:

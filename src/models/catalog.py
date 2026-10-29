@@ -85,11 +85,6 @@ class RevokedVersion(_Doc):
     @field_validator("version")
     @classmethod
     def _version_shape(cls, value: str) -> str:
-        """The same shape a published version has.
-
-        A revocation is matched against an item version by equality, so a
-        subject the item side could never carry revokes nothing at all.
-        """
         return _match_or_raise(value, VERSION_RE, "version")
 
 

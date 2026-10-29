@@ -68,8 +68,8 @@ describe('the approve strip', () => {
     const card = draw(BASH);
     expect(card.querySelector('[data-qc-fact="command"]')?.textContent).toBe('touch rigfile');
     expect(card.querySelector('[data-ap-bar]')?.textContent).not.toContain('touch rigfile');
-    expect(card.querySelector('[data-approval-approve-go]')?.classList.contains('modal-btn-confirm')).toBe(true);
-    expect(card.querySelector('[data-approval-deny]')?.classList.contains('modal-btn-secondary')).toBe(true);
+    expect(card.querySelector('[data-approval-approve-go]')?.getAttribute('data-btn')).toBe('confirm');
+    expect(card.querySelector('[data-approval-deny]')?.getAttribute('data-btn')).toBe('secondary');
   });
 
   test.each([

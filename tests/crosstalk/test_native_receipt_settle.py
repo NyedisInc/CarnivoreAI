@@ -87,3 +87,81 @@ def test_pending_receipt_carried_across_a_wake_still_confirms(tmp_path, monkeypa
     assert asyncio.run(claude_native.settle_after_wake(info, message)) == "delivered"
     _transcript(tmp_path, monkeypatch, [])
     assert asyncio.run(claude_native.settle_after_wake(info, message)) == ("failed", "receiver is a different pane instance")
+
+
+def _set(bus, sql, *params):
+    with bus._conn() as conn:
+        conn.execute(sql, params)
+
+
+@pytest.fixture
+def announced(monkeypatch):
+    seen = []
+    monkeypatch.setattr(store.card_push, "announce", lambda row: seen.append(row["id"]))
+    return seen
+
+
+def _reply(bus, replier_key, replier_epoch, to_key, to_epoch, parent="m1", sender_id="ses_b"):
+    bus.grant_contact(replier_key, to_key, replier_epoch, to_epoch)
+    return bus.reserve(sender={"key": replier_key, "id": sender_id, "epoch": replier_epoch, "name": "B", "provider": "claude"},
+                       receiver={"key": to_key, "id": "ses_a", "epoch": to_epoch, "name": "Alpha", "provider": "claude"},
+                       text="done", in_reply_to=parent)
+
+
+def test_receiver_reply_settles_a_held_native_message_and_expire_leaves_it(bus):
+    _reply(bus, "agent", 7, "alpha", None)
+    stored = bus.get("m1")
+    assert stored["status"] == "delivered" and stored["delivered_at"] and stored["reason"] is None
+    _set(bus, "UPDATE crosstalk_messages SET status='held', reason=?, delivered_at=NULL WHERE id='m1'", PENDING)
+    _set(bus, "UPDATE crosstalk_messages SET expires_at=1 WHERE id='m1'")
+    assert bus.expire() == []
+    assert bus.get("m1")["status"] == "delivered"
+    assert not [r for r in bus.messages_for("alpha") if r["source"] == "system"]
+
+
+def test_expire_backstop_spares_a_held_message_with_a_receiver_reply(bus, monkeypatch):
+    _reply(bus, "agent", 7, "alpha", None)
+    with bus._conn() as conn:
+        conn.execute("UPDATE crosstalk_messages SET status='held', reason=?, delivered_at=NULL, expires_at=1 WHERE id='m1'", (PENDING,))
+    assert bus.expire() == []
+    stored = bus.get("m1")
+    assert stored["status"] == "delivered" and stored["delivered_at"]
+    assert not [r for r in bus.messages_for("alpha") if r["source"] == "system"]
+
+
+def test_reply_from_someone_else_does_not_settle(bus):
+    _reply(bus, "alpha", None, "agent", 7, sender_id="ses_a")
+    assert bus.get("m1")["status"] == "held"
+    with bus._conn() as conn:
+        conn.execute("UPDATE crosstalk_messages SET expires_at=1 WHERE id='m1'")
+    bus.expire()
+    assert bus.get("m1")["status"] == "expired"
+
+
+def test_reply_time_settle_announces(bus, announced):
+    _reply(bus, "agent", 7, "alpha", None)
+    assert announced == ["m1"]
+
+
+def test_backstop_settle_announces(bus, announced):
+    _reply(bus, "agent", 7, "alpha", None)
+    _set(bus, "UPDATE crosstalk_messages SET status='held', reason=?, delivered_at=NULL, expires_at=1 WHERE id='m1'", PENDING)
+    announced.clear()
+    bus.expire()
+    assert announced == ["m1"]
+
+
+@pytest.mark.parametrize("status,reason", [("held", "receiver has an open dialog or startup gate"), ("queued", None)])
+def test_answered_row_that_is_not_native_pending_still_expires(bus, status, reason):
+    _reply(bus, "agent", 7, "alpha", None)
+    _set(bus, "UPDATE crosstalk_messages SET status=?, reason=?, delivered_at=NULL, expires_at=1 WHERE id='m1'", status, reason)
+    bus.expire()
+    assert bus.get("m1")["status"] == "expired"
+    assert bus.next_expiry() != 1
+
+
+def test_held_swarm_row_past_expiry_does_not_arm_the_expiry_timer(bus):
+    _set(bus, "UPDATE crosstalk_messages SET source='swarm', status='held', reason='receiver has an open dialog or startup gate', expires_at=1 WHERE id='m1'")
+    assert bus.expire() == []
+    assert bus.get("m1")["status"] == "held"
+    assert bus.next_expiry() is None

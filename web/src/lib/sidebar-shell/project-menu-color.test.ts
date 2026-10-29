@@ -34,6 +34,11 @@ async function projectNodes(key: string): Promise<MenuNode[]> {
     return itemMenu('project', { key, anchor: document.body }, { close: () => {}, glyph: () => '' })!.nodes;
 }
 
+/**
+ * The item menu's module graph is large and first imported by whichever test builds a menu, so on a loaded machine that cold import
+ * ate the first test's own 5 s budget and failed it in a whole-directory run while it passed alone. Loaded here, under the hook's
+ * longer timeout, no test pays for it.
+ */
 beforeAll(async () => {
     await import('../item-menu/menus/all');
     await import('../item-menu/registry');
@@ -53,7 +58,7 @@ describe('the project kebab color row', () => {
         expect(nodes[at]!.swatches!.value).toBe('#4e69ba');
     });
 
-    it('carries no crosstalk and no schedule this entry', async () => {
+    it('carries no crosstalk and no schedule this entry (Alex (Example-owner), 2026-10-19)', async () => {
         const ids = (await projectNodes('p:5')).map((e) => e.id);
         expect(ids).toContain('show-path');
         expect(ids).not.toContain('crosstalk');
@@ -76,6 +81,7 @@ describe('the project kebab color row', () => {
     });
 });
 
+// jsdom has no popover API; the shared menu driver shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};

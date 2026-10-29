@@ -1,3 +1,4 @@
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,10 +9,12 @@ import { TerminalProvider } from '../web/src/lib/terminal-provider/provider.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/** Read one client JS module's source. Inputs: name (string). Output: string. */
 function readClientJs(name) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', 'js', name), 'utf8');
 }
 
+/** Read one client CSS file's source. Inputs: name (string). Output: string. */
 function readClientCss(name) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', 'css', name), 'utf8');
 }
@@ -20,10 +23,15 @@ let passes = 0;
 let failures = 0;
 const queue = [];
 
+/**
+ * Queue one named assertion block, run strictly in order by runQueue().
+ * Inputs: name (string), fn (function|async function). Output: void.
+ */
 function test(name, fn) {
     queue.push([name, fn]);
 }
 
+/** Run every queued test in order. Inputs: none. Output: Promise<void>. */
 async function runQueue() {
     for (const [name, fn] of queue) {
         try {
@@ -42,6 +50,9 @@ function settle(ms) {
     return new Promise((r) => setTimeout(r, ms));
 }
 
+// ---------------------------------------------------------------------------
+// Sandbox
+// ---------------------------------------------------------------------------
 
 function makeSandbox(options = {}) {
     const {
@@ -67,6 +78,11 @@ function makeSandbox(options = {}) {
         },
         lastSentCols: null,
         lastSentRows: null,
+        /**
+         * Stand-in for TerminalController#sendResize with the same dedup
+         * contract: one frame per distinct (cols, rows).
+         * Inputs: reason (string). Output: void.
+         */
         sendResize(reason) {
             const { cols, rows } = controller.term;
             if (cols === controller.lastSentCols && rows === controller.lastSentRows) return;
@@ -113,6 +129,8 @@ function makeSandbox(options = {}) {
     return { sandbox, controller, fits, wire, state, listeners, observerCb: () => observerCb };
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('proposalIsSane accepts a normal grid', () => {
     const { sandbox } = makeSandbox();
@@ -152,6 +170,8 @@ test('a phone-sized grid is accepted, not mistaken for a failure', () => {
     assert.equal(sandbox.TerminalMetrics.proposalIsSane({ cols: 45, rows: 30 }).ok, true);
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('xterm.css counted as applied when .xterm is positioned', () => {
     const { sandbox } = makeSandbox({ position: 'relative' });
@@ -163,6 +183,8 @@ test('xterm.css counted as MISSING when .xterm is static', () => {
     assert.equal(sandbox.TerminalMetrics.xtermStylesheetApplied(), false);
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('guardedFit fits when the stylesheet applied and the proposal is sane', () => {
     const { sandbox, controller, fits } = makeSandbox();
@@ -193,6 +215,8 @@ test('guardedFit still fits when the addon has no proposeDimensions', () => {
     assert.equal(fits.length, 1);
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('a refused fit ships NOTHING to tmux', async () => {
     const { sandbox, controller, wire } = makeSandbox({ position: 'static' });
@@ -232,6 +256,8 @@ test('retries are bounded so a broken page cannot spin forever', () => {
     assert.ok(sandbox.TerminalLayout.MAX_FIT_RETRIES <= 20);
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('the mono font stack asks for ui-monospace, not bare SF Mono', () => {
     const css = readClientCss('styles.css');
@@ -270,6 +296,8 @@ test('the app shell height uses dvh so the iOS toolbar is tracked', () => {
     assert.ok(/height:\s*100vh/.test(css), 'body must keep the 100vh fallback');
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 function metricsController(cell, opts = {}, webgl = false) {
     return {
@@ -336,6 +364,7 @@ test('describeCellMetrics never throws on an unreadable terminal', () => {
     assert.match(out, /font=14/, 'a partial read must still report what it could');
 });
 
+// ---------------------------------------------------------------------------
 
 await runQueue();
 console.log(`\n${passes} passed, ${failures} failed`);

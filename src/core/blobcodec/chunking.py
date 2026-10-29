@@ -36,17 +36,6 @@ def refs_from_json(rows: List[List]) -> List[ChunkRef]:
 
 
 class ChunkReader:
-    """Iterate the chunks of one open file, reading at most ``limit`` bytes.
-
-    Inputs: stream (binary, positioned at 0); limit (bytes to read at most, the size seen by stat before the read);
-      line_mode (JSONL: cut at line boundaries and drop a torn last line); target (line chunk size); keep_tail (line mode:
-      keep a last line without a newline as a final chunk instead of dropping it; for a file that will not grow, such as one
-      read back from the old tree).
-    Attributes after iteration: ``read_bytes`` (bytes taken from the file), ``length`` (bytes in the chunks), ``torn_bytes``
-      (a last line without a newline, left out), ``lines`` (newlines counted in line mode, else 0), ``short`` (the stream
-      ended before ``limit`` bytes: the file shrank or a read came back empty, so what was read is not the whole file).
-    Example: r = ChunkReader(open(p, 'rb'), size, True); parts = list(r)
-    """
 
     def __init__(self, stream: BinaryIO, limit: int, line_mode: bool, target: Optional[int] = None,
                  keep_tail: bool = False) -> None:

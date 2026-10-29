@@ -12,7 +12,7 @@ from src.core.claude_config.transcript_roots import reset_transcript_roots_cache
 from src.core.session_resume_target import ResumeTarget, resume_extra_args
 from src.core.sessions.session_unstarted import downgrade_if_unstarted, row_has_recorded_work
 
-UUID = "c1f766ce-bd22-40e9-8884-0a064d7b6675"
+UUID = "d66e9f08-1111-4222-8333-444455556666"
 TMUX = "carnivore_Real"
 
 

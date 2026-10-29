@@ -104,7 +104,6 @@ class CertManager:
         return self._account_key_path or self._dir / "account.key"
 
     def _prepare(self) -> None:
-        """Make the private directory. Blocking."""
         self._dir.mkdir(mode=0o700, parents=True, exist_ok=True)
         os.chmod(self._dir, 0o700)
 
@@ -161,10 +160,6 @@ class CertManager:
         self._context = None
 
     async def ensure(self, hostname: str) -> ssl.SSLContext:
-        """A context serving a valid certificate for ``hostname``, obtaining one if needed.
-
-        Raises: AcmeError, Dns01Error - the certificate could not be obtained.
-        """
         self.hostname = hostname
         if await asyncio.to_thread(self.needs_renewal, hostname):
             try:

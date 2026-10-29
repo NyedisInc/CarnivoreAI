@@ -9,7 +9,8 @@
   ],
   "how_to": [
     "Open the link. The session's terminal streams live; you cannot type into it.",
-    "The page says when the link expires or when sharing stops."
+    "The page says when the link expires or when sharing stops.",
+    "As the owner, open the share dialog and press \"revoke all links\" twice to end every live link on the install at once; purging the share plugin does the same first."
   ],
   "id": "shared-terminal-viewer",
   "issues": [],

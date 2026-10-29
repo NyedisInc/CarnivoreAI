@@ -33,6 +33,14 @@ class GhLoginBody(BaseModel):
 
 @router.post("/pack/gh-login")
 async def gh_login(body: GhLoginBody) -> Dict[str, Any]:
+    """Log a paired machine's gh into one of this computer's gh accounts (the token crosses once, never stored or echoed).
+
+    Inputs: body (GhLoginBody). Output: {machine, account, ok: true}.
+    Raises: HTTPException 404 unknown machine, 409 ``peer_refuses_credentials`` / ``account_not_logged_in`` / ``gh_missing`` /
+      ``runs_older_carnivore``, 422 ``bad_account``, 502 the machine is unreachable or refused (its own code, such as
+      ``gh_insecure_storage`` or ``account_mismatch``, is passed through).
+    Example: POST /api/v1/pack/gh-login {"machine": "studio", "account": "example-owner"}
+    """
     if not github_account.valid_account(body.account):
         raise HTTPException(422, {"code": "bad_account", "detail": "that is not a GitHub account name"})
     peer = await asyncio.to_thread(replica_routes.find_peer, body.machine)

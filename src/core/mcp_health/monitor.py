@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import sqlite3
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -83,6 +84,9 @@ def measure_target(
     return Measure(specs, excluded, links, alive, started, now)
 
 
+CYCLE_ERRORS = (OSError, RuntimeError, ValueError, TypeError, KeyError, AttributeError, sqlite3.Error)
+
+
 @dataclass
 class McpMonitor:
 
@@ -93,6 +97,7 @@ class McpMonitor:
     _profiles: Dict[Tuple[str, Optional[int]], Optional[str]] = field(default_factory=dict)
     _measures: Dict[str, Measure] = field(default_factory=dict)
     _lock: threading.Lock = field(default_factory=threading.Lock)
+    _cycle_gate: threading.Lock = field(default_factory=threading.Lock)
 
     def register(self, targets: Iterable[Target]) -> None:
         fresh = {t.session_id: t for t in targets}
@@ -105,6 +110,15 @@ class McpMonitor:
             return self._measures.get(session_id)
 
     def _cycle_sync(self, targets: List[Target], profiles: Dict[Tuple[str, Optional[int]], Optional[str]]) -> bool:
+        if not self._cycle_gate.acquire(blocking=False):
+            log.warning("mcp_monitor_cycle_still_running")
+            return False
+        try:
+            return self._cycle_locked(targets, profiles)
+        finally:
+            self._cycle_gate.release()
+
+    def _cycle_locked(self, targets: List[Target], profiles: Dict[Tuple[str, Optional[int]], Optional[str]]) -> bool:
         now = datetime.now(timezone.utc)
         try:
             table = read_process_table(max_age=SHARED_TABLE_MAX_AGE_SECONDS)
@@ -152,7 +166,7 @@ class McpMonitor:
                         wake()
                 except asyncio.TimeoutError:
                     log.warning("mcp_monitor_cycle_timeout", seconds=CYCLE_TIMEOUT)
-                except (OSError, RuntimeError) as exc:
+                except CYCLE_ERRORS as exc:
                     log.warning("mcp_monitor_cycle_failed", error=type(exc).__name__, detail=str(exc))
             await asyncio.sleep(self.cycle)
 

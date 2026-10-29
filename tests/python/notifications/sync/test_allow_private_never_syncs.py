@@ -9,7 +9,7 @@ from src.core.notifications.sync import secrets_sync
 
 from .test_converge import link_all, rounds
 
-URL = "https://203.0.113.13/hook-SWITCHSENTINEL"
+URL = "https://192.168.1.20/hook-SWITCHSENTINEL"
 
 
 def test_switch_is_not_in_the_exchange_or_the_secrets_pull_and_starts_off_on_the_peer(cluster, make):

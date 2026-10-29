@@ -1,4 +1,4 @@
-/* padding */
+/* the page terminal */
 
 :root {
     --right-dock-w: 320px;
@@ -9,7 +9,6 @@ body.right-drawer-docked #terminal-screen {
     padding-right: var(--right-dock-w);
 }
 
-/* padding */
 body.right-drawer-docked:has(#terminal-screen.active) .header {
     padding-right: calc(var(--right-dock-w) + var(--header-pad-x));
 }

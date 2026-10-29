@@ -1,20 +1,3 @@
-"""The live, incremental lineage pass: keeps the graph current from the transcripts on disk (no archive needed).
-
-  * the tree level (``lineage_nodes``) from the head's ``entrypoint`` (a row with a NULL level when it names none);
-  * every ``compact_boundary`` record as a ``compact`` milestone (line, byte offset, trigger, pre-tokens);
-  * a ``forkedFrom`` pointer as a ``fork`` edge with its split point (``lineage.split``);
-  * each subagent transcript beside the conversation as a ``subagent`` edge;
-  * stored ``switch`` flips whose new transcript now proves a ``clear`` or ``fork`` (``lineage.reclassify``);
-  * spawned sessions (``sessions.parent_session_id``) as ``spawned_by`` edges;
-  * CODEX rollouts (``lineage.codex``): a node per rollout, ``forked_from_id`` as a fork edge and a subagent
-    thread's ``parent_thread_id`` as a ``spawned_by`` edge, when the codex that wrote the rollout recorded one.
-
-INCREMENTAL: a small cursor file in the state directory keeps ``(mtime_ns, size)`` per conversation, so a quiet
-pass stats the files and reads none. Every write is idempotent, so losing the cursor only costs one full sweep.
-The same function is the one-shot backfill (``scripts/lineage/backfill_disk.py``, dry run by default) and the
-daemon thread ``main.py`` starts (``start``/``stop``), so there is ONE implementation. A file macOS evicted to
-iCloud is counted and not read. Headless-worker inference needs every head at once and stays out of the live pass (the retired one-time script is kept on the git branch ``archive/conversation-backfill-20261022``).
-"""
 
 from __future__ import annotations
 
@@ -25,12 +8,13 @@ import tempfile
 import threading
 from collections import Counter
 from contextlib import closing
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.lineage import constants as K
 from src.core.lineage import codex, graph, headless, milestones, reclassify, scan, split
 
@@ -73,6 +57,7 @@ class FilePlan:
     compacts: Tuple[scan.CompactHit, ...]
     subagents: Tuple[str, ...]
     codex: Optional[codex.CodexMeta] = None
+    resume: Optional[scan.ScanResume] = None
 
 
 def _stamp(path: Path) -> Optional[List[int]]:
@@ -83,7 +68,15 @@ def _stamp(path: Path) -> Optional[List[int]]:
     return [info.st_mtime_ns, info.st_size]
 
 
-def load_cursor(state_dir: Path) -> Dict[str, List[int]]:
+def cursor_key(path: Path) -> str:
+    return str(path)
+
+
+def is_legacy_key(key: str) -> bool:
+    return os.sep not in key
+
+
+def load_cursor(state_dir: Path) -> Dict[str, List[Any]]:
     try:
         data = json.loads((state_dir / CURSOR_FILENAME).read_text())
     except (OSError, ValueError):
@@ -92,21 +85,47 @@ def load_cursor(state_dir: Path) -> Dict[str, List[int]]:
     return {k: v for k, v in files.items() if isinstance(v, list)} if isinstance(files, dict) else {}
 
 
-def save_cursor(state_dir: Path, files: Dict[str, List[int]]) -> None:
+def save_cursor(state_dir: Path, files: Dict[str, List[Any]]) -> None:
     handle = tempfile.NamedTemporaryFile("w", dir=state_dir, prefix=CURSOR_FILENAME, delete=False)
     try:
         with handle:
-            json.dump({"version": 1, "files": files}, handle, sort_keys=True)
+            json.dump({"version": 2, "files": files}, handle, sort_keys=True)
         os.replace(handle.name, state_dir / CURSOR_FILENAME)
     except OSError:
         Path(handle.name).unlink(missing_ok=True)
         raise
 
 
-def plan_file(path: Path) -> FilePlan:
+def stamp_of(entry: Sequence[Any]) -> List[Any]:
+    return list(entry[:2])
+
+
+def resume_of(entry: Sequence[Any]) -> Optional[scan.ScanResume]:
+    return scan.ScanResume.from_list(entry[2:])
+
+
+def stored_compacts(conn: sqlite3.Connection, conversation_id: str) -> int:
+    return conn.execute(f"SELECT COUNT(*) FROM {K.MILESTONES_TABLE} WHERE conversation_id = ? AND +kind = ?",
+                        (conversation_id, K.MILESTONE_COMPACT)).fetchone()[0]
+
+
+def resume_while_stored(conn: sqlite3.Connection, conversation_id: str,
+                        resume: Optional[scan.ScanResume]) -> Optional[scan.ScanResume]:
+    if resume is None:
+        return None
+    stored = stored_compacts(conn, conversation_id)
+    if stored < resume.stored:
+        logger.info("lineage_live_resume_dropped", conversation_id=conversation_id, stored=stored,
+                    expected=resume.stored)
+        return None
+    return resume
+
+
+def plan_file(path: Path, resume: Optional[scan.ScanResume] = None) -> FilePlan:
     folder = path.parent / path.stem / K.SUBAGENTS_DIRNAME
     subs = tuple(f"{path.stem}/{p.stem}" for p in sorted(folder.glob("*.jsonl"))) if folder.is_dir() else ()
-    return FilePlan(path.stem, path, headless.read_head(path), tuple(scan.compacts_of(path)), subs)
+    found = scan.scan_compacts(path, resume)
+    return FilePlan(path.stem, path, headless.read_head(path), tuple(found.hits), subs, resume=found.resume)
 
 
 def _compact_known(conn: sqlite3.Connection, hit: scan.CompactHit) -> bool:
@@ -151,6 +170,7 @@ def sweep(db_path: Path, state_dir: Path, *, roots: Optional[Sequence[Path]] = N
     report = SweepReport(dry_run=not apply)
     search = tuple(roots) if roots is not None else scan.roots()
     cursor = load_cursor(state_dir)
+    cursor_before = {stem: list(stamp) for stem, stamp in cursor.items()}
     try:
         conn = connect(db_path, create=False) if apply else _readonly(db_path)
     except (DatastoreUnreadableError, sqlite3.Error) as exc:
@@ -159,43 +179,60 @@ def sweep(db_path: Path, state_dir: Path, *, roots: Optional[Sequence[Path]] = N
         if not graph.ready(conn):
             raise LineageLiveError("the datastore predates schema v49 (no lineage tables)")
         session_of = scan.session_of_conversation(conn)
-        todo: List[Tuple[Path, List[int]]] = []
+        todo: List[Tuple[Path, str, List[int], Optional[scan.ScanResume]]] = []
         sources = [(p, False) for p in scan.transcripts(search)]
         if include_codex:
             sources += [(p, True) for p in codex.rollouts(codex_root or default_codex_root())]
         for path, is_codex in sources:
             stamp = _stamp(path)
-            if stamp is None or cursor.get(path.stem) == stamp:
+            key = cursor_key(path)
+            seen = cursor.get(key) or cursor.get(path.stem, [])
+            if stamp is not None and stamp_of(seen) == stamp:
+                cursor[key] = seen
+            if stamp is None or stamp_of(seen) == stamp:
                 report.unchanged += 1
             elif scan.is_dataless(path):
                 report.dataless_skipped += 1
             else:
-                todo.append((path, stamp))
+                todo.append((path, key, stamp, resume_of(seen)))
         kind_of = {p: c for p, c in sources}
         report.deferred = max(0, len(todo) - limit) if limit is not None else 0
-        for path, stamp in todo[:limit]:
+        for path, key, stamp, resume in todo[:limit]:
             try:
-                plan = plan_codex(path) if kind_of[path] else plan_file(path)
+                plan = (plan_codex(path) if kind_of[path]
+                        else plan_file(path, resume_while_stored(conn, path.stem, resume)))
             except OSError as exc:
                 report.unreadable += 1
                 logger.warning("lineage_live_unreadable", path=str(path), error=str(exc))
                 continue
             report.examined += 1
             if plan is None:
-                cursor[path.stem] = stamp
+                cursor[key] = stamp
                 continue
             written = _write(conn, plan, session_of, apply, transaction)
             report.counts.update(written)
             if apply and written.get("compacts"):
                 _announce_compaction(session_of.get(plan.conversation_id))
-            cursor[path.stem] = stamp
+            cursor[key] = stamp + _resume_entry(conn, plan, apply)
         if apply:
             with transaction(conn):
                 report.counts["spawned_by"] += _spawned(conn)
-                report.counts["switches_reclassified"] += reclassify.reclassify_switches(conn, roots=search)
+                by_stem = {p.stem: p for p, is_codex in sources if not is_codex}
+                report.counts["switches_reclassified"] += reclassify.reclassify_switches(
+                    conn, roots=search, finder=lambda conversation, _roots: by_stem.get(conversation))
     if apply:
-        save_cursor(state_dir, cursor)
+        if roots is None and not report.deferred:
+            cursor = {k: v for k, v in cursor.items() if not is_legacy_key(k)}
+        if cursor != cursor_before:
+            save_cursor(state_dir, cursor)
     return report
+
+
+def _resume_entry(conn: sqlite3.Connection, plan: FilePlan, apply: bool) -> List[int]:
+    if plan.resume is None:
+        return []
+    stored = stored_compacts(conn, plan.conversation_id) if apply else plan.resume.stored
+    return replace(plan.resume, stored=stored).as_list()
 
 
 def _announce_compaction(session_uuid: Optional[str]) -> None:
@@ -238,7 +275,7 @@ def _write(conn: sqlite3.Connection, plan: FilePlan, session_of: Dict[str, str],
 
 
 def _readonly(db_path: Path) -> sqlite3.Connection:
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    conn = connect_readonly(db_path)
     conn.execute("PRAGMA query_only = ON")
     return conn
 

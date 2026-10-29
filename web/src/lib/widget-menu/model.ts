@@ -1,4 +1,3 @@
-/* pop-out window */
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import { t } from '../i18n/index.svelte';
 import type { BarSize } from '../widget-bars/bar-settings.svelte';
@@ -80,12 +79,10 @@ export const BAR_SIZE_ORDER: readonly BarSize[] = ['compact', 'cozy', 'detailed'
 
 export const barSizeId = (size: BarSize): string => `bar-size-${size}`;
 
-/* label: ' */
 export function staysOpen(node: MenuNode): boolean {
   return node.keepOpen ?? (node.toggle === true && node.checked !== undefined);
 }
 
-/* label: ' */
 export function closing(nodes: readonly MenuNode[], onClose: () => void): MenuNode[] {
   return nodes.map((node) => {
     if (node.children) return { ...node, children: closing(node.children, onClose) };

@@ -1,52 +1,3 @@
-"""Boot and tear down one ISOLATED, real Cloude Code server for measurement.
-
-WHY A REAL SUBPROCESS, NOT AN IN-PROCESS TEST APP. Every existing test
-harness that boots "the app" (``tests/real_hook_app.py``,
-``tests/test_setup_wizard_renders.py``) deliberately assembles a MINIMAL
-FastAPI app with only the routers a given test needs, specifically to
-avoid ``src.main.py``'s full lifespan (config/db migration, first-run
-import, boot re-adopt). That is the right call for those files, and the
-wrong one here: this harness has to measure settings, the archive, menus
-and notifications as well as the terminal, and it has to report the
-SERVER PROCESS's own idle CPU and memory - both of which need the real
-``src.main:app``, in its own OS process, so a ``ps`` sample against its
-pid means what it claims to mean. A thread inside the measuring process
-would have its CPU time and the browser driver's CPU time on the same
-number.
-
-ISOLATION, ENFORCED BY CONSTRUCTION, NOT BY CONVENTION.
-
-  - Its tmux traffic never reaches the live ``cloude`` socket:
-    ``session.tmux_socket_name`` in this run's throwaway ``config.json``
-    is a name generated fresh per run (``_throwaway_socket_name``), and it
-    is asserted not to equal ``cloude``. No live socket is queried.
-  - Its state, working directory, logs and datastore all live under one
-    ``tempfile.mkdtemp()`` root, never under the real state directory a
-    running Electron app would be using.
-  - ``CLOUDE_TEST_MODE=1`` turns off the corpus ingest loop and the daily
-    integrity-check loop (both default OFF under it - see
-    ``src/core/corpus_ingest_task.py`` / ``src/core/db_integrity.py``), so
-    this run never walks the operator's real ``~/.claude/projects`` corpus
-    and never opens a database this harness did not create.
-  - Every agent this run launches is a bare shell, never ``claude``. See
-    the module docstring on ``scripts/perf/run_baseline.py`` for why: it
-    keeps the baseline deterministic and free of real LLM latency, which
-    the plan requires be measured SEPARATELY in the first place.
-  - The developer's own ``.env`` in the checkout root, if one exists, is
-    never read. ``Settings`` (``src/config/settings.py``) resolves its
-    ``env_file`` relative to the subprocess's cwd, which is
-    ``REPO_ROOT`` - not this run's throwaway root - so a whitelisted
-    ``os.environ`` alone cannot stop it from also picking up whatever
-    else the developer's ``.env`` sets (a real provider key, a real
-    ``DEFAULT_WORKING_DIR``, ``CLOUDE_DEV_RELOAD``). ``_env()`` instead
-    points ``CARNIVORE_SETTINGS_ENV_FILE`` at a path under this run's own
-    root that is never created, so ``Settings`` always resolves its
-    dotenv source to a missing file - a silent no-op - regardless of
-    what the checkout root holds.
-
-The subprocess binds loopback only. Its fresh authentication fixture and
-private socket/state/home are never shared with production clients.
-"""
 
 from __future__ import annotations
 
@@ -64,12 +15,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from tmux_socket_file import PERF_SOCKET_PREFIX, kill_server_and_unlink
+from tmux_socket_file import PERF_SOCKET_PREFIX, kill_server_and_unlink, refuse_live_socket
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 VENV_PYTHON = REPO_ROOT / "venv" / "bin" / "python3"
-
-FORBIDDEN_SOCKET_NAME = "cloude"
 
 def _fresh_totp_secret() -> str:
     import pyotp
@@ -89,7 +38,7 @@ def free_port(minimum: int = 5001) -> int:
 
 def _throwaway_socket_name() -> str:
     name = f"{PERF_SOCKET_PREFIX}{uuid.uuid4().hex[:12]}"
-    assert name != FORBIDDEN_SOCKET_NAME, "generated name collided with the live socket"
+    refuse_live_socket(name)
     return name
 
 
@@ -103,6 +52,7 @@ class PerfServer:
     def __post_init__(self) -> None:
         self.root = Path(tempfile.mkdtemp(prefix="cc_perf_"))
         self.tmux_socket = self.tmux_socket_name or _throwaway_socket_name()
+        refuse_live_socket(self.tmux_socket)
         self.totp_secret = _fresh_totp_secret()
         self.jwt_secret = secrets.token_hex(32)
         self.port = self.port or free_port()
@@ -119,7 +69,6 @@ class PerfServer:
 
 
     def _write_config(self) -> None:
-        assert self.tmux_socket != FORBIDDEN_SOCKET_NAME
         config = {
             "jwt_expiry_minutes": 30,
             "session": {
@@ -231,7 +180,7 @@ class PerfServer:
             self._proc = None
         if getattr(self, "_server_log", None) is not None:
             self._server_log.close()
-        assert self.tmux_socket != FORBIDDEN_SOCKET_NAME
+        refuse_live_socket(self.tmux_socket)
         kill_server_and_unlink(self.tmux_socket)
         shutil.rmtree(self.root, ignore_errors=True)
 
@@ -240,10 +189,3 @@ class PerfServer:
 
     def __exit__(self, *exc: object) -> None:
         self.stop()
-
-
-def assert_no_live_socket_named(name: str) -> None:
-    assert name != FORBIDDEN_SOCKET_NAME, (
-        "refusing to run against the live 'cloude' tmux socket - this "
-        "harness must use its own throwaway socket"
-    )

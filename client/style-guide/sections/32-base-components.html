@@ -1,4 +1,10 @@
 <h2 class="sg-h2">base components: card, fold, field, buttons, option list, tag, list, toolbar, state, stat tile, chart frame</h2>
+<p class="sg-lead">The first shared components of the design base (issue #2033, slice 2). Each is a class API that
+<code>client/js</code> can write plus a thin Svelte component in <code>web/src/lib/base/</code> that renders exactly that
+markup. They read only base tokens (<code>web/src/opscenter/tokens.css</code>) and keep a reserved 1px border so the one
+focus rule (<code>web/src/opscenter/focus.css</code>) lights them. The stat tile and the chart frame are in use: the six stat widgets, the gallery KPI card and the analytics chart cards are drawn by them; the automations list draws its rows, toolbar and empty states with the list, toolbar and state.
+Keyboard and roles for the fold, the accordion, the option list and the button come from bits-ui, a headless library
+with no look of its own, pending Alex's ruling on #2033.</p>
 
 <dl class="sg-facts">
     <dt>card</dt>
@@ -23,7 +29,9 @@
         icon, the input, a clear x drawn whenever there is text (focused or not) with no hover tile, an optional key hint
         (<code>/</code> while empty, <code>esc</code> with text) and a trailing slot for a mode button. The frame wears
         <code>oc-focus-host</code>, so focus brightens the frame's own border. The drawer's search box is this variant; the
-        similar terms under it are base <code>Button</code> chips (<code>role="option"</code>) in a horizontal listbox.</dd>
+        similar terms under it are base <code>Button</code> chips (<code>role="option"</code>) in a horizontal listbox.
+        An optional <code>lead</code> snippet (a scope crumb or an icon) draws inside the same frame after the search icon and before the input (<code>.oc-search__lead</code>); absent, the markup is unchanged.
+        <code>element</code> (bindable, every variant) hands back the rendered input or textarea, so a caller focuses it with no helper; the search variant's older <code>input</code> binding still works.</dd>
     <dt>task wrapper</dt>
     <dd><code>.oc-task</code>, <code>TaskWrapper.svelte</code>: THE ONE WRAPPER of a task, the same for every task whatever its section,
         status or kind. It has three states, <code>data-task-state</code> compact (exactly one row: lead, status icon, title and meta),
@@ -54,6 +62,14 @@
     <dd><code>.oc-tag</code>, <code>Tag.svelte</code>: a static uppercase word in one of six tones; a pressable filter is
         still <code>.oc-chip</code>.</dd>
     <dt>list and row</dt>
+    <dd><code>.oc-list</code>, <code>List.svelte</code> and <code>.oc-list__row</code>, <code>ListRow.svelte</code>: one
+        line per row in a fixed order, lead (an LED, an icon or a mark), primary, secondary (muted, gives way first), meta
+        (right, tabular numbers), trailing actions. Three densities from the row tokens: dense 22, default 26, roomy 32.
+        A list has NOTHING on hover (Joe (ccsliinc), 2026-10-26): no tint on a row or a row button; selected, focus and pressed stay. A row NEVER changes height on hover or focus: the state layers move only colors, the 1px border the focus rule
+        lights is reserved at rest, and the trailing actions are ALWAYS SHOWN on every row at rest (Joe (ccsliinc),
+        2026-10-22: "all records should show all the buttons at once"): nothing reveals them on hover, focus or a pick. <code>aria-disabled="true"</code> on a row is the base disabled look: text dimmed through the dim token, no pointer action, no pointer flag; callers write no local rule. A table row (automations) keeps its own grid of cells and
+        marks its actions cell <code>.oc-list__actions</code>. The <code>wrap</code> prop (<code>data-wrap</code>) lets a row's text wrap in full, no clamp and no ellipsis, for a record that carries a snippet. The <code>below</code> prop (<code>.oc-list__head</code> over <code>.oc-list__below</code>, <code>data-below</code>) keeps the row's one head line (lead, text, meta, actions) and puts the excerpt UNDER it at the full row width, indented to the text start, wrapping freely, never changing on a state (sidebar search variant D). Named <code>oc-list__row</code> because
+        <code>.oc-row</code> is the settings row.</dd>
     <dt>toolbar</dt>
     <dd><code>.oc-toolbar</code>, <code>Toolbar.svelte</code>: search, filters, a page's own extras, the end pushed right,
         and an optional row below for removable pills, each slot drawn only when given. Plain, it sits in a page bar
@@ -94,7 +110,7 @@ button recipe or the one field (<code>data-btn</code>, <code>data-field</code>),
     <dd><code>IconButton.svelte</code>, <code>icon-button.css</code> (<code>variant="danger"</code> is bare like quiet with the glyph coral at rest: a destructive key, nothing new on hover): the base button at <code>data-size="icon"</code>, a square that wears what
         <code>.oc-ibtn</code> wore. <code>label</code> is required and is both the accessible name and the tooltip (an icon-only control is the one place a
         tooltip is right). Variants: secondary (the framed square; <code>pressed</code> makes it a toggle), quiet (no frame until pointed at), close (quiet,
-        coral under the pointer), float (the faint floating icon). a custom property on the button or an ancestor sets the square; a phone gets the thumb target.</dd>
+        coral under the pointer), float (the faint floating icon). An optional <code>tooltip</code> is the hover tip when it must differ from the name (a hint, a shortcut); <code>label</code> stays the accessible name. a custom property on the button or an ancestor sets the square; a phone gets the thumb target.</dd>
     <dt>switch</dt>
     <dd><code>Switch.svelte</code>: a real button with <code>role="switch"</code> and <code>aria-checked</code>, drawn as the app's square check
         (<code>.oc-check</code>), so Space and Enter work natively and the state is never color alone. <code>bind:checked</code>; a caller that may refuse
@@ -106,7 +122,9 @@ button recipe or the one field (<code>data-btn</code>, <code>data-field</code>),
         <code>&lt;input&gt;</code> in its <code>&lt;label&gt;</code>, only the box drawn: a hairline square or circle on the control line, the confirm token
         filling its middle when on, a dash when mixed (<code>indeterminate</code>, checkbox only). The label is a string or a slot, with an optional
         hint line. A <code>RadioGroup</code> (<code>role="radiogroup"</code>) gives its radios one shared name, so the browser's own keys apply: one tab
-        stop, arrows move and choose. Options as data or as <code>Radio</code> children; <code>orientation</code> vertical or horizontal.</dd>
+        stop, arrows move and choose. Options as data or as <code>Radio</code> children; <code>orientation</code> vertical or horizontal. The mark sits beside the FIRST line of its label at every width: a label that wraps on a phone does not float the mark mid-block, the thumb height is padding around the first line.</dd>
+    <dt>menu item</dt>
+    <dd><code>MenuItem.svelte</code>: one row of an anchored item menu, drawn in the item menu's own look with no CSS of its own (the classes of <code>client/css/session-row-menu.css</code>: <code>.session-row-menu__item</code> with its icon, label, key and reason spans), so a Svelte menu and the legacy item menu cannot drift. <code>label</code>, an <code>icon</code> snippet, <code>keyHint</code> (the key word at the row's end), <code>reason</code> (a line under the label; while <code>disabled</code> it is the tooltip and <code>aria-description</code> instead). <code>disabled</code> is <code>aria-disabled</code>, never the attribute, so the arrow keys still reach it. Nothing on hover beyond the menu's own rule. The caller owns the <code>.session-row-menu</code> panel, focus walk and close; the widgets page's <code>PlaceMenu</code> is the first caller.</dd>
     <dt>select</dt>
     <dd><code>Select.svelte</code>: a native <code>&lt;select data-field&gt;</code>, the base field (control line, sunken ground, control height, coral when
         invalid; the drawn caret and the small <code>data-size</code> are in <a href="#base-elements">base elements</a>), so the browser keeps the list, the
@@ -122,7 +140,7 @@ button recipe or the one field (<code>data-btn</code>, <code>data-field</code>),
     <dd><code>Segmented.svelte</code>, <code>segmented.css</code> (<code>.oc-segmented</code>): a single-choice picker drawn as joined buttons in one hairline
         frame. A radio group, not tabs: <code>role="radiogroup"</code> of base buttons (<code>data-btn="quiet"</code>) with <code>role="radio"</code> and
         <code>aria-checked</code>, one tab stop (roving tabindex), arrows move and choose, Home and End jump, a disabled option is skipped. The picked option is the
-        base picked state. <code>iconOnly</code> draws only each option's icon (the label stays its accessible name and tooltip), for a header too narrow for words. Tabs that switch a panel stay <code>Tabs.svelte</code> (page tabs) and the terminal strip; never build a second tab component from this.</dd>
+        base picked state. <code>iconOnly</code> draws only each option's icon (the label stays its accessible name and tooltip), for a header too narrow for words. An option may carry its own <code>title</code> (its hover tip), which wins over the icon-only label tip. Tabs that switch a panel stay <code>Tabs.svelte</code> (page tabs) and the terminal strip; never build a second tab component from this.</dd>
 </dl>
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>web/src/style-guide/specimens/BaseControls.svelte</code></div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the page frame */
   import { onMount, untrack } from 'svelte';
   import { t } from '../sdk';
   import { mintTicket } from './board-api';
@@ -64,6 +65,7 @@
     bridge.load(payload, save);
   }
 
+  /* the page frame */
   export function theme(id: string, vars: Record<string, string>): void {
     bridge.theme(id, vars);
   }

@@ -6,11 +6,12 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Dict, Iterator, List, Optional, Tuple
+from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
 import structlog
 
 from src.cplugs.save.vault import constants as K
+from src.cplugs.save.vault.stamp_memo import StampMemo
 from src.cplugs.save.vault.manifest import HOME_CLAUDE, HOME_CODEX, ManifestError, check_unit, memory_unit_id
 
 logger = structlog.get_logger()
@@ -24,6 +25,7 @@ MEMORY_DIR = "memory"
 MERGED_SIDE_PREFIX = "_from-"
 _SIDECAR_DIRS = ("subagents", "tool-results", MEMORY_DIR)
 MAX_NEST = 3
+_LISTING = "listing"
 
 
 @dataclass(frozen=True)
@@ -65,28 +67,70 @@ class _Entry:
     is_file: bool
 
 
-def _list(path: Path) -> List[_Entry]:
+def _scan_listing(path: Path) -> Tuple[_Entry, ...]:
+    with os.scandir(path) as scan:
+        return tuple(sorted((_Entry(e.name, e.is_dir(follow_symlinks=False), e.is_file(follow_symlinks=False)) for e in scan),
+                            key=lambda entry: entry.name))
+
+
+def _list(path: Path, memo: Optional[StampMemo] = None) -> Tuple[_Entry, ...]:
     try:
-        with os.scandir(path) as scan:
-            return sorted((_Entry(e.name, e.is_dir(follow_symlinks=False), e.is_file(follow_symlinks=False)) for e in scan),
-                          key=lambda entry: entry.name)
+        return memo.get(path, _LISTING, lambda: _scan_listing(path)) if memo is not None else _scan_listing(path)
     except OSError as exc:
         logger.warning("vault_folder_unreadable", path=str(path), error=str(exc))
-        return []
+        return ()
 
 
-def _files_under(base: Path) -> Iterator[Path]:
-    def onerror(exc: OSError) -> None:
-        logger.warning("vault_walk_unreadable", path=str(exc.filename), error=str(exc))
+@dataclass(frozen=True)
+class _TreeSpec:
 
-    for dirpath, dirnames, filenames in os.walk(base, followlinks=False, onerror=onerror):
-        dirnames[:] = sorted(d for d in dirnames if not os.path.islink(os.path.join(dirpath, d)))
-        for name in sorted(filenames):
-            full = os.path.join(dirpath, name)
-            if os.path.islink(full):
-                logger.debug("vault_symlink_skipped", path=full)
-                continue
-            yield Path(full)
+    base: Path
+    rel_prefix: str
+    home: str
+    role: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class _Node:
+
+    files: Tuple["PlannedFile", ...]
+    dirs: Tuple[Path, ...]
+
+    def __len__(self) -> int:
+        return len(self.files) + len(self.dirs)
+
+
+def _scan_node(spec: _TreeSpec, folder: Path) -> _Node:
+    with os.scandir(folder) as scan:
+        found = sorted(((e.name, e.is_symlink(), e.is_dir(follow_symlinks=False)) for e in scan), key=lambda item: item[0])
+    inside = folder.relative_to(spec.base).as_posix()
+    files: List[PlannedFile] = []
+    dirs: List[Path] = []
+    for name, is_link, is_dir in found:
+        if is_link:
+            logger.debug("vault_symlink_skipped", path=str(folder / name))
+        elif is_dir:
+            dirs.append(folder / name)
+        else:
+            inner = name if inside == "." else f"{inside}/{name}"
+            role = spec.role or _role_in_folder(PurePosixPath(inner))
+            files.append(PlannedFile(folder / name, role, spec.home, f"{spec.rel_prefix}/{inner}"))
+    return _Node(tuple(files), tuple(dirs))
+
+
+def _tree_files(spec: _TreeSpec, memo: Optional[StampMemo] = None) -> List["PlannedFile"]:
+    planned: List[PlannedFile] = []
+    pending = [spec.base]
+    while pending:
+        folder = pending.pop()
+        try:
+            node = memo.get(folder, spec, lambda: _scan_node(spec, folder)) if memo is not None else _scan_node(spec, folder)
+        except OSError as exc:
+            logger.warning("vault_walk_unreadable", path=str(folder), error=str(exc))
+            continue
+        planned.extend(node.files)
+        pending.extend(reversed(node.dirs))
+    return planned
 
 
 def _role_in_folder(rel_in_folder: PurePosixPath) -> str:
@@ -99,11 +143,6 @@ def _role_in_folder(rel_in_folder: PurePosixPath) -> str:
 
 
 def _conv_id(entry: _Entry) -> Optional[str]:
-    """The conversation id a project-folder entry belongs to, or None when it belongs to none. Pure.
-
-    ``<id>.jsonl`` and ``<id>.jsonl.<suffix>`` (a transcript set aside) and a folder ``<id>/`` all belong to ``<id>``.
-    Example: _conv_id(_Entry('abc.jsonl.from-old-key-1', False, True)) -> 'abc'
-    """
     if entry.name.startswith("."):
         return None
     if entry.is_file:
@@ -118,23 +157,24 @@ def _is_merged_side(entry: _Entry) -> bool:
     return entry.is_dir and entry.name.startswith(MERGED_SIDE_PREFIX)
 
 
-def _is_project_folder(name: str, entries: List[_Entry]) -> bool:
+def _is_project_folder(name: str, entries: Sequence[_Entry]) -> bool:
     return name.startswith("-") or any((e.is_file and not e.name.startswith(".")) or (e.is_dir and e.name == MEMORY_DIR)
                                        or _is_merged_side(e) for e in entries)
 
 
 class Scanner:
 
-    def __init__(self, sources: Sources) -> None:
+    def __init__(self, sources: Sources, memo: Optional[StampMemo] = None) -> None:
         self.sources = sources
-        self._listings: Dict[Path, List[_Entry]] = {}
+        self._memo = memo
+        self._listings: Dict[Path, Tuple[_Entry, ...]] = {}
         self._encs: Dict[Path, List[Tuple[str, Path]]] = {}
         self._index: Optional[Dict[str, List[Tuple[Path, str, Path]]]] = None
         self._codex: Optional[Dict[str, UnitPlan]] = None
 
-    def listing(self, path: Path) -> List[_Entry]:
+    def listing(self, path: Path) -> Tuple[_Entry, ...]:
         if path not in self._listings:
-            self._listings[path] = _list(path)
+            self._listings[path] = _list(path, self._memo)
         return self._listings[path]
 
     def encs(self, root: Path) -> List[Tuple[str, Path]]:
@@ -177,7 +217,7 @@ class Scanner:
                     plan.encoded_folder = plan.encoded_folder or enc
                     plan.files += [f for f in found if f.path not in seen]
                     seen.update(f.path for f in found)
-            plan.files += [f for f in _history_files(root, conv) if f.path not in seen]
+            plan.files += [f for f in self._history_files(root, conv) if f.path not in seen]
         return plan if plan.files else None
 
     def _claude_files(self, root: Path, enc: str, enc_path: Path, conv: str) -> List[PlannedFile]:
@@ -188,10 +228,7 @@ class Scanner:
             elif entry.is_file and entry.name.startswith(f"{conv}.jsonl."):
                 out.append(PlannedFile(enc_path / entry.name, K.ROLE_CONVERSATION_OTHER, HOME_CLAUDE, f"projects/{enc}/{entry.name}"))
             elif entry.is_dir and entry.name == conv:
-                folder = enc_path / conv
-                for path in _files_under(folder):
-                    inner = PurePosixPath(path.relative_to(folder).as_posix())
-                    out.append(PlannedFile(path, _role_in_folder(inner), HOME_CLAUDE, f"projects/{enc}/{conv}/{inner}"))
+                out += _tree_files(_TreeSpec(enc_path / conv, f"projects/{enc}/{conv}", HOME_CLAUDE), self._memo)
         return out
 
     def scan_claude(self, skipped: Optional[List[str]] = None) -> Dict[str, UnitPlan]:
@@ -211,18 +248,29 @@ class Scanner:
     def codex(self) -> Dict[str, UnitPlan]:
         if self._codex is None:
             plans: Dict[str, UnitPlan] = {}
-            for path in _codex_files(self.sources):
-                conv = path.stem[-_CODEX_ID_CHARS:]
+            for rollout in self._rollouts():
+                conv = rollout.path.stem[-_CODEX_ID_CHARS:]
                 try:
                     check_unit(conv)
                 except ManifestError:
-                    logger.warning("vault_unsafe_rollout_name", name=path.name)
+                    logger.warning("vault_unsafe_rollout_name", name=rollout.path.name)
                     continue
-                plan = plans.setdefault(conv, UnitPlan(conv, KIND_CONVERSATION, FAMILY_CODEX, conv))
-                plan.files.append(PlannedFile(path, K.ROLE_CODEX_ROLLOUT, HOME_CODEX,
-                                              path.relative_to(self.sources.codex_home).as_posix()))
+                plans.setdefault(conv, UnitPlan(conv, KIND_CONVERSATION, FAMILY_CODEX, conv)).files.append(rollout)
             self._codex = plans
         return self._codex
+
+    def _history_files(self, root: Path, conv: str) -> List[PlannedFile]:
+        base = root.parent / "file-history" / conv
+        if not base.is_dir():
+            return []
+        return _tree_files(_TreeSpec(base, f"file-history/{conv}", HOME_CLAUDE, K.ROLE_FILE_HISTORY), self._memo)
+
+    def _rollouts(self) -> Iterator[PlannedFile]:
+        for sub in ("sessions", "archived_sessions"):
+            base = self.sources.codex_home / sub
+            if base.is_dir():
+                spec = _TreeSpec(base, sub, HOME_CODEX, K.ROLE_CODEX_ROLLOUT)
+                yield from (f for f in _tree_files(spec, self._memo) if f.path.name.startswith("rollout-") and f.path.suffix == ".jsonl")
 
     def scan_memory(self) -> Dict[str, UnitPlan]:
         plans: Dict[str, UnitPlan] = {}
@@ -231,14 +279,10 @@ class Scanner:
                 entries = self.listing(enc_path)
                 files = [PlannedFile(enc_path / e.name, K.ROLE_MEMORY, HOME_CLAUDE, f"projects/{enc}/{e.name}")
                          for e in entries if e.is_file and not e.name.startswith(".") and _conv_id(e) is None]
-                base = enc_path / MEMORY_DIR
                 if any(e.is_dir and e.name == MEMORY_DIR for e in entries):
-                    files += [PlannedFile(p, K.ROLE_MEMORY, HOME_CLAUDE, f"projects/{enc}/{MEMORY_DIR}/{p.relative_to(base).as_posix()}")
-                              for p in _files_under(base)]
+                    files += _tree_files(_TreeSpec(enc_path / MEMORY_DIR, f"projects/{enc}/{MEMORY_DIR}", HOME_CLAUDE, K.ROLE_MEMORY), self._memo)
                 for side in (e for e in entries if _is_merged_side(e)):
-                    folder = enc_path / side.name
-                    files += [PlannedFile(p, K.ROLE_MEMORY, HOME_CLAUDE, f"projects/{enc}/{side.name}/{p.relative_to(folder).as_posix()}")
-                              for p in _files_under(folder)]
+                    files += _tree_files(_TreeSpec(enc_path / side.name, f"projects/{enc}/{side.name}", HOME_CLAUDE, K.ROLE_MEMORY), self._memo)
                 if files:
                     unit = memory_unit_id(enc)
                     plan = plans.setdefault(unit, UnitPlan(unit, KIND_MEMORY, FAMILY_CLAUDE, None, enc))
@@ -246,28 +290,7 @@ class Scanner:
         return plans
 
 
-def _history_files(root: Path, conv: str) -> List[PlannedFile]:
-    base = root.parent / "file-history" / conv
-    if not base.is_dir():
-        return []
-    return [PlannedFile(p, K.ROLE_FILE_HISTORY, HOME_CLAUDE, f"file-history/{conv}/{p.relative_to(base).as_posix()}")
-            for p in _files_under(base)]
-
-
-def _codex_files(sources: Sources) -> Iterator[Path]:
-    for sub in ("sessions", "archived_sessions"):
-        base = sources.codex_home / sub
-        if base.is_dir():
-            for path in _files_under(base):
-                if path.name.startswith("rollout-") and path.suffix == ".jsonl":
-                    yield path
-
-
 def plan_claude(sources: Sources, conv: str, scanner: Optional[Scanner] = None) -> Optional[UnitPlan]:
-    """The plan of one Claude conversation, or None when nothing of it is on disk. Raises: ManifestError (not a unit id).
-
-    Inputs: sources; conv (the conversation id); scanner (reuse one across calls in a pass). Example: plan_claude(src, '1234...')
-    """
     return (scanner or Scanner(sources)).plan_claude(conv)
 
 

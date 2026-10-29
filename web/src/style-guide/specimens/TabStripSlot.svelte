@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* and the real */
   import TabStrip, { type TabItem } from '../../opscenter/shell/TabStrip.svelte';
   import CascadeMenu from '../../lib/drawer-tabs/CascadeMenu.svelte';
   import { useFrameHeader, type StripSlotProps } from '../../opscenter/shell/frame-header.svelte';

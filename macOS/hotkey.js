@@ -19,6 +19,7 @@ function isSafeAccelerator(accelerator) {
 
 const PREFERENCES_ROUTE = '/api/v1/preferences';
 
+/* an absent field is the default */
 function acceleratorOf(values) {
   if (typeof values !== 'object' || values === null) return null;
   return typeof values.desktop_hotkey === 'string' ? values.desktop_hotkey : DEFAULT_ACCELERATOR;

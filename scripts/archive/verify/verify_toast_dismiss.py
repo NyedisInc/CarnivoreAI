@@ -1,49 +1,4 @@
 #!/usr/bin/env python3
-"""Do toasts leave when the user deals with them, and stay when he does not.
-
-THE BEHAVIOUR. Two dismissal paths with deliberately different scope:
-
-  EXPLICIT - the user clicks "Dismiss all", and everything clears across
-  every session. It is broad because that is what the control says.
-
-THE CLAIMS, EACH MEASURED AS BOXES:
-
-  1. a toast for A stops painting when the user types into A; and
-  2. a toast for A KEEPS painting when the user types into B - including
-     a blocking PermissionRequest, which is the one that would hurt; and
-  3. "Dismiss all" paints a real, readable box; clicking it leaves ZERO
-     painted cards across three sessions; and
-  4. a toast raised AFTER either dismissal paints normally - both paths
-     clear the stack, neither mutes the feature.
-
-WHY PIXELS. tests/test_toast_dismiss.node.mjs reads the element tree,
-which is the right tool for the branch coverage and cannot answer any of
-the four. That file also owns the claim this page cannot make: that
-client/js/terminal.js really calls the dismissal, with the ATTACHED
-session id and only on real user input. Loading terminal.js here would
-need eval, which the production CSP this harness serves under forbids. This repo has shipped three visibly broken features through
-fully green suites that read markup: a badge rendering the literal
-`~~claude` while tests read `.textContent`, an unstyled button whose "the
-button exists" assertion passed, and a feature with 282 passing
-assertions that drew zero pixels. Every verdict here comes from a
-bounding rect in a real Chromium that loaded the real stylesheets in the
-shipped order.
-
-NEGATIVE CONTROL, per claim rather than once. Every disappearance claim
-is preceded by the SAME setup with no dismissal invoked, asserting the
-card is still painted. Without it, a harness where nothing ever rendered
-would satisfy every claim while measuring nothing - a false green
-manufactured inside the verification step, the worst place for one. A
-blind control is CANNOT DETERMINE for the whole run, never a pass.
-
-TWO THEMES: `claude` (dark, the shipped default) and `terminal` (zeroes
-every radius token, so the control is a hard-edged bar and must still be
-a measurable box there).
-
-playwright is not importable under this project's venv. Run it with an
-interpreter that has it, e.g.
-    /opt/homebrew/bin/python3 scripts/verify_toast_dismiss.py
-"""
 
 from __future__ import annotations
 

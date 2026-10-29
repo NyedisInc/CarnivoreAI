@@ -1,3 +1,5 @@
+// WHY THIS FILE EXISTS
+//     }
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -156,6 +158,7 @@ test('an unknown action is refused rather than defaulting to permitted', () => {
   assert.equal(d.permitted, false);
 });
 
+// --- wiring (SOURCE-LEVEL) ------------------------------------------------
 
 test('wiring (SOURCE-LEVEL): the old unconditional state=stopped is gone from the refusal', () => {
   const at = managerSrc.indexOf('async stop(');

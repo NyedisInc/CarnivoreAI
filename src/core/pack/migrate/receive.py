@@ -16,7 +16,7 @@ import structlog
 from src.core.companion_shell.rows import exclude_clause
 from src.core.pack.identity import home, replicas
 from src.core.pack.machines import restrictions as restrict
-from src.core.pack.migrate import code, manifest as manifest_mod, ops, transcripts
+from src.core.pack.migrate import code, manifest as manifest_mod, ops, task_manager_side, transcripts
 from src.core.pack.transport import blobs, github_account, ladder
 from src.core.pack.trust_carry import store as trust_store
 from src.core.pack.transport.tarball import TarballError
@@ -90,7 +90,6 @@ def prepare(env: TargetEnv, sender: str, body: Mapping[str, Any]) -> Dict[str, A
         if existing is None:
             case, root = "new", _new_root(env, body)
             if conn.execute("SELECT 1 FROM projects WHERE display_name = ? AND host_key = 'local'", (body["name"],)).fetchone():
-                # own project
                 raise MigrateRefused("project_name_taken", f"a different project here is already named {body['name']!r}")
             if conn.execute("SELECT 1 FROM projects WHERE root = ?", (root,)).fetchone():
                 raise MigrateRefused("project_root_in_use", f"the folder {root} already belongs to a project here")
@@ -116,6 +115,10 @@ def prepare(env: TargetEnv, sender: str, body: Mapping[str, Any]) -> Dict[str, A
         if free < DISK_HEADROOM * int(body.get("bytes_needed") or 0):
             raise MigrateRefused("not_enough_disk", "this computer does not have room for the project", 507)
         answer = {"root": root, "case": case, "project_id": existing["id"] if existing is not None else None, "free_bytes": free}
+        if body.get("dry_run") and body.get("task_file_parts"):
+            answer["task_files_not_copied"], failed = task_manager_side.dropped_task_files(env.state_dir, body["task_file_parts"])
+            if failed:
+                answer["task_files_check_failed"] = True
         if not body.get("dry_run"):
             ops.create(conn, op_id=body["op_id"], kind=body.get("kind", "project"), role="target", subject_uid=body["project_uid"],
                        source_install_id=sender, target_install_id=env.install_id, state="applying", step="prepare",
@@ -227,7 +230,6 @@ def _rollback(env: TargetEnv, op_id: str, undo: Dict[str, Any], project_id: Opti
 
 
 def _undo_all(env: TargetEnv, conn: sqlite3.Connection, undo: Mapping[str, Any], project_id: Optional[int], root: Optional[str]) -> None:
-    """Replay an undo record: conversation files, rows, the project row, a company this op made, then the folder. Idempotent."""
     if undo.get("transcripts") and root:
         folder = transcripts.target_folder(root, env.transcripts_root)
         for rel in undo["transcripts"]:
@@ -271,11 +273,6 @@ def abort(env: TargetEnv, sender: str, body: Mapping[str, Any]) -> Dict[str, Any
 
 
 def verify(env: TargetEnv, sender: str, body: Mapping[str, Any]) -> Dict[str, Any]:
-    """Check everything arrived intact. Output: {ok, misses: [name]}. ``misses`` names kinds of difference, never content.
-
-    Checks: the project row (replica of the sender), every session and agent present (agents asleep), the huddle counts equal, every
-    conversation file's sha256 equal, and the code equal (HEAD, or the tar's file count and bytes).
-    """
     with closing(env.open_db()) as conn:
         row = _op_row(conn, body["op_id"])
         d = row["detail"]

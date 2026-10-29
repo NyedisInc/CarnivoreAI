@@ -14,14 +14,6 @@ LOCAL_HOST_KEYS = (None, "", "local")
 
 def live_blocker(ident: SessionIdentity, panes_ok: bool, panes: Iterable[Tuple[Any, Any, Any]],
                  live_row_ids: Iterable[str] = ()) -> Optional[str]:
-    """Why the session counts as live, or None when it is measured asleep.
-
-    Description: a pane with the row's tmux name counts as this session when its creation epoch matches, or when
-      either epoch is unknown (ambiguous is refused, never guessed). A listing that did not answer refuses.
-    Inputs: ident; panes_ok (bool); panes ((name, epoch, path) rows); live_row_ids (``ses_`` ids the server holds a
-      live backend for whose row is this one, from the route). Output: str | None.
-    Example: live_blocker(ident, True, [("carnivore_x", 17000, "/p")])
-    """
     if not panes_ok:
         return "the tmux socket could not be listed, so the session cannot be proven asleep"
     if any(True for _ in live_row_ids):

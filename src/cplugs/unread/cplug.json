@@ -5,15 +5,11 @@
   "description_key": "cplug.unread.description",
   "version": "1.0.0",
   "icon": "bell",
-  "author": "Carnivore contributors",
+  "author": "Alex (example-owner)",
   "min_app_version": "1.12.20",
   "tier": "builtin",
   "default_enabled": true,
-  "surfaces": {
-    "plugins": [
-      "session-card-action"
-    ]
-  },
+  "surfaces": { "plugins": ["session-card-action"] },
   "owns": {
     "strings": [
       "cplug.unread."
@@ -25,8 +21,5 @@
       "session.card_action"
     ]
   },
-  "settings_schema": {
-    "version": 1,
-    "fields": {}
-  }
+  "settings_schema": { "version": 1, "fields": {} }
 }

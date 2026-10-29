@@ -4,10 +4,10 @@
   import { Icon } from '../sdk/ui';
   import { DETAIL_SLOT, type DetailSlot } from './task-manager-detail-slot';
   import { BODY_OPTIONS, DEFAULT_BODY_OPTIONS, type BodyOptions } from './task-manager-body-options';
-  import TaskManagerMove from './TaskManagerMove.svelte';
+  import { taskRowMenu } from './task-manager-row-menu';
   import { Button, Check } from '../sdk/ui';
   import { tickItem } from './task-manager-tick-confirm.svelte';
-  import { providerMark, t, truncatedTip } from '../sdk';
+  import { forwardMenuKey, menuRightClick, providerMark, t, truncatedTip } from '../sdk';
   import { huddle, loadThread, saveNote, toggleRow } from './huddle.svelte';
   import { askDelete } from './task-manager-tick-confirm.svelte';
   import { threadCount } from './task-manager-optimistic';
@@ -215,7 +215,6 @@
       <button type="button" class="oc-ibtn oc-ibtn--bare tkm-key" data-task-manager-note-open={item.id}
               aria-label={t(item.note ? 'cplug.huddle.row.note_edit' : 'cplug.huddle.row.note_add')}
               title={t(item.note ? 'cplug.huddle.row.note_edit' : 'cplug.huddle.row.note_add')} onclick={editNote}><Icon name="docs" size={ico.main} strokeWidth={ico.stroke} /></button>
-      <TaskManagerMove {item} />
       <button type="button" class="oc-ibtn oc-ibtn--bare tkm-key tkm-remove" data-task-manager-delete={item.id}
               aria-label={t('cplug.huddle.row.delete', { text: plainText })}
               onclick={() => askDelete(item)}><Icon name="close" size={ico.small} strokeWidth={ico.stroke} /></button>
@@ -257,7 +256,8 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <li class="hdr" bind:this={row} class:hdr--wrapped={wrapped} class:tkm--placeholder={dragging} class:tkm--asking={asking} class:tkm--open={open} class:tkm--info={isInfo(item)}
     class:tkm--focus={focused} style:--_state={stripe} data-task-manager-density={density} data-row-icons={options.drawerIcons ? 'drawer' : undefined} data-huddle-item={item.id} data-state={item.state} data-status={status} data-task-manager-signal={signal ?? undefined} data-task-manager-marker={marker ?? undefined}
-    data-kind={item.kind || undefined} data-by={item.created_by} data-task-manager-focused={focused ? 'on' : undefined}>
+    data-kind={item.kind || undefined} data-by={item.created_by} data-task-manager-focused={focused ? 'on' : undefined}
+    onkeydown={(event) => forwardMenuKey(event, row ?? null)} {...menuRightClick(() => taskRowMenu(item))}>
   {#if wrapped}
     
     <TaskWrapper state={taskState} onStateChange={peek} toggleProps={toggleProps}>
@@ -651,7 +651,6 @@
       color: var(--oc-coral);
     }
 
-    /* padding */
     .hdr.hdr--wrapped,
     .hdr.hdr--wrapped.tkm--open {
       display: block;

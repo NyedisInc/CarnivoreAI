@@ -149,11 +149,11 @@ test('5. signed out: a Sign In to Carnivore... row opens #account; signed in: th
   assert.equal(byId(out, 'settings').sublabel, undefined);
   const inside = buildMenuModel(snap(), env);
   assert.equal(byId(inside, 'account.sign_in'), undefined);
-  assert.equal(byId(inside, 'settings').sublabel, 'signed in as sam');
+  assert.equal(byId(inside, 'settings').sublabel, 'signed in as joe');
   const opened = [];
   const { handlers } = load('actions/app.js');
-  handlers({ serverManager: { getPublishedUrl: () => 'http://203.0.113.12:8000', getState: () => 'running' }, shell: { openExternal: (u) => opened.push(u) } })['app.account']();
-  assert.deepEqual(opened, ['http://203.0.113.12:8000/#account']);
+  handlers({ serverManager: { getPublishedUrl: () => 'http://10.0.1.5:8000', getState: () => 'running' }, shell: { openExternal: (u) => opened.push(u) } })['app.account']();
+  assert.deepEqual(opened, ['http://10.0.1.5:8000/#account']);
 });
 
 test('6. an untrusted port holder: why row, Kill Port Holder and Start Server agree', async () => {

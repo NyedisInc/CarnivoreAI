@@ -6,6 +6,7 @@ import uuid as _uuid
 from dataclasses import dataclass
 from typing import List, Optional
 
+from src.core import session_group_rule as rule_store
 from src.core import session_group_style as style_store
 from src.core.db import column_exists, table_exists, transaction
 from src.core.session_group_style_ddl import SESSION_GROUP_STYLES_TABLE
@@ -47,6 +48,7 @@ class SessionGroup:
     members: tuple
     member_session_uuids: tuple = ()
     style: Optional[style_store.GroupStyle] = None
+    rule: Optional[dict] = None
 
 
 def normalize_name(raw: str) -> str:
@@ -67,6 +69,7 @@ def list_groups(conn: sqlite3.Connection) -> List[SessionGroup]:
     _require_tables(conn)
     members = members_by_group(conn)
     styles = style_store.styles_by_group(conn)
+    rules = rule_store.rules_by_group(conn)
     rows = conn.execute(
         "SELECT id, group_uuid, name, position, created_at, updated_at "
         "FROM session_groups ORDER BY position ASC, group_uuid ASC"
@@ -84,6 +87,7 @@ def list_groups(conn: sqlite3.Connection) -> List[SessionGroup]:
                 members=tuple(name for _, name in filed if name),
                 member_session_uuids=tuple(uuid for uuid, _ in filed),
                 style=style_store.resolve(styles.get(int(r[0])), str(r[1])),
+                rule=rules.get(int(r[0])),
             )
         )
     return out
@@ -163,6 +167,23 @@ def set_group_icon(
     with transaction(conn):
         gid = _group_id(conn, group_uuid)
         style_store.write_icon(conn, gid, group_uuid, icon, now=now)
+
+def set_group_rule(
+    conn: sqlite3.Connection,
+    group_uuid: str,
+    flags: List[str],
+    prefix: Optional[str] = None,
+    suffix: Optional[str] = None,
+    *,
+    now: Optional[str] = None,
+) -> None:
+    _require_tables(conn)
+    rule = rule_store.normalize(flags, prefix, suffix)
+    if not table_exists(conn, rule_store.RULE_TABLE):
+        raise GroupsUnavailable("the group rule table is not present (schema before v101)")
+    with transaction(conn):
+        rule_store.write(conn, _group_id(conn, group_uuid), rule, now=now)
+
 
 def rename_group(
     conn: sqlite3.Connection,

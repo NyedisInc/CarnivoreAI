@@ -29,7 +29,7 @@ def branch_label(title: Optional[str], tmux_name: Optional[str]) -> str:
 async def branch(manager: Any, *, session_uuid: str, entry_uuid: str, conversation: Optional[str] = None,
                  preflight: Optional[Callable[[rows.SessionRow], None]] = None) -> dict:
     from src.core.session_fork import stamp_fork_child
-    from src.core.session_label import sanitize_tmux_name
+    from src.core.session_name_claim import sanitize_tmux_name
     from src.core.session_restart import resume_arguments
 
     row = await asyncio.to_thread(rows.read_row, session_uuid)
@@ -77,16 +77,6 @@ async def branch(manager: Any, *, session_uuid: str, entry_uuid: str, conversati
 
 async def rewind(manager: Any, *, session_uuid: str, entry_uuid: str, confirm: bool,
                  conversation: Optional[str] = None) -> dict:
-    """Restart THIS session's live pane on a copy of its conversation cut at ``entry_uuid``.
-
-    Inputs: manager (SessionManager); session_uuid (str); entry_uuid (str); confirm (bool) - the
-      ticked arm box, carried by the request; conversation (str | None) - as :func:`branch`.
-    Output: dict - ``claude_session_uuid`` (the copy), ``previous_claude_session_uuid``,
-      ``killed_live_pane``, ``resumed_copy`` (the command really carried the copy's uuid),
-      ``identity_status``, ``kind``, ``ok``, ``detail``.
-    Raises: RewindRefused - no confirm (400), not measured live, a restart already running, the
-      row moved, or the ladder refused; the BookmarkError family for the copy.
-    """
     from src.core import restart_inflight
 
     if confirm is not True:

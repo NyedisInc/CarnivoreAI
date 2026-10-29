@@ -5,8 +5,9 @@ from contextlib import contextmanager
 from typing import Any, Dict, Iterator
 
 import structlog
-from fastapi import HTTPException, Request
+from fastapi import Request
 
+from src.api.error_response import api_error
 from src.config.byoai import ConnectionConfig
 from src.core import session_change_notice
 from src.core.byoai.contracts import (
@@ -33,21 +34,20 @@ def publish_changed(request: Request, revision: int) -> None:
 def api_errors(gateway: Gateway) -> Iterator[None]:
     try:
         yield
-    except StaleRevision:
-        raise HTTPException(409, {"error": "stale_revision", "revision": gateway.store.read().revision,
-                                  "detail": "the AI settings changed; reload and try again"}) from None
+    except StaleRevision as exc:
+        raise api_error(409, "byoai_stale_revision", exc, extra={"revision": gateway.store.read().revision}) from None
     except NotConfigured as exc:
-        raise HTTPException(404, {"error": "not_configured", "detail": str(exc)}) from None
+        raise api_error(404, "byoai_not_configured", exc) from None
     except (MissingKey, InvalidKey) as exc:
-        raise HTTPException(400, {"error": "key", "detail": str(exc)}) from None
+        raise api_error(400, "byoai_key_rejected", exc) from None
     except Unsupported as exc:
-        raise HTTPException(400, {"error": "unsupported", "detail": str(exc)}) from None
+        raise api_error(400, "byoai_unsupported", exc) from None
     except ProviderHTTPError as exc:
-        raise HTTPException(502, {"error": "provider_error", "provider_status": exc.status,
-                                  "detail": exc.body}) from None
+        raise api_error(502, "byoai_provider_error", exc, extra={"provider_status": exc.status},
+                         provider_body=exc.body) from None
     except ProviderTimeout as exc:
-        raise HTTPException(504, {"error": "timeout", "detail": str(exc)}) from None
+        raise api_error(504, "byoai_timeout", exc) from None
     except ByoaiUnreachable as exc:
-        raise HTTPException(503, {"error": "unreachable", "detail": str(exc)}) from None
+        raise api_error(503, "byoai_unreachable", exc) from None
     except ByoaiError as exc:
-        raise HTTPException(400, {"error": "invalid", "detail": str(exc)}) from None
+        raise api_error(400, "byoai_invalid", exc) from None

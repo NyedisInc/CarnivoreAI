@@ -25,7 +25,7 @@ def config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, list[
 
 def test_a_tier_write_persists_reloads_and_names_the_push(config: tuple[Path, list[str]]) -> None:
     path, named = config
-    keys = ["session:3f81a069-084b-4840-84ea-9320d84a3261", "agent:7", "project:3"]
+    keys = ["session:9f3c2a10-1111-2222-3333-444455556666", "agent:7", "project:3"]
     stored = asyncio.run(routes.put_node_order(routes.NodeOrderWrite(tier="agents", keys=keys)))
     assert stored == {"companies": [], "projects": [], "agents": keys}
     asyncio.run(routes.put_node_order(routes.NodeOrderWrite(tier="companies", keys=["company:2", "company:1"])))

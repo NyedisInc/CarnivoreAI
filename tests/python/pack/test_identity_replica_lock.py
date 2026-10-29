@@ -23,7 +23,7 @@ from src.core.pack.identity import home, replicas  # noqa: E402
 from src.core.session_manager import SessionManager  # noqa: E402
 
 PEER_INSTALL = "iid-home-a"
-ROOT_A = "/work/ledgerbot"
+ROOT_A = "/work/trader"
 
 
 def _machine(monkeypatch, tmp_path: Path, name: str) -> Path:
@@ -43,9 +43,9 @@ def _seed_home(state: Path) -> dict:
         conn.execute("INSERT INTO companies (name, created_at, updated_at) VALUES ('Acme', 't', 't')")
         cid = conn.execute("SELECT id FROM companies WHERE name = 'Acme'").fetchone()[0]
         conn.execute("INSERT INTO projects (root, raw_path, display_name, source, company_id, created_at, updated_at) "
-                     "VALUES (?, ?, 'ledgerbot', 'user', ?, 't', 't')", (ROOT_A, ROOT_A, cid))
+                     "VALUES (?, ?, 'trader', 'user', ?, 't', 't')", (ROOT_A, ROOT_A, cid))
         conn.commit()
-        return dict(conn.execute("SELECT * FROM projects WHERE display_name = 'ledgerbot'").fetchone())
+        return dict(conn.execute("SELECT * FROM projects WHERE display_name = 'trader'").fetchone())
 
 
 def test_uid_is_stamped_the_lock_refuses_create_and_wake_and_a_replica_shares_the_uid(monkeypatch, tmp_path) -> None:
@@ -94,7 +94,7 @@ def test_uid_is_stamped_the_lock_refuses_create_and_wake_and_a_replica_shares_th
     app.include_router(peer_routes.router, prefix="/api/v1")
     app.dependency_overrides[peer_routes._require_replica] = lambda: peer_auth.Principal("peer", grant)
     client = TestClient(app)
-    body = {"project_uid": uid, "name": "ledgerbot", "root": str(tmp_path / "b-ledgerbot"), "company_uid": None, "company_name": "Acme"}
+    body = {"project_uid": uid, "name": "trader", "root": str(tmp_path / "b-trader"), "company_uid": None, "company_name": "Acme"}
     ok = client.post("/api/v1/federation/pack/replica", json=body)
     assert ok.status_code == 200, ok.text
     assert ok.json()["project_uid"] == uid and ok.json()["state"] == "replica" and ok.json()["created"] is True

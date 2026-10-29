@@ -110,7 +110,7 @@ async def _up(world, *, dialer_ident="main", main_pin=None, member_pin=None, dia
     linked: List[str] = []
     hellos: list = []
     holder: dict = {}
-    hub = LinkListener(identity=idents["main"], fed_dir=dirs["main"], listener_path=str(root / "main.sock"), addresses=lambda: ["main.local", "198.51.100.15"],
+    hub = LinkListener(identity=idents["main"], fed_dir=dirs["main"], listener_path=str(root / "main.sock"), addresses=lambda: ["main.local", "10.1.2.3"],
                        on_link=lambda iid: _record(linked, iid), on_member_hello=lambda iid, a, p: _record(hellos, (iid, a, p)),
                        on_members=lambda members: holder["dialer"].set_members(members))
     dialer = holder["dialer"] = LinkDialer(identity=idents[dialer_ident], hub=hub, rows=cache.get, backoff=backoff, stagger=0.05)
@@ -267,9 +267,9 @@ def test_a_blocked_private_address_is_named_local_network_blocked():
     import errno
     from src.core.computers.link_dialer import _failure_state
     blocked = [OSError(errno.EHOSTUNREACH, "No route to host")]
-    assert _failure_state(blocked, [("192.0.2.14", 1), ("air.local", 1)]) == LOCAL_NETWORK_BLOCKED
+    assert _failure_state(blocked, [("10.0.0.2", 1), ("air.local", 1)]) == LOCAL_NETWORK_BLOCKED
     assert _failure_state(blocked, [("8.8.8.8", 1)]) == "unreachable"
-    assert _failure_state([ConnectionRefusedError()], [("192.0.2.14", 1)]) == "unreachable"
+    assert _failure_state([ConnectionRefusedError()], [("10.0.0.2", 1)]) == "unreachable"
 
 
 @pytest.mark.asyncio
@@ -295,10 +295,10 @@ async def test_peer_links_uses_the_factory_and_set_initiator_keeps_the_ssh_targe
         grants.create_grant(c, peer_install_id=acceptor.install_id, public_key=pair_driver.fed_key.public_key_b64(acceptor.key),
                             label="a", remote_grant_id="theirs")
         peer_hosts.upsert(c, install_id=acceptor.install_id, label="a", grant_id="theirs", fid="f", initiator=False,
-                         ssh_target="hosta", ssh_port=2201)
+                         ssh_target="studio", ssh_port=2222)
         assert peer_hosts.set_initiator(c, acceptor.install_id, True)
         after = peer_hosts.get(c, acceptor.install_id)
-        assert after.initiator and after.ssh_target == "hosta" and after.ssh_port == 2201
+        assert after.initiator and after.ssh_target == "studio" and after.ssh_port == 2222
         assert not peer_hosts.set_initiator(c, "no-such-peer", True)
 
     class Stub:
@@ -323,6 +323,6 @@ async def test_peer_links_uses_the_factory_and_set_initiator_keeps_the_ssh_targe
         assert links._transports[acceptor.install_id] is stub
         links.transport_factory = lambda r, make: None
         await links.start_initiator(after)
-        assert isinstance(links._transports[acceptor.install_id], FakeSsh) and links._transports[acceptor.install_id].kw["dest"].target == "hosta"
+        assert isinstance(links._transports[acceptor.install_id], FakeSsh) and links._transports[acceptor.install_id].kw["dest"].target == "studio"
     finally:
         await links.shutdown()

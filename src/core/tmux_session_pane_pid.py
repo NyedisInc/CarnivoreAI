@@ -1,68 +1,30 @@
-"""One tmux session's foreground pane pid, probed by name+socket.
-
-Mirrors ``tmux_session_cwd.py``'s shape exactly (a ``probe_*`` function
-plus a ``make_*_probe`` factory the S7 adopt path already knows how to
-consume), for the same reason that module gives: the adopt path needs a
-callable it can hand a bare session name to, without threading a live
-backend instance through ``session_adopt_persist.py``.
-
-REUSES THE EXISTING MECHANISM RATHER THAN A NEW TMUX CALL. ``TmuxBackend``
-already exposes ``.pid`` (a ``display-message -p '#{pane_pid}'`` query)
-for exactly this purpose - see its docstring in ``tmux_backend.py``. This
-module's only job is to build a throwaway ``TmuxBackend.for_external``
-instance to read it from, and to turn every way that can fail into
-``None`` rather than an exception, matching
-``tmux_session_cwd.probe_session_working_dir``'s three-outcome contract:
-a pid, or ``None`` meaning CANNOT DETERMINE. Constructing the instance
-has no side effects - ``for_external`` only validates the name and sets
-attributes; it does not attach, capture, or open a pipe.
-"""
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Callable, Optional
 
 import structlog
 
+from src.core.tmux_session_cwd import CWD_PROBE_TIMEOUT_SECONDS, probe_session_format
+
 logger = structlog.get_logger()
 
+PANE_PID_FORMAT = "#{pane_pid}"
 
-def probe_session_pane_pid(name: str, *, socket: str) -> Optional[int]:
-    """Read one tmux session's current foreground pane pid.
 
-    Description: NEVER RAISES. An unsafe name (a tmux target separator),
-      a dead/missing session, or a tmux failure of any kind all answer
-      None - CANNOT DETERMINE, never "no process".
-    Inputs: name (str) - the tmux session name. socket (str) - the tmux
-      socket it lives on.
-    Output: int | None.
-    Example: probe_session_pane_pid('Image_Tool', socket='cloude')
-    """
-    if not name:
+def probe_session_pane_pid(
+    name: str, *, socket: str, timeout: float = CWD_PROBE_TIMEOUT_SECONDS
+) -> Optional[int]:
+    text = probe_session_format(name, socket=socket, fmt=PANE_PID_FORMAT, timeout=timeout)
+    if text is None:
         return None
-    from src.core.tmux_backend import TmuxBackend
-
     try:
-        backend = TmuxBackend.for_external(
-            session_name=name,
-            working_dir=Path.home(),
-            on_output=None,
-            socket_name=socket,
-        )
+        pid = int(text)
     except ValueError:
-        logger.warning("pane_pid_probe_unsafe_name", tmux_name=name)
+        logger.warning("pane_pid_probe_not_a_number", tmux_name=name, tmux_socket=socket,
+                       answer=text[:40])
         return None
-    try:
-        return backend.pid
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(
-            "pane_pid_probe_failed",
-            tmux_name=name,
-            tmux_socket=socket,
-            error=str(exc),
-        )
-        return None
+    return pid if pid > 0 else None
 
 
 def make_pane_pid_probe(socket: str) -> Callable[[str], Optional[int]]:

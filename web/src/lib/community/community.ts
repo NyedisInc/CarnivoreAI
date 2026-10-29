@@ -123,7 +123,6 @@ export function buildThread(pub: readonly Comment[], mine: readonly Comment[]): 
         if (!id || seen.has(id)) return;
         const own = mineById.get(id);
         const status = (own ?? c).status ?? null;
-        //  hidden 
         if (status === 'held' && !own) return;
         if (status !== null && HIDDEN.has(status) && !c.placeholder) return;
         seen.add(id);

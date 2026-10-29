@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* could not */
   import type { LayoutStore } from './layout.svelte';
 
   let { store }: { store: LayoutStore } = $props();

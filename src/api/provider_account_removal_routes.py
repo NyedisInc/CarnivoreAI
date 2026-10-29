@@ -37,6 +37,12 @@ async def delete_provider_account(account_id: str, request: Request) -> dict:
     200 would tell a settings screen it had deleted a row that was never
     in the file, and the screen would repaint from a state nobody wrote.
 
+    **A MANAGED ROW IS SIGNED OUT AND ITS PROFILE DIRECTORY IS DELETED**
+    (Alex, 2026-09-18: "make it so when removing the account make it
+    delete the directory since it's just a temp dir anyway"). That
+    directory is a temporary login area this app made, so retiring the
+    account retires the login in it.
+
     **AN UNMANAGED ROW IS UNCHANGED, AND THAT IS THE FENCE.** It names a
     directory the user made, very often the primary ``~/.claude``, and
     removing a pointer must never take what it points at. It answers
@@ -49,6 +55,11 @@ async def delete_provider_account(account_id: str, request: Request) -> dict:
     has to be first for a second reason: it runs UNDER the profile
     directory, so a logout after the delete would be pointed at
     something that is no longer there.
+
+    **A LOGOUT THAT FAILED DOES NOT STOP THE REMOVAL**, per the same
+    ruling, and neither does a directory this app refused to touch. Both
+    outcomes are published as their own field so the screen can say what
+    actually happened rather than implying it all worked.
 
     Raises:
         HTTPException(404): no account holds this id.
@@ -131,14 +142,6 @@ async def delete_provider_account(account_id: str, request: Request) -> dict:
 
 
 async def _sessions_on(request: Request, accounts, account_id: str) -> list:
-    """Running agent panes on this account's profile. See pane_account.
-
-    Description: a listing that cannot be taken refuses the removal rather
-      than proceeding blind, the same direction as an unreadable pane.
-    Inputs: request; accounts (the configured rows); account_id.
-    Output: list[str] - tmux names.
-    Raises: HTTPException(409) - the running sessions could not be listed.
-    """
     manager = getattr(request.app.state, "session_manager", None)
     if manager is None:
         return []
@@ -154,7 +157,7 @@ async def _sessions_on(request: Request, accounts, account_id: str) -> list:
             },
         ) from exc
     return await pane_account.sessions_on_account(
-        infos, socket=manager._tmux_socket_name(), accounts=accounts, account_id=account_id
+        infos, socket=manager.tmux_socket_name(), accounts=accounts, account_id=account_id
     )
 
 

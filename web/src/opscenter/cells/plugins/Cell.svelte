@@ -5,6 +5,7 @@
 </script>
 
 <script lang="ts">
+  /* there is nothing */
   import type { CellProps } from '../../lib/cell';
   import DataTable from '../../ui/DataTable.svelte';
   import Icon from '../../ui/Icon.svelte';

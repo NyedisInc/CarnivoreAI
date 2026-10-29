@@ -6,7 +6,6 @@ import { t } from '../../../lib/i18n/index.svelte';
 
 export const meta = metaFor('activity-log');
 
-/* padding */
 export const columns: ColumnSpec[] = [
   { key: 'time', headKey: 'opscenter.column.time', minPx: 72, weight: 0 },
   { key: 'tag', headKey: 'opscenter.column.tag', minPx: 69, weight: 0 },
@@ -18,7 +17,6 @@ export const sourceFullMinPx = 150;
 
 export const rowHeight = 15;
 
-/* padding */
 export const ROW_PAD_LEFT = 15;
 export const ROW_PAD_RIGHT = 10;
 export const ROW_GAP = 18;

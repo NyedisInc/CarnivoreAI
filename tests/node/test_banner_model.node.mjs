@@ -1,3 +1,4 @@
+// and the real
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -116,7 +117,7 @@ test('buttons keep the dialog order and count; multi-select, no options and unre
 });
 
 test('the visible-action cap: unbounded gives every option a button; a cap of 3 on 5 options gives two buttons and the more button', () => {
-  assert.equal(model.VISIBLE_ACTION_CAP, null, 'the shipped default is unbounded until the team reads the cap off macOS');
+  assert.equal(model.VISIBLE_ACTION_CAP, null, 'the shipped default is unbounded until Alex reads the cap off macOS');
   const five = dialog({ options: ['A', 'B', 'C', 'D', 'E'] });
   const open = model.planFor(five, { t });
   assert.deepEqual(open.buttons.map((b) => b.label), ['A', 'B', 'C', 'D', 'E']);

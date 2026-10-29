@@ -81,7 +81,6 @@ export function openItemMenu<T extends ItemMenuType>(
     const built = itemMenu(type, ctx, ITEM_MENU_ENV);
     if (!built) return false;
     closeItemMenu();
-    hg().SessionSidebarGroupActions?.closeMenu?.();
     const nestedIn = opts.nestedIn ?? null;
     const host = placeHost(nestedIn);
     ensurePanel(MENU_HOST_ID, ItemMenuHost, {});

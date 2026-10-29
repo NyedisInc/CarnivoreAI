@@ -95,6 +95,7 @@ const { importIdentityFromEnv } = require(${JSON.stringify(moduleUnderTest)});
 `);
 
 let failures = 0;
+/** Run one named case, count a failure instead of aborting the rest. */
 function test(name, fn) {
   try {
     fn();

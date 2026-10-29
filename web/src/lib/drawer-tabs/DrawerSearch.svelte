@@ -1,5 +1,7 @@
 <script lang="ts">
+  /* the drawer has focus */
   import Icon from '../../opscenter/ui/Icon.svelte';
+  import Button from '../base/Button.svelte';
   import Field from '../base/Field.svelte';
   import { t } from '../i18n/index.svelte';
   import { readChoice, readFlag, writeChoice } from '../ui/prefs.svelte';
@@ -12,6 +14,7 @@
   import { cursorTarget, moveCursor, resetCursor, searchD } from '../drawer/search-d.svelte';
   import { DeepSearchController, SUGGEST_LIST_ID } from '../deepsearch/deepsearch.svelte';
   import { SEARCH_AGENTS_BAND } from '../sidebar-shell/search-plan';
+  import { rowEls, setFocusRow } from '../sidebar-shell/row-focus';
   import type { MenuNode } from './add-component-menu';
   import {
     DRAWER_DEEP_ACTIVE_CLASS,
@@ -29,16 +32,9 @@
   interface SearchGlobal {
     setQuery?: (raw: string) => void;
   }
-  interface ReorderGlobal {
-    rowEls?: () => HTMLElement[];
-    setFocusRow?: (name: string | null, band: string | null, takeFocus: boolean) => void;
-  }
 
   function searchApi(): SearchGlobal | null {
     return (globalThis as { SessionSidebarSearch?: SearchGlobal }).SessionSidebarSearch ?? null;
-  }
-  function reorderApi(): ReorderGlobal | null {
-    return (globalThis as { SessionSidebarReorder?: ReorderGlobal }).SessionSidebarReorder ?? null;
   }
 
   let value = $state('');
@@ -59,7 +55,7 @@
     return made;
   });
   let modeOpen = $state(false);
-  let modeButton = $state<HTMLButtonElement | null>(null);
+  let modeButton = $state<HTMLElement | null>(null);
   let zone = $state<'box' | 'terms' | 'results'>('box');
 
   const modeRoot = $derived<MenuNode[]>(
@@ -159,11 +155,9 @@
   }
 
   function focusFirstRow(): void {
-    const R = reorderApi();
-    const rows = R?.rowEls?.() ?? [];
-    const first = rows[0];
-    if (!first || !R?.setFocusRow) return;
-    R.setFocusRow(first.dataset.name ?? null, first.dataset.band ?? null, true);
+    const first = rowEls()[0];
+    if (!first) return;
+    setFocusRow(first.dataset.name ?? null, first.dataset.band ?? null, true);
   }
 
   function walk(delta: number): void {
@@ -298,10 +292,11 @@
     >
       {#snippet trailing()}
         
-        <button
-          type="button"
-          class="oc-btn oc-btn--tool ds-mode"
-          bind:this={modeButton}
+        <Button
+          variant="quiet"
+          size="sm"
+          data-ds-mode
+          bind:element={modeButton}
           aria-haspopup="menu"
           aria-expanded={modeOpen}
           aria-label={t('drawer.search.mode.button', { mode: t(mode.nameKey) })}
@@ -310,7 +305,7 @@
         >
           <Icon name={mode.icon} size={16} />
           <span class="ds-mode-arrow"><Icon name="chevron-down" size={10} /></span>
-        </button>
+        </Button>
       {/snippet}
     </Field>
     {#if suggesting}<SearchTerms {controller} active={zone === 'terms'} />{/if}
@@ -359,7 +354,7 @@
       --oc-search-h: var(--drawer-field-h, var(--oc-control-h-sm));
     }
 
-    .ds-mode {
+    :global([data-ds-mode]) {
       min-height: auto;
       line-height: inherit;
       transition: initial;
@@ -380,10 +375,10 @@
       white-space: nowrap;
       cursor: pointer;
     }
-    .ds-mode:hover {
+    :global([data-ds-mode]:hover) {
       color: var(--oc-text-primary);
     }
-    .ds-mode[aria-expanded='true'] {
+    :global([data-ds-mode][aria-expanded='true']) {
       color: var(--oc-orange);
     }
     .ds-mode-arrow {
@@ -391,10 +386,10 @@
       color: var(--oc-text-muted);
     }
     @media (max-width: 1023px) {
-      .ds-mode {
+      :global([data-ds-mode]) {
         position: relative;
       }
-      .ds-mode::after {
+      :global([data-ds-mode]::after) {
         content: '';
         position: absolute;
         top: 50%;

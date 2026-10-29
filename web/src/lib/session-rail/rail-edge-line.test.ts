@@ -5,6 +5,7 @@ import { describe, expect, test } from 'vitest';
 const grip = readFileSync(join(process.cwd(), 'src/lib/session-rail/RailResizeHandle.svelte'), 'utf8');
 const out = readFileSync(join(process.cwd(), 'src/lib/session-rail/RailSlideout.svelte'), 'utf8');
 
+/** The declarations of the first rule whose selector is exactly `selector`. */
 function rule(selector: string): string {
   const start = grip.indexOf(`${selector} {`);
   expect(start, selector).toBeGreaterThan(-1);

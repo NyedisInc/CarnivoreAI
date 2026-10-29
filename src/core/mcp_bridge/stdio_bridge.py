@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 import copy
-import http.client
 import json
 import os
+import socket
 import sys
 import threading
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional, Tuple
 from urllib.parse import urlsplit
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 URL_ENV = "CARNIVORE_MCP_URL"
 TOKEN_ENV = "CLOUDECODE_HOOK_TOKEN"
@@ -44,6 +46,10 @@ class NotSent(Exception):
     pass
 
 
+class Refused(NotSent):
+    pass
+
+
 class Ambiguous(Exception):
     pass
 
@@ -52,17 +58,109 @@ class ChannelsOff(Exception):
     pass
 
 
-@dataclass(frozen=True)
+class HttpError(Exception):
+    pass
+
+
+class Response:
+
+    def __init__(self, rfile: "Any") -> None:
+        self._f = rfile
+        line = rfile.readline(65537)
+        parts = line.split(None, 2)
+        if len(parts) < 2 or not parts[0].startswith(b"HTTP/") or not parts[1].isdigit():
+            raise HttpError("bad status line")
+        self.status = int(parts[1])
+        self.headers: "Dict[str, str]" = {}
+        while True:
+            line = rfile.readline(65537)
+            if line in (b"\r\n", b"\n"):
+                break
+            if not line:
+                raise HttpError("headers cut short")
+            name, sep, value = line.decode("latin-1").partition(":")
+            if sep:
+                self.headers[name.strip().lower()] = value.strip()
+        self._chunked = "chunked" in self.headers.get("transfer-encoding", "").lower()
+        length = self.headers.get("content-length", "")
+        self._left = int(length) if length.isdigit() and not self._chunked else None
+        self._chunk_left = 0
+        self._eof = False
+        self._buf = b""
+
+    def _fill(self) -> bool:
+        if self._eof:
+            return False
+        if self._chunked:
+            if self._chunk_left == 0:
+                size = self._f.readline(65537).split(b";")[0].strip()
+                try:
+                    self._chunk_left = int(size, 16)
+                except ValueError:
+                    raise HttpError("bad chunk size") from None
+                if self._chunk_left == 0:
+                    self._eof = True
+                    return False
+            data = self._f.read1(self._chunk_left)
+            if not data:
+                raise HttpError("chunk cut short")
+            self._chunk_left -= len(data)
+            if self._chunk_left == 0:
+                self._f.readline(65537)
+        else:
+            data = self._f.read1(65536 if self._left is None else min(65536, self._left))
+            if self._left is not None:
+                self._left -= len(data)
+                if self._left and not data:
+                    raise HttpError("body cut short")
+                self._eof = self._left == 0
+            elif not data:
+                self._eof = True
+        self._buf += data
+        return bool(data) or not self._eof
+
+    def read(self) -> bytes:
+        while self._fill():
+            pass
+        data, self._buf = self._buf, b""
+        return data
+
+    def readline(self) -> bytes:
+        while b"\n" not in self._buf:
+            if not self._fill():
+                break
+        line, sep, rest = self._buf.partition(b"\n")
+        self._buf = rest
+        return line + sep
+
+
+def open_request(host: str, port: int, method: str, path: str, body: "Optional[bytes]", headers: "Dict[str, str]",
+                 connect_timeout: float, read_timeout: float) -> "Tuple[socket.socket, Any]":
+    if any(c in v for v in (path, *headers.values()) for c in "\r\n"):
+        raise ValueError("control characters in the request line or headers")
+    sock = socket.create_connection((host, port), timeout=connect_timeout)
+    try:
+        sock.settimeout(read_timeout)
+        authority = f"[{host}]" if ":" in host else host
+        head = [f"{method} {path} HTTP/1.1", f"Host: {authority}:{port}", "Connection: close", "Accept-Encoding: identity"]
+        if body is not None:
+            head.append(f"Content-Length: {len(body)}")
+        head += [f"{k}: {v}" for k, v in headers.items()]
+        sock.sendall(("\r\n".join(head) + "\r\n\r\n").encode("latin-1") + (body or b""))
+        return sock, sock.makefile("rb")
+    except BaseException:
+        sock.close()
+        raise
+
+
 class Settings:
 
-    host: str
-    port: int
-    path: str
-    token: str
-    session_ref: str
-    channel: bool
-    wait_s: float
-    probe_s: float = DEFAULT_PROBE_S
+    __slots__ = ("host", "port", "path", "token", "session_ref", "channel", "wait_s", "probe_s")
+
+    def __init__(self, host: str, port: int, path: str, token: str, session_ref: str, channel: bool,
+                 wait_s: float, probe_s: float = DEFAULT_PROBE_S) -> None:
+        self.host, self.port, self.path, self.token = host, port, path, token
+        self.session_ref, self.channel, self.wait_s, self.probe_s = session_ref, channel, wait_s, probe_s
 
     @staticmethod
     def from_env(env: Mapping[str, str]) -> "Settings":
@@ -133,6 +231,7 @@ class Upstream:
         self.s = settings
         self.emitter = emitter
         self._lock = threading.Lock()
+        self._reinit_lock = threading.Lock()
         self.session_id: Optional[str] = None
         self.protocol: Optional[str] = None
         self._init_message: Optional[dict] = None
@@ -152,24 +251,28 @@ class Upstream:
             h[PROTOCOL_HEADER] = self.protocol
         return h
 
+    def _open(self, method: str, body: Optional[bytes], headers: Dict[str, str], read_timeout: float) -> Tuple[Any, Any]:
+        try:
+            return open_request(self.s.host, self.s.port, method, self.s.path, body, headers,
+                                CONNECT_TIMEOUT_S, read_timeout)
+        except OSError as exc:
+            raise NotSent(type(exc).__name__) from exc
+        except ValueError as exc:
+            raise Refused(str(exc)) from exc
+
     def roundtrip(self, method: str, body: Optional[bytes], headers: Dict[str, str],
                   read_timeout: float) -> Tuple[int, Dict[str, str], bytes]:
-        conn = http.client.HTTPConnection(self.s.host, self.s.port, timeout=CONNECT_TIMEOUT_S)
+        sock, rfile = self._open(method, body, headers, read_timeout)
         try:
             try:
-                conn.connect()
-                conn.sock.settimeout(read_timeout)
-                conn.request(method, self.s.path, body=body, headers=headers)
-            except OSError as exc:
-                raise NotSent(type(exc).__name__) from exc
-            try:
-                resp = conn.getresponse()
+                resp = Response(rfile)
                 data = resp.read()
-            except (OSError, http.client.HTTPException) as exc:
+            except (OSError, HttpError) as exc:
                 raise Ambiguous(type(exc).__name__) from exc
-            return resp.status, {k.lower(): v for k, v in resp.getheaders()}, data
+            return resp.status, resp.headers, data
         finally:
-            conn.close()
+            rfile.close()
+            sock.close()
 
     def _call(self, body: bytes, idempotent: bool, with_session: bool) -> Tuple[int, Dict[str, str], bytes]:
         deadline = time.monotonic() + self.s.wait_s
@@ -183,6 +286,8 @@ class Upstream:
                         log("recovered", attempts=attempts)
                     return status, hdrs, data
                 failure: Exception = NotSent(f"HTTP {status}")
+            except Refused:
+                raise
             except NotSent as exc:
                 failure = exc
             except Ambiguous as exc:
@@ -196,7 +301,15 @@ class Upstream:
             time.sleep(delay)
             delay = min(delay * 2, BACKOFF_CAP_S)
 
-    def reinitialize(self) -> bool:
+    def reinitialize(self, seen_session: Optional[str] = None) -> bool:
+        with self._reinit_lock:
+            with self._lock:
+                current = self.session_id
+            if seen_session is not None and current is not None and current != seen_session:
+                return True
+            return self._reinitialize_locked()
+
+    def _reinitialize_locked(self) -> bool:
         if self._init_message is None:
             return False
         msg = copy.deepcopy(self._init_message)
@@ -228,9 +341,12 @@ class Upstream:
         idempotent = "tools/call" not in methods
         body = json.dumps(message).encode()
         try:
+            sent_session = self.session_id
             status, hdrs, data = self._call(body, idempotent, not is_init)
-            if status == 404 and not is_init and self.reinitialize():
+            if status == 404 and not is_init and self.reinitialize(sent_session):
                 status, hdrs, data = self._call(body, idempotent, True)
+        except Refused as exc:
+            return self._fail(batch, f"request refused by the bridge: {exc}")
         except NotSent:
             return self._fail(batch, f"carnivore server unreachable for {int(self.s.wait_s)} s")
         except Ambiguous:
@@ -243,7 +359,8 @@ class Upstream:
     def _learn_session(self, hdrs: Dict[str, str], data: bytes) -> None:
         sid = hdrs.get(MCP_SESSION_HEADER.lower())
         if sid:
-            self.session_id = sid
+            with self._lock:
+                self.session_id = sid
         try:
             result = json.loads(data).get("result", {})
             self.protocol = result.get("protocolVersion") or self.protocol
@@ -282,7 +399,7 @@ class Upstream:
                 self._stream_once(stop)
             except ChannelsOff:
                 return
-            except (NotSent, Ambiguous, OSError, http.client.HTTPException) as exc:
+            except (NotSent, Ambiguous, OSError, HttpError) as exc:
                 self._stream_backoff(stop, str(exc) or type(exc).__name__)
                 continue
             stop.wait(BACKOFF_FIRST_S)
@@ -312,17 +429,11 @@ class Upstream:
         stop.wait(BACKOFF_CAP_S)
 
     def _stream_once(self, stop: threading.Event) -> None:
-        conn = http.client.HTTPConnection(self.s.host, self.s.port, timeout=CONNECT_TIMEOUT_S)
+        h = self.headers()
+        h["Accept"] = "text/event-stream"
+        sock, rfile = self._open("GET", None, h, STREAM_READ_TIMEOUT_S)
         try:
-            try:
-                conn.connect()
-                conn.sock.settimeout(STREAM_READ_TIMEOUT_S)
-                h = self.headers()
-                h["Accept"] = "text/event-stream"
-                conn.request("GET", self.s.path, headers=h)
-            except OSError as exc:
-                raise NotSent(type(exc).__name__) from exc
-            resp = conn.getresponse()
+            resp = Response(rfile)
             if resp.status == 405:
                 log("stream_not_offered")
                 raise ChannelsOff()
@@ -342,7 +453,8 @@ class Upstream:
                     except ValueError:
                         log("stream_event_unreadable")
         finally:
-            conn.close()
+            rfile.close()
+            sock.close()
 
     def _probe_session(self) -> None:
         body = json.dumps({"jsonrpc": "2.0", "id": "carnivore-bridge-probe", "method": "ping"}).encode()

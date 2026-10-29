@@ -4,7 +4,8 @@ from __future__ import annotations
 import asyncio
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Dict, List
+import sqlite3
+from typing import Any, Dict, FrozenSet, List, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -13,6 +14,7 @@ from src.api.auth import require_auth
 from src.api.peer_auth import open_db
 from src.config import settings
 from src.core.computers import direction
+from src.core.db_reuse.kept_read import hot_read
 from src.core.pack.machines import runtime as machines_runtime
 from src.core.pack.relay import runtime as relay_runtime, targets
 from src.core.provider_ledger import accounts_store
@@ -36,11 +38,16 @@ def _claude_account_ids() -> List[str]:
     return [a.id for a in rows if a.provider == "claude"]
 
 
+def _stored_targets(conn: sqlite3.Connection) -> Tuple[Dict[str, List[Dict[str, object]]], FrozenSet[str]]:
+    accounts = [r[0] for r in conn.execute("SELECT DISTINCT account_key FROM pack_relay_targets")]
+    return targets.summary(conn), frozenset(a for a in accounts if not targets.default_mode(conn, a))
+
+
 def _read() -> Dict[str, Any]:
     accounts_ids = _claude_account_ids()
-    with closing(open_db()) as conn:
-        out: Dict[str, Any] = targets.summary(conn)
-        defaults = [a for a in accounts_ids if targets.default_mode(conn, a)]
+    stored, not_default = hot_read(open_db, ("relay_targets",), _stored_targets)
+    out: Dict[str, Any] = {account: [dict(entry) for entry in entries] for account, entries in stored.items()}
+    defaults = [a for a in accounts_ids if a not in not_default]
     candidates = relay_runtime.candidate_ids() if defaults else []
     for account in defaults:
         have = {e["machine"] for e in out.get(account, [])}

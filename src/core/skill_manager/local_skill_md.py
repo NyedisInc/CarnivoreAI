@@ -13,17 +13,6 @@ from src.core.skills.roots import unsafe_name_reason
 
 
 def resolve_skill_md(location: Dict[str, Any], root: Dict[str, Any]) -> Tuple[str, os.stat_result]:
-    """The real path and stat of one location's SKILL.md, containment enforced.
-
-    Description: the folder name must be a safe name, the root must be a real
-      directory (not a link), the folder must resolve to a direct child of the
-      root's real path, and ``SKILL.md`` must resolve INSIDE that folder and be
-      a regular file. Shared by the read and the edit routes (issue #1925).
-    Inputs: location (dict) - one inventory location. root (dict) - its root.
-    Output: (realpath of SKILL.md, its os.stat result).
-    Raises: OverrideError 404 ``gone`` / 409 ``target_unsafe`` / 409 ``no_skill_md``.
-    Example: resolve_skill_md(loc, root)[0]
-    """
     folder = location["folder"]
     if unsafe_name_reason(folder) is not None:
         raise OverrideError(409, "target_unsafe", "the folder name is not safe to read")

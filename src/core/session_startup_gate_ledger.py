@@ -1,16 +1,17 @@
 
 from __future__ import annotations
 
-import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+import structlog
+
 from src.core.session_startup_gate import STARTUP_TAIL_LINES
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 
@@ -97,36 +98,6 @@ class StartupGateLedger:
         matched: Optional[bool],
         now: Optional[datetime] = None,
     ) -> None:
-        """Remember what the last pane-tail read for this instance found.
-
-            Recording the verdict lets the caller re-read at its own
-            interval instead of at the listing's, and lets the gate keep
-            ANSWERING in between rather than falling back to ``unknown``
-            - a throttle that made the row flap between ``ready`` and
-            ``unknown`` would be a worse bug than the cost it saved.
-
-            A ``matched`` of None - the capture failed, or produced
-            nothing - CHANGES NOTHING AT ALL. It neither overwrites the
-            verdict nor stamps the clock, which is the same rule the rest
-            of this codebase applies to a reading that did not answer:
-            not having managed to look is not evidence, so it must not
-            erase what was measured last time, and it must not start a
-            throttle window either. Writing the None through would leave
-            the row answering ``unknown`` for the rest of the window
-            while a perfectly good measurement sat one field away.
-        Inputs:
-            tmux_name: tmux session name; falsy is a no-op.
-            matched: True (a startup-prompt marker was on the pane),
-                False (the pane was read and held none), None (the read
-                did not produce anything).
-            now: injectable clock. Defaults to ``datetime.utcnow()``.
-        Output: None.
-        Example:
-            >>> led = StartupGateLedger()
-            >>> led.record_tail_read("a", matched=False)
-            >>> led.last_tail_match("a")
-            False
-        """
         if not tmux_name:
             return
         if matched is None:
@@ -171,30 +142,6 @@ class StartupGateLedger:
 def capture_pane_tail(
     *, socket: str, name: str, lines: int = STARTUP_TAIL_LINES
 ) -> Optional[str]:
-    """Read a pane's recent scrollback as text, or None if it could not be.
-
-    Description: one ``tmux capture-pane`` through a bare
-        ``TmuxBackend.for_external`` - no attach, no pipe-pane, nothing
-        kept afterwards. This is the same cheap probe
-        ``SessionManager._detect_agent_type_from_pane`` uses, extracted
-        here so the capture and the thing that reads it are not written
-        twice.
-
-        NEVER RAISES, and returns None rather than "" on failure. A
-        listing poll must not fail because one pane could not be read,
-        and "" would be handed to ``detect_startup_prompt`` as text that
-        was successfully read and found empty - which would answer
-        ``ready`` for a pane nobody actually managed to look at.
-    Inputs:
-        socket: tmux socket name (always this app's own socket).
-        name: tmux session name.
-        lines: how many lines of scrollback to ask for.
-    Output:
-        str | None - decoded pane text, or None when the capture failed
-        or produced nothing.
-    Example:
-        capture_pane_tail(socket='cloude', name='cloude_a')
-    """
     from src.core.tmux_backend import TmuxBackend
 
     try:
@@ -210,6 +157,7 @@ def capture_pane_tail(
             session=name,
             socket=socket,
             error=str(exc),
+            error_type=type(exc).__name__,
         )
         return None
     if not raw:

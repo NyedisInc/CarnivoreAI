@@ -23,7 +23,7 @@ const LIVE_18: HuddleItem[] = [
 const CHAT = [mk(7001, 'open', true, 'agent:5'), mk(7002, 'open', true, 'agent:5'), mk(7003, 'open', true, 'agent:5')];
 const GROUPS = [
   { list: '18', name: 'Carnivore', items: LIVE_18 },
-  { list: '9', name: 'Brightfund', items: [mk(1028, 'scheduled', true, '9'), mk(1127, 'waiting', true, '9')] },
+  { list: '9', name: 'Amerifund', items: [mk(1028, 'scheduled', true, '9'), mk(1127, 'waiting', true, '9')] },
   { list: 'agent:5', name: null, items: CHAT },
 ] as unknown as TaskManagerGroup[];
 const scope = { sessionId: 'ses_1', rowId: 1, workingDir: '/x', projectId: 18 };
@@ -32,12 +32,12 @@ beforeEach(() => {
   huddle.groups = GROUPS;
   huddle.lists = [
     { key: '18', name: 'Carnivore', project_id: 18, items: 30, open: 5, review: 1, questions: 0, claude_seq: 0, unread: 21 },
-    { key: '9', name: 'Brightfund', project_id: 9, items: 2, open: 2, review: 0, questions: 0, claude_seq: 0, unread: 2 },
+    { key: '9', name: 'Amerifund', project_id: 9, items: 2, open: 2, review: 0, questions: 0, claude_seq: 0, unread: 2 },
     { key: 'agent:5', name: null, project_id: null, items: 3, open: 3, review: 0, questions: 0, claude_seq: 0, unread: 3 },
   ] as never;
 });
 
-describe('one unread number for the title and the chip; the rail key counts what needs the owner instead', () => {
+describe('one unread number for the title and the chip; the rail key counts what needs him instead (round 6 point C)', () => {
   test('list 18 reads nine: the active flagged tasks, not the parked or done ones', () => {
     const items = LIVE_18;
     const tasks = entriesOf([GROUPS[0]!]).map((entry) => taskOf(entry));
@@ -46,7 +46,7 @@ describe('one unread number for the title and the chip; the rail key counts what
     expect(alertCountSource('core.task-manager-mk2')?.read(scope)).toBe(2);
   });
 
-  test('every project reads ten: list 18 and Brightfund\'s waiting task, no agent chat thread, no never-opened scheduled task', () => {
+  test('every project reads ten: list 18 and Amerifund\'s waiting task, no agent chat thread, no never-opened scheduled task', () => {
     expect(headCountOf(allTasksOf(GROUPS)!)).toBe(ACTIVE_UNREAD.length + 1);
     expect(alertCountSource('core.task-manager-mk2-all')?.read(null)).toBe(2);
   });
@@ -58,7 +58,7 @@ describe('one unread number for the title and the chip; the rail key counts what
   });
 });
 
-describe('a scheduled task counts as unread only while it holds an unread message', () => {
+describe('a scheduled task counts as unread only while it holds an unread message (Joe (ccsliinc), 2026-10-23)', () => {
   const post = (id: number, author: string) => ({ id, author, kind: 'info', text: `post ${id}`, answered: false });
   const never = mk(2001, 'scheduled', true);
   const news = mk(2002, 'scheduled', true, '18', { thread: [post(1, 'joe'), post(2, 'claude')] });

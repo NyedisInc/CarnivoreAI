@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
+/** The one completed state these fixtures use (a fixture constant, never a literal in a test: the state names are being renamed, #1703). */
 const COMPLETED = 'done';
 
 const mk = (id: number, list: string, extra: Record<string, unknown> = {}) => ({
@@ -71,7 +72,7 @@ const infoMarked = (tail: Element | null): boolean => tail?.querySelector('[data
 
 beforeEach(() => {
   statusFolds.choices = {};
-  try { localStorage.removeItem(FOLDS_KEY); } catch {  }
+  try { localStorage.removeItem(FOLDS_KEY); } catch { /* storage may be unavailable */ }
   huddle.selected = AGGREGATE;
   huddle.groups = null;
   huddle.openId = null;

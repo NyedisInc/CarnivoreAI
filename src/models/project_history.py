@@ -62,6 +62,7 @@ class HistoryProject(BaseModel):
         None, description="The pack state of the folder (docs/project-pack.md); null when it was never packed")
     pack_state: Optional[str] = Field(None, description="home, replica or moved_away (P2); null before schema v80")
     moved_to_label: Optional[str] = Field(None, description="The machine a moved-away project went to, for the words moved to <machine>")
+    new_sessions_join_swarm: bool = Field(False, description="A new session of this project launches as a Swarm member (#2589)")
 
 
 class HistoryGroup(BaseModel):

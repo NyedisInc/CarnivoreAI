@@ -69,7 +69,7 @@ def test_the_shared_list_is_every_sessions_own(manager):
 
 
 def test_the_session_a_held_tell_waits_for_reads_the_list_and_another_does_not(manager):
-    item = huddle_store(manager).add("77", "ledgerbot fix", actor=JOE)
+    item = huddle_store(manager).add("77", "trader fix", actor=JOE)
     held._holds["77"] = held.Hold("77", "ses_3", "Agent", held.HELD, "pane_dialog_open", "a dialog is open", 1.0, 2e12)
     call(manager, "task_manager_tasks_list", {"list": "77"}, caller=ORCHESTRATOR)
     assert (status(manager, item["id"]), waiting(manager, "77")) == ("waiting_to_send", 1)
@@ -78,7 +78,7 @@ def test_the_session_a_held_tell_waits_for_reads_the_list_and_another_does_not(m
 
 
 def test_a_dropped_hold_gives_its_target_no_claim(manager):
-    item = huddle_store(manager).add("77", "ledgerbot fix", actor=JOE)
+    item = huddle_store(manager).add("77", "trader fix", actor=JOE)
     held._holds["77"] = held.Hold("77", "ses_3", "Agent", held.GONE, "session_not_found", "gone", 1.0)
     call(manager, "task_manager_tasks_list", {"list": "77"}, caller=TARGET)
     assert status(manager, item["id"]) == "waiting_to_send"
@@ -86,7 +86,7 @@ def test_a_dropped_hold_gives_its_target_no_claim(manager):
 
 def test_the_session_a_tell_was_delivered_to_reads_a_later_change_and_another_does_not(manager):
     store = huddle_store(manager)
-    item = store.add("77", "ledgerbot fix", actor=JOE)
+    item = store.add("77", "trader fix", actor=JOE)
     store.record_send(["77"], store.current_cursor(), "ses_3")
     store.update(item["id"], actor=JOE, note="and this")
     assert status(manager, item["id"]) == "waiting_to_send"

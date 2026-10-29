@@ -226,10 +226,10 @@ class _StubManager:
     async def get_session_info(self, session_id: Optional[str] = None):
         return self._rows.get(session_id)
 
-    def _claude_uuid_for_tmux_name(self, tmux_name: str) -> Optional[str]:
+    def claude_uuid_for_tmux_name(self, tmux_name: str) -> Optional[str]:
         return self._uuid
 
-    def _tmux_socket_name(self) -> str:
+    def tmux_socket_name(self) -> str:
         from tests.socket_guard import TEST_SOCKET_NAME
 
         return TEST_SOCKET_NAME

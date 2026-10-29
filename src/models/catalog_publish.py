@@ -22,6 +22,9 @@ class PublishSendRequest(PublishablePreviewRequest):
 
 class PublishHeroRequest(BaseModel):
     """`POST /catalog/submissions/media`: an author's hero image for an item of theirs.
+
+    The hosted route owns every check (publisher, magic, size, shape); this model
+    only bounds what is read off the socket (512 KiB of image as base64).
     """
 
     kind: str = Field(default="skill", max_length=16)
@@ -31,6 +34,7 @@ class PublishHeroRequest(BaseModel):
 
 
 class PublishableSkill(BaseModel):
+    """One skill on this Mac that is yours to publish (not catalog managed)."""
 
     location: str
     kind: str = "skill"
@@ -73,6 +77,15 @@ class PublishPreviewResponse(BaseModel):
 
 class PublishAccountResponse(BaseModel):
     """`GET /catalog/handle`: who the catalog says you are, for publishing.
+
+    ``handle`` is empty until registered; ``handle_status`` is ``pending`` until
+    Alex approves that person's first submission. ``can_claim`` is true for any
+    account with no handle (every provider picks one; a GitHub account is offered
+    its login). ``registered`` is true once the account has a handle, the current
+    terms and the age attestation; ``terms_version`` and ``terms_url`` are the
+    terms in force, for the register dialog; ``terms_accepted`` is the version this
+    account accepted (recorded at sign in), so the dialog can skip the checkboxes
+    when it equals ``terms_version``.
     """
 
     provider: Optional[str] = None
@@ -132,7 +145,8 @@ class ItemFactsCheck(BaseModel):
 
 
 class ItemFactsResponse(BaseModel):
-    """
+    """`GET /catalog/publish/items/{location}`: what only this computer knows about a folder.
+
     NO FIELD IS A FILESYSTEM PATH (``files`` carry relative paths). ``declared_version`` and ``license`` are
     empty when the manifest declares none (or an id off the policy list); ``changed_files`` counts the files
     that differ from the newest send, ``changed_at`` is the newest mtime among them (empty when none);

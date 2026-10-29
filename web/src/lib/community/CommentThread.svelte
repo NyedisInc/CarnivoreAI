@@ -6,6 +6,7 @@
     import RegisterGate from '../catalog/RegisterGate.svelte';
     import { GATE_CANCELLED, createRegisterGate } from '../catalog/register-gate.svelte';
     import AuthorLink from './AuthorLink.svelte';
+    import Button from '../base/Button.svelte';
     import Composer from './Composer.svelte';
     import Identicon from './Identicon.svelte';
     import RatingStars from '../rating/RatingStars.svelte';
@@ -224,15 +225,15 @@
             {/if}
             <div class="thr__acts">
                 {#if canReply && !reply && !node.held && !c.review_ref}
-                    <button type="button" class="thr__act" onclick={() => { replying = replying === id ? null : id; }}>{t('community.reply')}</button>
+                    <Button variant="quiet" size="sm" onclick={() => { replying = replying === id ? null : id; }}>{t('community.reply')}</Button>
                 {/if}
                 {#if node.mine && canEdit(c, nowSeconds())}
-                    <button type="button" class="thr__act" onclick={() => { editing = id; }}>{t('community.edit')}</button>
+                    <Button variant="quiet" size="sm" onclick={() => { editing = id; }}>{t('community.edit')}</Button>
                 {/if}
                 {#if node.mine}
-                    <button type="button" class="thr__act" onclick={() => void remove(id)}>{t('community.delete')}</button>
+                    <Button variant="danger" size="sm" onclick={() => void remove(id)}>{t('community.delete')}</Button>
                 {:else}
-                    <button type="button" class="thr__act" onclick={() => { reporting = reporting === id ? null : id; }}>{t('community.report')}</button>
+                    <Button variant="quiet" size="sm" onclick={() => { reporting = reporting === id ? null : id; }}>{t('community.report')}</Button>
                 {/if}
             </div>
             {#if reporting === id && itemId}
@@ -269,7 +270,7 @@
             {/each}
         </ul>
         {#if more}
-            <button type="button" class="modal-btn modal-btn-secondary" onclick={() => void loadMore()}>{t('community.more')}</button>
+            <Button onclick={() => void loadMore()}>{t('community.more')}</Button>
         {/if}
     {/if}
 
@@ -308,27 +309,11 @@
     .thr__body { margin: 0; color: var(--cat-text); font-size: 12px; line-height: 1.45; }
     .thr__gone { margin: 0; color: var(--cat-faint); font-size: 11px; font-style: italic; }
     .thr__acts { display: flex; gap: 10px; }
-    .thr__act {
-        padding: 0;
-        border: none;
-        background: transparent;
-        color: var(--cat-muted);
-        font-size: 11px;
-        cursor: pointer;
-    }
-    .thr__act:hover { color: var(--cat-text); }
     .thr__note { margin: 0; color: var(--cat-muted); font-size: 12px; line-height: 1.45; }
     .thr__note--out {
         padding: 6px 8px;
         border-left: 2px solid var(--cat-attention);
         background: var(--cat-raised);
         color: var(--cat-text);
-    }
-    @media (max-width: 1023px) {
-        .thr__act { min-height: 44px; padding: 0 8px; }
-    }
-    .thr :global(.modal-btn) {
-        padding: 7px 16px;
-        font-size: 13px;
     }
 </style>

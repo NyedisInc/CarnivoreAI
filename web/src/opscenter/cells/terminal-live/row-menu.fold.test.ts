@@ -8,6 +8,7 @@ import { rowMenuBridge } from '../../../lib/item-menu/row-bridge';
 import { openRowMenu } from './row-menu';
 import type { SessionInfo } from '../../api';
 
+// jsdom has no popover API; the shared menu driver shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};

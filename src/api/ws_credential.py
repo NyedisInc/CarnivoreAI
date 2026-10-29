@@ -16,7 +16,6 @@ async def handshake(websocket: WebSocket, allow_peer: bool = False) -> bool:
         return peer
     ok, detail = verify_jwt_from_subprotocol(websocket)
     if not ok:
-        # header present
         raw_header = websocket.headers.get("sec-websocket-protocol")
         header_present_but_empty = (
             raw_header is not None

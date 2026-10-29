@@ -20,6 +20,7 @@ export interface LogRecord {
 export interface LogPage {
   records: LogRecord[];
   head: string | null;
+  /* there is nothing */
   before: string | null;
   gap: boolean;
   reset: boolean;

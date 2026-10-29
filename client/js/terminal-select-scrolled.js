@@ -28,120 +28,141 @@
         return false;
     }
 
-    var dispatching = false;
+    function create() {
+        var dispatching = false;
 
-    var forcedGesture = false;
+        var forcedGesture = false;
 
-    function dispatchForcedMouseDown(term, screenEl, real) {
-        var opts = term.options;
-        var prevForce = opts.macOptionClickForcesSelection;
-        opts.macOptionClickForcesSelection = true;
-        dispatching = true;
-        try {
-            screenEl.dispatchEvent(new MouseEvent('mousedown', {
-                bubbles: true,
+        function dispatchForcedMouseDown(term, screenEl, real) {
+            var opts = term.options;
+            var prevForce = opts.macOptionClickForcesSelection;
+            opts.macOptionClickForcesSelection = true;
+            dispatching = true;
+            try {
+                screenEl.dispatchEvent(new MouseEvent('mousedown', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    button: real.button,
+                    buttons: real.buttons || 1,
+                    detail: real.detail || 1,
+                    clientX: real.clientX,
+                    clientY: real.clientY,
+                    shiftKey: true,
+                    altKey: true,
+                }));
+            } finally {
+                dispatching = false;
+                opts.macOptionClickForcesSelection = prevForce;
+            }
+        }
+
+        /* and ZERO events at */
+        function handleMouseDown(term, ev) {
+            if (dispatching) return;
+            if (!term || !ev || ev.button !== 0) return;
+            if (!areMouseEventsActive(term)) return;
+            if (!isScrolledUp(term)) return;
+            var screenEl = term.element && term.element.querySelector('.xterm-screen');
+            if (!screenEl) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            forcedGesture = true;
+            dispatchForcedMouseDown(term, screenEl, ev);
+        }
+
+        function handleMouseUp(ev) {
+            if (!forcedGesture) return;
+            forcedGesture = false;
+            if (!ev) return;
+            ev.stopPropagation();
+            document.dispatchEvent(new MouseEvent('mouseup', {
+                bubbles: false,
                 cancelable: true,
                 view: window,
-                button: real.button,
-                buttons: real.buttons || 1,
-                detail: real.detail || 1,
-                clientX: real.clientX,
-                clientY: real.clientY,
-                shiftKey: true,
-                altKey: true,
+                button: ev.button,
+                buttons: 0,
+                detail: ev.detail || 1,
+                clientX: ev.clientX,
+                clientY: ev.clientY,
             }));
-        } finally {
+        }
+
+        function handleMouseMove(term, ev) {
+            if (forcedGesture) return;
+            if (!term || !ev) return;
+            if (!areMouseEventsActive(term)) return;
+            var has = false;
+            try {
+                has = !!(typeof term.hasSelection === 'function' && term.hasSelection());
+            } catch (err) {
+                console.warn('TerminalSelectScrolled: selection read failed', err);
+                return;
+            }
+            if (!has) return;
+            if (!isScrolledUp(term)) return;
+            ev.stopPropagation();
+        }
+
+        var wired = false;
+        function init(container, termGetter) {
+            if (wired || !container || typeof termGetter !== 'function') return function () {};
+            wired = true;
+            var onDown = function (ev) { handleMouseDown(termGetter(), ev); };
+            var onMove = function (ev) { handleMouseMove(termGetter(), ev); };
+            container.addEventListener('mousedown', onDown, { capture: true });
+            container.addEventListener('mouseup', handleMouseUp, { capture: true });
+            container.addEventListener('mousemove', onMove, { capture: true });
+            return function uninstall() {
+                if (typeof container.removeEventListener === 'function') {
+                    container.removeEventListener('mousedown', onDown, { capture: true });
+                    container.removeEventListener('mouseup', handleMouseUp, { capture: true });
+                    container.removeEventListener('mousemove', onMove, { capture: true });
+                }
+                wired = false;
+                dispatching = false;
+                forcedGesture = false;
+            };
+        }
+
+        function _reset() {
+            wired = false;
             dispatching = false;
-            opts.macOptionClickForcesSelection = prevForce;
+            forcedGesture = false;
         }
-    }
 
-    function handleMouseDown(term, ev) {
-        if (dispatching) return;
-        if (!term || !ev || ev.button !== 0) return;
-        if (!areMouseEventsActive(term)) return;
-        if (!isScrolledUp(term)) return;
-        var screenEl = term.element && term.element.querySelector('.xterm-screen');
-        if (!screenEl) return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        forcedGesture = true;
-        dispatchForcedMouseDown(term, screenEl, ev);
-    }
-
-    /* nothing at all */
-    function handleMouseUp(ev) {
-        if (!forcedGesture) return;
-        forcedGesture = false;
-        if (!ev) return;
-        ev.stopPropagation();
-        document.dispatchEvent(new MouseEvent('mouseup', {
-            bubbles: false,
-            cancelable: true,
-            view: window,
-            button: ev.button,
-            buttons: 0,
-            detail: ev.detail || 1,
-            clientX: ev.clientX,
-            clientY: ev.clientY,
-        }));
-    }
-
-    /* nothing at all */
-    function handleMouseMove(term, ev) {
-        if (forcedGesture) return;
-        if (!term || !ev) return;
-        if (!areMouseEventsActive(term)) return;
-        var has = false;
-        try {
-            has = !!(typeof term.hasSelection === 'function' && term.hasSelection());
-        } catch (err) {
-            console.warn('TerminalSelectScrolled: selection read failed', err);
-            return;
+        function _isDispatching() {
+            return dispatching;
         }
-        if (!has) return;
-        if (!isScrolledUp(term)) return;
-        ev.stopPropagation();
+
+        function _isForcedGesture() {
+            return forcedGesture;
+        }
+
+
+        return {
+            init: init,
+            handleMouseDown: handleMouseDown,
+            handleMouseUp: handleMouseUp,
+            handleMouseMove: handleMouseMove,
+            _reset: _reset,
+            _isDispatching: _isDispatching,
+            _isForcedGesture: _isForcedGesture
+        };
     }
 
-    var wired = false;
-    function init(container, termGetter) {
-        if (wired || !container || typeof termGetter !== 'function') return;
-        wired = true;
-        container.addEventListener('mousedown', function (ev) {
-            handleMouseDown(termGetter(), ev);
-        }, { capture: true });
-        container.addEventListener('mouseup', function (ev) {
-            handleMouseUp(ev);
-        }, { capture: true });
-        container.addEventListener('mousemove', function (ev) {
-            handleMouseMove(termGetter(), ev);
-        }, { capture: true });
-    }
-
-    function _reset() {
-        wired = false;
-        dispatching = false;
-        forcedGesture = false;
-    }
-
-    function _isDispatching() {
-        return dispatching;
-    }
-
-    function _isForcedGesture() {
-        return forcedGesture;
-    }
+    var shared = create();
 
     window.TerminalSelectScrolled = {
-        init: init,
-        handleMouseDown: handleMouseDown,
-        handleMouseUp: handleMouseUp,
-        handleMouseMove: handleMouseMove,
+        create: create,
+        init: shared.init,
+        handleMouseDown: shared.handleMouseDown,
+        handleMouseUp: shared.handleMouseUp,
+        handleMouseMove: shared.handleMouseMove,
         areMouseEventsActive: areMouseEventsActive,
         isScrolledUp: isScrolledUp,
-        _reset: _reset,
-        _isDispatching: _isDispatching,
-        _isForcedGesture: _isForcedGesture
+        _reset: shared._reset,
+        _isDispatching: shared._isDispatching,
+        _isForcedGesture: shared._isForcedGesture
     };
 })();

@@ -14,7 +14,7 @@ class NoRestorePoint(LookupError):
 
 
 class RestoreFailed(RuntimeError):
-    """A restore point exists but could not be put back (unreadable, or the transcript is already on disk)."""
+    pass
 
 
 class RestorePointsPort(Protocol):

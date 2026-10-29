@@ -1,4 +1,4 @@
-/* padding */
+/* WHY THIS FILE LOADS LAST */
 
 @property --pf-angle {
     syntax: '<angle>';
@@ -36,26 +36,6 @@
     animation: popup-focus-orbit 6s linear infinite;
 }
 
-/* THE SHEEN THAT TURNS ON THE COMPOSITOR (issue #1809). A surface that stays
- * on screen (the selected terminal cell, a dashboard widget) wears
- * `popup-focus-turn` next to `popup-focus` and carries one child,
- * `<span class="pf-sheen" aria-hidden="true">`. Animating the registered
- * `--pf-angle` re-resolves style, re-lays-out and repaints the whole frame every
- * frame and the GPU re-rasterizes the gradient (measured an earlier date: about 85%
- * of the renderer and 79% of the GPU of an idle tab, forever). So here the
- * frame's border is STATIC (the ground and the top-down edge only, no conic
- * layer), and the sheen is a conic square, larger than the frame's diagonal,
- * that ROTATES with `transform`, clipped to a 1px band by a static mask on its
- * host. Only `transform` animates, so no layout, no style recalc, no repaint.
- * `overflow: clip` with a 1px margin lets the host reach over the border while
- * the frame still clips its own content to the rounded edge. The same look,
- * speed (6s a lap) and direction (clockwise) as the bordered menus below,
- * which are short lived and keep the registered-angle lap. */
-@keyframes popup-focus-turn {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
 .popup-focus.popup-focus-turn {
     --pf-bw: 1px;
     animation: none;
@@ -80,6 +60,7 @@
     container-type: size;
     padding: 1px;
     border-radius: inherit;
+    animation: amb-join-dialog-glow 1ms;
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -107,7 +88,7 @@
         transparent 360deg
     );
     will-change: transform;
-    animation: popup-focus-turn 6s linear infinite;
+    transform: rotate(calc(var(--amb-step, 0) * 15deg));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -117,7 +98,7 @@
     }
 
     .popup-focus-turn > .pf-sheen::before {
-        animation: none;
+        transform: none;
     }
 }
 

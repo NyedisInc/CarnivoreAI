@@ -44,6 +44,7 @@ const layOutBottom = (): void => layOutRail('bottom');
 const keys = (): string[] => keysIn('side');
 const bottomKeys = (): string[] => keysIn('bottom');
 
+/** The stored v2 value of a one-section rail. */
 const one = (...widgets: string[]) => ({ v: 2, sections: [{ items: widgets.map((widget) => ({ widget })) }] });
 
 beforeEach(() => {

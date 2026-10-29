@@ -69,7 +69,10 @@ def test_a_remote_host_session_sharing_a_companion_name_is_not_hidden():
     from datetime import datetime
 
     from src.core.companion_shell import index as companion_index
-    from src.core.hosts.remote_backend import RemoteTmuxBackend
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    from src.core.hosts.remote_backend import make_remote_backend
     from src.core.sessions.registry import SessionRegistry
     from src.models import Session, SessionStatus
 
@@ -83,7 +86,7 @@ def test_a_remote_host_session_sharing_a_companion_name_is_not_hidden():
                        tmux_session="carnivore_sh-1")
 
     registry.register(make("ses_local_shell"), None)
-    registry.register(make("ses_on_a_remote_host"), RemoteTmuxBackend.__new__(RemoteTmuxBackend))
+    registry.register(make("ses_on_a_remote_host"), make_remote_backend(SimpleNamespace(host_key="studio", socket="far"), "s", Path("/far")))
     assert registry.listable_ids() == ["ses_on_a_remote_host"]
     assert registry.is_hidden("ses_local_shell") and not registry.is_hidden("ses_on_a_remote_host")
     assert registry.find_hidden_id("carnivore_sh-1") == "ses_local_shell"

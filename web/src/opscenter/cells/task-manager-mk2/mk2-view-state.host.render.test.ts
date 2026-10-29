@@ -59,7 +59,7 @@ afterEach(() => {
   clearViewFilter();
   resetInspections();
   huddle.openId = null as never;
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom without storage */ }
 });
 
 async function settle(): Promise<void> {
@@ -78,6 +78,7 @@ async function drawRail(...manifests: Array<typeof SINGLE>): Promise<HTMLElement
   return boxes;
 }
 
+/** Forget the in-memory side of the view, as a page reload does. */
 function reload(): void {
   while (apps.length) unmount(apps.pop()!, { outro: false });
   document.body.replaceChildren();

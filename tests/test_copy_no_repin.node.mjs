@@ -34,6 +34,7 @@ test('scrollOnUserInput is turned OFF at construction', () => {
 });
 
 test('a real keystroke still takes the user back to live', () => {
+    // else.
     const at = terminalSrc.indexOf('this.term.onData(');
     assert.ok(at > -1, 'onData handler not found');
     const body = terminalSrc.slice(at, at + 900);

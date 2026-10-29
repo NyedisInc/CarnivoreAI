@@ -34,20 +34,6 @@ def remember_row(
 
 
 def row_id_for(manager: Any, tmux_name: Optional[str], epoch: Optional[int]) -> Optional[int]:
-    """The ``sessions.id`` a follow-up flag for this session keys on.
-
-    Description: the memo first; then the exact instance read; and only
-      when the epoch could not be measured (the pane is not on the socket,
-      which is what an ASLEEP session is) the newest row carrying the name,
-      which while a session sleeps is its own row, because the name stays
-      reserved for it (``session_sleep.reserved_names``). Used by the two
-      rare user actions (mark, clear), never by a per-poll reader.
-    Inputs: manager (SessionManager). tmux_name (str | None). epoch (int |
-      None).
-    Output: int | None - None when no row is recorded for this session (a
-      truly external tmux session), which falls back to the instance key.
-    Example: row_id_for(mgr, 'cloude_a', 17)  # 4
-    """
     if not tmux_name:
         return None
     memo: Optional[RowMemo] = getattr(manager, "_unread_rows", None)
@@ -104,20 +90,6 @@ def asleep_flag(store: Optional[UnreadStore], row: Mapping[str, Any]) -> Optiona
 
 
 def carry_into_sleep(manager: Any, row: Mapping[str, Any]) -> bool:
-    """Before a sleep closes the pane, move its unread mark onto the row.
-
-    Description: the mark lives on the instance key and would go with the
-      pane (and be pruned at boot, and not be found by the wake's NEW
-      instance). Both halves move: the manual reminder (a flag set while
-      the row could not be read, or before this build) and the automatic
-      turn-end mark, so a session that finished unread and was slept by
-      the timer (or the user) is still unread on its asleep row and after
-      its wake. Never raises: the sleep must not fail over a reminder.
-    Inputs: manager (SessionManager). row (Mapping) - the row being slept,
-      read before the close.
-    Output: bool - True when a mark was moved.
-    Example: carry_into_sleep(mgr, row)  # False when nothing was flagged
-    """
     store = getattr(manager, "_unread_store", None)
     if store is None:
         return False

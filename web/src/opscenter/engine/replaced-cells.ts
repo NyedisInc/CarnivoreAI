@@ -1,4 +1,3 @@
-/*  hidden  */
 
 import declarations from '../../../../src/data/widgets.json';
 import { repairSpans } from './spans';

@@ -11,7 +11,6 @@ import { fixtureChartId } from '../opscenter/widgets/fixtures/ids';
 import type { SlotId } from '../opscenter/engine/types';
 import type { FitZone } from '../opscenter/widgets/types';
 
-/* the glance area */
 export const HARNESS_ZONES: readonly FitZone[] = ['home', 'terminal', 'drawer'];
 
 export const FIXTURE_TERMINAL_SLOT: SlotId = 'terminal:row:9001';

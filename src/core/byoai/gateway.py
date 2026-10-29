@@ -333,7 +333,6 @@ _DEFAULT: Optional[Gateway] = None
 
 
 def build_default() -> Gateway:
-    """The gateway over this install's config.json, state directory and Keychain."""
     from src.config import settings
 
     return Gateway(ByoaiStore(Path(settings.auth_config_file).expanduser()), CallLog(settings.get_state_dir()), KeyStore())

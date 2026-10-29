@@ -117,7 +117,6 @@ export async function writeMode(api: AdminApi, mode: CommentMode): Promise<Comme
     return body?.mode === 'hold_all' ? 'hold_all' : 'instant';
 }
 
-/*  hidden  */
 export async function reviewsOf(api: AdminApi, itemId: string): Promise<ReviewRow[]> {
     const path = '/moderation/reviews?item_id=' + encodeURIComponent(itemId);
     return listOf<ReviewRow>(await api.call('GET', path, null, true), 'reviews');

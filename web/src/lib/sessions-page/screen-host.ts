@@ -1,4 +1,3 @@
-/* running sessions */
 import { createOverlayHost } from '../manager-frame/overlay-host';
 import { closeMenuPagesExcept } from '../menu-page/menu-page-shell.svelte';
 import SessionsScreen from './SessionsScreen.svelte';

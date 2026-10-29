@@ -63,3 +63,33 @@ REFUSED_PREFERENCE_FIELDS = frozenset({"theme_script_consent"})
 """Preference fields a bundle never carries, out or in. A script consent
 recorded on another machine names a theme id and no digest, so importing
 one would mint an unbounded standing grant of theme-script approval."""
+
+AGENT_COMMAND_FIELDS: Tuple[str, ...] = ("script", "entry", "args", "env")
+"""The keys of an ``agents.wrappers[]`` row that run or shape a command: the
+shell source, its entry function, its arguments and its environment. An
+import that writes any of them, new or changed, needs the code consent
+(Joe (ccsliinc), 2026-10-28, #2557; ``command_guard``). A launch profile's
+command fields (``before_launch``, ``custom_command``, ``flags``, ``env``,
+``secrets``) are ``launch_profiles.share.executable_parts`` and gated by
+``launch_profiles.bundle_guard``."""
+
+WORKSPACE_ENV_KEY = "env"
+"""``workspace.env``: NAME=value pairs injected into every spawned pane, so a
+changed ``PATH`` or ``ZDOTDIR`` decides what runs. A new or changed key is a
+command write (Joe (ccsliinc), 2026-10-28, #2557, "yes, same consent")."""
+
+WORKSPACE_SHELL_KEY = "default_shell"
+"""``workspace.default_shell``: the program every new terminal runs. A new
+non-empty value is a command write (same ruling)."""
+
+WORKSPACE_EDITOR_KEY = "default_editor"
+"""``workspace.default_editor``: the command line run to open a file. A new
+non-empty value is a command write (#2557, an application of the same ruling)."""
+
+BROWSER_EXECUTABLE_KEY = "executable"
+"""``browser.executable``: the browser program remote browser sessions launch."""
+
+ACCOUNT_DIR_FIELDS: Tuple[str, ...] = ("claude_config_dir", "codex_home")
+"""``provider_accounts.accounts[]`` folders handed to a spawned agent as
+``CLAUDE_CONFIG_DIR`` / ``CODEX_HOME``: they pick the settings, hooks and
+credentials the agent runs with, so a new or changed one is a command write."""

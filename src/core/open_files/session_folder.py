@@ -8,13 +8,14 @@ from typing import Optional
 
 from src.core.db import connect
 from src.core.hosts.ddl import host_scope
+from src.core.sessions import errors as session_errors
 
 
 class SessionFolderError(LookupError):
     pass
 
 
-class SessionNotFound(SessionFolderError):
+class SessionNotFound(SessionFolderError, session_errors.SessionNotFound):
     pass
 
 

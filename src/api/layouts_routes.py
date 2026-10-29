@@ -1,39 +1,3 @@
-"""API routes for saved Layouts: named groups of terminal sessions (issue #424).
-
-Deliberately thin, in the ``session_groups_routes.py`` pattern: request and
-response shape, auth, error translation and the connection dance. Every
-rule about what a Layout IS lives in ``src/core/layouts/store.py``.
-
-EVERY USER ACTION IS ONE ROUTE (decision D11, the API-first rule), so the
-MCP wrapper (#152) is one thin adapter per route:
-
-  GET    /layouts                         every Layout (200 even when unreadable)
-  POST   /layouts                         create; idempotent on source_key
-  PATCH  /layouts/{uuid}                  rename
-  PUT    /layouts/{uuid}/shape            replace the shape (expected_revision)
-  PUT    /layouts/{uuid}/style            set colour, gradient, animation (#821)
-  POST   /layouts/{uuid}/members          add a member
-  DELETE /layouts/{uuid}/members/{suuid}  remove a member
-  DELETE /layouts/{uuid}                  delete; never touches a session
-  PUT    /layouts/order                   drawer order
-  PUT    /layouts/{uuid}/active           renew the in-memory active lease
-  PUT    /layouts/{uuid}/members/{suuid}/broadcast  a member's broadcast toggle
-  POST   /layouts/{uuid}/broadcast        send one line plus Enter to the toggled-on
-                                          live members (``layouts/broadcast.py``)
-
-ERRORS carry ``{"code", "detail"}`` so a client branches on the code, never
-on prose: 400 ``layout_name_invalid`` / ``layout_shape_invalid`` /
-``layout_too_few_members`` / ``layout_style_invalid``; 404
-``layout_not_found``; 409 ``layout_name_taken`` / ``layout_limit`` /
-``member_unresolved`` (with ``unresolved``) / ``layout_stale`` (with
-``current``, the Layout as stored); 503 ``layouts_unavailable`` when the
-write could not happen, never a cheerful 200 for a Layout that is not
-there after a reload.
-
-A write that landed publishes ``sessions.changed`` with reason ``layouts``
-on ``/ws/events``, so every other browser re-reads at once. A lease renewal
-changes no data and publishes nothing.
-"""
 
 from __future__ import annotations
 
@@ -44,6 +8,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 
+from src.api.error_response import soft_failure
 from src.api.auth import require_auth
 from src.core.layouts import style as style_store
 from src.core.layouts import broadcast as layout_broadcast
@@ -113,45 +78,45 @@ def _to_write(result: store.WriteResult) -> LayoutWriteResponse:
     )
 
 
-def _error(status: int, code: str, detail: str, **extra: Any) -> HTTPException:
+def layout_error(status: int, code: str, detail: str, **extra: Any) -> HTTPException:
     body: Dict[str, Any] = {"code": code, "detail": detail}
     body.update(extra)
     return HTTPException(status_code=status, detail=body)
 
 
-def _run(operation: Callable, *args: Any, **kwargs: Any) -> Any:
+def run_on_store(operation: Callable, *args: Any, **kwargs: Any) -> Any:
     with closing(connect(_db_path(), create=False)) as conn:
         return operation(conn, *args, **kwargs)
 
 
 async def _write(request: Request, operation: Callable, *args: Any, **kwargs: Any) -> Any:
     try:
-        result = await run_in_threadpool(_run, operation, *args, **kwargs)
+        result = await run_in_threadpool(run_on_store, operation, *args, **kwargs)
     except store.LayoutNotFound as exc:
-        raise _error(404, "layout_not_found", str(exc))
+        raise layout_error(404, "layout_not_found", str(exc))
     except store.LayoutNameInvalid as exc:
-        raise _error(400, "layout_name_invalid", str(exc))
+        raise layout_error(400, "layout_name_invalid", str(exc))
     except store.LayoutShapeInvalid as exc:
-        raise _error(400, "layout_shape_invalid", str(exc))
+        raise layout_error(400, "layout_shape_invalid", str(exc))
     except style_store.LayoutStyleInvalid as exc:
-        raise _error(400, "layout_style_invalid", str(exc))
+        raise layout_error(400, "layout_style_invalid", str(exc))
     except store.LayoutTooFewMembers as exc:
-        raise _error(400, "layout_too_few_members", str(exc))
+        raise layout_error(400, "layout_too_few_members", str(exc))
     except store.LayoutNameTaken as exc:
-        raise _error(409, "layout_name_taken", str(exc))
+        raise layout_error(409, "layout_name_taken", str(exc))
     except store.LayoutLimitReached as exc:
-        raise _error(409, "layout_limit", str(exc))
+        raise layout_error(409, "layout_limit", str(exc))
     except store.MemberUnresolved as exc:
-        raise _error(409, "member_unresolved", str(exc), unresolved=exc.unresolved)
+        raise layout_error(409, "member_unresolved", str(exc), unresolved=exc.unresolved)
     except store.LayoutStale as exc:
-        raise _error(409, "layout_stale", str(exc),
+        raise layout_error(409, "layout_stale", str(exc),
                      current=to_model(exc.current).model_dump(mode="json"))
     except (DatastoreUnreadableError, store.LayoutsUnavailable,
             layout_broadcast.BroadcastUnavailable) as exc:
-        raise _error(503, "layouts_unavailable", str(exc))
+        raise layout_error(503, "layouts_unavailable", str(exc))
     except OSError as exc:
         logger.warning("layouts_write_failed", error=str(exc))
-        raise _error(503, "layouts_unavailable", str(exc))
+        raise layout_error(503, "layouts_unavailable", str(exc))
     session_change_notice.publish(
         request.app.state, session_change_notice.build_structural_notice(NOTICE_REASON)
     )
@@ -170,10 +135,9 @@ async def list_layouts() -> LayoutsResponse:
     if not _db_path().exists():
         return LayoutsResponse(status=STATUS_UNAVAILABLE, detail="datastore has not been created yet")
     try:
-        layouts: List[store.SavedLayout] = await run_in_threadpool(_run, store.list_layouts)
+        layouts: List[store.SavedLayout] = await run_in_threadpool(run_on_store, store.list_layouts)
     except (DatastoreUnreadableError, store.LayoutsUnavailable, OSError) as exc:
-        logger.info("layouts_unavailable", reason=str(exc))
-        return LayoutsResponse(status=STATUS_UNAVAILABLE, detail=str(exc))
+        return LayoutsResponse(status=STATUS_UNAVAILABLE, detail=soft_failure("datastore_unavailable", exc, step="list_layouts"))
     return LayoutsResponse(status=STATUS_OK, layouts=[to_model(l) for l in layouts])
 
 
@@ -294,13 +258,17 @@ async def delete_layout(layout_uuid: str, request: Request) -> LayoutWriteRespon
             dependencies=[Depends(require_auth)])
 async def renew_layout_lease(layout_uuid: str) -> LayoutActiveResponse:
     """Mark a Layout open on this device for the next ``lease_seconds``.
+
+    Description: keeps every member awake while the Layout is open (Alex,
+      2026-09-26). In memory only; see ``src/core/layouts/lease.py``.
+    Raises: HTTPException 404 (no such Layout), 503.
     """
     try:
-        await run_in_threadpool(_run, store.get_layout, layout_uuid)
+        await run_in_threadpool(run_on_store, store.get_layout, layout_uuid)
     except store.LayoutNotFound as exc:
-        raise _error(404, "layout_not_found", str(exc))
+        raise layout_error(404, "layout_not_found", str(exc))
     except (DatastoreUnreadableError, store.LayoutsUnavailable, OSError) as exc:
-        raise _error(503, "layouts_unavailable", str(exc))
+        raise layout_error(503, "layouts_unavailable", str(exc))
     LEASES.renew(layout_uuid)
     await peer_layout_lease.forward_lease(layout_uuid, peer_auth.open_db, peer_links.LINKS)
     return LayoutActiveResponse(layout_uuid=layout_uuid, lease_seconds=int(LEASES.lease_seconds))
@@ -322,7 +290,7 @@ async def set_member_broadcast(layout_uuid: str, session_uuid: str, body: Member
                                   layout_uuid, session_uuid, body.enabled))
 
 
-async def _live_listing(request: Request) -> List[Any]:
+async def live_listing(request: Request) -> List[Any]:
     from src.core import single_flight
 
     manager = request.app.state.session_manager
@@ -351,14 +319,14 @@ async def broadcast_to_layout(layout_uuid: str, body: BroadcastRequest,
         text = layout_broadcast.check_text(body.text)
     except layout_broadcast.BroadcastRefused as exc:
         logger.info("layout_broadcast_refused", layout_uuid=layout_uuid, code=exc.code)
-        raise _error(400, exc.code, str(exc))
+        raise layout_error(400, exc.code, str(exc))
     try:
-        layout = await run_in_threadpool(_run, store.get_layout, layout_uuid)
+        layout = await run_in_threadpool(run_on_store, store.get_layout, layout_uuid)
     except store.LayoutNotFound as exc:
-        raise _error(404, "layout_not_found", str(exc))
+        raise layout_error(404, "layout_not_found", str(exc))
     except (DatastoreUnreadableError, store.LayoutsUnavailable, OSError) as exc:
-        raise _error(503, "layouts_unavailable", str(exc))
-    infos = await _live_listing(request)
+        raise layout_error(503, "layouts_unavailable", str(exc))
+    infos = await live_listing(request)
     from src.api.layout_skills_routes import skill_rewriter
     outcomes = await layout_broadcast.broadcast(
         layout, text, infos=infos, backend_for=request.app.state.services.registry.get_backend,

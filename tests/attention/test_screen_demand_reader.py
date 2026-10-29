@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from src.core import attention_reader as reader_module
 from src.core.attention import screen_demand as sd
 from src.core.attention.record_identity import RecordIdentity
-from src.core.attention.registry_read import registry_for_session
+from src.core.attention.registry_index import registry_for_session
 from src.core.attention.transcript_facts import FACTS_NO_RECORD, TranscriptFacts
 from src.core.attention.watcher import WatchTarget
 from src.core.attention_reader import AttentionEvidenceReader
@@ -33,7 +33,8 @@ class Rig:
                 complete=True, socket="cloude-test"),
             _identity_for_instance=lambda name, epoch: {"agent_type": "claude"},
             _instance_index_for_listing=lambda *, socket, names: InstanceIndex(),
-            _tmux_socket_name=lambda: "cloude-test",
+            tmux_socket_name=lambda: "cloude-test",
+            _wrappers_reader=lambda: [],
             _registry=SimpleNamespace(sessions={"ses_a": SimpleNamespace(agent_type="claude")},
                                       backends={"ses_a": SimpleNamespace(socket_name="cloude-test")}),
         )

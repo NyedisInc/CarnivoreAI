@@ -33,7 +33,7 @@ async def resolve(ctx: CplugContext, item_id: int, result: str, reason: Optional
         logger.debug("task_manager_wait_callback_refused", item=item_id, authed=authed)
         raise TaskManagerForbidden(REFUSED)
     if by_agent and wait["status"] == waits.ESCALATED:
-        raise TaskManagerForbidden("the owner has been asked about this wait (push, drop or wait longer); the owner answers it, an agent cannot end it")
+        raise TaskManagerForbidden("the owner has been asked about this wait (push, drop or wait longer); he answers it, an agent cannot end it")
     if result == CLEARED:
         status, text, detail = waits.CLEARED, wait_copy.cleared(reason or wait["waiting_on"] or "the wait"), wait_runner.CLEARED_DETAIL
     else:

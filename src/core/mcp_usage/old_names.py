@@ -31,11 +31,6 @@ def install() -> None:
 
 
 def flush(store: Optional[usage_store.UsageStore] = None) -> int:
-    """Add the waiting counts to the store and forget them. BLOCKING; call it off the event loop.
-
-    Inputs: store (default the process's). Output: counts flushed. A failed write puts the counts back and re-raises, so the
-    next pass retries and nothing is lost. Raises: sqlite3.Error, OSError, RuntimeError (no state directory).
-    """
     with _lock:
         taken = dict(_pending)
         _pending.clear()

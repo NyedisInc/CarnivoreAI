@@ -71,7 +71,6 @@
         return painted;
     }
 
-    /* display:none getElementById('terminal') */
     function hasBox(el) {
         if (!el) return false;
         return (el.offsetWidth | 0) > 0 && (el.offsetHeight | 0) > 0;

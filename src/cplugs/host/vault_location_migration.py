@@ -14,12 +14,6 @@ logger = structlog.get_logger()
 
 
 def migrate(state_dir: Path, config_path: Path) -> Optional[str]:
-    """Copy the old config value into the save plugin's ``vaultLocation`` once. Output: the value stored, None when nothing was written.
-
-    Inputs: state_dir (the app state directory); config_path (``config.json``, read only).
-    Raises: ``StateWriteFailed`` when the plugin state file cannot be written (the boot logs it; the next boot tries again).
-    Example: migrate(Path('/state'), Path('/cfg/config.json')) -> '/Volumes/ExampleDrive/vault' on the first boot, None after
-    """
     entry = owner_state.stored_entry(state_dir, vault_record.SAVE_PLUGIN_ID)
     if entry is None:
         logger.info("vault_location_migration_waiting", reason="the save plugin has no stored entry yet; the old value is still read")

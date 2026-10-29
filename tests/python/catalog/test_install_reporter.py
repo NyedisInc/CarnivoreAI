@@ -99,7 +99,7 @@ def test_a_bad_item_and_a_failing_host_are_soft(tmp_path):
 
 def test_backfill_reports_each_installed_item_once_and_records_the_marker(tmp_path):
     config = tmp_path / "config.json"
-    config.write_text(json.dumps({"catalog": {"api_base_url": "https://example.net"}}))
+    config.write_text(json.dumps({"catalog": {"api_base_url": "https://keep.me"}}))
 
     class Row:
         def __init__(self, item_id, version):
@@ -124,7 +124,7 @@ def test_backfill_reports_each_installed_item_once_and_records_the_marker(tmp_pa
     assert run(first) == "done"
     assert [c[1] for c in first.calls if c[1].endswith("/installed")] == ["/items/a/b/installed", "/items/c/d/installed"]
     block = json.loads(config.read_text())["catalog"]
-    assert block["install_backfill_done"] is True and block["api_base_url"] == "https://example.net"
+    assert block["install_backfill_done"] is True and block["api_base_url"] == "https://keep.me"
     second = Host()
     assert run(second) == "already" and second.calls == []
 

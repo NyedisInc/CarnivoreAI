@@ -184,7 +184,6 @@
 .pk-sq[data-pack="pixel"] .pk-gw{border-radius:.08em;box-shadow:0 0 0 .07em var(--gc)}
 .pk-sq[data-pack="pixel"] .pk-rip,.pk-sq[data-pack="pixel"] .pk-gl{stroke-linecap:butt;stroke-linejoin:miter}
 
-/*  hidden  animation:none */
 :root[data-paused] .pk-sq,:root[data-paused] .pk-sq *{animation-play-state:paused!important}
 .pk-sq[data-still],.pk-sq[data-still] *{animation:none!important;transition:none!important}
 

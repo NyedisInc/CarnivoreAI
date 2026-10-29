@@ -62,7 +62,7 @@ def test_a_live_session_with_an_empty_start_command_projects_a_shell():
 
 def test_a_live_session_with_a_command_but_no_agent_type_projects_replay():
     preview = _live(
-        pane_start_command='"keyc"',
+        pane_start_command='"cld"',
         stored_agent_type=None,
         stored_agent_command=None,
     )
@@ -72,12 +72,12 @@ def test_a_live_session_with_a_command_but_no_agent_type_projects_replay():
 
 def test_a_live_session_projects_agent_only_when_both_halves_are_present():
     preview = _live(
-        pane_start_command='"keyc"',
+        pane_start_command='"cld"',
         stored_agent_type="claude-skip-permissions",
-        stored_agent_command="keyc",
+        stored_agent_command="cld",
     )
     assert preview.projected.kind == RESPAWN_AGENT
-    assert preview.projected.command == "keyc"
+    assert preview.projected.command == "cld"
 
 
 def test_each_wrapper_is_predicted_for_a_live_session():
@@ -85,14 +85,14 @@ def test_each_wrapper_is_predicted_for_a_live_session():
         pane_start_command="",
         offers=[
             WrapperOffer(agent_type="claude-chrome", command="cldc"),
-            WrapperOffer(agent_type="claude-skip-permissions", command="keyc"),
+            WrapperOffer(agent_type="claude-skip-permissions", command="cld"),
         ],
     )
     assert [o.kind for o in preview.options] == [RESPAWN_NOT_DEAD] * 2
     assert not any(o.actionable_now for o in preview.options)
 
     assert [o.projected_kind for o in preview.options] == [RESPAWN_AGENT] * 2
-    assert [o.command for o in preview.options] == ["cldc", "keyc"]
+    assert [o.command for o in preview.options] == ["cldc", "cld"]
     assert all("plain shell" in o.projected_detail for o in preview.options)
 
 
@@ -100,18 +100,18 @@ def test_each_wrapper_is_predicted_for_a_live_session():
 
 def test_a_projection_is_never_not_dead():
     for dead in ("0", "1"):
-        for start in ("", '"keyc"', None):
+        for start in ("", '"cld"', None):
             projected = project_restart_rung(
                 probe_ok=True,
                 pane_start_command=start,
-                agent_command="keyc",
+                agent_command="cld",
             )
             assert projected.kind != RESPAWN_NOT_DEAD
             acting = resolve_respawn_plan(
                 probe_ok=True,
                 pane_dead=dead,
                 pane_start_command=start,
-                agent_command="keyc",
+                agent_command="cld",
             )
             if dead == "0":
                 assert acting.kind == RESPAWN_NOT_DEAD
@@ -172,8 +172,8 @@ def test_resolvable_and_actionable_now_are_different_facts():
 
 
 def test_on_a_dead_pane_the_projection_equals_the_action():
-    for start in ("", '"keyc"', None, "   "):
-        for agent in ("keyc", None, ""):
+    for start in ("", '"cld"', None, "   "):
+        for agent in ("cld", None, ""):
             for chosen in (None, "cldc"):
                 acting = resolve_respawn_plan(
                     probe_ok=True,
@@ -295,8 +295,8 @@ def test_a_command_with_no_resume_is_never_refused_for_a_transcript():
     plan = resolve_respawn_plan(
         probe_ok=True,
         pane_dead="1",
-        pane_start_command='"keyc"',
-        agent_command="keyc",
+        pane_start_command='"cld"',
+        agent_command="cld",
     )
     assert plan.resume_uuid is None
     assert refuse_if_transcript_missing(plan, "absent") is plan

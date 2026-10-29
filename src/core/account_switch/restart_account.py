@@ -1,19 +1,3 @@
-"""Which account a restart or recreate launches on, and remembering the choice.
-
-THE RULE, in one place so the three launch paths cannot drift (respawn in
-place, restart of a stopped row, recreate of a gone tmux session):
-
-1. The restart dialog's choice (``requested``), when it sent one. It must be a
-   claude account that can start and resume (``session_pin.require_launchable``)
-   and the session must be a claude session; anything else is a
-   :class:`~src.core.account_switch.session_pin.PinError` (an HTTP 400).
-2. Otherwise the session's pinned account (``session_pin.pin_for``).
-3. Otherwise None: the global active account, exactly as before this feature.
-
-After a launch that worked, :func:`persist` applies the dialog's checkbox:
-ticked saves or moves the pin, unticked clears it. A request with no account
-(an older client, the unattended limit restart) never touches the pin.
-"""
 
 from __future__ import annotations
 

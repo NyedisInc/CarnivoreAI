@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
@@ -14,16 +14,19 @@ from src.core.crate_format.errors import CrateError
 from src.core.crate_format.model_files import FileRecord
 from src.core.crate_format.reader import CrateReader
 from src.core.crate_import import files_place, undo
+from src.core.crate_import.env import ImportEnv
 from src.core.crate_import.idmap import IdMap
 from src.core.crate_import.model import W_TASK_FILE_FAILED, W_TASK_FILE_KEPT, Collector
 from src.core.inventory.model import MAIN_STORE
+from src.core.work import file_refs
 
 logger = structlog.get_logger()
 
 ROLE = "task_file"
+REVIEW_PLUGIN, BOARDS_DATA = "reviewboard", "boards"
 ITEMS = f"{MAIN_STORE}.work_items"
 _REL = re.compile(r"^cplugs/huddle/files/(\d+)/([^/].*)$")
-FILES_DIR: Tuple[str, ...] = ("cplugs", "huddle", "files")
+FILES_DIR: Tuple[str, ...] = file_refs.FILES_DIR
 SCOPE_TASK_FILES = "task_files"
 
 
@@ -53,6 +56,23 @@ def carried(records: List[FileRecord]) -> List[Tuple[FileRecord, int, str]]:
 
 def destination(state: Path, new_item: int, rest: str) -> Path:
     return Path(state).joinpath(*FILES_DIR, str(int(new_item)), *rest.split("/"))
+
+
+def task_roots(env: ImportEnv) -> List[Path]:
+    home = env.plugin_homes(REVIEW_PLUGIN, BOARDS_DATA)
+    return [Path(home.root)] if home is not None and not home.default else []
+
+
+def file_home(state: Path, log: Optional[Callable[[Dict[str, Any]], None]], roots: Sequence[Path] = ()) -> file_refs.FileHome:
+    home = file_refs.FileHome(Path(state), roots=roots, carried_own=True)
+
+    def announce(dest: Path, sha256: str, length: int) -> None:
+        for entry in undo.creation_entries(dest, home.files_root, sha256, length, {SCOPE_TASK_FILES: True}):
+            log(entry)
+
+    if log is not None:
+        home.on_create = announce
+    return home
 
 
 def place_task_files(reader: CrateReader, state: Path, idmap: IdMap, col: Optional[Collector] = None,

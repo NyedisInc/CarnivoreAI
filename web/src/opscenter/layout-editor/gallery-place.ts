@@ -1,4 +1,3 @@
-/*  hidden  */
 import type { DropTarget } from '../engine/layout.svelte';
 import { rowOfCell } from '../engine/model';
 import { visualOrder } from '../engine/spans';

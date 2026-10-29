@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Set
 
+from src.cplugs.sdk.safe_io import atomic_write_text
 from src.cplugs.save.engine import constants as C
 
 _POINT_RE = re.compile(r"^\d{8}T\d{6}Z-[a-z]+(-\d+)?$")
@@ -47,9 +48,4 @@ def fsync_path(path: Path) -> None:
 
 
 def atomic_write_json(path: Path, payload: Dict[str, Any]) -> None:
-    tmp = path.with_name(temp_name())
-    with open(tmp, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2, sort_keys=True)
-        handle.flush()
-        os.fsync(handle.fileno())
-    os.replace(tmp, path)
+    atomic_write_text(path, json.dumps(payload, indent=2, sort_keys=True))

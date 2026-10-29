@@ -9,7 +9,6 @@ const MINUTE = 60;
 const HOUR = 3600;
 const DAY = 86400;
 
-/* CANNOT DETERMINE */
 export function renameState(r: SidebarRow, host: RowHost): { state: RenameState; reason: string } {
     if (r.asleep && r.session_uuid && !r.archived) return { state: 'renameable', reason: 'rename from the session menu or F2' };
     if (r.asleep) {
@@ -53,7 +52,6 @@ export function whenLabel(r: SidebarRow): string {
     return epoch === null ? '' : ageLabel(epoch, ' ago');
 }
 
-/* CANNOT DETERMINE */
 export function originBadge(r: SidebarRow, full: boolean): { text: string; title: string | null } | null {
     const own = r.created_by_cloude;
     if (own == null) return { text: 'unknown', title: 'CANNOT DETERMINE whether this session is ours' };

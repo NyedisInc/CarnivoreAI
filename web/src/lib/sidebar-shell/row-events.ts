@@ -5,6 +5,7 @@ import { openSessionAutomationsFor, openShare, openSubagents, openTimers, toggle
 import { onRowPointerDown, tookClick } from './row-drag';
 import { cascadeBandFold, toggleBandFold } from './heading-fold';
 import { closestTo, drawer, rg } from './row-globals';
+import { onKeyClick as onBrowserKeyClick } from '../drawer/browser-rows';
 import { searchD } from '../drawer/search-d.svelte';
 import { onPinClick, onRowKeydown } from './row-reorder';
 import { disarmWake } from './wake-arm.svelte';
@@ -66,7 +67,7 @@ function onClick(e: MouseEvent): void {
     const browserKey = closestTo(e.target, '[data-browser-row-action]');
     if (browserKey) {
         e.stopPropagation();
-        void rg().SessionSidebarBrowsers?.onKeyClick?.(browserKey);
+        void onBrowserKeyClick(browserKey);
         return;
     }
     const cup = closestTo(e.target, '[data-keep-awake-session]');
@@ -78,7 +79,7 @@ function onClick(e: MouseEvent): void {
     const share = closestTo(e.target, '[data-share-session-id]');
     if (share) {
         e.stopPropagation();
-        void openShare(ctrl, share);
+        void openShare(share);
         return;
     }
     const subagents = closestTo(e.target, '[data-subagents-session-id]');

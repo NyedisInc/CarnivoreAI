@@ -1,14 +1,11 @@
 @layer legacy {
-/* --color- */
 
-/*  hidden  */
 @media (min-width: 769px) {
     .terminal-tools-menu {
         display: none !important;
     }
 }
 
-/* removed with it */
 
 
 .fab-menu {
@@ -102,7 +99,6 @@
     align-items: center;
     justify-content: flex-start;
     width: 100%;
-    /* min-width: 0 overflow-wrap: anywhere overflow-y: auto */
     min-width: 0;
     height: auto;
     min-height: 44px;
@@ -118,7 +114,6 @@
     cursor: pointer;
 }
 
-/* box-shadow overflow-y: auto transform: none transform: scale( */
 .cloude-session-theme__list .cloude-session-theme__item:hover,
 .cloude-session-theme__list .cloude-session-theme__item:focus-visible {
     background: var(--oc-ground-hover);

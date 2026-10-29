@@ -21,7 +21,7 @@ afterEach(async () => {
   for (const component of mounted.splice(0)) await unmount(component);
   document.body.replaceChildren();
   currentPayload = null;
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom always has storage */ }
   vi.restoreAllMocks();
 });
 
@@ -30,8 +30,8 @@ const FAR_RESET = new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString();
 function account(overrides: Partial<AccountUsage> = {}): AccountUsage {
   return {
     id: 'acct-1',
-    name: 'Claude Code - Studio',
-    short_name: 'Studio',
+    name: 'Claude Code - Acme',
+    short_name: 'Nyedis',
     provider: 'claude',
     plan: null,
     identity: null,
@@ -231,7 +231,7 @@ test('the grown stats are a labeled grid: one label and one value per figure, th
   expect(grown?.querySelector('[data-stat="context"] .oc-tfs-label')?.textContent).toBe('context');
 });
 
-test('an unknown account leaves the grid, never "not available"', () => {
+test('an unknown account leaves the grid, never "not available" (Joe, issue #1053 follow-up)', () => {
   const target = setup(usage({ account: null }), 390);
   toggle(target).click();
   flushSync();

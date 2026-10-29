@@ -54,6 +54,7 @@ export interface PackTag {
     readonly title: string;
 }
 
+/* there is nothing */
 export function packTag(storage: PackStorage | null | undefined, t: Translate): PackTag | null {
     if (!storage) return null;
     if (isPackBusy(storage)) {

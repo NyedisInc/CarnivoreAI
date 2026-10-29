@@ -206,12 +206,6 @@ def _project_index(projects: Optional[Callable[[], List[dict]]]) -> ProjectIndex
 
 def migrate(vault: Vault, state_dir: Path, pace: Optional[Throttle] = None,
             projects: Optional[Callable[[], List[dict]]] = None) -> LegacyProgress:
-    """Migrate old points until the throttle's slice is used. Blocking.
-
-    Inputs: vault; state_dir; pace (rests and ends the pass); projects (-> project rows, to fill each point's project uid).
-    Output: LegacyProgress - ``more`` while readable points remain for a later pass, ``failed`` = points that could not be
-    migrated this pass (logged, not marked done, tried again by the caller later). Example: migrate(v, state).failed
-    """
     done = _read_done(vault)
     index = _project_index(projects)
     handled = failed = 0

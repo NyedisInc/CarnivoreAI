@@ -40,3 +40,23 @@ def test_a_session_of_the_crates_own_project_follows_this_imports_project_not_an
     project = rows_of(install, "SELECT id FROM projects WHERE uid = 'project-uid-1'")[0]["id"]
     assert project != 99
     assert {r["project_id"] for r in rows_of(install, "SELECT project_id FROM sessions")} == {project}
+
+
+def test_a_chosen_project_beats_an_earlier_imports_map_for_a_crate_with_no_project_row(tmp_path: Path) -> None:
+    from tests.python.crate_import.install import make_install
+    from tests.python.crate_import.test_import_golden import FIXTURES, restore, seed_target_project
+    from src.cplugs.sdk import crate_format as cf
+
+    path = FIXTURES / "v1" / "session-own.crate"
+    install = make_install(tmp_path)
+    chosen = seed_target_project(install)
+    with cf.open_crate(path) as reader:
+        source_install = reader.manifest.source["install_id"]
+    with closing(connect(db_path_for(install.state))) as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        ledger.write_entry(conn, "imp-20260101T000000Z-aaaaaaaa", {"source_install": source_install, "bundle_id": "old", "crate_sha256": "0" * 64,
+                                                                    "phase": "done", "key_map": {idmap.PROJECTS: {str(n): 99 for n in range(1, 10)}}, "created": {}})
+        conn.commit()
+    plan, receipt = restore(path, install, ImportRequest(target_project_id=chosen))
+    assert receipt is not None, plan["blockers"]
+    assert {r["project_id"] for r in rows_of(install, "SELECT project_id FROM sessions")} == {chosen}

@@ -1,3 +1,4 @@
+/* gives the same */
 
 export const GRID = 5;
 

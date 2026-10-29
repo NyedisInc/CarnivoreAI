@@ -40,6 +40,7 @@ function loadModule(preferences) {
 
 const localReader = (value) => () => value;
 
+// ---------------------------------------------------------------------
 
 test('a field the server does not hold falls through to local, never to a default', () => {
     const mod = loadModule(makePreferences({ values: {} }));

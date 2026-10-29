@@ -82,7 +82,6 @@ class Auth {
         });
     }
 
-    /*  hidden  */
     async resolveEntry() {
         const gen = ++this._entryGen;
         const container = document.querySelector('#auth-screen .auth-container');
@@ -138,6 +137,41 @@ class Auth {
         const container = document.querySelector('#auth-screen .auth-container');
         if (container) container.classList.remove('hidden');
         if (this.totpInput) this.totpInput.focus();
+        this._watchClipboard();
+        this.tryClipboardCode();
+    }
+
+    _watchClipboard() {
+        if (this._clipboardWatched) return;
+        this._clipboardWatched = true;
+        window.addEventListener('focus', () => this.tryClipboardCode());
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') this.tryClipboardCode();
+        });
+    }
+
+    async tryClipboardCode() {
+        const container = document.querySelector('#auth-screen .auth-container');
+        const screen = document.getElementById('auth-screen');
+        if (!this.totpInput || !screen || !screen.classList.contains('active')) return;
+        if (!container || container.classList.contains('hidden')) return;
+        if (this._submitting || this._clipboardReading || this.totpInput.value !== '') return;
+        if (!window.isSecureContext || !navigator.clipboard || !navigator.clipboard.readText) return;
+        this._clipboardReading = true;
+        try {
+            const perm = navigator.permissions && await navigator.permissions.query({ name: 'clipboard-read' }).catch(() => null);
+            if (perm && perm.state === 'denied') return;
+            const text = await navigator.clipboard.readText();
+            const code = String(text).trim().replace(/^(\d{3})[ -]?(\d{3})$/, '$1$2');
+            if (!/^\d{6}$/.test(code) || code === this._clipboardTried) return;
+            if (this._submitting || this.totpInput.value !== '') return;
+            this._clipboardTried = code;
+            this.totpInput.value = code;
+            await this.handleLogin({ silent: true });
+        } catch (err) {
+        } finally {
+            this._clipboardReading = false;
+        }
     }
 
     _unmountFirstRun() {
@@ -159,7 +193,8 @@ class Auth {
         window.dispatchEvent(new CustomEvent('authenticated'));
     }
 
-    async handleLogin() {
+    async handleLogin(opts = {}) {
+        const silent = opts.silent === true;
         if (this._submitting) {
             return;
         }
@@ -199,6 +234,11 @@ class Auth {
 
         } catch (error) {
             console.error('Auth: Login failed:', error);
+            if (silent) {
+                this.totpInput.value = '';
+                this.totpInput.focus();
+                return;
+            }
             const errorMsg = error?.reason === 'code_reused'
                 ? this.t('auth.totp_prompt.error_reused')
                 : (typeof error?.message === 'string' && error.message) || this.t('auth.totp_prompt.error_failed');
@@ -290,12 +330,15 @@ class Auth {
                 body: JSON.stringify({ refresh_token: refreshToken })
             });
         } catch (e) {
-            // connection refused
             console.warn('Auth: refresh network error (preserving refresh token)', e);
             return 'network-error';
         }
 
         if (!response.ok) {
+            if (response.status >= 500 || response.status === 408 || response.status === 429) {
+                console.warn('Auth: refresh got a transient status (preserving refresh token)', response.status);
+                return 'network-error';
+            }
             console.warn('Auth: refresh failed with status', response.status);
             return false;
         }

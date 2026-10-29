@@ -42,9 +42,9 @@ test('the exported status is kept as sent, and an absent or malformed one is nul
 test('kinds and conversation_id are sent only to a route that honors them', async () => {
   asked.length = 0;
   const signal = new AbortController().signal;
-  await groupedSearchApi('/deepsearch/search', { scope: 'local' }, true).search('rsync', 0, signal, { kinds: 'user' });
-  await groupedSearchApi('/deepsearch/search', {}, true).search('rsync', 0, signal, { conversationId: 'c1' });
-  await groupedSearchApi('/pipeline/prompts/search').search('rsync', 0, signal, { kinds: 'user', conversationId: 'c1' });
+  await groupedSearchApi('/deepsearch/search', { scope: 'local' }, true).search('restic', 0, signal, { kinds: 'user' });
+  await groupedSearchApi('/deepsearch/search', {}, true).search('restic', 0, signal, { conversationId: 'c1' });
+  await groupedSearchApi('/pipeline/prompts/search').search('restic', 0, signal, { kinds: 'user', conversationId: 'c1' });
   const query = (i: number) => new URLSearchParams(asked[i]!.split('?')[1]);
   expect(query(0).get('kinds')).toBe('user');
   expect(query(0).get('per_group')).toBe(String(PER_GROUP));

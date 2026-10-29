@@ -29,7 +29,7 @@ def test_huddle_batch_sets_it(manager):
     assert ok and body["applied"] == 1 and store.item(item["id"])["status"] == "todo"
 
 
-def test_owner_sets_it_and_takes_it_off(manager):
+def test_joe_sets_it_and_takes_it_off(manager):
     store = huddle_store(manager)
     item = store.add("all", "later", actor=JOE)
     assert store.update(item["id"], actor=JOE, state="todo")["status"] == "todo"

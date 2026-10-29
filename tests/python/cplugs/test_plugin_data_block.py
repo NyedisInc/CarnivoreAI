@@ -248,7 +248,7 @@ def policy_differences(declared: Optional[Dict[str, Dict[str, data_decl.DataDecl
     return out
 
 
-def test_declared_belridge_agree_with_the_core_table_except_the_listed_ones() -> None:
+def test_declared_policies_agree_with_the_core_table_except_the_listed_ones() -> None:
     found = policy_differences()
     assert set(found) == set(POLICY_DIFFERENCES_OK), f"policy differences changed: found {sorted(found)}, listed {sorted(POLICY_DIFFERENCES_OK)}"
 

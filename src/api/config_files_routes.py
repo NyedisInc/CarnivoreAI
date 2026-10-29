@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 import structlog
 
@@ -16,6 +16,7 @@ from src.core import (
     config_files_ignore,
     config_files_tree_request,
 )
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -49,6 +50,10 @@ class ConfigFileWriteRequest(BaseModel):
 
 class ConfigFileCreateRequest(BaseModel):
     """Body for POST /config-files/create.
+
+    Same fields as ConfigFileWriteRequest, with ``content`` defaulting to
+    empty so "make me an empty file" needs no body gymnastics. ``path``
+    names a file that must NOT already exist; its parent directory must.
     """
     root: str
     path: str
@@ -143,21 +148,35 @@ async def get_config_file_tree(
         permissions problem is "could not evaluate", not "bad request",
         per this project's three-outcome rule; the client renders this
         as a distinct error row rather than folding it into "empty").
+
+    THE WALK RUNS IN A THREAD, AND THAT IS THIS ENDPOINT'S WHOLE
+    PERFORMANCE STORY. ``config_files.list_subtree`` is a recursive
+    filesystem walk whose cost is thousands of ``stat`` syscalls, and an
+    ``async def`` body that never awaits holds the event loop for its
+    entire duration - during which the server cannot read the tmux pipe
+    carrying terminal output, cannot deliver a keystroke, and cannot
+    answer any other request. Measured on this repository before the
+    offload: the walk cost 264 to 477 ms, and a concurrent coroutine
+    standing in for the pipe reader was stalled for essentially that
+    same interval on every single call. The user experiences that as
+    typing lag, not as a slow file tree. Do not call the walk directly
+    from this coroutine, and do not add other synchronous filesystem or
+    database work beside it.
     """
     try:
         plan = config_files_tree_request.plan_tree_request(path, depth)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "config_file_rejected", exc, step="get_config_file_tree") from exc
     try:
         tree, ignore_status = await admission.run(
             WorkClass.BULK_SCAN, _list_tree, root, plan.rel_path, project_path, plan.levels, ignored,
         )
     except AdmissionRefused as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "config_files_unavailable", exc, step="get_config_file_tree") from exc
     except config_files.ConfigFileUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "config_files_unavailable", exc, step="get_config_file_tree") from exc
     except config_files.ConfigFileError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "config_file_rejected", exc, step="get_config_file_tree") from exc
     return ConfigFileTreeResponse(root=root, tree=tree, ignore_status=ignore_status)
 
 
@@ -204,9 +223,9 @@ async def find_config_files(
             WorkClass.BULK_SCAN, _find, root, path or "", project_path, q, ignored,
         )
     except AdmissionRefused as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "config_files_unavailable", exc, step="find_config_files") from exc
     except config_files.ConfigFileError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "config_file_rejected", exc, step="find_config_files") from exc
     return ConfigFileFindResponse(root=root, tree=tree, truncated=truncated, ignore_status=ignore_status)
 
 
@@ -233,7 +252,7 @@ async def read_config_file(
         result = config_files.read_file(root, path, project_path)
     except config_files.ConfigFileError as exc:
         logger.warning("config_files_read_rejected", root=root, path=path, error=str(exc))
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "config_file_rejected", exc, step="read_config_file") from exc
     return ConfigFileReadResponse(**result)
 
 
@@ -283,19 +302,12 @@ async def write_config_file(body: ConfigFileWriteRequest):
             expected_sha256=body.expected_sha256,
         )
     except config_files.FileChangedOnDiskError as exc:
-        logger.info("config_files_write_stale", root=body.root, path=body.path)
-        raise HTTPException(status_code=409, detail=exc.as_detail())
+        raise api_error(409, exc.CODE, exc, extra={"sha256": exc.current_sha256}, root=body.root, path=body.path) from exc
     except app_config_guard.AppConfigProtectedError as exc:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": app_config_guard.APP_CONFIG_PROTECTED,
-                "detail": str(exc),
-            },
-        )
+        raise api_error(409, app_config_guard.APP_CONFIG_PROTECTED, exc, root=body.root, path=body.path) from exc
     except config_files.ConfigFileError as exc:
         logger.warning("config_files_write_rejected", root=body.root, path=body.path, error=str(exc))
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "config_file_rejected", exc, step="write_config_file") from exc
     return ConfigFileWriteResponse(**result)
 
 
@@ -333,7 +345,12 @@ async def create_config_file(body: ConfigFileCreateRequest):
             acknowledge_executable=body.acknowledge_executable,
             acknowledge_sensitive=body.acknowledge_sensitive,
         )
+    except config_files_create.ConfirmationRequiredError as exc:
+        raise api_error(
+            400, "confirmation_required", exc, extra={"acknowledge": exc.acknowledge},
+            step="create_config_file", root=body.root, path=body.path,
+        ) from exc
     except config_files.ConfigFileError as exc:
         logger.warning("config_files_create_rejected", root=body.root, path=body.path, error=str(exc))
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "config_file_rejected", exc, step="create_config_file") from exc
     return ConfigFileCreateResponse(**result)

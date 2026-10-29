@@ -15,8 +15,8 @@ const SNAP = {
 
 function machine(over: Partial<PackMachine> & { host_key?: string | null } = {}): PackMachine {
     return {
-        install_id: 'a', label: 'hostb', is_self: true, is_master: true, paired: true, state: 'self', capabilities: [],
-        specs: { model: 'Mac00,1', cores: 10, mem_total_gb: 16 }, snapshot: SNAP, age_seconds: 1, ...over,
+        install_id: 'a', label: 'nostromo', is_self: true, is_master: true, paired: true, state: 'self', capabilities: [],
+        specs: { model: 'Mac16,10', cores: 10, mem_total_gb: 16 }, snapshot: SNAP, age_seconds: 1, ...over,
     } as PackMachine;
 }
 
@@ -56,7 +56,7 @@ afterEach(() => { if (handle) unmount(handle); handle = null; });
 
 describe('drawer pack rows', () => {
     it('the alpha row has the red wolf labelled Alpha, a non-alpha row has none, and the order is icon, wolf, light, name, stats', () => {
-        const el = draw(plan('compact', [machine(), machine({ install_id: 'b', label: 'hosta', is_self: false, is_master: false, state: 'connected', host_key: 'peer' })]));
+        const el = draw(plan('compact', [machine(), machine({ install_id: 'b', label: 'studio', is_self: false, is_master: false, state: 'connected', host_key: 'peer' })]));
         const rows = el.querySelectorAll('[data-pack-computer]');
         expect(rows.length).toBe(2);
         const wolf = rows[0]!.querySelector('[data-mark="alpha"]')!;
@@ -77,7 +77,7 @@ describe('drawer pack rows', () => {
     });
 
     it('one ResizeObserver per section, not one per row', () => {
-        draw(plan('compact', [machine(), machine({ install_id: 'b', label: 'hosta', is_self: false })]));
+        draw(plan('compact', [machine(), machine({ install_id: 'b', label: 'studio', is_self: false })]));
         expect(observers).toHaveBeenCalledTimes(1);
     });
 
@@ -133,7 +133,7 @@ describe('drawer pack rows', () => {
         expect([...el.querySelector('[data-pack-computer]')!.children].map((c) => c.className.split(' ')[0]), 'three lines')
             .toEqual(['sb-pack-row__main', 'sb-pack-row__stats', 'sb-pack-row__meta']);
         expect(el.querySelectorAll('.pk-meter').length).toBe(3);
-        expect(el.querySelector('.sb-pack-row__meta')!.textContent).toBe('Mac00,1 10 cores 16 gb reserve in use 30% / 20%');
+        expect(el.querySelector('.sb-pack-row__meta')!.textContent).toBe('Mac16,10 10 cores 16 gb reserve in use 30% / 20%');
     });
 
     it('missing specs are left out, never printed as null', () => {

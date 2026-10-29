@@ -11,7 +11,7 @@ def card(name: str, i: int) -> dict:
     return {"name": name, "id": f"ses_{i}", "session_uuid": f"uuid-{i}", "tmux_name": f"t{i}", "former_names": []}
 
 
-CARDS = [card("bot-Misc UI", 1), card("Ledgerbot", 2), card("Carnivore Server", 3)]
+CARDS = [card("Cv-Misc UI", 1), card("Trader", 2), card("Carnivore Server", 3)]
 
 
 def test_an_exact_name_never_reaches_difflib(monkeypatch):
@@ -19,7 +19,7 @@ def test_an_exact_name_never_reaches_difflib(monkeypatch):
         raise AssertionError("difflib must not run when an exact tier matched")
 
     monkeypatch.setattr(directory.difflib, "SequenceMatcher", boom)
-    result = directory.resolve_handle("@bot-misc ui", CARDS)
+    result = directory.resolve_handle("@cv-misc ui", CARDS)
     assert result.tier == "label" and result.matches[0]["id"] == "ses_1"
 
 
@@ -37,10 +37,10 @@ def test_async_twin_gives_the_same_answer_and_runs_fuzzy_in_a_thread(monkeypatch
 
     async def scenario():
         fuzzy = await directory.resolve_handle_async("carnivor sever", CARDS)
-        exact = await directory.resolve_handle_async("Ledgerbot", CARDS)
+        exact = await directory.resolve_handle_async("Trader", CARDS)
         return fuzzy, exact
 
     fuzzy, exact = asyncio.run(scenario())
     assert fuzzy == want_fuzzy
-    assert exact == directory.resolve_handle("Ledgerbot", CARDS)
+    assert exact == directory.resolve_handle("Trader", CARDS)
     assert len(threads) == 1 and threads[0] is not threading.main_thread()

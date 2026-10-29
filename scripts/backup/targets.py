@@ -10,20 +10,18 @@ from typing import Optional, Tuple
 from scripts.backup.errors import BadPhaseId, SourceMissing
 from src.core.db_rename.legacy import readable_db_path
 
-# state directory
 DEFAULT_STATE_DIR = Path("~/Library/Application Support/Carnivore").expanduser()
 DEFAULT_CONFIG_FILE = Path("~/Library/Application Support/Carnivore Menubar/server/config.json").expanduser()
-BACKUP_VOLUME = Path("/Volumes/ExampleDrive")
-# state directory
+BACKUP_VOLUME = Path("/Volumes/Backup")
 FALLBACK_DIR_NAME = "phase-backups"
 SET_PREFIX = "phase-"
 MANIFEST_NAME = "MANIFEST.json"
 MANIFEST_FORMAT = 1
+PRIVATE_FILE_MODE = 0o600
+PRIVATE_DIR_MODE = 0o700
 _PHASE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$")
 
-# state directory
 STATE_FILES: Tuple[str, ...] = ("cplugs/state.json",)
-# state directory
 STATE_TREES: Tuple[str, ...] = ("cplugs/huddle/files", "cplugs/task_manager/files")
 
 
@@ -48,10 +46,6 @@ def validate_phase_id(phase: str) -> str:
 
 
 def resolve_state_dir(explicit: Optional[str]) -> Path:
-    """The state directory: ``--state-dir``, else ``CARNIVORE_STATE_DIR`` / ``CLOUDE_STATE_DIR``, else the default.
-
-    Inputs: explicit (str | None). Output: Path (never created). Raises: SourceMissing when it is not a directory.
-    """
     chosen = explicit or os.environ.get("CARNIVORE_STATE_DIR") or os.environ.get("CLOUDE_STATE_DIR")
     path = Path(chosen).expanduser() if chosen else DEFAULT_STATE_DIR
     if not path.is_dir():

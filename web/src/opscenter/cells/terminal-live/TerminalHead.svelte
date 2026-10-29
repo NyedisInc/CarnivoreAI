@@ -186,7 +186,6 @@
       align-self: stretch;
       flex-direction: column;
       align-items: stretch;
-      /* padding */
       padding-block: var(--oc-space-1) var(--oc-space-1);
       gap: var(--oc-space-1);
     }
@@ -201,20 +200,6 @@
     }
 
     :global(.oc-frame-title:has(> .oc-tl-head-tabbed)) {
-      /* ONE RULE DECIDES THE SIDE INSETS ("the left and
-         right looks like shit"): the title row's own `padding: 0
-         var(--oc-space-3)` (12px, the `.pl-titlebar` inset) frames the head on
-         both sides. A `padding-left: 0` stood here but lost to it on source
-         order and never applied, so it is gone rather than left to mislead. */
-      /* THE TABBED ROW DRAWS NO DIVIDER OF ITS OWN (#606
-         follow-up): the untabbed title row's `box-shadow: inset 0 -1px 0 0
-         var(--oc-line-rule)` (below) reads as a full-width line under BOTH the
-         prompt box and the icon group on a theme whose border token carries
-         the accent tint, even though neither child draws a border or shadow
-         of its own (checks 47/48 measure the CHILDREN's own style, which is
-         correctly none - this row's OWN shadow is what a screenshot actually
-         shows). Cleared here, scoped to the tabbed case only, so an untabbed
-         card's title row keeps its divider unchanged. */
       box-shadow: none;
     }
 
@@ -238,6 +223,10 @@
       gap: 5px;
       margin-left: auto;
       flex: 0 0 auto;
+    }
+
+    :global(.oc-frame-strip) .oc-tl-controls {
+      gap: calc(var(--oc-space-1) / 2);
     }
 
     .oc-tl-dot {

@@ -1,9 +1,3 @@
-"""What a woken agent is told first (docs/swarm.md 4.2 step 8): the desk file for a fresh wake, a line for a resume.
-
-A fresh wake starts a new conversation, so everything dynamic rides in ``desk.md`` and the paste is one pointer
-sentence. A resume replays the old conversation, so its wake message IS the delivery. Both carry the reporting duty;
-the learning inbox rides both (:mod:`learning`); the secret scan runs on the whole file before it is written.
-"""
 
 from __future__ import annotations
 
@@ -29,8 +23,8 @@ REPORTING_DUTY = ("Reporting duty: when your job is done, call swarm_report with
                   "note does not count as an answer, and only the owner's words reset the crosstalk loop breaker.")
 
 CARD_DUTY = ("Card duty: if you hold a card, keep its handoff current with swarm_card_handoff, write it before you stop, and "
-             "finish the card with swarm_card_finish (result plus how-to-validate, and remember for what you learned) when the work is done; Done is the owner's "
-             "call, never yours. Asking: swarm_ask takes a one-sentence summary the owner can answer without reading code "
+             "finish the card with swarm_card_finish (result plus how-to-validate, and remember only for a lasting rule that meets the memory bar) when the work is done: needs_owner "
+             "false for checked, complete work (straight to Done), true with owner_ask only when the owner must answer, pick or do something (Review). Asking: swarm_ask takes a one-sentence summary the owner can answer without reading code "
              "(no file names, line numbers or code; say what the choice changes for the owner), with every detail in question.")
 
 

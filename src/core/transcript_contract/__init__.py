@@ -27,7 +27,7 @@ from src.core.transcript_contract.stream import (
 
 CONTRACT_VERSION: int = 1
 
-MEASURED_ON: str = "not measured"
+MEASURED_ON: str = "2026-09-30"
 MEASURED_CLAUDE_CODE: str = "1.0.61 to 2.1.286"
 MEASURED_CODEX_CLI: str = "0.115 prereleases"
 

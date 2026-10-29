@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
+  import { Segmented } from '../sdk/ui';
   import { SIDEBAR_AREAS, SIDEBAR_DENSITIES, SIDEBAR_WIDTHS, type SidebarView } from '../sdk/widget-lab';
 
   interface Props {
@@ -11,12 +12,10 @@
 </script>
 
 {#snippet group(name: string, choices: readonly string[], current: string, pick: (value: string) => void)}
-  <div class="dwl-band-sizes dwl-sidebar-group" role="group" aria-label={t(`cplug.devwidgetlab.sidebar.${name}`)} data-group={name}>
+  <div class="dwl-band-sizes dwl-sidebar-group">
     <span class="dwl-hint">{t(`cplug.devwidgetlab.sidebar.${name}`)}</span>
-    {#each choices as choice (choice)}
-      <button type="button" class="oc-btn oc-btn--sm dwl-size-key" aria-pressed={current === choice} data-on={current === choice ? 'yes' : 'no'} data-choice={choice}
-        onclick={() => pick(choice)}>{t(`cplug.devwidgetlab.sidebar.${name}.${choice}`)}</button>
-    {/each}
+    <Segmented data-group={name} label={t(`cplug.devwidgetlab.sidebar.${name}`)} value={current} onchange={pick}
+      options={choices.map((choice) => ({ value: choice, label: t(`cplug.devwidgetlab.sidebar.${name}.${choice}`), attrs: { 'data-choice': choice } }))} />
   </div>
 {/snippet}
 

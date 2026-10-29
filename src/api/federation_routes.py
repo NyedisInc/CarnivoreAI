@@ -249,6 +249,7 @@ async def token(body: TokenRequest, request: Request) -> TokenResponse:
 
 @router.get("/hello", response_model=HelloResponse)
 async def hello(principal: Principal = Depends(require_peer_sessions)) -> HelloResponse:
+    """Who this Mac is. Peer or owner. The version gate (F13) reads ``protocol``."""
     install_id = await _db(_install_id)
     restricted: List[str] = []
     if principal.is_peer and principal.grant is not None:
@@ -311,6 +312,7 @@ class ProveRequest(BaseModel):
 
 @router.post("/prove")
 async def prove(body: ProveRequest, request: Request) -> Dict[str, str]:
+    """Sign a caller's nonce (and, for a tcp back route, that live route's id) with this Mac's federation key."""
     import time
 
     raw = unb64url(body.nonce, 16)
@@ -380,6 +382,7 @@ async def peer_ws(websocket: WebSocket) -> None:
 
 @router.get("/grants", response_model=List[GrantModel], dependencies=[Depends(require_auth)])
 async def list_grants() -> List[GrantModel]:
+    """Every grant this Mac has issued, revoked ones included. Owner only."""
     return [_grant_model(g) for g in await _db(grants.list_grants)]
 
 
@@ -443,6 +446,8 @@ async def rotate_key(request: Request) -> RotateResponse:
     live = len([g for g in await _db(grants.list_grants) if not g.revoked])
     try:
         result = await key_rotate.rotate(install_id=install_id, links=peer_links.LINKS, live_grants=live)
+    except key_rotate.RotationBusy:
+        raise _error(409, "rotation_in_progress", "a key rotation is already running") from None
     except fed_key.DeviceKeyUnavailable:
         raise _error(503, "federation_key_unavailable", "the login keychain did not answer") from None
     discovery = getattr(request.app.state, "federation_discovery", None)

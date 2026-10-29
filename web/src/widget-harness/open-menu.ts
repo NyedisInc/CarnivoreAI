@@ -1,4 +1,3 @@
-/* could not */
 
 import { remoteMenuOpen } from './remote-menu';
 

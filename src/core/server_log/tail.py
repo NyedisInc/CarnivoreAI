@@ -1,13 +1,3 @@
-"""A bounded, redacted, parsed tail of the structlog JSON-lines server log.
-
-BOUNDED: only the last :data:`MAX_BYTES` of the file are ever read (a seek from the end), never the whole file, and at
-most :data:`MAX_LINES` entries come back. REDACTED: every free-text value goes through the spectator path's redactor
-(`stream_redactor.redact_whole`) before it leaves. The writer redacts structlog, stdlib and uvicorn records since #1859
-(`redact.py`), but not everything in the file: lines written before that, raw stderr (an interpreter crash before
-logging starts, a child's own output) and the launcher's banner lines never passed a redactor, so this read side stays.
-A line that is not JSON, or has no event, is skipped here (the file also carries ``[STDERR]`` text and tracebacks);
-the v2 read (`records.py`) keeps them as records and continuations.
-"""
 
 from __future__ import annotations
 
@@ -87,10 +77,7 @@ def _fields_text(record: Dict[str, Any]) -> str:
 
 
 def _redact_all(pieces: List[str]) -> List[str]:
-    if not pieces:
-        return []
-    out = redact_whole(_SEPARATOR.join(pieces)).split(_SEPARATOR)
-    return out if len(out) == len(pieces) else ["[redacted]"] * len(pieces)
+    return [redact_whole(piece) for piece in pieces]
 
 
 def entries_from(lines: Iterable[str], levels: Iterable[str], limit: int) -> List[LogEntry]:

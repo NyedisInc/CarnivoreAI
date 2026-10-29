@@ -12,7 +12,7 @@ from src.core.attention.codex_reader import (
 )
 
 NOW = datetime(2026, 9, 18, 12, 0, 0, tzinfo=timezone.utc)
-THREAD = "3fce7313-a048-4034-8b0d-72deecec7e53"
+THREAD = "ad166ca4-f8b4-989f-dee8-b5b4f34999e3"
 
 
 def _make_codex_home(tmp_path):

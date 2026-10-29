@@ -26,7 +26,6 @@
 
 <style>
   @layer components {
-    /* box-shadow */
     .sbcp {
       container: swarm-list / inline-size;
       position: sticky;

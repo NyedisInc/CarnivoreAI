@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.crate_format.canonical import text_factory
 from src.cplugs.sdk.vault_sources import SourceUnavailable
 
@@ -41,7 +42,7 @@ def _quote(name: str) -> str:
 
 
 def _open_ro(path: Path) -> sqlite3.Connection:
-    conn = sqlite3.connect(f"{Path(path).resolve().as_uri()}?mode=ro", uri=True, timeout=10, isolation_level=None)
+    conn = connect_readonly(path, timeout=10, isolation_level=None)
     conn.text_factory = text_factory
     return conn
 

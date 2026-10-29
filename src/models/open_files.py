@@ -40,12 +40,26 @@ class OpenFileRequest(BaseModel):
         return value
 
 
+class OpenFilePathRequest(BaseModel):
+    """An explicit file path selected by the authenticated owner, independent of a session."""
+
+    model_config = ConfigDict(extra="forbid")
+    path: str = Field(..., min_length=1, max_length=MAX_PATH_LENGTH)
+
+    @field_validator("path")
+    @classmethod
+    def _valid_path(cls, value: str) -> str:
+        if "\0" in value:
+            raise ValueError("path must not contain a NUL byte")
+        return value
+
+
 class OpenFileInfo(BaseModel):
     """One open file row as every window receives it."""
 
     id: str = Field(..., description="16 lowercase hex characters, minted by the server.")
     kind: Literal["file", "diff"]
-    root: Literal["user", "workdir"]
+    root: Literal["user", "workdir", "absolute"]
     path: str
     session_uuid: str
     title: str = Field(..., description="The file's own name, the row label; the path is its tooltip.")

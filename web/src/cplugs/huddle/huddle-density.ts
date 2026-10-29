@@ -51,7 +51,6 @@ export function rowTitle(item: Pick<HuddleItem, 'title' | 'text'>): string {
   return title ? title : item.text;
 }
 
-/* Daily Bulletin */
 export function latestMessage(item: Pick<HuddleItem, 'thread'>): TaskManagerMessage | null {
   return openQuestions(item).at(-1) ?? item.thread.filter((m) => !isSystemLine(m)).at(-1) ?? null;
 }

@@ -7,7 +7,7 @@ from src.core.db_models import (
     SESSION_CLAUDE_UUID_SOURCES,
 )
 
-UUID = "3fce7313-a048-4034-8b0d-72deecec7e53"
+UUID = "ad166ca4-f8b4-989f-dee8-b5b4f34999e3"
 
 
 class _FakeManager:
@@ -75,7 +75,7 @@ def test_measured_owned_conversation_rebinds_through_correlation_writer(tmp_path
                              claude_uuid=old)
     manager = SimpleNamespace(
         _writable_datastore_connection=lambda: connect(db_path_for(tmp_path)),
-        _tmux_socket_name=lambda: TEST_SOCKET,
+        tmux_socket_name=lambda: TEST_SOCKET,
     )
     result = codex_bind_conversation(
         manager, session_id="ses_1", tmux_name="cloude_owned", thread_uuid=UUID,
@@ -109,7 +109,7 @@ def test_owned_bind_cannot_take_another_rows_conversation(tmp_path):
                                  claude_uuid=uuid)
     manager = SimpleNamespace(
         _writable_datastore_connection=lambda: connect(db_path_for(tmp_path)),
-        _tmux_socket_name=lambda: TEST_SOCKET,
+        tmux_socket_name=lambda: TEST_SOCKET,
     )
     result = codex_bind_conversation(
         manager, session_id="ses_1", tmux_name="cloude_owned", thread_uuid=UUID,

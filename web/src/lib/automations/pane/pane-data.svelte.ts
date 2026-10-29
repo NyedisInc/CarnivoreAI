@@ -1,5 +1,5 @@
 import * as api from '../api';
-import { ensureReport, lookup, reports } from '../feed-store.svelte';
+import { ensureReport, keepReport, lookup, reports } from '../feed-store.svelte';
 import { slotOf, type FeedRow } from '../logic/feed';
 import type { ReportSlot, RunRow } from '../logic/types';
 import { isLive, runTime } from '../logic/words';
@@ -14,6 +14,7 @@ export const pane = $state({
   status: 'idle' as 'idle' | 'loading' | 'ready' | 'error',
   error: '',
   loadingMore: false,
+  /* there is nothing */
   exhausted: false,
 });
 
@@ -22,14 +23,6 @@ let generation = 0;
 function newest(a: PaneRun, b: PaneRun): number {
   if (a.number != null && b.number != null && a.number !== b.number) return b.number - a.number;
   return runTime(b) - runTime(a);
-}
-
-function keepReports(runs: readonly (api.RunSummary & { report?: unknown; report_omitted?: boolean })[]): void {
-  for (const run of runs) {
-    if (!run.has_report || isLive(run.status) || reports[run.run_id]) continue;
-    if (run.report_omitted || !('report' in run)) ensureReport(run.run_id);
-    else reports[run.run_id] = { state: 'ready', report: run.report ?? null };
-  }
 }
 
 export async function loadPaneRuns(id: string): Promise<void> {
@@ -44,7 +37,7 @@ export async function loadPaneRuns(id: string): Promise<void> {
   try {
     const page = await api.listRuns(id, RUN_PAGE, { include_report: true });
     if (mine !== generation) return;
-    keepReports(page.runs);
+    for (const run of page.runs) keepReport(run, true);
     pane.runs = (page.runs as unknown as PaneRun[]).slice().sort(newest);
     pane.exhausted = page.runs.length < RUN_PAGE;
     pane.status = 'ready';
@@ -80,7 +73,7 @@ export async function loadOlderRuns(): Promise<void> {
   try {
     const page = await api.listRuns(id, RUN_PAGE, { before: last.run_id, include_report: true });
     if (pane.automationId !== id) return;
-    keepReports(page.runs);
+    for (const run of page.runs) keepReport(run, true);
     const have = new Set(pane.runs.map((r) => r.run_id));
     pane.runs = [...pane.runs, ...(page.runs as unknown as PaneRun[]).filter((r) => !have.has(r.run_id))].sort(newest);
     pane.exhausted = page.runs.length < RUN_PAGE;

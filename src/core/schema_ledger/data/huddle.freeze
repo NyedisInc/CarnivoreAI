@@ -1,1 +1,9 @@
+# The huddle plugin's legacy ladder (src/cplugs/huddle/store.py MIGRATIONS) is frozen.
+# Issue #1711 (Task Manager split), phase P0: no new huddle.db rung until the split reaches the work ladder (phase P2).
+# A schema need waits for the work ladder, or lands before P2 with W1 regenerated. Card rungs are Alex's; he agrees first.
+# Plan: scratch-lab/task-manager-mockups/SPLIT-PLAN.md section 3(a) and 4 (P0). Record: docs/maintenance-history.md, "The huddle rung freeze".
+# To change the count on purpose, edit the number below in the same commit and say why in the commit message.
+# 2026-10-17, Joe (ccsliinc): #1890 extends the freeze by one rung, 49 (held_tells, so a held tell survives a restart); docs/DECISIONS.md.
+# 2026-10-17, Joe (ccsliinc), phase P2: the data moved into carnivore.db's work_ tables. This ladder is frozen for good; it is walked
+# only by the one-way import (src/core/work/importer). New Task Manager rungs are work ladder rungs (W2+, work.ledger), never rung 50.
 frozen_rungs 49

@@ -2,6 +2,7 @@
 <script lang="ts">
     import { t as reactiveT } from '../../i18n/index.svelte';
     import type { Translate } from '../../sessions/types';
+    import { Button } from '../../base';
     import Check from '../../../opscenter/ui/Check.svelte';
     import '../../settings-page/panel-kit/panel-kit.css';
     import './destinations.css';
@@ -52,15 +53,15 @@
         {#if isLocal}<span class="nd-badge" data-notify="local-badge">{t('settings.notify.dest.local')}</span>{/if}
         <Check role="switch" label={t('settings.notify.dest.enabled')} checked={destination.enabled} disabled={busy} data-notify="toggle" onToggle={onToggle} />
         <span class="tm__srv-tools">
-            <button type="button" class="oc-btn" disabled={busy || test.state === 'sending'} data-notify="test" onclick={() => void runTest()}>{t(test.state === 'sending' ? 'settings.notify.dest.test.sending' : 'settings.notify.dest.test.button')}</button>
-            <button type="button" class="oc-btn" disabled={busy} aria-expanded={extrasOpen} data-notify="extras-toggle" onclick={() => (extrasOpen = !extrasOpen)}>{t('settings.notify.dest.extras.button')}</button>
-            {#if !managedElsewhere}<button type="button" class="oc-btn" disabled={busy} data-notify="edit" onclick={onEdit}>{t('settings.notify.dest.edit')}</button>{/if}
+            <Button disabled={busy || test.state === 'sending'} data-notify="test" onclick={() => void runTest()}>{t(test.state === 'sending' ? 'settings.notify.dest.test.sending' : 'settings.notify.dest.test.button')}</Button>
+            <Button disabled={busy} aria-expanded={extrasOpen} data-notify="extras-toggle" onclick={() => (extrasOpen = !extrasOpen)}>{t('settings.notify.dest.extras.button')}</Button>
+            {#if !managedElsewhere}<Button disabled={busy} data-notify="edit" onclick={onEdit}>{t('settings.notify.dest.edit')}</Button>{/if}
             {#if destination.pinned}
-                <button type="button" class="oc-btn" disabled={busy} data-notify="reset" onclick={onReset}>{t('settings.notify.dest.reset')}</button>
+                <Button disabled={busy} data-notify="reset" onclick={onReset}>{t('settings.notify.dest.reset')}</Button>
             {:else if destination.scope === 'global'}
-                <button type="button" class="oc-btn" disabled={busy} data-notify="pin" onclick={onPin}>{t('settings.notify.dest.pin')}</button>
+                <Button disabled={busy} data-notify="pin" onclick={onPin}>{t('settings.notify.dest.pin')}</Button>
             {/if}
-            {#if !managedElsewhere}<button type="button" class="oc-btn oc-btn--danger" disabled={busy} data-notify="delete" onclick={() => (confirming = true)}>{t('settings.notify.dest.delete')}</button>{/if}
+            {#if !managedElsewhere}<Button variant="danger" disabled={busy} data-notify="delete" onclick={() => (confirming = true)}>{t('settings.notify.dest.delete')}</Button>{/if}
         </span>
     </div>
     {#if kind}
@@ -88,8 +89,8 @@
         <div class="tm__warn" role="alert" data-notify="delete-warning">
             <p>{t('settings.notify.dest.delete_warning', { name: destination.name })}</p>
             <div class="tm__actions">
-                <button type="button" class="modal-btn modal-btn-secondary" data-notify="delete-cancel" onclick={() => (confirming = false)}>{t('settings.notify.dest.form.cancel')}</button>
-                <button type="button" class="modal-btn modal-btn-danger" disabled={busy} data-notify="delete-confirm" onclick={() => { confirming = false; onDelete(); }}>{t('settings.notify.dest.delete_confirm')}</button>
+                <Button data-notify="delete-cancel" onclick={() => (confirming = false)}>{t('settings.notify.dest.form.cancel')}</Button>
+                <Button variant="danger" disabled={busy} data-notify="delete-confirm" onclick={() => { confirming = false; onDelete(); }}>{t('settings.notify.dest.delete_confirm')}</Button>
             </div>
         </div>
     {/if}

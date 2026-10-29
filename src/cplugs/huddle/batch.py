@@ -1,10 +1,18 @@
 
 from __future__ import annotations
 
+import sqlite3
 from typing import Any, Awaitable, Callable, Dict, List, Mapping
 
+import structlog
+
 from src.cplugs.huddle import flags, own_list, owner_guards
+from src.cplugs.huddle.rules import TaskManagerError
 from src.cplugs.sdk import ToolError
+
+logger = structlog.get_logger(__name__)
+
+OP_ERRORS = (sqlite3.Error, OSError, TaskManagerError)
 
 MAX_OPS = 50
 
@@ -48,12 +56,6 @@ def _check_ops(ops: Any) -> List[dict]:
 
 
 async def run(args: dict, *, handlers: Mapping[str, OpHandler], in_list: Callable[[int], Awaitable[None]]) -> Dict[str, Any]:
-    """Run every op in order and answer ``{applied, failed, results}``.
-
-    Inputs: args ({ops, stop_on_error?}); handlers ({op name: OpHandler}); in_list (checks an item is in the
-      batch's ``list_id``, raises ToolError when it is not).
-    Output: dict - ``results`` one lean entry per op, in op order.
-    """
     ops = _check_ops(args.get("ops"))
     stop = flags.flag(args, "stop_on_error", False)
     results: List[Dict[str, Any]] = []
@@ -67,6 +69,10 @@ async def run(args: dict, *, handlers: Mapping[str, OpHandler], in_list: Callabl
             results.append(await _one(raw, handlers, in_list))
         except ToolError as exc:
             results.append(_failed(item_id, str(exc)))
+            halted = stop
+        except OP_ERRORS as exc:
+            logger.error("task_manager_batch_op_failed", op=raw.get("op") if isinstance(raw, dict) else None, item=item_id, error_type=type(exc).__name__, error=str(exc)[:200])
+            results.append(_failed(item_id, f"{type(exc).__name__}: {exc}"))
             halted = stop
     failed = sum(1 for r in results if not r["ok"])
     return {"applied": len(results) - failed, "failed": failed, "results": results}

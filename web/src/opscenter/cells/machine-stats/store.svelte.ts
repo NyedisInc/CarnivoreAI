@@ -34,7 +34,6 @@ export const machineStats = $state<{ current: Resource<MachineStats> | null }>({
 let holders = 0;
 let offVisible: (() => void) | null = null;
 
-/*  hidden  */
 function make(): Resource<MachineStats> {
   let made: Resource<MachineStats> | null = null;
   made = resource<MachineStats>(

@@ -10,6 +10,8 @@ export const unread = $state({ seenAt: null as string | null, read: [] as string
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 let dirty = false;
+let markGen = 0;
+const RETRY_MS = 5000;
 
 function cleanSeen(value: unknown): string | null {
   return typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null;
@@ -42,27 +44,40 @@ function entries(): { field: string; value: unknown; localWriter: () => void }[]
   return out;
 }
 
+async function writeOnce(b: NonNullable<ReturnType<typeof bridge>>): Promise<void> {
+  const first = (await b.writeMany(entries())) as { status?: string } | undefined;
+  if (first?.status !== 'stale_revision') return;
+  const prefs = (globalThis as { Preferences?: { committedValue?(name: string): unknown } }).Preferences;
+  const merged = mergeRead(
+    { seenAt: cleanSeen(prefs?.committedValue?.(SEEN_FIELD)), read: cleanRead(prefs?.committedValue?.(READ_FIELD)) },
+    { seenAt: unread.seenAt, read: unread.read },
+  );
+  unread.seenAt = merged.seenAt;
+  unread.read = merged.read;
+  const replay = (await b.writeMany(entries())) as { status?: string } | undefined;
+  if (replay?.status === 'stale_revision') throw new Error('stale_revision after replay');
+}
+
 export async function flushReadState(): Promise<void> {
   if (timer) clearTimeout(timer);
   timer = null;
   const b = bridge();
   if (!b || !dirty) return;
-  const first = (await b.writeMany(entries())) as { status?: string } | undefined;
-  if (first?.status === 'stale_revision') {
-    const prefs = (globalThis as { Preferences?: { committedValue?(name: string): unknown } }).Preferences;
-    const merged = mergeRead(
-      { seenAt: cleanSeen(prefs?.committedValue?.(SEEN_FIELD)), read: cleanRead(prefs?.committedValue?.(READ_FIELD)) },
-      { seenAt: unread.seenAt, read: unread.read },
-    );
-    unread.seenAt = merged.seenAt;
-    unread.read = merged.read;
-    await b.writeMany(entries());
+  const gen = markGen;
+  try {
+    await writeOnce(b);
+  } catch (error) {
+    console.warn('[automations] could not write the unread state; retrying', error);
+    timer = setTimeout(() => void flushReadState(), RETRY_MS);
+    return;
   }
-  dirty = false;
+  if (gen === markGen) dirty = false;
+  else schedule();
 }
 
 function schedule(): void {
   dirty = true;
+  markGen += 1;
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => void flushReadState(), DEBOUNCE_MS);
 }

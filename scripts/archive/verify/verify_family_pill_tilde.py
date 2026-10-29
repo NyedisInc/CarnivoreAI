@@ -1,20 +1,4 @@
 #!/usr/bin/env python3
-"""Count the tildes a user actually SEES on a guessed agent-family pill.
-
-WHY THIS IS A SEPARATE, TINY SCRIPT. It answers one question that no
-other check in this repo can: how many tilde characters end up in front
-of the label once the STYLESHEET has had its say. It drives the real
-builder from the real module against the real stylesheet, then reads the
-`::before` content back out of the computed style and adds it up.
-
-THREE OUTCOMES:
-  0  PASS  - exactly one tilde, from exactly one source
-  1  FAIL  - measured, and it was not one
-  2  CANNOT DETERMINE - playwright missing or the browser would not
-     launch. Never reported as a pass.
-
-Run: python3 scripts/verify_family_pill_tilde.py
-"""
 
 from __future__ import annotations
 
@@ -74,7 +58,6 @@ def tildes(payload: dict) -> int:
 
 
 def main() -> int:
-    """Measure the rendered pill. Output: int - 0 pass, 1 fail, 2 cannot determine."""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:

@@ -1,4 +1,3 @@
-/* could not */
 
 console.log('[SessionHeaderLed Module] Loading...');
 
@@ -15,6 +14,7 @@ console.log('[SessionHeaderLed Module] Loading...');
         return null;
     }
 
+    /* there is nothing */
     function ledHtmlFor(row) {
         if (!row || !window.SessionStatusUI || row.agent_family === 'shell') return '';
         return window.SessionStatusUI.dotHtml(row.status, {
@@ -57,7 +57,6 @@ console.log('[SessionHeaderLed Module] Loading...');
         titleEl.parentNode.insertBefore(holder, titleEl);
     }
 
-    /* something else */
     function clear() {
         ++requestGeneration;
         const existing = document.getElementById(LED_ID);
@@ -91,12 +90,10 @@ console.log('[SessionHeaderLed Module] Loading...');
 
     let wired = false;
 
-    /*  hidden  */
     function onVisibilityChange() {
         if (!document.hidden) tick();
     }
 
-    /* something else */
     async function tick() {
         if (document.hidden) return;
         const sidebar = window.SessionSidebar;

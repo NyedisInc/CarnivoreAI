@@ -4,10 +4,14 @@ import { findItem, huddle } from '../huddle.svelte';
 import { applyAnswered } from '../task-manager-optimistic';
 import type { HuddleItem } from '../huddle-model';
 import { readAsk, submitAsk, type AskRead } from './ask-api';
+import { createAttachments } from '../task-manager-attachments.svelte';
+import { uploadFile } from '../task-manager-files-api';
 import { itemWhere } from '../task-manager-outbox';
 import { boundaryOf } from '../task-manager-boundary';
 import { keptNoticeKey } from '../../../lib/outbox/outbox';
 import { EXTRA_KEY, dismissPayload, drawnQuestions, hiddenSkips, payloadOf, progress, recommendable, takeAll, takeRecommendation, type AskAnswer, type AskProgress, type AskQuestion, type AskValue, type AskValues } from './ask-model';
+
+export type Attachments = ReturnType<typeof createAttachments>;
 
 export interface AskController {
   readonly read: AskRead | null;
@@ -17,6 +21,8 @@ export interface AskController {
   readonly submitting: boolean;
   readonly values: AskValues;
   readonly extra: string;
+  attachments(key: string): Attachments;
+  readonly uploading: boolean;
   readonly questions: AskQuestion[];
   readonly progress: AskProgress;
   readonly answered: boolean;
@@ -36,6 +42,24 @@ export interface AskController {
 
 export function createAsk(messageId: number): AskController {
   const s = $state({ read: null as AskRead | null, loading: true, missing: false, error: '', submitting: false, values: {} as AskValues, extra: '' });
+  const pasted = new Map<string, Attachments>();
+  const attachments = (key: string): Attachments => {
+    let found = pasted.get(key);
+    if (!found) {
+      found = createAttachments((file) => uploadFile(s.read?.item ?? 0, file));
+      pasted.set(key, found);
+    }
+    return found;
+  };
+  const withFiles = (): AskValues => {
+    const merged: AskValues = { ...s.values };
+    for (const [key, box] of pasted) {
+      if (key === EXTRA_KEY || !box.ids.length) continue;
+      merged[key] = { ...merged[key], files: box.chips.flatMap((c) => (c.status === 'ready' && c.ref ? [{ id: c.ref.id, name: c.ref.name }] : [])) };
+    }
+    return merged;
+  };
+  const uploading = (): boolean => [...pasted.values()].some((box) => box.busy);
   const stored = (): AskQuestion[] => s.read?.ask.questions ?? [];
   const questions = (): AskQuestion[] => drawnQuestions(stored());
   const item = (): HuddleItem | null => (s.read ? findItem(s.read.item) : null);
@@ -66,8 +90,8 @@ export function createAsk(messageId: number): AskController {
 
   /* no longer holds */
   async function submit(): Promise<boolean> {
-    if (!s.read || progress(questions(), s.values).requiredLeft > 0) return false;
-    return run(() => ({ ...hiddenSkips(stored(), questions()), ...payloadOf(questions(), s.values, s.extra) }));
+    if (!s.read || uploading() || progress(questions(), s.values).requiredLeft > 0) return false;
+    return run(() => ({ ...hiddenSkips(stored(), questions()), ...payloadOf(questions(), withFiles(), s.extra, attachments(EXTRA_KEY).ids) }));
   }
 
   async function dismiss(): Promise<boolean> {
@@ -116,6 +140,8 @@ export function createAsk(messageId: number): AskController {
     get submitting() { return s.submitting; },
     get values() { return s.values; },
     get extra() { return s.extra; },
+    attachments,
+    get uploading() { return uploading(); },
     get savedExtra() { return item()?.thread.find((m) => m.id === s.read?.answer_message_id)?.answers?.[EXTRA_KEY]?.text ?? ''; },
     get questions() { return questions(); },
     get progress() { return progress(questions(), s.values); },
@@ -131,7 +157,7 @@ export function createAsk(messageId: number): AskController {
     take,
     takeAll() { s.values = takeAll(questions(), s.values); },
     setExtra(text: string) { s.extra = text; s.error = ''; },
-    reset() { s.values = {}; s.extra = ''; s.error = ''; },
+    reset() { s.values = {}; s.extra = ''; s.error = ''; pasted.forEach((box) => box.clear()); },
     submit,
     dismiss,
   };

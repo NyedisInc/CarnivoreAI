@@ -1,3 +1,5 @@
+// WHY THIS FILE EXISTS
+// could not be determined
 
 import assert from 'node:assert/strict';
 import fsReal from 'node:fs';

@@ -60,10 +60,12 @@ class MachineStatsWatch:
             if sig != last_sig or self._clock() - last_named >= KEEPALIVE_SECONDS:
                 last_sig, last_named = sig, self._clock()
                 self._notify(topics.MACHINE_STATS)
+        self.sampler.reset_cpu_baseline()
         logger.debug("machine_stats_sampler_idle")
 
     async def stop(self) -> None:
         self._lease_until = 0.0
+        self.sampler.reset_cpu_baseline()
         task, self._task = self._task, None
         if task is not None and not task.done():
             task.cancel()

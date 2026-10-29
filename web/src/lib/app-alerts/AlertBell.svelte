@@ -3,8 +3,7 @@
   import { t } from '../i18n/index.svelte';
   import AlertBadge from './AlertBadge.svelte';
   import { alertCenter } from './alerts.svelte';
-  import { badgeOf } from '../attention-kinds/bell-badge';
-  import { bellRows, startAttentionSources } from '../attention-kinds/read.svelte';
+  import { bellBadge, startAttentionSources } from '../attention-kinds/read.svelte';
   import { alertPanel, toggleAppAlerts } from './alert-panel.svelte';
 
   let { place = 'drawer' }: { place?: 'drawer' | 'rail' } = $props();
@@ -16,7 +15,7 @@
 
   $effect(() => startAttentionSources());
 
-  const badge = $derived(badgeOf(bellRows()));
+  const badge = $derived(bellBadge());
   const label = $derived(badge.count > 0 ? t('app_alert.bell.count', { count: badge.count }) : t('app_alert.panel.title'));
 </script>
 

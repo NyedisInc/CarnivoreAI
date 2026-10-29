@@ -166,7 +166,6 @@ ADOPT_NO_SUCH_INSTANCE = "no_such_instance"
 
 ADOPT_NOT_RUNNING = "not_running"
 
-# COULD NOT EVALUATE
 ADOPT_NO_DATASTORE = "no_datastore"
 
 ADOPT_FAILURES: Tuple[str, ...] = (
@@ -178,23 +177,6 @@ ADOPT_FAILURES: Tuple[str, ...] = (
 
 @dataclass(frozen=True)
 class AdoptResult:
-    """What one :func:`claim_instance` call did, and why if it did nothing.
-
-    Description: the reason a bare bool was not enough. Adoption can
-      fail three distinguishable ways and the caller must render each
-      differently: "that session is no longer there, refresh" for a
-      missing row, "that session has stopped" for a corpse, and "we
-      could not record it" for an unavailable datastore. Collapsing them
-      gives the user one message that is wrong two thirds of the time.
-    Inputs (constructor): outcome (str) - one of ``ADOPT_CLAIMED`` or a
-      member of ``ADOPT_FAILURES``. session_id (int | None) - the row id
-      when one was found, including on the ``not_running`` refusal.
-      session_uuid (str | None) - the row's external identity when
-      found. stored_lifecycle (str | None) - the lifecycle that caused a
-      ``not_running`` refusal. detail (str | None) - human-readable
-      reason.
-    Output: an AdoptResult instance.
-    """
 
     outcome: str
     session_id: Optional[int] = None
@@ -223,45 +205,6 @@ def adopt_instance(
     working_dir: Optional[str] = None,
     agent_family_source: Optional[str] = None,
 ) -> bool:
-    """Claim one tmux instance as ours, permanently.
-
-    Description: design section 4.6's adoption statement - one UPDATE,
-      keyed on the instance triple so name reuse cannot redirect it onto
-      a different process. The caller owns the transaction.
-
-      ``origin`` moves to ``adopted`` and never moves again: this
-      function is the only writer of that value, and it has no path back
-      to ``observed``.
-    Inputs: conn (sqlite3.Connection) - caller owns the transaction.
-      socket (str), name (str), epoch (int) - the instance triple.
-      now (str | None) - ISO-8601 stamp, defaults to ``utc_now()``.
-      project_id (int | None), project_attribution (str | None),
-      working_dir (str | None), agent_family_source (str | None) - each
-      applied only when not None, so a caller that could not probe a
-      value leaves the stored one alone rather than nulling it.
-      LIFECYCLE IS GUARDED. The UPDATE requires the row NOT be
-      ``stopped``. Adoption is a claim on a LIVE session, and the triple
-      alone does not carry liveness - so a client holding a listing from
-      before the session died could POST /sessions/adopt and permanently
-      mark a corpse as adopted, getting ``True`` back for a process that
-      no longer exists. A refused claim is logged with the stored
-      lifecycle named, so the two ways of returning False stay
-      distinguishable in the log.
-    Output: bool - True when a LIVE row was updated. False when no row
-      carries that triple (nothing was created, and that is the honest
-      answer: adopting a session we have no record of is a caller bug,
-      not a row to invent), and False when the row exists but is
-      ``stopped``.
-      THIS IS NOW A THIN WRAPPER over :func:`claim_instance`, which
-      returns WHICH of the outcomes happened. The bool form is kept
-      because every existing caller and test only needs "did it stick",
-      and because one function deciding and another reporting is how two
-      copies of a rule start. There is exactly one implementation.
-    Output: bool - True when a LIVE row was updated. False for all three
-      failure modes; call :func:`claim_instance` when the difference
-      matters, which it does at any surface a user reads.
-    Example: adopt_instance(conn, socket='cloude', name='a', epoch=1000)
-    """
     return claim_instance(
         conn,
         socket=socket,
@@ -288,42 +231,6 @@ def claim_instance(
     agent_family_source: Optional[str] = None,
     host_key: str = LOCAL_HOST_KEY,
 ) -> AdoptResult:
-    """Claim one tmux instance as ours, reporting WHICH outcome happened.
-
-    Description: design section 4.6's adoption statement - one UPDATE,
-      keyed on the instance triple so name reuse cannot redirect it onto
-      a different process. The caller owns the transaction.
-
-      FOUR NAMED OUTCOMES, THREE CLASSES. ``claimed`` is the success.
-      ``no_such_instance`` and ``not_running`` are DEFINITE NEGATIVES the
-      user can act on - refresh the list, or the session has stopped -
-      and neither is an error to raise. ``no_datastore`` is the
-      could-not-evaluate: nothing is known to be wrong with the session,
-      we simply have nowhere to record the claim, and reporting it as
-      either negative would tell the user his session is gone when it is
-      sitting right there.
-
-      ``origin`` moves to ``adopted`` and never moves again: this is the
-      only writer of that value, and it has no path back to
-      ``observed``. A later ``observed`` sighting through
-      :func:`record_instance` MERGES and leaves ``origin`` untouched,
-      which is what makes the badge survive a restart.
-
-      LIFECYCLE IS GUARDED. The UPDATE requires the row NOT be
-      ``stopped``. Adoption is a claim on a LIVE session, and the triple
-      alone does not carry liveness - so a client holding a listing from
-      before the session died could otherwise permanently mark a corpse
-      as adopted.
-    Inputs: conn (sqlite3.Connection) - caller owns the transaction.
-      socket (str), name (str), epoch (int) - the instance triple.
-      now (str | None) - ISO-8601 stamp, defaults to ``utc_now()``.
-      project_id (int | None), project_attribution (str | None),
-      working_dir (str | None), agent_family_source (str | None) - each
-      applied only when not None, so a caller that could not probe a
-      value leaves the stored one alone rather than nulling it.
-    Output: AdoptResult.
-    Example: claim_instance(conn, socket='cloude', name='a', epoch=1000).outcome
-    """
     if not sessions_table_ready(conn):
         logger.warning(
             "session_adopt_no_datastore",

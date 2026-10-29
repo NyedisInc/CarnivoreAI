@@ -1,4 +1,3 @@
-/* @media (max-width width: 640px */
 
 console.log('[ToastCollapse Module] Loading...');
 
@@ -28,6 +27,7 @@ console.log('[ToastCollapse Module] Loading...');
         btn.setAttribute('title', label);
     }
 
+    /* there is nothing */
     function renderToggle(titleEl, cardEl, canExpand) {
         if (!titleEl || !cardEl || !canExpand) return;
 

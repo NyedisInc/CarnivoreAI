@@ -1,6 +1,6 @@
 import type { RoundWire } from './board-model';
 
-/* did not answer */
+/* the server did not answer */
 export interface Confirm { title: string; item: number; delivered: boolean; telling?: boolean; kept?: boolean; live?: 'told' | 'posted' | 'undelivered' }
 
 export function confirmKey(confirm: Confirm): string {

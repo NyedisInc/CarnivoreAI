@@ -45,7 +45,7 @@ const apps: ReturnType<typeof mount>[] = [];
 function kept(id: string, over: Partial<OutboxEntry> = {}): OutboxEntry {
   return {
     id, kind: 'reply', request: { method: 'POST', path: '/x', body: {} }, ageField: null, after: null,
-    label: { text: 'the words the owner typed and must not lose', where: 'fix the login', list: '18', item: 7 },
+    label: { text: 'the words Joe typed and must not lose', where: 'fix the login', list: '18', item: 7 },
     created_at: Date.now() - 5000, attempts: 1, next_at: Date.now() + 20000, state: 'pending', error: null, lease: null, ...over,
   };
 }

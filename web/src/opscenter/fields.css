@@ -1,4 +1,4 @@
-/* input, textarea reserved 1px border */
+/* reserved 1px border */
 
 @layer primitives {
   .oc-field {

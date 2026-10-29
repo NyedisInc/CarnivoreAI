@@ -12,7 +12,6 @@ from src.core.db_models import SESSION_CLAUDE_UUID_SOURCE_CODEX_THREAD_MAP
 
 _LIFECYCLE_SESSION_START = "SessionStart"
 
-# : conversation,
 _PAYLOAD_SOURCE_REGISTRY = "registry"
 
 
@@ -51,7 +50,7 @@ def _bind_owned_conversation(
     if conn is None:
         return BindResult(outcome=BIND_UNRESOLVED, detail="datastore unavailable")
     try:
-        socket = manager._tmux_socket_name()
+        socket = manager.tmux_socket_name()
         with transaction(conn):
             row = get_instance(conn, socket=socket, name=tmux_name, epoch=epoch)
             if row is None:

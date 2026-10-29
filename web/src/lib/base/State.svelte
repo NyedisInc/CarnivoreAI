@@ -1,4 +1,4 @@
-<!-- title="could not read the list" -->
+
 <script lang="ts" module>
   export type StateKind = 'empty' | 'loading' | 'warn' | 'error';
 </script>

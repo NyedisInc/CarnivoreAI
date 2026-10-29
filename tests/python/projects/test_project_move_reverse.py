@@ -16,14 +16,14 @@ def _rows(w):
 
 def test_the_reverse_call_puts_the_move_back(world):
     rows_before = _rows(world)
-    target = world.base / "org" / "initech" / "alpha"
+    target = world.base / "org" / "imc" / "alpha"
     forward = plan_for(world, move_folder=True, new_root=str(target), create_parents=True)
     with closing(connect(world.db, create=False)) as conn:
         done = apply_plan(conn, forward, state_dir=world.state)
     reverse = done["reverse"]
     assert reverse == {**reverse, "project": world.ids["alpha"], "new_root": str(world.old),
                        "move_folder": True, "create_parents": False}
-    assert "stays merged" in reverse["note"] and str(world.base / "org" / "initech") in reverse["note"]
+    assert "stays merged" in reverse["note"] and str(world.base / "org" / "imc") in reverse["note"]
     back = plan_for(world, move_folder=reverse["move_folder"], new_root=reverse["new_root"])
     assert back.ok, back.failed()
     with closing(connect(world.db, create=False)) as conn:

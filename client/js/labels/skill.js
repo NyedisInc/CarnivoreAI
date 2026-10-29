@@ -139,6 +139,7 @@ export const SKILL_KEYS = {
     updateAutoWorking: 'skill.update.auto.working',
     updateStale: 'skill.update.stale',
     updateConsentLead: 'skill.update.consent.lead',
+    updateConsentCplugLead: 'skill.update.consent.cplug_lead',
     updateConsentCheckbox: 'skill.update.consent.checkbox',
     updateConsentConfirm: 'skill.update.consent.confirm',
     updateConsentUnavailable: 'skill.update.consent.unavailable',
@@ -163,7 +164,6 @@ export const SKILL_KEYS = {
     oneShotSubmitted: 'skill.oneshot.submitted',
     oneShotNotSubmitted: 'skill.oneshot.not_submitted',
     oneShotBodyAbsent: 'skill.oneshot.body_absent',
-    /* the reading pane */
     ratingHeading: 'skill.rating.heading',
     ratingLoading: 'skill.rating.loading',
     ratingUnavailable: 'skill.rating.unavailable',
@@ -267,6 +267,7 @@ export const REFUSAL_CODES = new Set([
     'pane_not_an_agent',
     'pane_dialog_open',
     'paste_not_settled',
+    'paste_not_submitted',
     'body_has_escape',
     'body_too_large',
     'body_empty',
@@ -290,7 +291,9 @@ export const REFUSAL_CODES = new Set([
     'bad_version',
     'install_required',
     'guest_cap_reached',
+    // there is nothing
     'auth_not_configured',
+    // existed.
     'unknown_flow',
     'access_denied',
     'expired_token',
@@ -356,7 +359,6 @@ export const REVIEW_KINDS = new Set([
     'obfuscation',
     'privilege',
     'other',
-    // could not
     'prompt_injection',
     'settings_write',
     'description_mismatch',
@@ -372,9 +374,9 @@ export const REVIEW_BLOCKING_KINDS = new Set([
     'settings_write',
 ]);
 
+/* on the card and */
 export const REVIEW_INSTRUCTIONS_WRITE_KIND = 'instructions_write';
 
-/* could not */
 export function reviewVerdictLabel(verdict, t) {
     if (verdict === 'clean') return t(SKILL_KEYS.reviewVerdictClean);
     if (verdict === 'flagged') return t(SKILL_KEYS.reviewVerdictFlagged);
@@ -398,6 +400,7 @@ export function reviewKindLabel(kind, t) {
     return t(key);
 }
 
+/* its own sentence */
 export function isUnsupported(error) {
     if (!error || typeof error !== 'object') return false;
     const status = error.status;

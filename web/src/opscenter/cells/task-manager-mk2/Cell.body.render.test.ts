@@ -8,6 +8,7 @@ const mk = (id: number, list: string, extra: Record<string, unknown> = {}) => ({
   id, list, text: `item ${id}`, note: '', position: id, created_by: 'joe', state: 'open', kind: 'task',
   revision: 1, created_seq: id, seq: id, deleted: false, thread: [], github_issue: '', ...extra,
 });
+/** Two open items and two closed (done) ones. */
 const ITEMS = (list: string) => [mk(1, list), mk(2, list), mk(3, list, { state: 'done' }), mk(4, list, { state: 'done' })];
 
 vi.mock('../../api/auth.svelte', async (importOriginal) => {
@@ -55,6 +56,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** Mount the session cell under the menu host. Output: the host element after the body settled. */
 async function draw(): Promise<HTMLElement> {
   const host = document.createElement('div');
   document.body.appendChild(host);

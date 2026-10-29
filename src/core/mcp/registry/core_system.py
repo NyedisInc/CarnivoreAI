@@ -11,10 +11,15 @@ TABLE: Mapping[str, Tuple[str, str]] = {
     "whoami": ("system.identity.get",
                "Get who you are: your own session row (or a token's name and scope) and the tool families hidden from you, "
                "with why."),
-    "approval_wait": ("system.approvals.wait", "Wait up to 50 s for the decision on a pending action you started."),
+    "approval_wait": ("system.approvals.wait", "Wait up to 50 s for the owner's decision on a pending action you started."),
     "plugins_list": ("system.plugins.list",
                     "List every plugin in this build, and those installed from the catalog: state, permissions asked and granted, surfaces, revision."),
     "cplug_update": ("system.plugins.update", "Ask the owner to turn a plugin off or revoke its grants; never turns one on."),
+    "plugin_sideload_add": ("system.plugins.sideload.create",
+                        "Sideload or re-sync a developer's own plugin from a folder or git (url, ref, subdir). Always waits for the "
+                        "owner; refused while the sideload switch is off."),
+    "plugin_sideload_remove": ("system.plugins.sideload.delete",
+                               "Remove a sideloaded plugin and its git checkout. Always waits for the owner; refused while the switch is off."),
     "api_keys_list": ("system.api_keys.list",
                       "List the owner's API keys for scripts: name, display prefix and times. Never a key."),
     "api_key_delete": ("system.api_keys.delete",

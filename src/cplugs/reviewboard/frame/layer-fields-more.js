@@ -1,4 +1,3 @@
-/* outside min and max */
 (function () {
   'use strict';
   var F = RbLayerFields;
@@ -152,7 +151,6 @@
   }
 
 
-  /* outside min and max */
   function date(item, value, api) {
     var field = el('input', 'rbl-field rbl-datefield');
     field.type = 'date';

@@ -1,3 +1,4 @@
+/* the home screen */
 (function () {
     'use strict';
 

@@ -44,6 +44,7 @@ class PluginSpec:
     version: str = ""
     unrestricted: bool = False
     trust_refusal: str = ""
+    consent_owed: bool = False
 
 
 class ProcessEnded(Exception):

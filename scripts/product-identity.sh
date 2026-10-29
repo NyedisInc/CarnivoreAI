@@ -1,6 +1,4 @@
 #!/bin/bash
-#
-#
 
 PRODUCT_NAME="Carnivore"
 TMUX_SOCKET_NAME="carnivore"

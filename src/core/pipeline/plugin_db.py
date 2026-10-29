@@ -8,6 +8,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from src.core.db_reuse.thread_connections import ThreadConnections
 from src.core.pipeline import contract as C
 
 _locks: Dict[str, threading.Lock] = {}
@@ -18,15 +19,10 @@ _CURSOR_COLUMNS = ("path", "conversation_id", "family", "file_kind", "offset", "
 
 
 class PluginUnavailable(Exception):
-    """The plugin's database could not be opened or migrated (wraps the cause)."""
+    pass
 
 
 def db_path(state_dir: Path, plugin: C.Plugin) -> Path:
-    """The plugin's own database file. Output: Path. Example: db_path(s, p) -> s/'pipeline-plugins'/'stats.db'
-
-    A plugin whose file predates the pipeline (``in_state_dir``, deep search's ``deepsearch.db``) keeps it directly
-    under the state directory.
-    """
     folder = Path(state_dir) if plugin.in_state_dir else Path(state_dir) / C.PLUGIN_DIR
     return folder / plugin.db_name
 
@@ -88,6 +84,33 @@ def open_db(state_dir: Path, plugin: C.Plugin, path: Optional[Path] = None) -> s
         if conn is not None:
             conn.close()
         raise PluginUnavailable(f"{type(exc).__name__}: {exc}") from exc
+
+
+_pooled: Dict[tuple, ThreadConnections] = {}
+
+
+def pooled_db(state_dir: Path, plugin: C.Plugin) -> sqlite3.Connection:
+    path = db_path(state_dir, plugin)
+    key = (str(path), plugin.id)
+    with _locks_guard:
+        pool = _pooled.get(key)
+        if pool is None:
+            pool = _pooled[key] = ThreadConnections(lambda p: open_db(state_dir, plugin, p))
+    try:
+        conn = pool.get(path)
+    except sqlite3.Error as exc:
+        raise PluginUnavailable(f"{type(exc).__name__}: {exc}") from exc
+    if conn.in_transaction:
+        conn.rollback()
+    return conn
+
+
+def discard_pooled(state_dir: Path, plugin: C.Plugin) -> None:
+    path = db_path(state_dir, plugin)
+    with _locks_guard:
+        pool = _pooled.get((str(path), plugin.id))
+    if pool is not None:
+        pool.discard(path)
 
 
 @dataclass

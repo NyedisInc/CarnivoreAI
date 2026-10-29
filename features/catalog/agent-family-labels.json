@@ -15,7 +15,34 @@
     "codex",
     "harness"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The claude, codex and other harness marks side by side",
+      "caption": "The mark for each agent family",
+      "file": "marks.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The orange claude starburst on a drawer row",
+      "caption": "The claude mark on a drawer row",
+      "file": "claude-mark.png",
+      "kind": "icon",
+      "state": "claude"
+    },
+    {
+      "alt": "A small prompt glyph on a plain terminal row",
+      "caption": "The terminal mark on a plain shell row",
+      "file": "shell-mark.png",
+      "kind": "icon",
+      "state": "shell"
+    },
+    {
+      "alt": "The home screen's running sessions list with a robot glyph in the agent column",
+      "caption": "The robot in the running sessions list's agent column",
+      "file": "robot.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Agent family labels",
   "since": "2026-09-10",
   "status": "stable",
@@ -26,6 +53,5 @@
   "updated": "2026-09-27",
   "where": [
     "Next to each session in the drawer and in the running sessions list."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

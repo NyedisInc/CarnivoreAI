@@ -5,6 +5,6 @@
 </script>
 
 <AnchoredPopup label="probe" onClose={() => {}} {...props} data-probe="">
-  <button type="button" data-first>first</button>
-  <button type="button" data-second>second</button>
+  <button data-base-exempt="test fixture probe, not shipped UI" type="button" data-first>first</button>
+  <button data-base-exempt="test fixture probe, not shipped UI" type="button" data-second>second</button>
 </AnchoredPopup>

@@ -1,12 +1,14 @@
 import { t } from '../i18n/index.svelte';
 import { hostOffline, usageLimitLabel } from '../led';
+import type { Membership } from '../swarm-membership/member-face';
 import { closedPart } from './row-closed';
-import { providerMark } from '../sessions/agent-marks';
+import { sessionMark } from '../sessions/agent-marks';
 import { iconVisible } from '../drawer/row-icon-prefs';
 import type { SidebarRow } from './legacy';
 import { colorValue, isRowIcon } from '../open-files/row-looks';
 import { rowBodyPlan, type RowBodyPlan } from './row-body';
 import { contextPlan, type ContextPlan } from './row-context';
+import type { LayoutRowParts } from '../drawer/layouts-row-html';
 import type { RowHost } from './row-host';
 import {
     agentsIconPlan, browserKeyAttrs, keepAwakePlan, metaPlan, modelPlan, pinAttrs, sharePlan, shellsIconPlan, subagentChip,
@@ -69,6 +71,7 @@ export interface SessionRowPlan {
     search?: SearchHitPlan;
     leader?: LeaderMark | null;
     ghost?: { agentId: number; name: string; rank: 'alpha' | 'company' | 'project' } | null;
+    member?: Membership | null;
     key: string;
     attrs: Attrs;
     led: LedPlan | null;
@@ -124,10 +127,13 @@ export interface LayoutMembersPlan {
     rows: RowPlan[];
 }
 
-export interface LegacyRowPlan {
-    type: 'legacy';
+export interface LayoutRowPlan {
+    type: 'layout';
     key: string;
-    html: string;
+    parts: LayoutRowParts;
+    pin: Attrs;
+    menu: RowChipSpec | null;
+    nameMatch: { before: string; match: string; after: string } | null;
     members: LayoutMembersPlan | null;
 }
 
@@ -146,7 +152,7 @@ export interface SearchRowFacts {
     effort: string;
 }
 
-export type RowPlan = SessionRowPlan | BrowserRowPlan | LegacyRowPlan;
+export type RowPlan = SessionRowPlan | BrowserRowPlan | LayoutRowPlan;
 
 const DENSITIES = ['compact', 'cozy', 'detailed'];
 
@@ -220,7 +226,7 @@ function sessionRowPlan(
         agentsIcon: !body && iconVisible(mode, 'agents') ? agentsIconPlan(r) : null,
         shellsIcon: !body && iconVisible(mode, 'shells') ? shellsIconPlan(r) : null,
         timersIcon: !body && iconVisible(mode, 'timers') ? timersIconPlan(r) : null,
-        automationsIcon: iconVisible(mode, 'automations') ? automationsIconPlan(r) : null,
+        automationsIcon: !r.asleep && iconVisible(mode, 'automations') ? automationsIconPlan(r) : null,
         cozySubagents: legacyMode === 'cozy' ? subagentChip(r) : null,
         cozyTimer: legacyMode === 'cozy' ? timerPlan(r) : null,
         workflow: workflowIconPlan(r),
@@ -259,7 +265,7 @@ function sessionRowPlan(
 }
 
 function providerPlan(r: SidebarRow): GlyphChip {
-    const mark = providerMark((r.agent_family as string | undefined) ?? null);
+    const mark = sessionMark((r.agent_family as string | undefined) ?? null, (r as { agent_wrapper_icon?: string | null }).agent_wrapper_icon);
     const roles = roleMarks(r);
     return {
         attrs: {
@@ -348,7 +354,7 @@ function browserRowPlan(r: SidebarRow, band: string | undefined, host: RowHost):
         pin: pinAttrs(r.name, !!r.is_pinned),
         popOut: isFile ? null : browserKeyAttrs('popout'),
         closeKey: browserKeyAttrs('close', isPage, isFile),
-        menu: host.menu ? host.menu.triggerSpec(browserMenuContext(r, !!host.groupActions)) : null,
+        menu: host.menu ? host.menu.triggerSpec(browserMenuContext(r, true)) : null,
     };
 }
 
@@ -363,8 +369,8 @@ export function buildRowPlan(
 function layoutRowPlan(
     r: SidebarRow, density: string, band: string | undefined, host: RowHost,
     layouts: NonNullable<RowHost['layouts']>,
-): LegacyRowPlan {
-    const html = layouts.rowHtml(r, density, band);
+): LayoutRowPlan {
+    const parts = layouts.rowParts(r, band);
     const body = layouts.memberBody ? layouts.memberBody(r, band) : null;
     const members = body
         ? {
@@ -375,5 +381,9 @@ function layoutRowPlan(
                 .map((m) => buildRowPlan(m, density, body.band, undefined, host)),
         }
         : null;
-    return { type: 'legacy', key: r.name, html, members };
+    return {
+        type: 'layout', key: r.name, parts, pin: pinAttrs(parts.pin.name, parts.pin.pinned),
+        menu: host.menu ? host.menu.triggerSpec(parts.menuContext) : null,
+        nameMatch: null, members,
+    };
 }

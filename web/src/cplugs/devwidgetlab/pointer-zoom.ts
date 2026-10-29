@@ -1,4 +1,3 @@
-/* position: fixed */
 
 export function ancestorZoom(el: Element, style: (node: Element) => { zoom?: string } = (node) => getComputedStyle(node)): number {
   let factor = 1;

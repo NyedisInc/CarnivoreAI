@@ -10,7 +10,6 @@ import type { WidgetManifest } from './types';
 
 export const CONTRACT_MIN_APP_VERSION = '1.16.1';
 export const CONTRACT_AUTHOR = 'Carnivore';
-/* pop-out window */
 const POPOUT_HOST = 'popout';
 const PREFERENCES_ROUTE = 'GET /preferences';
 

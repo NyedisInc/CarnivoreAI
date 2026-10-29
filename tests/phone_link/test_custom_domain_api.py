@@ -353,3 +353,13 @@ def test_refresh_soon_makes_the_next_tick_read_status(tmp_path):
     svc.refresh_soon()
     assert svc._next_status == 0.0 and svc._wake.is_set()
     store.close()
+
+
+@pytest.mark.asyncio
+async def test_repeated_polls_of_a_pending_binding_climb_the_backoff_ladder(rig):
+    mgr, client, control, _, _ = rig
+    await client.put("/api/v1/phone-link/custom-domain", json={"domain": DOMAIN})
+    control.reply = (200, view("pending"))
+    await mgr.custom.refresh()
+    await mgr.custom.refresh()
+    assert round(mgr.custom._next_status - mgr.custom._clock()) == 120

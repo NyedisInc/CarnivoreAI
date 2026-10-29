@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
+/** The one completed state these fixtures use (a fixture constant, never a literal in a test: the state names are being renamed, #1703). */
 const COMPLETED = 'done';
 
 const mk = (id: number, extra: Record<string, unknown> = {}) => ({

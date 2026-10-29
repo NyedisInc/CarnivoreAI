@@ -38,11 +38,6 @@ def _planned(provider: str, conversation: str, point: fb.FallbackPoint, rel: str
 
 
 def plan_point(provider: str, conversation: str, point: fb.FallbackPoint, scope_by: str = "") -> List[PlannedFile]:
-    """The planned files of one point: ``point.json`` (bytes in hand) and every file (read from the vault when written).
-
-    Inputs: provider (the plugin id that provides backup points); conversation (the conversation id, or a folder point's unit);
-    scope_by (a folder point's store scope, written into ``point.json``). Raises: cf.UnsafeName (a conversation or point id a crate
-    cannot name). Pure."""
     base = f"{DATA_ID}/{conversation}/{point.point_id}"
     cf.check_rel(f"{base}/{POINT_FILE}")
     meta = json.dumps(point_meta(point, scope_by), sort_keys=True, separators=(",", ":")).encode("utf-8")

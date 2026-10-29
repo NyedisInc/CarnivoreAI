@@ -80,7 +80,6 @@ def kick(list_key: str, due: bool = False) -> None:
 
 
 def _arm(project_key: str, due: bool = False) -> None:
-    """Start the project's debounce window unless one is already running (on the loop); a kick during a send is remembered and re-armed after it."""
     if _loop is None:
         return
     if due:

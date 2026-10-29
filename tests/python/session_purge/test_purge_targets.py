@@ -24,13 +24,13 @@ def world(tmp_path: Any, monkeypatch: Any) -> Any:
     w = W.build(tmp_path, monkeypatch)
     monkeypatch.setattr(routes, "_panes", lambda: (True, ()))
     with closing(connect(w.db)) as conn:
-        w.old_id = W.add_session(conn, OLD_UUID, "carnivore_Ledgerbot", None, epoch=1)
-        w.new_id = W.add_session(conn, NEW_UUID, "carnivore_Ledgerbot", None, epoch=2)
+        w.old_id = W.add_session(conn, OLD_UUID, "carnivore_Trader", None, epoch=1)
+        w.new_id = W.add_session(conn, NEW_UUID, "carnivore_Trader", None, epoch=2)
         w.arch_id = W.add_session(conn, ARCH_UUID, "carnivore_trust-test", None, title="trust test")
         conn.execute("UPDATE sessions SET archived_at = 'now', legacy_session_id = 'ses_abcd1234' WHERE id = ?",
                      (w.arch_id,))
         w.bare_id = W.add_session(conn, BARE_UUID, "carnivore_permprobe", CONV_BARE)
-        conn.execute("UPDATE sessions SET working_dir = '/private/tmp/claude-1000/scratch', project_id = NULL "
+        conn.execute("UPDATE sessions SET working_dir = '/private/tmp/claude-501/scratch', project_id = NULL "
                      "WHERE id = ?", (w.bare_id,))
         conn.commit()
     return w
@@ -56,7 +56,7 @@ def test_shadowed_older_row_reached_by_uuid_and_row_id(world: Any) -> None:
 
 def test_shared_tmux_name_is_ambiguous_and_names_the_candidates(world: Any) -> None:
     with pytest.raises(purge_target.TargetAmbiguous) as caught:
-        resolve(world, "carnivore_Ledgerbot")
+        resolve(world, "carnivore_Trader")
     assert caught.value.candidates == [OLD_UUID, NEW_UUID]
     assert OLD_UUID in str(caught.value) and NEW_UUID in str(caught.value)
 
@@ -67,7 +67,7 @@ def test_unknown_target_is_not_found(world: Any) -> None:
 
 
 def test_no_project_row_plans_and_traces_a_private_tmp_cwd(world: Any) -> None:
-    transcript = world.home / "projects" / "-private-tmp-claude-1000-scratch" / f"{CONV_BARE}.jsonl"
+    transcript = world.home / "projects" / "-private-tmp-claude-501-scratch" / f"{CONV_BARE}.jsonl"
     transcript.parent.mkdir(parents=True)
     transcript.write_text(W.SECRET_LINE)
     answer = routes.plan_and_maybe_apply(BARE_UUID, routes.SessionPurgeRequest(), False)
@@ -77,7 +77,7 @@ def test_no_project_row_plans_and_traces_a_private_tmp_cwd(world: Any) -> None:
 
 
 def test_archived_and_shadowed_rows_keep_every_refusal(world: Any, monkeypatch: Any) -> None:
-    monkeypatch.setattr(routes, "_panes", lambda: (True, (("carnivore_Ledgerbot", 1, "/w"),)))
+    monkeypatch.setattr(routes, "_panes", lambda: (True, (("carnivore_Trader", 1, "/w"),)))
     old = routes.plan_and_maybe_apply(OLD_UUID, routes.SessionPurgeRequest(), False)
     assert any("is live" in b for b in old["blockers"])
     new = routes.plan_and_maybe_apply(NEW_UUID, routes.SessionPurgeRequest(), False)
@@ -93,6 +93,6 @@ def test_tool_resolves_stored_rows_and_refuses_ambiguity(world: Any, monkeypatch
     assert run(f"row:{world.arch_id}") == ARCH_UUID
     assert run(OLD_UUID) == OLD_UUID
     with pytest.raises(ToolError, match=OLD_UUID):
-        run("carnivore_Ledgerbot")
+        run("carnivore_Trader")
     with pytest.raises(ToolError, match="no stored session"):
         run("nope")

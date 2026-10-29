@@ -8,16 +8,6 @@ FALLBACK_SHELL = '"${SHELL:-/bin/sh}" -i'
 
 
 def missing_tool_message(binary: str, family: str) -> str:
-    """The lines printed into the pane when a wrapper's tool is absent.
-
-    Description: names the tool and the two concrete fixes. Lowercase, no
-      punctuation decoration; this is terminal output, not UI chrome.
-    Inputs:
-      binary (str) - the executable that was probed, e.g. "codex".
-      family (str) - the agent family name, e.g. "codex".
-    Output: str - newline-joined message body, no trailing newline.
-    Example: missing_tool_message("codex", "codex")
-    """
     return "\n".join([
         f"carnivore: {binary} is not installed, or is not on the PATH of this pane.",
         f"fix any one of: install {binary}; or edit the {family} wrapper on the"

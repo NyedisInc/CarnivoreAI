@@ -47,8 +47,8 @@ def test_redirections_are_scoped_to_the_source_builtin():
 
 
 def test_rc_prefixed_wraps_in_a_single_zsh_c_string():
-    assert rc_prefixed("keyc") == (
-        "zsh -c 'source ~/.zshrc >/dev/null 2>&1 </dev/null; keyc'"
+    assert rc_prefixed("cld") == (
+        "zsh -c 'source ~/.zshrc >/dev/null 2>&1 </dev/null; cld'"
     )
 
 
@@ -61,7 +61,7 @@ def test_every_launch_path_uses_the_one_prefix():
     scripts = Path(tempfile.mkdtemp(prefix="cc_wrap_"))
     rendered = [
         render_wrapper_invocation(
-            AgentWrapper(id="w", label="w", script="keyc() { :; }", entry="keyc"),
+            AgentWrapper(id="w", label="w", script="cld() { :; }", entry="cld"),
             scripts,
         ),
     ]

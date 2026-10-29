@@ -1,4 +1,3 @@
-/* CANNOT DETERMINE */
 import type { UsageLimit } from '../../opscenter/api/types';
 import { addRows } from './asleep';
 import { addClosedRows } from './closed';
@@ -11,9 +10,12 @@ import * as Archived from './archived-visibility';
 import { fromError, type ListingVerdict } from './listing-state';
 import * as Identity from './row-identity';
 import * as GroupStore from './group-store';
+import { liveRuleContext } from './group-rule-live';
 import { reconcile } from './store-rebind';
 import { noteRows } from './sync';
 import { drawerEnv } from './env';
+import { rows as browserRows } from './browser-rows';
+import { refreshGroups } from '../sidebar-shell/interaction-globals';
 import { openFiles } from '../open-files/api.svelte';
 import { isDirty } from '../open-files/buffers.svelte';
 import { fileDrawerRows } from '../open-files/rows';
@@ -50,7 +52,6 @@ export interface LiveInfo {
     notifications_muted?: boolean;
     task_lead?: boolean | null;
     do_not_disturb?: boolean | null;
-    // conversation id
     claude_session_uuid?: string | null;
     [field: string]: unknown;
 }
@@ -67,9 +68,7 @@ interface FetchGlobals {
         beginRequest?(): unknown;
         update?(rows: unknown[], active: string | null, request?: unknown): void;
     };
-    SessionSidebarBrowsers?: { rows(): DrawerRow[] };
     SessionSidebarLayouts?: { rows(rows: DrawerRow[]): DrawerRow[]; memberUuids?(): Set<string> };
-    SessionSidebarGroupActions?: { refresh?(): unknown };
     CloudeWeb?: { layoutPage?: { isActive?(): boolean } };
 }
 
@@ -156,13 +155,12 @@ export async function load(activeTmuxName: string | null): Promise<{ rows: Drawe
         row.running_model_tier = row.running_model_tier !== undefined ? row.running_model_tier : null;
         row.running_context_used_pct = row.running_context_used_pct !== undefined ? row.running_context_used_pct : null;
     }
-    //  hidden 
     if (!searchLists()) rows = filterAwakeSleeping(rows, sectionShown('open'), sectionShown('sleeping'));
     if (Archived.archivedShown()) {
         await Archived.freshen();
         rows.push(...archivedRows(Archived.archivedRecords(), Archived.archivedShown(), new Set(rows.map((r) => r.name))));
     }
-    if (G.SessionSidebarBrowsers) rows.push(...G.SessionSidebarBrowsers.rows());
+    rows.push(...(browserRows() as unknown as DrawerRow[]));
     rows.push(...fileDrawerRows(openFiles.data ?? [], isDirty));
     stampLooks(rows, rowLooks.data);
     if (G.SessionSidebarLayouts) rows.push(...G.SessionSidebarLayouts.rows(rows));
@@ -177,9 +175,9 @@ export function noteIdentities(rows: DrawerRow[], records: readonly Identity.Ses
     Identity.stamp(rows, records);
     reconcile(rows as Array<{ name: string; session_uuid?: string | null }>);
     noteRows(rows as Array<{ name: string; session_uuid?: string | null }>);
+    GroupStore.setRuleContext(liveRuleContext);
     GroupStore.setIdentities(rows as Array<{ name: string; session_uuid?: string | null }>);
-    const actions = g().SessionSidebarGroupActions;
-    if (Identity.namesChanged(rows) && actions && typeof actions.refresh === 'function') actions.refresh();
+    if (Identity.namesChanged(rows)) void refreshGroups();
 }
 
 function createdByUs(info: LiveInfo): boolean {
@@ -191,86 +189,22 @@ function orNull(v: unknown): unknown {
     return v !== undefined ? v : null;
 }
 
-export function mergeLiveRow(rows: DrawerRow[], info: LiveInfo): void {
-    const tmuxName = info && info.tmux_session;
-    if (!tmuxName) return;
-    const sessionId = (info.session && info.session.id) || null;
-    const rowId = typeof info.session_row_id === 'number' ? info.session_row_id : null;
-    const status = info.activity_status || 'unknown';
-    const unread = !!info.unread;
-    const workingDir = (info.session && info.session.working_dir) || null;
-    const existing = rows.find((r) => r.name === tmuxName);
-    if (existing) {
-        existing.is_active = true;
-        existing.session_id = sessionId;
-        if (rowId !== null) existing.session_row_id = rowId;
-        existing.working_dir = workingDir;
-        existing.status = status;
-        existing.unread = unread;
-        existing.created_by_cloude = createdByUs(info);
-        existing.startup_gate = info.startup_gate;
-        existing.status_source = info.status_source;
-        existing.activity_hint = orNull(info.activity_hint);
-        existing.parked_summary = orNull(info.parked_summary);
-        existing.usage_limit = orNull(info.usage_limit);
-        if (info.label !== undefined) existing.label = info.label;
-        if (info.agent_family !== undefined) existing.agent_family = info.agent_family;
-        if (info.agent_family_source !== undefined) existing.agent_family_source = info.agent_family_source;
-        if (info.pinned_theme) existing.pinned_theme = info.pinned_theme;
-        existing.project_id = info.project_id;
-        existing.project_name = info.project_name;
-        // conversation id
-        existing.claude_session_uuid = orNull(info.claude_session_uuid);
-        existing.running_model = info.running_model;
-        existing.running_model_effort = info.running_model_effort;
-        existing.running_model_tier = info.running_model_tier;
-        existing.running_context_used_pct = orNull(info.running_context_used_pct);
-        existing.spectator_expires_at = orNull(info.spectator_expires_at);
-        existing.subagents_running = orNull(info.subagents_running);
-        existing.subagents_total = orNull(info.subagents_total);
-        existing.workflow_active = orNull(info.workflow_active);
-        existing.timers_live = orNull(info.timers_live);
-        existing.timers_next_fire_at = orNull(info.timers_next_fire_at);
-        existing.automations_state = orNull(info.automations_state);
-        existing.automations_total = orNull(info.automations_total);
-        existing.automations_enabled = orNull(info.automations_enabled);
-        existing.automations_next = orNull(info.automations_next);
-        existing.background_open = orNull(info.background_open);
-        existing.agent_update = orNull(info.agent_update);
-        existing.mcp_health = orNull(info.mcp_health);
-        existing.account_id = orNull(info.account_id);
-        existing.automation = orNull(info.automation);
-        existing.messaging = orNull(info.messaging);
-        existing.notifications_muted = !!info.notifications_muted;
-        existing.task_lead = orNull(info.task_lead);
-        existing.do_not_disturb = orNull(info.do_not_disturb);
-        existing.host_key = info.host_key ?? 'local';
-        existing.host_label = info.host_label ?? 'this machine';
-        existing.host_state = info.host_state ?? 'up';
-        return;
-    }
-    rows.unshift({
-        name: tmuxName,
-        label: orNull(info.label),
-        created_by_cloude: createdByUs(info),
-        created_at_epoch: 0,
+function liveFields(info: LiveInfo): Partial<DrawerRow> {
+    return {
         is_active: true,
-        session_id: sessionId,
-        session_row_id: rowId,
-        status,
+        session_id: (info.session && info.session.id) || null,
+        working_dir: (info.session && info.session.working_dir) || null,
+        status: info.activity_status || 'unknown',
+        unread: !!info.unread,
+        created_by_cloude: createdByUs(info),
+        startup_gate: info.startup_gate,
         status_source: info.status_source,
         activity_hint: orNull(info.activity_hint),
         parked_summary: orNull(info.parked_summary),
         usage_limit: orNull(info.usage_limit),
-        unread,
-        agent_family: orNull(info.agent_family),
-        agent_family_source: orNull(info.agent_family_source),
-        pinned_theme: info.pinned_theme || null,
-        startup_gate: info.startup_gate,
         project_id: orNull(info.project_id),
         project_name: orNull(info.project_name),
         claude_session_uuid: orNull(info.claude_session_uuid),
-        working_dir: workingDir,
         running_model: orNull(info.running_model),
         running_model_effort: orNull(info.running_model_effort),
         running_model_tier: orNull(info.running_model_tier),
@@ -297,7 +231,35 @@ export function mergeLiveRow(rows: DrawerRow[], info: LiveInfo): void {
         host_key: info.host_key ?? 'local',
         host_label: info.host_label ?? 'this machine',
         host_state: info.host_state ?? 'up',
-    });
+    };
+}
+
+export function mergeLiveRow(rows: DrawerRow[], info: LiveInfo): void {
+    const tmuxName = info && info.tmux_session;
+    if (!tmuxName) return;
+    const rowId = typeof info.session_row_id === 'number' ? info.session_row_id : null;
+    const existing = rows.find((r) => r.name === tmuxName);
+    if (existing) {
+        Object.assign(existing, liveFields(info));
+        if (rowId !== null) existing.session_row_id = rowId;
+        if (info.label !== undefined) existing.label = info.label;
+        if (info.agent_family !== undefined) existing.agent_family = info.agent_family;
+        if (info.agent_family_source !== undefined) existing.agent_family_source = info.agent_family_source;
+        if (info.agent_wrapper_icon !== undefined) existing.agent_wrapper_icon = info.agent_wrapper_icon;
+        if (info.pinned_theme) existing.pinned_theme = info.pinned_theme;
+        return;
+    }
+    rows.unshift({
+        name: tmuxName,
+        label: orNull(info.label),
+        created_at_epoch: 0,
+        session_row_id: rowId,
+        agent_family: orNull(info.agent_family),
+        agent_family_source: orNull(info.agent_family_source),
+        agent_wrapper_icon: orNull(info.agent_wrapper_icon),
+        pinned_theme: info.pinned_theme || null,
+        ...liveFields(info),
+    } as DrawerRow);
 }
 
 export function workStampIndex(records: readonly unknown[]): Map<string, string> {

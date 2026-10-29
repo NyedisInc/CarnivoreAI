@@ -20,13 +20,6 @@ def label_of(info: Any) -> str:
 
 
 async def tasks_for(info: Any, reader: TaskReader) -> SessionTasks:
-    """The task list of one session, read from its conversation transcript off the event loop.
-
-    Inputs: info (SessionInfo); reader (TaskReader).
-    Output: SessionTasks - ``unsupported`` for a non-claude session, ``empty`` when no conversation or no list exists,
-      ``unknown`` when the transcript could not be read (never drawn as empty).
-    Example: await tasks_for(info, TaskReader())  # SessionTasks(state="ok", tasks=[...])
-    """
     base = {"session_id": info.session.id, "label": label_of(info)}
     family: Optional[str] = getattr(info, "agent_family", None)
     if family is not None and family != DEFAULT_FAMILY:

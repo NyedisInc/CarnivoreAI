@@ -26,7 +26,7 @@ def _read(path: Path) -> Dict[str, Any]:
     return json.loads(path.read_text())
 
 
-def test_owners_stored_grid_and_scope_move_as_stored_and_only_once(tmp_path: Path) -> None:
+def test_joes_stored_grid_and_scope_move_as_stored_and_only_once(tmp_path: Path) -> None:
     _state(tmp_path, {"beastmode": {"enabled": True, "grants": ["agent_writes"], "revision": 5, "settings": {
         "agentWritesOff": True, "folderTrustOn": False, "trustScope": "every", "junk": 1, "claudePermissionOn": "yes"}}})
     config = _config(tmp_path, {"mcp": {"beast_mode": True, "enabled": True}, "unrelated": 1})

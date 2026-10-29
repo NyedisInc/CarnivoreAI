@@ -20,7 +20,6 @@ _RAW = ("-c", "core.autocrlf=false", "-c", "core.safecrlf=false")
 
 
 class WipError(Exception):
-    """The work in progress could not be captured or restored; ``code`` is stable (``wip_failed``, ``wip_conflict``)."""
 
     def __init__(self, code: str, detail: str) -> None:
         super().__init__(detail)

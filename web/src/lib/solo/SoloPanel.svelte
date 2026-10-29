@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from '../base';
   import { t } from '../i18n/index.svelte';
 
   let { kind, name = '', sessionUuid = '', agentType = '' }: {
@@ -45,11 +46,11 @@
   </header>
   <div class="solo__body">
     {#if kind === 'asleep'}
-      <button type="button" class="oc-btn oc-btn--confirm" disabled={busy || !sessionUuid} onclick={act}>{t('solo.asleep.wake')}</button>
+      <Button variant="confirm" disabled={busy || !sessionUuid} onclick={act}>{t('solo.asleep.wake')}</Button>
     {:else if kind === 'gone'}
-      <button type="button" class="oc-btn oc-btn--confirm" disabled={busy || !sessionUuid} onclick={act}>{t('solo.gone.reopen')}</button>
+      <Button variant="confirm" disabled={busy || !sessionUuid} onclick={act}>{t('solo.gone.reopen')}</Button>
     {:else if kind === 'ended'}
-      <button type="button" class="oc-btn" onclick={closeWindow}>{t('solo.ended.close')}</button>
+      <Button onclick={closeWindow}>{t('solo.ended.close')}</Button>
     {/if}
     {#if note}<p class="solo__note">{note}</p>{/if}
   </div>
@@ -67,7 +68,6 @@
     font-family: var(--font-mono);
   }
 
-  /* box-shadow */
   .solo__bar {
     display: flex;
     align-items: center;

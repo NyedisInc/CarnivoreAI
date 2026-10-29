@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError as FutureTimeout
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
@@ -44,6 +44,7 @@ class _Entry:
     probe: Probe
     interval_s: float
     next_due: float = 0.0
+    inflight: Optional[Future] = None
 
 
 _registry: Dict[str, _Entry] = {}
@@ -62,8 +63,14 @@ def unregister_condition(key: str) -> None:
 
 
 def _probe(entry: _Entry, budget: float) -> Optional[ProbeResult]:
+    if entry.inflight is not None and not entry.inflight.done():
+        logger.warning("app_alert_probe_still_running", key=entry.key)
+        return None
+    entry.inflight = None
     try:
-        return _pool.submit(entry.probe).result(timeout=budget)
+        future = _pool.submit(entry.probe)
+        entry.inflight = future
+        return future.result(timeout=budget)
     except FutureTimeout:
         logger.warning("app_alert_probe_overran", key=entry.key, budget_s=budget)
     except Exception as exc:  # noqa: BLE001

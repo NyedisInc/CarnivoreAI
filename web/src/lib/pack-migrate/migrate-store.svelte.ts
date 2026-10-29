@@ -1,3 +1,4 @@
+/* quotes the fingerprint */
 
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { resource, type Resource } from '../../opscenter/api/poll.svelte';
@@ -13,6 +14,10 @@ export interface PlanCheck {
   ok: boolean;
   detail: string;
   blocking: boolean;
+  files?: string[];
+  files_more?: number;
+  files_unchecked?: number;
+  files_check_failed?: boolean;
 }
 
 export interface PublishCard {
@@ -58,7 +63,7 @@ export interface OpView {
   error_code: string | null;
   detail: Record<string, unknown>;
   steps: string[];
-  children: { id: string; name: string | null; state: string; step: string | null; error_code: string | null }[];
+  children: { id: string; name: string | null; state: string; step: string | null; error_code: string | null; task_files_not_copied?: string[]; task_files_not_copied_more?: number }[];
 }
 
 export type Phase = 'pick' | 'plan' | 'running' | 'done' | 'failed';
@@ -76,6 +81,7 @@ export const migrate = $state<{
   stopRunning: boolean;
 }>({ target: null, phase: 'pick', machine: null, plan: null, back: null, opId: null, busy: false, error: null, confirmedOneWay: false, stopRunning: false });
 
+/* the push topic */
 export const PACK_OPS_POLL_MS = 3000;
 let opResource = $state.raw<Resource<OpView> | null>(null);
 

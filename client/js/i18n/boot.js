@@ -1,4 +1,4 @@
-/* <script */
+/* failed to load */
 import { createI18n } from './runtime.js';
 import { bindDocumentLang } from './document-lang.js';
 import { sessionSummaryLabel } from '../labels/session-summary.js';

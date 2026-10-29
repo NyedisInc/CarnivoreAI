@@ -12,9 +12,11 @@ import structlog
 
 from src.cplugs.devwidgetlab.drafts import store
 from src.cplugs.devwidgetlab.errors import DraftInvalid
+from src.cplugs.sdk import app_info
 
 logger = structlog.get_logger()
 
+NO_GIT = "git is not installed on this computer (no developer tools)"
 WIDGETS_JSON = "src/data/widgets.json"
 CONTRACTS_JSON = "src/data/widget-contracts.json"
 
@@ -28,7 +30,7 @@ WIRING = (
 
 
 def _changed_since(repo: Path, base: str, rel: str) -> bool:
-    if not base:
+    if not base or not app_info.git_available():
         return False
     try:
         done = subprocess.run(["git", "-C", str(repo), "diff", "--quiet", base, "HEAD", "--", rel], capture_output=True, timeout=30, check=False)
@@ -48,6 +50,8 @@ def plan(folder: Path, repo: Path) -> Dict[str, Any]:
     record = store.read_record(folder)
     problems: List[str] = []
     warnings: List[str] = []
+    if not app_info.git_available():
+        problems.append(NO_GIT)
     copies = []
     for rel in store.mirrored_files(folder):
         try:
@@ -120,6 +124,8 @@ def apply(folder: Path, repo: Path, trash: Path, keep: bool = False) -> Dict[str
 
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    if not app_info.git_available():
+        raise DraftInvalid(NO_GIT)
     try:
         return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, timeout=60, check=False)
     except (OSError, subprocess.SubprocessError) as exc:
@@ -127,7 +133,7 @@ def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
 
 
 def worktree_parent(repo: Path) -> Path:
-    return Path.home() / "worktrees" / repo.name.lower()
+    return Path.home() / "dev-worktrees" / repo.name.lower()
 
 
 def apply_isolated(folder: Path, repo: Path, trash: Path, worktrees: Path, keep: bool = False) -> Dict[str, Any]:

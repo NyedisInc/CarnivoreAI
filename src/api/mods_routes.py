@@ -46,7 +46,6 @@ def account_settings_files() -> Tuple[List[Path], str]:
 
 
 def _require_accounts(status: str) -> None:
-    """Raise 409 ``accounts_unreadable`` when the account list could not be read (no write may proceed)."""
     if status != ACCOUNTS_OK:
         raise HTTPException(status_code=409, detail={"code": ACCOUNTS_UNREADABLE, "detail": "the account list could not be read, so no settings file was changed"})
 

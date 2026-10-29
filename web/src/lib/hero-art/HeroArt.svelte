@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
     import { ART_HEIGHT, ART_WIDTH, heroShapes } from './art';
     import { heroImageObjectUrl } from './image-blob';

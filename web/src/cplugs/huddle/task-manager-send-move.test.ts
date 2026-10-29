@@ -1,6 +1,8 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
+import { closeItemMenu } from '../../lib/item-menu/open.svelte';
+import { menuNode, menuNodeIds, openRowMenu, openRowMenuByKey } from './row-menu-driver.test.helper';
 
 const server = vi.hoisted(() => ({
   untold: { all: true, '12': false } as Record<string, boolean>,
@@ -120,78 +122,46 @@ describe('the send button', () => {
   }
 });
 
-describe('move to another list', () => {
-  test('the open item offers every other list and posts the move to the chosen one', async () => {
+describe('move to another list (the row menu, #2567)', () => {
+  test('a row draws no menu button; the menu is its right click and Shift+F10', async () => {
     const host = await mountBody();
     host.querySelector<HTMLElement>('[data-task-manager-toggle="1"]')!.click();
     await settle();
-    host.querySelector<HTMLElement>('[data-task-manager-move-open="1"]')!.click();
-    await settle();
-    const options = [...host.querySelectorAll<HTMLElement>('[data-task-manager-move-to]')].map((o) => o.dataset.taskManagerMoveTo);
-    expect(options).toEqual(['12', '18']);
-    host.querySelector<HTMLElement>('[data-task-manager-move-to="18"]')!.click();
+    expect(host.querySelector('[data-task-manager-move-open]')).toBeNull();
+    expect(host.querySelector('[data-huddle-item="1"] [aria-haspopup="menu"]')).toBeNull();
+    openRowMenu(host, 1);
+    const fromClick = menuNodeIds();
+    expect(fromClick).toContain('move-to');
+    closeItemMenu();
+    flushSync();
+    expect(menuNodeIds()).toEqual([]);
+    openRowMenuByKey(host, 1);
+    expect(menuNodeIds()).toEqual(fromClick);
+  });
+
+  test('move to offers every other list and posts the move to the chosen one', async () => {
+    const host = await mountBody();
+    openRowMenu(host, 1);
+    menuNode('move-to')!.click();
+    flushSync();
+    const lists = menuNodeIds().filter((id) => id.startsWith('move-to:'));
+    expect(lists).toEqual(['move-to:all', 'move-to:12', 'move-to:18']);
+    expect(menuNode('move-to:all')!.getAttribute('aria-checked')).toBe('true');
+    menuNode('move-to:18')!.click();
     await settle();
     const move = server.calls.find((c) => c.path === '/cplugs/huddle/items/1/move');
     expect(move?.method).toBe('POST');
     expect(JSON.parse(move!.body)).toEqual({ list: '18' });
-    expect(host.querySelector('[data-task-manager-move-pick]')).toBeNull();
+    expect(menuNodeIds()).toEqual([]);
   });
 
-  for (const popout of [false, true]) {
-    test(`${popout ? 'pop-out' : 'sidebar'}: the menu stays inside the huddle panel (so it inherits the panel theme) and wears the shared popup look`, async () => {
-      const host = await mountBody(popout);
-      host.querySelector<HTMLElement>('[data-task-manager-toggle="1"]')!.click();
-      await settle();
-      host.querySelector<HTMLElement>('[data-task-manager-move-open="1"]')!.click();
-      await settle();
-      const menu = host.querySelector<HTMLElement>('[data-task-manager-move-pick="1"]')!;
-      expect(menu, 'rendered under the mounted panel, not portalled to body').not.toBeNull();
-      expect(menu.closest('[data-task-manager-body]')).not.toBeNull();
-      expect(menu.classList.contains('popup-focus')).toBe(true);
-    });
-  }
-
-  test('the picker is a menu: its own list is marked and not a choice, arrows walk the rows, Escape closes and returns focus', async () => {
+  test('the item\'s own list is not a choice: it posts nothing', async () => {
     const host = await mountBody();
-    host.querySelector<HTMLElement>('[data-task-manager-toggle="1"]')!.click();
+    openRowMenu(host, 1);
+    menuNode('move-to')!.click();
+    flushSync();
+    menuNode('move-to:all')!.click();
     await settle();
-    const key = host.querySelector<HTMLElement>('[data-task-manager-move-open="1"]')!;
-    key.click();
-    await settle();
-    const menu = host.querySelector<HTMLElement>('[data-task-manager-move-pick="1"]')!;
-    expect(menu.getAttribute('role')).toBe('menu');
-    const here = menu.querySelector<HTMLButtonElement>('[data-task-manager-move-here]')!;
-    expect(here.getAttribute('aria-checked')).toBe('true');
-    expect(here.disabled).toBe(true);
-    const rows = [...menu.querySelectorAll<HTMLElement>('[role="menuitemradio"]')];
-    expect(rows.length).toBe(3);
-    const enabled = [...menu.querySelectorAll<HTMLElement>('[role^="menuitem"]')].filter((r) => !(r as HTMLButtonElement).disabled);
-    expect(document.activeElement).toBe(enabled[0]);
-    menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    expect(document.activeElement).toBe(enabled[1]);
-    menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    expect(document.activeElement).toBe(enabled[2]);
-    for (let i = 3; i < enabled.length; i += 1) {
-      menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-      expect(document.activeElement).toBe(enabled[i]);
-    }
-    menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    expect(document.activeElement).toBe(enabled[0]);
-    menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    await settle();
-    expect(host.querySelector('[data-task-manager-move-pick]')).toBeNull();
-    expect(document.activeElement).toBe(key);
-  });
-
-  test('a press outside the menu closes it without moving', async () => {
-    const host = await mountBody();
-    host.querySelector<HTMLElement>('[data-task-manager-toggle="1"]')!.click();
-    await settle();
-    host.querySelector<HTMLElement>('[data-task-manager-move-open="1"]')!.click();
-    await settle();
-    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    await settle();
-    expect(host.querySelector('[data-task-manager-move-pick]')).toBeNull();
-    expect(server.calls.some((c) => /\/move$/.test(c.path))).toBe(false);
+    expect(server.calls.some((c) => /\/(move|group)$/.test(c.path))).toBe(false);
   });
 });

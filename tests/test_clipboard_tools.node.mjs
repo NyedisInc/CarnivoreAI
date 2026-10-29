@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { createEnvironment } from './mini-dom.mjs';
 
+const CATALOG = (await import('../client/js/i18n/catalog.en.js')).default;
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let failures = 0;
@@ -61,7 +63,7 @@ function load(clipboard) {
     const env = createEnvironment({});
     env.window.navigator = { clipboard };
     env.window.WebSocket = { OPEN: 1 };
-    env.window.CloudeI18n = { t: (key) => key };
+    env.window.CloudeI18n = { t: (key) => CATALOG[key] ?? key };
     env.window.CopyCompat = { copyText: () => Promise.resolve({ ok: true }) };
     const sandbox = {
         window: env.window,
@@ -71,7 +73,9 @@ function load(clipboard) {
         console: { log() {}, warn() {}, error() {} },
     };
     sandbox.globalThis = sandbox;
+    sandbox.CloudeI18n = env.window.CloudeI18n;   // tr.js reads the context global
     vm.createContext(sandbox);
+    vm.runInContext(clientFile('js', 'i18n', 'tr.js'), sandbox);
     vm.runInContext(clientFile('js', 'clipboard.js'), sandbox);
     return { env, tools: env.window.ClipboardTools };
 }
@@ -80,7 +84,7 @@ function loadShipped(clipboard) {
     const env = createEnvironment({});
     env.window.navigator = { clipboard };
     env.window.WebSocket = { OPEN: 1 };
-    env.window.CloudeI18n = { t: (key) => key };
+    env.window.CloudeI18n = { t: (key) => CATALOG[key] ?? key };
     const sandbox = {
         window: env.window,
         document: env.document,
@@ -91,9 +95,11 @@ function loadShipped(clipboard) {
         clearTimeout: () => {},
     };
     sandbox.globalThis = sandbox;
+    sandbox.CloudeI18n = env.window.CloudeI18n;   // tr.js reads the context global
     vm.createContext(sandbox);
     vm.runInContext(clientFile('js', 'fab-menu.js'), sandbox);
     vm.runInContext(clientFile('js', 'paste-fallback.js'), sandbox);
+    vm.runInContext(clientFile('js', 'i18n', 'tr.js'), sandbox);
     vm.runInContext(clientFile('js', 'clipboard.js'), sandbox);
     return { env, tools: env.window.ClipboardTools };
 }
@@ -102,6 +108,8 @@ function item(types, payload) {
     return { types, getType: () => Promise.resolve(payload) };
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('INSECURE ORIGIN: paste opens the fallback the user can paste into', async () => {
     const { env, tools } = loadShipped(undefined);
@@ -132,6 +140,8 @@ test('a clipboard object with neither read nor readText is the same case', async
     assert.match(term.pills[0], /paste unavailable on this connection/);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('SECURE ORIGIN: clipboard text reaches the terminal, in ONE frame', async () => {
     const text = 'echo hello from the clipboard';
@@ -200,6 +210,8 @@ test('a closed socket is reported, so the paste is never silently lost', async (
     assert.match(term.pills[0], /^error: terminal not connected/);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('an image on the clipboard uploads instead of pasting its bytes', async () => {
     const blob = { size: 4, type: 'image/png' };
@@ -235,6 +247,8 @@ test('an image wins over text when the clipboard carries both items', async () =
         'the image wins and its PATH is what reaches the pty');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('ATTACH: the row opens the picker and the file reaches the upload', async () => {
     const { env, tools } = load(undefined);
@@ -310,12 +324,15 @@ test('ATTACH: wiring twice does not upload twice', async () => {
     assert.equal(term.uploads.length, 1, 'a double-wire would double-upload');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the shipped wiring matches what these tests exercised', () => {
     const html = clientFile('index.html');
     const menu = clientFile('js', 'terminal-tools-menu.js');
     const term = clientFile('js', 'terminal.js');
     assert.match(html, /id="cloude-image-attach-input"/);
+    // NO accept attribute since 2026-08-16: it steered the iOS picker at
     assert.ok(!/id="cloude-image-attach-input"[^>]*accept=/.test(html),
         'the picker must offer Files, not just Photos');
     assert.match(html, /<input type="file" id="cloude-image-attach-input"[^>]*hidden/);

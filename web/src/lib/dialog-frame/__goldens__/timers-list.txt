@@ -4,7 +4,7 @@
       "timers"
     <span class="sal-name">
       "api work"
-    <button class="sal-close" type="button">
+    <button data-btn="secondary" data-button-root="true" data-size="sm" tabindex="0" type="button">
       "close"
   <p class="sal-note" role="status">
     "could not read timers: offline"

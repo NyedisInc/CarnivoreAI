@@ -7,7 +7,6 @@ const { CRASH_LINE, listDumps } = require('../crash-reports');
 
 const LOG_TAIL_BYTES = 256 * 1024;
 
-/* padding */
 const pad = (n) => String(n).padStart(2, '0');
 
 function defaultName(when) {
@@ -31,7 +30,6 @@ function dumpListing({ dumpsDir, fs, home, now, t }) {
   return [shown, ...(rows.length ? rows : ['(no dumps)']), '', t('menubar.diagnostics.dumps_note')].join('\n') + '\n';
 }
 
-/* nothing was written */
 function createExport(deps) {
   const { dialog, shell, fs, t } = deps;
   const now = deps.now || (() => new Date());

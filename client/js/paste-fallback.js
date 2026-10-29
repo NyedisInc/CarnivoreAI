@@ -1,4 +1,3 @@
-/* permission prompt */
 
 console.log('[PasteFallback Module] Loading...');
 
@@ -51,7 +50,6 @@ console.log('[PasteFallback Module] Loading...');
         return btn;
     }
 
-    /* user-select: none */
     function buildInput() {
         var ta = document.createElement('textarea');
         ta.setAttribute('id', 'pasteFallbackInput');

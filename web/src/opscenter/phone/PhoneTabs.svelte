@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import TabStrip from '../shell/TabStrip.svelte';
   import CascadeMenu from '../../lib/drawer-tabs/CascadeMenu.svelte';
   import LiveRegion from '../engine/LiveRegion.svelte';

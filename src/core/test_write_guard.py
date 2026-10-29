@@ -1,51 +1,3 @@
-"""Refuse writes outside a temp directory while a test run is in progress.
-
-WHY THIS LIVES IN ``src/`` AND NOT IN ``tests/``
-------------------------------------------------
-The defect this exists to kill was a production code path
-(``src/main.py``'s lifespan calling the settings writer with no
-path) that fell back to the developer's real ``~/.claude/settings.json``
-and merged into it during a plain ``pytest`` run. It succeeded, returned
-``True`` and logged an ``info`` line, so every signal was green while the
-machine's live Claude Code configuration was being edited.
-
-A ``conftest.py`` fixture can redirect the path, and this repo does that
-too, but a fixture is not a control: a test that constructs its own app,
-imports the writer directly, or shells out to a subprocess never sees it.
-The only place that can refuse EVERY route is the writer itself, so the
-check has to ship next to the writer.
-
-It is inert in production. ``running_under_test()`` is false unless a
-pytest marker is present in the environment, so a real server boot takes
-the same path it always did.
-
-THE THREE-OUTCOME RULE
-----------------------
-``assert_test_write_allowed`` resolves to exactly one of three verdicts:
-
-* allowed      - not under test, or the path is provably under a temp root.
-* refused      - under test and the path is provably outside every temp root.
-* undetermined - under test and the temp root could not be resolved at all.
-
-``undetermined`` is a REFUSAL. "I could not work out where this write
-would land" is the precise state the original defect hid in, so it is
-treated as at least as dangerous as a known-bad path. Collapsing it into
-"allowed" would rebuild the bug inside the guard meant to prevent it.
-
-DETECTING A TEST RUN
---------------------
-Two markers, deliberately, because each covers a hole in the other:
-
-* ``PYTEST_CURRENT_TEST`` is set by pytest for the duration of each test.
-  It is authoritative but it is CLEARED between tests and during
-  collection, so code running at import time or in a fixture teardown is
-  unprotected by it alone.
-* ``CLOUDE_TEST_MODE`` is set once by ``tests/conftest.py`` at import
-  time, before any test module is collected, and lives in ``os.environ``
-  so a child process inherits it. That is what keeps the guard alive
-  across a ``subprocess.run`` fork, where ``PYTEST_CURRENT_TEST`` may
-  have been stripped.
-"""
 
 from __future__ import annotations
 
@@ -106,21 +58,6 @@ def _is_under(path: Path, root: Path) -> bool:
 
 
 def assert_test_write_allowed(path: Path) -> None:
-    """Raise unless ``path`` is a legitimate destination for a test write.
-
-    A no-op outside a test run, so production behaviour is unchanged.
-
-    Inputs:
-        path: The file the caller is about to write.
-    Outputs:
-        None. Raises :class:`OutsideTempWriteError` on refusal.
-    Raises:
-        OutsideTempWriteError: the run is under test AND the path is
-            outside every temp root, or the temp roots could not be
-            resolved at all.
-    Example:
-        >>> assert_test_write_allowed(tmp_path / "settings.json")  # allowed
-    """
     if not running_under_test():
         return
 

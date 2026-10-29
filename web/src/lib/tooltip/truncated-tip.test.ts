@@ -88,7 +88,7 @@ describe('a cut-off title whose visible text is the full text', () => {
   });
 });
 
-describe('an inline node cut by its parent', () => {
+describe('an inline node cut by its parent (issue #1710 round 6 point M)', () => {
   test('a text span with no box of its own is clipped when the clipping parent is', async () => {
     const { isClipped } = await import('./truncated-tip');
     const parent = document.createElement('div');

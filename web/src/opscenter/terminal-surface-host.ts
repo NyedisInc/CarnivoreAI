@@ -1,3 +1,4 @@
+/* is gone with */
 import { mountPanel, unmountPanel } from '../lib/mount';
 import TerminalSurface from './TerminalSurface.svelte';
 import ComponentsPopover from './engine/ComponentsPopover.svelte';
@@ -35,7 +36,6 @@ export function mountTerminalGrid(containerId: string): boolean {
     return mountPanel(containerId, TerminalSurface) !== null;
 }
 
-/*  hidden  position: fixed */
 export function openTerminalComponents(anchor: HTMLElement | null): boolean {
     return (
         mountPanel(TERMINAL_COMPONENTS_ID, ComponentsPopover, {

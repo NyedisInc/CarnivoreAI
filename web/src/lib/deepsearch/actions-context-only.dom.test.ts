@@ -71,6 +71,6 @@ test('in the context mode the action row sits UNDER the excerpt, never on the na
     const acts = row.querySelector(':scope > [data-testid="deepsearch-actions"]') as HTMLElement;
     expect(acts, 'the action row is in the hit, under the excerpt').not.toBeNull();
     expect(snip.compareDocumentPosition(acts) & Node.DOCUMENT_POSITION_FOLLOWING, 'after the excerpt').toBeTruthy();
-    const kinds = [...acts.querySelectorAll('[data-action]')].map((b) => `${b.getAttribute('data-action')}:${b.getAttribute('data-btn') ?? 'icon'}`);
+    const kinds = [...acts.querySelectorAll('[data-action]')].map((b) => `${b.getAttribute('data-action')}:${b.getAttribute('data-size') === 'icon' ? 'icon' : b.getAttribute('data-btn')}`);
     expect(kinds).toEqual(['read:confirm', 'link:icon']);
 });

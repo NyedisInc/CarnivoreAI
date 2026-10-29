@@ -115,7 +115,6 @@ export function nameRefusal(verdict, t) {
     return t(key, verdict.params || {});
 }
 
-/* could not */
 export function uniqueNameFailure(error, t) {
     const key = error && error.cloudeKey;
     if (key) return t(key);

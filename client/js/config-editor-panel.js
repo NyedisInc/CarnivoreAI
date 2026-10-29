@@ -1,4 +1,4 @@
-/* at the gesture the page terminal */
+/* the page terminal */
 
 console.log('[ConfigEditorPanel Module] Loading...');
 
@@ -27,12 +27,6 @@ class ConfigEditorPanelController {
         this._scope = null;
         this._openGeneration = 0;
         this._directory = null;
-        this._mode = 'drawer';
-        this._cellClose = null;
-    }
-
-    get mode() {
-        return this._mode;
     }
 
     get directory() {
@@ -52,7 +46,7 @@ class ConfigEditorPanelController {
         }
         if (typeof window.dispatchEvent !== 'function' || typeof CustomEvent !== 'function') return;
         window.dispatchEvent(new CustomEvent('cloude:file-drawer', {
-            detail: { open: this.isOpen, mode: this._mode, directory: this._directory },
+            detail: { open: this.isOpen, directory: this._directory },
         }));
     }
 
@@ -63,7 +57,7 @@ class ConfigEditorPanelController {
 
     _paintHeaderMode() {
         if (this._header && typeof this._header.setComponentShown === 'function') {
-            this._header.setComponentShown(this._mode === 'drawer' && this._gridUp());
+            this._header.setComponentShown(this._gridUp());
         }
     }
 
@@ -122,7 +116,7 @@ class ConfigEditorPanelController {
             if (e.target === this.overlay) this.close();
         });
         this.overlay.addEventListener('keydown', (e) => {
-            if (e.key !== 'Escape' || this._mode !== 'drawer' || !this._docked()) return;
+            if (e.key !== 'Escape' || !this._docked()) return;
             e.stopPropagation();
             e.preventDefault();
             this._escape();
@@ -144,12 +138,6 @@ class ConfigEditorPanelController {
         this._target = controller || null;
         this._directory = ['skills', 'plugins'].includes(directory) ? directory : null;
         this._triggerEl = triggerEl || null;
-        if (this._mode === 'cell') {
-            this._scopeThemeTo(controller);
-            this._announce();
-            await this._loadTree();
-            return;
-        }
         const wasOpen = this.isOpen;
         this.isOpen = true;
         this.overlay.hidden = false;
@@ -179,13 +167,12 @@ class ConfigEditorPanelController {
     }
 
     _syncModal(docked) {
-        if (!this.isOpen || this._mode !== 'drawer') return;
+        if (!this.isOpen) return;
         if (!docked) {
             window.ModalStack.push(this.overlay, { onEscape: () => this._escape() });
             return;
         }
         window.ModalStack.pop(this.overlay);
-        //  hidden 
         this.overlay.style.zIndex = '';
         this.overlay.removeAttribute('inert');
         this.overlay.removeAttribute('aria-hidden');
@@ -205,41 +192,11 @@ class ConfigEditorPanelController {
         if (this._context.path !== before) await this._loadTree();
     }
 
-    async attach(cellEl, target, onClose) {
-        this._wire();
-        if (!this.panel || !cellEl) return;
-        if (this.isOpen && this._mode === 'drawer') await this.close();
-        this._mode = 'cell';
-        this._cellClose = typeof onClose === 'function' ? onClose : null;
-        this.overlay.hidden = true;
-        cellEl.appendChild(this.panel);
-        this.isOpen = true;
-        this._context = window.ConfigEditorRoots.resolveProjectContext(target);
-        this._target = target || null;
-        this._directory = null;
-        this._scopeThemeTo(target);
-        this._paintHeaderMode();
-        this._announce();
-        await this._loadTree();
-    }
-
-    detach(cellEl) {
-        if (this._mode !== 'cell' || !this.panel || this.panel.parentElement !== cellEl) return;
-        this.overlay.appendChild(this.panel);
-        this._mode = 'drawer';
-        this._cellClose = null;
-        this.isOpen = false;
-        this._treeGeneration += 1;
-        this._scopeThemeTo(null);
-        this._paintHeaderMode();
-        this._announce();
-    }
-
     async openAsComponent() {
         const web = window.CloudeWeb;
         const files = web && web.fileDrawer;
         if (!files || typeof files.showCell !== 'function') return;
-        if (this.isOpen && this._mode === 'drawer') await this.close();
+        if (this.isOpen) await this.close();
         files.showCell();
     }
 
@@ -265,10 +222,6 @@ class ConfigEditorPanelController {
 
     async close() {
         if (!this.overlay || !this.isOpen) return;
-        if (this._mode === 'cell') {
-            if (this._cellClose) this._cellClose();
-            return;
-        }
         const modal = window.ConfigEditorModal;
         if (modal && !modal.isInPlace()) {
             if (modal.isDirty() && !(await modal.confirmDiscardIfDirty())) return;
@@ -332,7 +285,7 @@ class ConfigEditorPanelController {
         if (typeof opener !== 'function' || !ref) return false;
         const result = await opener(Object.assign({}, request, ref));
         if (result === 'unavailable') return false;
-        if (result === 'opened' && this._mode !== 'cell') await this.close();
+        if (result === 'opened') await this.close();
         return true;
     }
 
@@ -355,7 +308,7 @@ class ConfigEditorPanelController {
         const target = this._target;
         const directory = this._directory;
         const folder = this._currentProjectPath();
-        if (this._mode !== 'cell') await this.close();
+        await this.close();
         return {
             host,
             onFiles: () => this.open(null, target, directory),
@@ -525,7 +478,6 @@ class ConfigEditorPanelController {
         };
     }
 
-    /* could not */
     async _fetchRoot(def, projectPath, query, scopePath = null) {
         try {
             const resp = query

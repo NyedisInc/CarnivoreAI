@@ -2,7 +2,6 @@
 console.log('[MarkdownLite Module] Loading...');
 
 (function () {
-    /* <script */
     function escapeHtml(value) {
         return String(value == null ? '' : value)
             .replace(/&/g, '&amp;')
@@ -13,9 +12,7 @@ console.log('[MarkdownLite Module] Loading...');
     }
 
     function isSafeUrl(url) {
-        const stripped = String(url || '').replace(/[\s\x00-]+/g, '').toLowerCase();
-        if (/^(javascript|data|vbscript):/.test(stripped)) return false;
-        return true;
+        return !!(window.HttpUrl && window.HttpUrl.isHttpUrl(url));
     }
 
     function inline(text) {

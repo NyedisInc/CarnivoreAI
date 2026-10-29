@@ -33,12 +33,6 @@ def mapping_moves(mapping: PathMapping) -> bool:
 
 
 def rebase_for_import(state_dir: Path, mapping: PathMapping, session_uuids: Iterable[str]) -> JournalOutcome:
-    """Rebase the journal entries of ``session_uuids`` through ``mapping``. Blocking (file I/O under the journal lock).
-
-    Inputs: state_dir (the Carnivore state folder); mapping; session_uuids (the crate's sessions).
-    Output: JournalOutcome; ``not_needed`` when the mapping moves nothing, ``unreadable`` when the journal could not be read (it is
-    left exactly as it was), ``failed`` on an I/O error. Example: rebase_for_import(state, mapping, ["u"]).state -> 'updated'
-    """
     from src.core.session_journal_task import mutate_journal
 
     if not mapping_moves(mapping):

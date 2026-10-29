@@ -3,13 +3,16 @@
     import { onMount } from 'svelte';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import { t } from '../i18n/index.svelte';
+    import { Button, Field } from '../base';
     import SessionRow from './SessionRow.svelte';
     import { createLaunchProfilesApi, type AccountOption, type ProfileRow } from '../launch-profiles-page/api';
+    import { visibleProfiles } from '../launch-profiles-page/visibility';
     import { blueprintError, createBlueprint, updateBlueprint } from './api';
     import { blankSession, type Blueprint, type BlueprintSpec, type SessionSpec } from './types';
 
     const NAME_MAX = 60;
     const SESSIONS_MAX = 16;
+    const NAME_FIELD_ID = 'bp-name';
 
     interface Props {
         uuid: string | null;
@@ -28,14 +31,13 @@
     );
     let error = $state('');
     let busy = $state(false);
-    let nameField: HTMLInputElement | null = $state(null);
     let profiles = $state<ProfileRow[]>([]);
     let accounts = $state<AccountOption[]>([]);
 
     onMount(() => {
-        const timer = setTimeout(() => nameField?.focus(), 100);
+        const timer = setTimeout(() => document.getElementById(NAME_FIELD_ID)?.focus(), 100);
         const api = createLaunchProfilesApi();
-        void api.list().then((body) => { profiles = body.profiles; }).catch((error) => console.warn('blueprint editor: launch profiles unreadable', error));
+        void api.list().then((body) => { profiles = visibleProfiles(body.profiles); }).catch((error) => console.warn('blueprint editor: launch profiles unreadable', error));
         void api.accounts().then((list) => { accounts = list; }).catch(() => undefined);
         return () => clearTimeout(timer);
     });
@@ -112,25 +114,18 @@
     onCancel={() => close(false)}
     overlayClass="bp-editor-overlay"
 >
-    <div class="modal-input-group">
-        <label class="modal-label" for="bp-name">{t('blueprint.name.label')}</label>
-        <input
-            id="bp-name"
-            type="text"
-            class="modal-input"
-            maxlength={NAME_MAX * 2}
-            placeholder={t('blueprint.name.placeholder')}
-            bind:this={nameField}
-            bind:value={name}
-        />
-    </div>
+    <Field
+        id={NAME_FIELD_ID}
+        label={t('blueprint.name.label')}
+        maxlength={NAME_MAX * 2}
+        placeholder={t('blueprint.name.placeholder')}
+        bind:value={name}
+    />
 
     <div class="bp-sessions">
         <div class="bp-sessions__head">
             <span class="oc-label">{t('blueprint.session.heading')}</span>
-            <button type="button" class="modal-btn modal-btn-secondary" disabled={sessions.length >= SESSIONS_MAX} onclick={addSession}>
-                {t('blueprint.session.add')}
-            </button>
+            <Button disabled={sessions.length >= SESSIONS_MAX} onclick={addSession}>{t('blueprint.session.add')}</Button>
         </div>
         {#each sessions as session, index (index)}
             <SessionRow
@@ -150,8 +145,8 @@
     {/if}
 
     {#snippet footer()}
-        <button class="modal-btn modal-btn-secondary" disabled={busy} onclick={() => close(false)}>{t('blueprint.cancel')}</button>
-        <button class="modal-btn modal-btn-primary" disabled={busy} onclick={() => void submit()}>{t('blueprint.save')}</button>
+        <Button disabled={busy} onclick={() => close(false)}>{t('blueprint.cancel')}</Button>
+        <Button variant="confirm" data-bp-confirm disabled={busy} onclick={() => void submit()}>{t('blueprint.save')}</Button>
     {/snippet}
 </ModalShell>
 

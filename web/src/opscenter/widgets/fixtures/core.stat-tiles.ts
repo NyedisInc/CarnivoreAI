@@ -1,4 +1,3 @@
-/* running sessions */
 import { closedSessionsFixtures } from './core.closed-sessions';
 import { ledgerFixtures } from './core.ledger';
 import { runningSessionsFixtures } from './core.running-sessions';

@@ -6,9 +6,20 @@
     min-width: 0;
   }
 
-  .mvf-row > input {
+  .mvf-row > [data-field] {
     flex: 1 1 auto;
     min-width: 0;
+  }
+
+  .mvf-choice {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-1);
+    padding: var(--oc-space-2) var(--oc-space-3);
+  }
+
+  .mvf-choice + .mvf-choice {
+    border-top: var(--oc-border) solid var(--oc-line-faint);
   }
 
   .mvf-plan {

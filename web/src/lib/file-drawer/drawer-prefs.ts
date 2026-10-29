@@ -1,3 +1,4 @@
+/* The file drawer's */
 import { readFlag, writeFlag } from '../ui/prefs.svelte';
 
 export const HIDE_DOT_KEY = 'carnivore.files.hideDotFiles';

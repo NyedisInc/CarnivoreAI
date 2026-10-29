@@ -19,16 +19,6 @@ LE_STAGING_DIRECTORY = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
 
 def viewer_base_url(publish_url: str) -> str:
-    """The relay's public https origin, derived from its publish endpoint.
-
-    Description: same host, ``https`` for ``wss``, and the publish path's
-      last segment dropped, so a relay mounted under a path prefix keeps
-      it. The relay serves the viewer page at ``<base>/s/<link_id>``.
-    Inputs: publish_url (str) - the ``wss://.../publish`` endpoint.
-    Output: str - the origin plus any prefix, no trailing slash.
-    Example: viewer_base_url("wss://relay.carnivore.ai/publish")
-      -> "https://relay.carnivore.ai"
-    """
     parts = urlsplit(publish_url)
     prefix = parts.path.rsplit("/", 1)[0]
     return f"https://{parts.netloc}{prefix}"

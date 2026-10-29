@@ -1,20 +1,4 @@
 #!/usr/bin/env python3
-"""Turn the round-trip harness's captured artifacts into a verdict.
-
-Reads the ordered ``NN-<step>.config.json`` snapshots and
-``NN-<step>.probe.json`` files a run produced and prints, for each step,
-what changed in config.json and what the running version could see.
-
-The verdict is deliberately three-valued. A step whose probe never ran,
-or whose server never answered, is reported as CANNOT_DETERMINE and is
-NEVER folded into PASS - an unmeasured step and a healthy one look
-identical only if you let them.
-
-Inputs (argv): --run-dir DIR (the harness work directory).
-Output: a human-readable report on stdout, plus ``verdict.json`` in the
-  run directory. Exit 0 when every step passed, 1 when any step failed,
-  2 when any step could not be evaluated and none failed.
-"""
 
 from __future__ import annotations
 
@@ -66,12 +50,6 @@ def diff_configs(before: Any, after: Any) -> Dict[str, List[str]]:
 
 
 def summarise_probe(probe: Optional[dict]) -> Dict[str, Any]:
-    """Reduce one probe to the fields the verdict turns on.
-
-    Inputs: probe (dict | None).
-    Output: dict of the load-bearing fields, with CANNOT_DETERMINE where
-      the probe itself is missing.
-    """
     if probe is None:
         return {"probe": CANNOT}
     projects = probe.get("projects")
@@ -102,15 +80,6 @@ def summarise_probe(probe: Optional[dict]) -> Dict[str, Any]:
 
 
 def step_verdict(name: str, probe: Optional[dict], server: Optional[dict]) -> Tuple[str, str]:
-    """Decide one step's outcome.
-
-    Description: the three-outcome rule applied per step. A missing probe
-      or a server result of ``unknown`` yields CANNOT_DETERMINE, never
-      PASS.
-    Inputs: name (str) - step name. probe (dict | None). server (dict |
-      None) - the recorded server-start result.
-    Output: (verdict, reason).
-    """
     if probe is None:
         return CANNOT, "no probe artifact was written for this step"
     if server is not None:
@@ -172,7 +141,6 @@ def main() -> int:
         )
         prev_config, prev_name = cfg, name
 
-    # could not
     meta = load_json(art / "meta-verdict.json")
     if meta is not None:
         expect_file = art / "meta.expect"

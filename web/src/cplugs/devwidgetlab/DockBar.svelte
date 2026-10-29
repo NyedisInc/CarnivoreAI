@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* the bottom bar the terminal grid */
+  /* the terminal grid */
   import { t } from '../sdk';
   import { Icon, buttonAttrs } from '../sdk/ui';
   import '../sdk/host-chrome';

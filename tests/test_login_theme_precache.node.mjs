@@ -12,6 +12,11 @@ const VARS_CACHE_KEY = 'carnivore.theme.vars';
 let passes = 0;
 let failures = 0;
 
+/**
+ * Description: run one named assertion block, recording rather than
+ *   throwing so one failure does not hide the rest.
+ * Inputs: name (string), fn (function). Output: Promise<void>.
+ */
 async function test(name, fn) {
     try {
         await fn();
@@ -81,6 +86,7 @@ await test('the two themes actually differ, or nothing below discriminates', () 
 await test('the harness records painted vars (positive control)', () => {
     const { sandbox, painted } = load({});
     sandbox.Themes.applyStoredThemeIdSync();
+    // through a real
     assert.equal(painted.size, 0, 'no cache must paint nothing');
     const seeded = load({
         [THEME_KEY]: 'matrix',

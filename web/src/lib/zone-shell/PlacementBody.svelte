@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  padding */
   import { untrack, type Snippet } from 'svelte';
   import { observeCell, sizeOf } from '../../opscenter/engine/observe.svelte';
   import { entryFor } from '../../opscenter/cells/registry';
@@ -292,7 +291,7 @@
       overflow-y: auto;
     }
 
-    /* padding */
+    /* the widget menu */
     .pb-body[data-headless] {
       box-sizing: border-box;
       border: var(--oc-border) solid transparent;

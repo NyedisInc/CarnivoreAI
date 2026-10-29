@@ -79,6 +79,42 @@ class TaskManagerNotFound(TaskManagerError):
     status = 404
 
 
+class TaskManagerFileRemoved(TaskManagerError):
+
+    code = "task_manager_file_removed"
+    status = 409
+
+
+class TaskManagerNotAttacher(TaskManagerError):
+
+    code = "task_manager_not_attacher"
+    status = 403
+
+
+class TaskManagerFileUnsafe(TaskManagerError):
+
+    code = "task_manager_file_unsafe"
+    status = 409
+
+
+class TaskManagerFileShared(TaskManagerError):
+
+    code = "task_manager_file_shared"
+    status = 409
+
+
+class TaskManagerFileOnBoard(TaskManagerError):
+
+    code = "task_manager_file_on_board"
+    status = 409
+
+
+class TaskManagerBytesNotRemoved(TaskManagerError):
+
+    code = "task_manager_bytes_not_removed"
+    status = 503
+
+
 class TaskManagerStale(TaskManagerError):
 
     code = "task_manager_stale"
@@ -107,6 +143,17 @@ class TaskManagerLocked(TaskManagerNotAllowed):
     def __init__(self, reason: str, message: str, blocking: Mapping[str, Any]) -> None:
         super().__init__(reason, message)
         self.blocking = dict(blocking)
+
+
+class TaskManagerUseFireAt(TaskManagerNotAllowed):
+
+    code = "task_manager_use_fire_at"
+    status = 409
+
+    def __init__(self, fire_at: str) -> None:
+        super().__init__("use_fire_at", f"a wait that ends at a known time is a schedule, not a wait: set fire_at {fire_at} on this task "
+                         "(task_manager_update with fire_at and state todo) and Carnivore sends it to you then; waiting is for what has no time")
+        self.fire_at = fire_at
 
 
 class TaskManagerAnswered(TaskManagerError):
@@ -184,11 +231,11 @@ def next_state(actor: str, current: str, *, approve: Optional[bool], state: Opti
         raise TaskManagerInvalid(f"state must be one of {', '.join(STATES)}")
     if actor == CLAUDE:
         if approve is not None or (state in APPROVED_STATES):
-            raise TaskManagerForbidden("only the owner approves an item")
+            raise TaskManagerForbidden("only joe approves an item")
         if state is None:
             return current
         if current in APPROVED_STATES:
-            raise TaskManagerForbidden(f"the owner approved this item; only the owner can change its state now. To ask the owner to reopen or close it, call {STATE_REQUEST_TOOL} (the owner approves each request in the approvals inbox)")
+            raise TaskManagerForbidden(f"joe approved this item; only joe can change its state now. To ask him to reopen or close it, call {STATE_REQUEST_TOOL} (he approves each request in the approvals inbox)")
         return state
     if approve is not None and state is not None:
         raise TaskManagerInvalid("give approve or state, not both")

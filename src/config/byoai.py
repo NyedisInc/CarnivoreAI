@@ -19,6 +19,7 @@ _OPTION_NAME_ALLOWED = frozenset({"auth_header"})
 
 
 class ModelOverride(BaseModel):
+    """What the owner ticked or unticked for one model of a connection."""
 
     model_config = ConfigDict(extra="forbid")
 

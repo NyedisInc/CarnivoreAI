@@ -42,11 +42,9 @@ export interface CatalogHost {
     previewInstall(request: InstallRequest): Promise<InstallPreview>;
     install(request: InstallRequest): Promise<InstalledItem>;
     uninstall(installId: string): Promise<unknown>;
-    /* the reading pane */
     item(itemId: string): Promise<CatalogItem | null>;
     patchInstalled(installId: string, body: PatchInstalledRequest): Promise<InstalledItem>;
     applyUpdate(installId: string, body: UpdateInstalledRequest): Promise<InstalledItem>;
-    /* running sessions */
     runningSessions(): readonly RunningSessionRow[];
     oneShot(sessionId: string, text: string): Promise<OneShotResult>;
     tryInScratch(prompt: string): Promise<unknown>;

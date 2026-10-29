@@ -15,7 +15,7 @@ import structlog
 from src.core import db
 from src.core.db import transaction
 from src.core.mcp.caller import AgentCaller
-from src.core.swarm import activity, body, fact_index, memory, push, spawn, store, thread_port
+from src.core.swarm import activity, body, fact_index, fact_life, memory, push, spawn, store, thread_port
 from src.core.trail_entry import utc_now
 
 logger = structlog.get_logger()
@@ -123,21 +123,42 @@ async def _owner_words(port: Any, agent: Dict[str, Any], args: Dict[str, Any]) -
 
 
 def _validate(args: Dict[str, Any]) -> tuple:
-    title, scope, push_up = args.get("title"), args.get("scope"), args.get("push_up", False)
+    title, scope, push_up, kind = args.get("title"), args.get("scope"), args.get("push_up", False), args.get("kind", "note")
     if not isinstance(title, str) or not title.strip() or len(title.strip()) > MAX_TITLE_CHARS:
         raise FactRefused(f"title is required, at most {MAX_TITLE_CHARS} characters")
     if scope not in memory.FACT_SCOPES:
         raise FactRefused("scope must be craft or project")
     if not isinstance(push_up, bool):
         raise FactRefused("push_up must be true or false")
-    return " ".join(title.split()), scope, push_up
+    if kind not in fact_life.KINDS:
+        raise FactRefused("kind must be rule or note")
+    return " ".join(title.split()), scope, push_up, kind
+
+
+def _resaved(conn: sqlite3.Connection, agent: Dict[str, Any], title: str, text: str, kind: str) -> Optional[Dict[str, Any]]:
+    own = {f"fact:{r['id']}": dict(r) for r in conn.execute(
+        "SELECT id, origin, scope, kind FROM swarm_facts WHERE agent_id = ? AND state = 'live'", (agent["id"],))}
+    ranked = fact_index.rank(conn, fact_index.query_terms(f"{title} {text}"), [agent["id"]], set(own)) if own else []
+    if not ranked or ranked[0].coverage < fact_life.RESAVE_COVERAGE:
+        return None
+    hit = own[ranked[0].doc_key]
+    with transaction(conn):
+        now_kind = fact_life.record_use(conn, hit["id"], fact_life.conversation_key(conn, agent["id"]))
+        if kind == "rule" and now_kind == "note":
+            conn.execute("UPDATE swarm_facts SET kind = 'rule', ruled_at = ? WHERE id = ?", (utc_now(), hit["id"]))
+            now_kind = "rule"
+    return {"fact_id": hit["id"], "state": "live", "origin": hit["origin"], "scope": hit["scope"], "kind": now_kind,
+            "conflict": None, "resaved": True}
 
 
 def _store(conn: sqlite3.Connection, agent: Dict[str, Any], title: str, scope: str, push_up: bool,
-           source: Dict[str, Any]) -> Dict[str, Any]:
+           source: Dict[str, Any], kind: str = "note") -> Dict[str, Any]:
     text = source["text"]
     if len(text) > MAX_FACT_CHARS:
         raise FactRefused(f"the fact must be at most {MAX_FACT_CHARS} characters")
+    again = _resaved(conn, agent, title, text, kind) if source["origin"] == "agent" and source["learning_id"] is None else None
+    if again is not None:
+        return again
     conflict = _conflict_with(conn, agent, title, text) if source["origin"] == "agent" else None
     fact_id = "f_" + uuid.uuid4().hex[:12]
     taught_at = utc_now()
@@ -149,10 +170,10 @@ def _store(conn: sqlite3.Connection, agent: Dict[str, Any], title: str, scope: s
         with transaction(conn):
             conn.execute(
                 "INSERT INTO swarm_facts (id, agent_id, rel_path, title, scope, origin, owner_message_ref, taught_at, "
-                "taught_by_agent_id, sha256, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "taught_by_agent_id, sha256, state, kind, ruled_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (fact_id, agent["id"], f"facts/{fact_id}.md", title, scope, source["origin"], source["owner_message_ref"],
                  taught_at, agent["id"], hashlib.sha256(text.encode("utf-8")).hexdigest(),
-                 "held" if conflict else "live"))
+                 "held" if conflict else "live", kind, taught_at if kind == "rule" else None))
             if source["learning_id"] is not None:
                 conn.execute("UPDATE swarm_learning SET state = 'stamped', scope_stamp = ? WHERE id = ?",
                              (scope, source["learning_id"]))
@@ -164,19 +185,18 @@ def _store(conn: sqlite3.Connection, agent: Dict[str, Any], title: str, scope: s
         raise
     fact_index.refresh_agent(conn, agent)
     logger.info("swarm_fact_written", fact_id=fact_id, agent_id=agent["id"], origin=source["origin"],
-                state="held" if conflict else "live")
+                state="held" if conflict else "live", kind=kind)
     return {"fact_id": fact_id, "state": "held" if conflict else "live", "origin": source["origin"], "scope": scope,
-            "conflict": conflict}
+            "kind": kind, "conflict": conflict}
 
 
 def store_owner_fact(conn: sqlite3.Connection, agent: Dict[str, Any], *, title: str, text: str, owner_message_ref: str) -> Dict[str, Any]:
     cut = " ".join(title.split())[:MAX_TITLE_CHARS]
     return _store(conn, agent, cut, "project", False,
-                  {"text": text, "origin": "owner", "owner_message_ref": owner_message_ref, "learning_id": None})
+                  {"text": text, "origin": "owner", "owner_message_ref": owner_message_ref, "learning_id": None}, "note")
 
 
 def _discard(conn: sqlite3.Connection, agent: Dict[str, Any], fact_id: str) -> None:
-    """Remove a fact that never became visible (its card could not be posted): row, file, index."""
     row = conn.execute("SELECT rel_path FROM swarm_facts WHERE id = ?", (fact_id,)).fetchone()
     conn.execute("DELETE FROM swarm_facts WHERE id = ?", (fact_id,))
     if row is not None:
@@ -189,12 +209,12 @@ async def remember(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict
         agent = await spawn.parent_agent(view, caller)
     except spawn.SpawnRefused as exc:
         raise FactRefused(str(exc)) from None
-    title, scope, push_up = _validate(args)
+    title, scope, push_up, kind = _validate(args)
     port = thread_port.get()
     owner_text = await _owner_words(port, agent, args)
 
     def work(conn: sqlite3.Connection) -> Dict[str, Any]:
-        return _store(conn, agent, title, scope, push_up, _resolve_source(conn, agent, args, owner_text))
+        return _store(conn, agent, title, scope, push_up, _resolve_source(conn, agent, args, owner_text), kind)
 
     try:
         done = await body.run_db(work)
@@ -207,7 +227,9 @@ async def remember(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict
     await asyncio.to_thread(push.notify_agent, agent["id"])
     if push_up and agent["parent_id"] is not None and not done["conflict"]:
         await asyncio.to_thread(push.notify_agent, agent["parent_id"])
-    answer = {k: done[k] for k in ("fact_id", "state", "origin", "scope")}
+    answer = {k: done[k] for k in ("fact_id", "state", "origin", "scope", "kind")}
+    if done.get("resaved"):
+        answer["resaved"] = True
     if done["conflict"] is not None:
         answer["held_for"] = done["conflict"]["title"]
         await _post_conflict_card(agent, done, port)
@@ -271,7 +293,7 @@ def decide_conflict(conn: sqlite3.Connection, fact_id: str, accept_theirs: bool)
 
 def list_for_agent(conn: sqlite3.Connection, agent_id: int) -> List[Dict[str, Any]]:
     return [dict(r) for r in conn.execute(
-        "SELECT id, agent_id, title, scope, origin, owner_message_ref, taught_at, taught_by_agent_id, state FROM swarm_facts "
+        "SELECT id, agent_id, title, scope, origin, owner_message_ref, taught_at, taught_by_agent_id, state, kind, last_used_at FROM swarm_facts "
         "WHERE agent_id = ? AND state <> 'killed' ORDER BY taught_at DESC, id", (agent_id,))]
 
 
@@ -292,3 +314,12 @@ def set_scope(conn: sqlite3.Connection, fact_id: str, scope: str) -> Dict[str, A
         conn.execute("UPDATE swarm_facts SET scope = ? WHERE id = ?", (scope, fact_id))
     fact_index.refresh_agent(conn, agent)
     return {k: v for k, v in _get(conn, fact_id)["fact"].items() if k not in ("rel_path", "sha256", "killed_at")}
+
+
+def forgettable(conn: sqlite3.Connection, agent: Dict[str, Any], fact_id: str) -> Dict[str, Any]:
+    found = _get(conn, fact_id)
+    if found["fact"]["state"] == "killed":
+        raise FactRefused("that fact is already deleted")
+    if agent["id"] not in _chain_ids(conn, found["agent"]):
+        raise FactRefused("you may delete only your own facts and your children's")
+    return found["fact"]

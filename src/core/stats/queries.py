@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import hashlib
 import json
 import math
@@ -8,25 +7,28 @@ import re
 import sqlite3
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
 from pathlib import PurePath
 from zoneinfo import ZoneInfo
 
+import structlog
 from pydantic import ValidationError
 
 from src.core.stats import activity_query, agent_names, answers, pack_scope, project_groups
 from src.core.stats.batch_store import BatchStore
-from src.core.stats.catalog import METRICS
+from src.core.stats.catalog import METRICS, families_for
 from src.core.session_token_usage.model_table import readable_model_name
 from src.core.stats.plugin.schema import FLOOR_SQL
+from src.core.stats.query_buckets import (
+    QueryLimit, all_buckets, bucket_bounds, bucket_of, cell_value, empty_cell, iso_utc, merge_cell, minute_window)
 from src.core.stats.project_groups import OTHER_GROUP, OTHER_PUBLIC_KEY, ProjectGroups, other_label
 from src.core.provider_ledger import poller
 from src.models.stats import QueryRequest, StatsFilters
 
+logger = structlog.get_logger()
+
 MAX_ROWS = 250_000
 DEADLINE_SECONDS = 2.0
 BATCH_CAP_SECONDS = 6.0
-UTC = timezone.utc
 _FILTER_COLUMNS = {
     "host": "host", "provider": "provider", "project": "project",
     "model": "model", "agent_kind": "agent_kind", "conversation_id": "conversation_id",
@@ -56,20 +58,6 @@ _REAL_USAGE = "(model!='<synthetic>' OR input_tokens+cache_write_tokens+cache_re
 _TOKEN_TOTAL = "input_tokens+cache_write_tokens+cache_read_tokens+output_tokens"
 
 
-class QueryLimit(ValueError):
-    pass
-
-
-def _iso(ts: int | float) -> str:
-    return datetime.fromtimestamp(ts, UTC).isoformat().replace("+00:00", "Z")
-
-
-def _range(value) -> tuple[int, int]:
-    start = int(value.from_.timestamp()) // 60 * 60
-    end = math.ceil(value.to.timestamp() / 60) * 60
-    return start, end
-
-
 def _resolution(start: int, end: int, choice: str) -> str:
     if choice == "auto":
         for name, seconds in (("minute", 60), ("5minute", 300), ("hour", 3600),
@@ -85,26 +73,6 @@ def _resolution(start: int, end: int, choice: str) -> str:
     return choice
 
 
-@functools.lru_cache(maxsize=1 << 16)
-def _bucket(ts: int, resolution: str, zone: ZoneInfo) -> str:
-    local = datetime.fromtimestamp(ts, zone)
-    if resolution == "minute":
-        local = local.replace(second=0, microsecond=0)
-    elif resolution == "5minute":
-        local = local.replace(minute=local.minute // 5 * 5, second=0, microsecond=0)
-    elif resolution == "hour":
-        local = local.replace(minute=0, second=0, microsecond=0)
-    elif resolution == "day":
-        local = local.replace(hour=0, minute=0, second=0, microsecond=0)
-    elif resolution == "week":
-        local = (local - timedelta(days=local.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
-    elif resolution == "month":
-        local = local.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    else:
-        local = local.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    return local.isoformat()
-
-
 def _project_labels(groups: ProjectGroups, members: int = 0) -> dict[str, str]:
     return {**groups.labels, OTHER_GROUP: other_label(members)}
 
@@ -114,7 +82,7 @@ def _regroup(cells: dict, groups: ProjectGroups) -> tuple[dict, dict[str, float]
     sums: dict[str, float] = defaultdict(float)
     for (bucket, raw), cell in cells.items():
         group = groups.group_of(raw) if raw else OTHER_GROUP
-        _merge_cell(folded.setdefault((bucket, group), _empty_cell()), cell)
+        merge_cell(folded.setdefault((bucket, group), empty_cell()), cell)
         sums[raw or ""] += cell["sum"]
     return folded, sums
 
@@ -126,8 +94,11 @@ def _account_labels() -> dict[str, str]:
 def _fold_subagents(cells: dict) -> dict:
     folded: dict = {}
     for (bucket, raw), cell in cells.items():
-        _merge_cell(folded.setdefault((bucket, agent_names.root_of(raw)), _empty_cell()), cell)
+        merge_cell(folded.setdefault((bucket, agent_names.root_of(raw)), empty_cell()), cell)
     return folded
+
+
+OTHER_BUCKET = "@other"
 
 
 def _public_dimension(name: str | None, raw: str | None,
@@ -147,8 +118,10 @@ def _public_dimension(name: str | None, raw: str | None,
         return raw, label, raw
     if name == "project" and raw and ("/" in raw or "\\" in raw):
         return "project:" + hashlib.sha256(raw.encode()).hexdigest()[:16], PurePath(raw).name or other_label(1), None
-    if name == "conversation_id" and raw == "other":
+    if raw == OTHER_BUCKET:
         return "other", "Other", None
+    if raw == "other" and name != "conversation_id":
+        return "other:value", "other", raw
     if name == "conversation_id" and raw:
         label = raw[:36] if agent_labels is None else agent_labels.get(raw, agent_names.UNNAMED)
         return "conversation:" + hashlib.sha256(raw.encode()).hexdigest()[:16], label, raw
@@ -299,8 +272,8 @@ def _aggregate_activity(rows, metric: str, resolution: str, zone: ZoneInfo,
         if time.monotonic() > deadline:
             raise QueryLimit("query deadline exceeded")
 
-    cells = activity_query.aggregate(rows, metric, group_by, lambda stamp: _bucket(stamp, resolution, zone),
-                                     _empty_cell, coverage, tick)
+    cells = activity_query.aggregate(rows, metric, group_by, lambda stamp: bucket_of(stamp, resolution, zone),
+                                     empty_cell, coverage, tick)
     return cells, coverage
 
 
@@ -326,7 +299,7 @@ def _aggregate(rows, metric: str, resolution: str, zone: ZoneInfo,
         value = _value(row, metric)
         group = str(row["group_value"]) if aggregated and group_by else (
             str(row[group_by]) if group_by else "all")
-        key = (_bucket(stamp, resolution, zone), group)
+        key = (bucket_of(stamp, resolution, zone), group)
         if metric == "estimated_cost_nano_usd":
             coverage["priced_usage_count"] += row["priced_usage_count"]
             coverage["unpriced_usage_count"] += row["unpriced_usage_count"]
@@ -341,12 +314,12 @@ def _aggregate(rows, metric: str, resolution: str, zone: ZoneInfo,
                             else "unpriced_token_total" if row["unpriced_usage_count"] else None)
                 if category:
                     coverage[category] += tokens
-            cells.setdefault(key, _empty_cell())["samples"] += (
+            cells.setdefault(key, empty_cell())["samples"] += (
                 row["row_count"] if aggregated else 1)
             if aggregated:
                 coverage["unknown_value_rows"] += row["unknown_count"]
             if row["unpriced_usage_count"]:
-                cells.setdefault(key, _empty_cell())["unknown"] += row["unpriced_usage_count"]
+                cells.setdefault(key, empty_cell())["unknown"] += row["unpriced_usage_count"]
         if metric in ("average_working_agents", "average_running_agents"):
             global_seconds = row["global_observed_seconds"]
             known_seconds = (row["observed_seconds"] if metric == "average_working_agents"
@@ -359,7 +332,7 @@ def _aggregate(rows, metric: str, resolution: str, zone: ZoneInfo,
             if not aggregated:
                 coverage["unknown_value_rows"] += 1
             continue
-        cell = cells.setdefault(key, _empty_cell())
+        cell = cells.setdefault(key, empty_cell())
         cell["sum"] += value
         cell["count"] += row["row_count"] if aggregated else 1
         if metric != "estimated_cost_nano_usd":
@@ -394,70 +367,13 @@ def _finished_coverage(data: dict, start: int, end: int) -> dict:
     }
 
 
-def _cell_value(cell: dict, metric: str, resolution: str) -> float | int | None:
-    if not cell["count"]:
-        return None
-    if metric == "quota_utilization":
-        return cell["sum"] / cell["count"]
-    if metric.startswith("average_"):
-        observed = sum(cell["observed_by_minute"].values())
-        return cell["sum"] / observed if observed else 0
-    return cell["sum"]
-
-
-def _merge_cell(target: dict, cell: dict) -> None:
-    target["sum"] += cell["sum"]
-    target["count"] += cell["count"]
-    target["samples"] += cell["samples"]
-    target["unknown"] += cell["unknown"]
-    target["sample_minutes"].update(cell["sample_minutes"])
-    target["conversations"].update(cell["conversations"])
-    for minute, seconds in cell["observed_by_minute"].items():
-        target["observed_by_minute"][minute] = max(target["observed_by_minute"].get(minute, 0), seconds)
-
-
-def _empty_cell() -> dict:
-    return {"sum": 0, "count": 0, "samples": 0, "unknown": 0, "sample_minutes": set(),
-            "observed_by_minute": {}, "conversations": set()}
-
-
-def _bucket_bounds(bucket: str, resolution: str, zone: ZoneInfo) -> tuple[int, int]:
-    start = datetime.fromisoformat(bucket).astimezone(zone)
-    start_ts = int(start.timestamp())
-    if resolution == "month":
-        end = start.replace(year=start.year + 1, month=1) if start.month == 12 else start.replace(month=start.month + 1)
-    elif resolution == "year":
-        end = start.replace(year=start.year + 1)
-    elif resolution == "day":
-        end = start + timedelta(days=1)
-    elif resolution == "week":
-        end = start + timedelta(days=7)
-    else:
-        return start_ts, start_ts + {"minute": 60, "5minute": 300, "hour": 3600}[resolution]
-    return start_ts, int(end.timestamp())
-
-
-def _all_buckets(start: int, end: int, resolution: str, zone: ZoneInfo) -> list[str]:
-    answer = []
-    cursor = start
-    while cursor < end:
-        bucket = _bucket(cursor, resolution, zone)
-        if not answer or answer[-1] != bucket:
-            answer.append(bucket)
-            if len(answer) > 600:
-                raise QueryLimit("query exceeds 600 points")
-        _, bucket_end = _bucket_bounds(bucket, resolution, zone)
-        cursor = max(cursor + 60, bucket_end)
-    return answer
-
-
 def _transformed(value: float | int | None, cell: dict, request: QueryRequest,
                  resolution: str, bucket: str, zone: ZoneInfo,
                  span_start: int, span_end: int) -> float | int | None:
     if value is None:
         return None
     if request.transform == "rate":
-        bucket_start, bucket_end = _bucket_bounds(bucket, resolution, zone)
+        bucket_start, bucket_end = bucket_bounds(bucket, resolution, zone)
         return value / max(1, min(bucket_end, span_end) - max(bucket_start, span_start))
     if request.transform == "per_conversation":
         count = len(cell["conversations"])
@@ -518,13 +434,13 @@ def execute(store, request: QueryRequest, deadline: float | None = None) -> dict
     other_members: dict[str, float] = defaultdict(float)
     account_labels = _account_labels() if request.group_by == "account_id" else None
     agent_labels = agent_names.names_for(store) if request.group_by == "conversation_id" else None
-    start, end = _range(request)
+    start, end = minute_window(request)
     resolution = _resolution(start, end, request.resolution)
     zone = ZoneInfo(request.timezone)
     pack = _pack_query(store, request, table)
     spans = [(start, end)]
     if request.comparison:
-        compare_start, compare_end = _range(request.comparison)
+        compare_start, compare_end = minute_window(request.comparison)
         if compare_end - compare_start != end - start:
             raise ValueError("comparison ranges must have equal duration")
         spans.append((compare_start, compare_end))
@@ -549,20 +465,20 @@ def execute(store, request: QueryRequest, deadline: float | None = None) -> dict
                     other_members[raw] += value
         if request.group_by == "conversation_id":
             cells = _fold_subagents(cells)
-        buckets = _all_buckets(span_start, span_end, resolution, zone)
-        totals: dict[str, dict] = defaultdict(_empty_cell)
+        buckets = all_buckets(span_start, span_end, resolution, zone)
+        totals: dict[str, dict] = defaultdict(empty_cell)
         for (_, group), cell in cells.items():
-            _merge_cell(totals[group], cell)
+            merge_cell(totals[group], cell)
         prepared.append((span_start, span_end, rows, cells, coverage, buckets,
                          totals, conversation_count))
     primary_totals = prepared[0][6]
     primary_order = sorted(primary_totals, key=lambda group: (
-        _cell_value(primary_totals[group], request.metric, resolution) is None,
-        -(_cell_value(primary_totals[group], request.metric, resolution) or 0), group))
+        cell_value(primary_totals[group], request.metric, resolution) is None,
+        -(cell_value(primary_totals[group], request.metric, resolution) or 0), group))
     primary_selected = primary_order[:request.top_n] if request.group_by else ["all"]
     has_other = request.group_by and any(
         group not in primary_selected for item in prepared for group in item[6])
-    selected = primary_selected + (["other"] if has_other else [])
+    selected = primary_selected + ([OTHER_BUCKET] if has_other else [])
     if len(selected) * len(spans) > 12:
         raise QueryLimit("more than 12 expanded series")
     other_detail = None
@@ -583,17 +499,17 @@ def execute(store, request: QueryRequest, deadline: float | None = None) -> dict
             public_key, label, filter_value = _public_dimension(request.group_by, group, project_labels, account_labels, agent_labels)
             points = []
             source_cells = cells
-            if group == "other":
+            if group == OTHER_BUCKET:
                 source_cells = {}
                 for (bucket, cell_group), cell in cells.items():
                     if cell_group not in primary_selected:
-                        _merge_cell(source_cells.setdefault((bucket, "other"), _empty_cell()), cell)
+                        merge_cell(source_cells.setdefault((bucket, OTHER_BUCKET), empty_cell()), cell)
             for index, bucket in enumerate(buckets):
                 if index % 64 == 0 and time.monotonic() > deadline:
                     raise QueryLimit("query deadline exceeded")
                 cell = source_cells.get((bucket, group))
                 points.append({"time": bucket, "value": (
-                    _transformed(_cell_value(cell, request.metric, resolution), cell,
+                    _transformed(cell_value(cell, request.metric, resolution), cell,
                                  request, resolution, bucket, zone, span_start, span_end)
                     if cell else None), "samples": cell["samples"] if cell else 0,
                     "unpriced_usage_count": cell["unknown"] if cell else 0,
@@ -613,7 +529,7 @@ def execute(store, request: QueryRequest, deadline: float | None = None) -> dict
                 continue
             key, label, filter_value = _public_dimension(request.group_by, group, project_labels, account_labels, agent_labels)
             cell = totals[group]
-            value = _cell_value(cell, request.metric, resolution)
+            value = cell_value(cell, request.metric, resolution)
             if value is None:
                 pass
             elif request.transform == "per_conversation":
@@ -624,12 +540,12 @@ def execute(store, request: QueryRequest, deadline: float | None = None) -> dict
                             "value": value, "samples": cell["samples"],
                             **({"detail": other_detail} if group == OTHER_GROUP and other_detail else {})})
         if has_other:
-            other_cell = _empty_cell()
+            other_cell = empty_cell()
             for group, cell in totals.items():
                 if group not in primary_selected:
-                    _merge_cell(other_cell, cell)
+                    merge_cell(other_cell, cell)
             if other_cell["samples"]:
-                other_value = _cell_value(other_cell, request.metric, resolution)
+                other_value = cell_value(other_cell, request.metric, resolution)
                 if other_value is None:
                     pass
                 elif request.transform == "per_conversation":
@@ -661,7 +577,7 @@ def execute(store, request: QueryRequest, deadline: float | None = None) -> dict
                 total /= max(1, span_end - span_start)
             if total is not None and request.transform == "per_conversation":
                 total /= max(1, conversation_count)
-        output.append({"range": {"from": _iso(span_start), "to": _iso(span_end)},
+        output.append({"range": {"from": iso_utc(span_start), "to": iso_utc(span_end)},
                        "coverage": all_coverage[-1],
                        "series": series, "ranking": ranking, "summary": {
                            "value": total, "samples": coverage["minute_rows"],
@@ -708,14 +624,14 @@ def coverage(store) -> dict:
         db_bytes = sum(path.stat().st_size for path in (
             store.db_path, store.db_path.with_name(store.db_path.name + "-wal"),
         ) if path.exists())
-        return {"earliest": _iso(usage[0]) if usage[0] is not None else None,
-                "latest": _iso(usage[1]) if usage[1] is not None else None,
+        return {"earliest": iso_utc(usage[0]) if usage[0] is not None else None,
+                "latest": iso_utc(usage[1]) if usage[1] is not None else None,
                 "freshness_seconds": max(0, int(time.time()) - usage[1]) if usage[1] is not None else None,
                 "minute_rows": usage[2], "quality_rows": 0,
                 "unknown_cost_rows": usage[3] or 0,
                 "sources": [dict(row) for row in sources],
-                "disabled_spans": [{"from": _iso(row["start_ts"]),
-                                    "to": _iso(row["end_ts"]) if row["end_ts"] else None} for row in spans],
+                "disabled_spans": [{"from": iso_utc(row["start_ts"]),
+                                    "to": iso_utc(row["end_ts"]) if row["end_ts"] else None} for row in spans],
                 "backfill": {row["state"]: row["count"] for row in backfills},
                 "db_bytes": db_bytes,
                 "revision": store.revision()}
@@ -727,7 +643,7 @@ def contributions(store, request: QueryRequest, *, limit: int, cursor: int) -> d
     deadline = time.monotonic() + DEADLINE_SECONDS
     if request.metric == "quota_utilization":
         raise ValueError("quota has no conversation contributions")
-    start, end = _range(request)
+    start, end = minute_window(request)
     table = METRICS[request.metric][1]
     rows = _fetch(store, table, request.filters, start, end, "conversation_id", deadline, request.metric)
     grouped: dict[str, dict] = {}
@@ -842,11 +758,11 @@ def execute_batch(store, items: list[dict]) -> dict:
 
 
 def _ledger_key(request: QueryRequest) -> tuple[str, int]:
-    start, end = _range(request)
+    start, end = minute_window(request)
     body = request.model_dump(mode="json", by_alias=True, exclude={"from_", "to", "comparison"})
     if request.rolling is None:
         body["window"] = [start, end]
-        body["compare"] = list(_range(request.comparison)) if request.comparison else None
+        body["compare"] = list(minute_window(request.comparison)) if request.comparison else None
     return answers.digest(body), end
 
 
@@ -874,7 +790,8 @@ def _answer_item(view: BatchStore, item: dict, cap: float, state: str) -> dict:
     return answers.serve(
         view, key=key, window_end=window_end, fingerprint=_item_fingerprint(view, request), state=state,
         compute=lambda target, deadline: execute(target, request, deadline),
-        deadline=min(time.monotonic() + DEADLINE_SECONDS, cap), budget=DEADLINE_SECONDS)
+        deadline=min(time.monotonic() + DEADLINE_SECONDS, cap), budget=DEADLINE_SECONDS,
+        families=families_for(request.metric))
 
 
 def _run_batch(store, items: list[dict], cap: float, memo: dict, results: list) -> dict:
@@ -892,5 +809,9 @@ def _run_batch(store, items: list[dict], cap: float, memo: dict, results: list) 
                 memo[key] = {"ok": False, "error": {
                     "code": "stats_query_limit" if isinstance(exc, QueryLimit) else "invalid_stats_request",
                     "message": str(exc)}}
+            except sqlite3.Error as exc:
+                logger.warning("stats_batch_item_failed", error_type=type(exc).__name__, error=str(exc))
+                memo[key] = {"ok": False, "error": {
+                    "code": "stats_unavailable", "message": "statistics are temporarily unavailable"}}
         results.append(memo[key])
     return {"results": results, "revision": store.revision()}

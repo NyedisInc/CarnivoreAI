@@ -58,11 +58,6 @@ def _fd_real_path(fd: int) -> str:
 
 
 def _read_contained(root: Path, rel: str) -> bytes:
-    """Read up to MAX_BYTES + 1 of a regular file, proving containment on the OPEN descriptor (no check-then-read gap).
-
-    The final component is opened without following a symlink and without blocking; the descriptor must be a regular
-    file with a single link whose real path is inside ``root``. Raises EscapesRepository otherwise, the same answer as an outside path.
-    """
     try:
         fd = os.open(root / rel, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except OSError as exc:

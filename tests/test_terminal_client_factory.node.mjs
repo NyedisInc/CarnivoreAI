@@ -1,3 +1,4 @@
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,6 +12,13 @@ const CLIENT_JS = path.join(__dirname, '..', 'client', 'js');
 let passes = 0;
 let failures = 0;
 
+/**
+ * Run one named assertion block immediately, recording the outcome.
+ *
+ * @param {string} name - what is being asserted.
+ * @param {function(): void} fn - the assertions.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -84,6 +92,7 @@ test('two scroll owners keep INDEPENDENT gesture latches', () => {
     const first = win.TerminalScroll.create();
     const second = win.TerminalScroll.create();
 
+    // nothing at all
     first.noteUserScroll();
     assert.equal(first.isGestureActive(), true);
     assert.equal(second.isGestureActive(), false,

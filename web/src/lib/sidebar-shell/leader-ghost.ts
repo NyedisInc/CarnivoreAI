@@ -1,6 +1,5 @@
-import { renameAgent, turnOffAgent, wakeAgent } from '../../cplugs/huddle/chat/chat-api';
-import { openAgentTerminal } from '../../cplugs/huddle/agents/agent-terminal';
-import { refreshRoster } from '../../cplugs/huddle/agents/agent-roster.svelte';
+import { openSwarmAgentTerminal, renameSwarmAgent, turnOffSwarmAgent, wakeSwarmAgent } from '../../cplugs/sdk/swarm-agent-actions';
+import { refreshSwarmRoster } from '../../cplugs/sdk/swarm-roster.svelte';
 import { askLeaderConfirm } from '../leader-confirm/confirm';
 import { t } from '../i18n/index.svelte';
 import { announceFailure, reasonOf } from './interaction-globals';
@@ -19,7 +18,11 @@ export async function act(g: GhostAgent, run: () => Promise<void>): Promise<void
     } catch (err) {
         announceFailure(t('leader.ghost.failed', { name: g.name, reason: reasonOf(err) }));
     }
-    await refreshRoster();
+    await refreshSwarmRoster();
+}
+
+export async function wake(g: GhostAgent): Promise<void> {
+    await act(g, () => wakeSwarmAgent(g.agentId, 'resume'));
 }
 
 export async function rename(g: GhostAgent): Promise<void> {
@@ -30,13 +33,13 @@ export async function rename(g: GhostAgent): Promise<void> {
     });
     const next = (raw ?? '').trim();
     if (!next || next === g.name) return;
-    await act(g, () => renameAgent(g.agentId, next));
+    await act(g, () => renameSwarmAgent(g.agentId, next));
 }
 
 export async function turnOff(g: GhostAgent): Promise<void> {
     const typed = await askLeaderConfirm({ name: g.name, rank: g.rank, action: 'turn off' });
     if (typed === null) return;
-    await act(g, () => turnOffAgent(g.agentId, typed));
+    await act(g, () => turnOffSwarmAgent(g.agentId, typed));
 }
 
 export function openGhostMenu(anchor: Element, g: GhostAgent): void {
@@ -46,5 +49,5 @@ export function openGhostMenu(anchor: Element, g: GhostAgent): void {
 export function openGhostTerminal(event: MouseEvent, g: GhostAgent): void {
     if (!event.shiftKey) return;
     event.stopPropagation();
-    void openAgentTerminal(g.agentId);
+    void openSwarmAgentTerminal(g.agentId);
 }

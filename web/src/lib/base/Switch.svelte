@@ -1,5 +1,4 @@
-<!-- <button class="oc-check" role="switch" (or "checkbox") aria-checked> padding: a switch inline in a row that already has its frame),
-    role ('switch', the default, for a setting; -->
+
 <script lang="ts">
   import type { HTMLButtonAttributes } from 'svelte/elements';
   import Icon from '../../opscenter/ui/Icon.svelte';

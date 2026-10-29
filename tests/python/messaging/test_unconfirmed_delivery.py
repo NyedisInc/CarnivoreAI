@@ -19,13 +19,13 @@ def _restart_mid_send(monkeypatch, world) -> HTTPException:
         return http.GuardResponse(422, {}, json.dumps(body).encode(), False)
 
     async def identity(request, caller):
-        return UUID_A, "ledgerbot"
+        return UUID_A, "trader"
 
     monkeypatch.setattr(client.http, "guarded_request", fake)
     monkeypatch.setattr(routes, "_caller_identity", identity)
     monkeypatch.setattr(routes, "runtime_of", lambda request: world.rt)
     world.rt.providers[world.pid].client = client.HttpProviderClient(
-        "p_x", "http://203.0.113.16:1", "tok-not-real", allow_private=True, allow_plain_http=True)
+        "p_x", "http://10.0.0.1:1", "tok-not-real", allow_private=True, allow_plain_http=True)
     bind(world, UUID_A, default=True)
     caller = routes.AgentCaller(session_id="ses_a", tmux_name="t", current_session_id="ses_a", scope="write")
     try:

@@ -42,7 +42,6 @@
     }
 
     .info-tip__btn {
-        /* reserved 1px border */
         box-sizing: border-box;
         width: 16px;
         height: 16px;

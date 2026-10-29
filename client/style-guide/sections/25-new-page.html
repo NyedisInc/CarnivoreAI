@@ -1,4 +1,6 @@
 <h2 class="sg-h2">building a new page</h2>
+<p class="sg-lead">A worked example: "make a new page in Carnivore for Music". Every step names the file to copy. Follow it
+and the page looks exactly like the ledger, the catalog and the themes page, under every theme.</p>
 
 <h3 class="sg-h3" id="new-page-decide">0. decide what it is</h3>
 <ul>
@@ -13,7 +15,7 @@
 <h3 class="sg-h3" id="new-page-steps">the steps</h3>
 <ol>
     <li><strong>Intake.</strong> Run the work skill (<code>.claude/skills/work/SKILL.md</code>): search issues, file or reuse
-        one, claim it, work in a worktree under <code>worktrees/cloudecode/</code>. Read this guide's
+        one, claim it, work in a worktree under <code>dev-worktrees/cloudecode/</code>. Read this guide's
         <a href="#principles">principles</a>, then the ledger's files.</li>
     <li><strong>API first.</strong> Every action the page offers is an authenticated route before it is a button:
         <code>src/api/music_routes.py</code>, included by one line in the <code>src/api/routes.py</code> aggregator. The page is
@@ -87,6 +89,22 @@
 </ol>
 
 <h3 class="sg-h3" id="new-page-phone-header">the phone header (below 768px)</h3>
+<p>Binding for every page (Alex (example-owner), 2026-10-04, "i like 2 + 5", <code>docs/DECISIONS.md</code>; it supersedes the
+    2026-10-03 three-row header): on a phone the page's header is ONE 56px bar on the 16px gutter and no bar holds a lone
+    small control. Left to right: the back arrow (<code>.oc-titlebar__back</code>, <code>arrow-left</code>, 40px, the arrow
+    tip on the gutter) that runs the page closer, the omnibar frame (<code>.oc-titlebar__omni</code>, 44px, one hairline,
+    two lines: the title as a 10px tracked accent overline, then a magnifier and the page's ONE search input,
+    <code>.oc-titlebar__omni-row</code>), then the filters that fit as a joined 44px control and ONE view flip
+    (<code>.oc-page__flip</code>, 44x44, shows the current view and names the switch) inside
+    <code>.oc-titlebar__controls</code>. <code>Page</code> draws no close button and the shell strip is not drawn. A page with
+    no search shows the title alone. A page may pass <code>icon</code> to draw its own 14px icon inside the heading, left of the
+    title (<code>.oc-titlebar__icon</code>; the warez page wears its floppy). Filters that would squeeze the frame under about 150px, and the page's own actions, take
+    ONE row under the bar (<code>.oc-page__bar</code>, <code>.oc-page__tools--end</code>); a tabbed page puts its tab row
+    there (settings merges its section picker into the row as the first cell, <code>.st-picker</code>). Keep ONE search input
+    in the DOM and move it, never duplicate it. A page built on <code>ManagerFrame</code> inherits all of it; a hand-built
+    page passes <code>search</code> (and <code>controls</code>) to <code>Page</code> while <code>viewport.narrow</code> and
+    draws the same field in its bar otherwise. Targets stay 40px or more and the bar's, the flip's and the cards' right edges
+    share a line within 1px.</p>
 <p>The rows under the bar SCROLL AWAY (layout 5, same pick). <code>Page</code> puts the tab row and the bar in ONE wrapper,
     <code>.oc-page__away</code>, sticky under the sticky title bar; scrolling down slides it behind the bar by a transform
     (the scroll area never changes size, so nothing flickers) and the bar casts the lift-shadow token while it is away

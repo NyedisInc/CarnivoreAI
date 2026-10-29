@@ -7,7 +7,6 @@ export interface RequiredEntry {
     readonly local_edits: boolean | null;
 }
 
-/* is not installed */
 export function shownEntries(entries: readonly RequiredEntry[]): RequiredEntry[] {
     return entries.filter((entry) => (entry.required && entry.state === 'blocked') || (entry.state === 'installed' && entry.local_edits === true));
 }

@@ -30,12 +30,12 @@ def test_upload_wins_prompt_has_name_not_secrets_and_failure_keeps_fallback(worl
     hero_images.store(kind, rid, "jpg", UPLOAD)
     fake = FakeProvider()
     for regenerate in (False, True):
-        assert hero_art_gen.generate(kind, rid, "Orchard", "a SIEM", fake, regenerate=regenerate)["status"] == "upload"
+        assert hero_art_gen.generate(kind, rid, "Argent", "a SIEM", fake, regenerate=regenerate)["status"] == "upload"
     assert fake.prompts == [] and hero_images.find(kind, rid).read_bytes() == UPLOAD
     hero_images.remove_upload(kind, rid)
     assert hero_images.find(kind, rid) is None
     bad = FakeProvider(fail=True)
-    assert hero_art_gen.generate(kind, rid, "Orchard", "", bad)["status"] == "failed"
+    assert hero_art_gen.generate(kind, rid, "Argent", "", bad)["status"] == "failed"
     assert len(bad.prompts) == hero_art_gen.ATTEMPTS and hero_images.find(kind, rid) is None
     assert hero_images.index(kind) == {}
     ok = FakeProvider(theme=f"a dragon guarding {FAKE_SECRET}")
@@ -80,16 +80,16 @@ def test_prompts_are_text_free_logo_or_project_and_the_request_is_landscape():
 
 def test_no_summary_never_gives_the_vault_the_name_is_the_fallback_and_duplicate_themes_are_redone():
     fake = FakeProvider(theme="a holographic globe with flight arcs")
-    theme, _cost, source = hero_art_gen.distill_theme(fake, "CorstoneSolbrook", "", "name")
-    assert (theme, source) == ("a holographic globe with flight arcs", "name") and fake.calls == [("CorstoneSolbrook", "", "")]
+    theme, _cost, source = hero_art_gen.distill_theme(fake, "TravelAgent", "", "name")
+    assert (theme, source) == ("a holographic globe with flight arcs", "name") and fake.calls == [("TravelAgent", "", "")]
     assert not hasattr(hero_art_prompt, "DEFAULT_THEMES")
     class Dead(FakeProvider):
         def distill(self, name, summary, avoid=""):
             raise hero_art_gen.ArtError("down")
 
-    assert hero_art_gen.distill_theme(Dead(), "junstone-novwick", "", "name")[0] is None
-    prompt = hero_art_prompt.build_prompt("project", None, "junstone-novwick")
-    assert "junstone-novwick" in prompt and "vault" not in prompt.replace("safe, vault", "")
+    assert hero_art_gen.distill_theme(Dead(), "legal-chat", "", "name")[0] is None
+    prompt = hero_art_prompt.build_prompt("project", None, "legal-chat")
+    assert "legal-chat" in prompt and "vault" not in prompt.replace("safe, vault", "")
     items = {("project", 1): {"name": "A", "theme": "a vault", "source": "readme"},
              ("project", 2): {"name": "B", "theme": "A  Vault", "source": "readme"},
              ("project", 3): {"name": "C", "theme": "a lathe", "source": "readme"}}

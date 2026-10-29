@@ -28,7 +28,6 @@ function demoState(): AccountSwitchState {
   };
 }
 
-/* active account */
 export const accountSwitch: Resource<AccountSwitchState> = resource<AccountSwitchState>(
   () => authFetch<AccountSwitchState>('/provider-ledger/switch'),
   { intervalMs: SWITCH_POLL_MS, name: 'account-switch', demo: demoState, topics: ['account_switch'] },
@@ -111,7 +110,6 @@ function openLogin(id: string): Promise<void> {
   return startLogin(id, deps);
 }
 
-/* active account */
 export async function finishSetup(
   id: string,
   login?: () => void | Promise<void>,
@@ -142,7 +140,6 @@ export async function finishSetup(
   return outcome;
 }
 
-/* running sessions */
 export async function loadRunningElsewhere(): Promise<void> {
   try {
     switchActivity.running = await authFetch<RunningElsewhere[]>('/provider-ledger/switch/running');

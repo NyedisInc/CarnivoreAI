@@ -1,5 +1,4 @@
 
-/* height: 100% position: relative */
 .oc-surface {
   position: relative;
   display: grid;
@@ -10,12 +9,11 @@
   transition: grid-template-rows var(--oc-motion) ease;
 }
 
-/* position: fixed */
 .oc-surface-zoomable {
   contain: layout;
 }
 
-/* grid-template-rows: none z-index: 2 */
+/* and the three */
 .oc-row {
   position: relative;
   display: grid;
@@ -31,7 +29,6 @@
   min-height: 0;
 }
 
-/* border: */
 .oc-gutter {
   position: relative;
   min-width: 0;
@@ -121,8 +118,6 @@
   pointer-events: none;
 }
 
-/* height: auto position:
-   relative */
 .oc-cellslot.oc-cellslot-zoomed {
   position: fixed;
   inset: 0;
@@ -266,13 +261,13 @@ body.grid-dragging {
     display: none;
   }
 
+  /* and the three */
   .oc-cellslot {
     min-height: 0;
   }
 }
 
 @media (max-width: 639px) {
-  /* running sessions */
   .oc-surface {
     gap: var(--oc-gutter);
   }

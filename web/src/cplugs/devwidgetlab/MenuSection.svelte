@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { FoldChevron } from '../sdk/ui';
+  import { Button, FoldChevron } from '../sdk/ui';
 
   interface Props {
     label: string;
@@ -15,10 +15,10 @@
 </script>
 
 <section class="dwl-sec" data-open={open ? 'yes' : 'no'}>
-  <button type="button" class="dwl-group dwl-sec-head" aria-expanded={open} onclick={() => ontoggle(!open)}>
+  <Button variant="row" data-tree-group data-sec-head aria-expanded={open} onclick={() => ontoggle(!open)}>
     <FoldChevron />
     <span class="dwl-sec-label">{label}</span>
     <span class="dwl-sec-value" data-tone={tone}>{value}</span>
-  </button>
+  </Button>
   {#if open}<div class="dwl-sec-body">{@render children()}</div>{/if}
 </section>

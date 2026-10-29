@@ -4,7 +4,6 @@ import { sideBudget } from './side-budget.svelte';
 import { widgetBars } from '../widget-bars/bar-settings.svelte';
 import type { BarSize } from '../widget-bars/bar-settings.svelte';
 
-/* the bottom rail */
 export function roomFor(edge: RailEdge, win: { innerWidth: number; innerHeight: number } = window): number {
   return edge === 'side' ? win.innerWidth : win.innerHeight;
 }
@@ -20,7 +19,6 @@ class RailOutSizes {
     return this.#px[edge] ?? OUT_DEFAULT_PX[edge];
   }
 
-  /* the bottom bar */
   size(edge: RailEdge): BarSize {
     return widgetBars.view[edge].size;
   }

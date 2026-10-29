@@ -1,5 +1,5 @@
 <script lang="ts">
-  /*  hidden  */
+  /* nothing at all */
   import { t } from '../sdk';
   import TaskManagerMarker from './TaskManagerMarker.svelte';
   import { markerKey, markersInUse } from './task-manager-markers';

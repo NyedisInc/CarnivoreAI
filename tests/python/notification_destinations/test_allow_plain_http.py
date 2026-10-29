@@ -25,7 +25,7 @@ BOTH = {"allow_private": True, "allow_plain_http": True}
 
 def test_http_is_accepted_for_webhook_and_ntfy_with_both_switches_on(service):
     client = make_client(service)
-    made = client.post(f"{BASE}/destinations", json=webhook("http://203.0.113.13:5678/hook", **BOTH))
+    made = client.post(f"{BASE}/destinations", json=webhook("http://192.168.1.20:5678/hook", **BOTH))
     assert made.status_code == 201, made.text
     got = made.json()["destination"]
     assert got["allow_private"] is True and got["allow_plain_http"] is True
@@ -35,7 +35,7 @@ def test_http_is_accepted_for_webhook_and_ntfy_with_both_switches_on(service):
 
 @pytest.mark.parametrize("over", [{}, {"allow_private": True}, {"allow_plain_http": True}])
 def test_http_is_refused_unless_both_switches_are_on(service, over):
-    got = fields_of(make_client(service).post(f"{BASE}/destinations", json=webhook("http://203.0.113.13/x", **over)))
+    got = fields_of(make_client(service).post(f"{BASE}/destinations", json=webhook("http://192.168.1.20/x", **over)))
     expected = {"allow_plain_http": validate.REQUIRES_PRIVATE} if over == {"allow_plain_http": True} else {"url": validate.HTTPS_REQUIRED}
     assert got == expected
 
@@ -66,8 +66,8 @@ def test_other_kinds_refuse_http_and_the_field(service):
 
 def test_patch_round_trip_and_turning_private_off_turns_plain_off(service):
     client = make_client(service)
-    dest = client.post(f"{BASE}/destinations", json=webhook("http://203.0.113.13/x", **BOTH)).json()["destination"]["id"]
-    assert client.patch(f"{BASE}/destinations/{dest}", json={"secrets": {"url": "http://192.0.2.19/y"}}).status_code == 200
+    dest = client.post(f"{BASE}/destinations", json=webhook("http://192.168.1.20/x", **BOTH)).json()["destination"]["id"]
+    assert client.patch(f"{BASE}/destinations/{dest}", json={"secrets": {"url": "http://10.1.1.1/y"}}).status_code == 200
     bad = client.patch(f"{BASE}/destinations/{dest}", json={"allow_private": False, "allow_plain_http": True})
     assert fields_of(bad) == {"allow_plain_http": validate.REQUIRES_PRIVATE}
     off = client.patch(f"{BASE}/destinations/{dest}", json={"allow_private": False}).json()["destination"]
@@ -77,16 +77,16 @@ def test_patch_round_trip_and_turning_private_off_turns_plain_off(service):
 
 def test_the_policy_honors_the_switch_through_the_view(service):
     client = make_client(service)
-    client.post(f"{BASE}/destinations", json=webhook("http://203.0.113.13/x", **BOTH))
-    client.post(f"{BASE}/destinations", json=webhook("https://203.0.113.13/x", allow_private=True))
+    client.post(f"{BASE}/destinations", json=webhook("http://192.168.1.20/x", **BOTH))
+    client.post(f"{BASE}/destinations", json=webhook("https://192.168.1.20/x", allow_private=True))
     spec = kind_specs.get_kind("webhook")
     views = view.DocRoutingView(service.docs.snapshot()).destinations()
     on = [v for v in views if v.config.get("allow_plain_http")]
     assert len(on) == 1 and len(views) == 2
-    assert base.policy_for(spec, on[0].config, "http://203.0.113.13/x").allow_plain_http is True
+    assert base.policy_for(spec, on[0].config, "http://192.168.1.20/x").allow_plain_http is True
     other = [v for v in views if v is not on[0]][0]
-    assert base.policy_for(spec, other.config, "https://203.0.113.13/x").allow_plain_http is False
-    assert base.policy_for(spec, {"allow_plain_http": True}, "http://203.0.113.13/x").allow_plain_http is False
+    assert base.policy_for(spec, other.config, "https://192.168.1.20/x").allow_plain_http is False
+    assert base.policy_for(spec, {"allow_plain_http": True}, "http://192.168.1.20/x").allow_plain_http is False
 
 
 def test_local_policy_refusals_classify_as_uncounted_classes():
@@ -97,10 +97,10 @@ def test_local_policy_refusals_classify_as_uncounted_classes():
 
 def test_the_switch_is_local_only_never_exported_and_delete_removes_it(service, config_path):
     client = make_client(service)
-    dest = client.post(f"{BASE}/destinations", json=webhook("http://203.0.113.13/x", **BOTH)).json()["destination"]["id"]
+    dest = client.post(f"{BASE}/destinations", json=webhook("http://192.168.1.20/x", **BOTH)).json()["destination"]["id"]
     doc = service.docs.snapshot()
     key = view.allow_plain_http_key(dest)
-    assert doc["local"][key] == "http://203.0.113.13:80" and key.startswith("local/") and "allow_plain_http" not in json.dumps(doc["global"])
+    assert doc["local"][key] == "http://192.168.1.20:80" and key.startswith("local/") and "allow_plain_http" not in json.dumps(doc["global"])
     cfg = config_writer.read_config(config_path)
     assert "allow_plain_http" in json.dumps(cfg["notification_routing"])
     projected = bundle.project(cfg, {})
@@ -111,7 +111,7 @@ def test_the_switch_is_local_only_never_exported_and_delete_removes_it(service, 
 
 def test_a_synced_http_destination_is_accepted_without_the_switch(service):
     spec = kind_specs.get_kind("webhook")
-    assert validate.validate_fields(spec.secret_fields, {"url": "http://203.0.113.13/x"}, spec)["url"].startswith("http://")
+    assert validate.validate_fields(spec.secret_fields, {"url": "http://192.168.1.20/x"}, spec)["url"].startswith("http://")
     slack = kind_specs.get_kind("slack")
     with pytest.raises(validate.InvalidDestination):
         validate.validate_fields(slack.secret_fields, {"url": "http://hooks.slack.com/services/T0/B0/abc"}, slack)

@@ -1,4 +1,3 @@
-/*  hidden  */
 
 import { tick } from 'svelte';
 import { META, metaFor } from './meta';
@@ -50,7 +49,6 @@ function setDragging(on: boolean): void {
   document.body.classList.toggle('grid-dragging', on);
 }
 
-/* already running */
 export function beginGesture(element: HTMLElement, event: PointerEvent, handlers: GestureHandlers): boolean {
   if (active) return false;
   if (event.button !== 0 && event.pointerType === 'mouse') return false;
@@ -226,7 +224,7 @@ function cellTitle(id: SlotId): string {
   return meta.titleName ?? t(meta.titleKey);
 }
 
-/* could not */
+/* at the same time */
 export function captureRows(
   store: LayoutStore,
   root: ParentNode,

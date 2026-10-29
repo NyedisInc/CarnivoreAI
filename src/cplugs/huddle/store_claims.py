@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from contextlib import closing
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 import structlog
 
@@ -73,10 +73,15 @@ class StoreClaims:
     def record_claude_read(self, seen: Sequence[tuple]) -> Dict[int, str]:
         if not seen:
             return {}
-        with closing(self._connect(True)) as conn, conn:
-            moved = lifecycle.record_read(conn, seen)
-            ids = [item_id for item_id, _seq in seen]
-            marks = ",".join("?" * len(ids))
+        moved: Set[str] = set()
+        with closing(self._read_connection()) as conn:
+            behind = lifecycle.any_behind(conn, seen)
+        if behind:
+            with self._immediate() as conn:
+                moved = lifecycle.record_read(conn, seen)
+        ids = [item_id for item_id, _seq in seen]
+        marks = ",".join("?" * len(ids))
+        with closing(self._read_connection()) as conn:
             rows = conn.execute(f"SELECT {ITEM_COLS} FROM work_items WHERE deleted = 0 AND id IN ({marks})", ids).fetchall()
             asking = lifecycle.asking_ids(conn, ids)
             statuses = {r["id"]: lifecycle.status(r, r["id"] in asking) for r in rows}
@@ -85,21 +90,21 @@ class StoreClaims:
         return statuses
 
     def sweep_read_claims(self) -> List[int]:
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             ids, keys = lifecycle.sweep_read_claims(conn)
         for key in sorted(keys):
             self._commit_notify(key)
         return ids
 
     def sweep_stale_dots(self) -> List[int]:
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             ids, keys = unread_sweep.sweep_stale_dots(conn)
         for key in sorted(keys):
             self._commit_notify(key)
         return ids
 
     def sweep_read_owners(self) -> List[int]:
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             ids, keys, owners = lifecycle.sweep_read_owners(conn)
         for item_id, owner in owners.items():
             logger.info("task_manager_read_owner_cleared", item_id=item_id, owner_prefix=owner[:8])
@@ -108,7 +113,7 @@ class StoreClaims:
         return ids
 
     def release_conversation_claims(self, claimant: str) -> List[str]:
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             released = lifecycle.end_claims_of(conn, claimant)
         for key in sorted(released):
             self._commit_notify(key)
@@ -120,18 +125,23 @@ class StoreClaims:
             flow.refuse_claim_on_held(row)
             claims.refuse_swarm_lane(row, swarm_caller)
         current = self.item(item_id)
+        ticked = f"the owner ticked this item; its state is his. To ask him to reopen it, call {rules.STATE_REQUEST_TOOL}"
+        approved = sorted(rules.APPROVED_STATES)
         if current["state"] in rules.APPROVED_STATES:
-            raise TaskManagerForbidden(f"the owner ticked this item; its state is their. To ask the owner to reopen it, call {rules.STATE_REQUEST_TOOL}")
+            raise TaskManagerForbidden(ticked)
         if current["state"] in (rules.REVIEW, rules.WAITING):
             current = self.update(item_id, actor=CLAUDE, state=rules.OPEN)
         with closing(self._connect(True)) as conn, conn:
             changed = conn.execute(
                 "UPDATE work_items SET claude_working = 1, claude_working_by = ?, claude_read_seq = MAX(claude_read_seq, joe_seq) "
                 f"WHERE id = ? AND deleted = 0 AND {flow.UNHELD_SQL}{'' if swarm_caller else ' AND ' + claims.NOT_SWARM_LANE_SQL} "
+                f"AND state NOT IN ({','.join('?' * len(approved))}) "
                 "AND (claude_working = 0 OR claude_working_by != ? OR claude_read_seq < joe_seq)",
-                (claimed_by or "", item_id, claimed_by or "")).rowcount
+                (claimed_by or "", item_id, *approved, claimed_by or "")).rowcount
             if not changed:
                 row = self._row(conn, item_id)
+                if row["state"] in rules.APPROVED_STATES:
+                    raise TaskManagerForbidden(ticked)
                 flow.refuse_claim_on_held(row)
                 claims.refuse_swarm_lane(row, swarm_caller)
             else:
@@ -143,7 +153,7 @@ class StoreClaims:
     def mark_sent_by_swarm_ref(self, swarm_ref: str, *, prefix: bool = False) -> List[int]:
         like = swarm_ref.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%" if prefix else None
         where = "swarm_ref LIKE ? ESCAPE '\\'" if prefix else "swarm_ref = ?"
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             rows = conn.execute(f"SELECT id, list_key FROM work_items WHERE deleted = 0 AND {where}", (like or swarm_ref,)).fetchall()
             conn.execute(f"UPDATE work_items SET claude_read_seq = MAX(claude_read_seq, joe_seq) WHERE deleted = 0 AND {where} "
                          "AND claude_read_seq < joe_seq", (like or swarm_ref,))

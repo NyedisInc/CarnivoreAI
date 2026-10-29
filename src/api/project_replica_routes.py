@@ -9,6 +9,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
 
+from src.api.error_response import api_error
 from src.api import peer_auth, projects_service
 from src.api.auth import require_auth
 from src.config import settings
@@ -62,7 +63,7 @@ async def call_peer(peer: peer_hosts.PeerRow, method: str, path: str, body: Any 
     try:
         reply = await asyncio.wait_for(client.request(method, path, json=body), PEER_TIMEOUT_SECONDS)
     except (PeerUnreachable, PeerRefused, asyncio.TimeoutError) as exc:
-        raise HTTPException(502, {"code": "machine_unreachable", "detail": f"{peer.label} did not answer ({type(exc).__name__})"}) from exc
+        raise api_error(502, "machine_unreachable", exc, peer=peer.label) from exc
     try:
         data = reply.json() if reply.status_code == 200 else None
     except ValueError:
@@ -90,7 +91,7 @@ async def list_project_replicas(project_name: str) -> Dict[str, Any]:
 
     Inputs: project_name (str, URL display name). Output: {project_uid, name, pack_state, home_install_id, air_gap, replicas[]}.
     Raises: HTTPException 404 unknown project, 409 ambiguous name, 503 datastore unreachable.
-    Example: GET /api/v1/projects/ledgerbot/replicas
+    Example: GET /api/v1/projects/trader/replicas
     """
     def read() -> Dict[str, Any]:
         with closing(projects_service.open_db_or_503(settings)) as conn:
@@ -109,7 +110,7 @@ async def add_project_replica(project_name: str, body: AddReplicaRequest) -> Dic
     Output: the replica view (as GET) plus ``replica`` (the machine's answer).
     Raises: HTTPException 404 unknown project or machine, 409 ``project_moved_away`` or ``not_project_home``, 502 the machine
       is unreachable or refused (``machine_unreachable``, or its own code such as ``project_name_taken``).
-    Example: POST /api/v1/projects/ledgerbot/replicas {"machine": "hosta"}
+    Example: POST /api/v1/projects/trader/replicas {"machine": "studio"}
     """
     def read() -> Dict[str, Any]:
         with closing(projects_service.open_db_or_503(settings)) as conn:
@@ -156,7 +157,7 @@ async def remove_project_replica(project_name: str, machine: str) -> Dict[str, A
     Inputs: project_name (str); machine (str: label, host key or install id). Output: the replica view (as GET).
     Raises: HTTPException 404 unknown project, machine or replica, 409 ``project_moved_away`` or ``not_project_home``,
       502 the machine is unreachable (the replica row is kept until it has been told).
-    Example: DELETE /api/v1/projects/ledgerbot/replicas/hosta
+    Example: DELETE /api/v1/projects/trader/replicas/studio
     """
     def read() -> Dict[str, Any]:
         with closing(projects_service.open_db_or_503(settings)) as conn:
@@ -200,7 +201,7 @@ async def set_project_air_gap(project_name: str, body: SetAirGapRequest) -> Dict
 
     Inputs: project_name (str); body (SetAirGapRequest). Output: the replica view (as GET).
     Raises: HTTPException 404 unknown project, 409 ambiguous name, 503 datastore unreachable.
-    Example: PUT /api/v1/projects/ledgerbot/air-gap {"air_gap": true}
+    Example: PUT /api/v1/projects/trader/air-gap {"air_gap": true}
     """
     def write() -> Dict[str, Any]:
         with closing(projects_service.open_db_or_503(settings)) as conn:

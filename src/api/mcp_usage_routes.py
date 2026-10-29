@@ -5,9 +5,10 @@ import sqlite3
 from typing import Any, Dict
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.concurrency import run_in_threadpool
 
+from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.core.db import DatastoreError
 from src.core.mcp import tools
@@ -37,4 +38,4 @@ async def get_mcp_usage(days: int = Query(report.DEFAULT_DAYS, ge=1, le=report.M
     try:
         return await run_in_threadpool(_answer, days)
     except (sqlite3.Error, OSError, RuntimeError) as exc:
-        raise HTTPException(status_code=503, detail=f"the usage counts could not be read: {type(exc).__name__}")
+        raise api_error(503, "datastore_unavailable", exc, step="mcp_usage") from exc

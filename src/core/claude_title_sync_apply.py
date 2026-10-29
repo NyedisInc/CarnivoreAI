@@ -1,37 +1,3 @@
-"""Run one title-sync pass for a session, and write at most one row.
-
-The seam between the pure reader in :mod:`src.core.claude_title_sync` and
-the database. It exists as its own module for the reason the respawn
-ladder keeps ``session_transcript_presence`` separate: the rules stay
-testable without a datastore, and ``session_manager.py`` - already well
-past the 500-line guideline - does not grow another method.
-
-WHAT THIS RUNS ON. Every Claude Code hook event, including ``PreToolUse``
-and ``PostToolUse``, which fire on every single tool call. So the cost of
-the common path is the design constraint, not an afterthought:
-
-  * one SELECT of six columns on an indexed-ish lookup,
-  * one ``os.path.getsize``,
-  * one read of at most 64 KB,
-  * and NO write at all unless a name actually changed.
-
-THE RENAME RETRY RIDES THIS PASS, and rides it precisely because of the
-list above. ``src.core.claude_rename_retry_apply`` needs the row id, both
-title columns, the conversation uuid and this pass's ``TITLE_*`` verdict,
-and every one of them has already been read here - so the whole feature
-costs two dictionary lookups and a string comparison in steady state, and
-spends a subprocess only when a browser rename is provably still pending.
-It is wired at the tail of :func:`sync_claude_title` rather than given a
-loop of its own for the same reason the sync itself was rehomed onto the
-watcher: the trigger it needs is a transcript that grew, and that trigger
-already exists here.
-
-IDEMPOTENCE IS NOT OPTIONAL HERE. Hook events are unordered, duplicated
-and droppable, so a pass must survive the same event twice and a missing
-one. It does, because the decision is a comparison against
-``sessions.claude_title`` rather than a transition: running it twice
-compares the second time against what the first time wrote and stops.
-"""
 
 from __future__ import annotations
 
@@ -50,6 +16,7 @@ from src.core.claude_title_sync import (
     read_newest_custom_title,
     registry_user_title,
 )
+from src.core.sessions.lazy_write import DatastoreNotWritable, lazy_datastore
 
 logger = structlog.get_logger()
 
@@ -57,10 +24,8 @@ SYNC_NO_SESSION: str = "no_session"
 
 SYNC_NO_CONVERSATION: str = "no_conversation"
 
-# could not
 SYNC_NO_TRANSCRIPT: str = "no_transcript"
 
-# could not be reached
 SYNC_UNAVAILABLE: str = "unavailable"
 
 SYNC_RAN: str = "ran"
@@ -132,7 +97,7 @@ def _registry_evidence(
     if recorded is not None and recorded != observed:
         return None, False
 
-    from src.core.attention.registry_read import registry_for_session
+    from src.core.attention.registry_index import registry_for_session
 
     record = registry_for_session(tmux_name=tmux_name, claude_session_uuid=uuid)
     user_title = registry_user_title(
@@ -159,7 +124,7 @@ def sync_claude_title(session_manager: Any, session_id: str) -> TitleSyncResult:
 
     conn = None
     try:
-        conn = session_manager._writable_datastore_connection()
+        conn = lazy_datastore(session_manager)
         if conn is None:
             return TitleSyncResult(
                 SYNC_UNAVAILABLE,
@@ -170,7 +135,7 @@ def sync_claude_title(session_manager: Any, session_id: str) -> TitleSyncResult:
 
         identity = identity_for_live_name(
             conn,
-            socket=session_manager._tmux_socket_name(),
+            socket=session_manager.tmux_socket_name(),
             name=tmux_name,
         )
         if not identity:
@@ -332,6 +297,11 @@ def sync_claude_title(session_manager: Any, session_id: str) -> TitleSyncResult:
             ),
             effective_title=current_title,
             effective_claude_title=claude_title,
+        )
+    except DatastoreNotWritable:
+        return TitleSyncResult(
+            SYNC_UNAVAILABLE,
+            detail="the datastore could not be opened for writing",
         )
     except sqlite3.Error as exc:
         logger.debug(

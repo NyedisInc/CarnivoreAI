@@ -31,10 +31,6 @@ def manifest_id(key: str) -> str:
 
 
 def command_for(out_dir: Path, catalog: bool, only: Optional[str] = None) -> list[str]:
-    """The child process's argument list (no shell). Inputs: out_dir; catalog - also write catalog images; only - one widget's harness key. Output: argv.
-
-    Example: command_for(out, False, "core.notes")  # [..., "--out", out, "--only", "core.notes"]
-    """
     argv = [sys.executable, "-m", "scripts.widgets.gate", "--out", str(out_dir)]
     if only:
         argv += ["--only", manifest_id(only)]
@@ -53,21 +49,25 @@ def read_table(storage_path: Path) -> Optional[Dict[str, Any]]:
 
 
 def state(storage_path: Path) -> Dict[str, Any]:
-    """What the page shows: {available, reason, running, started, exit, table}. ``exit`` is the last run's status (0 clean, 1 failing, 2 cannot determine)."""
     task = _job["task"]
     return {**availability(), "running": bool(task and not task.done()), "started": _job["started"], "exit": _job["exit"],
             "table": read_table(storage_path)}
 
 
 async def _run(argv: list[str]) -> None:
-    proc = await asyncio.create_subprocess_exec(*argv, cwd=str(repo_root() or REPO), stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+    try:
+        proc = await asyncio.create_subprocess_exec(*argv, cwd=str(repo_root() or REPO), stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+    except OSError as exc:
+        logger.error("widget_lab_matrix_spawn_failed", error_type=type(exc).__name__, error=str(exc))
+        _job["exit"] = 2
+        return
     try:
         await asyncio.wait_for(proc.wait(), timeout=TIMEOUT_SECONDS)
         _job["exit"] = proc.returncode
     except asyncio.TimeoutError:
         proc.kill()
         await proc.wait()
-        _job["exit"] = 2  # cannot determine
+        _job["exit"] = 2
         logger.warning("widget_lab_matrix_timeout", seconds=TIMEOUT_SECONDS)
 
 

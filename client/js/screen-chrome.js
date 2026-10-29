@@ -1,5 +1,5 @@
-/*  hidden  */
 
+(function () {
 console.log('[ScreenChrome Module] Loading...');
 
 const AUTHENTICATED_SCREENS = ['launchpad', 'terminal'];
@@ -26,3 +26,4 @@ const ScreenChrome = {
 
 window.ScreenChrome = ScreenChrome;
 console.log('[ScreenChrome Module] Loaded');
+})();

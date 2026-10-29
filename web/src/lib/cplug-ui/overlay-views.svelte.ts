@@ -3,7 +3,9 @@ import { authFetch } from '../../opscenter/api/auth.svelte';
 import { resourcePush } from '../resource-push/boot';
 import { t } from '../i18n/index.svelte';
 import { toCplugItem, type CplugItem, type CplugRow } from '../plugins-page/cplugs-adapter';
+import { setPages } from './page-views.svelte';
 import { setPanels } from './panel-views.svelte';
+import { shareRelay } from './share-relay';
 
 const CPLUGS_TOPIC = 'cplugs';
 const POLL_MS = 60_000;
@@ -34,6 +36,8 @@ async function sync(): Promise<void> {
         const rows = Array.isArray(body.cplugs) ? body.cplugs : [];
         overlays.list = overlayEntries(rows);
         setPanels(rows);
+        shareRelay.retain(new Set(rows.flatMap((row) => (row.runtime === 'sidecar' && row.enabled && row.state === 'active' && row.install_key ? [row.install_key] : []))));
+        setPages(rows);
     } catch {
     }
 }

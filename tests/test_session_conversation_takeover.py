@@ -29,7 +29,7 @@ from src.core.session_recreate_presence import (
     TMUX_UNKNOWN,
 )
 
-LIVE_NAME = "cloude_Storefront"
+LIVE_NAME = "cloude_Shopify"
 LIVE_ROW_ID = 26
 RETIRED_ROW_ID = 28
 
@@ -43,7 +43,7 @@ def _decide(**overrides):
         "live_tmux_name": LIVE_NAME,
         "listing_ok": True,
         "listing_complete": True,
-        "names": [LIVE_NAME, "cloude_Orchard"],
+        "names": [LIVE_NAME, "cloude_Argent"],
     }
     args.update(overrides)
     return decide_conversation_takeover(**args)
@@ -106,7 +106,7 @@ def test_a_name_outside_the_namespace_takes_nothing():
 def test_a_carnivore_prefixed_incumbent_is_inside_the_namespace_too():
     decision = _decide(
         incumbent_tmux_name="carnivore_LongGone",
-        names=[LIVE_NAME, "cloude_Orchard"],
+        names=[LIVE_NAME, "cloude_Argent"],
     )
 
     assert decision.may_take is True
@@ -116,8 +116,8 @@ def test_a_carnivore_prefixed_incumbent_is_inside_the_namespace_too():
 
 def test_an_incumbent_with_its_own_pane_on_the_socket_is_present():
     decision = _decide(
-        incumbent_tmux_name="cloude_Orchard",
-        names=[LIVE_NAME, "cloude_Orchard"],
+        incumbent_tmux_name="cloude_Argent",
+        names=[LIVE_NAME, "cloude_Argent"],
     )
 
     assert decision.may_take is False
@@ -128,7 +128,7 @@ def test_an_incumbent_with_its_own_pane_on_the_socket_is_present():
 def test_an_incumbent_whose_own_name_is_off_the_socket_is_gone():
     decision = _decide(
         incumbent_tmux_name="cloude_LongGone",
-        names=[LIVE_NAME, "cloude_Orchard"],
+        names=[LIVE_NAME, "cloude_Argent"],
     )
 
     assert decision.may_take is True
@@ -159,7 +159,7 @@ def test_an_incumbent_with_no_tmux_name_takes_nothing():
 
 
 def test_a_same_name_incumbent_needs_the_live_pane_on_the_socket():
-    decision = _decide(names=["cloude_Orchard"])
+    decision = _decide(names=["cloude_Argent"])
 
     assert decision.may_take is True
     assert decision.outcome == TMUX_GONE

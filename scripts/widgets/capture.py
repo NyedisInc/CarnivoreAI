@@ -1,5 +1,25 @@
 """Capture and fit-check every widget from its fixture, at its standard sizes, under the capture themes.
 
+One pipeline for two jobs (Joe (ccsliinc), 2026-10-01: "take the thinking out
+of the loop"): the PNGs a widget's description shows, and the fit check that
+gates a widget change. For every widget the harness publishes (every core
+manifest and every analytics gallery preset), every zone it declares that
+changes how it is drawn (home, terminal, drawer; the pop-out draws the home
+host unchanged), every standard size (s, m, l, phone on the grids; the drawer's
+widths and the glance row in the sidebar), every size the widget claims as
+TESTED (``u<w>x<h>``: its ``fits.tested`` list, else the standard set 1 x 1 to
+8 x 2 at or above its floor, the aspects the gear menu offers) and the
+off-standard sizes a widget must fill though it suggests none of them (odd-wide, odd-tall, odd-mid), every
+capture theme, and both fixtures (data, empty):
+
+  1. draw it in the harness (frozen clock, fixture server, reduced motion,
+     settled: no request and no DOM change for 600ms, animations finished);
+  2. run the fit check in the page (overflow-x, overflow-y, scrollbar-x,
+     clipped-text, overlap, bad-text, catalog-key) and collect fixture misses;
+     any finding fails the run (Joe (ccsliinc), 2026-10-03: "if there is any
+     slipping it fails");
+  3. write ``<out>/<key>/<zone>-<size>-<fixture>-<theme>.png``.
+
 Usage:
   venv/bin/python3 -m scripts.widgets.capture [--out DIR] [--only KEY ...]
       [--themes a,b] [--fixtures data,empty] [--zones home,...] [--sizes all | s,m,u,...]
@@ -17,6 +37,8 @@ Output: ``<out>/report.md`` (failures grouped by widget, worst first) and
 ``<out>/report.json``. Exit 0: every draw passed. Exit 1: at least one fit
 finding, a draw error, or a widget with no fixture. Exit 2: CANNOT DETERMINE
 (the harness did not build, serve or draw), never a pass.
+
+Docs: ``docs/widget-spec.md``, "Fixtures, standard sizes and the fit check".
 """
 
 from __future__ import annotations
@@ -27,6 +49,7 @@ import shutil
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from scripts.widgets import defect_allow
@@ -40,6 +63,21 @@ DEFAULT_OUT = REPO / "build" / "widget-capture"
 CATALOG_MEDIA = REPO / "features" / "media" / "widgets"
 OFF_SIZE_PREFIX = "odd-"
 NAMED_SIZES_WORD = "named"
+
+
+@dataclass(frozen=True)
+class RunOptions:
+
+    zones: str
+    fixtures: str
+    sizes: str
+    no_shots: bool
+    out: Path
+    defects: bool = False
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> "RunOptions":
+        return cls(zones=args.zones, fixtures=args.fixtures, sizes=args.sizes, no_shots=args.no_shots, out=args.out)
 
 
 def parse(argv: list[str]) -> argparse.Namespace:
@@ -75,15 +113,15 @@ def layout_defect_findings(page, render: Render, allowed: list[defect_allow.Allo
             if f["severity"] == "fail" and not any(e.allows(draw, f) for e in allowed)]
 
 
-def run_widget(page, base: str, widget: dict, args: argparse.Namespace, themes: list[str]) -> list[Render]:
+def run_widget(page, base: str, widget: dict, options: RunOptions, themes: list[str]) -> list[Render]:
     renders: list[Render] = []
-    allowed = defect_allow.load() if getattr(args, "defects", False) else []
-    zones = [z for z in widget["zones"] if z in args.zones.split(",")]
-    for fixture in args.fixtures.split(","):
+    allowed = defect_allow.load() if options.defects else []
+    zones = [z for z in widget["zones"] if z in options.zones.split(",")]
+    for fixture in options.fixtures.split(","):
         first = True
         for zone in zones:
             for size in widget["sizes"][zone]:
-                if not size_wanted(size, args.sizes):
+                if not size_wanted(size, options.sizes):
                     continue
                 page.set_viewport_size({"width": size["viewport"], "height": 1100 if size["viewport"] > 500 else 844})
                 for theme in themes:
@@ -95,10 +133,10 @@ def run_widget(page, base: str, widget: dict, args: argparse.Namespace, themes: 
                             return renders
                         first = False
                     render = show(page, widget["key"], fixture, zone, size["name"], theme)
-                    if getattr(args, "defects", False) and not render.error:
+                    if options.defects and not render.error:
                         render.findings += layout_defect_findings(page, render, allowed)
-                    if not args.no_shots and not render.error:
-                        render.shot = shoot(page, args.out / widget["key"] / f"{zone}-{size['name']}-{fixture}-{theme}.png")
+                    if not options.no_shots and not render.error:
+                        render.shot = shoot(page, options.out / widget["key"] / f"{zone}-{size['name']}-{fixture}-{theme}.png")
                     renders.append(render)
     return renders
 
@@ -131,8 +169,10 @@ def write_catalog_images(browser, base: str, widgets: list[dict], theme: str) ->
 
 def main(argv: list[str]) -> int:
     args = parse(argv)
+    options = RunOptions.from_args(args)
     started = time.monotonic()
     try:
+        from playwright.sync_api import Error as PlaywrightError  # noqa: PLC0415
         from playwright.sync_api import sync_playwright  # noqa: PLC0415
     except ImportError:
         print("capture: CANNOT DETERMINE - playwright is not installed in this venv", file=sys.stderr)
@@ -158,15 +198,15 @@ def main(argv: list[str]) -> int:
                 raise HarnessError(f"no widget matches {args.only}")
             missing = [w["key"] for w in chosen if not w["fixture"]]
             for widget in chosen:
-                one = run_widget(page, base, widget, args, themes)
+                one = run_widget(page, base, widget, options, themes)
                 bad = sum(1 for r in one if r.findings or r.error)
                 print(f"capture: {widget['key']}: {len(one)} draws, {bad} failing", flush=True)
                 renders.extend(one)
             if args.catalog:
                 print(f"capture: wrote {write_catalog_images(browser, base, chosen, harness_themes[0])} catalog images")
             browser.close()
-    except HarnessError as exc:
-        print(f"capture: CANNOT DETERMINE - {exc}", file=sys.stderr)
+    except (HarnessError, PlaywrightError) as exc:
+        print(f"capture: CANNOT DETERMINE - {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
     finally:
         httpd.shutdown()

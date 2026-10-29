@@ -216,11 +216,6 @@ def _candidate(raw: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def fail_relay(code: str, candidates: Optional[List[Dict[str, Any]]] = None, job_id: Optional[str] = None) -> JoinJob:
-    """The helper could not reach main: ``code`` is one of ``RELAY_FAIL_CODES`` (a look: ``LOOK_FAIL_CODES``). ``several`` (a look: ``found``)
-    ends the job in ``finding`` with ``candidates`` (``{name, fid, fid_short, pack_name}`` in, ``+ label`` out) for the window's pick step. ``job_id``, when given, must be the waiting job's. Raises JoinNotAllowed("no_join_waiting") or ("bad_request").
-
-    Example: ``fail_relay("no_pack")``.
-    """
     job = _job
     if job is None or _pending is None or job.state != "waiting_relay" or (job_id is not None and job_id != job.id):
         raise JoinNotAllowed("no_join_waiting")
@@ -236,7 +231,6 @@ def fail_relay(code: str, candidates: Optional[List[Dict[str, Any]]] = None, job
 
 
 def end_waiting(job: JoinJob, code: str) -> None:
-    """End ``job`` ``failed`` with ``code`` when it still waits for a helper (the server could not start one). Example: ``end_waiting(job, "helper_not_started")``."""
     if _job is job and job.state == "waiting_relay":
         _finish(job, "failed", code)
         log.info("computer_join_failed", code=code)

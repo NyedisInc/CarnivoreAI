@@ -8,7 +8,7 @@
   import { onMount } from 'svelte';
   import type { CellProps } from '../../lib/cell';
   import { atLeast } from '../../lib/states';
-  import { themes, sessions, openThemes } from '../../api';
+  import { themes, openThemes } from '../../api';
   import { tile, tileRows, CHIP_LEFT, CHIP_WIDTH, LINE_LEFT, LINE_HEIGHT, TILES_PER_ROW, buildTiles, visibleTiles, type RenderTile } from './meta';
   import { themesCellView } from './view.svelte';
   import { themeFavorites } from '../../../lib/themes-page/favorites.svelte';
@@ -53,17 +53,18 @@
   const isBig = $derived(phone ? false : atLeast(meta.heightStates, heightState, 'tiles-big'));
 
   const view = $derived(themesCellView.value);
-  const builtTiles = $derived(visibleTiles(themes.data, sessions.data, view, themeFavorites.ids).map(theme => pageTheme ? { ...theme, current: theme.id === pageTheme } : theme));
+  const builtTiles = $derived(visibleTiles(themes.data, pageTheme, view, themeFavorites.ids));
   const tiles = $derived(phone ? [...builtTiles].sort((a, b) => Number(b.current) - Number(a.current)) : builtTiles);
   const current = $derived(tiles.find((t) => t.current));
 
+  /* there is nothing */
   const notice = $derived.by((): string | null => {
     if (themes.status === 'loading') return t('opscenter.themes.loading');
     if (themes.status === 'signed-out') return t('opscenter.themes.signed_out');
     if (themes.status === 'unavailable') return t('opscenter.themes.unavailable');
     if (themes.status === 'error') return themes.error ?? t('opscenter.themes.error');
     if (!tiles.length) {
-      return view === 'favorites' && buildTiles(themes.data, sessions.data).length
+      return view === 'favorites' && buildTiles(themes.data, pageTheme).length
         ? t('themes.cell.no_favorites')
         : t('opscenter.themes.none');
     }
@@ -203,7 +204,6 @@
       min-width: 0;
     }
 
-    /* padding */
     .oc-themes .oc-tile {
       display: block;
       width: auto;

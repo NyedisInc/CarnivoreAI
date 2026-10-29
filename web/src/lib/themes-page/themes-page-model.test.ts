@@ -11,7 +11,7 @@ const ZETA = theme('zeta', { source: 'user', description: 'deep red glow' });
 const LIST = [
     ZETA,
     theme('matrix', { cssVars: { '--ascii-display': 'block' } }),
-    theme('alpha', { author: 'acme' }),
+    theme('alpha', { author: 'alex' }),
 ];
 
 describe('the model', () => {
@@ -29,7 +29,7 @@ describe('the model', () => {
     test('every search word must match somewhere', () => {
         expect(matchesQuery(ZETA, 'red deep')).toBe(true);
         expect(matchesQuery(ZETA, 'red blue')).toBe(false);
-        expect(visibleThemes(LIST, 'all', 'acme', []).map((m) => m.id)).toEqual(['alpha']);
+        expect(visibleThemes(LIST, 'all', 'alex', []).map((m) => m.id)).toEqual(['alpha']);
     });
 
     test('a star on a removed theme is not counted', () => {

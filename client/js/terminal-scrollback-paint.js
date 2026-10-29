@@ -13,7 +13,6 @@ console.log('[TerminalScrollbackPaint Module] Loading...');
         return bytes;
     }
 
-    /* nothing was written */
     async function paint(controller, b64, what, opts) {
         if (controller) global.TerminalReadiness?.recordPrepaint?.(controller, null);
         if (!controller || !controller.term || !b64) return 'nothing';

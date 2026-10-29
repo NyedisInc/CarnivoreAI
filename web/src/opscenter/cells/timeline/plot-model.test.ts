@@ -4,6 +4,7 @@ import type { SessionTimeline } from './types';
 import { clusterMarks, COLUMN_CONTENT_PLOT_PX, COLUMN_MIN_PLOT_PX, frameFor } from './plot-model';
 import { BREAK_PX, buildScale, rulerTicks, spanWords, V_LABEL_PAD_PX, V_LINE_PX } from './scale';
 
+/** The busy fixture, fresh. Output: SessionTimeline. */
 const busy = (): SessionTimeline => structuredClone(Object.values(timelineWidgetFixtures.data).find((v) => (v as SessionTimeline).bars) as SessionTimeline);
 
 describe('frameFor', () => {

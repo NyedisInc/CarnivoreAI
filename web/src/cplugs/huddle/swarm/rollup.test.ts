@@ -22,7 +22,7 @@ beforeAll(() => {
 describe('swarm roll-up', () => {
   const input = (sessions: FloorSession[]): FloorInput => ({
     agents: [agent(1, 'alpha', { thread_key: 'all' }), agent(2, 'project', { project_id: 10, thread_key: '10', state: 'asleep' })],
-    sessions, companies: [{ id: 5, name: 'Nyedis' }], projects: [{ id: 10, name: 'Carnivore', companyId: 5 }, { id: 11, name: 'Orchard', companyId: 5 }],
+    sessions, companies: [{ id: 5, name: 'Nyedis' }], projects: [{ id: 10, name: 'Carnivore', companyId: 5 }, { id: 11, name: 'Argent', companyId: 5 }],
     rowOf: () => undefined, showInactive: true,
   } as unknown as FloorInput);
 

@@ -1,11 +1,3 @@
-"""The one analysis a plan and an apply both stand on (sections 10 and 11).
-
-:func:`analyze` runs the read-only stages in order and each one only adds findings: provenance (who wrote it), the live guard
-(nothing running is touched), the target (project, root, mapping), the rows (every table against the policy), the Claude folder
-names, the files (destination and collision class) and the conversation classes. The result is an :class:`Analysis`. The plan
-(``plan.py``) renders it as the preview and fingerprints it; the apply (``apply.py``) re-runs it, requires the same fingerprint,
-and writes exactly what it describes, so the two can never disagree about what an import does. READ ONLY.
-"""
 
 from __future__ import annotations
 

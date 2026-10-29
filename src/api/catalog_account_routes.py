@@ -108,6 +108,10 @@ async def catalog_account_delete(request: Request, body: CatalogDeleteRequest) -
     """Delete the catalog account: needs a sign in within 15 minutes and the handle typed exactly.
 
     A guest account may delete itself (it confirms with the word ``delete``; the host decides).
+
+    The host answers 200 when the erase finished and 202 when its sweeper will
+    finish it; either way every session is revoked, so this machine forgets its
+    stored sign in.
     """
     answer = await _hosted(
         request, "POST", "/account/delete", json_body=body.model_dump(), bearer=await _bearer(request, allow_guest=True)

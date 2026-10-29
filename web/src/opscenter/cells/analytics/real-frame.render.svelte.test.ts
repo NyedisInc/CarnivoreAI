@@ -9,7 +9,7 @@ vi.mock('../../viz/query-client', () => ({ runQueries: vi.fn(async (items: { met
   metric: item.metric, operation: item.operation, unit: 'tokens', resolution: 'hour',
   series: [{ key: 'all', label: 'all', points: [{ time: '2026-10-01T00:00:00Z', value: 100 }] }],
   summary: { value: 100, samples: 3, contributing_conversations: 4 },
-  ranking: [{ key: 'a', label: 'Carnivore', value: 100 }, { key: 'b', label: 'Harbor', value: 50 }], coverage: { minute_rows: 9 } } }))) }));
+  ranking: [{ key: 'a', label: 'Carnivore', value: 100 }, { key: 'b', label: 'Fleet', value: 50 }], coverage: { minute_rows: 9 } } }))) }));
 vi.mock('../../viz/visible', () => ({ watchVisible: (_node: Element, set: (value: boolean) => void) => { set(true); return () => {}; } }));
 
 import Cell from './Cell.svelte';

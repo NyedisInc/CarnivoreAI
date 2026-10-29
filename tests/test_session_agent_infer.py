@@ -50,7 +50,7 @@ BOTH = wrapper(
     "claude-chrome-skip",
     'command claude --chrome --dangerously-skip-permissions "$@"',
 )
-THIN = wrapper("keyc", 'keyc "$@"')
+THIN = wrapper("cld", 'cld "$@"')
 THIN2 = wrapper("cld2", 'cld2 "$@"')
 
 
@@ -67,7 +67,7 @@ def test_per_run_flags_are_removed_from_both_sides():
 def test_a_wrapper_signature_ignores_flags_that_are_not_claudes():
     real = wrapper(
         "cld-real",
-        "keyc() (\n"
+        "cld() (\n"
         "  security find-generic-password --account foo --wacky-flag\n"
         "  export ANTHROPIC_BASE_URL=https://example.invalid\n"
         '  command claude --dangerously-skip-permissions "$@"\n'

@@ -67,10 +67,10 @@ def test_owned_features_carry_the_owner_link_and_hide_while_the_override_is_off(
 def test_an_install_that_never_wrote_the_switch_follows_its_route(client):
     http, store, state = client
     assert _features(http)[OWNED]["hidden"] is True
-    conn = store.add_connection(preset="ollama", label="llm-b")
-    store.set_feature(OWNED, TargetRef(connection=conn.id, model="m"), expected_revision=store.read().revision)
+    spark = store.add_connection(preset="ollama", label="mini")
+    store.set_feature(OWNED, TargetRef(connection=spark.id, model="m"), expected_revision=store.read().revision)
     row = _features(http)[OWNED]
-    assert row["hidden"] is False and row["target"]["connection"] == conn.id
+    assert row["hidden"] is False and row["target"]["connection"] == spark.id
 
 
 def test_an_owner_whose_switch_cannot_be_read_stays_listed():

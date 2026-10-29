@@ -28,7 +28,7 @@ from src.cplugs.sdk import crate_format as cf
 from tests.python.cplugs.crate.crate_world import env_for, make_world, project_request
 
 FIXTURES_V11 = Path(__file__).resolve().parents[2] / "fixtures" / "crate" / "v1.1"
-V11_SUMS_SHA256 = "4c90584f467f09f69e28f47f091893f1fbabd0c7a6939c84149e53c64adf2fec"
+V11_SUMS_SHA256 = "6bfae4519ac6f689d3f9788da708400740c9fecab0f86e4e1a0723b0a20fac14"
 
 
 def _sha(data: bytes) -> str:

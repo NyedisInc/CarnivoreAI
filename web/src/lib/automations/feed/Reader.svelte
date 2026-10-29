@@ -15,7 +15,7 @@
   import { bytesWords, isLive, reasonWords, runStatusWord, runTime, skipReason, statusWord, type Clock } from '../logic/words';
   import RunSheet, { type SheetRun } from '../report/RunSheet.svelte';
   import { readerFacts, whatRan, type ReaderRun } from './feed-model';
-  import { attachmentHref, cancelRun, carryOn, fixIt, openRunSessions } from './run-actions';
+  import { attachmentHref, cancelRun, carryOn, fixIt, openRunSessions } from '../run-actions';
 
   type Props = {
     run: FeedRun;

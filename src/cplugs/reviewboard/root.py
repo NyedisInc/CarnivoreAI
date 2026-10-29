@@ -56,12 +56,6 @@ def _forbidden(path: Path, state_dir: Optional[Path]) -> bool:
 
 
 def check_root(value: Any, state_dir: Optional[Path] = None) -> Path:
-    """The boards folder, or a refusal naming why it cannot be used.
-
-    Inputs: value (the ``boardsRoot`` setting, any type); state_dir (Path | None) - the app state directory, which may not hold boards.
-    Output: Path (absolute, real). Raises: NoRoot (``reason`` one of :data:`REASONS`).
-    Example: check_root("/Users/me/worktrees/cloudecode/boards/design/boards")
-    """
     def refuse(reason: str) -> NoRoot:
         return NoRoot(reason, REASONS[reason])
 
@@ -123,5 +117,4 @@ def root_status(value: Any, state_dir: Path) -> RootStatus:
 
 
 def state_dir_of(storage_folder: Path) -> Path:
-    """The app state directory above a plugin's folder (``<state_dir>/cplugs/<id>``). Input: storage_folder (Path). Output: Path."""
     return Path(storage_folder).parent.parent

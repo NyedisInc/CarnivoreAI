@@ -13,6 +13,7 @@ from src.core.workspace_settings import (
 from src.models import ConfigSettingsUpdateRequest
 
 from src.api.auth import require_auth
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -41,11 +42,7 @@ async def get_settings():
             detail="Configuration not found. Run setup_auth.py first."
         )
     except Exception as e:
-        logger.error("settings_summary_error", error=str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve settings: {str(e)}"
-        )
+        raise api_error(500, "settings_read_failed", None, error_type=type(e).__name__) from e
 
 
 @router.patch("/config/settings", dependencies=[Depends(require_auth)])
@@ -98,7 +95,7 @@ async def update_settings(body: ConfigSettingsUpdateRequest):
                 workspace_update["env"] = env_map
         except WorkspaceValidationError as e:
             logger.info("workspace_settings_rejected", reason=str(e))
-            raise HTTPException(status_code=400, detail=str(e))
+            raise api_error(400, "settings_invalid", e, step="update_settings") from e
 
     server_prefs_update: dict = {}
     if body.server_prefs is not None:
@@ -120,7 +117,7 @@ async def update_settings(body: ConfigSettingsUpdateRequest):
                 )
         except WorkspaceValidationError as e:
             logger.info("server_prefs_rejected", reason=str(e))
-            raise HTTPException(status_code=400, detail=str(e))
+            raise api_error(400, "settings_invalid", e, step="update_settings") from e
 
     logger.info(
         "settings_update_requested",
@@ -143,11 +140,7 @@ async def update_settings(body: ConfigSettingsUpdateRequest):
             detail="Configuration not found. Run setup_auth.py first."
         )
     except ValueError as e:
-        logger.error("settings_update_validation_error", error=str(e))
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning("settings_update_validation_error", error=str(e))
+        raise api_error(400, "settings_invalid", e, step="update_settings") from e
     except Exception as e:
-        logger.error("settings_update_error", error=str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to update settings: {str(e)}"
-        )
+        raise api_error(500, "settings_write_failed", None, error_type=type(e).__name__) from e

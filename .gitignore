@@ -55,6 +55,7 @@ unread_state.json
 /claude-projects/
 
 .cloude_uploads/
+.carnivore_uploads/
 
 refresh_tokens.db
 
@@ -93,14 +94,18 @@ troubleshooting/
 CLAUDE.local.md
 
 scripts/codemirror-vendor/node_modules
+scripts/codemirror-vendor/node_modules.nosync/
 scripts/codemirror-vendor/package-lock.json
 
 .update-check.json
 
 macOS/dist
+macOS/dist.nosync/
 macOS/node_modules
+macOS/node_modules.nosync/
 
 /build
+/build.nosync/
 
 *.nobackup
 *.nobackup-shm
@@ -118,6 +123,7 @@ scripts/verify/.terminal-opacity-shots/
 !.claude/commands/
 
 web/node_modules
+web/node_modules.nosync/
 
 !client/dist/
 
@@ -132,49 +138,3 @@ client/widget-harness-build/
 ios/Carnivore.xcodeproj/
 ios/build/
 ios/DerivedData/
-
-.credentials.json
-.dockercfg
-.git-credentials
-.htpasswd
-.my.cnf
-.netrc
-.npmrc
-.pgpass
-.pypirc
-_netrc
-credentials
-credentials.json
-kubeconfig
-secrets.json
-secrets.yaml
-secrets.yml
-service-account.json
-service_account.json
-terraform.tfstate
-authkey_*
-id_dsa*
-id_ecdsa*
-id_ed25519*
-id_rsa*
-service-account*
-service_account*
-serviceaccount*
-*.asc
-*.gpg
-*.jks
-*.kdbx
-*.key
-*.keystore
-*.mobileprovision
-*.p12
-*.p8
-*.pem
-*.pfx
-*.ppk
-*.tfvars
-*.tfvars.json
-.aws/
-.gnupg/
-.kube/
-.ssh/

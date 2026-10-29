@@ -1,4 +1,3 @@
-/* --color- */
 
 export interface ThemeChoice {
   id: string;

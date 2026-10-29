@@ -142,10 +142,6 @@ async def _build_company(name: str) -> Optional[int]:
 
 
 async def _build_project(name: str, company_id: int) -> Tuple[int, bool]:
-    """Phase one for a project: folder, ``git init`` and the project row filed under the company (or the existing project's id).
-
-    Output: ``(project id, created)``; ``created`` is True only when this call made the folder (an adopted project is False).
-    """
     def existing(conn: sqlite3.Connection) -> Optional[int]:
         why = _problem(conn, "project", name, company_id)
         if why:

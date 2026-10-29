@@ -192,11 +192,11 @@ def test_a_session_never_forked_from_has_no_children(conn):
 def test_the_fork_tmux_name_passes_the_client_router():
     import re
 
-    from src.core.session_label import sanitize_tmux_name
+    from src.core.session_name_claim import sanitize_tmux_name
 
-    router_rx = re.compile(r"^[A-Za-z0-9_\- ]+$")
+    router_rx = re.compile(r"^(?!\.{1,2}$)[^/\\\x00-\x1f\x7f-\x9f]+$")
 
-    for parent in ("Labbench-4", "Image Tool", "a"):
+    for parent in ("ScratchLab-4", "Media Compression", "a"):
         label = fork_label(parent)
         assert "(fork)" in label, "the human label must keep its marker"
         safe = sanitize_tmux_name(label)
@@ -209,9 +209,9 @@ def test_the_fork_tmux_name_passes_the_client_router():
 def test_a_fork_of_a_fork_is_still_router_safe():
     import re
 
-    from src.core.session_label import sanitize_tmux_name
+    from src.core.session_name_claim import sanitize_tmux_name
 
-    router_rx = re.compile(r"^[A-Za-z0-9_\- ]+$")
+    router_rx = re.compile(r"^(?!\.{1,2}$)[^/\\\x00-\x1f\x7f-\x9f]+$")
     label = fork_label(fork_label(fork_label("work")))
     assert label == "work(fork)(fork)(fork)"
     assert router_rx.match(sanitize_tmux_name(label))
@@ -241,10 +241,10 @@ def test_the_route_uses_the_filtered_name_not_the_label():
 
 
 def test_the_fork_label_uses_the_display_name_not_the_tmux_handle(conn):
-    _insert(conn, "p", name="cloude_Labbench-4", epoch=1000, claude_uuid="c1")
-    src = resolve_fork_source(conn, socket=SOCKET, tmux_name="cloude_Labbench-4")
-    assert src.label == "Labbench-4", f"label leaked the prefix: {src.label!r}"
-    assert fork_label(src.label) == "Labbench-4(fork)"
+    _insert(conn, "p", name="cloude_ScratchLab-4", epoch=1000, claude_uuid="c1")
+    src = resolve_fork_source(conn, socket=SOCKET, tmux_name="cloude_ScratchLab-4")
+    assert src.label == "ScratchLab-4", f"label leaked the prefix: {src.label!r}"
+    assert fork_label(src.label) == "ScratchLab-4(fork)"
 
 
 def test_an_explicit_title_still_wins_over_the_derived_name(conn):

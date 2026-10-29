@@ -7,7 +7,7 @@ import { openMigrate } from '../pack-migrate/migrate-store.svelte';
 import { runPackFlow } from './pack-flow';
 import { isPackBusy } from './pack-model';
 import { MAX_PAGES, overviewQuery, projectQuery } from './history-query';
-import { SET_COLOR, SET_COMPANY, companyKeyOf, findSession, type PrimaryId } from './ledger-model';
+import { SET_COLOR, SET_COMPANY, SWARM_NEW_SESSIONS, companyKeyOf, findSession, type PrimaryId } from './ledger-model';
 import {
     ORPHANED,
     PROJECTS_HOME,
@@ -22,7 +22,6 @@ export interface ControllerDeps {
     readonly t: Translate;
     readonly embedded: boolean;
     readonly close: () => void;
-    /*  hidden  */
     readonly pickImage?: () => Promise<File | null>;
     readonly onChanged?: () => void;
 }
@@ -62,6 +61,7 @@ export class ProjectsController {
 
     readonly #deps: ControllerDeps;
     #ticket = 0;
+    readonly #followers = new Map<string, () => void>();
     #peers: { groups: HistoryGroup[]; unavailable: string[] } = { groups: [], unavailable: [] };
     #drawerPushed = false;
 
@@ -273,6 +273,7 @@ export class ProjectsController {
         this.go({ view, company, project, session: null });
     }
 
+    /* start a session */
     create(kind: 'session' | 'project'): void {
         const { api, t } = this.#deps;
         const started = kind === 'session' ? api.createSession?.() : api.createProject?.();
@@ -319,6 +320,12 @@ export class ProjectsController {
                         this.projectBusy = false;
                     }
                 })();
+                return;
+            }
+            case SWARM_NEW_SESSIONS: {
+                const write = api.setNewSessionsJoin;
+                const projectId = project.id;
+                if (write && projectId !== null) void run(() => write(projectId, project.new_sessions_join_swarm !== true));
                 return;
             }
             case 'copy-path':
@@ -429,9 +436,29 @@ export class ProjectsController {
     }
 
     #followSwarm(name: string): void {
-        const busy = (): boolean => [...this.overview, ...(this.project ? [this.project] : [])]
-            .some((g) => g.project?.name === name && isPackBusy(g.project.storage));
-        const stop = resourcePush().pushOrPoll(() => void this.load().then(() => { if (!busy()) stop(); }), PACK_POLL_MS, ['projects']);
+        this.#stopFollower(name);
+        const stop = resourcePush().pushOrPoll(() => void this.#followTick(name), PACK_POLL_MS, ['projects']);
+        this.#followers.set(name, stop);
+    }
+
+    async #followTick(name: string): Promise<void> {
+        await this.load();
+        if (!(await this.#isPackRunning(name))) this.#stopFollower(name);
+    }
+
+    async #isPackRunning(name: string): Promise<boolean> {
+        try {
+            const page = await this.#deps.api.list(projectQuery(name));
+            return page.groups.some((g) => g.project?.name === name && isPackBusy(g.project.storage));
+        } catch (error) {
+            console.warn('ProjectsController: could not read the pack job of', name, error);
+            return true;
+        }
+    }
+
+    #stopFollower(name: string): void {
+        this.#followers.get(name)?.();
+        this.#followers.delete(name);
     }
 
     async #deleteProject(name: string, key: string): Promise<void> {
@@ -515,5 +542,6 @@ export class ProjectsController {
 
     stop(): void {
         this.#ticket += 1;
+        for (const name of [...this.#followers.keys()]) this.#stopFollower(name);
     }
 }

@@ -1,11 +1,3 @@
-"""
-  GET /lineage/{node_type}/{node_id}    parents, children, siblings, subagents and milestones of a node
-
-``node_type`` is ``session`` (a ``session_uuid``), ``conversation`` (a conversation id) or ``subagent``
-(``<conversation id>/<file stem>``). Siblings are derived: the other children of the same parent through the same
-kind (five sessions forked from one conversation are each other's siblings). Docs: ``docs/conversation-index.md``,
-"Lineage and milestones".
-"""
 
 from __future__ import annotations
 
@@ -22,6 +14,7 @@ from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.flow_data import spawn_links
 from src.core.lineage import constants as K
 from src.core.lineage import graph, milestones, timeline, view
+from src.api.error_response import api_error
 
 router = APIRouter(tags=["lineage"], dependencies=[Depends(require_auth)])
 
@@ -112,7 +105,7 @@ def _build(node_type: str, node_id: str) -> Optional[Dict[str, Any]]:
                 found["spawn_children"] = spawn_links.children_of(parent_uuid=node_id, conn=conn)
             return found
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc, step="_build") from exc
 
 
 @router.get("/lineage/{node_type}/{node_id:path}", response_model=Neighbourhood)

@@ -1,4 +1,4 @@
-/*  hidden  */
+/* the newest match */
 import type { TermLike } from './types';
 
 export const QUIET_MS = 400;

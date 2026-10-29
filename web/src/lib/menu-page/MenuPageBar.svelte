@@ -1,8 +1,8 @@
-<!-- hidden  box-shadow -->
+
 <script lang="ts">
     import { t as reactiveT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
-    import Icon from '../../opscenter/ui/Icon.svelte';
+    import IconButton from '../base/IconButton.svelte';
     import { viewport } from '../../opscenter/engine/viewport.svelte';
     import { closeMenuPageGuarded } from './menu-page-shell.svelte';
 
@@ -19,17 +19,12 @@
 
 <div class="menu-page-bar" data-oc-base>
   {#if viewport.narrow}
-    <button
-        type="button"
-        class="menu-page-bar__claw menu-page-bar__back"
-        aria-label={t('opscenter.components.back')}
-        onclick={() => void closeMenuPageGuarded()}
-    >
-        <Icon name="arrow-left" size={20} strokeWidth={2} />
-    </button>
+    <IconButton label={t('opscenter.components.back')} variant="quiet" icon="arrow-left" iconSize={20} data-menu-page-back
+        onclick={() => void closeMenuPageGuarded()} />
   {:else}
     <button
         type="button"
+        data-base-exempt="the brand mark is the button: a picture, not a labelled control"
         class="menu-page-bar__claw"
         aria-label={t('drawer.rail.open')}
         title={t('drawer.rail.open')}
@@ -67,22 +62,6 @@
         border: var(--oc-border, 1px) solid transparent;
         border-radius: var(--oc-radius);
         cursor: pointer;
-    }
-
-    .menu-page-bar__back {
-        position: relative;
-        color: var(--oc-text-secondary);
-    }
-
-    .menu-page-bar__back::after {
-        content: '';
-        position: absolute;
-        inset: -2px;
-    }
-
-    .menu-page-bar__back:hover,
-    .menu-page-bar__back:focus-visible {
-        color: var(--oc-text-primary);
     }
 
     .menu-page-bar__claw img {

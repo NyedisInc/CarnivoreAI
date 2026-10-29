@@ -1,11 +1,3 @@
-"""The skills bundle: a stdlib gzip tar of whole skills plus one ``files.json``. Built by alpha, read and verified by a receiver.
-
-Members are ``<family>/<name>/<relative path>`` (regular files and directories only, normalised modes, no owner, no time) and
-``files.json`` (``{"v": 1, "skills": {"<family>/<name>": [{path, size, mode, sha256}]}}``). :func:`read_bundle` refuses, before
-writing a byte, any member that is not a regular file or directory, any name or path failing :mod:`rules`, any member not in
-``files.json`` and any count or size over the limits; it then extracts with ``filter="data"`` into a private staging folder and
-re-hashes every file. Nothing on the wire carries an absolute path.
-"""
 
 from __future__ import annotations
 
@@ -47,12 +39,6 @@ class Bundle:
 
 
 def build_bundle(out: Path, items: Iterable[tuple[str, str, Path, Sequence[FileEntry]]]) -> None:
-    """Write a bundle of whole skills to ``out``.
-
-    Inputs: out (Path) - the archive to create; items - ``(family, name, skill folder, scanned file entries)`` per skill.
-    Raises: OSError on a read or write failure; BundleError when a file is not a regular file any more.
-    Example: build_bundle(tmp / "b.tgz", [("claude", "sme", root / "sme", scan.skills["sme"].files)])
-    """
     listing = {f"{fam}/{name}": [{"path": e.path, "size": e.size, "mode": e.mode, "sha256": e.sha256} for e in files]
                for fam, name, _dir, files in items}
     manifest = json.dumps({"v": 1, "skills": listing}, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -164,7 +150,6 @@ def read_bundle(path: Path, staging: Path) -> Bundle:
 
 
 def _verify_file(path: Path, entry: FileEntry) -> None:
-    """The extracted file is a regular file of the listed size and sha256. Raises BundleError ``hash_mismatch``."""
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
         with os.fdopen(fd, "rb") as handle:

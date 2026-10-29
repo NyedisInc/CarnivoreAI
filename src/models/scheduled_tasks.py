@@ -1,12 +1,3 @@
-"""App-level scheduled tasks, as ``GET /scheduled-tasks`` answers (issue #893).
-
-NOTHING GUESSED ON THE WIRE. ``schedule`` is only ever what the task's
-own frontmatter records (``schedule_source: frontmatter``); otherwise it
-is null with ``schedule_source: not_recorded``, and ``next_run_at`` is
-null because nothing on disk here records one. ``last_run_at`` and
-``runs_recorded`` come from the scheduler's own enqueue record at the head
-of each run's transcript. Text is redacted and truncated. No path.
-"""
 
 from __future__ import annotations
 

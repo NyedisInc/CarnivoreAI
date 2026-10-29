@@ -1,4 +1,9 @@
 <h2 class="sg-h2">base: one scale, one component set, every theme</h2>
+<p class="sg-lead">The design base is one geometry and one component set that every theme extends with color only
+(issue #2033, phase 2 of #1103). This first slice is additive: the tokens below exist in
+<code>web/src/opscenter/tokens.css</code>, no app screen reads them yet, and nothing in the app moved. Every value is the
+one the app already uses most, so moving a screen onto the base is a rename. Pick a theme at the top to repaint this
+section; the last specimen shows every shipped theme side by side.</p>
 
 <h3 class="sg-h3" id="base-space">spacing</h3>
 <div class="sg-specimen">
@@ -205,7 +210,7 @@ judged before the shared class lands in the next slice.</p>
                 <div class="sg-draft-card__body">a plain card: raised surface, surface edge, panel corner.</div>
             </div>
             <div class="sg-draft-card sg-draft-card--selected">
-                <div class="sg-draft-card__head"><span class="sg-draft-card__title">orchard</span><span class="sg-draft-card__meta">selected</span></div>
+                <div class="sg-draft-card__head"><span class="sg-draft-card__title">argent</span><span class="sg-draft-card__meta">selected</span></div>
                 <div class="sg-draft-card__body">a selected card: the selected state layer and an accent hairline.</div>
             </div>
             <div class="sg-draft-card">
@@ -250,4 +255,8 @@ judged before the shared class lands in the next slice.</p>
     <dd>A theme owns its grounds, ink, accent, status hues, font family and (clamped) corners. The base owns spacing,
         type sizes, heights, borders, depth, motion and stacking. Every surface above is derived from the theme's page
         ground and ink, so a theme that sets two colors still gets five distinct surfaces.</dd>
+    <dt>decisions taken without a ruling yet</dt>
+    <dd>Alex has not ruled on #2033, so this slice follows the plan's recommendations: the 2px and 6px steps (decision
+        2), a 2px control corner and 4px panel corner as defaults (3, not yet applied to any control), the control line
+        at 3:1 (6), clamped theme corners (7) and a 32px default control (10).</dd>
 </dl>

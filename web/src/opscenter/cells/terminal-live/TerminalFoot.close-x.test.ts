@@ -33,7 +33,7 @@ afterEach(async () => {
   document.body.replaceChildren();
   delete (globalThis as { TerminalLayout?: unknown }).TerminalLayout;
   requestFit.mockReset();
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom always has storage */ }
 });
 
 function setup(width = 1440): HTMLElement {

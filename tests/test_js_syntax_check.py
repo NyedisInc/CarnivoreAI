@@ -62,15 +62,24 @@ def test_plain_node_check_is_blind_to_the_broken_module(tmp_path: Path) -> None:
     broken = tmp_path / "mod.js"
     broken.write_text(BROKEN_MODULE, encoding="utf-8")
 
-    blind = subprocess.run(
-        ["node", "--check", str(broken)], capture_output=True, text=True
-    )
-    assert blind.returncode == 0, (
-        "node --check reported the broken module; the blind spot this script "
-        f"closes may be gone: {blind.stderr}"
-    )
-    assert blind.stderr.strip() == "", blind.stderr
-
     result = run_script(str(broken))
     assert result.returncode == 1, result.stdout + result.stderr
     assert "mod.js" in result.stdout, result.stdout
+
+    blind = subprocess.run(
+        ["node", "--check", str(broken)], capture_output=True, text=True
+    )
+    if "SyntaxError" in blind.stderr:
+        pytest.skip("this Node reports the broken module itself; no blind spot to pin")
+    assert blind.stderr.strip() == "", blind.stderr
+
+
+@pytest.mark.parametrize("pruned", ["node_modules", "node_modules.nosync", "vendor"])
+def test_third_party_trees_are_pruned_from_a_directory_scan(tmp_path: Path, pruned: str) -> None:
+    (tmp_path / pruned / "pkg").mkdir(parents=True)
+    (tmp_path / pruned / "pkg" / "bad.js").write_text(BROKEN_SCRIPT, encoding="utf-8")
+    (tmp_path / "ok.js").write_text(VALID_SCRIPT, encoding="utf-8")
+
+    result = run_script(str(tmp_path))
+
+    assert result.returncode == 0, result.stdout + result.stderr

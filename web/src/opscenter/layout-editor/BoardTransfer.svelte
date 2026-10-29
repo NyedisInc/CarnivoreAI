@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '../../lib/base/Button.svelte';
   import { t } from '../../lib/i18n/index.svelte';
   import { MAX_BOARDS } from '../engine/home-boards';
   import { homeBoards } from '../engine/home-sync.svelte';
@@ -45,17 +46,16 @@
   }
 </script>
 
-<button type="button" class="oc-btn oc-btn--sm" data-board-import disabled={full || busy} title={full ? t('opscenter.boards.full', { max: MAX_BOARDS }) : ''} onclick={() => input?.click()}
-  >{t('opscenter.boards.import')}</button
->
+<Button size="sm" data-board-import disabled={full || busy} title={full ? t('opscenter.boards.full', { max: MAX_BOARDS }) : ''} onclick={() => input?.click()}
+  >{t('opscenter.boards.import')}</Button>
 <input bind:this={input} class="bt-file" type="file" accept=".json,application/json" aria-label={t('opscenter.boards.import_file')} data-board-import-file onchange={onPick} />
 
 {#if pending}
   <div class="bt-panel" data-board-import-preview>
     <p class="oc-notice">{t('opscenter.boards.import_will_add', { name: pending.preview.name, count: pending.preview.widgets.length })}</p>
     <div class="bt-row">
-      <button type="button" class="modal-btn modal-btn-secondary" onclick={() => (pending = null)}>{t('opscenter.boards.import_cancel')}</button>
-      <button type="button" class="modal-btn modal-btn-confirm" data-board-import-confirm disabled={busy} onclick={confirm}>{t('opscenter.boards.import_go')}</button>
+      <Button onclick={() => (pending = null)}>{t('opscenter.boards.import_cancel')}</Button>
+      <Button variant="confirm" data-board-import-confirm disabled={busy} onclick={confirm}>{t('opscenter.boards.import_go')}</Button>
     </div>
   </div>
 {/if}
@@ -85,7 +85,7 @@
   }
   }
 
-  .bt-row :global(.modal-btn) {
+  .bt-row :global([data-btn]) {
     flex: 1 1 0;
     min-height: var(--oc-space-6);
     padding: 0 var(--oc-space-3);

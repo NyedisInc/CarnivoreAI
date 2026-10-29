@@ -27,7 +27,14 @@
     "notepad",
     "markdown"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "A session terminal with the markdown notes drawer open on the right",
+      "caption": "The notes drawer beside a session",
+      "file": "drawer.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Session notes",
   "since": "2026-09-20",
   "status": "stable",
@@ -41,6 +48,5 @@
   "where": [
     "Open a session, then the notes icon in the terminal cell's title strip (in its three-dot menu when the strip is too narrow).",
     "The edit | preview toggle and the save disk sit at the right end of the notes title row, in the grid and in the notes drawer."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

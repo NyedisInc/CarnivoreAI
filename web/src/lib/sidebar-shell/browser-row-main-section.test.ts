@@ -9,6 +9,12 @@ import { rowMenuBridge } from '../item-menu/row-bridge';
 import { buildRowPlan } from './row-plan';
 import { activateRow, paintSelection } from './row-activate';
 import { onRowKeydown } from './row-reorder';
+import * as BrowserRows from '../drawer/browser-rows';
+
+vi.mock('../drawer/browser-rows', async (orig) => {
+    const real = await orig<typeof import('../drawer/browser-rows')>();
+    return { ...real, onKeyClick: vi.fn(real.onKeyClick) };
+});
 
 let w: LegacyWindow;
 const PAGE = 'browser:fedcba9876543210';
@@ -58,7 +64,7 @@ describe('the row icons', () => {
             browsers: { list: () => [], pages: () => [], popOut: async (id: string) => { calls.push(`popOut ${id}`); return true; } },
         };
         const page = draw(browserRow(PAGE, true));
-        await w.SessionSidebarBrowsers.onKeyClick(page.el.querySelector('[data-browser-row-action="popout"]'));
+        await BrowserRows.onKeyClick(page.el.querySelector('[data-browser-row-action="popout"]')!);
         page.stop();
         expect(calls).toEqual([`popOut ${PAGE.slice(8)}`]);
     });
@@ -142,11 +148,11 @@ describe('shift turns the kebab into a red close x (#1697)', () => {
             const page = draw(browserRow(PAGE, true));
             const browser = draw(browserRow(BROWSER, false));
             shift(true);
-            await w.SessionSidebarBrowsers.onKeyClick(closeKey(page.el));
+            await BrowserRows.onKeyClick(closeKey(page.el)!);
             expect(calls).toEqual([`close ${PAGE.slice(8)}`]);
             expect(confirms).toEqual([]);
 
-            await w.SessionSidebarBrowsers.onKeyClick(closeKey(browser.el));
+            await BrowserRows.onKeyClick(closeKey(browser.el)!);
             page.stop();
             browser.stop();
             expect(confirms).toEqual(['close this proxy browser? x']);
@@ -182,10 +188,9 @@ describe('the red close x from the keyboard (#1697)', () => {
     }
 
     it('shift with enter, space or delete on the focused row presses the x and never opens the row', () => {
-        const bridge = w.SessionSidebarBrowsers as Record<string, any>;
-        const real = bridge.onKeyClick;
         const pressed: (string | null)[] = [];
-        bridge.onKeyClick = (el: Element) => { pressed.push(el.getAttribute('data-browser-row-action')); return Promise.resolve(); };
+        const realOnKeyClick = vi.mocked(BrowserRows.onKeyClick).getMockImplementation()!;
+        vi.mocked(BrowserRows.onKeyClick).mockImplementation((el: Element) => { pressed.push(el.getAttribute('data-browser-row-action')); return Promise.resolve(); });
         try {
             const { el, stop } = draw(browserRow(PAGE, true));
             const reads = recordingDrawer();
@@ -205,7 +210,7 @@ describe('the red close x from the keyboard (#1697)', () => {
             expect(reads.length).toBeGreaterThan(0);
             stop();
         } finally {
-            bridge.onKeyClick = real;
+            vi.mocked(BrowserRows.onKeyClick).mockImplementation(realOnKeyClick);
         }
     });
 });

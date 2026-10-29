@@ -1,4 +1,3 @@
-/* the viewer page */
 import { ApiError } from '../sdk';
 import { draftApi, refusalText } from './lab-api';
 import { HOST_FILES, needsWatching, NO_DRAFTS, withHost, type DraftRequest, type DraftsState, type DraftSummary } from './drafts-model';

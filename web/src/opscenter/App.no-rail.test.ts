@@ -17,6 +17,7 @@ afterEach(async () => {
   document.body.replaceChildren();
 });
 
+/* the home screen */
 function renderAt(width: number): HTMLElement {
   viewport.wide = width >= 1024;
   viewport.phone = width < 701;

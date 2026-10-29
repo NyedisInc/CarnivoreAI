@@ -1,4 +1,3 @@
-/*  hidden  <button> */
 
 console.log('[ConfigEditorNewFile Module] Loading...');
 
@@ -67,6 +66,17 @@ console.log('[ConfigEditorNewFile Module] Loading...');
             const rootSelect = overlayEl.querySelector('#config-editor-new-root');
             const createBtn = overlayEl.querySelector('#config-editor-new-create');
 
+            /* the same words */
+            const confirmGated = (acknowledge, rel) => window.App.showConfirmModal(
+                acknowledge === 'executable' ? 'create executable file?' : 'create credentials file?',
+                acknowledge === 'executable'
+                    ? `"${rel}" is code claude code runs automatically.`
+                    : `"${rel}" looks like credentials, a secret, or a private key.`,
+                'it is created empty and you can edit it afterwards.',
+                'create',
+                'cancel'
+            );
+
             const submit = async () => {
                 const root = rootSelect.value;
                 const path = (pathInput.value || '').trim();
@@ -75,13 +85,21 @@ console.log('[ConfigEditorNewFile Module] Loading...');
                     return;
                 }
                 createBtn.disabled = true;
+                const body = { root, path, content: '', project_path: root === 'user' ? null : projectPath };
                 try {
-                    await window.API.createConfigFile({
-                        root,
-                        path,
-                        content: '',
-                        project_path: root === 'user' ? null : projectPath,
-                    });
+                    try {
+                        await window.API.createConfigFile(body);
+                    } catch (err) {
+                        const detail = err && err.detail;
+                        if (!detail || detail.code !== 'confirmation_required') throw err;
+                        if (!(await confirmGated(detail.acknowledge, path))) {
+                            createBtn.disabled = false;
+                            return;
+                        }
+                        await window.API.createConfigFile(
+                            Object.assign({}, body, { ['acknowledge_' + detail.acknowledge]: true })
+                        );
+                    }
                     finish({ root, path });
                 } catch (err) {
                     showError(err.message || String(err));

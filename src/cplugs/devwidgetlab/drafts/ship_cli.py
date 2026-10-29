@@ -1,13 +1,3 @@
-"""Ship a Widget Lab draft into this checkout: the dry run by default (it lives inside the plugin, so the plugin's folder stays self-contained), the move with ``--apply``.
-
-Usage (from the repo root of a source checkout; ``--repo`` names the checkout the draft was built from, which the Lab's ship plan prints):
-  venv/bin/python3 -m src.cplugs.devwidgetlab.drafts.ship_cli --draft <path to the draft folder> --repo <checkout>            # dry run: prints the plan, writes nothing
-  venv/bin/python3 -m src.cplugs.devwidgetlab.drafts.ship_cli --draft <path to the draft folder> --repo <checkout> --apply    # new worktree and branch, copies, appends, commit, folder to ~/.Trash
-      [--keep]    leave the folder where it is
-      [--worktrees <folder>]    where the worktree goes
-
-Exit 0: the plan is clean (and, with --apply, done). Exit 1: the plan has problems (nothing was written). Exit 2: the draft could not be read.
-"""
 
 from __future__ import annotations
 
@@ -30,7 +20,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--apply", action="store_true", help="do it (default: print the plan only)")
     parser.add_argument("--keep", action="store_true", help="with --apply, leave the draft folder in place")
     parser.add_argument("--repo", default=str(REPO), help="the checkout root (default: this one)")
-    parser.add_argument("--worktrees", default=None, help="the folder the throwaway worktree goes under (default worktrees/<repo folder>)")
+    parser.add_argument("--worktrees", default=None, help="the folder the throwaway worktree goes under (default ~/dev-worktrees/<repo folder>)")
     parser.add_argument("--trash", default=str(Path.home() / ".Trash"), help="where the folder goes (default ~/.Trash)")
     args = parser.parse_args(argv)
     folder = Path(args.draft).resolve()

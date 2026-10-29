@@ -46,6 +46,8 @@ const block = (revision, values) => ({
     status: 'unchanged', schema_version: 1, revision, values,
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('applying a received change generates no outgoing save', async () => {
     const prefs = loadModule();
@@ -83,6 +85,8 @@ test('a browser ignores the event raised by its own write', async () => {
     assert.equal(prefs.revision(), 0);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('with the read failing, no write is ever sent', async () => {
     const prefs = loadModule();
@@ -117,6 +121,8 @@ test('a failed read reports no value, so a control keeps its own default', async
     assert.equal(prefs.get('theme'), undefined);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the same event twice applies once', async () => {
     const prefs = loadModule();
@@ -174,6 +180,8 @@ test('a frame with no usable revision is ignored', async () => {
     assert.equal(prefs.get('theme'), undefined);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('a deliberate choice applies locally and reports itself pending', async () => {
     const prefs = loadModule();
@@ -286,6 +294,8 @@ test('a received change for a field with an unsaved edit becomes a conflict', as
     assert.equal(prefs.committedValue('theme'), 'from-another-device');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('a re-read that left before a save and lands after it is dropped', async () => {
     const prefs = loadModule();
@@ -440,6 +450,8 @@ test('unsubscribing stops the listener', async () => {
     assert.equal(calls, 1);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('hydrate and set with no argument go through the page API client', async () => {
     const prefs = loadModule();
@@ -489,6 +501,8 @@ test('app.js hands the page API client to Preferences.hydrate', () => {
         'the authenticated bring-up no longer hydrates preferences');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('setMany sends one PATCH with both fields and one revision', async () => {
     const prefs = loadModule();

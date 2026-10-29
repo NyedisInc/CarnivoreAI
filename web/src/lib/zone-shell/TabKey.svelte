@@ -375,7 +375,6 @@
       --oc-ibtn-size: 36px;
     }
 
-    /* padding */
     .oc-topbar-brand {
       position: relative;
       display: inline-flex;

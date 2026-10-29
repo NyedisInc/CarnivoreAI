@@ -86,7 +86,8 @@ export function terminalRows<T extends BucketRow>(rows: readonly T[]): T[] {
 
 export function isListedSession(row: BucketRow): boolean {
     const kind = kindOf(row);
-    return (kind === KIND_AGENT || kind === KIND_TERMINAL) && row.archived !== true && typeof row.swarm_agent_id !== 'number';
+    const ghost = typeof row.swarm_agent_id === 'number' && typeof row.name === 'string' && row.name.startsWith('swarm-agent:');
+    return (kind === KIND_AGENT || kind === KIND_TERMINAL) && row.archived !== true && !ghost;
 }
 
 export function filterAwakeSleeping<T extends BucketRow>(rows: readonly T[], open: boolean, sleeping: boolean): T[] {
@@ -206,7 +207,6 @@ export function filteredProjectBuckets<T extends BucketRow>(
         .filter((b) => b.rows.length > 0);
 }
 
-/*  hidden  */
 export function keepBandSection(key: string, rows: readonly unknown[], dragging: boolean, _q: string): boolean {
     void key;
     return rows.length > 0 || dragging;

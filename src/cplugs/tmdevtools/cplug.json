@@ -5,43 +5,23 @@
   "description_key": "cplug.tmdevtools.description",
   "version": "0.1.0",
   "icon": "plug",
-  "author": "Carnivore contributors",
+  "author": "Carnivore",
   "min_app_version": "1.16.1",
   "tier": "dev",
   "default_enabled": false,
-  "requires": [
-    "huddle"
-  ],
+  "requires": ["huddle"],
   "tool_family": "task_manager",
   "permissions": {
-    "app": [
-      "agent_writes"
-    ]
+    "app": ["agent_writes"]
   },
   "surfaces": {
     "routes": true,
-    "mcp_tools": [
-      "task_manager_dev_scroll_set",
-      "task_manager_dev_fold_set",
-      "task_manager_dev_tasks_list"
-    ],
-    "topics": [
-      "command"
-    ]
+    "mcp_tools": ["task_manager_dev_scroll_set", "task_manager_dev_fold_set", "task_manager_dev_tasks_list"],
+    "topics": ["command"]
   },
   "owns": {
-    "routes": [
-      "/commands",
-      "/fold",
-      "/scroll-top",
-      "/tasks"
-    ],
-    "strings": [
-      "cplug.tmdevtools."
-    ],
-    "tests": [
-      "tests/python/cplugs/tmdevtools/",
-      "web/src/cplugs/tmdevtools/"
-    ]
+    "routes": ["/commands", "/fold", "/scroll-top", "/tasks"],
+    "strings": ["cplug.tmdevtools."],
+    "tests": ["tests/python/cplugs/tmdevtools/", "web/src/cplugs/tmdevtools/"]
   }
 }

@@ -23,6 +23,7 @@ def _resolve(name: str):
 
 @router.put("/sessions/{session_name}/active", dependencies=[Depends(require_peer_sessions)])
 async def renew_session_lease(session_name: str) -> Dict[str, int]:
+    """Hold this Mac's session awake for the next lease window. Raises 404 (no such session), 503 (datastore)."""
     try:
         session_uuid = await run_in_threadpool(_resolve, session_name)
     except (DatastoreUnreadableError, OSError):

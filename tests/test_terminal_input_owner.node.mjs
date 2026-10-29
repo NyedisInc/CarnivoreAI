@@ -1,3 +1,4 @@
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,6 +13,7 @@ const OWN_SRC = read('client/js/terminal-input-ownership.js');
 const FACTORY_SRC = read('client/js/terminal-client-factory.js');
 const TERM_SRC = read('client/js/terminal.js');
 
+/** terminal.js's own marker line; see the comment on it in that file. */
 const CLASS_END = '// THE CLASS ENDS ABOVE.';
 
 const OPEN = 1;
@@ -19,6 +21,13 @@ const OPEN = 1;
 let passes = 0;
 let failures = 0;
 
+/**
+ * Run one named assertion block immediately, recording the outcome.
+ *
+ * @param {string} name - what is being asserted.
+ * @param {function(): void} fn - the assertions.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -124,11 +133,13 @@ test('an unowned surface emits nothing from a cell, mouse reports included', () 
     assert.equal(sent.length, 0, 'an unclaimed surface let a cell write');
 });
 
+// the gate itself
 
 test('an unfocused cell emits NOTHING, including mouse reports', () => {
     const world = makeWorld();
     const { client, sent } = clientFor(world, 'terminal:ses_a');
 
+    // nobody is looking at
     world.setOwner('terminal:ses_b');
     for (let i = 0; i < 5; i++) {
         assert.equal(client._sendUserBytes(new TextEncoder().encode(`\x1b[<35;${i};4M`)), false);

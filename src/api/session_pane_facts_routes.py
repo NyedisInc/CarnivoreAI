@@ -37,6 +37,6 @@ async def get_session_pane_facts(request: Request, session_id: str) -> SessionPa
     tmux_name = info.tmux_session
     if not tmux_name:
         return SessionPaneFacts()
-    facts = await read_pane_facts(session_manager._tmux_socket_name(), tmux_name)
+    facts = await read_pane_facts(session_manager.tmux_socket_name(), tmux_name)
     logger.debug("session_pane_facts_read", session_id=session_id, readable=facts.cwd is not None)
     return facts

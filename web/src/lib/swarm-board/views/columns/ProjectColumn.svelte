@@ -1,4 +1,4 @@
-<!-- the detail pane -->
+
 <script lang="ts">
   import { t } from '../../../i18n/index.svelte';
   import type { CardColumn, CardView } from '../../board-types';

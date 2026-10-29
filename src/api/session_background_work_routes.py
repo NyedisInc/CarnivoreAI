@@ -26,6 +26,7 @@ from src.models.background_work import (
     TerminateRequest,
     TerminateResponse,
 )
+from src.api.error_response import api_error, soft_failure
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -36,11 +37,6 @@ def _iso(value: Optional[datetime]) -> Optional[str]:
 
 
 async def _resolve(request: Request, session_id: str, action: str) -> tuple[Any, Any, str]:
-    """The manager, the listing row and its stored tmux name.
-
-    Raises: HTTPException 404 - no such session, or it carries no tmux name;
-      409 - a remote session.
-    """
     session_manager = request.app.state.session_manager
     refuse_remote(session_manager, session_id, action)
     info = await session_manager.get_session_info(session_id)
@@ -78,9 +74,8 @@ async def get_session_background_work(request: Request, session_id: str) -> Sess
     try:
         tree = await asyncio.to_thread(bw_tree.measure, tmux_name, socket)
     except bw_tree.TreeError as exc:
-        logger.info("background_work_unmeasured", session_id=session_id, tmux=tmux_name,
-                    error=str(exc))
-        return SessionBackgroundWork(state="unchecked", family=family, as_of=now, detail=str(exc))
+        detail = soft_failure("background_work_unmeasured", exc, status=503, session_id=session_id, tmux=tmux_name)
+        return SessionBackgroundWork(state="unchecked", family=family, as_of=now, detail=detail)
     if tree.agent_pid is None:
         return SessionBackgroundWork(state="absent", family=family, as_of=now,
                                      detail="no claude process runs in this pane")
@@ -100,7 +95,7 @@ async def get_session_background_work(request: Request, session_id: str) -> Sess
 
 
 async def _owners(session_manager: Any, info: Any, tmux_name: str) -> LaunchOwners:
-    conversation_uuid = session_manager._claude_uuid_for_tmux_name(tmux_name)
+    conversation_uuid = session_manager.claude_uuid_for_tmux_name(tmux_name)
     working_dir = info.session.working_dir if info.session is not None else None
     return await asyncio.to_thread(read_owners, conversation_uuid, working_dir=working_dir)
 
@@ -138,11 +133,11 @@ async def terminate_background_process(
     try:
         verdict, result = await asyncio.to_thread(_guarded_terminate, tmux_name, socket, pid, body.start)
     except bw_tree.PaneNotFound as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise api_error(404, "not_found", exc, step="terminate_background_process") from exc
     except (bw_tree.TreeUnmeasured, LivenessUnmeasured) as exc:
         logger.warning("background_work_terminate_unmeasured", session_id=session_id,
                        tmux=tmux_name, pid=pid, error=str(exc))
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise api_error(503, "service_unavailable", exc, step="terminate_background_process") from exc
     if result is None and verdict.code == bw_guard.REFUSE_GONE:
         return TerminateResponse(pid=pid, outcome="already_gone", detail=verdict.detail)
     if result is None:
@@ -197,11 +192,11 @@ async def terminate_background_processes(
         verdicts, result = await asyncio.to_thread(guarded_terminate_all, tmux_name,
                                                    socket, targets)
     except bw_tree.PaneNotFound as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise api_error(404, "not_found", exc, step="terminate_background_processes") from exc
     except (bw_tree.TreeUnmeasured, LivenessUnmeasured) as exc:
         logger.warning("background_work_terminate_all_unmeasured", session_id=session_id,
                        tmux=tmux_name, targets=len(targets), error=str(exc))
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise api_error(503, "service_unavailable", exc, step="terminate_background_processes") from exc
     answers = bw_batch.outcomes(verdicts, result)
     logger.info(
         "background_work_terminated_many", session_id=session_id, tmux=tmux_name,

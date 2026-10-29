@@ -48,8 +48,8 @@ async def transcribe(target: Target, key: Optional[str], audio: bytes, mime: str
         fields["language_code"] = str(options["language"])
     fields.update({k: str(v) for k, v in (options.get("extra") or {}).items()})
     content, headers = multipart(fields, "file", audio_filename(mime), audio, mime)
-    body = (await transport.request(target.connection, key, "POST", "/v1/speech-to-text",
-                                    content=content, headers=headers)).json()
+    body = (await transport.request_json(target.connection, key, "POST", "/v1/speech-to-text",
+                                    content=content, headers=headers))
     words = [w for w in body.get("words") or [] if isinstance(w, dict) and isinstance(w.get("end"), (int, float))]
     return Transcript(text=str(body.get("text") or ""), language=body.get("language_code"),
                       duration_s=float(words[-1]["end"]) if words else None, raw=body)
@@ -57,7 +57,7 @@ async def transcribe(target: Target, key: Optional[str], audio: bytes, mime: str
 
 async def list_models(connection: Connection, key: Optional[str]) -> List[ModelInfo]:
     try:
-        rows = (await transport.request(connection, key, "GET", "/v1/models")).json()
+        rows = (await transport.request_json(connection, key, "GET", "/v1/models", list_ok=True))
         tts = [(m["model_id"], str(m.get("name") or "")) for m in rows
                if isinstance(m, dict) and m.get("model_id") and m.get("can_do_text_to_speech")]
     except ProviderHTTPError as exc:
@@ -65,7 +65,7 @@ async def list_models(connection: Connection, key: Optional[str]) -> List[ModelI
             raise
         tts = [(m, m) for m in FALLBACK_TTS_MODELS]
     try:
-        voices = (await transport.request(connection, key, "GET", "/v1/voices")).json().get("voices", [])
+        voices = (await transport.request_json(connection, key, "GET", "/v1/voices")).get("voices", [])
     except ProviderHTTPError as exc:
         if exc.status not in (401, 403):
             raise

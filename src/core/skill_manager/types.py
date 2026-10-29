@@ -88,13 +88,6 @@ class SkillGroup:
 
 
 class OverrideError(Exception):
-    """A skill toggle that was refused or could not be written.
-
-    Fields: status (HTTP status), code (stable machine token such as
-    ``settings_unparseable``, ``settings_changed``, ``plugin_managed``,
-    ``codex_config_edit_unsafe``), detail (one plain sentence; never a file
-    value).
-    """
 
     def __init__(self, status: int, code: str, detail: str) -> None:
         super().__init__(detail)

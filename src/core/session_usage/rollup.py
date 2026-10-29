@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sqlite3
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_QUICK_S, connect_readonly
 import time
 from contextlib import closing
 from datetime import datetime, timezone
@@ -44,7 +45,7 @@ def conversation_sessions(conn: sqlite3.Connection) -> Dict[str, Set[str]]:
 
 def _read_activity(stats_db: Path, lo: int, hi: int) -> Dict[str, Any]:
     deadline = time.monotonic() + DEADLINE_SECONDS
-    with closing(sqlite3.connect(stats_db.as_uri() + "?mode=ro", uri=True, timeout=1)) as conn:
+    with closing(connect_readonly(stats_db, timeout=READONLY_TIMEOUT_QUICK_S)) as conn:
         conn.set_progress_handler(lambda: 1 if time.monotonic() > deadline else 0, 1000)
         try:
             rows = conn.execute(

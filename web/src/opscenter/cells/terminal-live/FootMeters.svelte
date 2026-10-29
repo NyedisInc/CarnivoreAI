@@ -1,6 +1,4 @@
 <script lang="ts">
-  /*  hidden
- */
   import type { UsageRow, UsageWindowView, SessionTokenUsage, sessionUsageLabels } from '../../api';
   import ProviderMark from '../../../lib/byoai/ProviderMark.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
@@ -208,7 +206,6 @@
 
 <style>
   @layer components {
-    /* min-width: 0 */
     .oc-tf-meter {
       display: flex;
       align-items: center;
@@ -222,7 +219,6 @@
       flex: 0 0 auto;
     }
 
-    /* min-width: 14px */
     .oc-tf-bar {
       position: relative;
       display: inline-block;
@@ -288,7 +284,6 @@
 
     .oc-tf-state[data-usage-state='unchecked'] { color: var(--oc-yellow); }
 
-    /* flex: 0 0 auto flex: 1 1 auto margin-left: auto */
     .oc-tf-model {
       display: flex;
       align-items: baseline;
@@ -344,19 +339,6 @@
       opacity: 0.85;
     }
 
-    /* OPTION A: THE THREE LIMITS ARE ONE CENTERED GROUP AGAIN (the team
-       (acme), an earlier date, restoring the layout of 92622de3, an earlier date
-       15:24: "center the three and put enough space between them with a
-       little divider", "Make all of them even progress bar size"; reverses
-       the left-packing of c0925ead, `docs/DECISIONS.md`, an earlier date). The
-       model stays leftmost and the work segments on the right (the owner's
-       ordering); the auto margins put the meters in the middle of the free
-       width between them. Each pair of PRESENT meters is a 28px gap plus 28px
-       of padding with a hairline 9px into the padding, the same weight as the
-       work segments' own hairline; `+` takes a missing window's divider with
-       it for free. Every bar is one fixed 112px (was 64pxlonger bars, more space
-       between the groups), so what the measuring copy
-       reads is what is drawn. */
     .oc-tf-meters {
       display: flex;
       align-items: center;

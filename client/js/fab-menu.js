@@ -1,4 +1,4 @@
-/* position: fixed z-index: 70 */
+/* nothing at all */
 
 console.log('[FabMenu Module] Loading...');
 

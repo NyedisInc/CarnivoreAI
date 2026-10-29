@@ -87,7 +87,7 @@ describe('SessionsPage shell', () => {
         ]);
     });
 
-    test('a page row and a project heading draw no menu button; the right click is their menu', async () => {
+    test('a page row and a project heading draw no menu button (Joe (ccsliinc), 2026-10-22); the right click is their menu', async () => {
         handle = mount(SessionsPage, { target: document.body, props: { api: fakeApi(), readers, embedded: true, now: () => NOW } });
         flushSync();
         await vi.waitFor(() => expect(document.querySelectorAll('.sp-row').length).toBeGreaterThan(0));

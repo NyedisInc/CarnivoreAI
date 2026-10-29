@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { Button, IconButton } from '../base';
     import '../../opscenter/ui/rank-panel.css';
     import Icon from '../../opscenter/ui/Icon.svelte';
     import GroupGlyph from './GroupGlyph.svelte';
@@ -133,7 +134,7 @@
     ondrop={dropped}
 >
     <div class="wp-place__head">
-        <button type="button" class="wp-place__pick" aria-pressed={chosen} title={t('widgets.places.pick', { place: label })} onclick={onPick}>
+        <Button variant="row" data-place-pick aria-pressed={chosen} title={t('widgets.places.pick', { place: label })} onclick={onPick}>
             <span class="wp-pmark" data-pl={def.id}>{def.mark}</span>
             <h3 class="wp-place__name oc-rank__label">
                 <span class="t-name">{label}</span>
@@ -141,18 +142,17 @@
                 <span class="t-have">{t('widgets.places.already')}</span>
                 <span class="t-no">{t('widgets.places.no_fit')}</span>
             </h3>
-        </button>
-        <button
-            type="button"
-            class="wp-place__add"
-            aria-label={t('widgets.places.add_to_place', { place: label })}
-            title={t('widgets.places.add_to_place', { place: label })}
+        </Button>
+        <IconButton
+            icon="plus"
+            data-place-add
+            label={t('widgets.places.add_to_place', { place: label })}
             aria-haspopup="menu"
             onclick={(event) => {
                 event.stopPropagation();
                 onAdd(event.currentTarget as HTMLElement);
             }}
-        ><Icon name="plus" size={12} /></button>
+        />
     </div>
     <div class="wp-place__wrap">
         <div class="wp-place__body" role="list" aria-label={label} tabindex="-1" bind:this={body} onscroll={measure}>
@@ -196,8 +196,8 @@
                             <span class="oc-rank__num">{index + 1}</span>
                             <WidgetTile id={row.widget} icon={one.icon} group={one.group} size={20} />
                             <span class="oc-rank__name">{one.name}</span>
-                            <button type="button" class="wp-row__x" title={t('widgets.places.take_out', { name: one.name, place: label })} aria-label={t('widgets.places.take_out', { name: one.name, place: label })}
-                                onclick={(event) => { event.stopPropagation(); onRemove(row); }}><Icon name="close" size={12} /></button>
+                            <IconButton variant="close" icon="close" data-row-x label={t('widgets.places.take_out', { name: one.name, place: label })}
+                                onclick={(event) => { event.stopPropagation(); onRemove(row); }} />
                         </div>
                     {/if}
                 {/each}

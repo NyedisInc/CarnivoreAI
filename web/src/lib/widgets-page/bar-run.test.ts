@@ -1,3 +1,4 @@
+/* the widgets page */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const world = vi.hoisted(() => {

@@ -68,7 +68,6 @@ class RevisionBody(_Body):
 
     @model_validator(mode="after")
     def _layer_rules(self) -> "RevisionBody":
-        """A page is required unless a questions or rows layer stands in for it; a layer is payload mode and carries no prompts. Raises: ValueError."""
         if self.layer is None:
             if self.html is None:
                 raise ValueError("html is required (the page), or name a questions or rows layer")

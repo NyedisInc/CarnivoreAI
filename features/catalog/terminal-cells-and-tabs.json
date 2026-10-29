@@ -21,7 +21,14 @@
     "tabs",
     "grid"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The terminal tab strip with the new tab menu open",
+      "caption": "Adding a tab to the terminal",
+      "file": "tabs.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Terminal panes and tabs",
   "since": "2026-09-19",
   "status": "stable",
@@ -34,6 +41,5 @@
   "where": [
     "Open a session: its tabs run along the top of the terminal.",
     "The + after the last tab adds another; the components icon arranges them."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

@@ -2,7 +2,6 @@ import type { MenuNode } from '../../../lib/drawer-tabs/add-component-menu';
 import type { DeclaredAction } from './declared-actions.svelte';
 import { t } from '../../../lib/i18n/index.svelte';
 
-/* label: ' */
 export function menuLeaves(nodes: readonly MenuNode[]): MenuNode[] {
   return nodes.flatMap((node) => (node.children ? menuLeaves(node.children) : node.run ? [node] : []));
 }

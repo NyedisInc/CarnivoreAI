@@ -1,4 +1,3 @@
-/* navigation generation */
 import { beginNav, currentNav, keepNav, type NavToken } from '../../lib/launchpad/nav-generation';
 
 interface Armed {
@@ -20,7 +19,6 @@ function onCreated(event: Event): void {
   target.land(id);
 }
 
-/* could not */
 export async function createAsTab(
   start: () => Promise<void> | null,
   land: (sessionId: string) => void,

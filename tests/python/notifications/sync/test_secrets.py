@@ -86,7 +86,7 @@ def make_app(service) -> TestClient:
     app = FastAPI()
     app.include_router(peer_routes.router, prefix="/api/v1")
     app.state.notification_service = service
-    grant = Grant("g1", "peer-install", "pk", "fid", "hosta", ("sessions", "settings"), None, "now", None, None)
+    grant = Grant("g1", "peer-install", "pk", "fid", "studio", ("sessions", "settings"), None, "now", None, None)
     app.dependency_overrides[peer_routes._require_settings] = lambda: Principal("peer", grant)
     app.state.test_grant = grant
     return TestClient(app)

@@ -7,6 +7,8 @@ import type { Layout } from '../layouts-bridge/api.svelte';
 import { t } from '../i18n/index.svelte';
 import { companyList } from '../companies';
 import { fileProject, newCompanyPrompt } from '../sidebar-shell/company-actions';
+import { commitAssignment } from '../sidebar-shell/group-assign';
+import { announceFailure, reasonOf } from '../sidebar-shell/interaction-globals';
 
 const CONTAINER_ID = 'add-to-cascade-menu';
 
@@ -32,10 +34,6 @@ interface GroupStoreGlobal {
   groupByUuid(uuid: string): GroupRecord | null;
 }
 
-interface GroupActionsGlobal {
-  commitAssignment(name: string, groupUuid: string | null): Promise<boolean>;
-}
-
 interface KindGroupsGlobal {
   isAgentKind(row: LegacyRow): boolean;
 }
@@ -46,7 +44,6 @@ interface SessionSidebarGlobal {
 
 interface LegacyGlobals {
   SessionSidebarGroupStore?: GroupStoreGlobal;
-  SessionSidebarGroupActions?: GroupActionsGlobal;
   SessionSidebarKindGroups?: KindGroupsGlobal;
   SessionSidebar?: SessionSidebarGlobal;
 }
@@ -73,28 +70,44 @@ function isLayoutMember(layout: Layout, sessionUuid: string | null | undefined):
   return !!sessionUuid && layout.members.some((m) => m.session_uuid === sessionUuid);
 }
 
-function assignGroup(name: string, groupUuid: string | null): void {
-  void legacy().SessionSidebarGroupActions?.commitAssignment(name, groupUuid);
+async function assignGroup(name: string, groupUuid: string | null): Promise<void> {
+  try {
+    await commitAssignment(name, groupUuid);
+  } catch (err) {
+    announceFailure(t('sidebar.group.assign_failed', { name, reason: reasonOf(err) }));
+  }
 }
 
-function addSessionToLayout(layoutUuid: string, sessionUuid: string): void {
-  void layoutsBridge.addMember(layoutUuid, sessionUuid);
+async function addSessionToLayout(layoutUuid: string, sessionUuid: string): Promise<void> {
+  const name = layoutsBridge.get(layoutUuid)?.name ?? '';
+  try {
+    await layoutsBridge.addMember(layoutUuid, sessionUuid);
+  } catch (err) {
+    announceFailure(t('layout.add.failed', { name, reason: reasonOf(err) }));
+  }
 }
 
 async function addGroupToLayout(layoutUuid: string, memberUuids: readonly string[]): Promise<void> {
   const layout = layoutsBridge.get(layoutUuid);
   const already = new Set((layout?.members ?? []).map((m) => m.session_uuid));
-  for (const uuid of memberUuids) {
-    if (already.has(uuid)) continue;
-    // eslint-disable-next-line no-await-in-loop -- sequential on purpose: each write bumps the Layout's revision the next one reads
-    await layoutsBridge.addMember(layoutUuid, uuid);
+  const pending = memberUuids.filter((uuid) => !already.has(uuid));
+  let added = 0;
+  for (const uuid of pending) {
+    try {
+      // eslint-disable-next-line no-await-in-loop -- sequential on purpose: each write bumps the Layout's revision the next one reads
+      await layoutsBridge.addMember(layoutUuid, uuid);
+      added += 1;
+    } catch (err) {
+      announceFailure(t('layout.add.group_partial', { added, total: pending.length, name: layout?.name ?? '', reason: reasonOf(err) }));
+      return;
+    }
   }
 }
 
 function groupChildrenForAgent(name: string): MenuNode[] {
   const store = legacy().SessionSidebarGroupStore;
   if (!store || !store.isUsable()) {
-    return [{ id: 'unavailable', label: 'groups unavailable', blocked: 'groups unavailable' }];
+    return [{ id: 'unavailable', label: t('sidebar.add_to.groups_unavailable'), blocked: t('sidebar.add_to.groups_unavailable') }];
   }
   const current = store.groupOf(name);
   const groups = store.current().groups.filter((g) => g.group_uuid !== current);
@@ -103,7 +116,7 @@ function groupChildrenForAgent(name: string): MenuNode[] {
     label: g.name,
     run: () => {
       finish();
-      assignGroup(name, g.group_uuid);
+      void assignGroup(name, g.group_uuid);
     },
   }));
 }
@@ -115,7 +128,7 @@ function layoutChildrenForAgent(sessionUuid: string | null): MenuNode[] {
     label: l.name,
     run: () => {
       finish();
-      if (sessionUuid) addSessionToLayout(l.layout_uuid, sessionUuid);
+      if (sessionUuid) void addSessionToLayout(l.layout_uuid, sessionUuid);
     },
   }));
 }
@@ -129,7 +142,7 @@ function agentChildrenForGroup(groupUuid: string): MenuNode[] {
       label: displayName(r),
       run: () => {
         finish();
-        assignGroup(r.name, groupUuid);
+        void assignGroup(r.name, groupUuid);
       },
     }));
 }
@@ -160,7 +173,7 @@ function agentChildrenForLayout(layoutUuid: string): MenuNode[] {
       label: displayName(r),
       run: () => {
         finish();
-        addSessionToLayout(layoutUuid, r.session_uuid as string);
+        void addSessionToLayout(layoutUuid, r.session_uuid as string);
       },
     }));
 }
@@ -220,15 +233,15 @@ function open(root: MenuNode[], anchor: HTMLElement, label: string, opts: OpenOp
 
 function sessionBranches(name: string, sessionUuid: string | null): MenuNode[] {
   return [
-    branch('group', 'Group', groupChildrenForAgent(name), 'no other groups yet'),
-    branch('layout', 'Layout', layoutChildrenForAgent(sessionUuid), 'no Layouts yet'),
+    branch('group', t('sidebar.add_to.group'), groupChildrenForAgent(name), t('sidebar.add_to.no_other_groups')),
+    branch('layout', t('sidebar.add_to.layout'), layoutChildrenForAgent(sessionUuid), t('sidebar.add_to.no_layouts_yet')),
   ];
 }
 
 function layoutBranches(layoutUuid: string): MenuNode[] {
   return [
-    branch('agents', 'Agents', agentChildrenForLayout(layoutUuid), 'no agents to add'),
-    branch('groups', 'Groups', groupChildrenForLayout(layoutUuid), 'no groups to add'),
+    branch('agents', t('sidebar.add_to.agents'), agentChildrenForLayout(layoutUuid), t('sidebar.add_to.no_agents')),
+    branch('groups', t('sidebar.add_to.groups'), groupChildrenForLayout(layoutUuid), t('sidebar.add_to.no_groups')),
   ];
 }
 
@@ -236,34 +249,34 @@ function openForSession(anchor: HTMLElement, name: string, sessionUuid: string |
   open(
     sessionBranches(name, sessionUuid),
     anchor,
-    `Add ${name} to`,
+    t('sidebar.add_to.agent_title', { name }),
     opts,
   );
 }
 
 function groupBranches(groupUuid: string): MenuNode[] {
   return [
-    branch('agents', 'Agents', agentChildrenForGroup(groupUuid), 'no other agents to add'),
-    branch('layouts', 'Layouts', layoutChildrenForGroup(groupUuid), 'no Layouts to add to'),
+    branch('agents', t('sidebar.add_to.agents'), agentChildrenForGroup(groupUuid), t('sidebar.add_to.no_other_agents')),
+    branch('layouts', t('sidebar.add_to.layouts'), layoutChildrenForGroup(groupUuid), t('sidebar.add_to.no_layouts_to_add_to')),
   ];
 }
 
 function openForGroup(anchor: HTMLElement, groupUuid: string, opts: OpenOptions = {}): void {
-  const name = legacy().SessionSidebarGroupStore?.groupByUuid(groupUuid)?.name ?? 'this group';
+  const name = legacy().SessionSidebarGroupStore?.groupByUuid(groupUuid)?.name ?? t('sidebar.add_to.this_group');
   open(
     groupBranches(groupUuid),
     anchor,
-    `Add to ${name}`,
+    t('sidebar.add_to.target_title', { name }),
     opts,
   );
 }
 
 function openForLayout(anchor: HTMLElement, layoutUuid: string, opts: OpenOptions = {}): void {
-  const name = layoutsBridge.get(layoutUuid)?.name ?? 'this Layout';
+  const name = layoutsBridge.get(layoutUuid)?.name ?? t('sidebar.add_to.this_layout');
   open(
     layoutBranches(layoutUuid),
     anchor,
-    `Add to ${name}`,
+    t('sidebar.add_to.target_title', { name }),
     opts,
   );
 }

@@ -68,13 +68,6 @@ export const ALERT_FRAMES = [FRAME_RAISED, FRAME_UPDATED, FRAME_RESOLVED] as con
 
 export const RESOLVED_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-export function badgeFor(counts: AlertCounts | null | undefined): { count: number; severity: 'error' | 'warn' | null } {
-  const error = Math.max(0, counts?.error ?? 0);
-  const warn = Math.max(0, counts?.warn ?? 0);
-  const count = error + warn;
-  return { count, severity: error > 0 ? 'error' : warn > 0 ? 'warn' : null };
-}
-
 export function shouldToast(frame: AlertFrame, seen: Set<number>): boolean {
   if (frame.type !== FRAME_RAISED || typeof frame.id !== 'number') return false;
   if (seen.has(frame.id)) return false;

@@ -3,10 +3,14 @@
     import { onMount } from 'svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import { createLaunchProfilesApi } from '../launch-profiles-page/api';
+    import { visibleProfiles } from '../launch-profiles-page/visibility';
     import { PROJECT_CREATE_KEYS } from '../../../../client/js/labels/project-create.js';
     import type { Translate } from '../sessions/types';
     import type { EditResult } from './modal-types';
     import ModalShell from './ModalShell.svelte';
+    import Button from '../base/Button.svelte';
+    import Field from '../base/Field.svelte';
+    import Select from '../base/Select.svelte';
     import { isProjectColor } from '../project-colors/palette';
     import ProjectColorSwatches from '../project-colors/ProjectColorSwatches.svelte';
     import Check from '../../opscenter/ui/Check.svelte';
@@ -48,7 +52,7 @@
     let profileOptions = $state<{ id: string; label: string }[]>([]);
     onMount(() => {
         createLaunchProfilesApi().list()
-            .then((out) => { profileOptions = out.profiles.map((p) => ({ id: p.id, label: p.label || p.id })); })
+            .then((out) => { profileOptions = visibleProfiles(out.profiles).map((p) => ({ id: p.id, label: p.label || p.id })); })
             .catch((error) => console.warn('CloudeWeb: launch profiles unreadable for the project default', error));
     });
     const taskManagerOn = $derived(projectId !== null && cplugEnabled(taskManagerManifest as CplugManifest));
@@ -60,10 +64,10 @@
         if (projectId === null || !cplugEnabled(taskManagerManifest as CplugManifest)) return;
         getListNudge(projectId)
             .then((on) => { nudgeStored = on; nudge = on; })
-            .catch((error) => console.warn('CloudeWeb: the huddle nudge is unreadable for the edit modal', error));
+            .catch((error) => console.warn('CloudeWeb: the task manager nudge is unreadable for the edit modal', error));
         getListInbox(projectId)
             .then((on) => { inboxStored = on; inbox = on; })
-            .catch((error) => console.warn('CloudeWeb: the huddle add box switch is unreadable for the edit modal', error));
+            .catch((error) => console.warn('CloudeWeb: the task manager add box switch is unreadable for the edit modal', error));
     });
     let nameEl: HTMLInputElement | null = $state(null);
     let descEl: HTMLInputElement | null = $state(null);
@@ -109,42 +113,32 @@
         <div class="modal-description">{t(PROJECT_CREATE_KEYS.editFolderHint)}</div>
     </div>
     <div class="modal-input-group">
-        <label class="modal-label" for="edit-project-name"
-            >{t(PROJECT_CREATE_KEYS.nameLabel)}</label
-        >
-        <input
-            type="text"
-            class="modal-input"
+        <Field
+            label={t(PROJECT_CREATE_KEYS.nameLabel)}
             id="edit-project-name"
             autocomplete="off"
-            bind:this={nameEl}
             bind:value={name}
             onkeydown={onNameKey}
+            bind:element={nameEl}
         />
     </div>
     <div class="modal-input-group">
-        <label class="modal-label" for="edit-project-description"
-            >{t(PROJECT_CREATE_KEYS.descriptionLabel)}</label
-        >
-        <input
-            type="text"
-            class="modal-input"
+        <Field
+            label={t(PROJECT_CREATE_KEYS.descriptionLabel)}
             id="edit-project-description"
             placeholder={t(PROJECT_CREATE_KEYS.descriptionPlaceholder)}
             autocomplete="off"
-            bind:this={descEl}
             bind:value={description}
             onkeydown={onDescKey}
+            bind:element={descEl}
         />
     </div>
     <div class="modal-input-group">
-        <label class="modal-label" for="edit-project-launch-profile">{t('launch_picker.project_default')}</label>
-        <select class="modal-input oc-focus-host" id="edit-project-launch-profile" bind:value={defaultProfile}>
+        <Select label={t('launch_picker.project_default')} help={t('launch_picker.project_default_hint')} id="edit-project-launch-profile" bind:value={defaultProfile}>
             <option value="">{t('launch_picker.project_default_none')}</option>
             {#each profileOptions as option (option.id)}<option value={option.id}>{option.label}</option>{/each}
             {#if defaultProfile && !profileOptions.some((o) => o.id === defaultProfile)}<option value={defaultProfile}>{defaultProfile}</option>{/if}
-        </select>
-        <div class="modal-description">{t('launch_picker.project_default_hint')}</div>
+        </Select>
     </div>
     <div class="modal-input-group">
         <div class="modal-label" id="edit-project-color-label">{t('project.color.label')}</div>
@@ -165,13 +159,7 @@
         </div>
     {/if}
     {#snippet footer()}
-        <button
-            class="modal-btn modal-btn-secondary"
-            id="edit-modal-cancel"
-            onclick={() => close(null)}>{t(PROJECT_CREATE_KEYS.cancel)}</button
-        >
-        <button class="modal-btn modal-btn-primary" id="edit-modal-save" onclick={submit}
-            >{t(PROJECT_CREATE_KEYS.editSave)}</button
-        >
+        <Button id="edit-modal-cancel" onclick={() => close(null)}>{t(PROJECT_CREATE_KEYS.cancel)}</Button>
+        <Button variant="confirm" id="edit-modal-save" onclick={submit}>{t(PROJECT_CREATE_KEYS.editSave)}</Button>
     {/snippet}
 </ModalShell>

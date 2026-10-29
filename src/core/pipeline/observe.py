@@ -1,28 +1,3 @@
-"""What feeds the engine: the dirty set, and the classifier that turns a transcript path into a delivery target.
-
-THE DIRTY SET is the engine's whole queue (decision 7 of the overhaul, #1682). A key is a transcript file (or a
-conversation whose main transcript is gone); marking a key that is already pending changes nothing, so a file
-appended to a hundred times between two deliveries is delivered once. Every key has an EARLIEST-ELIGIBLE TIME:
-
-* a key delivered at ``t`` cannot be delivered again before ``t + MIN_INTERVAL_SECONDS`` (a streaming transcript
-  is delivered about every 2 seconds, not on every append);
-* a key whose FILE could not be read (a hung read, an iCloud placeholder) waits out an exponential backoff,
-  ``BACKOFF_BASE_SECONDS`` doubling to ``BACKOFF_CAP_SECONDS``, and a later mark of the same key never shortens it;
-* a PLUGIN that raised on a key waits out its own backoff for that key (failures are kept per key AND plugin), and
-  only that plugin waits: a later live mark makes the key due again at the normal spacing and the engine leaves the
-  failing plugin out until its own ``retry_at`` (``held``), so one plugin's poison file never slows another plugin
-  on the same live conversation (R1 M2);
-* a file that still has bytes after the run's byte budget goes straight back, behind everything already due.
-
-``take`` hands out the keys that are due, LIVE keys first (an observer, a turn end or a feed mark: someone is
-watching that conversation) and then the bulk ones (a scan, a rebuild replay), each group earliest-eligible first, so
-a key that has waited longest goes first, one re-queued key never starves the rest (round robin) and a replay of
-twenty thousand files never makes live freshness wait (R1 M4). Nothing is ever dropped: a key leaves the set only
-when it was delivered (or its file is gone, which the scan reports as a removal).
-
-``mark_*`` is O(1), takes one lock and reads no file: it is safe from the event loop, from ``fs_trigger``
-callbacks and from the scan thread. ``Observer`` is the one door a watcher uses to say "this path changed".
-"""
 
 from __future__ import annotations
 
@@ -57,14 +32,6 @@ KEY_WIDE: str = ""
 
 @dataclass
 class Entry:
-    """One pending key. ``target`` is None for a conversation removal (a file removal carries its file as ``target``).
-
-    Attributes: key (kind, path or conversation id); conversation_id, family; trigger (what first marked it);
-      rewritten (the manifest saw the file rewritten: open it even if the size equals the cursor); first_dirty (the
-      clock reading of the first mark, kept across retries, so lag measures the real age); eligible_at; seq (the
-      heap's tie-break and its staleness check); live (a live mark reached it: it is taken before bulk keys);
-      backoff (it waits only for a failure's retry time, no new mark since).
-    """
 
     key: Key
     target: Optional[FileTarget]
@@ -219,16 +186,6 @@ class DirtySet:
 
     def settle(self, entry: Entry, *, ok: Iterable[str] = (), failures: Optional[Dict[str, str]] = None,
                file_error: Optional[str] = None, file_ok: bool = False, requeue: bool = False) -> float:
-        """Record how one delivery of a key ended, and put the key back when anything still waits on it.
-
-        Inputs: entry - the key just delivered; ok - plugins that ran and did not fail (their failure records go);
-          failures - {plugin id: error} for plugins that raised (each backs off on its own: ``base * 2**(n-1)``,
-          capped); file_error - the file itself could not be read (backs the whole key off); file_ok - the file was
-          read this time (a file-level failure record goes); requeue - the run's byte budget ran out (back in, due
-          now, behind what is already due).
-        Output: the longest new backoff in seconds (0 when none). The key returns when it was requeued or any failure
-          record remains, at the earliest of their retry times; a later mark never shortens a file-level wait.
-        """
         now = self._clock()
         longest = 0.0
         with self._lock:

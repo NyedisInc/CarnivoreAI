@@ -4,15 +4,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
+
+const groupFlow = vi.hoisted(() => ({ create: vi.fn(async (_name: string | null) => {}) }));
+vi.mock('../sidebar-shell/group-assign', () => ({ createGroupThenAssign: groupFlow.create }));
 import SidebarControls from './SidebarControls.svelte';
 import { drawerSurface } from '../drawer-tabs/drawer-surface.svelte';
 import { cplugEnablement } from '../../cplugs/host/enablement.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 
+// jsdom has neither method.
 installPopoverPolyfill();
 
 const REPO = path.resolve(process.cwd(), '..');
 
+/** The drawer's <aside>, exactly as shipped. */
 function drawerMarkup(): string {
   const source = fs.readFileSync(path.join(REPO, 'client', 'index.html'), 'utf8');
   const start = source.indexOf('<aside id="session-sidebar-panel"');
@@ -89,19 +94,18 @@ test('"+" project opens the full new-project menu; the import button is gone', (
 });
 
 test('"+" group runs the drawer\'s own new group flow, filing no session', () => {
-  const createGroupThenAssign = vi.fn(async () => {});
-  win.SessionSidebarGroupActions = { createGroupThenAssign };
+  groupFlow.create.mockClear();
   try {
     const row = render();
     row.querySelector<HTMLButtonElement>('[data-action="new-session"]')!.click();
     flushSync();
     row.querySelector<HTMLButtonElement>('[data-node="group"]')!.click();
     flushSync();
-    expect(createGroupThenAssign).toHaveBeenCalledTimes(1);
-    expect(createGroupThenAssign).toHaveBeenCalledWith(null);
+    expect(groupFlow.create).toHaveBeenCalledTimes(1);
+    expect(groupFlow.create).toHaveBeenCalledWith(null);
     expect(row.querySelector('[role="menu"]')).toBeNull();
   } finally {
-    delete win.SessionSidebarGroupActions;
+    groupFlow.create.mockClear();
   }
 });
 

@@ -15,6 +15,7 @@ from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.descriptions import roster, store
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.models.descriptions import SessionDescriptionRequest, SessionDescriptionResponse
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -24,7 +25,7 @@ def _open_or_503():
     try:
         return connect(db_path_for(settings.get_state_dir()), create=False)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=f"the datastore cannot be read: {exc}")
+        raise api_error(503, "datastore_unavailable", exc) from exc
 
 
 @router.patch(
@@ -47,7 +48,7 @@ async def set_session_description(request: Request, session_uuid: str, body: Ses
         short = store.clean_text(body.short_description, single_line=True)
         long_ = store.clean_text(body.long_description, single_line=False)
     except store.DescriptionInvalid as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "description_invalid", exc, step="set_session_description") from exc
 
     def write() -> dict:
         with closing(_open_or_503()) as conn:
@@ -77,7 +78,8 @@ async def get_roster(
     company: Optional[str] = Query(None, description="A company id or name; includes every company under it"),
     detail: bool = Query(False, description="Add long descriptions and each session's folder"),
 ) -> dict:
-    """
+    """Who is online or around on this computer: status, live/asleep/archived, descriptions and family.
+
     Inputs: request (Request) - for ``app.state.session_manager``; the filters above.
     Output: dict ``{scope, filters, total, truncated, sessions, note?}`` (``roster.build_roster``).
     Raises: HTTPException 400 - an unknown scope or has_description; 503 - the datastore is unreadable.
@@ -97,4 +99,4 @@ async def get_roster(
         return roster.build_roster(ctx, infos, scope=scope, has_description=has_description, project=project,
                                    company=company, detail=detail)
     except roster.RosterRefused as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "description_invalid", exc, step="read") from exc

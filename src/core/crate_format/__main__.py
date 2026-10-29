@@ -1,18 +1,3 @@
-"""The crate CLI: list, verify or extract a crate with no server and no state folder.
-
-    python3 -m src.core.crate_format list    <file> [--identity-stdin]
-    python3 -m src.core.crate_format verify  <file> [--level quick|full|drill] [--sha <hex>] [--identity-stdin]
-    python3 -m src.core.crate_format extract <file> <conversation_id> <new dest dir> [--identity-stdin]
-
-An age identity is read from stdin only, never from argv (a process's argv is visible to every user). ``verify`` reads
-``<file>.sha256`` when ``--sha`` is absent. ``extract`` refuses a destination inside a live harness home (the Claude
-home named by ``CLAUDE_CONFIG_DIR`` and ``~/.claude``, the Codex home named by ``CODEX_HOME`` and ``~/.codex``), as the
-plugin does. It files a Claude conversation under the ENC folder the crate recorded, which is the folder Claude derived
-when the crate was written; the plugin's extract applies today's rule instead (this package imports no server module,
-so the CLI has no copy of that rule). A drill extracts into a fresh system temp folder and removes it. Output is
-plain lines. Exit codes: 0 ok; 1 problems found; 2 could not check (unreadable, too new, needs an identity, a wrong key,
-no expected hash). Exit 2 is never a pass.
-"""
 
 from __future__ import annotations
 

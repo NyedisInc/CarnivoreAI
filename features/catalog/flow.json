@@ -3,17 +3,21 @@
     "src/cplugs/flow/routes.py"
   ],
   "area": "sessions",
-  "description": "The flow plugin rebuilds a multi-agent run two ways from one collector. The flow tab: a live chat of the same run, ordered by cause instead of a time axis, with each agent's words as a bubble in its own color (a subagent stepped in under its parent) and cards between them for tasks, crosstalk, spawns, subagent launches and returns, huddle posts and runs of tool calls (folded, open to see each call). The tab is for testing and stays out of the tab strip until the plugin setting show tab is switched on (it ships off). The tab follows the run as it happens over the push while it is open and does nothing while it is closed. The plugin ships off; finished charts are kept as snapshots in its own flow.db.",
+  "description": "The flow plugin rebuilds a multi-agent run two ways from one collector. The swimlane flow chart: one lane per agent session with subagents nested under their parent, blocks for the work each did, and arrows for crosstalk messages, spawns, subagent launches and returns, task manager posts and owner replies, every item carrying the ids it came from and an arrow no exact key proves marked inferred; an agent calls flow_get (or the owner its route), and with html set gets one self-contained page to post to the task manager. The flow tab: a live chat of the same run, ordered by cause instead of a time axis, with each agent's words as a bubble in its own color (a subagent stepped in under its parent) and cards between them for tasks, crosstalk, spawns, subagent launches and returns, task manager posts and runs of tool calls (folded, open to see each call). The tab is for testing and stays out of the tab strip until the plugin setting show tab is switched on (it ships off). The tab follows the run as it happens over the push while it is open and does nothing while it is closed. The plugin ships off; finished charts are kept as snapshots in its own flow.db.",
   "docs": [
     "docs/flow.md",
     "docs/cplugs.md"
   ],
-  "examples": [],
+  "examples": [
+    "Ask for the flow of task manager item 395 and see the briefing, Fleet, its two spawned children and Fleet's subagent on one time axis.",
+    "Post the html answer to the task manager so Joe can open the chart in the item.",
+    "Open the flow tab on item 395 and watch the briefing ask Fleet over crosstalk, Fleet launch a worker subagent, the worker's 32 tool calls fold into one card, and the return card report its duration."
+  ],
   "how_to": [
     "Turn the flow plugin on from the plugins page; to see the flow tab, also switch on its show tab setting (off by default).",
-    "Call flow_get with id set to a huddle item number; add html: true for the standalone page.",
+    "Call flow_get with id set to a task manager item number; add html: true for the standalone page.",
     "For a session, pass seed: session, its uuid or tmux name as id, and optionally start and end as epoch seconds.",
-    "For the chat view, open the flow tab, pick huddle item or session, type the number or the session reference and press open; follow live keeps the newest item in view and turns off when you scroll up."
+    "For the chat view, open the flow tab, pick task manager item or session, type the number or the session reference and press open; follow live keeps the newest item in view and turns off when you scroll up."
   ],
   "id": "flow",
   "issues": [],
@@ -31,7 +35,7 @@
     "live",
     "feed"
   ],
-  "media_exempt": "no capture spec yet: the chat tab needs a leased test slot holding a multi-agent run, and the recapture is a pre-version-bump step; the swimlane chart is a standalone page an agent posts as a huddle artifact",
+  "media_exempt": "no capture spec yet: the chat tab needs a leased test slot holding a multi-agent run, and the recapture is a pre-version-bump step; the swimlane chart is a standalone page an agent posts as a task manager artifact",
   "name": "Flow chart",
   "since": "2026-10-11",
   "status": "beta",
@@ -39,11 +43,11 @@
   "surfaces": [
     "src/cplugs/flow/mcp.py",
     "src/cplugs/flow/views/page.py",
-    "src/cplugs/flow/feed.py",
-    "src/cplugs/flow/live.py",
+    "src/core/flow_data/feed.py",
+    "src/core/flow_data/live.py",
     "web/src/cplugs/flow/FlowBody.svelte"
   ],
-  "updated": "2026-10-11",
+  "updated": "2026-10-27",
   "where": [
     "The flow_get MCP tool for agents, while the flow plugin is on.",
     "GET /api/v1/cplugs/flow/run.",

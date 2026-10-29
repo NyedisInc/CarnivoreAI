@@ -43,7 +43,6 @@
         }
     }
 
-    /* --color- */
     var lastCachedThemeVarsJson = null;
 
     function cacheThemeVars(themeId, cssVars) {
@@ -157,7 +156,6 @@
 
     function paintCssVars(cssVars) {
         var rootStyle = document.documentElement.style;
-        // reapplied unchanged, which is real recalculation for a change
         var applied = window.ThemeVarWriter
             ? window.ThemeVarWriter.applyVarDiff(rootStyle, appliedCssVarValues, cssVars)
             : null;
@@ -188,19 +186,19 @@
         });
     }
 
+    // -----------------------------------------------------------------------
+    // -----------------------------------------------------------------------
 
     var loadedEffectsScripts = new Set();
     var activeEffectsModule = null;
     var activeEffectsThemeId = null;
-    var pendingConsentForTheme = null;
-    var consentResolveQueue = [];
+    var pendingConsents = new Map();
 
-    /* --color- */
     function showConsentModal(manifest, info) {
-        if (pendingConsentForTheme === manifest.id) {
-            return new Promise(function (resolve) { consentResolveQueue.push(resolve); });
-        }
-        pendingConsentForTheme = manifest.id;
+        var open = pendingConsents.get(manifest.id);
+        if (open) return new Promise(function (resolve) { open.queue.push(resolve); });
+        var entry = { queue: [], cancel: noopCancel };
+        pendingConsents.set(manifest.id, entry);
         var changed = !!(info && info.changed);
 
         return new Promise(function (resolve) {
@@ -245,12 +243,9 @@
                 try { document.body.removeChild(overlay); } catch (_) {}
                 releaseTrap();
                 releaseTrap = function () {};
-                pendingConsentForTheme = null;
-                cancelPendingConsent = noopCancel;
+                pendingConsents.delete(manifest.id);
                 resolve(decision);
-                var pending = consentResolveQueue.slice();
-                consentResolveQueue = [];
-                pending.forEach(function (r) {
+                entry.queue.forEach(function (r) {
                     try { r(decision); } catch (_) {}
                 });
             }
@@ -261,13 +256,10 @@
                 finish(btn.getAttribute('data-action'));
             });
 
-            cancelPendingConsent = function (themeId) {
-                if (themeId && themeId !== manifest.id) return false;
-                finish('never');
-                return true;
-            };
+            entry.cancel = function () { finish('never'); };
 
             document.body.appendChild(overlay);
+            // and the three
             if (window.ModalStack && typeof window.ModalStack.trap === 'function') {
                 releaseTrap = window.ModalStack.trap(overlay, {});
             }
@@ -276,8 +268,14 @@
         });
     }
 
-    function noopCancel() { return false; }
-    var cancelPendingConsent = noopCancel;
+    function noopCancel() {}
+
+    function cancelPendingConsent(themeId) {
+        var targets = themeId ? [pendingConsents.get(themeId)] : Array.from(pendingConsents.values());
+        var hit = targets.filter(Boolean);
+        hit.forEach(function (entry) { entry.cancel(); });
+        return hit.length > 0;
+    }
 
     function effectsUrlFor(manifest) {
         var file = manifest.effects;
@@ -348,7 +346,6 @@
         });
     }
 
-    /* running anyway */
     async function maybeLoadEffects(manifest) {
         if (!manifest || !manifest.effects) return;
         if (loadedEffectsScripts.has(manifest.id)) return;
@@ -450,6 +447,7 @@
             }
         }
 
+        // opts.forXterm === true
         var forXterm = opts && Object.prototype.hasOwnProperty.call(opts, 'forXterm')
             ? opts.forXterm
             : undefined;
@@ -527,7 +525,6 @@
         return manifests.get(activeGlobalId) || null;
     }
 
-    /* the bottom bar */
     function sessionScopeElement() {
         return document.getElementById(SESSION_SCOPE_ID);
     }
@@ -673,7 +670,6 @@
         };
     }
 
-    /* failed to load */
     function paintStoredGlobal() {
         var stored = getStoredThemeId();
         if (!manifests.has(stored)) {
@@ -752,6 +748,7 @@
         clearSession: clearSession,
         setReplayInProgress: setReplayInProgress,
         revokeEffects: revokeEffects,
+        _showConsentModal: showConsentModal,
         getActiveGlobal: getActiveGlobal,
         getActiveTerminalManifest: getActiveTerminalManifest,
         getSessionManifest: getSessionManifest,
@@ -760,7 +757,6 @@
         onXtermThemeChange: onXtermThemeChange,
         STORAGE_KEY: STORAGE_KEY,
         DEFAULT_THEME_ID: DEFAULT_THEME_ID,
-        // localStorage.getItem('cloude.theme')
         getStoredThemeId: getStoredThemeId,
         applyStoredThemeIdSync: function () {
             var id = getStoredThemeId();

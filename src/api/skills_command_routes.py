@@ -1,8 +1,3 @@
-"""``GET /api/v1/skills/command-center``: every local skill against every project and the personal folders.
-
-Read only except ``POST /skills/copy`` and ``POST /skills/remove``. The client names no path; columns come from the launcher's own project list and the fixed personal
-folders (``src/core/skill_manager/command_center.py``). Mounted under ``/api/v1`` from ``src/api/routes.py``.
-"""
 
 from __future__ import annotations
 
@@ -39,10 +34,6 @@ def _ledger_paths(request: Request) -> Iterator[Tuple[str, str]]:
 
 
 def command_center_now(request: Request, include_archived: bool) -> Dict[str, Any]:
-    """Build the matrix on a worker thread (project list, filesystem and ledger reads).
-
-    Raises: HTTPException(503) when the project list could not be read (an empty matrix would lie).
-    """
     state_dir = request.app.state.services.settings_reader.state_dir()
     view = resolve_projects(state_dir, include_archived=include_archived)
     if view.mode != MODE_DB:

@@ -10,13 +10,6 @@ from src.core.attention_history.store import DB_NAME, AttentionHistoryStore
 
 
 def build_recorder(state_dir: Callable[[], Path]) -> EdgeRecorder:
-    """The recorder the attention watcher is wired to. Inputs: state_dir - read lazily. Output: EdgeRecorder.
-
-    Description: the state directory is read when an event is written, not at construction, the way the watcher's
-      other state-dir readers do it. Writes go to the default executor so the event loop never opens sqlite, and each
-      one that changed the file tells open timelines (coalesced, existing ``session_timeline`` topic).
-    Example: watcher_kwargs["on_transition"] = build_recorder(settings.get_state_dir).on_transition
-    """
     from src.core.db import db_path_for  # noqa: PLC0415
     from src.core.session_timeline import push  # noqa: PLC0415
 

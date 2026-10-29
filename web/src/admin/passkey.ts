@@ -7,7 +7,6 @@ export interface CredentialsLike {
 
 export type OptionsJson = Record<string, unknown>;
 
-/* padding */
 export function b64uEncode(data: ArrayBuffer | Uint8Array): string {
     const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
     let text = '';
@@ -15,7 +14,6 @@ export function b64uEncode(data: ArrayBuffer | Uint8Array): string {
     return btoa(text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-/* padding */
 export function b64uDecode(text: string): Uint8Array {
     const padded = text.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((text.length + 3) % 4);
     const raw = atob(padded);

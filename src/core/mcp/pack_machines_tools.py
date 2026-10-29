@@ -63,7 +63,7 @@ SPECS = (
                     "current master it reaches the other computers by the exchange; run elsewhere it changes only this computer, "
                     "because the others accept only the master's signed change.",
         properties=_MACHINE, required=("machine",), invoke=_master, summary=_summary("make a computer the Pack master"),
-        example={"machine": "hosta"},
+        example={"machine": "studio"},
     ),
     ra.RouteTool(
         name="pack_settings_update", route="src.api.pack_machines_routes:put_settings", gate=ra.ACT,

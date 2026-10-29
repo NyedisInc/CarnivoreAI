@@ -15,6 +15,7 @@ DEFAULT_LIMIT = 40
 
 @router.get("/sent")
 async def get_sent(limit: int = Query(DEFAULT_LIMIT, ge=1, le=sent.MAX_LIMIT), ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """The owner's recent sends with their tell states, newest first. Output: {now, sends}."""
     store = service.store(ctx)
     names = await run_store(lambda: service.project_names(ctx))
     queue = send_queue.state(ctx).get("lists", {})

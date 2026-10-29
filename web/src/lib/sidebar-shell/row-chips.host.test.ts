@@ -14,21 +14,21 @@ describe('hostChip', () => {
     });
 
     test('a reachable remote row shows its label with no state attribute', () => {
-        const chip = hostChip(row({ host_key: 'hosta', host_label: 'Hosta', host_state: 'up' }));
-        expect(chip?.text).toBe('Hosta');
+        const chip = hostChip(row({ host_key: 'studio', host_label: 'Studio', host_state: 'up' }));
+        expect(chip?.text).toBe('Studio');
         expect(chip?.attrs['data-host-state']).toBeUndefined();
         expect(chip?.attrs.class).toBe('session-sidebar-row-badge session-sidebar-row-host');
     });
 
     test('a degraded or offline remote row carries data-host-state, quietly', () => {
-        const degraded = hostChip(row({ host_key: 'hosta', host_label: 'Hosta', host_state: 'degraded' }));
+        const degraded = hostChip(row({ host_key: 'studio', host_label: 'Studio', host_state: 'degraded' }));
         expect(degraded?.attrs['data-host-state']).toBe('degraded');
-        const down = hostChip(row({ host_key: 'hosta', host_label: 'Hosta', host_state: 'down' }));
+        const down = hostChip(row({ host_key: 'studio', host_label: 'Studio', host_state: 'down' }));
         expect(down?.attrs['data-host-state']).toBe('down');
     });
 
     test('a missing label falls back to the key', () => {
-        const chip = hostChip(row({ host_key: 'hosta', host_state: 'up' }));
-        expect(chip?.text).toBe('hosta');
+        const chip = hostChip(row({ host_key: 'studio', host_state: 'up' }));
+        expect(chip?.text).toBe('studio');
     });
 });

@@ -1,4 +1,3 @@
-/*  hidden  */
 
 export interface Ghost {
   move: (x: number, y: number) => void;

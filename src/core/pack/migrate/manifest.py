@@ -1,14 +1,3 @@
-"""What crosses besides the code and the conversation files: the rows of a migrating project (P4, #1517; docs/pack.md 10).
-
-``collect`` (source, read only) turns the project into one JSON document: the project and its company, its sessions (as ASLEEP
-rows), its live Swarm agents with their definition and memory files, and its huddle list. ``apply`` (target) re-keys all of it by
-uid and thread key, never by the source's integer ids: the project row takes the source's ``uid``; a session is found by its
-``session_uuid`` and an agent by its ``thread_key``; a source id never appears on the target. Nothing here deletes anything on the
-source, and ``apply`` returns an UNDO record of exactly what it created or changed, which ``abort`` replays.
-
-LEFT BEHIND ON PURPOSE (reported by the plan): an agent's past wakes and deliveries (a woken agent starts fresh with its memory), a
-card's event history, folder-trust answers, and any live process. Sessions come over asleep and resume by ``claude_session_uuid``.
-"""
 
 from __future__ import annotations
 
@@ -136,16 +125,7 @@ def _insert(conn: sqlite3.Connection, table: str, values: Mapping[str, Any]) -> 
 
 
 def apply(conn: sqlite3.Connection, manifest: Mapping[str, Any], *, project_id: int, target_root: str,
-          state_dir: str, undo: Dict[str, Any]) -> Dict[str, int]:
-    """Write sessions, agents, agent files and the huddle list for the project row ``project_id`` (already made). Output: summary counts.
-
-    Description: ``undo`` is filled AS WE GO (the caller persists it), so a failure half way is still fully abortable:
-      ``session_ids`` / ``agent_ids`` (rows created), ``agent_before`` (``{id: old column values}`` for a row UPDATED in place,
-      a project coming back), ``files`` (relative paths written), ``huddle`` (:func:`task_manager_side.import_list`'s record).
-    Inputs: conn; manifest; project_id (target row id); target_root; state_dir; undo.
-    Raises: ManifestError ``agent_conflict`` or ``session_conflict`` (a uniqueness rule here refused a row).
-    Example: apply(conn, manifest, project_id=4, target_root="/t/p", state_dir="/s", undo={})
-    """
+          state_dir: str, undo: Dict[str, Any]) -> Dict[str, Any]:
     stamp = utc_now()
     company_id = conn.execute("SELECT company_id FROM projects WHERE id = ?", (project_id,)).fetchone()[0]
     undo.setdefault("session_ids", [])
@@ -202,7 +182,7 @@ def apply(conn: sqlite3.Connection, manifest: Mapping[str, Any], *, project_id: 
         dest.write_bytes(base64.b64decode(blob))
         undo["files"].append(rel)
     undo["huddle"] = task_manager_side.import_list(state_dir, str(project_id), manifest["huddle"], agent_map)
-    return summary(manifest)
+    return {**summary(manifest), "task_files_not_copied": list(undo["huddle"].get("task_files_dropped", []))}
 
 
 def undo_rows(conn: sqlite3.Connection, undo: Mapping[str, Any], *, target_root: Optional[str], project_id: Optional[int], state_dir: str) -> None:

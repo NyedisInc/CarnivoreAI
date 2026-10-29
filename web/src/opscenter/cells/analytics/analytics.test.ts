@@ -8,8 +8,8 @@ vi.mock('../../api/auth.svelte', () => ({ authFetch: vi.fn() }));
 
 describe('independent analytics cells', () => {
   test('two UUID instances keep their identities and geometry through validation', () => {
-    const first = 'c3f21b4b-4171-4249-8e85-6653ebc5aa96';
-    const second = '94047a28-7d49-4075-8da7-a3abd732a134';
+    const first = '10101010-1010-4010-8010-101010101010';
+    const second = '20202020-2020-4020-8020-202020202020';
     let layout = resetLayout(META, 'home');
     layout = addInstance(layout, 'analytics', first, '').layout;
     layout = addInstance(layout, 'analytics', second, '').layout;
@@ -43,7 +43,7 @@ describe('chart writes', () => {
     vi.mocked(authFetch).mockReset();
     vi.mocked(authFetch).mockResolvedValue({} as never);
     const config = {
-      id: 'c3f21b4b-4171-4249-8e85-6653ebc5aa96', revision: 2, title: 'test', enabled: true,
+      id: '10101010-1010-4010-8010-101010101010', revision: 2, title: 'test', enabled: true,
       series: [{ metric: 'total_tokens', visible: true, filters: {}, transform: 'total' as const }], filters: {},
       range: { mode: 'global' as const }, display: { type: 'line' as const },
       created_at: '2026-09-01T00:00:00Z',

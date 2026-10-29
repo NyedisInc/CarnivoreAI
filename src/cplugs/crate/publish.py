@@ -9,7 +9,6 @@ from src.cplugs.crate import constants as K
 
 
 class NameTaken(Exception):
-    """The final name already exists; nothing was replaced. Fields: path."""
 
     def __init__(self, path: str) -> None:
         super().__init__(f"{path} already exists")

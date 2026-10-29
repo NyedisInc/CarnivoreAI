@@ -23,6 +23,7 @@ async function readKeyId(fetchImpl: typeof fetch): Promise<string | null> {
         const r = await fetchImpl(SIGNATURE_URL, { cache: 'no-cache' });
         return r.ok ? keyIdOfSignature(await r.text()) : null;
     } catch {
+        // the trust line
         return null;
     }
 }

@@ -5,6 +5,21 @@ import secrets
 import subprocess
 import sys
 from pathlib import Path
+from typing import Callable
+
+from src.core.app_restart.restart import (
+    RestartOutcome,
+    app_is_running,
+    engine_owns_port,
+    is_installed_engine_root,
+    parse_port,
+    port_accepts,
+    restart_app_and_engine,
+)
+from src.core.owner_identity.otpauth import ISSUER
+from src.core.product_identity import PRODUCT_NAME
+
+DEFAULT_SERVER_PORT = 8000
 
 
 def check_and_setup_venv():
@@ -200,14 +215,14 @@ def update_env_file(
         pass
 
 
-def generate_qr_code(secret: str, account_name: str = "Cloude Code"):
+def generate_qr_code(secret: str, account_name: str = ISSUER):
     import pyotp
     import qrcode
 
     totp = pyotp.TOTP(secret)
     uri = totp.provisioning_uri(
         name=account_name,
-        issuer_name="Cloude Code"
+        issuer_name=ISSUER
     )
 
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
@@ -231,13 +246,6 @@ def prompt_with_default(prompt_text, default_value=""):
 
 
 def setup_env_file(env_path):
-    """Interactive setup for .env file configuration.
-
-    Plan v3.2: the Cloudflare tunnel system was demolished. This wizard
-    no longer asks for Cloudflare credentials, tunnel names, or zone
-    IDs. It only collects local paths + the Claude CLI binary location;
-    secrets are minted later by the auth-secret block in main().
-    """
     current_values = {}
     if env_path.exists():
         with open(env_path) as f:
@@ -293,7 +301,6 @@ def setup_env_file(env_path):
         with open(env_template_path) as f:
             content = f.read()
     else:
-        # Plan v3.2
         content = (
             "# Server Configuration\n"
             "HOST=0.0.0.0\n"
@@ -330,7 +337,6 @@ def setup_env_file(env_path):
     else:
         content += f"\nCLAUDE_CLI_PATH={claude_cli_path}\n"
 
-    # DEFAULT_WORKING_DIR
     if 'DEFAULT_WORKING_DIR=' in content:
         content = re.sub(r'^DEFAULT_WORKING_DIR=.*$', f'DEFAULT_WORKING_DIR={working_dir}', content, flags=re.MULTILINE)
     else:
@@ -404,7 +410,63 @@ def report_secret_outcome(outcome: dict) -> None:
     print()
 
 
-def finish_setup(project_root: Path, env_path: Path, config_path: Path) -> None:
+def restart_running_install(env_path: Path, restart: Callable[[int], RestartOutcome] = restart_app_and_engine) -> RestartOutcome:
+    return restart(parse_port(read_env_value(env_path, "PORT"), DEFAULT_SERVER_PORT))
+
+
+def secrets_changed(outcome: dict) -> bool:
+    return outcome["totp_action"] != "kept" or outcome["jwt_action"] != "kept"
+
+
+def start_server(project_root: Path) -> None:
+    venv_python = project_root / "venv" / "bin" / "python3"
+    if not venv_python.exists():
+        print("Could not find venv, please start server manually with: ./start.sh")
+        return
+    try:
+        subprocess.Popen([str(venv_python), '-m', 'src.main'], cwd=str(project_root),
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError as e:
+        print(f"Could not start server: {e}")
+        print("   Start manually with: ./start.sh")
+        return
+    print("Server started in background")
+
+
+def apply_running_install(project_root: Path, env_path: Path, changed: bool) -> None:
+    if not changed:
+        port = parse_port(read_env_value(env_path, "PORT"), DEFAULT_SERVER_PORT)
+        if not port_accepts(port):
+            start_server(project_root)
+        elif engine_owns_port(port):
+            print(f"{PRODUCT_NAME} is already running; no secret changed, so nothing was restarted.")
+        else:
+            print(f"Port {port} is held by something other than the {PRODUCT_NAME} engine; no server was started.")
+        return
+    if not is_installed_engine_root(project_root):
+        port = parse_port(read_env_value(env_path, "PORT"), DEFAULT_SERVER_PORT)
+        if not port_accepts(port) and not app_is_running():
+            start_server(project_root)
+            return
+        print(f"This folder is not the installed {PRODUCT_NAME} engine's folder, so the running engine")
+        print(f"does not read the .env written here. Nothing was restarted: restart {PRODUCT_NAME} yourself")
+        print("after copying the new secret to the installed engine's .env.")
+        return
+    print(f"Restarting {PRODUCT_NAME} to apply changes...")
+    print()
+    outcome = restart_running_install(env_path)
+    for note in outcome.notes:
+        print(f"WARNING: {note}")
+    if not outcome.restarted:
+        print(f"{PRODUCT_NAME} was NOT restarted and no second server was started.")
+        print("The new secret takes effect the next time you restart the app.")
+    elif outcome.reopened:
+        print(f"{PRODUCT_NAME} restarted (it starts its own server)")
+    else:
+        start_server(project_root)
+
+
+def finish_setup(project_root: Path, env_path: Path, config_path: Path, changed: bool) -> None:
     print()
     print("=" * 70)
     print("Setup Complete!")
@@ -416,38 +478,7 @@ def finish_setup(project_root: Path, env_path: Path, config_path: Path) -> None:
     print("You can find and modify the app config here:")
     print(f"   {config_path}")
     print()
-    print("Starting Cloude Code server...")
-    print()
-
-    try:
-        venv_python = project_root / "venv" / "bin" / "python3"
-        if venv_python.exists():
-            subprocess.Popen([str(venv_python), '-m', 'src.main'],
-                           cwd=str(project_root),
-                           stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL)
-            print("✅ Server started in background")
-        else:
-            print("⚠️  Could not find venv, please start server manually with: ./start.sh")
-    except Exception as e:
-        print(f"⚠️  Could not start server: {e}")
-        print("   Start manually with: ./start.sh")
-
-    print()
-    print("Restarting Cloude Code app to apply changes...")
-    try:
-        result = subprocess.run(['pgrep', '-x', 'Cloude Code'], capture_output=True)
-        if result.returncode == 0:
-            subprocess.run(['killall', 'Cloude Code'], check=False)
-            import time
-            time.sleep(2)
-            subprocess.run(['open', '-a', 'Cloude Code'], check=False)
-            print("✅ Cloude Code app restarted")
-        else:
-            print("ℹ️  Cloude Code app not running (launch it from Applications)")
-    except Exception as e:
-        print(f"⚠️  Could not restart app: {e}")
-        print("   Please restart Cloude Code manually from Applications")
+    apply_running_install(project_root, env_path, changed)
 
     print()
     print("This window will close in 3 seconds...")
@@ -461,7 +492,7 @@ def finish_setup(project_root: Path, env_path: Path, config_path: Path) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Cloude Code authentication setup",
+        description=f"{PRODUCT_NAME} authentication setup",
         add_help=True,
     )
     parser.add_argument(
@@ -498,7 +529,7 @@ def main():
     check_and_setup_venv()
 
     print("=" * 70)
-    print("Cloude Code Authentication Setup")
+    print(f"{PRODUCT_NAME} Authentication Setup")
     print("=" * 70)
     print()
 
@@ -544,7 +575,6 @@ def main():
 
     config_path = project_root / "config.json"
 
-    # already exists
     if config_path.exists():
         print(f"📄 Config file exists at: {config_path}")
 
@@ -592,7 +622,7 @@ def main():
         print("If you have LOST your authenticator, re-run with:")
         print("   python3 setup_auth.py --rotate-totp")
         print()
-        finish_setup(project_root, env_path, config_path)
+        finish_setup(project_root, env_path, config_path, secrets_changed(secret_outcome))
         return
 
     uri, qr_path = generate_qr_code(totp_secret)
@@ -618,7 +648,7 @@ def main():
 
     input("Press Enter after scanning the QR code...")
 
-    finish_setup(project_root, env_path, config_path)
+    finish_setup(project_root, env_path, config_path, secrets_changed(secret_outcome))
 
 
 if __name__ == "__main__":

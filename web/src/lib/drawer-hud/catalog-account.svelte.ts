@@ -30,13 +30,17 @@ interface CatalogApi {
     getPublishAccount?: () => Promise<{ handle?: string; login?: string | null; email?: string | null; provider?: string | null }>;
 }
 
+let readGeneration = 0;
+
 export async function loadCatalogAccount(): Promise<void> {
     const api = (globalThis as { API?: CatalogApi }).API;
     if (!api || typeof api.getCatalogSession !== 'function') return;
+    const mine = ++readGeneration;
     let facts: CatalogAccountFacts | null = null;
+    let guest = false;
     try {
         const session = await api.getCatalogSession();
-        catalogAccount.guest = session?.signed_in !== true && session?.kind === 'guest';
+        guest = session?.signed_in !== true && session?.kind === 'guest';
         if (session?.signed_in === true) {
             facts = {
                 signedIn: true,
@@ -64,6 +68,8 @@ export async function loadCatalogAccount(): Promise<void> {
         console.warn('[catalog-account] session unavailable', err);
         return;
     }
+    if (mine !== readGeneration) return;
+    catalogAccount.guest = guest;
     publish(facts);
 }
 
@@ -76,7 +82,6 @@ interface HostEvents {
 export function followCatalogAccount(): () => void {
     void loadCatalogAccount();
     const again = () => void loadCatalogAccount();
-    // restored from
     const onVisible = () => {
         if (document.visibilityState === 'visible') again();
     };
@@ -90,7 +95,10 @@ export function followCatalogAccount(): () => void {
             return;
         }
         if (frame?.type !== ACCOUNT_SESSION_FRAME) return;
-        if (frame.signed_in === false) publish(null);
+        if (frame.signed_in === false) {
+            readGeneration++;
+            publish(null);
+        }
         else again();
     });
     return () => {

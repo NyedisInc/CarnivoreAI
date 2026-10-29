@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the home screen */
   import IconButton from '../../lib/base/IconButton.svelte';
   import CascadeMenu from '../../lib/drawer-tabs/CascadeMenu.svelte';
   import type { MenuNode } from '../../lib/drawer-tabs/add-component-menu';
@@ -8,6 +9,7 @@
   let open = $state(false);
   let button = $state<HTMLElement | null>(null);
 
+  // the home screen
   const root = $derived<MenuNode[]>(
     openTargets().map((target, index, all) => ({
       id: target.id,

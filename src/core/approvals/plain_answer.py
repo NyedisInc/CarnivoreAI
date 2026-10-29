@@ -1,11 +1,3 @@
-"""The ONE rule for a plain yes or no on a permission prompt, and the one-line summary of what it approves.
-
-Pure, no I/O. Three callers share it: the dialog answer driver (``choice: {"plain": "yes"|"no"}``,
-resolved against the FRESH pane at the write), the approvals inbox (``plain_yes``, ``plain_no`` and
-``summary`` on a dialog item, so the questions tab can draw approve and deny), and Beast Mode's
-prompts scope (``src/core/beast_prompts/engine.py``), which answers only what :func:`auto_approvable`
-admits.
-"""
 
 from __future__ import annotations
 

@@ -29,7 +29,6 @@ console.log('[TerminalReconnectPolicy Module] Loading...');
         return INIT.UNKNOWN;
     }
 
-    /* did not answer */
     function consumesBudget(signals) {
         var s = signals || {};
         if (s.outcome === INIT.READY) return false;

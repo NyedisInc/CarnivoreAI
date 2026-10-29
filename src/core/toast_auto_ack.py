@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Iterable, List, Mapping, Optional, Sequence
 
 from src.models import Toast
+from src.models.utc_time import as_aware_utc
 
 ACK_REASON_DISMISSED = "dismissed"
 
@@ -52,10 +53,7 @@ def _raised_after(toast: Toast, cutoff: datetime) -> bool:
     created = getattr(toast, "created_at", None)
     if created is None:
         return False
-    try:
-        return created > cutoff
-    except TypeError:
-        return False
+    return as_aware_utc(created) > as_aware_utc(cutoff)
 
 
 def describe(event_kind: str, acked_ids: Iterable[str]) -> dict:

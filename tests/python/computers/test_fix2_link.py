@@ -66,15 +66,15 @@ async def test_persisting_addresses_never_rolls_back_a_rotation(world, monkeypat
     stale = main.query(lambda c: store.get(c, JOIN))
     main.query(lambda c: store.set_next_cert(c, JOIN, b"next-der", "nextsha"))
     monkeypatch.setattr(store, "get", lambda conn, iid: stale)
-    await rt._on_member_hello(JOIN, ["198.51.100.16"], 4711)
+    await rt._on_member_hello(JOIN, ["10.9.9.9"], 4711)
     monkeypatch.undo()
     row = main.query(lambda c: store.get(c, JOIN))
-    assert row.next_cert_sha256 == "nextsha" and row.addresses == ("198.51.100.16",) and row.link_port == 4711
+    assert row.next_cert_sha256 == "nextsha" and row.addresses == ("10.9.9.9",) and row.link_port == 4711
     assert res is not None
 
 
 def test_the_ports_bind_the_configured_address():
-    assert runtime.bind_host("203.0.113.13") == "203.0.113.13"
+    assert runtime.bind_host("192.168.1.20") == "192.168.1.20"
     assert runtime.bind_host("0.0.0.0") == runtime.ALL_BIND
     assert runtime.bind_host("127.0.0.1") == runtime.LOOPBACK_BIND and runtime.bind_host("localhost") == runtime.LOOPBACK_BIND
 
@@ -83,9 +83,9 @@ def test_the_ports_bind_the_configured_address():
 async def test_wrong_codes_reach_the_owner(world, monkeypatch, sink):
     main, _join = world
     rt = _runtime(main, monkeypatch)
-    rt._on_notice("burned", "198.51.100.13")
+    rt._on_notice("burned", "10.0.0.7")
     assert [(e.type_id, e.kind) for e in sink] == [("computer.wrong_code", "computer_wrong_code")]
-    assert "198.51.100.13" in sink[0].details
+    assert "10.0.0.7" in sink[0].details
 
 
 @pytest.mark.asyncio
@@ -104,10 +104,10 @@ async def test_alerts_count_to_refused_and_anything_else_resets(monkeypatch):
             pass
 
     monkeypatch.setattr(link_dialer, "client_link_ctx", lambda identity, pins: None)
-    dialer = link_dialer.LinkDialer(identity=None, hub=Hub(), rows=lambda iid: store.LinkRow(iid, "member", "tls", "", addresses=("192.0.2.14",), link_port=47110))
+    dialer = link_dialer.LinkDialer(identity=None, hub=Hub(), rows=lambda iid: store.LinkRow(iid, "member", "tls", "", addresses=("10.0.0.2",), link_port=47110))
 
     async def fake_dial(targets, ctx, shas):
-        return ("192.0.2.14", 47110, None, Writer()), []
+        return ("10.0.0.2", 47110, None, Writer()), []
 
     monkeypatch.setattr(dialer, "_dial", fake_dial)
     member = SimpleNamespace(cert=object(), next_cert=None, shas=lambda: frozenset())

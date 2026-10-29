@@ -42,13 +42,6 @@ def _signature(path: Path) -> Tuple[int, int]:
 
 @dataclass(frozen=True)
 class StorageSpec:
-    """What a plugin declares about its storage.
-
-    Inputs: db (str) - the file name inside the plugin folder; migrations (SQL scripts, the ladder);
-      legacy_db (str | None) - a file directly under the state directory moved in once (``huddle.db``);
-      backup_before ({rung number: label} | None) - a verified copy of the file (``storage_backup.py``) is taken, labelled,
-      before a file behind that rung walks to or past it; None takes none. Must be immutable (``MappingProxyType``).
-    """
 
     db: str
     migrations: Sequence[str]
@@ -116,7 +109,7 @@ class CplugStorage:
             for suffix in ("",) + _SIDE_SUFFIXES:
                 stale = Path(f"{temp}{suffix}")
                 if stale.exists():
-                    stale.unlink()  # left by a crash
+                    stale.unlink()
             source = sqlite3.connect(str(old), timeout=5.0)
             try:
                 dest = sqlite3.connect(str(temp))
@@ -140,18 +133,11 @@ class CplugStorage:
                 state["conn"] = None
             if state.get("conn") is None:
                 state["placeholder"] = not self.db_path.exists()
-                state["conn"] = self._open(False)
+                state["conn"] = self._open(False) if state["placeholder"] else self._reads.lend(self.db_path)
             return _SharedReadConnection(state["conn"])  # type: ignore[return-value]
         return self._open(write)
 
     def connect_read(self) -> sqlite3.Connection:
-        """A read connection reused across calls on this thread (a no-op ``close``); the hot readers use it instead of ``connect(False)``.
-
-        Description: inside a ``read_scope`` it is the scope's connection. A file that does not exist yet answers a fresh stand-in
-          (nothing to reuse, nothing created). Otherwise one connection per thread and file stays open, at the latest schema, with no
-          transaction held between calls, so a write through any connection is visible to the next read. A replaced file is re-opened.
-        Output: a connection to use in ``with closing(...)`` like ``connect(False)``. Raises: as ``connect``.
-        """
         if self._scope.__dict__.get("depth", 0) > 0 or not self.db_path.exists():
             return self.connect(False)
         return self._reads.lend(self.db_path)  # type: ignore[return-value]

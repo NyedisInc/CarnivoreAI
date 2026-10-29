@@ -12,11 +12,9 @@ export interface PluginRow {
 const DEMO = ['version', 'author'] as const;
 
 export const plugins: PluginRow[] = [
-  { id: 'chart-kit', name: 'Chart-Kit', description: 'Charts from tabular data', version: '2.2.0', author: 'example', demoColumns: DEMO },
-  { id: 'pdf-notes', name: 'PDF-Notes', description: 'Annotate and export documents', version: '1.1.4', author: 'community', tone: 'link', demoColumns: DEMO },
-  { id: 'ticket-bridge', name: 'Ticket-Bridge', description: 'Sync issues with a tracker', version: '0.8.0', author: 'community', demoColumns: DEMO },
-  { id: 'lint-watch', name: 'Lint-Watch', description: 'Run linters on save', version: '3.4.1', author: 'core', demoColumns: DEMO },
-  { id: 'snippet-box', name: 'Snippet-Box', description: 'Reusable prompt snippets', version: '1.0.0', author: 'example', demoColumns: DEMO },
-  { id: 'calendar-sync', name: 'Calendar-Sync', description: 'Show events beside sessions', version: '0.5.2', author: 'community', demoColumns: DEMO },
-  { id: 'theme-pack', name: 'Theme-Pack', description: 'Extra colour themes', version: '1.7.3', author: 'core', demoColumns: DEMO },
+  { id: 'rfp-agent', name: 'RFP-Agent', description: 'Automate RFP analysis', version: '1.4.0', author: 'nyedis', tone: 'link', demoColumns: DEMO },
+  { id: 'shopify', name: 'Shopify', description: 'E-commerce integration', version: '2.1.3', author: 'nyedis', demoColumns: DEMO },
+  { id: 'argent', name: 'Argent', description: 'Web3 wallet operations', version: '0.9.1', author: 'community', demoColumns: DEMO },
+  { id: 'leaveit', name: 'LeaveIt', description: 'Task and notes manager', version: '1.0.2', author: 'community', demoColumns: DEMO },
+  { id: 'github', name: 'GitHub', description: 'Repo, PR and issue automation', version: '3.0.0', author: 'core', demoColumns: DEMO },
 ];

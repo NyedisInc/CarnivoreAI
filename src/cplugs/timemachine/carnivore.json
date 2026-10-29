@@ -1,0 +1,35 @@
+{
+  "kind": "cplug",
+  "id": "timemachine",
+  "name": "time machine check",
+  "version": "1.0.0",
+  "api_version": 1,
+  "min_app_version": "1.16.4",
+  "author": "Alex (example-owner)",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "database",
+  "default_enabled": false,
+  "permissions": [
+    {
+      "name": "notify",
+      "reason": "raises one alert when time machine has not backed up in 24 hours or cannot be read"
+    }
+  ],
+  "owns": {
+    "routes": [
+      "/check"
+    ],
+    "strings": [
+      "cplug.timemachine."
+    ],
+    "tests": [
+      "tests/python/cplugs/timemachine/",
+      "web/src/cplugs/timemachine/"
+    ]
+  },
+  "data": []
+}

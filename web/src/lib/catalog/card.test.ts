@@ -294,7 +294,7 @@ describe('whether the row is marked for the security verdict', () => {
         expect(card.flagged).toBe(true);
     });
 
-    test('a blocked verdict marks it; an overridden one paints no verdict and no flag', () => {
+    test('a blocked verdict marks it; an overridden one paints no verdict and no flag (Alex (example-owner), 2026-10-16)', () => {
         const plain = rowFor({
             status: 'reviewed',
             verdict: 'blocked',

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://carnivore.ai/schemas/extensions/warez/mod.schema.json",
   "title": "Claude Code mod, layer 2 (warez front door)",
-  "description": "L1 mod plus the base overlay.",
+  "description": "L1 mod plus the base overlay. First party only until a ruling (policy, not schema). external_code as for plugins.",
   "allOf": [
     {
       "$ref": "../mod.schema.json"

@@ -32,7 +32,20 @@
     "usage",
     "cost"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The drawer's providers panel with three accounts and their usage bars",
+      "caption": "The PROVIDERS panel in the drawer",
+      "file": "panel.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The chevron is clicked three times: the panel expands with details, collapses to its heading, then returns",
+      "caption": "The PROVIDERS panel cycling compact, expanded and hidden",
+      "file": "fold.gif",
+      "kind": "gif"
+    }
+  ],
   "name": "Provider ledger",
   "since": "2026-09-18",
   "status": "stable",
@@ -45,6 +58,5 @@
   "where": [
     "The PROVIDERS panel at the foot of the agents drawer.",
     "The PROVIDER LEDGER card on the home screen, and View all for the full screen."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

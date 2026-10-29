@@ -12,12 +12,14 @@ const DROP_ATTR = 'data-menu-drop';
 export interface MenuDragHost {
   ids(): string[];
   commit(ids: string[]): void;
+  marker?: string;
 }
 
 interface Drag {
   id: string;
   li: HTMLElement;
   list: HTMLElement;
+  zones: HTMLElement[];
   host: MenuDragHost;
   startX: number;
   startY: number;
@@ -46,15 +48,32 @@ function beforeAt(list: HTMLElement, clientY: number): string | null {
   return null;
 }
 
-function paintDrop(list: HTMLElement, before: string | null): void {
-  clearDrop(list);
+function paintDrop(zones: HTMLElement[], list: HTMLElement, before: string | null): void {
+  clearDrop(zones);
   const all = lines(list);
   const target = before === null ? all[all.length - 1] : all.find((li) => li.getAttribute(ROW_ATTR) === before);
-  target?.setAttribute(DROP_ATTR, before === null ? 'after' : 'before');
+  (target ?? list).setAttribute(DROP_ATTR, before === null ? 'after' : 'before');
 }
 
-function clearDrop(list: HTMLElement): void {
-  list.querySelectorAll(`[${DROP_ATTR}]`).forEach((el) => el.removeAttribute(DROP_ATTR));
+function clearDrop(zones: HTMLElement[]): void {
+  for (const zone of zones) {
+    zone.removeAttribute(DROP_ATTR);
+    zone.querySelectorAll(`[${DROP_ATTR}]`).forEach((el) => el.removeAttribute(DROP_ATTR));
+  }
+}
+
+function pickZone(zones: HTMLElement[], clientY: number): HTMLElement {
+  let best = zones[0] as HTMLElement;
+  let gap = Infinity;
+  for (const zone of zones) {
+    const r = zone.getBoundingClientRect();
+    const away = clientY < r.top ? r.top - clientY : clientY > r.bottom ? clientY - r.bottom : 0;
+    if (away < gap) {
+      gap = away;
+      best = zone;
+    }
+  }
+  return best;
 }
 
 function swallowClick(): void {
@@ -73,6 +92,11 @@ function lift(d: Drag): void {
   d.list.style.cursor = 'grabbing';
 }
 
+function positionSentence(host: MenuDragHost, next: readonly string[], id: string, name: string): string {
+  const rows = host.marker ? next.filter((x) => x !== host.marker) : next;
+  return t('sidebar.row.move.moved', { name, position: rows.indexOf(id) + 1, total: rows.length });
+}
+
 function finish(drop: boolean): void {
   const d = drag;
   if (!d) return;
@@ -85,15 +109,15 @@ function finish(drop: boolean): void {
   document.removeEventListener('touchmove', blockScroll);
   d.li.removeAttribute(LIFTED_ATTR);
   d.list.style.cursor = '';
-  clearDrop(d.list);
+  clearDrop(d.zones);
   if (!d.active) return;
   swallowClick();
   if (!drop || d.before === undefined) return;
   const ids = d.host.ids();
-  const next = moveBefore(ids, d.id, d.before);
+  const next = moveBefore(ids, d.id, d.before ?? d.list.dataset.menuEnd ?? null);
   if (next.some((id, i) => id !== ids[i])) {
     d.host.commit(next);
-    announce(t('sidebar.row.move.moved', { name: rowName(d.li, d.id), position: next.indexOf(d.id) + 1, total: next.length }));
+    announce(positionSentence(d.host, next, d.id, rowName(d.li, d.id)));
   }
 }
 
@@ -107,10 +131,12 @@ function onMove(e: PointerEvent): void {
     lift(d);
   }
   e.preventDefault();
-  const before = beforeAt(d.list, e.clientY);
-  if (before !== d.before) {
+  const list = d.zones.length > 1 ? pickZone(d.zones, e.clientY) : d.list;
+  const before = beforeAt(list, e.clientY);
+  if (before !== d.before || list !== d.list) {
+    d.list = list;
     d.before = before;
-    paintDrop(d.list, before);
+    paintDrop(d.zones, list, before);
   }
 }
 
@@ -129,15 +155,21 @@ function onEscape(e: KeyboardEvent): void {
   }
 }
 
+function zonesOf(list: HTMLElement): HTMLElement[] {
+  const root = list.closest<HTMLElement>('[data-menu-zones]');
+  const all = root ? Array.from(root.querySelectorAll<HTMLElement>('[data-menu-zone]')) : [];
+  return all.length > 0 ? all : [list];
+}
+
 export function onMenuPointerDown(e: PointerEvent, host: MenuDragHost): void {
   if (drag || (typeof e.button === 'number' && e.button !== 0)) return;
   const target = e.target as Element | null;
   const li = target?.closest<HTMLElement>(`li[${ROW_ATTR}]`) ?? null;
   const list = li?.parentElement ?? null;
-  if (!li || !list || target?.closest('[data-menu-popout], [data-menu-dashboards-caret]')) return;
+  if (!li || !list || target?.closest('[data-menu-popout], [data-menu-dashboards-caret], [data-menu-nodrag]')) return;
   const id = li.getAttribute(ROW_ATTR) as string;
   const d: Drag = {
-    id, li, list, host, startX: e.clientX, startY: e.clientY, pointerId: e.pointerId, pointerType: e.pointerType,
+    id, li, list, zones: zonesOf(list), host, startX: e.clientX, startY: e.clientY, pointerId: e.pointerId, pointerType: e.pointerType,
     active: false, timer: null, before: undefined,
   };
   drag = d;
@@ -170,8 +202,9 @@ export function onMenuMoveKey(e: KeyboardEvent, host: MenuDragHost): boolean {
     announce(t(to < 0 ? 'sidebar.row.move.top_of_list' : 'sidebar.row.move.bottom_of_list', { name }));
     return true;
   }
-  host.commit(moveBefore(ids, id, e.key === 'ArrowDown' ? (ids[to + 1] ?? null) : (ids[to] as string)));
-  announce(t('sidebar.row.move.moved', { name, position: to + 1, total: ids.length }));
+  const next = moveBefore(ids, id, e.key === 'ArrowDown' ? (ids[to + 1] ?? null) : (ids[to] as string));
+  host.commit(next);
+  announce(positionSentence(host, next, id, name));
   queueMicrotask(() => li.querySelector<HTMLElement>('.oc-nav-item')?.focus());
   return true;
 }

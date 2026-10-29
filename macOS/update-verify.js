@@ -46,7 +46,6 @@ async function readPlistKey(run, plist, key) {
   return (await run(PLUTIL, ['-extract', key, 'raw', '-o', '-', plist])).stdout.trim();
 }
 
-/*  hidden  */
 async function findBundles(fsApi, dir, sub = '') {
   const found = [];
   for (const e of await fsApi.promises.readdir(path.join(dir, sub), { withFileTypes: true })) {

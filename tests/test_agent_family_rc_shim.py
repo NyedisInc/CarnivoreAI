@@ -61,7 +61,7 @@ def test_the_shell_standard_wrapper_does_not_source_the_rc(tmp_path):
 
 
 def test_every_family_declares_the_column_deliberately():
-    covered = set(TOOL_FAMILIES) | {"shell"}
+    covered = set(TOOL_FAMILIES) | {"shell", "custom"}
     assert {f.name for f in AGENT_FAMILIES} == covered, (
         "a family was added or removed; decide its sources_zshrc value "
         "and record the reason in this test"

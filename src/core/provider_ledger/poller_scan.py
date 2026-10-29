@@ -38,18 +38,6 @@ async def read_accounts(
     list_accounts: Callable[[Path], List[ProviderAccount]],
     config_path: Path,
 ) -> Optional[List[ProviderAccount]]:
-    """The configured accounts, or None when the file could not be read.
-
-    Description: ``list_accounts`` names exactly two failures and both
-      are ordinary states of a machine rather than defects, so they are
-      caught HERE by name rather than left to the loop's outermost
-      frame. The read is a blocking file read and goes off the event
-      loop.
-    Inputs: list_accounts (callable) - the reader; config_path (Path) -
-      the file to read.
-    Output: list[ProviderAccount] | None.
-    Example: accounts = await read_accounts(store.list_accounts, path)
-    """
     try:
         return await asyncio.to_thread(list_accounts, config_path)
     except (FileNotFoundError, ValueError) as exc:

@@ -1,4 +1,3 @@
-/*  hidden  display: flex */
 
 #sessionNotesBtn {
     display: none;
@@ -13,5 +12,4 @@ body:has(#terminal-screen.active) #sessionNotesBtn {
     color: var(--oc-orange-bright, currentColor);
 }
 
-/* padding */
 

@@ -16,7 +16,6 @@ export type ShellOutcome =
   | { ok: true; shell: CompanionShell }
   | { ok: false; code: string; detail: string };
 
-/*  hidden  */
 export function shellSlot(rowId: number): string {
   return `shell:row:${rowId}`;
 }

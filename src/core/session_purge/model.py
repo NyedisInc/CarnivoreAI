@@ -6,7 +6,6 @@ from typing import Any, Dict, List
 
 from src.core.inventory.model import DELETE, KEEP, Artifact, SessionIdentity
 
-# state directory
 RECEIPTS_DIR_NAME = "purge-receipts"
 
 

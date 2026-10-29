@@ -65,7 +65,7 @@ async def test_a_connection_the_tunnel_did_not_open_is_refused(rig):
 @pytest.mark.asyncio
 async def test_the_host_must_be_exactly_the_link_name(rig):
     gate, app, _, _, cookie, _ = rig
-    for host in ("evil.example", "127.0.0.1", "x." + HOST, "203.0.113.11:8000", ""):
+    for host in ("evil.example", "127.0.0.1", "x." + HOST, "192.168.1.5:8000", ""):
         _, sent = await call(gate, "/pair", host=host, cookie=cookie)
         assert status(sent) == 421, host
     _, sent = await call(gate, "/pair", host=HOST.upper() + ":443")

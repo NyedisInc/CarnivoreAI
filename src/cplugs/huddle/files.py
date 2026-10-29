@@ -1,44 +1,39 @@
-"""Files on a Task Manager reply: drop or paste, stored in the plugin's own folder (``docs/task-manager.md`` section 42).
-
-THE ID. The file's ``uuid8`` prefix. An upload answers ``{id, name, mime, size}``; the reply that attaches it stores
-``messages.parts = {"files": [{id, name, mime, size, path}]}`` (NO schema step: ``parts`` is the column the structured asks
-use, and ``{"files"`` collides with none of their prefixes). ``path`` is relative to the plugin folder for a file stored there, so a
-moved state directory keeps working, and ABSOLUTE for a file in the Task Manager folder; Claude's tool answers the ABSOLUTE path
-(:func:`for_agent`) either way so it can ``Read`` it.
-"""
 
 from __future__ import annotations
 
 import errno
+import hashlib
 import json
 import mimetypes
 import os
-import re
 import shutil
 import sqlite3
 import time
 import uuid
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Set
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Set
 
 import structlog
 
-from src.cplugs.huddle.rules import TaskManagerInvalid, TaskManagerNotFound
-from src.cplugs.sdk import CplugStorage
+from src.cplugs.huddle import rich_ask
+from src.cplugs.huddle.rules import TaskManagerFileRemoved, TaskManagerInvalid, TaskManagerNotFound
+from src.cplugs.sdk import CplugStorage, task_folders
 from src.cplugs.sdk.uploads import is_image_name
 
 logger = structlog.get_logger()
 
 DIR_NAME = "files"
-ID_PATTERN = re.compile(r"^[0-9a-f]{8}$")
+ID_PATTERN = task_folders.FILE_ID_PATTERN
 MAX_PER_REPLY = 10
 ORPHAN_AGE_S = 86400.0
 PARTS_PREFIX = '{"files"'
-PARTS_SQL = ("(parts LIKE '{\"files\"%' OR parts LIKE '{\"v\": 2, \"answers_to\"%\"files\"%' "
+FREEFORM_PREFIX = rich_ask.ANSWERS_TO_PREFIX
+PARTS_SQL = (f"(parts LIKE '{PARTS_PREFIX}%' OR parts LIKE '{FREEFORM_PREFIX}%\"files\"%' "
              "OR parts LIKE '{\"quote\"%\"files\"%')")
-FREEFORM_PREFIX = '{"v": 2, "answers_to"'
 QUOTED_PREFIX = '{"quote"'
+ASIDE_PREFIX = ".removing-"
+ASIDE_GRACE_S = 120.0
 DEFAULT_MIME = "application/octet-stream"
 
 
@@ -95,15 +90,41 @@ def _recorded_dirs(storage: CplugStorage, item_id: int, file_id: str) -> List[Pa
 def locate(storage: CplugStorage, item_id: int, file_id: str, folders: Sequence[Path] = ()) -> Path:
     if not ID_PATTERN.match(file_id or ""):
         raise TaskManagerNotFound("no such file")
-    for folder in (item_dir(storage, item_id), *folders):
-        found = _in_folder(folder, file_id)
-        if found is not None:
-            return found
-    for folder in _recorded_dirs(storage, item_id, file_id):
+    for folder in _search_folders(storage, item_id, file_id, folders):
         found = _in_folder(folder, file_id)
         if found is not None:
             return found
     raise TaskManagerNotFound("no such file")
+
+
+def _search_folders(storage: CplugStorage, item_id: int, file_id: str, folders: Sequence[Path]) -> Iterator[Path]:
+    yield item_dir(storage, item_id)
+    yield from folders
+    yield from _recorded_dirs(storage, item_id, file_id)
+
+
+def aside_name(path: Path) -> Path:
+    return path.with_name(f"{ASIDE_PREFIX}{path.name}")
+
+
+def leftovers(storage: CplugStorage, item_id: int, file_id: str, folders: Sequence[Path] = ()) -> List[Path]:
+    if not ID_PATTERN.match(file_id or ""):
+        return []
+    found: List[Path] = []
+    for folder in _search_folders(storage, item_id, file_id, folders):
+        if not folder.is_symlink() and folder.is_dir():
+            found.extend(p for p in folder.glob(f"{ASIDE_PREFIX}{file_id}-*") if p.is_file() and not p.is_symlink())
+    return found
+
+
+def candidates(storage: CplugStorage, item_id: int, file_id: str, folders: Sequence[Path] = ()) -> List[Path]:
+    if not ID_PATTERN.match(file_id or ""):
+        return []
+    found: List[Path] = []
+    for folder in _search_folders(storage, item_id, file_id, folders):
+        if not folder.is_symlink() and folder.is_dir():
+            found.extend(folder.glob(f"{file_id}-*"))
+    return list(dict.fromkeys(found))
 
 
 def _in_folder(folder: Path, file_id: str) -> Optional[Path]:
@@ -115,11 +136,28 @@ def _in_folder(folder: Path, file_id: str) -> Optional[Path]:
     return found[0]
 
 
+def mismatch(path: Path, file_id: str, name: str, size: int, sha256: Optional[str]) -> Optional[str]:
+    if path.name != f"{file_id}-{name}":
+        return "the stored file has another name than the board recorded"
+    if path.stat().st_size != size:
+        return "the stored file has another size than the board recorded"
+    if sha256 is not None and hashlib.sha256(path.read_bytes()).hexdigest() != sha256:
+        return "the stored file has other content than the board recorded"
+    return None
+
+
 def _stored_path(storage: CplugStorage, path: Path) -> str:
     try:
         return path.relative_to(storage.path).as_posix()
     except ValueError:
         return str(path)
+
+
+def stamp_now(path: Path) -> None:
+    try:
+        os.utime(path)
+    except OSError as exc:
+        logger.warning("task_manager_file_stamp_failed", name=path.name, error=type(exc).__name__)
 
 
 def move_into(path: Path, folder: Path) -> Path:
@@ -128,6 +166,7 @@ def move_into(path: Path, folder: Path) -> Path:
         raise FileExistsError(errno.EEXIST, "a file of that name is already in the task folder", str(target))
     try:
         os.rename(path, target)
+        stamp_now(target)
         return target
     except OSError as exc:
         if exc.errno != errno.EXDEV:
@@ -166,8 +205,16 @@ def attach(storage: CplugStorage, item_id: int, file_ids: Sequence[str], target:
         if path.parent == own and f"{int(item_id)}/{file_id}" not in keep:
             path = move_into(path, target)
             logger.info("task_manager_file_moved_to_task_folder", item=item_id, file=file_id)
+        elif path.parent != own:
+            stamp_now(path)
         out.append(_entry(storage, file_id, path))
     return out
+
+
+def require_present(storage: CplugStorage, parts: str) -> None:
+    for e in entries_of(parts):
+        if isinstance(e.get("path"), str) and not (storage.path / e["path"]).is_file():
+            raise TaskManagerFileRemoved(f"{e.get('name', e.get('id'))} was removed, so it cannot be attached")
 
 
 def parts_of(entries: Sequence[Dict[str, Any]]) -> str:
@@ -197,13 +244,29 @@ def summary_text(raw: str) -> str:
     return ", ".join(e.get("name", "") for e in entries_of(raw))
 
 
+def has_messages(conn: sqlite3.Connection) -> bool:
+    return conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'work_messages'").fetchone() is not None
+
+
 def _referenced(storage: CplugStorage) -> Set[str]:
     with closing(storage.connect(False)) as conn:
-        try:
-            rows = conn.execute(f"SELECT item_id, parts FROM work_messages WHERE {PARTS_SQL}").fetchall()
-        except sqlite3.OperationalError:
+        if not has_messages(conn):
             return set()
+        rows = conn.execute(f"SELECT item_id, parts FROM work_messages WHERE {PARTS_SQL}").fetchall()
     return {f"{r['item_id']}/{e['id']}" for r in rows for e in entries_of(r["parts"]) if "id" in e}
+
+
+def _sweep_one(path: Path, folder: Path, keep: Set[str], at: float, age_s: float) -> int:
+    try:
+        stored = path.name[len(ASIDE_PREFIX):] if path.name.startswith(ASIDE_PREFIX) else path.name
+        if stored.split("-", 1)[0] in keep:
+            return 0
+        if at - path.stat().st_mtime < (ASIDE_GRACE_S if stored != path.name else age_s):
+            return 0
+        path.unlink()
+    except FileNotFoundError:
+        return 0
+    return 1
 
 
 def sweep_orphans(storage: CplugStorage, now: Optional[float] = None, age_s: float = ORPHAN_AGE_S) -> int:
@@ -211,15 +274,11 @@ def sweep_orphans(storage: CplugStorage, now: Optional[float] = None, age_s: flo
     if not base.is_dir():
         return 0
     at = time.time() if now is None else now
-    keep = _referenced(storage)
+    keep = {ref.split("/", 1)[1] for ref in _referenced(storage)}
     removed = 0
     for folder in sorted(p for p in base.iterdir() if p.is_dir()):
         for path in sorted(folder.iterdir()):
-            file_id = path.name.split("-", 1)[0]
-            if f"{folder.name}/{file_id}" in keep or at - path.stat().st_mtime < age_s:
-                continue
-            path.unlink()
-            removed += 1
+            removed += _sweep_one(path, folder, keep, at, age_s)
         if not any(folder.iterdir()):
             shutil.rmtree(folder, ignore_errors=True)
     if removed:
@@ -227,5 +286,5 @@ def sweep_orphans(storage: CplugStorage, now: Optional[float] = None, age_s: flo
     return removed
 
 
-__all__ = ["attach", "describe", "disposition", "entries_of", "for_agent", "item_dir", "locate", "move_into", "parts_of", "save",
-           "summary_text", "sweep_orphans", "wire"]
+__all__ = ["ASIDE_GRACE_S", "ASIDE_PREFIX", "aside_name", "attach", "candidates", "leftovers", "describe", "disposition", "entries_of", "for_agent", "item_dir", "locate", "has_messages", "mismatch", "move_into", "parts_of", "require_present", "save",
+           "stamp_now", "summary_text", "sweep_orphans", "wire"]

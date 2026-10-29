@@ -1,26 +1,3 @@
-"""
-A carried file is filed under ``plugin-<plugin id>`` with the path ``<data id>/<path below that store's root>``. Each store is put
-where its plugin keeps it NOW (``ImportEnv.plugin_homes``); a store with no location (the plugin is off or absent, or its folder
-setting is blank) is kept in the import's receipt folder and reported ``plugin_store_unlocated``, never a blocker. A store of REVIEW
-BOARDS that cannot be put anywhere is NOT parked: it is listed as not restored with its reason (``plugin_store_plugin_off`` when the
-plugin is switched off here, ``plugin_store_no_folder`` when its boards folder is not set) and stays in the crate for a later restore.
-Nothing here ever overwrites a file:
-
-- **A review board** (a folder holding ``sidecar.json``) whose slug is not under the root anywhere is placed whole into its task's
-  ``boards/`` folder, where the task is the item the board was linked to, re-keyed to the item's new id (the Task Manager folder
-  comes from the one marker writer, ``task_folders.ensure_task``). A board with no task goes under its project's folder, else at the
-  top. The markers the crate carries beside a nested board name the SOURCE's ids and are never copied. A slug already there with the
-  same files is ``same``; with different files the board that is there wins and the crate's copy is written to
-  ``<root>/.crate-import/<import id>/<its original path>``, a top-level dot folder the board scanner skips. After the rows commit a
-  placed board whose task id changed is relinked through the review board's own writer (``ImportEnv.relink_board``, history kept); a
-  board that could not be relinked is reported ``board_unlinked`` with its new task id.
-- **A store whose plugin declares ``purge: kept``** never loses an entry: a file that is there and differs keeps the local one, and
-  the crate's copy goes beside it in the store's own ``.crate-import`` folder.
-- **Any other store** is absent-only, file by file; a file there that differs keeps the local one and is listed.
-
-Everything is idempotent (a file already there with the crate's bytes is ``same``), so a crash after the commit is finished by
-running the step again. It only runs when the request ticked ``include_plugin_data``.
-"""
 
 from __future__ import annotations
 
@@ -315,17 +292,12 @@ def _announcer(log: Optional[UndoLog], scope: Optional[Dict[str, Any]]) -> Optio
         return None
 
     def before(kind: str, path: Path, match: Optional[Dict[str, Any]]) -> None:
-        """Log one folder or marker. Raises OSError (the log could not be written: nothing is made)."""
         log({**(undo.marker_entry(path, match or {}) if kind == "marker" else undo.dir_entry(path)), **(scope or {})})
 
     return before
 
 
 def _task_folder(conn: Any, root: Path, new_item: int, before: Optional[task_folders.Before] = None) -> Optional[Path]:
-    """The task folder of an imported item under ``root`` (made by the one marker writer when it is not there). Blocking.
-
-    Inputs: before (told of each folder and marker about to be made, so the undo log has them first).
-    Output: the folder, or None when the item row is not here. Raises OSError (the folder could not be made)."""
     row = conn.execute("SELECT list_key, title, text FROM work_items WHERE id = ?", (new_item,)).fetchone()
     if row is None:
         return None
@@ -445,7 +417,7 @@ def place_plugin_data(reader: CrateReader, env: ImportEnv, idmap: IdMap, import_
         for unit in store.units:
             try:
                 moved = _place_board(reader, unit, store, Path(home.root), import_id, conn, idmap, out, log)
-            except OSError as exc:  # could not
+            except OSError as exc:
                 out.failed.append(f"{unit.slug}: {type(exc).__name__}")
                 continue
             if moved is not None:

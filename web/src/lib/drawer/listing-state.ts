@@ -1,4 +1,3 @@
-/* CANNOT DETERMINE did not answer */
 
 export interface ListingVerdict {
     ok: boolean;
@@ -46,7 +45,6 @@ export function fromError(err: unknown, status: number | null): ListingVerdict {
     return { ok: false, reason: reasonFromError(err, status), detail: detailFromError(err, status) };
 }
 
-/* CANNOT DETERMINE */
 export function attentionHtml(listing: ListingVerdict | null | undefined): string {
     if (!listing || listing.ok) return '';
     const reason = esc(listing.reason || 'probe_error');

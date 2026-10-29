@@ -12,6 +12,7 @@ CAP_SKILLS = "pack.skills"
 CAP_SETTINGS_SIGNED = "pack.settings_signed"
 CAP_PIPELINE_ROLLUP = "pack.pipeline_rollup"
 CAP_TASK_MANAGER_NAMES = "task_manager.names"
+CAP_SWARM_ADOPT = "swarm.adopt_body"
 
 _registered: Set[str] = set()
 

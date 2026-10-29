@@ -159,7 +159,6 @@ async def _run(connection: Connection, args: List[str], prompt: str, cwd: Option
     except ValueError:
         body = None
     if not isinstance(body, dict) or result.exit_code or body.get("is_error"):
-        # authentication error
         raise cli_run.failure("claude", result)
     structured = body.get("structured_output")
     text = json.dumps(structured) if structured is not None else str(body.get("result") or "")

@@ -172,9 +172,6 @@ async def swarm_accept_report(manager: Any, caller: AgentCaller, args: dict) -> 
 
 
 async def swarm_propose_naming(manager: Any, caller: AgentCaller, args: dict) -> dict:
-    """
-    Inputs: args ``family``, ``persona``, ``reason`` (text). Output: result ``{item_id}`` of the review card.
-    """
     try:
         agent = await spawn.parent_agent(manager, caller)
         return _ok({"item_id": await project_agent.propose_naming(agent, args.get("family"), args.get("persona"), args.get("reason"))})
@@ -193,6 +190,13 @@ async def swarm_remember(manager: Any, caller: AgentCaller, args: dict) -> dict:
     try:
         return _ok(await facts.remember(manager, caller, args))
     except facts.FactRefused as exc:
+        raise ToolError(str(exc)) from None
+
+
+async def swarm_forget(manager: Any, caller: AgentCaller, args: dict) -> dict:
+    try:
+        return _ok(await answers.forget(manager, caller, args))
+    except (facts.FactRefused, routing.QuestionRefused) as exc:
         raise ToolError(str(exc)) from None
 
 
@@ -307,11 +311,6 @@ async def swarm_rename(manager: Any, caller: AgentCaller, args: dict) -> dict:
 
 
 async def swarm_conflict(manager: Any, caller: AgentCaller, args: dict) -> dict:
-    """The calling agent reports one collision it met (#1439): it counts toward ITS OWN project's merge-conflict throttle.
-
-    Inputs: args ``kind`` (one of ``conflicts.KINDS``). Output: result ``{project_id, kind, recent, window_minutes, threshold,
-    throttled, limit, lifts_at}``. Raises ToolError (not a Swarm agent, no project, a bad kind, the record could not be written).
-    """
     try:
         agent = await spawn.parent_agent(manager, caller)
     except spawn.SpawnRefused as exc:
@@ -329,7 +328,7 @@ async def swarm_conflict(manager: Any, caller: AgentCaller, args: dict) -> dict:
 
 
 WRITE_TOOLS: frozenset = frozenset({"swarm_spawn", "swarm_report", "swarm_accept_report", "swarm_propose_naming",
-                                  "swarm_suggest", "swarm_remember", "swarm_ask", "swarm_answer", "swarm_pass", "swarm_promote", "swarm_say",
+                                  "swarm_suggest", "swarm_remember", "swarm_forget", "swarm_ask", "swarm_answer", "swarm_pass", "swarm_promote", "swarm_say",
                                   "swarm_rewind", "swarm_set_look", "swarm_rename", "swarm_conflict"})
 
 _DETAIL = {"type": "boolean", "description": "full answer instead of the lean default"}
@@ -416,19 +415,27 @@ TOOLS: dict = {
          "company_id": {"type": "integer", "minimum": 1, "description": "a project suggestion's own company; may be left out"}},
         ["kind", "name", "reason"], swarm_suggest),
     "swarm_remember": (
-        "Write one fact into your own memory: text, or learning_id (a learning item in your inbox, copied verbatim), or "
-        "owner_message_ref (huddle:msg:<id> of an owner message in YOUR thread, stored as an owner fact). A fact that clashes "
-        "with one the owner taught is held until the owner decides. scope: craft (any project) or project (this repo only).",
+        "Write one fact into your own memory, rarely. " + facts.fact_life.MEMORY_BAR + " Give text, or learning_id (a learning "
+        "item in your inbox, copied verbatim), or owner_message_ref (huddle:msg:<id> of an owner message in YOUR thread, stored as "
+        "an owner fact). Saving a fact you already hold counts a use instead of a copy. A fact that clashes with one the owner "
+        "taught is held until the owner decides. scope: craft (any project) or project (this repo only).",
         {"title": {"type": "string", "maxLength": facts.MAX_TITLE_CHARS},
          "scope": {"type": "string", "enum": list(facts.memory.FACT_SCOPES)},
          "text": {"type": "string", "maxLength": facts.MAX_FACT_CHARS},
          "learning_id": {"type": "integer", "minimum": 1},
          "owner_message_ref": {"type": "string", "pattern": "^huddle:msg:[0-9]+$"},
-         "push_up": {"type": "boolean", "description": "also queue this as a discovery for your parent"}},
-        ["title", "scope"], swarm_remember),    "swarm_ask": (
-        "Ask what you cannot answer from memory. It goes up your chain (project, company, SysOp agent), each asked in turn; "
-        "if all pass, the owner gets it. The answer arrives later as text in your session. An open question covering yours is joined. "
-        "The owner reads summary first (one sentence, no code, paths or line numbers, else refused); question holds every detail.",
+         "push_up": {"type": "boolean", "description": "also queue this as a discovery for your parent"},
+         "kind": {"type": "string", "enum": list(facts.fact_life.KINDS),
+                  "description": "rule: a standing rule kept until deleted; note (default): expires 14 days after its last use"}},
+        ["title", "scope"], swarm_remember),
+    "swarm_forget": (
+        "Delete one of your own facts or one of your children's: it fails the memory bar, is now in code or docs, is stale or "
+        "duplicates another. Questions whose answers cited it reopen.",
+        {"fact_id": {"type": "string", "pattern": "^f_[0-9a-f]{12}$"}}, ["fact_id"], swarm_forget),    "swarm_ask": (
+        "Ask what you cannot answer from memory. It climbs your chain (project, company, SysOp agent); "
+        "if all pass, the owner gets it. The answer arrives later as text. An open question covering yours is joined. "
+        "The owner reads summary first (one sentence, no code, paths or line numbers, else refused); question holds every detail. "
+        "Several asks: ONE call with typed questions, never a numbered list.",
         {"question": {"type": "string", "maxLength": routing.MAX_QUESTION_CHARS,
                       "description": "the full question with every detail, verbatim: the owner reads it under full details"},
          "summary": {"type": "string", "maxLength": routing.MAX_SUMMARY_CHARS,
@@ -436,12 +443,18 @@ TOOLS: dict = {
                                     "line numbers or code, and say what the choice changes for the owner"},
          "task": {"type": "string", "maxLength": routing.MAX_TASK_CHARS,
                   "description": "optional: what you are working on, in plain words (default: the title of the card you hold, "
-                                 "else your job)"}},
+                                 "else your job)"},
+         "questions": {"type": "array", "minItems": 1, "maxItems": 20, "items": {"type": "object"},
+                       "description": "optional typed batch, each {id (a-z0-9_-), type: yes_no | single | multi | rank | short_text "
+                                      "| long_text, prompt (short), options [{id, label, recommended, reason}] for a choice or rank, "
+                                      "recommend {value | order | text, reason} otherwise, help, required (default true)}; mark your "
+                                      "recommendation on each so the owner can accept them in one press. He answers them in one form; you get one line per "
+                                      "question plus JSON keyed by your question ids, with the absolute path of any file he attached"}},
         ["question", "summary"], swarm_ask),
     "swarm_answer": (
         "Answer a question that was routed to you. fact_ids are YOUR stored facts you relied on: the server keeps only "
         "live facts of yours and writes the receipt itself. No stored fact means your answer is marked as your judgment. "
-        "It reaches the asker as your words, never the owner's, even when it repeats what the owner told you.",
+        "It reaches the asker as your words, never the owner's, even when it repeats what he told you.",
         {"question_id": {"type": "integer", "minimum": 1},
          "text": {"type": "string", "maxLength": answers.MAX_ANSWER_CHARS},
          "fact_ids": {"type": "array", "items": {"type": "string"}, "maxItems": receipts.MAX_FACT_IDS}},

@@ -1,10 +1,3 @@
-"""Wait for a session's turn to end (P5, #165; docs/pack.md 11). A running turn is never interrupted.
-
-The watcher's own status is the only evidence (one observation drives status): the session is at a turn end when its listing status is
-``idle`` or ``finished_unread`` with no activity hint (a shell command claude started is still open) and its startup gate is ``ready``
-(no folder-trust dialog, no question), and it has stayed so for :data:`SETTLE_SECONDS`. ``question`` is not a turn end. The wait is bounded
-by ``wait_seconds``; a session that never rests is ``TurnNotEnded`` (409 ``turn_not_ended``) with the state it was last seen in.
-"""
 
 from __future__ import annotations
 
@@ -43,10 +36,6 @@ def blocker_text(info: Any, name: str) -> str:
 
 
 def shells_only(info: Any) -> int:
-    """How many open background shells are the only thing between a ready agent and its turn end (0: none, or something else holds it).
-
-    Inputs: info (SessionInfo; wrapper fields, or None). Example: shells_only(row_idle_with_2_shells) -> 2
-    """
     if info is None or getattr(info, "startup_gate", "ready") != "ready":
         return 0
     count = getattr(info, "background_open", None)

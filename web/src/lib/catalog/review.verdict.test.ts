@@ -80,6 +80,7 @@ describe('a verdict this build can take at face value', () => {
     });
 
     test('an advisory kind may NOT be called blocked', () => {
+        // would pass for the wrong reason
         for (const kind of ['network', 'shell_exec', 'file_delete', 'privilege', 'description_mismatch', 'other']) {
             const block = reviewed({
                 verdict: 'blocked',
@@ -246,16 +247,16 @@ describe('an override, which excuses a block and never erases it', () => {
         const block = reviewed({
             verdict: 'blocked',
             warnings: [{ kind: 'obfuscation', detail: 'd', file: 'SKILL.md' }],
-            override: { reason: 'internal fixture', by: 'acme', at: '2026-09-19T00:00:00Z' },
+            override: { reason: 'internal fixture', by: 'Example-owner', at: '2026-09-19T00:00:00Z' },
         });
         const view = reviewView(block);
         expect(view.overridden).toBe(true);
         expect(view.overrideReason).toBe('internal fixture');
-        expect(view.overrideBy).toBe('acme');
+        expect(view.overrideBy).toBe('Example-owner');
         expect(view.overrideAt).toBe('2026-09-19');
     });
 
-    test('reviewView keeps the verdict, but the card paints none', () => {
+    test('reviewView keeps the verdict, but the card paints none (Alex (Example-owner), 2026-10-16)', () => {
         const block = reviewed({
             verdict: 'blocked',
             warnings: [{ kind: 'obfuscation', detail: 'd', file: 'SKILL.md' }],
@@ -293,10 +294,10 @@ describe('an override, which excuses a block and never erases it', () => {
         const badAt = reviewView(reviewed({
             verdict: 'blocked',
             warnings: [{ kind: 'obfuscation', detail: 'd', file: 'SKILL.md' }],
-            override: { reason: 'internal fixture', by: 'acme', at: 'not-a-date' },
+            override: { reason: 'internal fixture', by: 'Example-owner', at: 'not-a-date' },
         }));
         expect(badAt.overrideReason).toBe('internal fixture');
-        expect(badAt.overrideBy).toBe('acme');
+        expect(badAt.overrideBy).toBe('Example-owner');
         expect(badAt.overrideAt).toBe(null);
     });
 

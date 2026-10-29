@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.core.crosstalk.fork import engine
 from src.core.mcp.caller import AgentCaller
@@ -18,9 +19,9 @@ async def fork_for_caller(request: Request, body: engine.ForkRequest,
         return await engine.fork(BatchView(request.app.state.session_manager, request.app),
                                  caller, body, owner_approved=owner_approved)
     except ToolError as exc:
-        raise HTTPException(status_code=409, detail={'code': 'fork_refused', 'message': str(exc)}) from exc
+        raise api_error(409, 'fork_refused', exc, session=caller.session_id) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=409, detail={'code': 'fork_history_unavailable', 'message': str(exc)}) from exc
+        raise api_error(409, 'fork_history_unavailable', exc, session=caller.session_id) from exc
 
 
 @router.post('/sessions/{session_id}/fork-to', status_code=201)

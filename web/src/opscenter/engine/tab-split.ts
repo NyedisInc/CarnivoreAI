@@ -41,7 +41,6 @@ export function zoneTarget(layout: Layout, slot: SlotId, zone: Zone): DropTarget
   return { kind: 'row', row: row.id, index: zone === 'left' ? at : at + 1 };
 }
 
-/*  hidden  */
 export function freeSlot(taken: readonly string[], candidates: readonly string[]): string | null {
   return candidates.find((id) => id.startsWith('terminal:') && !taken.includes(id)) ?? null;
 }

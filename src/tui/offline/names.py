@@ -1,10 +1,3 @@
-"""Display names and projects for the offline rows, read only from ``carnivore.db``.
-
-READ ONLY, NEVER CREATE. The state directory is located without the server's resolver (which creates the
-directory and renames a legacy one forward); the database file comes from ``readable_db_path`` (which never
-creates a file) and is opened with ``mode=ro``. A missing, empty or unreadable database just leaves the
-names blank: the tmux name is always shown, so offline mode never depends on the database.
-"""
 
 from __future__ import annotations
 
@@ -15,12 +8,12 @@ from typing import Iterable, Optional
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_QUICK_S, connect_readonly
 from src.core.db_rename.legacy import readable_db_path
 from src.core.product_identity import LEGACY_STATE_DIR_NAMES, STATE_DIR_NAME
 
 logger = structlog.get_logger(__name__)
 
-# state directory
 APP_SUPPORT = Path("~/Library/Application Support")
 
 NAMES_SQL = (
@@ -38,8 +31,6 @@ class SessionNames:
 
 
 def offline_state_dir(override: Optional[str]) -> Optional[Path]:
-    """The existing state directory without creating or renaming anything, or None.
-    """
     if override:
         path = Path(override).expanduser()
         return path if path.is_dir() else None
@@ -68,7 +59,7 @@ def read_names(
         return {}
     marks = ",".join("?" for _ in wanted)
     try:
-        conn = sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True, timeout=1.0)
+        conn = connect_readonly(path, timeout=READONLY_TIMEOUT_QUICK_S)
         try:
             rows = conn.execute(NAMES_SQL.format(marks=marks), tuple(wanted)).fetchall()
         finally:

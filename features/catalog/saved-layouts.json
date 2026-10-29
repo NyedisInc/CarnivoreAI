@@ -19,7 +19,14 @@
     "layouts",
     "arrangement"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The name this layout box that opens when a second terminal is added in edit layout",
+      "caption": "Naming a layout as a second terminal is added",
+      "file": "menu.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Saved layouts",
   "since": "2026-09-26",
   "status": "stable",
@@ -30,6 +37,5 @@
   "updated": "2026-09-27",
   "where": [
     "The terminal widget menu, edit layout, while a session is open."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

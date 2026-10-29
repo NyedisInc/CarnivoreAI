@@ -24,7 +24,7 @@ RENEW_EVERY = 6
 
 
 class LinkDown(Exception):
-    """``establish`` could not bring the route up. The message is safe to log."""
+    pass
 
 
 class LinkRefused(LinkDown):
@@ -67,11 +67,12 @@ class PeerLink:
         self._set(DISCONNECTED)
 
     def _set(self, state: str, protocol: Optional[int] = None) -> None:
+        previous_protocol = self.protocol
         if protocol is not None:
             self.protocol = protocol
-        if state == self.state and protocol is None:
-            return
         changed = state != self.state
+        if not changed and self.protocol == previous_protocol:
+            return
         self.state = state
         if changed:
             logger.info("peer_link_state", peer=self.peer_install_id[:8], state=state)

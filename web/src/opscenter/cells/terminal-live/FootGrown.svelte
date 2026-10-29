@@ -52,8 +52,6 @@
 
 <style>
   @layer components {
-    /*  hidden  overflow:
-       hidden */
     .oc-tf-grown {
       position: absolute;
       left: 0;
@@ -76,7 +74,6 @@
       display: none;
     }
 
-    /* position: absolute */
     .oc-tf-close {
       position: absolute;
       top: 4px;

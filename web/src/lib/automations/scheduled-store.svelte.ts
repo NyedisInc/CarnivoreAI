@@ -2,6 +2,7 @@ import { resourcePush } from '../resource-push/boot';
 import { taskManagerAddonOn } from '../task-manager-schedules/task-manager-addon.svelte';
 import { readTaskManagerSchedules, TASK_MANAGER_TOPICS, type TaskManagerSchedule } from '../task-manager-schedules/task-manager-scheduled';
 
+/* the push topic */
 const POLL_MS = 30000;
 
 export const scheduled = $state({ rows: [] as TaskManagerSchedule[], answered: false });

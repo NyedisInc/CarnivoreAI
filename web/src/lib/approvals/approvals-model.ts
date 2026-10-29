@@ -133,7 +133,6 @@ export function optionTone(label: string): OptionTone {
   return QUITS.test(label.trim()) ? 'danger' : 'secondary';
 }
 
-/* permission prompt */
 export function canApprove(item: ApprovalItem): boolean {
   return item.source === 'dialog' && typeof item.plain_yes === 'string' && item.plain_yes.trim() !== '';
 }
@@ -146,7 +145,6 @@ export function isRemote(item: ApprovalItem): boolean {
   return item.host !== undefined && item.host !== 'local' && item.host !== '';
 }
 
-/* label: ' */
 export function hostName(item: ApprovalItem): string {
   const label = item.host_label?.trim();
   const key = item.host ?? '';
@@ -195,7 +193,6 @@ export interface NamedListingRow {
 
 const LEGACY_TMUX_PREFIX = 'cloude_';
 
-/* label: ' */
 export function sessionNameFor(tmux: string | null | undefined, rows: readonly NamedListingRow[] | null | undefined): string | null {
   if (!tmux) return null;
   const row = (rows ?? []).find((r) => (r.tmux_session ?? r.session?.tmux_session) === tmux);

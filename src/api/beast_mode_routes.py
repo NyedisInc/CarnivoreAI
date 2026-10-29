@@ -12,12 +12,19 @@ from src.api.auth import require_auth
 from src.config import settings
 from src.core.approvals import beast_policy
 from src.core.mcp import beast_mode, beast_store
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/beast-mode", tags=["beast-mode"], dependencies=[Depends(require_auth)])
 
 
 class BeastSetting(BaseModel):
+    """The owner's desired armed state.
+
+    ``prompts``: also answer session permission prompts (the second scope, Joe (ccsliinc), 2026-10-07).
+    ``hours``: auto-off for both scopes, 1, 4 or 8; None is "until I turn it off". Both are ignored on a disarm.
+    Example: {"enabled": true, "prompts": true, "hours": 4}
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -84,7 +91,7 @@ async def put_beast_rules(body: BeastGridUpdate) -> dict:
     try:
         await asyncio.to_thread(beast_store.write_grid, cells=body.cells, trust_scope=body.trust_scope)
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_request", exc, step="put_beast_rules") from exc
     except (FileNotFoundError, OSError) as exc:
         logger.error("beast_grid_unwritable", error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="config.json could not be updated") from exc

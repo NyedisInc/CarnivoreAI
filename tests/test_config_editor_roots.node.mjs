@@ -10,6 +10,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -77,6 +83,7 @@ test('no attached session reports reason no-session, not a bare null', () => {
 });
 
 test('REGRESSION: a stale _currentSession from a detached session is not a project context on the launcher', () => {
+    // not present in
     const tc = {
         sessionActive: false,
         _currentSession: { session: { id: 'ses_1', working_dir: WORKDIR } },
@@ -132,6 +139,7 @@ test('workdirUnavailableNotice names the root and the directory, and reads as co
 });
 
 test('REGRESSION: no notice function narrates a project with no .claude/ or an empty root', () => {
+    // nothing to list in
     assert.equal(Roots.missingRootNotice, undefined, 'missingRootNotice must be removed, not just unused');
     for (const key of Object.keys(Roots)) {
         const fn = Roots[key];

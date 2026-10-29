@@ -33,7 +33,14 @@
     "shape contract",
     "latency"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The status light in each of its states, from working to dead, with labels",
+      "caption": "Every status light, with its meaning",
+      "file": "matrix.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Session status lights",
   "since": "2026-09-08",
   "status": "stable",
@@ -44,6 +51,5 @@
   "updated": "2026-10-04",
   "where": [
     "On every session: drawer rows, tabs, the running sessions list."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

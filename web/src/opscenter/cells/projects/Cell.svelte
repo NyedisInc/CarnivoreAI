@@ -1,4 +1,5 @@
 <script lang="ts" module>
+  import { countForProject } from './count';
   import { defineWidget } from '../../widgets/shell/define-widget.svelte';
 
   export const PROJECTS_WIDGET = defineWidget({ id: 'core.projects', scope: 'global', actions: [], state: {} });
@@ -78,8 +79,7 @@
 
   function sessionCountFor(project: ProjectResponse): number | null {
     if (sessions.status !== 'ok' || !sessions.data) return null;
-    const key = project.root ?? project.path;
-    return sessions.data.filter((row) => row.session.working_dir === key).length;
+    return countForProject(sessions.data, project);
   }
 
   function sessionsLabel(count: number | null): string {

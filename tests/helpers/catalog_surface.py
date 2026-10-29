@@ -261,7 +261,7 @@ def publish_index(
     items: List[Dict[str, Any]],
     serial: int = 1,
     generated_at: datetime = GENERATED_AT,
-    publisher_handle: str = "acme",
+    publisher_handle: str = "alex",
     revocations: Optional[Dict[str, Any]] = None,
 ) -> bytes:
     signed = build_signed_index(

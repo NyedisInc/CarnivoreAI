@@ -1,37 +1,4 @@
 #!/usr/bin/env python3
-"""fix/login-chrome - is the login screen's chrome actually GONE, in pixels.
-
-So every verdict here comes from getBoundingClientRect() plus
-getComputedStyle() in a real Chromium loading the real stylesheets and
-the real modules, through tests/manual/login-chrome-harness.html. An
-element with `.hidden` in its class list proves nothing; an element with
-a zero-area box and `display: none` is genuinely not on screen.
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS  - every control measured and landed where it should
-  1  FAIL  - something was measured and was wrong
-  2  CANNOT DETERMINE - the measurement could not be taken at all
-             (playwright missing, browser would not launch, harness never
-             became ready, tab reported itself hidden). Never a pass.
-
---legacy runs the SAME measurements against a deliberately pre-fix page,
-and its verdict is inverted so that 0 still means good news:
-  0  CONTROL OK      - the pre-fix bug reproduced, so these measurements
-                       are capable of failing
-  1  CONTROL BROKEN  - nothing reproduced; the control cannot fail and is
-                       therefore not evidence of anything
-  2  CANNOT DETERMINE - as above
-Run it after any change to screen-chrome.css/.js or to the harness.
-
-The hidden-tab check is not paranoia: a backgrounded Chromium tab
-freezes CSS transitions at frame zero and never fires rAF, so computed
-styles read back pre-transition values forever and a passing or failing
-number measured there means nothing.
-
-playwright is not importable under this project's venv. Run it with an
-interpreter that has it, e.g.
-    /opt/homebrew/bin/python3 scripts/verify_login_chrome.py
-"""
 
 from __future__ import annotations
 
@@ -71,8 +38,6 @@ AUTH_ONLY_MOBILE = [
     ("dpad-float-btn", "d-pad"),
 ]
 
-# the whole suite
-# nothing at all
 ALWAYS = [("appTitle", "app title")]
 
 GLYPH_FLOOR_PCT = 10.0
@@ -139,19 +104,6 @@ def check(auth: dict, launch: dict, launch_menu: dict,
 
 
 def interior_ink_pct(png: bytes, inset: int = GLYPH_INSET_PX):
-    """Percentage of a button's interior pixels that are not background.
-
-    Crops `inset` pixels off every edge so the button's own border and
-    its antialiasing cannot be mistaken for a glyph, takes the most
-    common remaining colour as the background, and counts pixels far
-    enough from it to be ink.
-
-    Inputs: png (bytes) - a PNG screenshot of one element.
-            inset (int) - pixels to crop from each edge.
-    Output: float percentage, or None if the crop left nothing to
-            measure (which is a CANNOT DETERMINE, never a pass).
-    Example: interior_ink_pct(el.screenshot()) -> 13.4
-    """
     from collections import Counter
 
     from PIL import Image
@@ -314,7 +266,6 @@ def main() -> int:
         else:
             csp_unknown.append("%dpx viewport: %s" % (w, why))
         try:
-            # CANNOT DETERMINE
             page.wait_for_function("() => window.__loginChromeReady === true",
                                    timeout=15000)
         except Exception:  # noqa: BLE001

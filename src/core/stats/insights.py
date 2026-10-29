@@ -11,9 +11,10 @@ from src.core.stats import config
 from src.core.stats import project_groups
 from src.core.stats.project_groups import other_label
 from src.core.stats.queries import (
-    DEADLINE_SECONDS, MAX_ROWS, QueryLimit,
+    DEADLINE_SECONDS, MAX_ROWS,
     _usage_source, _where,
 )
+from src.core.stats.query_buckets import QueryLimit
 from src.models.stats import StatsFilters
 
 CONVERSATION_CAP = 500

@@ -1,19 +1,3 @@
-"""
-The family table is ``tool_families.FAMILIES``. Three families follow a checkbox in ``config.json``'s ``mcp`` block
-(``src/config/mcp.py``, written only by ``PUT /mcp-admin/agent-tools`` through ``src/core/config_writer.py``):
-``agent_huddle_tools`` (default OFF), ``agent_swarm_tools`` (default ON) and ``agent_app_settings_tools`` (default OFF).
-Three follow the computer's own durable records (``family_signals``): Pack tools appear once any Pack state exists,
-messaging tools once a messaging provider is stored, AI tools once an AI connection is saved.
-
-READ LIVE, ON EVERY CALL: ``tools.tool_definitions`` and ``instructions.guide`` ask here each time, and both feed the
-fingerprint in ``protocol.tool_fingerprint``, so a change moves the fingerprint at once: a connected client's next
-request on its old ``Mcp-Session-Id`` is stale (it re-initializes), and an open channel stream sends
-``notifications/tools/list_changed`` at its next idle tick. No restart. (A Codex or plain-HTTP pane ignores
-``list_changed``: it needs a restart or ``/mcp`` reconnect.)
-
-ONE REFUSAL PATH: :func:`hidden_reason` serves both the listing (``tools.allowed``) and the pre-check in
-``tools.call_tool``, so a stale call to a hidden tool gets the named refusal, never the read-only-token one.
-"""
 
 from __future__ import annotations
 

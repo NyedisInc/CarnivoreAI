@@ -1,0 +1,398 @@
+{
+ "generated_from": "2026-10-01T02:30:00Z",
+ "synthetic": true,
+ "lines": [
+  {
+   "shape": "attachment:agent_listing_delta",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"addedLines\":[],\"addedTypes\":[],\"builtInTypes\":[],\"isInitial\":false,\"removedTypes\":[],\"showConcurrencyNote\":false,\"type\":\"agent_listing_delta\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:auto_mode",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"autoModeConsentFlow\":false,\"bashFirst\":false,\"bashFirstSteer\":\"<str>\",\"bypass\":false,\"steerOnly\":false,\"type\":\"auto_mode\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:auto_mode_exit",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"bashFirst\":false,\"steerOnly\":false,\"type\":\"auto_mode_exit\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:bash_output_audience_note",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"toolUseID\":\"<str>\",\"type\":\"bash_output_audience_note\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:batching_reminder_sent",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"clearAt\":\"<str>\",\"model\":\"<str>\",\"text\":\"<str>\",\"type\":\"batching_reminder_sent\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:command_permissions",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"allowedTools\":[],\"type\":\"command_permissions\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:compact_file_reference",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"displayPath\":\"<str>\",\"filename\":\"<str>\",\"type\":\"compact_file_reference\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:credential_org",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"organizationUuid\":\"<str>\",\"type\":\"credential_org\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:date",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"changed\":false,\"date\":\"<str>\",\"type\":\"date\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:date_change",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"newDate\":\"<str>\",\"type\":\"date_change\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:deferred_tools_delta",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"addedLines\":[],\"addedNames\":[],\"failedMcpServers\":[],\"needsAuthMcpServers\":[],\"pendingMcpServers\":[],\"readdedNames\":[],\"removedNames\":[],\"retractedTools\":[],\"surfacedDefinitions\":[],\"surfacedNames\":[],\"type\":\"deferred_tools_delta\",\"wireHiddenNames\":[]},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:deferred_tools_record",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"entries\":[],\"nameOnlyAnnouncements\":[],\"strippedReferences\":[],\"toolInputCopies\":[],\"type\":\"deferred_tools_record\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:directory",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"content\":\"<str>\",\"displayPath\":\"<str>\",\"path\":\"<str>\",\"type\":\"directory\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:edited_text_file",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"displayPath\":\"<str>\",\"filename\":\"<str>\",\"snippet\":\"<str>\",\"type\":\"edited_text_file\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:environment",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"changes\":[],\"snapshot\":{},\"type\":\"environment\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:file",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"content\":{},\"displayPath\":\"<str>\",\"filename\":\"<str>\",\"type\":\"file\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:hook_additional_context",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"content\":[],\"hookEvent\":\"<str>\",\"hookName\":\"<str>\",\"toolUseID\":\"<str>\",\"type\":\"hook_additional_context\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:hook_cancelled",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"command\":\"<str>\",\"durationMs\":0,\"hookEvent\":\"<str>\",\"hookName\":\"<str>\",\"toolUseID\":\"<str>\",\"type\":\"hook_cancelled\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:hook_non_blocking_error",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"command\":\"<str>\",\"durationMs\":0,\"exitCode\":0,\"hookEvent\":\"<str>\",\"hookName\":\"<str>\",\"stderr\":\"<str>\",\"stdout\":\"<str>\",\"toolUseID\":\"<str>\",\"type\":\"hook_non_blocking_error\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:hook_permission_decision",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"decision\":\"<str>\",\"hookEvent\":\"<str>\",\"toolUseID\":\"<str>\",\"type\":\"hook_permission_decision\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:hook_success",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"command\":\"<str>\",\"content\":\"<str>\",\"durationMs\":0,\"exitCode\":0,\"hookEvent\":\"<str>\",\"hookName\":\"<str>\",\"stderr\":\"<str>\",\"stdout\":\"<str>\",\"toolUseID\":\"<str>\",\"type\":\"hook_success\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:hook_system_message",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"content\":\"<str>\",\"hookEvent\":\"<str>\",\"hookName\":\"<str>\",\"toolUseID\":\"<str>\",\"type\":\"hook_system_message\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:inlined_image_paths",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"paths\":[],\"type\":\"inlined_image_paths\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:instructions",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"changed\":false,\"files\":[],\"reason\":\"<str>\",\"removed\":[],\"type\":\"instructions\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:invoked_skills",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"skills\":[],\"type\":\"invoked_skills\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:mcp_instructions_delta",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"addedBlocks\":[],\"addedNames\":[],\"removedNames\":[],\"type\":\"mcp_instructions_delta\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:model",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"identity\":{},\"text\":\"<str>\",\"type\":\"model\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:nested_memory",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"content\":{},\"displayPath\":\"<str>\",\"path\":\"<str>\",\"type\":\"nested_memory\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:pdf_reference",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"displayPath\":\"<str>\",\"fileSize\":0,\"filename\":\"<str>\",\"pageCount\":0,\"type\":\"pdf_reference\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:plan_file_reference",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"planContent\":\"<str>\",\"planFilePath\":\"<str>\",\"type\":\"plan_file_reference\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:plan_mode",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"isSubAgent\":false,\"planExists\":false,\"planFilePath\":\"<str>\",\"reminderType\":\"<str>\",\"type\":\"plan_mode\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:plan_mode_exit",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"planExists\":false,\"planFilePath\":\"<str>\",\"type\":\"plan_mode_exit\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:prompt_snapshot",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"cliPrefix\":\"<str>\",\"contextRendering\":\"<str>\",\"echoWireToolInputs\":false,\"hostPrompt\":\"<str>\",\"inlineTools\":false,\"keptReminders\":false,\"reminderFold\":false,\"systemPrompt\":[],\"systemTurns\":false,\"toolChangeHeader\":false,\"tools\":[],\"type\":\"prompt_snapshot\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:queued_command",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"commandMode\":\"<str>\",\"delivery_id\":\"<str>\",\"humanTurn\":false,\"imagePasteIds\":[],\"isMeta\":false,\"origin\":{},\"prompt\":\"<str>\",\"source_uuid\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"queued_command\",\"usage\":{}},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:read_truncation_notice",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"banner\":\"<str>\",\"toolUseID\":\"<str>\",\"type\":\"read_truncation_notice\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:remote_session_change",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"commit\":\"<str>\",\"managedCommit\":false,\"managedPr\":false,\"pr\":\"<str>\",\"sendUserFileHint\":false,\"type\":\"remote_session_change\",\"url\":\"<str>\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:session_context",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"changed\":false,\"context\":{},\"reason\":\"<str>\",\"type\":\"session_context\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:silent_turn_reminder",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"text\":\"<str>\",\"type\":\"silent_turn_reminder\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:skill_listing",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"content\":\"<str>\",\"isInitial\":false,\"names\":[],\"skillCount\":0,\"type\":\"skill_listing\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:task_reminder",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"content\":[],\"itemCount\":0,\"type\":\"task_reminder\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:task_status",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"deltaSummary\":\"<str>\",\"description\":\"<str>\",\"outputFilePath\":\"<str>\",\"shell\":{},\"status\":\"<str>\",\"taskId\":\"<str>\",\"taskType\":\"<str>\",\"type\":\"task_status\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:thinking_drop",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"blockHashes\":[],\"clientChange\":{},\"firstReportForThreadInProcess\":false,\"model\":\"<str>\",\"newlyDropped\":{},\"querySource\":\"<str>\",\"requestId\":\"<str>\",\"thinkingBlocksSent\":0,\"thinkingTurnsSent\":0,\"type\":\"thinking_drop\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:thinking_stripped",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"scope\":\"<str>\",\"type\":\"thinking_stripped\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:todo_reminder",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"content\":[],\"itemCount\":0,\"type\":\"todo_reminder\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "attachment:total_tokens_reminder",
+   "line": "{\"agentId\":\"<str>\",\"attachment\":{\"text\":\"<str>\",\"type\":\"total_tokens_reminder\"},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentUuid\":\"<str>\",\"rendered\":[],\"renderedInHumanTurn\":[],\"renderedRole\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"attachment\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "block:assistant:fallback",
+   "line": "{\"advisorModel\":\"<str>\",\"agentId\":\"<str>\",\"apiBlockIndex\":0,\"apiError\":\"<str>\",\"apiErrorStatus\":0,\"attributionAgent\":\"<str>\",\"attributionMcpServer\":\"<str>\",\"attributionMcpTool\":\"<str>\",\"attributionPlugin\":\"<str>\",\"attributionSkill\":\"<str>\",\"cwd\":\"<str>\",\"effort\":\"<str>\",\"entrypoint\":\"<str>\",\"error\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"isAbortedMidStream\":false,\"isApiErrorMessage\":false,\"isSidechain\":false,\"message\":{\"container\":null,\"content\":[{\"from\":{},\"to\":{},\"type\":\"fallback\"}],\"context_management\":{},\"diagnostics\":{},\"id\":\"<str>\",\"input_transformations\":[],\"model\":\"<str>\",\"role\":\"assistant\",\"stop_details\":{},\"stop_reason\":\"<str>\",\"stop_sequence\":\"<str>\",\"type\":\"message\",\"usage\":{\"cache_creation\":{},\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"fallback_credit\":null,\"inference_geo\":\"<str>\",\"input_tokens\":0,\"iterations\":[],\"output_tokens\":0,\"output_tokens_details\":{},\"server_tool_use\":{},\"service_tier\":\"<str>\",\"speed\":\"<str>\"}},\"parentUuid\":\"<str>\",\"perTurnEffort\":\"<str>\",\"requestId\":\"<str>\",\"serverClassifierRequest\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"supersedesUuids\":[],\"timestamp\":\"<str>\",\"type\":\"assistant\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\",\"wireToolInputs\":{}}"
+  },
+  {
+   "shape": "block:assistant:text",
+   "line": "{\"advisorModel\":\"<str>\",\"agentId\":\"<str>\",\"apiBlockIndex\":0,\"apiError\":\"<str>\",\"apiErrorStatus\":0,\"attributionAgent\":\"<str>\",\"attributionMcpServer\":\"<str>\",\"attributionMcpTool\":\"<str>\",\"attributionPlugin\":\"<str>\",\"attributionSkill\":\"<str>\",\"cwd\":\"<str>\",\"effort\":\"<str>\",\"entrypoint\":\"<str>\",\"error\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"isAbortedMidStream\":false,\"isApiErrorMessage\":false,\"isSidechain\":false,\"message\":{\"container\":null,\"content\":[{\"text\":\"<str>\",\"type\":\"text\"}],\"context_management\":{},\"diagnostics\":{},\"id\":\"<str>\",\"input_transformations\":[],\"model\":\"<str>\",\"role\":\"assistant\",\"stop_details\":{},\"stop_reason\":\"<str>\",\"stop_sequence\":\"<str>\",\"type\":\"message\",\"usage\":{\"cache_creation\":{},\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"fallback_credit\":null,\"inference_geo\":\"<str>\",\"input_tokens\":0,\"iterations\":[],\"output_tokens\":0,\"output_tokens_details\":{},\"server_tool_use\":{},\"service_tier\":\"<str>\",\"speed\":\"<str>\"}},\"parentUuid\":\"<str>\",\"perTurnEffort\":\"<str>\",\"requestId\":\"<str>\",\"serverClassifierRequest\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"supersedesUuids\":[],\"timestamp\":\"<str>\",\"type\":\"assistant\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\",\"wireToolInputs\":{}}"
+  },
+  {
+   "shape": "block:assistant:thinking",
+   "line": "{\"advisorModel\":\"<str>\",\"agentId\":\"<str>\",\"apiBlockIndex\":0,\"apiError\":\"<str>\",\"apiErrorStatus\":0,\"attributionAgent\":\"<str>\",\"attributionMcpServer\":\"<str>\",\"attributionMcpTool\":\"<str>\",\"attributionPlugin\":\"<str>\",\"attributionSkill\":\"<str>\",\"cwd\":\"<str>\",\"effort\":\"<str>\",\"entrypoint\":\"<str>\",\"error\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"isAbortedMidStream\":false,\"isApiErrorMessage\":false,\"isSidechain\":false,\"message\":{\"container\":null,\"content\":[{\"signature\":\"<str>\",\"thinking\":\"<str>\",\"type\":\"thinking\"}],\"context_management\":{},\"diagnostics\":{},\"id\":\"<str>\",\"input_transformations\":[],\"model\":\"<str>\",\"role\":\"assistant\",\"stop_details\":{},\"stop_reason\":\"<str>\",\"stop_sequence\":\"<str>\",\"type\":\"message\",\"usage\":{\"cache_creation\":{},\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"fallback_credit\":null,\"inference_geo\":\"<str>\",\"input_tokens\":0,\"iterations\":[],\"output_tokens\":0,\"output_tokens_details\":{},\"server_tool_use\":{},\"service_tier\":\"<str>\",\"speed\":\"<str>\"}},\"parentUuid\":\"<str>\",\"perTurnEffort\":\"<str>\",\"requestId\":\"<str>\",\"serverClassifierRequest\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"supersedesUuids\":[],\"timestamp\":\"<str>\",\"type\":\"assistant\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\",\"wireToolInputs\":{}}"
+  },
+  {
+   "shape": "block:assistant:tool_use",
+   "line": "{\"advisorModel\":\"<str>\",\"agentId\":\"<str>\",\"apiBlockIndex\":0,\"apiError\":\"<str>\",\"apiErrorStatus\":0,\"attributionAgent\":\"<str>\",\"attributionMcpServer\":\"<str>\",\"attributionMcpTool\":\"<str>\",\"attributionPlugin\":\"<str>\",\"attributionSkill\":\"<str>\",\"cwd\":\"<str>\",\"effort\":\"<str>\",\"entrypoint\":\"<str>\",\"error\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"isAbortedMidStream\":false,\"isApiErrorMessage\":false,\"isSidechain\":false,\"message\":{\"container\":null,\"content\":[{\"caller\":{},\"id\":\"<str>\",\"input\":{},\"name\":\"<str>\",\"type\":\"tool_use\"}],\"context_management\":{},\"diagnostics\":{},\"id\":\"<str>\",\"input_transformations\":[],\"model\":\"<str>\",\"role\":\"assistant\",\"stop_details\":{},\"stop_reason\":\"<str>\",\"stop_sequence\":\"<str>\",\"type\":\"message\",\"usage\":{\"cache_creation\":{},\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"fallback_credit\":null,\"inference_geo\":\"<str>\",\"input_tokens\":0,\"iterations\":[],\"output_tokens\":0,\"output_tokens_details\":{},\"server_tool_use\":{},\"service_tier\":\"<str>\",\"speed\":\"<str>\"}},\"parentUuid\":\"<str>\",\"perTurnEffort\":\"<str>\",\"requestId\":\"<str>\",\"serverClassifierRequest\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"supersedesUuids\":[],\"timestamp\":\"<str>\",\"type\":\"assistant\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\",\"wireToolInputs\":{}}"
+  },
+  {
+   "shape": "block:user:document",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":[{\"source\":{\"data\":\"<str>\",\"media_type\":\"<str>\",\"type\":\"base64\"},\"type\":\"document\"}],\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "block:user:image",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":[{\"source\":{\"data\":\"<str>\",\"media_type\":\"<str>\",\"type\":\"base64\"},\"type\":\"image\"}],\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "block:user:text",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":[{\"text\":\"<str>\",\"type\":\"text\"}],\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "block:user:tool_result",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":[{\"content\":\"<str>\",\"is_error\":false,\"tool_use_id\":\"<str>\",\"type\":\"tool_result\"}],\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "queue_operation:dequeue",
+   "line": "{\"commandUuid\":\"<str>\",\"content\":\"<str>\",\"deliveryId\":\"<str>\",\"operation\":\"dequeue\",\"reason\":\"<str>\",\"sessionId\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"queue-operation\"}"
+  },
+  {
+   "shape": "queue_operation:enqueue",
+   "line": "{\"commandUuid\":\"<str>\",\"content\":\"<str>\",\"deliveryId\":\"<str>\",\"operation\":\"enqueue\",\"reason\":\"<str>\",\"sessionId\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"queue-operation\"}"
+  },
+  {
+   "shape": "queue_operation:popAll",
+   "line": "{\"commandUuid\":\"<str>\",\"content\":\"<str>\",\"deliveryId\":\"<str>\",\"operation\":\"popAll\",\"reason\":\"<str>\",\"sessionId\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"queue-operation\"}"
+  },
+  {
+   "shape": "queue_operation:remove",
+   "line": "{\"commandUuid\":\"<str>\",\"content\":\"<str>\",\"deliveryId\":\"<str>\",\"operation\":\"remove\",\"reason\":\"<str>\",\"sessionId\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"queue-operation\"}"
+  },
+  {
+   "shape": "record:agent-name",
+   "line": "{\"agentName\":\"<str>\",\"sessionId\":\"<str>\",\"type\":\"agent-name\"}"
+  },
+  {
+   "shape": "record:ai-title",
+   "line": "{\"aiTitle\":\"<str>\",\"sessionId\":\"<str>\",\"type\":\"ai-title\"}"
+  },
+  {
+   "shape": "record:artifact-autoreact-ledger",
+   "line": "{\"accountUuid\":\"<str>\",\"artifacts\":{},\"sessionId\":\"<str>\",\"type\":\"artifact-autoreact-ledger\",\"v\":0}"
+  },
+  {
+   "shape": "record:artifact-comment-monitor",
+   "line": "{\"artifacts\":{},\"sessionId\":\"<str>\",\"type\":\"artifact-comment-monitor\",\"v\":0}"
+  },
+  {
+   "shape": "record:assistant",
+   "line": "{\"advisorModel\":\"<str>\",\"agentId\":\"<str>\",\"apiBlockIndex\":0,\"apiError\":\"<str>\",\"apiErrorStatus\":0,\"attributionAgent\":\"<str>\",\"attributionMcpServer\":\"<str>\",\"attributionMcpTool\":\"<str>\",\"attributionPlugin\":\"<str>\",\"attributionSkill\":\"<str>\",\"cwd\":\"<str>\",\"effort\":\"<str>\",\"entrypoint\":\"<str>\",\"error\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"isAbortedMidStream\":false,\"isApiErrorMessage\":false,\"isSidechain\":false,\"message\":{\"container\":null,\"content\":[{\"type\":\"text\",\"text\":\"<str>\"}],\"context_management\":{},\"diagnostics\":{},\"id\":\"<str>\",\"input_transformations\":[],\"model\":\"<str>\",\"role\":\"assistant\",\"stop_details\":{},\"stop_reason\":\"<str>\",\"stop_sequence\":\"<str>\",\"type\":\"message\",\"usage\":{\"cache_creation\":{},\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"fallback_credit\":null,\"inference_geo\":\"<str>\",\"input_tokens\":0,\"iterations\":[],\"output_tokens\":0,\"output_tokens_details\":{},\"server_tool_use\":{},\"service_tier\":\"<str>\",\"speed\":\"<str>\"}},\"parentUuid\":\"<str>\",\"perTurnEffort\":\"<str>\",\"requestId\":\"<str>\",\"serverClassifierRequest\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"supersedesUuids\":[],\"timestamp\":\"<str>\",\"type\":\"assistant\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\",\"wireToolInputs\":{}}"
+  },
+  {
+   "shape": "record:atis-latch",
+   "line": "{\"atis\":\"<str>\",\"sessionId\":\"<str>\",\"type\":\"atis-latch\"}"
+  },
+  {
+   "shape": "record:bridge-session",
+   "line": "{\"bridgeSessionId\":\"<str>\",\"lastSequenceNum\":0,\"noHistoryBackfill\":false,\"ownerAccountUuid\":\"<str>\",\"ownerOrganizationUuid\":\"<str>\",\"sessionId\":\"<str>\",\"type\":\"bridge-session\"}"
+  },
+  {
+   "shape": "record:cost-state",
+   "line": "{\"hasUnknownModelCost\":false,\"modelUsage\":{},\"sessionId\":\"<str>\",\"startTime\":0,\"totalAPIDuration\":0,\"totalAPIDurationWithoutRetries\":0,\"totalCostUSD\":0.5,\"totalDuration\":0,\"totalLinesAdded\":0,\"totalLinesRemoved\":0,\"totalToolDuration\":0,\"type\":\"cost-state\"}"
+  },
+  {
+   "shape": "record:custom-title",
+   "line": "{\"customTitle\":\"<str>\",\"sessionId\":\"<str>\",\"type\":\"custom-title\"}"
+  },
+  {
+   "shape": "record:file-history-delta",
+   "line": "{\"backup\":{},\"messageId\":\"<str>\",\"snapshotMessageId\":\"<str>\",\"timestamp\":\"<str>\",\"trackingPath\":\"<str>\",\"type\":\"file-history-delta\"}"
+  },
+  {
+   "shape": "record:file-history-snapshot",
+   "line": "{\"isSnapshotUpdate\":false,\"messageId\":\"<str>\",\"snapshot\":{},\"type\":\"file-history-snapshot\"}"
+  },
+  {
+   "shape": "record:fork-context-ref",
+   "line": "{\"agentId\":\"<str>\",\"contextLength\":0,\"parentLastUuid\":\"<str>\",\"parentSessionId\":\"<str>\",\"type\":\"fork-context-ref\"}"
+  },
+  {
+   "shape": "record:frame-link",
+   "line": "{\"artifactCount\":0,\"frameUrl\":\"<str>\",\"path\":\"<str>\",\"sessionId\":\"<str>\",\"timestamp\":\"<str>\",\"title\":\"<str>\",\"type\":\"frame-link\"}"
+  },
+  {
+   "shape": "record:history-suppression",
+   "line": "{\"cause\":\"<str>\",\"sessionId\":\"<str>\",\"ts\":\"<str>\",\"type\":\"history-suppression\",\"vetoedAgainstAccountUuid\":\"<str>\"}"
+  },
+  {
+   "shape": "record:last-prompt",
+   "line": "{\"lastPrompt\":\"<str>\",\"leafUuid\":\"<str>\",\"sessionId\":\"<str>\",\"type\":\"last-prompt\"}"
+  },
+  {
+   "shape": "record:mode",
+   "line": "{\"mode\":\"<str>\",\"sessionId\":\"<str>\",\"type\":\"mode\"}"
+  },
+  {
+   "shape": "record:permission-mode",
+   "line": "{\"permissionMode\":\"<str>\",\"sessionId\":\"<str>\",\"type\":\"permission-mode\"}"
+  },
+  {
+   "shape": "record:pr-link",
+   "line": "{\"prNumber\":0,\"prRepository\":\"<str>\",\"prUrl\":\"<str>\",\"sessionId\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"pr-link\"}"
+  },
+  {
+   "shape": "record:progress",
+   "line": "{\"agentId\":\"<str>\",\"cwd\":\"<str>\",\"data\":{},\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"isSidechain\":false,\"parentToolUseID\":\"<str>\",\"parentUuid\":\"<str>\",\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"timestamp\":\"<str>\",\"toolUseID\":\"<str>\",\"type\":\"progress\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "record:queue-operation",
+   "line": "{\"commandUuid\":\"<str>\",\"content\":\"<str>\",\"deliveryId\":\"<str>\",\"operation\":\"enqueue\",\"reason\":\"<str>\",\"sessionId\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"queue-operation\"}"
+  },
+  {
+   "shape": "record:result",
+   "line": "{\"agentId\":\"<str>\",\"key\":\"<str>\",\"result\":{},\"type\":\"result\"}"
+  },
+  {
+   "shape": "record:started",
+   "line": "{\"agentId\":\"<str>\",\"key\":\"<str>\",\"type\":\"started\"}"
+  },
+  {
+   "shape": "record:summary",
+   "line": "{\"leafUuid\":\"<str>\",\"summary\":\"<str>\",\"type\":\"summary\"}"
+  },
+  {
+   "shape": "record:system",
+   "line": "{\"agentId\":\"<str>\",\"apiRefusalCategory\":\"<str>\",\"apiRefusalExplanation\":\"<str>\",\"cause\":{},\"commandRun\":{},\"compactMetadata\":{},\"content\":\"<str>\",\"cron\":\"<str>\",\"cwd\":\"<str>\",\"direction\":\"<str>\",\"durationMs\":0,\"entrypoint\":\"<str>\",\"error\":{},\"fallbackModel\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"hasOutput\":false,\"hookAdditionalContext\":[],\"hookCount\":0,\"hookErrors\":[],\"hookInfos\":[],\"isMeta\":false,\"isSidechain\":false,\"level\":\"<str>\",\"logicalParentUuid\":\"<str>\",\"maxRetries\":0,\"messageCount\":0,\"microcompactMetadata\":{},\"neutralizedByFork\":false,\"originalModel\":\"<str>\",\"parentUuid\":\"<str>\",\"pendingBackgroundAgentCount\":0,\"preventedContinuation\":false,\"prompt\":\"<str>\",\"refusedUserMessageUuid\":\"<str>\",\"requestId\":\"<str>\",\"retractedMessageUuids\":[],\"retryAttempt\":0,\"retryInMs\":0.5,\"scope\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"source\":\"<str>\",\"stopReason\":\"<str>\",\"taskId\":\"<str>\",\"timestamp\":\"<str>\",\"toolUseID\":\"<str>\",\"trigger\":\"<str>\",\"type\":\"system\",\"url\":\"<str>\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "record:user",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"<str>\"}],\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:api_error",
+   "line": "{\"cause\":{},\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"error\":{},\"gitBranch\":\"<str>\",\"isSidechain\":false,\"level\":\"<str>\",\"maxRetries\":0,\"parentUuid\":\"<str>\",\"retryAttempt\":0,\"retryInMs\":0.5,\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"source\":\"<str>\",\"subtype\":\"api_error\",\"timestamp\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:away_summary",
+   "line": "{\"content\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isMeta\":false,\"isSidechain\":false,\"parentUuid\":\"<str>\",\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"subtype\":\"away_summary\",\"timestamp\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:bridge_status",
+   "line": "{\"content\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isMeta\":false,\"isSidechain\":false,\"parentUuid\":\"<str>\",\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"subtype\":\"bridge_status\",\"timestamp\":\"<str>\",\"type\":\"system\",\"url\":\"<str>\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:compact_boundary",
+   "line": "{\"agentId\":\"<str>\",\"compactMetadata\":{},\"content\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"isMeta\":false,\"isSidechain\":false,\"level\":\"<str>\",\"logicalParentUuid\":\"<str>\",\"parentUuid\":\"<str>\",\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"subtype\":\"compact_boundary\",\"timestamp\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:informational",
+   "line": "{\"content\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isMeta\":false,\"isSidechain\":false,\"level\":\"<str>\",\"parentUuid\":\"<str>\",\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"subtype\":\"informational\",\"timestamp\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:local_command",
+   "line": "{\"commandRun\":{},\"content\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"isMeta\":false,\"isSidechain\":false,\"level\":\"<str>\",\"parentUuid\":\"<str>\",\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"subtype\":\"local_command\",\"timestamp\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:microcompact_boundary",
+   "line": "{\"content\":\"<str>\",\"cwd\":\"<str>\",\"gitBranch\":\"<str>\",\"isMeta\":false,\"isSidechain\":false,\"level\":\"<str>\",\"microcompactMetadata\":{},\"parentUuid\":\"<str>\",\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"subtype\":\"microcompact_boundary\",\"timestamp\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:model_refusal_fallback",
+   "line": "{\"apiRefusalCategory\":\"<str>\",\"apiRefusalExplanation\":\"<str>\",\"content\":\"<str>\",\"cwd\":\"<str>\",\"direction\":\"<str>\",\"entrypoint\":\"<str>\",\"fallbackModel\":\"<str>\",\"gitBranch\":\"<str>\",\"isMeta\":false,\"isSidechain\":false,\"level\":\"<str>\",\"neutralizedByFork\":false,\"originalModel\":\"<str>\",\"parentUuid\":\"<str>\",\"refusedUserMessageUuid\":\"<str>\",\"requestId\":\"<str>\",\"retractedMessageUuids\":[],\"scope\":\"<str>\",\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"subtype\":\"model_refusal_fallback\",\"timestamp\":\"<str>\",\"trigger\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:scheduled_task_fire",
+   "line": "{\"content\":\"<str>\",\"cron\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"gitBranch\":\"<str>\",\"isMeta\":false,\"isSidechain\":false,\"parentUuid\":\"<str>\",\"prompt\":\"<str>\",\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"subtype\":\"scheduled_task_fire\",\"taskId\":\"<str>\",\"timestamp\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:stop_hook_summary",
+   "line": "{\"agentId\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"hasOutput\":false,\"hookAdditionalContext\":[],\"hookCount\":0,\"hookErrors\":[],\"hookInfos\":[],\"isSidechain\":false,\"level\":\"<str>\",\"parentUuid\":\"<str>\",\"preventedContinuation\":false,\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"stopReason\":\"<str>\",\"subtype\":\"stop_hook_summary\",\"timestamp\":\"<str>\",\"toolUseID\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "system:turn_duration",
+   "line": "{\"agentId\":\"<str>\",\"cwd\":\"<str>\",\"durationMs\":0,\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"isMeta\":false,\"isSidechain\":false,\"messageCount\":0,\"parentUuid\":\"<str>\",\"pendingBackgroundAgentCount\":0,\"sessionId\":\"<str>\",\"slug\":\"<str>\",\"subtype\":\"turn_duration\",\"timestamp\":\"<str>\",\"type\":\"system\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "tool_result_item:document",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":[{\"content\":[{\"source\":{\"data\":\"<str>\",\"media_type\":\"<str>\",\"type\":\"base64\"},\"type\":\"document\"}],\"is_error\":false,\"tool_use_id\":\"<str>\",\"type\":\"tool_result\"}],\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "tool_result_item:image",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":[{\"content\":[{\"source\":{\"data\":\"<str>\",\"media_type\":\"<str>\",\"type\":\"base64\"},\"type\":\"image\"}],\"is_error\":false,\"tool_use_id\":\"<str>\",\"type\":\"tool_result\"}],\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "tool_result_item:text",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":[{\"content\":[{\"text\":\"<str>\",\"type\":\"text\"}],\"is_error\":false,\"tool_use_id\":\"<str>\",\"type\":\"tool_result\"}],\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "tool_result_item:tool_reference",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":[{\"content\":[{\"tool_name\":\"<str>\",\"type\":\"tool_reference\"}],\"is_error\":false,\"tool_use_id\":\"<str>\",\"type\":\"tool_result\"}],\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  },
+  {
+   "shape": "user:content_string",
+   "line": "{\"agentId\":\"<str>\",\"classifierBoundary\":false,\"classifierMetaLines\":\"<str>\",\"cwd\":\"<str>\",\"entrypoint\":\"<str>\",\"forkedFrom\":{},\"gitBranch\":\"<str>\",\"imagePasteIds\":[],\"interruptedByShutdown\":false,\"interruptedMessageId\":\"<str>\",\"isCompactSummary\":false,\"isMeta\":false,\"isSidechain\":false,\"isVisibleInTranscriptOnly\":false,\"mcpMeta\":{},\"message\":{\"content\":\"<str>\",\"role\":\"user\"},\"origin\":{},\"parentUuid\":\"<str>\",\"permissionMode\":\"<str>\",\"planContent\":\"<str>\",\"promptId\":\"<str>\",\"promptSource\":\"<str>\",\"queueOrigin\":{},\"queuePriority\":\"<str>\",\"queueSkipAttachments\":false,\"queueTranscriptOnly\":false,\"scheduledFireId\":\"<str>\",\"scheduledTaskId\":\"<str>\",\"serverClassifierContext\":{},\"sessionId\":\"<str>\",\"session_id\":\"<str>\",\"slug\":\"<str>\",\"sourceToolAssistantUUID\":\"<str>\",\"sourceToolUseID\":\"<str>\",\"thinkingMetadata\":{},\"timestamp\":\"<str>\",\"todos\":[],\"toolDenialKind\":\"<str>\",\"toolEndsTurn\":false,\"toolUseResult\":{},\"turnCompanion\":false,\"turnOrigin\":\"<str>\",\"type\":\"user\",\"userType\":\"<str>\",\"uuid\":\"<str>\",\"version\":\"<str>\"}"
+  }
+ ]
+}

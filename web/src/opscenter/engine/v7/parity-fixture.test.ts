@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { leavesOf, terminalSlotsOf, withoutSlot } from './tree';
 import type { LayoutV7 } from './types';
 
+/** Where the shared fixture lives, from this file. */
 const FIXTURE = fileURLToPath(new URL('../../../../../tests/fixtures/layout_v7_parity.json', import.meta.url));
 
 interface ParityCase {

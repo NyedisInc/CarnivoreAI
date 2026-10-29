@@ -1,4 +1,3 @@
-/*  hidden  */
 import { createZone, type Zone } from '../../lib/zone-shell/zone.svelte';
 import type { PanelState, TabRef } from '../../lib/zone-shell/zone-types';
 

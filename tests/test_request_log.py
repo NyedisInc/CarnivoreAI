@@ -13,7 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.api.request_log import RequestLogMiddleware  # noqa: E402
+from src.api import request_log  # noqa: E402
+from src.api.request_log import LOG_EXTRA_KEY, RequestLogMiddleware  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -30,6 +31,15 @@ def _build_app() -> FastAPI:
 
     @app.get("/api/thing")
     async def ok_route(request: Request):
+        return {"ok": True}
+
+    @app.post("/api/thing")
+    async def write_route():
+        return {"ok": True}
+
+    @app.post("/mcp")
+    async def mcp_route(request: Request):
+        request.scope[LOG_EXTRA_KEY] = {"rpc": (await request.body()).decode()}
         return {"ok": True}
 
     @app.get("/boom")
@@ -65,13 +75,13 @@ def _only_http_request_events(logs: list[dict]) -> list[dict]:
 def test_successful_request_logs_all_five_fields():
     client = _client()
     with structlog.testing.capture_logs() as logs:
-        resp = client.get("/api/thing")
+        resp = client.post("/api/thing")
     assert resp.status_code == 200
 
     events = _only_http_request_events(logs)
     assert len(events) == 1
     entry = events[0]
-    assert entry["method"] == "GET"
+    assert entry["method"] == "POST"
     assert entry["path"] == "/api/thing"
     assert entry["status"] == 200
     assert entry["client_ip"] == "testclient"
@@ -95,7 +105,7 @@ def test_raised_handler_logs_status_500_and_still_raises():
 def test_query_string_never_appears_in_the_logged_path_or_anywhere_else():
     client = _client()
     with structlog.testing.capture_logs() as logs:
-        resp = client.get("/api/thing?token=abc123secret")
+        resp = client.post("/api/thing?token=abc123secret")
     assert resp.status_code == 200
 
     events = _only_http_request_events(logs)
@@ -132,7 +142,7 @@ def test_static_path_logs_at_debug_level():
 def test_api_path_logs_at_info_level():
     client = _client()
     with structlog.testing.capture_logs() as logs:
-        client.get("/api/thing")
+        client.post("/api/thing")
 
     events = _only_http_request_events(logs)
     assert len(events) == 1
@@ -143,8 +153,31 @@ def test_server_log_reads_log_at_debug_so_the_viewer_does_not_fill_itself():
     client = _client()
     with structlog.testing.capture_logs() as logs:
         assert client.get("/api/v1/server-log").status_code == 200
-        assert client.get("/api/thing").status_code == 200
+        assert client.post("/api/thing").status_code == 200
 
     by_path = {e["path"]: e["log_level"] for e in _only_http_request_events(logs)}
     assert by_path["/api/v1/server-log"] == "debug"
     assert by_path["/api/thing"] == "info"
+
+
+def test_routine_reads_and_pings_are_rolled_up_but_errors_and_writes_keep_their_line():
+    request_log._ROLLUP.reset()
+    client = _client()
+    with structlog.testing.capture_logs() as logs:
+        assert client.get("/api/thing").status_code == 200
+        assert client.get("/api/thing").status_code == 200
+        assert client.post("/mcp", content="ping").status_code == 200
+        assert client.post("/mcp", content="tools/call").status_code == 200
+        assert client.post("/api/thing").status_code == 200
+        with pytest.raises(RuntimeError):
+            client.get("/boom")
+        request_log.flush_rollup()
+
+    per_request = {(e["method"], e["path"], e.get("rpc"), e["status"]) for e in _only_http_request_events(logs)}
+    assert per_request == {("POST", "/mcp", "tools/call", 200), ("POST", "/api/thing", None, 200), ("GET", "/boom", None, 500)}
+    (rollup,) = [e for e in logs if e.get("event") == "http_request_rollup"]
+    rows = {(r["method"], r["path"], r["rpc"]): r for r in rollup["routes"]}
+    assert rows[("GET", "/api/thing", "")]["count"] == 2
+    assert rows[("POST", "/mcp", "ping")]["count"] == 1
+    assert rollup["requests"] == 3
+    assert {"total_ms", "avg_ms", "max_ms"} <= rows[("GET", "/api/thing", "")].keys()

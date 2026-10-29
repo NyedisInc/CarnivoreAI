@@ -1,20 +1,3 @@
-"""A bounded, read-only measurement of one installed skill folder for Sentinel.
-
-Two jobs the signed digest (``src.core.skills.digest``) deliberately does not do:
-
-- It is BOUNDED: at most :data:`MAX_FILES` files, :data:`MAX_BYTES` bytes and
-  :data:`MAX_SECONDS` seconds, else :class:`TooLarge`. A folder that later grows a
-  ``node_modules`` or a multi-GB file is reported unmeasurable, never hashed in full.
-- It is SAFE to point at a hostile folder: every entry is lstat-ed first, a file is
-  opened ``O_NOFOLLOW | O_NONBLOCK`` and ``fstat``-ed regular AFTER the open (a
-  file swapped for a FIFO or a symlink between the two steps is refused, never read
-  and never blocks), and nothing outside the folder is opened.
-
-The signed digest skips anything that is not a regular file, so an added symlink,
-FIFO, socket, device or an unreadable subdirectory would leave it unchanged. Here each
-of those is returned as an ANOMALY such as ``refs (symlink)``, and Sentinel counts an
-anomaly as drift.
-"""
 
 from __future__ import annotations
 

@@ -84,7 +84,7 @@ describe('sessions in a project', () => {
 describe('the one primary action', () => {
     test.each([
         ['running, held here', { state: 'running', live_session_id: 'ses_1' }, 'open'],
-        ['running on another host, not held', { state: 'running', host_key: 'hostb' }, 'none'],
+        ['running on another host, not held', { state: 'running', host_key: 'mini' }, 'none'],
         ['asleep', { state: 'asleep' }, 'wake'],
         ['closed, transcript on disk', { claude_session_uuid: 'c', has_transcript: true }, 'resume'],
         ['closed, transcript gone', { claude_session_uuid: 'c' }, 'none'],

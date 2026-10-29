@@ -4,7 +4,7 @@ from typing import Any, Callable, Optional
 
 import structlog
 
-from src.cplugs.reviewboard import artifact_port, artifact_source, capabilities, mcp, mcp_attachments, mcp_live, mcp_scratch, migrate, pages_port, relink_port, root_port, routes
+from src.cplugs.reviewboard import artifact_port, attachments_port, artifact_source, capabilities, mcp, mcp_attachments, mcp_live, mcp_scratch, migrate, pages_port, relink_port, root_port, routes
 from src.cplugs.sdk import CplugDefinition, load_manifest, ports, with_capabilities
 
 logger = structlog.get_logger()
@@ -21,11 +21,6 @@ def _start_copy(ctx: Any, loop: asyncio.AbstractEventLoop) -> None:
 
 
 def _copy_when_task_manager_is_up(ctx: Any) -> None:
-    """Start the copy now when the Task Manager's artifact port is there, else the moment it is registered (the Task Manager may start after this plugin).
-
-    The listener keeps the loop the plugin started on: a port can be registered from any thread, so the copy is handed to that loop
-    thread-safely, and a listener whose loop has closed (a host that never stopped this plugin) removes itself instead of raising.
-    """
     global _unlisten
     loop = asyncio.get_running_loop()
     if artifact_source.get() is not None:
@@ -49,6 +44,7 @@ def _copy_when_task_manager_is_up(ctx: Any) -> None:
 
 async def _start(ctx: Any) -> None:
     root_port.register(ctx)
+    attachments_port.register(ctx)
     relink_port.register(ctx)
     pages_port.register()
     artifact_port.register(ctx)
@@ -58,6 +54,7 @@ async def _start(ctx: Any) -> None:
 async def _stop(ctx: Any) -> None:
     global _copy, _unlisten
     root_port.unregister()
+    attachments_port.unregister()
     relink_port.unregister()
     pages_port.unregister()
     artifact_port.unregister()

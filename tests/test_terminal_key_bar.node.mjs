@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,6 +24,12 @@ const LEGACY_GLYPHS = new Set([...read('client/js/icons/glyphs.js')
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion, recording the outcome rather than throwing.
+ * @param {string} name
+ * @param {Function} fn
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -176,6 +183,7 @@ test('the legacy ordering test, kept for the original eight', () => {
 });
 
 test('a key that declares a glyph actually PAINTS one', () => {
+    // the whole file
     const r = realm();
     const declared = terminalKeyBarLabels((k) => k).keys.filter((k) => k.glyph);
     assert.ok(declared.length >= 5, 'the arrows and the two marks all draw glyphs');

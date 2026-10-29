@@ -9,9 +9,10 @@
         t: Translate;
         load?: () => Promise<ThirdPartyStatus>;
         save?: (enabled: boolean) => Promise<ThirdPartyStatus>;
+        onStatus?: (status: ThirdPartyStatus) => void;
     }
 
-    const { t, load = () => loadThirdParty(), save = (enabled) => saveThirdParty(enabled) }: Props = $props();
+    const { t, load = () => loadThirdParty(), save = (enabled) => saveThirdParty(enabled), onStatus }: Props = $props();
 
     let status = $state<ThirdPartyStatus | null>(null);
     let busy = $state(false);
@@ -39,6 +40,10 @@
         }
     }
 
+    $effect(() => {
+        if (status) onStatus?.(status);
+    });
+
     const line = $derived(status ? sandboxLine(status) : null);
 </script>
 
@@ -53,7 +58,8 @@
             data-third-party-toggle="1"
             onToggle={(next) => void flip(next)}
         />
-        {#if status.enabled && line}
+        
+        {#if status.enabled && line && !status.sandbox?.ok}
             <span class="plp-note" data-third-party-sandbox={status.sandbox ? (status.sandbox.ok ? 'ok' : 'bad') : 'unchecked'}>{t(line.key, { reason: line.reason ?? '' })}</span>
         {/if}
         {#if status.safe_mode.active}<span class="plp-note" data-third-party-safe>{t('plugins.page.third_party.safe_mode')}</span>{/if}

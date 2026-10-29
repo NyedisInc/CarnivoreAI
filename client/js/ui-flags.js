@@ -1,4 +1,3 @@
-/* could not */
 
 console.log('[UIFlags Module] Loading...');
 

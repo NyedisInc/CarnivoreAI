@@ -1,4 +1,4 @@
-<!-- animation: none -->
+
 <script lang="ts">
     import { onMount } from 'svelte';
     import { ANIMATION_TYPES, animationTypeOff, setAnimationTypeOff, watchAnimationTypes, type AnimationType } from '../motion/animation-types';

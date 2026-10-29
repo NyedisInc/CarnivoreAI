@@ -1,0 +1,10 @@
+[
+  {"id": "claude_model", "harness": "claude", "needs": "claude", "endpoint_preset": null,
+   "model": {"mode": "fixed", "value": "sonnet"}, "permissions": "harness_default", "flags": ["--verbose"]},
+  {"id": "claude_openrouter", "harness": "claude", "needs": "claude", "endpoint_preset": "openrouter",
+   "model": {"mode": "ask", "value": null}, "permissions": "harness_default", "flags": []},
+  {"id": "shell", "harness": "shell", "needs": null, "endpoint_preset": null,
+   "model": {"mode": "default", "value": null}, "permissions": "harness_default", "flags": []},
+  {"id": "codex", "harness": "codex", "needs": "codex", "endpoint_preset": null,
+   "model": {"mode": "default", "value": null}, "permissions": "ask", "flags": ["--search"]}
+]

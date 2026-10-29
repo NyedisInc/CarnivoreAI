@@ -11,7 +11,8 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar
 import fastapi
 import structlog
 
-from src.core import db
+from src.core import db, session_change_notice
+from src.core.db_reuse import datastore_pool
 from src.core.swarm import admission, alerts, body_create, conflicts, delivery, profiles, push, settings as swarm_settings, promotion_store, store, switch, thread_port, wake_prompt, watch  # noqa: F401
 from src.core.swarm.body_create import BodyIdentity
 from src.core.pack.identity import home as project_home
@@ -55,7 +56,7 @@ async def run_db(work: Callable[[sqlite3.Connection], T]) -> T:
     from src.config import settings as app_settings
 
     def go() -> T:
-        with closing(db.connect(db.db_path_for(app_settings.get_state_dir()), create=False)) as conn:
+        with closing(datastore_pool.lend(db.db_path_for(app_settings.get_state_dir()))) as conn:
             return work(conn)
 
     return await asyncio.to_thread(go)
@@ -85,7 +86,7 @@ def _resolve_mode(conn: sqlite3.Connection, agent: Dict[str, Any], mode: str) ->
     has_conversation = bool(row and row[0])
     if mode == "fresh" or not has_conversation or (mode != "resume" and promotion_store.reshaped_since_last_wake(conn, agent["id"])):
         return "fresh"
-    return "resume" if mode == "resume" or _has_open_work(conn, agent) else "fresh"
+    return "resume" if mode == "resume" or store.is_member(agent) or _has_open_work(conn, agent) else "fresh"
 
 
 def _compute_reserve() -> Optional[admission.Reserve]:
@@ -208,8 +209,6 @@ def agent_lock(agent_id: int) -> "asyncio.Lock":
 async def wake(app_state: Any, agent_id: int, reason: str, authority: str, *, mode: str = "auto",
                conversation_uuid: Optional[str] = None, orders: str = "",
                owner_message_ref: Optional[str] = None) -> WakeResult:
-    """Wake an agent, or join the wake already running; never starts a second body (docs/swarm.md 4.2).
-    """
     switch.require_on()
     async with agent_lock(agent_id):
         agent = await run_db(lambda c: store.get_agent(c, agent_id))
@@ -255,7 +254,7 @@ async def wake(app_state: Any, agent_id: int, reason: str, authority: str, *, mo
     try:
         try:
             ident = await _start(app_state, agent, resolved)
-            await _finish_start(app_state, agent, wake_id, ident)
+            await finish_start(app_state, agent, wake_id, ident)
         except START_ERRORS as exc:
             logger.warning("swarm_wake_failed", agent_id=agent_id, error_type=type(exc).__name__, error=str(exc)[:300])
             await _card(agent, "wake failed", f"{agent['display_name']} could not start: {exc}", f"{WAKE_FAILED_PREFIX}{agent_id}:{wake_id}")
@@ -264,11 +263,16 @@ async def wake(app_state: Any, agent_id: int, reason: str, authority: str, *, mo
     finally:
         if not done:
             await _unwind(agent_id, wake_id)
+    _changed(app_state, "swarm_woken")
     fresh = await run_db(lambda c: store.get_agent(c, agent_id)) or agent
     await _resolve_wake_cards(agent_id)
     await _refresh_index(fresh)
     delivery.send_wake_prompt(app_state, fresh, wake_id, resolved, reason, orders, authority, owner_message_ref)
     return WakeResult(wake_id, True, "awake")
+
+
+def _changed(app_state: Any, reason: str) -> None:
+    session_change_notice.publish(app_state, session_change_notice.build_structural_notice(reason))
 
 
 async def wait_awake(agent_id: int, *, poll_s: float = 0.5) -> None:
@@ -315,7 +319,10 @@ async def _start(app_state: Any, agent: Dict[str, Any], mode: str) -> BodyIdenti
                                     get_manager=lambda: app_state.session_manager, fresh=mode == "fresh")
     if answer.status != "started":
         raise body_create.CreateRefused(answer.detail or "the recreate was refused")
-    info = await app_state.session_manager.get_session_info(answer.session_id)
+    from src.core.sessions.name_locks import hold_adopt
+
+    async with hold_adopt(app_state.session_manager, answer.tmux_session):
+        info = await app_state.session_manager.get_session_info(answer.session_id)
     if info is None or info.session_row_id != agent["session_row_id"]:
         await _kill_minted(app_state, info)
         raise body_create.CreateRefused("the new body is not on the agent's own session row")
@@ -335,7 +342,7 @@ async def _kill_minted(app_state: Any, info: Optional[Any]) -> None:
         logger.error("swarm_minted_body_close_failed", tmux_name=info.tmux_session, error=str(exc)[:200])
 
 
-async def _finish_start(app_state: Any, agent: Dict[str, Any], wake_id: int, ident: BodyIdentity) -> None:
+async def finish_start(app_state: Any, agent: Dict[str, Any], wake_id: int, ident: BodyIdentity) -> None:
     from src.core.crosstalk import store as crosstalk_store
 
     def record(conn: sqlite3.Connection) -> None:
@@ -399,6 +406,7 @@ async def sleep(app_state: Any, agent_id: int, end_reason: str = "sleep") -> Sle
     await _refresh_index(agent)
     commit = await _commit(app_state, agent)
     await run_db(lambda c: store.cas_state(c, agent_id, "sleeping", "asleep"))
+    _changed(app_state, "swarm_slept")
     return SleepResult("asleep", commit)
 
 

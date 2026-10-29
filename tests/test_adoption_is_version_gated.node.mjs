@@ -1,3 +1,4 @@
+// WHY THIS FILE EXISTS
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -140,6 +141,7 @@ test('decideAdoption called with nothing at all does not throw and does not adop
   assert.equal(decideAdoption({}).adopt, false);
 });
 
+// --- wiring (SOURCE-LEVEL) ------------------------------------------------
 
 test('wiring (SOURCE-LEVEL): start() consults the gate before adopting', () => {
   assert.ok(

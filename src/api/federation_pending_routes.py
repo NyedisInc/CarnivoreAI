@@ -37,6 +37,8 @@ def _ready(p: pair_sas.Pending) -> bool:
 async def _activate(p: pair_sas.Pending) -> None:
     d = p.data
     refuse_tls_pairing(d["install_id"])
+    if pair_sas.ACCEPTING.pop(p.nonce) is None:
+        return
 
     def run(conn: sqlite3.Connection):
         old = grants.live_for_peer(conn, d["install_id"])
@@ -51,13 +53,20 @@ async def _activate(p: pair_sas.Pending) -> None:
     try:
         old = await _db(run)
     except GrantError as exc:
+        _release(p)
         raise _error(400, exc.code, str(exc)) from None
-    pair_sas.ACCEPTING.pop(p.nonce)
+    except Exception:
+        _release(p)
+        raise
     if old is not None:
         await peer_sockets.close_grant(old.grant_id)
         if peer_links.LINKS is not None:
             await peer_links.LINKS.remove(old.peer_install_id)
     logger.info("federation_paired", grant=d["grant_id"][:8], fid=p.fid, proof=p.proof)
+
+
+def _release(p: pair_sas.Pending) -> None:
+    pair_sas.ACCEPTING.add(p.nonce, proof=p.proof, sas=p.sas, label=p.label, fid=p.fid, **p.data)
 
 
 def _find(nonce: str) -> pair_sas.Pending:
@@ -69,11 +78,13 @@ def _find(nonce: str) -> pair_sas.Pending:
 
 @router.get("/pending-pairs", dependencies=[Depends(require_auth)])
 async def list_pending() -> List[Dict[str, Any]]:
+    """Pairings waiting on this Mac. Example: [{"nonce": "ab..", "sas": "12345 67890", ...}]."""
     return [_pending_json(p) for p in pair_sas.ACCEPTING.all()]
 
 
 @router.post("/pending-pairs/{nonce}/confirm", dependencies=[Depends(require_auth)])
 async def confirm_pending(nonce: str) -> Dict[str, Any]:
+    """This Mac's owner says the codes match. Active once the initiator accepted too."""
     p = _find(nonce)
     p.data["owner_ok"] = True
     if _ready(p):
@@ -84,6 +95,7 @@ async def confirm_pending(nonce: str) -> Dict[str, Any]:
 
 @router.post("/pending-pairs/{nonce}/cancel", dependencies=[Depends(require_auth)])
 async def cancel_pending(nonce: str) -> Dict[str, bool]:
+    """This Mac's owner says the codes differ (or cancels): the pairing is dropped."""
     _find(nonce)
     pair_sas.ACCEPTING.pop(nonce)
     logger.info("federation_pair_cancelled", side="acceptor")

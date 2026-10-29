@@ -70,7 +70,7 @@ def test_a_second_change_of_the_setting_during_a_batch_is_followed_not_settled_a
 
 
 def test_a_file_that_is_an_icloud_placeholder_is_not_opened_and_keeps_its_stamp_until_it_is_whole(world, monkeypatch):
-    headless = world["main"].parent / "5440f51e-018d-47a4-8fdf-c52dbf80f162.jsonl"
+    headless = world["main"].parent / "99999999-aaaa-bbbb-cccc-1234567890ab.jsonl"
     headless.write_bytes(rec(0, "an agent started this headless session about narwhalword", entrypoint="sdk-cli"))
     scan(world)
     drain(world)

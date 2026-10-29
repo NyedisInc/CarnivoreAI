@@ -1,4 +1,3 @@
-/* automations list */
 @layer components {
     .pledger .lsk-page,
     .lsk-sheet {
@@ -130,7 +129,6 @@
         color: var(--oc-text-muted);
     }
 
-    /* --color- */
     .pledger .lsk-cell[data-state='syncing'],
     .pledger .lsk-cell[data-state='syncing'] .lsk-cell__mark {
         color: var(--oc-yellow);
@@ -166,7 +164,6 @@
         gap: var(--oc-space-1) var(--oc-space-2);
     }
 
-    /* box-shadow */
     .pledger .lsk-scroll--pack {
         max-height: min(70dvh, 52rem);
     }

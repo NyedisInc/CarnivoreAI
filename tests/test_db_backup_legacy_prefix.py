@@ -142,7 +142,7 @@ def test_prune_backups_can_still_delete_an_old_legacy_backup(
     assert not deleted[0].exists()
 
 
-def test_default_retention_keeps_newest_five_plus_three_days_and_sweeps_sidecars(
+def test_default_retention_keeps_exactly_the_newest_two_and_sweeps_sidecars(
     tmp_path: Path,
 ) -> None:
     now = datetime(2026, 10, 12, 12, 0, tzinfo=timezone.utc)
@@ -161,8 +161,8 @@ def test_default_retention_keeps_newest_five_plus_three_days_and_sweeps_sidecars
 
     deleted = db_backup.prune_backups(tmp_path, now=now)
 
-    kept = set(names[:13])
-    assert len(kept) == 13 and len(deleted) == (50 - 13) * 3 + 1, "population must be non-empty"
+    kept = set(names[:2])
+    assert len(kept) == 2 and len(deleted) == (50 - 2) * 3 + 1, "population must be non-empty"
     for name in names:
         for suffix in ("", "-shm", "-wal"):
             assert (tmp_path / (name + suffix)).exists() == (name in kept), name + suffix

@@ -380,15 +380,5 @@ class _Run:
 
 
 async def answer_all(*, asked: AskQuestions, answers: List[QuestionAnswer], capture, send) -> str:
-    """Answer every question of ``asked`` in order and submit once; returns ``"review"`` or ``"direct"``.
-
-    Inputs: asked (the transcript's questions, already matched to the pane by the caller's identity check);
-      answers (one QuestionAnswer per question, in question order); capture / send as in
-      :mod:`src.core.approvals.answer`.
-    Raises: AnswerRefused with a named reason (validate()'s, or no_dialog, dialog_changed, dialog_closed_early,
-      question_text_mismatch, question_count_mismatch, option_text_mismatch, key_not_applied, toggle_failed,
-      other_row_not_empty, review_mismatch, submit_not_confirmed, ...); nothing is pressed after a refusal.
-    Example: await answer_all(asked=asked, answers=[QuestionAnswer(option="Blue")], capture=cap, send=snd)
-    """
     validate(asked, answers)
     return await _Run(asked, answers, capture, send).run()

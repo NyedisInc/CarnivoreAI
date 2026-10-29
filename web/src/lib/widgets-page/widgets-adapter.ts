@@ -1,5 +1,3 @@
-/*  hidden
- */
 import { CORE_MANIFESTS } from '../../opscenter/widgets/core-manifests';
 import { isViewCell } from '../../opscenter/widgets/views';
 import { authFetch } from '../../opscenter/api/auth.svelte';

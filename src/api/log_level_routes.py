@@ -6,11 +6,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from src.api.auth import require_auth
 from src.core.log_level import expiry, live, store
 from src.models.log_level import LogLevelState, LogLevelWrite
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -75,11 +76,7 @@ async def put_log_level(body: LogLevelWrite) -> LogLevelState:
     try:
         await asyncio.to_thread(store.set_chosen, _config_path(), body.level)
     except (FileNotFoundError, ValueError) as exc:
-        logger.error("log_level_unwritable", error=type(exc).__name__)
-        raise HTTPException(
-            status_code=500,
-            detail={"code": "config_unreadable", "detail": f"config.json could not be used: {exc}"},
-        ) from exc
+        raise api_error(500, "config_unreadable", None, error_type=type(exc).__name__) from exc
     expiry.clear()
     name = body.level or _env_level()
     live.apply_level(name)

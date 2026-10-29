@@ -1,4 +1,3 @@
-/* session skills */
 import { stateToSend } from '../skills-page/skills-model';
 import type { OverrideFile, SessionSkill } from '../skills-page/skills-types';
 

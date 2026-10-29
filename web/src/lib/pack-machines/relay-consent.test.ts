@@ -25,7 +25,7 @@ import { setLocale } from '../i18n/index.svelte';
 
 setLocale('en');
 
-const offer = (key: string, over: Record<string, unknown> = {}) => ({ key, sender: 'iid-a', sender_label: 'hosta', account_key: key.split(':')[1],
+const offer = (key: string, over: Record<string, unknown> = {}) => ({ key, sender: 'iid-a', sender_label: 'studio', account_key: key.split(':')[1],
   label: key.split(':')[1], accepted: false, pending: true, ...over });
 const view = (over: Record<string, unknown> = {}) => ({ mode: null, answered: false, may_receive_credentials: false, accepted: [],
   offers: [offer('iid-a:work'), offer('iid-a:home')], pending: ['iid-a:work', 'iid-a:home'], ...over });

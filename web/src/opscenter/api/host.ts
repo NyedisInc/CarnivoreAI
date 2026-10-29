@@ -1,5 +1,6 @@
 
 import { closeMenuPagesExcept } from '../../lib/menu-page/menu-page-shell.svelte';
+import { createGroupThenAssign } from '../../lib/sidebar-shell/group-assign';
 
 interface WebNamespace {
   openCatalogScreen?: () => boolean;
@@ -88,12 +89,11 @@ export function primaryTmuxEpoch(): number | null {
   return typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
 }
 
-/* nothing at all the project row */
 export function newSession(project: Record<string, unknown> | null): boolean {
   const lp = web()?.launchpad;
   if (project) {
     if (typeof lp?.selectProject !== 'function') return missing('CloudeWeb.launchpad.selectProject');
-    void lp.selectProject(project, null);
+    void lp.selectProject(project);
     return true;
   }
   return startNewSession('agent') !== null;
@@ -103,7 +103,6 @@ export function newTerminal(): boolean {
   return startNewSession('terminal') !== null;
 }
 
-/* navigation generation */
 export function startNewSession(kind: 'agent' | 'terminal'): Promise<void> | null {
   const lp = web()?.launchpad;
   if (kind === 'agent') {
@@ -120,7 +119,6 @@ export function startNewSessionInProject(project: Record<string, unknown>): Prom
   return lp.selectProject(project);
 }
 
-/* CANNOT DETERMINE running sessions */
 export function startSessionInProject(): boolean {
   const start = web()?.launchpad?.startSessionInExistingProject;
   if (typeof start !== 'function') return missing('CloudeWeb.launchpad.startSessionInExistingProject');
@@ -128,7 +126,6 @@ export function startSessionInProject(): boolean {
   return true;
 }
 
-/* running sessions */
 export function startNewProject(): boolean {
   const start = web()?.launchpad?.startNewClaudeProject;
   if (typeof start !== 'function') return missing('CloudeWeb.launchpad.startNewClaudeProject');
@@ -136,7 +133,6 @@ export function startNewProject(): boolean {
   return true;
 }
 
-/* conversation id */
 export function resumeSession(record: {
   sessionUuid: string | null;
   title: string | null;
@@ -170,7 +166,6 @@ export function openBlueprints(): boolean {
   return true;
 }
 
-/* running sessions */
 export function openSessions(): boolean {
   closeOtherMenuScreens('sessions');
   const open = web()?.openSessionsScreen;
@@ -237,10 +232,7 @@ export function importProject(): boolean {
 }
 
 export function newGroup(): boolean {
-  const actions = (globalThis as { SessionSidebarGroupActions?: { createGroupThenAssign?: (name: null) => Promise<void> } })
-    .SessionSidebarGroupActions;
-  if (typeof actions?.createGroupThenAssign !== 'function') return missing('window.SessionSidebarGroupActions.createGroupThenAssign');
-  void actions.createGroupThenAssign(null);
+  void createGroupThenAssign(null);
   return true;
 }
 

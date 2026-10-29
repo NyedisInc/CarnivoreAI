@@ -1,4 +1,4 @@
-<!-- pop-out window -->
+
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import TerminalLive from '../../opscenter/cells/terminal-live/Cell.svelte';

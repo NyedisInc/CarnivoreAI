@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterator, List, Optional
+from src.core.sessions import errors as session_errors
 
 DELETE = "delete"
 KEEP = "keep"
@@ -28,7 +29,7 @@ class InventoryError(Exception):
     pass
 
 
-class SessionNotFound(InventoryError, LookupError):
+class SessionNotFound(InventoryError, session_errors.SessionNotFound):
     pass
 
 

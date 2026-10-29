@@ -18,11 +18,8 @@ from src.core.attention.evidence import (
     TIER_REGISTRY,
 )
 from src.core.attention.ledger import AttentionLedger
-from src.core.attention.registry_read import (
-    REG_STALE,
-    parse_registry_record,
-    registry_for_session,
-)
+from src.core.attention.registry_record import REG_STALE, parse_registry_record
+from src.core.attention.registry_index import registry_for_session
 from src.core.attention.side_effects import AttentionSideEffects
 from src.core.attention.transcript_facts import FACTS_FOUND, TranscriptFacts
 from src.core.attention.watcher import Observation, WatchTarget
@@ -72,7 +69,7 @@ class RecordingManager:
     def _writable_datastore_connection(self):
         return None
 
-    def _tmux_socket_name(self):
+    def tmux_socket_name(self):
         return "cloudetest"
 
     def _unread_epoch(self, tmux_name):
@@ -480,12 +477,12 @@ def test_a_real_user_prompt_survives_the_same_reader(wired):
     assert manager.work_stamps == [(SESSION_ID, TMUX_NAME, None)]
 
 
-def test_the_ack_cutoff_is_naive_utc(wired):
+def test_the_ack_cutoff_is_aware_utc(wired):
     manager, effects, _calls = wired
     effects.on_observation(TARGET, observation(prompt_at=NOW))
     cutoff = manager.acks[0][2]
-    assert cutoff is not None and cutoff.tzinfo is None
-    assert cutoff == NOW.replace(tzinfo=None)
+    assert cutoff is not None and cutoff.utcoffset() == timedelta(0)
+    assert cutoff == NOW
 
 
 def test_the_busy_edge_answers_a_permission_and_nothing_else(wired):

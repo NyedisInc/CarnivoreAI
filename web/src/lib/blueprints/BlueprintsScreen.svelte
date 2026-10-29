@@ -1,4 +1,4 @@
-<!-- padding position: fixed -->
+
 <script lang="ts">
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import ManagerFrame from '../manager-frame/ManagerFrame.svelte';
@@ -9,6 +9,7 @@
     import type { Translate } from '../sessions/types';
     import { providerMark } from '../sessions/agent-marks';
     import { openModal } from '../modal';
+    import { Button, List, ListRow } from '../base';
     import BlueprintEditorModal from './BlueprintEditorModal.svelte';
     import LaunchModal from './LaunchModal.svelte';
     import ExportModal from './ExportModal.svelte';
@@ -42,7 +43,6 @@
                 : a.name.localeCompare(b.name),
         ),
     );
-    /* the detail pane */
     let notice = $state<{ id: string; text: string; error: boolean } | null>(null);
 
     // svelte-ignore state_referenced_locally
@@ -183,31 +183,25 @@
         {t}
     >
         {#snippet actions()}
-            <button type="button" class="oc-btn" data-blueprint-import-open onclick={() => void openImport()}
-                >{t('blueprint.import')}</button
-            >
-            <button type="button" class="oc-btn oc-btn--confirm" data-blueprint-new-open onclick={() => void openNew()}
-                >{t('blueprint.new')}</button
-            >
+            <Button data-blueprint-import-open onclick={() => void openImport()}>{t('blueprint.import')}</Button>
+            <Button variant="confirm" data-blueprint-new-open onclick={() => void openNew()}>{t('blueprint.new')}</Button>
         {/snippet}
         {#snippet cardExtra(item)}
             {@const blueprint = blueprintOf(item)}
-            <ul class="bp-card__members">
+            <List density="dense" label={t('blueprint.session.heading')}>
                 {#each blueprint.spec.sessions as session (session.label)}
                     {@const mark = providerMark(session.family)}
-                    <li class="bp-card__member">
-                        <span class="bp-card__mark" data-agent-family={mark.key} role="img" aria-label={mark.label} title={mark.label}
-                            >{@html mark.svg}</span
-                        >
-                        <span class="bp-card__member-label">{session.label}</span>
-                        <span class="bp-card__member-folder">{folderLine(session)}</span>
-                    </li>
+                    <ListRow primary={session.label} secondary={folderLine(session)}>
+                        {#snippet lead()}
+                            <span class="bp-card__mark" data-agent-family={mark.key} role="img" aria-label={mark.label} title={mark.label}
+                                >{@html mark.svg}</span
+                            >
+                        {/snippet}
+                    </ListRow>
                 {/each}
-            </ul>
+            </List>
             <div class="bp-card__actions">
-                <button type="button" class="oc-btn oc-btn--confirm" data-blueprint-launch onclick={() => void openLaunch(blueprint)}>
-                    {t('blueprint.launch')}
-                </button>
+                <Button variant="confirm" data-blueprint-launch onclick={() => void openLaunch(blueprint)}>{t('blueprint.launch')}</Button>
             </div>
         {/snippet}
         {#snippet detail(item)}
@@ -219,36 +213,29 @@
                 <dd data-blueprint-detail-count>{t('session.summary.sessions', { count: blueprint.spec.sessions.length })}</dd>
             </dl>
             <p class="bp-detail__heading">{t('blueprint.session.heading')}</p>
-            <ul class="bp-detail__members">
+            <List label={t('blueprint.session.heading')}>
                 {#each blueprint.spec.sessions as session (session.label)}
                     {@const mark = providerMark(session.family)}
-                    <li class="bp-detail__member">
-                        <span class="bp-card__mark" data-agent-family={mark.key} role="img" aria-label={mark.label} title={mark.label}
-                            >{@html mark.svg}</span
-                        >
-                        <span class="bp-detail__member-body">
-                            <span class="bp-detail__member-label">{session.label}</span>
-                            <span class="bp-detail__member-line">{folderLine(session)}</span>
-                        </span>
-                    </li>
+                    <ListRow wrap primary={session.label} secondary={folderLine(session)}>
+                        {#snippet lead()}
+                            <span class="bp-card__mark" data-agent-family={mark.key} role="img" aria-label={mark.label} title={mark.label}
+                                >{@html mark.svg}</span
+                            >
+                        {/snippet}
+                    </ListRow>
                 {/each}
-            </ul>
+            </List>
             <div class="bp-detail__actions">
-                <button type="button" class="oc-btn" data-blueprint-edit onclick={() => void openEdit(blueprint)}>
-                    {t('blueprint.edit')}
-                </button>
-                <button type="button" class="oc-btn" data-blueprint-export onclick={() => void openExportOne(blueprint)}>
-                    {t('blueprint.export')}
-                </button>
-                <button
-                    type="button"
-                    class="oc-btn oc-btn--danger"
+                <Button data-blueprint-edit onclick={() => void openEdit(blueprint)}>{t('blueprint.edit')}</Button>
+                <Button data-blueprint-export onclick={() => void openExportOne(blueprint)}>{t('blueprint.export')}</Button>
+                <Button
+                    variant="danger"
                     data-blueprint-remove
                     disabled={removing === blueprint.blueprint_uuid}
                     onclick={() => void removeOne(blueprint)}
                 >
                     {t('blueprint.remove')}
-                </button>
+                </Button>
             </div>
             {#if notice && notice.id === blueprint.blueprint_uuid}
                 <p class={notice.error ? 'bp-detail__error' : 'bp-detail__notice'} role={notice.error ? 'alert' : 'status'}>{notice.text}</p>
@@ -269,37 +256,6 @@
         color: var(--oc-text-secondary);
     }
 
-    .bp-card__members {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-        margin: 6px 0 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    .bp-card__member {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        min-width: 0;
-        font-size: 11px;
-    }
-
-    .bp-card__member-label {
-        flex: none;
-        color: var(--oc-text-primary);
-    }
-
-    .bp-card__member-folder {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        color: var(--oc-text-muted);
-        font-family: var(--font-mono);
-    }
-
     .bp-card__actions {
         display: flex;
         margin-top: 10px;
@@ -311,48 +267,6 @@
         font-size: 10px;
         letter-spacing: var(--oc-tracking-label, 0.6px);
         text-transform: uppercase;
-    }
-
-    .bp-detail__members {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    .bp-detail__member {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        border-top: 1px solid var(--oc-line-rule);
-        padding-top: 8px;
-    }
-
-    .bp-detail__member:first-child {
-        border-top: none;
-        padding-top: 0;
-    }
-
-    .bp-detail__member-body {
-        display: flex;
-        min-width: 0;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .bp-detail__member-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--oc-text-primary);
-    }
-
-    .bp-detail__member-line {
-        font-size: 11px;
-        font-family: var(--font-mono);
-        color: var(--oc-text-muted);
-        overflow-wrap: anywhere;
     }
 
     .bp-detail__actions {

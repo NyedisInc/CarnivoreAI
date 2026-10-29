@@ -19,7 +19,7 @@ READY_STATUSES = ("idle", "finished_unread")
 
 
 class BringUpFailed(Exception):
-    """A session could not be brought to its prompt; the message is the sentence a caller shows."""
+    pass
 
 
 class RestoreOfferOpen(BringUpFailed):

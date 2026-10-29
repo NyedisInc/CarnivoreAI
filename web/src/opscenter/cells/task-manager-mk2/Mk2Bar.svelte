@@ -1,5 +1,5 @@
 <script lang="ts">
-  /*  hidden  */
+  /* the widget menu */
   import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
   import { clearViewFilter, setViewChip, setViewQuery, viewFilter, viewFilterActive, type ViewChip } from '../../../cplugs/huddle/task-manager-view-filter.svelte';
   import { hiddenSections, setSectionHidden } from '../../../cplugs/huddle/task-manager-status-folds.svelte';
@@ -74,7 +74,6 @@
 
 <style>
   @layer components {
-    /* padding */
     .mk2-bar {
       display: flex;
       flex-direction: column;

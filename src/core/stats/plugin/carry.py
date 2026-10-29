@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readonly
 import time
 from contextlib import closing
 from pathlib import Path
@@ -80,7 +81,7 @@ def retire_legacy(state_dir: Path, conn: sqlite3.Connection, today: Optional[str
         if part.exists():
             os.replace(part, Path(f"{retired}{suffix}"))
     try:
-        with closing(sqlite3.connect(retired.as_uri() + "?mode=ro", uri=True, timeout=30)) as old:
+        with closing(connect_readonly(retired, timeout=READONLY_TIMEOUT_LONG_S)) as old:
             with transaction(conn):
                 copied = copy_tables(old, conn, SETTINGS_TABLES)
                 close_open_backfills(conn)

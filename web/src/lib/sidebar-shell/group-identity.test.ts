@@ -24,7 +24,7 @@ function row(over: Record<string, unknown> = {}): Record<string, unknown> & { na
 const STALE_GROUPS = {
     status: 'ok', detail: null,
     groups: [{
-        group_uuid: 'g1', name: 'the owner', position: 0,
+        group_uuid: 'g1', name: 'Joe', position: 0,
         members: ['cloude_c', 'cloude_a', 'cloude_b'],
         member_session_uuids: ['U-C', 'U-A', 'U-B'],
     }],

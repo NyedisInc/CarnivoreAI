@@ -87,8 +87,6 @@ def check_alpha(state: ReceiverState, source: str, from_install_id: str = "") ->
 
 
 def check_placers(state: ReceiverState) -> None:
-    """Raise one alert per computer that placed skills here and no longer holds a live grant; clear it when that computer is paired
-    again or nothing it placed is left. Blocking. Example: check_placers(state) -> ``pack_skills.placer_gone:iid-hosta`` raised once."""
     seams = _SEAMS
     if seams is None:
         return

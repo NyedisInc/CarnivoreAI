@@ -20,8 +20,9 @@ from src.core.session_one_shot_gate import (
     check_can_paste,
     sanitize_body,
 )
-from src.core.session_status import KNOWN_SHELL_COMMANDS, STATUS_UNKNOWN
-from src.core.tmux_one_shot import PasteNotSettledError
+from src.core.session_status import KNOWN_SHELL_COMMANDS, STATUS_NOTICE, STATUS_UNKNOWN
+from src.core.tmux_one_shot import PasteNotSettledError, PasteNotSubmittedError
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -29,6 +30,7 @@ router = APIRouter()
 PASTE_UNSUPPORTED: str = "paste_unsupported"
 
 PASTE_NOT_SETTLED: str = "paste_not_settled"
+PASTE_NOT_SUBMITTED: str = "paste_not_submitted"
 
 
 class OneShotRequest(BaseModel):
@@ -175,8 +177,6 @@ async def check_through_gates(
         pane_row = await _read_pane_row(backend, session.tmux_session)
         pane_command = pane_row.get("pane_current_command") if pane_row else None
         pane_dead = pane_row.get("pane_dead") if pane_row else None
-        # did not answer
-        # could not
         info = await request.app.state.session_manager.get_session_info(
             session_id=session_id
         )
@@ -216,7 +216,7 @@ async def check_through_gates(
                 raise OneShotRefused(DIALOG_UNREADABLE, "the pane's dialog state could not be read")
         if idle_only and status not in PROMPT_READY_STATUSES:
             raise OneShotRefused(PANE_DIALOG_OPEN, "crosstalk paste waits for a ready prompt (idle, or finished but unread)")
-        if fresh_dialog_check:
+        if fresh_dialog_check or status == STATUS_NOTICE:
             if verdict is None:
                 verdict = await dialog_verdict(request.app, session_id)
             if verdict == OPEN:
@@ -253,17 +253,14 @@ async def paste_gated(gated: GatedBody, session_id: str) -> OneShotResponse:
         await backend.paste_and_submit(clean.text, gate=gated.gate)
     except OneShotRefused as refusal:
         raise _refuse(refusal.code, refusal.message, session_id)
+    except PasteNotSubmittedError as exc:
+        raise _refuse(PASTE_NOT_SUBMITTED, str(exc), session_id)
     except PasteNotSettledError as exc:
         raise _refuse(PASTE_NOT_SETTLED, str(exc), session_id)
     except NotImplementedError as exc:
         raise _refuse(PASTE_UNSUPPORTED, str(exc), session_id)
     except RuntimeError as exc:
-        logger.error(
-            "one_shot_paste_failed", session_id=session_id, error=str(exc)
-        )
-        raise HTTPException(
-            status_code=500, detail=f"failed to paste into the pane: {exc}"
-        )
+        raise api_error(500, "session_paste_failed", exc, session_id=session_id) from exc
 
     return OneShotResponse(
         pasted_bytes=clean.byte_length,

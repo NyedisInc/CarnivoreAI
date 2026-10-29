@@ -1,12 +1,9 @@
-/*  hidden  */
 import type { IdleReport } from '../sdk/widget-lab';
 import { waitForReport, type HarnessWindow } from './frame-reader';
 
 export interface IdleReading {
-  /*  hidden  */
   hidden: number;
   shown: number;
-  /*  hidden  */
   routes: string[];
 }
 

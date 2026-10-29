@@ -29,7 +29,7 @@ def store(tmp_path, monkeypatch, config_json):
     monkeypatch.setitem(targets.RUNNERS, "recipe", recipe.run)
     monkeypatch.setitem(targets.RUNNERS, "command", command.run)
     monkeypatch.setitem(targets.VALIDATORS, "command", command.validate_target)
-    monkeypatch.setattr(recipe, "_tell", lambda *a, **k: None)
+    monkeypatch.setattr(recipe.notify_policy, "tell", lambda *a, **k: None)
     return AutomationStore(storage_for(tmp_path), notify=lambda _t: None)
 
 
@@ -106,7 +106,7 @@ def test_sleep_idle_sessions_runs_one_pass(store):
 
 
 def test_restart_session_never_touches_a_live_session(store, monkeypatch):
-    uuid = "4ca6918a-97d8-484c-8398-e63f0afc41c8"
+    uuid = "0f6c2d6e-1111-4c4c-9e9e-000000000002"
     monkeypatch.setattr(bring_up, "ops_for_app", lambda app_state: None)
 
     async def find_live(ops, session_uuid):

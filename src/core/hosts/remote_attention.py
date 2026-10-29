@@ -38,11 +38,6 @@ class RemotePass:
             return self._maps[host.host_key]
 
     def claude_files(self, manager: Any, host: Any, now: datetime) -> Tuple[Any, Dict[Any, Any]]:
-        """This host's far registry and transcript sizes for the pass dated ``now``. THREAD BODY.
-
-        Output: tuple - (FarClaudeFiles, or None when the host could not be
-          asked; the host's open rows, (name, epoch) -> claude_session_uuid).
-        """
         from src.core.hosts.remote_claude_files import files_for
 
         with self._lock:
@@ -55,11 +50,6 @@ class RemotePass:
             return self._files[host.host_key]
 
     def codex_files(self, manager: Any, host: Any, now: datetime) -> Tuple[Any, Dict[Any, Any]]:
-        """This host's far codex stores for the pass dated ``now``. THREAD BODY.
-
-        Output: tuple - (FarCodexFiles, or None when the host could not be
-          asked; the host's open rows, (name, epoch) -> conversation).
-        """
         from src.core.hosts.remote_codex_files import files_for as codex_files_for
 
         with self._lock:
@@ -97,12 +87,11 @@ def host_open_rows(manager: Any, host: Any) -> Dict[Tuple[str, int], Optional[st
 
 
 def _capture(backend: Any) -> Optional[str]:
-    """The far visible viewport as plain text, or None when it could not be read."""
-    from src.core.tmux_backend import _safe_target
+    from src.core.tmux_transport.target import exact_pane_target
 
     try:
         rc, out, _ = backend._run_tmux_sync(
-            "capture-pane", "-p", "-S", "0", "-t", _safe_target(backend.tmux_session),
+            "capture-pane", "-p", "-S", "0", "-t", exact_pane_target(backend.tmux_session),
             check=False, timeout=CAPTURE_TIMEOUT_SECONDS)
     except (RemoteHostUnavailable, RemoteSyncOnLoopError, subprocess.TimeoutExpired,
             ValueError) as exc:
@@ -113,14 +102,6 @@ def _capture(backend: Any) -> Optional[str]:
 
 def read_remote_evidence(manager: Any, remote_pass: RemotePass, session_id: str,
                          backend: Any, now: datetime) -> Optional[Any]:
-    """One remote pane's evidence, or None for a read that did not happen. THREAD BODY.
-
-    Inputs: manager (SessionManager); remote_pass (RemotePass); session_id
-      (str); backend (RemoteTmuxBackend); now (datetime) - the pass instant.
-    Output: Evidence | None - None when the host could not be asked, or
-      the name now belongs to another instance.
-    Example: read_remote_evidence(mgr, RemotePass(), 'ses_1', backend, now)
-    """
     from dataclasses import replace
 
     from src.core.agent_family_display import resolve_family_for_display
@@ -128,7 +109,6 @@ def read_remote_evidence(manager: Any, remote_pass: RemotePass, session_id: str,
     from src.core.attention.evidence import FAMILY_CLAUDE, FAMILY_CODEX, Evidence
     from src.core.attention.pane_markers import classify_pane_tail
     from src.core.listing_attention import attention_reads_for_name
-    from src.core.session_manager import _configured_wrappers
 
     status_map = remote_pass.status_map(backend.host, now)
     if not status_map.complete:
@@ -143,13 +123,13 @@ def read_remote_evidence(manager: Any, remote_pass: RemotePass, session_id: str,
         return None
     session = manager._registry.sessions.get(session_id)
     family, _ = resolve_family_for_display(getattr(session, "agent_type", None),
-                                           _configured_wrappers())
+                                           manager._wrappers_reader())
     family_name = family.name if family else None
     epoch = measured if measured is not None else epoch
     files, rows = (remote_pass.claude_files(manager, backend.host, now)
                    if family_name in (None, FAMILY_CLAUDE) else (None, {}))
     row_uuid = rows.get((name, epoch)) if epoch is not None else None
-    if files is None:  # could not be read
+    if files is None:
         registry, transcript = attention_reads_for_name(
             name, registry_index={}, session_started_epoch=None, claude_session_uuid=None,
             working_dir=None, now=now)

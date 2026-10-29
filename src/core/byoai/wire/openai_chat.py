@@ -80,7 +80,7 @@ def _calls(raw: Any) -> tuple:
 
 async def chat(target: Target, key: Optional[str], request: ChatRequest) -> ChatResult:
     body = build_body(_shared.require_model(target), request, connection_fields=connection_extra(target.connection))
-    data = (await transport.request(target.connection, key, "POST", "/chat/completions", json=body, timeout=request.timeout_s)).json()
+    data = (await transport.request_json(target.connection, key, "POST", "/chat/completions", json=body, timeout=request.timeout_s))
     choices = data.get("choices") or []
     if not choices:
         raise ByoaiError("the provider answered with no choices")
@@ -118,7 +118,7 @@ async def chat_stream(target: Target, key: Optional[str], request: ChatRequest) 
 
 async def embed(target: Target, key: Optional[str], inputs: List[str]) -> EmbedResult:
     body = {"model": _shared.require_model(target), "input": inputs}
-    data = (await transport.request(target.connection, key, "POST", "/embeddings", json=body)).json()
+    data = (await transport.request_json(target.connection, key, "POST", "/embeddings", json=body))
     rows = sorted(data.get("data") or [], key=lambda r: r.get("index", 0))
     if len(rows) != len(inputs):
         raise ByoaiError("the provider returned the wrong number of vectors")
@@ -129,7 +129,7 @@ async def embed(target: Target, key: Optional[str], inputs: List[str]) -> EmbedR
 
 
 async def list_models(connection: Connection, key: Optional[str]) -> List[ModelInfo]:
-    data = (await transport.request(connection, key, "GET", "/models")).json()
+    data = (await transport.request_json(connection, key, "GET", "/models"))
     return [_shared.infer_model(str(e["id"]), e) for e in data.get("data") or [] if isinstance(e, dict) and e.get("id")]
 
 

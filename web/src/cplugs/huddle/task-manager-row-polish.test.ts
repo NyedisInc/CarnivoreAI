@@ -10,6 +10,7 @@ import HuddleThread from './HuddleThread.svelte';
 
 vi.mock('./huddle.svelte', () => ({ readPost: vi.fn(), reply: vi.fn() }));
 
+/** The declarations of the LAST rule whose selector is exactly `selector` in a component's style block. */
 function rule(file: string, selector: string): string {
   const source = readFileSync(new URL(file, import.meta.url), 'utf8');
   const css = (file.endsWith('.css') ? source : (source.split('<style>')[1] ?? '')).replace('@layer components {', '');
@@ -83,7 +84,7 @@ describe('an empty list', () => {
 });
 
 describe('the open item', () => {
-  test('threadTone: each Claude kind its own hue, other Claude the accent, the owner the quiet ink', () => {
+  test('threadTone: each Claude kind its own hue, other Claude the accent, Joe the quiet ink', () => {
     expect(threadTone({ author: 'claude', kind: 'question' })).toBe(KIND_COLORS.question.color);
     expect(threadTone({ author: 'claude', kind: 'info' })).toBe(KIND_COLORS.info.color);
     expect(threadTone({ author: 'claude', kind: 'attention' })).toBe(KIND_COLORS.look.color);
@@ -91,7 +92,7 @@ describe('the open item', () => {
     expect(threadTone({ author: 'joe', kind: 'reply' })).toBe('var(--oc-text-secondary)');
   });
 
-  test('the transcript wears the bubbles: a token per message, the owner on their own side with their own frame', async () => {
+  test('the transcript wears the bubbles: a token per message, Joe on his own side with his own frame', async () => {
     const item = { id: 1, list: 'all', text: 't', state: 'open', thread: [msg(1, 'claude', 'info', 'fyi'), msg(2, 'joe', 'reply', 'ok'), msg(3, 'claude', 'attention', 'look')] };
     const host = await draw(HuddleThread as never, { item, closed: true });
     const style = (id: number) => host.querySelector<HTMLElement>(`[data-task-manager-message="${id}"]`)!.style.getPropertyValue('--_post');

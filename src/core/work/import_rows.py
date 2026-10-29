@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Any, Dict, Mapping
+from typing import Any, Dict, Mapping, Optional
 
 from src.core.pack.migrate import task_manager_history, task_manager_names
 from src.core.work import tables
+from src.core.work.file_refs import FileHome
 
 _NOT_COPIED = frozenset({"id", "list_key", "created_seq", "seq", "attention_seq", "seen_seq", "joe_seq", "claude_read_seq", "info_seq",
                          "call_seq", "claude_working", "claude_working_by", "group_id", "forked_from", "card_parent", "card_report_id",
@@ -15,7 +16,7 @@ _AGENT_COLS = ("card_holder", "card_last_holder", "card_dealt_to", "card_paused_
 
 
 def import_rows(conn: sqlite3.Connection, list_key: str, data: Mapping[str, Any], agent_map: Mapping[int, int], *,
-                replace_existing: bool) -> Dict[str, Any]:
+                replace_existing: bool, files: Optional[FileHome] = None) -> Dict[str, Any]:
     undo: Dict[str, Any] = {"item_ids": [], "group_ids": [], "replaced_item_ids": [], "replaced_group_ids": [], "inbox_ids": [],
                             "item_map": {}, "group_map": {}, "message_map": {}}
     previous_factory = conn.row_factory
@@ -69,6 +70,9 @@ def import_rows(conn: sqlite3.Connection, list_key: str, data: Mapping[str, Any]
         for msg in data.get("messages", []):
             if msg["item_id"] not in item_map:
                 continue
+            msg = dict(msg)
+            if files is not None and msg.get("parts"):
+                msg["parts"], msg["text"] = files.rewrite_message(msg["parts"], msg.get("text") or "", msg["item_id"], item_map[msg["item_id"]])
             cols = [c for c in msg if c in have_msg and c not in ("id", "item_id", "seq")]
             cur = conn.execute(f"INSERT INTO work_messages (item_id, seq, {', '.join(cols)}) VALUES (?, ?, {', '.join('?' * len(cols))})",
                                (item_map[msg["item_id"]], next_seq(), *[msg[c] for c in cols]))

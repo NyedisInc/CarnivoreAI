@@ -86,6 +86,7 @@ function makeScroller(container: HTMLElement): (to: number) => void {
   };
 }
 
+/** A pointer event jsdom can carry: a MouseEvent wearing the two pointer members. */
 function pointerEvent(type: string, x: number, y: number): PointerEvent {
   const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 });
   Object.defineProperty(event, 'pointerId', { value: 1 });
@@ -148,6 +149,7 @@ describe('a cell drag captures rows from the surface it was started on', () => {
   });
 
   test('a drag on the HOME surface finds the home row, with the terminal mounted first', () => {
+    // too rather than
     const terminal = mountSurface(terminalLayout);
     const home = mountSurface(homeLayout);
     placeRows(terminal, TERMINAL_BAND, 'r1');

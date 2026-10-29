@@ -14,7 +14,6 @@ REASON_CONFIRMED_UNCHANGED: str = "geometry_confirmed_unchanged"
 
 REASON_CHANGED: str = "geometry_changed"
 
-# could not
 REASON_UNMEASURED: str = "geometry_unmeasured"
 
 REASON_NO_CLIENT_GEOMETRY: str = "no_client_geometry"
@@ -44,24 +43,6 @@ def decide_settle(
     measured: Optional[Tuple[int, int]],
     outcome: ResizeOutcome,
 ) -> SettleVerdict:
-    """Decide whether the attach handshake must pause before painting.
-
-    The ladder, in order. Only the last rung skips:
-
-    Args:
-        measured: (cols, rows) the PANE reported for itself before the
-            resize, or None when it could not be read.
-        outcome: what the resize attempt actually did.
-
-    Returns:
-        SettleVerdict: ``settle`` plus the reason it was decided.
-
-    Example:
-        >>> decide_settle((100, 40), ResizeOutcome((100, 40), False, False))
-        SettleVerdict(settle=False, reason='geometry_confirmed_unchanged')
-        >>> decide_settle(None, ResizeOutcome((100, 40), True, False))
-        SettleVerdict(settle=True, reason='geometry_unmeasured')
-    """
     if outcome.failed:
         return SettleVerdict(True, REASON_RESIZE_FAILED)
     if outcome.target is None:

@@ -1,4 +1,4 @@
-<!-- noopener noreferrer -->
+
 <script lang="ts">
     import type { Translate } from '../sessions/types';
     import type { CatalogCredit } from './catalog-plugins.svelte';

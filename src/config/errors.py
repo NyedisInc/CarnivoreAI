@@ -3,19 +3,6 @@ from pathlib import Path
 
 
 class StateDirUnavailableError(RuntimeError):
-    """Raised when the resolved state directory cannot be created.
-
-    Description: named, catchable failure for ``Settings.get_state_dir()``.
-      A server that cannot create its own state directory must refuse to
-      start with a clear message, never silently fall back to a temp
-      directory and never surface as an opaque unhandled traceback. See
-      ``src/main.py``'s module-level call to ``get_state_dir()`` for how
-      this is turned into a startup-failure message the user sees.
-    Inputs: path (Path) - the directory ``get_state_dir()`` tried to
-      create. cause (OSError) - the underlying filesystem error.
-    Output: exception instance whose message names both the path and the
-      original OS error.
-    """
 
     def __init__(self, path: Path, cause: OSError) -> None:
         self.path = path

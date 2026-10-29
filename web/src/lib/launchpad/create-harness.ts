@@ -3,6 +3,7 @@ import type { CreateHost, CreatePayload, CreatedSession, HostChoice, ProviderCho
 import type { ModalOpeners } from './modals';
 import type { ChoiceOptions, ClonedProject, EditResult, FolderChoice } from './modal-types';
 
+/** A real translator over the shipped en catalog. */
 export function enT(): (key: string, params?: Record<string, unknown> | null) => string {
     const i18n = createI18n({ locale: 'en' }) as {
         t(key: string, params?: Record<string, unknown> | null): string;

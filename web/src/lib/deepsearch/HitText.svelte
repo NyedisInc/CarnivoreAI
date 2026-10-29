@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { snippetParts } from '../conversation-snippet/snippet-parts';
 
   interface Props {

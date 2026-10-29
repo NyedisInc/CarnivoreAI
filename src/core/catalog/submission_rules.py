@@ -76,8 +76,6 @@ def frontmatter(text: str) -> Dict[str, str]:
 
 
 def refuse_name(name: str) -> Optional[Refusal]:
-    """Why this folder name could not be a skill name, or None.
-    """
     if not name or not SKILL_NAME_RE.match(name):
         return Refusal(
             SUBMISSION_INVALID,
@@ -92,18 +90,6 @@ def refuse_name(name: str) -> Optional[Refusal]:
 
 
 def refuse_member_path(path: str, seen: Dict[str, str]) -> Optional[Refusal]:
-    """Why this member path could not be submitted, or None.
-
-    Description: the path becomes a suffix of an S3 key upstream, so it
-      is held to a relative, ASCII, traversal-free shape. The duplicate
-      check FOLDS CASE, because a submission unpacked on a case
-      insensitive filesystem would silently lose one of two members that
-      differ only in case, and macOS is one.
-    Inputs: path (str) - a POSIX path relative to the folder root; seen
-      (dict) - the case folded paths already accepted, MUTATED in place.
-    Output: Refusal | None.
-    Example: refuse_member_path("SKILL.md", {})  # None
-    """
     if not path:
         return Refusal(SUBMISSION_INVALID, "every file needs a path")
     if len(path) > MAX_PATH_LENGTH:

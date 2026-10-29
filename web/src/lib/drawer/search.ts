@@ -54,6 +54,7 @@ export function displayName(row: Record<string, unknown>): string {
     return typeof display === 'string' ? display : '';
 }
 
+/* not a string */
 export function folderName(path: unknown): string {
     if (typeof path !== 'string') return '';
     const parts = path.split('/').filter((seg) => seg !== '');

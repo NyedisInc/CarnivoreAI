@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* it must have a warning */
   import { onMount } from 'svelte';
   import ModalShell from '../../../lib/launchpad/ModalShell.svelte';
   import { t } from '../../../lib/i18n/index.svelte';

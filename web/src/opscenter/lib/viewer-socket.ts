@@ -1,4 +1,3 @@
-/*  hidden  */
 
 export interface ViewerTerminal {
   resize(cols: number, rows: number): void;
@@ -45,9 +44,7 @@ export interface ViewerSocketOptions {
 }
 
 export interface InputTicket {
-  /* at the gesture */
   readonly session: string;
-  /* at the gesture */
   readonly connection: number;
 }
 
@@ -154,7 +151,6 @@ export function createViewerSocket(options: ViewerSocketOptions): ViewerSocket {
     }
   }
 
-  /*  hidden  */
   function flush(): void {
     disarm();
     if (destroyed || pending.length === 0) return;
@@ -185,7 +181,6 @@ export function createViewerSocket(options: ViewerSocketOptions): ViewerSocket {
       const dropped = deps.queue.shedFront(pending, needed);
       pendingBytes = 0;
       for (const chunk of pending) pendingBytes += chunk.length;
-      // could not
       const marker = encoder.encode(deps.queue.dropMarker(dropped));
       pending.push(marker);
       pendingBytes += marker.length;
@@ -205,7 +200,6 @@ export function createViewerSocket(options: ViewerSocketOptions): ViewerSocket {
     if (message.type === 'terminal_size') {
       const cols = typeof message.cols === 'number' ? message.cols : 0;
       const rows = typeof message.rows === 'number' ? message.rows : 0;
-      // could not
       if (cols > 0 && rows > 0) {
         options.term.resize(cols, rows);
         options.onGrid?.(cols, rows);
@@ -295,7 +289,7 @@ export function createViewerSocket(options: ViewerSocketOptions): ViewerSocket {
       return { session: options.sessionId, connection };
     },
 
-    /* something else */
+    /* there is nothing */
     send(data: string, ticket: InputTicket): boolean {
       if (!interactive || destroyed || !socketOpen) return false;
       const open = socket;

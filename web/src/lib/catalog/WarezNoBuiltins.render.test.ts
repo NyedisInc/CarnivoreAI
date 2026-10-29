@@ -16,11 +16,11 @@ import WarezScreen from './WarezScreen.svelte';
 const i18n = createI18n({ locale: 'en' }) as { t(key: string, params?: Record<string, unknown> | null): string };
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
-const SKILL: CatalogItem = { id: 'acme/deploy', name: 'deploy', publisher: 'acme', latest: '1.0', kind: 'skill', card: { title: 'Deploy Runner', brief: 'ships a build' } };
+const SKILL: CatalogItem = { id: 'alex/deploy', name: 'deploy', publisher: 'alex', latest: '1.0', kind: 'skill', card: { title: 'Deploy Runner', brief: 'ships a build' } };
 const row = (item_id: string, kind: string, source_index_url: string): InstalledItem =>
     ({ install_id: `i-${item_id}`, item_id, kind, name: item_id, version: '1.0.0', scope: 'global', source_index_url }) as InstalledItem;
 const LEDGER: InstalledItem[] = [
-    row('acme/deploy', 'skill', 'https://index.example/v1'),
+    row('alex/deploy', 'skill', 'https://index.example/v1'),
     row('nyedis/flow', 'cplug', 'builtin'),
     row('carnivore/huddle', 'skill', 'bundled'),
 ];
@@ -69,8 +69,8 @@ describe('the warez page lists store items only', () => {
     test('the ledger the page reads drops the rows the app wrote itself and keeps the store row', async () => {
         const data = createCatalogData(hostFor(), t);
         await data.refresh();
-        expect((data.ledger ?? []).map((r) => r.item_id)).toEqual(['acme/deploy']);
-        expect(Object.keys(data.installed)).toEqual(['acme/deploy']);
+        expect((data.ledger ?? []).map((r) => r.item_id)).toEqual(['alex/deploy']);
+        expect(Object.keys(data.installed)).toEqual(['alex/deploy']);
     });
 
     test('the page draws no built-in group and no built-in card, and the store card still renders', async () => {

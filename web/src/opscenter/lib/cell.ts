@@ -10,14 +10,12 @@ export interface CellProps {
   meta: CellMeta;
   instance: string;
   collapsed?: boolean;
-  /* could not */
   phone?: boolean;
   limit?: number | null;
   onToggleCollapse?: () => void;
   page?: LayoutPage;
   scope?: SessionScope | null;
   options?: PlacementOptions;
-  /* cannot be changed */
   onOption?: (option: string, value: boolean | number | string) => void;
 }
 

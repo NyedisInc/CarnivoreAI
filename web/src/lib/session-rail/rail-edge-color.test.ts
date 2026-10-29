@@ -6,6 +6,7 @@ const here = join(process.cwd(), 'src/lib/session-rail');
 const grip = readFileSync(join(here, 'RailResizeHandle.svelte'), 'utf8');
 const layer = readFileSync(join(here, 'rail-layer.css'), 'utf8');
 
+/** The declarations of the first rule whose selector is exactly `selector`. */
 function rule(css: string, selector: string): string {
   const start = css.indexOf(`${selector} {`);
   expect(start, selector).toBeGreaterThan(-1);

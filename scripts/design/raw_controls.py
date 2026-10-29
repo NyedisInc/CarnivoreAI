@@ -1,27 +1,3 @@
-"""Count hand-written controls outside the base layer (enforce the base, issue #2361).
-
-WHAT IS RAW. In every ``web/src/**/*.svelte`` except ``web/src/lib/base/`` and test files, an element that draws a control
-without opting into the base (``web/src/lib/base/elements.css``):
-  buttons  a ``<button``, ``<svelte:element this="button">`` or ``<input type="button|submit|reset">`` tag with no ``data-btn``
-           attribute and no ``{...buttonAttrs(`` spread on the same tag;
-  fields   an ``<input`` (text-like types only), ``<select`` or ``<textarea`` tag with no ``data-field`` attribute;
-  checkbox an ``<input type="checkbox">`` without the base pick marker (the ``oc-pick__input`` class, written by the base
-           ``Checkbox`` and ``Radio`` in web/src/lib/base, feat/base-controls f644cfd0e);
-  radio    an ``<input type="radio">`` without that marker.
-A range, color, file, hidden and image input has no base look yet, so it is not counted (the inventory lists those as kinds
-with no base equivalent). A tag is parsed to its closing ``>`` across lines, so ``{#if}`` blocks, ``=>`` arrows and
-quoted ``>`` inside attribute expressions do not end it early. ``<script>``, ``<style>`` and HTML comments are blanked first
-(newlines kept, so line numbers stay true). A ``<Button>`` component (the base one or bits-ui's) is not a raw tag and is never counted.
-
-EXEMPTIONS NAME THEIR REASON. A tag carrying ``data-base-exempt="<reason>"`` (a non-empty literal reason) is not counted; it is
-listed under ``exempt`` in the report so the list stays readable. An empty value does not exempt.
-
-WHY A BASELINE. ``tests/fixtures/design_raw_controls_baseline.json`` holds today's count per file and kind. A file may never
-go above its count and a file not listed must have none; a count that fell must be lowered with ``--write`` so the list cannot
-rot. Raising it needs ``Approved-by-other-operator`` (scripts/design/ratchet_guard.py).
-
-Usage: python3 -m scripts.design.raw_controls [--write] [--lines]   (exit 0 clean, 1 a count grew, 2 could not scan)
-"""
 from __future__ import annotations
 
 import json
@@ -46,7 +22,7 @@ _EXEMPT = re.compile(r"""\bdata-base-exempt\s*=\s*(?:"([^"]+)"|'([^']+)')""")
 
 
 class ScanError(Exception):
-    """The scan could not run (root missing, nothing to scan): exit 2, never a pass (gotcha 11)."""
+    pass
 
 
 def blank_nonmarkup(text: str) -> str:
@@ -179,10 +155,6 @@ def write_baseline(found: dict[str, dict[str, int]], path: Path = BASELINE) -> N
 
 
 def main(argv: list[str]) -> int:
-    """CLI: print totals and drift; ``--write`` rewrites the baseline; ``--lines`` also prints every raw line.
-
-    Inputs: argv. Output: exit status (0 clean, 1 a count grew or a new file appeared, 2 could not scan).
-    """
     try:
         raw, exempt = scan_detail(WEB_SRC, REPO)
         found = {rel: {k: len(v) for k, v in kinds.items()} for rel, kinds in raw.items()}

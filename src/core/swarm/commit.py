@@ -88,7 +88,6 @@ def _changed_files(repo: Path, paths: List[str]) -> Optional[List[Tuple[str, boo
 
 
 def _unscannable(path: Path) -> bool:
-    """True when ``path`` exists but cannot be scanned in full: unreadable, not a regular file, or oversize."""
     try:
         st = os.lstat(path)
     except FileNotFoundError:

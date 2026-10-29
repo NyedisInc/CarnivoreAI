@@ -7,6 +7,9 @@ import { metaFor } from '../../engine/meta';
 import type { SlotId } from '../../engine/types';
 import { sessions } from '../../api';
 
+// The cell's heavy collaborators. None of them is what this file measures, and
+// each one builds or holds something real: an xterm on a div, a socket, a
+// palette written onto a frame.
 vi.mock('./client', () => ({ startLiveTerminal: () => null }));
 vi.mock('./actions', () => ({ registerTerminalActions: () => () => {}, terminalAction: vi.fn(), toolShowing: () => false }));
 vi.mock('./theme', () => ({ bindTerminalTheme: () => () => {} }));

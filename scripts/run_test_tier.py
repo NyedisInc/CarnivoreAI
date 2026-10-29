@@ -1,48 +1,4 @@
 #!/usr/bin/env python3
-"""Run the test tier a change needs: smoke always, then client or full.
-
-    every changed path under client/, web/ or docs/   -> CLIENT tier
-    anything else, or no changed path at all           -> FULL suite
-
-The client tier is smoke, the python tests that name a touched file or scan
-the client/web/docs folders (minus the full_tier browser pixel tests), then
-vitest, then every tests/*.node.mjs script six at a time. The full tier is
-smoke, then scripts/run-tests.sh unchanged. A server or data change always
-runs everything, so the must-run security, data, tmux-identity and status
-coverage holds by construction, and the rule is two path prefixes that
-cannot go stale without anyone noticing.
-
-`python3 scripts/features.py check` (no --branch) rides alongside smoke on
-every run regardless of tier (issue #816): it is stdlib and cheap, and it
-catches a malformed features/ JSON file even on a diff that never touched
-features/.
-
-Changed paths are `git diff --name-only <trunk remote>/master...HEAD` plus
-staged, unstaged and untracked files, all read NUL-separated, so a path with
-a space (the repo itself lives under one) or a newline is one path.
-
-Usage::
-
-    python3 scripts/run_test_tier.py            # route by the diff and run
-    python3 scripts/run_test_tier.py --plan     # print the route, run nothing
-    python3 scripts/run_test_tier.py --smoke    # the smoke tier alone
-    python3 scripts/run_test_tier.py --gate     # the 1.0 gate: smoke, then tests/python/gate/, the clean room, the default state walk, the field installs (G4)
-
-Environment: CLOUDE_TEST_WORKERS (default 6), CLOUDE_TIER_BASE (default
-<trunk remote>/master, where the trunk remote is resolved BY URL -
-scripts/lib/trunk_remote.py, issue #717 - never a hardcoded name, since
-remote names are per clone; override the remote alone with
-CLOUDE_TRUNK_REMOTE, or the whole base with CLOUDE_TIER_BASE).
-
-Exit codes:
-    0  every stage that ran passed
-    1  a test failed
-    2  could not determine: a listed file is missing, a file or a selection
-       collected zero tests, the diff could not be read, or a tool is absent
-
-Exit 2 is NOT a pass. A check that looked at nothing has checked nothing
-(CLAUDE.md gotcha 11).
-"""
 
 from __future__ import annotations
 
@@ -93,7 +49,7 @@ NODE_TIMEOUT_S = 300
 
 
 class Refusal(Exception):
-    """The tier cannot be determined or run; always exit 2, never a pass."""
+    pass
 
 
 def read_list(path: Path) -> list[str]:
@@ -212,10 +168,6 @@ def run_pytest(label: str, files: list[str], workers: int, marker: str | None = 
 
 
 def run_gate_script(module: str) -> int:
-    """Run one ``scripts/gate`` module (clean room, default state) with the repo venv. Inputs: module (dotted). Output: PASS, FAIL or REFUSED.
-
-    Each exits 0 pass, 1 fail, 2 could not determine, the same codes this tool uses, so the code maps straight through.
-    """
     print(f"== {module}", flush=True)
     rc = subprocess.run([str(PYTHON), "-m", module], cwd=REPO).returncode
     return rc if rc in (PASS, FAIL) else REFUSED
@@ -275,7 +227,6 @@ def main(argv: list[str]) -> int:
         tier, paths = "gate", []
         print("run_test_tier: --gate -> smoke, then the 1.0 gate matrix (#1946)", flush=True)
     else:
-        # something else
         base = os.environ.get("CLOUDE_TIER_BASE")
         if not base:
             try:

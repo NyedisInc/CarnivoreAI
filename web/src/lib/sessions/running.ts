@@ -1,4 +1,4 @@
-/* could not */
+/* could not determine */
 import type {
     AttachableSession,
     ListingState,
@@ -11,6 +11,33 @@ import { emptyListing, noteListingUnknown } from './listing';
 function createdByUs(row: { created_by_us?: boolean | null; created_by_cloude?: boolean | null }): boolean {
     if (typeof row.created_by_us === 'boolean') return row.created_by_us;
     return !!row.created_by_cloude;
+}
+
+type LiveFields = Pick<
+    RunningSessionRow,
+    | 'startup_gate' | 'status_source' | 'activity_hint' | 'parked_summary' | 'usage_limit'
+    | 'host_key' | 'host_label' | 'host_state'
+    | 'agent_family' | 'agent_family_source' | 'agent_wrapper_label' | 'launched_with'
+    | 'session_row_id' | 'parent_session_id'
+>;
+
+function liveFields(live: SessionListItem): LiveFields {
+    return {
+        startup_gate: live.startup_gate,
+        status_source: live.status_source,
+        activity_hint: live.activity_hint !== undefined ? live.activity_hint : null,
+        parked_summary: live.parked_summary !== undefined ? live.parked_summary : null,
+        usage_limit: live.usage_limit ?? null,
+        host_key: live.host_key ?? null,
+        host_label: live.host_label ?? null,
+        host_state: live.host_state ?? null,
+        agent_family: live.agent_family !== undefined ? live.agent_family : null,
+        agent_family_source: live.agent_family_source !== undefined ? live.agent_family_source : null,
+        agent_wrapper_label: live.agent_wrapper_label !== undefined ? live.agent_wrapper_label : null,
+        launched_with: live.launched_with !== undefined ? live.launched_with : null,
+        session_row_id: live.session_row_id !== undefined ? live.session_row_id : null,
+        parent_session_id: live.parent_session_id !== undefined ? live.parent_session_id : null,
+    };
 }
 
 export function mergeLiveSession(rows: RunningSessionRow[], live: SessionListItem): boolean {
@@ -26,26 +53,8 @@ export function mergeLiveSession(rows: RunningSessionRow[], live: SessionListIte
         existing.status = liveStatus;
         existing.unread = liveUnread;
         existing.created_by_cloude = createdByUs(live);
-        existing.startup_gate = live.startup_gate;
-        existing.status_source = live.status_source;
-        existing.activity_hint =
-            live.activity_hint !== undefined ? live.activity_hint : null;
-        existing.parked_summary =
-            live.parked_summary !== undefined ? live.parked_summary : null;
-        existing.usage_limit = live.usage_limit ?? null;
-        existing.host_key = live.host_key ?? null;
-        existing.host_label = live.host_label ?? null;
-        existing.host_state = live.host_state ?? null;
-        existing.agent_family = live.agent_family !== undefined ? live.agent_family : null;
-        existing.agent_family_source = live.agent_family_source !== undefined
-            ? live.agent_family_source : null;
-        existing.agent_wrapper_label = live.agent_wrapper_label !== undefined
-            ? live.agent_wrapper_label : null;
-        existing.launched_with = live.launched_with !== undefined ? live.launched_with : null;
+        Object.assign(existing, liveFields(live));
         if (live.pinned_theme) existing.pinned_theme = live.pinned_theme;
-        existing.session_row_id = live.session_row_id !== undefined ? live.session_row_id : null;
-        existing.parent_session_id = live.parent_session_id !== undefined
-            ? live.parent_session_id : null;
         if (live.label !== undefined) existing.label = live.label;
         return true;
     }
@@ -59,24 +68,8 @@ export function mergeLiveSession(rows: RunningSessionRow[], live: SessionListIte
         status: liveStatus,
         unread: liveUnread,
         pinned_theme: live.pinned_theme || null,
-        agent_family: live.agent_family !== undefined ? live.agent_family : null,
-        agent_family_source: live.agent_family_source !== undefined
-            ? live.agent_family_source : null,
-        agent_wrapper_label: live.agent_wrapper_label !== undefined
-            ? live.agent_wrapper_label : null,
-        launched_with: live.launched_with !== undefined ? live.launched_with : null,
-        session_row_id: live.session_row_id !== undefined ? live.session_row_id : null,
-        parent_session_id: live.parent_session_id !== undefined ? live.parent_session_id : null,
         label: live.label !== undefined ? live.label : null,
-        // nothing at all
-        startup_gate: live.startup_gate,
-        status_source: live.status_source,
-        activity_hint: live.activity_hint !== undefined ? live.activity_hint : null,
-        parked_summary: live.parked_summary !== undefined ? live.parked_summary : null,
-        usage_limit: live.usage_limit ?? null,
-        host_key: live.host_key ?? null,
-        host_label: live.host_label ?? null,
-        host_state: live.host_state ?? null,
+        ...liveFields(live),
     });
     return true;
 }
@@ -91,7 +84,6 @@ export function mergeLiveSessions(
     return rows;
 }
 
-/* could not */
 export function filterDeadPanes(rows: RunningSessionRow[]): RunningSessionRow[] {
     return rows.filter((s) => !s || s.status !== 'dead');
 }
@@ -165,10 +157,12 @@ export async function loadRunningRows(deps: {
             const answeredLive = await live;
             if (!answeredLive.ok) throw answeredLive.error;
             liveSessions = answeredLive.value;
+            if (!Array.isArray(liveSessions)) {
+                noteListingUnknown(listing, 'live', 'malformed_response', deps.malformedDetail(deps.t));
+                liveSessions = [];
+            }
         }
-        // no live sessions
-        const listAnswered = live !== null && Array.isArray(liveSessions);
-        if (!listAnswered) {
+        if (!live) {
             const current = await deps.host.getCurrentSession();
             liveSessions = current ? [current] : [];
         }

@@ -1,4 +1,3 @@
-/*  hidden  */
 import type { DeepGroup, DeepHit } from './deepsearch-api';
 
 export type Layout = 'ledger' | 'best';
@@ -137,7 +136,6 @@ export function walk(groups: readonly DeepGroup[], expanded: Readonly<Record<str
   return groups.flatMap((group) => visibleHits(group, expanded[group.conversationId] === true).map((hit) => ({ index: index++, group, hit })));
 }
 
-/* conversation id */
 export function startIndexes(groups: readonly DeepGroup[], expanded: Readonly<Record<string, true>>): Record<string, number> {
   const out: Record<string, number> = {};
   let n = 0;
@@ -174,7 +172,6 @@ export function hitActions(state: ConvState, group: DeepGroup, hit: DeepHit): Ac
   return out;
 }
 
-/*  hidden  */
 export function splitActions(ids: readonly ActionId[]): { strip: ActionId[]; menu: ActionId[] } {
   const stripIds: readonly ActionId[] = ['read', 'go', 'resume', 'link'];
   return { strip: ids.filter((id) => stripIds.includes(id)), menu: ids.filter((id) => !stripIds.includes(id)) };

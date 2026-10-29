@@ -1,4 +1,3 @@
-/* something else */
 
 export type FeedKind = 'bubble' | 'work' | 'crosstalk' | 'spawn' | 'launch' | 'return' | 'huddle' | 'task';
 

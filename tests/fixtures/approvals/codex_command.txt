@@ -1,0 +1,29 @@
+
+  >_ OpenAI Codex (v0.159.2)
+     /tmp/work
+
+  Speak, friend, and enter a prompt.
+
+  Tip: Maximize usage with GPT-6.1 Sol. Try it on complex work for near-Astra performance at a lower cost.
+
+
+› RIG:run please
+
+
+• Running touch rigfile
+
+
+  Would you like to run the following command?
+
+  Environment: local
+
+  Reason: rig wants a file
+
+  $ touch rigfile
+
+
+› 1. Yes, proceed (y)
+  2. Yes, and don't ask again for commands that start with `touch rigfile` (p)
+  3. No, and tell Codex what to do differently (esc)
+
+  Press enter to confirm or esc to cancel

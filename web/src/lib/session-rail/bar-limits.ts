@@ -1,4 +1,3 @@
-/* the bottom bar */
 
 export const TERMINAL_MIN_COLUMNS = 60;
 
@@ -27,7 +26,6 @@ export function terminalCell(win: MetricsWindow = typeof window === 'undefined' 
   };
 }
 
-/* the bottom bar */
 export function maxBarPx(room: number, axis: 'x' | 'y', cell: { width: number; height: number } = terminalCell(), min: number = BAR_GRAB_MIN_PX): number {
   const floor = axis === 'x' ? TERMINAL_MIN_COLUMNS * cell.width : TERMINAL_MIN_ROWS * cell.height;
   return Math.max(min, Math.floor(room - floor));

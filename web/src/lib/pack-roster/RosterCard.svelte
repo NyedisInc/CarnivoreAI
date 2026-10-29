@@ -1,5 +1,6 @@
 
 <script lang="ts">
+  import Button from '../base/Button.svelte';
   import { t } from '../i18n/index.svelte';
   import Marks from './Marks.svelte';
   import Meters from './Meters.svelte';
@@ -31,7 +32,7 @@
 </script>
 
 {#snippet nameButton()}
-  <button type="button" class="catalog-card__open m1-name" aria-label={t('roster.card.open', { name: c.name })} onclick={(e) => { e.stopPropagation(); onOpen(c.id); }}>{c.name}</button>
+  <Button variant="quiet" aria-label={t('roster.card.open', { name: c.name })} data-name-open onclick={(e) => { e.stopPropagation(); onOpen(c.id); }}>{c.name}</Button>
 {/snippet}
 {#snippet icon()}<span class="oc-icon-tile" aria-hidden="true">{c.name.charAt(0).toUpperCase()}</span>{/snippet}
 

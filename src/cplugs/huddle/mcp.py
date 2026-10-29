@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from src.cplugs.huddle import actor_log, answers as answers_wire, artifacts, batch, inbox, inbox_filing, mcp_artifact, mcp_inbox, callers, changes_view, files, flags, focus, fork as forks, from_project, github_issue, groups, held, item_marker, item_owner, kinds, lane, lean_read, lifecycle, owner_read, own_list, progress, reply_paths, review, review_checks, rich_ask, rules, schedule, scheduled, service, steer, structured, perceived_ask, title as titles, triggers, your_items
-from src.cplugs.huddle import child_hold, mcp_wait, owner_guards, question_toasts, reply_return, review_lock, schedule_offer, state_request, waits
+from src.cplugs.huddle import child_hold, mcp_file_remove, mcp_wait, owner_guards, question_toasts, reply_return, review_lock, schedule_offer, state_request, waits
 from src.cplugs.huddle.roles import dnd_gate, mcp_lead, mcp_tags, mcp_roles, service as roles_service
 from src.cplugs.huddle.rules import CLAUDE, JOE, QUESTION, TaskManagerError, TaskManagerNotFound
 from src.cplugs.huddle.guide_rev import TASK_MANAGER_GUIDE_CHANGELOG, TASK_MANAGER_GUIDE_REV, guide_answer
@@ -29,7 +29,7 @@ _LIST_SCHEMA = {"type": "string", "description": "all, a project id from project
 _KIND_SCHEMA = {"type": "string", "enum": list(rules.KINDS) + [""],
                 "description": "question (needs the owner's call), done, waiting, or info. Empty string clears."}
 _ITEM_SCHEMA = {"type": "integer", "description": "An item id from task_manager_tasks_list or task_manager_changes (not its number)."}
-_NOTIFY_SCHEMA = {"notify": {"type": "boolean", "description": "reply, on an info only. true marks the item unread and badges their tab; it asks nothing. Default false."}}
+_NOTIFY_SCHEMA = {"notify": {"type": "boolean", "description": "reply, on an info only. true marks the item unread and badges his tab; it asks nothing. Default false."}}
 _ACTION_SCHEMA = {"type": "string", "enum": list(review.ACTIONS),
                   "description": "What the owner must do: tick (check and tick), push (tick to push), answer, read, none."}
 _REVIEW_SCHEMAS = {
@@ -72,8 +72,8 @@ TYPED_HINT = ("Typed question {id, type, prompt, required?, help?}: type yes_no 
               "single or multi (options [{id, label, recommended?, reason?}], other?: true adds a free-text box, multi: min?, max?; a single may carry command {text, lang?} or a string: a copyable command area above the options, which then draw as pills, e.g. a handoff command with pills ran it, failed, skip), "
               "rank (options, recommend {order: [every option id], reason}?), short_text or long_text (placeholder?, max_length?, recommend {text, reason}?). "
               "Name ids (i54, fold): the answer comes back keyed by them. Mark a recommendation with a reason whenever you have one. "
-              "A form is fully answered by the owner's submit; if the owner types in the item's chat instead, that reply answers the newest open form provisionally (the item goes to working) and arrives with answers_to and freeform true, no answers: read their words and ask anew if needed. "
-              "A submit arrives as their next message with answers_to (the question's message id) and answers {question id: {value | choice | choices | order | text, prompt, recommended?, note?, skipped?}}; its text is the same in words.")
+              "A form is fully answered by the owner's submit; if he types in the item's chat instead, that reply answers the newest open form provisionally (the item goes to working) and arrives with answers_to and freeform true, no answers: read his words and ask anew if needed. "
+              "A submit arrives as his next message with answers_to (the question's message id) and answers {question id: {value | choice | choices | order | text, prompt, recommended?, note?, skipped?}}; its text is the same in words.")
 _TYPED_QUESTION = {
     "type": "object", "required": ["type", "prompt"],
     "properties": {
@@ -99,7 +99,7 @@ _ASK_SCHEMA = {
     "questions": {"type": "array", "minItems": 1, "maxItems": structured.MAX_QUESTIONS,
                   "items": {"anyOf": [{"type": "string", "maxLength": structured.MAX_QUESTION}, _TYPED_QUESTION]},
                   "description": "Short, precise questions. PREFER TYPED ONES (objects): the owner gets a form and answers each by its id. "
-                                 "A plain string is a numbered question the owner answers by reply. Replaces text. " + TYPED_HINT},
+                                 "A plain string is a numbered question he answers by reply. Replaces text. " + TYPED_HINT},
 }
 _REPEAT_SCHEMA = {
     "repeat": {"type": ["object", "string"], "description": (
@@ -113,9 +113,9 @@ _BORN_SCHEMA = {"state": {"type": "string", "enum": ["open", "todo"],
 _CLAUDE_STATE_ENUM = [rules.OPEN, "working", *(s for s in rules.CLAUDE_STATES if s != rules.OPEN)]
 _LEAN_SCHEMA = {"lean": {"type": "boolean", "description": "Default true: {item_id, ok, state, revision}. false: the full item with its thread."}}
 SCHEDULE_OFFER_HINT = ("Optional. Propose a follow-up the owner accepts with one click (a clock button on this message): {when: ISO 8601 with a UTC offset, in the future, "
-                       "e.g. 2026-10-20T09:00:00-04:00; title: a few words}. When the owner accepts, their reply on the thread tells you to file it: call task_manager_add with fire_at=<when> and that title, then reply with the date. Offer only a follow-up you would otherwise ask the owner to schedule.")
-FILES_HINT = ("A thread message the owner attached files to (pasted or dropped on their reply) carries files: [{name, mime, size, path}]; "
-              "each path is ABSOLUTE and local, so Read it (an image or a document) to see what the owner sent.")
+                       "e.g. 2026-10-20T09:00:00-04:00; title: a few words}. When he accepts, his reply on the thread tells you to file it: call task_manager_add with fire_at=<when> and that title, then reply with the date. Offer only a follow-up you would otherwise ask him to schedule.")
+FILES_HINT = ("A thread message the owner attached files to (pasted or dropped on his reply) carries files: [{name, mime, size, path}]; "
+              "each path is ABSOLUTE and local, so Read it (an image or a document) to see what he sent.")
 _THREAD_SCHEMA = {"detail": {"type": "boolean", "description": "true also sends each changed item's whole thread. Default false: the new messages already come in messages."}}
 _LIST_READ_SCHEMA = {
     "fields": {"type": ["array", "string"], "items": {"type": "string", "enum": sorted(lean_read.EXTRA_FIELDS) + [lean_read.FULL]},
@@ -175,7 +175,7 @@ async def _swarm_reader(ctx: CplugContext, caller: AgentCaller) -> bool:
 
 
 _QUOTE_SCHEMA = {"type": "integer", "description": "ONLY with kind answer: the id of the owner's message on this item that you are answering; the server snapshots its text and shows it quoted above your answer."}
-_QUOTE_TEXT_SCHEMA = {"type": "string", "maxLength": 1000, "description": "ONLY with kind answer, instead of quote: the owner's question in their words, when the owner asked it outside the huddle."}
+_QUOTE_TEXT_SCHEMA = {"type": "string", "maxLength": 1000, "description": "ONLY with kind answer, instead of quote: the owner's question in his words, when he asked it outside the huddle."}
 
 
 def _item_id(args: dict) -> int:
@@ -222,15 +222,10 @@ async def _caller_key(ctx: CplugContext, caller: AgentCaller) -> Optional[str]:
 
 
 async def _touched(ctx: CplugContext, caller: AgentCaller, list_key: Optional[str]) -> None:
-    """Record this pane as the list's latest huddle caller, the "tell claude" default (``callers.py``).
-
-    Never for an external token (no session to tell). ``list_key`` None (a read of every list) records the shared list.
-    """
     await _remember_lists(ctx, caller, [list_key], None)
 
 
 async def _remember(ctx: CplugContext, caller: AgentCaller, list_key: Optional[str], cursor: int) -> None:
-    """Record the cursor this pane read at, so "tell claude" can name it, and the pane as a caller. Never for an external token."""
     await _remember_lists(ctx, caller, [list_key], cursor)
 
 
@@ -247,10 +242,6 @@ async def _remember_lists(ctx: CplugContext, caller: AgentCaller, list_keys: lis
 
 
 async def _owned_lists(ctx: CplugContext, caller: AgentCaller, list_keys: set) -> set:
-    """
-    Inputs: ctx; caller; list_keys (the lists the read returned items of). Output: the subset it owns; empty for an
-    external token or an unbound caller (no session, so the read is foreign).
-    """
     if caller.external or not caller.current_session_id or not list_keys:
         return set()
     infos = await ctx.sessions.list()
@@ -658,7 +649,7 @@ async def _reply(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
     if (quote is not None or quote_text) and kind != kinds.ANSWER:
         raise ToolError("quote and quote_text go only on an answer: use kind answer")
     if kind == kinds.ANSWER and (quote is None) == (not quote_text):
-        raise ToolError("an answer quotes the question it answers: pass quote (the id of the owner's message on this item) or quote_text (their words, when the owner asked outside the huddle)")
+        raise ToolError("an answer quotes the question it answers: pass quote (the id of the owner's message on this item) or quote_text (his words, when he asked outside the huddle)")
     flagging = _check_marker(args)
     refusal = steer.check_reply(kind, args)
     if refusal:
@@ -699,8 +690,8 @@ async def huddle_mark_answered(ctx: CplugContext, caller: AgentCaller, args: dic
 
 
 async def _delete(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
-    raise ToolError(f"only the owner deletes, and a delete is for good (thread, history and files). To ask the owner, call {rules.STATE_REQUEST_TOOL} "
-                    "with action delete, the item and your reason; the owner approves each request in the approvals inbox")
+    raise ToolError(f"only the owner deletes, and a delete is for good (thread, history and files). To ask him, call {rules.STATE_REQUEST_TOOL} "
+                    "with action delete, the item and your reason; he approves each request in the approvals inbox")
 
 
 async def huddle_batch(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
@@ -846,15 +837,15 @@ TOOLS: dict = {
         ["list", "text"], huddle_add, "agent",
     ),
     "task_manager_update": ToolSpec(
-        "Change an item: your own item's text or kind, any item's title, or its state. Set working when you start, waiting when blocked (needs waiting_on and wait_kind), review when finished (with a review_* block), open to take it back. Only the owner approves. Set todo only on their explicit ask to park it; todo items are not worked unless the owner asks. Only a question or a review reaches the owner.",
+        "Change an item: your own item's text or kind, any item's title, or its state. Set working when you start, waiting when blocked (needs waiting_on and wait_kind), review when finished (with a review_* block), open to take it back. Only the owner approves. Set todo only on his explicit ask to park it; todo items are not worked unless the owner asks. Only a question or a review reaches the owner.",
         {"item": _ITEM_SCHEMA, "text": {"type": "string", "description": "Plain text (no markdown); formatted detail goes in a task_manager_reply."},
          "state": {"type": "string", "enum": _CLAUDE_STATE_ENUM},
          "kind": _KIND_SCHEMA, **_TITLE_SCHEMA, **_PERCEIVED_ASK_SCHEMA, **_MARKER_SCHEMA, **_GITHUB_ISSUE_SCHEMA, **_REVIEW_SCHEMAS, **_REVIEW_CHECKS_SCHEMA, **_FIRE_AT_SCHEMA, **_REPEAT_SCHEMA, **_PAUSE_SCHEMA, **_FIRE_NOW_SCHEMA, **mcp_tags.SCHEMA, **mcp_wait.SCHEMA,
          "expected_revision": {"type": "integer"}, **_LEAN_SCHEMA, **own_list.SCHEMA, **dnd_gate.SCHEMA}, ["item"], huddle_update, "agent",
     ),
     "task_manager_state_request": ToolSpec(
-        "Ask the owner to REOPEN an approved item (to open, or waiting via to_state), CLOSE an open one (their approve is the tick), "
-        "UNDO_COMPLETION of a closure or DELETE one for good. task_manager_update cannot touch an approved item. Nothing changes until the owner approves in the "
+        "Ask the owner to REOPEN an approved item (to open, or waiting via to_state), CLOSE an open one (his approve is the tick), "
+        "UNDO_COMPLETION of a closure or DELETE one for good. task_manager_update cannot touch an approved item. Nothing changes until he approves in the "
         "approvals inbox; asking again updates it. Answers pending: read the outcome with approval_wait.",
         {"item": _ITEM_SCHEMA, "action": {"type": "string", "enum": list(state_request.ACTIONS)},
          "reason": {"type": "string", "maxLength": state_request.MAX_REASON, "description": "Why, in plain words; the owner reads it on the card."},
@@ -886,7 +877,7 @@ TOOLS: dict = {
          "remove": {"type": "boolean"}, **own_list.SCHEMA}, ["group"], huddle_group_update, "agent",
     ),
     "task_manager_ask": ToolSpec(
-        "Ask the owner a question on an item ONLY when you are blocked on their answer: the item becomes question and the owner is notified. Put background in context and typed questions (yes_no, single, multi, rank, short_text, long_text) in questions; their form answer returns keyed by your ids. Not blocked? Use task_manager_reply. Only a question or a review reaches the owner.",
+        "Ask the owner a question on an item ONLY when you are blocked on his answer: the item becomes question and he is notified. Put background in context and typed questions (yes_no, single, multi, rank, short_text, long_text) in questions; his form answer returns keyed by your ids. Not blocked? Use task_manager_reply. Only a question or a review reaches the owner.",
         {"item": _ITEM_SCHEMA, "text": {"type": "string", "maxLength": rules.MAX_MESSAGE, "description": "A plain question (kept for compatibility). Prefer context plus questions."},
          **_ASK_SCHEMA, **_LEAN_SCHEMA, **own_list.SCHEMA}, ["item"], huddle_ask, "agent",
     ),
@@ -895,7 +886,7 @@ TOOLS: dict = {
         {"item": _ITEM_SCHEMA, **_LEAN_SCHEMA, **own_list.SCHEMA}, ["item"], huddle_mark_answered, "agent",
     ),
     "huddle_focus": ToolSpec(
-        "DEPRECATED: mark tasks with the marker argument of task_manager_update instead. Still highlights rows and opens one in the owner's views, and marks each row unread for the owner. clear true removes the highlight.",
+        "DEPRECATED: mark tasks with the marker argument of task_manager_update instead. Still highlights rows and opens one in the owner's views, and marks each row unread for him. clear true removes the highlight.",
         {"list": _LIST_SCHEMA, "items": {"type": "array", "items": _ITEM_SCHEMA, "maxItems": focus.MAX_FOCUS_ITEMS},
          "open": {"type": ["integer", "null"], "description": "The item id to open (it is highlighted too); null opens nothing."},
          "clear": {"type": "boolean", "description": "true drops the current highlight; the other arguments are then ignored."},
@@ -933,7 +924,7 @@ TOOLS: dict = {
         {"list": _LIST_SCHEMA}, [], huddle_inbox_list, "read",
     ),
     "task_manager_entry_import": ToolSpec(
-        "File an add-box entry (the 'huddle inbox:' line names its id) as one or more items: split several requests, title each, group it, and obey a leading backlog or their plain ask to park it (state todo; else born open), now (working, you start it) or ask (question). Each item {title, text, group?, state?, ask?, perceived_ask?}; the raw text stays on every item. Read the guide's filing section first.",
+        "File an add-box entry (the 'huddle inbox:' line names its id) as one or more items: split several requests, title each, group it, and obey a leading backlog or his plain ask to park it (state todo; else born open), now (working, you start it) or ask (question). Each item {title, text, group?, state?, ask?, perceived_ask?}; the raw text stays on every item. Read the guide's filing section first.",
         {"inbox_id": {"type": "integer", "minimum": 1, "description": "The entry id from the 'huddle inbox:' line or task_manager_entries_list."},
          "items": {"type": "array", "minItems": 1, "maxItems": inbox.MAX_FILED_ITEMS, "items": {
              "type": "object", "required": ["title", "text"],
@@ -962,14 +953,14 @@ TOOLS: dict = {
         ["list_id", "ops"], huddle_batch, "agent",
     ),
     "task_manager_reply": ToolSpec(
-        "Reply on an item's thread. info = fyi: it keeps the task in needs you (a read) until the owner reads it or the status changes; notify true also badges. answer = reply to HIS question (needs quote or quote_text). No looks: use task_manager_ask. His files[].path is ABSOLUTE. Data: pipe table or ```kv. Only a question or a review reaches the owner. offer_schedule {when,title}: one-click follow-up.",
+        "Reply on an item's thread. info = fyi: it keeps the task in needs you (a read) until he reads it or the status changes; notify true also badges. answer = reply to HIS question (needs quote or quote_text). No looks: use task_manager_ask. His files[].path is ABSOLUTE. Data: pipe table or ```kv. Only a question or a review reaches the owner. offer_schedule {when,title}: one-click follow-up.",
         {"item": _ITEM_SCHEMA, "text": {"type": "string", "maxLength": rules.MAX_MESSAGE, "description": FORMAT_HINT},
          "kind": {"type": "string", "enum": list(kinds.REPLY_KINDS),
-                  "description": "info (fyi, not unread unless notify), answer (replying to a question requested; needs quote or quote_text) or attention (RETIRED: read as an info with notify true). Omitted: info."},
+                  "description": "info (fyi, not unread unless notify), answer (replying to a question the owner asked; needs quote or quote_text) or attention (RETIRED: read as an info with notify true). Omitted: info."},
          **_NOTIFY_SCHEMA,
          "quote": _QUOTE_SCHEMA, "quote_text": _QUOTE_TEXT_SCHEMA,
          "action": {**_ACTION_SCHEMA, "description": "RETIRED (the look). answer, tick and push are refused (use task_manager_ask, or task_manager_update with review_action); read and none are read as notify true."},
-         "changes": {"type": "boolean", "description": "Legacy, no effect: the owner's reply on a review or done item already moved it to open. Answer a question with this reply, then return the item with task_manager_update state review (or done, for a task the owner had ticked); for changes, work them."},
+         "changes": {"type": "boolean", "description": "Legacy, no effect (R92): the owner's reply on a review or done item already moved it to open. Answer a question with this reply, then return the item with task_manager_update state review (or done, for a task he had ticked); for changes, work them."},
          "offer_schedule": {"type": "object", "properties": {"when": {"type": "string"}, "title": {"type": "string", "maxLength": schedule_offer.MAX_TITLE}},
                             "required": ["when", "title"], "additionalProperties": False, "description": SCHEDULE_OFFER_HINT},
          **reply_paths.SCHEMA, **steer.NOT_A_QUESTION_SCHEMA, **_MARKER_SCHEMA, **_LEAN_SCHEMA, **own_list.SCHEMA, **dnd_gate.SCHEMA},
@@ -978,6 +969,6 @@ TOOLS: dict = {
 }
 
 
-TOOLS.update(mcp_lead.TOOLS)
+TOOLS.update({**mcp_lead.TOOLS, **mcp_file_remove.TOOLS})
 
 TOOLS = {name: dataclasses.replace(spec, handler=your_items.with_your_items(spec.handler, _caller_key)) for name, spec in TOOLS.items()}

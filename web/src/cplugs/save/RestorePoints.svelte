@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { stampLabel, type Translate } from '../sdk';
-    import { Icon, buttonAttrs } from '../sdk/ui';
+    import { Button, Icon, buttonAttrs } from '../sdk/ui';
     import { gigabytes, megabytes } from './bytes';
     import type { RestorePoint } from './points-api';
 
@@ -49,8 +49,7 @@
                     <td>{stampLabel(point.takenAt)}</td>
                     <td>
                         <span class="rpt-why">
-                            <span class="rpt-why__k" class:rpt-why__k--fs={point.failsafe}>{t(reasonKey(point.reason))}</span>
-                            {#if point.failsafe}<span class="ph-tag ph-tag--dash">{t('cplug.save.tab.failsafe')}</span>{/if}
+                            <span class="rpt-why__k">{t(reasonKey(point.reason))}</span>
                             {#if point.pinned}<span class="ph-tag rpt-tag">{t('cplug.save.tab.pinned')}</span>{/if}
                             {#if point.imported}<span class="ph-tag rpt-tag" data-imported title={t('cplug.save.tab.imported_title')}>{t('cplug.save.tab.imported')}</span>{/if}
                             {#each point.labels ?? [] as label (label)}<span class="ph-tag ph-tag--dash" data-label>{label}</span>{/each}
@@ -75,8 +74,8 @@
                         >
                     </td>
                     <td class="rpt-table__acts">
-                        <button type="button" class="oc-btn oc-btn--sm rpt-action" data-restore="exact" disabled={busy.has(point.id)} onclick={() => onRestore(point.id)}
-                            ><Icon name="reset" size={10} />{t('cplug.save.tab.resume_exact')}</button
+                        <Button size="sm" data-rpt-action data-restore="exact" disabled={busy.has(point.id)} onclick={() => onRestore(point.id)}
+                            ><Icon name="reset" size={10} />{t('cplug.save.tab.resume_exact')}</Button
                         >
                     </td>
                 </tr>
@@ -107,7 +106,7 @@
             background: var(--oc-cyan);
         }
 
-        .rpt-action {
+        .rpt-frame :global([data-rpt-action]) {
             --_bd: color-mix(in srgb, var(--oc-cyan) 65%, transparent);
             border-style: dashed;
             border-color: var(--_bd);
@@ -200,10 +199,6 @@
             letter-spacing: var(--oc-tracking-label, 0.6px);
             text-transform: uppercase;
             color: var(--oc-cyan);
-        }
-
-        .rpt-why__k--fs {
-            color: var(--oc-text-muted);
         }
 
         @container ph (max-width: 760px) {

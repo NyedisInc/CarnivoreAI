@@ -61,6 +61,7 @@ describe('signed in', () => {
         page({ readNews: async () => true, setNews: async (n) => n });
         await settle();
         expect(document.querySelector('[data-account-pick-handle]')).not.toBeNull();
+        // there is nothing
         expect(document.querySelector('#catalog-account-handle-change')).toBeNull();
     });
 
@@ -74,7 +75,7 @@ describe('signed in', () => {
 
     it('draws the same avatar as the drawer chip for the same account, handle or not (#1200)', async () => {
         for (const handle of ['', 'ada-lovelace']) {
-            const facts = { signedIn: true, handle, login: 'acme@example.net', email: 'acme@example.net', provider: 'email' };
+            const facts = { signedIn: true, handle, login: 'alex@evergreenai.com', email: 'alex@evergreenai.com', provider: 'email' };
             catalogAccount.facts = facts;
             accountChip.identity = accountIdentity(facts);
             page({ readNews: async () => true, setNews: async (n) => n });
@@ -103,5 +104,39 @@ describe('signed out', () => {
         expect(document.querySelector('[data-account-news]')).toBeNull();
         (document.querySelector('[data-account-signin]') as HTMLElement).click();
         expect(openSignInModal).toHaveBeenCalledWith(expect.objectContaining({ src: 'account_page' }));
+    });
+});
+
+describe('review fixes (u132-02, u132-04)', () => {
+    it('reads the news flag when the account turns signed in on this very page (u132-02)', async () => {
+        catalogAccount.facts = null;
+        const readNews = vi.fn(async () => true);
+        page({ readNews, setNews: async (n) => n });
+        await settle();
+        expect(readNews).not.toHaveBeenCalled();
+        catalogAccount.facts = { signedIn: true, handle: 'ada', login: 'a@b.c', email: 'a@b.c', provider: 'email' };
+        await settle();
+        expect(readNews).toHaveBeenCalledTimes(1);
+        expect(document.querySelector<HTMLButtonElement>('[data-account-news]')!.getAttribute('aria-checked')).toBe('true');
+    });
+
+    it('a failed sign out is said in words and logged, never an unhandled rejection (u132-04)', async () => {
+        catalogAccount.facts = { signedIn: true, handle: 'ada', login: 'a@b.c', email: 'a@b.c', provider: 'email' };
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const host = {
+            getCatalogAccountSessions: async () => ({ sessions: [] }),
+            signOutOfCatalog: async () => { throw new Error('offline'); },
+            exportCatalogAccount: async () => ({}),
+        } as unknown as CatalogHost;
+        const target = document.createElement('div');
+        document.body.appendChild(target);
+        panel = mount(AccountPage, { target, props: { host, account: { readNews: async () => true, setNews: async (n: boolean) => n }, t, embedded: true } as never }) as never;
+        flushSync();
+        await settle();
+        document.querySelector<HTMLButtonElement>('[data-account-signout]')!.click();
+        await settle();
+        expect(document.body.textContent).toContain('could not sign out');
+        expect(warn).toHaveBeenCalled();
+        warn.mockRestore();
     });
 });

@@ -16,14 +16,14 @@ from src.cplugs.reviewboard import document, payloads, round_text
 from src.cplugs.reviewboard.requests import SaveBody
 from src.cplugs.reviewboard.schema import MAX_PAYLOAD_BYTES, MAX_SAVES
 from tests.python.cplugs.reviewboard.boards import SIDECAR, sidecar as base_sidecar
-from tests.python.cplugs.reviewboard.harness import BASE, Env, huddle_on, huddle_store, make_env
+from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.test_publish import create_body
 
 
 @pytest.fixture
 def world(tmp_path: Path, monkeypatch):
     env = make_env(tmp_path)
-    ctx = huddle_on(env, monkeypatch)
+    ctx = task_manager_on(env, monkeypatch)
     env.app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
     with TestClient(env.app) as client:
         yield env, client, ctx
@@ -33,7 +33,7 @@ def world(tmp_path: Path, monkeypatch):
 @pytest.fixture
 def board(world):
     env, client, _ctx = world
-    item = huddle_store(env).add("all", "pick the menu", actor="claude", title="Menu picker")["id"]
+    item = task_manager_store(env).add("all", "pick the menu", actor="claude", title="Menu picker")["id"]
     r = client.post(f"{BASE}/boards", json=create_body(item, prompts=[], anchors=[], payload_mode=True))
     assert r.status_code == 200, r.text
     return r.json()["slug"], item
@@ -194,7 +194,7 @@ def test_a_send_is_a_save_and_a_round_with_a_diff_in_one_write(world, board) -> 
     doc = sidecar_of(env, slug)
     assert [s["n"] for s in doc["revisions"][0]["saves"]] == [1, 2] and doc["revisions"][0]["saves"][0]["note"] == "look at my changes and direct me"
     assert [r["id"] for r in doc["rounds"]] == ["n1", "n2"]
-    texts = [m["text"] for m in huddle_store(env).item(item)["thread"] if m.get("board_round")]
+    texts = [m["text"] for m in task_manager_store(env).item(item)["thread"] if m.get("board_round")]
     assert texts[1].startswith(f"review the payload: round n2 on board {slug} (r1, save 2")
     assert "note: look at my changes and direct me" in texts[0] and texts[0].startswith(f"review the payload: round n1 on board {slug}")
     for text in texts:
@@ -207,13 +207,13 @@ def test_a_send_goes_through_the_same_delivery_as_any_round(world, board) -> Non
     rid = str(uuid.uuid4())
     out = send(client, slug, {"a": 1}, client_round_id=rid).json()
     assert out["delivery"]["state"] == "posted" and out["duplicate"] is False
-    message = [m for m in huddle_store(env).item(item)["thread"] if m.get("board_round")][-1]
+    message = [m for m in task_manager_store(env).item(item)["thread"] if m.get("board_round")][-1]
     assert message["author"] == "joe" and message["board_round"] == {"slug": slug, "round": "n1", "revision": "r1"}
     again = send(client, slug, {"a": 1, "b": 2}, client_round_id=rid).json()
     assert again["duplicate"] is True and again["round"]["payload"] == {"a": 1}
     doc = sidecar_of(env, slug)
     assert len(doc["rounds"]) == 1 and len(doc["revisions"][0]["saves"]) == 1
-    assert len([m for m in huddle_store(env).item(item)["thread"] if m.get("board_round")]) == 1
+    assert len([m for m in task_manager_store(env).item(item)["thread"] if m.get("board_round")]) == 1
 
 
 def test_a_payload_send_is_refused_where_it_does_not_belong(world, board) -> None:
@@ -271,7 +271,7 @@ def test_the_agent_publishes_a_payload_revision_through_the_revise_tool(world, b
     assert sidecar_of(env, slug)["revisions"][1]["payload_mode"] is True
 
 
-def test_round_text_for_a_payload_round_stays_under_the_huddle_limit() -> None:
+def test_round_text_for_a_payload_round_stays_under_the_task_manager_limit() -> None:
     raw = base_sidecar()
     raw["revisions"][0]["payload_mode"] = True
     raw["revisions"][0]["saves"] = [{"n": 1, "at": "2026-10-13T15:00:00Z", "payload": {"a": 1}}]
@@ -300,7 +300,7 @@ def test_the_draft_overwrites_in_place_and_is_never_a_numbered_save(world, board
     row = sidecar_of(env, slug)["revisions"][0]
     assert row["draft"]["payload"] == {"milk": True} and "saves" not in row
     assert sidecar_of(env, slug)["rounds"] == []
-    assert [m for m in huddle_store(env).item(item)["thread"] if m.get("board_round")] == []
+    assert [m for m in task_manager_store(env).item(item)["thread"] if m.get("board_round")] == []
     assert save(client, slug, {"milk": True}).json()["save"]["n"] == 1
 
 

@@ -5,6 +5,9 @@
   import './pack-work.css';
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
+  import Button from '../base/Button.svelte';
+  import Select from '../base/Select.svelte';
+  import type { SelectChoice } from '../base';
   import PackSettingsBlock from './PackSettingsBlock.svelte';
   import PackReserveRow from './PackReserveRow.svelte';
   import PackMarks from './PackMarks.svelte';
@@ -24,6 +27,16 @@
   const online = $derived((view?.machines ?? []).filter((m) => m.state === 'connected' || m.state === 'self').length);
   const peers = $derived((view?.machines ?? []).filter((m) => !m.is_self && m.paired));
   let targetId = $state('');
+  const moveChoices = $derived<SelectChoice[]>([
+    { value: '', label: t('pack.migrate.panel_pick') },
+    ...([['pack.migrate.group.active', groups.active], ['pack.migrate.group.others', groups.others]] as const)
+      .filter(([, options]) => options.length > 0)
+      .map(([label, options]) => ({ group: t(label), options: options.map((o) => ({ value: o.key, label: `${t(`pack.migrate.kind.${o.kind}`)}: ${o.name}` })) })),
+  ]);
+  const targetChoices = $derived<SelectChoice[]>([
+    { value: '', label: t('pack.work.move_target') },
+    ...peers.map((m) => ({ value: m.install_id, label: m.label || m.install_id.slice(0, 8), disabled: refuses(m) })),
+  ]);
 
   const refuses = (m: PackMachine): boolean => m.state !== 'connected' || m.snapshot?.restrictions.may_receive_projects !== true;
 
@@ -76,23 +89,11 @@
       <div class="pm-settings" data-pm="migrate">
         <h3 class="pl-label">{t('pack.migrate.panel_title')}</h3>
         <div class="pw-move">
-          <select class="pk-field pk-select" bind:value={moveKey} aria-label={t('pack.migrate.panel_pick')} data-pm="migrate-pick">
-            <option value="">{t('pack.migrate.panel_pick')}</option>
-            {#each [['pack.migrate.group.active', groups.active], ['pack.migrate.group.others', groups.others]] as const as [label, options] (label)}
-              {#if options.length}
-                <optgroup label={t(label)}>
-                  {#each options as option (option.key)}<option value={option.key}>{t(`pack.migrate.kind.${option.kind}`)}: {option.name}</option>{/each}
-                </optgroup>
-              {/if}
-            {/each}
-          </select>
+          <Select bind:value={moveKey} options={moveChoices} aria-label={t('pack.migrate.panel_pick')} data-pm="migrate-pick" />
           <span class="pw-arrow" aria-hidden="true">&gt;</span>
-          <select class="pk-field pk-select" bind:value={targetId} aria-label={t('pack.work.move_target')} data-pm="migrate-target">
-            <option value="">{t('pack.work.move_target')}</option>
-            {#each peers as machine (machine.install_id)}<option value={machine.install_id} disabled={refuses(machine)}>{machine.label || machine.install_id.slice(0, 8)}</option>{/each}
-          </select>
+          <Select bind:value={targetId} options={targetChoices} aria-label={t('pack.work.move_target')} data-pm="migrate-target" />
           {#if !migrate.target}
-            <button type="button" class="modal-btn modal-btn-confirm pk-act" disabled={!moveKey || !targetId} data-pm="migrate-go" onclick={startMove}>{t('pack.migrate.panel_go')}</button>
+            <Button variant="confirm" disabled={!moveKey || !targetId} data-pm="migrate-go" onclick={startMove}>{t('pack.migrate.panel_go')}</Button>
           {/if}
         </div>
         <MigrateWizard />

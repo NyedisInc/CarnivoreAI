@@ -14,6 +14,7 @@ function blueprint(uuid: string, name: string): Blueprint {
   };
 }
 
+/** One listing row, every signal on the WRAPPER, where the server puts it. */
 function row(id: string, label: string, family: string | null, project: [number, string] | null): SessionInfo {
   return {
     session: { id, working_dir: '/work/' + id },

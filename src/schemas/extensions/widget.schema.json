@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://carnivore.ai/schemas/extensions/widget.schema.json",
   "title": "Widget, layer 1",
-  "description": "send the weekly digest to the team",
+  "description": "A widget: what it is called, where it can be drawn, the sizes it calls out, the data it reads, the fixtures that prove it, and whether it is declarative. A widget that is not builtin is declarative: no script in the browser, the CSP untouched (Alex, #126). Code-running third-party widgets are out of 1.0. The first-party shape is WidgetManifest in web/src/opscenter/widgets/types.ts. See docs/extension-contract.md section 9. A catalog widget's id is <publisher>/<name>; the runtime id <install>.<name> is derived (L1-3).",
   "allOf": [
     {
       "$ref": "item.schema.json"

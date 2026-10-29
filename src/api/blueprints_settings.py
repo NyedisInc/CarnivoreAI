@@ -1,17 +1,3 @@
-"""Per-session terminal settings a blueprint member remembers (issue #1323).
-
-A member saved from a live session carries the settings the user set on THAT
-session: keep awake (the coffee cup), muted notifications and the terminal
-background override. Launching a member that has to be CREATED applies them
-through the very routes the UI toggles call, so there is no second
-implementation; a member that is already running is reused untouched.
-
-Only a setting that is ON (or an override that exists) is captured, so a
-blueprint of default sessions stays as small as before. Excluded on purpose:
-per-device or per-window state (scroll, active tab, the size crown), identity
-(names, ids, pins, groups), content (notes) and an uploaded background picture
-(a file, not a setting).
-"""
 
 from __future__ import annotations
 
@@ -67,11 +53,6 @@ class CaptureSources:
 
 async def apply_settings(request: Request, member: BlueprintSession, session_uuid: Optional[str],
                          tmux_name: Optional[str]) -> None:
-    """Apply a newly created member's saved settings through the UI's own routes.
-
-    Description: the session is already running, so a setting that cannot be applied is logged and
-      skipped; it never fails the member.
-    """
     from src.api.auto_sleep_routes import put_keep_awake
     from src.api.session_background_routes import set_session_background
     from src.api.session_records_routes import set_session_notification_policy

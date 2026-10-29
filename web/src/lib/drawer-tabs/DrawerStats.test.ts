@@ -40,6 +40,7 @@ import { tooltipTargetFor } from '../tooltip/tooltip';
 setLocale('en');
 const REPO = path.resolve(process.cwd(), '..');
 
+/** The drawer's <aside>, exactly as shipped. */
 function drawerMarkup(): string {
   const source = fs.readFileSync(path.join(REPO, 'client', 'index.html'), 'utf8');
   const start = source.indexOf('<aside id="session-sidebar-panel"');
@@ -79,6 +80,7 @@ afterEach(async () => {
   vi.useRealTimers();
 });
 
+/** Let pending microtasks and timers settle, up to ~2 s, until `done` holds. */
 async function settle(done: () => boolean = () => true): Promise<void> {
   for (let i = 0; i < 200; i += 1) {
     await tick();
@@ -227,7 +229,7 @@ test('a paired computer that cannot be reached hatches the chart from its last g
     ...fixture, state: 'partial',
     sources: [
       { host_key: 'local', label: 'this computer', state: 'ok' },
-      { host_key: 'peer-1', label: 'hosta', state: 'unreachable', reason: 'timeout', data_through: through },
+      { host_key: 'peer-1', label: 'studio', state: 'unreachable', reason: 'timeout', data_through: through },
     ],
   });
   const bar = await render();
@@ -238,7 +240,7 @@ test('a paired computer that cannot be reached hatches the chart from its last g
   expect(bar.querySelector('.dst-flag')?.getAttribute('data-cue')).toBe('down');
   expect(bar.querySelector('.dst-row')?.getAttribute('data-state') ?? bar.querySelector('[data-state]')?.getAttribute('data-state')).toBe('partial');
 
-  answer = () => ({ ...fixture, state: 'partial', sources: [{ host_key: 'peer-1', label: 'hosta', state: 'paused', data_through: through }] });
+  answer = () => ({ ...fixture, state: 'partial', sources: [{ host_key: 'peer-1', label: 'studio', state: 'paused', data_through: through }] });
   await unmount(mounted.pop()!);
   const again = await render();
   expect(again.querySelector<HTMLElement>('.dst-band')?.dataset.cue).toBe('partial');

@@ -37,9 +37,9 @@ NATIVE = (
 HELPER = NATIVE.replace("bin/codex --yolo", "bin/codex-code-mode-host")
 
 CODEX_PANE = [
-    ProcessRow(pid=4441, ppid=1, command=NODE_LAUNCHER),
-    ProcessRow(pid=4237, ppid=4441, command=NATIVE),
-    ProcessRow(pid=4337, ppid=4237, command=HELPER),
+    ProcessRow(pid=33086, ppid=1, command=NODE_LAUNCHER),
+    ProcessRow(pid=33556, ppid=33086, command=NATIVE),
+    ProcessRow(pid=34422, ppid=33556, command=HELPER),
 ]
 SHELL_PANE = [ProcessRow(pid=300, ppid=1, command="-zsh")]
 CLAUDE_PANE = [
@@ -77,7 +77,7 @@ def test_a_node_pane_command_alone_creates_nothing():
 
 
 def test_an_unread_table_asks_no_reader_and_names_nothing():
-    verdict = infer(4441, None)
+    verdict = infer(33086, None)
     assert verdict.family is None
     assert verdict.inference.outcome == INFER_UNAVAILABLE
 
@@ -96,7 +96,7 @@ def test_both_measured_codex_shapes_match(command):
 
 
 def test_the_measured_codex_pane_is_named_codex_as_an_inference():
-    verdict = infer(4441, CODEX_PANE, current="node")
+    verdict = infer(33086, CODEX_PANE, current="node")
     assert verdict.named is True
     assert verdict.family == "codex"
     assert verdict.inference.outcome == INFER_FAMILY
@@ -106,7 +106,7 @@ def test_the_measured_codex_pane_is_named_codex_as_an_inference():
 
 def test_codex_under_a_zsh_c_parent_is_found():
     table = [ProcessRow(pid=10, ppid=1, command="zsh -c codex --yolo")] + [
-        ProcessRow(pid=r.pid, ppid=10 if r.pid == 4441 else r.ppid, command=r.command)
+        ProcessRow(pid=r.pid, ppid=10 if r.pid == 33086 else r.ppid, command=r.command)
         for r in CODEX_PANE
     ]
     assert infer(10, table).family == "codex"
@@ -147,7 +147,7 @@ def db(tmp_path):
     c.executemany(
         "INSERT INTO sessions VALUES (?, 's', ?, 1, ?, ?, ?)",
         [
-            ("u-codex", "cloude_AdBoard", None, None, SESSION_FAMILY_SOURCE_UNKNOWN),
+            ("u-codex", "cloude_AdManager", None, None, SESSION_FAMILY_SOURCE_UNKNOWN),
             ("u-shell", "cloude_shell", None, None, SESSION_FAMILY_SOURCE_UNKNOWN),
             ("u-launched", "cloude_launched", "codex-yolo", "codex",
              SESSION_FAMILY_SOURCE_LAUNCHED),
@@ -166,7 +166,7 @@ def _manager(path):
         return c
 
     return SimpleNamespace(
-        _tmux_socket_name=lambda: "s", _writable_datastore_connection=connect
+        tmux_socket_name=lambda: "s", _writable_datastore_connection=connect
     )
 
 
@@ -185,7 +185,7 @@ def _rows(path):
 
 def test_the_sweep_names_the_codex_row_and_leaves_the_rest(db, monkeypatch):
     panes = [
-        {"name": "cloude_AdBoard", "created_at_epoch": 1, "pid": 4441,
+        {"name": "cloude_AdManager", "created_at_epoch": 1, "pid": 33086,
          "pane_current_command": "node"},
         {"name": "cloude_shell", "created_at_epoch": 1, "pid": 300,
          "pane_current_command": "zsh"},

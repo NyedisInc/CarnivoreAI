@@ -1,5 +1,4 @@
 
-/* display:flex */
 #first-run-screen {
   flex-direction: column;
   align-items: center;
@@ -111,7 +110,7 @@
   max-width: 320px;
 }
 
-.first-run__input {
+.first-run__form [data-first-run='code'] {
   font-size: 22px;
   letter-spacing: 0.3em;
   text-align: center;
@@ -123,7 +122,7 @@
   gap: 10px;
 }
 
-.first-run__go {
+.first-run [data-go] {
   min-height: 36px;
 }
 
@@ -140,7 +139,7 @@
   gap: 8px;
 }
 
-.first-run__cell {
+.first-run__cells [data-field] {
   width: 40px;
   min-width: 0;
   padding-inline: 0;
@@ -148,11 +147,11 @@
   text-align: center;
 }
 
-.first-run__form > .oc-btn {
+.first-run__form > button {
   align-self: flex-start;
 }
 
-.first-run__link {
+.first-run__form [data-first-run='link'] {
   width: 100%;
   min-width: 0;
 }
@@ -167,7 +166,7 @@
   list-style: none;
 }
 
-.first-run__pack {
+.first-run__packs [data-btn] {
   width: 100%;
   min-width: 0;
   text-align: left;

@@ -1,6 +1,7 @@
 <script lang="ts">
     import ModalShell from '../launchpad/ModalShell.svelte';
     import { t } from '../i18n/index.svelte';
+    import { Button } from '../base';
 
     interface Props {
         close: (value: 'signin' | 'later') => void;
@@ -17,12 +18,12 @@
     </ul>
 
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={() => close('later')} data-welcome-later>
+        <Button onclick={() => close('later')} data-welcome-later>
             {t('account.welcome.later')}
-        </button>
-        <button type="button" class="modal-btn modal-btn-confirm" onclick={() => close('signin')} data-welcome-signin>
+        </Button>
+        <Button variant="confirm" onclick={() => close('signin')} data-welcome-signin>
             {t('account.welcome.signin')}
-        </button>
+        </Button>
     {/snippet}
 </ModalShell>
 

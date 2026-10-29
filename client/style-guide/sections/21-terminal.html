@@ -10,7 +10,32 @@ and never take input meant for the terminal.</p>
         (<code>client/css/terminal-mascot.css</code>) over exactly those 9 by 3 cells with an xterm decoration. The sprite is
         artwork and may carry its own colours; the CSS holds none. No match leaves stock Clawd, and the pane's bytes are never touched.</dd>
     <dt>head row</dt>
+    <dd>A tabbed component's head row is the last-prompt bar (#533): <code>TerminalHead.svelte</code>,
+        <code>PromptHeader.svelte</code>, <code>PromptHeaderControls.svelte</code>, <code>PromptRail.svelte</code>,
+        <code>PromptTick.svelte</code>. The floating prompt header sits on <code>--oc-ground-card</code> (the one ground every
+        theme lifts off its own terminal) with a lit lower edge (<code>--oc-strip-edge</code>) and a faint glow (<code>--oc-strip-glow</code>), because a
+        ground step alone does not stick out on the darkest themes (Alex, 2026-09-21: "maybe a color glowing dropshadow
+        (minimal)?"). INLINE in a tabbed component (<code>.prompt-header-root--inline</code>) it joins the tab band instead: the
+        same <code>--oc-ground-titlerow</code> as the active tab, one continuous surface with no divider under it (Alex, #606
+        follow-up). It sits FLUSH under the strip now, 0px gap (Alex, #627: REVERSES the 5px spacer #594 put here, removed
+        entirely once the tool icon group moved off this row - see "tools" below), and spans the
+        row's full content width, since it no longer shares the row with anything else.</dd>
     <dt>tools</dt>
+    <dd><code>TerminalActions.svelte</code> and <code>TerminalUtilities.svelte</code>: session skills, session plugins,
+        files, search, notes, theme, the background picture (<code>.tbg-open</code>), bookmarks and keep awake, sleep and the
+        size crown as 15px icons in the bar (<code>toolbar.ts</code>'s width ladder), folding into the session kebab menu one at
+        a time as the cell narrows, least used first, search and files last (Joe (ccsliinc), 2026-10-21, reversing #959,
+        #1551 and the 2026-10-14 kebab moves). The kebab (<code>.cell-options</code>) matches
+        <code>CellMenu.svelte</code>'s look and behaviour - <code>role="menu"</code>/<code>menuitem</code>, arrow-key
+        navigation, focus-on-open, focus returned to the trigger on close - rather than a bespoke menu. In the tab strip
+        (<code>.oc-frame-strip</code>) every control, the bookmark key (<code>.oc-ibtn</code>) included, is exactly as tall as
+        the tab body beside it. IN A TABBED COMPONENT
+        THIS GROUP RENDERS IN THE TAB STRIP NOW, NOT THE HEAD ROW (Alex, 2026-09-25, #627, superseding "move all the icons
+        down to the right of the arrows" from the #533 prompt-bar merge): right-aligned after the tabs and the "+", vertically
+        centred with them, on the strip's own ground (<code>--oc-ground-tabstrip</code>) rather than the active tab's -
+        <code>TerminalHead.svelte</code> writes the same snippet it would otherwise render inline to a new
+        <code>frameHeader.tools</code> slot (<code>frame-header.svelte.ts</code>), which <code>CellFrame.svelte</code> renders
+        inside <code>.oc-frame-strip</code>. The untabbed head row is unaffected: it keeps its icons inline, unchanged.</dd>
     <dt>status bar</dt>
     <dd><code>TerminalFoot.svelte</code> (its meters are drawn by <code>FootMeters.svelte</code> and its grown overlay by <code>FootGrown.svelte</code>; and <code>TerminalFootHost.svelte</code> under the legacy pane): live in
         <a href="#meters-foot">the bottom bar meter</a>. A click grows it upward over the pane to add cost and the account;
@@ -39,17 +64,88 @@ and never take input meant for the terminal.</p>
     <dd><code>web/src/spectate/SpectatePage.svelte</code>: the read-only share link's page, the same terminal look with no
         input (<code>docs/spectator-links.md</code>).</dd>
     <dt>browser sessions</dt>
+    <dd><code>BrowserScreen.svelte</code> and <code>BrowserView.svelte</code>: a remote headless Chromium's frames in the same
+        chrome (<code>docs/browser-sessions.md</code>), named "proxy browser" wherever the kind is named (row label and
+        tooltip, the screen's label, the open menu; #1694) so it is told apart from a page opened in the main area; the list
+        heading stays "browsers". While the address field has focus, <code>.bv-where</code> lays a hairline strip over the
+        top of the page saying the proxy browser runs on the computer Carnivore runs on, so addresses resolve there (localhost is that computer's),
+        without resizing the stage. The screen has NO title row (Task Manager item 439): it fills the main section
+        (<code>#browser-screen</code> inside <code>#terminal-grid</code>, <code>client/css/terminal-grid.css</code>, 1px of
+        padding inside it so the page sits 1px in from every edge, Task Manager item 551) with the
+        rails and slide-outs still around it, the app header names the page, and pop out is one quiet icon in the drawer
+        row's right-side slot just before the pin (close is the row menu's item) (<code>.session-sidebar-row-key</code>, <code>data-browser-row-action</code>);
+        while Shift is held EVERY browser and page row's kebab turns into a red close x in its slot at once (a row with
+        its menu open or its kebab focused keeps the kebab)
+        (<code>.session-sidebar-row-shift-close</code> holding <code>.session-sidebar-row-key--close</code>, <code>--oc-coral</code>, #1697),
+        the kebab staying in the layout, hidden, so its menu keeps its anchor; on the focused row Shift+Enter, Shift+Space or Shift+Delete presses the x;
+        <code>.bs-note</code> is its one-line "opening the page..." line.</dd>
     <dt>opened pages</dt>
+    <dd>A page opened for the owner (Joe (ccsliinc), 2026-10-11, <code>docs/browser-pages.md</code>): a Task Manager artifact or the
+        app's own pop-out page is a ROW in the left sidebar's browser list (the browser row with a document mark,
+        <code>data-browser-state="page"</code>, the <code>docs</code> icon, no rename, a "close page" menu item) and shows FULL
+        SIZE in the browser screen where a session's terminal shows. The body (<code>PageFrame.svelte</code>) is one frame filling
+        the screen with no card or border of its own (<code>.pf-frame</code>); an artifact's is the artifact dialog's locked-down
+        frame, <code>sandbox="allow-scripts"</code> and never <code>allow-same-origin</code>, with its light canvas
+        (<code>.pf-frame--sandboxed</code>); a page that cannot be framed shows <code>.pf-note</code>. Every browser or page row
+        has a "pop out" menu item and row key: a page opens in its own tab; a proxy browser asks where every time
+        (<code>PopOutChoice.svelte</code>, in dialogs), the proxy itself opening in the pop-out page <code>?browser=&lt;id&gt;</code> (<code>BrowserPopout.svelte</code>: <code>.bp</code>,
+        <code>.bp-body</code>, <code>.bp-notice</code>, the one widget header over
+        <code>BrowserView</code>).</dd>
     <dt>opened files</dt>
+    <dd>A file opened from the files widget (Joe (ccsliinc), 2026-10-12, item 539, <code>docs/open-files.md</code>) is a ROW in
+        the left sidebar's own "files" list, right under the browsers (the browser row with a file mark,
+        <code>data-browser-state="file"</code>, the path as the file mark's tooltip (never the name's, #1209), no pop out, no rename, a "close file" menu item and
+        the same Shift red x), and shows FULL SIZE in the browser screen where a page shows. Unsaved edits draw a small dot after
+        the row's name (<code>.session-sidebar-row-dirty</code>, <code>--oc-yellow</code>). The body is
+        <code>FileScreen.svelte</code>: a title row that IS the ledger's shared <code>.pl-titlebar</code> (the screen wears <code>.pledger</code>;
+        the kind in the accent as <code>.pl-title</code>, the path <code>.fs-path</code>, the unsaved and read only flags
+        <code>.fs-flag</code> and <code>.fs-flag--quiet</code>, then <code>.fs-actions</code> holding the notes header's own control set
+        (<code>EditorControls.svelte</code>, shared with <code>NotesControls</code>, see the cells section): the edit | preview toggle for a markdown file, the save
+        disk (colored by <code>file-save-light.ts</code>, enabled only with unsaved edits, Cmd or Ctrl+S too) and, last, close (a bare icon key that runs the row menu's own close, asking first when edits are unsaved)); under it a stale-save strip (<code>.fs-stale</code>, <code>.fs-stale-text</code>:
+        keep editing, reload from disk, and overwrite in the base <code>Button</code> danger variant) and a one-line status
+        (<code>.fs-msg</code>); then <code>.fs-body</code> with the editor (<code>.fs-edit</code> holding
+        <code>FileEditor.svelte</code>, whose host wears the legacy editor's
+        <code>.config-editor-cm-host</code>), the markdown preview (<code>.fs-preview</code> scrolls, <code>.fs-doc</code> fills the pane inside the <code>--oc-gutter</code> padding, long lines wrap and a code block scrolls in its own box; every <code>.modal-btn</code> on the screen is one size, 7px 16px at 13px), the masked credentials pane
+        (<code>.fs-mask</code>), the "can't show" view for a binary, a file over 2 MB or a file that is gone
+        (<code>.fs-cant</code>, <code>.fs-cant-title</code>, <code>.fs-cant-detail</code>), a diff row's read-only
+        <code>GitDiffView</code> (<code>.fs-diff</code>), or the one-line <code>.fs-note</code>.</dd>
     <dt>themes</dt>
     <dd>The terminal wears its session's theme (pin, then project default, then global) on its own container through
         <code>[data-session-theme]</code>; the chrome around it stays on the global theme. <code>terminal-carnivore.css</code>
         keeps the header and sidebar Military Terminal whatever the session theme is; <code>session-theme-tint.css</code> draws
         a session's pinned accent where it is listed.</dd>
     <dt>layout command bar</dt>
+    <dd><code>LayoutCommandBar.svelte</code> (issue #837, #943): the strip across the top of an open Layout, in flow in
+        <code>#layout-command-bar</code> above the grid and empty on every other view. The Layout's name is a tab
+        (<code>.lcb__tabs</code> holding <code>LayoutTabs.svelte</code>, issue #1223: the terminal tab strip itself, <code>TabStrip.svelte</code>
+        with no component icon, its tabs the one key (<code>.oc-tab</code>, the accent on top when active, each name in its Layout's colour),
+        a close <code>.oc-tab-x</code> while more than one is open, and the <code>.oc-tab-new</code> plus that opens the one menu of the
+        Layouts not yet tabbed; the arrows move between tabs and Enter opens one; the list is per device and a close never deletes the
+        Layout); then one box, right-justified at half width inside <code>.lcb__slot</code>
+        (<code>.lcb__box</code>, the catalog's <code>.oc-field</code>, <code>oc-focus-host</code>, so the box's own edge brightens, softly, while its field has focus) holding
+        TWO mode buttons on its left (base quiet <code>IconButton</code>s, glass then <code>&gt;</code>): the active mode's icon is bright and the
+        other dim, and each selects its own mode. The field is a textarea that grows downward over the page to show wrapped text. Search drives each terminal's
+        own search (<code>layout-search.svelte.ts</code> drives each <code>SearchController</code>, never a second
+        engine); command sends the line plus Enter to every live terminal whose toggle is on through
+        <code>POST /api/v1/layouts/{uuid}/broadcast</code>. Search mode adds the count (<code>.lcb__count</code>) and the
+        prompts-only switch (the single session panel's own glyph and the same per-device value) and previous/next.
+        Command mode adds a small base <code>Button</code> (<code>data-bar-tool="recipients"</code>), "to 2 of 3", which opens the recipients menu (the one menu engine, <code>CascadeMenu</code>, an on/off check per terminal) and turns yellow when nobody would receive it (restored 2026-09-29, reversing that part of
+        issue #1016); each terminal's own <code>&gt;</code> toggle sets the same value. A clean send says nothing further - Enter is
+        already the confirmation; a skip or a
+        failure still reports in the result line (<code>.lcb__line</code>, which carries <code>.lcb__line--empty</code>
+        and leaves the flex flow entirely when there is nothing to say, so its own <code>gap</code> never reserves
+        trailing space after it). Below 600px the extras and the result line give way; Enter and
+        Shift+Enter still walk. While the desktop drawer is collapsed to the mini rail
+        (<code>body.session-sidebar-railed</code>), the box right-justifies to the header's right edge instead of
+        sitting flush left of the name. In command mode a line that starts with "/" (Claude Code) or "$" (Codex) opens the skill list
+        (<code>.lsk</code>, <code>LayoutSkillMenu.svelte</code>) under the box: <code>.lsk__item</code> rows with the name
+        (<code>.lsk__name</code>), a scope tag (<code>.lsk__scope</code>, global or project) and the one-line description
+        (<code>.lsk__desc</code>); the lit row (<code>.lsk__item--active</code>) wears the accent border like a recipients-menu row.
+        Global skills always, project skills only when every terminal the line would reach has them
+        (<code>GET /api/v1/layouts/{uuid}/skills</code>). Up and Down move, Tab or Enter insert, Escape closes.</dd>
     <dt>broadcast toggle</dt>
     <dd><code>LayoutCellMarks.svelte</code>: a <code>&gt;</code> in each member terminal's tool group
-        (<code>.lcm__toggle</code>, the cell tools' own 26px size - issue #1021), pressed means on, the default and a
+        (a base quiet <code>IconButton</code>, <code>pressed</code> - issue #1021), pressed means on, the default and a
         broadcast skips it when unpressed. NO BOX AT REST in either state: on reads the same colour as the row's other
         tool icons (<code>--oc-orange</code>), off dims the glyph (<code>--oc-text-dim</code>, the tab strip's own
         idle-icon idiom - issue #936). Hovering either state may paint the sibling tool buttons' own hover box
@@ -64,19 +160,16 @@ and never take input meant for the terminal.</p>
 
 <h3 class="sg-h3" id="terminal-rules">rules the terminal chrome may never break</h3>
 <ul>
+    <li>A hidden tab does not vote on the pane's size (<code>pty_resize</code> carries <code>hidden: true</code>, Alex 2026-09-23). A
+        flag, never a faked size.</li>
     <li>Claim input at the gesture, check it at the write (<code>terminal-input-ownership.js</code>); a stale navigation token
         discards silently.</li>
     <li>The left inset is <code>--oc-terminal-inset</code> (8px) and never more than 16: above that, glyphs clip.</li>
     <li>A bare <code>requestAnimationFrame</code> never resolves in a hidden tab; race a timer (gotcha 9).</li>
     <li>Nothing overlays the prompt row; a notice sits above the output, never on the input line.</li>
 </ul>
-<h3 class="sg-h3" id="terminal-crosstalk">crosstalk cards</h3>
-<div class="sg-specimen">
-    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/crosstalk/CrosstalkCard.svelte</code><span>received message, collapsed and expanded</span></div>
-    <div class="sg-specimen__body"><div id="sg-live-crosstalk-card"></div></div>
-</div>
 <h3 class="sg-h3" id="terminal-xtalk-cards">crosstalk cards on a terminal (core since #1899, formerly the xtalk plugin)</h3>
-<p>The crosstalk cards (a Settings switch under Terminal, off for a new install) draw a FROM card on the terminal a crosstalk message was delivered to and a TO card on the terminal that sent it. The server pushes one <code>crosstalk.card</code> frame per delivery and nothing reads the terminal or its scrollback. <code>web/src/lib/crosstalk/terminal-cards/CardStack.svelte</code> owns the markup, <code>web/src/lib/crosstalk/terminal-cards/terminal-cards.css</code> the <code>.xtalk-card</code> and <code>.xtalk-layer</code> selectors, copied from the history card above: a hairline, a 3px square-cornered left bar in the accent for FROM and the confirm green for TO, a tracked uppercase direction, and tokens only. The whole card is one button: click to dismiss; it also expires on its own after twenty seconds, unless the <em>keep cards until dismissed</em> setting is on (off by default): then the cards stay, per session, while the page is open, and the layer takes the modifier <code>.xtalk-layer--keep</code> (only the card column, scrollable). The layer sits over the terminal in the cell's enclosing box, never inside the pane, so it takes none of the terminal's input.</p>
+<p>The crosstalk cards (a Settings switch under Terminal, off for a new install) draw a FROM card on the terminal a crosstalk message was delivered to and a TO card on the terminal that sent it. The server pushes one <code>crosstalk.card</code> frame per delivery and nothing reads the terminal or its scrollback. <code>web/src/lib/crosstalk/terminal-cards/CardStack.svelte</code> owns the markup, <code>web/src/lib/crosstalk/terminal-cards/terminal-cards.css</code> the <code>[data-xtalk-card]</code> and <code>.xtalk-layer</code> selectors, a hairline, a 3px square-cornered left bar in the accent for FROM and the confirm green for TO, a tracked uppercase direction, and tokens only. The whole card is one button: click to dismiss; it also expires on its own after twenty seconds, unless the <em>keep cards until dismissed</em> setting is on (off by default): then the cards stay, per session, while the page is open, and the layer takes the modifier <code>.xtalk-layer--keep</code> (only the card column, scrollable). The layer sits over the terminal in the cell's enclosing box, never inside the pane, so it takes none of the terminal's input.</p>
 
 <h3 class="sg-h3" id="terminal-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">

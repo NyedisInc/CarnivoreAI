@@ -1,11 +1,6 @@
 import { t } from '../../sdk';
 import type { Task } from './model';
 
-export interface TaskClock {
-  readonly nowSec: number;
-  readonly zone: string;
-}
-
 const OWNER = 'owner';
 const MINUTE_S = 60;
 const HOUR_S = 3600;

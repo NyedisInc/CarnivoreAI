@@ -1,8 +1,8 @@
 <script lang="ts">
   import { t } from '../i18n/index.svelte';
-  import Check from '../../opscenter/ui/Check.svelte';
+    import Check from '../../opscenter/ui/Check.svelte';
   import { formatBytes } from '../session-move/move-api';
-  import type { SendCarry } from './send-api';
+  import { IGNORED_WHY, type SendCarry } from './send-api';
 
   interface Props {
     carry: SendCarry;
@@ -15,7 +15,7 @@
   const outside = $derived(carry.outside ?? []);
   const comes = $derived(carry.units ?? []);
   const stays = $derived([
-    ...(carry.left_behind ?? []).map((l) => ({ text: l.what + (l.size != null ? ` (${formatBytes(l.size)})` : ''), why: l.why })),
+    ...(carry.left_behind ?? []).filter((l) => l.why !== IGNORED_WHY).map((l) => ({ text: l.what + (l.size != null ? ` (${formatBytes(l.size)})` : ''), why: l.why })),
     ...(carry.other_projects ?? []).map((o) => ({ text: o.path, why: t('session.send.carry.other_project', { project: o.project }) })),
     ...outside.filter((o) => !o.carryable).map((o) => ({ text: o.path + (o.size != null ? ` (${formatBytes(o.size)})` : ''), why: t('session.send.carry.update', { machine }) })),
   ]);
@@ -23,6 +23,7 @@
   const servers = $derived(carry.servers ?? []);
   const empty = $derived(!comes.length && !stays.length && !tools.length && !servers.length && !outside.some((o) => o.carryable));
 
+  /* the project folder */
   const unitName = (path: string): string => (path === '.' ? t('session.send.carry.project_folder') : path);
 </script>
 
@@ -31,7 +32,7 @@
     {#if comes.length || outside.some((o) => o.carryable)}
       <div class="stm-carry-head">{t('session.send.carry.comes')}</div>
       {#each comes as u (u.kind + u.path)}
-        <div class="stm-carry-row" data-carry="comes">{unitName(u.path)}<span class="stm-carry-why">{u.state}</span></div>
+        <div class="stm-carry-row" data-carry="comes">{unitName(u.path)}</div>
       {/each}
       {#each outside.filter((o) => o.carryable) as o (o.path)}
         <div class="stm-carry-row" data-carry="outside">
@@ -39,6 +40,9 @@
             onToggle={(next) => onTick(o.path, next)} />
         </div>
       {/each}
+      {#if carry.total_bytes != null}
+        <div class="stm-carry-row stm-carry-total" data-carry="total">{t('session.send.carry.total', { size: formatBytes(carry.total_bytes) })}</div>
+      {/if}
     {/if}
     {#if stays.length}
       <div class="stm-carry-head">{t('session.send.carry.stays')}</div>

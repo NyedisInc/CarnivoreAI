@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 from src.api.request_log import RequestLogMiddleware
 from src.core.perf_hooks import monitor as monitor_module
 from src.core.perf_hooks.monitor import FRAME_TYPE, PerfMonitor, frame_topic
-from src.core.perf_hooks.process_stats import parse_ps, tmux_servers
+from src.core.perf_hooks.process_stats import ProcessSampler, parse_ps, tmux_servers
 
 
 class _FakeSampler:
@@ -113,3 +113,29 @@ def test_process_parsing_finds_tmux_servers_by_socket() -> None:
     servers = tmux_servers(rows)
     assert list(servers) == ["cloude"] and servers["cloude"].pid == 10
     assert frame_topic('{"no_type": 1}') == "text"
+
+
+def test_sampler_reports_shell_roles_and_window_server(monkeypatch) -> None:
+    app = "/Applications/Carnivore.app/Contents"
+    def ps(main_cpu: str, rend_cpu: str, gpu_cpu: str, ws_cpu: str) -> str:
+        return (
+            f"  20     1   {main_cpu}  102400 {app}/MacOS/Carnivore\n"
+            f"  21    20   {rend_cpu}  204800 {app}/Frameworks/Carnivore Helper (Renderer).app/Contents/MacOS/Carnivore Helper (Renderer) --type=renderer --lang=en\n"
+            f"  22    20   {gpu_cpu}   51200 {app}/Frameworks/Carnivore Helper (GPU).app/Contents/MacOS/Carnivore Helper (GPU) --type=gpu-process\n"
+            f"  23    20   0:00.10   10240 {app}/Frameworks/Carnivore Helper.app/Contents/MacOS/Carnivore Helper --type=utility\n"
+            "  30     1   0:50.00   99999 /Applications/Slack.app/Contents/Frameworks/Slack Helper (Renderer).app/Contents/MacOS/Slack Helper (Renderer) --type=renderer\n"
+            f"  40     1   {ws_cpu}   30720 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer -daemon\n"
+        )
+    clock = iter([100.0, 110.0])
+    monkeypatch.setattr("src.core.perf_hooks.process_stats.time.monotonic", lambda: next(clock))
+    sampler = ProcessSampler(own_pid=999)
+    first = sampler.sample(parse_ps(ps("0:10.00", "1:00.00", "0:20.00", "5:00.00")))
+    assert first["shell"]["main"]["cpu_pct"] is None and first["window_server"]["cpu_pct"] is None
+    second = sampler.sample(parse_ps(ps("0:11.00", "1:05.00", "0:20.50", "5:02.00")))
+    shell = second["shell"]
+    assert shell["main"] == {"pid": 20, "cpu_pct": 10.0, "rss_mb": 100.0}
+    assert shell["renderer"] == [{"pid": 21, "cpu_pct": 50.0, "rss_mb": 200.0}]
+    assert shell["gpu"] == {"pid": 22, "cpu_pct": 5.0, "rss_mb": 50.0}
+    assert [u["pid"] for u in shell["utility"]] == [23]
+    assert second["window_server"] == {"pid": 40, "cpu_pct": 20.0, "rss_mb": 30.0}
+    assert 30 not in {shell["main"]["pid"], shell["gpu"]["pid"], *(r["pid"] for r in shell["renderer"])}

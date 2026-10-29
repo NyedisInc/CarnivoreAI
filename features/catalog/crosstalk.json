@@ -38,6 +38,7 @@
   ],
   "how_to": [
     "Find a recipient with agents_lookup.",
+    "Send with crosstalk_send and approve first contact in the owner inbox.",
     "Read your own messages with crosstalk_inbox or crosstalk_thread; use crosstalk_reply to respond.",
     "Use agent_spawn with a task to start a coworker in the current folder, or choose a project or working directory. Give peer to start it on a paired computer. The new session appears as a tab beside its parent."
   ],
@@ -52,7 +53,8 @@
     "A local agent messages a paired computer's Claude pane; the remote native inbox receives it and a reply returns through the same thread.",
     "fork into a worktree with a child contact pinned to its durable session identity",
     "Local fork lineage refuses a remote-host row even when its socket, pane name and epoch match.",
-    "Owner-only provider forks and prompt history are explicitly refused by the peer route inventory."
+    "Owner-only provider forks and prompt history are explicitly refused by the peer route inventory.",
+    "An agent asks agents_lookup for a sleeping teammate (status asleep) and crosstalk_send wakes it, once the owner approves, and delivers the question."
   ],
   "media_exempt": "Spawn uses the existing terminal tab strip and generic phone toast; it adds no unique visual component to capture."
 }

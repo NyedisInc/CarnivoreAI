@@ -201,16 +201,6 @@ def _check_resume(plan: SessionMovePlan, row: Mapping[str, Any], preview: Any, c
 def build_plan(conn: sqlite3.Connection, row: Mapping[str, Any], *, project_id: Optional[int],
                new_folder: Optional[str], settings: Any, preview: Any, home: Optional[str] = None,
                corpus_root: Optional[Path] = None) -> SessionMovePlan:
-    """Plan one session move. Reads only; creates nothing.
-
-    Inputs: conn; row (dict) - from :func:`read_row`; project_id (int | None) - an existing project;
-      new_folder (str | None) - a folder to move into (created when missing, its parent must exist);
-      settings - for the projects root and allowed roots; preview - ``SessionManager.restart_preview``'s
-      answer (None when it could not be taken); home (str | None) - the home folder, for tests;
-      corpus_root (Path | None) - the claude transcript root, for tests (default ``~/.claude/projects``).
-    Output: SessionMovePlan.
-    Example: build_plan(conn, row, project_id=4, new_folder=None, settings=settings, preview=p).ok
-    """
     from src.core.project_directory import canonical_path, projects_root
 
     home_real = canonical_path(home or str(Path.home()))

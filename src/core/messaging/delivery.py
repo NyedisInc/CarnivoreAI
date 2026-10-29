@@ -37,7 +37,6 @@ async def session_cards(app: Any) -> Dict[str, dict]:
 
 
 def _row_exists(session_uuid: str) -> Optional[bool]:
-    """Whether a ``sessions`` row carries this uuid; None when the store could not be read (never guessed)."""
     from src.core.db import DatastoreUnreadableError
 
     try:

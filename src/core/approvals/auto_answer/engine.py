@@ -46,12 +46,6 @@ def answers_own_dev_channels(dialog: Any) -> bool:
 
 
 class AutoAnswerEngine:
-    """Presses the fixed row of a matched startup screen once per launch, when the rule is on and its guard allows.
-
-    Example:
-        engine = AutoAnswerEngine(app_state, lambda: manager, on_pressed=record_and_announce(lambda: manager))
-        engine.on_observation(target, observation)
-    """
 
     def __init__(self, app_state: Any, get_manager: Callable[[], Any], *, policy: Optional[Callable[[], catalog.Policy]] = None,
                  answer: Optional[Answer] = None, info: Optional[Info] = None, seams: Optional[rules.Seams] = None,

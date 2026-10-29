@@ -30,7 +30,7 @@ def _asleep_row(rig, socket: str) -> tuple:
     name = f"carnivore_wf{uuid.uuid4().hex[:6]}"
     session_uuid = seed_row(rig.state, socket, name, 1790000000, lifecycle_source="slept_by_timer")
     with closing(connect(db_path_for(rig.state), create=False)) as conn:
-        conn.execute("UPDATE sessions SET working_dir = ?, title = 'TamcrestJunhaven' WHERE session_uuid = ?",
+        conn.execute("UPDATE sessions SET working_dir = ?, title = 'SoundDesk' WHERE session_uuid = ?",
                      (str(rig.work), session_uuid))
         conn.commit()
         row_id = conn.execute("SELECT id FROM sessions WHERE session_uuid = ?", (session_uuid,)).fetchone()[0]
@@ -61,12 +61,12 @@ async def test_never_written_conversation_is_refused_then_starts_fresh_on_the_sa
     session_uuid, name, row_id = _asleep_row(rig, tmux_test_socket)
     seen = capture_commands(monkeypatch, run_instead="sh -c 'sleep 45'")
     state = SimpleNamespace(session_manager=_manager())
-    refused = await wake_by_uuid(state, session_uuid, "keyc")
+    refused = await wake_by_uuid(state, session_uuid, "cld")
     assert refused.status == "refused" and refused.code == "transcript_missing", refused
     assert _row(rig, session_uuid) == (row_id, name, UUID), "a refusal must change nothing"
     before = len(seen)
     try:
-        answer = await wake_by_uuid(state, session_uuid, "keyc", start_fresh=True)
+        answer = await wake_by_uuid(state, session_uuid, "cld", start_fresh=True)
         live = tmux(tmux_test_socket, "list-sessions", "-F", "#{session_name}")
     finally:
         for line in tmux(tmux_test_socket, "list-sessions", "-F", "#{session_name}").split():
@@ -90,7 +90,7 @@ async def test_start_fresh_never_discards_a_conversation_whose_transcript_exists
     (folder / f"{UUID}.jsonl").write_text("{}\n")
     seen = capture_commands(monkeypatch, run_instead="sh -c 'sleep 45'")
     try:
-        answer = await wake_by_uuid(SimpleNamespace(session_manager=_manager()), session_uuid, "keyc", start_fresh=True)
+        answer = await wake_by_uuid(SimpleNamespace(session_manager=_manager()), session_uuid, "cld", start_fresh=True)
     finally:
         for line in tmux(tmux_test_socket, "list-sessions", "-F", "#{session_name}").split():
             if line.startswith("carnivore_wf"):

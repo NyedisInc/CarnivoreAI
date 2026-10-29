@@ -141,7 +141,7 @@ def test_an_archived_handoff_and_a_prose_mention_are_not_pending(handoff_root):
     (handoff_root / "archive").mkdir()
     (handoff_root / "archive" / "20261006-declined.sh").write_text("#!/bin/bash\n")
     texts = ["the declined one was ~/.handoff/handoff 20261006-declined", "With no name, ~/.handoff/handoff opens the picker.",
-             "~/.handoff/handoff on a test machine"]
+             "~/.handoff/handoff on the mini"]
     assert owner_guards.pending_handoffs(texts) == []
     assert owner_guards.handoff_script(HANDOFF) == handoff_root / "pending" / f"{HANDOFF}.sh"
 

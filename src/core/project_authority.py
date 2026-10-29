@@ -1,49 +1,17 @@
-"""
-THE ANSWER IS ALWAYS cloude.db. Projects used to live in two places -
-this table and a mirrored ``projects`` key in config.json kept as a
-rollback artifact - and this module's job was to decide which of the two
-was speaking, serve the right one, and report when they disagreed. That
-second source is gone. ``projects_config_migration`` moves anything the
-file still held into the table once, per install, and removes the key.
-
-WHY THE SECOND SOURCE WENT. Two sources need a comparison, a comparison
-needs both sides read the same way, and the two sides were NOT read the
-same way: the table was read live on every request while config.json came
-from ``Settings._auth_config_cache``, which is invalidated only when the
-app itself writes the file. So a user who hand-edited config.json - which
-the app's own Edit Config menu item invites - got a divergence report
-built from a live measurement on one side and a stale one on the other,
-and it named disagreements that did not exist on disk. On top of that the
-two detectors that fed the UI each formed their own opinion, and shipped
-two banners at once that flatly contradicted each other about which
-source the user was looking at.
-
-Neither defect is fixed by a better comparison. Both are removed by
-having nothing to compare.
-
-TWO OUTCOMES, AND THE SECOND IS NOT "ZERO PROJECTS":
-
-  db              cloude.db opened and answered. Authoritative. Writes
-                  allowed. An empty list here is a real, measured empty
-                  list.
-  db_unreadable   cloude.db could not be opened or could not be read.
-                  The list is EMPTY because nothing could be read, not
-                  because nothing is there, and the mode plus the message
-                  both say so. Writes are refused: a write in this state
-                  could not detect a conflict and could not record itself
-                  anywhere durable.
-"""
 
 from __future__ import annotations
 
+import copy
 from contextlib import closing
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
-from src.core.db import DatastoreUnreadableError, connect, db_path_for
+from src.core.db import DatastoreUnreadableError, db_path_for
+from src.core.db_reuse.core_read import lend_pooled_or_raise
+from src.core.db_reuse.change_cache import HOT_READS
 from src.core.project_reconcile import reconcile_summary
 from src.core.project_writes import list_projects_ordered
 
@@ -65,21 +33,6 @@ class ProjectsReadOnlyError(RuntimeError):
 
 @dataclass(frozen=True)
 class ProjectsView:
-    """The resolved answer to one project read, with its provenance.
-
-    Description: the list and the reason the list is what it is travel
-      together, always. A caller cannot obtain the projects without also
-      obtaining the mode they came from, which is what makes it
-      impossible to render a could-not-read as an empty-but-healthy list
-      by forgetting a second lookup.
-    Inputs (constructor): mode (str - one of the MODE_* constants),
-      projects (list[dict] - each ``{"id", "name", "path", "description",
-      "root", "agent_type"}``), message (str - one sentence for a user),
-      detail (str | None - the underlying error, when there is one),
-      reconcile (dict | None - what the last startup project reconcile
-      did; None only when the database could not be read).
-    Output: a ProjectsView instance.
-    """
 
     mode: str
     projects: List[Dict[str, Any]] = field(default_factory=list)
@@ -135,23 +88,14 @@ def _row_to_view(row: Dict[str, Any]) -> Dict[str, Any]:
 def resolve_projects(
     state_dir: Path, *, include_archived: bool = False
 ) -> ProjectsView:
-    """Read the project list from the datastore, or say it could not be.
-
-    Description: the single read entry point. Takes no config list and
-      has no fallback source - that is the enforcement, not an omission.
-      While the signature accepted a config list, any caller could hand
-      one in and this module could grow a second opinion about where
-      projects come from, which is the exact condition that produced two
-      contradictory banners.
-    """
     db_file = db_path_for(state_dir)
 
     try:
-        with closing(connect(db_file, create=False)) as conn:
-            rows = list_projects_ordered(
-                conn, include_archived=include_archived
-            )
-            reconcile = reconcile_summary(conn)
+        rows, reconcile = HOT_READS.fetch(
+            db_file,
+            ("projects", include_archived),
+            lambda: _read_project_rows(db_file, include_archived),
+        )
     except DatastoreUnreadableError as exc:
         return _unreadable(str(exc), db_file)
     except Exception as exc:  # noqa: BLE001
@@ -161,8 +105,18 @@ def resolve_projects(
         mode=MODE_DB,
         projects=[_row_to_view(row) for row in rows],
         message="projects are served from cloude.db, which is authoritative.",
-        reconcile=reconcile,
+        reconcile=copy.deepcopy(reconcile),
     )
+
+
+def _read_project_rows(
+    db_file: Path, include_archived: bool
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    with closing(lend_pooled_or_raise(db_file)) as conn:
+        return (
+            list_projects_ordered(conn, include_archived=include_archived),
+            reconcile_summary(conn),
+        )
 
 
 def _unreadable(detail: str, db_file: Path) -> ProjectsView:

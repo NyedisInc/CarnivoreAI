@@ -28,12 +28,6 @@ def live_v2_cached(store, now: float | None = None) -> dict:
 
 
 def _agents_5m(rows: list, current: int, names: dict[str, str]) -> list[dict]:
-    """Tokens per minute of each agent over the last five whole minutes, highest first, subagents under their parent.
-
-    Inputs: rows - minute_usage rows of the last hour; current - the current minute; names - conversation id -> session name.
-    Output: up to ``_AGENTS_LIMIT`` of ``{conversation_id, name, tokens, tokens_per_minute}`` with tokens > 0.
-    Example: ``[{"conversation_id": "ab12", "name": "api work", "tokens": 5000, "tokens_per_minute": 1000.0}]``
-    """
     lo = current - 4 * 60
     totals: dict[str, int] = {}
     for r in rows:

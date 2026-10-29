@@ -1,4 +1,3 @@
-/* display: none */
 import { mountPanel } from '../mount';
 import { openAppAlerts } from './alert-panel.svelte';
 import { hostDocument } from '../sessions/env';

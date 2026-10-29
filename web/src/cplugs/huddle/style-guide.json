@@ -1,0 +1,8 @@
+{
+  "files": {
+    "web/src/cplugs/huddle/swarm/SwarmMemberFace.svelte": {
+      "section": "status-led",
+      "classes": []
+    }
+  }
+}

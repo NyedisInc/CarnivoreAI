@@ -109,6 +109,7 @@ describe('mark read with a five second undo', () => {
 });
 
 describe('the strip at a narrow width (round 9c: the undo button overlapped the last tab label at 380)', () => {
+  // vitest runs from web/; the sheet is read as text because jsdom draws no layout.
   const css = readFileSync('src/opscenter/cells/task-manager-mk2/mk2-design.css', 'utf8');
   test('the tabs go to icons while the strip is too narrow for four labels and the control, and the control keeps one width through its count', () => {
     expect(css).toMatch(/@container oc-ptabs \(max-width: 420px\)[^}]*\{[^}]*oc-ptab__icon[^}]*display: inline-flex/s);

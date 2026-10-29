@@ -112,7 +112,7 @@
             <RestorePoints
                 points={view.points.points}
                 keep={view.store?.keep ?? null}
-                usedBytes={view.store?.usedBytes ?? 0}
+                usedBytes={view.store?.historyBytes ?? 0}
                 capBytes={view.store?.capBytes ?? 0}
                 {busy}
                 {t}

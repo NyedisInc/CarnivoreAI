@@ -1,4 +1,3 @@
-// Keep Mac Awake
 
 'use strict';
 

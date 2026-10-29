@@ -62,13 +62,6 @@ def _inside(target: set, root: set) -> bool:
 
 
 def moved_away_for(conn: sqlite3.Connection, working_dir: str) -> Optional[Dict[str, Any]]:
-    """The moved-away project whose folder holds ``working_dir``, None when none does.
-
-    Description: the MOST SPECIFIC project holding the folder decides, so a live project that sits inside a moved-away
-      project's folder is not locked by it. Cheap in the common case: one indexless query that finds no moved-away row.
-    Inputs: conn; working_dir (str). Output: the project row dict (with ``moved_to_label``) | None.
-    Example: moved_away_for(conn, "/p/ledgerbot/sub")  # {"display_name": "ledgerbot", ...}
-    """
     if not working_dir or not _has_state(conn):
         return None
     moved = [dict(r) for r in conn.execute("SELECT * FROM projects WHERE pack_state = 'moved_away'").fetchall()]

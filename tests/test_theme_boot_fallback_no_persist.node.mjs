@@ -11,6 +11,11 @@ const THEME_KEY = 'carnivore.theme';
 let passes = 0;
 let failures = 0;
 
+/**
+ * Description: run one named assertion block, recording rather than
+ *   throwing so one failure does not hide the rest.
+ * Inputs: name (string), fn (function). Output: Promise<void>.
+ */
 async function test(name, fn) {
     try {
         await fn();

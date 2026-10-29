@@ -43,7 +43,6 @@
       box-shadow: inset 0 0 0 1px var(--oc-line-rule);
       overflow: hidden;
     }
-    /* box-shadow */
     .sbch-head {
       display: flex;
       flex: none;

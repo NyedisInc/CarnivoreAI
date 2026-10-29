@@ -26,6 +26,15 @@ export function liveRowFor(rowId: number | null): SessionInfo | null {
   return (sessions.data ?? []).find((row) => row.session_row_id === rowId) ?? null;
 }
 
+export function isLiveRow(row: SessionInfo | null | undefined): row is SessionInfo {
+  return row !== null && row !== undefined && row.activity_status !== 'dead';
+}
+
+export function liveMemberRowFor(rowId: number | null): SessionInfo | null {
+  const row = liveRowFor(rowId);
+  return isLiveRow(row) ? row : null;
+}
+
 export function rowIdForSession(sessionId: string): number | null {
   const found = rowFor(sessions.data, sessionId)?.session_row_id;
   return typeof found === 'number' && Number.isFinite(found) ? found : null;

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { GOOD_FOLDER, GOOD_NAME, enT, modals, recorder } from './create-harness';
-import { accountFields, buildCreatePayload, agentTypeFor, chooseHost, createConsoleFlow, createProjectFlow } from './create-flow';
+import { accountFields, buildCreatePayload, buildOpenProjectPayload, isRemoteRoot, splitRemoteRoot, agentTypeFor, chooseHost, createConsoleFlow, createProjectFlow } from './create-flow';
 import type { HostChoice } from './create-host';
 import { cloneFromGithubFlow } from './entry-flows';
 import { openProjectFromFolderFlow } from './open-folder-flow';
@@ -234,7 +234,7 @@ describe('what happens after the session lands', () => {
 
 describe('issue #162 slice S6: which host a create launches on', () => {
     const REMOTE: HostChoice = {
-        key: 'hosta', label: 'Hosta', local: false, ssh_target: 'hosta', enabled: true, probe_state: 'ok',
+        key: 'studio', label: 'Studio', local: false, ssh_target: 'studio', enabled: true, probe_state: 'ok',
         ssh_port: null, socket: null, session_count: 0, probe_detail: null, probed_at: null,
         tmux_path: null, tmux_version: null, login_path: null, agent_paths: null, login_shell: null,
         machine_id: null, remote_carnivore: null, created_at: '', updated_at: '',
@@ -248,9 +248,9 @@ describe('issue #162 slice S6: which host a create launches on', () => {
     });
 
     test('with a remote host configured, the picker is asked and its answer wins', async () => {
-        const m = modals({ choice: 'hosta' });
+        const m = modals({ choice: 'studio' });
         const picked = await chooseHost({ listHosts: async () => [REMOTE] } as never, m.openers, enT());
-        expect(picked?.key).toBe('hosta');
+        expect(picked?.key).toBe('studio');
         expect(m.asked.map(([kind]) => kind)).toEqual(['choice']);
     });
 
@@ -264,40 +264,40 @@ describe('issue #162 slice S6: which host a create launches on', () => {
     });
 
     test('a paired computer posts its folder as project_parent_dir so its own folder checks run (#1952)', async () => {
-        const PEER: HostChoice = { ...REMOTE, key: 'peer-hosta-test', label: 'hosta' };
+        const PEER: HostChoice = { ...REMOTE, key: 'peer-studio-test', label: 'studio' };
         const rec = recorder({ listHosts: async () => [PEER] });
-        const m = modals({ choice: PEER.key, name: [GOOD_NAME], folder: { parent: '~/carnivore-projects/TamcrestJunhaven', path: '~/carnivore-projects/TamcrestJunhaven' } });
+        const m = modals({ choice: PEER.key, name: [GOOD_NAME], folder: { parent: '~/carnivore-projects/SoundDesk', path: '~/carnivore-projects/SoundDesk' } });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(result.outcome).toBe('created');
         expect(rec.payloads[0]!.host_key).toBe(PEER.key);
-        expect(rec.payloads[0]!.project_parent_dir).toBe('~/carnivore-projects/TamcrestJunhaven');
+        expect(rec.payloads[0]!.project_parent_dir).toBe('~/carnivore-projects/SoundDesk');
         expect(rec.payloads[0]!.project_name).toBe(GOOD_NAME.name);
         expect('working_dir' in rec.payloads[0]!).toBe(false);
     });
 
     test('a remote host asks for a far folder and posts it as working_dir, never project_parent_dir', async () => {
         const rec = recorder({ listHosts: async () => [REMOTE] });
-        const m = modals({ choice: 'hosta', name: [GOOD_NAME], folder: { parent: '~/carnivore-projects/TamcrestJunhaven', path: '~/carnivore-projects/TamcrestJunhaven' } });
+        const m = modals({ choice: 'studio', name: [GOOD_NAME], folder: { parent: '~/carnivore-projects/SoundDesk', path: '~/carnivore-projects/SoundDesk' } });
         const result = await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(result.outcome).toBe('created');
         expect(m.asked.map(([kind]) => kind)).toEqual(['choice', 'name', 'folder']);
         expect((m.asked[1]![1] as { confirmLabel: string }).confirmLabel).toBe('next');
-        expect(rec.payloads[0]!.host_key).toBe('hosta');
-        expect(rec.payloads[0]!.working_dir).toBe('~/carnivore-projects/TamcrestJunhaven');
+        expect(rec.payloads[0]!.host_key).toBe('studio');
+        expect(rec.payloads[0]!.working_dir).toBe('~/carnivore-projects/SoundDesk');
         expect('project_parent_dir' in rec.payloads[0]!).toBe(false);
         expect(rec.payloads[0]!.copy_templates).toBe(false);
         expect('model' in rec.payloads[0]!).toBe(false);
     });
 
     test('the folder step names the host kind: a paired computer makes the folder and has no guessed default, an ssh host needs an existing one', async () => {
-        const PEER: HostChoice = { ...REMOTE, key: 'peer-hosta-test', label: 'hosta' };
+        const PEER: HostChoice = { ...REMOTE, key: 'peer-studio-test', label: 'studio' };
         const peer = modals({ choice: PEER.key, name: [GOOD_NAME], folder: { parent: '/x', path: '/x' } });
         await createProjectFlow(recorder({ listHosts: async () => [PEER] }).host, peer.openers, enT(), null);
         const peerAsk = peer.asked[2]![1] as { remote: { creates: boolean }; defaultParent: () => Promise<string | null>; confirmLabel: string };
         expect(peerAsk.remote.creates).toBe(true);
         expect(await peerAsk.defaultParent()).toBe(null);
         expect(peerAsk.confirmLabel).toBe('create project');
-        const ssh = modals({ choice: 'hosta', name: [GOOD_NAME], folder: { parent: '/x', path: '/x' } });
+        const ssh = modals({ choice: 'studio', name: [GOOD_NAME], folder: { parent: '/x', path: '/x' } });
         await createProjectFlow(recorder({ listHosts: async () => [REMOTE] }).host, ssh.openers, enT(), null);
         const sshAsk = ssh.asked[2]![1] as { remote: { creates: boolean }; defaultParent: () => Promise<string | null> };
         expect(sshAsk.remote.creates).toBe(false);
@@ -312,10 +312,10 @@ describe('issue #162 slice S6: which host a create launches on', () => {
     });
 
     test('a paired computer labelled with its own hostname is listed once, not twice', async () => {
-        const m = modals({ choice: 'hosta' });
+        const m = modals({ choice: 'studio' });
         await chooseHost({ listHosts: async () => [REMOTE, { ...REMOTE, key: 'b', label: 'Box', ssh_target: 'box.lan' }] } as never, m.openers, enT());
         const items = (m.asked[0]![1] as { items: { key: string; sub: string | null }[] }).items;
-        expect(items.find((i) => i.key === 'hosta')!.sub).toBe(null);
+        expect(items.find((i) => i.key === 'studio')!.sub).toBe(null);
         expect(items.find((i) => i.key === 'b')!.sub).toBe('box.lan');
     });
 
@@ -325,26 +325,26 @@ describe('issue #162 slice S6: which host a create launches on', () => {
         const hostCalls = rec.host.listHosts;
         rec.host.listHosts = async () => { order.push('hosts'); return hostCalls(); };
         let asked: unknown = 'unset';
-        rec.host.chooseProvider = async (remote) => { order.push('launcher'); asked = remote; return { wrapperId: 'keyc', farLauncher: true }; };
-        const m = modals({ choice: 'hosta', name: [GOOD_NAME], folder: GOOD_FOLDER });
+        rec.host.chooseProvider = async (remote) => { order.push('launcher'); asked = remote; return { wrapperId: 'cld', farLauncher: true }; };
+        const m = modals({ choice: 'studio', name: [GOOD_NAME], folder: GOOD_FOLDER });
         await createProjectFlow(rec.host, m.openers, enT(), null);
         expect(order).toEqual(['hosts', 'launcher']);
-        expect(asked).toEqual({ key: 'hosta', label: 'Hosta' });
-        expect(rec.payloads[0]!.agent_type).toBe('keyc');
+        expect(asked).toEqual({ key: 'studio', label: 'Studio' });
+        expect(rec.payloads[0]!.agent_type).toBe('cld');
         expect(rec.payloads[0]!.agent_type_is_far).toBe(true);
     });
 
     test('#1911: this computer gets no remote target, and a bare family from the old-peer fallback is never flagged', async () => {
         const local = recorder();
         let asked: unknown = 'unset';
-        local.host.chooseProvider = async (remote) => { asked = remote; return { wrapperId: 'keyc' }; };
+        local.host.chooseProvider = async (remote) => { asked = remote; return { wrapperId: 'cld' }; };
         await createProjectFlow(local.host, modals({ name: [GOOD_NAME], folder: GOOD_FOLDER }).openers, enT(), null);
         expect(asked).toBe(null);
         expect('agent_type_is_far' in local.payloads[0]!).toBe(false);
 
         const old = recorder({ listHosts: async () => [REMOTE] });
         old.host.chooseProvider = async () => ({ wrapperId: 'claude', farLauncher: false });
-        await createProjectFlow(old.host, modals({ choice: 'hosta', name: [GOOD_NAME], folder: GOOD_FOLDER }).openers, enT(), null);
+        await createProjectFlow(old.host, modals({ choice: 'studio', name: [GOOD_NAME], folder: GOOD_FOLDER }).openers, enT(), null);
         expect(old.payloads[0]!.agent_type).toBe('claude');
         expect('agent_type_is_far' in old.payloads[0]!).toBe(false);
     });
@@ -406,5 +406,38 @@ describe('RULE: a refused folder creates no session (#1928)', () => {
         const shown = rec.calls.filter(([kind]) => kind === 'showError').map(([, message]) => String(message));
         expect(shown).toHaveLength(1);
         expect(shown[0]).toContain('base folder');
+    });
+});
+
+describe('opening an existing project builds its body by the same local-only rules (u141-05)', () => {
+    const choice = { model: 'opus', accountId: 'play', pinAccount: true, wrapperId: 'claude-chrome' };
+
+    test('a local root sends the model, the account pin and the agent', () => {
+        expect(buildOpenProjectPayload('api', '/Users/me/api', choice as never, { cols: 80 })).toEqual({
+            working_dir: '/Users/me/api', auto_start_claude: true, copy_templates: false, project_name: 'api', label: 'api',
+            cols: 80, agent_type: 'claude-chrome', model: 'opus', account_id: 'play', account_pinned: true,
+        });
+    });
+
+    test('an ssh:// or peer:// root carries its computer and far folder, like create does', () => {
+        expect(buildOpenProjectPayload('api', 'ssh://studio/home/api', choice as never, {})).toMatchObject({ host_key: 'studio', working_dir: '/home/api' });
+        expect(buildOpenProjectPayload('api', 'peer://peer-ab12/Users/me/api', choice as never, {})).toMatchObject({ host_key: 'peer-ab12', working_dir: '/Users/me/api' });
+        expect(buildOpenProjectPayload('api', '/Users/me/api', null, {})).not.toHaveProperty('host_key');
+    });
+
+    test('splitRemoteRoot refuses a local path and a root with no far folder', () => {
+        expect(splitRemoteRoot('/Users/me/api')).toBeNull();
+        expect(splitRemoteRoot('ssh://studio')).toBeNull();
+        expect(splitRemoteRoot('ssh:///x')).toBeNull();
+    });
+
+    test('an ssh:// or peer:// root sends neither the model nor the account', () => {
+        for (const root of ['ssh://studio/home/api', 'peer://mini/Users/me/api']) {
+            const body = buildOpenProjectPayload('api', root, choice as never, {});
+            expect(body).not.toHaveProperty('model');
+            expect(body).not.toHaveProperty('account_id');
+            expect(isRemoteRoot(root)).toBe(true);
+        }
+        expect(isRemoteRoot('/Users/me/api')).toBe(false);
     });
 });

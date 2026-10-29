@@ -56,7 +56,6 @@ export function pathLabelKey(provider: ProviderKind): string {
     return provider === 'codex' ? LEDGER_KEYS.editorCodexHomeLabel : LEDGER_KEYS.editorClaudeDirLabel;
 }
 
-/* CLAUDE_CONFIG_DIR */
 export function pathHelpKey(provider: ProviderKind): string {
     return provider === 'codex' ? LEDGER_KEYS.editorCodexHomeHelp : LEDGER_KEYS.editorClaudeDirHelp;
 }
@@ -91,6 +90,7 @@ export function storedAccountBody(
     if (!name || (provider !== 'claude' && provider !== 'codex')) return null;
     const managed = stored.managed === true;
     const body: AccountBody = { name, provider, managed, color };
+    // and an empty string
     if (typeof edit.short_name === 'string') body.short_name = edit.short_name.trim();
     if (managed) return body;
     const claudeDir = stored.claude_config_dir;
@@ -101,7 +101,7 @@ export function storedAccountBody(
     return body;
 }
 
-/* could not be read nothing at all */
+/* could not be read */
 export function draftRefusal(
     draft: AccountDraft,
     taken: readonly string[] | null,

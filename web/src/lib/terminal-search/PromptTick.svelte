@@ -1,4 +1,4 @@
-<!-- <button> -->
+
 <script lang="ts">
     import type { TickView } from './rail-model.svelte';
 
@@ -13,7 +13,7 @@
     const top = $derived(`${tick.y}px`);
 </script>
 
-<button
+<button data-base-exempt="a tick mark on the prompt rail, positioned by percent"
     type="button"
     class="prompt-tick"
     class:is-dim={tick.dim}

@@ -27,10 +27,10 @@ def test_a_reply_on_a_wait_that_is_not_on_the_owner_keeps_it_waiting(store):
 
 
 def test_a_reply_on_a_wait_that_names_the_owner_releases_it(store):
-    item = _park(store, "the owner runs the handoff script", "install")
+    item = _park(store, "Joe runs the handoff script", "install")
     assert store.post(item, "confirmed", actor="joe", kind="reply")["item"]["state"] == "open"
 
 
 def test_a_comment_never_releases_even_a_wait_on_the_owner(store):
-    item = _park(store, "the owner runs the handoff script", "install")
+    item = _park(store, "Joe runs the handoff script", "install")
     assert store.post(item, "note to self", actor="joe", kind="comment")["item"]["state"] == "waiting"

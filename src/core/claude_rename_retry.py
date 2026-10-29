@@ -16,7 +16,6 @@ MAX_PUSH_ATTEMPTS: int = 5
 
 MIN_ATTEMPT_INTERVAL_SECONDS: float = 60.0
 
-# could not
 
 RETRY_PUSH: str = "push"
 
@@ -90,48 +89,6 @@ def decide_retry(
     max_attempts: int = MAX_PUSH_ATTEMPTS,
     min_interval_seconds: float = MIN_ATTEMPT_INTERVAL_SECONDS,
 ) -> RetryDecision:
-    """Whether to re-push a browser rename that never reached Claude.
-
-    Description: PURE, and the whole policy. The ladder, in order, with
-      the reason each rung sits where it does:
-
-      1. The transcript could not be read -> :data:`RETRY_UNREADABLE`.
-         FIRST, because a reading that did not happen decides nothing and
-         must not be charged against the budget.
-      2. The sync WROTE this pass -> :data:`RETRY_SUPERSEDED`. An
-         ``APPLIED`` means Claude renamed after we last looked, so
-         Claude's name is the newer one and pushing over it is exactly
-         the clobber this module exists to avoid. A ``BASELINE`` means
-         first sight, which by this project's standing rule establishes
-         no ordering at all.
-      3. The columns agree -> :data:`RETRY_AGREED`. The steady state.
-      4. The ordering frame is missing or overtaken ->
-         :data:`RETRY_UNORDERED`. See the module docstring: a divergence
-         with no witnessed agreement behind it may be a baseline that
-         landed on a row whose visible label was already different, and
-         that case genuinely cannot be ordered.
-      5. The budget for this label is spent -> :data:`RETRY_EXHAUSTED`.
-      6. The last push is younger than the interval floor ->
-         :data:`RETRY_WAITING`.
-      7. Otherwise -> :data:`RETRY_PUSH`.
-
-      Note rung 2 is reached only on a pass that actually wrote, so the
-      surviving path into rung 4 is ``TITLE_UNCHANGED``: the transcript's
-      newest ``custom-title`` was READ and equals ``claude_title``. That
-      is the positive confirmation described in the module docstring, and
-      it is why a ``CUSTOM_TITLE_NO_RECORD`` window - which arrives here
-      as ``TITLE_NOT_MEASURED`` - authorises nothing.
-    Inputs: sync_action (str) - a ``claude_title_sync.TITLE_*`` verdict
-      from this same pass. title (str | None) - ``sessions.title`` after
-      the pass. claude_title (str | None) - ``sessions.claude_title``
-      after the pass. mark (RenameMark | None) - the row's ledger entry.
-      now (float) - unix seconds. max_attempts (int). min_interval_seconds
-      (float).
-    Output: RetryDecision.
-    Example: decide_retry(sync_action=TITLE_UNCHANGED, title='New',
-      claude_title='Old', mark=RenameMark(agreed_title='Old'),
-      now=0.0).verdict -> 'push'
-    """
     if sync_action == TITLE_NOT_MEASURED:
         return RetryDecision(
             RETRY_UNREADABLE,

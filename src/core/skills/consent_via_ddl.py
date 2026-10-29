@@ -13,7 +13,6 @@ CONSENT_BLUEPRINT = "blueprint"
 CONSENT_PACK = "pack"
 CONSENT_VIA_VALUES: Tuple[str, ...] = (CONSENT_SHEET, CONSENT_ONE_CLICK, CONSENT_BLUEPRINT, CONSENT_PACK)
 
-# already exists
 OLD_CONSENT_CHECK = f"CHECK ({CONSENT_VIA_COLUMN} IN ('sheet', 'one_click', 'blueprint'))"
 NEW_CONSENT_CHECK = f"CHECK ({CONSENT_VIA_COLUMN} IN ({', '.join(repr(v) for v in CONSENT_VIA_VALUES)}))"
 

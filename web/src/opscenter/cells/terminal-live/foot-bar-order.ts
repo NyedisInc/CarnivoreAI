@@ -1,3 +1,4 @@
+import { preferenceField } from '../../../lib/preferences/field';
 
 export const FOOT_BAR_ORDER_IDS = ['context', 'window_5h', 'window_7d'] as const;
 
@@ -6,17 +7,6 @@ export type FootBarOrderId = (typeof FOOT_BAR_ORDER_IDS)[number];
 export const FOOT_BAR_ORDER_FIELD = 'foot_bar_order';
 
 export const DEFAULT_FOOT_BAR_ORDER: readonly FootBarOrderId[] = FOOT_BAR_ORDER_IDS;
-
-interface Bridge {
-  read(field: string, localReader: () => unknown): unknown;
-  write(field: string, value: unknown, localWriter: () => void): Promise<unknown>;
-  follow?(field: string, apply: (value: unknown) => void): () => void;
-}
-
-function bridge(): Bridge | null {
-  const found = (globalThis as { PreferenceBridge?: Bridge }).PreferenceBridge;
-  return found && typeof found.read === 'function' ? found : null;
-}
 
 export function asFootBarOrder(value: unknown): FootBarOrderId[] {
   const kept: FootBarOrderId[] = [];
@@ -39,12 +29,12 @@ export function moveInOrder(order: readonly FootBarOrderId[], id: FootBarOrderId
   return next;
 }
 
+const field = preferenceField<FootBarOrderId[]>(FOOT_BAR_ORDER_FIELD, asFootBarOrder, [...DEFAULT_FOOT_BAR_ORDER]);
+
 export function readFootBarOrder(): FootBarOrderId[] {
-  return asFootBarOrder(bridge()?.read(FOOT_BAR_ORDER_FIELD, () => null));
+  return field.read();
 }
 
 export function followFootBarOrder(apply: (order: FootBarOrderId[]) => void): () => void {
-  const found = bridge();
-  if (!found || typeof found.follow !== 'function') return () => {};
-  return found.follow(FOOT_BAR_ORDER_FIELD, (value) => apply(asFootBarOrder(value)));
+  return field.follow(apply);
 }

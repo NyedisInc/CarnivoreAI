@@ -144,6 +144,16 @@ class Lane:
         self._day_count.add(self.dest_id, self._day_key(now), billed)
         return True
 
+    async def send_now(self, item: Item) -> DeliveryResult:
+        if self._sms_like:
+            now = self._clock()
+            billed = await self._billed(item)
+            if not self._charge(now, billed):
+                log.warning("notify_sms_daily_cap", dest=self.dest_id, cap=PER_DAY_SMS, needed=billed, test=True)
+                return DeliveryResult(ok=False, failure=FailureClass.RATE_LIMITED,
+                                      detail=f"{SMS_CAP_DETAIL}: {billed} messages needed, {self._sms_left(now)} left today")
+        return await self._attempt(item)
+
     async def _deliver(self, item: Item, billed: int = 0) -> DeliveryResult:
         result = await self._attempt(item)
         for index in range(len(RETRY_DELAYS)):

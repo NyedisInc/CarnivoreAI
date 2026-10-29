@@ -11,6 +11,7 @@ from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Sequence, Tu
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_QUICK_S, connect_readonly
 from src.core.session_timeline.assemble import parse_time
 
 logger = structlog.get_logger()
@@ -35,7 +36,7 @@ class Cell(NamedTuple):
 
 
 class BandUnreadable(Exception):
-    """The activity could not be read inside its budget (row cap or deadline)."""
+    pass
 
 
 def grain_for(span_seconds: float) -> int:
@@ -77,7 +78,7 @@ def read_cells(stats_db: Path, windows: Sequence[Window]) -> Dict[str, List[Cell
     for w in windows:
         args += [w.conversation_id, w.lo - w.lo % HOUR_ROW_SECONDS, w.lo - w.lo % MINUTE_ROW_SECONDS, w.hi, w.grain]
     args.append(MAX_ROWS + 1)
-    with closing(sqlite3.connect(stats_db.as_uri() + "?mode=ro", uri=True, timeout=1)) as conn:
+    with closing(connect_readonly(stats_db, timeout=READONLY_TIMEOUT_QUICK_S)) as conn:
         conn.set_progress_handler(
             lambda: 1 if time.thread_time() > cpu_deadline or time.monotonic() > wall_deadline else 0, 1000)
         try:

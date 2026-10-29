@@ -6,6 +6,10 @@ import { setLocale } from '../i18n/index.svelte';
 import { sidebarTabs } from '../dynamic-tabs/tab-store.svelte';
 import { DRAWER_TAB_STORAGE_KEY, DRAWER_TABBODY_ID } from '../drawer-tabs/drawer-tabs';
 import { FLOW_TAB, prefs, settle, setupRail, teardownRail } from '../sidebar-widgets/fixtures/rail-harness';
+import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+
+// The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
+registerSwarmFlyout();
 import { tabFlags } from '../sidebar-widgets/fixtures/tab-flags.svelte';
 import { mountDrawerLayout } from './mount-drawer-layout';
 import { ROOT_ZONE_KEY, SESSION_LIST_TAB } from './root-zone.svelte';

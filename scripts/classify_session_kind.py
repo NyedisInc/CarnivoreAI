@@ -1,14 +1,46 @@
 #!/usr/bin/env python3
-"""
+"""Classify every IMPORTED session row as the owner's work or machinery's.
+
 DRY RUN IS THE DEFAULT AND IS THE ONLY MODE THAT NEEDS NO ARGUMENT.
-``--apply`` exists so a human can act on a report he has read.
+``--apply`` exists so a human can act on a report he has read, and it
+refuses without ``--require-backup <path>`` naming a backup taken first.
+
+WHY THIS SCRIPT EXISTS. ``scripts/import_transcript_sessions.py`` gave
+every conversation on this machine a ``sessions`` row - 895 of them. That
+corpus is not all the owner's typing: measured 2026-09-08 it holds 259
+scheduler runs and 11 headless ``claude -p`` probes. The owner's rule,
+verbatim: "lists should always just be mine. the rest can be found in the
+archive explorer." This pass writes the column the lists filter on.
 
 WHAT IT WRITES, AND WHERE IT REFUSES TO. Exactly ONE column,
 ``sessions.kind``, on rows that satisfy BOTH guards:
 
+  * ``origin = 'imported'`` - a row this app never watched. Rows the app
+    CREATED or ADOPTED were launched or attached by the owner at a
+    keyboard and were stamped 'interactive' by the v25 migration; this
+    script does not second-guess them.
+  * ``kind IS NULL OR kind = 'unknown'`` - never overwrite a decided
+    classification. Re-running is therefore safe and converges rather
+    than churning.
+
+THE VOCABULARY IS THREE WORDS. 'interactive', 'automated', 'unknown'.
+src/core/session_kind.py owns the ladder and the argument for every rung;
+nothing here re-implements a matcher. ``unknown`` is written as a real
+value rather than left NULL so a later re-run can tell "measured, and the
+file answers nothing" apart from "never measured" - and BOTH keep the row
+in the owner's lists, because not having looked is not evidence of
+automation.
+
 NEGATIVE CONTROLS RUN ON EVERY REPORT, not as a one-off. A matcher that
 always finds something is worse than useless, so the report states, as
 counts:
+
+  * how many rows the TITLE would have called scheduled that the marker
+    does not, and vice versa;
+  * how many rows titled "Implement the following plan: ..." - which
+    reads as delegated work - are proven INTERACTIVE by a ``planContent``
+    record, i.e. a human approving a plan in the TUI;
+  * how many rows a title rule would have missed entirely.
 
 READ-ONLY BY CONSTRUCTION IN DRY RUN. The database is opened with
 ``PRAGMA query_only=ON`` rather than a ``mode=ro`` URI, because
@@ -40,7 +72,10 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.db_rename.legacy import script_default_db  # noqa: E402
+from src.core.db_rename.legacy import (  # noqa: E402
+    backup_refusal,
+    resolve_script_db,
+)
 
 from src.core.session_kind import (  # noqa: E402
     KIND_AUTOMATED,
@@ -57,9 +92,7 @@ TITLE_SCHEDULED_PREFIX = "scheduled task:"
 
 TITLE_PLAN_PREFIX = "implement the following plan"
 
-
-def default_db() -> str:
-    return script_default_db()
+APPLY_BUSY_TIMEOUT_S = 30
 
 
 def default_corpus() -> Path:
@@ -67,12 +100,6 @@ def default_corpus() -> Path:
 
 
 def open_readonly(db_path: str) -> sqlite3.Connection:
-    """Open the datastore so a write is impossible for the connection's life.
-
-    Inputs: db_path (str).
-    Output: sqlite3.Connection.
-    Raises: sqlite3.Error - the file could not be opened.
-    """
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA query_only=ON")
     conn.row_factory = sqlite3.Row
@@ -185,7 +212,7 @@ def apply_kinds(
     db_path: str, classified: Sequence[Tuple[sqlite3.Row, str, str, str]]
 ) -> int:
     written = 0
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=APPLY_BUSY_TIMEOUT_S)
     try:
         with conn:
             for row, kind, _marker, _detail in classified:
@@ -266,7 +293,11 @@ def census(conn: sqlite3.Connection) -> Counter:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--db", default=default_db(), help="path to cloude.db")
+    parser.add_argument(
+        "--db",
+        default=None,
+        help="path to the database (default: the conventional state directory)",
+    )
     parser.add_argument(
         "--corpus",
         default=str(default_corpus()),
@@ -278,17 +309,22 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="write sessions.kind. Without this, nothing is written.",
     )
+    parser.add_argument(
+        "--require-backup",
+        metavar="PATH",
+        help="a backup that must exist (and not be empty) before --apply writes",
+    )
     return parser
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """Entry point.
-
-    Inputs: argv (list[str] | None).
-    Output: int - 0 on success, 2 when the datastore could not be read.
-    Example: main(['--report', '/tmp/r.md'])
-    """
     args = build_parser().parse_args(argv)
+    if args.apply:
+        refusal = backup_refusal(args.require_backup)
+        if refusal:
+            print(refusal, file=sys.stderr)
+            return 2
+    args.db = resolve_script_db(args.db)
     if not os.path.exists(args.db):
         print(f"no datastore at {args.db}", file=sys.stderr)
         return 2
@@ -307,7 +343,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         conn.close()
 
     classified = classify_rows(rows, index_corpus(Path(args.corpus)))
-    applied = apply_kinds(args.db, classified) if args.apply else None
+    try:
+        applied = apply_kinds(args.db, classified) if args.apply else None
+    except sqlite3.Error as exc:
+        print(f"could not write sessions.kind: {exc}", file=sys.stderr)
+        return 2
     report = render(
         classified, db_path=args.db, before=before, applied=applied
     )

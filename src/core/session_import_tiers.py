@@ -1,22 +1,3 @@
-"""The individual tier evaluators of the session-attribution ladder.
-
-Split out of :mod:`src.core.session_import_ladder` so neither file grows
-past this project's 500-line ceiling, and so the RULE that combines the
-tiers stays readable next to the rule about what each one may claim.
-
-Every function here returns a :class:`TierOutcome` with THREE possible
-results and never raises for a data problem: ``hit`` (this tier proves
-the session is ours), ``miss`` (this tier was evaluated and found
-nothing) and ``unevaluated`` (this tier could not be measured at all).
-The third is not a flavour of the second. A tier that could not be
-measured propagates upward and stops the ladder reporting "we looked and
-found nothing" about a measurement that never happened.
-
-THERE IS NO TIER 2 IN THIS FILE, AND THAT IS THE POINT. See the ladder
-module's docstring: an ``ext_`` pipe records the app's own verdict, which
-the bug produced, and :class:`TierOutcome` refuses to be constructed with
-``tier=2`` at all.
-"""
 
 from __future__ import annotations
 
@@ -107,23 +88,6 @@ def _tier3_created_pipe(
 def _tier4_origin_marker(
     session: LiveSession, evidence: LadderEvidence
 ) -> TierOutcome:
-    """Tier 4: the tmux env marker ``CLOUDECODE_ORIGIN``, EPOCH GATED.
-
-    Description: the marker only proves anything on a session created
-      AFTER Stage A shipped on this install. On anything older it is
-      evidence of nothing and is IGNORED - not trusted, and not quietly
-      treated as absent either: the miss says why. When the install's
-      Stage-A boundary cannot be determined the tier is UNEVALUATED
-      rather than assumed valid.
-
-      A session with NO marker misses regardless of the boundary. There
-      is nothing to date, so an unknown boundary is not a failed
-      measurement - collapsing that into UNEVALUATED would put every
-      session on every pre-Stage-A install into could-not-evaluate and
-      drown the real signal.
-    Inputs: session (LiveSession). evidence (LadderEvidence).
-    Output: TierOutcome.
-    """
     name = "origin_marker"
     if session.tmux_name in evidence.origin_probe_failures:
         return TierOutcome(

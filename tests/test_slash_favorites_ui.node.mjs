@@ -1,3 +1,4 @@
+// told apart by SHAPE
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,6 +10,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -21,6 +28,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read one file from the repo root.
+ * @param {...string} parts  Path segments below the repo root.
+ * @returns {string} File contents.
+ */
 function read(...parts) {
     return fs.readFileSync(path.join(__dirname, '..', ...parts), 'utf8');
 }
@@ -45,6 +57,8 @@ const indexHtml = read('client', 'index.html');
 const chipsSvelte = read('web', 'src', 'lib', 'slash-favorites', 'FavoriteChips.svelte');
 const catalog = read('client', 'js', 'i18n', 'catalog.en.js');
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the star declares a 44px box rather than inheriting 36px', () => {
     const star = ruleBody(chipsCss, '.command-star');
@@ -70,6 +84,8 @@ test('the star is square: no pill, no ellipse', () => {
         'settings was just flattened and this has to match');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('`more` is no longer a pill either', () => {
     const more = ruleBody(baseCss, '.command-more');
@@ -109,6 +125,8 @@ test('a chip reserves the same room and can still shrink', () => {
     assert.ok(pad && Number(pad[1]) >= 40, 'no room reserved for the chip star');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the star handler stops propagation and the default', () => {
     const wire = /function wire\(root, onChange\)[\s\S]*?\n    }\n/.exec(favJs);
@@ -131,6 +149,8 @@ test('a failed toggle re-enables the star and does not fake success', () => {
         'a star left disabled after a failure looks like it worked');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('an empty favorites row says what it is', () => {
     assert.match(catalog, /'slash\.favorites\.empty': 'no favorites\. tap a star below to add one\.'/,
@@ -149,6 +169,8 @@ test('a server predating `defaulted` is treated as user-chosen', () => {
         'claiming authorship the user does not have is the wrong default');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the row still carries the FULL description in data-description', () => {
     assert.match(modalJs, /data-description="\$\{this\._escapeHtml\(full\)\}"/,
@@ -173,6 +195,8 @@ test('a repaint swaps stars in place rather than rebuilding the rows', () => {
         + 'replacing them would break search until the modal was reopened');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('slash-favorites.js loads before slash-commands.js and after api.js', () => {
     const order = ['/static/js/api.js', '/static/js/slash-favorites.js', '/static/js/slash-commands.js']

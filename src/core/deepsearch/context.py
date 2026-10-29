@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import threading
+from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -16,6 +19,11 @@ from src.core.deepsearch.live.reader import RangeReader, read_line
 WINDOW_DEFAULT: int = 20
 WINDOW_MAX: int = 50
 ROLES: Dict[str, str] = {K.KIND_USER: "user", K.KIND_ASSISTANT: "assistant", K.KIND_TOOL: "tool", K.KIND_SUMMARY: "summary"}
+
+
+SPANS_CACHE_SIZE: int = 4
+_spans_cache: "OrderedDict[tuple, List[Tuple[int, int]]]" = OrderedDict()
+_spans_lock = threading.Lock()
 
 
 class ContextNotFound(LookupError):
@@ -42,6 +50,34 @@ def find_file(conn: sqlite3.Connection, conversation_id: str, file_kind: str) ->
                        "WHERE conversation_id = ? AND file_kind = ? AND in_scope = 1 ORDER BY indexed_offset DESC LIMIT 1",
                        (conversation_id, file_kind)).fetchone()
     return LiveFile(Path(row[0]), row[1] or "claude", row[2], int(row[3]), row[4], row[5]) if row else None
+
+
+def _spans_key(file: LiveFile) -> tuple:
+    base = (str(file.path), file.mark, file.conversation_id, file.file_kind, file.end)
+    if file.from_backup:
+        return base
+    stat = os.stat(file.path)
+    return base + (stat.st_size, stat.st_mtime_ns)
+
+
+def _spans(source: ByteSource, file: LiveFile) -> List[Tuple[int, int]]:
+    try:
+        key: Optional[tuple] = _spans_key(file)
+    except OSError:
+        key = None
+    if key is not None:
+        with _spans_lock:
+            hit = _spans_cache.get(key)
+            if hit is not None:
+                _spans_cache.move_to_end(key)
+                return hit
+    spans = [(offset, len(raw)) for offset, raw in RangeReader(source, 0, file.end)]
+    if key is not None:
+        with _spans_lock:
+            _spans_cache[key] = spans
+            while len(_spans_cache) > SPANS_CACHE_SIZE:
+                _spans_cache.popitem(last=False)
+    return spans
 
 
 def _message(spans: List[Tuple[int, int]], source: ByteSource, file: LiveFile, rules: Dict[str, Any], line: int) -> Optional[Dict[str, Any]]:
@@ -102,7 +138,7 @@ def window(file: LiveFile, overrides: Dict[str, Any], marks: List[Any], *, line:
     before, after = max(1, min(int(before), WINDOW_MAX)), max(1, min(int(after), WINDOW_MAX))
     rules = rules_for(overrides, file.family, file.file_kind)
     source = open_source(str(file.path), file.mark, file.conversation_id, file.file_kind)
-    spans = [(offset, len(raw)) for offset, raw in RangeReader(source, 0, file.end)]
+    spans = _spans(source, file)
     if line is None and at is None and before_line is None and after_line is None:
         raise ContextNotFound("no anchor")
     if before_line is not None:

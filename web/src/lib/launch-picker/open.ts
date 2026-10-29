@@ -8,8 +8,9 @@ import type { LaunchProfilesApi } from '../launch-profiles-page/api';
 import type { AccountAnswer } from './account-model';
 import type { RestartAccounts } from './account-types';
 import type { PickerRow } from './picker-model';
+import type { LaunchPrefill } from './prefill';
 
-export interface PickerAnswer { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean }
+export interface PickerAnswer { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean }
 
 export interface OpenOptions {
     title?: string;
@@ -22,6 +23,7 @@ export interface OpenOptions {
     accounts?: boolean;
     remote?: { key: string; label: string } | null;
     goLabel?: string | null;
+    prefill?: LaunchPrefill | null;
 }
 
 export function openLaunchPicker(options: OpenOptions = {}, t: Translate = appT): Promise<PickerAnswer | null> {
@@ -46,7 +48,7 @@ export interface LaunchChoiceOptions {
     api?: LaunchProfilesApi;
 }
 
-/* label: ' */
+/* the launch choice */
 export function mountLaunchChoice(containerId: string, opts: LaunchChoiceOptions): LaunchChoiceHandle | null {
     const host = mountPanel(containerId, LaunchChoiceHost, { rows: opts.rows, value: opts.value ?? '', label: opts.label ?? '', accounts: opts.accounts ?? null, api: opts.api });
     if (!host) return null;

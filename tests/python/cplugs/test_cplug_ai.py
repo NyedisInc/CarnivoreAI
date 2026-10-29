@@ -87,7 +87,7 @@ def refused(host, feature, capability, data):
 
 def test_chat_goes_through_a_host_built_request_and_is_budgeted(rig):
     host, _, gateway, seen, tmp = rig
-    secret = "ghp_" + "aB3dE5fG7hJ9kL1mN3pQ5rS7tV9wX1yZ3aB5"  # synthetic test value, never issued
+    secret = "ghp_" + "aB3dE5fG7hJ9kL1mN3pQ5rS7tV9wX1yZ3aB5"
     out = call(host, FID, "chat", {"prompt": f"summarise {secret} please", "max_tokens": 99999})
     assert out == {"output": "ok"}
     kind, protocol, request = seen[0]

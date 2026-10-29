@@ -195,25 +195,6 @@
   --_btn-ink: var(--oc-green);
 }
 
-.sd-ib {
-  display: inline-grid;
-  place-items: center;
-  width: var(--oc-control-h-xs);
-  height: var(--oc-control-h-xs);
-  padding: 0;
-  border: var(--oc-border) solid transparent;
-  border-radius: var(--oc-radius-control);
-  background: transparent;
-  color: var(--oc-text-secondary);
-  flex: 0 0 auto;
-  cursor: pointer;
-}
-
-.sd-ib--framed {
-  border-color: var(--oc-line-rule);
-  background: var(--oc-ground-raised);
-}
-
 .sd-glyph {
   display: inline-flex;
   flex: 0 0 auto;

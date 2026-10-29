@@ -36,7 +36,7 @@
   {#if rollup}
     <span class="subagent-count subagent-count--rollup" {title} data-subagents-rollup>{badgeText(count)}</span>
   {:else}
-    <button
+    <button data-base-exempt="an inline count chip sized to the session row label"
       type="button"
       class="subagent-count subagent-count--button"
       aria-haspopup="dialog"

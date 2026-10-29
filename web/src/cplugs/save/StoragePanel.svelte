@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { t as reactiveT, scaleStep, type Translate } from '../sdk';
-    import { LimitGauge } from '../sdk/ui';
+    import { Button, LimitGauge } from '../sdk/ui';
     import FolderUnits from './FolderUnits.svelte';
     import {
         CAP_MIN_GB,
@@ -32,9 +32,9 @@
     let note = $state('');
     let problem = $state('');
 
-    const percent = $derived(usage && usage.cap_bytes > 0 ? (usage.used_bytes / usage.cap_bytes) * 100 : 0);
+    const percent = $derived(usage && usage.cap_bytes > 0 ? (usage.history_bytes / usage.cap_bytes) * 100 : 0);
     const meterText = $derived(
-        usage ? t('cplug.save.settings.meter', { used: gbText(usage.used_bytes), cap: gbText(usage.cap_bytes) }) : '',
+        usage ? t('cplug.save.settings.meter', { used: gbText(usage.history_bytes), cap: gbText(usage.cap_bytes) }) : '',
     );
     const locked = $derived(settings?.cap_env_locked ?? false);
 
@@ -72,7 +72,7 @@
     function onRelease(): void {
         note = '';
         if (!usage || value === sliderValue(settings?.cap_gb ?? value)) return;
-        if (dropsPoints(value, usage.used_bytes)) {
+        if (dropsPoints(value, usage.history_bytes)) {
             pending = value;
             return;
         }
@@ -90,7 +90,7 @@
         <div class="tm__meter">
             <LimitGauge variant="fill" pct={percent} scale={scaleStep(percent)} {meterText} height={8} />
             <p class="tm__figs" data-tm="figures">
-                {t('cplug.save.settings.meter', { used: gbText(usage.used_bytes), cap: gbText(usage.cap_bytes) })}
+                {t('cplug.save.settings.meter', { used: gbText(usage.history_bytes), cap: gbText(usage.cap_bytes) })}
             </p>
             <p class="tm__sub" data-tm="counts">
                 {t('cplug.save.settings.counts', {
@@ -121,14 +121,14 @@
         {/if}
         {#if pending !== null}
             <div class="tm__warn" role="alert" data-tm="warn">
-                <p>{t('cplug.save.settings.lower_warning', { cap: `${pending} gb`, used: gbText(usage.used_bytes) })}</p>
+                <p>{t('cplug.save.settings.lower_warning', { cap: `${pending} gb`, used: gbText(usage.history_bytes) })}</p>
                 <div class="tm__actions">
-                    <button type="button" class="oc-btn" data-tm="cancel" disabled={busy} onclick={cancel}>
+                    <Button data-tm="cancel" disabled={busy} onclick={cancel}>
                         {t('cplug.save.settings.cancel')}
-                    </button>
-                    <button type="button" class="oc-btn oc-btn--confirm" data-tm="confirm" disabled={busy} onclick={() => void write(pending!)}>
+                    </Button>
+                    <Button variant="confirm" data-tm="confirm" disabled={busy} onclick={() => void write(pending!)}>
                         {t('cplug.save.settings.confirm')}
-                    </button>
+                    </Button>
                 </div>
             </div>
         {/if}

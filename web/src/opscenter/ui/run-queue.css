@@ -1,11 +1,3 @@
-/*
- * RUNNING AND QUEUE (ui/RunQueue.svelte, an item follow-up, #1689): the two short sections over the pipeline chart
- * and the scheduled chart. COPIED, NOT INVENTED: the deleted job widget's sections (75d4ae2a3^,
- * cells/pipeline/Cell.svelte: .oc-pl-head, .oc-pl-count, .oc-pl-job, .oc-pl-name, .oc-pl-stage, .oc-pl-time,
- * .oc-pl-none), restated here as global rules so the style guide's bundle (no component CSS) renders them. Color is
- * --oc-* tokens only; the head is a title-row hairline (box-shadow, never a border). The time column is `auto`, so a
- * time is never cut off; the name and the area share the rest and ellipsize (no tooltip on a name, #1209).
- */
 @layer patterns {
   .oc-rq {
     flex: 0 0 auto;
@@ -50,7 +42,6 @@
     padding: 0;
   }
 
-  /* padding */
   .oc-rq-row {
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;

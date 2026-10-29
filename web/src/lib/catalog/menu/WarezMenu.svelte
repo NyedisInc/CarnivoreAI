@@ -177,7 +177,6 @@
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
-        /* padding */
         width: max-content;
         max-width: 300px;
         min-height: 0;
@@ -202,7 +201,6 @@
         box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
     }
 
-    /* padding */
     .wm__search :global(.oc-page__search) {
         contain: inline-size;
     }

@@ -1,4 +1,3 @@
-/*  hidden  */
 import { isAgentList, type TaskManagerGroup } from '../huddle-model';
 import { listLabel } from '../task-manager-schedule-project';
 import type { Entry } from './task-view';

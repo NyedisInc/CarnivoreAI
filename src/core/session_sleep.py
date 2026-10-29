@@ -1,38 +1,3 @@
-"""Putting a session to SLEEP: stop its agent and tmux, keep its row, asleep.
-
-ASLEEP IS A LIFECYCLE SOURCE, NOT A NEW COLUMN. An asleep row is
-``lifecycle='stopped'`` with ``lifecycle_source='slept_by_user'`` (or
-``'slept_by_timer'`` when the auto-sleep pass did it). A companion shell
-(issue #1551) is never selected by auto-sleep (``auto_sleep.sleeper.AGENT_FAMILIES``) and a
-sleeping agent CLOSES its shell through this module's :func:`close_for_sleep`,
-writing the shell row ``lifecycle_source='closed_with_agent'`` (a source word
-that is not a sleep source: the shell is not asleep, it is gone until the next
-open re-records it on the same row). That is a
-durable fact on the row (so a boot, a ghost reap or the lifecycle reaper
-cannot lose it: none of them deletes a row, and the reaper writes only over
-``running``), and it needs no schema bump, so an older build can still open
-the database. It also cannot go stale: every path that brings a row back
-(wake, a Recent restart, the reopen offer) goes through
-``session_restart.rebind_instance``, which rewrites ``lifecycle`` and
-``lifecycle_source``, and a later kill or loss writes its own source over it.
-
-HOW IT DIFFERS FROM KILL, and nothing else does. Kill (``DELETE /sessions``)
-writes ``closed_by_user``, which files the row under Recent; it also removes
-the session's uploads bucket and drops its pinned theme. Sleep keeps the row
-in the running lists, keeps the uploads and the pin (the session is coming
-back to them), and refuses a session whose conversation id is not known,
-because a sleep that cannot be woken into the same conversation is a kill.
-
-NO SECOND TEARDOWN. A registered session is stopped by its own backend's
-``stop()`` (``kill-session -t =<name>`` on its own socket) and forgotten by
-``session_ghost_reap.drop_registration``, the registration teardown the ghost
-reap and the adopt path already use. A session on the socket with no
-registration is killed by exact name on the row's own socket.
-
-THE NAME STAYS RESERVED WHILE ASLEEP (:func:`reserved_names`), or a new
-session in the same project could take it and the wake, gated on that name
-being measured absent, could never run.
-"""
 
 from __future__ import annotations
 
@@ -46,6 +11,7 @@ import structlog
 from src.core.sessions import offer_reservation
 from src.core.db_models import SESSION_LIFECYCLE_RUNNING, SESSION_LIFECYCLE_STOPPED
 from src.core.session_pane_death import LIFECYCLE_SOURCE_PANE_DEAD
+from src.core.sessions.host_port import SessionHost
 
 logger = structlog.get_logger()
 
@@ -81,16 +47,6 @@ def is_dead_pane_stop(row: Optional[Mapping[str, Any]]) -> bool:
 
 
 def _transcript_absent(row: Mapping[str, Any], uuid: str) -> bool:
-    """Is this row's conversation transcript MEASURED absent from disk (P23)?
-
-    Description: a conversation id with no transcript behind it cannot be resumed, so a dead-pane row holding
-      one is closed, not asleep (row 77 "Home"). Asked of the row's own harness: codex rollout store for a
-      codex row, every claude transcript root (``locate_transcript``) otherwise. UNCHECKED (a store that could
-      not be read) is NOT absence, so the row keeps reading asleep. Results are cached by the presence probe.
-    Inputs: row (Mapping) - a ``sessions`` row; uuid (str) - its conversation id.
-    Output: bool - True only on a definite ABSENT.
-    Example: _transcript_absent({'agent_family': 'codex'}, '019a...')  # True when no rollout exists
-    """
     from src.core.attention.evidence import FAMILY_CODEX
     from src.core.session_transcript_presence import CONVERSATION_ABSENT, codex_rollout_presence
 
@@ -110,17 +66,6 @@ def is_asleep(row: Optional[Mapping[str, Any]]) -> bool:
 
 
 def is_closed(row: Optional[Mapping[str, Any]]) -> bool:
-    """Is this stored row CLOSED: stopped on purpose or gone, not asleep, not deleted? PURE.
-
-    Description: a closed session (#1845) is a real process that ended (the user closed it, or tmux lost it) and that
-      the user has not archived. It is not asleep (nothing promises a wake), not archived (the user has not removed
-      it from the lists) and not a lineage row (no tmux creation epoch: it describes a conversation, not a process).
-      The drawer lists it with its own "closed" look until the user reopens or archives it.
-    Inputs: row (Mapping | None) - a ``sessions`` row.
-    Output: bool.
-    Example: is_closed({'lifecycle': 'stopped', 'lifecycle_source': 'closed_by_user',
-      'tmux_created_epoch': 1, 'archived_at': None})  # True
-    """
     if not row or row.get("archived_at"):
         return False
     if row.get("lifecycle") != SESSION_LIFECYCLE_STOPPED or row.get("tmux_created_epoch") is None:
@@ -129,20 +74,6 @@ def is_closed(row: Optional[Mapping[str, Any]]) -> bool:
 
 
 def sleep_refusal(row: Mapping[str, Any], *, fresh_ok: bool = False) -> Optional[SleepRefusal]:
-    """Whether this row may be put to sleep, and why not. PURE.
-
-    Description: the gates, in order. THE CONVERSATION GATE USES THE SAME
-      CLASSIFIER THE WAKE WILL (``session_resume_target.resume_target_from_row``
-      is what ``recreate_routes._gather`` builds its ``--resume`` from), so a
-      row this lets through is one the wake can resume by construction.
-    Inputs: row (Mapping) - the ``sessions`` row, read by ``session_uuid``. fresh_ok
-      (bool) - a Swarm sleep: the no-conversation gate is skipped, because a body
-      that never finished a turn has no conversation id and its next wake is fresh.
-    Output: SleepRefusal | None - None means every gate passed.
-    Example: sleep_refusal({'lifecycle': 'running', 'tmux_name': 'a',
-      'tmux_created_epoch': 1, 'claude_session_uuid': None}).code
-      # 'no_conversation'
-    """
     from src.core.session_recreate import has_tmux_identity
     from src.core.session_resume_target import (
         CONVERSATION_RESUMED,
@@ -237,14 +168,6 @@ def asleep_rows(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
 
 
 def closed_rows(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
-    """Every CLOSED, undeleted, user-facing row with a known conversation id, newest first (#1980).
-
-    Description: a closed row (:func:`is_closed`, e.g. ``lifecycle_source='tmux_missing'`` after a reboot) that
-      can be reopened through the recreate path, which resumes by the row's ``claude_session_uuid``; a closed row
-      without one has nothing to resume and is left out. Same user-facing filter as :func:`asleep_rows`.
-    Inputs: conn (sqlite3.Connection). Output: list[dict] - ``sessions`` rows.
-    Example: closed_rows(conn)  # [{'session_uuid': 'u1', 'lifecycle_source': 'tmux_missing', ...}]
-    """
     from src.core import session_store
 
     rows = session_store.list_sessions(
@@ -291,7 +214,7 @@ def reserved_names(owned: Iterable[str], *, db_path: Optional[Path] = None) -> S
     return names | offer_reservation.offered_names(db_path.parent)
 
 
-async def close_for_sleep(manager: Any, *, name: str, socket: str) -> Dict[str, Any]:
+async def close_for_sleep(manager: SessionHost, *, name: str, socket: str) -> Dict[str, Any]:
     from src.core.session_ghost_reap import drop_registration
 
     held = [

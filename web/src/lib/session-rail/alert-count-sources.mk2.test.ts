@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import './alert-count-sources.svelte';
 import { alertCountSource } from './alert-counts';
 import { huddle } from '../../cplugs/huddle/huddle.svelte';
+import { entriesOf } from '../../cplugs/huddle/task-manager-design/entries';
+import { headCountsOf } from '../../opscenter/cells/task-manager-mk2/mk2-head-count';
 
 const scope = { sessionId: 'ses_1', rowId: 1, workingDir: '/x', projectId: 7 };
 
@@ -19,11 +21,12 @@ beforeEach(() => {
 });
 
 describe('TM Mark II rail badge', () => {
-  test('the single cell publishes the actionable count of the session project list: a question that needs him and a review, not the unread scheduled run and not the parked task', () => {
-    expect(alertCountSource('core.task-manager-mk2')?.read(scope)).toBe(2);
+  test('the single cell publishes the strip needs-you number of the session project list, not the unread scheduled run', () => {
+    expect(alertCountSource('core.task-manager-mk2')?.read(scope)).toBe(headCountsOf(entriesOf(huddle.groups, '7')).needsYou);
+    expect(alertCountSource('core.task-manager-mk2')?.read(scope)).toBe(3);
   });
-  test('the all-projects cell publishes the actionable count of every list, not the unread count (5 of the 6 are unread)', () => {
-    expect(alertCountSource('core.task-manager-mk2-all')?.read(null)).toBe(3);
+  test('the all-projects cell publishes the strip needs-you number of every list, not the unread count (5 of the 6 are unread)', () => {
+    expect(alertCountSource('core.task-manager-mk2-all')?.read(null)).toBe(headCountsOf(entriesOf(huddle.groups)).needsYou);
   });
   test('no project is no count, never zero', () => {
     expect(alertCountSource('core.task-manager-mk2')?.read({ ...scope, projectId: null } as never)).toBeNull();

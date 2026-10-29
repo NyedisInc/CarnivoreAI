@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { t as reactiveT, type Translate } from '../sdk';
+    import { Button } from '../sdk/ui';
     import { fetchLocation, saveLocation, type Fetcher, type LocationView, type LocationWarning } from './location-api';
     import { errorText } from './settings-api';
 
@@ -83,12 +84,12 @@
         {/if}
     {/if}
     <div class="tm__actions">
-        <button type="button" class="oc-btn" data-tm="location-default" disabled={busy || !view || view.location === ''} onclick={() => void write('')}>
+        <Button data-tm="location-default" disabled={busy || !view || view.location === ''} onclick={() => void write('')}>
             {t('cplug.save.location.use_default')}
-        </button>
-        <button type="button" class="oc-btn oc-btn--confirm" data-tm="location-save" disabled={busy || !changed} onclick={() => void write(draft)}>
+        </Button>
+        <Button variant="confirm" data-tm="location-save" disabled={busy || !changed} onclick={() => void write(draft)}>
             {t('cplug.save.location.save')}
-        </button>
+        </Button>
     </div>
     {#if note}<p class="tm__note" role="status" data-tm="location-note">{note}</p>{/if}
     {#if problem}<p class="tm__problem" role="alert" data-tm="location-problem">{problem}</p>{/if}

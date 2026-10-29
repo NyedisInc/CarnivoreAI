@@ -145,13 +145,6 @@ async def perf_profile(manager: Any, caller: AgentCaller, args: dict) -> dict:
 
 
 async def session_git_status(manager: Any, caller: AgentCaller, args: dict) -> dict:
-    """What changed in one session's repository since HEAD (#148): branch, ahead/behind, counts, changed files.
-
-    Inputs: args - ``target`` (required: a session id, adopted:<name> or tmux name).
-    Output: GET /sessions/{id}/git-status, scrubbed. ``state`` is ok, not_a_repo, remote (a paired computer's
-      session) or unknown (git could not be read: never a clean tree). The files list is capped by the reader.
-    Raises: ToolError - no target, no live session matches, or the route refused.
-    """
     from src.api.session_git_routes import get_session_git_status
     from src.core.mcp.write_tools import _request
 

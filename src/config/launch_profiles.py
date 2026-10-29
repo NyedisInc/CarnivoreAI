@@ -12,7 +12,7 @@ from src.core.debug_trace import is_secret_name
 
 LAUNCH_PROFILES_KEY = "launch_profiles"
 
-HARNESSES = ("claude", "codex", "shell", "hermes", "openclaw", "local")
+HARNESSES = ("claude", "codex", "shell", "hermes", "openclaw", "local", "custom")
 STRUCTURED_HARNESSES = frozenset({"claude", "codex", "shell"})
 
 _ID = re.compile(WRAPPER_ID_PATTERN)
@@ -158,7 +158,7 @@ class LaunchProfile(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str
-    harness: Literal["claude", "codex", "shell", "hermes", "openclaw", "local"]
+    harness: Literal["claude", "codex", "shell", "hermes", "openclaw", "local", "custom"]
     label: str = Field(min_length=1)
     icon: Optional[str] = None
     description: Optional[str] = None

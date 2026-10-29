@@ -16,6 +16,7 @@ from src.core.browsers.manager import BrowserUnavailable, CapReached
 from src.cplugs.host import page_owner, runtime
 from src.core.browsers.url_policy import UrlRefused, normalize_url, origin_of, storable_url
 from src.models.browsers import BrowserInfo, CreateBrowserRequest, OpenPageRequest
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -29,7 +30,7 @@ def _normalized(url: str) -> str:
     try:
         return normalize_url(url)
     except UrlRefused as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(400, "invalid_request", exc, step="_normalized") from exc
 
 
 async def _artifact_tab(ref: Dict[str, Any]) -> Tuple[Dict[str, str], str]:
@@ -37,7 +38,7 @@ async def _artifact_tab(ref: Dict[str, Any]) -> Tuple[Dict[str, str], str]:
         resolved = await resolvers.resolve(page_tab.KIND_ARTIFACT, ref)
     except resolvers.PageKindUnavailable as exc:
         raise HTTPException(status_code=409, detail={
-            "code": "browser_open_kind_unavailable", "detail": "huddle artifacts cannot be opened while the huddle is off"}) from exc
+            "code": "browser_open_kind_unavailable", "detail": "task manager artifacts cannot be opened while the task manager is off"}) from exc
     except resolvers.PageNotFound as exc:
         raise HTTPException(status_code=404, detail={"code": "browser_open_not_found", "detail": "no such artifact"}) from exc
     return page_tab.artifact_page(resolved.path, ref["item"], ref["artifact"]), resolved.title
@@ -53,9 +54,9 @@ async def _reuse(browser_id: str, url: str, label: str, request: Request) -> Bro
     try:
         live, relaunched = await manager.ensure_live(browser_id, url)
     except CapReached as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise api_error(409, "conflict", exc, step="_reuse") from exc
     except BrowserUnavailable as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise api_error(503, "service_unavailable", exc, step="_reuse") from exc
     if not relaunched:
         await live.navigate(url)
     return browser_routes.info_for(row, manager)
@@ -92,6 +93,7 @@ async def open_in_pool(url: str, key: str, label: str, request: Request) -> Brow
 
 @router.get("/browsers/selected")
 async def get_selected() -> Dict[str, Any]:
+    """The item the owner's windows were last asked to select. Output: {select: {...,age_s} | None}."""
     return {"select": select.current()}
 
 
@@ -108,7 +110,8 @@ async def _page_info(page: open_pages.OpenPage, src: Optional[str] = None) -> Di
 
 @router.get("/browsers/pages")
 async def list_pages(request: Request) -> Dict[str, Any]:
-    """
+    """The pages opened for the owner, oldest first, minus those of a plugin that is off.
+
     Output: {pages: [{id, key, frame, title, opened_at, src, section}]}; ``section`` is the owning plugin's
       ``surfaces.page_section`` or None. A page whose plugin is off is left out and its row kept (``cplugs/host/page_owner.py``).
     """
@@ -135,6 +138,7 @@ async def close_page(page_id: str) -> Response:
 
 @router.post("/browsers/open")
 async def open_page(body: OpenPageRequest, request: Request) -> Dict[str, Any]:
+    """Open a page for the owner, routed by target, and show it on every open window. Output: {page | browser, select}. Errors: see module."""
     if body.huddle_artifact is not None:
         ref = body.huddle_artifact.model_dump()
         page, own_title = await _artifact_tab(ref)
@@ -147,7 +151,7 @@ async def open_page(body: OpenPageRequest, request: Request) -> Dict[str, Any]:
         try:
             opened = app_open.open_app_page(body.url or "", body.title)
         except page_tab.AppPageRefused as exc:
-            raise HTTPException(status_code=400, detail={"code": "browser_open_app_page", "detail": str(exc)}) from exc
+            raise api_error(400, "browser_open_app_page", exc) from exc
         row_looks.apply_on_open(opened["page"]["id"], body.color, body.icon)
         logger.info("browser_page_row_opened", kind="app", frame=opened["page"]["frame"])
         return opened

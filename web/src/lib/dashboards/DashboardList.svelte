@@ -2,6 +2,7 @@
   import { homeBoards } from '../../opscenter/engine/home-sync.svelte';
   import { dashboardLayout } from './board-layout';
   import Icon from '../../opscenter/ui/Icon.svelte';
+  import { Button } from '../base';
   import { MAX_BOARDS } from '../../opscenter/engine/home-boards';
   import { t } from '../i18n/index.svelte';
   import DashboardCard from './DashboardCard.svelte';
@@ -27,16 +28,15 @@
     {/each}
     {#if !needle}
       <li class="dash-list__new-cell">
-        <button
-          type="button"
-          class="dash-list__new"
+        <Button
+          variant="quiet"
           data-dashboard-new-tile
           disabled={full || dashboardsUi.busy}
           title={full ? t('dashboards.full', { max: MAX_BOARDS }) : ''}
           onclick={() => void addDashboard(false)}
           ><Icon name="plus" size={18} /><span class="dash-list__new-word">{t('dashboards.new')}</span><span class="dash-list__new-hint"
             >{t('dashboards.new_hint')}</span
-          ></button
+          ></Button
         >
       </li>
     {/if}
@@ -65,31 +65,15 @@
       min-width: 0;
     }
 
-    .dash-list__new {
-      display: flex;
+    .dash-list__new-cell :global([data-dashboard-new-tile]) {
       flex: 1 1 auto;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
       gap: var(--oc-space-1);
       min-height: 180px;
       padding: var(--oc-space-3);
-      border: var(--oc-border, 1px) dashed var(--oc-line-rule);
-      border-radius: var(--oc-radius-sm, 2px);
-      background: transparent;
-      color: var(--oc-text-secondary);
-      font-family: inherit;
-      cursor: pointer;
-    }
-
-    .dash-list__new:hover:not(:disabled) {
-      background: var(--oc-ground-hover);
-      color: var(--oc-text-primary);
-    }
-
-    .dash-list__new:disabled {
-      cursor: not-allowed;
-      opacity: 0.45;
+      --_btn-edge: var(--oc-line-rule);
+      border-style: dashed;
+      white-space: normal;
     }
 
     .dash-list__new-word {

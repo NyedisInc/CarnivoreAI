@@ -7,7 +7,6 @@ export interface Zone {
   readonly spec: ZoneSpec;
   readonly tabs: readonly TabRef[];
   readonly active: TabRef | null;
-  /*  hidden  */
   visibility(tabKey: string): ZoneVisibility;
   headerFor(tabKey: string): FrameHeader;
   release(tabKey: string): void;

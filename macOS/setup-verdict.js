@@ -1,6 +1,6 @@
-// CLOUDFLARE_API_TOKEN
-// local evaluation
-// could not
+// WHY THIS FILE EXISTS
+// The owner ran the setup script, it succeeded, the app restarted, and the
+// watching.
 
 'use strict';
 
@@ -15,7 +15,6 @@ const CHECK_KEYS = Object.freeze([
 
 const COMPLETE = 'complete';
 const INCOMPLETE = 'incomplete';
-/* could not */
 const UNDETERMINED = 'undetermined';
 
 function readEnvValue(envText, key) {
@@ -25,7 +24,6 @@ function readEnvValue(envText, key) {
   return value === '' ? null : value;
 }
 
-/* could not */
 function evaluateLocalSetup(facts) {
   const envText = (facts && facts.envText) || null;
   const configText =
@@ -89,7 +87,6 @@ function evaluateLocalSetup(facts) {
   return { status, checks };
 }
 
-/* could not local evaluation */
 function resolveSetupVerdict(input) {
   const serverStatus = (input && input.serverStatus) || null;
   const local = (input && input.local) || { status: UNDETERMINED };

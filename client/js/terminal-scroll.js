@@ -148,7 +148,6 @@
             if (typeof ev.stopPropagation === 'function') ev.stopPropagation();
         }
 
-        /*  hidden  overflow: hidden */
         function blockOverscrollEscape(ev) {
             if (ev.defaultPrevented) return;
             if (!ev.cancelable) return;

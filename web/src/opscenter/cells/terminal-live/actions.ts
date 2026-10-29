@@ -7,7 +7,6 @@ import { filesDrawer, filesShowing, listenFileDrawer } from '../../../lib/right-
 export interface TerminalActionContext {
     controller: ControllerLike;
     container: HTMLElement;
-    /* file editor */
     overlay: HTMLElement | null;
 }
 export type TerminalAction = 'files' | 'search' | 'skills' | 'plugins';

@@ -1,10 +1,3 @@
-"""Close the sleep gaps of a session that is running now (#2016).
-
-A wake writes no lineage milestone (only a restart, a flip or a kill does), so ``assemble._gaps`` finds no sign of
-life after a plain sleep and wake and leaves the gap open: a moon at the left edge of a live lane. A session whose row
-reads running is not asleep, so every open gap on it ended; it ended at the first later sign of life the timeline
-holds (a watcher span starting after the sleep, else the next sleep, else now).
-"""
 
 from __future__ import annotations
 

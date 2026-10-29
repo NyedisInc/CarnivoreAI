@@ -16,11 +16,12 @@ installPopoverPolyfill();
 
 const HOUR = 3600_000;
 const win = (kind: string, used: number, seconds: number) => ({ kind, label: kind, used_pct: used, window_seconds: seconds, resets_at: new Date(Date.now() + 4 * HOUR).toISOString() });
-const account = { id: 'sam', name: 'sam', short_name: null, provider: 'claude', plan: 'max', identity: 'sam', credential_state: 'ok', fetched_at: null, next_poll_at: null, error: null, color: null, managed: false, windows: [win('five_hour', 30, 5 * 3600), win('seven_day', 40, 7 * 86400)] };
+const account = { id: 'joe', name: 'joe', short_name: null, provider: 'claude', plan: 'max', identity: 'joe', credential_state: 'ok', fetched_at: null, next_poll_at: null, error: null, color: null, managed: false, windows: [win('five_hour', 30, 5 * 3600), win('seven_day', 40, 7 * 86400)] };
 
 let instance: ReturnType<typeof mount> | null = null;
 const placed: string[] = [];
 
+/* the glance area */
 function draw(widgets: string[], options = true): HTMLElement {
   const entries = widgets.map((widget) => {
     const key = drawerZone.addGlance(widget, true)!;

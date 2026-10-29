@@ -88,6 +88,7 @@ function mediaSha(media: unknown): string | null {
     return typeof sha === 'string' && /^[0-9a-f]{64}$/.test(sha) ? sha : null;
 }
 
+/* not a string */
 function tagList(raw: unknown): string[] | null {
     if (!Array.isArray(raw)) return null;
     const tags: string[] = [];

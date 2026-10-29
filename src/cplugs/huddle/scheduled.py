@@ -52,7 +52,7 @@ async def _pings(ctx: CplugContext, key: str, leads: Optional[Dict[str, str]] = 
         lead = leads.get(key, "") if leads is not None else await asyncio.to_thread(lambda: RoleStore(service.store(ctx)).seat(key).lead_key)
         try:
             sleepers = await ctx.sessions.asleep_read()
-        except HTTPException as exc:  # could not be read
+        except HTTPException as exc:
             logger.warning("task_manager_schedules_asleep_unreadable", list=key, status=exc.status_code)
             return None, None
         if sleepers is None:

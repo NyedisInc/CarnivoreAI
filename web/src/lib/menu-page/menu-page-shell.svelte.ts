@@ -1,7 +1,6 @@
 import { MENU_PAGES, MENU_PAGE_OPEN_CLASS, menuPage, type MenuPage } from './menu-pages';
 import { sidebarTabs } from '../dynamic-tabs/tab-store.svelte';
 import { clearPageHash, hashNamesPage, pageOfHash, pushPageHash, type HashEnv } from './menu-page-hash';
-import { restoreLastView } from '../drawer/last-view';
 import { initMenuPageEscape } from './menu-page-escape';
 import { mayClosePage, type ConfirmFn } from './menu-page-dirty';
 import { surfaceTrackerFor, type SurfaceTracker } from './menu-page-surface';
@@ -21,7 +20,6 @@ export interface ShellDeps {
     origin?: OriginDeps;
     openDrawer?: () => void;
     hashEnv?: HashEnv;
-    restoreLastView?: () => unknown;
     confirm?: ConfirmFn | null;
     surface?: SurfaceTracker | null;
 }
@@ -69,11 +67,9 @@ export function pickDrawerTab(
     tab: string,
     doc: Document = document,
     deps: ShellDeps = defaultDeps,
-    restore = false,
 ): void {
     if (tab === 'agents') closeMenuPagesExcept(null, doc, deps);
     deps.selectTab(tab);
-    if (tab === 'agents' && restore) (deps.restoreLastView ?? restoreLastView)();
 }
 
 export function backFromMenuPage(doc: Document = document, deps: ShellDeps = defaultDeps): void {

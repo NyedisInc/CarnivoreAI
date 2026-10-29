@@ -1,9 +1,10 @@
-<!-- hidden -->
+
 <script lang="ts" module>
     let nextId = 0;
 </script>
 
 <script lang="ts">
+    import { Button } from '../base';
     import Check from '../../opscenter/ui/Check.svelte';
     import ChoiceDropdown from '../dropdown/ChoiceDropdown.svelte';
     import { t as appT } from '../i18n/index.svelte';
@@ -34,9 +35,9 @@
             {#if summaryOption}{#each tagKeys(summaryOption, answer) as key (key)}<span class="lac-tag">{t(key)}</span>{/each}{/if}
         </span>
     {/if}
-    <button type="button" class="lac-link" aria-expanded={expanded} aria-controls={expanded ? panelId : undefined} data-lac-link onclick={() => (expanded = !expanded)}>
+    <Button variant="quiet" size="sm" aria-expanded={expanded} aria-controls={expanded ? panelId : undefined} data-lac-link onclick={() => (expanded = !expanded)}>
         {expanded ? t('launch_picker.account.collapse') : t('launch_picker.account.expand')}
-    </button>
+    </Button>
     {#if expanded}
         <div class="lac-panel" id={panelId}>
             <span class="lac-label">{t('launch_picker.account.label')}</span>
@@ -59,8 +60,6 @@
 
         .lac-summary { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; color: var(--oc-text-secondary); font-size: 12px; overflow-wrap: anywhere; }
 
-        .lac-link { min-height: 28px; padding: 0 2px; border: 1px solid transparent; --_bd: var(--oc-cyan); background: transparent; color: var(--oc-cyan); font: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
-
         .lac-panel { display: flex; flex: 1 1 100%; flex-direction: column; gap: 6px; min-width: 0; }
 
         .lac-label { color: var(--oc-text-muted); font-size: 10px; letter-spacing: var(--oc-tracking-label, 0.6px); text-transform: uppercase; }
@@ -72,7 +71,7 @@
         .lac-tag { flex: none; padding: 0 5px; border: 1px solid var(--oc-line-rule); border-radius: 2px; color: var(--oc-text-muted); font-size: 10px; letter-spacing: var(--oc-tracking-label, 0.6px); text-transform: uppercase; white-space: nowrap; }
 
         @media (max-width: 767px) {
-            .lac-link { min-height: 44px; flex: 1 1 100%; text-align: left; }
+            .lac :global([data-lac-link]) { min-height: 44px; flex: 1 1 100%; justify-content: flex-start; }
             .lac-panel :global([data-lac-pin]) { width: 100%; min-height: 44px; white-space: normal; overflow: visible; }
             .lac-panel :global([data-lac-pin] span) { white-space: normal; overflow-wrap: anywhere; }
         }

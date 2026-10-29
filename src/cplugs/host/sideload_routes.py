@@ -19,7 +19,7 @@ from src.core.skills import kinds
 from src.core.skills.consent_via_ddl import CONSENT_SHEET
 from src.core.skills.ledger import InstallLedger
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, InstalledItem
-from src.cplugs.host import identity, runtime, sideload
+from src.cplugs.host import identity, risk, runtime, sideload, sideload_git
 from src.cplugs.host import state as owner_state
 from src.cplugs.host.owner_switch import _runtime as _sidecar_runtime
 
@@ -39,9 +39,11 @@ class SyncBody(BaseModel):
 
 
 class SwitchBody(BaseModel):
+    """The sideload switch the owner chose and, turning it on, for how long (``hours``; omitted is twelve, null until turned off)."""
 
     model_config = ConfigDict(extra="forbid")
     enabled: StrictBool
+    hours: Any = None
 
 
 def _refuse(exc: sideload.SideloadRefused) -> HTTPException:
@@ -100,9 +102,10 @@ async def _expired(live: Any) -> None:
 
 def _status(state_dir: Path) -> Dict[str, Any]:
     on = sideload.is_on(state_dir, sideload.wall)
-    return {"enabled": on, "expires_at": sideload.expires_at(state_dir) if on else None,
+    return {"enabled": on, "expires_at": sideload.expires_at(state_dir) if on else None, "hours": sideload.duration_hours(state_dir),
             "items": [{"id": n, "item_id": f"{sideload.LOCAL_PUBLISHER}/{n}", "source": v.get("source", ""), "synced_at": v.get("synced_at"),
-                       "changed": v.get("changed") or []} for n, v in sorted(sideload.items(state_dir).items())]}
+                       "changed": v.get("changed") or [], "git": sideload_git.describe(state_dir, n, v.get("source", ""))}
+                      for n, v in sorted(sideload.items(state_dir).items())]}
 
 
 @router.get("/sideload")
@@ -113,9 +116,13 @@ async def get_sideload(request: Request) -> Dict[str, Any]:
 
 @router.put("/sideload/switch")
 async def put_switch(body: SwitchBody, request: Request) -> Dict[str, Any]:
-    """Turn the developer sideload switch on (twelve hours) or off (every sideloaded plugin stops and is hidden). Output: status."""
+    """Turn the developer sideload switch on (for ``hours``) or off (every sideloaded plugin stops and is hidden). Output: status."""
     live = _sidecar_runtime(request)
-    if not await asyncio.to_thread(sideload.set_switch, live.state_dir, body.enabled, sideload.wall):
+    hours = body.hours if "hours" in body.model_fields_set else sideload.DEFAULT_HOURS
+    if not sideload.valid_duration(hours):
+        raise HTTPException(status_code=422, detail={"code": "duration_invalid",
+                                                     "detail": f"hours is one of {list(sideload.DURATION_HOURS)}, or null for until turned off"})
+    if not await asyncio.to_thread(sideload.set_switch, live.state_dir, body.enabled, sideload.wall, hours):
         raise HTTPException(status_code=500, detail={"code": "switch_not_saved", "detail": "the switch could not be written; it is unchanged"})
     arm_expiry(request.app, live)
     if not body.enabled:
@@ -125,7 +132,7 @@ async def put_switch(body: SwitchBody, request: Request) -> Dict[str, Any]:
     return _status(live.state_dir)
 
 
-def _name_of(source: Path, given: Optional[str]) -> str:
+def name_of(source: Path, given: Optional[str]) -> str:
     if given is not None:
         if not isinstance(given, str) or not identity.INSTALL_NAME.match(given):
             raise sideload.SideloadRefused("name_invalid", f"an install name must match {identity.INSTALL_NAME.pattern}", 409)
@@ -140,7 +147,7 @@ def _name_of(source: Path, given: Optional[str]) -> str:
 
 
 def _sync_blocking(state_dir: Path, source: Path, given: Optional[str]) -> Dict[str, Any]:
-    name = _name_of(source, given)
+    name = name_of(source, given)
     staging, files, manifest = sideload.stage(state_dir, name, source)
     digest = manifest.code_digest
     try:
@@ -183,15 +190,23 @@ def _commit_blocking(state_dir: Path, source: Path, staged: Dict[str, Any]) -> l
     return changed
 
 
+def require_on(state_dir: Path) -> None:
+    if not sideload.is_on(state_dir, sideload.wall):
+        raise HTTPException(status_code=409, detail={"code": "sideload_off", "detail": "the developer sideload switch is off"})
+
+
 @router.post("/sideload")
 async def post_sideload(body: SyncBody, request: Request) -> Dict[str, Any]:
     """Copy a folder into the code root and register it as ``local/<name>`` (or re-sync it). Output: {id, digest, unchanged, changed, needs_approval}."""
     live = _sidecar_runtime(request)
-    state_dir, source = live.state_dir, Path(body.path)
-    if not sideload.is_on(state_dir, sideload.wall):
-        raise HTTPException(status_code=409, detail={"code": "sideload_off", "detail": "the developer sideload switch is off"})
+    require_on(live.state_dir)
+    return await sync_folder(live, Path(body.path), body.name)
+
+
+async def sync_folder(live: Any, source: Path, given: Optional[str]) -> Dict[str, Any]:
+    state_dir = live.state_dir
     try:
-        staged = await asyncio.to_thread(_sync_blocking, state_dir, source, body.name)
+        staged = await asyncio.to_thread(_sync_blocking, state_dir, source, given)
         manifest = staged["manifest"]
         changed: list = []
         if not staged["unchanged"]:
@@ -206,7 +221,7 @@ async def post_sideload(body: SyncBody, request: Request) -> Dict[str, Any]:
     held = owner_state.get(state_dir, manifest)
     return {"id": staged["name"], "item_id": f"{sideload.LOCAL_PUBLISHER}/{staged['name']}", "tier": sideload.TIER_LOCAL, "unverified": True,
             "digest": staged["digest"], "unchanged": staged["unchanged"], "changed": changed,
-            "needs_approval": bool(held.grants) and held.digest != staged["digest"]}
+            "needs_approval": held.enabled and risk.consent_owed(sideload.TIER_LOCAL, staged["digest"], held.digest)}
 
 
 def _delete_blocking(state_dir: Path, name: str) -> bool:
@@ -217,6 +232,7 @@ def _delete_blocking(state_dir: Path, name: str) -> bool:
         ledger.delete(row.install_id)
     shutil.rmtree(sideload.code_root_of(state_dir, name), ignore_errors=True)
     sideload.forget(state_dir, name)
+    sideload_git.forget(state_dir, name)
     return True
 
 

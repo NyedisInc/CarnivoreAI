@@ -1,12 +1,3 @@
-"""Transcript heads and the headless-worker inference: which session launched a ``claude -p`` conversation.
-
-Every top-level transcript's head names its ``entrypoint`` (``cli`` and ``claude-desktop`` are typed into by a
-person; ``sdk-cli`` and the SDKs are headless workers), its folder and its first timestamp. Nothing on disk says
-which session ran a headless worker, so the link is INFERRED (``inferred_active_session``): the worker began
-while exactly ONE human conversation in the same project folder was active (begun, and its file not yet last
-written). When that human conversation belongs to a Carnivore session the edge is session -> worker, otherwise
-human conversation -> worker. Two or more active candidates is ambiguous and writes nothing. Reads only.
-"""
 
 from __future__ import annotations
 

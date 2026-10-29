@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* position: relative */
   import { untrack } from 'svelte';
   import type { WidgetManifest } from '../../opscenter/widgets/types';
   import type { PlacementOptions } from '../../opscenter/widgets/placement-options';

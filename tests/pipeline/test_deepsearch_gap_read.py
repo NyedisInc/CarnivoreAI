@@ -7,7 +7,7 @@ from typing import List, Tuple
 
 from src.core.deepsearch import pipeline_plugin as dp
 from src.core.deepsearch.cache import db as cache_db
-from src.core.deepsearch.live import store
+from src.core.deepsearch.live import range_rows, store
 from src.core.pipeline import deliver
 from src.core.pipeline import engine as engine_mod
 from tests.pipeline.test_deepsearch_plugin import (Driver, hits, line, live_rows, old_index, world)  # noqa: F401
@@ -37,7 +37,7 @@ def test_a_gap_bigger_than_the_run_budget_is_delivered_across_runs_with_no_write
     assert f.b.stat().st_size - index_end < CAP < index_end
 
     reads: List[Tuple[int, int, bool]] = []
-    real_reader = dp.RangeReader
+    real_reader = range_rows.RangeReader
 
     class Probed(real_reader):
 
@@ -54,7 +54,7 @@ def test_a_gap_bigger_than_the_run_budget_is_delivered_across_runs_with_no_write
             reads.append((self.start, self.end, writable))
             yield from super().__iter__()
 
-    monkeypatch.setattr(dp, "RangeReader", Probed)
+    monkeypatch.setattr(range_rows, "RangeReader", Probed)
     real_delivery = engine_mod.Delivery
     runs: List[int] = []
 

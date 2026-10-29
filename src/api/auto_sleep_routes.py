@@ -18,6 +18,7 @@ from src.core.resource_push import topics as resource_topics
 from src.core.auto_sleep import store
 from src.models.auto_sleep import AutoSleepState, AutoSleepWrite, KeepAwakeWrite, SleepHoldEntry
 from src.models.websocket import WSMessageType
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -94,18 +95,10 @@ def reconcile_mac_awake(request: Request, config: AutoSleepConfig) -> None:
 
 
 def _unreadable(exc: Exception) -> HTTPException:
-    return HTTPException(
-        status_code=500,
-        detail={"code": "config_unreadable", "detail": f"config.json could not be used: {exc}"},
-    )
+    return api_error(500, "config_unreadable", None, error_type=type(exc).__name__)
 
 
 def _resolve_uuid(tmux_name: str) -> str:
-    """The durable session uuid behind a tmux name. On a worker thread.
-
-    Raises: HTTPException 404 - no row carries that name; 503 - the
-      datastore could not be read.
-    """
     from src.core.db import DatastoreUnreadableError, connect
     from src.core.session_group_errors import SessionGroupError
     from src.core.session_group_membership import session_uuid_for_name
@@ -117,9 +110,9 @@ def _resolve_uuid(tmux_name: str) -> str:
         with closing(connect(path, create=False)) as conn:
             return session_uuid_for_name(conn, tmux_name)
     except SessionGroupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise api_error(404, "not_found", exc, step="_resolve_uuid") from exc
     except (DatastoreUnreadableError, OSError, sqlite3.Error) as exc:
-        raise HTTPException(status_code=503, detail=f"the datastore could not be read: {exc}") from exc
+        raise api_error(503, "datastore_unavailable", exc, step="resolve_uuid") from exc
 
 
 def _changed(request: Request) -> None:
@@ -208,9 +201,7 @@ async def put_keep_awake(body: KeepAwakeWrite, request: Request) -> AutoSleepSta
     except ValueError as exc:
         if "Invalid JSON" in str(exc) or "Invalid config shape" in str(exc):
             raise _unreadable(exc) from exc
-        raise HTTPException(
-            status_code=422, detail={"code": "invalid_keep_awake", "detail": str(exc)}
-        ) from exc
+        raise api_error(422, "invalid_keep_awake", exc) from exc
     _changed(request)
     await asyncio.to_thread(reconcile_mac_awake, request, config)
     return await asyncio.to_thread(_state, config, mac_awake=_mac_awake(request), holding=_holding(request))

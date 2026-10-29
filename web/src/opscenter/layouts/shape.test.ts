@@ -3,6 +3,7 @@ import { PRIMARY_SLOT } from '../engine/model';
 import type { Layout } from '../engine/types';
 import { displayedTabs, freeName, fromServerShape, nameProblem, toServerShape, visibleTerminals } from './shape';
 
+/** A grid of one flex row holding these slots. */
 function grid(...ids: string[]): Layout {
   return {
     v: 6,

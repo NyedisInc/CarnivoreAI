@@ -26,6 +26,7 @@ export class CommandBar {
   mode = $state<BarMode>('search');
   text = $state('');
   sending = $state(false);
+  /* there is nothing */
   line = $state('');
   #deps: BarDeps;
   #timer: ReturnType<typeof setTimeout> | null = null;

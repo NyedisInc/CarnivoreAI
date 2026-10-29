@@ -268,7 +268,7 @@ describe('X6 fixes', () => {
         page((s) => { s.signedIn = true; s.account = { handle: null, handle_status: null } as never; });
         expect(document.querySelector('.d-strip__h')?.hasAttribute('data-own')).toBe(true);
         unmount(app as never); app = null; document.body.innerHTML = '';
-        page((s) => { s.signedIn = true; s.account = { handle: 'acme', handle_status: 'confirmed' } as never; });
+        page((s) => { s.signedIn = true; s.account = { handle: 'harbor', handle_status: 'confirmed' } as never; });
         expect(document.querySelector('.d-strip__h')?.hasAttribute('data-own')).toBe(false);
     });
 });

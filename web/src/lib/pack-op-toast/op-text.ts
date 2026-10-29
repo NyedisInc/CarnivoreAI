@@ -24,13 +24,22 @@ export interface PackOp {
   shells: number | null;
   woken?: number | null;
   wake_failed?: { name: string; reason: string }[] | null;
-  /* could not */
   told?: number | null;
   continue_failed?: { name: string; reason: string }[] | null;
   running: boolean;
   interrupted: boolean;
   cancellable: boolean;
   cancel_blocked: string | null;
+  progress?: OpProgress | null;
+}
+
+export interface OpProgress {
+  step: string | null;
+  bytes_done: number | null;
+  bytes_total: number | null;
+  rate: number | null;
+  eta_s: number | null;
+  log: { at: number; step: string | null; text: string }[];
 }
 
 export type OpPhase = 'running' | 'done' | 'failed' | 'canceled';
@@ -59,7 +68,7 @@ export function headline(op: PackOp): string {
 export function stepLine(op: PackOp): string {
   if (!op.running) return '';
   if (op.interrupted) return t('pack.op.stuck');
-  const projectStep = op.kind !== 'session' && (op.step === 'interrupt' || op.step === 'wait' || op.step === 'sleep' || op.step === 'wake' || op.step === 'continue');
+  const projectStep = op.kind !== 'session' && (op.step === 'code' || op.step === 'interrupt' || op.step === 'wait' || op.step === 'sleep' || op.step === 'wake' || op.step === 'continue');
   const key = `pack.op.step.${op.step ?? 'unknown'}${projectStep ? '_project' : ''}`;
   const text = t(key, { ...params(op), count: op.step === 'interrupt' || op.step === 'wait' || op.step === 'wake' || op.step === 'continue' ? op.agents ?? 0 : op.shells ?? 0 });
   const base = text === key ? t('pack.op.step.unknown') : text;
@@ -81,7 +90,6 @@ function wakeLine(op: PackOp): string {
   return failed.length === 0 ? started : `${started} ${failed.map((f) => t('pack.op.wake_failed', { name: f.name, reason: f.reason })).join(' ')}`;
 }
 
-/* could not */
 function continueLine(op: PackOp): string {
   if (op.told == null) return '';
   const failed = op.continue_failed ?? [];
@@ -106,4 +114,38 @@ export function elapsed(start: string, end: string | null, now: number): string 
   const m = Math.floor((total % 3600) / 60);
   const s = String(total % 60).padStart(2, '0');
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+}
+
+export function sizeText(bytes: number): string {
+  const units = ['b', 'kb', 'mb', 'gb'];
+  let n = bytes;
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i += 1; }
+  return `${i === 0 ? n : n.toFixed(1)} ${units[i]}`;
+}
+
+export function barFraction(op: PackOp): number | null {
+  const at = op.step ? op.steps.indexOf(op.step) : -1;
+  if (!op.running || at < 0 || op.steps.length === 0) return null;
+  const p = op.progress;
+  const share = p && p.step === op.step && p.bytes_total ? Math.min(0.99, (p.bytes_done ?? 0) / p.bytes_total) : 0;
+  return (at + share) / op.steps.length;
+}
+
+export function bytesLine(op: PackOp): string {
+  const p = op.progress;
+  if (!op.running || !p || p.step !== op.step || !p.bytes_total) return '';
+  const base = t('pack.op.bytes', { done: sizeText(p.bytes_done ?? 0), total: sizeText(p.bytes_total) });
+  return p.rate ? `${base}, ${t('pack.op.rate', { rate: sizeText(p.rate) })}` : base;
+}
+
+export function etaLine(op: PackOp): string {
+  const s = op.running && op.progress?.step === op.step ? op.progress?.eta_s : null;
+  if (s == null) return '';
+  return s >= 90 ? t('pack.op.eta_min', { n: Math.round(s / 60) }) : t('pack.op.eta_sec', { n: Math.max(1, s) });
+}
+
+export function logLine(l: { at: number; step: string | null; text: string }): string {
+  const time = new Date(l.at * 1000).toLocaleTimeString([], { hour12: false });
+  return `${time} ${l.step ? l.step + ' ' : ''}${l.text}`;
 }

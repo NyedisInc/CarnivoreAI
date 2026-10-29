@@ -1,13 +1,3 @@
-"""
-``PackMachines`` (``exchange.py``) delegates every read and write of the document here. The rules live in ``settings_sign``;
-this class applies them to the stored copy: a received document is judged, stored with its signature in one write, and the
-first accepted signed document from the trust anchor turns signed mode on (trust on first use, logged). An upgraded alpha that
-is paired and has not signed yet mints one content-free signed revision, so the Pack enters signed mode as soon as alpha runs
-this build.
-
-Without a ``Signing`` (a test, or a Pack layer that could not reach its key) everything behaves as before #1921: nothing is
-signed and every document merges by ``rev``. Blocking (config and Keychain reads): call off the loop.
-"""
 
 from __future__ import annotations
 

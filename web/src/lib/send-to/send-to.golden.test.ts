@@ -17,7 +17,9 @@ import { indent, recordedParts, recording, reframed, snapshot } from '../dialog-
 const FRAME = { addClasses: ['modal-overlay', 'stm-modal'], removeClasses: ['popup-focus', 'stm'], attrs: { 'aria-modal': 'true' } };
 
 function onShell(name: string): string {
-  const { frame, children: [title = '', body = '', foot = ''] } = recordedParts(recording(name));
+  const { frame, children: [title = '', recorded = '', foot = ''] } = recordedParts(recording(name));
+  const verdict = '  <div class="stm-verdict" data-send="verdict" data-state="ready" role="status">\n    <p class="stm-verdict-text">\n      "ready to send to studio"\n';
+  const body = recorded.replace(/( *)<div class="stm-body">\n/, (m) => m + verdict);
   return `${reframed(frame, FRAME)}  <div class="modal-content popup-focus stm" data-oc-base="">\n${indent(title, 2)}`
     + `    <div class="modal-body">\n${indent(body, 3)}    <div class="modal-footer">\n${indent(foot, 3)}`;
 }
@@ -26,7 +28,7 @@ import SendToModal from './SendToModal.svelte';
 
 setLocale('en');
 
-const machine = { install_id: 'hosta', label: 'hosta', is_self: false, is_master: false, paired: true, state: 'connected', capabilities: [],
+const machine = { install_id: 'studio', label: 'studio', is_self: false, is_master: false, paired: true, state: 'connected', capabilities: [],
   specs: null, age_seconds: 1, snapshot: null } as unknown as PackMachine;
 
 const mounted: ReturnType<typeof mount>[] = [];
@@ -39,7 +41,7 @@ test('the dialog renders its recorded markup', async () => {
   auth.state = 'signed-in';
   const root = document.createElement('div');
   document.body.append(root);
-  mounted.push(mount(SendToModal, { target: root, props: { uuid: 'u1', name: 'api', machine, projectName: 'ledgerbot', onClose: vi.fn() } }));
+  mounted.push(mount(SendToModal, { target: root, props: { uuid: 'u1', name: 'api', machine, projectName: 'trader', onClose: vi.fn() } }));
   await new Promise((r) => setTimeout(r, 0));
   flushSync();
   const now = snapshot(root.querySelector('[data-send-to-modal]')!);

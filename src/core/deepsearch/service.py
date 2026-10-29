@@ -29,15 +29,6 @@ def parse_kinds(raw: Optional[str]) -> Optional[List[str]]:
 async def search(index: ConversationIndex, q: str, *, kinds: Optional[List[str]] = None, project: Optional[str] = None,
                  conversation_id: Optional[str] = None, limit: int = LIMIT_DEFAULT, offset: int = 0,
                  per_group: int = PER_GROUP_DEFAULT, scope: str = SCOPE_ALL) -> Dict[str, Any]:
-    """Search, grouped by conversation, with the ingest status. Raises InvalidSearch, ConversationsUnavailable.
-
-    The first page also asks every paired computer (bounded, concurrent): their conversations come back merged in, each
-      group tagged ``host_key`` / ``host_label`` (a conversation on both is one group with ``also_on``), and
-      ``peer_unavailable`` names a computer that did not answer. ``limit`` is per computer. Issue #1674.
-
-    Inputs: index; q (stripped, 1..500 chars); kinds; project; conversation_id; limit, offset (conversations); per_group
-      (hits each); scope. Output: the grouped answer plus ``ingest`` (state, reason, newest_indexed_at, conversations, coverage).
-    """
     if scope == SCOPE_PEERS:
         return await index.search_peers(q, kinds=kinds, project=project, conversation_id=conversation_id,
                                         limit=limit, offset=offset, per_group=per_group)

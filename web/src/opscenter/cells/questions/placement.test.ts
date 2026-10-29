@@ -1,3 +1,4 @@
+/* and the three */
 import { describe, expect, test, vi } from 'vitest';
 
 vi.mock('../../api/auth.svelte', () => ({ auth: { state: 'signed-in' }, initAuth: async () => {}, ApiError: class ApiError extends Error {}, authFetch: async () => null }));

@@ -101,11 +101,6 @@ def _claude_json(art: cs.Artifact, locs: cs.Locations) -> Dict[str, Any]:
 
 
 def _theme(art: cs.Artifact, locs: cs.Locations) -> Dict[str, Any]:
-    """A folder's ``.cc.theme`` as text, refused over 4 KiB. Blocking. Raises EntryUnreadable.
-
-    Opened through ``forbidden.open_source`` (``O_NOFOLLOW``, a regular file, not a credential file's inode), so a
-    ``.cc.theme`` that is a symlink or a hard link to a credential file is a blocker sentence and is never read.
-    """
     path = str(art.locator.get("path") or art.what)
     try:
         fd, _st = open_source(path, [os.path.realpath(os.path.dirname(path))], deny_inodes(locs))

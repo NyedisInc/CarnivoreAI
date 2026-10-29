@@ -31,7 +31,8 @@
     "Scan the stat tiles (one figure each), then running sessions, recently closed, projects, skills, themes and the provider ledger.",
     "Click a running session to open it; use + to start one.",
     "Read token/cache breakdowns, API-equivalent cost, activity, model/project rankings, tokens per agent (a line per agent over 1h, 24h or 1w, with the running agents and their tokens per minute below) and account/window quota history on Home. Open Details for filters, tables, annotations and comparisons. Edit layout to configure or hide cards; existing arrangements are preserved.",
-    "Every widget wears one 31px header: its icon menu at the left, its name, its own controls, then a close x that hides it at once (back from the components list; a copy such as a browser is removed). Untick show header in the icon menu to hide one copy's header on every device; its icon then sits over the top left of the widget."
+    "Every widget wears one 31px header: its icon menu at the left, its name, its own controls, then a close x that hides it at once (back from the components list; a copy such as a browser is removed). Untick show header in the icon menu to hide one copy's header on every device; its icon then sits over the top left of the widget.",
+    "Drag the thin grip under the bottom row of widgets downward to make that row taller than the window; the home screen then scrolls. Drag it back up to shrink it (it stops where the page fits the window); the height is saved like any other row height."
   ],
   "id": "home-screen",
   "issues": [
@@ -41,22 +42,27 @@
     "home",
     "dashboard"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The home screen with metrics, running sessions, recently closed sessions, projects and more",
+      "caption": "The home screen",
+      "file": "home.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Home screen",
   "since": "2026-09-19",
   "status": "stable",
   "summary": "See running sessions, projects, and independently configurable charts backed by metadata-only minute history.",
   "surfaces": [
     "web/src/opscenter/App.svelte",
-    "web/src/lib/launchpad/RunningSessions.svelte",
     "web/src/opscenter/cells/analytics/Cell.svelte",
     "web/src/opscenter/cells/analytics/Controls.svelte",
     "web/src/opscenter/cells/analytics/DetailsModal.svelte"
   ],
-  "updated": "2026-10-23",
+  "updated": "2026-10-27",
   "where": [
     "The first screen after you sign in.",
     "The Carnivore logo at the top of the drawer always returns to it."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

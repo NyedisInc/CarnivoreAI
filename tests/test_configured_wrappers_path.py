@@ -16,6 +16,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 # ruff: noqa: E402
 from src.config import Settings
 from src.core.agent_families import resolve_agent_type
+from src.core.sessions import wrapper_source
 
 
 def test_settings_has_no_agents_attribute():
@@ -28,8 +29,6 @@ def test_settings_has_no_agents_attribute():
 
 
 def test_the_helper_reads_the_real_config(tmp_path):
-    import src.core.session_manager as sm
-
     config_path = tmp_path / "config.json"
     config_path.write_text(json.dumps({
         "config_version": 3,
@@ -51,20 +50,13 @@ def test_the_helper_reads_the_real_config(tmp_path):
         totp_secret="x", jwt_secret="y",
         auth_config_file=str(config_path),
     )
-    original = sm.settings
-    try:
-        sm.settings = patched
-        got = sm._configured_wrappers()
-        assert [w.id for w in got] == ["claude-skip-permissions"], (
-            "the helper did not read the configured wrappers"
-        )
-    finally:
-        sm.settings = original
+    got = wrapper_source.configured_wrappers(settings_provider=lambda: patched)
+    assert [w.id for w in got] == ["claude-skip-permissions"], (
+        "the helper did not read the configured wrappers"
+    )
 
 
 def test_a_wrapper_id_resolves_to_its_family(tmp_path):
-    import src.core.session_manager as sm
-
     config_path = tmp_path / "config.json"
     config_path.write_text(json.dumps({
         "config_version": 3,
@@ -84,33 +76,22 @@ def test_a_wrapper_id_resolves_to_its_family(tmp_path):
         totp_secret="x", jwt_secret="y",
         auth_config_file=str(config_path),
     )
-    original = sm.settings
-    try:
-        sm.settings = patched
-        family, explicit = resolve_agent_type(
-            "claude-skip-permissions", sm._configured_wrappers()
-        )
-        assert family.name == "claude"
-        assert explicit is not None and explicit.id == "claude-skip-permissions"
-    finally:
-        sm.settings = original
+    family, explicit = resolve_agent_type(
+        "claude-skip-permissions",
+        wrapper_source.configured_wrappers(settings_provider=lambda: patched),
+    )
+    assert family.name == "claude"
+    assert explicit is not None and explicit.id == "claude-skip-permissions"
 
 
 def test_an_unreadable_config_degrades_to_empty_not_an_exception(tmp_path):
-    import src.core.session_manager as sm
-
     patched = Settings(
         default_working_dir=str(tmp_path),
         log_directory=str(tmp_path / "logs"),
         totp_secret="x", jwt_secret="y",
         auth_config_file=str(tmp_path / "does-not-exist.json"),
     )
-    original = sm.settings
-    try:
-        sm.settings = patched
-        assert sm._configured_wrappers() == []
-    finally:
-        sm.settings = original
+    assert wrapper_source.configured_wrappers(settings_provider=lambda: patched) == []
 
 
 def test_no_call_site_uses_the_old_broken_chain():
@@ -134,5 +115,5 @@ def test_no_call_site_uses_the_old_broken_chain():
                 offenders.append(f"{rel}:{node.lineno}")
     assert not offenders, (
         f"the wrong wrapper-lookup path is back at {offenders}; "
-        "use _configured_wrappers()"
+        "use sessions.wrapper_source.configured_wrappers()"
     )

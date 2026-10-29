@@ -28,7 +28,14 @@
     "reserve",
     "home"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The Pack machine card on Home: each computer's load bar against its reserve line, with cpu, memory, disk, battery and agent figures",
+      "caption": "The Pack machine card",
+      "file": "card.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Pack machine view",
   "since": "2026-10-10",
   "status": "beta",
@@ -41,6 +48,5 @@
   "updated": "2026-10-10",
   "where": [
     "Home, analytics, the pack machines card in the edit layout gallery."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

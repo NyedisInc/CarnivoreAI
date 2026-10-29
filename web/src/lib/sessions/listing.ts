@@ -1,4 +1,4 @@
-/* CANNOT DETERMINE did not answer */
+/* did not answer */
 import type { ListingState } from './types';
 
 export const DEFAULT_REASON = 'probe_error';

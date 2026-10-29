@@ -33,7 +33,7 @@
 
 <div class="qc-card" data-qc-card={id} data-tone={contract.tone} data-qc-folded={shown ? undefined : ''}>
   {#if foldable}
-    <button type="button" class="qc-toggle" data-qc-toggle aria-expanded={open} onclick={toggle}>{@render head()}</button>
+    <button type="button" class="qc-toggle" data-base-exempt="the whole card head is one fold trigger holding a badge, who, where, age and headline; the base Card needs a plain title and has no untitled or two-line head yet (base-gaps)" data-qc-toggle aria-expanded={open} onclick={toggle}>{@render head()}</button>
   {:else}
     <div class="qc-toggle qc-toggle--still">{@render head()}</div>
   {/if}

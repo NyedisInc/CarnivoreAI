@@ -12,12 +12,11 @@ const row = (id: string, enabled: boolean, asks: string[] = [], extra: Partial<C
 });
 
 let rows: CplugRow[] = [
-    row('unread', true, [], { icon: 'bell', author: 'summit (lantern666)', surfaces: { plugins: ['session-card-action'] } }),
-    row('share', false, [], { icon: 'link', author: 'summit (lantern666)', surfaces: { plugins: ['session-card-action'] } }),
-    row('huddle', false, ['sessions.read', 'notify'], { icon: 'chat', author: 'orchard (quartz)', surfaces: { tabs: ['huddle'], menu_links: ['huddle'], mcp_tools: ['huddle_list'] } }),
-    // could not
-    { ...row('flow', true, [], { icon: 'plug', author: 'orchard (quartz)' }), state: 'unavailable', detail: 'draft the quarterly summary for the review', storage_bytes: 48_000 },
-    { ...row('mcphealth', true, ['sessions.read', 'sessions.message'], { icon: 'chart', author: 'orchard (quartz)', surfaces: { plugins: ['session-card-action'] } }), state: 'needs_approval', grants: { app: [] }, risks: { 'sessions.read': 'low', 'sessions.message': 'high' } },
+    row('unread', true, [], { icon: 'bell', author: 'Alex (Example-owner)', surfaces: { plugins: ['session-card-action'] } }),
+    row('share', false, [], { icon: 'link', author: 'Alex (Example-owner)', surfaces: { plugins: ['session-card-action'] } }),
+    row('huddle', false, ['sessions.read', 'notify'], { icon: 'chat', author: 'Joe (ccsliinc)', surfaces: { tabs: ['huddle'], menu_links: ['huddle'], mcp_tools: ['huddle_list'] } }),
+    { ...row('flow', true, [], { icon: 'plug', author: 'Joe (ccsliinc)' }), state: 'unavailable', detail: 'start hook failed: OSError', storage_bytes: 48_000 },
+    { ...row('mcphealth', true, ['sessions.read', 'sessions.message'], { icon: 'chart', author: 'Joe (ccsliinc)', surfaces: { plugins: ['session-card-action'] } }), state: 'needs_approval', grants: { app: [] }, risks: { 'sessions.read': 'low', 'sessions.message': 'high' } },
 ];
 
 export const pluginsSpecimenAdapter: ManagerAdapter = {
@@ -38,7 +37,7 @@ const catalogHost = {
         ],
     }),
     listInstalled: async () => ({ items: ledger }),
-    listProjects: async () => [{ name: 'carnivore', path: '/projects/carnivore' }, { name: 'lantern pebble', path: '/projects/lantern' }],
+    listProjects: async () => [{ name: 'carnivore', path: '/projects/carnivore' }, { name: 'argent', path: '/projects/argent' }],
     currentProjectPath: async () => '/projects/carnivore',
     previewInstall: async (request: InstallRequest) => ({
         digest: 'a'.repeat(64), body_sha: 'b'.repeat(64), plan_token: `plan-${request.item_id}`, files: [{ path: 'SKILL.md' }],

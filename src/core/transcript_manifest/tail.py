@@ -13,7 +13,6 @@ from src.core.transcript_manifest import constants as K
 
 @dataclass(frozen=True)
 class LastLine:
-    """Where the last complete line of a file is. All three None when it could not be found."""
 
     serial: Optional[str]
     offset: Optional[int]

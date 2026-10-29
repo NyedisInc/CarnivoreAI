@@ -72,7 +72,7 @@ describe('Page inset', () => {
     });
 });
 
-describe('compact and collapse', () => {
+describe('compact and collapse (TM Mark II round 4 point 2)', () => {
     const ICONS: TabDef[] = [{ id: 'a', label: 'action', icon: 'bolt' }, { id: 'b', label: 'discussion', icon: 'chat', badge: '2 new' }, { id: 'c', label: 'plain' }];
 
     test('compact is a class on the strip; collapse names every icon tab by its label and leaves the others alone', () => {

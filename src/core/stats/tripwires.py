@@ -90,12 +90,22 @@ def _measure(store, row: sqlite3.Row, now: float) -> float | None:
     return float(value) if isinstance(value, (int, float)) else None
 
 
-def _step(row: sqlite3.Row, value: float | None, now: int) -> dict:
+def _was_firing(store, tripwire_id: str) -> bool:
+    with store.connect(readonly=True) as db:
+        row = db.execute("SELECT kind FROM stats_events WHERE subject=? AND kind IN "
+                         "('tripwire_fired','tripwire_resolved') ORDER BY id DESC LIMIT 1",
+                         (tripwire_id,)).fetchone()
+    return bool(row) and row["kind"] == "tripwire_fired"
+
+
+def _step(row: sqlite3.Row, value: float | None, now: int, was_firing: bool = False) -> dict:
     state, pending = row["state"], row["pending_since"]
     hold = row["for_minutes"] * 60
     if value is None:
         return {"state": "unknown", "since": now if state != "unknown" else row["since"],
                 "pending_since": None, "transition": None}
+    if state == "unknown" and was_firing:
+        state = "firing"
     breach = value > row["threshold"] if row["comparator"] == ">" else value < row["threshold"]
     if state == "firing":
         if breach:
@@ -122,7 +132,8 @@ def evaluate_all(store, now: float | None = None) -> list[dict]:
     frames = []
     for row in rows:
         value = _measure(store, row, stamp)
-        change = _step(row, value, int(stamp))
+        change = _step(row, value, int(stamp),
+                       was_firing=row["state"] == "unknown" and _was_firing(store, row["id"]))
         fired = int(stamp) if change["transition"] == "firing" else row["last_fired_at"]
         with store.connect() as db:
             db.execute("UPDATE stats_tripwires SET state=?,since=?,pending_since=?,last_fired_at=?,"

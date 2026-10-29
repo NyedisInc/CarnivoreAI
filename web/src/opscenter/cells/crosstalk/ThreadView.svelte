@@ -16,6 +16,7 @@
     older: boolean;
     nowMs: number;
     width: number;
+    /* list, so the */
     takeFocus: boolean;
     wrap: boolean;
     reserveCorner: boolean;

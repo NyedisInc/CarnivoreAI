@@ -29,7 +29,7 @@ from src.core.session_restore_offer import offer_candidates
 from src.core.tmux_listing import TmuxListing
 from src.core.trail_entry import utc_now
 
-NAME = "carnivore_Orchard-Budgets"
+NAME = "carnivore_Cobalt-Budgets"
 EPOCH = 1790090835
 UUID = "u-budgets"
 

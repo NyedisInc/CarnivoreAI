@@ -7,6 +7,7 @@ import uuid
 from typing import Any, Dict, Mapping, Optional
 
 from src.core.db import transaction
+from src.core.pack import progress
 from src.core.trail_entry import utc_now
 
 STEPS_BY_MODE = {"move": ("project", "check", "interrupt", "wait", "code", "sleep", "stop_shells", "carry", "wake", "forward", "continue"),
@@ -50,6 +51,7 @@ def update(conn: sqlite3.Connection, op_id: str, role: str, *, state: Optional[s
             "UPDATE pack_session_moves SET state = COALESCE(?, state), step = COALESCE(?, step), error_code = COALESCE(?, error_code), "
             "detail_json = ?, finished_at = CASE WHEN ? THEN ? ELSE finished_at END WHERE id = ? AND role = ?",
             (state, step, error_code, json.dumps(merged), 1 if done else 0, utc_now(), op_id, role))
+    progress.on_update(op_id, role, state=state, step=step, error_code=error_code, detail=detail)
     _notify(op_id)
 
 

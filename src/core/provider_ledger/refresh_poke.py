@@ -1,36 +1,3 @@
-"""Making Claude Code refresh its own token, without ever holding one.
-
-**THE EXIT CODE PROVES NOTHING AND IS NEVER THE SUCCESS TEST.** Success
-is ``expiresAt`` MOVING FORWARD, measured by re-reading the credential,
-and that judgement lives in
-:mod:`src.core.provider_ledger.poller_poke`. Reading exit 0 as success
-here would be gotcha 11 exactly: a check that passes because it looked at
-nothing.
-
-**THE CHILD ENVIRONMENT IS BUILT, NEVER COPIED** (``ENV_ALLOW_LIST``): a
-few basics plus the profile's ``CLAUDE_CONFIG_DIR``. A server started from
-an agent pane inherits that pane's Claude session variables
-(``CLAUDECODE``, ``CLAUDE_CODE_SESSION_ID``, the messaging socket and so
-on), and a copy-and-strip list can never name them all. The single use
-``CLAUDE_CODE_OAUTH_REFRESH_TOKEN`` is the worst of the credential names,
-since an inherited one is SPENT rather than merely honoured;
-``SUPPRESSING_ENV_VARS`` stays as the independent statement of what must
-never reach a child, and the logout path for ``codex`` still strips by it.
-
-**THE CHILD IS A PROCESS TREE AND THE STOP HAS TO REACH ALL OF IT.**
-``claude`` shells out to ``security``, so the spawn takes a session of
-its own and both the timeout and a cancellation signal the process
-GROUP; signalling the direct child alone leaves the grandchild running.
-The timeout asks first (SIGTERM) and forces only after a grace period.
-
-**STDOUT AND STDERR ARE CAPTURED AND NEVER LOGGED BEYOND THEIR BYTE
-LENGTHS AND A SET OF FIXED LABELS** (:func:`classify_output`). A failing
-``claude`` prints authentication error strings, and there is no
-redaction processor in this codebase: not passing the value IS the
-mechanism, the same rule :mod:`keychain` states. A label is a constant
-this module chose, so it can say "the output mentioned invalid_grant"
-without a byte of the output leaving the process.
-"""
 
 from __future__ import annotations
 
@@ -193,7 +160,6 @@ POKE_NO_REFRESH = "poke_no_refresh"
 
 NEEDS_LOGIN = "needs_login"
 
-# could not
 POKE_ERRORED = "poke_errored"
 
 LOGIN_EXPIRED = "login_expired"
@@ -201,23 +167,6 @@ LOGIN_EXPIRED = "login_expired"
 
 @dataclass(frozen=True)
 class PokeOutcome:
-    """What one attempt to run the poke did. NEVER whether it worked.
-
-    Description: this reports the PROCESS, not the refresh. Whether the
-      credential actually moved is decided by re-reading it, in
-      :mod:`poller_poke`, because a keepalive exits 0 either way.
-
-    Attributes:
-        ran: whether a child process was started at all. ``False`` means
-            the binary was not there or could not be executed.
-        exit_code: the child's status, or ``None`` when it never
-            finished (killed on timeout) or never started.
-        timed_out: whether the bound elapsed and the child was stopped.
-        duration_seconds: wall time for the whole attempt.
-        stdout_bytes / stderr_bytes: how much each stream carried.
-        output_signals: which of :data:`OUTPUT_SIGNALS` appeared in
-            either stream, as their fixed labels. NEVER the text.
-    """
 
     ran: bool
     exit_code: Optional[int]
@@ -376,7 +325,6 @@ async def run_child(
             duration_seconds=time.monotonic() - started,
         )
     except asyncio.CancelledError:
-        # server stopped
         try:
             await _stop_process_group(process)
         except asyncio.CancelledError:

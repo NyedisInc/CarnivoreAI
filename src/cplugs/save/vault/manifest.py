@@ -5,7 +5,7 @@ import json
 import os
 import re
 from datetime import datetime, timedelta, timezone
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -13,7 +13,9 @@ import structlog
 
 from src.cplugs.save.engine import layout
 from src.cplugs.save.vault import constants as K
+from src.cplugs.save.vault.stamp_memo import StampMemo, file_stamp
 from src.cplugs.save.vault.summary import PointSummary, SummaryCache
+from src.cplugs.sdk.dir_listing import DirListingCache
 from src.cplugs.sdk.blob_codec import ChunkRef, chain_sha, refs_from_json, refs_to_json
 
 logger = structlog.get_logger()
@@ -32,7 +34,7 @@ class SoleCopyError(RuntimeError):
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class FileEntry:
 
     role: str
@@ -175,6 +177,8 @@ class ManifestStore:
     def __init__(self, root: Path) -> None:
         self._dir = Path(root) / K.MANIFESTS_DIR
         self.summaries = SummaryCache(ManifestError, Path(root) / K.SUMMARIES_FILE)
+        self._listings = DirListingCache()
+        self._parsed = StampMemo(K.MANIFEST_MEMO_MAX_ENTRIES, stamp_of=file_stamp, trust_after_ns=0, weigh=lambda m: len(m.files) or 1)
 
     def save_summaries(self) -> bool:
         return self.summaries.save()
@@ -197,8 +201,8 @@ class ManifestStore:
 
     def point_ids(self, unit: str) -> List[str]:
         try:
-            return sorted(p.stem for p in self.unit_dir(unit).iterdir()
-                          if p.suffix == ".json" and not p.name.startswith("."))
+            names = (name for name, _kind in self._listings.listing(self.unit_dir(unit)))
+            return sorted(Path(name).stem for name in names if name.endswith(".json") and not name.startswith("."))
         except FileNotFoundError:
             return []
 
@@ -206,9 +210,10 @@ class ManifestStore:
         layout.check_point_id(point_id)
         path = self.unit_dir(unit) / f"{point_id}.json"
         try:
-            return Manifest.from_json(json.loads(path.read_text(encoding="utf-8")))
+            parsed = self._parsed.get(path, "manifest", lambda: Manifest.from_json(json.loads(path.read_text(encoding="utf-8"))))
         except (OSError, ValueError) as exc:
             raise ManifestError(f"manifest {unit}/{point_id} unreadable: {exc}") from exc
+        return replace(parsed, files=list(parsed.files))
 
     def points(self, unit: str) -> List[Manifest]:
         found: List[Manifest] = []

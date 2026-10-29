@@ -32,7 +32,7 @@ const LEAF_FIELDS: ReadonlySet<string> = new Set(['t', 'id']);
 
 export type SlotIdCheck = (id: string) => boolean;
 
-export const defaultIsSlotId: SlotIdCheck = (id) => id in META || isInstanceId(id as SlotId);
+export const defaultIsSlotId: SlotIdCheck = (id) => Object.hasOwn(META, id) || isInstanceId(id as SlotId);
 
 export interface NodeContext {
   page: LayoutPage;

@@ -9,7 +9,12 @@
     import { clearKey, createConnection, deleteConnection, isStale, patchConnection, type Fetcher, type ModelOverride } from './api';
     import { createFor, patchFor, type Draft } from './form-logic';
     import { ai, attach, presetOf, refresh } from './store.svelte';
+    import Button from '../base/Button.svelte';
+    import List from '../base/List.svelte';
+    import ListRow from '../base/ListRow.svelte';
+    import State from '../base/State.svelte';
     import ConnectionCard from './ConnectionCard.svelte';
+    import ProviderMark from './ProviderMark.svelte';
     import ConnectionForm from './ConnectionForm.svelte';
 
     interface Props {
@@ -78,26 +83,40 @@
 <div class="tm" data-ai="connections">
     <p class="tm__sub">{t('settings.ai.connections.intro')}</p>
     {#if ai.config}
-        {#each ai.config.connections as connection (connection.id)}
-            {@const preset = presetOf(connection.preset)}
-            {#if editing === connection.id && preset}
-                <ConnectionForm {t} presets={ai.presets} {connection} accounts={ai.accounts} {busy} onSave={(d) => void save(d)} onCancel={() => (editing = null)} />
-            {:else if preset}
-                <ConnectionCard {t} {connection} {preset} {busy} onToggle={(on) => void toggle(connection.id, on)} onEdit={() => (editing = connection.id)}
-                    onDelete={() => void remove(connection.id)} onModels={(models) => void saveModels(connection.id, models)} />
-            {/if}
-        {/each}
-        {#if ai.config.connections.length === 0}<p class="tm__sub" data-ai="none">{t('settings.ai.connections.none')}</p>{/if}
+        {#if ai.config.connections.length > 0}
+            <List label={t('settings.ai.connections.intro')}>
+                {#snippet children()}
+                    {#each ai.config!.connections as connection (connection.id)}
+                        {@const preset = presetOf(connection.preset)}
+                        {#if editing === connection.id && preset}
+                            <ListRow wrap data-ai-connection={connection.id} data-ai-editing="">
+                                {#snippet lead()}<ProviderMark preset={preset.id} size={18} />{/snippet}
+                                {#snippet primary()}<span data-ai="name">{connection.label || preset.label}</span>{/snippet}
+                                {#snippet secondary()}<span data-ai="preset-name">{preset.label}</span>{/snippet}
+                                {#snippet below()}
+                                    <ConnectionForm {t} presets={ai.presets} {connection} accounts={ai.accounts} {busy} onSave={(d) => void save(d)} onCancel={() => (editing = null)} />
+                                {/snippet}
+                            </ListRow>
+                        {:else if preset}
+                            <ConnectionCard {t} {connection} {preset} {busy} onToggle={(on) => void toggle(connection.id, on)} onEdit={() => (editing = connection.id)}
+                                onDelete={() => void remove(connection.id)} onModels={(models) => void saveModels(connection.id, models)} />
+                        {/if}
+                    {/each}
+                {/snippet}
+            </List>
+        {:else}
+            <p class="tm__sub" data-ai="none">{t('settings.ai.connections.none')}</p>
+        {/if}
         {#if editing === 'new' && ai.presets.length > 0}
             <ConnectionForm {t} presets={ai.presets} connection={null} accounts={ai.accounts} {busy} onSave={(d) => void save(d)} onCancel={() => (editing = null)} />
         {:else}
             <div class="tm__actions">
-                <button type="button" class="oc-btn oc-btn--confirm" disabled={busy || editing !== null} data-ai="add" onclick={() => (editing = 'new')}>{t('settings.ai.connections.add')}</button>
+                <Button variant="confirm" disabled={busy || editing !== null} data-ai="add" onclick={() => (editing = 'new')}>{t('settings.ai.connections.add')}</Button>
             </div>
         {/if}
     {:else if !ai.problem}
         <p class="tm__sub">{t('settings.ai.loading')}</p>
     {/if}
-    {#if note}<p class="tm__note" role="status" data-ai="note">{note}</p>{/if}
-    {#if problem || ai.problem}<p class="tm__problem" role="alert" data-ai="problem">{problem || ai.problem}</p>{/if}
+    {#if note}<State inline title={note} role="status" data-ai="note" />{/if}
+    {#if problem || ai.problem}<State kind="error" inline title={problem || ai.problem} data-ai="problem" />{/if}
 </div>

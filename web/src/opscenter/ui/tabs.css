@@ -47,7 +47,6 @@
     mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
   }
 
-  /* padding */
   .oc-ptabs--joined,
   .oc-frame .oc-ptabs,
   .rail-body .oc-ptabs {
@@ -121,10 +120,9 @@
     display: inline-flex;
   }
 
-  /* padding */
   .oc-ptabs--compact .oc-ptab {
     font-size: var(--oc-fs-micro, 10px);
-    letter-spacing: var(--oc-tracking-micro, 0.4px);
+    letter-spacing: var(--oc-tracking-micro);
   }
 
   .oc-ptabs--collapse {

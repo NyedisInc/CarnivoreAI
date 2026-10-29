@@ -11,7 +11,7 @@ vi.mock('../../opscenter/api/auth.svelte', async (original) => ({
     if (init?.method === 'POST') return { url: 'https://github.com/NyedisInc/notes', owner: 'NyedisInc', name: 'notes', private: true };
     if (path.endsWith('/replicas')) return { pack_state: 'home', replicas: [] };
     if (path.endsWith('/github-account')) {
-      return { air_gap: false, account: null, source: 'none', needs_card: true, rung: 'carried', rung_reason: 'no remote', logged_in: ['acme'] };
+      return { air_gap: false, account: null, source: 'none', needs_card: true, rung: 'carried', rung_reason: 'no remote', logged_in: ['NyedisAdam'] };
     }
     return { name: 'notes', private: true, owner: null, account: null, account_source: 'none', asks: ['owner', 'account'], offered: true, reason: null };
   },
@@ -42,9 +42,9 @@ afterEach(async () => {
 
 describe('the machine badge', () => {
   test('a remote row wears its computer label and a local one wears nothing', () => {
-    const remote = place(MachineBadge, { hostKey: 'peer-abc', label: 'hosta', state: 'up' });
-    expect(remote.querySelector('[data-machine-badge]')?.textContent).toBe('hosta');
-    const down = place(MachineBadge, { hostKey: 'peer-abc', label: 'hosta', state: 'disconnected' });
+    const remote = place(MachineBadge, { hostKey: 'peer-abc', label: 'studio', state: 'up' });
+    expect(remote.querySelector('[data-machine-badge]')?.textContent).toBe('studio');
+    const down = place(MachineBadge, { hostKey: 'peer-abc', label: 'studio', state: 'disconnected' });
     expect(down.querySelector('[data-machine-badge]')?.getAttribute('data-host-state')).toBe('disconnected');
     expect(place(MachineBadge, { hostKey: 'local', label: 'this computer' }).querySelector('[data-machine-badge]')).toBeNull();
     expect(place(MachineBadge, {}).querySelector('[data-machine-badge]')).toBeNull();
@@ -65,7 +65,7 @@ describe('the publish private repo card', () => {
     ownerBox.value = 'NyedisInc';
     ownerBox.dispatchEvent(new Event('input', { bubbles: true }));
     const pick = root.querySelector('[data-pt="publish-account-pick"]') as HTMLSelectElement;
-    pick.value = 'acme';
+    pick.value = 'NyedisAdam';
     pick.dispatchEvent(new Event('change', { bubbles: true }));
     flushSync();
     expect(go.disabled).toBe(false);
@@ -75,7 +75,7 @@ describe('the publish private repo card', () => {
     expect(posts).toHaveLength(1);
     expect(posts[0]!.path).toBe('/projects/notes/publish-repo');
     const body = JSON.parse(String(posts[0]!.init?.body));
-    expect(body).toEqual({ owner: 'NyedisInc', account: 'acme' });
+    expect(body).toEqual({ owner: 'NyedisInc', account: 'NyedisAdam' });
     expect('private' in body || 'visibility' in body).toBe(false);
     expect(root.querySelector('[data-pt="publish-done"]')?.textContent).toContain('private');
   });

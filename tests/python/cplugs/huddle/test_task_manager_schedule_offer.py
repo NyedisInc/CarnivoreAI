@@ -1,12 +1,13 @@
 
 from __future__ import annotations
 
+import threading
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from src.cplugs.host import runtime
-from src.cplugs.huddle import schedule_offer
+from src.cplugs.huddle import schedule_offer, triggers
 from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerInvalid, TaskManagerNotFound
 from src.cplugs.huddle.store import TaskManagerStore
 from tests.python.cplugs.huddle.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
@@ -46,7 +47,7 @@ def test_an_agent_reply_carries_an_offer_and_a_bad_offer_writes_nothing(manager)
     assert len(huddle_store(manager).item(item["id"])["thread"]) == count
 
 
-def test_owner_accepts_once_and_the_agent_is_cued_on_the_thread(client, app, pasted):
+def test_joe_accepts_once_and_the_agent_is_cued_on_the_thread(client, app, pasted):
     store = TaskManagerStore(runtime.host_for(app).storage("huddle"), notify=lambda key: None)
     item = client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "moved files"}).json()["id"]
     when = soon()
@@ -65,10 +66,47 @@ def test_owner_accepts_once_and_the_agent_is_cued_on_the_thread(client, app, pas
     assert client.post(f"/api/v1/cplugs/huddle/items/{item}/messages/{plain['id']}/schedule").status_code == 404
 
 
-def test_owner_cannot_attach_an_offer_and_an_offer_in_the_past_is_refused_at_accept(client, app):
+def test_joe_cannot_attach_an_offer_and_an_offer_in_the_past_is_refused_at_accept(client, app):
     store = TaskManagerStore(runtime.host_for(app).storage("huddle"), notify=lambda key: None)
     item = client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "x"}).json()["id"]
     with pytest.raises(TaskManagerInvalid):
         store.post(item, "mine", actor=JOE, offer={"when": soon(), "title": "t", "state": "offered"})
     stale = store.post(item, "late", actor=CLAUDE, offer={"when": "2020-01-01T00:00:00+00:00", "title": "t", "state": "offered"})["message"]
     assert client.post(f"/api/v1/cplugs/huddle/items/{item}/messages/{stale['id']}/schedule").status_code == 400
+
+
+def test_two_concurrent_accepts_queue_and_the_second_is_refused(client, app, monkeypatch):
+    store = TaskManagerStore(runtime.host_for(app).storage("huddle"), notify=lambda key: None)
+    item = client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "moved files"}).json()["id"]
+    message = store.post(item, "keeping them a week", actor=CLAUDE, offer=schedule_offer.clean({"when": soon(), "title": "delete them"}))["message"]
+    paused, resume, calls = threading.Event(), threading.Event(), []
+    real_parse = triggers.parse_fire_at
+
+    def parse_pausing_the_first(*args, **kwargs):
+        calls.append(threading.current_thread().name)
+        if len(calls) == 1:
+            paused.set()
+            resume.wait(10)
+        return real_parse(*args, **kwargs)
+
+    monkeypatch.setattr(triggers, "parse_fire_at", parse_pausing_the_first)
+    results: dict = {}
+
+    def accept(name: str) -> None:
+        try:
+            results[name] = store.accept_schedule(item, message["id"])
+        except TaskManagerInvalid as exc:
+            results[name] = exc
+
+    first = threading.Thread(target=accept, args=("first",), name="first")
+    first.start()
+    assert paused.wait(10)
+    second = threading.Thread(target=accept, args=("second",), name="second")
+    second.start()
+    second.join(0.5)
+    resume.set()
+    first.join(10)
+    second.join(10)
+    outcomes = sorted(type(v).__name__ for v in results.values())
+    assert outcomes == ["TaskManagerInvalid", "dict"], results
+    assert isinstance(results["first"], dict) and "already accepted" in str(results["second"])

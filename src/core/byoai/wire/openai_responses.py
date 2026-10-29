@@ -81,7 +81,7 @@ def parse_output(data: Dict[str, Any]) -> ChatResult:
 
 async def chat(target: Target, key: Optional[str], request: ChatRequest) -> ChatResult:
     body = build_body(_shared.require_model(target), request)
-    return parse_output((await transport.request(target.connection, key, "POST", "/responses", json=body, timeout=request.timeout_s)).json())
+    return parse_output((await transport.request_json(target.connection, key, "POST", "/responses", json=body, timeout=request.timeout_s)))
 
 
 async def chat_stream(target: Target, key: Optional[str], request: ChatRequest) -> AsyncIterator[ChatDelta]:
@@ -103,7 +103,7 @@ async def chat_stream(target: Target, key: Optional[str], request: ChatRequest) 
 
 
 async def list_models(connection: Connection, key: Optional[str]) -> List[ModelInfo]:
-    data = (await transport.request(connection, key, "GET", "/models")).json()
+    data = (await transport.request_json(connection, key, "GET", "/models"))
     return [_shared.infer_model(str(e["id"]), e) for e in data.get("data") or [] if isinstance(e, dict) and e.get("id")]
 
 

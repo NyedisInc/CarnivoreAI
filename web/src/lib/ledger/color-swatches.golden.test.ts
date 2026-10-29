@@ -6,6 +6,7 @@ import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
 import { recorded, reframed, snapshot } from '../dialog-frame/goldens';
 
+/** The move's only intended change: the frame is `AnchoredPopup`'s, which adds its own class. */
 const FRAME = { addClasses: ['oc-anchored'] };
 
 const i18n = createI18n();

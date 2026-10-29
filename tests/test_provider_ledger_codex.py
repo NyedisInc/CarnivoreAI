@@ -64,7 +64,7 @@ AUTH_CLAIM = "https://api.openai.com/auth"
 
 FULL_ID_TOKEN = id_token_for(
     {
-        "email": "acme@example.com",
+        "email": "alex@example.com",
         AUTH_CLAIM: {
             "chatgpt_account_id": "acct_notreal",
             "chatgpt_plan_type": "plus",
@@ -101,7 +101,7 @@ class TestReadingTheIdToken:
         assert codex_usage.plan_type_from_id_token(FULL_ID_TOKEN) == "plus"
 
     def test_an_absent_claim_block_is_none_rather_than_a_guess(self):
-        token = id_token_for({"email": "acme@example.com"})
+        token = id_token_for({"email": "alex@example.com"})
         assert codex_usage.account_id_from_id_token(token) is None
         assert codex_usage.plan_type_from_id_token(token) is None
 

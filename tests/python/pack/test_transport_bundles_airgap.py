@@ -72,14 +72,14 @@ def commit(repo: Path, name: str, text: str) -> str:
 def pair(monkeypatch, tmp_path):
     a, b = Machine(tmp_path, "a", "iid-a"), Machine(tmp_path, "b", "iid-b")
     with closing(a.conn()) as conn:
-        conn.execute("INSERT INTO projects (root, raw_path, display_name, source, created_at, updated_at) VALUES (?, ?, 'ledgerbot', 'user', 't', 't')",
+        conn.execute("INSERT INTO projects (root, raw_path, display_name, source, created_at, updated_at) VALUES (?, ?, 'trader', 'user', 't', 't')",
                      (str(a.repo), str(a.repo)))
         conn.commit()
         uid = conn.execute("SELECT uid FROM projects").fetchone()[0]
         replicas.record_replica(conn, uid, "iid-b", str(b.repo), "carried")
     with closing(b.conn()) as conn:
         conn.execute("INSERT INTO projects (root, raw_path, display_name, source, uid, pack_state, home_install_id, created_at, updated_at) "
-                     "VALUES (?, ?, 'ledgerbot', 'user', ?, 'replica', 'iid-a', 't', 't')", (str(b.repo), str(b.repo), uid))
+                     "VALUES (?, ?, 'trader', 'user', ?, 'replica', 'iid-a', 't', 't')", (str(b.repo), str(b.repo), uid))
         conn.commit()
     principals = {("iid-a", "iid-b"): peer_auth.Principal("peer", b.grant_to("iid-a")),
                   ("iid-b", "iid-a"): peer_auth.Principal("peer", a.grant_to("iid-b"))}
@@ -110,7 +110,7 @@ def refs(repo: Path, prefix: str) -> Dict[str, str]:
 
 def test_bundle_round_trip_with_no_remote_and_the_air_gap_argv_rule(pair, monkeypatch) -> None:
     a, b, uid, link = pair
-    git(a.repo, "remote", "add", "origin", "https://github.com/acme/ledgerbot.git")
+    git(a.repo, "remote", "add", "origin", "https://github.com/acme/trader.git")
     with closing(a.conn()) as conn:
         conn.execute("UPDATE projects SET air_gap = 1")
         conn.commit()
@@ -151,17 +151,17 @@ def test_bundle_round_trip_with_no_remote_and_the_air_gap_argv_rule(pair, monkey
     assert argvs, "the recorder saw no process: the test looked at nothing"
     assert [v for v in argvs if any("github.com" in x.lower() for x in v) or Path(v[0]).name == "gh"] == []
     before = len(argvs)
-    for bad in (["git", "-C", str(a.repo), "fetch", "https://github.com/acme/ledgerbot.git"], ["git", "-C", str(a.repo), "push"],
+    for bad in (["git", "-C", str(a.repo), "fetch", "https://github.com/acme/trader.git"], ["git", "-C", str(a.repo), "push"],
                 ["git", "-C", str(a.repo), "pull"], ["git", "-C", str(a.repo), "ls-remote"], ["git", "-C", str(a.repo), "fetch", "origin"],
                 ["gh", "auth", "status"], ["/opt/homebrew/bin/gh", "api", "user"]):
         with pytest.raises(ladder.AirGapViolation):
             ladder.run(bad, air_gap=True)
     with pytest.raises(ladder.AirGapViolation):
-        ladder.clone_from_origin("git@github.com:acme/ledgerbot.git", str(a.state / "clone"), gh_helper.config_pairs("acme", "/usr/bin/gh"), air_gap=True)
+        ladder.clone_from_origin("git@github.com:acme/trader.git", str(a.state / "clone"), gh_helper.config_pairs("acme", "/usr/bin/gh"), air_gap=True)
     with pytest.raises(ladder.AirGapViolation):
         gh_helper.install(str(a.repo), "acme", air_gap=True)
     with pytest.raises(publish.PublishRefused) as refused:
-        publish.publish(str(a.repo), name="ledgerbot", owner="acme", account="acme", air_gap=True)
+        publish.publish(str(a.repo), name="trader", owner="acme", account="acme", air_gap=True)
     assert refused.value.code == "air_gap"
     assert len(argvs) == before, "a refused call started a process"
     res = github_account.resolve(air_gap=True, project_account="acme", company_account="acme", origin_url="https://github.com/acme/x",
@@ -176,7 +176,7 @@ def test_bundle_round_trip_with_no_remote_and_the_air_gap_argv_rule(pair, monkey
     monkeypatch.setattr(ladder.subprocess, "run", lambda argv, *a_, **k_: subprocess.CompletedProcess(argv, 0, b"", b""))
     seen: List[List[str]] = []
     monkeypatch.setattr(ladder, "check_argv", lambda argv, air_gap: seen.append(list(argv)))
-    ladder.run(["git", "clone", "https://github.com/acme/ledgerbot.git"], air_gap=False)
+    ladder.run(["git", "clone", "https://github.com/acme/trader.git"], air_gap=False)
     assert any("github.com" in x for x in seen[0])
 
 
@@ -196,18 +196,18 @@ def test_the_credential_helper_holds_the_account_name_and_never_the_token(monkey
     real_run = subprocess.run
     monkeypatch.setattr(ladder.subprocess, "run", lambda argv, *a, **k: (argvs.append([str(x) for x in argv]), real_run(argv, *a, **k))[1])
 
-    assert gh_helper.install(str(repo), "acme", air_gap=False) == [gh_helper.HELPER_KEY, gh_helper.INSTEAD_KEY]
+    assert gh_helper.install(str(repo), "Example-owner", air_gap=False) == [gh_helper.HELPER_KEY, gh_helper.INSTEAD_KEY]
     config = (repo / ".git" / "config").read_text()
-    assert "acme" in config and str(fake) in config and TOKEN not in config
+    assert "Example-owner" in config and str(fake) in config and TOKEN not in config
     helpers = subprocess.run(["git", "-C", str(repo), "config", "--local", "--get-all", gh_helper.HELPER_KEY], capture_output=True, text=True).stdout.split("\n")
     assert helpers[0] == "" and helpers[1].startswith("!f()")
 
     asked = subprocess.run(["git", "-C", str(repo), "credential", "fill"], input="protocol=https\nhost=github.com\n\n", text=True,
                            capture_output=True, check=True)
-    assert "username=acme" in asked.stdout and f"password={TOKEN}" in asked.stdout
-    assert github_account.token_env("acme") == {"GH_TOKEN": TOKEN}
+    assert "username=Example-owner" in asked.stdout and f"password={TOKEN}" in asked.stdout
+    assert github_account.token_env("Example-owner") == {"GH_TOKEN": TOKEN}
     assert not [v for v in argvs if any(TOKEN in x for x in v)], "the token appeared in an argv Carnivore started"
-    assert TOKEN not in log.read_text() and "auth token --hostname github.com --user acme" in log.read_text()
+    assert TOKEN not in log.read_text() and "auth token --hostname github.com --user Example-owner" in log.read_text()
     assert subprocess.run(["git", "-C", str(repo), "config", "--local", "--list"], capture_output=True, text=True).stdout.count(TOKEN) == 0
     for bad in ("x; rm -rf /", "a b", "$(id)", "", "-x" * 30, "a" * 40):
         with pytest.raises(github_account.AccountError):
@@ -215,7 +215,7 @@ def test_the_credential_helper_holds_the_account_name_and_never_the_token(monkey
     assert github_account.resolve(air_gap=False, project_account="p", company_account="c", origin_url=None).source == "project"
     assert github_account.resolve(air_gap=False, project_account=None, company_account="c", origin_url=None).source == "company"
     owner = github_account.resolve(air_gap=False, project_account=None, company_account=None,
-                                   origin_url="git@github.com:NyedisInc/x.git", logged_in=lambda: ["acme", "nyedisinc"])
+                                   origin_url="git@github.com:NyedisInc/x.git", logged_in=lambda: ["adammaxy", "nyedisinc"])
     assert (owner.account, owner.source) == ("nyedisinc", "remote_owner")
     card = github_account.resolve(air_gap=False, project_account=None, company_account=None, origin_url="https://github.com/zzz/x", logged_in=lambda: ["a"])
     assert card.needs_card

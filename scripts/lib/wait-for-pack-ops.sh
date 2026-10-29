@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-#
-#
 set -u
 
 DB="${PACK_WAIT_DB:-${CARNIVORE_STATE_DIR:-$HOME/Library/Application Support/Carnivore}/carnivore.db}"

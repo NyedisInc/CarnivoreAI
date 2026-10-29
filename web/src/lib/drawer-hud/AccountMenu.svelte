@@ -73,7 +73,7 @@
       });
     }
     const swarm = swarmSwitch.data;
-    if (swarm) {  //  hidden 
+    if (swarm) {
       out.push({
         id: 'swarm',
         label: t('drawer.account.swarm'),

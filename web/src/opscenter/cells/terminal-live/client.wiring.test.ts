@@ -8,6 +8,7 @@ const NAMES = [
   'TerminalInputBuffer',
   'AltScreenScroll',
   'TerminalStartupNotice',
+  'TerminalSelectScrolled',
 ] as const;
 
 function stubGlobals(): Record<string, number> {
@@ -41,7 +42,7 @@ describe('a terminal cell wiring record', () => {
       const value = wiring![key] as { __default?: boolean } | null;
       if (value) expect(value.__default, `${key} fell through to the global`).toBeUndefined();
     }
-    expect(COLLABORATORS.length).toBe(6);
+    expect(COLLABORATORS.length).toBe(7);
   });
 
   test('two cells share nothing', () => {

@@ -1,4 +1,4 @@
-/* could not be read */
+/* could not be read there is nothing */
 
 console.log('[ThemeConsent Module] Loading...');
 
@@ -37,7 +37,6 @@ console.log('[ThemeConsent Module] Loading...');
 
     const PERSISTED_STATUSES = ['committed', 'unchanged'];
 
-    /* could not */
     function decide(input) {
         const spec = input || {};
         if (!spec.declaresScript) {
@@ -91,7 +90,6 @@ console.log('[ThemeConsent Module] Loading...');
         return null;
     }
 
-    /* not allowed */
     function revocationsBetween(before, after) {
         const prior = (before && typeof before === 'object') ? before : {};
         const current = (after && typeof after === 'object') ? after : {};
@@ -185,7 +183,6 @@ console.log('[ThemeConsent Module] Loading...');
         return PERSISTED_STATUSES.indexOf(outcome.status) !== -1;
     }
 
-    /* could not */
     function report(spec, message, info) {
         console.warn('[ThemeConsent] ' + message, info);
         const notify = (spec && typeof spec.notify === 'function')

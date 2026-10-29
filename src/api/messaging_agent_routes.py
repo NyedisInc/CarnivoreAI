@@ -58,6 +58,7 @@ async def send_for_caller(request: Any, caller: AgentCaller, body: SendBody) -> 
 @router.post("/sessions/{session_id}/messaging/send", status_code=201)
 async def post_messaging_send(request: Request, session_id: str, body: SendBody,
                               caller: AgentCaller = Depends(require_agent)) -> Dict[str, Any]:
+    """Send one text to the owner as the calling session. Raises 403 for another session's path."""
     if session_id not in (caller.session_id, caller.current_session_id):
         raise HTTPException(status_code=403, detail={"code": "not_your_session"})
     return await send_for_caller(request, caller, body)

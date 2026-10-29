@@ -26,19 +26,6 @@ router = APIRouter(tags=["catalog"])
 
 
 def refuse_empty(snapshot: IndexSnapshot) -> None:
-    """Raise the right status when nothing is held and something refused.
-
-    Description: THE STATUS IS CHOSEN BY WHO FAILED, not by how bad it
-      looks. A transport refusal is a 502 because this server could not
-      reach the catalog; a verify refusal is a 409 because it reached it
-      and declined the bytes. A snapshot that holds an index never
-      reaches here: the list is served and the refusal rides in the index
-      block.
-    Inputs: snapshot (IndexSnapshot).
-    Output: None - returns when there is nothing to refuse.
-    Raises: HTTPException(502) or HTTPException(409).
-    Example: refuse_empty(snapshot)  # then build the response
-    """
     if snapshot.verified is not None or snapshot.refusal is None:
         return
     refusal = snapshot.refusal
@@ -183,6 +170,11 @@ async def refresh_catalog_on_open(request: Request) -> IndexStatus:
 )
 async def refresh_catalog_index(request: Request) -> IndexStatus:
     """Fetch the index now, ignoring the five minute throttle.
+
+    The only caller that forces. A refusal is reported in the returned
+    block rather than raised, for the same reason the status endpoint
+    does it: the user pressed refresh and is owed the answer, including
+    "it did not work and here is the code".
 
     FORCING SKIPS THE THROTTLE, NOT EVERY FLOOR. A burst arriving inside
     ``FORCE_REFRESH_FLOOR_SECONDS`` of the last round trip is answered

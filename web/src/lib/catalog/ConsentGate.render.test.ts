@@ -20,7 +20,7 @@ const WITH_SCRIPTS: InstallPreview = {
         { path: 'scripts/run.sh', size: 100 },
         { path: 'bin/go', size: 50, exec: true },
     ],
-    publisher: 'acme',
+    publisher: 'alex',
     version: '1.0',
     digest: 'abc123def456',
     digest_prefix: 'abc123',

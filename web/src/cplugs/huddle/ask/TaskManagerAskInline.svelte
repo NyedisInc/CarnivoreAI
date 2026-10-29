@@ -27,7 +27,7 @@
   const answered = $derived(message.answered || ask.answered);
   const stored = $derived<AskAnswer | undefined>(question ? findItem(message.item_id)?.thread.find((m) => m.answers_to === message.id)?.answers?.[question.id] : undefined);
   const byComment = $derived(answeredByComment(findItem(message.item_id)?.thread ?? [], message.id));
-  const words = $derived(answerWords(stored) || sent || t(byComment ? 'cplug.huddle.ask.answered_by_comment' : 'cplug.huddle.ask.answered'));
+  const words = $derived(answerWords(stored, t) || sent || t(byComment ? 'cplug.huddle.ask.answered_by_comment' : 'cplug.huddle.ask.answered'));
 
   $effect(() => {
     if (ask.error) {

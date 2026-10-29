@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { ApiError, downloadBlob, t, truncatedTip } from '../sdk';
-  import { AnchoredPopup, Icon } from '../sdk/ui';
+  import { AnchoredPopup, Icon, IconButton, List, ListRow } from '../sdk/ui';
   import { fetchAttachmentBlob, fetchAttachments } from './board-api';
   import { apiPathOf, dateLabel, openType, sizeLabel, type BoardAttachment } from './attachment-model';
 
@@ -80,9 +80,8 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <span class="rb-clipwrap" onkeydown={closeOnEscape}>
-  <button type="button" class="rb-icon rb-clip-key" aria-label={t('cplug.reviewboard.attachments.key', { count: files.length })}
-          title={t('cplug.reviewboard.attachments.key', { count: files.length })} aria-expanded={open} data-attachments-key bind:this={keyEl}
-          onclick={() => (open = !open)}><Icon name="paperclip" size={16} />{#if files.length > 0}<span class="rb-clip-count" data-attachments-count>{files.length}</span>{/if}</button>
+  <IconButton label={t('cplug.reviewboard.attachments.key', { count: files.length })} variant="quiet" aria-expanded={open} data-attachments-key
+              bind:element={keyEl} onclick={() => (open = !open)}><Icon name="paperclip" size={16} />{#if files.length > 0}<span class="rb-clip-count" data-attachments-count>{files.length}</span>{/if}</IconButton>
   {#if open}
     <AnchoredPopup class="rb-clippop" label={t('cplug.reviewboard.attachments.title')} anchor={keyEl} outside="none" initialFocus="none" returnFocus={false}
                    onClose={() => (open = false)} data-attachments-fold>
@@ -93,26 +92,26 @@
       {#if shown.length === 0}
         {#if !listFailed}<p class="rb-note-text" data-attachments-empty>{t('cplug.reviewboard.attachments.none')}</p>{/if}
       {:else}
-        <ul class="rb-cliplist">
+        <List density="dense">
           {#each shown as file (file.file_id)}
-            <li class="rb-clip" data-attachment={file.file_id}>
-              <span class="rb-clip-text">
-                <span class="rb-clip-name" use:truncatedTip={file.name}>{file.name}</span>
-                <span class="rb-clip-meta">{t(file.revision ? 'cplug.reviewboard.attachments.meta_rev' : 'cplug.reviewboard.attachments.meta',
-                  { size: sizeLabel(file.bytes), date: dateLabel(file.added_at), revision: file.revision ?? '' })}</span>
-                {#if fileFailed === file.file_id}<span class="rb-clip-meta rb-clip-meta--error" role="status">{t('cplug.reviewboard.attachments.file_failed')}</span>{/if}
-              </span>
-              {#if apiPathOf(file.url)}
-                <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.attachments.open', { name: file.name })}
-                        title={t('cplug.reviewboard.attachments.open', { name: file.name })} data-attachment-open onclick={() => void openFile(file)}><Icon name="external" size={14} /></button>
-                <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.attachments.download', { name: file.name })}
-                        title={t('cplug.reviewboard.attachments.download', { name: file.name })} data-attachment-download onclick={() => void saveFile(file)}><Icon name="import" size={14} /></button>
-              {:else}
-                <span class="rb-clip-meta" data-attachment-offline>{t('cplug.reviewboard.attachments.offline')}</span>
-              {/if}
-            </li>
+            <ListRow wrap data-attachment={file.file_id}>
+              {#snippet primary()}<span data-clip-name use:truncatedTip={file.name}>{file.name}</span>{/snippet}
+              {#snippet secondary()}<span data-clip-meta>{t(file.revision ? 'cplug.reviewboard.attachments.meta_rev' : 'cplug.reviewboard.attachments.meta',
+                { size: sizeLabel(file.bytes), date: dateLabel(file.added_at), revision: file.revision ?? '' })}</span>
+                {#if fileFailed === file.file_id}<span class="rb-clip-error" data-clip-meta role="status">{t('cplug.reviewboard.attachments.file_failed')}</span>{/if}{/snippet}
+              {#snippet actions()}
+                {#if apiPathOf(file.url)}
+                  <IconButton label={t('cplug.reviewboard.attachments.open', { name: file.name })} icon="external" variant="quiet" iconSize={14}
+                              data-attachment-open onclick={() => void openFile(file)} />
+                  <IconButton label={t('cplug.reviewboard.attachments.download', { name: file.name })} icon="import" variant="quiet" iconSize={14}
+                              data-attachment-download onclick={() => void saveFile(file)} />
+                {:else}
+                  <span class="rb-clip-offline" data-attachment-offline>{t('cplug.reviewboard.attachments.offline')}</span>
+                {/if}
+              {/snippet}
+            </ListRow>
           {/each}
-        </ul>
+        </List>
       {/if}
     </AnchoredPopup>
   {/if}

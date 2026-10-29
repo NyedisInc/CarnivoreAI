@@ -62,9 +62,10 @@ afterEach(() => {
   clearViewFilter();
   resetInspections();
   huddle.openId = null as never;
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom without storage */ }
 });
 
+/** Settle the mocked reads. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 10; i += 1) { await Promise.resolve(); await tick(); }
   flushSync();
@@ -118,7 +119,7 @@ const wrapperOf = (host: HTMLElement, id: number): HTMLElement | null => host.qu
 
 const partsDrawn = (host: HTMLElement, id: number): string[] => [...(wrapperOf(host, id)?.querySelectorAll(':scope > [data-task-part]') ?? [])].map((el) => (el as HTMLElement).dataset.taskPart as string);
 
-describe('every task is one wrapper', () => {
+describe('every task is one wrapper (round 4 point 7)', () => {
   test('every task in every section draws through the one wrapper, with the same row parts', async () => {
     const host = await draw();
     for (const [section, id] of SECTIONS) {

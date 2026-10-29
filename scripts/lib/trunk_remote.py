@@ -2,20 +2,21 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 from pathlib import Path
 
-DEFAULT_TRUNK_REPO = "NyedisInc/CarnivoreAI"
+_GITHUB_SLUG_RE = re.compile(r"github\.com[:/]([^/:]+/[^/]+?)(?:\.git)?/?$", re.IGNORECASE)
+
+
+TRUNK_REPO_NAME = "CarnivoreAIDev"
+_TRUNK_NAME_RE = re.compile(
+    r"github\.com[:/][^/:]+/" + re.escape(TRUNK_REPO_NAME) + r"(?:\.git)?/?$", re.IGNORECASE
+)
 
 
 class TrunkRemoteError(Exception):
-    """No remote resolves to the trunk, or the checkout could not be read.
-
-    Never caught to fall back to a guessed remote name - a caller that
-    cannot resolve the trunk must refuse loudly (CLAUDE.md gotcha 11: a
-    check that silently looked at the wrong repo is worse than one that
-    stopped).
-    """
+    pass
 
 
 def _remote_names(repo: Path) -> list[str]:
@@ -39,6 +40,12 @@ def _remote_url(repo: Path, name: str) -> str | None:
     return done.stdout.strip() or None
 
 
+def _origin_slug(repo: Path) -> str | None:
+    url = _remote_url(repo, "origin")
+    match = _GITHUB_SLUG_RE.search(url) if url else None
+    return match.group(1) if match else None
+
+
 def _url_matches_trunk(url: str, slug: str) -> bool:
     norm = url[:-4] if url.lower().endswith(".git") else url
     norm = norm.rstrip("/")
@@ -58,7 +65,7 @@ def trunk_remote_name(
     resolved_override = override if override is not None else os.environ.get(
         "CLOUDE_TRUNK_REMOTE"
     )
-    resolved_slug = slug or os.environ.get("CLOUDE_TRUNK_REPO") or DEFAULT_TRUNK_REPO
+    resolved_slug = slug or os.environ.get("CLOUDE_TRUNK_REPO")
 
     if resolved_override:
         if _remote_url(repo, resolved_override) is None:
@@ -73,10 +80,24 @@ def trunk_remote_name(
         raise TrunkRemoteError("trunk-remote: no remotes configured in this checkout")
 
     matched: list[str] = []
-    for name in names:
-        url = _remote_url(repo, name)
-        if url and _url_matches_trunk(url, resolved_slug):
-            matched.append(name)
+    if not resolved_slug:
+        for name in names:
+            url = _remote_url(repo, name)
+            if url and _TRUNK_NAME_RE.search(url):
+                matched.append(name)
+        if not matched:
+            resolved_slug = _origin_slug(repo)
+            if not resolved_slug:
+                raise TrunkRemoteError(
+                    f"trunk-remote: no remote's fetch URL names {TRUNK_REPO_NAME} and origin "
+                    f"is not a github.com remote (checked: {', '.join(names)}). Set "
+                    "CLOUDE_TRUNK_REPO=owner/repo or override with CLOUDE_TRUNK_REMOTE=<name>"
+                )
+    if resolved_slug:
+        for name in names:
+            url = _remote_url(repo, name)
+            if url and _url_matches_trunk(url, resolved_slug):
+                matched.append(name)
 
     if not matched:
         raise TrunkRemoteError(

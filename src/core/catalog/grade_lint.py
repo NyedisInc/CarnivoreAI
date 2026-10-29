@@ -225,16 +225,6 @@ def _within(folder: Path, relpath: str) -> Optional[Path]:
 
 
 def split_skill_md(text: str) -> Optional[Tuple[str, str]]:
-    """Split a SKILL.md into its front matter block and its body.
-
-    Description: requires the file to OPEN with a ``---`` fence and to close
-      it, which is what the specification states the format is. Returns None
-      when either fence is missing, so the caller can fail the front matter
-      rule rather than guessing where the body starts.
-    Inputs: text (str) - the whole file.
-    Output: (front matter text, body text), or None when unfenced.
-    Example: split_skill_md("---\\nname: a\\n---\\nbody\\n")[1] -> "body\\n"
-    """
     lines = text.splitlines(keepends=True)
     if not lines or lines[0].strip() != FENCE:
         return None

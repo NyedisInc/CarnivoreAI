@@ -13,7 +13,6 @@ from src.core.federation import peer_deepsearch
 
 
 class PeerContextUnavailable(RuntimeError):
-    """The paired computer could not give the window; ``reason`` is the link's word for why (``timeout``, ``http_404``...)."""
 
     def __init__(self, reason: str) -> None:
         super().__init__(reason)

@@ -121,11 +121,6 @@ def check(conn: sqlite3.Connection, repo_dir: str, *, fetch: Fetch = fetch_visib
 
 
 def approve(conn: sqlite3.Connection, repo_dir: str, remote_fingerprint: str) -> bool:
-    """
-    Refuses (False, nothing stored) when the repo's remotes NOW hash to something else, or the stored row
-    is for a different set. ``remote_fingerprint`` is the one the pending card carried.
-    Example: approve(conn, "/r", card_fingerprint) -> True
-    """
     if fingerprint(read_remotes(Path(repo_dir))) != remote_fingerprint:
         return False
     return store.approve_visibility(conn, repo_dir, remote_fingerprint)

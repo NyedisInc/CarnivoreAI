@@ -24,7 +24,7 @@ const ITEMS = [
         fm: { author: 'morluto', homepage: 'https://example.com/rea', repository: 'javascript:alert(1)', author_url: null },
         versions,
     },
-    { id: 'acme/deploy', name: 'deploy', publisher: 'acme', latest: '1.0.0', kind: 'skill', card: { title: 'Deploy', brief: 'a skill' }, versions },
+    { id: 'alex/deploy', name: 'deploy', publisher: 'alex', latest: '1.0.0', kind: 'skill', card: { title: 'Deploy', brief: 'a skill' }, versions },
 ] as unknown as CatalogItem[];
 
 const host = {

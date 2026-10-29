@@ -7,7 +7,7 @@ vi.mock('../../opscenter/api/auth.svelte', () => ({
   auth: { state: 'signed-in' },
   initAuth: async () => {},
   ApiError: class ApiError extends Error {},
-  authFetch: async () => ({ v: 1, rev: 1, window: '1h', bucket_seconds: 60, start: 1, now: 2, state: 'ok', in: [1], out: [1], totals: null, rate: null, sources: [], machines: [] }),
+  authFetch: async (p: string) => p.includes('sessions') ? [] : ({ v: 1, rev: 1, window: '1h', bucket_seconds: 60, start: 1, now: 2, state: 'ok', in: [1], out: [1], totals: null, rate: null, sources: [], machines: [] }),
 }));
 
 import * as Search from '../drawer/search';
@@ -30,6 +30,9 @@ import { MENU_FLYOUT, QUESTIONS_FLYOUT, SESSION_LIST_WIDGET, SWARM_FLYOUT } from
 import FlyoutBodyFixture from './fixtures/FlyoutBodyFixture.svelte';
 import { tabFlags } from './fixtures/tab-flags.svelte';
 import { CLOSABLE_TAB, FLOW_TAB, closedTabs, HUDDLE, REPO, askOne, flyout, press, rail, railBtn, railOn, setupRail, unpinRail, settle, teardownRail } from './fixtures/rail-harness';
+
+// The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
+registerSwarmFlyout();
 
 setLocale('en');
 
@@ -212,7 +215,7 @@ test('T09: pressing the active icon again returns to agents, for each slide-out'
   await askOne();
   for (const id of [MENU_FLYOUT, QUESTIONS_FLYOUT, SWARM_FLYOUT]) {
     await press(id);
-    if (id !== MENU_FLYOUT) expect(railBtn(id).getAttribute('aria-pressed')).toBe('true');
+    if (id !== MENU_FLYOUT) expect(railBtn(id).getAttribute('aria-pressed')).toBe('true'); // the menu has no key
     await press(id);
     expect(activeFlyout(), id).toBeNull();
     expect(railBtn(SESSION_LIST_WIDGET).getAttribute('aria-pressed')).toBe('true');
@@ -356,13 +359,14 @@ test('hidden until data: a number or a boolean source both gate; zero and false 
   expect(widgetPresent({ ...base, hiddenUntilData: () => 3, present: () => false })).toBe(false);
 });
 
+/** A real Escape keydown from a target; returns the event. */
 function escapeFrom(target: EventTarget): KeyboardEvent {
   const key = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
   target.dispatchEvent(key);
   return key;
 }
 
-test('Escape closes an open slide-out only while focus is inside it or on the rail, never from the main pane or the terminal', async () => {
+test('Escape closes an open slide-out only while focus is inside it or on the rail, never from the main pane or the terminal (Joe, 2026-10-19)', async () => {
   await railOn();
   const term = document.createElement('textarea');
   term.className = 'xterm-helper-textarea';
@@ -501,7 +505,7 @@ test('gap 3: Enter or Space (a click with no pointer) opens the focused key and 
   expect(activeFlyout()).toBe(SWARM_FLYOUT);
   expect((document.activeElement as HTMLElement).hasAttribute('data-flyout-close')).toBe(true);
   const esc = await keyOn(document.activeElement!, 'Escape');
-  expect(esc.defaultPrevented, 'a pinned rail\'s slide-out keeps its Escape').toBe(false);
+  expect(esc.defaultPrevented, 'a pinned rail\'s slide-out keeps its Escape (Joe (ccsliinc), 2026-10-20)').toBe(false);
   expect(activeFlyout()).toBe(SWARM_FLYOUT);
 });
 

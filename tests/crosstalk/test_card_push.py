@@ -109,3 +109,9 @@ def test_a_new_install_ships_off_and_the_gate_follows_the_stored_preference():
     assert card_push.enabled() is False
     card_push.uninstall()
     assert card_push.enabled() is False
+
+
+def test_the_card_preview_stars_a_credential_like_history_does():
+    key = "ghp_" + "aB3xY9" * 6
+    frame = card_push.frame_of({"id": "m-1", "thread": "t", "text": f"use {key} please"})
+    assert key not in frame["preview"] and "please" in frame["preview"]

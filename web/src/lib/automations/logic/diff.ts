@@ -386,7 +386,6 @@ export function previousIndex(runs: { run_id: string; status: string; has_report
   return -1;
 }
 
-/* not usable */
 export function outputChanged(base: ReportSlot, head: ReportSlot): boolean | null {
   const a = usableReport(base);
   const b = usableReport(head);

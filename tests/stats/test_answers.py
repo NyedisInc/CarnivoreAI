@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from src.core.stats import answers, live_view, project_groups, queries
-from src.core.stats.plugin import carry
+from src.core.stats import answers, live_view, project_groups, queries, query_buckets
+from src.core.stats.plugin import carry, usage_revision
 from src.core.stats.plugin import progress as progress_mod
 from src.core.stats.store import StatsStore
 from src.models import stats as models
@@ -31,7 +31,7 @@ def env(tmp_path, monkeypatch):
     def counted(target, request, deadline=None):
         calls.append(request.metric)
         if state["fail"]:
-            raise queries.QueryLimit("forced failure")
+            raise query_buckets.QueryLimit("forced failure")
         return real(target, request, deadline)
 
     monkeypatch.setattr(queries, "execute", counted)
@@ -88,6 +88,7 @@ def test_new_usage_makes_a_fresh_row_stale_at_once_and_the_recompute_carries_it(
     env.clock["now"] += 10
     with env.store.connect() as db:
         db.execute("UPDATE stats_meta SET value=CAST(value AS INTEGER)+1 WHERE key='revision'")
+        usage_revision.bump(db)
     _row(env.store, int(BASE), "c1")
     served = env.ask(ROLLING)[0]
     assert served["answer"]["stale"] is True and served["answer"]["reason"] == "refreshing"

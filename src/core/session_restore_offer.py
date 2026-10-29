@@ -1,28 +1,3 @@
-"""
-Description: PURE. It decides from the journal, the ``sessions`` rows and one
-  measured listing; the background task and the routes do the measuring and
-  the writing.
-
-  WHY. The reason is chosen from measurements and the words follow it:
-    reboot            the kernel boot time moved.
-    tmux_server_gone  same boot, and the socket has no server at all.
-    sessions_gone     same boot, the server is up, some sessions vanished.
-    unknown_boot      the boot time could not be read. It does NOT claim a
-                      reboot: an unmeasurable boot time is not a reboot.
-  tmux being gone is never, on its own, evidence of a reboot.
-
-  DECLINING IS REMEMBERED PER INSTANCE. A declined instance is not offered
-  again, so the page does not nag on every load; the same row dying again
-  under a NEW instance is a new event and is offered.
-
-  LEAVING A ROW UNTICKED IS NOT DECLINING IT (1.11.1). An accept closes the
-  offer, so nothing unticked comes back on the next page load, but it is not
-  written to ``declined`` either: the next event that builds an offer (a
-  boot, the terminal server going away) may offer it again. Only "not now"
-  declines. Before 1.11.1 an unticked row was declined, which made the
-  pre-tick rule (older sessions start unticked) a silent way of declining
-  every older session on the first accept.
-"""
 
 from __future__ import annotations
 

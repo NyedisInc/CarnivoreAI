@@ -106,7 +106,7 @@ describe('where the finding is', () => {
     });
 });
 
-describe('an overridden item paints no blocked verdict and no override note', () => {
+describe('an overridden item paints no blocked verdict and no override note (Alex (example-owner), 2026-10-16)', () => {
     const blocked = {
         status: 'reviewed',
         summary: 's',
@@ -115,11 +115,11 @@ describe('an overridden item paints no blocked verdict and no override note', ()
     };
 
     test('overridden + blocked: no verdict word, no override callout, warnings still listed', () => {
-        paint({ ...blocked, override: { reason: 'internal test fixture', by: 'acme', at: '2026-09-19T16:02:14Z' } } as CatalogReview);
+        paint({ ...blocked, override: { reason: 'internal test fixture', by: 'Example-owner', at: '2026-09-19T16:02:14Z' } } as CatalogReview);
         expect(text()).not.toContain(i18n.t('skill.review.verdict.blocked'));
         expect(text()).not.toContain(i18n.t('skill.review.verdict.clean'));
         expect(text()).not.toContain('internal test fixture');
-        expect(text()).not.toContain('acme');
+        expect(text()).not.toContain('Example-owner');
         expect(document.querySelectorAll('.cat-review__override, .cat-review__override-by')).toHaveLength(0);
         expect(text()).toContain('reads ~/.aws');
     });

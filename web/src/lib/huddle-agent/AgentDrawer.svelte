@@ -1,18 +1,4 @@
-<!--
-  The Swarm agent drawer (#1363, slice A): a slide-out that grows from UNDER the left (Swarm) drawer toward the right, hosting ONE agent's chat, with a second tab, the Tasks
-  Viewer, which is the huddle lists view filtered to that agent. It replaces opening the agent's full page on a click.
 
-  ONE CHAT COMPONENT: the body is `cplugs/huddle/chat/ChatWidget.svelte` (the same one the agent page and the widget
-  mount); this file only frames it, so a pop-out window or a widget host mounts the same component. The Tasks Viewer is
-  `HuddleBody` with its `agent` prop, never a copy of the lists.
-
-  Width: the left drawer's width by default, dragged on the right edge, remembered per device (`agent-drawer.svelte.ts`).
-  The kebab menu pops it out into its own window or makes it a widget of the current layout (`agent-dock.ts`); the title row
-  drags onto the layout to drop it as a widget. At 1024 px and wider the open drawer DOCKS: the terminal moves to its right
-  instead of sitting under it (`dockBesideTerminal`, #1408). Close: the close key, Escape, or a press (pointerdown) outside it. COPIED, NOT INVENTED: the title strip and quiet tabs of `ChatWidget.svelte` and
-  `web/src/lib/ledger/ledger-chrome.css` (fixed-height title-row ground, a hairline by box-shadow, a small tracked
-  label in the accent).
--->
 <script lang="ts">
     import { motionReduced } from '../motion/motion';
     import { onMount } from 'svelte';
@@ -24,7 +10,7 @@
     import { openAgentTerminal } from '../../cplugs/huddle/agents/agent-terminal';
     import { addAgentWidget, beginAgentBarDrag, popOutAgent } from './agent-dock';
     import {
-        AGENT_DRAWER_MAX_PX, AGENT_DRAWER_MIN_PX, agentDrawer, closeAgentDrawer, dockBesideTerminal, drawerAnchorLeft, drawerWidth, keepsDrawerOpen, resetDrawerWidth, setDrawerWidth, widthFromPointer,
+        AGENT_DRAWER_MAX_PX, AGENT_DRAWER_MIN_PX, agentDrawer, closeAgentDrawer, dockBesideTerminal, drawerAnchorLeft, drawerWidth, resetDrawerWidth, setDrawerWidth, widthFromPointer,
     } from './agent-drawer.svelte';
 
     interface Props {
@@ -92,20 +78,16 @@
         };
         window.addEventListener('resize', redock);
         const onKey = (event: KeyboardEvent): void => {
-            if (event.key !== 'Escape' || agentDrawer.id === null || event.defaultPrevented) return;
+            if (event.key !== 'Escape' || agentDrawer.id === null || event.defaultPrevented || !panel) return;
+            const inside = (node: unknown): boolean => node instanceof Node && panel!.contains(node);
+            if (!inside(event.target) && !inside(document.activeElement)) return;
             closeWithFocus();
         };
-        const onDown = (event: PointerEvent): void => {
-            if (agentDrawer.id === null || keepsDrawerOpen(event.target)) return;
-                closeAgentDrawer();
-        };
         window.addEventListener('keydown', onKey);
-        document.addEventListener('pointerdown', onDown, true);
         return () => {
             window.removeEventListener('resize', redock);
             dockBesideTerminal(false, 0);
             window.removeEventListener('keydown', onKey);
-            document.removeEventListener('pointerdown', onDown, true);
         };
     });
 
@@ -159,7 +141,7 @@
   @layer components {
     .had {
       position: fixed;
-      top: env(safe-area-inset-top, 0px);
+      top: max(env(safe-area-inset-top, 0px), var(--desktop-inset-top, 0px));
       left: 0;
       bottom: 0;
       z-index: 1099;

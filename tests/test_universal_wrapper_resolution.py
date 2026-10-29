@@ -68,20 +68,20 @@ def _settings(tmp_path, wrappers=None, **agent_overrides):
     ("shell", "shell-default.zsh"),
 ])
 def test_bare_family_types_launch_their_standard_wrapper(tmp_path, agent_type, expected):
-    s = _settings(tmp_path, wrappers=[_wrapper("keyc", default=True)],
+    s = _settings(tmp_path, wrappers=[_wrapper("cld", default=True)],
                   codex_command="never-read", hermes_command="never-read",
                   openclaw_command="never-read", shell_command="never-read")
     out = s.get_agent_command(agent_type)
     assert launches(out, expected)
     assert "never-read" not in out
-    assert "keyc.zsh" not in out
+    assert "cld.zsh" not in out
 
 
 def test_an_existing_shell_session_still_launches_a_shell(tmp_path):
     from src.core.agent_families import get_family
     from src.core.shell_init import RC_SOURCE
 
-    s = _settings(tmp_path, wrappers=[_wrapper("keyc", default=True)])
+    s = _settings(tmp_path, wrappers=[_wrapper("cld", default=True)])
     out = s.get_agent_command("shell")
     assert launches(out, "shell-default.zsh") and get_family("shell").default_script in out
     assert RC_SOURCE not in out
@@ -90,7 +90,7 @@ def test_an_existing_shell_session_still_launches_a_shell(tmp_path):
 def test_claude_launch_uses_the_default_claude_wrapper(tmp_path):
     s = _settings(tmp_path, wrappers=[
         _wrapper("claude-skip-permissions", default=True),
-        _wrapper("keyc"),
+        _wrapper("cld"),
     ])
     out = s.get_agent_command("claude")
     assert "claude-skip-permissions.zsh" in out
@@ -99,9 +99,9 @@ def test_claude_launch_uses_the_default_claude_wrapper(tmp_path):
 def test_an_explicit_wrapper_id_wins_over_the_default(tmp_path):
     s = _settings(tmp_path, wrappers=[
         _wrapper("claude-skip-permissions", default=True),
-        _wrapper("keyc"),
+        _wrapper("cld"),
     ])
-    assert "keyc.zsh" in s.get_agent_command("keyc")
+    assert "cld.zsh" in s.get_agent_command("cld")
 
 
 def test_no_wrappers_launches_the_standard_claude_wrapper(tmp_path):
@@ -131,10 +131,10 @@ def test_a_codex_wrapper_does_not_affect_the_claude_launch(tmp_path):
 
 
 def test_a_claude_wrapper_does_not_affect_the_codex_launch(tmp_path):
-    s = _settings(tmp_path, wrappers=[_wrapper("keyc", default=True)])
+    s = _settings(tmp_path, wrappers=[_wrapper("cld", default=True)])
     out = s.get_agent_command("codex")
     assert launches(out, "codex-default.zsh") and out.endswith("_ --no-alt-screen")
-    assert "keyc.zsh" not in out
+    assert "cld.zsh" not in out
 
 
 def test_each_family_resolves_its_own_default_independently(tmp_path):
@@ -163,14 +163,14 @@ def test_a_family_with_no_default_uses_its_first_wrapper(tmp_path):
 
 
 def test_a_model_is_dropped_for_a_wrapper_that_does_not_accept_one(tmp_path):
-    s = _settings(tmp_path, wrappers=[_wrapper("keyc", default=True, accepts_model=False)])
-    out = s.get_agent_command("keyc", model="vendor/m-1")
+    s = _settings(tmp_path, wrappers=[_wrapper("cld", default=True, accepts_model=False)])
+    out = s.get_agent_command("cld", model="vendor/m-1")
     assert "vendor/m-1" not in out
 
 
 def test_a_model_is_forwarded_to_a_wrapper_that_accepts_one(tmp_path):
-    s = _settings(tmp_path, wrappers=[_wrapper("clxor", default=True, accepts_model=True)])
-    assert "vendor/m-1" in s.get_agent_command("clxor", model="vendor/m-1")
+    s = _settings(tmp_path, wrappers=[_wrapper("cldor", default=True, accepts_model=True)])
+    assert "vendor/m-1" in s.get_agent_command("cldor", model="vendor/m-1")
 
 
 def test_model_gating_applies_to_a_non_claude_family_too(tmp_path):
@@ -183,16 +183,16 @@ def test_model_gating_applies_to_a_non_claude_family_too(tmp_path):
 
 def test_a_wrapper_dict_with_no_family_key_still_resolves_as_claude(tmp_path):
     legacy = {
-        "id": "keyc",
-        "label": "keyc",
-        "script": "keyc",
+        "id": "cld",
+        "label": "cld",
+        "script": "cld",
         "entry": None,
         "description": None,
         "default": True,
         "accepts_model": False,
     }
     s = _settings(tmp_path, wrappers=[legacy])
-    assert "keyc.zsh" in s.get_agent_command("claude")
+    assert "cld.zsh" in s.get_agent_command("claude")
     assert launches(s.get_agent_command("shell"), "shell-default.zsh")
 
 
@@ -201,7 +201,7 @@ def test_family_summaries_cover_every_family_and_report_wrapper_counts(tmp_path)
     from src.core.agent_families import AGENT_FAMILY_NAMES
 
     s = _settings(tmp_path, wrappers=[
-        _wrapper("keyc", default=True),
+        _wrapper("cld", default=True),
         _wrapper("my-codex", family="codex", default=True),
     ])
     summary = s.get_settings_summary()["agents"]

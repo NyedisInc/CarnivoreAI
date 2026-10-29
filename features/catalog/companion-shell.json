@@ -33,7 +33,14 @@
     "terminal",
     "session_shell_get"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The bottom bar under the terminal grid with its terminal key pressed: a plain shell for the agent opens in the bottom panel.",
+      "caption": "Bottom terminal widget",
+      "file": "bottom-terminal-widget.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Terminal widget",
   "since": "2026-10-11",
   "status": "beta",
@@ -48,6 +55,5 @@
   "updated": "2026-10-11",
   "where": [
     "The bottom bar under the terminal grid, its first key, at 1024 wide or more."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

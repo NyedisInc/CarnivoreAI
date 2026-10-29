@@ -22,8 +22,6 @@ SAFE_HEADERS = {"X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"
 
 
 def _configured_parents(env: CrateEnv) -> List[str]:
-    """The real paths of the folders a crate may be downloaded from: each configured crates folder and its ``share/``. Blocking.
-    A folder that is not usable now is left out."""
     out: List[str] = []
     for which in (K.FOLDER_PRIMARY, K.FOLDER_SECOND):
         try:
@@ -35,7 +33,6 @@ def _configured_parents(env: CrateEnv) -> List[str]:
 
 
 def _regular(path: Path) -> bool:
-    """Whether ``path`` is a regular file and not a symlink. Blocking (one lstat)."""
     try:
         return stat.S_ISREG(os.lstat(path).st_mode)
     except OSError:

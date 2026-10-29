@@ -5,6 +5,7 @@
   import { manifestById } from '../widgets/core-manifests';
   import { passesFilter, type DrawerInputs } from './drawer-model';
   import { addAnalyticsWidget, addGalleryPreset, hideAnalyticsWidget, removeWidget, restoreAnalyticsWidget } from './editor.svelte';
+  import Button from '../../lib/base/Button.svelte';
   import ChartDeleteChip from './ChartDeleteChip.svelte';
   import { t } from '../../lib/i18n/index.svelte';
 
@@ -41,18 +42,18 @@
     <p class="le-gallery__label">{t('gallery.title')}</p>
     <div class="le-gallery__cats" role="group" aria-label={t('gallery.cats')}>
       {#each GALLERY_CATEGORIES as name (name)}
-        <button type="button" class="le-chip" class:le-chip--on={galleryCategory === name} aria-pressed={galleryCategory === name} data-gallery-category={name}
-          onclick={() => (galleryCategory = galleryCategory === name ? null : name)}>{t(`gallery.cat.${name}`)}</button>
+        <Button size="sm" aria-pressed={galleryCategory === name} data-gallery-category={name}
+          onclick={() => (galleryCategory = galleryCategory === name ? null : name)}>{t(`gallery.cat.${name}`)}</Button>
       {/each}
     </div>
     <ul class="le-gallery__cards">
       {#each galleryCards as preset (preset.id)}
-        <li><button type="button" class="le-card le-gallery__card" data-preset={preset.id} data-viz={preset.viz} title={t(presetNoteKey(preset))} onclick={() => addGalleryPreset(preset)}>
+        <li><Button variant="row" data-le-card="" data-preset={preset.id} data-viz={preset.viz} title={t(presetNoteKey(preset))} onclick={() => addGalleryPreset(preset)}>
           <span class="le-gallery__plus" aria-hidden="true">+</span>
           <span class="le-gallery__text"><span class="le-gallery__name">{t(presetTitleKey(preset))}</span><span class="le-gallery__note"
               ><span class="le-gallery__viz">{t(`viz.${preset.viz}`)}</span><span class="le-gallery__sep" aria-hidden="true">·</span>{t(presetNoteKey(preset))}</span
             ></span>
-        </button></li>
+        </Button></li>
       {/each}
     </ul>
     <p class="le-gallery__hint">{t('gallery.hint')}</p>
@@ -66,11 +67,11 @@
             <span class="le-chart-row__name" title={chart.title}>{chart.title}</span>
             <span class="le-chart-row__acts">
               {#if placed}
-                <button type="button" class="le-chip" onclick={() => addAnalyticsWidget(chart)}>{t('analytics.duplicate')}</button>
-                <button type="button" class="le-chip" onclick={() => hideAnalyticsWidget(slot)}>{t('analytics.hide')}</button>
-                <button type="button" class="le-chip" onclick={() => void removeWidget(slot)}>{t('analytics.remove')}</button>
+                <Button size="sm" onclick={() => addAnalyticsWidget(chart)}>{t('analytics.duplicate')}</Button>
+                <Button size="sm" onclick={() => hideAnalyticsWidget(slot)}>{t('analytics.hide')}</Button>
+                <Button size="sm" variant="danger" onclick={() => void removeWidget(slot)}>{t('analytics.remove')}</Button>
               {:else}
-                <button type="button" class="le-chip" onclick={() => restoreAnalyticsWidget(slot)}>{t('analytics.restore')}</button>
+                <Button size="sm" onclick={() => restoreAnalyticsWidget(slot)}>{t('analytics.restore')}</Button>
                 <ChartDeleteChip chartId={chart.id} />
               {/if}
             </span>
@@ -119,7 +120,7 @@
     list-style: none;
   }
 
-  :global(.le-drawer) .le-gallery__card {
+  [data-preset] {
     align-items: flex-start;
     gap: var(--oc-space-2);
     padding: var(--oc-space-1) 6px;
@@ -131,11 +132,6 @@
     font-size: var(--oc-fs-body);
     line-height: 16px;
     color: var(--oc-text-muted);
-  }
-
-  :global(.le-drawer) .le-gallery__card:hover .le-gallery__plus,
-  :global(.le-drawer) .le-gallery__card:focus-visible .le-gallery__plus {
-    color: var(--oc-green);
   }
 
   .le-gallery__text {
@@ -186,10 +182,6 @@
     min-height: 26px;
     padding: 2px 6px;
     border-radius: var(--oc-radius-sm, 2px);
-  }
-
-  .le-chart-row:hover {
-    background: var(--oc-ground-hover);
   }
 
   .le-chart-row__name {

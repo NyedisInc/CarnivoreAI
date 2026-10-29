@@ -4,6 +4,7 @@ export interface CatalogSignature {
     [key: string]: unknown;
 }
 
+/* was not found */
 export interface CatalogReview {
     status?: 'reviewed' | 'unavailable' | null;
     summary?: string | null;
@@ -28,7 +29,6 @@ export interface CatalogReviewWarning {
     [key: string]: unknown;
 }
 
-/*  hidden  */
 export interface CatalogGrade {
     grade?: string | null;
     checked?: number | null;
@@ -358,10 +358,9 @@ export interface ItemRatings {
     [key: string]: unknown;
 }
 
-/* could not */
 export interface SubmissionFile {
     path?: string | null;
-    /* could not */
+    /* could not measure */
     size?: number | null;
     [key: string]: unknown;
 }

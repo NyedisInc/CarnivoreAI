@@ -1,33 +1,3 @@
-"""API routes for blueprints: saved team specs one launch brings up (issue #759).
-
-Layouts slice E (#424), carrying over #153. Thin, in the
-``layouts_routes.py`` pattern: shapes, auth, error translation and the
-connection dance. The rules live in ``src/core/blueprints_store.py``,
-``blueprints_file.py``, ``project_worktree.py`` and
-``src/api/blueprints_launch.py``. EVERY USER ACTION IS ONE ROUTE (the
-API-first rule), all behind ``require_auth``:
-
-  GET    /blueprints                         every blueprint (200 even when unreadable)
-  POST   /blueprints                         create from a spec
-  GET    /blueprints/settings                the worktree root
-  PUT    /blueprints/settings                set the worktree root (config writer)
-  POST   /blueprints/import                  read <project>/.carnivore/swarm.json
-  POST   /blueprints/from-layout/{uuid}      a blueprint of a saved Layout's members
-  GET    /blueprints/{uuid}                  one blueprint
-  PUT    /blueprints/{uuid}                  replace the spec
-  DELETE /blueprints/{uuid}                  delete; nothing else is touched
-  POST   /blueprints/{uuid}/export           write <project>/.carnivore/swarm.json
-  POST   /blueprints/{uuid}/launch/preview   the per-member plan; writes nothing
-  POST   /blueprints/{uuid}/launch           launch, sequentially; per-member outcome
-
-ERRORS are ``{"detail": {"code", "detail", ...}}``: 400 ``blueprint_secret``
-(with ``detectors``) / ``blueprint_invalid`` / ``worktree_root_invalid``;
-404 ``blueprint_not_found`` / ``layout_not_found`` / ``swarm_file_missing``;
-409 ``blueprint_name_taken`` / ``blueprint_limit`` / ``blueprint_corrupt`` /
-``project_path_invalid`` / ``swarm_file_invalid`` / ``swarm_path_unsafe`` /
-``layout_member_unusable``; 503 ``blueprints_unavailable``. A write that
-landed publishes ``sessions.changed`` with reason ``blueprints``.
-"""
 
 from __future__ import annotations
 
@@ -40,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from pydantic import ValidationError
 
+from src.api.error_response import soft_failure
 from src.api import blueprints_launch_routes
 from src.api.blueprints_settings import CaptureSources
 from src.api.auth import require_auth
@@ -127,8 +98,7 @@ async def list_blueprints() -> BlueprintsResponse:
     try:
         saved: List[store.SavedBlueprint] = await run_in_threadpool(run, store.list_blueprints)
     except (DatastoreUnreadableError, store.BlueprintError, OSError) as exc:
-        logger.info("blueprints_unavailable", reason=str(exc))
-        return BlueprintsResponse(status="unavailable", detail=str(exc))
+        return BlueprintsResponse(status="unavailable", detail=soft_failure("datastore_unavailable", exc, step="list_blueprints"))
     return BlueprintsResponse(status="ok", blueprints=[to_model(b) for b in saved])
 
 
@@ -142,7 +112,7 @@ async def create_blueprint(body: BlueprintWriteRequest, request: Request) -> Blu
 
 @router.get("/settings", response_model=WorktreeSettings, dependencies=[Depends(require_auth)])
 async def get_settings() -> WorktreeSettings:
-    """Where a launch makes new worktrees (``worktrees`` unless set)."""
+    """Where a launch makes new worktrees (``~/dev-worktrees`` unless set)."""
     return WorktreeSettings(worktree_root=blueprints_launch_routes.worktree_root())
 
 

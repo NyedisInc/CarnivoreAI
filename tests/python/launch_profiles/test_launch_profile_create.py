@@ -64,7 +64,7 @@ def env(tmp_path, monkeypatch, tmux_test_socket):
 
     def _auth(self):
         return SimpleNamespace(
-            agents=AgentsConfig(wrappers=[AgentWrapper(id="claude-or", label="or", script="claude")]), session=SessionConfig(tmux_socket_name=tmux_test_socket), mcp=SimpleNamespace(enabled=False, beast_mode=False, beast_grid={}, beast_trust_scope="projects"),
+            agents=AgentsConfig(wrappers=[AgentWrapper(id="claude-or", label="or", script="claude")]), session=SessionConfig(tmux_socket_name=tmux_test_socket), mcp=SimpleNamespace(channels=False, enabled=False, beast_mode=False, beast_grid={}, beast_trust_scope="projects"),
             launch_profiles=SimpleNamespace(profiles=[_profile("claude-plain", default=True, endpoint={"mode": "native"}),
                                                       _profile("claude-or")]),
             byoai=SimpleNamespace(connections=[connection]),

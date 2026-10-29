@@ -1,40 +1,3 @@
-"""Installing a catalog item: what it would do, and then doing it.
-
-THREE ROUTES. What is installed, what installing this WOULD write, and
-the install itself. Uninstall, the auto-update toggle and applying an
-update are a later slice and are deliberately absent rather than stubbed
-out, because a stub that answers 200 is worse than a route that is not
-there.
-
-**STAGING IS DISCARDED ON EVERY RESPONSE PATH, INCLUDING THE ONES THAT
-RAISE.** A staged copy is a full extraction of somebody else's tarball
-sitting in the state directory, and the failure mode is silent: each
-refused install leaves one behind, the concurrency cap fills, and every
-later install refuses with ``staging_busy`` for reasons that have
-nothing to do with the item being installed. So both handlers hold the
-directory in a ``finally``, the steps in
-:mod:`src.api.catalog_install_support` clean up their own failures, and
-a test counts the entries under the staging root after each call. The
-boot sweep exists for the request that died between the extraction and
-the ``finally``; it is not the normal cleanup.
-
-**ONE STAGED COPY IS KEPT DELIBERATELY, AND IT IS THE EXCEPTION.** A
-preview that produced an installable plan hands its directory to the
-plan-token store instead of discarding it, because the point of the
-token is that the install performs what the sheet described rather than
-downloading again. Those directories are still bounded: ten minutes, and
-a count DERIVED from the staging cap so it always sits under it
-(``plan_tokens.MAX_OUTSTANDING_TOKENS``), swept on the next request,
-removed at boot.
-
-**THE PLAN IS MADE TWICE, ON PURPOSE.** Preview plans, and install plans
-again from scratch. Between the two requests a user can install
-something else, a folder can appear, a root can become a symlink.
-Reusing the preview's verdict would be checking the world as it was when
-somebody was reading a screen.
-
-Mounted under ``/api/v1`` from ``src/api/routes.py``.
-"""
 
 from __future__ import annotations
 
@@ -85,7 +48,6 @@ from src.api.catalog_one_click import (
     REASON_NO_SHEET_PROOF,
     REASON_SCRIPTS,
     one_click_precheck,
-    staged_has_script_members,
     plan_needs_sheet,
     sheet_answer_for_refusal,
     sheet_required,
@@ -245,7 +207,6 @@ async def preview_install(
         if isinstance(verdict, InstallRefusal) and verdict.code != NAME_TAKEN:
             raise refuse_409(verdict.code, verdict.detail)
 
-        # undefined outside a secure context
         body_sha, _size = await asyncio.to_thread(
             hash_file, staged.path / manifest_name(item.kind)
         )
@@ -372,10 +333,7 @@ async def run_install(
             if item.kind == KIND_CPLUG
             else None
         )
-        if one_click and (
-            plugin_code
-            or await asyncio.to_thread(staged_has_script_members, staged.path)
-        ):
+        if one_click and plugin_code:
             raise sheet_required(REASON_SCRIPTS)
         if needs_consent:
             body_sha, _size = await asyncio.to_thread(

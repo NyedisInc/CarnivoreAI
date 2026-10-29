@@ -23,12 +23,8 @@ from src.core.attention.evidence import (
     Evidence,
 )
 from src.core.attention.process_scope import evidence_process_floor
-from src.core.attention.registry_read import (
-    REG_OK,
-    REG_STALE,
-    STALE_CAUSE_CONVERSATION,
-    read_registry_index,
-)
+from src.core.attention.registry_record import REG_OK, REG_STALE, STALE_CAUSE_CONVERSATION
+from src.core.attention.registry_index import read_registry_index
 from src.core.attention.resolve import resolve_attention
 from src.core.attention.transcript_facts import read_transcript_facts
 from src.core.listing_attention import attention_reads_for_name
@@ -44,9 +40,9 @@ requires_tmux = pytest.mark.skipif(
     shutil.which("tmux") is None, reason="tmux not on PATH"
 )
 
-OLD_CONVERSATION = "c694aa96-1982-41b9-84ea-82c5655265b5"
+OLD_CONVERSATION = "11111111-1a7b-42f9-baba-abacc8720544"
 
-NEW_CONVERSATION = "9c1bad07-72f6-4121-8f2a-e5153998ba2e"
+NEW_CONVERSATION = "22222222-1a7b-42f9-baba-abacc8720544"
 
 CLAUDE_VERSION = "2.1.283"
 

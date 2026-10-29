@@ -148,7 +148,7 @@ async def migrate_project(project_name: str, body: MigrateBody, http_request: Ht
     Inputs: project_name; body (MigrateBody). Output: the plan view, or {op_id, state, plan}.
     Raises: 404 unknown project or machine, 409 ``project_moved_away`` / ``plan_blocked`` / ``migrate_in_progress`` or the other computer's
       refusal (403 ``pack_restricted`` with its ``rule``), 412 / 428 fingerprint, 502 ``machine_unreachable``.
-    Example: POST /api/v1/projects/ledgerbot/migrate {"machine": "hosta"}
+    Example: POST /api/v1/projects/trader/migrate {"machine": "studio"}
     """
     project = await run_in_threadpool(lambda: _read_projects(lambda c: projects_service.resolve_target(c, project_name)))
     return await _run("project", project["display_name"], [project], body, http_request)
@@ -156,8 +156,9 @@ async def migrate_project(project_name: str, body: MigrateBody, http_request: Ht
 
 @router.post("/companies/{company}/migrate", dependencies=[Depends(require_auth)])
 async def migrate_company(company: str, body: MigrateBody, http_request: HttpRequest) -> Dict[str, Any]:
-    """
-    Output and raises: as ``migrate_project``; the plan lists every project. Example: POST /api/v1/companies/packproof/migrate {"machine": "hosta"}
+    """Plan, or plan and start, moving every active project of a company (by id or name) to one machine, all or nothing at the staging step.
+
+    Output and raises: as ``migrate_project``; the plan lists every project. Example: POST /api/v1/companies/packproof/migrate {"machine": "studio"}
     """
     def read(conn: Any) -> Dict[str, Any]:
         rows = _company_projects(conn, company)
@@ -171,6 +172,11 @@ async def migrate_company(company: str, body: MigrateBody, http_request: HttpReq
 @router.post("/projects/{project_name}/migrate-back", dependencies=[Depends(require_auth)])
 async def migrate_back(project_name: str, body: BackBody) -> Dict[str, Any]:
     """Bring a moved-away project home: the machine that holds it plans and applies a migrate back here.
+
+    Description: only a ``moved_away`` project. This machine must allow receiving projects. Output: the plan (``apply`` false), or the
+      other computer's finished answer {op_id, project, machine, root}; its progress is on ``GET /pack/ops/{op_id}`` here.
+    Raises: 404, 409 ``not_moved_away``, 502 ``machine_unreachable``, 404 ``not_moved_from_you`` (the holder no longer has it).
+    Example: POST /api/v1/projects/trader/migrate-back {"apply": true}
     """
     def read(conn: Any) -> Dict[str, Any]:
         project = projects_service.resolve_target(conn, project_name)

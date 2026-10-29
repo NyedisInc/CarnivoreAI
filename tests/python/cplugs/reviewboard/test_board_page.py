@@ -92,7 +92,7 @@ def test_a_forged_ticket_gets_404(client: TestClient, env: Env):
         "garbage", "a.b.c", f"{slug}.{rev}.{view}.{expiry}", "",
         ticket.mint(slug, rev, view, now=time.time() - ticket.TTL_S - 5),
         signed_links.mint("huddle-artifact-ticket-v1", [slug, rev, view], 3600),
-        artifact_ticket.mint(1, "49759e95"),
+        artifact_ticket.mint(1, "ab12cd34"),
     ]
     env.app.dependency_overrides.clear()
     with TestClient(env.app) as anonymous:

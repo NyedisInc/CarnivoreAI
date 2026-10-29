@@ -9,6 +9,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -21,6 +27,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read one file from the client directory.
+ * @param {...string} parts  Path segments below `client/`.
+ * @returns {string} File contents.
+ */
 function clientFile(...parts) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', ...parts), 'utf8');
 }
@@ -56,6 +67,8 @@ const styleRules = rules(stylesCss);
 const toastRules = rules(toastCss);
 const sidebarRules = rules(sidebarCss);
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('no bare `button` element rule exists any more', () => {
     const bare = bySelector(styleRules, 'button');
@@ -93,6 +106,8 @@ test('box-sizing is border-box, which is why the reset eats padding', () => {
         'without border-box the reset would not absorb a class\'s own padding');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 const OPT_OUTS = [
     ['styles.css', styleRules, '.cloude-touch-copy', ['width', 'height']],
@@ -141,6 +156,8 @@ test('the sidebar collapse control is sized as a header control, not a bare butt
         'no unlayered rule of the old hand-made button is left to beat the shared one');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('.running-session-name can shrink, so a long name cannot push the row wide', () => {
     const name = bySelector(styleRules, '.running-session-name');

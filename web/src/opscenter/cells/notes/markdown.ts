@@ -1,4 +1,3 @@
-/* <script */
 
 export type Inline =
   | { kind: 'text'; text: string }
@@ -8,12 +7,14 @@ export type Inline =
   | { kind: 'em'; children: Inline[] }
   | { kind: 'link'; href: string; children: Inline[] };
 
+export type SubList = { ordered: boolean; items: Inline[][] };
+
 export type Block =
   | { kind: 'heading'; level: 1 | 2 | 3 | 4 | 5 | 6; children: Inline[] }
   | { kind: 'paragraph'; children: Inline[] }
   | { kind: 'code'; text: string }
   | { kind: 'quote'; children: Inline[] }
-  | { kind: 'list'; ordered: boolean; items: Inline[][] }
+  | { kind: 'list'; ordered: boolean; start: number; items: Inline[][]; subs: (SubList | null)[] }
   | { kind: 'rule' };
 
 const ALLOWED_SCHEMES = /^(https?:\/\/|mailto:)/i;
@@ -27,6 +28,8 @@ const RULE = /^\s{0,3}(-{3,}|\*{3,}|_{3,})\s*$/;
 const BULLET = /^\s{0,3}[-*+]\s+(.*)$/;
 
 const NUMBERED = /^\s{0,3}\d{1,9}[.)]\s+(.*)$/;
+
+const LIST_ITEM = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)$/;
 
 const QUOTE = /^\s{0,3}>\s?(.*)$/;
 
@@ -124,6 +127,39 @@ export function parseInline(source: string, allow: LinkFilter = allowedHref): In
   return out;
 }
 
+function parseList(lines: string[], at: number, allow: LinkFilter): { block: Block; next: number } {
+  const first = LIST_ITEM.exec(lines[at] as string) as RegExpExecArray;
+  const base = (first[1] as string).length;
+  const ordered = /^\d/.test(first[2] as string);
+  const start = ordered ? parseInt(first[2] as string, 10) : 1;
+  const items: Inline[][] = [];
+  const subs: (SubList | null)[] = [];
+  let next = at;
+  while (next < lines.length) {
+    if (!(lines[next] as string).trim()) {
+      if (!LIST_ITEM.test(lines[next + 1] ?? '')) break;
+      next += 1;
+    }
+    const item = LIST_ITEM.exec(lines[next] as string);
+    if (!item) break;
+    const depth = (item[1] as string).length;
+    const itemOrdered = /^\d/.test(item[2] as string);
+    const text = parseInline(item[3] as string, allow);
+    if (depth >= base + 2 && items.length > 0) {
+      const last = subs.length - 1;
+      subs[last] ??= { ordered: itemOrdered, items: [] };
+      (subs[last] as SubList).items.push(text);
+    } else if (depth > base + 1 || itemOrdered !== ordered) {
+      break;
+    } else {
+      items.push(text);
+      subs.push(null);
+    }
+    next += 1;
+  }
+  return { block: { kind: 'list', ordered, start, items, subs }, next };
+}
+
 export function parseMarkdown(source: string, allow: LinkFilter = allowedHref): Block[] {
   const lines = source.replace(/\r\n?/g, '\n').split('\n');
   const blocks: Block[] = [];
@@ -175,19 +211,10 @@ export function parseMarkdown(source: string, allow: LinkFilter = allowedHref): 
       continue;
     }
 
-    const bullet = BULLET.exec(line);
-    const numbered = NUMBERED.exec(line);
-    if (bullet || numbered) {
-      const ordered = bullet === null;
-      const pattern = ordered ? NUMBERED : BULLET;
-      const items: Inline[][] = [];
-      while (at < lines.length) {
-        const item = pattern.exec(lines[at] as string);
-        if (!item) break;
-        items.push(parseInline(item[1] as string, allow));
-        at += 1;
-      }
-      blocks.push({ kind: 'list', ordered, items });
+    if (BULLET.test(line) || NUMBERED.test(line)) {
+      const parsed = parseList(lines, at, allow);
+      blocks.push(parsed.block);
+      at = parsed.next;
       continue;
     }
 
@@ -245,6 +272,16 @@ function buildInline(parent: Node, runs: Inline[], doc: Document, allow: LinkFil
   }
 }
 
+function buildList(ordered: boolean, items: Inline[][], doc: Document, allow: LinkFilter): HTMLElement {
+  const list = doc.createElement(ordered ? 'ol' : 'ul');
+  for (const item of items) {
+    const entry = doc.createElement('li');
+    buildInline(entry, item, doc, allow);
+    list.appendChild(entry);
+  }
+  return list;
+}
+
 export function renderTree(blocks: Block[], doc: Document, allow: LinkFilter = allowedHref): DocumentFragment {
   const fragment = doc.createDocumentFragment();
   for (const block of blocks) {
@@ -261,12 +298,12 @@ export function renderTree(blocks: Block[], doc: Document, allow: LinkFilter = a
       continue;
     }
     if (block.kind === 'list') {
-      const list = doc.createElement(block.ordered ? 'ol' : 'ul');
-      for (const item of block.items) {
-        const entry = doc.createElement('li');
-        buildInline(entry, item, doc, allow);
-        list.appendChild(entry);
-      }
+      const list = buildList(block.ordered, block.items, doc, allow);
+      if (block.ordered && block.start !== 1) list.setAttribute('start', String(block.start));
+      block.items.forEach((_, i) => {
+        const sub = block.subs[i];
+        if (sub) list.children[i]?.appendChild(buildList(sub.ordered, sub.items, doc, allow));
+      });
       fragment.appendChild(list);
       continue;
     }

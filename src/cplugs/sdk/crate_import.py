@@ -1,11 +1,3 @@
-"""The crate import engine, for the crate plugin (one definition, in core: ``src/core/crate_import/``).
-
-A plugin imports only the SDK, so the engine arrives here by name: the request record, the install record, the plan and the
-error codes. :func:`plan_import` measures and writes nothing; :func:`apply_import` restores (the plugin checks its
-``imports.write`` grant first), :func:`finish_import` rolls a committed import forward, :func:`recover_files` replays an undo log, :func:`plan_undo` and
-:func:`run_undo` take a FINISHED import back.
-Everything is BLOCKING; call it off the event loop.
-"""
 
 from __future__ import annotations
 

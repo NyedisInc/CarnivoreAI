@@ -50,7 +50,7 @@
   <div bind:this={box} class="chart-legend">
     <div class="chart-legend__view">
       <ul bind:this={track} class="chart-legend__track" class:chart-legend__track--wrap={wrap} style:transform={`translateX(-${shift}px)`} style:--legend-cap={cap === null ? null : `${cap}px`}>
-        {#each items as item, index (item.name)}
+        {#each items as item, index (item.id ?? index)}
           <li class="chart-legend__cell" class:chart-legend__cell--off={index < first || index > last}>
             <button type="button" class="chart-legend__item" class:chart-legend__item--dim={!item.on} aria-pressed={item.on} tabindex={index < first || index > last ? -1 : 0}
               title={item.name} onclick={() => onToggle(item.name)}>

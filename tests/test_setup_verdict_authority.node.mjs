@@ -1,3 +1,4 @@
+// WHY THIS FILE EXISTS
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -170,6 +171,7 @@ test('"Finish Setup..." is offered ONLY on a definite incomplete', () => {
 });
 
 test('no CLOUDFLARE credential is required anywhere in the tray any more', () => {
+  // existed.
   const code = managerSrc
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/^\s*\/\/.*$/gm, '');

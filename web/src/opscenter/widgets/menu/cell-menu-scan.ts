@@ -143,12 +143,6 @@ function scriptText(text: string): string {
   return out;
 }
 
-/**
- * Every data call in one cell folder: the cell must not fetch or run a timer itself, it reads a shared store (section 14).
- * Inputs: sources - the folder's `.svelte` and `.ts` files (tests excluded by the caller). Output: DataFinding[] in file order.
- *   Waivers are the caller's (`menu-rules.ts` `DATA_KNOWN`), so the scan itself never goes blind.
- * Example: scanCellData([{ path: 'Cell.svelte', text: '<script>setInterval(tick, 1000)</script>' }])
- */
 export function scanCellData(sources: readonly CellSource[]): DataFinding[] {
   const found: DataFinding[] = [];
   for (const source of sources) {

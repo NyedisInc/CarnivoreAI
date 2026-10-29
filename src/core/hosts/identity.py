@@ -35,14 +35,38 @@ def remote_project_root(host_key: str, far_path: str) -> str:
     return f"{REMOTE_ROOT_SCHEME}{host_key}{far_path}"
 
 
+def parse_remote_root(root: Optional[str]) -> Optional[Tuple[str, str]]:
+    if not root or not root.startswith(REMOTE_ROOT_SCHEME):
+        return None
+    rest = root[len(REMOTE_ROOT_SCHEME):]
+    key, slash, tail = rest.partition("/")
+    if not slash or key == LOCAL_HOST_KEY or KEY_RE.fullmatch(key) is None:
+        return None
+    return key, "/" + tail
+
+
+class RemoteRootConflict(ValueError):
+    pass
+
+
+def resolve_create_target(host_key: Optional[str], working_dir: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+    parsed = parse_remote_root(working_dir)
+    if parsed is None:
+        return host_key, working_dir
+    root_key, far_path = parsed
+    if host_key and host_key != root_key:
+        raise RemoteRootConflict(f"host_key {host_key!r} does not match the folder's computer {root_key!r}")
+    return root_key, far_path
+
+
 def is_remote_root(root: Optional[str]) -> bool:
     return bool(root) and str(root).startswith((REMOTE_ROOT_SCHEME, PEER_ROOT_SCHEME))
 
 
 def is_remote_backend(backend: Any) -> bool:
-    from src.core.hosts.remote_backend import RemoteTmuxBackend
+    from src.core.session_backend import SessionBackend
 
-    return isinstance(backend, RemoteTmuxBackend)
+    return isinstance(backend, SessionBackend) and backend.is_remote
 
 
 def backend_host_key(backend: Any) -> str:

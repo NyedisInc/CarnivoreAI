@@ -31,6 +31,7 @@ const q = (sel: string) => document.querySelector(sel);
 
 interface Rig { calls: string[]; release: (r: CliInstall | Error) => void }
 
+/* stays pending until */
 async function render(state: CliState, getFails = false): Promise<Rig> {
     const calls: string[] = [];
     let release: Rig['release'] = () => undefined;

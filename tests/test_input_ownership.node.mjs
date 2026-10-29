@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -14,6 +15,13 @@ const OWN_SRC = read('client/js/terminal-input-ownership.js');
 const CLIP_SRC = read('client/js/clipboard.js');
 const TERM_SRC = read('client/js/terminal.js');
 const INDEX_HTML = read('client/index.html');
+// The boot line is one call into client/js/terminal-client-factory.js
+// now, and the register() that hands it the class is the first of the
+// two lines, so it is what a loader cuts at to get the class alone.
+// The boot below that line does more than construct: it refuses by
+// name when the client factory did not load. A loader that wants the
+// class alone has to cut above the whole boot, so terminal.js carries
+// this marker line and says in place that it does not move.
 const TERM_SINGLETON = '// THE CLASS ENDS ABOVE.';
 
 const OPEN = 1;
@@ -47,6 +55,8 @@ function makeWorld() {
             return u.promise;
         },
     };
+    sandbox.CloudeI18n = sandbox.window.CloudeI18n;
+    vm.runInContext(read('client/js/i18n/tr.js'), sandbox, { filename: 'tr.js' });
     vm.runInContext(CLIP_SRC, sandbox, { filename: 'clipboard.js' });
     if (!sandbox.window.ClipboardTools) {
         throw new Error(
@@ -182,6 +192,12 @@ test('Terminal#insertText is the last line of defence and honours a ticket', () 
     const Klass = loadTerminalClass(sandbox);
     const sent = [];
     const self = {
+        // THE THREE ACCESSORS every method reaches its collaborators, its
+        // own container and the page's chrome through, now that Terminal
+        // is instantiable. On a hand-built stand-in they have to come off
+        // the prototype like the methods do. Empty backing state means
+        // every collaborator resolves to this sandbox's own global, which
+        // is exactly what this world sets up.
         _wiring: {}, _pageChrome: {}, _host: null,
         _m: Klass.prototype._m, _chrome: Klass.prototype._chrome, _containerEl: Klass.prototype._containerEl,
         ws: { readyState: OPEN, send: (b) => sent.push(b) },

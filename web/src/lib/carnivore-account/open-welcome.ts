@@ -1,7 +1,6 @@
 import { openModal } from '../modal';
 import { whenLegacyBootComplete } from '../legacy-boot';
 import { isSignedIn, refreshAccount } from './account-store.svelte';
-import type { AccountFeature } from './features';
 import { requireAccount } from './funnel';
 import { prefsHydrated, readWelcomeSeen, writeWelcomeSeen } from './welcome-flag';
 import WelcomeModal from './WelcomeModal.svelte';
@@ -27,7 +26,7 @@ export function realWelcomeDeps(): WelcomeDeps {
         loadAccount: refreshAccount,
         signedIn: isSignedIn,
         open: () => openModal<'signin' | 'later', Record<string, unknown>>(WelcomeModal as never, {}),
-        signIn: () => void requireAccount({ feature: 'welcome' as AccountFeature, src: 'welcome', resume: () => {} }),
+        signIn: () => void requireAccount({ feature: null, src: 'welcome', resume: () => {} }),
     };
 }
 

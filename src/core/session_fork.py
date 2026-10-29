@@ -21,7 +21,6 @@ FORK_READY = "ready"
 
 FORK_NO_CONVERSATION = "no-conversation"
 
-# COULD NOT EVALUATE
 FORK_UNRESOLVED = "unresolved"
 
 
@@ -155,19 +154,6 @@ def children_of(conn: sqlite3.Connection, parent_id: int) -> list:
 def newest_anchor_uuid(
     conn: sqlite3.Connection, *, socket: str, tmux_name: str, host_key: str = LOCAL_HOST_KEY
 ) -> Optional[str]:
-    """The session_uuid of the newest LIVE anchor row for a tmux name.
-
-    Description: how the fork endpoint finds the row it just caused to be
-      created, so it can stamp lineage on it. Keyed on the newest epoch
-      because a tmux name is reusable and this app re-mints them itself;
-      restricted to a non-null epoch so a lineage row - which carries the
-      same socket and name for context - can never be picked instead.
-    Inputs: conn (sqlite3.Connection). socket (str). tmux_name (str).
-    Output: str | None - None means the row is not there, which the caller
-      must report as a fork whose lineage could not be recorded rather
-      than as a failed fork. The tmux session exists either way.
-    Example: newest_anchor_uuid(conn, socket="cloude", tmux_name="work_fork")
-    """
     if not sessions_table_ready(conn):
         return None
     scope_sql, scope_params = host_scope(conn, host_key)
@@ -180,7 +166,8 @@ def newest_anchor_uuid(
     return row["session_uuid"] if row else None
 
 
-def stamp_fork_child(db_path, *, socket: str, child_tmux: str, parent_id: int, label: str) -> bool:
+def stamp_fork_child(db_path, *, socket: str, child_tmux: str, parent_id: int, label: str,
+                     resumed_conversation: Optional[str] = None) -> bool:
     from contextlib import closing
 
     from src.core.db import connect, transaction
@@ -197,4 +184,43 @@ def stamp_fork_child(db_path, *, socket: str, child_tmux: str, parent_id: int, l
         with transaction(conn):
             marked = mark_as_fork(conn, child_session_uuid=child_uuid, parent_id=parent_id)
             set_label_for_instance(conn, socket=socket, name=child_tmux or "", epoch=child_epoch, label=label)
+            if marked and resumed_conversation:
+                _add_resumed_edge(conn, resumed_conversation, child_uuid)
             return marked
+
+
+def _add_resumed_edge(conn: sqlite3.Connection, conversation_id: str, child_session_uuid: str) -> None:
+    from src.core.lineage import constants as LK
+    from src.core.lineage import graph as lineage_graph
+
+    if lineage_graph.ready(conn):
+        lineage_graph.add_edge(conn, LK.NODE_CONVERSATION, conversation_id, LK.NODE_SESSION, child_session_uuid,
+                               LK.KIND_FORK)
+
+
+@dataclass(frozen=True)
+class ForkChild:
+
+    session: Any
+    recorded: bool
+    stamp_error: Optional[BaseException] = None
+
+
+async def spawn_fork_child(manager: Any, *, source: Dict[str, Any], label: str, project_name: str,
+                           agent_extra_args: list, db_path: Any, socket: str,
+                           resumed_conversation: Optional[str] = None) -> ForkChild:
+    import asyncio
+    import uuid as uuid_module
+
+    from src.core.db import DatastoreUnreadableError
+
+    child = await manager.create_session(
+        session_id=f"ses_{uuid_module.uuid4().hex[:8]}", working_dir=source["working_dir"], project_name=project_name,
+        agent_type=source["agent_type"], model=source["model"], agent_extra_args=agent_extra_args, label=label)
+    try:
+        recorded = bool(await asyncio.to_thread(
+            stamp_fork_child, db_path, socket=socket, child_tmux=getattr(child, "tmux_session", None) or "",
+            parent_id=source["id"], label=label, resumed_conversation=resumed_conversation))
+    except (DatastoreUnreadableError, sqlite3.Error) as exc:
+        return ForkChild(session=child, recorded=False, stamp_error=exc)
+    return ForkChild(session=child, recorded=recorded)

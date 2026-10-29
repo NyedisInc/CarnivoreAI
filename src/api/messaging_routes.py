@@ -62,7 +62,6 @@ class TestBody(_Strict):
 
 
 class ConversationCreate(_Strict):
-    """POST /conversations: the provider's conversation id (write-only) and a label."""
 
     provider_id: str
     conversation: str = Field(..., min_length=1, max_length=400)
@@ -356,6 +355,8 @@ async def _binding_rows(request: Request, rows: List[Dict[str, Any]]) -> List[Di
 async def list_bindings(request: Request, session_uuid: Optional[str] = None) -> Dict[str, Any]:
     """Bindings (optionally one session's), with held counts and session names. Output: {bindings: [...]}."""
     runtime_of(request)
+    if session_uuid is not None and not session_uuid:
+        raise _refuse(422, "session_uuid_empty")
     rows = await asyncio.to_thread(store.list_bindings, session_uuid=session_uuid)
     return {"bindings": await _binding_rows(request, rows)}
 
@@ -416,6 +417,7 @@ async def delete_binding(request: Request, binding_id: str) -> Dict[str, Any]:
 @router.get("/messages")
 async def list_messages(request: Request, binding: Optional[str] = None, status: Optional[str] = None,
                         before: Optional[float] = None, limit: int = Query(100, ge=1, le=500)) -> Dict[str, Any]:
+    """The log, newest first, text included (owner only, this computer only). Output: {messages: [...]}."""
     runtime_of(request)
     rows = await asyncio.to_thread(message_store.list_messages, binding_id=binding, status=status, before=before,
                                    limit=limit)

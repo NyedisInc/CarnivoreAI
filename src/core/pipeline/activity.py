@@ -1,16 +1,3 @@
-"""
-* ``running`` - one row per plugin given the key the worker is delivering now (one worker, so at most one key), plus
-  one row per plugin whose rebuild is in progress (always the machine's);
-* ``queue`` - the next ``QUEUE_LIMIT`` pending keys in the order the worker takes them, with ``total`` the whole
-  count, so a client can say "+N more".
-
-THE ENGINE ONLY COPIES. It hands this module plain data copied under its locks (``InFlight``, ``observe.Waiting``)
-and the names are looked up afterwards, outside every engine lock, through ``RecentRuns.cached_lookup``: the cache
-only, never the database, so a status read can never hold up a delivery. A live key whose name is not cached yet is
-NOT shown as the machine: it carries its short conversation id in ``conversation``, so it reads as unnamed, loudly,
-until the next batch's ``prepare`` names it. A key that is not live (a scan, a rebuild replay) is the machine's, as in
-the recent runs. Every figure is a name, a count or a time: no transcript text, no path.
-"""
 
 from __future__ import annotations
 
@@ -21,10 +8,8 @@ from src.core.pipeline import recent
 from src.core.pipeline.observe import TRIGGER_LIVE, Waiting
 
 QUEUE_LIMIT: int = 8
-# conversation id
 SHORT_ID_CHARS: int = 8
 
-# conversation id
 Lookup = Callable[[Optional[str]], Optional[recent.Area]]
 
 

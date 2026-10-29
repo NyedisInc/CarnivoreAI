@@ -23,7 +23,6 @@
       blueprints = list.status === 'ok' ? list.blueprints : [];
       failed = list.status !== 'ok';
     } catch {
-      // could not
       failed = true;
       blueprints = [];
       return;

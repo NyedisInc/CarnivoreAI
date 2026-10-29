@@ -1,6 +1,8 @@
 
 export const PACE_MIN_ELAPSED_PCT = 5;
 
+export const PACE_YOUNG_WINDOW_JUDGED_USED_PCT = 25;
+
 export const PACE_OVERRUN_PROJECTION_PCT = 120;
 
 const HOUR_SECONDS = 3600;
@@ -41,7 +43,7 @@ export function paceState(usedPct, elapsed) {
     const gone = finite(elapsed);
     if (used === null || gone === null) return null;
     if (used >= 100) return 'over';
-    if (gone < PACE_MIN_ELAPSED_PCT) return 'on';
+    if (gone < PACE_MIN_ELAPSED_PCT && used < PACE_YOUNG_WINDOW_JUDGED_USED_PCT) return 'on';
     if (used <= gone) return 'on';
     const projected = (used / gone) * 100;
     return projected >= PACE_OVERRUN_PROJECTION_PCT ? 'over' : 'ahead';

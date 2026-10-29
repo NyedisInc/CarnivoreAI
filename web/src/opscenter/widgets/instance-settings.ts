@@ -1,3 +1,4 @@
+/* list, so the */
 
 import type { WidgetManifest } from './types';
 

@@ -21,7 +21,7 @@ LEDGER_VERSION = 1
 HOST_WORDS = frozenset({"state", "safe-mode", "r", "restart", "kill"})
 ROADMAP_IDS = frozenset({
     "archive", "stats", "budget", "github", "slack", "discord", "telegram", "sns", "unread", "share", "huddle",
-    "deepsearch", "backup", "summarize", "save", "ntfy", "pushover", "nflow", "homeassistant", "spotify", "addons",
+    "deepsearch", "backup", "summarize", "save", "ntfy", "pushover", "n8n", "homeassistant", "spotify", "addons",
 })
 RESERVED_ROUTES = frozenset({"secrets", "restart", "kill", "purge", "grants", "ui"})
 

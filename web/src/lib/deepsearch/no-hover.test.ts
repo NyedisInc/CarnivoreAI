@@ -24,7 +24,7 @@ test('a result row, a hit and an agent row paint nothing on hover: the mock\'s `
     expect(resets).toContain("[data-search-section='agents'] .session-sidebar-row");
 });
 
-test('an agent row in a search keeps its own menu key: the session row contract', () => {
+test('an agent row in a search keeps its own menu key: the session row contract (Joe, 2026-10-22)', () => {
     const css = read('sidebar-shell/search-sections.css');
     const hides = rules(css).filter((r) => r.sel.includes('session-row-menu-trigger') && /display:\s*none|visibility:\s*hidden/.test(r.body));
     expect(hides).toEqual([]);

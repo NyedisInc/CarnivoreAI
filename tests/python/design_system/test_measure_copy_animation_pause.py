@@ -37,7 +37,5 @@ def test_measure_copies_are_paused_in_every_cover_list() -> None:
 
 
 def test_old_stylesheet_fails() -> None:
-    import subprocess
-
-    old = subprocess.run(["git", "show", "19383374a^:client/css/animation-pause.css"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    old = (ROOT / "tests" / "fixtures" / "animation-pause.before-1821.css").read_text()
     assert check(old) != []

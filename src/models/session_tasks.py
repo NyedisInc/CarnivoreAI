@@ -6,7 +6,6 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
 TaskStatus = Literal["pending", "in_progress", "completed"]
-# could not be read
 TasksState = Literal["ok", "empty", "unknown", "unsupported", "remote"]
 
 

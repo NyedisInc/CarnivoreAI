@@ -1,26 +1,3 @@
-"""The catalog's HTTP shapes: what the routes answer and what they accept.
-
-SEPARATE FROM ``src/models/catalog.py`` BECAUSE THEY MODEL DIFFERENT
-THINGS. That file models the SIGNED DOCUMENT - every field in it is one
-the publisher signed, and its validators are part of the trust decision.
-Nothing here is signed. These are this server's own answers, assembled
-from a verified index plus the local ledger, and putting them beside the
-index models would invite a later reader to assume a field arrived under
-a signature when it was computed here. The 500 line guideline says the
-same thing for a duller reason: that file is already at 433.
-
-THE WIRE NAMES ARE THE CLIENT'S, AND THEY ARE NOT NEGOTIABLE HERE.
-``web/src/lib/catalog/types.ts`` declares what the panel reads, field for
-field, and it shipped first. A version is ``v`` and not ``version``
-because that is the index's own name for it; a preview's manifest text
-is ``body``; a collision choice carries ``choice`` and ``bytes_delta``.
-Renaming any of them here would break a screen that already exists.
-
-ABSENT IS NOT A DEFAULT, ON EVERY OPTIONAL BELOW. A null means this
-server could not determine the value; a missing key means it has nothing
-to say. Neither means zero and neither means false, which is why nothing
-here carries a falsy default that would erase the difference.
-"""
 
 from __future__ import annotations
 
@@ -83,7 +60,8 @@ class IndexStatus(BaseModel):
 
 
 class InstalledRef(BaseModel):
-    """
+    """The local half of a catalog row: what this machine already has.
+
     Fields:
         install_id: the ledger id, which is what an uninstall addresses.
         scope: ``global`` or ``project``.
@@ -103,6 +81,21 @@ class InstalledRef(BaseModel):
 
 class CatalogItemView(BaseModel):
     """One catalog entry as the panel reads it, with its local state joined.
+
+    Fields:
+        id, kind, name, publisher, latest, card, fm, versions: the
+            item exactly as the verified index carries it.
+        installed: the ledger row for this item, or null when this
+            machine does not have it. Null is a real answer and the
+            panel paints it as "not installed".
+        untrusted: this item's publisher key is not one the app pins, so
+            it is LISTED and cannot be installed.
+        featured_rank: position in the signed featured list (0 first), or
+            null when the item is not featured or the index has no list.
+        first_published_at: the oldest ``published_at`` among the item's
+            versions as signed, or null when no version carries one.
+        cost: the index's estimated token cost block, or null when the
+            index carries none.
     """
 
     id: str
@@ -209,6 +202,13 @@ class PreviewFile(BaseModel):
 
 class NameTakenChoice(BaseModel):
     """One way past a name collision, with what it would cost.
+
+    Fields:
+        choice: ``install_as`` or ``replace``, passed back verbatim.
+        name: the folder name that choice installs under.
+        added, changed, removed: file counts, NEVER a text diff.
+        bytes_delta: signed; negative means the result is smaller.
+        against: the existing directory those counts describe.
     """
 
     choice: str
@@ -222,6 +222,11 @@ class NameTakenChoice(BaseModel):
 
 class McpServerPreview(BaseModel):
     """One MCP server a staged plugin would register: the program the harness spawns.
+
+    Fields:
+        name: the server's key in ``mcpServers``.
+        command, args: the FULL command line, shown verbatim on the sheet.
+        env_keys: the env variable NAMES only; values are never sent.
     """
 
     name: str
@@ -232,6 +237,52 @@ class McpServerPreview(BaseModel):
 
 class InstallPreviewResponse(BaseModel):
     """``POST /catalog/install/preview``: the whole consent surface.
+
+    Fields:
+        body: the SKILL.md text, verbatim, capped by the previewer.
+        body_truncated: the cap was reached, so the text is partial.
+        files, total_bytes: what would land, measured from the staged
+            copy rather than taken from the index.
+        publisher, version, key_id, pinned: who signed it and whether
+            that key is one of the app's own constants.
+        index_host: the host the index came from, so the user can see
+            which catalog this is.
+        digest_prefix: the first twelve characters, kept beside the
+            whole value below for a compact render. For recognition, not
+            for proof; the full digest was already checked.
+        digest: the WHOLE folder digest, sixty-four hex characters. IT IS
+            WHAT A CONSENT IS RECORDED AGAINST, so the sheet publishes it
+            and the client echoes it back rather than rebuilding it: a
+            consent naming the prefix would be consent to any version
+            sharing those twelve characters.
+        warnings: front matter keys the two harnesses disagree about.
+            Warned on, never stripped.
+        script_files: every file in this skill that is executable
+            content, meaning anything under ``scripts/`` plus every file
+            the publisher marked executable. THESE ARE ALSO IN ``files``:
+            the sheet shows the whole folder and marks these, it does not
+            show them instead. Empty for a skill that carries none.
+        mcp_servers: every MCP server a plugin declares (command, args,
+            env KEYS only). An MCP server is code the harness spawns at
+            session start, so the sheet shows each in full and a
+            non-empty list gates the tick like scripts do.
+        requires_consent: this skill carries executable content, so
+            installing it needs an explicit consent action naming these
+            exact bytes. It is a STATEMENT ABOUT THE ITEM, not about
+            whether consent has been given; the server decides the
+            latter and answers ``consent_required`` when it has not.
+        review: what a machine review said, or that it did not run.
+        plan_token: names the staged copy this sheet describes, so
+            pressing install does not download the tarball again.
+        body_sha: sha256 of the ``SKILL.md`` FILE, not of the possibly
+            capped text above. Carried on every preview and on the 409
+            ``consent_required`` an update answers, because it is one of
+            the two values a caller echoes back in ``consent`` once a
+            person has read that text, and a sheet that withheld it left
+            a script-bearing item impossible to install from a browser.
+        code, detail, choices: present ONLY on the 409 that offers a way
+            past a name collision, or the one that asks for fresh consent
+            to changed instructions, both of which carry this same body.
     """
 
     body: str
@@ -397,6 +448,16 @@ class UpdateConsent(BaseModel):
 
 class InstalledUpdateRequest(BaseModel):
     """``POST /catalog/installed/{install_id}/update``: apply a new version.
+
+    Fields:
+        expected_revision: as above, and checked twice - once before any
+            bytes are fetched, and again as the compare-and-swap that
+            actually writes the row.
+        consent: present when the caller has shown the user the new
+            ``SKILL.md`` and they accepted it. Absent means "only proceed
+            if the instructions are byte-identical to the ones already
+            consented to", which is the safe default and the one an
+            automatic caller wants.
     """
 
     expected_revision: int

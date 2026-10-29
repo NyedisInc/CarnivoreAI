@@ -1,5 +1,6 @@
-/* padding */
+/* nothing at all */
 
+import { innerBox, isDrawn, overflowOf, shared } from './box-geometry';
 import { cssPath } from './fit-probe';
 import { contrastRatio, effectiveBackground, inheritedOpacity, over, parseColor } from './layout-color';
 
@@ -20,12 +21,6 @@ export interface DefectReport {
 
 export const OVERLAP_PX = 1.5;
 export const EDGE_PX = 1;
-/**
- * The smallest readable font size. The design system's smallest type token is
- * `--oc-fs-micro`, 10px (`opscenter/tokens.css`); anything under it is off the
- * type scale, and at 9px a monospace face loses the counters that tell 0 from 8
- * and 1 from l. A quarter pixel of slack absorbs a scaled `calc()`.
- */
 export const MIN_FONT_PX = 10;
 const FONT_SLACK_PX = 0.25;
 export const CONTRAST_LABEL = 3;
@@ -46,40 +41,10 @@ interface Graphic {
 const GRAPHIC_TAGS: ReadonlySet<string> = new Set(['svg', 'canvas', 'img', 'video']);
 const CONTROL_TAGS: ReadonlySet<string> = new Set(['input', 'textarea', 'select', 'button', 'option']);
 
-function isDrawn(el: Element): boolean {
-  const box = el.getBoundingClientRect();
-  if (box.width <= 1 || box.height <= 1) return false;
-  const html = el as HTMLElement;
-  if (typeof html.checkVisibility === 'function' && !html.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false;
-  const style = getComputedStyle(el);
-  return !(style.clip && style.clip !== 'auto');
-}
-
-function overflowOf(el: Element, axis: 'x' | 'y'): 'scroll' | 'clip' | null {
-  const value = getComputedStyle(el)[axis === 'x' ? 'overflowX' : 'overflowY'];
-  if (value === 'auto' || value === 'scroll') return 'scroll';
-  if (value === 'hidden' || value === 'clip') return 'clip';
-  return null;
-}
-
-function innerBox(el: Element): DOMRect {
-  const box = el.getBoundingClientRect();
-  const s = getComputedStyle(el);
-  const l = parseFloat(s.borderLeftWidth) || 0;
-  const t = parseFloat(s.borderTopWidth) || 0;
-  const r = parseFloat(s.borderRightWidth) || 0;
-  const b = parseFloat(s.borderBottomWidth) || 0;
-  return new DOMRect(box.left + l, box.top + t, Math.max(0, box.width - l - r), Math.max(0, box.height - t - b));
-}
-
 function intersect(a: DOMRect, b: DOMRect): DOMRect {
   const left = Math.max(a.left, b.left);
   const top = Math.max(a.top, b.top);
   return new DOMRect(left, top, Math.max(0, Math.min(a.right, b.right) - left), Math.max(0, Math.min(a.bottom, b.bottom) - top));
-}
-
-function shared(a: DOMRect, b: DOMRect): { x: number; y: number } {
-  return { x: Math.min(a.right, b.right) - Math.max(a.left, b.left), y: Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) };
 }
 
 function clippers(el: Element, cell: Element, withCell: boolean): Element[] {
@@ -128,7 +93,6 @@ function textLines(cell: Element): TextLine[] {
     const el = node.parentElement;
     if (!el || !(node.textContent ?? '').trim() || !isDrawn(el) || marked(el, cell, 'data-fit-clip')) continue;
     range.selectNodeContents(node);
-    //  hidden 
     const chain = overflowOf(el, 'x') || overflowOf(el, 'y') ? [el, ...clippers(el, cell, true)] : clippers(el, cell, true);
     for (const full of range.getClientRects()) {
       if (full.width < 1 || full.height < 1) continue;

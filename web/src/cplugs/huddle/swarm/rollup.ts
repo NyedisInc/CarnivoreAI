@@ -13,6 +13,7 @@ const BUCKET_STATE: Readonly<Record<string, string>> = {
   dead: 'dead',
 };
 
+/* }, { activity_status: */
 export function rollupState(rows: readonly ListingRow[]): string | null {
   const fold = (globalThis as { SessionStatusSummary?: { summarizeStates?: (r: readonly unknown[]) => Summary } }).SessionStatusSummary?.summarizeStates;
   if (!fold || rows.length === 0) return null;

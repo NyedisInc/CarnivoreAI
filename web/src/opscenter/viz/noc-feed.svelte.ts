@@ -1,4 +1,3 @@
-/*  hidden  */
 import { authFetch } from '../api/auth.svelte';
 import { subscribe } from '../api/events.svelte';
 import { annotations } from '../cells/analytics/api';
@@ -17,7 +16,6 @@ function makeFeed<T>(read: () => Promise<T>, frames: Record<string, (frame: Even
   let watchers = 0;
   let last = 0;
   let inFlight = false;
-  /*  hidden  */
   let missed = false;
   let floorTimer: ReturnType<typeof setTimeout> | null = null;
   let stops: (() => void)[] = [];
@@ -39,7 +37,10 @@ function makeFeed<T>(read: () => Promise<T>, frames: Record<string, (frame: Even
       held.fetchedAt = Date.now();
     } catch (cause: unknown) {
       held.failure = cause instanceof Error ? cause.message : t('analytics.query_failed');
-    } finally { inFlight = false; }
+    } finally {
+      inFlight = false;
+      if (missed && watchers > 0) void refresh();
+    }
   }
 
   function start(): void {

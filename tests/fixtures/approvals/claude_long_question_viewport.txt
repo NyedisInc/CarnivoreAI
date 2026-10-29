@@ -1,0 +1,21 @@
+pass. That pass runs for every client and has a pinned cost test, so one git
+call per repo per pass slows everyone. Instead: run git only while a screen
+shows that session's rail or footer chip, skip it when .git/index and HEAD
+haven't moved, re-read when a turn ends, and push the result. Deviate from the
+issue?
+
+❯ 1. Read on view, push (Recommended)
+     Zero cost when nobody is looking; the listing cost test stays untouched.
+     Reversal of the issue text gets recorded in DECISIONS.
+  2. Listing pass, as written
+     Every listing pass runs git per repo; the pinned cost ceiling has to be
+     raised.
+  3. Browser polls every 10s
+     Simplest, but breaks the push-not-pull rule.
+  4. Type something.
+──────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+
+─────────────────────────────────────────────────────────────── Cv-PackChats ─

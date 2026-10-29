@@ -50,7 +50,7 @@ def _insert_session(conn, **overrides):
         "working_dir": "/home/x/proj",
         "agent_type": "claude",
         "model": None,
-        "title": "Media Studio",
+        "title": "Media Pipeline",
         "claude_session_uuid": "claude-abc",
         "created_at": utc_now(),
         "updated_at": utc_now(),
@@ -74,7 +74,7 @@ def test_a_row_with_a_conversation_is_resumable_and_carries_its_identity(conn):
     assert src.outcome == RESTART_RESUMABLE
     assert src.parent_id == parent_id
     assert src.claude_session_uuid == "claude-abc"
-    assert src.title == "Media Studio", (
+    assert src.title == "Media Pipeline", (
         "the TITLE is the field the old code never even put in the markup"
     )
     assert src.working_dir == "/home/x/proj"
@@ -83,9 +83,9 @@ def test_a_row_with_a_conversation_is_resumable_and_carries_its_identity(conn):
 
 
 def test_a_row_with_no_title_falls_back_to_its_stripped_tmux_name(conn):
-    _insert_session(conn, title=None, tmux_name="cloude_Labbench-4")
+    _insert_session(conn, title=None, tmux_name="cloude_ScratchLab-4")
     src = resolve_restart_source(conn, session_uuid="s-1")
-    assert src.title == "Labbench-4", (
+    assert src.title == "ScratchLab-4", (
         "the internal 'cloude_' prefix must never reach a human-read label"
     )
 
@@ -122,7 +122,7 @@ def test_a_row_without_a_claude_uuid_is_not_resumable_but_still_carries_identity
     assert src.outcome != RESTART_RESUMABLE
     assert src.claude_session_uuid is None
     assert src.parent_id == parent_id
-    assert src.title == "Media Studio"
+    assert src.title == "Media Pipeline"
     assert src.working_dir == "/home/x/proj"
     assert src.agent_type == "claude"
     assert src.detail and "nothing to resume" in src.detail

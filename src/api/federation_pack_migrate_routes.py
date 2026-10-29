@@ -2,24 +2,24 @@
 from __future__ import annotations
 
 from contextlib import closing
-from typing import Any, Callable, Dict, Optional
+from typing import Annotated, Any, Callable, Dict, List, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from src.api import pack_migrate_env as env_mod
 from src.api.peer_auth import Principal, require_peer
 from src.core.pack.identity import home
 from src.core.pack.machines import capabilities as pack_capabilities
-from src.core.pack.migrate import apply, ops, plan, receive
+from src.core.pack.migrate import apply, ops, plan, receive, task_manager_side
 from src.core.pack.trust_carry import wire as trust_wire
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/federation/pack/migrate", tags=["federation"])
 _require_migrate = require_peer("migrate")
-pack_capabilities.register("pack.migrate", trust_wire.CAP_TRUST_CARRY, trust_wire.CAP_IMPORTS_CARRY)
+pack_capabilities.register("pack.migrate", trust_wire.CAP_TRUST_CARRY, trust_wire.CAP_IMPORTS_CARRY, task_manager_side.CAP_TASK_FILES_PLAN)
 
 _OP = Field(min_length=3, max_length=64)
 
@@ -40,6 +40,7 @@ class PrepareBody(BaseModel):
     source_imports_ok: bool = False
     parent_id: Optional[str] = Field(default=None, max_length=64)
     dry_run: bool = False
+    task_file_parts: List[Annotated[str, StringConstraints(max_length=task_manager_side.MAX_PART_CHARS)]] = Field(default_factory=list, max_length=task_manager_side.MAX_PROBED_PARTS)
 
 
 class CodeBody(BaseModel):
@@ -106,6 +107,7 @@ async def _step(fn: Callable[..., Dict[str, Any]], principal: Principal, body: B
 
 @router.post("/prepare")
 async def prepare(body: PrepareBody, principal: Principal = Depends(_require_migrate)) -> Dict[str, Any]:
+    """Whether this machine takes the project and where. Output: {root, case, project_id, free_bytes}. Raises 403 ``pack_restricted`` and the refusals of ``receive.prepare``."""
     return await _step(receive.prepare, principal, body)
 
 

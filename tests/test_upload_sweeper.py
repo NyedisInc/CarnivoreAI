@@ -20,7 +20,17 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 # ruff: noqa: E402
-from src.core.upload_sweeper import UPLOAD_DIR_NAME, UploadSweeper  # noqa: E402
+from src.core.upload_sweeper import UploadSweeper  # noqa: E402
+
+BUCKET_NAMES = (".carnivore_uploads", ".cloude_uploads")
+UPLOAD_DIR_NAME = BUCKET_NAMES[0]
+
+
+@pytest.fixture(autouse=True, params=BUCKET_NAMES)
+def _bucket_name(request, monkeypatch):
+    monkeypatch.setitem(globals(), "UPLOAD_DIR_NAME", request.param)
+    return request.param
+
 
 
 def _make_sweeper(
@@ -159,3 +169,22 @@ async def test_sweeper_per_base_error_does_not_kill_loop(tmp_path, monkeypatch, 
     assert result["files_pruned"] == 1
     out, _ = capfd.readouterr()
     assert "upload_sweep_partial_error" in out
+
+
+@pytest.mark.asyncio
+async def test_sweeper_re_resolves_projects_each_pass(tmp_path):
+    ttl = 60
+    later = tmp_path / "later_project"
+    later.mkdir()
+    target = _seed_file(later, "old.png", age_seconds=2 * ttl)
+    state = {"paths": None}
+    sweeper = UploadSweeper(
+        ttl_seconds=ttl, interval_seconds=0, project_paths=None,
+        default_dir=Path(tempfile.mkdtemp(prefix="cc_sw_default_")),
+        project_paths_provider=lambda: state["paths"],
+    )
+    first = await sweeper.sweep_now()
+    assert first["project_list_determined"] is False and target.exists()
+    state["paths"] = [str(later)]
+    second = await sweeper.sweep_now()
+    assert second["project_list_determined"] is True and not target.exists()

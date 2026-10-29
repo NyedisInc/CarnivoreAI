@@ -229,6 +229,8 @@ async def messaging_bindings_list(manager: Any, caller: AgentCaller, args: dict)
         target = await resolver.resolve({"target": caller.tmux_name}, reach=session_target.LIVE,
                                         tool="messaging_bindings_list")
     uuid = await resolver.uuid_of(target)
+    if not uuid:
+        raise ToolError("that session has no session_uuid yet, so it has no bindings to list")
     from fastapi import HTTPException
 
     from src.core.mcp.write_tools import _detail

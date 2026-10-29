@@ -20,15 +20,6 @@ PANE_FORMAT: str = "#{session_name}\t#{" + PIPE_OWNER_OPTION + "}"
 
 
 def parse_pane_rows(text: str) -> PaneFacts:
-    """Parse ``list-panes -a`` output into facts. PURE.
-
-    Description: a row without the tab separator, or with an empty session
-      name, makes the whole answer incomplete: a row we could not read may
-      have been the session that owns a file.
-    Inputs: text (str) - stdout of the pane listing.
-    Output: PaneFacts.
-    Example: parse_pane_rows("cloude_a\\t/x/tmux_cloude_a.pipe\\n").complete
-    """
     names: set[str] = set()
     owners: set[str] = set()
     for row in text.split("\n"):

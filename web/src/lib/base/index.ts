@@ -10,6 +10,7 @@ export type { IconButtonVariant } from './IconButton.svelte';
 export { default as List } from './List.svelte';
 export type { ListDensity } from './List.svelte';
 export { default as ListRow } from './ListRow.svelte';
+export { default as MenuItem } from './MenuItem.svelte';
 export { default as NumberField } from './NumberField.svelte';
 export { default as OptionList } from './OptionList.svelte';
 export type { OptionItem } from './OptionList.svelte';

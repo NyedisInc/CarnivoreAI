@@ -30,7 +30,6 @@ export function resolveSectionOrder(stored?: readonly string[] | null): SectionI
     return out;
 }
 
-/*  hidden  */
 export function moveSection(
     order: readonly SectionId[], id: SectionId, beforeId: SectionId | null, visible: readonly SectionId[],
 ): SectionId[] {

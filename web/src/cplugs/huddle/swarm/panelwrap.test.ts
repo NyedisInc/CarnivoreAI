@@ -10,9 +10,14 @@ const door = vi.hoisted(() => ({
   authFetch: vi.fn(async (_path: string, _init?: RequestInit): Promise<unknown> => ({})),
   openCplugPage: vi.fn((_key: string) => true),
 }));
-vi.mock('../../sdk', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../sdk')>()),
-  openSession: door.openSession, authFetch: door.authFetch, openCplugPage: door.openCplugPage, terminalAvailable: () => true,
+vi.mock('../../sdk/sessions.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../sdk/sessions.svelte')>()), openSession: door.openSession, terminalAvailable: () => true,
+}));
+vi.mock('../../sdk/pages', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../sdk/pages')>()), openCplugPage: door.openCplugPage,
+}));
+vi.mock('../../../opscenter/api/auth.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../opscenter/api/auth.svelte')>()), authFetch: door.authFetch,
 }));
 
 import { setLocale } from '../../../lib/i18n/index.svelte';
@@ -93,17 +98,16 @@ describe('PANELWRAP', () => {
     expect(door.openSession).toHaveBeenCalledTimes(1);
   });
 
-  test('#1408: a plain click on an agent (crumb, row, square, Swarm node) asks for its chat AND its terminal', async () => {
+  test('#2618: a plain click on an agent (crumb, row, square, Swarm node) opens its chat and leaves the current view alone', async () => {
     swarmRoster.agents = ROSTER as never;
+    const before = location.hash;
     openFloorTarget({ kind: 'agent', agentId: 4 });
     expect(door.openCplugPage).toHaveBeenCalledWith(AGENT_PAGE);
     expect(agentPage.id).toBe(4);
-    await vi.waitFor(() => expect(door.openSession).toHaveBeenCalledWith('ses_4', 'cloude_loki'));
-    door.openSession.mockClear();
-    door.openCplugPage.mockClear();
     expect(openAgentPage(4)).toBe(true);
-    expect(door.openCplugPage).toHaveBeenCalledWith(AGENT_PAGE);
-    await vi.waitFor(() => expect(door.openSession).toHaveBeenCalledWith('ses_4', 'cloude_loki'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(door.openSession).not.toHaveBeenCalled();
+    expect(location.hash).toBe(before);
   });
 
   test('#1408: a click on an asleep agent opens its chat alone and never wakes it', async () => {

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Button, IconButton, Select } from '../base';
+
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
   import ModalShell from '../launchpad/ModalShell.svelte';
@@ -35,7 +37,7 @@
   {#snippet head()}
     <div class="text-prompt-modal__head">
       <span class="text-prompt-modal__verb">{t('beast.confirm.title')}</span>
-      <button type="button" class="modal-close" aria-label={t('modal.close')} onclick={() => close(null)}>×</button>
+      <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => close(null)} />
     </div>
   {/snippet}
   <p class="modal-description">{t('beast.confirm.body', { count: status?.pending_count ?? 0 })}</p>
@@ -45,17 +47,14 @@
       disabled={busy} onToggle={(next) => (prompts = next)} data-beast-prompts-check="" />
     <label class="beast-scope__off">
       <span class="pl-label">{t('beast.auto_off.label')}</span>
-      <select class="oc-field" bind:value={hours} disabled={busy} data-beast-auto-off>
-        {#each BEAST_AUTO_OFF_HOURS as choice (choice ?? 'never')}
-          <option value={choice === null ? '' : String(choice)}>{choice === null ? t('beast.auto_off.never') : t('beast.auto_off.hours', { count: choice })}</option>
-        {/each}
-      </select>
+      <Select bind:value={hours} disabled={busy} data-beast-auto-off aria-label={t('beast.auto_off.label')}
+        options={BEAST_AUTO_OFF_HOURS.map((choice) => ({ value: choice === null ? '' : String(choice), label: choice === null ? t('beast.auto_off.never') : t('beast.auto_off.hours', { count: choice }) }))} />
     </label>
   </div>
   {#if error}<p role="alert">{error}</p>{/if}
   {#snippet footer()}
-    <button type="button" class="modal-btn modal-btn-secondary" disabled={busy} onclick={() => close(null)}>{t('beast.confirm.cancel')}</button>
-    <button type="button" class="modal-btn modal-btn-danger" data-beast-confirm-go disabled={busy} onclick={arm}>{t('beast.confirm.arm')}</button>
+    <Button disabled={busy} onclick={() => close(null)}>{t('beast.confirm.cancel')}</Button>
+    <Button variant="danger" data-beast-confirm-go disabled={busy} onclick={arm}>{t('beast.confirm.arm')}</Button>
   {/snippet}
 </ModalShell>
 

@@ -1,4 +1,3 @@
-/*  hidden  display:none */
 (function (global) {
     'use strict';
 
@@ -87,7 +86,6 @@
         return l > r || t > bt ? null : rect(l, t, r - l, bt - t);
     }
 
-    /* padding */
     function paddingBox(a) {
         var r = a.getBoundingClientRect();
         return rect(r.left + a.clientLeft, r.top + a.clientTop, a.clientWidth, a.clientHeight);

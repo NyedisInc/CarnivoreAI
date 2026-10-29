@@ -143,7 +143,7 @@ test('the 5k cap is one named constant and the old 50000 is gone', () => {
 test('every open path asks for the depth the buffer keeps, from the one constant', () => {
     const root = path.join(CLIENT_JS, '..', '..');
     const paths = [
-        ['client/js/session-sidebar-clicks.js', 1],
+        ['web/src/lib/drawer/row-switch.ts', 1],
         ['client/js/solo-window.js', 2],
         ['client/js/session-restart-return.js', 1],
         ['web/src/lib/launchpad/navigation.ts', 1],

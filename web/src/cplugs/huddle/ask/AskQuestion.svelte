@@ -7,7 +7,9 @@
   import AskYesNo from './fields/AskYesNo.svelte';
   import AskChoice from './fields/AskChoice.svelte';
   import AskRank from './fields/AskRank.svelte';
+  import type { Attachments } from './ask-state.svelte';
   import AskText from './fields/AskText.svelte';
+  import AskWhen from './fields/AskWhen.svelte';
   import TaskManagerMarkdown from '../TaskManagerMarkdown.svelte';
   import TaskManagerCommandBox from '../TaskManagerCommandBox.svelte';
 
@@ -18,10 +20,11 @@
     answer?: AskAnswer;
     readonly?: boolean;
     busy?: boolean;
+    box?: Attachments;
     onChange: (patch: AskValue) => void;
     onTake: () => void;
   }
-  let { question, number, value, answer, readonly = false, busy = false, onChange, onTake }: Props = $props();
+  let { question, number, value, answer, readonly = false, busy = false, box, onChange, onTake }: Props = $props();
 
   let noting = $state(false);
   let noteInput = $state<HTMLInputElement | null>(null);
@@ -34,7 +37,7 @@
   }
   const done = $derived(isAnswered(question, value));
   const tag = $derived(done ? 'answered' : question.required ? 'required' : 'optional');
-  const words = $derived(answerWords(answer));
+  const words = $derived(answerWords(answer, t));
   const followed = $derived(readonly ? answer?.recommended ?? null : tookRecommendation(question, value));
 </script>
 
@@ -59,7 +62,7 @@
     {#if question.type === 'yes_no'}<AskYesNo {question} {value} {onChange} />
     {:else if question.type === 'single' || question.type === 'multi'}<AskChoice {question} {value} {busy} {onChange} />
     {:else if question.type === 'rank'}<AskRank {question} {value} {onChange} />
-    {:else}<AskText {question} {value} {onChange} />{/if}
+    {:else}<AskText {question} {value} {box} {onChange} />{/if}
     <div class="hdq-qfoot">
       {#if hasRecommendation(question) && !done}<Button size="sm" data-ask-take={question.id} onclick={onTake}>{t('cplug.huddle.ask.take')}</Button>{/if}
       {#if noting || value?.note}

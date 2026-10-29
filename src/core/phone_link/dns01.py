@@ -23,7 +23,7 @@ Call = Callable[..., Awaitable[hosted_api.HostedAnswer]]
 
 
 class Dns01Error(Exception):
-    """The TXT record could not be set, checked or cleared. Never carries a value."""
+    pass
 
 
 class AcmeTxtClient:

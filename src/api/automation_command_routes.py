@@ -4,9 +4,10 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict
 
+from src.api.error_response import api_error, refusal_error
 from src.api.auth import require_auth
 from src.core.automations import command_allowlist
 
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/automation-commands", tags=["automations"], dependen
 
 
 class CommandList(BaseModel):
+    """The body of a PUT: the whole list, in the order the owner wants it shown."""
 
     model_config = ConfigDict(extra="forbid")
     commands: List[str]
@@ -35,6 +37,6 @@ async def put_commands(body: CommandList) -> Dict[str, Any]:
     try:
         return _shape(await asyncio.to_thread(command_allowlist.save, body.commands))
     except command_allowlist.CommandListInvalid as exc:
-        raise HTTPException(status_code=422, detail={"code": exc.code, "message": str(exc)[:200]}) from exc
+        raise refusal_error(exc, status=422) from exc
     except (FileNotFoundError, ValueError, OSError) as exc:
-        raise HTTPException(status_code=503, detail={"code": "config_unwritable", "error": type(exc).__name__}) from exc
+        raise api_error(503, "config_unwritable", exc) from exc

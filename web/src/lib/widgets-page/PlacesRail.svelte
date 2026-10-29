@@ -11,6 +11,7 @@ export interface RailRow {
 </script>
 
 <script lang="ts">
+    import { Button } from '../base';
     import type { Translate } from '../sessions/types';
     import GroupGlyph from './GroupGlyph.svelte';
 
@@ -37,11 +38,11 @@ export interface RailRow {
         <div class="wp-rail__group" role="radiogroup" aria-label={set.label} data-group={set.key}>
             <span class="wp-rail__label">{set.label}</span>
             {#each set.rows as row (row.id)}
-                <button type="button" class="wp-rail__row" role="radio" aria-checked={row.on} disabled={busy} data-rail={`${set.key}:${row.id}`} onclick={() => onPick(set.key, row.id)}>
+                <Button variant="row" role="radio" aria-checked={row.on} disabled={busy} data-rail={`${set.key}:${row.id}`} onclick={() => onPick(set.key, row.id)}>
                     {#if row.mark}<span class="wp-pmark" data-pl={row.mark.place}>{row.mark.letter}</span>{:else if row.glyph}<GroupGlyph name={row.glyph} />{/if}
                     <span class="wp-rail__text">{row.label}</span>
                     <span class="wp-rail__count">{row.count}</span>
-                </button>
+                </Button>
             {/each}
         </div>
     {/each}

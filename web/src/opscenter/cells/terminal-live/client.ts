@@ -1,4 +1,4 @@
-/*  hidden  */
+/* the bottom bar */
 
 interface Factoryish {
   create(deps?: Record<string, unknown>): unknown;
@@ -32,6 +32,7 @@ export const COLLABORATORS = [
   'AltScreenScroll',
   'TerminalStartupNotice',
   'TerminalToolsMenu',
+  'TerminalSelectScrolled',
 ] as const;
 
 function mod(name: string): Factoryish | null {
@@ -46,6 +47,7 @@ export function cellWiring(host: HTMLElement): Record<string, unknown> | null {
   const buffer = mod('TerminalInputBuffer');
   const altScreen = mod('AltScreenScroll');
   const notice = mod('TerminalStartupNotice');
+  const selectScrolled = mod('TerminalSelectScrolled');
   if (!scroll || !layout || !buffer || !altScreen || !notice) return null;
   const alt = altScreen.create();
   return {
@@ -55,6 +57,7 @@ export function cellWiring(host: HTMLElement): Record<string, unknown> | null {
     AltScreenScroll: alt,
     TerminalStartupNotice: notice.create(),
     TerminalToolsMenu: null,
+    TerminalSelectScrolled: selectScrolled ? selectScrolled.create() : null,
   };
 }
 
@@ -110,7 +113,6 @@ export function startLiveTerminal(
 
 export const PAINT_WAIT_MS = 50;
 
-/*  hidden  */
 export function nextPaint(): Promise<void> {
   return new Promise<void>((resolve) => {
     let done = false;

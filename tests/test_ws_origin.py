@@ -14,20 +14,20 @@ from tests.test_ws_subprotocol_auth import (  # noqa: F401
     ws_app,
 )
 
-HOST = "198.51.100.18:8000"
+HOST = "192.168.1.50:8000"
 PATHS = ["/ws/terminal", "/ws/events"]
 
 
 @pytest.mark.parametrize("origin,host", [
     (None, HOST),
-    ("http://198.51.100.18:8000", HOST),
-    ("https://198.51.100.18:8000", HOST),
-    ("HTTP://198.51.100.18:8000/", HOST),
+    ("http://192.168.1.50:8000", HOST),
+    ("https://192.168.1.50:8000", HOST),
+    ("HTTP://192.168.1.50:8000/", HOST),
     ("http://[::1]:8000", "[::1]:8000"),
-    ("https://hosta.example.net", "hosta.example.net"),
-    ("http://hosta.example.net", "hosta.example.net"),
+    ("https://example.ts.net", "example.ts.net"),
+    ("http://example.ts.net", "example.ts.net"),
     ("https://tunnel.example.com", "127.0.0.1:8000"),
-    ("https://box.tailnet.ts.net", "127.0.0.1:8000"),
+    ("https://mac.tailnet.ts.net", "127.0.0.1:8000"),
 ])
 def test_origin_trusted(origin, host):
     policy = HostPolicy("*.tailnet.ts.net", ["https://tunnel.example.com"])
@@ -37,10 +37,10 @@ def test_origin_trusted(origin, host):
 @pytest.mark.parametrize("origin,host", [
     ("http://evil.example", HOST),
     ("null", HOST),
-    ("http://198.51.100.18:9999", HOST),
-    ("http://198.51.100.18", HOST),
-    ("ftp://198.51.100.18:8000", HOST),
-    ("http://198.51.100.18:bad", HOST),
+    ("http://192.168.1.50:9999", HOST),
+    ("http://192.168.1.50", HOST),
+    ("ftp://192.168.1.50:8000", HOST),
+    ("http://192.168.1.50:bad", HOST),
     ("", HOST),
     ("http://127.0.0.1:8000", None),
     ("https://tunnel.example.com.evil.example", "127.0.0.1:8000"),
@@ -60,7 +60,7 @@ def _close_code(app, path: str, headers: dict, subprotocols=None) -> int:
 
 
 @pytest.mark.parametrize("path", PATHS)
-@pytest.mark.parametrize("origin", ["http://evil.example", "null", "http://198.51.100.18:9999"])
+@pytest.mark.parametrize("origin", ["http://evil.example", "null", "http://192.168.1.50:9999"])
 def test_real_app_refuses_foreign_origin(path, origin):
     from src.main import app
     with capture_logs() as logs:
@@ -70,7 +70,7 @@ def test_real_app_refuses_foreign_origin(path, origin):
 
 
 @pytest.mark.parametrize("path", PATHS)
-@pytest.mark.parametrize("origin", [None, "http://198.51.100.18:8000"])
+@pytest.mark.parametrize("origin", [None, "http://192.168.1.50:8000"])
 def test_real_app_trusted_origin_reaches_auth(path, origin):
     from src.main import app
     headers = {"host": HOST} if origin is None else {"host": HOST, "origin": origin}
@@ -79,7 +79,7 @@ def test_real_app_trusted_origin_reaches_auth(path, origin):
 
 def test_empty_subprotocol_still_4400_with_trusted_origin():
     from src.main import app
-    headers = {"host": HOST, "origin": "http://198.51.100.18:8000", "sec-websocket-protocol": " "}
+    headers = {"host": HOST, "origin": "http://192.168.1.50:8000", "sec-websocket-protocol": " "}
     assert _close_code(app, "/ws/terminal", headers) == 4400
 
 
@@ -112,7 +112,7 @@ def test_valid_jwt_foreign_origin_refused(guarded):
     assert code == UNTRUSTED_CLOSE_CODE
 
 
-@pytest.mark.parametrize("origin", [None, "http://198.51.100.18:8000", "https://198.51.100.18:8000"])
+@pytest.mark.parametrize("origin", [None, "http://192.168.1.50:8000", "https://192.168.1.50:8000"])
 def test_valid_jwt_trusted_origin_accepted(guarded, origin):
     app, path = guarded
     headers = {"host": HOST} if origin is None else {"host": HOST, "origin": origin}

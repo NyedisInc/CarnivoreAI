@@ -22,7 +22,6 @@ export function kindCounts(items: readonly CatalogItem[]): KindCount[] {
         .sort((a, b) => rank(a.kind) - rank(b.kind) || a.kind.localeCompare(b.kind));
 }
 
-/* first published */
 export function newestItems(items: readonly CatalogItem[], limit = 5): CatalogItem[] {
     return items
         .filter((item) => typeof item?.first_published_at === 'string' && item.first_published_at)

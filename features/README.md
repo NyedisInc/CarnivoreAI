@@ -96,8 +96,14 @@ Immutable once merged - never edit one after it lands.
 | `pr` | no | the PR number |
 | `breaking` | no | boolean |
 | `media_unchanged` | no | `true`: this change touched the feature's `surfaces` without changing how it looks, so no recapture |
+| `release` | no | `vX.Y.Z`, pins this entry to a release explicitly instead of letting it derive from the commit that added this file. Only for a BACKFILLED entry - one written after the commit it describes already shipped. See "Release grouping is derived, never typed in" below. |
 
 ## Showing a feature (issue #846)
+
+A catalog entry is the collapsed bullet; `where`, `how_to`, `examples` and
+`media` are what it expands into. Alex (example-owner), 2026-09-26: show where a
+feature is, how to use it, why, and what it looks like - screenshots, the
+states of its icons, a GIF when it is an action - and make it stick.
 
 ### `media`
 
@@ -117,6 +123,7 @@ Immutable once merged - never edit one after it lands.
   names the theme it was captured under when not the default.
 - `file` is a plain name inside `features/media/<feature-id>/` - no `/`, no
   `..` - and must exist. `alt` is required and non-blank.
+- Size caps, enforced by `check`: png/webp 400 KB, gif 2 MB, svg 50 KB.
 - Every png/gif/webp must be produced by a shot in that feature's capture
   spec, so it can be regenerated; an svg icon may be copied in by hand. A
   file in the folder that no entry lists fails `check` (delete it or list it).
@@ -214,7 +221,7 @@ is still 100% of entries in practice.
 
 **A preview build never creates a release group.** `~/bin/carnivore-preview`
 (`docs/preview-install.md`) stamps a pre-release version such as
-`1.12.20-preview.30.g059b3f0` only into its build worktree's UNCOMMITTED
+`1.12.20-preview.30.gf29437b` only into its build worktree's UNCOMMITTED
 `macOS/package.json`, and creates no tag, so neither the `v*` tag list nor
 the pending-bump rule (`_pending_release_tag`, which reads the committed
 `macOS/package.json`) ever sees it; its changes stay under `Unreleased` until
@@ -222,6 +229,16 @@ the real release is tagged. Never tag a preview: `_version_key` pulls every
 digit out of a tag, so a `v1.12.20-preview...` tag WOULD become a group.
 
 ## Auditing a release for a missing entry
+
+`scripts/release/changelog_audit.py` (the owner, 2026-09-28, issue #1096)
+checks a commit range against `features/changes/` instead of trusting that
+every product-changing commit remembered to add one - an audit of v1.12.10
+through v1.12.19 found roughly 30 that did not, mostly small same-day UI
+follow-ups. For a range, it classifies every non-merge commit (a fragment-
+only commit, a generated-files rebuild, docs-only, test-only, non-product
+tooling, a version bump, a small CSS/copy tweak, or "product") and flags any
+product-touching commit whose sha does not match some change entry's own
+added-commit, exiting 1 if any do.
 
 ```
 python3 scripts/release/changelog_audit.py --range v1.12.18..v1.12.19

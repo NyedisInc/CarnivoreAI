@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* automations list */
   import { t } from '../../../lib/i18n/index.svelte';
   import { Button, List, ListRow, State, Switch } from '../../../lib/base';
   import { updateAutomation, type Automation } from '../../../lib/automations/api';

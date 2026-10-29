@@ -1,3 +1,4 @@
+/* the mockup frame */
 import { MAX_PAYLOAD_BYTES, validatePayload, type Payload } from './payload-model';
 
 export const BRIDGE_VERSION = 1;
@@ -14,6 +15,7 @@ export type DropReason = 'source' | 'origin' | 'size' | 'shape' | 'type' | 'rate
 export interface GapSpot { x: number; y: number; w: number }
 export type GapLayout = Record<string, GapSpot>;
 
+/* not an object at all */
 export function gapSpots(value: unknown, declared: ReadonlySet<string>): GapLayout | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const out: GapLayout = {};

@@ -27,8 +27,12 @@ def text(by: str, from_state: str, to_state: str, detail: str = "") -> str:
 def post(conn: sqlite3.Connection, item_id: int, from_state: str, to_state: str, *, by: str, now: float, detail: str = "") -> None:
     if not from_state or from_state == to_state:
         return
+    note(conn, item_id, text(by, from_state, to_state, detail), now)
+
+
+def note(conn: sqlite3.Connection, item_id: int, words: str, now: float) -> None:
     seq = work.next_seq(conn)
     conn.execute("INSERT INTO work_messages (item_id, author, kind, text, created_at, seq, author_key, parts, category, seen) "
                  "VALUES (?, ?, 'info', ?, ?, ?, ?, '', ?, 1)",
-                 (item_id, rules.CLAUDE, text(by, from_state, to_state, detail), now, seq, KEY, CATEGORY))
+                 (item_id, rules.CLAUDE, words, now, seq, KEY, CATEGORY))
     conn.execute("UPDATE work_items SET seq = ? WHERE id = ? AND seq < ?", (seq, item_id, seq))

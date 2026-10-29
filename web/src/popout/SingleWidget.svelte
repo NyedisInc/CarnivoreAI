@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* pop-out window */
   import { onMount, untrack } from 'svelte';
   import { entryFor } from '../opscenter/cells/registry';
   import { META } from '../opscenter/engine/meta';

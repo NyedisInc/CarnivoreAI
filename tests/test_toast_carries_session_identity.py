@@ -79,10 +79,10 @@ def test_a_toast_carries_the_label_when_the_session_has_one(monkeypatch, tmp_pat
     monkeypatch.setattr(
         SessionManager,
         "_label_for_tmux_name",
-        lambda self, name: "Image Tool" if name == "cloude_alpha" else None,
+        lambda self, name: "Media Compression" if name == "cloude_alpha" else None,
     )
     toast = mgr.record_toast(session_id="s1", kind="Stop", title="Your turn")
-    assert toast.session_label == "Image Tool"
+    assert toast.session_label == "Media Compression"
     assert toast.session_name == "cloude_alpha"
 
 

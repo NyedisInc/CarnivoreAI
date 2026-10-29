@@ -5,6 +5,7 @@ import json
 import sqlite3
 from typing import Any, Dict, List, Optional
 
+from src.core.db import after_commit
 from src.core.lineage import constants as K
 from src.core.lineage.graph import LineageValueError, now_iso
 from src.core.session_timeline import push as timeline_push
@@ -27,7 +28,7 @@ def add_milestone(conn: sqlite3.Connection, conversation_id: str, kind: str, sou
          json.dumps(detail or {}, sort_keys=True), stamp))
     written = cursor.rowcount == 1
     if written:
-        timeline_push.announce()
+        after_commit(conn, timeline_push.announce)
     return written
 
 

@@ -17,7 +17,9 @@ export type MenuEntry = MenuHead | MenuRow;
 </script>
 
 <script lang="ts">
+    import { Field } from '../base';
     import { onMount, tick } from 'svelte';
+    import MenuItem from '../base/MenuItem.svelte';
     import WidgetIcon from '../../opscenter/ui/WidgetIcon.svelte';
     import { t } from '../i18n/index.svelte';
 
@@ -32,7 +34,7 @@ export type MenuEntry = MenuHead | MenuRow;
     const { anchor, entries, label, align = 'left', onClose }: Props = $props();
 
     let panel: HTMLElement | undefined = $state();
-    let findInput: HTMLInputElement | undefined = $state();
+    const findInput = (): HTMLInputElement | null => panel?.querySelector<HTMLInputElement>('[data-field]') ?? null;
     let query = $state('');
     let left = $state(0);
     let top = $state(0);
@@ -116,7 +118,7 @@ export type MenuEntry = MenuHead | MenuRow;
         window.addEventListener('blur', gone);
         void tick().then(() => {
             place();
-            (findInput ?? items().find((el) => el.getAttribute('aria-disabled') !== 'true'))?.focus({ preventScroll: true });
+            (findInput() ?? items().find((el) => el.getAttribute('aria-disabled') !== 'true'))?.focus({ preventScroll: true });
         });
         return () => {
             document.removeEventListener('pointerdown', away, true);
@@ -131,31 +133,25 @@ export type MenuEntry = MenuHead | MenuRow;
 <div bind:this={panel} class="session-row-menu popup-focus wp-menu" role="menu" aria-label={label} style:left="{left}px" style:top="{top}px" style:max-height="{maxH}px">
     {#if finding}
         <div class="session-row-menu__find oc-focus-host">
-            <input class="oc-field" type="search" bind:this={findInput} bind:value={query} placeholder={t('widgets.places.menu.find')} aria-label={t('widgets.places.menu.find_label')} />
+            <Field type="search" bind:value={query} placeholder={t('widgets.places.menu.find')} aria-label={t('widgets.places.menu.find_label')} />
         </div>
     {/if}
     <div class="wp-menu__list" role="none">
         {#each shown as entry, index (isRow(entry) ? entry.id : `head:${index}`)}
             {#if isRow(entry)}
-                <button
-                    type="button"
-                    class="session-row-menu__item"
-                    role="menuitem"
-                    tabindex="-1"
+                <MenuItem
+                    label={entry.label}
+                    keyHint={entry.key}
+                    reason={entry.sub}
+                    disabled={entry.disabled}
                     data-node={entry.id}
-                    aria-disabled={entry.disabled ? 'true' : undefined}
-                    data-tooltip={entry.disabled ? entry.sub : undefined}
-                    {...(entry.disabled && entry.sub ? { 'aria-description': entry.sub } : {})}
                     onclick={(event) => { event.stopPropagation(); pick(entry); }}
                 >
-                    <span class="session-row-menu__icon">
+                    {#snippet icon()}
                         {#if entry.mark}<span class="wp-pmark" data-pl={entry.mark.place}>{entry.mark.letter}</span>
                         {:else if entry.widget}<span class="wp-menu__wicon" style={`color: var(--${entry.widget.tone})`}><WidgetIcon name={entry.widget.icon} widget={entry.widget.id} size={14} /></span>{/if}
-                    </span>
-                    <span class="session-row-menu__label">{entry.label}</span>
-                    <span class="session-row-menu__key">{entry.key ?? ''}</span>
-                    {#if entry.sub && !entry.disabled}<span class="session-row-menu__reason">{entry.sub}</span>{/if}
-                </button>
+                    {/snippet}
+                </MenuItem>
             {:else if needle === ''}
                 <div class="session-row-menu__head">{entry.head}</div>
             {/if}

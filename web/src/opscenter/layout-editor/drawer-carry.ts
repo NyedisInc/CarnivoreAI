@@ -28,7 +28,6 @@ export interface CarryOffer {
 export interface SidebarHolds {
   zone: readonly string[];
   glance: readonly { id: string; widget: string }[];
-  /* the widgets page */
   disabled: (widgetId: string) => boolean;
   /* the glance area */
   repeatable: (widgetId: string) => boolean;
@@ -58,7 +57,6 @@ export type CarryTarget =
 export interface CarryHandlers {
   onMove: (x: number, y: number, aimed: boolean) => void;
   onDrop: (target: CarryTarget) => void;
-  /* the widgets page */
   onRefuse: (sentence: string) => void;
   onEnd: (lifted: boolean) => void;
 }

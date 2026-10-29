@@ -98,6 +98,35 @@ def test_counter_is_off_outside_a_window():
     assert all(row["count"] == 0 for row in out["totals"])
 
 
+def _count_async_spawns(loop) -> list:
+    import asyncio
+
+    async def run():
+        proc = await asyncio.create_subprocess_exec("true")
+        await proc.wait()
+
+    call_counter.start()
+    try:
+        loop.run_until_complete(run())
+    finally:
+        rows = call_counter.stop(1.0)["subprocess.Popen"]
+        loop.close()
+    return [r for r in rows if r["detail"] == "true"]
+
+
+def test_async_subprocess_spawn_is_counted_exactly_once_under_the_real_uvloop():
+    uvloop = pytest.importorskip("uvloop")
+    rows = _count_async_spawns(uvloop.new_event_loop())
+    assert sum(r["count"] for r in rows) == 1
+
+
+def test_async_subprocess_spawn_is_counted_exactly_once_under_the_stdlib_loop():
+    import asyncio
+
+    rows = _count_async_spawns(asyncio.new_event_loop())
+    assert sum(r["count"] for r in rows) == 1
+
+
 def test_one_profile_at_a_time():
     async def both():
         first = asyncio.ensure_future(sampler.profile(sampler.ProfileRequest(seconds=1.0, hz=20)))

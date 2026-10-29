@@ -32,6 +32,21 @@ export function slotOf(run: Pick<FeedRow, 'run_id' | 'has_report' | 'status'>, l
   return normalizeSlot(lookup(run.run_id));
 }
 
+const SAME_MEMO_MAX = 2000;
+const sameMemo = new Map<string, { a: unknown; b: unknown; same: boolean }>();
+
+function sameByDiff(p: FeedRow, pSlot: ReportSlot, r: FeedRow, rSlot: ReportSlot, retryStatusWord: (s: string) => string): boolean {
+  const key = `${p.run_id}|${r.run_id}`;
+  const a = rSlot.state === 'ready' ? rSlot.report : undefined;
+  const b = pSlot.state === 'ready' ? pSlot.report : undefined;
+  const hit = sameMemo.get(key);
+  if (hit && hit.a === a && hit.b === b) return hit.same;
+  const same = compare({ run: p, slot: pSlot }, { run: r, slot: rSlot }, { statusWord: retryStatusWord }).same;
+  if (sameMemo.size >= SAME_MEMO_MAX) sameMemo.clear();
+  sameMemo.set(key, { a, b, same });
+  return same;
+}
+
 function sameAs(r: FeedRow, p: FeedRow, lookup: ReportLookup, retryStatusWord: (s: string) => string): { same: boolean; pending: boolean } {
   if (isLive(r.status) || isLive(p.status)) return { same: false, pending: false };
   if (r.status !== p.status || (r.reason ?? '') !== (p.reason ?? '')) return { same: false, pending: false };
@@ -42,7 +57,7 @@ function sameAs(r: FeedRow, p: FeedRow, lookup: ReportLookup, retryStatusWord: (
   if (a.state === 'unreadable' || b.state === 'unreadable') return { same: false, pending: false };
   if (r.status === 'failed') return { same: (r.error ?? '') === (p.error ?? '') && stable(a.report ?? null) === stable(b.report ?? null), pending: false };
   if (stable(a.report ?? null) === stable(b.report ?? null)) return { same: true, pending: false };
-  return { same: compare({ run: p, slot: b }, { run: r, slot: a }, { statusWord: retryStatusWord }).same, pending: false };
+  return { same: sameByDiff(p, b, r, a, retryStatusWord), pending: false };
 }
 
 export function analyse(runs: FeedRow[], older: FeedRow[], lookup: ReportLookup): Map<string, RunInfo> {
@@ -124,9 +139,21 @@ export interface FeedFilters {
   unreadOnly: boolean;
 }
 
+const textMemo = new WeakMap<object, string>();
+const SEARCH_TEXT_MAX = 30000;
+
+function reportText(rep: unknown): string {
+  if (rep === undefined) return '';
+  if (typeof rep !== 'object' || rep === null) return (JSON.stringify(rep) ?? '').slice(0, SEARCH_TEXT_MAX);
+  const hit = textMemo.get(rep);
+  if (hit !== undefined) return hit;
+  const text = (JSON.stringify(rep) ?? '').slice(0, SEARCH_TEXT_MAX);
+  textMemo.set(rep, text);
+  return text;
+}
+
 export function haystack(run: FeedRow, slot: ReportSlot, ctx: RuleContext, retryMax: number): string {
-  const rep = usableReport(slot);
-  const text = rep === undefined ? '' : (JSON.stringify(rep) ?? '').slice(0, 30000);
+  const text = reportText(usableReport(slot));
   return [run.automation_name ?? '', face(run, slot, ctx).text, runStatusWord(run), triggerWord(run, retryMax), run.error ?? '', text].join(' ').toLowerCase();
 }
 

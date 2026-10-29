@@ -1,4 +1,4 @@
-<!-- <path> -->
+<!-- there is nothing -->
 <script lang="ts">
     import {
         GLYPHS,

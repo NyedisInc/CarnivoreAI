@@ -11,7 +11,7 @@ from src.core.auto_sleep.pane_listeners import (
     parse_lsof_pids,
 )
 from src.core.conversation_writers import ProcessTable, read_process_table
-from src.core.tmux_discovery import tmux_argv_prefix
+from src.core.tmux_transport.run import tmux_run_text
 
 __all__ = ["find_port_owner", "owner_of_listeners", "pane_pid_sessions", "port_listener_pids"]
 
@@ -38,18 +38,16 @@ def pane_pid_sessions(
     *,
     runner: Callable[..., subprocess.CompletedProcess] = subprocess.run,
 ) -> Dict[int, str]:
-    argv = tmux_argv_prefix(socket) + ["list-panes", "-a", "-F", "#{session_name}\t#{pane_pid}"]
-    try:
-        done = runner(argv, capture_output=True, text=True,
-                      timeout=TMUX_TIMEOUT_SECONDS, check=False)
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        raise MeasureError(f"tmux could not run: {type(exc).__name__}") from exc
+    done = tmux_run_text(socket, "list-panes", "-a", "-F", "#{session_name}\t#{pane_pid}",
+                         timeout=TMUX_TIMEOUT_SECONDS, runner=runner)
+    if done.error:
+        raise MeasureError(f"tmux could not run: {done.error}")
     if done.returncode != 0:
-        if "no server running" in (done.stderr or ""):
+        if "no server running" in done.stderr:
             return {}
         raise MeasureError(f"tmux list-panes exited {done.returncode}")
     out: Dict[int, str] = {}
-    for line in (done.stdout or "").splitlines():
+    for line in done.stdout.splitlines():
         name, _, raw_pid = line.partition("\t")
         try:
             out[int(raw_pid)] = name

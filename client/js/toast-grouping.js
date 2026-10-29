@@ -67,7 +67,7 @@ Object.assign(ToastManager.prototype, {
           winner: picked.winner,
           count: g.toasts.length,
           badgeCount: picked.count,
-          severity: this._severity(picked.winner.kind),
+          severity: g.toasts.reduce((m, t) => Math.max(m, this._severity(t.kind)), 0),
         };
       });
       groups.sort((a, b) => {
@@ -77,7 +77,6 @@ Object.assign(ToastManager.prototype, {
       return groups;
     },
 
-    /* permission prompt */
     _countBySeverity(groups, min, exact = false) {
       let n = 0;
       for (const group of groups) {

@@ -90,20 +90,18 @@
     --radius-pill: 50px;
     --radius-full: 50%;
 
-    --project-gutter: 52px;
-
     --sidebar-gutter: 22px;
 
 
     --header-pad-y: 12px;
-    /* padding */
     --header-pad-x: 20px;
-    /* padding */
+    /* the home screen */
     --screen-pad-x: 20px;
     --header-border: 2px;
     --home-subheader-extra: 0px;
     --header-h: calc(var(--control-size) + var(--header-pad-y) * 2
                      + var(--header-border) + var(--home-subheader-extra));
+    /* the home screen */
     --overlay-top: var(--header-h);
 
     --control-size: 36px;
@@ -135,8 +133,6 @@
 }
 }
 
-/*  hidden  height: auto min-height: 100vh overflow: hidden */
-/* position: fixed */
 html {
     background: var(--color-bg);
 }
@@ -158,12 +154,10 @@ body {
     top: 0;
     z-index: 1000;
     background: var(--color-bg-page);
-    /* padding */
     padding: var(--header-pad-y) var(--header-pad-x);
     border-bottom: var(--header-border) solid var(--color-accent);
 }
 
-/* text-overflow: ellipsis */
 .header-row {
     display: flex;
     justify-content: space-between;
@@ -171,8 +165,6 @@ body {
     gap: 15px;
 }
 
-/* flex-shrink: 0 min-width: 0 white-space: nowrap width:auto */
-/*  hidden  align-items: center overflow: hidden */
 .header h1 {
     font-size: 1.3rem;
     line-height: 1.2;
@@ -207,7 +199,6 @@ body {
     flex-shrink: 0;
 }
 
-/* display: none flex: 1 1 auto text-overflow: ellipsis */
 .header-home-spacer {
     display: none;
 }
@@ -237,7 +228,7 @@ body.home-header-active {
     }
 }
 
-/* display: none */
+/* the home screen */
 .header--home {
     --home-header-toggle-w: 36px;
 }
@@ -246,7 +237,6 @@ body.home-header-active {
     order: -1;
 }
 
-/* display: none */
 .header--home:has(#session-sidebar-toggle:not(.hidden)) .header-home-spacer {
     width: calc(var(--home-header-flank-w) - var(--home-header-toggle-w));
 }
@@ -278,7 +268,6 @@ body.home-header-active {
     justify-content: center;
     width: 1.2em;
     height: 1.2em;
-    /* display: flex */
     margin-right: 0.15em;
     flex-shrink: 0;
 }
@@ -314,7 +303,7 @@ body.home-header-active {
 
 .header-rename-input {
     background: var(--color-bg-elevated, #1a1a1a);
-    color: var(--color-fg-strong, #fff);
+    color: var(--color-fg);
     border: 1px solid var(--color-accent);
     border-radius: var(--radius-sm);
     padding: 2px 6px;
@@ -331,7 +320,6 @@ body.home-header-active {
     margin-left: 8px;
 }
 
-/* --color- */
 .running-session-rename-unavailable {
     width: 24px;
     height: 24px;
@@ -367,18 +355,6 @@ body.home-header-active {
 }
 
 
-.running-session-rename-input {
-    flex: 1;
-    background: var(--color-bg-elevated, #1a1a1a);
-    color: var(--color-fg-strong, #fff);
-    border: 1px solid var(--color-accent);
-    border-radius: var(--radius-sm);
-    padding: 2px 6px;
-    font: inherit;
-    font-weight: bold;
-    min-width: 0;
-}
-
 .running-session-rename-error {
     color: var(--color-danger-strong, #e64);
     font-size: 0.75em;
@@ -390,12 +366,11 @@ body.home-header-active {
     display: flex;
     gap: 8px;
     align-items: center;
+    /* there is nothing */
     flex-shrink: 0;
-    /*  hidden  overflow: hidden */
     overflow: visible;
 }
 
-/* --color- <button> */
 .header .controls button > svg {
     color: var(--color-accent);
 }
@@ -404,8 +379,6 @@ body.home-header-active {
     color: var(--color-danger);
 }
 
-/* <button> border-radius: 50%` turned the settings tabs into literal ellipses
- * (fixed in place at the time, not at the source; transform: scale( */
 .btn-icon {
     background: var(--color-accent-bg);
     color: var(--color-accent);
@@ -431,8 +404,8 @@ body.home-header-active {
 }
 
 .btn-icon:disabled {
-    background: rgba(62, 62, 66, 0.1);
-    border-color: rgba(62, 62, 66, 0.3);
+    background: color-mix(in srgb, var(--color-border) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-border) 30%, transparent);
     color: var(--color-fg-subtle);
     cursor: not-allowed;
     opacity: 0.4;
@@ -487,45 +460,8 @@ body.home-header-active {
     flex-direction: column;
     min-height: 0;
 
-    /* THE PANE IS THE CONTAINING BLOCK FOR EVERY OVERLAY INSIDE IT.
-     * ------------------------------------------------------------------
-     * This element is a flex column, so an in-flow child of it steals
-     * rows from `#terminal`; the ResizeObserver reads that as a real
-     * geometry change, ships a pty_resize, tmux raises SIGWINCH and
-     * claude answers with `ESC[2J`, which on the alternate screen erases
-     * the conversation. So everything that appears over the terminal is
-     * `position: absolute` instead - today that is the session search
-     * panel and the prompt rail (web/src/lib/terminal-search/), and
-     * `#localServersContainer` before them.
-     *
-     * WITHOUT THIS DECLARATION those overlays escape to the nearest
-     * positioned ancestor, `#terminal-screen` (`.screen` is
-     * `position: relative`). An absolutely positioned box resolves
-     * `left`/`right` against its containing block's PADDING box, and
-     * `body.session-sidebar-pinned .screen` puts
-     * `padding-left: var(--sidebar-dock-w)` on exactly that element - so
-     * `left: 15px` measured from the viewport edge, BEHIND the docked
-     * sidebar, rather than from the terminal the overlay belongs to.
-     * Measured in a real engine at 1357px with the sidebar docked: the
-     * overlay's box was x=15 w=1327 against the pane's x=320 w=1037, so
-     * 290px too wide and 305px into the sidebar column.
-     *
-     * SAFE BECAUSE IT WAS COUNTED. With a real xterm mounted there are
-     * SEVEN absolutely positioned descendants here, and making this a
-     * containing block moved exactly ONE of them - the overlay. The
-     * other six are xterm's own, and `.xterm` is itself
-     * `position: relative` (client/vendor/xterm/xterm.css), so they were
-     * never resolving against anything above it.
-     *
-     * It is declared HERE, in the file that owns `.terminal-container`,
-     * and deliberately nowhere else: two `position: relative`
-     * declarations on one element is how one of them gets deleted as a
-     * duplicate and the other turns out to be the one that mattered.
-     * Guarded by tests/test_terminal_container_containing_block.node.mjs,
-     * which resolves the real cascade rather than grepping for the text. */
     position: relative;
 
-    /*  hidden  overflow: hidden */
     overscroll-behavior: contain;
 }
 
@@ -717,7 +653,6 @@ body.home-header-active {
 }
 
 
-/* recent projects */
 .launchpad-section-toggle {
     display: flex;
     align-items: center;
@@ -753,13 +688,10 @@ body.home-header-active {
 }
 
 .project-item {
-    /* var(--color-accent-bg-soft) */
     background-color: color-mix(in srgb, var(--color-bg, #1e1e1e) 80%, transparent);
     background-image: linear-gradient(var(--color-accent-bg-soft), var(--color-accent-bg-soft));
-    /* --color- box-shadow */
     border: 1px solid var(--color-border);
     box-shadow: inset 3px 0 0 var(--color-accent);
-    /* padding */
     padding: 14px 72px 14px 16px;
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -810,7 +742,6 @@ body.home-header-active {
     cursor: not-allowed;
 }
 
-/* could not */
 .project-item.project-presence-missing {
     box-shadow: inset 3px 0 0 var(--color-danger);
     background-image: linear-gradient(var(--color-danger-bg), var(--color-danger-bg));
@@ -940,7 +871,6 @@ body.home-header-active {
     border-color: var(--color-accent, #6cf);
 }
 
-/* padding */
 @media (pointer: coarse) {
     .project-item {
         padding-right: 92px;
@@ -1004,7 +934,6 @@ body.home-header-active {
 .adopt-attach-btn { position: absolute; top: 12px; right: 12px; width: auto; height: auto; padding: 6px 14px; font-size: 0.85rem; }
 
 
-/*  hidden  overflow: hidden position: relative */
 #terminal-screen {
     flex-direction: column;
     position: relative;
@@ -1059,32 +988,11 @@ body.home-header-active {
     }
 }
 
-/* NO D-PAD STYLES HERE ANY MORE, AND NO `.slash-commands-btn` BLOCK
- * BELOW EITHER.
- *
- * Two round `position: fixed` buttons used to sit in the terminal's
- * bottom row, one opening a full-screen arrow-key overlay and one
- * opening the slash command modal. Both painted over live terminal
- * output, which is the habit this page has been removing control by
- * control. The owner replaced them, and the arrow overlay with them,
- * with ONE in-flow row of keys under the pane:
- * client/js/terminal-key-bar.js and client/css/terminal-key-bar.css.
- *
- * The rules are DELETED rather than left unreferenced. A block of
- * styling for markup nothing emits is how a retired control gets revived
- * by accident, the same call already made for the top-right rail and its
- * `--fab-top-edge` token. `@keyframes slideInFromBottomRight` went with
- * the overlay that was its only user; `fadeIn`, which it also used, is
- * shared and stays.
- *
- * The `--fab-*` tokens are gone from the token block above for the same
- * reason: every floating button that read them is deleted. */
 
 .hidden {
     display: none !important;
 }
 
-/* padding var(--color-accent) */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -1108,7 +1016,6 @@ body.home-header-active {
 
 .modal-content {
     background: var(--oc-ground-raised);
-    /* padding */
     border: var(--oc-border) solid var(--oc-line-panel);
     border-radius: var(--oc-radius-sm);
     padding: 31px;
@@ -1163,7 +1070,6 @@ body.home-header-active {
     transition: all var(--oc-motion) ease;
 }
 
-/* box-shadow */
 .modal-input:focus {
     outline: none;
     border-color: var(--oc-orange);
@@ -1201,16 +1107,7 @@ body.home-header-active {
     height: auto;
 }
 
-/* Slash Commands Modal
- *
- * MILITARY TERMINAL, LIKE EVERY OTHER OVERLAY (issue #405). Every colour
- * below is an --oc-* palette token and the panel wears the shared
- * `popup-focus` look (client/css/popup-focus.css, which owns its border,
- * ground and shadow and is added by client/js/slash-commands.js), the
- * same call 06f994ce made for the other surfaces over the terminal. No
- * --color-* name is read here: those follow the SESSION theme, and this
- * popup is app chrome. The orange marks one thing per surface: the hover,
- * the keyboard-active row and the filter's focus, never the frame. */
+/* Slash Commands Modal */
 .modal {
     display: none !important;
 }
@@ -1380,7 +1277,6 @@ body.home-header-active {
     line-height: 1.4;
 }
 
-/* width: auto */
 .all-commands-list,
 .command-category,
 .command-item {
@@ -1552,7 +1448,6 @@ body.home-header-active {
     flex-shrink: 0;
 }
 
-/*  hidden  min-width: 0 overflow: hidden */
 .folder-picker-name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1670,10 +1565,9 @@ body.home-header-active {
 }
 
 .running-session-row:hover {
-    background-image: linear-gradient(rgba(215, 119, 87, 0.14), rgba(215, 119, 87, 0.14));
+    background-image: linear-gradient(color-mix(in srgb, var(--color-accent) 14%, transparent), color-mix(in srgb, var(--color-accent) 14%, transparent));
 }
 
-/* --color- */
 
 .running-session-top {
     display: flex;
@@ -1685,7 +1579,6 @@ body.home-header-active {
 
 .running-session-name {
     flex: 1;
-    /*  hidden  min-width: 0 overflow: hidden white-space: nowrap */
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1742,7 +1635,7 @@ body.home-header-active {
     border: 1px solid var(--color-danger-strong, #e64);
     border-left-width: 3px;
     border-radius: var(--radius-md);
-    color: var(--color-fg-strong, #fff);
+    color: var(--color-fg);
     font: inherit;
     font-size: 12px;
     line-height: 1.45;
@@ -1767,9 +1660,8 @@ body.home-header-active {
     padding: 0 2px;
 }
 
-.launchpad-error-dismiss:hover { color: var(--color-fg-strong, #fff); }
+.launchpad-error-dismiss:hover { color: var(--color-fg); }
 
-/* margin-left: auto */
 .running-session-id {
     margin-left: auto;
     font-family: var(--font-mono, ui-monospace, monospace);
@@ -1787,48 +1679,11 @@ body.home-header-active {
     border-radius: var(--radius-sm);
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    /* border: padding */
     border: 1px solid transparent;
 }
 
 .badge-tmux     { background: var(--color-badge-tmux-bg);     color: var(--color-badge-tmux-fg); }
 .badge-external { background: var(--color-badge-external-bg); color: var(--color-badge-external-fg); }
-
-/* could not be determined */
-.family-pill {
-    font-size: 0.7em;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    letter-spacing: 0.3px;
-    border: 1px solid transparent;
-}
-
-.family-pill--fact {
-    background: var(--color-family-fact-bg);
-    color: var(--color-family-fact-fg);
-    border-style: solid;
-    border-color: var(--color-family-fact-fg);
-}
-
-.family-pill--guess {
-    background: var(--color-family-guess-bg);
-    color: var(--color-family-guess-fg);
-    border-style: dashed;
-    border-color: var(--color-family-guess-fg);
-}
-
-.family-pill--guess::before {
-    content: "~";
-    margin-right: 2px;
-}
-
-.family-pill--unknown {
-    background: var(--color-family-unknown-bg);
-    color: var(--color-family-unknown-fg);
-    border-style: dotted;
-    border-color: var(--color-family-unknown-fg);
-    font-style: italic;
-}
 
 .running-session-age {
     color: var(--color-fg-faint);
@@ -1836,7 +1691,6 @@ body.home-header-active {
     align-self: center;
 }
 
-/* CANNOT DETERMINE */
 .recent-sessions-attention {
     padding: 10px 12px;
     margin-bottom: 8px;
@@ -1870,7 +1724,6 @@ body.home-header-active {
 
 .recent-session-name {
     font-size: 0.86rem;
-    /* min-width:0 */
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1889,7 +1742,7 @@ body.home-header-active {
     background: var(--color-accent-bg-soft);
 }
 
-/* <button> */
+/* could not evaluate */
 .recent-session-row button:first-of-type {
     margin-left: auto;
 }
@@ -1938,7 +1791,6 @@ body.home-header-active {
     max-height: 60dvh;
 }
 
-/* display:none */
 .new-fab {
     position: relative;
     display: inline-flex;
@@ -1953,7 +1805,6 @@ body.home-header-active {
 .new-fab.hidden { display: none; }
 
 .new-fab__trigger {
-    /* --color- */
     width: 36px;
     height: 36px;
     padding: 0;
@@ -2011,7 +1862,6 @@ body.home-header-active {
     transform: rotate(45deg);
 }
 
-/* ; position: overflow-y: auto position: absolute; position: fixed */
 .new-fab__menu {
     position: fixed;
     top: 0;
@@ -2030,10 +1880,8 @@ body.home-header-active {
 }
 
 .new-fab__item {
-    /* padding */
     width: auto;
     flex-direction: row-reverse;
-    /* width:600px */
     height: 44px;
     padding: 0 0 0 14px;
     border-radius: 22px;
@@ -2172,7 +2020,6 @@ body.home-header-active {
 }
 
 
-/*  hidden  --color- z-index: 70 */
 .fab-menu-notice {
     position: fixed;
     top: calc(var(--header-h) + 12px);
@@ -2250,7 +2097,6 @@ body.home-header-active {
 
 .cloude-touch-copy {
     position: fixed;
-    /* padding */
     width: auto;
     height: auto;
     padding: 10px 18px;
@@ -2279,7 +2125,6 @@ body.home-header-active {
     }
 }
 
-/* .settings-section */
 
 .settings-section {
     margin-bottom: 28px;
@@ -2378,7 +2223,6 @@ body.home-header-active {
     border-radius: var(--radius-md);
 }
 
-/* flex-shrink: 0 flex-wrap: wrap min-width: 0 */
 .settings-wrapper-row-head {
     display: flex;
     flex-wrap: wrap;
@@ -2387,13 +2231,11 @@ body.home-header-active {
     gap: 12px;
 }
 
-/* min-width:0 */
 .settings-wrapper-row-desc {
     min-width: 0;
     overflow-wrap: anywhere;
 }
 
-/* width:auto */
 .settings-wrapper-row-main {
     flex: 1 1 auto;
     min-width: 0;
@@ -2411,7 +2253,6 @@ body.home-header-active {
     flex-shrink: 0;
 }
 
-/* --color- */
 .settings-wrapper-badge {
     display: inline-block;
     color: var(--color-fg);
@@ -2431,7 +2272,6 @@ body.home-header-active {
     gap: 8px;
 }
 
-/* min-width: 0 width: auto */
 .settings-legacy-actions {
     display: flex;
     align-items: center;
@@ -2566,7 +2406,6 @@ body.home-header-active {
         flex: 1 1 auto;
     }
 
-    /* .settings-wrapper-row */
     .settings-wrapper-row-head {
         flex-direction: column;
         align-items: stretch;
@@ -2576,7 +2415,6 @@ body.home-header-active {
         gap: 8px;
     }
 
-    /* padding */
     .settings-wrapper-family {
         padding: 8px;
     }
@@ -2586,63 +2424,6 @@ body.home-header-active {
     }
 }
 
-
-.project-node {
-    display: flex;
-    flex-direction: column;
-}
-
-.project-node__row {
-    display: grid;
-    grid-template-columns: var(--project-gutter) 1fr;
-    align-items: flex-start;
-}
-
-.project-node__row .project-item {
-    min-width: 0;
-}
-
-.project-node__gutter {
-    min-width: 0;
-}
-
-/* width: 100% */
-.project-node__toggle {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    width: 100%;
-    box-sizing: border-box;
-    margin-top: 14px;
-    padding: 4px 6px;
-    background: transparent;
-    border: none;
-    color: var(--color-text-secondary, var(--color-text));
-    cursor: pointer;
-    font-size: 0.78rem;
-}
-
-.project-node__chevron {
-    display: inline-block;
-    transition: transform 150ms ease;
-}
-
-.project-node__toggle[aria-expanded="true"] .project-node__chevron {
-    transform: rotate(90deg);
-}
-
-/* margin-left: auto */
-.project-node__count {
-    font-variant-numeric: tabular-nums;
-    color: var(--color-accent);
-}
-
-.project-node__sessions {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin: 4px 0 4px var(--project-gutter);
-}
 
 .project-session-row {
     display: flex;
@@ -2657,7 +2438,7 @@ body.home-header-active {
 }
 
 .project-session-row:hover {
-    background-image: linear-gradient(rgba(215, 119, 87, 0.14), rgba(215, 119, 87, 0.14));
+    background-image: linear-gradient(color-mix(in srgb, var(--color-accent) 14%, transparent), color-mix(in srgb, var(--color-accent) 14%, transparent));
 }
 
 .project-session-row__name {
@@ -2669,68 +2450,6 @@ body.home-header-active {
     font-size: 0.86rem;
 }
 
-.project-node--virtual > .project-node__header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-    padding: 10px 12px;
-    background: transparent;
-    border: 1px dashed var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-text-secondary, var(--color-text));
-    cursor: pointer;
-    text-align: left;
-}
-
-.project-node--virtual .project-node__title {
-    flex: 1;
-    font-weight: 600;
-}
-
-.project-node--virtual .project-node__count {
-    font-size: 0.74rem;
-    opacity: 0.7;
-}
-
-.project-node--virtual .project-node__sessions {
-    margin-left: 12px;
-}
-
-/* could not */
-.project-node--attention {
-    margin-top: 4px;
-}
-
-.project-node__header--attention {
-    padding: 10px 12px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-warning, #d79921);
-    background: var(--color-accent-bg-soft);
-}
-
-.project-node__attention-head {
-    display: block;
-    text-transform: uppercase;
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
-    font-weight: 700;
-    color: var(--color-warning, #d79921);
-}
-
-.project-node--attention .project-node__title {
-    display: block;
-    margin-top: 3px;
-    font-size: 0.86rem;
-    font-weight: 600;
-}
-
-.project-node--attention .project-node__sessions {
-    margin-left: 12px;
-    margin-top: 4px;
-}
-
-/*  hidden  */
 .project-session-row--ended {
     cursor: default;
     background-image: none;
@@ -2770,7 +2489,6 @@ body.home-header-active {
     opacity: 0.75;
 }
 
-/* did not answer */
 .project-authority-banner {
     padding: 8px 10px;
     margin: 0 0 10px 0;
@@ -2781,7 +2499,7 @@ body.home-header-active {
 }
 
 .project-authority-banner-unknown {
-    color: var(--color-text-secondary);
+    color: var(--color-fg-muted);
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
 }
@@ -2793,24 +2511,14 @@ body.home-header-active {
 }
 
 
-/*  hidden  display: none */
 #launchpad-screen .adopt-disclosure > summary {
     display: none;
 }
 
-/* border-radius: 0px`, `appearance: auto`,
- * 20x20 shrink-wrapped around its 16px glyph instead of the
- * `--control-size` box every sibling uses. A near-white, hard-cornered,
- * bevelled square with a correctly-coloured "?" drawn on top of it -
- * which is the white square the user reported. It was never an asset
- * problem: the glyph is inline SVG with `stroke="currentColor"` and it
- * resolved correctly the whole time (measured `rgb(215, 119, 87)`, the
- * accent). Nothing here introduces a colour; border: display: flex */
 #launchpad-help-btn {
     display: none;
 }
 
-/* display: none flex-shrink: 0 */
 .header--home #launchpad-help-btn {
     display: inline-flex;
     align-items: center;
@@ -2819,20 +2527,7 @@ body.home-header-active {
     margin-left: 8px;
 }
 
-/* THE HOME SCREEN'S THEMED-ROW OVERRIDE IS GONE, because there is
- * nothing left for it to override. Deliberately no rule here, so this
- * comment is the record of why.
-
- * It was `box-shadow: inset 0 0 0 1px var(--session-theme-ring)` on
- * `.launchpad-container .running-session-row[data-session-theme]`,
- * existing for exactly one reason: session-theme-tint.css declared a 3px
- * inline-start rail plus the ring for BOTH surfaces, and the home screen
- * was not to carry a left-side colour bar, so this re-declared the ring
- * alone and won on specificity. The sidebar kept the rail.
-
- * If a left-side rail is ever wanted on one surface and not the other,
- * this is where the exception goes - but decide it here rather than
- * declaring it for both and cancelling it in one place. */
+/* the home screen */
 
 
 .new-fab__icon-img {
@@ -2864,11 +2559,7 @@ body.home-header-active {
     color: var(--oc-text-primary);
 }
 
-/* could not */
 .folder-picker-empty--unknown {
     color: var(--color-warning);
     font-style: normal;
 }
-
-/* running sessions */
-

@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { providerMark } from './agent-marks';
+  import { sessionMark } from './agent-marks';
 
-  let { family, light }: { family: string | null; light?: Snippet } = $props();
+  let { family, icon = null, light }: { family: string | null; icon?: string | null; light?: Snippet } = $props();
 
-  const mark = $derived(providerMark(family));
+  const mark = $derived(sessionMark(family, icon));
 </script>
 
 <span class="agent-marks" data-agent-marks="">

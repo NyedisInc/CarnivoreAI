@@ -24,7 +24,7 @@ def test_an_apply_while_another_move_runs_is_refused_and_a_plan_is_not(world, mo
         assert client.post(url, json={"new_root": str(world.new), "move_folder": True}).status_code == 200
         busy = client.post(url, json={"new_root": str(world.new), "move_folder": True, "apply": True,
                                       "plan_fingerprint": plan["fingerprint"]})
-    assert busy.status_code == 409 and "another project move is running" in busy.json()["detail"]["message"]
+    assert busy.status_code == 409 and busy.json()["detail"]["code"] == "move_busy"
     assert snapshot(world) == before
     done = client.post(url, json={"new_root": str(world.new), "move_folder": True, "apply": True,
                                   "plan_fingerprint": plan["fingerprint"]})

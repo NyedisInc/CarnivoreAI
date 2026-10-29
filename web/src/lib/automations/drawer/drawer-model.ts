@@ -28,6 +28,7 @@ function first(entries: readonly DiffEntry[], pick: (e: DiffEntry) => boolean): 
   return entries.find(pick);
 }
 
+/* there is nothing */
 export function sinceSentence(result: Pick<DiffResult, 'same' | 'entries' | 'counts'> | null): string {
   if (!result) return '';
   if (result.same) return t('automations.simple.since.same');

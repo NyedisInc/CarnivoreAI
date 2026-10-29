@@ -12,16 +12,18 @@
     "Mint a read token named claude desktop, paste the snippet into Claude Desktop's config, and ask it which sessions are running.",
     "A script with a write token asks to restart a session; the request waits in your inbox as external client: script, and runs only when you approve it.",
     "Revoke a token you no longer trust: its next request is refused.",
-    "Leave huddle tools for agents unticked (the default) and no session files huddle questions or reviews; tick it and they can again.",
-    "Before any computer is linked, agents do not see the pack tools; pair a computer and they appear."
+    "Leave task manager tools for agents unticked (the default) and no session files task manager questions or reviews; tick it and they can again.",
+    "Before any computer is linked, agents do not see the pack tools; pair a computer and they appear.",
+    "A tool Alex retired is still in the code: switch it on in advanced, mcp tools, to test it, then switch it off again."
   ],
   "how_to": [
     "Open settings, sessions and agents, agents, mcp server.",
     "Mint a token: pick a name, read or write, and an optional expiry. Copy the secret at once; it is never shown again.",
+    "Copy the claude code command, the Claude Desktop config or the ssh tunnel line (they carry this computer's real port and a placeholder for the token).",
     "Revoke a token from the list behind a confirm. Turn the whole server off with the switch (new and restarted sessions pick that up).",
     "Click the link under the endpoint (see the mcp tools) to open the documentation page that lists every tool and what it is for.",
-    "Pack, messaging and ai tools appear by themselves once a computer is linked, a messaging provider is connected or an ai connection is saved.",
-    "Open settings, advanced, mcp tools. Tools are grouped by heading, then sub-heading (a tool with no sub-heading sits right under its heading). A tool whose family is off in the mcp server panel stays hidden until that is on too.",
+    "Untick task manager tools for agents or swarm tools for agents, or tick app settings tools for agents (off by default), to choose which of those tools every session on this computer sees; running sessions pick it up without a restart. Pack, messaging and ai tools appear by themselves once a computer is linked, a messaging provider is connected or an ai connection is saved.",
+    "Open settings, advanced, mcp tools. Tools are grouped by heading, then sub-heading (a tool with no sub-heading sits right under its heading). Open a heading, then flip a tool's switch to hide it from every agent on this computer (a call to it says it is switched off) or bring it back; all on and all off flip a whole group. A tool whose family is off in the mcp server panel stays hidden until that is on too.",
     "In settings, advanced, mcp tools, each row shows its calls since the last reset and a bar per day for the last 7 days; reset counts at the top zeroes the view (nothing is deleted)."
   ],
   "id": "mcp-panel",

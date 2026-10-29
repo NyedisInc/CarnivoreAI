@@ -65,7 +65,7 @@ n = await push(load(), { body: 'only body' });
 assert.equal(n.title, 'carnivore');
 assert.equal(n.options.body, 'only body');
 
-for (const bad of ['//example.net', '/\\example.net', 'https://example.net', 'evil', '', '/a\nb', '/\t/example.net', '/a\\b', 7, null]) {
+for (const bad of ['//evil.com', '/\\evil.com', 'https://evil.com', 'evil', '', '/a\nb', '/\t/evil.com', '/a\\b', 7, null]) {
     n = await push(load(), { title: 't', body: 'b', path: bad });
     assert.equal(n.options.data.path, null, `push path ${JSON.stringify(bad)}`);
     let calls = await click([], { path: bad });
@@ -86,7 +86,7 @@ const calls2 = [];
 await (async () => {
     const env = load([win(calls2)]);
     let waited;
-    env.listeners.notificationclick({ notification: { close() {}, data: { path: '//example.net' } }, waitUntil: (p) => { waited = p; } });
+    env.listeners.notificationclick({ notification: { close() {}, data: { path: '//evil.com' } }, waitUntil: (p) => { waited = p; } });
     await waited;
 })();
 assert.deepEqual(calls2, [['focus'], ['navigate', '/']]);

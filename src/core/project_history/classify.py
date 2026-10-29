@@ -1,19 +1,3 @@
-"""What one stored session row IS, for the projects page. Pure.
-
-Five states, and the order they are decided in is the rule:
-
-  running  ``lifecycle='running'``. FIRST, even over ``archived_at``: the
-           schema guarantees archiving never hides a live process (design
-           section 4.8, ``session_store.list_sessions``), so a running row
-           that was also removed from the lists still reads running.
-  removed  ``archived_at`` is set: the user took it off their lists
-           (``DELETE /sessions/records/{uuid}``), the row is kept.
-  asleep   stopped by a sleep (``session_sleep.is_asleep``), wakeable.
-  closed   any other stopped row: ended, killed, or a ghost the lifecycle
-           reaper stopped when its tmux session was measured gone.
-  unknown  ``lifecycle='unknown'``: CANNOT DETERMINE, never folded into
-           closed, because "we could not look" is not "it ended".
-"""
 
 from __future__ import annotations
 

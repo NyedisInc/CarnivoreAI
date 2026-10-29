@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import { clockTime, laneColor, shortDuration, type FeedItem, type FeedLane } from './flow-model';
 
   interface Props {
@@ -35,9 +36,9 @@
       <span>{t('cplug.flow.chat.work.calls', { count: item.count ?? 0 })}</span>
       <span>{shortDuration(item.duration_s ?? 0)}</span>
       <span>{tally}</span>
-      <button type="button" class="flw-more" aria-expanded={open} onclick={() => (open = !open)}>
+      <Button variant="quiet" size="sm" data-flow-more aria-expanded={open} onclick={() => (open = !open)}>
         {t(open ? 'cplug.flow.chat.less' : 'cplug.flow.chat.more')}
-      </button>
+      </Button>
     </div>
     {#if open}
       <ul class="flw-calls">

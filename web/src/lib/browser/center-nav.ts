@@ -1,4 +1,4 @@
-/*  hidden  */
+/* the bottom rail */
 
 const ACTIVE_CLASS = 'active';
 
@@ -6,7 +6,6 @@ let parked: string[] = [];
 
 const TERMINAL_SCREEN_ID = 'terminal-screen';
 
-/* the bottom bar */
 const MAIN_SECTION_ID = 'terminal-grid';
 
 export const MAIN_SECTION_PAGE_ATTR = 'data-center-page';

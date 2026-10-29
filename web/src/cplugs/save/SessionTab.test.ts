@@ -11,8 +11,8 @@ import type { PointsApi, RestoreResult } from './points-api';
 
 setLocale('en');
 
-const POINT = { id: 'p1', takenAt: '2026-10-01T10:00:00Z', reason: 'kill', turns: 4, sizeBytes: 1048576, rawBytes: 4194304, pinned: false, failsafe: false, digest: null };
-const STORE = { usedBytes: 1073741824, capBytes: 4294967296, pointCount: 1, pinnedCount: 0, keep: 10, bySession: null };
+const POINT = { id: 'p1', takenAt: '2026-10-01T10:00:00Z', reason: 'kill', turns: 4, sizeBytes: 1048576, rawBytes: 4194304, pinned: false, digest: null };
+const STORE = { usedBytes: 1073741824, historyBytes: 1073741824, capBytes: 4294967296, pointCount: 1, pinnedCount: 0, keep: 10 };
 
 function fakeApi(restored: RestoreResult | { error: string }): PointsApi {
     return {

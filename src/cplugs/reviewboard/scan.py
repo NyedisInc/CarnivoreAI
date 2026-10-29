@@ -1,24 +1,3 @@
-"""THE SCANNER: rebuild every board from the boards folder alone (``docs/reviewboard.md``, "The scanner").
-
-A pure function of the folder: no database, no network, no write, nothing deleted. The command-line scanner
-(``cli/scan.py``), the repo test over ``design/boards/`` and (from slice 2) the server's ``GET /boards`` all call
-:func:`scan`. It never follows a symlink.
-
-WHAT IT CHECKS, per board folder: the folder name is a slug and equals ``board.slug``; ``sidecar.json`` parses and
-validates (``document.parse_sidecar``); every revision view file exists as a regular file whose sha256 and byte count
-match the sidecar (revision files are IMMUTABLE); nothing else lies in the folder. A sidecar of a NEWER schema version is
-listed read only, unvalidated. A file or folder that exists but cannot be read (a permission, an iCloud placeholder) is
-that board's ``unreadable`` error, never a crash that hides every other board.
-
-WHERE IT LOOKS (``layout.py``, #1733). A board folder directly under the root (the flat shape, every board made before #1733) and
-one under a task's ``boards/`` in the Task Manager layout (``<root>/<project>/<task>/boards/<slug>/``; project and task folders are
-known by their markers, ``sdk/task_folders.py``). A project folder is walked, never reported as an unknown entry; anything else in a
-task folder (``pastes/``, ``artifacts/``) is not the board's business. A slug found twice is an error on the second.
-
-EXIT MEANING (gotcha 11: a green check must be able to go red). :attr:`ScanResult.exit_code` is 0 clean (warnings
-allowed), 1 at least one error, 2 COULD NOT SCAN: the root is missing, not a folder, a symlink, has no ``.boards-root``
-marker, or holds no board at all, so nothing was looked at and nothing may read as a pass.
-"""
 
 from __future__ import annotations
 
@@ -59,10 +38,6 @@ class Finding:
 
 @dataclass(frozen=True)
 class BoardRow:
-    """One board as the folder alone describes it. ``status``: ``ok``, ``invalid`` (listed, unusable) or ``newer``
-    (made by a newer build: read only). The counts and names are None when the sidecar could not be read. ``project`` is the list
-    key the board's project folder marker names (``<root>/<project>/<task>/boards/<slug>/``), None for a flat board or the
-    ``no-project`` folder; ``last_revision_at`` is the newest revision's time (a closed board's ``closed_at``, ``service.listing``)."""
 
     slug: str
     status: str
@@ -97,7 +72,6 @@ class ScanResult:
 
     @property
     def exit_code(self) -> int:
-        """0 clean, 1 errors found, 2 could not scan. Output: int."""
         return 2 if self.root_error else (1 if self.errors else 0)
 
     @property
@@ -124,9 +98,24 @@ def _regular(path: Path) -> Optional[os.stat_result]:
 
 
 def _unreadable(board: _Board, name: str, exc: OSError) -> None:
-    """Record a file or folder that exists but could not be read, naming the error number. Inputs: board; name; exc."""
     reason = errno.errorcode.get(exc.errno, "unknown") if exc.errno is not None else type(exc).__name__
     board.add("error", "unreadable", f"{name} could not be read ({reason})")
+
+
+_DIGESTS: Dict[Tuple[str, int, int, int, int], str] = {}
+DIGEST_CACHE_MAX = 4096
+
+
+def _digest(path: Path, st: os.stat_result) -> str:
+    key = (str(path), st.st_size, st.st_mtime_ns, st.st_ctime_ns, st.st_ino)
+    found = _DIGESTS.get(key)
+    if found is not None:
+        return found
+    found = hashlib.sha256(path.read_bytes()).hexdigest()
+    while len(_DIGESTS) >= DIGEST_CACHE_MAX:
+        _DIGESTS.pop(next(iter(_DIGESTS)), None)
+    _DIGESTS[key] = found
+    return found
 
 
 def _view_file(folder: Path, name: str, where: str, board: _Board) -> Optional[Tuple[str, int]]:
@@ -138,13 +127,13 @@ def _view_file(folder: Path, name: str, where: str, board: _Board) -> Optional[T
         board.add("error", "too_large", f"{name} is {st.st_size} bytes; a view is at most {MAX_VIEW_BYTES}")
         return None
     try:
-        data = (folder / name).read_bytes()
+        digest = _digest(folder / name, st)
     except OSError as exc:
         _unreadable(board, name, exc)
         return None
-    if len(data) > VIEW_WARN_BYTES:
-        board.add("warning", "large_view", f"{name} is {len(data)} bytes; past {VIEW_WARN_BYTES} it weighs on the repo")
-    return hashlib.sha256(data).hexdigest(), len(data)
+    if st.st_size > VIEW_WARN_BYTES:
+        board.add("warning", "large_view", f"{name} is {st.st_size} bytes; past {VIEW_WARN_BYTES} it weighs on the repo")
+    return digest, st.st_size
 
 
 def _check_views(folder: Path, sidecar: Sidecar, board: _Board) -> Set[str]:
@@ -161,11 +150,6 @@ def _check_views(folder: Path, sidecar: Sidecar, board: _Board) -> Set[str]:
 
 
 def _check_draft_files(folder: Path, sidecar: Sidecar, board: _Board) -> Set[str]:
-    """The live draft's page files (#1725): each must be there as a regular file, but its hash is NOT compared, because the draft is overwritten in
-    place and a scan can land between the page write and the sidecar write (the viewer re-reads once; a revision's file stays immutable).
-
-    Inputs: folder; sidecar; board. Output: the file names the live slot names (empty for a board that is not live).
-    """
     names: Set[str] = set()
     for view in sidecar.live.draft.views if sidecar.live else []:
         names.add(view.file)

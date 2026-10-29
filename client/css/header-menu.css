@@ -1,35 +1,9 @@
-/* Header overflow menu
- *
- * Holds five rows: search, session theme and detach session (session-
- * scoped, on top - search joined an earlier date, above theme, see
- * client/js/header-menu.js's HEADER_SESSION_CONTROL_IDS comment), then
- * logout and settings (app-scoped). It used
- * to be a phone-only fold of the whole six-icon cluster; between
- * an earlier date and #317 (an earlier date) it was a permanent overflow with the
- * trigger always visible regardless of width, which is the bug #317
- * reports - a door drawn next to every control it would have opened.
- * The fix is narrower than a full revert: the file editor and the
- * archive icon still never fold (see client/js/header-menu.js's
- * HEADER_TOOL_CONTROL_IDS), but session theme/detach/components/
- * logout/settings are foldable again, and `#header-menu-toggle`'s own
- * visibility now tracks whether anything is actually folded - see
- * `.controls--folded` below. See client/js/header-menu.js for why
- * logout/settings are RE-PARENTED rather than mirrored, why session
- * theme/detach are BUILT here instead, and for what is deliberately kept
- * out.
- *
- * COLOUR COMES FROM THE --oc-* PALETTE NOW, NOT FROM THE SESSION THEME.
- * This menu is app chrome, so it reads the same tokens the operations
- * center dashboard does (web/src/opscenter/tokens.css, already on :root
- * through the compiled bundle) rather than the --color-* theme variables
- * it used to. No import and no new file: the tokens are already there.
- */
 
 .controls {
     position: relative;
 }
 
-/* flex-shrink:0 */
+/* there is nothing */
 .header-menu-toggle {
     display: none;
     align-items: center;
@@ -55,10 +29,8 @@
     gap: 2px;
     min-width: 200px;
     padding: 6px;
-    /* --color- */
     border-radius: var(--oc-radius-sm);
     max-width: calc(100vw - 24px);
-    /* height: 100dvh overflow: hidden; */
     max-height: calc(100vh - 96px);
     max-height: calc(100dvh - 96px);
     overflow-y: auto;
@@ -120,7 +92,6 @@
     text-overflow: ellipsis;
     text-transform: lowercase;
     font-size: 0.9rem;
-    /* --color- */
     color: var(--oc-text-secondary);
     pointer-events: none;
 }
@@ -148,7 +119,6 @@
     }
 }
 
-/*  hidden  display: flex */
 #headerSessionThemeBtn,
 #headerDetachBtn {
     display: none;

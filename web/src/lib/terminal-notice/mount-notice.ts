@@ -1,4 +1,3 @@
-/* could not */
 import { ensurePanel } from '../mount';
 import { hostDocument } from '../sessions/env';
 import TerminalStartupNotice from './TerminalStartupNotice.svelte';

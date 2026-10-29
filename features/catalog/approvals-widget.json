@@ -1,12 +1,12 @@
 {
   "id": "approvals-widget",
   "name": "Approvals widget",
-  "summary": "",
-  "description": "Retired. The widget drew the inbox's own cards in a cell. The approval inbox, its pane and its routes are unchanged.",
+  "summary": "Retired 2026-10-12: the approvals widget is gone; the waiting on you widget lists approvals and the rest of what the top bell holds.",
+  "description": "Retired. The widget drew the inbox's own cards in a cell. The owner, 2026-10-12: \"remove the obsoleted widget, give it a new name and description.\" Every saved placement of it (drawer widget area, either session rail, glance tile, Home grid) is rewritten on load into a waiting on you widget copy that lists approvals only (server side for the placements, src/core/widget_placement/retired_widgets.py; the Home grid through the replaced block of src/data/widgets.json). The approval inbox, its pane and its routes are unchanged.",
   "area": "home",
   "status": "removed",
   "since": "2026-09-30",
-  "updated": "2026-10-12",
+  "updated": "2026-10-29",
   "surfaces": [
     "home screen",
     "drawer widget area",

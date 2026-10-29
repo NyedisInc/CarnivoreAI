@@ -22,7 +22,7 @@ from tests.python.launch_profiles.test_config_migration_v7 import _config
 FIXTURES = Path(__file__).parent / "fixtures"
 APP_ARGS = ("--resume", "11111111-2222-3333-4444-555555555555", "--name", "my proj",
             "--mcp-config={\"mcpServers\":{}}", "open the 'prompt' $HOME")
-AGENT_TYPES = ["claude", "keyc", "clxor", "codex-yolo", "hermes-default", "openclaw-default", "local-default",
+AGENT_TYPES = ["claude", "cld", "cldor", "codex-yolo", "hermes-default", "openclaw-default", "local-default",
                "shell-default", "codex", "shell", "hermes", "openclaw", "local", "no-such-legacy-value", None]
 
 
@@ -143,7 +143,7 @@ def test_pick_and_guard_rules(world):
     _, profiles, state = world
     base = dict(profiles=profiles, scripts_dir=state)
     assert resolve_launch(LaunchRequest(agent_type="shell", **base)).display.label == "shell-default"
-    assert resolve_launch(LaunchRequest(agent_type="gone", **base)).display.label == "keyc"
+    assert resolve_launch(LaunchRequest(agent_type="gone", **base)).display.label == "cld"
     assert resolve_launch(LaunchRequest(profiles=(), agent_type="codex", scripts_dir=state)).display.harness == "codex"
     with pytest.raises(LaunchProfileNotFound) as err:
         resolve_launch(LaunchRequest(agent_type="gone", explicit=True, **base))

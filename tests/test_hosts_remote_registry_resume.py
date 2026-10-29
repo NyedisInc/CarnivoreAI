@@ -29,7 +29,7 @@ from tests.test_hosts_remote_sessions import HOST, TMUX, _wait, rig  # noqa: E40
 
 pytestmark = pytest.mark.skipif(TMUX is None, reason="tmux is not installed")
 
-UUID = "6c38286c-2db9-43b8-859d-19a96acbac98"
+UUID = "5e7a0c1d-2b3c-4d5e-8f90-a1b2c3d4e5f6"
 
 
 def _far_home(rig):
@@ -38,16 +38,16 @@ def _far_home(rig):
 
 async def _pane(rig, name: str) -> dict:
     code, out = await rig.far("list-panes", "-t", f"={name}", "-F",
-                              "#{pane_pid} #{session_created} #{pane_dead}")
+                              "#{pane_pid}|#{session_created}|#{pane_dead}")
     assert code == 0, out
-    pid, created, dead = out.split()[:3]
-    return {"pid": int(pid), "epoch": int(created), "dead": dead}
+    pid, created, dead = out.strip().splitlines()[0].split("|")
+    return {"pid": int(pid) if pid else None, "epoch": int(created), "dead": dead}
 
 
 def _local_pane(mgr, name: str) -> tuple:
     import subprocess
 
-    out = subprocess.run(["tmux", "-L", mgr._tmux_socket_name(), "list-panes", "-t", f"={name}",
+    out = subprocess.run(["tmux", "-L", mgr.tmux_socket_name(), "list-panes", "-t", f"={name}",
                           "-F", "#{pane_pid}|#{pane_start_command}|#{pane_dead}"],
                          capture_output=True, text=True, check=True).stdout.strip()
     return tuple(out.split("|"))
@@ -83,7 +83,7 @@ def _prompt(ts: str) -> dict:
 
 def _turn_end(ts: str) -> dict:
     return {"type": "system", "subtype": "turn_duration", "durationMs": 1000, "messageCount": 2,
-            "timestamp": ts, "uuid": "6b09440b-7e65-4fae-84b4-0dce91b930c0", "isMeta": False,
+            "timestamp": ts, "uuid": "2c6a3bac-0183-47b6-a32c-67712e89b6e9", "isMeta": False,
             "sessionId": UUID, "version": "2.1.266", "pendingBackgroundAgentCount": 0}
 
 

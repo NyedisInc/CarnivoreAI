@@ -1,5 +1,7 @@
 
 <script lang="ts">
+    import { Button } from '../../base';
+
     import { onMount } from 'svelte';
     import { t as reactiveT } from '../../i18n/index.svelte';
     import type { Translate } from '../../sessions/types';
@@ -91,8 +93,8 @@
             <code class="tm__code" data-notify="signing-value">{signing.value}</code>
             <p>{t('settings.notify.dest.signing.once')}</p>
             <div class="tm__actions">
-                <button type="button" class="modal-btn modal-btn-secondary" data-notify="signing-copy" onclick={() => void copySecret()}>{t(copied ? 'settings.notify.dest.signing.copied' : 'settings.notify.dest.signing.copy')}</button>
-                <button type="button" class="modal-btn modal-btn-confirm" data-notify="signing-done" onclick={() => { signing = null; copied = false; }}>{t('settings.notify.dest.signing.done')}</button>
+                <Button data-notify="signing-copy" onclick={() => void copySecret()}>{t(copied ? 'settings.notify.dest.signing.copied' : 'settings.notify.dest.signing.copy')}</Button>
+                <Button variant="confirm" data-notify="signing-done" onclick={() => { signing = null; copied = false; }}>{t('settings.notify.dest.signing.done')}</Button>
             </div>
         </div>
     {/if}
@@ -110,7 +112,7 @@
         <DestinationForm {t} kinds={addableKinds(notify.kinds)} destination={null} {busy} onSave={(d, s) => void save(d, s)} onCancel={() => (editing = null)} />
     {:else}
         <div class="tm__actions">
-            <button type="button" class="oc-btn oc-btn--confirm" disabled={busy || addableKinds(notify.kinds).length === 0} data-notify="add" onclick={() => (editing = 'new')}>{t('settings.notify.dest.add')}</button>
+            <Button variant="confirm" disabled={busy || addableKinds(notify.kinds).length === 0} data-notify="add" onclick={() => (editing = 'new')}>{t('settings.notify.dest.add')}</Button>
         </div>
     {/if}
     {#if note}<p class="tm__note" role="status" data-notify="note">{note}</p>{/if}

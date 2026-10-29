@@ -71,7 +71,7 @@ class NudgeStore:
 
     def record_nudges(self, list_key: str, sent: Sequence[Any], tries: int, now: float) -> int:
         done = 0
-        with closing(self._store._connect(True)) as conn, conn:
+        with self._store._immediate() as conn:
             for cand in sent:
                 if conn.execute(f"SELECT {nudges.BASIS_SQL} FROM work_items WHERE id = ?", (cand.id,)).fetchone()[0] != cand.basis:
                     continue

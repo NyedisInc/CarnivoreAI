@@ -1,6 +1,6 @@
 <!-- could not be read -->
 <script lang="ts">
-    import Icon from '../../opscenter/ui/Icon.svelte';
+    import { Button, IconButton } from '../base';
     import type { Translate } from '../sessions/types';
 
     interface Props {
@@ -17,9 +17,10 @@
 </script>
 
 <span class="wp-add" data-dis={here && blocked ? '' : undefined}>
-    <button
-        type="button"
-        class="wp-add__main"
+    <Button
+        variant="quiet"
+        size="sm"
+        data-add="main"
         disabled={disabled || (here && blocked)}
         aria-haspopup={here ? undefined : 'menu'}
         aria-label={here ? t('widgets.places.card.add_here_label', { name }) : t('widgets.places.card.add_label', { name })}
@@ -27,16 +28,18 @@
             event.stopPropagation();
             onMain(event.currentTarget as HTMLElement);
         }}
-    >{here ? t('widgets.places.card.add_here') : t('widgets.places.card.add')}</button>
-    <button
-        type="button"
-        class="wp-add__caret"
+    >{here ? t('widgets.places.card.add_here') : t('widgets.places.card.add')}</Button>
+    <IconButton
+        variant="quiet"
+        icon="chevron-down"
+        iconSize={10}
+        data-add="caret"
         {disabled}
         aria-haspopup="menu"
-        aria-label={t('widgets.places.card.add_to', { name })}
+        label={t('widgets.places.card.add_to', { name })}
         onclick={(event) => {
             event.stopPropagation();
             onCaret(event.currentTarget as HTMLElement);
         }}
-    ><Icon name="chevron-down" size={10} /></button>
+    />
 </span>

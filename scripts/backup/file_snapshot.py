@@ -9,6 +9,7 @@ from typing import Dict, Iterator, Tuple
 import structlog
 
 from scripts.backup.db_snapshot import file_sha256
+from scripts.backup.targets import PRIVATE_FILE_MODE
 
 logger = structlog.get_logger()
 
@@ -33,6 +34,7 @@ def describe_file(path: Path) -> FileFacts:
 def copy_file(source: Path, dest: Path) -> FileFacts:
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, dest)
+    os.chmod(dest, PRIVATE_FILE_MODE)
     return describe_file(dest)
 
 

@@ -19,9 +19,9 @@ import { dismissRefusal, placementRefusal } from '../widgets/chrome/refusal-toas
 const real = { ...editorSeams };
 let app: ReturnType<typeof mount> | null = null;
 
-const cards = (): HTMLButtonElement[] => [...document.querySelectorAll<HTMLButtonElement>('.le-card[data-widget]')];
+const cards = (): HTMLButtonElement[] => [...document.querySelectorAll<HTMLButtonElement>('[data-le-card][data-widget]')];
 const card = (widget: string): HTMLButtonElement | null =>
-  document.querySelector<HTMLButtonElement>(`.le-card[data-widget="${widget}"]`);
+  document.querySelector<HTMLButtonElement>(`[data-le-card][data-widget="${widget}"]`);
 const placed = (): string[] => homeLayout.state.layout.rows.flatMap((row) => row.slots.map((slot) => slot.id));
 
 beforeEach(() => {
@@ -56,7 +56,7 @@ describe('the list', () => {
     const stats = card('core.stat-running')!;
     expect(stats.dataset['state']).toBe('placed');
     expect(stats.getAttribute('aria-disabled')).toBe('false');
-    expect(stats.classList.contains('le-card--placed')).toBe(false);
+    expect(stats.hasAttribute("data-placed")).toBe(false);
     expect(stats.textContent).toContain('on home');
     expect(cards().every((c) => c.querySelector('.le-ico[data-widget-icon] svg'))).toBe(true);
     expect(cards().some((c) => c.querySelector('[data-row-sizes]') || /\d+ x \d+/.test(c.textContent ?? ''))).toBe(false);
@@ -134,7 +134,7 @@ describe('the list', () => {
 
   test('the (i) opens the description card under its row, and closes it again', () => {
     const info = document.querySelector<HTMLButtonElement>('[data-widget-info-open="core.notes"]')!;
-    expect(info.closest('.le-card')).toBeNull();
+    expect(info.closest('[data-le-card]')).toBeNull();
     expect(info.getAttribute('aria-expanded')).toBe('false');
     info.click();
     flushSync();
@@ -156,7 +156,7 @@ describe('the list', () => {
     expect(document.querySelector('[data-widget-description="core.notes"]')).toBeNull();
   });
 
-  test('a switched-off widget is listed, dimmed, with why; no toggle or hidden count under the list', () => {
+  test('a switched-off widget is listed, dimmed, with why; no toggle or hidden count under the list (Joe, 2026-10-03)', () => {
     unmount(app!);
     switchedOff.add('core.notes');
     app = mount(WidgetDrawer, { target: document.body, props: { store: homeLayout, page: 'home' } });

@@ -5,8 +5,11 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+
+from src.core.tmux_listing import TmuxListing
 
 os.environ.setdefault("DEFAULT_WORKING_DIR", tempfile.mkdtemp(prefix="cc_uof_wd_"))
 os.environ.setdefault("LOG_DIRECTORY", tempfile.mkdtemp(prefix="cc_uof_logs_"))
@@ -36,6 +39,9 @@ class _StubSettings:
     def __init__(self, root: Path):
         self._root = root
         self.port = 5001
+
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
 
     def get_pinned_themes_path(self) -> Path:
         return self._root / "pinned_themes.json"
@@ -83,8 +89,8 @@ def _manager(monkeypatch, tmp_path: Path) -> SessionManager:
     )
     monkeypatch.setattr(
         mgr,
-        "list_attachable_sessions",
-        lambda: [{"name": TMUX_NAME, "created_at_epoch": EPOCH}],
+        "_probe_instances",
+        lambda: (None, TmuxListing.answered([{"name": TMUX_NAME, "created_at_epoch": EPOCH}])),
     )
     assert mgr._instance_epochs == {}, "the cache must start empty or this proves nothing"
     return mgr
@@ -93,6 +99,7 @@ def _manager(monkeypatch, tmp_path: Path) -> SessionManager:
 def _client(mgr: SessionManager) -> TestClient:
     app = FastAPI()
     app.state.session_manager = mgr
+    app.state.services = SimpleNamespace(owned_tmux=SimpleNamespace(names=set()))
     app.include_router(routes_mod.router, prefix="/api/v1")
     app.dependency_overrides[require_auth] = lambda: True
     return TestClient(app)

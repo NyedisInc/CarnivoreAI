@@ -29,10 +29,10 @@ import { chatSlotId } from './chat-model';
 
 let app: object | null = null;
 const own = [{ kind: 'agent', name: 'Loki', agent_id: 7 }];
-const you = [{ kind: 'owner', name: 'acme', agent_id: null }];
+const you = [{ kind: 'owner', name: 'alex', agent_id: null }];
 const outside = [{ kind: 'agent', name: 'Fenrir', agent_id: 9 }];
 const question = {
-  kind: 'card', id: 'item:41', at: 5, card: 'question', author_path: outside,
+  kind: 'card', id: 'item:41', at: 5, card: 'question', author_path: outside, waits_on_owner: true,
   item: { id: 41, list: 'agent:7', text: 'which port?', note: '', position: 1, created_by: 'claude', state: 'open', kind: 'question', revision: 1, created_seq: 1, seq: 1, deleted: false, status: 'question', thread: [] },
 };
 

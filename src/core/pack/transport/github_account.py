@@ -1,10 +1,3 @@
-"""Which GitHub account a project uses, and how a call asks for its token (P3, #1516; docs/pack.md 9.3).
-
-Every Carnivore gh or https-git call for a project then uses that account EXPLICITLY at call time: ``gh auth token -u
-<account>`` read in memory and handed to the child in its ENVIRONMENT (``GH_TOKEN``). Never the machine's active account,
-never ``gh auth switch``, never argv, a file or a log line. An account name is validated to a strict pattern because it is
-interpolated into the per-repo credential helper (``gh_helper``).
-"""
 
 from __future__ import annotations
 
@@ -29,7 +22,6 @@ _GH_CANDIDATES = ("/opt/homebrew/bin/gh", "/usr/local/bin/gh", "/usr/bin/gh")
 
 
 class AccountError(Exception):
-    """A GitHub account could not be used; ``code`` is the stable reason and the message never carries a token."""
 
     def __init__(self, code: str, detail: str) -> None:
         super().__init__(detail)

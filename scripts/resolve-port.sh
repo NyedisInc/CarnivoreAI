@@ -1,6 +1,4 @@
 #!/bin/bash
-#
-#
 
 DEFAULT_PORT=8000
 

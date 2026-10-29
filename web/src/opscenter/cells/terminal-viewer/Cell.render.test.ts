@@ -196,6 +196,7 @@ function render(opts: {
   return { target, component };
 }
 
+/* with a plain */
 vi.mock('../../api', async () => {
   const actual = await vi.importActual<Record<string, unknown>>('../../api');
   return {
@@ -366,6 +367,7 @@ describe('a cell the user can type into, and where those bytes go', () => {
     expect(opened[0]?.interactive).toBe(true);
   });
 
+  /* nothing at all */
   test('a keystroke reaches its own cell`s session and no other', () => {
     render({ height: 300, id: 'ses_7' });
     render({ height: 300, id: 'ses_8' });
@@ -411,6 +413,7 @@ describe('a cell the user can type into, and where those bytes go', () => {
     }
   });
 
+  /* and the focus ring */
   test('focus entering the pane claims input, and leaving it gives it back', () => {
     const { target } = render({ height: 300, id: 'ses_7' });
     const body = target.querySelector('[data-viewer-state="pane"]') as HTMLElement;

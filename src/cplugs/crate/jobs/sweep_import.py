@@ -53,10 +53,6 @@ def _utc(now: float) -> str:
 
 
 def end_import(env: CrateEnv, rec: state.JobRecord, now: float) -> None:
-    """Decide how an interrupted import ends (module docstring) and say so in ``rec``. Blocking.
-
-    Raises: OSError (the database or the undo log could not be read: the sweep tries again at the next start).
-    """
     import_id = str(rec.request.get("import_id") or "")
     if not ci.IMPORT_ID_RE.match(import_id):
         _fail(rec, K.E_INTERRUPTED, "the app stopped while this import ran; its record names no import")

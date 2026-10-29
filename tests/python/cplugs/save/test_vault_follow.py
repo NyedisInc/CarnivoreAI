@@ -12,7 +12,7 @@ from src.cplugs.save.vault.follow import Engine
 from src.cplugs.sdk.blob_codec import Throttle
 from tests.python.cplugs.save.vault_helpers import CODEX_ID, CONV, ENC, World, jsonl
 
-IDS = [f"{n:08d}-810d-e10e-fb30-4f4c6232a9c6" for n in range(1, 6)]
+IDS = [f"{n:08d}-aaaa-bbbb-cccc-1234567890ab" for n in range(1, 6)]
 
 
 def engine_for(world: World, rows=None, side_dbs=None, throttle=None, clock=time.time) -> Engine:

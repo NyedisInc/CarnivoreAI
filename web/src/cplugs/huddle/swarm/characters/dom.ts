@@ -1,4 +1,3 @@
-/*  hidden  */
 import { packClock } from './clock';
 import { coronaFor, pixelBlendD, type HomeShape, type PackShapes, type ShapeKey } from './shapes';
 import { heldShape, planMorph, STATES, type CharacterState } from './states';
@@ -25,7 +24,6 @@ export function defIds(packId: string, home: HomeShape = 'sq'): DefIds {
   };
 }
 
-/*  hidden  display: none */
 export function ensureDefs(shapes: PackShapes, packId: string, home: HomeShape = 'sq'): DefIds {
   const ids = defIds(packId, home);
   if (typeof document === 'undefined') return ids;

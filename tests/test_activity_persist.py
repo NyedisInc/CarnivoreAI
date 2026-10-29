@@ -25,17 +25,17 @@ from src.core.session_status import STATUS_DEAD
 
 def test_a_write_lands_on_the_named_instance_only_not_its_dead_namesake(conn):
     dead_id = add_row(
-        conn, uuid="dead", name="Image_Tool", epoch=1787686975,
+        conn, uuid="dead", name="Media_Compression", epoch=1787686975,
         lifecycle="stopped",
     )
     live_id = add_row(
-        conn, uuid="live", name="Image_Tool", epoch=1788016091,
+        conn, uuid="live", name="Media_Compression", epoch=1788016091,
         lifecycle="running",
     )
     conn.commit()
 
     ok = write_state(
-        conn, "Image_Tool", "working", 1788016091,
+        conn, "Media_Compression", "working", 1788016091,
         tmux_socket=SOCKET,
     )
     conn.commit()
@@ -50,11 +50,11 @@ def test_a_write_lands_on_the_named_instance_only_not_its_dead_namesake(conn):
 
 
 def test_writing_the_dead_instance_never_touches_the_live_one(conn):
-    add_row(conn, uuid="dead", name="Image_Tool", epoch=1787686975)
-    add_row(conn, uuid="live", name="Image_Tool", epoch=1788016091)
+    add_row(conn, uuid="dead", name="Media_Compression", epoch=1787686975)
+    add_row(conn, uuid="live", name="Media_Compression", epoch=1788016091)
     conn.commit()
 
-    write_state(conn, "Image_Tool", "idle", 1787686975, tmux_socket=SOCKET)
+    write_state(conn, "Media_Compression", "idle", 1787686975, tmux_socket=SOCKET)
     conn.commit()
 
     assert row_by_uuid(conn, "dead")["activity_state"] == "idle"
@@ -75,11 +75,11 @@ def test_no_epoch_refuses_the_write_even_with_one_matching_row(conn):
 
 
 def test_no_epoch_never_falls_back_to_a_name_scoped_update(conn):
-    add_row(conn, uuid="dead", name="Image_Tool", epoch=1787686975)
-    add_row(conn, uuid="live", name="Image_Tool", epoch=1788016091)
+    add_row(conn, uuid="dead", name="Media_Compression", epoch=1787686975)
+    add_row(conn, uuid="live", name="Media_Compression", epoch=1788016091)
     conn.commit()
 
-    ok = write_state(conn, "Image_Tool", "working", None)
+    ok = write_state(conn, "Media_Compression", "working", None)
     conn.commit()
 
     assert ok is False
@@ -88,10 +88,10 @@ def test_no_epoch_never_falls_back_to_a_name_scoped_update(conn):
 
 
 def test_an_epoch_matching_no_row_is_a_clean_no_op_not_a_wrong_row(conn):
-    add_row(conn, uuid="live", name="Image_Tool", epoch=1788016091)
+    add_row(conn, uuid="live", name="Media_Compression", epoch=1788016091)
     conn.commit()
 
-    ok = write_state(conn, "Image_Tool", "working", 999, tmux_socket=SOCKET)
+    ok = write_state(conn, "Media_Compression", "working", 999, tmux_socket=SOCKET)
     conn.commit()
 
     assert ok is False

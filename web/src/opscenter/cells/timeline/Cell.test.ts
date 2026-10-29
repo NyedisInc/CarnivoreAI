@@ -224,7 +224,7 @@ describe('a picked point', () => {
     expect(notice.classList.contains('tlx-card__notice--error')).toBe(true);
   });
 
-  test('a second click on the same mark fenmont, and Escape clears a pick', async () => {
+  test('a second click on the same mark lets go, and Escape clears a pick', async () => {
     await draw(timelineFixture(), WIDE);
     markBtn('bookmark:1').click();
     await settle();

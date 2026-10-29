@@ -1,17 +1,25 @@
-# Web push
+# Web push (issue #164, plan D15)
+
+The computer pushes straight to the browser vendors' push services (Apple, Google, Mozilla) when the approval
+inbox gains an item. Ruled by Alex (example-owner), 2026-09-30: "web push, and the payload is only 'approval needed'".
 
 ## What is sent
 
 Two paths share one sender (`src/core/web_push/sender.py`).
 
-- The typed path: a push is the destination
+- The typed path (issue #1278, reverses the approval-only payload): a push is the destination
   `webpush:<subscription id>` of the notifications engine (`src/core/notifications/kinds/webpush.py`). The
   plaintext is `{"title": ..., "body": ..., "path": ...}`: the fixed per-type copy from the catalog and the
   relative session path from `notifications/links.py` (`/` when the event has no session). Never details, never
   an absolute link, never agent text. `client/sw.js` renders it as plain text and a tap opens `path` only when it
   is a same-origin relative path.
 - The old fixed path: `{"title":"carnivore","body":"approval needed"}` (`sender.FIXED_PAYLOAD`), sent by
-  `PushSender.notify` for the test button only (`POST /push/test`). The approval-only trigger is retired: the approvals inbox no longer calls the sender, and `PushSender.on_inbox_gain` is deleted.
+  `PushSender.notify` for the test button only (`POST /push/test`). The approval-only trigger is RETIRED (#1278
+  cutover): the approvals inbox no longer calls the sender, and `PushSender.on_inbox_gain` is deleted.
+
+Ruled by Alex (example-owner), 2026-09-30: "web push, and the payload is only 'approval needed'"; superseded for the
+typed path by the #1278 plan ("Web push carries typed fixed copy"). No session name, project or question text
+rides in a header or a log.
 
 ### Typed path: coalescing, pruning, switches
 
@@ -26,6 +34,12 @@ Two paths share one sender (`src/core/web_push/sender.py`).
 - A new subscription is seeded with the global tick defaults (`seed_destination_ticks`), and ticks are local.
 
 ## Trigger and limits
+
+`ApprovalsInbox.on_gain(listener)` fires once per refresh that ADDS an item id (a removal or an unchanged list
+does not; a changed fingerprint is a new id). Nothing registers a web push listener on it any more (the old
+approval-only trigger was retired in #1278); the approvals source (`notifications/sources/approvals.py`)
+emits the event and the engine decides. Remote (`remote:`) sessions are left out of the signature, like the owner's list. At most one push per subscription per 60 s (in memory; `POST /push/test`
+skips the wait). Headers: `TTL: 3600`, `Urgency: high`, `Topic: approval` (repeats collapse at the service).
 
 ## Wire format (`src/core/web_push/`)
 
@@ -48,7 +62,7 @@ Two paths share one sender (`src/core/web_push/sender.py`).
   After the insert the route re-checks that the device is still paired; if a revoke ran meanwhile it removes the
   subscription and answers 403, and the revoke route removes a device's subscriptions even when the device is already
   gone (404), so a retry can finish the cleanup. Subscriptions created over the link BEFORE device binding shipped carry
-  no device, so a revoke will not remove them: remove them by hand in settings.
+  no device, so a revoke will not remove them: remove them by hand in settings. None exist on the live computer yet.
 - Logs carry the service host and error type only, never an endpoint, key or secret.
 
 ## Routes (`src/api/web_push_routes.py`, owner auth)
@@ -62,3 +76,9 @@ A paired computer's peer token is a different credential from an owner access to
 
 ## Client
 
+`client/sw.js`, served at `/sw.js` (`src/main.py`, `Cache-Control: no-cache, must-revalidate`, listed in
+`PUBLIC_HTTP` because a browser fetches a worker without a bearer token). Push and notificationclick handlers
+only: no fetch handler, no caching. The CSP's `default-src 'self'` covers a same-origin worker. Settings,
+notifications, "alerts on this device" (`WebPushPanel.svelte`): "alerts on" appears only when the page is an
+installed app (display-mode standalone) and `PushManager` exists; it asks permission, registers the worker,
+subscribes with the VAPID key and posts the subscription. iOS delivers web push only to a home-screen app.

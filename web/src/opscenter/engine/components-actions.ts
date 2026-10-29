@@ -2,16 +2,14 @@ import type { LayoutStore } from './layout.svelte';
 import { instanceId } from './meta';
 import { sessions } from '../api';
 import { slotNameFor } from './slot-identity';
-import { DECLARED_LIMITS, MAX_VIEWERS, limitVerdict, viewersOf, type AddRefusal } from './model';
+import { DECLARED_LIMITS, MAX_VIEWERS, countsAsViewer, limitVerdict, viewersOf, type AddRefusal } from './model';
 import { manifestById } from '../widgets/core-manifests';
 import { sizeOf } from './observe.svelte';
 import { GUTTER } from './tracks';
-import { isPluginSlot } from './plugin-kinds';
 import type { InstanceKind, SlotId } from './types';
 import { t } from '../../lib/i18n/index.svelte';
 import { splitThrough } from '../layouts/transition.svelte';
 
-/*  hidden  */
 export function takenSlots(store: LayoutStore): SlotId[] {
   return [
     ...store.state.layout.rows.flatMap((row) => row.slots.map((slot) => slot.id)),
@@ -24,7 +22,7 @@ export function addBlocked(store: LayoutStore, kind: InstanceKind, sessionId: st
     return t('opscenter.components.add_duplicate');
   }
   if (limitVerdict(store.state.layout, kind).refused) return limitLine(kind);
-  if (kind !== 'analytics' && !isPluginSlot(kind) && viewersOf(store.state.layout).length >= MAX_VIEWERS) {
+  if (countsAsViewer(kind) && viewersOf(store.state.layout).length >= MAX_VIEWERS) {
     return t('opscenter.components.add_cap', { count: MAX_VIEWERS });
   }
   return '';

@@ -135,6 +135,10 @@ async def catalog_delete_rating(
     account can influence a score, and putting the totals back where they
     were is not influence.
 
+    ``removed`` IS THREE ANSWERS. True withdrew one, false found none to
+    withdraw - a real outcome with its own sentence - and null means the
+    host said nothing about it.
+
     Raises:
         HTTPException(400): ``bad_item_id``.
         HTTPException(403): ``unauthorized``, with nothing sent upstream.

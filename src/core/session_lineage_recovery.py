@@ -1,30 +1,3 @@
-"""Recover a conversation uuid when the SessionStart hook delivered nothing.
-
-WHY IT NEVER RECOVERED ON ITS OWN, AND WHY THAT IS THE REAL BUG. Every
-OTHER hook event repeats forever - a Stop, a PreToolUse, a
-UserPromptSubmit fires hundreds of times a session - so a single lost
-delivery is invisible and self-healing. ``SessionStart`` fires once. One
-lost delivery is permanent. A one-shot write over a lossy channel with no
-retry and no reconciliation will lose some fraction of its writes
-forever, and the fraction observed here was 41 percent of rows. Chasing
-the empty body would be chasing a symptom in someone else's binary; the
-defect that belongs to this codebase is the absence of a second chance.
-
-THE SECOND CHANCE ALREADY EXISTED - ON THE OTHER PATH. The adopt path
-runs a two-rung correlation ladder
-(:mod:`src.core.claude_session_correlate_ladder`) reached from
-``session_adopt_persist.persist_adoption``. The create path never ran it.
-This module is that ladder, invoked at the ONE moment the create path
-knows it has failed: a SessionStart that authenticated, named a live tmux
-session, and carried no conversation id. Nothing else changes, and the
-cost is paid only on the failure path.
-
-WHAT IT WILL AND WILL NOT DO. It proposes nothing and guesses nothing: it
-calls the same ladder with the same safeguards, and a
-non-decisive answer leaves the row exactly as it was. It never overwrites
-a uuid the row already holds, never writes one another row claims, and
-never raises into the hook request it runs inside.
-"""
 
 from __future__ import annotations
 

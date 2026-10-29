@@ -19,15 +19,7 @@ SQL_FN_BODY_CHARS: str = "cloude_body_chars"
 
 
 class BodyCodecError(ValueError):
-    """A stored body could not be interpreted as either shape.
-
-    Description: raised rather than returning None or an empty string,
-      because a body that cannot be read is a COULD NOT EVALUATE and a
-      caller that receives "" will render it as an empty message. The
-      message names what was found, never the body's content.
-    Inputs: standard ValueError arguments.
-    Output: an exception instance.
-    """
+    pass
 
 
 def is_compressed(value: Any) -> bool:

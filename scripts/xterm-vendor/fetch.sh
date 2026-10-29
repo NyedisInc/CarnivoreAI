@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-#
-#
-#
-#
 
 set -euo pipefail
 
@@ -34,12 +30,15 @@ sha256_of() {
 
 mkdir -p "$OUT_DIR"
 
-echo "fetching pinned xterm assets into $OUT_DIR"
+STAGE="$(mktemp -d "${TMPDIR:-/tmp}/xterm-vendor.XXXXXX")"
+trap 'rm -rf "$STAGE"' EXIT
+
+echo "fetching pinned xterm assets (staged in $STAGE, installed into $OUT_DIR only if all verify)"
 
 count=0
 while IFS='|' read -r file url expected_sha256; do
     [ -n "$file" ] || continue
-    dest="$OUT_DIR/$file"
+    dest="$STAGE/$file"
 
     echo "  -> $file  ($url)"
     curl -sSfL -o "$dest" "$url"
@@ -71,5 +70,12 @@ if [ "$count" -ne 6 ]; then
     echo "FAIL: verified $count assets, expected 6 - the asset list did not parse" >&2
     exit 1
 fi
+
+while IFS='|' read -r file _url _sha; do
+    [ -n "$file" ] || continue
+    mv -f "$STAGE/$file" "$OUT_DIR/$file"
+done <<EOF
+$ASSETS
+EOF
 
 echo "all six xterm assets verified against pinned sha256"

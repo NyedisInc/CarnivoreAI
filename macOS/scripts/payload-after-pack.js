@@ -35,7 +35,6 @@ function writeNotices(appPath, trees) {
   return out;
 }
 
-/* sha256 mismatch */
 function stagePayload(appPath) {
   const out = buildOutDir();
   const dest = path.join(appPath, 'Contents', 'Resources', 'payload');

@@ -97,13 +97,6 @@ class LedgerPoller:
 
 
     def start(self) -> bool:
-        """Create the polling task and return. Never awaits a poll.
-
-        Inputs: none.
-        Output: bool - True when this call created the task, False when
-          one was already running.
-        Example: poller.start()
-        """
         if self._task is not None and not self._task.done():
             return False
         self._stopping = False
@@ -129,22 +122,12 @@ class LedgerPoller:
         logger.info("provider_ledger_poller_stopped")
 
     async def _loop(self) -> None:
-        """Scan, sleep, repeat, until cancelled.
-
-        Description: the sleep is AFTER the scan so two scans can never
-          overlap. Every exception a pass could not name itself is logged
-          here and the loop continues.
-        Inputs: none.
-        Output: None.
-        Example: awaited only by :meth:`start`.
-        """
         while not self._stopping:
             try:
                 await self.run_pass()
             except asyncio.CancelledError:
                 raise
             except BaseException as exc:  # noqa: BLE001
-                # could not
                 logger.warning(
                     "provider_ledger_pass_crashed", error=type(exc).__name__
                 )
@@ -154,15 +137,6 @@ class LedgerPoller:
 
 
     def _builtin_login_label(self) -> Optional[str]:
-        """The user's display name for the built-in login row, or None.
-
-        Description: read from the in-memory ``ui_preferences`` projection
-          (no disk read), so a rename lands on the next pass. None when no
-          store is wired (tests, a bare poller) or nothing was set.
-        Inputs: none.
-        Output: str | None.
-        Example: self._builtin_login_label()  # 'work laptop'
-        """
         store = getattr(self._app_state, "ui_preferences_store", None)
         if store is None:
             return None
@@ -170,20 +144,6 @@ class LedgerPoller:
         return label if isinstance(label, str) and label else None
 
     async def run_pass(self) -> List[str]:
-        """Re-read the accounts, poll the ones that are due, publish once.
-
-        Description: the account list is re-read from disk every pass, so
-          a write through the route lands without a restart. A list that
-          could not be read leaves the known accounts ALONE rather than
-          emptying them: a half-written config.json is a moment, not a
-          decision to delete everything. Reconciling runs BEFORE the
-          credential-signal check, so an account added this very pass is
-          already in ``self._states`` by the time that check runs and is
-          never skipped for having just appeared.
-        Inputs: none.
-        Output: list[str] - the ids whose state or reading changed.
-        Example: changed = await poller.run_pass()
-        """
         now = self._clock()
         accounts = await poller_scan.read_accounts(
             self._list_accounts, self._config_path()
@@ -356,7 +316,6 @@ class LedgerPoller:
             return
         self._pushed_fingerprint = fingerprint
         resource_push.notify(resource_topics.PROVIDER_LEDGER)
-        # active account
         resource_push.notify(resource_topics.ACCOUNT_SWITCH)
 
 
@@ -367,26 +326,6 @@ class LedgerPoller:
             state.next_poll_at = self._clock()
 
     def forget_account(self, account_id: str) -> None:
-        """Drop everything this loop remembers about one account.
-
-        Description: WHAT A REMOVAL THROUGH THE SETTINGS ROUTE CALLS. The
-          scan already drops a row the file no longer holds, so this is
-          about the GAP: between the delete landing and the next pass the
-          ledger would still answer a row for an account that is gone,
-          and the screen repaints from it. A row nobody can refresh and
-          nobody can delete is worse than no row.
-
-          The poke record goes with the state, because it lives ON the
-          state; the hurry goes too, or the NEXT account to take this id
-          would be due immediately for a reason nobody could see.
-
-          An id this loop never saw is not an error: two screens can both
-          remove the same row, and the second is describing the state it
-          wanted rather than failing at it.
-        Inputs: account_id (str).
-        Output: None.
-        Example: poller.forget_account("max-main")
-        """
         self._poll_soon.discard(account_id)
         state = self._states.pop(account_id, None)
         if state is not None:

@@ -11,7 +11,9 @@ EXPORT_NAME = re.compile(r"^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$")
 MAX_EXPORT_BYTES = 8 * 1024 * 1024
 _DENIED_HOME_PARTS = ("Library", ".ssh", ".aws", ".gnupg", ".config", ".zshrc", ".zprofile", ".zshenv", ".bashrc",
                       ".bash_profile", ".profile", ".claude", ".codex", ".carnivore", ".local/bin", "bin")
-_AGENT_INSTRUCTION_NAMES = frozenset({"claude.md", "agents.md", "gemini.md"})
+_AGENT_INSTRUCTION_NAMES = frozenset({
+    "claude.md", "claude.local.md", "agents.md", "agent.md", "gemini.md", "qwen.md", "copilot-instructions.md", "skill.md",
+    "warp.md", "conventions.md", "crush.md"})
 _DENIED_ABSOLUTE = ("/Applications", "/System", "/Library", "/usr", "/bin", "/sbin", "/etc", "/private/etc", "/var/root")
 
 
@@ -70,7 +72,7 @@ def check_export_name(name: object) -> str:
     if not isinstance(name, str) or not EXPORT_NAME.match(name) or name in (".", ".."):
         raise UnsafePath("bad_name", "an export name is a plain basename with no leading dot")
     if name.lower() in _AGENT_INSTRUCTION_NAMES:
-        raise UnsafePath("bad_name", "CLAUDE.md, AGENTS.md and GEMINI.md are read by agents as instructions")
+        raise UnsafePath("bad_name", "CLAUDE.md, AGENTS.md, GEMINI.md and the like are read by agents as instructions")
     return name
 
 

@@ -53,6 +53,12 @@
     "Open a session in a terminal cell and open its file browser.",
     "The two tabs sit under the browser's header; the status line sits at its bottom."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "file-browser-git.png",
+      "caption": "changed files tagged in the file browser, with the git status line",
+      "alt": "the file browser beside a terminal: the files tab shows changed names tinted with a status letter at the right edge, a folder with a dot, and a status line at the bottom with the branch and counts"
+    }
+  ]
 }

@@ -17,12 +17,12 @@ os.environ.setdefault("TOTP_SECRET", "testsecretnotreal")
 os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
 # ruff: noqa: E402
-from src.core.tmux_listing import (
+from src.core.tmux_listing import classify_listing_failure
+from src.core.tmux_stderr import (
     LISTING_ENV_OVERRIDES,
     STDERR_CONNECT_FAILED,
     STDERR_NO_SERVER,
     STDERR_UNRECOGNISED,
-    classify_listing_failure,
     classify_tmux_stderr,
     listing_env,
 )
@@ -116,13 +116,12 @@ def test_crlf_and_trailing_newline_do_not_create_empty_rows() -> None:
 
 
 def test_no_listing_site_uses_splitlines() -> None:
-    source = (ROOT / "src" / "core" / "tmux_backend.py").read_text()
-    tree = ast.parse(source)
-
     listing_stdout_names = {"stdout_text", "raw_lines", "names"}
     offenders: List[str] = []
+    trees = [ast.parse((ROOT / "src" / "core" / name).read_text())
+             for name in ("tmux_backend.py", "tmux_transport/pane_listing.py")]
 
-    for node in ast.walk(tree):
+    for node in (n for tree in trees for n in ast.walk(tree)):
         if not isinstance(node, ast.Call):
             continue
         func = node.func
@@ -140,7 +139,8 @@ def test_no_listing_site_uses_splitlines() -> None:
 
 
 def test_backend_imports_the_row_splitter() -> None:
-    source = (ROOT / "src" / "core" / "tmux_backend.py").read_text()
+    source = "".join((ROOT / "src" / "core" / name).read_text()
+                     for name in ("tmux_backend.py", "tmux_transport/pane_listing.py"))
     assert "split_listing_rows" in source
     assert source.count("split_listing_rows(") >= 3, (
         "all three enumeration sites (list_attachable_sessions, "

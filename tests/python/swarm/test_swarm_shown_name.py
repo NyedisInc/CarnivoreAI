@@ -14,11 +14,11 @@ def test_leaders_show_without_agent_and_store_keeps_it(tmp_path):
     with closing(connect(db_path_for(tmp_path))) as conn:
         run_chain(conn, 0, CURRENT_SCHEMA_VERSION)
         made = {name: store.create_agent(conn, slug=slug, rank=rank, job="j", display_name=name, repo_dir="/tmp/swarm-x", effort="high")
-                for slug, rank, name in (("sysop", "alpha", "SysOp"), ("nyedis", "company", "Acme agent"),
-                                         ("carnivore", "project", "Widget agent"), ("loki", "feature", "Loki agent"),
+                for slug, rank, name in (("sysop", "alpha", "SysOp"), ("acme", "company", "Acme agent"),
+                                         ("carnivore", "project", "Carnivore.ai agent"), ("loki", "feature", "Loki agent"),
                                          ("etna", "task", "Etna agent"))}
         shown = {name: views.summarize(store.get_agent(conn, a["id"]), {})["display_name"] for name, a in made.items()}
-        assert shown == {"SysOp": "SysOp", "Acme agent": "Acme", "Widget agent": "Widget",
+        assert shown == {"SysOp": "SysOp", "Acme agent": "Acme", "Carnivore.ai agent": "Carnivore.ai",
                          "Loki agent": "Loki agent", "Etna agent": "Etna agent"}
         assert [store.get_agent(conn, a["id"])["display_name"] for a in made.values()] == list(made)
         company = store.get_agent(conn, made["Acme agent"]["id"])

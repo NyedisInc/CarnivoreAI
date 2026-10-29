@@ -5,13 +5,11 @@
   "description_key": "cplug.huddle.description",
   "version": "1.0.0",
   "icon": "chat",
-  "author": "Carnivore contributors",
+  "author": "Joe (ccsliinc)",
   "min_app_version": "1.12.20",
   "tier": "builtin",
   "tool_family": "task_manager",
-  "legacy_ids": {
-    "nudge": "nudgeEnabled"
-  },
+  "legacy_ids": { "nudge": "nudgeEnabled" },
   "mcp_tool_aliases": {
     "huddle_list": "task_manager_tasks_list",
     "huddle_changes": "task_manager_changes",
@@ -44,264 +42,51 @@
     "sendCapSeconds": "tellCapSeconds"
   },
   "default_enabled": true,
-  "permissions": {
-    "app": [
-      "sessions.read",
-      "sessions.message",
-      "notify",
-      "agent_writes",
-      "swarm",
-      "work"
-    ]
-  },
+  "permissions": { "app": ["sessions.read", "sessions.message", "notify", "agent_writes", "swarm", "work"] },
   "surfaces": {
     "routes": true,
-    "plugins": [
-      "session-card-action"
-    ],
-    "mcp_tools": [
-      "task_manager_tasks_list",
-      "task_manager_changes",
-      "task_manager_schedules_list",
-      "task_manager_add",
-      "task_manager_update",
-      "task_manager_state_request",
-      "task_manager_ask",
-      "task_manager_reply",
-      "huddle_focus",
-      "task_manager_move",
-      "task_manager_group_create",
-      "task_manager_group_update",
-      "task_manager_answered_set",
-      "task_manager_fork",
-      "task_manager_batch_run",
-      "task_manager_artifact_add",
-      "task_manager_entries_list",
-      "task_manager_entry_import",
-      "task_manager_progress_set",
-      "task_manager_role_set",
-      "task_manager_lead_set",
-      "task_manager_leads_list",
-      "task_manager_leads_update",
-      "task_manager_wait_update",
-      "task_manager_guide"
-    ],
-    "topics": [
-      "list",
-      "delta",
-      "cards",
-      "focus",
-      "held",
-      "sendq",
-      "tellq",
-      "told",
-      "progress",
-      "prefs"
-    ],
-    "widgets": [
-      "chat"
-    ],
-    "tabs": [
-      "huddle"
-    ],
+    "plugins": ["session-card-action"],
+    "mcp_tools": ["task_manager_tasks_list", "task_manager_changes", "task_manager_schedules_list", "task_manager_add", "task_manager_update", "task_manager_state_request", "task_manager_ask", "task_manager_reply", "huddle_focus", "task_manager_move", "task_manager_group_create", "task_manager_group_update", "task_manager_answered_set", "task_manager_fork", "task_manager_batch_run", "task_manager_artifact_add", "task_manager_entries_list", "task_manager_entry_import", "task_manager_progress_set", "task_manager_role_set", "task_manager_lead_set", "task_manager_leads_list", "task_manager_leads_update", "task_manager_wait_update", "task_manager_file_remove", "task_manager_guide"],
+    "topics": ["list", "delta", "cards", "focus", "held", "sendq", "tellq", "told", "progress", "prefs"],
+    "widgets": ["chat"],
+    "tabs": ["huddle"],
     "menu_links": [],
     "storage": true
   },
-  "owns": {
-    "strings": [
-      "cplug.huddle."
-    ],
-    "styles": [
-      "task-manager-tail.css",
-      "task-manager-tree.css",
-      "task-manager-bubble.css",
-      "ask/ask-form.css",
-      "swarm/characters/characters.css"
-    ],
-    "tests": [
-      "tests/python/cplugs/huddle/"
-    ],
-    "contributions": [
-      "chat.widget_kind",
-      "style_guide.specimen",
-      "session.schedules",
-      "session.roles"
-    ]
-  },
+  "owns": { "strings": ["cplug.huddle."], "styles": ["task-manager-tail.css", "task-manager-tree.css", "task-manager-bubble.css", "ask/ask-form.css", "swarm/characters/characters.css"], "tests": ["tests/python/cplugs/huddle/"], "style_guide": ["web/src/cplugs/huddle/swarm/SwarmMemberFace.svelte"], "contributions": ["chat.widget_kind", "style_guide.specimen", "session.schedules", "session.roles", "session.member_face"] },
   "settings_schema": {
     "version": 1,
     "fields": {
-      "showTab": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.show_tab",
-        "hintKey": "cplug.huddle.settings.show_tab_help",
-        "default": true
-      },
-      "showEmptyGroups": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.show_empty_groups",
-        "default": false
-      },
-      "hideCompleted": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.hide_completed",
-        "default": false
-      },
-      "view": {
-        "kind": "enum",
-        "labelKey": "cplug.huddle.settings.view",
-        "options": [
-          "status",
-          "area"
-        ],
-        "default": "status"
-      },
-      "density": {
-        "kind": "enum",
-        "labelKey": "cplug.huddle.settings.density",
-        "options": [
-          "compact",
-          "normal",
-          "full"
-        ],
-        "default": "normal"
-      },
-      "accordion": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.accordion",
-        "default": false
-      },
-      "heldSendMinutes": {
-        "kind": "number",
-        "labelKey": "cplug.huddle.settings.held_send_minutes",
-        "min": 1,
-        "max": 1440,
-        "default": 30
-      },
-      "sendQuietSeconds": {
-        "kind": "number",
-        "labelKey": "cplug.huddle.settings.send_quiet_seconds",
-        "min": 1,
-        "max": 300,
-        "default": 10
-      },
-      "sendCapSeconds": {
-        "kind": "number",
-        "labelKey": "cplug.huddle.settings.send_cap_seconds",
-        "min": 5,
-        "max": 600,
-        "default": 45
-      },
-      "inboxFallbackSeconds": {
-        "kind": "number",
-        "labelKey": "cplug.huddle.settings.inbox_fallback_seconds",
-        "hintKey": "cplug.huddle.settings.inbox_fallback_seconds_help",
-        "min": 15,
-        "max": 3600,
-        "default": 120
-      },
-      "badgeQuestions": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.badge_questions",
-        "hintKey": "cplug.huddle.settings.badge_help",
-        "default": true
-      },
-      "badgeReviews": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.badge_reviews",
-        "default": true
-      },
-      "badgeOpen": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.badge_open",
-        "default": false
-      },
-      "badgeWorking": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.badge_working",
-        "default": false
-      },
-      "badgeWaiting": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.badge_waiting",
-        "default": false
-      },
-      "badgeScheduled": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.badge_scheduled",
-        "default": false
-      },
-      "nudgeEnabled": {
-        "kind": "boolean",
-        "labelKey": "cplug.huddle.settings.nudge_enabled",
-        "hintKey": "cplug.huddle.settings.nudge_enabled_help",
-        "default": false
-      },
-      "nudgeMinutes": {
-        "kind": "number",
-        "labelKey": "cplug.huddle.settings.nudge_minutes",
-        "hintKey": "cplug.huddle.settings.nudge_minutes_help",
-        "min": 15,
-        "max": 1440,
-        "default": 60
-      },
-      "nudgeTries": {
-        "kind": "number",
-        "labelKey": "cplug.huddle.settings.nudge_tries",
-        "hintKey": "cplug.huddle.settings.nudge_tries_help",
-        "min": 1,
-        "max": 10,
-        "default": 3
-      },
-      "nudgeMaxItems": {
-        "kind": "number",
-        "labelKey": "cplug.huddle.settings.nudge_max_items",
-        "hintKey": "cplug.huddle.settings.nudge_max_items_help",
-        "min": 1,
-        "max": 10,
-        "default": 5
-      },
-      "unclaimedText": {
-        "kind": "string",
-        "labelKey": "cplug.huddle.settings.nudge_unclaimed_text",
-        "hintKey": "cplug.huddle.settings.nudge_unclaimed_text_help",
-        "maxLength": 600,
-        "default": "huddle nudge: \"{item}\" has sat open and unclaimed for {minutes} min. If you are free, take it: claim it with task_manager_update state working and keep going, ask with task_manager_ask if blocked, or leave it open if you cannot."
-      },
-      "pickupText": {
-        "kind": "string",
-        "labelKey": "cplug.huddle.settings.nudge_pickup_text",
-        "hintKey": "cplug.huddle.settings.nudge_pickup_text_help",
-        "maxLength": 600,
-        "default": "huddle nudge: you have been idle for {minutes} min and hold no swarm item. Pick up the next open item, \"{item}\": claim it with task_manager_update state working and keep going, or ask with task_manager_ask if blocked."
-      },
-      "claimedText": {
-        "kind": "string",
-        "labelKey": "cplug.huddle.settings.nudge_claimed_text",
-        "hintKey": "cplug.huddle.settings.nudge_claimed_text_help",
-        "maxLength": 600,
-        "default": "huddle nudge: no progress for {minutes} min on {items}. For each: post task_manager_progress_set and keep going, set review or waiting, ask with task_manager_ask if blocked, or set open if you stopped."
-      },
-      "waitCheckHosts": {
-        "kind": "string",
-        "labelKey": "cplug.huddle.settings.wait_check_hosts",
-        "hintKey": "cplug.huddle.settings.wait_check_hosts_help",
-        "maxLength": 1000,
-        "default": ""
-      }
+      "showTab": { "kind": "boolean", "labelKey": "cplug.huddle.settings.show_tab", "hintKey": "cplug.huddle.settings.show_tab_help", "default": true },
+      "showEmptyGroups": { "kind": "boolean", "labelKey": "cplug.huddle.settings.show_empty_groups", "default": false },
+      "hideCompleted": { "kind": "boolean", "labelKey": "cplug.huddle.settings.hide_completed", "default": false },
+      "view": { "kind": "enum", "labelKey": "cplug.huddle.settings.view", "options": ["status", "area"], "default": "status" },
+      "density": { "kind": "enum", "labelKey": "cplug.huddle.settings.density", "options": ["compact", "normal", "full"], "default": "normal" },
+      "accordion": { "kind": "boolean", "labelKey": "cplug.huddle.settings.accordion", "default": false },
+      "heldSendMinutes": { "kind": "number", "labelKey": "cplug.huddle.settings.held_send_minutes", "min": 1, "max": 1440, "default": 30 },
+      "sendQuietSeconds": { "kind": "number", "labelKey": "cplug.huddle.settings.send_quiet_seconds", "min": 1, "max": 300, "default": 10 },
+      "sendCapSeconds": { "kind": "number", "labelKey": "cplug.huddle.settings.send_cap_seconds", "min": 5, "max": 600, "default": 45 },
+      "inboxFallbackSeconds": { "kind": "number", "labelKey": "cplug.huddle.settings.inbox_fallback_seconds", "hintKey": "cplug.huddle.settings.inbox_fallback_seconds_help", "min": 15, "max": 3600, "default": 120 },
+      "badgeQuestions": { "kind": "boolean", "labelKey": "cplug.huddle.settings.badge_questions", "hintKey": "cplug.huddle.settings.badge_help", "default": true },
+      "badgeReviews": { "kind": "boolean", "labelKey": "cplug.huddle.settings.badge_reviews", "default": true },
+      "badgeOpen": { "kind": "boolean", "labelKey": "cplug.huddle.settings.badge_open", "default": false },
+      "badgeWorking": { "kind": "boolean", "labelKey": "cplug.huddle.settings.badge_working", "default": false },
+      "badgeWaiting": { "kind": "boolean", "labelKey": "cplug.huddle.settings.badge_waiting", "default": false },
+      "badgeScheduled": { "kind": "boolean", "labelKey": "cplug.huddle.settings.badge_scheduled", "default": false },
+      "nudgeEnabled": { "kind": "boolean", "labelKey": "cplug.huddle.settings.nudge_enabled", "hintKey": "cplug.huddle.settings.nudge_enabled_help", "default": false },
+      "nudgeMinutes": {"kind": "number", "labelKey": "cplug.huddle.settings.nudge_minutes", "hintKey": "cplug.huddle.settings.nudge_minutes_help", "min": 15, "max": 1440, "default": 60},
+      "nudgeTries": {"kind": "number", "labelKey": "cplug.huddle.settings.nudge_tries", "hintKey": "cplug.huddle.settings.nudge_tries_help", "min": 1, "max": 10, "default": 3},
+      "nudgeMaxItems": {"kind": "number", "labelKey": "cplug.huddle.settings.nudge_max_items", "hintKey": "cplug.huddle.settings.nudge_max_items_help", "min": 1, "max": 10, "default": 5},
+      "unclaimedText": {"kind": "string", "labelKey": "cplug.huddle.settings.nudge_unclaimed_text", "hintKey": "cplug.huddle.settings.nudge_unclaimed_text_help", "maxLength": 600, "default": "huddle nudge: \"{item}\" has sat open and unclaimed for {minutes} min. If you are free, take it: claim it with task_manager_update state working and keep going, ask with task_manager_ask if blocked, or leave it open if you cannot."},
+      "pickupText": {"kind": "string", "labelKey": "cplug.huddle.settings.nudge_pickup_text", "hintKey": "cplug.huddle.settings.nudge_pickup_text_help", "maxLength": 600, "default": "huddle nudge: you have been idle for {minutes} min and hold no swarm item. Pick up the next open item, \"{item}\": claim it with task_manager_update state working and keep going, or ask with task_manager_ask if blocked."},
+      "claimedText": {"kind": "string", "labelKey": "cplug.huddle.settings.nudge_claimed_text", "hintKey": "cplug.huddle.settings.nudge_claimed_text_help", "maxLength": 600, "default": "huddle nudge: no progress for {minutes} min on {items}. For each: post task_manager_progress_set and keep going, set review or waiting, ask with task_manager_ask if blocked, or set open if you stopped."},
+      "waitCheckHosts": { "kind": "string", "labelKey": "cplug.huddle.settings.wait_check_hosts", "hintKey": "cplug.huddle.settings.wait_check_hosts_help", "maxLength": 1000, "default": "" }
     }
   },
   "widgets": {
     "chat": {
       "instancing": "per-target",
-      "fits": {
-        "sizes": [
-          "medium",
-          "large",
-          "full"
-        ],
-        "anySize": true
-      }
+      "fits": { "sizes": ["medium", "large", "full"], "anySize": true }
     }
   },
   "css_prefix": "hdr"

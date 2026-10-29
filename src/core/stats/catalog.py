@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Tuple
+
 METRICS = {
     "input_tokens": ("tokens", "minute_usage"),
     "cache_write_tokens": ("tokens", "minute_usage"),
@@ -28,8 +30,17 @@ METRICS = {
     "cache_write_5m_tokens": ("tokens", "minute_counters"),
     "cache_write_1h_tokens": ("tokens", "minute_counters"),
 }
+FAMILY_USAGE, FAMILY_ACTIVITY = "usage", "activity"
+_TABLE_FAMILIES = {
+    "minute_usage": (FAMILY_USAGE,), "minute_counters": (FAMILY_USAGE,),
+    "activity_minutes": (FAMILY_ACTIVITY,), "quota_minutes": (FAMILY_ACTIVITY,),
+}
 DIMENSIONS = ("host", "provider", "project", "model", "agent_kind", "conversation_id", "account_id", "window")
 RESOLUTIONS = ("minute", "5minute", "hour", "day", "week", "month", "year")
+
+
+def families_for(metric: str) -> Tuple[str, ...]:
+    return _TABLE_FAMILIES.get(METRICS[metric][1], (FAMILY_USAGE, FAMILY_ACTIVITY))
 
 
 def catalog() -> dict:

@@ -28,7 +28,7 @@ if str(ROOT) not in sys.path:
 # ruff: noqa: E402
 from src.api.routes import router as api_router  # noqa: E402
 from src.core.session_manager import SessionManager  # noqa: E402
-from src.core.upload_sweeper import UPLOAD_DIR_NAME  # noqa: E402
+from src.core.product_identity import UPLOAD_DIR_NAME  # noqa: E402
 from src.models import Session, SessionStatus  # noqa: E402
 
 
@@ -240,7 +240,8 @@ def test_upload_no_active_session_rejected(app_without_session, auth_headers):
 
 
 @pytest.mark.asyncio
-async def test_destroy_session_cleans_uploads_dir(tmp_path, monkeypatch):
+@pytest.mark.parametrize("bucket_name", [".carnivore_uploads", ".cloude_uploads"])
+async def test_destroy_session_cleans_uploads_dir(tmp_path, monkeypatch, bucket_name):
     import src.core.session_manager as sm_mod
 
     metadata_path = tmp_path / "session_metadata.json"
@@ -250,7 +251,7 @@ async def test_destroy_session_cleans_uploads_dir(tmp_path, monkeypatch):
         lambda: metadata_path,
     )
 
-    uploads_dir = tmp_path / UPLOAD_DIR_NAME
+    uploads_dir = tmp_path / bucket_name
     uploads_dir.mkdir(mode=0o700)
     (uploads_dir / "foo.png").write_bytes(b"fake-png-bytes")
     assert uploads_dir.exists()

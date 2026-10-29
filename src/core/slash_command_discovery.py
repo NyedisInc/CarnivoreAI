@@ -141,7 +141,7 @@ def build_command_groups(
             commands=codex_skills,
         ))
 
-    for plugin_name, commands in sorted(discover_plugin_scope().items()):
+    for plugin_name, commands in sorted(discover_plugin_scope(claude_home).items()):
         groups.append(CommandGroup(
             id=f"plugin:{plugin_name}",
             label=f"{plugin_name} (plugin)",

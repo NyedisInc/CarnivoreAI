@@ -96,7 +96,6 @@ export const LEDGER_KEYS = {
     editorRemoveFailed: 'ledger.editor.remove_failed',
     editorRemoveDirRefused: 'ledger.editor.remove_dir_refused',
 
-    /* already exists */
     editStart: 'ledger.edit.start',
     editOpen: 'ledger.edit.open',
     editTitle: 'ledger.edit.title',
@@ -163,7 +162,6 @@ export interface LedgerAccount {
     windows?: LedgerWindow[] | null;
     color?: string | null;
     managed?: boolean | null;
-    /* could not */
     login_expires_at?: string | null;
     poke?: LedgerPoke | null;
     setup_complete?: boolean | null;
@@ -172,7 +170,6 @@ export interface LedgerAccount {
 export interface LedgerPoke {
     state?: string | null;
     last_at?: string | null;
-    /* authentication error */
     error?: string | null;
 }
 
@@ -260,7 +257,6 @@ export function formatAge(
     return t(LEDGER_KEYS.ageDays, { days: Math.floor(ago / DAY) });
 }
 
-/* label: ' */
 export function formatWindowLabel(
     window: LedgerWindow | LedgerTotalWindow | null | undefined,
     t: Translate,
@@ -314,7 +310,6 @@ export function credentialTone(state: string | null | undefined): string {
     return CREDENTIAL_TONES[state] ?? 'unknown';
 }
 
-/* active account */
 export function sortAccounts(
     accounts: readonly LedgerAccount[],
     state: AccountSwitchState | null = null,
@@ -379,7 +374,6 @@ export function removeConfirmKey(account: Pick<LedgerAccount, 'managed'>): strin
 
 export const BUILT_IN_ACCOUNT_ID = 'auto-claude-default';
 
-/* the built-in login */
 export function isBuiltInLogin(account: Pick<LedgerAccount, 'id'>): boolean {
     return account.id === BUILT_IN_ACCOUNT_ID;
 }

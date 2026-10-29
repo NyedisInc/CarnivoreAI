@@ -28,7 +28,7 @@ import MoveFolderModal from './MoveFolderModal.svelte';
 setLocale('en');
 
 const PLAN = {
-  session_uuid: 'u1', tmux_name: 'carnivore_x', source: '/home/ses_ab12', source_kind: 'temp', destination: '/p/app',
+  session_uuid: 'u1', tmux_name: 'carnivore_x', source: '/home/alex', source_kind: 'temp', destination: '/p/app',
   destination_kind: 'project', project_id: 3, project_name: 'app', creates_folder: false, pane_state: 'exited',
   kills_live_pane: false, file_count: 2, total_bytes: 2048, left_behind: [], collisions: [], ok: true, refusals: [],
   applied: false, done: null,
@@ -88,7 +88,7 @@ describe('the move dialog', () => {
     await pickProject();
     await press('check');
     expect(moveCalls()).toEqual([{ path: '/sessions/u1/move-folder', body: { project_id: 3, apply: false, confirm_restart_live: false } }]);
-    expect(q('[data-move="from"]')?.textContent).toContain('/home/ses_ab12');
+    expect(q('[data-move="from"]')?.textContent).toContain('/home/alex');
     expect(q('[data-move="to"]')?.textContent).toContain('/p/app');
     expect(q('[data-move="files"]')?.textContent).toContain('2 carried, 2.0 kb');
     expect(q('[data-move="live"]')).toBeNull();
@@ -116,7 +116,7 @@ describe('the move dialog', () => {
     await press('check');
     expect(q('[data-move="live"]')).not.toBeNull();
     expect(q('[data-move="go"]')?.textContent).toBe('stop and move');
-    expect(q('[data-move="go"]')?.classList.contains('modal-btn-danger')).toBe(true);
+    expect(q('[data-move="go"]')?.getAttribute('data-btn') === 'danger').toBe(true);
     expect((q('[data-move="go"]') as HTMLButtonElement).disabled).toBe(true);
     await press('go');
     expect(moveCalls().filter((c) => c.body.apply === true)).toEqual([]);
@@ -132,7 +132,7 @@ describe('the move dialog', () => {
     await pickProject();
     await press('check');
     expect((q('[data-move="go"]') as HTMLButtonElement).disabled).toBe(false);
-    (document.querySelector('[data-choice="folder"] input') as HTMLInputElement).click();
+    (document.querySelector('input[data-choice="folder"]') as HTMLInputElement).click();
     await tick();
     expect(q('[data-move="plan"]')).toBeNull();
     expect((q('[data-move="go"]') as HTMLButtonElement).disabled).toBe(true);
@@ -140,7 +140,7 @@ describe('the move dialog', () => {
 
   test('a new folder is sent as new_folder, trimmed', async () => {
     await open();
-    (document.querySelector('[data-choice="folder"] input') as HTMLInputElement).click();
+    (document.querySelector('input[data-choice="folder"]') as HTMLInputElement).click();
     await tick();
     const field = q('[data-move="folder"]') as HTMLInputElement;
     field.value = '  /Users/me/app  ';

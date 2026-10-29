@@ -33,7 +33,7 @@ def test_codex_restart_plan_reports_resumed_from_the_command_itself():
     command = f"zsh -c 'source ~/.zshrc; exec codex resume {UUID} --yolo'"
     plan = project_restart_rung(
         probe_ok=True,
-        pane_start_command='"keyc"',
+        pane_start_command='"cld"',
         agent_command=command,
         resume_outcome=None,
     )
@@ -46,7 +46,7 @@ def test_claude_restart_plan_is_unchanged():
     command = f"zsh -c 'source ~/.zshrc; exec claude --resume {UUID}'"
     plan = project_restart_rung(
         probe_ok=True,
-        pane_start_command='"keyc"',
+        pane_start_command='"cld"',
         agent_command=command,
         resume_outcome=None,
     )
@@ -59,7 +59,7 @@ def test_codex_restart_now_runs_the_transcript_check():
     command = f"zsh -c 'source ~/.zshrc; exec codex resume {UUID} --yolo'"
     plan = project_restart_rung(
         probe_ok=True,
-        pane_start_command='"keyc"',
+        pane_start_command='"cld"',
         agent_command=command,
         resume_outcome=None,
     )

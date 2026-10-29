@@ -2,8 +2,8 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { t } from '../i18n/index.svelte';
-  import Icon from '../../opscenter/ui/Icon.svelte';
   import IconButton from '../base/IconButton.svelte';
+  import Button from '../base/Button.svelte';
   import Tabs, { panelAttrs } from '../../opscenter/ui/Tabs.svelte';
   import { activity, remove } from '../computers/computers-store.svelte';
   import Marks from './Marks.svelte';
@@ -39,7 +39,7 @@
 
 <header class="m1-pane__head">
   <div class="m1-pane__top">
-    <button type="button" class="m1-pane__back" aria-label={t('roster.pane.back')} onclick={onClose}><Icon name="back" size={16} /></button>
+    <IconButton label={t('roster.pane.back')} variant="quiet" icon="back" iconSize={16} data-roster-key="pane-back" onclick={onClose} />
     <h2 class="m1-pane__title" tabindex="-1" bind:this={titleEl}>{c.name}</h2>
     <Marks {c} />
     <IconButton label={t('roster.pane.close')} variant="close" icon="close" iconSize={14} data-roster-key="pane-close" onclick={onClose} />
@@ -47,13 +47,13 @@
   <div class="m1-pane__acts"><Status {c} />
     <span class="m1-pane__btns"><WolfButton {c} />
       {#if removable && !confirming}
-        <button type="button" class="oc-btn oc-btn--sm pp-destroy" data-act="remove" disabled={activity.busy !== null} onclick={() => (confirming = true)}>{t('computers.row.remove')}</button>
+        <Button variant="danger" size="sm" data-act="remove" disabled={activity.busy !== null} onclick={() => (confirming = true)}>{t('computers.row.remove')}</Button>
       {/if}</span></div>
   {#if confirming}
     <div class="pp-confirm" data-open data-act="remove-confirm"><span class="pp-confirm__text">{t('computers.row.remove_confirm', { label: c.name })}</span>
       <span class="pp-confirm__row">
-        <button type="button" class="oc-btn oc-btn--sm" onclick={() => (confirming = false)}>{t('computers.row.cancel')}</button>
-        <button type="button" class="oc-btn oc-btn--sm pp-destroy" data-act="remove-yes" disabled={activity.busy !== null} onclick={() => void removeIt()}>{t('computers.row.remove')}</button></span></div>
+        <Button size="sm" onclick={() => (confirming = false)}>{t('computers.row.cancel')}</Button>
+        <Button variant="danger" size="sm" data-act="remove-yes" disabled={activity.busy !== null} onclick={() => void removeIt()}>{t('computers.row.remove')}</Button></span></div>
   {/if}
 </header>
 <Tabs tabs={tabDefs} active={rosterUi.tab} onSelect={(id) => (rosterUi.tab = id as PaneTab)} label={t('roster.pane.tabs')} idBase="roster" class="m1-ptabs" />

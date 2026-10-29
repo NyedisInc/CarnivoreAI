@@ -1,5 +1,5 @@
 <script lang="ts">
-  /*  hidden  */
+  /* the same words */
   import Icon from '../ui/Icon.svelte';
   import { t } from '../../lib/i18n/index.svelte';
   import { dashboardFromSearch, focusMainWindow, hasMainWindow } from '../../popout/popout';
@@ -7,7 +7,6 @@
   import { viewport } from '../engine/viewport.svelte';
 
   const board = typeof window !== 'undefined' ? dashboardFromSearch(window.location.search) : null;
-  /*  hidden  */
   const canEdit = $derived(board !== null && viewport.wide);
 </script>
 

@@ -13,6 +13,8 @@ from src.cplugs.sdk.cards import CardRefused
 logger = structlog.get_logger()
 
 MAX_FINISH_CHARS = 4000
+MAX_ASK_CHARS = 500
+_CLOSE_SKIPS = ("task_manager_lane", "not_in_review")
 MAX_TITLE_CHARS = 120
 MAX_SUMMARY_CHARS = 200
 COLUMNS = ("todo", "in_progress", "review", "done")
@@ -137,6 +139,13 @@ async def finish(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: s
         raise CardRefused("no_how_to_validate", "write how to validate this card (steps the owner can run) before you finish it")
     if len(how) > MAX_FINISH_CHARS or not result_text or len(result_text) > MAX_FINISH_CHARS:
         raise CardRefused("bad_card", f"result and how_to_validate are required, at most {MAX_FINISH_CHARS} characters each")
+    needs_owner, ask = args.get("needs_owner"), " ".join((args.get("owner_ask") or "").split())
+    if needs_owner is not None and type(needs_owner) is not bool:
+        raise CardRefused("bad_card", "needs_owner is true when the owner must answer, pick or do something before the card closes, else false")
+    if needs_owner and (not ask or len(ask) > MAX_ASK_CHARS):
+        raise CardRefused("bad_card", f"owner_ask is required with needs_owner true: what the owner must answer, pick or do, at most {MAX_ASK_CHARS} characters")
+    if needs_owner:
+        result_text = f"needs you: {ask}\n\n{result_text}"
     _no_secrets("finish", result_text, how)
     report_id: Optional[int] = None
     parent = await body.run_db(lambda c: store.get_agent(c, agent["parent_id"])) if agent["parent_id"] is not None else None
@@ -146,12 +155,39 @@ async def finish(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: s
         except reports.ReportRefused as exc:
             raise CardRefused("report_pending", str(exc)) from None
     sent = {"result": result_text, "how_to_validate": how, "validate_link": args.get("validate_link"), "report_id": report_id}
+    straight = needs_owner is False and card.get("parent") is None
     try:
-        return (await _act(app_state, "finish", card_id, sent, by))["card"]
+        finished = (await _act(app_state, "finish", card_id, sent, by, skip=("review_entered",) if straight else ()))["card"]
     except Exception:  # noqa: BLE001
         if report_id is not None:
             await body.run_db(lambda c: store.delete_report(c, report_id))
         raise
+    if not straight:
+        return finished
+    return await _close_done(app_state, card_id, "finished and validated by its agent", by) or finished
+
+
+async def _close_done(app_state: Any, card_id: int, reason: str, by: str) -> Optional[Dict[str, Any]]:
+    try:
+        return (await _act(app_state, "done", card_id, {"reason": reason, "agent_close": True}, by))["card"]
+    except CardRefused as exc:
+        if exc.code not in _CLOSE_SKIPS:
+            raise
+        logger.info("swarm_card_agent_close_skipped", card_id=card_id, code=exc.code)
+        return None
+
+
+async def close(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: str) -> Dict[str, Any]:
+    card = await _card(card_id)
+    if await _allow(by, "close", card, args) is None:
+        raise CardRefused("not_allowed", "close is an agent's tool; the owner moves a card with the board")
+    if card["column"] != "review":
+        raise CardRefused("not_in_review", "only a card in Review is closed")
+    reason = " ".join((args.get("reason") or "").split())
+    if not reason or len(reason) > MAX_ASK_CHARS:
+        raise CardRefused("bad_card", f"reason is required, at most {MAX_ASK_CHARS} characters")
+    _no_secrets("reason", reason)
+    return (await _act(app_state, "done", card_id, {"reason": reason, "agent_close": True}, by))["card"]
 
 
 async def release(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: str) -> Dict[str, Any]:
@@ -181,18 +217,11 @@ def _within(conn: sqlite3.Connection, root_id: int, row: Mapping[str, Any]) -> b
 
 
 async def deal(app_state: Any, card_id: Optional[int], args: Mapping[str, Any], *, by: str, skip: Sequence[str] = ()) -> Dict[str, Any]:
-    """Deal a waiting card to an agent; a card already held is a swap. ``hold`` leaves the card where it is (the dealer's answer to a request).
-
-    Inputs: card_id (None: the top queued card of the dealer's own project, picked by the server); args ``agent_id``, ``hold``, ``reason``
-      (needed to deal a card below the top queued one, or to an agent outside the specialty the card names; kept in its history);
-      by (owner, project agent of the list, its company agent, Alpha); skip (effect kinds to drop).
-    Output: CardView. Raises: CardRefused (``not_allowed``, ``bad_agent``, ``held``, ``pinned_elsewhere``, ``not_dealable``, ``not_top``, ``not_fit``...).
-    """
     if args.get("hold"):
         held = await _card(card_id) if card_id is not None else None
         await dealer.answered(held, await _allow(by, "deal", held, args))
         return held or {}
-    if card_id is None:  # own project
+    if card_id is None:
         top = await fit.top_card(await _agent(by))
         if top is None:
             raise CardRefused("bad_card", "card_id is required: you have no queued card of your own project to deal")
@@ -329,13 +358,6 @@ def _card_text(value: str, limit: int) -> str:
 
 async def mint_for_spawn(app_state: Any, parent: Mapping[str, Any], child: Mapping[str, Any], *, title: str, text: str,
                          card_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
-    """Give a freshly spawned child its card: the named one, else one minted from the goal (origin ``spawn:<parent id>``), dealt to the child.
-
-    Description: the dealt tell is dropped (the first message carries the card line instead). Inputs: parent (row); child (row); title; text; card_id.
-    Output: the dealt CardView; None when the goal could not be minted into a card (the list is full), so the spawn goes ahead without one as it did before cards.
-      The card text is the goal cleaned for the huddle and cut to ``MAX_CARD_TEXT``; the full goal still rides in the first message.
-    Raises: CardRefused (the plugin refused the deal, or the named card was taken since the spawn was checked), CardsOff (the huddle plugin is off).
-    """
     by = f"agent:{parent['id']}"
     if card_id is None:
         list_key = str(parent["project_id"]) if parent.get("project_id") is not None else parent["thread_key"]
@@ -393,6 +415,31 @@ async def delete(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: s
     await _allow(by, "delete", before, args)
     await card_port.get().act("delete", card_id, {}, by)
     notices.note(app_state, before, None)
+    return {"id": int(card_id), "deleted": True}
+
+
+async def curate_check(card_id: int, args: Mapping[str, Any], *, by: str, op: str) -> Dict[str, Any]:
+    card = await _card(card_id)
+    if await _allow(by, op, card, args) is None:
+        raise CardRefused("not_allowed", "this is an agent's tool; the owner archives and deletes cards on the board")
+    reason = " ".join((args.get("reason") or "").split())
+    if not reason or len(reason) > MAX_ASK_CHARS:
+        raise CardRefused("bad_card", f"reason is required, at most {MAX_ASK_CHARS} characters")
+    _no_secrets("reason", reason)
+    return {"card": card, "reason": reason}
+
+
+async def agent_archive(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: str) -> Dict[str, Any]:
+    checked = await curate_check(card_id, args, by=by, op="agent_archive")
+    card = (await _act(app_state, "archive", card_id, {"on": True, "reason": checked["reason"]}, by))["card"]
+    notices.note(app_state, checked["card"], card)
+    return card
+
+
+async def agent_delete(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: str) -> Dict[str, Any]:
+    checked = await curate_check(card_id, args, by=by, op="agent_delete")
+    await card_port.get().act("delete", card_id, {"reason": f"{by}: {checked['reason']}"}, "owner")
+    notices.note(app_state, checked["card"], None)
     return {"id": int(card_id), "deleted": True}
 
 

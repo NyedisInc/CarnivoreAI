@@ -8,6 +8,7 @@ plugin = Plugin()
 
 @plugin.tool("send_test", "Send a test alert to the configured channels", {"type": "object"}, gate="inbox")
 async def send_test(arguments, caller):
+    """Tool body; the host serves the MANIFEST's description of it, never this one."""
     return "sent"
 
 

@@ -1,9 +1,3 @@
-"""The attention-kind choice: which kinds the "waiting on you" widget shows (issue #1627).
-
-ABSENT IS EVERYTHING ON, and a default is never written. The client writes sparsely: ``all: false`` only when the whole filter
-is off, and ``kinds[<id>]: false`` only for a kind switched off. Individual switches survive ``all`` being turned off, so
-turning it back on restores them.
-"""
 
 from __future__ import annotations
 
@@ -40,5 +34,4 @@ class AttentionKindsChoice(BaseModel):
 
     @model_serializer(mode="wrap")
     def _omit_absent(self, handler: Any) -> Dict[str, Any]:
-        """Store only the keys that were set: ABSENT stays absent, so a default is never written."""
         return {key: value for key, value in handler(self).items() if value is not None}

@@ -52,7 +52,8 @@
     "messaging_send"
   ],
   "where": [
-    "Settings, notifications, messaging: providers, their conversations, every binding and the message log."
+    "Settings, notifications, messaging: providers, their conversations, every binding and the message log.",
+    "The drawer row: a small msg badge on a bound session, msg 2 held in yellow while texts wait."
   ],
   "how_to": [
     "Open settings, notifications, messaging and press add provider. Enter the bridge address, its token (or an op:// reference) and your phone number or email; allow a private address and plain http only for a bridge on your own network. Save: Carnivore checks the bridge first.",
@@ -64,7 +65,7 @@
     "On the provider card, the duplicate-send protection line says whether a retried send was ever answered with the original result (proven, with when) or never seen yet."
   ],
   "examples": [
-    "You text restart the feed while the session is asking a permission question; you get held for ledgerbot, and the text goes in after you answer the dialog.",
+    "You text restart the feed while the session is asking a permission question; you get held for trader, and the text goes in after you answer the dialog.",
     "Three texts sent while the computer was asleep arrive as one message, oldest first, each with its time and age.",
     "A bound session texts you build is green with messaging_send; a session without an out binding is refused."
   ],

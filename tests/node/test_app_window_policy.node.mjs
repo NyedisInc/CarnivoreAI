@@ -15,7 +15,7 @@ test('partition is persistent, stable per origin and distinct across origins', (
   assert.match(a, /^persist:carnivore-[0-9a-f]{12}$/);
   assert.equal(a, policy.partitionForOrigin(ORIGIN));
   assert.notEqual(a, policy.partitionForOrigin('http://127.0.0.1:8001'));
-  assert.notEqual(a, policy.partitionForOrigin('http://203.0.113.11:8000'));
+  assert.notEqual(a, policy.partitionForOrigin('http://192.168.1.5:8000'));
 });
 
 test('partition refuses anything that is not a bare http(s) origin', () => {
@@ -30,7 +30,7 @@ test('same origin stays in the window, other http(s) goes to the browser, the re
   assert.equal(policy.decideNavigation('https://example.com/', ORIGIN), 'external');
   assert.equal(policy.decideNavigation('http://127.0.0.1:8001/', ORIGIN), 'external');
   assert.equal(policy.decideNavigation('http://localhost:8000/', ORIGIN), 'external');
-  assert.equal(policy.decideNavigation('http://127.0.0.1:8000@example.net/', ORIGIN), 'external');
+  assert.equal(policy.decideNavigation('http://127.0.0.1:8000@evil.com/', ORIGIN), 'external');
   for (const bad of ['file:///etc/passwd', 'javascript:alert(1)', 'data:text/html,x', 'carnivore://x', 'not a url', '', null, undefined]) {
     assert.equal(policy.decideNavigation(bad, ORIGIN), 'deny', String(bad));
   }
@@ -64,7 +64,7 @@ test('everything else of the app origin is refused, other http(s) goes to the br
   assert.equal(policy.decideWindowOpen('http://user:pw@127.0.0.1:8000/static/popout.html', ORIGIN, 'new-window'), 'deny');
   assert.equal(policy.decideWindowOpen(`${ORIGIN}/static/popout.html?x=${'a'.repeat(2100)}`, ORIGIN, 'new-window'), 'deny');
   assert.equal(policy.decideWindowOpen('https://example.com/static/popout.html', ORIGIN, 'new-window'), 'external');
-  assert.equal(policy.decideWindowOpen('http://127.0.0.1:8000@example.net/static/popout.html', ORIGIN, 'foreground-tab'), 'external');
+  assert.equal(policy.decideWindowOpen('http://127.0.0.1:8000@evil.com/static/popout.html', ORIGIN, 'foreground-tab'), 'external');
   assert.equal(policy.decideWindowOpen('http://127.0.0.1:8001/?solo=7', ORIGIN, 'new-window'), 'external');
   for (const bad of ['about:blank', 'javascript:1', 'file:///etc/passwd', 'data:text/html,x', 'carnivore://x', '', null]) {
     assert.equal(policy.decideWindowOpen(bad, ORIGIN, 'foreground-tab'), 'deny', String(bad));
@@ -215,7 +215,7 @@ test('host: restore reopens only windows the policy accepts; an old file with no
   const dir = tmpDir();
   const file = path.join(dir, 'window-state.json');
   const good = [{ key: 'popout:carnivore-stats', kind: 'popout', path: '/static/popout.html?widget=stats' }, { key: 'solo:row:7', kind: 'solo', path: '/?solo=7' }];
-  const bad = ['http://example.net/static/popout.html', 'javascript:1', '/static/other.html', `/?solo=${'9'.repeat(16)}`, '//example.net/static/popout.html', '@example.net/x', '/?solo=7&x=1', 5, null]
+  const bad = ['http://evil.com/static/popout.html', 'javascript:1', '/static/other.html', `/?solo=${'9'.repeat(16)}`, '//evil.com/static/popout.html', '@evil.com/x', '/?solo=7&x=1', 5, null]
     .map((p, i) => ({ key: `popout:bad${i}`, kind: 'popout', path: p }));
   fs.writeFileSync(file, JSON.stringify({ version: 1, windows: {}, open: [bad[0], good[0], ...bad.slice(1), good[1]] }));
   const r = rig(dir);

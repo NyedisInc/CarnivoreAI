@@ -27,11 +27,6 @@ def _entry_opener(vault: Vault, entry: FileEntry) -> Callable[[], Iterator[bytes
 
 
 def vault_copies(vault: Vault, keys: Set[Tuple[str, str]], intake: model.Intake) -> Iterator[model.Copy]:
-    """Every transcript and sub-agent file of every point of the units whose conversation key is in ``keys``. Blocking.
-
-    A unit is the conversation id or ``<id>@<8 hex>``. An unreadable manifest or damaged chunk is listed as refused (that held copy then
-    decides nothing, so the old copy is planned as if it were not held: it is added, never lost).
-    """
     wanted = {conv for _family, conv in keys}
     measured: Dict[str, Tuple[int, str]] = {}
     for unit in vault.manifests.units():

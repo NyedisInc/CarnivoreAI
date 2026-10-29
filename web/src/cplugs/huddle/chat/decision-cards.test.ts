@@ -13,15 +13,9 @@ vi.mock('../huddle.svelte', async (importOriginal) => {
   };
 });
 
-vi.mock('../huddle-send-many.svelte', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../huddle-send-many.svelte')>();
-  return { ...real, readChoice: async () => undefined, ensureChoice: async () => undefined };
-});
-
 import ChatCard from './ChatCard.svelte';
 import { decisionKeys } from './chat-model';
 import HuddleReply from '../HuddleReply.svelte';
-import { sendPicks } from '../huddle-send-many.svelte';
 import type { HuddleItem } from '../huddle-model';
 
 let app: object | null = null;
@@ -91,10 +85,7 @@ describe('decision cards', () => {
 });
 
 describe('no session picker in an agent chat', () => {
-  const noDefault = { default: null, sessions: [{ id: 'a', label: 'one' }, { id: 'b', label: 'two' }] };
-
   test('no reply box has a picker', () => {
-    sendPicks.choices['agent:7'] = noDefault as never;
     const chat = draw(HuddleReply, { item: card('question:3'), agentName: 'Loki', noSend: true });
     expect(chat.querySelector('[data-huddle-reply-target]')).toBeNull();
     unmount(app as object, { outro: false });

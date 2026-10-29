@@ -18,9 +18,7 @@ from src.core.db_models import (
     SESSION_ORIGIN_IMPORTED,
 )
 from src.core.transcript_import_facts import TranscriptFacts
-from src.core.transcript_import_paths import (  # noqa: F401
-    SCRATCH_PREFIXES,
-    TITLE_MAX,
+from src.core.transcript_import_paths import (
     canonical,
     git_top_level,
     is_scratch,
@@ -34,7 +32,6 @@ PLAN_ALREADY_PRESENT = "already_present"
 
 PLAN_EXCLUDED_SCRATCH = "excluded_scratch"
 
-# could not be read
 PLAN_NOT_A_CONVERSATION = "not_a_conversation"
 
 PLAN_NOT_A_SESSION_REF = "not_a_session_ref"

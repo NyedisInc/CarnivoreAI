@@ -18,7 +18,7 @@ KIND_TRUST = "folder_trust"
 KIND_PERMISSION = "permission"
 KIND_CODEX = "codex_approval"
 KIND_OTHER = "other"
-KIND_UNREADABLE = "unreadable"  # a dialog is open
+KIND_UNREADABLE = "unreadable"
 
 ROLE_OPTION = "option"
 ROLE_OTHER = "other"
@@ -372,10 +372,25 @@ def _number_end_column(line: str) -> int:
     return re.search(r"\d+", line).end()
 
 
+def _footerless_end(lines: List[str]) -> Optional[int]:
+    end = len(lines)
+    while end and not lines[end - 1].strip():
+        end -= 1
+    tail = " ".join(ln.strip() for ln in lines[max(0, end - 3):end])
+    return end if end and tail.endswith("(esc)") else None
+
+
+def _footerless_ok(tail: List[str], cursor: Optional[int], question: str) -> bool:
+    return (cursor is not None and re.match(r"Do you want .*\?$", question) is not None
+            and all(not ln.strip() or _DESCRIPTION_LINE.match(ln) for ln in tail))
+
+
 def extract_dialog(text: str, family: Optional[str]) -> Optional[Dialog]:
     fam = FAMILY_CODEX if family == FAMILY_CODEX else FAMILY_CLAUDE
     lines = (text or "").splitlines()
     foot, tag = _footer_index(lines, fam)
+    if foot is None and fam == FAMILY_CLAUDE:
+        foot, tag = _footerless_end(lines), "claude"
     if foot is None or tag is None:
         return _claude_footer_dialog(lines) if fam == FAMILY_CLAUDE else None
     last = next((i for i in range(foot - 1, -1, -1) if _NUMBERED.match(lines[i])), None)
@@ -399,6 +414,8 @@ def extract_dialog(text: str, family: Optional[str]) -> Optional[Dialog]:
     if not rows:
         return None
     question, q_at = _question(lines, first, tag == "ask")
+    if _footer_index(lines, fam)[0] is None and not _footerless_ok(lines[last + 1:foot], cursor, question):
+        return _claude_footer_dialog(lines) if fam == FAMILY_CLAUDE else None
     top = q_at
     while top > 0 and not _RULE.match(lines[top - 1]) and q_at - top < _QUESTION_SCAN_LINES:
         top -= 1

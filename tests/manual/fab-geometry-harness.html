@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>fab geometry harness</title>
-<!-- height: 36px width: 36px -->
 <link rel="stylesheet" href="../../client/css/styles.css" />
 <link rel="stylesheet" href="../../client/css/terminal-tools.css" />
 <link rel="stylesheet" href="../../client/css/ios-chrome.css" />
@@ -75,6 +74,7 @@ if (location.search.indexOf('inner=1') === -1) {
     document.getElementById('desktop').addEventListener('load', render);
     render();
 } else {
+    // Inside the iframe: no nested frame, just this document's numbers.
     document.getElementById('desktop').remove();
     document.getElementById('out').textContent =
         JSON.stringify(report(window), null, 1);

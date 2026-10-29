@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -9,6 +10,7 @@ const ROOT = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..'
 import { makeEnv, toast, cards, settle } from './lib_toast_dom_stub.mjs';
 
 const tests = [];
+/** Description: register one named case. Inputs: name, fn. Output: None. */
 function test(name, fn) { tests.push([name, fn]); }
 
 function pinClock(mgr) {
@@ -234,6 +236,7 @@ test('the poller reconciles removals, against the RAW list, with an instant',
             'additions still go through the ring-filtered list');
     });
 
+// ----------------------------------------------------------------- runner
 
 let failed = 0;
 for (const [name, fn] of tests) {

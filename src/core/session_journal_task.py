@@ -44,6 +44,8 @@ _TRUTHY = {"1", "true", "yes", "on"}
 
 JOURNAL_LOCK = threading.Lock()
 
+BOOT_PASS_ATTEMPTS: int = 3
+
 
 def journal_enabled() -> bool:
     raw = os.environ.get(ENABLE_ENV)
@@ -231,6 +233,7 @@ class SessionJournalScheduler:
 
     async def _loop(self) -> None:
         first = True
+        boot_failures = 0
         while not self._cancel.is_set():
             try:
                 if first:
@@ -243,8 +246,11 @@ class SessionJournalScheduler:
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001
-                first = False
-                logger.warning("session_journal_pass_crashed", error=f"{type(exc).__name__}: {exc}")
+                if first:
+                    boot_failures += 1
+                    first = boot_failures < BOOT_PASS_ATTEMPTS
+                logger.warning("session_journal_pass_crashed", error=f"{type(exc).__name__}: {exc}",
+                               boot_failures=boot_failures, boot_retry_pending=first)
             if self._cancel.is_set():
                 break
             await asyncio.sleep(self.interval)

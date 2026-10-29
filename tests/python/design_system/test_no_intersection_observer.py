@@ -9,10 +9,10 @@ KNOWN_OBSERVERS = ["web/src/lib/widgets-page/PlaceDock.svelte"]
 COMMENT = re.compile(r"^\s*(?://|/\*|\*)")
 
 
-def offenders(files):
+def offenders(files, *, root: Path = REPO):
     found = []
     for path in files:
-        rel = path.relative_to(REPO).as_posix()
+        rel = path.relative_to(root).as_posix()
         if ".test." in path.name or "/fixtures/" in rel:
             continue
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -25,13 +25,11 @@ def production_files():
     return [p for root in ROOTS for p in root.rglob("*") if p.suffix in SUFFIXES and p.is_file()]
 
 
-def test_scanner_can_go_red():
-    planted = REPO / "client" / "js" / "zz_planted_for_test.js"
+def test_scanner_can_go_red(tmp_path: Path) -> None:
+    planted = tmp_path / "client" / "js" / "planted.js"
+    planted.parent.mkdir(parents=True)
     planted.write_text("const o = new IntersectionObserver(() => {});\n", encoding="utf-8")
-    try:
-        assert offenders([planted]) == ["client/js/zz_planted_for_test.js:1"]
-    finally:
-        planted.unlink()
+    assert offenders([planted], root=tmp_path) == ["client/js/planted.js:1"]
 
 
 def test_no_real_intersection_observer_in_production_code():

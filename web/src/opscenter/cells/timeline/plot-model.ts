@@ -7,7 +7,6 @@ export const COLUMN_DETAIL_SHARE = 0.28;
 export const COLUMN_DETAIL_MIN_PX = 150;
 export const COLUMN_DETAIL_MAX_PX = 260;
 export const COLUMN_INSET_PX = 8;
-/* waiting on you */
 export const WAITING_KINDS: readonly string[] = ['question', 'startup'];
 
 export type Body = 'list' | 'column';
@@ -42,7 +41,6 @@ export type Item =
   | { key: string; kind: 'cluster'; marks: Mark[]; x: number }
   | { key: string; kind: 'sleep'; gap: Gap; x: number; x1: number };
 
-/* waiting on you */
 export interface Band {
   key: string;
   state: 'busy' | 'idle' | 'waiting';

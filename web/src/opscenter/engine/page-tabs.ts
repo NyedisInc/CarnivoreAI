@@ -30,7 +30,6 @@ export function pageTabOfRowName(name: string): string | null {
   return BROWSER_ID.test(id) ? pageTabId(id) : null;
 }
 
-/*  hidden  */
 export function pageSlotFor(tab: string, taken: readonly string[]): string | null {
   const id = pageIdOfTab(tab);
   if (id === null) return null;

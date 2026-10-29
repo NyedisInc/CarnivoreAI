@@ -1,4 +1,3 @@
-/*  hidden  */
 import type { FrameReport, IdleReport } from '../sdk/widget-lab';
 
 export interface HarnessState {

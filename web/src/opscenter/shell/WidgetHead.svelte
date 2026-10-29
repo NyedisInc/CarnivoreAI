@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* pop-out window */
   import type { Snippet } from 'svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../../lib/base/IconButton.svelte';
@@ -153,12 +152,12 @@
     {@render cluster()}
   {:else}
     {#if titleShort}
-      <!-- display: none -->
+      
       <h2 class="oc-frame-name"><span class="oc-frame-name-full">{title}</span><span class="oc-frame-name-short">{titleShort}</span></h2>
     {:else}
       <h2 class="oc-frame-name">{title}</h2>
     {/if}
-    <!-- could not -->
+    <!-- could not determine -->
     {#if meta?.showCount && count !== null}
       <span class="oc-frame-count oc-frame-count-narrow-drop">{t('opscenter.frame.count', { count })}</span>
     {/if}
@@ -196,7 +195,9 @@
     }
 
     .oc-frame-name {
-      --oc-frame-name-min: 5ch;
+      --oc-frame-name-min: 14ch;
+      min-width: min(var(--oc-frame-name-min), 100%);
+      flex-shrink: 0.1;
       margin: 0;
       font-size: var(--oc-fs-title);
       font-weight: 400;
@@ -300,7 +301,7 @@
       }
 
       .oc-frame-name {
-        min-width: min(var(--oc-frame-name-min), 100%);
+        --oc-frame-name-min: 5ch;
       }
 
       .oc-frame-control {

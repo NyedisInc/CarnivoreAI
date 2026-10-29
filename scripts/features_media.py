@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +28,7 @@ STEP_OPS: dict[str, type | tuple[type, ...]] = {
 }
 SHOT_KINDS = ("screenshot", "gif", "icon")
 SHOT_KEYS = {"name", "kind", "steps", "record", "target", "clip", "pad", "hide"}
-SPEC_KEYS = {"feature", "viewport", "theme", "scale", "seed", "mocks", "shots", "drawer_width"}
+SPEC_KEYS = {"feature", "viewport", "theme", "scale", "seed", "mocks", "shots", "drawer_width", "unpaired"}
 SEED_KEYS = {"sessions", "preferences", "config", "transcripts"}
 
 
@@ -72,14 +73,23 @@ def validate_capture_spec(spec: Any, fid: str, where: str) -> tuple[list[str], s
     dw = spec.get("drawer_width")
     if dw is not None and not (isinstance(dw, int) and not isinstance(dw, bool) and 240 <= dw <= 480):
         errors.append(f"{where}: 'drawer_width' must be an int from 240 to 480")
+    unpaired = spec.get("unpaired", False)
+    if not isinstance(unpaired, bool):
+        errors.append(f"{where}: 'unpaired' must be true or false")
+    elif unpaired and spec.get("seed"):
+        errors.append(f"{where}: an 'unpaired' spec has no sign-in, so it cannot carry a 'seed' (mocks are fine)")
     seed = spec.get("seed", {})
     if not isinstance(seed, dict) or set(seed) - SEED_KEYS:
         errors.append(f"{where}: 'seed' may only carry {sorted(SEED_KEYS)}")
     mocks = spec.get("mocks", [])
     if not isinstance(mocks, list) or not all(
-            isinstance(m, dict) and isinstance(m.get("url"), str) and "/api/" in m["url"] and "json" in m
-            and set(m) <= {"url", "json"} for m in mocks):
-        errors.append(f"{where}: 'mocks' must be a list of {{\"url\": \"**/api/...\", \"json\": ...}}")
+            isinstance(m, dict) and isinstance(m.get("url"), str) and "/api/" in m["url"]
+            and ("json" in m) != ("json_file" in m) and set(m) <= {"url", "json", "json_file"} for m in mocks):
+        errors.append(f"{where}: 'mocks' must be a list of {{\"url\": \"**/api/...\", \"json\": ...}} "
+                      "or {\"url\": ..., \"json_file\": \"fixtures/<name>.json\"}")
+    errors += [f"{where}: mock json_file {m['json_file']!r} must be fixtures/<name>.json"
+               for m in mocks if isinstance(m, dict) and isinstance(m.get("json_file"), str)
+               and not re.fullmatch(r"fixtures/[\w.-]+\.json", m["json_file"])]
     shots = spec.get("shots")
     produced: set[str] = set()
     if not isinstance(shots, list) or not shots:

@@ -1,8 +1,8 @@
-/* already exists */
 import {
     PROJECT_CREATE_KEYS,
     uniqueNameFailure,
 } from '../../../../client/js/labels/project-create.js';
+import { refusedWith } from './refusal-shape';
 import type { Translate } from '../sessions/types';
 import type { CreateHost } from './create-host';
 import type { ModalOpeners } from './modals';
@@ -18,7 +18,6 @@ interface ApiError extends Error {
     body?: { existing_project?: { name?: string | null } | null } | null;
 }
 
-/* something else */
 export async function saveProjectWithUniqueName(
     host: CreateHost,
     row: { name: string; path: string; description?: string | null },
@@ -39,8 +38,7 @@ export async function saveProjectWithUniqueName(
                 if (existing) return String(existing);
                 throw error;
             }
-            const message = error instanceof Error ? error.message : String(error ?? '');
-            if (!message.includes('already exists')) throw error;
+            if (!refusedWith(error, { code: 'project_name_taken', phrase: 'already exists' })) throw error;
             attempt = `${row.name} (${i + 2})`;
         }
     }

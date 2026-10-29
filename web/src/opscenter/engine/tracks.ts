@@ -44,6 +44,7 @@ export interface SurfaceTracks {
 
 export const GUTTER = 12;
 
+/* and stopping at */
 export const CELL_SQUEEZE_MIN = 44;
 
 interface SpanBox {

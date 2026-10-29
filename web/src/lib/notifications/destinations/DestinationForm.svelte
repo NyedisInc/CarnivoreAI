@@ -2,6 +2,7 @@
 <script lang="ts">
     import { t as reactiveT } from '../../i18n/index.svelte';
     import type { Translate } from '../../sessions/types';
+    import { Button, Field, Select } from '../../base';
     import Check from '../../../opscenter/ui/Check.svelte';
     import '../../settings-page/panel-kit/panel-kit.css';
     import './destinations.css';
@@ -52,26 +53,24 @@
         {/if}
         <label class="tm__field">
             <span class="oc-key">{t('settings.notify.dest.form.name')}</span>
-            <input class="oc-field" type="text" bind:value={draft.name} disabled={busy} maxlength="80" autocomplete="off" data-notify="name" />
+            <Field bind:value={draft.name} disabled={busy} maxlength={80} autocomplete="off" data-notify="name" />
         </label>
         {#each kind.public_fields as field (field.name)}
             <label class="tm__field">
                 <span class="oc-key">{label(field)}{field.required ? '' : ` (${t('settings.notify.dest.form.optional')})`}</span>
                 {#if field.type === 'enum' && field.choices.length > 0}
-                    <select class="oc-field" bind:value={draft.config[field.name]} disabled={busy} data-notify={`field-${field.name}`}>
-                        {#if !field.required}<option value="">{t('settings.notify.dest.form.default_choice')}</option>{/if}
-                        {#each field.choices as choice (choice)}<option value={choice}>{choice}</option>{/each}
-                    </select>
+                    <Select bind:value={() => draft.config[field.name] ?? '', (v) => (draft.config[field.name] = v)} disabled={busy} data-notify={`field-${field.name}`}
+                        options={[...(field.required ? [] : [{ value: '', label: t('settings.notify.dest.form.default_choice') }]), ...field.choices.map((choice) => ({ value: choice, label: choice }))]} />
                 {:else}
-                    <input class="oc-field" type={field.type === 'int' ? 'number' : 'text'} bind:value={draft.config[field.name]} disabled={busy} autocomplete="off"
-                        spellcheck="false" data-notify={`field-${field.name}`} />
+                    <Field type={field.type === 'int' ? 'number' : 'text'} bind:value={() => draft.config[field.name] ?? '', (v) => (draft.config[field.name] = v)} disabled={busy} autocomplete="off"
+                        spellcheck={false} data-notify={`field-${field.name}`} />
                 {/if}
             </label>
         {/each}
         {#each kind.secret_fields as field (field.name)}
             <label class="tm__field">
                 <span class="oc-key">{label(field)}{field.required ? '' : ` (${t('settings.notify.dest.form.optional')})`}</span>
-                <input class="oc-field" use:secretField bind:value={draft.secrets[field.name]} disabled={busy}
+                <Field {@attach (node) => secretField(node as HTMLInputElement)} bind:value={() => draft.secrets[field.name] ?? '', (v) => (draft.secrets[field.name] = v)} disabled={busy}
                     placeholder={t(editing && isSet(field.name) ? 'settings.notify.dest.form.secret_keep' : field.type === 'list' ? 'settings.notify.dest.form.list_hint' : 'settings.notify.dest.form.secret_placeholder')}
                     data-notify={`secret-${field.name}`} />
                 {#if editing}
@@ -93,7 +92,7 @@
             onToggle={(next) => (localOnly = next)} />
     {/if}
     <div class="tm__actions">
-        <button type="button" class="modal-btn modal-btn-secondary" disabled={busy} data-notify="cancel" onclick={onCancel}>{t('settings.notify.dest.form.cancel')}</button>
-        <button type="submit" class="modal-btn modal-btn-confirm" disabled={busy || !ready} data-notify="save">{t(editing ? 'settings.notify.dest.form.save' : 'settings.notify.dest.form.add_button')}</button>
+        <Button disabled={busy} data-notify="cancel" onclick={onCancel}>{t('settings.notify.dest.form.cancel')}</Button>
+        <Button type="submit" variant="confirm" disabled={busy || !ready} data-notify="save">{t(editing ? 'settings.notify.dest.form.save' : 'settings.notify.dest.form.add_button')}</Button>
     </div>
 </form>

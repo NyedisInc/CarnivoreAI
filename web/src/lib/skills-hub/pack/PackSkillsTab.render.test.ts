@@ -13,12 +13,12 @@ const row = (name: string, state: string, synced: boolean, cells: Record<string,
 
 const alphaView = () => ({
   role: 'alpha',
-  alpha: { id: 'a', label: 'hostb' },
+  alpha: { id: 'a', label: 'nostromo' },
   gen: 3,
   problem: null,
   hold: null,
   choices: { mode: 'some', include: [['claude', 'sme']], exclude: [] },
-  peers: { t: peer('hosta', 'in sync', [['claude', 'big', 'too large']]), m: peer('hostb', 'differs') },
+  peers: { t: peer('studio', 'in sync', [['claude', 'big', 'too large']]), m: peer('mini', 'differs') },
   rows: [
     row('sme', 'synced', true, { t: 'in sync', m: 'syncing' }),
     row('new', 'synced', true, { t: 'missing', m: 'differs' }),
@@ -31,11 +31,11 @@ const alphaView = () => ({
 const receiverView = () => ({
   role: 'receiver',
   read_only: true,
-  alpha: { id: 'a', label: 'hostb' },
+  alpha: { id: 'a', label: 'nostromo' },
   applied_gen: 3,
   rows: [{ family: 'claude', name: 'sme', synced: true, state: 'in sync', digest: 'd1' }],
 });
-const preview = { skills: [], computers: [{ id: 't', label: 'hosta', state: 'ok', add: 1, replace: 0, same: 0, conflict: 0, skills: { 'claude/sme': 'will add' } }], total_bytes: 10, total_files: 2, choices: {}, plan_token: 'tok1' };
+const preview = { skills: [], computers: [{ id: 't', label: 'studio', state: 'ok', add: 1, replace: 0, same: 0, conflict: 0, skills: { 'claude/sme': 'will add' } }], total_bytes: 10, total_files: 2, choices: {}, plan_token: 'tok1' };
 
 let app: ReturnType<typeof mount> | null = null;
 const settle = async () => {
@@ -73,12 +73,12 @@ test('every cell state is a word plus a shape mark', async () => {
     expect(c.querySelector('.lsk-cell__word')?.textContent?.trim().length, c.dataset.state).toBeGreaterThan(0);
   }
   expect(q('[data-pks-cell="big|t"]')?.textContent).toContain('too large');
-  expect(q('[data-pks-alpha]')?.textContent).toContain('hostb');
+  expect(q('[data-pks-alpha]')?.textContent).toContain('nostromo');
 });
 
 test('a computer that is not alpha is read only and says where to change it', async () => {
   await open(receiverView());
-  expect(q('[data-pks-readonly]')?.textContent).toContain('change it on hostb');
+  expect(q('[data-pks-readonly]')?.textContent).toContain('change it on nostromo');
   expect(q<HTMLButtonElement>('[data-pks-switch="sme"]')!.disabled).toBe(true);
   expect(q<HTMLButtonElement>('[data-pks-all]')!.disabled).toBe(true);
 });
@@ -188,7 +188,7 @@ test('a one-skill sheet says how many other skills were left out of the preview,
   q('[data-pks-switch="lone"]')!.click();
   await settle();
   expect(q('[data-pks-others]')!.textContent).toMatch(/3/);
-  expect(q('[data-pks-sheet]')!.textContent).not.toContain('ashhaven');
+  expect(q('[data-pks-sheet]')!.textContent).not.toContain('dummyproof');
 });
 
 test('a skill with one held family and one syncable family keeps stop syncing and remove everywhere', async () => {
@@ -251,7 +251,7 @@ test('SKILL, GLOBAL and a computer label wear one label style, and the header ke
   expect(await cascaded(ths[1]!, 'box-shadow', false)).toContain('--oc-line-rule');
 });
 
-const takePreview = { family: 'claude', name: 'new', digest: 'd9', files: 2, bytes: 40, scripts: ['scripts/run.sh'], here: 'differs', from: 'hostb', plan_token: 'tk9' };
+const takePreview = { family: 'claude', name: 'new', digest: 'd9', files: 2, bytes: 40, scripts: ['scripts/run.sh'], here: 'differs', from: 'mini', plan_token: 'tk9' };
 
 test('take it shows on another computers differing cell only, and its sheet confirms after the dry run with its token', async () => {
   const view = alphaView();

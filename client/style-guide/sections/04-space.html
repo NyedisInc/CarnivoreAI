@@ -48,6 +48,9 @@ small and square.</p>
         (<code>--pl-gutter</code>). Prefer more space over less, with grey dividers between list items. A title row pads
         0 12 to 14px; a panel body pads 12px; a dialog footer 12 to 16px.</dd>
     <dt>between sections</dt>
+    <dd>24px (<code>--oc-space-5</code>) between two titled sections, set once as the column's <code>gap</code>; 12px
+        (<code>--oc-space-3</code>) or less inside a section. The step between sections is always larger than any step
+        inside one (#2469, round 4 ruling, 2026-10-24; <a href="#panels-sections">a column of sections</a>).</dd>
     <dt>hairlines</dt>
     <dd>1px (<code>--oc-border</code>) in <code>--oc-line-rule</code> between regions, <code>--oc-line-faint</code>
         between list rows, <code>--oc-line-panel</code> for a panel or quiet control edge. A title row's rule is an inset
@@ -86,4 +89,10 @@ small and square.</p>
     <li><strong>A layout jump on a state change.</strong> The restart picker's footer wrapped when "restart" became "kill
         and restart" and the centred modal shifted every row above it (#592). Size the container for the longest label
         of every state.</li>
+    <li><strong>Two rules owning one gap.</strong> Two margins that meet (a paragraph's bottom margin and the next
+        block's top margin) or a first child that keeps its top margin add up to a gap nobody chose. The publish page port
+        landed 12 to 30px off the design for related reasons: a missing wrapper, stored fields that were absent and
+        collapsed the layout, an invented footer margin, a thumbnail that moved the log (#2469, port TODO,
+        2026-10-24). Fix the cause, then let one rule own each gap: the column's <code>gap</code> between sections, the
+        body's <code>gap</code> inside one, a first child's top margin zero.</li>
 </ul>

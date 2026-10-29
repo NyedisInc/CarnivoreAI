@@ -9,7 +9,7 @@ import CratePanel from './CratePanel.svelte';
 
 setLocale('en');
 
-const BUNDLE_ID = 'crate-20261017T000000Z-project-225fde27';
+const BUNDLE_ID = 'crate-20261017T000000Z-project-1a2b3c4d';
 const SUMMARY = { folders: { primary: { path: '/state/crates', state: 'ok', reason: null, free_bytes: 5 }, second: null }, encrypt_default: false, recipients: [], running_job: null, bundles: 1 };
 const BUNDLE = { bundle_id: BUNDLE_ID, scope: 'project', label: 'before the move', created_at: '2026-10-17T00:00:00Z', verified_at: null, conversations: 3,
     locations: [{ where: '/state/crates/crate-x.crate', verified_at: null, state: 'present' }] };

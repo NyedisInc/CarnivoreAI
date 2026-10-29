@@ -1,4 +1,3 @@
-/* something else */
 import { ensurePanel, panelInstance, unmountPanel } from '../mount';
 import { whenLegacyBootComplete } from '../legacy-boot';
 import LedgerScreen from './LedgerScreen.svelte';
@@ -19,6 +18,7 @@ interface ScreenHandle {
     isOpen?: () => boolean;
 }
 
+/* the home screen */
 export function mountLedgerScreen(): Record<string, unknown> | null {
     return ensurePanel(LEDGER_SCREEN_CONTAINER, LEDGER_SCREEN_PANEL, {});
 }

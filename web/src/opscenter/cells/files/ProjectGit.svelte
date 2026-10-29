@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* could not */
   import type { SessionGitStatus } from '../../api/types';
   import { t } from '../../../lib/i18n/index.svelte';
   import { fk } from './labels';

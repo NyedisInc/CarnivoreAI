@@ -145,12 +145,6 @@ def _local_prefix_sha(path: Path, count: int) -> str:
 
 
 def grow_size(dest: Path, record: FileRecord, reader: CrateReader) -> Optional[int]:
-    """The size of the local file at ``dest`` when it is STILL a strict prefix of the crate's copy, else None. Blocking.
-
-    The apply calls this just before it replaces the file, so a file somebody extended or changed after the preview is never
-    overwritten. A placeholder, a link or anything that is not a regular file answers None.
-    Example: grow_size(Path('/h/p/c.jsonl'), record, reader) -> 1024
-    """
     try:
         info = os.lstat(dest)
         if not stat.S_ISREG(info.st_mode) or is_dataless_file(dest) or not 0 < info.st_size < record.length:

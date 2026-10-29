@@ -109,7 +109,6 @@ export function scaleStepFor(percent, stops) {
     return stops.length + 1;
 }
 
-/* anything at all */
 export function compactTokens(value) {
     const n = toNumber(value);
     if (n === null || n < 0) return null;
@@ -119,7 +118,6 @@ export function compactTokens(value) {
     return `${Math.floor(whole / 1000000)}.${Math.floor((whole % 1000000) / 100000)}M`;
 }
 
-/* anything at all nothing at all */
 export function compactContextTokens(value) {
     const n = toNumber(value);
     if (n === null || n < 0) return null;
@@ -133,6 +131,7 @@ export function compactContextTokens(value) {
 
 export const COST_BRIGHT_DECIMALS = 2;
 
+/* there is nothing */
 export function splitAmountText(text) {
     if (typeof text !== 'string') return null;
     const at = text.lastIndexOf('.');
@@ -229,7 +228,6 @@ function cleanText(value) {
     return typeof value === 'string' && value.trim() !== '' ? value : null;
 }
 
-/* could not */
 export function usagePanelLabels(usage, t, options) {
     const opts = options || {};
     const title = cleanText(opts.sessionName) || t(USAGE_PANEL_KEYS.title);
@@ -332,7 +330,6 @@ function readableWindows(account) {
     return windows.filter((w) => toNumber(w && w.used_pct) !== null);
 }
 
-/* label: ' */
 export function windowLabels(account, t, nowMs) {
     return readableWindows(account).map((window) => {
         const pct = toNumber(window.used_pct);
@@ -352,7 +349,6 @@ export function windowLabels(account, t, nowMs) {
             paceState: pace.state,
             percentText: t(USAGE_PANEL_KEYS.percent, { percent: Math.round(pct) }),
             meterText: windowMeterText(label, pct, pace, t),
-            // reset in 4d 3h
             resetText: resetText(window.resets_at, t, nowMs),
             resetDuration: resetDuration(window.resets_at, t, nowMs),
             resetAria: resetAriaLabel(window.resets_at, t, nowMs),

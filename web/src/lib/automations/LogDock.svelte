@@ -1,4 +1,4 @@
-<!-- automations list -->
+
 <script lang="ts">
   import Button from '../base/Button.svelte';
   import { t } from '../i18n/index.svelte';

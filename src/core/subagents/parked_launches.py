@@ -12,7 +12,8 @@ from typing import Any, BinaryIO, Callable, Dict, List, Optional, Set, Tuple
 import structlog
 
 from src.core.attention.transcript_contract import check_window
-from src.core.attention.transcript_records import _is_real_user_prompt
+from src.core.stat_gate.dir_names import entry_names
+from src.core.attention.transcript_records import is_real_user_prompt
 from src.core.attention.turn_counts import (
     KIND_MONITOR,
     KIND_SHELL,
@@ -158,14 +159,14 @@ class OpenLaunches:
 
 def _launch_from(record: Dict[str, Any], agent_id: str) -> Optional[OpenLaunch]:
     launch = async_launch(record)
-    if launch is None or launch["kind"] not in (KIND_SHELL, KIND_MONITOR):
+    if launch is None or launch.kind not in (KIND_SHELL, KIND_MONITOR):
         return None
     at = parse_timestamp(record.get("timestamp"))
-    task_id = launch["task_id"]
+    task_id = launch.task_id
     if at is None or not task_id:
         return None
     result = record["toolUseResult"]
-    if launch["kind"] == KIND_SHELL:
+    if launch.kind == KIND_SHELL:
         output = None
         for block in content_blocks(record, "tool_result"):
             text = block.get("content")
@@ -219,7 +220,7 @@ def _scan_prompts(handle: BinaryIO, mark: _PromptMark, _unused: str) -> Tuple[_P
     newest = mark.at
     for line in scan:
         record = decode_object(line)
-        if record is None or not _is_real_user_prompt(record):
+        if record is None or not is_real_user_prompt(record):
             continue
         at = parse_timestamp(record.get("timestamp"))
         if at is not None and (newest is None or at > newest):
@@ -281,16 +282,15 @@ def _retired(task_id: str, ledger: _Ledger, *indexes: Optional[CompletionIndex])
 def _candidates(directory: Path, since: datetime, index: Optional[CompletionIndex]) -> Set[str]:
     found: Set[str] = set()
     floor = (since - CLOCK_SKEW).timestamp()
-    with os.scandir(directory) as entries:
-        for entry in entries:
-            match = _AGENT_FILE_RE.match(entry.name)
-            if match is None:
-                continue
-            try:
-                if entry.stat().st_mtime >= floor:
-                    found.add(match.group(1))
-            except OSError:
-                continue
+    for name in entry_names(directory):
+        match = _AGENT_FILE_RE.match(name)
+        if match is None:
+            continue
+        try:
+            if os.stat(os.path.join(directory, name)).st_mtime >= floor:
+                found.add(match.group(1))
+        except OSError:
+            continue
     for agent_id, end in (index.by_agent_id.items() if index is not None else ()):
         if end.at > since and _AGENT_FILE_RE.match("agent-%s.jsonl" % agent_id):
             if (directory / ("agent-%s.jsonl" % agent_id)).is_file():
@@ -374,8 +374,7 @@ def conversation_launches(parent_path: Path) -> Optional[List[Tuple[OpenLaunch, 
              for launch in parent.launches.values()]
     directory = subagents_dir_for(parent_path)
     try:
-        names = sorted(entry.name for entry in os.scandir(directory)
-                       if _AGENT_FILE_RE.match(entry.name))
+        names = [name for name in entry_names(directory) if _AGENT_FILE_RE.match(name)]
     except OSError:
         names = []
     for name in names:

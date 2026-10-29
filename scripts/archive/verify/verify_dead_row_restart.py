@@ -1,47 +1,4 @@
 #!/usr/bin/env python3
-"""A dead session row must offer a way BACK IN, not only a way to delete it.
-
-WHAT THIS EXISTS TO CATCH
-
-WHY THIS IS A PIXEL HARNESS AND NOT A DOM ASSERTION
-
-Because the defect is visible to a human and the app's own history says a
-green DOM check is not evidence of a rendered control: an element can be
-present in the markup, pass every ``textContent`` and element-presence
-assertion, and still render as nothing, or render in the wrong colour and
-read as the wrong kind of control. So this measures the RENDERED result in
-a real browser at a real viewport:
-
-  * the restart button exists AND has a non-zero bounding box,
-  * its SVG has a non-zero bounding box, so it is not a blank square,
-  * it does not render in the same colour as the trash beside it - a
-    non-destructive control painted in the destructive palette is a lie
-    that also costs the trash its only warning,
-  * Remove is STILL there, because losing delete would trade one gap for
-    another,
-  * and then it is actually CLICKED, and the pane is asserted alive again
-    against real tmux - not against a function having been called.
-
-The session is a real tmux session on a socket this harness creates and
-kills, never the production one.
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS              - restart is rendered, distinct, and revives the pane
-  1  FAIL              - the dead row offers no usable restart, or it does
-                         not work
-  2  CANNOT DETERMINE  - the measurement could not be taken at all
-
-POSITIVE CONTROL. ``--legacy`` restores the shipped behaviour in the live
-page (``actionsFor`` is replaced with the old single-remove rule before the
-list paints), so the harness must FAIL. A harness never shown capable of
-failing proves nothing when it passes::
-
-    /opt/homebrew/bin/python3 scripts/verify_dead_row_restart.py           # expect 0
-    /opt/homebrew/bin/python3 scripts/verify_dead_row_restart.py --legacy  # expect 1
-
-playwright is not importable under this project's venv. Run this with an
-interpreter that has it, e.g. /opt/homebrew/bin/python3.
-"""
 
 from __future__ import annotations
 
@@ -191,7 +148,6 @@ def main() -> int:
                 return CANNOT_DETERMINE
 
             if LEGACY:
-                # could not
                 page.evaluate(
                     """() => {
                         const A = window.SessionRowActions;

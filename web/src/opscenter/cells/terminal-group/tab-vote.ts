@@ -1,4 +1,4 @@
-/*  hidden  */
+/* nobody is looking at */
 import { inputFocus } from '../../lib/input-focus.svelte';
 import type { TabPane } from '../../shell/frame-header.svelte';
 
@@ -10,7 +10,6 @@ function vote(): SizeVote | undefined {
   return (globalThis as { TerminalSizeVote?: SizeVote }).TerminalSizeVote;
 }
 
-/*  hidden  */
 export function followTab(
   client: unknown,
   slot: string,

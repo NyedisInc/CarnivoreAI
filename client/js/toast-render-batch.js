@@ -1,4 +1,4 @@
-/*  hidden  */
+/* against a plain */
 console.log('[ToastRenderBatch Module] Loading...');
 
 (function (global) {
@@ -6,7 +6,6 @@ console.log('[ToastRenderBatch Module] Loading...');
 
     var FALLBACK_MS = 32;
 
-    /* could not */
     function schedule(flush) {
         var done = false;
         function run() {

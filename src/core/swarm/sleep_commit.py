@@ -19,14 +19,6 @@ _repo_locks: Dict[str, "asyncio.Lock"] = {}
 
 
 async def run(agent: Dict[str, Any], message: str = "") -> Optional[Dict[str, Any]]:
-    """Commit the agent's memory paths, one commit at a time per repo; never raises for a repo or datastore condition.
-
-    Inputs: agent (``swarm_agents`` row dict); message (a commit message other than the default). Output: the ``CommitResult`` as a dict, None when the commit could not run.
-    A public or unknown origin without approval posts the approve card (carrying the fingerprint the check saw).
-    While the global Swarm switch is off nothing is committed and None is answered: the changed files stay in the
-      folder and the next sleep after a turn-on commits them (docs/swarm.md 4.10).
-    Example: await run(agent) -> {"status": "committed", "sha": "..."}
-    """
     if not switch.is_on():
         logger.info("swarm_commit_skipped_off", agent_id=agent.get("id"))
         return None

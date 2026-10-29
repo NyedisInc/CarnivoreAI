@@ -1,4 +1,3 @@
-/*  hidden  overflow: hidden */
 
 const watched = new WeakMap<Element, () => void>();
 
@@ -15,7 +14,6 @@ export function isTruncated(el: HTMLElement): boolean {
   return el.scrollWidth - el.clientWidth > TOLERANCE_PX;
 }
 
-/* <button use:titleWhenTruncated={'.oc-ptab__label'}> */
 export function titleWhenTruncated(node: HTMLElement, selector?: string): { destroy: () => void } {
   const label = (): HTMLElement => {
     const found = node.querySelector<HTMLElement>(selector ?? ':scope > [data-btn-label]');

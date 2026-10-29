@@ -19,7 +19,7 @@ from src.core.db_migration import ensure_db_migrated
 from src.core.federation import peer_hosts, peer_links, shadow_rows
 from src.models.blueprints import BlueprintSession
 
-IID = "iid-hosta"
+IID = "iid-studio"
 
 
 class Client:
@@ -54,8 +54,8 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setattr(peer_auth, "open_db", lambda: connect(path, create=False))
     monkeypatch.setattr(member_mod, "SHADOW_WAIT_SECONDS", 1.0)
     with closing(connect(path, create=False)) as conn:
-        peer = peer_hosts.upsert(conn, install_id=IID, label="hosta", grant_id="g", fid="f", initiator=True,
-                                 ssh_target="hosta")
+        peer = peer_hosts.upsert(conn, install_id=IID, label="studio", grant_id="g", fid="f", initiator=True,
+                                 ssh_target="studio")
         conn.execute("UPDATE hosts SET peer_state = 'connected' WHERE key = ?", (peer.key,))
         shadow = shadow_rows.sync_peer(conn, host_key=peer.key, peer_install_id=IID, complete=True, rows=[{
             "session_uuid": "11111111-2222-4333-8444-555555555555", "row_id": 9, "name": "carnivore_bp",

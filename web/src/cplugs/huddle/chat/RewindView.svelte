@@ -77,7 +77,6 @@
 
 <style>
   @layer components {
-    /* box-shadow */
     .hdw {
       flex: none;
       display: flex;

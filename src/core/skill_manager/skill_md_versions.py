@@ -1,11 +1,3 @@
-"""Saved versions of a local SKILL.md (issue #1925): a small SQLite under the state directory.
-
-Not ``carnivore.db`` and not the skill folder. A version is the FULL bytes of one state of the file,
-keyed by the real path of that SKILL.md AND the identity of its folder: a save stores the new text with
-the note typed for it (and, first, the text it replaced when no version holds that yet), so a rollback
-can itself be rolled back. Only the last :data:`KEEP_PER_SKILL` versions of one file are kept. A skill
-removed and later recreated at the same path is a different folder, so it starts with no versions.
-"""
 
 from __future__ import annotations
 

@@ -152,7 +152,12 @@ def _dialog_answer(ctx: _Ctx) -> tuple:
     choice = ctx.args.get("choice") or {}
     kind = next(iter(choice), "")
     value = choice.get(kind)
-    picked = ", ".join(str(v) for v in value) if isinstance(value, list) else str(value) if kind == "option" else ""
+    if isinstance(value, list):
+        picked = ", ".join(str(v) for v in value)
+    elif kind in ("option", "other") and value:
+        picked = _cut(_no_breaks(str(value)), _PICKS_MAX)
+    else:
+        picked = ""
     cons = [_c("answers_with", choice=picked)] if picked else [_c("answers_other")]
     return ("answer", "session_dialog", ctx.target, CONFIRM, cons + [_c("agent_continues")], [])
 

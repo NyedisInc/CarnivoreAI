@@ -79,7 +79,7 @@ export const ROW_CASES: readonly RowCase[] = [
     },
     { name: 'session mcp drop idle', type: 'session', ctx: { ...BASE, status: 'idle', mcpDropped: true, mcpServers: 'github' } },
     { name: 'session mcp drop working', type: 'session', ctx: { ...BASE, mcpDropped: true, mcpServers: 'github, slack' } },
-    { name: 'session remote', type: 'session', ctx: { ...BASE, hostKey: 'peer-hostb' } },
+    { name: 'session remote', type: 'session', ctx: { ...BASE, hostKey: 'peer-mini' } },
     { name: 'session adopted', type: 'session', ctx: { ...BASE, owned: false, forkable: false, forkReason: 'cannot fork: carnivore did not create this agent, so it has no recorded conversation to branch from', agentFamily: '' } },
     { name: 'session not renameable', type: 'session', ctx: { ...BASE, renameable: false, renameReason: 'cannot rename: this agent has no live backend to send the change to' } },
     { name: 'session in group', type: 'session', ctx: { ...BASE, groupUuid: 'g-1', groupName: 'crew' } },

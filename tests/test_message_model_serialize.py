@@ -11,23 +11,19 @@ from src.core.message_model_serialize import (
     SERIALIZER_STYLES,
     STYLE_NAMES,
     canonical_json,
-    detect_style,
     identity_key,
-    join_lines,
     parse_line,
     render_line,
     render_with_style,
-    scalar_fields,
     session_ref_scheme,
     sha256_text,
-    split_lines,
     split_record,
     stored_body_json,
 )
 
 REAL_SHAPED_LINE = (
     '{"parentUuid":"p1","isSidechain":false,"userType":"external",'
-    '"cwd":"/Users/example","sessionId":"s1","version":"2.0.76",'
+    '"cwd":"/Users/j","sessionId":"s1","version":"2.0.76",'
     '"gitBranch":"main","type":"assistant",'
     '"message":{"role":"assistant","model":"claude-opus-5",'
     '"content":[{"type":"text","text":"hi"}]},'
@@ -38,7 +34,7 @@ REAL_SHAPED_LINE = (
 def _round_trip(line: str) -> str:
     value = json.loads(line)
     split = split_record(value)
-    style = detect_style(value, line)
+    style = next((n for n in STYLE_NAMES if render_with_style(value, n) == line), None)
     assert style is not None, "no registered style reproduced the line"
     return render_line(split.body, split.envelope, split.key_order, style)
 
@@ -61,17 +57,6 @@ def test_an_envelope_key_in_the_middle_goes_back_to_the_middle():
 def test_non_ascii_round_trips():
     line = '{"text":"café — done"}'
     assert _round_trip(line) == line
-
-
-def test_every_registered_style_is_detected_for_its_own_output():
-    value = {"b": 1, "a": [1, 2], "c": {"d": "e"}}
-    for name in STYLE_NAMES:
-        rendered = render_with_style(value, name)
-        assert detect_style(value, rendered) is not None
-
-
-def test_detect_style_returns_none_rather_than_guessing():
-    assert detect_style({"a": 1}, '{ "a" : 1 }') is None
 
 
 
@@ -110,39 +95,6 @@ def test_reassembly_refuses_to_emit_a_short_object():
 
 
 
-def test_scalar_fields_reaches_into_the_nested_message_for_role_and_model():
-    fields = scalar_fields(json.loads(REAL_SHAPED_LINE))
-    assert fields["record_type"] == "assistant"
-    assert fields["role"] == "assistant"
-    assert fields["model"] == "claude-opus-5"
-    assert fields["origin_session_ref"] == "s1"
-    assert fields["parent_uuid"] == "p1"
-
-
-def test_scalar_fields_returns_none_rather_than_a_default_for_absent_keys():
-    fields = scalar_fields({})
-    assert all(
-        fields[key] is None
-        for key in ("record_type", "role", "model", "compact_subtype",
-                    "parent_uuid", "ts", "origin_session_ref", "message_uuid")
-    )
-
-
-def test_both_compaction_shapes_produce_a_compact_subtype():
-    boundary = scalar_fields({"type": "system", "subtype": "compact_boundary"})
-    summary = scalar_fields({"type": "user", "isCompactSummary": True})
-    assert boundary["compact_subtype"] == "compact_boundary"
-    assert summary["compact_subtype"] == "isCompactSummary"
-    assert boundary["is_compact_boundary"] == 1
-    assert summary["is_compact_boundary"] == 1
-
-
-def test_an_unrelated_system_subtype_is_not_called_a_compact_subtype():
-    assert scalar_fields(
-        {"type": "system", "subtype": "something_else"}
-    )["compact_subtype"] is None
-
-
 def test_identity_key_has_no_null_to_be_exempted_by():
     assert identity_key(None, "ab") == ":ab"
     assert identity_key("u", "ab") == "u:ab"
@@ -156,19 +108,7 @@ def test_both_measured_agent_prefixes_are_recognised():
 
 
 def test_a_session_uuid_is_not_mistaken_for_an_agent_ref():
-    assert session_ref_scheme("d1b0f992-cd9d-4221-8044-46c08aa8790c") == "uuid"
-
-
-
-def test_split_and_join_are_exact_inverses():
-    for text in ("", "a\n", "a\nb\n", "a\nb", "a\n\nb\n", "\n"):
-        lines, trailing = split_lines(text)
-        assert join_lines(lines, trailing) == text
-
-
-def test_a_blank_line_in_the_middle_is_kept():
-    lines, _ = split_lines("a\n\nb\n")
-    assert lines == ["a", "", "b"]
+    assert session_ref_scheme("07e1cc0e-8a47-4029-8cfc-554f883ba28f") == "uuid"
 
 
 def test_parse_line_names_its_three_outcomes():

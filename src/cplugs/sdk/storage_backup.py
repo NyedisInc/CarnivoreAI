@@ -10,13 +10,14 @@ from typing import Dict, Optional
 
 import structlog
 
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.test_write_guard import assert_test_write_allowed
 
 logger = structlog.get_logger()
 
 
 class BackupFailed(Exception):
-    """The copy could not be made or did not verify; ``storage`` re-raises it as ``CplugSchemaError``."""
+    pass
 
 
 def _counts(conn: sqlite3.Connection) -> Dict[str, int]:
@@ -27,7 +28,7 @@ def _counts(conn: sqlite3.Connection) -> Dict[str, int]:
 
 def verify(copy: Path, *, expect_version: int, expect_counts: Dict[str, int]) -> None:
     try:
-        with closing(sqlite3.connect(f"{copy.resolve().as_uri()}?mode=ro", uri=True)) as check:
+        with closing(connect_readonly(copy)) as check:
             verdict = check.execute("PRAGMA integrity_check").fetchone()[0]
             version = int(check.execute("PRAGMA user_version").fetchone()[0])
             counts = _counts(check)

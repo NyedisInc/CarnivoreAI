@@ -98,6 +98,7 @@ export function squareState(agent: PanelAgent, row: ListingRow | undefined, nowM
   return 'unknown';
 }
 
+/* }, { activity_status: */
 export function sendOf(agent: PanelAgent, row: ListingRow | undefined): Tell | null {
   const status = row?.activity_status;
   if (status === 'question') return 'question';

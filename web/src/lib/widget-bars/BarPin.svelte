@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* the bottom bar */
   import Icon from '../../opscenter/ui/Icon.svelte';
   import IconButton from '../base/IconButton.svelte';
   import { t } from '../i18n/index.svelte';

@@ -100,15 +100,19 @@ def delegated_key_for(
     delegations: Tuple[Delegation, ...], publisher: str, key_id: str,
 ) -> Optional[PublicKey]:
     wanted = key_id.strip().upper()
+    reserved = publisher in RESERVED_CLAIM_HANDLES
     for delegation in delegations:
         if delegation.key.key_id != wanted:
+            continue
+        if reserved:
+            if delegation.custody == "kms" and delegation.handle == publisher:
+                return delegation.key
             continue
         if delegation.handle == publisher:
             return delegation.key
         if (
             delegation.handle == ANY_HANDLE
             and delegation.custody == "catalog"
-            and publisher not in RESERVED_CLAIM_HANDLES
         ):
             return delegation.key
     return None

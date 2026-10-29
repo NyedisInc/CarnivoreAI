@@ -42,7 +42,6 @@ const LOGO_OF: Readonly<Record<string, string>> = {
 
 const GLYPHS: Readonly<Record<string, string>> = { jev: 'bolt', local_audio: 'cap-speak', custom: 'plug', pushover: 'bell', webpush: 'bell', webhook: 'link' };
 
-/* <path d="..."/> */
 export function markFor(presetId: string): Mark {
     const logo = LOGO_OF[presetId];
     if (logo !== undefined && LOGOS[logo] !== undefined) return { paths: LOGOS[logo] };

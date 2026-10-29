@@ -14,7 +14,6 @@ export type CompareMode = 'side' | 'draft';
 
 export const DRAWER_DOCKS = ['left', 'bottom', 'right'] as const;
 export type DrawerDock = (typeof DRAWER_DOCKS)[number];
-/* pop-out window */
 export const PLACEMENT_ORDER = ['home', 'terminal', 'left', 'bottom', 'right', 'popout'] as const;
 export type Placement = (typeof PLACEMENT_ORDER)[number];
 
@@ -91,7 +90,6 @@ export function sizeNames(widget: LabWidget | undefined): string[] {
   return names;
 }
 
-/* the PREVIEW block */
 export interface SizeOption {
   name: string;
   widths: number[];

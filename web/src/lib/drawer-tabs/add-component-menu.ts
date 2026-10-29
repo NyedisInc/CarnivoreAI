@@ -33,7 +33,7 @@ export interface ProjectBucket {
   rows: SessionInfo[];
 }
 
-/* rogue agents */
+/* there is nothing */
 export function bucketByProject(
   rows: readonly SessionInfo[],
   current: string,

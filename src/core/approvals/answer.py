@@ -93,20 +93,6 @@ async def _confirm_review(answered: Dialog, capture: Capture, send: Send) -> Non
 
 async def answer_dialog(*, family: Optional[str], fingerprint: str, choice: Choice,
                         capture: Capture, send: Send) -> Dialog:
-    """Deliver ``choice`` to the open dialog whose fingerprint is ``fingerprint``.
-
-    Inputs: family ("claude" | "codex" | None); fingerprint (str) - the dialog the
-      caller saw; choice (Choice); capture / send - see the module docstring.
-    Output: the Dialog as it was when the answer began (its kind and fingerprint are
-      what the audit line records).
-    Raises: AnswerRefused - no_dialog, dialog_changed, cursor_unreadable,
-      cursor_mismatch, no_such_option, no_other_row, no_submit_row, not_multi_select,
-      other_needs_single_select, toggle_failed, no_plain_yes.
-    A ``plain`` choice reads its label off the fresh dialog: "yes" refuses ``no_plain_yes`` when the
-    dialog has no exact plain yes (never "Yes, and ..."); "no" with no decline row presses Esc.
-    Example: await answer_dialog(family="claude", fingerprint=fp,
-      choice=Choice(option="Blue"), capture=cap, send=snd)
-    """
     first = await _read(capture, family, fingerprint)
 
     async def read() -> Dialog:

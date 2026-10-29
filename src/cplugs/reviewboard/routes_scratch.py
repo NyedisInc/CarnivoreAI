@@ -48,7 +48,8 @@ def _viewport(text: Optional[str]) -> Optional[int]:
 
 @router.post("/scratch")
 async def post_scratch(request: Request, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """Post a page and its files to a scratch board, as the owner. Output: see the module docstring.
+
     The size is judged from ``Content-Length`` BEFORE the body is parsed (a request without one is refused 411: the server then reads
     no more than it declared), and the parser itself is bounded (``max_files``, ``max_fields``, ``max_part_size`` for text fields; Starlette answers 400 past one).
     """

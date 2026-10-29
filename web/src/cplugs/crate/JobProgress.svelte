@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { resourcePush, scaleStep, t as reactiveT, type Translate } from '../sdk';
-    import { LimitGauge } from '../sdk/ui';
+    import { Button, LimitGauge } from '../sdk/ui';
     import {
         JOBS_FAMILY,
         bytesText,
@@ -85,9 +85,7 @@
         <span class="pl-label">{label}</span>
         {#if phaseWord && running}<span class="tm__sub" data-crt-phase>{phaseWord}</span>{/if}
         {#if running}
-            <button type="button" class="oc-btn oc-btn--sm" data-crt-cancel disabled={cancelling} onclick={() => void cancel()}>
-                {t('cplug.crate.job.cancel')}
-            </button>
+            <Button size="sm" data-crt-cancel disabled={cancelling} onclick={() => void cancel()}>{t('cplug.crate.job.cancel')}</Button>
         {/if}
     </div>
     {#if running}

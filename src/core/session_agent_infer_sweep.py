@@ -32,7 +32,7 @@ def sweep_live_sessions(
         rows = _live_pane_rows(session_manager)
         if not rows:
             return 0, 0
-        socket = session_manager._tmux_socket_name()
+        socket = session_manager.tmux_socket_name()
         conn = session_manager._writable_datastore_connection()
         if conn is None:
             return 0, 0
@@ -78,7 +78,7 @@ def sweep_live_sessions(
                 candidates=list(inference.candidates),
                 detail=inference.detail,
             )
-        logger.info(
+        (logger.info if written else logger.debug)(
             "agent_infer_sweep_complete", examined=examined, written=written
         )
         return examined, written
@@ -94,18 +94,6 @@ def sweep_live_sessions(
 
 
 def _live_pane_rows(session_manager: Any) -> Sequence[dict]:
-    """One bulk tmux listing of every pane on the dedicated socket.
-
-    Description: reuses ``TmuxBackend.list_pane_status_all``, which is
-      already THE bulk pane read in this codebase and already returns the
-      four fields the sweep needs. A listing that did not answer yields
-      an empty sequence, which the sweep treats as "nothing measured" -
-      never as "no panes".
-    Inputs: session_manager (SessionManager).
-    Output: Sequence[dict] - rows with ``name``, ``created_at_epoch``,
-      ``pid`` and ``pane_current_command``.
-    Example: _live_pane_rows(mgr)[0]['name']  # 'cloude_api'
-    """
     from src.config import settings
     from src.core.session_backend import build_backend
     from src.core.tmux_listing import coerce_listing
@@ -120,7 +108,6 @@ def _live_pane_rows(session_manager: Any) -> Sequence[dict]:
         return ()
     listing = coerce_listing(probe.list_pane_status_all())
     if not listing.ok:
-        # did not answer
         logger.warning("agent_infer_sweep_listing_unavailable")
         return ()
     return listing.sessions or ()

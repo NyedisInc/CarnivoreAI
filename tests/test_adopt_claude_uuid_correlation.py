@@ -159,7 +159,7 @@ def test_filesystem_error_leaves_adopt_succeeding_with_null_uuid(
 
 
 RESUME_UUID = "82854c0e-a423-4591-a34f-a14cb92fbf41"
-PANE_PID = 4239
+PANE_PID = 99871
 
 
 def test_argv_resume_wins_end_to_end_over_a_predating_transcript(
@@ -179,7 +179,7 @@ def test_argv_resume_wins_end_to_end_over_a_predating_transcript(
                 pid=PANE_PID,
                 ppid=1,
                 command=(
-                    "/Users/example/.local/bin/claude "
+                    "/Users/sam/.local/bin/claude "
                     f"--resume {RESUME_UUID} --dangerously-skip-permissions"
                 ),
             )

@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* a fold chevron */
   import { getContext } from 'svelte';
   import { BODY_OPTIONS, DEFAULT_BODY_OPTIONS, type BodyOptions } from './task-manager-body-options';
   import { FoldChevron, Icon } from '../sdk/ui';

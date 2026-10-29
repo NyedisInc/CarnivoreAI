@@ -22,7 +22,6 @@ LEGACY_DB_FILENAMES: Tuple[str, ...] = ("cloude.db",)
 DB_BACKUP_PREFIX = "carnivore.db.bak-v"
 LEGACY_DB_BACKUP_PREFIXES: Tuple[str, ...] = ("cloude.db.bak-v",)
 
-# state directory
 STATE_DIR_NAME = "Carnivore"
 LEGACY_STATE_DIR_NAMES: Tuple[str, ...] = ("CloudeCode",)
 
@@ -38,13 +37,11 @@ LEGACY_ENV_PREFIXES: Tuple[str, ...] = ("CLOUDE_", "CLOUDECODE_")
 UPLOAD_DIR_NAME = ".carnivore_uploads"
 LEGACY_UPLOAD_DIR_NAMES: Tuple[str, ...] = (".cloude_uploads",)
 
-# own project
 
 BROWSER_KEY_PREFIX = "carnivore."
 LEGACY_BROWSER_KEY_PREFIXES: Tuple[str, ...] = ("cloude.",)
 
 RELEASE_REPO = "NyedisInc/CarnivoreAI"
-LEGACY_RELEASE_REPOS: Tuple[str, ...] = ("NyedisInc/CarnivoreAI",)
 
 LEGACY_MANAGED_HOOKS_MARKER = "# cloudecode-managed"
 

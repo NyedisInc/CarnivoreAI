@@ -1,16 +1,3 @@
-"""The carnivore account gates: refuse NEW hosted-service actions while signed out (#1200, slice L4).
-
-ONE LIST, TWO READERS. The gate ids live in
-``src/api/account_gates.json`` (under src/ so every install ships it); the web bundle
-imports it through Vite and this module reads it beside itself, so the UI and the server name the
-same ids. Only ids marked ``server_enforced`` get a dependency here; the others
-are listed for the UI.
-
-GRACE: a gate only ever stops a NEW action (mint, enable, open a window). It
-never reaches into anything already running; revoke, disable and status stay open.
-The refusal body is TOP LEVEL, ``{"code": "account_required", "feature", "detail"}``,
-the shape ``client/js/api.js`` keeps on ``err.body``.
-"""
 
 from __future__ import annotations
 

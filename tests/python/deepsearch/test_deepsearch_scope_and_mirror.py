@@ -100,7 +100,7 @@ def test_changing_the_scope_indexes_subagent_files_and_changing_it_back_removes_
 
 
 def test_headless_sessions_follow_the_middle_choice_in_both_directions(world):
-    headless = world["main"].parent / "5440f51e-018d-47a4-8fdf-c52dbf80f162.jsonl"
+    headless = world["main"].parent / "99999999-aaaa-bbbb-cccc-1234567890ab.jsonl"
     headless.write_bytes(rec(0, "an agent started this headless session about narwhalword", entrypoint="sdk-cli"))
     other = str(headless)
     choose_scope(world["state"], "human")

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '../../lib/base/Button.svelte';
   import IconButton from '../../lib/base/IconButton.svelte';
   import { t } from '../../lib/i18n/index.svelte';
   import type { LogRecord } from './types';
@@ -47,11 +48,11 @@
       <bdi class="oc-lv-event">{record.event}</bdi>
       {#if record.lines.length}<span class="oc-lv-more">{t('opscenter.log.more', { count: record.lines.length })}</span>{/if}
       {#each fields as [key, value] (key)}
-        <button type="button" class="oc-chip oc-lv-field" data-log-field={key}
-          onclick={(event) => onField(key, value, event.altKey)}>{key}={value}</button>
+        <Button size="sm" data-log-field={key}
+          onclick={(event) => onField(key, value, event.altKey)}>{key}={value}</Button>
       {/each}
     </span>
-    <button type="button" class="oc-btn oc-btn--sm oc-btn--ghost oc-lv-copy" onclick={() => onCopy(record)} data-log-copy>{t('opscenter.log.copy')}</button>
+    <Button size="sm" variant="quiet" onclick={() => onCopy(record)} data-log-copy>{t('opscenter.log.copy')}</Button>
   </div>
   {#if expanded}
     <pre class="oc-lv-json" data-log-json>{json}</pre>

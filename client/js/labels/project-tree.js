@@ -34,7 +34,6 @@ export function sessionCountLabel(count, t) {
     return t(PROJECT_TREE_KEYS.sessionCount, { count: count });
 }
 
-/* could not */
 export function attentionTitle(count, t) {
     return t(PROJECT_TREE_KEYS.attentionTitle, { count: count });
 }
@@ -62,7 +61,6 @@ export function authorityBannerText(banner, t) {
     return null;
 }
 
-/* could not */
 export function presenceBadgeText(state, detail, t) {
     if (state === 'missing') return t(PROJECT_TREE_KEYS.presenceMissing);
     if (state === 'unreachable') {

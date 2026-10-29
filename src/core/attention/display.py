@@ -23,7 +23,7 @@ from src.core.attention.evidence import (
     TIER_TRANSCRIPT,
     AttentionVerdict,
 )
-from src.core.attention.registry_read import REG_SHELL, RegistryRecord
+from src.core.attention.registry_record import REG_SHELL, RegistryRecord
 from src.core.session_status import (
     STATUS_DEAD,
     STATUS_IDLE,

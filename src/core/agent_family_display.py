@@ -8,7 +8,6 @@ from src.core.agent_families import AGENT_FAMILY_BY_NAME, DEFAULT_FAMILY, AgentF
 FAMILY_SOURCE_WRAPPER = "wrapper"
 FAMILY_SOURCE_RESERVED_NAME = "reserved_name"
 FAMILY_SOURCE_FINGERPRINT = "fingerprint"
-# claude command
 FAMILY_SOURCE_INFERRED_PROCESS = "inferred_process"
 FAMILY_SOURCE_DERIVED_DEEPEST = "derived_deepest"
 FAMILY_SOURCE_UNKNOWN = "unknown"
@@ -38,47 +37,6 @@ def resolve_family_for_display(
     from_fingerprint: bool = False,
     from_process: bool = False,
 ) -> Tuple[Optional[AgentFamily], str]:
-    """Resolve ``agent_type`` into a family for DISPLAY, honestly.
-
-    DISPLAY-TIME RESOLVER - the counterpart to ``get_family`` /
-    ``resolve_agent_type`` in ``src/core/agent_families.py``, and
-    deliberately NOT merged with them. Those two exist to make sure a
-    session always has something to run; this one exists to make sure a
-    pill never claims a fact nobody measured. When the input cannot be
-    resolved this returns ``(None, "unknown")`` - never
-    ``AGENT_FAMILY_BY_NAME[DEFAULT_FAMILY]``. A caller that wants a value
-    to launch with must call ``get_family`` / ``resolve_agent_type``
-    instead; this function is not a drop-in replacement for either.
-
-    Inputs:
-      agent_type (str | None) - the stored/requested value, same shape as
-        ``resolve_agent_type`` accepts (a wrapper id OR a bare family
-        name); case-insensitive.
-      wrappers (list) - every configured wrapper, ``AgentWrapper`` objects
-        or AgentWrapper-shaped dicts (same dual-type contract as
-        ``wrappers_for_family``).
-      from_fingerprint (bool) - True iff the caller already knows this
-        ``agent_type`` value was produced by scrollback fingerprinting
-        rather than an explicit launch/config choice. The resolver has no
-        way to infer this on its own - a fingerprinted value that landed
-        on "codex" is textually identical to an explicit "codex" launch -
-        so the caller must say so. Defaults to False (the common case:
-        launched or config-derived).
-      from_process (bool) - True iff this ``agent_type`` was inferred
-        from the pane's process tree. THE TWO GUESS FLAGS ARE MUTUALLY
-        EXCLUSIVE by construction: one evidence ladder answers per
-        session and it sets exactly one basis. If a caller ever asserts
-        both, ``from_fingerprint`` wins - the WEAKER label - so a
-        contradiction under-claims rather than over-claims. It never
-        raises, because this decorates a listing and a listing must not
-        fail over a provenance label.
-    Output:
-      (AgentFamily | None, str) - the resolved family (or None when it
-      could not be determined) and one of ``DISPLAY_FAMILY_SOURCES``.
-    Example:
-      resolve_family_for_display("deleted-wrapper-id", []) -> (None, "unknown")
-      resolve_family_for_display("codex", []) -> (codex family, "reserved_name")
-    """
     normalized = (agent_type or "").strip().lower()
     if not normalized:
         return None, FAMILY_SOURCE_UNKNOWN

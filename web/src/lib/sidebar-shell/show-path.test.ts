@@ -5,7 +5,7 @@ import { ROW_ITEMS } from '../item-menu/menus/row-items';
 import type { RowMenuCtx } from '../item-menu/row-context';
 import { showPath } from './show-path';
 
-const FOLDER = '/Users/me/Library/Mobile Documents/com~apple~CloudDocs/work/CloudeCode';
+const FOLDER = '/Users/me/Sync/Development/CloudeCode';
 
 afterEach(() => {
     document.body.innerHTML = '';

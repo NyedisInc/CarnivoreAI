@@ -25,14 +25,12 @@ CREATE_LIFECYCLE_SOURCE = "create"
 
 CREATE_RECORDED = "recorded"
 
-# COULD NOT EVALUATE could not
 CREATE_LISTING_UNAVAILABLE = "listing_unavailable"
 
 CREATE_SESSION_GONE = "session_gone"
 
 CREATE_REFUSED = "refused"
 
-# COULD NOT EVALUATE could not
 CREATE_NO_DATASTORE = "no_datastore"
 
 CREATE_NOT_TMUX_BACKED = "not_tmux_backed"
@@ -136,7 +134,6 @@ def persist_creation(
         )
     project_id, attribution = binding.project_id, binding.attribution
 
-    # already exists
     resolved_title = label if label else None
 
     if agent_launched is True:

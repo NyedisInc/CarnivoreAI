@@ -1,11 +1,10 @@
-<!-- already exists already running -->
+
 <script lang="ts">
     import { onMount, type Snippet } from 'svelte';
     import type { HTMLAttributes } from 'svelte/elements';
     import { t } from '../i18n/index.svelte';
     import IconButton from '../base/IconButton.svelte';
 
-    /* tabindex= */
     const FOCUSABLE = [
         'a[href]',
         'button:not([disabled])',
@@ -30,7 +29,6 @@
         escapeGuard?: (event: KeyboardEvent) => boolean;
         width?: string;
         height?: string;
-        /* padding */
         fill?: boolean;
     }
 

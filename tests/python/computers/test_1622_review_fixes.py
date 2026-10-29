@@ -94,11 +94,11 @@ async def test_4_the_helper_answer_is_bounded_and_the_peer_table_and_probe_are_c
         return True
 
     monkeypatch.setattr(discovery, "_can_connect", fake_connect)
-    cands = [{"name": str(i), "lp": 9000, "addresses": ["203.0.113.%d" % j for j in range(20)]} for i in range(30)]
+    cands = [{"name": str(i), "lp": 9000, "addresses": ["10.0.0.%d" % j for j in range(20)]} for i in range(30)]
     got = await discovery.probe_join_ports(cands)
     assert len(got) == 30 and peak <= discovery.PROBE_CONCURRENCY
     one = await discovery.probe_join_ports(cands[:1])
-    assert one[0]["join_address"] == "203.0.113.0"
+    assert one[0]["join_address"] == "10.0.0.0"
 
 
 def test_5_the_label_drops_bidi_and_zero_width_characters():

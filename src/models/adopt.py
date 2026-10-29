@@ -2,9 +2,9 @@
 from typing import Optional
 from pydantic import BaseModel, Field, model_validator
 from .sessions import Session
+from .terminal_dims import TermCols, TermRows
 
 
-# already exists
 class AttachableSession(BaseModel):
     """A tmux session on our socket that the UI may adopt.
 
@@ -98,7 +98,8 @@ class AttachableSession(BaseModel):
 
 
 class AttachableListingStatus(BaseModel):
-    """
+    """The body of a "could not determine the session list" response.
+
     Returned as the ``detail`` of an HTTP 503 from
     ``GET /sessions/attachable`` when the tmux probe did not produce an
     answer. It deliberately carries no ``sessions`` array: the whole
@@ -146,11 +147,11 @@ class AdoptSessionRequest(BaseModel):
             "otherwise."
         ),
     )
-    cols: Optional[int] = Field(
+    cols: Optional[TermCols] = Field(
         None,
         description="Client-measured terminal columns (xterm cell grid width)"
     )
-    rows: Optional[int] = Field(
+    rows: Optional[TermRows] = Field(
         None,
         description="Client-measured terminal rows (xterm cell grid height)"
     )

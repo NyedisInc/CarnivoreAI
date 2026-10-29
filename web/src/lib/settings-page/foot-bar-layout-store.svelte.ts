@@ -1,5 +1,5 @@
 
-import { whenLegacyBootComplete } from '../legacy-boot';
+import { PreferenceField } from '../zone-shell/preference-field';
 
 export const FOOT_BAR_LAYOUT_FIELD = 'foot_bar_layout';
 
@@ -12,17 +12,6 @@ export const FOOT_BAR_LAYOUT_DEFAULT: FootBarLayoutOption = 'a';
 export interface SparseFootBarLayout {
     collapsed?: FootBarLayoutOption;
     open?: FootBarLayoutOption;
-}
-
-interface Bridge {
-    read(field: string, localReader: () => unknown): unknown;
-    write(field: string, value: unknown, localWriter: () => void): Promise<unknown>;
-    follow(field: string, apply: (value: unknown) => void): () => void;
-}
-
-function bridge(): Bridge | null {
-    const found = (globalThis as { PreferenceBridge?: Bridge }).PreferenceBridge;
-    return found && typeof found.read === 'function' ? found : null;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -44,20 +33,16 @@ export function sanitize(value: unknown): SparseFootBarLayout {
 class FootBarLayoutStore {
     value = $state<SparseFootBarLayout>({});
 
-    #started = false;
+    readonly #pref = new PreferenceField(FOOT_BAR_LAYOUT_FIELD, (value) => {
+        this.value = sanitize(value);
+    });
 
     start(target: Window | null = typeof window !== 'undefined' ? window : null): void {
-        if (this.#started) return;
-        this.#started = true;
-        this.reload();
-        bridge()?.follow(FOOT_BAR_LAYOUT_FIELD, (value) => {
-            this.value = sanitize(value);
-        });
-        whenLegacyBootComplete(target, () => this.reload());
+        this.#pref.start(target);
     }
 
     reload(): void {
-        this.value = sanitize(bridge()?.read(FOOT_BAR_LAYOUT_FIELD, () => null));
+        this.#pref.reload();
     }
 
     effective(half: 'collapsed' | 'open'): FootBarLayoutOption {
@@ -72,8 +57,7 @@ class FootBarLayoutStore {
             [half]: option,
         };
         this.value = next;
-        const found = bridge();
-        if (found) void found.write(FOOT_BAR_LAYOUT_FIELD, next, () => {});
+        void this.#pref.write(next);
     }
 }
 

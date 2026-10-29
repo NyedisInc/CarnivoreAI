@@ -10,6 +10,7 @@ from typing import List, Optional, Tuple
 
 import structlog
 
+from src.core.stat_gate.dir_names import entry_names
 from src.core.subagents.contract import SHAPE_UNRECOGNIZED, contract_versions
 from src.core.subagents.files import (
     FILE_UNREADABLE,
@@ -60,25 +61,23 @@ def _iso(value: Optional[datetime]) -> Optional[str]:
 def _scan(directory: Path) -> Tuple[List[_Candidate], int]:
     newest: dict = {}
     internal = set()
-    with os.scandir(directory) as entries:
-        for entry in entries:
-            name = entry.name
-            if not name.startswith(_PREFIX):
-                continue
-            if name.endswith(_META):
-                agent_id = name[len(_PREFIX):-len(_META)]
-            elif name.endswith(_JSONL):
-                agent_id = name[len(_PREFIX):-len(_JSONL)]
-            else:
-                continue
-            if not _USER_AGENT_ID.match(agent_id):
-                internal.add(agent_id)
-                continue
-            try:
-                mtime = entry.stat().st_mtime
-            except OSError:
-                mtime = 0.0
-            newest[agent_id] = max(mtime, newest.get(agent_id, 0.0))
+    for name in entry_names(directory):
+        if not name.startswith(_PREFIX):
+            continue
+        if name.endswith(_META):
+            agent_id = name[len(_PREFIX):-len(_META)]
+        elif name.endswith(_JSONL):
+            agent_id = name[len(_PREFIX):-len(_JSONL)]
+        else:
+            continue
+        if not _USER_AGENT_ID.match(agent_id):
+            internal.add(agent_id)
+            continue
+        try:
+            mtime = os.stat(os.path.join(directory, name)).st_mtime
+        except OSError:
+            mtime = 0.0
+        newest[agent_id] = max(mtime, newest.get(agent_id, 0.0))
     candidates = [_Candidate(agent_id, mtime) for agent_id, mtime in newest.items()]
     candidates.sort(key=lambda c: (c.mtime, c.agent_id), reverse=True)
     return candidates, len(internal)
@@ -92,17 +91,6 @@ def classify(
     process_started_at: Optional[datetime],
     now: datetime,
 ) -> Tuple[str, str]:
-    """Decide one agent's status. PURE; the module docstring is the rule.
-
-    Inputs: line (LineFacts) - the agent transcript's facts. end
-      (RecordedEnd | None) - the newest end the parent recorded.
-      index_available (bool) - False when the parent could not be read.
-      process_started_at (datetime | None) - the current claude
-      process's start, when known. now (datetime) - aware UTC.
-    Output: tuple[str, str] - (status, status_reason).
-    Example: classify(line=f, end=None, index_available=True,
-      process_started_at=None, now=n) -> ('running', 'no_end_recorded')
-    """
     if not index_available:
         return "unknown", "parent_unreadable"
     if line.state == SHAPE_UNRECOGNIZED:

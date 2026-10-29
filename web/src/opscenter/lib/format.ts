@@ -38,7 +38,6 @@ export function compact(value: number): string {
 
 const HAS_ZONE_MARKER = /(?:Z|z|[+-]\d{2}:?\d{2})$/;
 
-/* could not */
 export function parseServerTime(value: string | null | undefined): number {
   if (typeof value !== 'string') return Number.NaN;
   const trimmed = value.trim();

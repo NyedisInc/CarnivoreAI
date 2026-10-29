@@ -1,5 +1,7 @@
 <script lang="ts">
+  /* the phone layout */
   import { t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import type { FrameReport, LabIcon, LabSize, SidebarView } from '../sdk/widget-lab';
   import type { FixtureChoice } from './frame-url';
   import type { FrameVerdict } from './lab-model';
@@ -72,7 +74,7 @@
 
 <figure class="dwl-preview" data-size={size.name} data-focused={focused ? 'yes' : 'no'} data-dim={dim ? 'yes' : 'no'}>
   <figcaption class="dwl-preview-cap">
-    <button type="button" class="dwl-cap-key" aria-pressed={focused} title={t('cplug.devwidgetlab.frame.focus')} onclick={onfocus}>{capName}</button>
+    <Button variant="quiet" size="sm" data-cap-key aria-pressed={focused} title={t('cplug.devwidgetlab.frame.focus')} onclick={onfocus}>{capName}</Button>
     {#if verdict && !docked && !fb.sidebar}
       {@const word = t(`cplug.devwidgetlab.fit.cell.${verdict === 'clip' ? 'red' : verdict}`)}
       <span class="dwl-verdict" data-verdict={verdict === 'pass' ? 'pass' : 'fail'} data-for={resized ? 'size' : undefined}>{resized ? t('cplug.devwidgetlab.resize.verdict_for', { verdict: word, size: size.name }) : word}</span>
@@ -80,7 +82,7 @@
     <span class="dwl-dims" data-resized={resized ? 'yes' : 'no'} data-testid="dims">{t('cplug.devwidgetlab.resize.readout', { w: now.w, h: now.h })}
       {#if !docked && !fb.sidebar}<span class="dwl-hint">{t('cplug.devwidgetlab.resize.nearest', { size: nearest })}</span>{/if}</span>
     <IdleReadout {spec} size={frameSize} />
-    {#if resized}<button type="button" class="oc-btn oc-btn--sm dwl-reset" onclick={reset}>{docked ? t('cplug.devwidgetlab.resize.reset_dock') : t('cplug.devwidgetlab.resize.reset', { size: size.name })}</button>{/if}
+    {#if resized}<Button size="sm" data-reset onclick={reset}>{docked ? t('cplug.devwidgetlab.resize.reset_dock') : t('cplug.devwidgetlab.resize.reset', { size: size.name })}</Button>{/if}
   </figcaption>
   <div class="dwl-stage">
     <div class="dwl-zoom" data-scale={scale.toFixed(2)} style:zoom={scale === 1 ? undefined : scale}>

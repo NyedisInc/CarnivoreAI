@@ -27,6 +27,7 @@ class SummaryAccount(BaseModel):
 
 
 class LedgerSummary(BaseModel):
+    """`GET /provider-ledger/summary`: this Mac's accounts, summarised."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -39,6 +40,7 @@ class PeerLedgerAccount(SummaryAccount):
 
 
 class PeerLedger(BaseModel):
+    """One paired Mac's summary as this Mac shows it: ``shared`` marks an account this Mac holds too."""
 
     host_key: str
     host_label: str

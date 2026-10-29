@@ -1,8 +1,9 @@
-/* position: fixed z-index: 40 */
+/* event that starts */
 
 console.log('[AppBootComplete Module] Loading...');
 
 (function () {
+    /* and the real */
     var EVENT = 'app-boot-complete';
 
     /** @type {boolean} Whether the announcement has already gone out. */

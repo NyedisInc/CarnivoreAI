@@ -40,11 +40,3 @@ export function refusedProjectNotice(data, t) {
         text: t(HOME_KEYS.refusedUnknown, { name, path, state: presence }),
     };
 }
-
-export function failureReason(error, t) {
-    if (error && typeof error === 'object' && typeof error.message === 'string' && error.message) {
-        return error.message;
-    }
-    const text = error == null ? '' : String(error);
-    return text || t('error.server_unreachable');
-}

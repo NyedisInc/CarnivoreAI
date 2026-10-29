@@ -17,7 +17,6 @@ function recentProjects(list) {
   return [...newest.entries()].sort((a, b) => b[1] - a[1]).slice(0, MAX_RECENT).map(([name]) => name);
 }
 
-/* could not */
 function buildDockMenuTemplate({ rows: list, led, t, openApp, openApproval, sessionLink }) {
   const items = [{ id: 'new', label: t('menubar.new_session'), click: () => openApp('') }];
   const projects = recentProjects(list);

@@ -60,6 +60,11 @@ describe('paceState', () => {
     test('a window younger than the minimum is never judged', () => {
         expect(paceState(3, PACE_MIN_ELAPSED_PCT - 1)).toBe('on');
     });
+    test('a young window is still judged once usage is large (u012-08)', () => {
+        expect(paceState(95, 4)).toBe('over');
+        expect(paceState(30, PACE_MIN_ELAPSED_PCT - 1)).toBe('over');
+        expect(paceState(24, PACE_MIN_ELAPSED_PCT - 1)).toBe('on');
+    });
     test('unknown inputs give no state', () => {
         expect(paceState(null, 50)).toBeNull();
         expect(paceState(50, null)).toBeNull();

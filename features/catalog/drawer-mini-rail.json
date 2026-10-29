@@ -20,7 +20,20 @@
     "icon rail",
     "collapsed sidebar"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The closed drawer as a column of icons, with the projects flyout listing agents under their projects",
+      "caption": "The closed drawer's icon rail and a section flyout",
+      "file": "rail.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "A terminal filling the page from the top, the icon rail at its left edge and no top bar",
+      "caption": "The terminal page with the drawer closed",
+      "file": "terminal.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Mini drawer",
   "since": "2026-09-27",
   "status": "stable",
@@ -33,6 +46,5 @@
   "updated": "2026-09-27",
   "where": [
     "The left edge of every screen on a desktop, whenever the agents drawer is closed."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

@@ -22,6 +22,8 @@ async function test(name, fn) {
     }
 }
 
+// -----------------------------------------------------------------
+// -----------------------------------------------------------------
 
 function loadWriter() {
     const sandbox = { window: {}, console: { log() {}, error() {} } };
@@ -81,6 +83,8 @@ await test('writer: a value unchanged in TEXT but re-typed is still treated as u
     assert.deepEqual(style.setCalls, [], 'the same value re-supplied must still be a skip');
 });
 
+// -----------------------------------------------------------------
+// -----------------------------------------------------------------
 
 function loadRegistry(store) {
     const style = styleSpy();

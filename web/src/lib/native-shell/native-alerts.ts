@@ -12,7 +12,6 @@ export interface NativeDeviceRow {
     readonly last_result: { readonly status: number; readonly at: string } | null;
 }
 
-/* permission prompt */
 export const REGISTER_TIMEOUT_MS = 120_000;
 
 export async function listNativeDevices(fetcher: Fetcher = authFetch): Promise<NativeDeviceRow[]> {

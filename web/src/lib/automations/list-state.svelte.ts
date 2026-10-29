@@ -7,7 +7,7 @@ import { compare, firstResult, previousIndex, type DiffResult, type DiffRun } fr
 import { filterRows, previewText, sortRows, type ListRow, type Pill, type PreviewRun, type SortKey } from './logic/list';
 import { signalsOf } from './logic/signals';
 import type { ReportSlot } from './logic/types';
-import { statusWord } from './logic/words';
+import { isLive, statusWord } from './logic/words';
 import { data, openNew, openPane, pageClock, refresh, select } from './page-store.svelte';
 import type { EditorStart } from './schedule-prefill';
 import { TARGET_FORMS } from './target-forms';
@@ -103,13 +103,24 @@ export function runNow(a: api.Automation): Promise<void> {
   });
 }
 
+function isUnattendedAgent(target: api.AutomationTarget): boolean {
+  const t = target as { kind?: string; permission?: string };
+  return t.kind === 'agent' && t.permission === 'unattended';
+}
+
 export async function duplicate(a: api.Automation): Promise<void> {
+  const name = `${a.name} ${t('automations.page.report.copy')}`;
+  if (isUnattendedAgent(a.target)) {
+    const { acknowledge_unattended: _typed, ...copied } = JSON.parse(JSON.stringify(a.target)) as api.AutomationTarget & { acknowledge_unattended?: unknown };
+    openNew({ target: copied as api.AutomationTarget, projectId: a.project_id, name });
+    return;
+  }
   const draft: api.AutomationDraft = {
-    name: `${a.name} ${t('automations.page.report.copy')}`,
+    name,
     cron: a.trigger.cron,
     target: JSON.parse(JSON.stringify(a.target)) as api.AutomationTarget,
     delivery: { ...a.delivery },
-    enabled: a.enabled,
+    enabled: false,
     description: a.description,
     project_id: a.project_id,
     misfire: a.misfire,
@@ -138,19 +149,34 @@ export function remove(a: api.Automation): Promise<void> {
 
 const compared = new Map<string, DiffResult | null>();
 
+async function slotsFor(runs: readonly (api.RunSummary & { report?: unknown; report_omitted?: boolean })[]): Promise<Map<string, ReportSlot>> {
+  const slots = new Map<string, ReportSlot>();
+  await Promise.all(
+    runs.map(async (r) => {
+      if (!r.report_omitted) return void slots.set(r.run_id, { state: 'ready', report: r.report ?? null });
+      try {
+        slots.set(r.run_id, { state: 'ready', report: (await api.getRun(r.run_id)).report ?? null });
+      } catch (error) {
+        slots.set(r.run_id, { state: 'unreadable', reason: 'read_failed', message: refusalText(error) });
+      }
+    }),
+  );
+  return slots;
+}
+
 /* no report to compare */
 export async function compareWithPrevious(automationId: string, run: { run_id: string }): Promise<DiffResult | null> {
   const key = `${automationId}:${run.run_id}`;
   if (compared.has(key)) return compared.get(key) ?? null;
   try {
     const { runs } = await api.listRuns(automationId, 12, { include_report: true });
-    const slots = new Map<string, ReportSlot>(runs.map((r) => [r.run_id, r.has_report ? { state: 'ready', report: r.report ?? null } : { state: 'ready', report: null }]));
+    const slots = await slotsFor(runs);
     const at = runs.findIndex((r) => r.run_id === run.run_id);
     if (at < 0) return null;
     const head = { run: runs[at] as unknown as DiffRun, slot: slots.get(run.run_id)! };
     const prev = previousIndex(runs, at, (id) => slots.get(id) ?? { state: 'pending' });
     const result = prev < 0 ? firstResult(head.run) : compare({ run: runs[prev] as unknown as DiffRun, slot: slots.get(runs[prev]!.run_id)! }, head, { statusWord });
-    compared.set(key, result);
+    if (!isLive(runs[at]!.status)) compared.set(key, result);
     return result;
   } catch {
     return null;

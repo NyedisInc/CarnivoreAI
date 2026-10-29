@@ -65,7 +65,6 @@ export class PanelData {
     bookmarks = $state<BookmarkList | null>(null);
     marksStatus = $state<'idle' | 'loading' | 'ready' | 'error'>('idle');
     timeline = $state<SessionTimeline | null>(null);
-    /* conversation id */
     resuming = $state<string | null>(null);
 
     readonly #readers: PanelReaders;

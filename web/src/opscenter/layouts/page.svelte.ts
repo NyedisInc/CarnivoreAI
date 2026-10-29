@@ -1,4 +1,3 @@
-/* navigation generation */
 import { tick } from 'svelte';
 import { terminalLayout } from '../engine/layout.svelte';
 import { adoptGroups, cloneTabs, openTab, tabsFor } from '../engine/tab-groups.svelte';
@@ -19,9 +18,9 @@ import {
 } from './api';
 import { fromServerShape, rowSlot, terminalComponents } from './shape';
 import { PENDING_KEY, clearLayoutMode, layoutActive, layoutKeyOf, layoutMode, memberForRow } from './mode.svelte';
-import { currentShape, dropPending, flushShape, noteSaved, savePending, startSaveTarget, whileApplying } from './save-target.svelte';
+import { currentShape, dropPending, flushShape, flushShapeFinal, noteSaved, savePending, startSaveTarget, whileApplying } from './save-target.svelte';
 import { abortNaming, abortNamingIfMoved, isNaming, namingSurvives, refusalLine, setSavedHandler } from './transition.svelte';
-import { displayName, liveRowFor, urlSlug } from './names';
+import { displayName, liveMemberRowFor, liveRowFor, urlSlug } from './names';
 import { rememberLastView } from '../../lib/drawer/last-view';
 import { layoutByUuid } from '../../lib/layouts-bridge/api.svelte';
 import { withScrollback } from '../cells/terminal-live/client';
@@ -81,7 +80,7 @@ function pickAnchor(
 ): { member: LayoutMember; sessionId: string; tmux: string; row: unknown } | null {
   const ordered = [...members].sort((a, b) => a.position - b.position);
   for (const member of ordered) {
-    const row = liveRowFor(member.session_row_id);
+    const row = liveMemberRowFor(member.session_row_id);
     if (row?.session?.id) return { member, sessionId: row.session.id, tmux: row.tmux_session ?? '', row };
   }
   return null;
@@ -104,7 +103,7 @@ function nothingOnScreen(): boolean {
   return !screen || screen === 'auth';
 }
 
-/* nothing at all */
+/* nothing at all the home screen */
 function landHomeIfBlank(): void {
   if (!nothingOnScreen()) return;
   (globalThis as { App?: { showLaunchpad?: () => void } }).App?.showLaunchpad?.();
@@ -121,6 +120,7 @@ async function bindAnchor(row: unknown, nav: NavToken): Promise<void> {
   returnToExistingTerminal(bound);
 }
 
+/* there is nothing */
 async function offerAllDown(saved: SavedLayout, nav: NavToken, uuid: string, fromUrl: boolean): Promise<void> {
   landHomeIfBlank();
   const revived = await openModal(AllDownModal, { layout: saved });
@@ -157,7 +157,7 @@ function applyLayout(layout: SavedLayout, anchorRowId: number, anchorSessionId: 
 
 function leave(rebind: boolean): void {
   if (!layoutActive()) return;
-  void flushShape();
+  void flushShapeFinal();
   stopLease();
   dropPending();
   setHolding(false);
@@ -198,7 +198,6 @@ async function fetchLayout(uuid: string): Promise<{ saved: SavedLayout | null; h
   }
 }
 
-/* at the gesture */
 function takeKeyboard(tab: string): void {
   inputFocus.claim(tab);
   const nav = currentNav();
@@ -226,6 +225,7 @@ export function focusMember(sessionUuid: string, keyboard = false): boolean {
   return false;
 }
 
+/* on the terminal screen */
 export async function openLayout(uuid: string, fromUrl = false, focusSession = ''): Promise<void> {
   start();
   const alreadyOpen = layoutActive() && layoutMode.uuid === uuid && onTerminalScreen();

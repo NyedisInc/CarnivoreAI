@@ -2,7 +2,7 @@
 
 Operator-facing guide for running Cloude Code as a pure container. The FastAPI server and the Claude Code CLI both run inside the container; your host only ships Docker Desktop and a browser.
 
-If you're on macOS and want Claude Pro / Max OAuth or macOS-native MCPs, use Mode 1 (the macOS app) instead.
+If you're on macOS and want Claude Pro / Max OAuth or macOS-native MCPs, use [Mode 1](../README.md#mode-1--macos-native-electron-menu-bar-app-primary) instead.
 
 ---
 
@@ -13,6 +13,7 @@ If you're on macOS and want Claude Pro / Max OAuth or macOS-native MCPs, use Mod
 | Docker Desktop | 4.x+ | or Docker Engine 24+ on Linux |
 | Host shell | bash / zsh | `id -u` and `id -g` must resolve |
 | Free port | `8000` by default | published on the host side; override with `PORT=` in `.env` (same variable the app reads - see section 8) |
+| Disk | ~2 GB | image + logs + session state |
 
 Network MCP endpoints you plan to use (ntfy.sh, Postgres, custom HTTP) must be reachable from inside the container.
 
@@ -54,7 +55,7 @@ Paste the results into `.env`. Then set your LAN bind IP if you want phone acces
 
 ```bash
 # .env
-CLOUDE_BIND_IP=192.0.2.11       # or leave unset for loopback-only
+CLOUDE_BIND_IP=192.168.1.250       # or leave unset for loopback-only
 CLOUDE_PROJECT_PATH=~/cloude-projects
 CLOUDE_LOG_DIR=./logs
 ```
@@ -124,12 +125,12 @@ If you try to run `claude` inside the container with no `ANTHROPIC_API_KEY` and 
 
 | MCP category | Mode 2 | Example servers |
 |---|---|---|
-| Network-only (HTTP / stdio over network) | ✅ Works | Gmail, GDrive, Postgres, nflow, custom HTTP |
+| Network-only (HTTP / stdio over network) | ✅ Works | Gmail, GDrive, Postgres, n8n, custom HTTP |
 | Pure-stdio, portable binary | ✅ Works | filesystem MCP scoped to `/workspace`, git, generic stdio servers |
 | macOS-native | ❌ Does not work | Shortcuts, AppleScript, Calendar, Reminders, Messages, Finder |
 | Keychain-backed | ❌ Does not work | Anything calling `security find-generic-password` or Keychain APIs |
 
-**If you rely on any red-X category, run Mode 1.** The container has no bridge to macOS system services — there is no workaround.
+**If you rely on any red-X category, run Mode 1.** The container has no bridge to macOS system services — there is no workaround short of the hybrid mode we explicitly cut.
 
 ---
 
@@ -138,7 +139,7 @@ If you try to run `claude` inside the container with no `ANTHROPIC_API_KEY` and 
 The compose file publishes port `${PORT:-8000}` on `${CLOUDE_BIND_IP:-127.0.0.1}`. Key points:
 
 - **Default is loopback-only.** An unset or misspelled `CLOUDE_BIND_IP` falls back to `127.0.0.1`, not `0.0.0.0`. This is deliberate — LAN exposure is opt-in.
-- **LAN exposure:** set `CLOUDE_BIND_IP` to a specific host IP (e.g., `192.0.2.11`). Run the preflight script first.
+- **LAN exposure:** set `CLOUDE_BIND_IP` to a specific host IP (e.g., `192.168.1.250`). Run the preflight script first.
 - **Port:** set `PORT` in `.env` to change it from the default 8000. This is the SAME `.env` the app itself reads (`src/config.py`'s `Settings.port`), so one edit moves both the container's internal listener and the published host port together. Never edit the host-side port in `docker-compose.yml` directly - that desyncs the two.
 - **Reaching it by name:** the server refuses a Host header that is not an IP address, `localhost` or the machine's own name, which inside a container is the container's name, not the Mac's. To reach it as `yourmac.local`, a MagicDNS name or a tunnel hostname, list that name in `CARNIVORE_ALLOWED_HOSTS` in `.env` (comma separated, exact or `*.suffix`). By IP it always works.
 - **macOS firewall:** System Settings → Network → Firewall must allow incoming connections on the configured port for phone/tablet access.
@@ -183,3 +184,7 @@ docker compose up -d
 
 For anything else, `docker compose logs -f cloude` is your first call. The server logs structured JSON — pipe through `jq` if you want it pretty.
 
+
+## Full docs-index description (moved from CLAUDE.md catalog table)
+
+You are running the server as a pure container. Operator facing. 

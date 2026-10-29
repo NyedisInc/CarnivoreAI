@@ -46,13 +46,14 @@ class CheckBody(BaseModel):
 
 @router.post("/sessions/{session_uuid}/send", dependencies=[Depends(require_auth)])
 async def send_session(session_uuid: str, body: SendBody, request: Request) -> Dict[str, Any]:
-    """
+    """Send one session of this computer to a paired computer as a move, a copy (fork) or a fresh agent.
+
     Inputs: session_uuid (``sessions.session_uuid``); body (SendBody). Output: {op_id, state, machine, mode}.
     Raises: 404 ``unknown_session`` / ``unknown_machine``, 409 ``session_not_movable`` / ``no_conversation`` (move, copy) / ``project_moved_away`` /
       ``move_in_progress`` and, from the op on ``GET /pack/ops/{id}``, ``turn_not_ended`` / ``project_not_on_target`` (without ``with_project``) /
       ``pack_restricted`` / ``account_not_usable`` / ``launch_profile_not_on_target``; 502 ``machine_unreachable``; a ``move`` of an agent that is mid-turn is
       refused up front, 409 ``agents_running`` naming it, unless ``stop_running`` is true.
-    Example: POST /api/v1/sessions/9f27394c-1111/send {"machine": "hosta", "mode": "copy", "with_project": true}
+    Example: POST /api/v1/sessions/0198c8f0-1111/send {"machine": "studio", "mode": "copy", "with_project": true}
     """
     return await start_send(session_uuid, body.machine, body.wait_seconds, request, mode=body.mode, with_project=body.with_project, stop_running=body.stop_running)
 
@@ -64,7 +65,7 @@ async def send_check_route(session_uuid: str, body: CheckBody, request: Request)
     Output: {move, copy, fresh: {ok, reason?, detail?}, project_on_target, project_addable: {ok, reason?}, carry: {units, left_behind}, stop_shells: int, running: bool}.
       ``running`` is true while the agent is mid-turn; ``move`` is then not ok (``agents_running``) unless ``stop_running`` is true.
     Raises: 404 ``unknown_session`` / ``unknown_machine``, 409 ``session_not_movable`` / ``project_moved_away``, 502 ``machine_unreachable``.
-    Example: POST /api/v1/sessions/9f27394c-1111/send/check {"machine": "hosta"}
+    Example: POST /api/v1/sessions/0198c8f0-1111/send/check {"machine": "studio"}
     """
     peer = await run_in_threadpool(find_peer, body.machine)
     request_fn = env_mod.link_request(peer.peer_install_id, MOVE_TIMEOUT_SECONDS)

@@ -1,3 +1,4 @@
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -49,10 +50,11 @@ test('both terminal-arrival paths hand focus to the terminal', () => {
     }
 
     for (const name of ['showTerminal', 'returnToExistingTerminal']) {
-        assert.match(methodBody(name), /this\.focusTerminal\(\)/,
-            `${name}() must hand focus to the terminal - otherwise whatever the `
-            + 'user clicked to get here keeps it and swallows their keystrokes');
+        assert.match(methodBody(name), /AppScreenEntry\.enterTerminal\(/,
+            `${name}() must enter through the shared entry body`);
     }
+    assert.match(readClientJs('app-screen-entry.js'), /app\.focusTerminal\(\)/,
+        'the shared terminal entry must hand focus to the terminal');
 });
 
 await runQueue();

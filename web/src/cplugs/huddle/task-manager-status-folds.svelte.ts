@@ -136,7 +136,6 @@ export function reloadStatusFolds(): void {
 
 export const HIDDEN_SECTIONS_KEY = 'cloude.huddle.hiddenSections';
 
-/*  hidden  */
 function loadHiddenSections(): TaskManagerSectionKey[] {
   try {
     const parsed: unknown = JSON.parse(globalThis.localStorage?.getItem(HIDDEN_SECTIONS_KEY) ?? '[]');
@@ -148,7 +147,6 @@ function loadHiddenSections(): TaskManagerSectionKey[] {
   }
 }
 
-/*  hidden  */
 export const hiddenSections = $state<{ keys: TaskManagerSectionKey[] }>({ keys: loadHiddenSections() });
 
 export function isSectionHidden(key: TaskManagerSectionKey): boolean {
@@ -163,12 +161,10 @@ export function setSectionHidden(key: TaskManagerSectionKey, hidden: boolean): v
   }
 }
 
-/*  hidden  */
 export function reloadHiddenSections(): void {
   hiddenSections.keys = loadHiddenSections();
 }
 
-/*  hidden  */
 export const COUNTS_HIDDEN_KEY = 'cloude.huddle.countsHidden';
 
 function loadCountsHidden(): boolean {
@@ -179,7 +175,6 @@ function loadCountsHidden(): boolean {
   }
 }
 
-/*  hidden  */
 export const countBadges = $state<{ hidden: boolean }>({ hidden: loadCountsHidden() });
 
 export function setCountsHidden(hidden: boolean): void {

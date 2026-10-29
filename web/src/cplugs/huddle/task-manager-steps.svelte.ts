@@ -1,4 +1,3 @@
-/*  hidden  */
 import { authFetch, familyOf, resourcePush } from '../sdk';
 import { TASK_MANAGER_LIST_FAMILY, followTaskManagerDelta } from '../sdk/task-manager-delta';
 import { parseSteps, stepsMoved, type ClaimKey, type ListSteps, type StepsEntry } from './task-manager-steps';
@@ -25,7 +24,6 @@ const claims = new Map<number, ClaimKey>();
 
 let missed = false;
 
-/*  hidden  */
 function tabHidden(): boolean {
   return typeof document !== 'undefined' && document.visibilityState === 'hidden';
 }
@@ -43,7 +41,6 @@ function onVisibility(): void {
   if (!tabHidden() && missed) readUnlessHidden();
 }
 
-/*  hidden  */
 export function holdSteps(): void {
   holders += 1;
   if (stop) return;

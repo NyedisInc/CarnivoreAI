@@ -1,4 +1,3 @@
-/* connection refused */
 
 'use strict';
 

@@ -23,6 +23,7 @@ class AutopsySpan(BaseModel):
 
 
 class SkillAutopsy(BaseModel):
+    """``GET /skills/{name}/autopsy``: what followed a skill's fires on this mac."""
 
     skill: str
     days: int

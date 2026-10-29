@@ -1,4 +1,3 @@
-// state directory
 
 'use strict';
 
@@ -18,7 +17,7 @@ const UNINSTALL_LOG_FILE = path.join(os.tmpdir(), 'carnivore-uninstall.log');
 function uninstallScriptSource(ctx) {
   return ctx.app.isPackaged
     ? path.join(process.resourcesPath, 'uninstall.sh')
-    : path.join(__dirname, '..', '..', '..', 'hosted', 'site', 'uninstall.sh');
+    : path.join(__dirname, '..', '..', '..', 'uninstall.sh');
 }
 
 function unregisterLoginService(ctx) {
@@ -44,7 +43,6 @@ async function askStopSessions(ctx, copyDir) {
   return ['--stop-tmux', '--tmux-bin', copy];
 }
 
-/* nothing at all */
 async function uninstallApp(ctx) {
   if (!(await confirmWindow.promptForUninstallConfirmation())) return;
   const source = uninstallScriptSource(ctx);
@@ -69,7 +67,6 @@ async function uninstallApp(ctx) {
       try {
         await ctx.shell.trashItem(bundle);
       } catch (error) {
-        // could not
         console.error('[uninstall] could not move the app to the Trash:', error);
       }
     }

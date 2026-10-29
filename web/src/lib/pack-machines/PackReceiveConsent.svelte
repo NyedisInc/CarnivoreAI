@@ -3,6 +3,7 @@
   import './pack-machines.css';
   import './relay-consent.css';
   import { t } from '../i18n/index.svelte';
+  import Button from '../base/Button.svelte';
   import RelayConsentList from './RelayConsentList.svelte';
   import { answerConsent, consentBody, relayConsent } from './relay-consent-store.svelte';
 
@@ -41,8 +42,8 @@
     <RelayConsentList {offers} bind:ticked bind:all disabled={busy} idBase="rc-logins" onedit={() => (dirty = true)} />
     {#if error}<p class="pm-error" role="alert" data-rc="error">{error}</p>{/if}
     <div class="rc-actions">
-      <button type="button" class="modal-btn modal-btn-confirm" data-rc="save" disabled={busy || !dirty} onclick={() => void save()}>
-        {t('pack.consent.save')}</button>
+      <Button variant="confirm" data-rc="save" disabled={busy || !dirty} onclick={() => void save()}>
+        {t('pack.consent.save')}</Button>
     </div>
   </div>
 {/if}

@@ -10,7 +10,7 @@
 
     let { palette, size = 'card', label = '' }: Props = $props();
 
-    /*  hidden  */
+    /* failed to load */
     let artFailed = $state(false);
 
     const art = $derived(size === 'large' ? (palette.background ?? palette.artwork) : palette.artwork);

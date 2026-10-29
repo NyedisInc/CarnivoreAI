@@ -29,8 +29,8 @@ def envfile(tmp_path, monkeypatch):
 
 
 def test_env_file_turns_the_check_on(envfile):
-    envfile(f"{SECRET}\nCARNIVORE_BACKUP_VOLUME=/Volumes/ExampleDrive\n")
-    assert checks.backup_volume() == Path("/Volumes/ExampleDrive")
+    envfile(f"{SECRET}\nCARNIVORE_BACKUP_VOLUME=/Volumes/Backup\n")
+    assert checks.backup_volume() == Path("/Volumes/Backup")
 
 
 def test_legacy_spellings_in_env_file(envfile):
@@ -66,7 +66,7 @@ def test_missing_or_unreadable_env_file_is_off_and_logs_no_contents(envfile, tmp
 
 
 def test_unrelated_secret_never_escapes(envfile):
-    envfile(f"{SECRET}\nCARNIVORE_BACKUP_VOLUME=/Volumes/ExampleDrive\n")
+    envfile(f"{SECRET}\nCARNIVORE_BACKUP_VOLUME=/Volumes/Backup\n")
     checks.backup_volume()
     before = dict(os.environ)
     with structlog.testing.capture_logs() as logs:
@@ -84,5 +84,5 @@ def test_reference_in_env_value_is_taken_literally(envfile, monkeypatch):
 
 
 def test_lowercase_key_in_env_file_is_read(envfile):
-    envfile("carnivore_backup_volume=/Volumes/ExampleDrive\n")
-    assert checks.backup_volume() == Path("/Volumes/ExampleDrive")
+    envfile("carnivore_backup_volume=/Volumes/Backup\n")
+    assert checks.backup_volume() == Path("/Volumes/Backup")

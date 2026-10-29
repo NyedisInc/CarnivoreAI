@@ -91,7 +91,8 @@ async def detect(app_state: Any, agent: Dict[str, Any]) -> bool:
     await body._refresh_index(agent)
     await body._commit(app_state, agent)
     await body.run_db(lambda c: store.cas_state(c, agent["id"], "sleeping", "asleep"))
+    body._changed(app_state, "swarm_died")
     logger.warning("swarm_body_died", agent_id=agent["id"], how=how, open_work=open_work)
-    if open_work and switch.is_on():  # nothing waiting
+    if open_work and switch.is_on():
         await alerts.post_dead_card(agent, wake["id"])
     return True

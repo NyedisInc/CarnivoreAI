@@ -27,7 +27,7 @@ from src.core.stats import config, project_groups, rollup
 from src.core.stats.plugin.extract import project_key
 from src.core.stats.store import StatsStore
 
-OPEN_CONV = "c3a270a6-e4a9-4a6a-89bd-29577759078c"
+OPEN_CONV = "00000011-aaaa-bbbb-cccc-1234567890ab"
 
 
 @pytest.fixture()

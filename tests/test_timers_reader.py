@@ -79,7 +79,7 @@ def test_stop_true_cancels_the_loop(tmp_path):
 def test_a_restarted_process_lost_its_timers(tmp_path):
     t = Transcript()
     t.wakeup(at(10, 0), "toolu_w1", delay=1800)
-    t.cron(at(10, 0), "toolu_c1", "49759e95", "*/5 * * * *")
+    t.cron(at(10, 0), "toolu_c1", "ab12cd34", "*/5 * * * *")
     rows, counts, upcoming = _derive(t, tmp_path, process=ProcessFact(PROCESS_ALIVE, at(10, 1)))
     assert counts.lost == 2 and counts.live == 0 and upcoming is None
 
@@ -100,10 +100,10 @@ def test_an_unmeasured_process_is_unknown_never_live(tmp_path):
 
 def test_a_recurring_cron_is_live_with_a_next_fire_from_now(tmp_path):
     t = Transcript()
-    t.cron(at(10, 0), "toolu_c1", "49759e95", "*/5 * * * *")
+    t.cron(at(10, 0), "toolu_c1", "ab12cd34", "*/5 * * * *")
     rows, counts, upcoming = _derive(t, tmp_path, now=at(10, 7, 30))
     row = rows[0]
-    assert row.id == "49759e95" and row.status == "live" and row.recurring is True
+    assert row.id == "ab12cd34" and row.status == "live" and row.recurring is True
     assert row.human_schedule == "Every 5 minutes"
     assert row.expires_at == "2026-10-04T10:00:00Z"
     assert upcoming == at(10, 10)
@@ -111,26 +111,26 @@ def test_a_recurring_cron_is_live_with_a_next_fire_from_now(tmp_path):
 
 def test_cron_delete_cancels_by_id(tmp_path):
     t = Transcript()
-    t.cron(at(10, 0), "toolu_c1", "49759e95", "*/5 * * * *")
+    t.cron(at(10, 0), "toolu_c1", "ab12cd34", "*/5 * * * *")
     t.cron(at(10, 1), "toolu_c2", "ef56ab78", "*/30 * * * *")
-    t.cron_delete(at(10, 2), "toolu_d1", "49759e95")
+    t.cron_delete(at(10, 2), "toolu_d1", "ab12cd34")
     rows, counts, _ = _derive(t, tmp_path)
     by = _by_id(rows)
-    assert by["49759e95"].status == "cancelled"
+    assert by["ab12cd34"].status == "cancelled"
     assert by["ef56ab78"].status == "live"
     assert counts.cancelled == 1 and counts.live == 1
 
 
 def test_a_recurring_cron_past_its_recorded_expiry_is_expired(tmp_path):
     t = Transcript()
-    t.cron(at(10, 0), "toolu_c1", "49759e95", "*/5 * * * *", days=3)
+    t.cron(at(10, 0), "toolu_c1", "ab12cd34", "*/5 * * * *", days=3)
     _, counts, _ = _derive(t, tmp_path, now=at(10, 0) + timedelta(days=3, minutes=1))
     assert counts.expired == 1 and counts.live == 0
 
 
 def test_a_one_shot_cron_fires_once_a_turn_starts_after_it(tmp_path):
     t = Transcript()
-    t.cron(at(10, 0), "toolu_c1", "49759e95", "30 * * * *", recurring=False)
+    t.cron(at(10, 0), "toolu_c1", "ab12cd34", "30 * * * *", recurring=False)
     rows, _, upcoming = _derive(t, tmp_path)
     assert rows[0].status == "live" and upcoming is not None
     t.prompt(upcoming + timedelta(seconds=2), meta=True)
@@ -194,7 +194,7 @@ def test_a_refused_call_scheduled_nothing(tmp_path):
 def test_a_changed_shape_is_named_never_live(tmp_path):
     t = Transcript()
     t.call(at(10, 0), "ScheduleWakeup", "toolu_w1", {"delay": "soon", "prompt": "p"})
-    t.cron(at(10, 1), "toolu_c1", "49759e95", "*/5 * * * *")
+    t.cron(at(10, 1), "toolu_c1", "ab12cd34", "*/5 * * * *")
     t.records[-1]["toolUseResult"]["id"] = 12345678
     rows, counts, _ = _derive(t, tmp_path)
     assert counts.shape_unrecognized == 2 and counts.live == 0
@@ -217,7 +217,7 @@ def test_a_sidechain_call_is_not_this_conversations_timer(tmp_path):
 
 
 def test_prompt_summaries_are_redacted_and_truncated(tmp_path):
-    key = "ghp_" + "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"  # synthetic test value, never issued
+    key = "ghp_" + "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"
     t = Transcript()
     t.wakeup(at(10, 0), "toolu_w1", delay=60, prompt=f"use {key} then " + "x" * 400)
     rows, _, _ = _derive(t, tmp_path)

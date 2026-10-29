@@ -4,7 +4,7 @@
     "src/api/session_crud_routes.py"
   ],
   "area": "sessions",
-  "description": "Stage one of driving sessions on another machine you can ssh into, with nothing installed there. The second slice adds the ssh transport and a probe that checks a host over ssh (tmux and its version, the login shell, the agents, whether the far box runs its own Carnivore) and stores what it found.",
+  "description": "Stage one of driving sessions on another machine you can ssh into, with nothing installed there. This first slice lands the host dimension: a `hosts` table (schema v40) with this machine as `local`, a host on every session and project (all `local` until the remote backend lands), and the routes to add, list, edit and remove a machine by its ssh target. The second slice adds the ssh transport and a probe that checks a host over ssh (tmux and its version, the login shell, the agents, whether the far box runs its own Carnivore) and stores what it found. Alex's rulings D1 to D5 and the slices: `docs/remote-hosts.md`. The third step runs sessions there: `POST /sessions` with a `host_key` creates a session in a folder on that machine (connecting it on first use), its output streams back while you watch, and closing it kills it on that machine only; a session on this machine with the same name is never touched.",
   "docs": [
     "docs/remote-hosts-ssh.md",
     "docs/remote-hosts.md"
@@ -17,11 +17,14 @@
   "how_to": [
     "Open Pack (press h with the drawer menu focused, or go to /#hosts), open the computers tab, and press \"add a computer\" for a label and an ssh target (an alias from your ~/.ssh/config, or user@host); the port and tmux socket are optional. The server generates the host's key; it shows up in the detail pane once the host is added.",
     "Open the new row and press \"probe\" to check it over ssh: tmux and its version, the login shell, the agents it has, and whether it runs its own Carnivore. A failed probe names why (unreachable, ssh authentication failed, host key not verified, tmux too old); fix it and probe again.",
-    "Its status is read off its own pane (a permission dialog there reads question), with host_state down and status unknown while its host is unreachable; after a restart it comes back on its row and id.",
-    "Restart it from its row menu (the picker previews its far pane), or restart a stopped one from the launchpad: it comes back on its host, on the same row, resuming its conversation, but only once the host is reachable and confirms the old session is gone.",
+    "Turn a host off with its switch (never on this machine), or remove it once no session names it (never this machine either).",
+    "Pick the host when you start a new session: the picker is skipped straight to this machine while no other host is configured, and only asks once you have added one.",
+    "A remote session's row carries its host's label beside its status light in the drawer, dimmed when the host is degraded or offline; this machine's own rows show no host label at all. Its status is read off its own pane (a permission dialog there reads question), with host_state down and status unknown while its host is unreachable; after a restart it comes back on its row and id.",
+    "Rename a remote session, pin it a theme or give it its own terminal background from its row menu and header exactly as a local one; each is kept for that host's session alone, never for a same-named session on this machine. Restart it from its row menu (the picker previews its far pane), or restart a stopped one from the launchpad: it comes back on its host, on the same row, resuming its conversation, but only once the host is reachable and confirms the old session is gone. Fork and sleep act on this machine and are not offered on a remote row.",
     "Or drive it through the API directly: POST /api/v1/hosts to add, GET to list, PATCH to edit, DELETE to remove, POST /api/v1/hosts/{key}/probe to check it, and POST /sessions with host_key set to a probed host to launch there.",
-    "If its ssh host key is already trusted here nothing is typed and the pairing finishes; on first contact the dialog asks for a code, which you get by pressing \"show a code\" on the other computer's own hosts page and typing its pairing id and code here. A computer Bonjour cannot see (a tailnet, another network) is added with \"pair a computer\": its name or ssh target.",
-    "A paired computer shows one of: connected, connecting, disconnected (the link is down and retrying), incompatible (its carnivore speaks another protocol), unpaired (it dropped its grant) or identity changed (its key is not the pinned one: unpair and pair again). A computer that is both an ssh host and a paired computer sits under one heading."
+    "Pair with another computer running Carnivore: it appears under \"found on this network\" on the hosts page (Bonjour); open it and press \"pair\". If its ssh host key is already trusted here nothing is typed and the pairing finishes; on first contact the dialog asks for a code, which you get by pressing \"show a code\" on the other computer's own hosts page and typing its pairing id and code here. A computer Bonjour cannot see (a tailnet, another network) is added with \"pair a computer\": its name or ssh target.",
+    "A paired computer shows one of: connected, connecting, disconnected (the link is down and retrying), incompatible (its carnivore speaks another protocol), unpaired (it dropped its grant) or identity changed (its key is not the pinned one: unpair and pair again). A computer that is both an ssh host and a paired computer sits under one heading. Its detail pane lists the grants this computer issued to it with revoke on each (that computer still sees this one until it revokes its own), and unpair, which ends both sides.",
+    "The toolbar holds the advertise switch (on by default; off stops this computer announcing itself, browsing stays), a rescan, and \"rotate key\", which asks first and tells every connected computer; a computer that was offline must pair again."
   ],
   "id": "remote-hosts",
   "issues": [
@@ -36,7 +39,34 @@
     "tailnet",
     "lan"
   ],
-  "media": [],
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "hosts-list.png",
+      "caption": "the pack page's computers tab listing a remote ssh host",
+      "alt": "the pack page's computers tab showing a host named Studio with its ssh target and probe state"
+    },
+    {
+      "kind": "screenshot",
+      "file": "hosts-detail.png",
+      "caption": "a remote host's detail pane, ssh tab, with its probe button",
+      "alt": "the pack page detail pane for Studio, ssh tab, showing its ssh target, tmux socket and a probe button"
+    },
+    {
+      "kind": "screenshot",
+      "file": "hosts-list-black-ops.png",
+      "caption": "the ssh host card under the black ops theme",
+      "alt": "the ssh host card rendered under a dark red-accented theme",
+      "theme": "black_ops"
+    },
+    {
+      "kind": "screenshot",
+      "file": "hosts-list-acid-trip.png",
+      "caption": "the ssh host card under the acid trip theme",
+      "alt": "the ssh host card rendered under a bright green-accented theme",
+      "theme": "acid_trip"
+    }
+  ],
   "name": "Remote tmux hosts",
   "since": "2026-09-28",
   "status": "beta",
@@ -53,6 +83,5 @@
     "The host picker in the new-session dialog, right after choosing a provider.",
     "A remote session's host label on its drawer row, beside its status light.",
     "The PAIRING tab's pair a computer, show a code, advertising, rescan and rotate key controls, and its found on this network group; a paired computer's detail pane on MACHINES."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

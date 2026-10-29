@@ -196,6 +196,8 @@ async def apply_version(
             scripts_present=needs_consent,
             digest=staged.digest,
         ):
+            if row.kind == KIND_CPLUG:
+                mod_facts = await catalog_cplug_gates.gate_staged_cplug(request, item, staged.path, version)
             raise consent_409(
                 request,
                 item,

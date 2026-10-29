@@ -6,6 +6,7 @@
   import { createBoardData } from './board-data.svelte';
   import type { BoardScope } from './board-types';
   import { BOARD_VIEWS, VIEW_COMPONENTS, readView, writeView, type BoardView } from './views';
+  import { boardFocus, isFresh } from './board-focus.svelte';
 
   type ScopeKind = BoardScope['kind'];
   const SCOPES: readonly ScopeKind[] = ['sysop', 'company', 'project'];
@@ -31,6 +32,16 @@
       return id === null ? { kind: 'sysop' } : { kind: 'project', id };
     }
     return { kind: 'sysop' };
+  });
+
+  $effect(() => {
+    const want = boardFocus.request;
+    if (!isFresh(want)) return;
+    scopeKind = 'sysop';
+    filter = 'all';
+    archivedOnly = want.archived;
+    search = '';
+    view = 'swimlanes';
   });
 
   const data = createBoardData(() => ({ scope, filter, archived: archivedOnly ? 'only' : 'hide' }), () => search);
@@ -97,7 +108,6 @@
       min-width: 0;
       font-family: var(--font-mono);
     }
-    /* box-shadow */
     .sbb-bar {
       display: flex;
       flex-wrap: wrap;

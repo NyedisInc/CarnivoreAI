@@ -1,12 +1,15 @@
 const { exec, execFile } = require('child_process');
 const portTrust = require('./tray-menu/port-trust');
 const path = require('path');
+const { persistBindHost } = require('./bind-settings');
 const axios = require('axios');
 const { app } = require('electron');
 const net = require('net');
 const fs = require('fs');
 const os = require('os');
 const { currentTotp, secondsUntilRollover } = require('./totp');
+const { readEnvValue, validateEnvFile } = require('./env-file');
+const devProvisioning = require('./dev-provisioning');
 const { terminateProcess, isAlive } = require('./process-teardown');
 const { decideAdoption } = require('./adoption-decision');
 const { decideLifecycleAction } = require('./ownership-policy');
@@ -49,7 +52,6 @@ class ServerManager {
     this.lastExit = null;
 
     if (app.isPackaged) {
-      // Application Support
       this.baseDir = path.join(app.getPath('userData'), 'server');
       this.appResourcesPath = path.join(app.getAppPath(), '..');
     } else {
@@ -71,10 +73,13 @@ class ServerManager {
     this.settingsPath = path.join(app.getPath('userData'), 'menubar-settings.json');
     this._settings = this._loadSettings();
 
+    // and the real
     this.reportedBind = null;
     this.reportedSetupStatus = null;
   }
 
+  // ---------------------------------------------------------------------
+  // ---------------------------------------------------------------------
 
   _loadSettings() {
     const defaults = { bind_host: DEFAULT_BIND_HOST };
@@ -115,21 +120,6 @@ class ServerManager {
     }
   }
 
-  writeConfigBindHost(ip) {
-    const configPath = this.getConfigPath();
-    try {
-      const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      parsed.server_prefs = Object.assign({}, parsed.server_prefs, { bind_host: ip });
-      const tmp = configPath + '.menubar.tmp';
-      fs.writeFileSync(tmp, JSON.stringify(parsed, null, 2), 'utf8');
-      fs.renameSync(tmp, configPath);
-      return true;
-    } catch (err) {
-      console.warn('[bind-host] could not write config.json:', err.message);
-      return false;
-    }
-  }
-
   getBindHost() {
     return this.readConfigBindHost()
       || this._settings.bind_host
@@ -147,12 +137,8 @@ class ServerManager {
     } catch (err) {
       throw new Error(`could not read .env to resolve PORT: ${err.message}`);
     }
-    const m = envText.match(/^PORT=(.*)$/m);
-    if (!m) {
-      return DEFAULT_PORT;
-    }
-    const raw = m[1].trim().replace(/^['"]|['"]$/g, '').trim();
-    if (raw === '') {
+    const raw = readEnvValue(envText, 'PORT');
+    if (raw === null || raw === '') {
       return DEFAULT_PORT;
     }
     const parsed = Number(raw);
@@ -162,7 +148,7 @@ class ServerManager {
     return parsed;
   }
 
-  async setBindHost(ip) {
+  async setBindHost(ip, options = {}) {
     if (!ip || typeof ip !== 'string') {
       throw new Error(`invalid bind host: ${ip}`);
     }
@@ -173,7 +159,7 @@ class ServerManager {
     console.log(`[bind-host] change: ${this._settings.bind_host} -> ${ip}`);
     this._settings.bind_host = ip;
     this._saveSettings();
-    this.writeConfigBindHost(ip);
+    await persistBindHost(this.getConfigPath(), ip, options.api);
 
     await this.restart();
   }
@@ -192,7 +178,6 @@ class ServerManager {
     return ips.length > 0 ? ips[0].ip : null;
   }
 
-  /* cannot determine */
   getPublishedUrl() {
     let port;
     try {
@@ -209,7 +194,6 @@ class ServerManager {
     });
   }
 
-  /* cannot be determined */
   getAppWindowUrl() {
     if (this.startBlockedReason) return null;
     let port;
@@ -226,7 +210,6 @@ class ServerManager {
     return (h === '0.0.0.0' || !h) ? '127.0.0.1' : h;
   }
 
-  /* cannot determine */
   probeHostCandidates() {
     const candidates = [this.getLocalProbeHost()];
     if (!candidates.includes('127.0.0.1')) candidates.push('127.0.0.1');
@@ -249,9 +232,7 @@ class ServerManager {
       const envPath = path.join(this.baseDir, '.env');
       if (!fs.existsSync(envPath)) return null;
       const envText = fs.readFileSync(envPath, 'utf8');
-      const m = envText.match(/^TOTP_SECRET=(.*)$/m);
-      if (!m) return null;
-      const secret = m[1].trim().replace(/^['"]|['"]$/g, '').trim();
+      const secret = readEnvValue(envText, 'TOTP_SECRET');
       if (!secret) return null;
       return currentTotp(secret);
     } catch (err) {
@@ -265,30 +246,7 @@ class ServerManager {
   }
 
   findPython() {
-    if (!app.isPackaged) {
-      const localVenv = path.join(this.baseDir, 'venv', 'bin', 'python3');
-      if (fs.existsSync(localVenv)) {
-        console.log(`Using local venv Python: ${localVenv}`);
-        return localVenv;
-      }
-    }
-
-    const pythonLocations = [
-      '/opt/homebrew/bin/python3',
-      '/usr/local/bin/python3',
-      '/usr/bin/python3',
-      path.join(process.env.HOME || '', '.pyenv', 'shims', 'python3'),
-    ];
-
-    for (const location of pythonLocations) {
-      if (fs.existsSync(location)) {
-        console.log(`Found Python at: ${location}`);
-        return location;
-      }
-    }
-
-    console.log('Using python3 from PATH');
-    return 'python3';
+    return devProvisioning.findPython({ baseDir: this.baseDir, isPackaged: app.isPackaged });
   }
 
   async ensureCloudflared() {
@@ -329,65 +287,9 @@ class ServerManager {
   }
 
   async ensureServerFiles() {
-    const requiredDirs = ['src', 'client'];
-    const requiredFiles = ['setup_auth.py', 'requirements.txt', 'config.example.json', 'nuke.sh', '.env.example'];
-
-    if (!fs.existsSync(this.baseDir)) {
-      console.log(`Creating baseDir: ${this.baseDir}`);
-      fs.mkdirSync(this.baseDir, { recursive: true });
-    }
-
-    if (app.isPackaged) {
-      // Application Support
-      const resourcesPath = this.appResourcesPath;
-
-      for (const dir of requiredDirs) {
-        const srcPath = path.join(resourcesPath, dir);
-        const destPath = path.join(this.baseDir, dir);
-
-        if (fs.existsSync(srcPath) && !fs.existsSync(destPath)) {
-          console.log(`Copying ${dir}/ to Application Support...`);
-          this.copyRecursive(srcPath, destPath);
-        }
-      }
-
-      for (const file of requiredFiles) {
-        const srcPath = path.join(resourcesPath, file);
-        const destPath = path.join(this.baseDir, file);
-
-        if (fs.existsSync(srcPath) && !fs.existsSync(destPath)) {
-          console.log(`Copying ${file} to Application Support...`);
-          fs.copyFileSync(srcPath, destPath);
-        }
-      }
-    }
-
-    const srcDir = path.join(this.baseDir, 'src');
-    if (!fs.existsSync(srcDir)) {
-      throw new Error(`Server source files not found at: ${srcDir}`);
-    }
+    devProvisioning.ensureServerFiles({ baseDir: this.baseDir, resourcesPath: this.appResourcesPath, isPackaged: app.isPackaged });
   }
 
-  copyRecursive(src, dest) {
-    if (!fs.existsSync(dest)) {
-      fs.mkdirSync(dest, { recursive: true });
-    }
-
-    const entries = fs.readdirSync(src, { withFileTypes: true });
-
-    for (const entry of entries) {
-      const srcPath = path.join(src, entry.name);
-      const destPath = path.join(dest, entry.name);
-
-      if (entry.isDirectory()) {
-        this.copyRecursive(srcPath, destPath);
-      } else {
-        fs.copyFileSync(srcPath, destPath);
-      }
-    }
-  }
-
-  /* CARNIVORE_PAYLOAD_PYTHON */
   engineBaseEnv(binDir, inherited) {
     if (this.payload) return payloadEngineEnv(this.payload, inherited, binDir, path.join(app.getPath('userData'), 'tmux'));
     const env = { ...inherited };
@@ -397,47 +299,8 @@ class ServerManager {
 
   async ensureVenv() {
     if (this.payload) return;
-    const venvPath = path.join(this.baseDir, 'venv');
-    const requirementsPath = path.join(this.baseDir, 'requirements.txt');
-
-    if (!fs.existsSync(venvPath)) {
-      console.log('Creating virtual environment...');
-
-      return new Promise((resolve, reject) => {
-        exec(`"${this.pythonPath}" -m venv "${venvPath}"`, (error) => {
-          if (error) {
-            console.error('Failed to create venv:', error);
-            reject(error);
-            return;
-          }
-
-          if (fs.existsSync(requirementsPath)) {
-            const venvPython = path.join(venvPath, 'bin', 'python3');
-            console.log('Installing requirements...');
-
-            exec(`"${venvPython}" -m pip install -r "${requirementsPath}"`, (error2) => {
-              if (error2) {
-                console.error('Failed to install requirements:', error2);
-                reject(error2);
-                return;
-              }
-
-              console.log('Venv setup complete');
-              this.pythonPath = venvPython;
-              resolve();
-            });
-          } else {
-            resolve();
-          }
-        });
-      });
-    } else {
-      const venvPython = path.join(venvPath, 'bin', 'python3');
-      if (fs.existsSync(venvPython)) {
-        this.pythonPath = venvPython;
-        console.log(`Using existing venv: ${venvPython}`);
-      }
-    }
+    const venvPython = await devProvisioning.ensureVenv({ baseDir: this.baseDir, pythonPath: this.pythonPath, exec });
+    if (venvPython) this.pythonPath = venvPython;
   }
 
   async isPortInUse(port = this.getPort()) {
@@ -507,7 +370,6 @@ class ServerManager {
       console.log(`Port ${port} already in use, checking if it's our server...`);
       const health = await this.getHealth();
       if (health) {
-        // CANNOT DETERMINE
         const foreign = portTrust.holderRefusal(await portTrust.listeners(port, { execFile }), process.getuid());
         if (foreign) {
           this.state = 'stopped';
@@ -613,7 +475,14 @@ class ServerManager {
     this.startTime = Date.now();
     console.log(`Server process started with PID: ${this.processPid}`);
 
-    this.process.on('exit', (code, signal) => {
+    this.attachChildHandlers(this.process);
+
+    console.log('Server process started');
+  }
+
+  attachChildHandlers(child) {
+    child.on('exit', (code, signal) => {
+      if (this.process !== child) return;
       console.log(`Server process exited with code ${code} and signal ${signal}`);
       appendEngineLog(this.logFile, `\n=== Server stopped at ${new Date().toISOString()} (code: ${code}, signal: ${signal}) ===\n`);
 
@@ -631,7 +500,8 @@ class ServerManager {
       this.superviseDown({ expected: wasExpected });
     });
 
-    this.process.on('error', (err) => {
+    child.on('error', (err) => {
+      if (this.process !== child) return;
       console.error('Failed to start server:', err);
       appendEngineLog(this.logFile, `\n=== Server error: ${err.message} ===\n`);
 
@@ -645,8 +515,6 @@ class ServerManager {
       this.state = 'stopped';
       this.startTime = null;
     });
-
-    console.log('Server process started');
   }
 
   /* could not be determined */
@@ -659,7 +527,6 @@ class ServerManager {
     }
   }
 
-  /* CANNOT DETERMINE */
   findPortHolderPid(port) {
     return new Promise((resolve) => {
       exec(`lsof -nP -iTCP:${port} -sTCP:LISTEN -t`, (err, stdout) => {
@@ -738,11 +605,10 @@ class ServerManager {
     }
   }
 
-  /* could not */
   cancelQuit() { this.quitting = false; }
 
   async engineIsUp(port = this.getPort()) {
-    return Boolean(await this.getHealth()) || (await this.isPortInUse(port));
+    return Boolean(await this.getHealth(port)) || (await this.isPortInUse(port));
   }
 
   stopEngine(options = {}) {
@@ -817,12 +683,10 @@ class ServerManager {
   async stop(options = {}) {
     console.log('Stopping server...');
 
-    // this.state = 'stopped'
     const verdict = decideLifecycleAction({
       action: 'stop',
       owned: this.ownedProcess,
       takeOwnership: options.takeOwnership === true,
-      // could not
       serverResponding: this.processPid ? isAlive(this.processPid) : null,
     });
 
@@ -902,13 +766,16 @@ class ServerManager {
     }
 
     if (!this.ownedProcess && options.takeOwnership === true) {
-      // could not
       await this.takeOverPort();
       console.log('Server restarted under new ownership');
       return { restarted: true, refused: false, tookOwnership: true };
     }
 
-    await this.stop();
+    const stopResult = await this.stop();
+    if (stopResult && stopResult.stopped === false) {
+      console.error(`Not restarting: stop() did not confirm the exit (${stopResult.outcome || stopResult.reason || 'unknown'}).`);
+      return { restarted: false, refused: false, stopFailed: true, reason: stopResult.reason || stopResult.outcome, pid: stopResult.pid };
+    }
 
     await new Promise(resolve => setTimeout(resolve, 3000));
 
@@ -917,10 +784,10 @@ class ServerManager {
     return { restarted: true, refused: false, tookOwnership: false };
   }
 
-  async getHealth() {
+  async getHealth(portOverride) {
     let port;
     try {
-      port = this.getPort();
+      port = portOverride || this.getPort();
     } catch (err) {
       console.error(`[port] getHealth: ${err.message}`);
       return null;
@@ -970,7 +837,7 @@ class ServerManager {
     return null;
   }
 
-  /* could not be determined */
+  /* could not be determined the bind was not measured */
   getMeasuredUrl() {
     const host = this.getEffectiveBindHost();
     if (!host) return null;
@@ -1030,72 +897,9 @@ class ServerManager {
   }
 
   validateEnvFile() {
-    const envPath = path.join(this.baseDir, '.env');
-
-    const result = {
-      isValid: true,
-      missingRequired: [],
-      emptyRequired: [],
-      errors: []
-    };
-
-    if (!fs.existsSync(envPath)) {
-      result.isValid = false;
-      result.errors.push('.env file not found. Run setup first.');
-      return result;
-    }
-
-    const envContent = fs.readFileSync(envPath, 'utf8');
-
-    const criticalFields = ['DEFAULT_WORKING_DIR', 'LOG_DIRECTORY'];
-
-    const authFields = ['TOTP_SECRET', 'JWT_SECRET'];
-
-    criticalFields.forEach(field => {
-      const regex = new RegExp(`^${field}=(.*)$`, 'm');
-      const match = envContent.match(regex);
-
-      if (!match) {
-        result.missingRequired.push(field);
-        result.isValid = false;
-      } else if (!match[1] || match[1].trim() === '') {
-        result.emptyRequired.push(field);
-        result.isValid = false;
-      }
-    });
-
-    authFields.forEach(field => {
-      const regex = new RegExp(`^${field}=(.*)$`, 'm');
-      const match = envContent.match(regex);
-
-      if (!match) {
-        result.missingRequired.push(field);
-        result.isValid = false;
-      } else if (!match[1] || match[1].trim() === '') {
-        result.emptyRequired.push(field);
-        result.isValid = false;
-      }
-    });
-
-    if (result.missingRequired.length > 0) {
-      result.errors.push(`Missing required fields: ${result.missingRequired.join(', ')}`);
-    }
-    if (result.emptyRequired.length > 0) {
-      result.errors.push(`Empty required fields: ${result.emptyRequired.join(', ')}`);
-    }
-
-    // could not
-    try {
-      this.getPort();
-    } catch (err) {
-      result.isValid = false;
-      result.errors.push(err.message);
-    }
-
-    return result;
+    return validateEnvFile(this.baseDir, () => this.getPort());
   }
 
-  /* CLOUDFLARE_API_TOKEN could not local evaluation */
   getSetupVerdict() {
     const local = setupVerdict.evaluateLocalSetup(this.readSetupFacts());
     const resolved = setupVerdict.resolveSetupVerdict({

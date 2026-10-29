@@ -1,4 +1,24 @@
 <h3 class="sg-h3" id="chrome-flow-plugin">flow plugin: the chat view</h3>
 <dl class="sg-facts">
     <dt id="chrome-flow-chat">flow chat view</dt>
+    <dd>The flow plugin's page tab (Joe (ccsliinc), 2026-10-11, task manager "Flow plugin: live chat view with bubbles and cards";
+        <code>docs/flow.md</code>, "The chat view"): a multi-agent run as a live chat, in causal order with no time axis.
+        <code>web/src/cplugs/flow/FlowBody.svelte</code> (<code>.flw</code>) owns the page: a title-row strip (<code>.flw-bar</code>, a hairline
+        under it via <code>box-shadow</code>) with the one accent label (<code>.flw-label</code>, <code>--oc-orange</code>), the seed picker
+        (the base small select and field (<code>data-field</code>, the id box <code>.flw-id</code>), the base small button) and the follow live switch
+        (the shared <code>Check</code>, <code>.flw-follow</code>); a head line (<code>.flw-head</code>, <code>.flw-title</code>); notes
+        (<code>.flw-note</code>, <code>.flw-note--error</code> in <code>--oc-coral</code>); then the list (<code>.flw-stream</code>, one
+        <code>.flw-entry</code> per item, stepped in by <code>--_depth</code> for a subagent, <code>.flw-entry--owner</code> on the owner's side).
+        <code>FlowBubble.svelte</code> (<code>.flw-bubble</code>) copies the task manager bubble base (<code>.hb</code>): a 1px hairline and a faint tint,
+        here in the AGENT's series token (<code>--oc-series-1</code> to <code>--oc-series-8</code> by lane, set as <code>--_agent</code>);
+        a typed prompt sits on the owner's side with a 3px right bar (<code>.flw-bubble--owner</code>); the header (<code>.flw-who</code>,
+        <code>.flw-name</code>, <code>.flw-chip</code>, <code>.flw-time</code>) is small tracked capitals with the time small and dim;
+        the text (<code>.flw-text</code>, <code>.flw-md</code>) is markdown through the one closed-subset renderer, restating the task manager chat's
+        <code>.hdc-md</code> rules, folded behind a quiet base button (<code>data-flow-more</code>). <code>FlowCard.svelte</code> (<code>.flw-card</code>)
+        copies the crosstalk card (<code>[data-xtalk-card]</code>): a hairline and a 3px square left bar in the kind's token, set by
+        <code>data-kind</code>: crosstalk <code>--oc-cyan</code>, spawn <code>--oc-violet</code>, subagent launch and return
+        <code>--oc-green</code>, task manager <code>--oc-orange</code>, task <code>--oc-yellow</code>, work the quiet <code>--oc-line-frame</code>;
+        the head names the kind (<code>.flw-kind</code>) and the route (<code>.flw-route</code>); facts are small and muted
+        (<code>.flw-meta</code>, an inferred edge in <code>.flw-meta--warn</code>); a work card folds its tool calls
+        (<code>.flw-calls</code>, <code>.flw-call</code>, <code>.flw-call-tool</code>) until opened. Tokens only; focus is the shared rule.</dd>
 </dl>

@@ -11,7 +11,7 @@
     "docs/federation.md"
   ],
   "examples": [
-    "Name hosta when spawning a browser-heavy task and watch it run from hosta's copy of the repository while its report lands on your board.",
+    "Name studio when spawning a browser-heavy task and watch it run from studio's copy of the repository while its report lands on your board.",
     "Let two computers work the same project in parallel, each agent in its own folder, with one board and one chat at home.",
     "Refresh every replica computer after a change lands."
   ],

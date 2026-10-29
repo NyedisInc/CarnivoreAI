@@ -29,7 +29,7 @@
     "testflight",
     "web view"
   ],
-  "media_exempt": "screenshots are not shipped in the open-source tree",
+  "media_exempt": "no TestFlight build exists yet (the upload and device test wait on Alex's Apple steps), so there is nothing reproducible to capture; the picture is a simulator screenshot",
   "name": "iPhone App",
   "since": "2026-10-07",
   "status": "beta",

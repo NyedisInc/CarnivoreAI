@@ -3,6 +3,7 @@
   import type { PanelReadState, ProjectPanelProps } from '../sdk';
   import { errorSentence, fetchBundles, isRemoved, presentCopies, verifyBundle, type BundleView } from './crate-api';
   import { downloadCrate } from './undo-api';
+  import { Button, List, ListRow, Tag } from '../sdk/ui';
   import ExportDialog from './ExportDialog.svelte';
   import ImportDialog from './ImportDialog.svelte';
   import JobProgress from './JobProgress.svelte';
@@ -102,6 +103,8 @@
     failed = false;
     expanded = false;
     jobId = null;
+    running = false;
+    problem = '';
     void load(id);
     return resourcePush().pushOrPoll(() => void load(id), POLL_MS, [EXPORTS_TOPIC]);
   });
@@ -110,48 +113,51 @@
 {@render header(count, read)}
 {#if !folded}
   <div class="crt-pacts">
-    <button type="button" class="oc-btn oc-btn--sm oc-btn--confirm" data-crt-export-project onclick={() => void exportProject()}>
+    <Button size="sm" variant="confirm" data-crt-export-project onclick={() => void exportProject()}>
       {t('cplug.crate.project.export')}
-    </button>
+    </Button>
   </div>
   {#if read === 'failed'}
     <p class="ph-empty" data-crt-failed><span class="ph-gone">{t('cplug.crate.project.failed')}</span></p>
   {:else if read === 'ready' && count === 0}
     <p class="ph-empty">{t('cplug.crate.project.empty')}</p>
   {:else}
-    {#each crates.slice(0, shown) as crate (crate.bundleId)}
-      {@const name = crate.label ?? crate.bundleId}
-      <div class="crt-prow ph-scols" data-crt-crate={crate.bundleId}>
-        <span class="crt-prow__lead"></span>
-        <span class="crt-prow__name">{name}</span>
-        <span class="crt-prow__meta">
-          <span><span class="ph-tag">{t(`cplug.crate.panel.scope.${crate.scope === 'project' ? 'project' : 'session'}`)}</span></span>
-          <span><span class="ph-tag" data-crt-copies={isRemoved(crate) ? 'removed' : allThere(crate) ? 'present' : 'missing'} title={copiesText(crate)}>
-            {copiesText(crate)}
-          </span></span>
-        </span>
-        <span class="crt-prow__when">{age(crate.createdAt)}</span>
-        <span class="crt-prow__act">
-          {#if !isRemoved(crate)}
-          <button type="button" class="oc-btn oc-btn--sm" data-crt-restore={crate.bundleId} disabled={running}
-            aria-label={t('cplug.crate.project.restore_label', { name })} onclick={() => void restore(crate)}>{t('cplug.crate.import.restore')}</button>
-          <button type="button" class="oc-btn oc-btn--sm" data-crt-verify={crate.bundleId} disabled={running}
-            aria-label={t('cplug.crate.project.verify_label', { name })} onclick={() => void verify(crate)}>{t('cplug.crate.panel.verify')}</button>
-          {#if presentCopies(crate) > 0}
-          <button type="button" class="oc-btn oc-btn--sm" data-crt-download={crate.bundleId} disabled={downloading !== null}
-            aria-label={t('cplug.crate.project.download_label', { name })} onclick={() => void download(crate)}>{t(downloading === crate.bundleId ? 'cplug.crate.panel.downloading' : 'cplug.crate.panel.download')}</button>
-          <button type="button" class="oc-btn oc-btn--sm" data-crt-remove={crate.bundleId} disabled={running}
-            aria-label={t('cplug.crate.project.remove_label', { name })} onclick={() => void remove(crate)}>{t('cplug.crate.panel.remove')}</button>
-          {/if}
-          {/if}
-        </span>
-        <span class="crt-prow__pad"></span>
-      </div>
-    {/each}
+    <List label={t('cplug.crate.project.group')}>
+      {#snippet children()}
+        {#each crates.slice(0, shown) as crate (crate.bundleId)}
+          {@const name = crate.label ?? crate.bundleId}
+          {#snippet below()}
+            <span class="crt-pacts__line">
+              <Tag>{t(`cplug.crate.panel.scope.${crate.scope === 'project' ? 'project' : 'session'}`)}</Tag>
+              <Tag tone={isRemoved(crate) ? 'neutral' : allThere(crate) ? 'ok' : 'warn'} data-crt-copies={isRemoved(crate) ? 'removed' : allThere(crate) ? 'present' : 'missing'} title={copiesText(crate)}>
+                {copiesText(crate)}
+              </Tag>
+            </span>
+            {#if !isRemoved(crate)}
+              <span class="crt-pacts__line">
+                <Button size="sm" data-crt-restore={crate.bundleId} disabled={running}
+                  aria-label={t('cplug.crate.project.restore_label', { name })} onclick={() => void restore(crate)}>{t('cplug.crate.import.restore')}</Button>
+                <Button size="sm" data-crt-verify={crate.bundleId} disabled={running}
+                  aria-label={t('cplug.crate.project.verify_label', { name })} onclick={() => void verify(crate)}>{t('cplug.crate.panel.verify')}</Button>
+                {#if presentCopies(crate) > 0}
+                  <Button size="sm" data-crt-download={crate.bundleId} disabled={downloading !== null}
+                    aria-label={t('cplug.crate.project.download_label', { name })} onclick={() => void download(crate)}>{t(downloading === crate.bundleId ? 'cplug.crate.panel.downloading' : 'cplug.crate.panel.download')}</Button>
+                  <Button size="sm" variant="danger" data-crt-remove={crate.bundleId} disabled={running}
+                    aria-label={t('cplug.crate.project.remove_label', { name })} onclick={() => void remove(crate)}>{t('cplug.crate.panel.remove')}</Button>
+                {/if}
+              </span>
+            {/if}
+          {/snippet}
+          <ListRow wrap data-crt-crate={crate.bundleId} primary={name} meta={age(crate.createdAt)} {below} />
+        {/each}
+      {/snippet}
+    </List>
     {#if shown < count}
-      <button type="button" class="oc-btn crt-pmore" data-show-all onclick={() => (expanded = true)}>
-        {t('projects.page.show_all', { count })}
-      </button>
+      <span class="crt-pacts">
+        <Button size="sm" data-show-all onclick={() => (expanded = true)}>
+          {t('projects.page.show_all', { count })}
+        </Button>
+      </span>
     {/if}
     {#if failed}<p class="ph-empty" data-crt-failed><span class="ph-gone">{t('cplug.crate.project.failed')}</span></p>{/if}
   {/if}
@@ -173,89 +179,12 @@
       flex-direction: column;
     }
 
-    .crt-prow {
-      grid-template-columns: 16px minmax(0, 1fr) 72px 160px 56px 288px 24px;
-      min-height: 28px;
-      box-shadow: inset 0 -1px 0 var(--oc-line-faint);
-    }
-
-    .crt-prow:hover {
-      background: var(--oc-ground-hover);
-    }
-
-    .crt-prow__meta {
-      display: contents;
-    }
-
-    .crt-prow__meta > span {
+    .crt-pacts__line {
       display: flex;
-      min-width: 0;
-    }
-
-    .crt-prow__meta > span > span {
-      flex: 0 1 auto;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .crt-prow__name {
-      display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      min-width: 0;
-      overflow: hidden;
-      font-weight: 500;
-      color: var(--oc-text-primary);
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .crt-prow__when {
-      font-size: var(--oc-fs-label, 11px);
-      font-variant-numeric: tabular-nums;
-      color: var(--oc-text-secondary);
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .crt-prow__act {
-      display: flex;
       gap: var(--oc-space-2);
-      justify-self: end;
-    }
-
-    .crt-pmore {
-      margin: var(--oc-space-1) var(--oc-space-3);
-    }
-
-    @container ph (max-width: 767px) {
-      .crt-prow {
-        grid-template-columns: 16px minmax(0, 1fr) auto auto auto;
-        grid-template-areas:
-          'lead name when act kebab'
-          'lead meta meta act kebab';
-        column-gap: var(--oc-space-2);
-        row-gap: 0;
-        min-height: 48px;
-        padding-block: 2px;
-      }
-
-      .crt-prow__lead { grid-area: lead; }
-      .crt-prow__name { grid-area: name; }
-      .crt-prow__when { grid-area: when; }
-      .crt-prow__act { grid-area: act; grid-row: 1 / 3; align-self: center; }
-      .crt-prow__pad { grid-area: kebab; grid-row: 1 / 3; width: 44px; min-width: 44px; }
-
-      .crt-prow__meta {
-        display: flex;
-        grid-area: meta;
-        align-items: center;
-        gap: var(--oc-space-2);
-        min-width: 0;
-        font-size: var(--oc-fs-label, 11px);
-        color: var(--oc-text-dim);
-      }
+      padding-block: var(--oc-space-0-5);
     }
   }
 </style>

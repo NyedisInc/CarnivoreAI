@@ -1,38 +1,4 @@
 #!/usr/bin/env python3
-"""Clicking a project whose folder is gone must SAY so, not do nothing.
-
-WHAT THIS EXISTS TO CATCH
-
-A project row whose folder does not exist is correctly refused - it must
-never be opened into a stale directory. But the refusal was a bare
-``return`` in the row's click handler: no message, no log line, no request.
-Measured on a fresh install before the fix, clicking such a row produced
-ZERO non-GET requests and ZERO console output. To the user that is a button
-that does nothing, which is indistinguishable from a broken app.
-
-It mattered most on a fresh install, where the shipped ``config.example.json``
-seeded four projects pointing at paths that existed on nobody's machine, so
-every row on the very first screen was a dead click.
-
-Refusing and doing nothing are different things. This harness asserts the
-app does the first.
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS              - the click was refused and the refusal named the path
-  1  FAIL              - the click was silent, or opened a missing directory
-  2  CANNOT DETERMINE  - the measurement could not be taken at all
-
-POSITIVE CONTROL. ``--legacy`` neutralises the explanation in the live page
-(it replaces the handler's explain hook with a no-op), reproducing the
-shipped silent-return behaviour. A harness never shown capable of failing
-proves nothing when it passes::
-
-    /opt/homebrew/bin/python3 scripts/verify_missing_project_click.py           # expect 0
-    /opt/homebrew/bin/python3 scripts/verify_missing_project_click.py --legacy  # expect 1
-
-playwright is not importable under this project's venv. Run this with an
-interpreter that has it, e.g. /opt/homebrew/bin/python3.
-"""
 
 from __future__ import annotations
 

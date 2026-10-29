@@ -1,4 +1,3 @@
-/* running sessions */
 
 import { metaFor } from '../../engine/meta';
 import { normalizeStatus, sessions, statusHue, type SessionInfo } from '../../api';

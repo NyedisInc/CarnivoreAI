@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
@@ -15,9 +14,11 @@ from src.core.hosts.remote_readopt import schedule_remote_readopt  # noqa: F401
 from src.core.hosts.remote_resume import respawn_remote  # noqa: F401
 from src.core.hosts.probe import AGENT_NAMES
 from src.core.hosts.registry import HostUnavailable
+from src.core.sessions.ports import SessionManagerSurface
 from src.core.hosts.remote_host import RemoteHost, RemoteHostUnavailable
 from src.core.hosts.ssh_exec import posix_quote
 from src.models import Session, SessionStatus
+from src.models.utc_time import utc_now
 
 logger = structlog.get_logger()
 
@@ -69,12 +70,12 @@ def remote_command(agent_paths: Optional[Mapping[str, str]], host_key: str,
     return " ".join(posix_quote(word) for word in words), family
 
 
-def _names_on_host(manager: Any, host_key: str) -> List[str]:
+def _names_on_host(manager: SessionManagerSurface, host_key: str) -> List[str]:
     return [backend.tmux_session for backend in list(manager._registry.backends.values())
             if is_remote_backend(backend) and backend.host_key == host_key]
 
 
-async def _claim_name(manager: Any, host: RemoteHost, base: Optional[str],
+async def _claim_name(manager: SessionManagerSurface, host: RemoteHost, base: Optional[str],
                       recreate: bool = False) -> Optional[str]:
     from src.core import session_backend, session_name_claim
 
@@ -90,7 +91,7 @@ async def _claim_name(manager: Any, host: RemoteHost, base: Optional[str],
     return claim.name
 
 
-def _persist(manager: Any, backend: Any, *, far_dir: str, family: Optional[str],
+def _persist(manager: SessionManagerSurface, backend: Any, *, far_dir: str, family: Optional[str],
              launched: bool, label: Optional[str], reuse_session_id: Optional[int]) -> Any:
     from src.core.db import transaction
     from src.core.session_create_persist import (
@@ -118,7 +119,7 @@ def _persist(manager: Any, backend: Any, *, far_dir: str, family: Optional[str],
 
 
 async def create_remote_session(
-    manager: Any, *, host_key: str, session_id: str, working_dir: Optional[str],
+    manager: SessionManagerSurface, *, host_key: str, session_id: str, working_dir: Optional[str],
     auto_start: bool, initial_cols: Optional[int], initial_rows: Optional[int],
     base_name: Optional[str], agent_type: Optional[str], label: Optional[str],
     agent_extra_args: Optional[List[str]],
@@ -149,7 +150,7 @@ async def create_remote_session(
     except (ValueError, RuntimeError):
         await manager._cleanup_failed_create(session_id, backend)
         raise
-    now = datetime.utcnow()
+    now = utc_now()
     session = Session(id=session_id, pty_pid=None, working_dir=far_dir,
                       status=SessionStatus.RUNNING, created_at=now, last_activity=now,
                       agent_type=family, tmux_session=backend.tmux_session)
@@ -165,7 +166,7 @@ async def create_remote_session(
     return session
 
 
-def host_fields(manager: Any, backend: Any) -> Dict[str, str]:
+def host_fields(manager: SessionManagerSurface, backend: Any) -> Dict[str, str]:
     if not is_remote_backend(backend):
         return {}
     key = backend_host_key(backend)
@@ -180,7 +181,7 @@ def _parse(remote_id: str) -> tuple[str, str]:
     return parsed
 
 
-async def destroy_external(manager: Any, remote_id: str) -> dict:
+async def destroy_external(manager: SessionManagerSurface, remote_id: str) -> dict:
     host_key, name = _parse(remote_id)
     if name in _names_on_host(manager, host_key):
         raise ValueError(f"{remote_id!r} is a currently-active session; "
@@ -199,11 +200,11 @@ async def destroy_external(manager: Any, remote_id: str) -> dict:
     raise RuntimeError(f"tmux kill-session on host {host_key} failed")
 
 
-async def resolve_external_cwd(manager: Any, remote_id: str) -> Path:
+async def resolve_external_cwd(manager: SessionManagerSurface, remote_id: str) -> Path:
     host_key, name = _parse(remote_id)
     host = await manager.hosts.get(host_key)
     try:
-        reply = await host.command("display-message", "-p", "-t", f"={name}",
+        reply = await host.command("display-message", "-p", "-t", f"={name}:",
                                    "#{pane_current_path}")
     except RemoteHostUnavailable as exc:
         raise HostUnavailable("host_unreachable", str(exc)) from exc

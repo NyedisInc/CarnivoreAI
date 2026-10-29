@@ -33,7 +33,6 @@ function quoteForSecurity(value, what) {
   return `"${value.replace(/[\\"]/g, '\\$&')}"`;
 }
 
-/* could not */
 function runInteractive(name, command) {
   if (Buffer.byteLength(command, 'utf8') + 1 > SECURITY_LINE_LIMIT) {
     throw new Error(`security ${name} command line exceeds the ${SECURITY_LINE_LIMIT}-byte line security -i reads whole`);
@@ -63,7 +62,7 @@ function parseIdentities(listing) {
   return [...seen.values()];
 }
 
-/* private directory */
+/* neither an existing file nor base64 */
 function materializeP12(link, dir) {
   const asPath = link.startsWith('file://') ? decodeURIComponent(link.slice(7)) : link;
   if (fs.existsSync(asPath)) {

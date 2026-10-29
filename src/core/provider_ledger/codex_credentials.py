@@ -12,6 +12,7 @@ from typing import Any, Optional
 import structlog
 
 from src.core.provider_ledger import keychain
+from src.core.provider_ledger.miss_cache import MissCache
 from src.core.provider_ledger.codex_usage import (
     account_id_from_id_token,
     plan_type_from_id_token,
@@ -27,6 +28,8 @@ logger = structlog.get_logger()
 
 CODEX_KEYCHAIN_SERVICE = "Codex Auth"
 CODEX_AUTH_FILE = "auth.json"
+
+_misses = MissCache("codex_credential_missing")
 
 CODEX_PROFILE_CLAIM = "https://api.openai.com/profile"
 
@@ -108,11 +111,21 @@ def read_codex_credential(codex_home: str) -> Optional[CodexCredential]:
     if raw is not None:
         return parse_codex_document(_loads(raw, source="file"), source="file")
 
+    home = path.parent
+    try:
+        st = home.stat()
+        stamp: tuple = ((st.st_mtime_ns, st.st_size),)
+    except OSError:
+        stamp = (None,)
+    if _misses.blocked(str(home), stamp):
+        return None
     from_keychain = keychain.read_password(
         CODEX_KEYCHAIN_SERVICE, account=codex_keychain_account(codex_home)
     )
     if not from_keychain:
+        _misses.miss(str(home), stamp)
         return None
+    _misses.hit(str(home))
     return parse_codex_document(
         _loads(from_keychain, source="keychain"), source="keychain"
     )

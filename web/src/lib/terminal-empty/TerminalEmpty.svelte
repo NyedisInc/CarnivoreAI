@@ -1,5 +1,6 @@
-<!-- running sessions -->
+
 <script lang="ts">
+    import { Button } from '../base';
     import { t } from '../i18n/index.svelte';
     import { newSession } from '../../opscenter/api/host';
 
@@ -21,12 +22,12 @@
         <h2 class="terminal-empty__title">{t('terminal.empty.title')}</h2>
         <p class="terminal-empty__body">{t('terminal.empty.body')}</p>
         <div class="terminal-empty__actions">
-            <button type="button" class="oc-btn terminal-empty__btn--drawer" onclick={openDrawer}>
+            <Button data-terminal-empty="drawer" onclick={openDrawer}>
                 {t('terminal.empty.open_drawer')}
-            </button>
-            <button type="button" class="oc-btn oc-btn--confirm terminal-empty__btn--new" onclick={() => void newSession(null)}>
+            </Button>
+            <Button variant="confirm" data-terminal-empty="new" onclick={() => void newSession(null)}>
                 {t('terminal.empty.new_session')}
-            </button>
+            </Button>
         </div>
     </div>
 </div>

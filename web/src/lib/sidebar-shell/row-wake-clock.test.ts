@@ -27,7 +27,7 @@ describe('drawer row wake clock', () => {
     it('an asleep row with a wake time draws the clock in the right-hand icon group, the time in its title', () => {
         const el = draw({ status: 'asleep', asleep: true, next_wake_at: 1.9e9 });
         const clock = el.querySelector('.session-sidebar-row-wake-icon');
-        expect(clock?.getAttribute('title')).toBe(wakeTitle(1.9e9));
+        expect(clock?.getAttribute('title')).toBe(`${wakeTitle(1.9e9)}. click to open its automations.`);
         expect(clock?.getAttribute('title')).toMatch(/^scheduled to wake this session: .+/);
         const cluster = el.querySelector('.session-sidebar-row-controls-cluster');
         expect(clock?.parentElement).toBe(cluster);

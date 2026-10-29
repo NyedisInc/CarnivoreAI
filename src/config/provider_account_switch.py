@@ -14,12 +14,20 @@ MIN_THRESHOLD_PERCENT = 50
 
 SwitchProvider = Literal["claude", "codex"]
 
-# could not
 _ID_SHAPE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 class ProviderAccountSwitchConfig(BaseModel):
     """Auto-switch on or off, its threshold, and the active account per provider.
+
+    Fields:
+        auto_switch: whether the ledger's poll may move the active pointer
+            on its own. Default False (owner: "default OFF").
+        threshold_percent: the used percent, on the active account's
+            short (5h) or weekly window, at which auto-switch moves.
+        active_claude: the account id new Claude sessions launch under,
+            or None for "not chosen", which injects nothing.
+        active_codex: the same, for Codex.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -34,12 +42,6 @@ class ProviderAccountSwitchConfig(BaseModel):
     @field_validator("active_claude", "active_codex")
     @classmethod
     def _pointer_is_an_id(cls, value: Optional[str]) -> Optional[str]:
-        """Refuse a pointer that could not be an account id.
-
-        Inputs: value (str | None) - the stored pointer.
-        Output: str | None - the same value.
-        Raises: ValueError - not the lowercase slug an id always is.
-        """
         if value is not None and not _ID_SHAPE.fullmatch(value):
             raise ValueError("an active account pointer must be an account id")
         return value

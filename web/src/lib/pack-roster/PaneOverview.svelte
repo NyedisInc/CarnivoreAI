@@ -1,5 +1,6 @@
 
 <script lang="ts">
+  import Button from '../base/Button.svelte';
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
   import Meters from './Meters.svelte';
@@ -28,7 +29,7 @@
 <section class="m1-sec"><h3 class="pp-k">{t('roster.ov.load')}</h3><Meters {c} /></section>
 {#if c.kind !== 'ssh-only'}
   <p class="m1-setwork"><span class="pp-hint">{t('roster.ov.reserve_hint')}</span>
-    <button type="button" class="oc-btn oc-btn--sm oc-btn--ghost" onclick={onWork}>{t('roster.ov.set_in_work')}</button></p>
+    <Button variant="quiet" size="sm" onclick={onWork}>{t('roster.ov.set_in_work')}</Button></p>
 {/if}
 <section class="m1-sec"><h3 class="pp-k">{t('roster.ov.tools')}</h3>
   <div class="pp-tools" data-pm="toolchain">

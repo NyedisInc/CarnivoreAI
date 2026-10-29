@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 
 import structlog
 
+from src.core.safe_io.atomic_write import atomic_write_bytes
 from src.core.blobcodec.place import PlaceConflict, PlaceMismatch, write_verified
 from src.core.crate_format.constants import M_PROJECT_PATCH
 from src.core.crate_format.errors import CrateError
@@ -130,9 +131,7 @@ def _write_atomic(path: Path, data: bytes) -> None:
             return
     except OSError as exc:
         logger.warning("crate_import_receipt_unreadable", path=str(path), error=type(exc).__name__)
-    temp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    temp.write_bytes(data)
-    os.replace(temp, path)
+    atomic_write_bytes(path, data)
 
 
 def keep_git_state(reader: CrateReader, plan: SidePlan, env: ImportEnv, import_id: str) -> Dict[str, Any]:

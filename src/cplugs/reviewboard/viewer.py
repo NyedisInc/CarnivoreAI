@@ -1,16 +1,3 @@
-"""The revision viewer: one immutable page, read from the board folder and served to the sandboxed frame (``docs/reviewboard.md``, slice 4).
-
-THE SECURITY MODEL (read before changing anything). A revision page is untrusted code written by an agent. It is served ONLY by the viewer
-route, under the sdk's one sandbox policy (``sdk/sandboxed_html.py``: ``sandbox allow-scripts``, ``default-src 'none'``, no network) and
-framed by the board page with ``<iframe sandbox="allow-scripts">``, never ``allow-same-origin``, so it runs in an opaque origin with no
-cookie, storage or token. The route has no bearer (an iframe cannot send one): the signed ticket (``ticket.py``) is the credential, and it
-names a slug, a revision and a view, so a ticket opens exactly one page. This module only READS: it follows no symlink, reads a regular file
-inside the board folder, and refuses a file whose sha256 is not the one the sidecar recorded (revision files are immutable).
-
-:func:`page` injects the bridge (``bridge.js``) first in ``<head>`` so the board can point and highlight, and on a scratch board
-inlines the post's files as ``data:`` URIs (``scratch_files.resolve``: the frame can fetch nothing, so the page carries them); :func:`load_sidecar` is the cheap
-read (one file, no hashing of the other pages) the ticket and open routes use to check a board, revision and view exist.
-"""
 
 from __future__ import annotations
 

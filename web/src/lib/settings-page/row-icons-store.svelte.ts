@@ -1,5 +1,6 @@
+/* there is nothing */
 
-import { whenLegacyBootComplete } from '../legacy-boot';
+import { PreferenceField } from '../zone-shell/preference-field';
 import { defaultFor, PREFERENCE_FIELD, type IconKind } from '../drawer/row-icon-prefs';
 
 export type { IconKind };
@@ -14,17 +15,6 @@ export const ROW_ICON_KINDS: readonly IconKind[] = ['agents', 'shells', 'timers'
 type SparseCell = Partial<Record<IconKind, boolean>>;
 
 export type SparseRowIcons = Partial<Record<RowDensity, SparseCell | null>>;
-
-interface Bridge {
-    read(field: string, localReader: () => unknown): unknown;
-    write(field: string, value: unknown, localWriter: () => void): Promise<unknown>;
-    follow(field: string, apply: (value: unknown) => void): () => void;
-}
-
-function bridge(): Bridge | null {
-    const found = (globalThis as { PreferenceBridge?: Bridge }).PreferenceBridge;
-    return found && typeof found.read === 'function' ? found : null;
-}
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
@@ -48,20 +38,16 @@ export function sanitize(value: unknown): SparseRowIcons {
 class RowIconsStore {
     value = $state<SparseRowIcons>({});
 
-    #started = false;
+    readonly #pref = new PreferenceField(PREFERENCE_FIELD, (value) => {
+        this.value = sanitize(value);
+    });
 
     start(target: Window | null = typeof window !== 'undefined' ? window : null): void {
-        if (this.#started) return;
-        this.#started = true;
-        this.reload();
-        bridge()?.follow(PREFERENCE_FIELD, (value) => {
-            this.value = sanitize(value);
-        });
-        whenLegacyBootComplete(target, () => this.reload());
+        this.#pref.start(target);
     }
 
     reload(): void {
-        this.value = sanitize(bridge()?.read(PREFERENCE_FIELD, () => null));
+        this.#pref.reload();
     }
 
     effective(density: RowDensity, kind: IconKind): boolean {
@@ -72,8 +58,7 @@ class RowIconsStore {
     set(density: RowDensity, kind: IconKind, on: boolean): void {
         const next: SparseRowIcons = { ...this.value, [density]: { ...this.value[density], [kind]: on } };
         this.value = next;
-        const found = bridge();
-        if (found) void found.write(PREFERENCE_FIELD, next, () => {});
+        void this.#pref.write(next);
     }
 }
 

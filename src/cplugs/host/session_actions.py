@@ -24,11 +24,6 @@ async def asleep(request: Any) -> List[Dict[str, Any]]:
 
 
 async def wake(request: Any, session_uuid: str) -> Dict[str, Any]:
-    """Wake one asleep session through the wake route's own function.
-
-    Inputs: request; session_uuid (str). Output: {status ('started' or 'refused'), detail, code}.
-    Raises: HTTPException from the route (409 not asleep, 404, 503).
-    """
     from src.api.session_sleep_routes import wake_session  # noqa: PLC0415
 
     result = await wake_session(request, session_uuid, None)

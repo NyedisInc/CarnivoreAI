@@ -126,7 +126,7 @@ def _list(value: Any, field: kind_specs.FieldSpec) -> Tuple[Optional[str], Optio
         if any(ord(c) < 32 or ord(c) == 127 for c in text) or (field.pattern and not re.fullmatch(field.pattern, text)):
             return None, BAD_VALUE
         clean.append(text)
-    if len(clean) > MAX_LIST_ITEMS:
+    if len(clean) > (field.max_items or MAX_LIST_ITEMS):
         return None, TOO_LONG
     return LIST_SEPARATOR.join(clean), None
 

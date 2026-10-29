@@ -1,5 +1,5 @@
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -25,7 +25,7 @@ class _Sess:
     def __init__(self, status, working_dir="/x/CloudeCode", age=90):
         self.status = status
         self.working_dir = working_dir
-        self.created_at = datetime.utcnow() - timedelta(seconds=age)
+        self.created_at = datetime.now(timezone.utc) - timedelta(seconds=age)
 
 
 class _Registry:

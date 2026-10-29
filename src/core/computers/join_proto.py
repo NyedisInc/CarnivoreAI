@@ -43,7 +43,7 @@ class Incompatible(ProtoError):
 
 
 class SpakeUnavailable(RuntimeError):
-    """The ``spake2`` package is not installed in this venv."""
+    pass
 
 
 def canonical_json(obj: Any) -> bytes:

@@ -18,7 +18,6 @@ export interface ScheduledRuns {
 }
 
 let projectNames: Record<number, string> | null = null;
-/* did not answer new read */
 const unanswered = new Set<number>();
 
 function forgetProjectNames(): void {

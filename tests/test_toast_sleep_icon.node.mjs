@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 
@@ -6,6 +7,7 @@ import { makeEnv, toast, cards } from './lib_toast_dom_stub.mjs';
 const MOON_PATH_SIGNATURE = 'M13.3 9.3A6 6 0 0 1 6.7 2.7a6 6 0 1 0 6.6 6.6z';
 
 const tests = [];
+/** Description: register one named case. Inputs: name, fn. Output: None. */
 function test(name, fn) { tests.push([name, fn]); }
 
 test('the AutoSlept toast title is prefixed with the reused moon icon', () => {
@@ -41,6 +43,7 @@ test('a Notification toast (the closest neighbour in severity) also gets no icon
         'Notification must not pick up the AutoSlept-only icon');
 });
 
+// ------------------------------------------------------------------- run
 
 let failed = 0;
 for (const [name, fn] of tests) {

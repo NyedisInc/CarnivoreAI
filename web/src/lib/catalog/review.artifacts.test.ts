@@ -89,11 +89,11 @@ describe('the blocked document the gate emitted, and its override', () => {
 
     test('the fixture also names who allowed it and when', () => {
         const view = reviewView(excused as never);
-        expect(view.overrideBy).toBe('acme');
+        expect(view.overrideBy).toBe('psyance');
         expect(view.overrideAt).toBe('2026-09-19');
     });
 
-    test('the plain one marks the card; the overridden one paints no flag', () => {
+    test('the plain one marks the card; the overridden one paints no flag (Alex (example-owner), 2026-10-16)', () => {
         expect(rowFor(plain).flagged).toBe(true);
         expect(rowFor(excused).flagged).toBe(false);
     });

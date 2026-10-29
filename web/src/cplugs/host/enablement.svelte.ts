@@ -8,7 +8,7 @@ const DEFAULT_GRANTED = new Set(['sessions.read', 'notify']);
 export const cplugEnablement = $state<{ read: boolean; enabled: Record<string, boolean> }>({ read: false, enabled: {} });
 
 export function defaultEnabled(manifest: CplugManifest): boolean {
-  if (manifest.tier === 'dev') return false; //  hidden 
+  if (manifest.tier === 'dev') return false;
   if (manifest.tier === 'core' || manifest.default_enabled === true) return true;
   if (manifest.default_enabled === false) return false;
   return (manifest.permissions?.app ?? []).every((p) => DEFAULT_GRANTED.has(p));

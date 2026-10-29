@@ -31,7 +31,7 @@ from src.api import (
 EXPECTED_ROUTES = 11
 
 VALID_BODY = {
-    "item_id": "acme/sme",
+    "item_id": "alex/sme",
     "scope": "global",
     "auto_update": True,
     "expected_revision": 1,
@@ -42,7 +42,7 @@ _PARAMETER = re.compile(r"\{([^}]+)\}")
 
 def _fill(path: str) -> str:
     return _PARAMETER.sub(
-        lambda match: "acme/sme" if ":path" in match.group(1) else "i1",
+        lambda match: "alex/sme" if ":path" in match.group(1) else "i1",
         path,
     )
 
@@ -76,7 +76,7 @@ def test_the_route_list_is_the_one_this_file_was_written_against():
 
     assert len(cases) == EXPECTED_ROUTES, cases
     assert ("POST", "/catalog/install") in cases
-    assert ("GET", "/catalog/items/acme/sme") in cases
+    assert ("GET", "/catalog/items/alex/sme") in cases
     assert ("DELETE", "/catalog/installed/i1") in cases
     assert ("PATCH", "/catalog/installed/i1") in cases
     assert ("POST", "/catalog/installed/i1/update") in cases

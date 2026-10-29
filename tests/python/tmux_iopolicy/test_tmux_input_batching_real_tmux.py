@@ -88,8 +88,9 @@ def rig(tmp_path, monkeypatch):
     real_run = TmuxBackend._run_tmux
 
     async def counting_run(self, *args, **kwargs):
-        if args and args[0] == "send-keys":
-            spawns.append(args[1])
+        script = kwargs.get("stdin_bytes") or b""
+        if args[:2] == ("source-file", "-") and script.startswith(b"send-keys"):
+            spawns.append(script.split()[1].decode())
         return await real_run(self, *args, **kwargs)
 
     monkeypatch.setattr(TmuxBackend, "_run_tmux", counting_run)

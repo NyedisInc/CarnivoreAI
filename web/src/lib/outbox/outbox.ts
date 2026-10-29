@@ -39,11 +39,16 @@ function leasedByOther(entry: OutboxEntry, nowMs: number): boolean {
   return !!entry.lease && entry.lease.tab !== TAB && entry.lease.until > nowMs;
 }
 
+function isInFlight(entry: OutboxEntry, nowMs: number): boolean {
+  return entry.state === 'sending' && !!entry.lease && entry.lease.until > nowMs;
+}
+
 async function attempt(id: string, live: boolean): Promise<OutboxResult> {
   const found = findEntry(id);
   const now = Date.now();
   if (!found) return { ok: false, kept: true, error: { status: null, code: null, message: 'gone' } };
   if (leasedByOther(found, now)) return { ok: false, kept: true, error: { status: null, code: null, message: 'another tab is sending it' } };
+  if (isInFlight(found, now)) return { ok: false, kept: true, error: { status: null, code: null, message: 'already being sent' } };
   const tries = found.attempts + 1;
   const sending: OutboxEntry = { ...found, attempts: tries, state: 'sending', lease: { tab: TAB, until: now + LEASE_MS } };
   putEntry(sending);
@@ -80,7 +85,7 @@ export async function send(spec: NewOutboxEntry): Promise<OutboxResult> {
   const kept = findEntry(spec.id);
   if (!kept) {
     putEntry({ ...spec, created_at: Date.now(), attempts: 0, next_at: WAIT_FOR_TRIGGER, state: 'pending', error: null, lease: null });
-  } else if (!leasedByOther(kept, Date.now())) {
+  } else if (!isInFlight(kept, Date.now())) {
     putEntry({ ...kept, kind: spec.kind, request: spec.request, ageField: spec.ageField, after: spec.after, label: spec.label, state: 'pending', next_at: WAIT_FOR_TRIGGER, lease: null });
   }
   return attempt(spec.id, true);

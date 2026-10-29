@@ -50,14 +50,6 @@ _RETRYABLE_ERRORS = (
 
 
 class HostedUnavailable(Exception):
-    """The hosted catalog api could not be reached, or did not answer JSON.
-
-    Attributes:
-        code: a short machine readable reason, one of :data:`UNAVAILABLE`
-            or :data:`TLS_VERIFY_FAILED`.
-        detail: what went wrong, for a log and for a developer. It never
-            contains the url, because a url may carry a password.
-    """
 
     def __init__(self, code: str, detail: str) -> None:
         super().__init__(detail)
@@ -160,36 +152,6 @@ async def call(
     json_body: Optional[Dict[str, Any]] = None,
     bearer: Optional[str] = None,
 ) -> HostedAnswer:
-    """Make one call to the hosted catalog api and read its answer.
-
-    Description: the url is checked BEFORE the connection pool is even
-      reached for, so a misconfigured base tells the network nothing. A
-      redirect is refused rather than followed, because following one
-      would let the host move an authenticated call somewhere this app
-      did not choose. The body is capped while it is read, and anything
-      that is not a JSON object is a refusal rather than an answer.
-
-      A TRANSPORT FAILURE IS TRIED ONCE MORE, AND ONLY WHEN THAT CANNOT
-      COST ANYTHING: the verb has to be idempotent and the response must
-      not have started, which together mean the request was not
-      processed and the same one is being sent again rather than a
-      second one. See :func:`_may_retry`. A write never reaches that
-      question. Whichever attempt is the last one logs
-      ``catalog_hosted_call_failed`` before it raises, because a 502 in a
-      browser with nothing in the log is how this stayed invisible.
-    Inputs: api_base_url (str) - e.g. ``https://host/api/v1``; method
-      (str) - an HTTP verb; path (str) - the path under the base, leading
-      slash included; json_body (dict | None) - sent as JSON when given,
-      and no body at all when None; bearer (str | None) - an access
-      token, sent as ``Authorization: Bearer`` only when given. Keyword
-      only after ``path``.
-    Output: HostedAnswer - the host's own status and parsed body,
-      including for every refusal.
-    Raises: HostedUnavailable - the host could not be reached on any
-      attempt, the url was refused, it redirected, or it did not answer a
-      JSON object.
-    Example: await call(base, "GET", "/items/a/b/ratings")
-    """
     refusal = refuse_api_base_url(api_base_url)
     if refusal is not None:
         raise HostedUnavailable(UNAVAILABLE, refusal)

@@ -60,7 +60,6 @@ HOST_ATTRIBUTION_VALUES: Tuple[str, ...] = (
     "manifest_verified", "declared", "cannot_determine",
 )
 
-# could not be read
 PROJECT_ATTRIBUTION_VALUES: Tuple[str, ...] = (
     "derived", "none_declared", "cannot_determine",
 )

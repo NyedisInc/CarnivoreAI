@@ -1,4 +1,3 @@
-/* could not */
 (function () {
     'use strict';
 
@@ -6,7 +5,6 @@
         return !!(navigator.clipboard && typeof navigator.clipboard.writeText === 'function');
     }
 
-    /* display:none */
     function makeCopySource(text) {
         var el = document.createElement('div');
         el.setAttribute('aria-hidden', 'true');

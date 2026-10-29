@@ -1,8 +1,3 @@
-"""What ``task_manager_changes`` leaves out because the calling pane already holds it.
-
-The memory is per process and per pane session id; an external token has no session, so it always gets full
-items. A restart forgets it, which only costs one full answer.
-"""
 
 from __future__ import annotations
 

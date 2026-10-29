@@ -1,4 +1,3 @@
-// nothing at all
 
 'use strict';
 
@@ -6,12 +5,10 @@ const { parseDeepLink, createFocusGate } = require('./deep-link');
 
 const HOLD_MS = 60000;
 
-/* could not */
 function createLinkRouter({ appWindow, now = Date.now, warn = console.warn }) {
   const gate = createFocusGate({ now });
   let held = null;
 
-  /* could not */
   function act(link) {
     return link.kind === 'approvals' ? appWindow.openApproval(link.approvalId) : appWindow.open(link.hash);
   }

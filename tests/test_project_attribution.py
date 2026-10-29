@@ -42,24 +42,24 @@ def conn(tmp_path):
 
 
 def test_an_exact_match_attributes_to_that_project():
-    assert attribute("/Users/example/Development/app",
-                     {"/Users/example/Development/app": 7}) == (
+    assert attribute("/Users/j/Development/CloudeCode",
+                     {"/Users/j/Development/CloudeCode": 7}) == (
         7, SESSION_ATTRIBUTION_DERIVED_DEEPEST)
 
 
 def test_a_subdirectory_attributes_to_the_project_above_it():
-    assert attribute("/Users/example/Development/app/src/api",
-                     {"/Users/example/Development/app": 7}) == (
+    assert attribute("/Users/j/Development/CloudeCode/src/api",
+                     {"/Users/j/Development/CloudeCode": 7}) == (
         7, SESSION_ATTRIBUTION_DERIVED_DEEPEST)
 
 
 def test_the_deepest_containing_root_wins_not_the_first_or_the_shortest():
     roots = {
-        "/Users/example/Development": 8,
-        "/Users/example/Development/app": 7,
-        "/Users/example": 5,
+        "/Users/j/Development": 8,
+        "/Users/j/Development/CloudeCode": 7,
+        "/Users/j": 5,
     }
-    assert attribute("/Users/example/Development/app/src", roots) == (
+    assert attribute("/Users/j/Development/CloudeCode/src", roots) == (
         7, SESSION_ATTRIBUTION_DERIVED_DEEPEST)
 
 

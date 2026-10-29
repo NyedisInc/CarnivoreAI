@@ -28,8 +28,8 @@ def test_the_topic_is_announced_in_hello() -> None:
 def test_every_hosts_table_writer_rings_the_topic(tmp_path: Path, rung: list) -> None:
     db_path = migrated(tmp_path / "state")
     with closing(connect(db_path, create=False)) as conn:
-        host = store.create_host(conn, label="Hosta", ssh_target="acme@hosta")
-        store.update_host(conn, host.key, label="Hosta 2")
+        host = store.create_host(conn, label="Studio", ssh_target="alex@studio")
+        store.update_host(conn, host.key, label="Studio 2")
         store.record_probe(conn, host.key, {**{name: None for name in store.PROBE_COLUMNS}, "probe_state": "ok"})
         store.delete_host(conn, host.key)
         peer_hosts.upsert(conn, install_id="iid-a", label="a", grant_id="g", fid="f", initiator=True)

@@ -6,9 +6,9 @@ import json
 import pytest
 from typing import Any, Dict, List, Optional
 
+from src.core.attention.transcript_walk import BOOKKEEPING_RECORD_TYPES
 from src.core.attention.transcript_facts import (
     BLOCKING_TOOL_NAMES,
-    BOOKKEEPING_RECORD_TYPES,
     FACTS_FOUND,
     FACTS_NO_RECORD,
     FACTS_TAIL_BYTES,
@@ -18,22 +18,22 @@ from src.core.attention.transcript_facts import (
 )
 from src.core.claude_title_sync import DEFAULT_TAIL_BYTES
 
-SESSION_UUID = "ea5fcd7e-c297-4f63-8740-170403025cdd"
-CWD = "/Users/example/marridge-elmwick/belford_marridge"
+SESSION_UUID = "9160010b-90b4-4267-b31e-4ce4d4a6dcd6"
+CWD = "/Users/alex/cloude-projects/ses_3da07dde"
 
 
 def _turn_end(
     timestamp: str, pending: Any = "omit", version: Optional[str] = "2.1.266"
 ) -> Dict[str, Any]:
     record: Dict[str, Any] = {
-        "parentUuid": "61425be1-a6dc-48be-87af-e500076acf02",
+        "parentUuid": "7d9deb25-12da-455b-b61e-5b4385e6a0eb",
         "isSidechain": False,
         "type": "system",
         "subtype": "turn_duration",
         "durationMs": 75930,
         "messageCount": 56,
         "timestamp": timestamp,
-        "uuid": "6b09440b-7e65-4fae-84b4-0dce91b930c0",
+        "uuid": "2c6a3bac-0183-47b6-a32c-67712e89b6e9",
         "isMeta": False,
         "userType": "external",
         "entrypoint": "cli",
@@ -189,13 +189,13 @@ def _bookkeeping(kind: str, **fields: Any) -> Dict[str, Any]:
 
 _SOAK_HIDDEN_QUESTION_TAIL: List[Dict[str, Any]] = [
     _assistant_tool_use(
-        "2026-09-13T22:57:49.950Z", "AskUserQuestion", "toolu_01H0Yejme4ueSo2nywIux0ab"
+        "2026-09-13T22:57:49.950Z", "AskUserQuestion", "toolu_01H9Kdfej5fiOw6qdyHcr6wk"
     ),
     _bookkeeping(
         "queue-operation",
         operation="enqueue",
         timestamp="2026-09-13T22:57:55.975Z",
-        content="<task-notification>\n<task-id>46dfa6e79aae20074</task-id>\n",
+        content="<task-notification>\n<task-id>4363471f976cbd82e</task-id>\n",
     ),
     _bookkeeping(
         "queue-operation",
@@ -219,7 +219,7 @@ _SOAK_HIDDEN_QUESTION_TAIL: List[Dict[str, Any]] = [
     _bookkeeping(
         "last-prompt",
         lastPrompt="Do exactly two things in this one turn, in this order.",
-        leafUuid="5017575e-a56f-4475-8558-a51456fd08c8",
+        leafUuid="5f0e8e77-a3a6-4f14-a3f3-db00a4a96b03",
     ),
     _bookkeeping("cost-state", totalCostUSD=0.82638125, hasUnknownModelCost=False),
 ]
@@ -227,13 +227,13 @@ _SOAK_HIDDEN_QUESTION_TAIL: List[Dict[str, Any]] = [
 
 _RESUME_BURST_HIDDEN_QUESTION_TAIL: List[Dict[str, Any]] = [
     _assistant_tool_use("2026-09-13T18:00:10.000Z", "AskUserQuestion", "toolu_q"),
-    _bookkeeping("last-prompt", lastPrompt="Firford this", leafUuid="08ed14bb"),
-    _bookkeeping("custom-title", customTitle="TEAM-Docs"),
-    _bookkeeping("agent-name", agentName="TEAM-Docs"),
+    _bookkeeping("last-prompt", lastPrompt="Super plan this", leafUuid="08ed14bb"),
+    _bookkeeping("custom-title", customTitle="ALEX-Docs"),
+    _bookkeeping("agent-name", agentName="ALEX-Docs"),
     _bookkeeping("mode", mode="normal"),
     _bookkeeping("permission-mode", permissionMode="auto"),
     _bookkeeping("atis-latch", atis=""),
-    _bookkeeping("bridge-session", bridgeSessionId="cse_01Nc7I5jzWDj5OsUF309EoNP"),
+    _bookkeeping("bridge-session", bridgeSessionId="cse_01Fs2U1koHVq6MaYV439WcVU"),
 ]
 
 
@@ -251,7 +251,7 @@ _ANSWERED_THEN_BOOKKEEPING_TAIL: List[Dict[str, Any]] = [
     _bookkeeping("agent-name", agentName="ZZVAL2"),
     _bookkeeping("mode", mode="normal"),
     _bookkeeping("permission-mode", permissionMode="auto"),
-    _bookkeeping("bridge-session", bridgeSessionId="cse_01Nc7I5jzWDj5OsUF309EoNP"),
+    _bookkeeping("bridge-session", bridgeSessionId="cse_01Fs2U1koHVq6MaYV439WcVU"),
 ]
 
 

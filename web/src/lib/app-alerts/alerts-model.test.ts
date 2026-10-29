@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { badgeFor, panelSections, shouldToast, type AppAlert } from './alerts-model';
+import { panelSections, shouldToast, type AppAlert } from './alerts-model';
 
 function alert(over: Partial<AppAlert>): AppAlert {
   return {
@@ -9,17 +9,6 @@ function alert(over: Partial<AppAlert>): AppAlert {
     snoozed_until: null, actions: [], ...over,
   };
 }
-
-describe('badgeFor', () => {
-  it('counts error plus warn and paints the highest severity', () => {
-    expect(badgeFor({ error: 1, warn: 2, info: 9 })).toEqual({ count: 3, severity: 'error' });
-    expect(badgeFor({ error: 0, warn: 2, info: 9 })).toEqual({ count: 2, severity: 'warn' });
-  });
-  it('shows nothing at zero, info alone included', () => {
-    expect(badgeFor({ error: 0, warn: 0, info: 4 })).toEqual({ count: 0, severity: null });
-    expect(badgeFor(null)).toEqual({ count: 0, severity: null });
-  });
-});
 
 describe('shouldToast', () => {
   it('toasts a newly raised alert of any severity once, never a bump or a resolve', () => {

@@ -1,6 +1,9 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
+import json
 import math
 import re
 from collections import Counter
@@ -13,6 +16,10 @@ PLACEHOLDER_MARKERS: Tuple[str, ...] = (
     "dummy", "sample", "redacted", "notreal", "fake", "test", "xxxx",
     "0000", "1234", "abcd", "deadbeef", "insert", "replace", "todo",
     "fixme", "somekey", "sometoken", "secretgoeshere", "goeshere",
+)
+
+JWT_STAND_IN_VALUE_RE = re.compile(
+    r"your[-_].*|<.*>|changeme|change_me|placeholder|redacted|dummy|fake|notreal|x{3,}|([^0-9])\1{3,}", re.DOTALL
 )
 
 DOCUMENTED_SAMPLE_VALUES: frozenset = frozenset({
@@ -68,12 +75,37 @@ def has_mixed_alphabet(value: str) -> bool:
     return any(c.isupper() for c in value) and any(c.isdigit() for c in value)
 
 
-def is_placeholder(value: str) -> bool:
+def is_placeholder(value: str, *, scan_markers: bool = True) -> bool:
     if _is_reference(value) or _is_indirection(value):
         return True
     if value in DOCUMENTED_SAMPLE_VALUES:
         return True
     if _has_long_repeat(value):
         return True
+    if not scan_markers:
+        return False
     lowered = value.lower()
     return any(marker in lowered for marker in PLACEHOLDER_MARKERS)
+
+
+def _decoded_json_object(segment: str) -> dict:
+    try:
+        obj = json.loads(base64.urlsafe_b64decode(segment + "=" * (-len(segment) % 4)).decode("utf-8"))
+    except (ValueError, binascii.Error, RecursionError):
+        return {}
+    return obj if isinstance(obj, dict) else {}
+
+
+JWT_IDENTITY_FALLBACK_CLAIMS: Tuple[str, ...] = ("email", "preferred_username", "client_id", "oid")
+
+
+def _identity_is_stand_in(payload: dict) -> bool:
+    claims = [payload["sub"]] if "sub" in payload else [payload[k] for k in JWT_IDENTITY_FALLBACK_CLAIMS if k in payload]
+    return bool(claims) and all(isinstance(c, str) and JWT_STAND_IN_VALUE_RE.fullmatch(c.strip().lower()) for c in claims)
+
+
+def is_placeholder_jwt(value: str) -> bool:
+    if is_placeholder(value, scan_markers=False):
+        return True
+    parts = value.split(".")
+    return len(parts) == 3 and _identity_is_stand_in(_decoded_json_object(parts[1]))

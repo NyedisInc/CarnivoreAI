@@ -1,3 +1,5 @@
+// there is nothing
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,6 +12,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let passes = 0;
 let failures = 0;
 
+/**
+ * Run one named assertion block immediately, recording the outcome.
+ *
+ * @param {string} name - what is being asserted.
+ * @param {function(): void} fn - the assertions.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();

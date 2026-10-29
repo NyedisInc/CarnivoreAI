@@ -1450,7 +1450,7 @@
       "response": {
         "status": "unavailable",
         "layouts": [],
-        "detail": "the layouts tables are not present (schema before v34)"
+        "detail": "the datastore could not be read. try again in a moment."
       }
     },
     {

@@ -19,7 +19,6 @@
     try {
       sessions = await api.listSessionRecords();
     } catch {
-      // could not
       failed = true;
       sessions = [];
     }

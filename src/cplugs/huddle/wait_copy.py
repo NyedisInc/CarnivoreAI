@@ -8,7 +8,8 @@ CHALLENGE = ("this was parked on {what} and was due to clear by {by}. it has not
              "extend_reason and a new expect_by; a second extension is refused), or ask the owner with task_manager_ask.")
 CLEARED = "cleared: {what}"
 FAILED = "wait failed: {reason}"
-ESCALATION = "stuck on {what} past two deadlines (it was due {by}). push it back to its agent, drop it, or wait longer?"
+ESCALATION = "stuck on {what} past two deadlines (it was due {by})."
+STUCK_PROMPT = "this task waited on {what} since {since}. what now?"
 NO_REASON = "no reason given"
 
 
@@ -30,3 +31,7 @@ def failed(reason: str) -> str:
 
 def escalation(what: str, expect_by: float) -> str:
     return ESCALATION.format(what=what or "something", by=when(expect_by))
+
+
+def stuck_prompt(what: str, set_at: float) -> str:
+    return STUCK_PROMPT.format(what=what or "something", since=when(set_at))

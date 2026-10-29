@@ -34,13 +34,15 @@
     "resume",
     "transcript"
   ],
-  "where": [],
+  "where": [
+    "The session row menu item 'move to another computer'."
+  ],
   "how_to": [
     "Open a session row menu, choose move to another computer, pick the paired computer and confirm; the move starts when the turn ends.",
     "While a transfer runs a status card sits in the bottom right corner; cancel stops it before the other computer is asked to start the agent, and a finished card stays until dismissed."
   ],
   "examples": [
-    "Move the build session to hosta while it finishes its current turn."
+    "Move the build session to studio while it finishes its current turn."
   ],
   "media_exempt": "A confirm dialog and a status line; the dialog is the shared confirm modal."
 }

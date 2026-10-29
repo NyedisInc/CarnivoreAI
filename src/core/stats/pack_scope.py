@@ -12,7 +12,11 @@ from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core.db import db_path_for
+from src.core.db_reuse.lent import LentConnection
+from src.core.db_reuse.pooled_read import POOL_LIMIT, fresh_for_read, is_corrupt
+from src.core.db_reuse.thread_connections import ThreadConnections
 from src.core.pack.rollup_import.ddl import COUNTER_TABLE, STATE_TABLE, USAGE_TABLE
 from src.core.stats import project_groups
 from src.core.stats.answers import digest
@@ -39,6 +43,34 @@ _LOCAL_LOSES = "(conversation_id || '|' || (minute_ts / 3600 * 3600)) IN (SELECT
 _PEER_LOSES = "(host || '|' || conversation_id || '|' || minute_ts) IN (SELECT value FROM json_each(?))"
 
 
+class _AppLoan(LentConnection):
+
+    def __init__(self, conn: sqlite3.Connection, path: Path) -> None:
+        super().__init__(conn)
+        self._path = path
+
+    def execute(self, *args: Any, **kwargs: Any) -> Any:
+        try:
+            return self._conn.execute(*args, **kwargs)
+        except sqlite3.DatabaseError as exc:
+            if is_corrupt(exc):
+                _APP_READS.discard(self._path)
+            raise
+
+    def close(self) -> None:
+        self._conn.set_progress_handler(None, 0)
+
+
+def _open_app_read(path: Path) -> sqlite3.Connection:
+    conn = connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout=5000")
+    return conn
+
+
+_APP_READS = ThreadConnections(_open_app_read, limit=POOL_LIMIT)
+
+
 @dataclass(frozen=True)
 class Arm:
 
@@ -53,10 +85,7 @@ class Arm:
     def connect(self, store: Any) -> Any:
         if self.carnivore is None:
             return store.connect(readonly=True)
-        conn = sqlite3.connect(f"{self.carnivore.as_uri()}?mode=ro", uri=True, timeout=5)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA busy_timeout=5000")
-        return conn
+        return _AppLoan(fresh_for_read(_APP_READS.get(self.carnivore)), self.carnivore)
 
 
 @dataclass(frozen=True)
@@ -81,7 +110,6 @@ _cache: Dict[str, Tuple[Tuple[int, str], Ownership]] = {}
 
 
 def _warn_unreadable(error: Exception) -> None:
-    """Say once per ``WARN_EVERY_SECONDS`` that the Pack tables could not be read. Input: the error."""
     global _warned_at
     with _warn_lock:
         if time.monotonic() - _warned_at < WARN_EVERY_SECONDS and _warned_at:
@@ -168,8 +196,10 @@ def ownership(store: Any, view: Any) -> Optional[Ownership]:
             try:
                 states = _rollup_state(app)
                 if states:
-                    signature = digest(states, sorted(_homes(app).items()))
-                    key = (view.revision(), signature)
+                    homes = _homes(app)
+                    grouping = sorted(project_groups.groups_for(store).group.items()) if homes else []
+                    signature = digest(states, sorted(homes.items()), grouping)
+                    key = (view.usage_revision(), signature)
                     with _cache_lock:
                         hit = _cache.get(str(store.state_dir))
                     if hit is not None and hit[0] == key:

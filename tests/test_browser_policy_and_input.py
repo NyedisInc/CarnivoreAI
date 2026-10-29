@@ -61,7 +61,7 @@ def test_every_refused_scheme_is_refused(url):
         ("https://example.com/a?b=1#c", "https://example.com/a?b=1#c"),
         ("localhost:3000/app", "http://localhost:3000/app"),
         ("127.0.0.1:8080", "http://127.0.0.1:8080"),
-        ("203.0.113.13:5173", "https://203.0.113.13:5173"),
+        ("192.168.1.20:5173", "https://192.168.1.20:5173"),
         ("  http://example.com  ", "http://example.com"),
         ("HTTPS://Example.com/P", "https://Example.com/P"),
     ],

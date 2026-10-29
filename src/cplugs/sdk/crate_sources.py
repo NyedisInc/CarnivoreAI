@@ -87,7 +87,6 @@ def locations() -> Locations:
 
 
 def _with_main(state_dir: Path, work: Callable[[sqlite3.Connection], T]) -> T:
-    """Run ``work`` on carnivore.db (never created). Raises SourceUnavailable when it cannot be opened or read."""
     from src.core.db import DatastoreUnreadableError, connect, db_path_for
 
     try:
@@ -130,14 +129,12 @@ def superseded_by_declaration(pattern: str, rels: Sequence[str]) -> bool:
 
 
 def live_panes() -> PaneListing:
-    """Every live pane on Carnivore's tmux socket (``ok=False`` when the listing did not answer). Blocking."""
     from src.api.project_move_routes import read_live_panes
 
     return read_live_panes()
 
 
 def live_blocker(ident: SessionIdentity, listing: PaneListing) -> Optional[str]:
-    """Why the session counts as live, or None when measured asleep (a listing that did not answer refuses). Pure."""
     from src.core.session_purge.identity import live_blocker as purge_live_blocker
 
     return purge_live_blocker(ident, listing.ok, listing.panes)

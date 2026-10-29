@@ -41,8 +41,8 @@ function catalogOn(page: LayoutPage, store: LayoutStore, popout = false): string
   document.body.append(target);
   app = mount(WidgetDrawer, { target, props: { store, page } });
   flushSync();
-  const widgets = [...document.querySelectorAll<HTMLElement>('.le-list .le-card[data-widget]')].map((one) => one.dataset['widget']!);
-  const windows = [...document.querySelectorAll<HTMLElement>('.le-card[data-picker-entry]')].map((one) => `window:${one.dataset['pickerEntry']}`);
+  const widgets = [...document.querySelectorAll<HTMLElement>('.le-list [data-le-card][data-widget]')].map((one) => one.dataset['widget']!);
+  const windows = [...document.querySelectorAll<HTMLElement>('[data-le-card][data-picker-entry]')].map((one) => `window:${one.dataset['pickerEntry']}`);
   const out = [...new Set([...widgets, ...windows])].sort();
   unmount(app);
   app = null;

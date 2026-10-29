@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import sqlite3
 import time
 from typing import Callable, Optional
 
@@ -59,8 +58,8 @@ class Scheduler:
             try:
                 await self.due()
                 timeout = await asyncio.to_thread(self._timeout)
-            except (OSError, RuntimeError, sqlite3.Error) as exc:
-                logger.error("nudge_pass_failed", error_type=type(exc).__name__, error=str(exc)[:200])
+            except Exception as exc:  # noqa: BLE001
+                logger.exception("nudge_pass_failed", error_type=type(exc).__name__, error=str(exc)[:200])
                 timeout = MAX_SLEEP_S
             try:
                 await asyncio.wait_for(self._wake.wait(), timeout)

@@ -1,8 +1,3 @@
-"""
-A point is named by ``(id, point_id)``: ``id`` is the plan's unit (the conversation id, or ``<id>@<8 hex>`` for a shared id) and
-``point_id`` the planned point's id, exactly as ``review/keep-ids.json`` lists them. :func:`restrict` drops every other point from a
-:class:`plan.Plan` and turns the import decisions of their copies into ``skip:not_selected``; every copy still sits in exactly one bucket.
-"""
 
 from __future__ import annotations
 

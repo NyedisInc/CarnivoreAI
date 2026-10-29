@@ -26,9 +26,10 @@ EVENTS_OVERFLOW_CLOSE_CODE = OVERFLOW_CLOSE_CODE
 
 class EventClient:
 
-    def __init__(self, client_id: str, stream: BoundedStream) -> None:
+    def __init__(self, client_id: str, stream: BoundedStream, reduced: bool = False) -> None:
         self.client_id = client_id
         self.stream = stream
+        self.reduced = reduced
 
 
 class EventHub:
@@ -46,14 +47,14 @@ class EventHub:
         self._listeners: List[Callable[[Optional[str]], None]] = []
 
 
-    def register(self) -> EventClient:
+    def register(self, reduced: bool = False) -> EventClient:
         client_id = f"evt_{next(self._ids)}"
         stream = BoundedStream(
             max_items=self._max_items,
             max_bytes=self._max_bytes,
             label=f"events {client_id}",
         )
-        client = EventClient(client_id, stream)
+        client = EventClient(client_id, stream, reduced)
         self._clients[client_id] = client
         logger.info("event_client_registered", client_id=client_id,
                     total_clients=len(self._clients))
@@ -82,14 +83,24 @@ class EventHub:
                 logger.warning("event_listener_failed", frame_type=frame_type,
                                error=str(exc), error_type=type(exc).__name__)
 
+    def has_owner_client(self) -> bool:
+        return any(not c.reduced for c in self._clients.values())
 
-    def publish(self, frame: Dict[str, Any]) -> int:
+
+    def publish(self, frame: Dict[str, Any], reduced: Optional[Dict[str, Any]] = None) -> int:
         if self._listeners:
             self._notify_listeners(frame)
         if not self._clients:
             return 0
         try:
-            encoded = json.dumps(frame)
+            try:
+                encoded = json.dumps(frame, allow_nan=False)
+            except ValueError:
+                if reduced is None:
+                    raise
+                logger.warning("event_frame_body_unencodable", frame_type=frame.get("type"))
+                frame, encoded = reduced, json.dumps(reduced, allow_nan=False)
+            encoded_reduced = json.dumps(reduced, allow_nan=False) if reduced is not None else encoded
         except (TypeError, ValueError) as exc:
             logger.error(
                 "event_frame_unencodable",
@@ -99,9 +110,10 @@ class EventHub:
             return 0
 
         size = len(encoded.encode("utf-8"))
+        size_reduced = len(encoded_reduced.encode("utf-8")) if reduced is not None else size
         delivered = 0
         for client in list(self._clients.values()):
-            result = client.stream.offer(encoded, size)
+            result = client.stream.offer(encoded_reduced, size_reduced) if client.reduced else client.stream.offer(encoded, size)
             if result == OFFER_ACCEPTED:
                 delivered += 1
                 continue

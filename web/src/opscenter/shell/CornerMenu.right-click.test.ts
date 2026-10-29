@@ -30,6 +30,7 @@ function frame(slot: SlotId): HTMLElement {
   return target;
 }
 
+/** A right-click on an element the way the page receives it. Inputs: el. Output: the event. */
 function rightClick(el: Element): MouseEvent {
   const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 });
   el.dispatchEvent(event);

@@ -160,7 +160,7 @@ def test_local_rows_still_collide_on_the_quad_and_other_hosts_do_not(v39_state):
     with _open(db_path_for(v39_state)) as conn:
         with pytest.raises(sqlite3.IntegrityError):
             _duplicate_of_running(conn, "local")
-        _duplicate_of_running(conn, "hosta")
+        _duplicate_of_running(conn, "studio")
         assert conn.execute(
             "SELECT COUNT(*) FROM sessions WHERE tmux_name = 'carnivore_api' "
             "AND tmux_created_epoch = 1790000200").fetchone()[0] == 2

@@ -12,14 +12,15 @@ const i18n = createI18n({ locale: 'en' }) as {
 };
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
+/** An item three people have reported installing. */
 const COUNTED: ItemInstalls = {
-    item_id: 'acme/sme',
+    item_id: 'example-owner/sme',
     count: 3,
     by_version: { '1.0.0': 3 },
 };
 
 const UNREPORTED: ItemInstalls = {
-    item_id: 'acme/sme',
+    item_id: 'example-owner/sme',
     count: 0,
     by_version: {},
 };
@@ -72,10 +73,11 @@ function paint(host: CatalogHost): void {
     document.body.appendChild(target);
     panel = mount(InstallCount, {
         target,
-        props: { itemId: 'acme/sme', host, t } as never,
+        props: { itemId: 'example-owner/sme', host, t } as never,
     }) as never;
 }
 
+/** Let every microtask settle. */
 function settle(): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, 0));
 }
@@ -142,7 +144,7 @@ describe('what this fact is allowed to touch', () => {
         const recorder = hostFor(COUNTED);
         paint(recorder.host);
         await settle();
-        expect(recorder.calls).toEqual(['itemInstalls:acme/sme']);
+        expect(recorder.calls).toEqual(['itemInstalls:example-owner/sme']);
     });
 
     test('and with no item it asks for nothing at all', async () => {

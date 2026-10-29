@@ -1,5 +1,12 @@
 /** @vitest-environment jsdom */
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+
+vi.mock('./row-focus', async (orig) => ({ ...(await orig<typeof import('./row-focus')>()), afterRender: () => {} }));
+const sleepHook = vi.hoisted(() => ({ release: (_name: string): void => {} }));
+vi.mock('../drawer/row-menu-sleep', async (orig) => ({
+    ...(await orig<typeof import('../drawer/row-menu-sleep')>()), releaseThisTab: (o: { name: string }) => sleepHook.release(o.name),
+}));
+import { closeItemMenu } from '../item-menu/open.svelte';
 import { canonicalDom } from './legacy-fixture';
 import { legacyAnswer, suiteOfTest } from './goldens';
 import {
@@ -96,7 +103,7 @@ async function play(steps: Steps, o: RunOptions = {}): Promise<Run> {
     };
     await steps(h, g);
     g.snap('end');
-    w.SessionSidebarGroupActions.closeMenu();
+    closeItemMenu();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     const input = document.querySelector('#session-sidebar-list .session-sidebar-rename-input') as HTMLInputElement | null;
     if (input) input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -126,6 +133,7 @@ const INPUT = '#session-sidebar-list .session-sidebar-rename-input';
 
 beforeAll(() => {
     w = loadInteractions(sidebarShell);
+    sleepHook.release = (name) => { recorded().push(['release', name]); };
 });
 
 describe('folding from a heading', () => {
@@ -136,7 +144,7 @@ describe('folding from a heading', () => {
             await g.click(TOGGLE('g:g1'));
         });
         expect(run.snaps[0]!.collapsed).toEqual(['g:g1']);
-        expect(run.events).toContainEqual(['live', 'g:g1 group collapsed']);
+        expect(run.events).toContainEqual(['live', 'work stuff group collapsed']);
     });
 
     it('a project band and a company heading fold', async () => {
@@ -189,6 +197,7 @@ describe('the group heading menu', () => {
             g.snap('wrapped');
             await g.key('Escape');
         });
+        // wraps to the first
         expect(run.snaps.map((s) => s.focus.split(' (')[0])).toEqual(['item:add', 'item:remove', 'item:rename', 'BUTTON|oc-ibtn oc-ibtn--bare session-sidebar-group__menu||']);
     });
 

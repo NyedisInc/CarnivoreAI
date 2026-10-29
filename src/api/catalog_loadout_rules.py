@@ -43,23 +43,6 @@ def is_loadout(kind: str) -> bool:
 
 
 def ensure_loadouts_root(request: Request) -> None:
-    """Create ``<state_dir>/loadouts`` if it is not there. A no-op after that.
-
-    Description: THIS APP'S OWN DIRECTORY, WHICH IS WHY IT IS CREATED
-      RATHER THAN REFUSED. ``plan_install`` answers ``root_absent`` for a
-      missing root and that rule is right for a HARNESS: an absent
-      ``~/.codex`` means Codex is not installed, and making the directory
-      would put structure in somebody's home for a program they do not
-      run. ``<state_dir>`` is this app's, it already holds the database,
-      the staging area and the update journal, and it is created the same
-      way they are - so refusing a loadout install because our own
-      directory does not exist yet would be refusing our own first run.
-    Inputs: request (Request).
-    Output: None.
-    Raises: OSError when the directory cannot be made, which is a real
-      failure and not something to guess past.
-    Example: await asyncio.to_thread(ensure_loadouts_root, request)
-    """
     roots = request.app.state.services.install_roots
     for target in roots.targets_for(kinds.KIND_LOADOUT, SCOPE_GLOBAL, None):
         target.leaf_dir.mkdir(parents=True, exist_ok=True)
@@ -83,20 +66,6 @@ def _refuse_loadout(refusal: LoadoutRefusal) -> HTTPException:
 def resolved_members(
     request: Request, item: CatalogItem, staged: Any, snapshot: IndexSnapshot
 ) -> Tuple[ResolvedMember, ...]:
-    """Read the staged ``loadout.json`` and match every member to the index.
-
-    Description: the index-only pass, and it is the LAST point at which
-      the whole loadout can be refused for free. Both refusals it can
-      raise mean nothing has been written: the manifest could not be
-      read, or the list names something this catalog cannot give you.
-    Inputs: request (Request). item (CatalogItem) - the loadout itself,
-      whose id is passed down so a list naming ITSELF is refused. staged
-      (StagedSkill). snapshot (IndexSnapshot) - the held index.
-    Output: tuple[ResolvedMember, ...].
-    Raises: HTTPException(409) carrying ``loadout_manifest_invalid`` or
-      ``loadout_member_unknown``.
-    Example: resolved_members(request, item, staged, snapshot)
-    """
     try:
         manifest = read_loadout_manifest(staged.path, own_id=item.id)
     except LoadoutManifestInvalid as exc:

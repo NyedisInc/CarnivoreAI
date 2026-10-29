@@ -77,7 +77,7 @@ def test_the_step_is_idempotent_audited_partitioned_and_reversible():
 
 
 def test_derived_colour_is_stable_and_an_auto_colour():
-    uuid = "816d608d-9b02-49eb-817a-9cf12a838fc9"
+    uuid = "0f3c2d9e-1111-4222-8333-944455556666"
     first = style.derived_colour(uuid)
     assert first == style.derived_colour(uuid)
     assert first in style.AUTO_COLOURS
@@ -182,13 +182,13 @@ def test_the_stylesheet_carries_a_rule_for_every_key_and_no_colour_literal():
 
 
 def test_the_client_picker_mirrors_the_server_keys():
-    js = (REPO / "client" / "js" / "session-sidebar-group-colour.js").read_text()
+    js = (REPO / "web" / "src" / "lib" / "drawer" / "group-color-palette.ts").read_text()
 
     def listed(name):
-        match = re.search(rf"const {name} = \[([^\]]*)\]", js)
+        match = re.search(rf"export const {name} = \[([^\]]*)\]", js)
         assert match, name
         return tuple(re.findall(r"'([a-z]+)'", match.group(1)))
 
-    assert listed("COLOURS") == style.COLOURS
+    assert listed("COLORS") == style.COLOURS
     assert listed("GRADIENTS") == style.GRADIENTS
     assert listed("ANIMATIONS") == style.ANIMATIONS

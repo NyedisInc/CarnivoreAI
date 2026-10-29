@@ -8,7 +8,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.cplugs.flow import build, feed, live, service, tail
+from src.core.flow_data import feed, live, tail
+from src.cplugs.flow import service
+from src.core.flow_data.collect import build
 from src.cplugs.host.activity_reader import ActivityReader
 from src.cplugs.sdk import transcript_events
 from tests.python.cplugs.flow import fixture as fx

@@ -31,6 +31,7 @@ const fake = vi.hoisted(() => {
 const { FakeApiError, calls } = fake;
 
 vi.mock('../../api/auth.svelte', () => ({
+  // The widget shell's settings read reaches the poll module, which names these two at import (item 1048).
   auth: { state: 'unknown' },
   initAuth: () => {},
   ApiError: fake.FakeApiError,
@@ -71,10 +72,11 @@ vi.mock('../../api', () => ({
 import Cell from './Cell.svelte';
 import CellWithHost from '../../shell/fixtures/CellWithHost.svelte';
 import { declaredActionsFor } from '../../widgets/menu/declared-actions.svelte';
-import { note, reset } from '../../api/notes.svelte';
+import { acquire, reset } from '../../api/notes.svelte';
 import { inputFocus } from '../../lib/input-focus.svelte';
 import { META } from '../../engine/meta';
 
+/** A server answer shaped like the endpoint's. */
 function answer(body: string, revision: number, status = 'unchanged') {
   return { status, body, revision, updated_at: '2026-09-20T12:00:00+00:00' };
 }
@@ -145,6 +147,7 @@ describe('one notepad on screen', () => {
 
 describe('what the cell draws in each state', () => {
   test('follows the SELECTED terminal cell, the page terminal by default', async () => {
+    // the page terminal
     fake.answers = [answer('page note', 1), answer('web note', 4)];
     const { target, app } = draw();
     await vi.advanceTimersByTimeAsync(0);
@@ -339,8 +342,9 @@ describe('the conflict', () => {
     (target.querySelector('[data-notes-action="theirs"]') as HTMLElement).click();
     flushSync();
     expect(target.querySelector('[data-notes-conflict="open"]')).toBeNull();
-    expect(note.body).toBe('theirs');
-    expect(note.revision).toBe(7);
+    const held = acquire('cloude_api').note;
+    expect(held.body).toBe('theirs');
+    expect(held.revision).toBe(7);
     unmount(app, { outro: false });
   });
 });

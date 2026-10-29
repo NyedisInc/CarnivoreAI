@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import sqlite3
 import threading
 import time
 from contextlib import closing
@@ -9,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readonly
 from src.core.pipeline import contract as C
 from src.core.pipeline import plugin_db
 from src.core.transcript_manifest import constants as TM
@@ -28,11 +28,10 @@ class Lag:
 
 
 def _cursor_offsets(state_dir: Path, plugin: C.Plugin) -> Dict[str, int]:
-    """{file path: consumed offset} from the plugin's database, {} when it does not exist yet. Raises: sqlite3.Error."""
     path = plugin_db.db_path(state_dir, plugin)
     if not path.exists():
         return {}
-    with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=30.0)) as conn:
+    with closing(connect_readonly(path, timeout=READONLY_TIMEOUT_LONG_S)) as conn:
         present = conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
                                (C.CURSORS_TABLE,)).fetchone()
         if not present:
@@ -74,7 +73,6 @@ def lag_of(state_dir: Path, db_path: Path, plugin: C.Plugin, *, now: Optional[fl
 
 
 def forget(state_dir: Optional[Path] = None) -> None:
-    """Drop the cached lag of one state directory (all when None), so the next read measures afresh. Output: None."""
     with _lock:
         for key in [k for k in _cache if state_dir is None or k[0] == str(state_dir)]:
             del _cache[key]

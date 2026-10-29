@@ -22,7 +22,7 @@
   import { inputFocus } from '../../lib/input-focus.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
   import { Button, State } from '../../../lib/base';
-  import { edit, keepMine, keepTheirs, note, open, save } from '../../api/notes.svelte';
+  import { acquire, release, type NoteStore } from '../../api/notes.svelte';
   import MarkdownEditor from '../../../lib/markdown-editor/MarkdownEditor.svelte';
   import NotesControls, { pressSave } from './NotesControls.svelte';
   import WidgetShell from '../../widgets/shell/WidgetShell.svelte';
@@ -61,7 +61,7 @@
   const widget: WidgetHandle<typeof NOTES_WIDGET> = useWidget(NOTES_WIDGET, () => props, () => ({
     'mode:edit': { on: mode === 'edit', run: () => setMode('edit') },
     'mode:preview': { on: mode === 'preview', run: () => setMode('preview') },
-    save: { run: () => pressSave(focusConflict), blocked: blockedKey ? t(blockedKey) : '' },
+    save: { run: () => pressSave(store, focusConflict), blocked: blockedKey ? t(blockedKey) : '' },
   }));
   const mode: NotesMode = $derived(widget.state.mode);
 
@@ -73,8 +73,13 @@
     return (row?.tmux_session ?? '').trim();
   });
 
+  let store = $state<NoteStore>(acquire(''));
+  const note = $derived(store.note);
+
   $effect(() => {
-    void open(tmuxName);
+    const name = tmuxName;
+    store = acquire(name);
+    return () => void release(name);
   });
 
   $effect(() => {
@@ -107,7 +112,6 @@
     widget.state.mode = next;
   }
 
-  /* at the gesture */
   function takeFocus(): void {
     inputFocus.claim(props.instance);
   }
@@ -117,12 +121,12 @@
     const body = event.currentTarget;
     if (next instanceof Node && body instanceof Node && body.contains(next)) return;
     inputFocus.release(props.instance);
-    void save();
+    void store.save();
   }
 </script>
 
 {#snippet controls(place: 'header' | 'body' | 'corner')}
-  <NotesControls {mode} onMode={setMode} onConflict={focusConflict} diskOnly={place === 'body' && inlineDiskOnly} corner={place === 'corner'} />
+  <NotesControls {store} {mode} onMode={setMode} onConflict={focusConflict} diskOnly={place === 'body' && inlineDiskOnly} corner={place === 'corner'} />
 {/snippet}
 
 <WidgetShell {widget} {status} note={blockedKey ? t(blockedKey) : ''} {controls}>
@@ -138,8 +142,8 @@
       <div class="oc-notes-conflict" role="group" data-notes-conflict="open" bind:this={conflictEl}>
         <State kind="warn" inline title={t(KEYS.conflict)}>
           {#snippet actions()}
-            <Button size="sm" onclick={keepTheirs} data-notes-action="theirs">{t(KEYS.reload)}</Button>
-            <Button size="sm" variant="danger" onclick={() => void keepMine()} data-notes-action="mine">{t(KEYS.overwrite)}</Button>
+            <Button size="sm" onclick={() => store.keepTheirs()} data-notes-action="theirs">{t(KEYS.reload)}</Button>
+            <Button size="sm" variant="danger" onclick={() => void store.keepMine()} data-notes-action="mine">{t(KEYS.overwrite)}</Button>
           {/snippet}
         </State>
         <details class="oc-notes-theirs">
@@ -150,7 +154,7 @@
     {/if}
     <MarkdownEditor
       value={note.body}
-      oninput={edit}
+      oninput={(text) => store.edit(text)}
       {mode}
       label={t(KEYS.label)}
       emptyText={t(KEYS.emptyPreview)}

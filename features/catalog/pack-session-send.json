@@ -35,14 +35,15 @@
     "replica"
   ],
   "where": [
-    "The agent row menu's \"send to\" item (hotkey G), which lists the paired computers; picking one opens the send modal."
+    "The agent row menu's \"send to\" item (hotkey G), which lists the paired computers; picking one opens the send modal. Also the owner routes POST /sessions/{session_uuid}/send and /send/check."
   ],
   "how_to": [
     "Open an agent's row menu, choose send to, then a computer. Pick move it, copy it, start a new agent there, or move the whole project; tick \"copy the project to <computer> first\" when the project is not there yet; press send.",
     "Read the checklist under the options before pressing send: it lists what comes along, what stays behind, missing tools (a warning, never a refusal) and servers that will stop."
   ],
   "examples": [
-    "Copy the build agent to hosta: row menu, send to, hosta, copy it, send. The original keeps running here."
+    "Copy the build agent to studio: row menu, send to, studio, copy it, send. The original keeps running here.",
+    "An agent ran python3 -m http.server 5041 and used a scratch folder: the dialog lists the folder (ticked when under 500 mb and the computer can take it) and says the server on port 5041 will stop."
   ],
   "media_exempt": "The menu and modal are checked under three themes by the change's own screenshots; capture config comes with the next feature recapture."
 }

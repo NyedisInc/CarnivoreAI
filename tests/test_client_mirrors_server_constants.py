@@ -33,12 +33,20 @@ def test_the_rebind_prefixes_are_the_product_identity_prefixes():
     assert re.search(r"export const CURRENT_PREFIX = TMUX_SESSION_PREFIX;", text), (
         "store-rebind.ts no longer takes CURRENT_PREFIX from product-identity"
     )
-    assert re.search(r"import \{ TMUX_SESSION_PREFIX \} from '\.\./product-identity';", text)
+    assert re.search(
+        r"import \{ LEGACY_TMUX_SESSION_PREFIXES, TMUX_SESSION_PREFIX \} from '\.\./product-identity';", text
+    )
+    assert re.search(
+        r"export const LEGACY_PREFIXES: readonly string\[\] = LEGACY_TMUX_SESSION_PREFIXES;", text
+    ), "store-rebind.ts no longer binds LEGACY_PREFIXES to the shared tuple"
     identity = (lib / "product-identity.ts").read_text()
     current = re.search(r"export const TMUX_SESSION_PREFIX = '([^']*)';", identity).group(1)
     legacy = re.findall(
         r"'([^']*)'",
-        re.search(r"export const LEGACY_PREFIXES: readonly string\[\] = \[([^\]]*)\];", text).group(1),
+        re.search(
+            r"export const LEGACY_TMUX_SESSION_PREFIXES: readonly string\[\] = Object\.freeze\(\[([^\]]*)\]\);",
+            identity,
+        ).group(1),
     )
     assert current == TMUX_SESSION_PREFIX
     assert tuple(legacy) == tuple(LEGACY_TMUX_SESSION_PREFIXES)

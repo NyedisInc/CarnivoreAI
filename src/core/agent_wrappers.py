@@ -1,24 +1,3 @@
-"""User-defined launch wrappers for the "claude" agent family.
-
-    keyc() (
-        local claude_token
-        claude_token="$(security find-generic-password ...)" || { ... }
-        export CLAUDE_CODE_OAUTH_TOKEN="$claude_token"
-        ...
-        command claude --dangerously-skip-permissions "$@"
-    )
-
-Representation choice: ``script`` is stored as a single JSON string with
-embedded ``\\n`` (not an array of lines). Every other multi-line-shaped
-value already in this codebase (``AgentsConfig.*_command``,
-``ProvidersConfig.models`` entries) is a plain string, and a script written
-via the settings-panel textarea round-trips through ``json.dump(..., indent=2)``
-with zero extra logic. An array-of-lines shape would read slightly better
-in a hand-edited config.json but forces a join/split step at every read and
-write site for a benefit that only matters if someone is hand-editing
-30-line shell functions directly in JSON - the UI textarea is the intended
-editing surface, and it preserves whitespace/indentation exactly either way.
-"""
 
 from __future__ import annotations
 
@@ -65,9 +44,57 @@ def derive_accepts_model(wrapper: dict) -> bool:
 class AgentWrapper(BaseModel):
     """One user-defined launch wrapper for the "claude" agent family.
 
+    - ``id``: stable identifier. Doubles as the ``agent_type`` value a
+      caller passes to launch through this specific wrapper (see
+      ``Settings.get_agent_command``) and as the on-disk script filename.
+      NEVER rename one: ``Session.agent_type`` stores it, so a rename
+      orphans every running and historical session launched through it.
+    - ``family``: which command family this wrapper wraps - one of
+      ``src/core/agent_families.AGENT_FAMILY_NAMES`` (claude, codex,
+      hermes, openclaw, shell). Defaults to ``"claude"`` because every
+      wrapper that existed before this field was, by construction, a
+      claude wrapper; the v2->v3 migration writes that value explicitly.
+      A family always has at least one wrapper: its standard one is
+      seeded when it has none (``src/core/launch_wrappers``).
+    - ``label``: human-readable name shown in the UI.
+    - ``script``: the full shell source - a plain command, or a complete
+      function definition. Never validated for shell syntax (arbitrary
+      user shell, same trust level as the pre-existing ``claude_command``
+      field); written verbatim to disk, never interpolated into a quoted
+      string.
+    - ``entry``: function name to invoke after sourcing ``script``. Unset
+      (None/empty) means ``script`` is directly runnable on its own - the
+      common case for a migrated single command or a thin
+      ``cld "$@"``-style forwarder to a function the user's own
+      ``~/.zshrc`` defines. Set it when ``script`` is a function
+      definition that needs an explicit call, e.g. ``entry="cld"`` for a
+      pasted ``cld() ( ... )`` body.
+    - ``description``: optional free-text note shown in the editor.
+    - ``default``: at most one wrapper should carry this; the resolver
+      falls back to the first wrapper in list order if none (or more than
+      one, from a hand-edited config.json) is marked default.
+    - ``accepts_model``: whether this wrapper consumes an OpenRouter model
+      id as its first argument (the ``cldor`` shape). Model choice and
+      wrapper choice are two INDEPENDENT axes; collapsing them into one
+      flat picker list is what caused the regression this field fixes -
+      a model chosen next to a wrapper that ignores models got forwarded
+      to the DEFAULT wrapper, whose ``"$@"`` passed the model id through
+      to ``claude`` as a PROMPT ARGUMENT. Defaults to ``False`` so a
+      wrapper that says nothing about models is never offered one and
+      behaviour for every existing wrapper is unchanged; the v1->v2
+      migration seeds a derived value once (see ``derive_accepts_model``).
+      ``Settings.get_agent_command`` drops the model outright when the
+      resolved wrapper does not accept one, so the picker's rule is
+      enforced server-side too, not just in the UI.
+    - ``icon``: an icon id from the shared icon picker (issue #1004,
+      ``docs/icon-picker.md``), or None. None means "the family's own
+      mark", which is what every surface draws for it. Only its shape is
+      checked here; ``PUT /api/v1/wrappers/{id}/icon`` checks the id is
+      one the picker offers. No colour: the mark wears its parent's.
+
     SECURITY: there is deliberately no "secret" field. A wrapper is a
     shell command - secrets must never be pasted into ``script`` or
-    ``description``. The correct pattern, which the author's own ``keyc``
+    ``description``. The correct pattern, which the author's own ``cld``
     demonstrates, is to read from the macOS Keychain at *run time* inside
     the script (``security find-generic-password ...``), so no credential
     ever passes through this app or lands in config.json.
@@ -203,9 +230,9 @@ def render_script_invocation(
 
 
 
-EXAMPLE_WRAPPER_CLD = """keyc() (
+EXAMPLE_WRAPPER_CLD = """cld() (
     local claude_token
-    claude_token="$(security find-generic-password -a "$USER" -s "example-claude-oauth" -w 2>/dev/null)" || {
+    claude_token="$(security find-generic-password -a "$USER" -s "claude-cld-oauth" -w 2>/dev/null)" || {
         echo "Claude OAuth token not found in macOS Keychain."
         echo "Run: claude setup-token"
         return 1
@@ -227,7 +254,7 @@ EXAMPLE_WRAPPER_CLD = """keyc() (
     command claude --dangerously-skip-permissions "$@"
 )"""
 
-EXAMPLE_WRAPPER_CLDOR = """clxor() (
+EXAMPLE_WRAPPER_CLDOR = """cldor() (
   local openrouter_key
   local selected_model=""
   local claude_bin
@@ -235,7 +262,7 @@ EXAMPLE_WRAPPER_CLDOR = """clxor() (
   openrouter_key="$(
     security find-generic-password \\
       -a "$USER" \\
-      -s "example-openrouter-key" \\
+      -s "claude-cldor-openrouter" \\
       -w 2>/dev/null
   )" || {
     echo "OpenRouter API key not found in macOS Keychain."
@@ -306,11 +333,11 @@ EXAMPLE_WRAPPER_CLDOR = """clxor() (
 
 EXAMPLE_WRAPPERS: List[dict] = [
     {
-        "id": "keyc",
+        "id": "cld",
         "family": "claude",
-        "label": "keyc (subscription, keychain-backed)",
+        "label": "cld (subscription, keychain-backed)",
         "script": EXAMPLE_WRAPPER_CLD,
-        "entry": "keyc",
+        "entry": "cld",
         "description": (
             "example - reads a Claude subscription OAuth token from the "
             "macOS Keychain at run time (entry 'claude setup-token' first) "
@@ -321,11 +348,11 @@ EXAMPLE_WRAPPERS: List[dict] = [
         "accepts_model": False,
     },
     {
-        "id": "clxor",
+        "id": "cldor",
         "family": "claude",
-        "label": "clxor (openrouter, keychain-backed)",
+        "label": "cldor (openrouter, keychain-backed)",
         "script": EXAMPLE_WRAPPER_CLDOR,
-        "entry": "clxor",
+        "entry": "cldor",
         "description": (
             "example - takes a model id as its first argument, reads an "
             "OpenRouter API key from the macOS Keychain, and runs Claude "

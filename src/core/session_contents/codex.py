@@ -26,11 +26,7 @@ def _instructions(home: Path, chain: List[Path]) -> List[Item]:
     out: List[Item] = []
     for path, scope in paths:
         if path.is_file():
-            try:
-                lines = len(path.read_text(encoding="utf-8", errors="replace").splitlines())
-            except OSError:
-                lines = 0
-            out.append(item(path.name, scope, path, detail=f"{lines} lines"))
+            out.append(item(path.name, scope, path))
     return out
 
 

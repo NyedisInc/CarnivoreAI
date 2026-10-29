@@ -10,7 +10,6 @@ VERDICT_OK = "ok"
 VERDICT_FAILED = "failed"
 VERDICT_CANNOT_DETERMINE = "cannot_determine"
 
-# could not be determined
 _SEVERITY: Tuple[str, ...] = (
     VERDICT_FAILED,
     VERDICT_CANNOT_DETERMINE,
@@ -27,16 +26,6 @@ def expected_databases(state_dir: Path) -> List[Tuple[str, Path]]:
 
 
 def part_record(role: str, path: Path, status: str, detail: Optional[str]) -> Dict[str, Any]:
-    """Build one per-database entry for the artifact's ``databases`` list.
-
-    Description: one shape for both roles, so a reader never has to
-      branch on which file it is looking at.
-    Inputs: role (str - ROLE_STATE), path (Path), status
-      (str - one of the VERDICT_* constants), detail (str | None - the
-      pragma's complaint, or why it could not run).
-    Output: dict.
-    Example: part_record("state", Path("/s/cloude.db"), "ok", None)
-    """
     return {
         "role": role,
         "db_path": str(path),

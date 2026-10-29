@@ -1,14 +1,4 @@
 #!/usr/bin/env bash
-#
-# the whole suite
-#
-#
-#
-#
-#
-# the whole suite
-#
-#
 
 set -u
 

@@ -1,4 +1,3 @@
-/* the offline marker */
 import { mountPanel } from '../lib/mount';
 import { bootResourcePush } from '../lib/resource-push/boot';
 import { startOutbox } from '../lib/outbox/outbox';

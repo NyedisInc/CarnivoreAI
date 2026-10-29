@@ -167,6 +167,15 @@ async def catalog_email_verify(
 ) -> CatalogSessionResponse:
     """Answer the challenge with the typed code, and store what it mints.
 
+    **A TYPO IS NOT THE END OF THE FLOW.** Cognito allows five wrong
+    codes against one challenge and the challenge SURVIVES each of them
+    (measured 2026-09-16), so a relayed 400 ``code_mismatch`` leaves this
+    flow open and the same handle works for the next attempt. Only a 410
+    ends it, because at that point the challenge genuinely cannot be
+    answered again and the person needs a new code. Ending the flow on
+    any refusal would cost somebody a second email for one mistyped
+    digit.
+
     **THE ADDRESS AND THE SESSION COME FROM MEMORY, NOT FROM THE BODY.**
     See this module's header: a body carrying the address would let a
     caller aim a challenge at a different username.

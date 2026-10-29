@@ -35,6 +35,7 @@ async function showUnread(): Promise<HuddleItem> {
   return huddle.body!.items[0]!;
 }
 
+/* nothing was written */
 async function pushStillUnread(thread?: TaskManagerMessage[]): Promise<HuddleItem> {
   net.answers['GET /cplugs/huddle/lists/12?live_only=1'] = body(unreadItem(thread));
   await refreshList();

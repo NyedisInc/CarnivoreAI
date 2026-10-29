@@ -1,0 +1,12 @@
+@layer components {
+    .modal-titlerow,
+    .text-prompt-modal__head {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        min-height: var(--oc-titlerow-h, 37px);
+        padding: 0 14px;
+        background: var(--oc-ground-titlerow);
+        box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
+    }
+}

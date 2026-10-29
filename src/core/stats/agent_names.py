@@ -1,10 +1,3 @@
-"""
-WHY. The stats store keys usage by the harness's conversation id (a uuid). The "tokens per agent" widget
-labels every line and row by the agent's NAME, never that id, so the query layer resolves it here, beside the
-project and account labels.
-
-The answer is cached for :data:`CACHE_SECONDS` per stats store, because every grouped chart asks.
-"""
 from __future__ import annotations
 
 import sqlite3
@@ -39,7 +32,6 @@ def _name_of(title: Optional[str], tmux_name: Optional[str]) -> Optional[str]:
 
 
 def resolve(store) -> Dict[str, str]:
-    """Every conversation id this install can name. Input: the stats store. Output: conversation id -> name."""
     try:
         app_db = connect(db_path_for(store.state_dir), create=False)
     except DatastoreUnreadableError as exc:
@@ -63,7 +55,6 @@ def resolve(store) -> Dict[str, str]:
 
 
 def names_for(store, *, now: Optional[float] = None) -> Dict[str, str]:
-    """The cached resolution for one store. Inputs: store; now (test clock). Output: conversation id -> name."""
     clock = time.monotonic() if now is None else now
     key = str(store.state_dir)
     with _lock:

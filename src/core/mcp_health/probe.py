@@ -1,28 +1,3 @@
-"""Carnivore's own reachability probe of remote MCP servers, shared per unique URL (#1678).
-
-WHAT IT ANSWERS: is the endpoint up? NOT whether a session's client is connected to it: that is the session's
-own link evidence (``client_log.py``, ``first_hand.py``), which outranks this. The probe EXPLAINS a down link
-(refused, DNS, timeout) and catches an endpoint that is down right now while a quiet client still believes
-it is connected.
-
-WHAT IT SENDS: an unauthenticated MCP ``initialize`` POST (JSON-RPC, ``Accept: application/json,
-text/event-stream``), the exact first request a client's connect makes, with NO credential of any session (no
-Authorization, no configured header, no query string: ``servers.clean_url`` stripped it). Chosen over a bare
-GET because a streamable-HTTP endpoint legitimately answers a GET with 405 or opens a stream, and a GET's 404
-does not prove the POST route is missing; an initialize gets the answer the client's next connect would get,
-minus credentials. Only the status line and headers are read, the body is never parsed. A server that mints a
-session on it (``Mcp-Session-Id`` in the answer) gets the spec's ``DELETE`` for that id at once, so a probe leaves
-nothing behind. An ``sse`` endpoint gets a ``GET`` with ``Accept: text/event-stream``, closed after the headers.
-
-CLASSES: 2xx and every 4xx except the ones below are ``reachable``; 401/403 are ``auth_required`` (reachable,
-sign-in not checked: the probe holds no credential, so this is never "down"); 404/410 are ``not_found`` (down,
-the client's own ENDPOINT_NOT_FOUND); 5xx ``server_error`` (down); refused, DNS, timeout, TLS and other socket
-errors are down with that reason.
-
-COST: one request per unique URL per :data:`PROBE_INTERVAL` (60 s), at most :data:`MAX_CONCURRENT` at once,
-each bounded by :data:`TIMEOUT` (5 s), on a worker thread pool, never the event loop. A URL no live session
-names is forgotten.
-"""
 
 from __future__ import annotations
 

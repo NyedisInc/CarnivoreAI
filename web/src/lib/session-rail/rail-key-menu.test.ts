@@ -27,6 +27,7 @@ import { registerDraftWidget, type DraftSpec } from '../../widget-harness/draft-
 import { declareWidgetActions } from '../../opscenter/widgets/menu/declared-actions.svelte';
 import { railBodyKey } from './rail-body-key';
 
+// jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};
@@ -74,7 +75,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('the bar sizes are in the bar\'s own menu only (tweak 57b9c3e49: they leave every widget menu)', () => {
+describe('the bar sizes are in the bar\'s own menu only (tweak 8c8a373ef: they leave every widget menu)', () => {
   test('a key menu on either bar offers no size radio', () => {
     follow(RAIL_FIELD, one({ widget: 'core.files' }, { widget: 'core.notes' }));
     rightClick(keyIn('side', 'core.files'));

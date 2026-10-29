@@ -21,7 +21,6 @@ export interface PasskeyHost {
     remove(id: string): Promise<void>;
 }
 
-/* passkey sign in */
 export async function signInCeremony(
     pk: PasskeyApi,
     creds: CredentialsLike | undefined,

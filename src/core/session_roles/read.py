@@ -14,7 +14,7 @@ _PORT_ERRORS = (OSError, RuntimeError, ValueError, LookupError, AttributeError, 
 
 
 class SessionRolesUnreadable(Exception):
-    """A plugin offered its roles and could not read them: the row's word is then not measured, never a partial answer."""
+    pass
 
 
 async def read(app_state: Any, infos: Iterable[Any], asleep: Optional[List[Dict[str, Any]]] = None) -> Optional[Dict[str, Dict[str, bool]]]:

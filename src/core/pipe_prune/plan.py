@@ -55,13 +55,6 @@ class Decision:
 def refusal_for(
     facts: PaneFacts, ladder_consumed: bool, open_paths: Optional[frozenset]
 ) -> Optional[Refusal]:
-    """Say why the whole pass must delete nothing, or None to proceed.
-
-    Inputs: facts (PaneFacts); ladder_consumed (bool); open_paths
-      (frozenset | None) - None means the open-file check could not run.
-    Output: Refusal | None.
-    Example: refusal_for(PaneFacts(False), True, frozenset())  # TMUX_UNKNOWN
-    """
     if not facts.complete:
         return Refusal.TMUX_UNKNOWN
     if not facts.session_names:

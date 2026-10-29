@@ -36,20 +36,20 @@ setLocale('en');
 
 const SELF = (role: string) => ({ install_id: 'me', label: 'studio', fid_short: 'ab12cd', role,
   link: { state: 'listening', port: 8443, join_open: false, addresses: [], code_paused_until: null },
-  main: role === 'member' ? { label: 'hosta', state: 'connected', last_link_at: null, reachable_note: false } : null });
+  main: role === 'member' ? { label: 'ripley', state: 'connected', last_link_at: null, reachable_note: false } : null });
 const machine = (id: string, over: Record<string, unknown> = {}) => ({ install_id: id, label: id, is_self: id === 'me', is_master: id === 'me', paired: id !== 'me',
   state: 'ok', capabilities: [], specs: null, snapshot: null, age_seconds: 5, ...over });
 const entry = (id: string, over: Record<string, unknown> = {}) => ({ install_id: id, label: id, host_key: null, transport: 'ssh', role: 'member', state: 'connected', direction: 'both',
   fid: `${id}fid000`, fid_short: `${id}fid`.slice(0, 6), cert_sha256: null, joined_at: null, last_link_at: new Date().toISOString(), possible_duplicate_of: null, ...over });
-const host = (key: string, over: Record<string, unknown> = {}) => ({ key, label: key, local: false, ssh_target: `acme@${key}`, ssh_port: null, socket: 'carnivore-remote', enabled: true, session_count: 0,
+const host = (key: string, over: Record<string, unknown> = {}) => ({ key, label: key, local: false, ssh_target: `alex@${key}`, ssh_port: null, socket: 'carnivore-remote', enabled: true, session_count: 0,
   probe_state: 'ok', probe_detail: null, probed_at: null, tmux_path: null, tmux_version: '3.4', login_path: null, agent_paths: null, login_shell: '/bin/zsh', machine_id: null,
   remote_carnivore: null, computer_install_id: null, created_at: '', updated_at: '', ...over });
 
 const mounted: ReturnType<typeof mount>[] = [];
 async function render(role = 'main', entryOver: Record<string, unknown> = {}): Promise<HTMLElement> {
-  view = { self: SELF(role), computers: [entry('hosta', entryOver)], invites: [], add_jobs: [] };
-  machines = [machine('me'), machine('hosta')];
-  hostRows = [host('hosta', { computer_install_id: 'hosta' }), host('forge')];
+  view = { self: SELF(role), computers: [entry('studio', entryOver)], invites: [], add_jobs: [] };
+  machines = [machine('me'), machine('studio')];
+  hostRows = [host('studio', { computer_install_id: 'studio' }), host('forge')];
   const target = document.createElement('div');
   document.body.append(target);
   mounted.push(mount(PackRoster, { target, props: {} }), mount(RosterActions, { target, props: {} }));
@@ -77,11 +77,11 @@ describe('the Pack roster', () => {
   test('lists computers and ssh hosts once, and a computer shows its ssh host on its ssh tab', async () => {
     const root = await render();
     const ids = [...root.querySelectorAll('[data-computer-card]')].map((e) => e.getAttribute('data-computer-card'));
-    expect(ids).toEqual(expect.arrayContaining(['me', 'hosta', 'host:forge']));
-    expect(ids.filter((i) => i === 'hosta')).toHaveLength(1);
-    openComputer('hosta', 'ssh');
+    expect(ids).toEqual(expect.arrayContaining(['me', 'studio', 'host:forge']));
+    expect(ids.filter((i) => i === 'studio')).toHaveLength(1);
+    openComputer('studio', 'ssh');
     await settle();
-    expect(root.querySelector('.pp-ssh')?.textContent).toContain('acme@hosta');
+    expect(root.querySelector('.pp-ssh')?.textContent).toContain('alex@studio');
     expect(root.querySelector('[data-act="match"]')).not.toBeNull();
   });
 
@@ -119,10 +119,27 @@ describe('the Pack roster', () => {
 
   test('the wolf button confirms, then makes that computer the leader through PUT /pack/master', async () => {
     const root = await render();
-    root.querySelector<HTMLButtonElement>('[data-computer-card="hosta"] [data-act="makeleader"]')!.click();
+    root.querySelector<HTMLButtonElement>('[data-computer-card="studio"] [data-act="makeleader"]')!.click();
     await settle();
     const put = calls.find((c) => c.path === '/pack/master' && c.init?.method === 'PUT');
     expect(put).toBeTruthy();
-    expect(JSON.parse(String(put!.init!.body))).toEqual({ machine: 'hosta' });
+    expect(JSON.parse(String(put!.init!.body))).toEqual({ machine: 'studio' });
+  });
+
+  test('with only this computer, the empty message is a base State carrying the add button, never a bare m1-empty div', async () => {
+    view = { self: SELF('main'), computers: [], invites: [], add_jobs: [] };
+    machines = [machine('me')];
+    hostRows = [];
+    const target = document.createElement('div');
+    document.body.append(target);
+    mounted.push(mount(PackRoster, { target, props: {} }), mount(RosterActions, { target, props: {} }));
+    await Promise.all([computers.refresh(true), packMachines.refresh(true), hosts.refresh(true), peers.refresh(true), discovered.refresh(true)]);
+    await settle();
+    const empty = target.querySelector('[data-roster-only-self]');
+    expect(empty).not.toBeNull();
+    expect(empty!.classList.contains('oc-state')).toBe(true);
+    expect(empty!.getAttribute('data-state')).toBe('empty');
+    expect(empty!.querySelector('.oc-state__actions button')?.textContent).toContain('add a computer');
+    expect(target.querySelector('.m1-empty')).toBeNull();
   });
 });

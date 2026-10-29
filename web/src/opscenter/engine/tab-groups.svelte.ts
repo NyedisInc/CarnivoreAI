@@ -227,6 +227,7 @@ export function cloneTabs(from: string, to: string): void {
   persist(to, record);
 }
 
+/* there is nothing */
 export function forgetTabs(key: string): void {
   cache.delete(key);
   revision += 1;

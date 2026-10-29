@@ -1,33 +1,3 @@
-"""The opening prompt a new session is born with (issue #759, blueprints).
-
-``CreateSessionRequest.opening_prompt`` asks the agent to start working on
-something the moment it launches: a blueprint member's first instruction,
-which can invoke a skill installed into its folder.
-
-ONE ARGUMENT, NEVER SHELL TEXT. The prompt travels as a single positional
-argument through ``agent_extra_args``, the path the fork route already
-uses for ``--resume <uuid> --fork-session``
-(``src/api/session_fork_routes.py``). Every renderer quotes each extra
-argument on its own with ``shlex.quote`` (``agent_wrappers.
-render_wrapper_invocation``, the one launch renderer), so
-``$(...)``, backticks, ``;`` and quotes reach the CLI as the literal
-characters they are. The text checks in ``check_opening_prompt`` refuse
-what the CLI's OWN parser would take for something else: a leading ``-``
-(an option) and a lone bare word (a subcommand).
-
-CLAUDE AND CODEX ONLY. Both CLIs take an initial prompt as a positional
-argument; a shell takes none and a family this app does not know would
-receive it as who knows what. The family is resolved the way the launch
-itself resolves it (explicit ``agent_type``, else the project's default,
-else claude; then ``resolve_agent_type`` against the configured
-wrappers), and the resolved ``agent_type`` is handed back so the launch
-cannot resolve a different one.
-
-FIRST LAUNCH ONLY. Nothing stores the prompt: ``agent_extra_args`` is used
-once to build the launch command and never persisted, and a restart
-resumes the conversation through ``session_resume_target`` instead, so a
-restart never sends the prompt a second time.
-"""
 
 from __future__ import annotations
 

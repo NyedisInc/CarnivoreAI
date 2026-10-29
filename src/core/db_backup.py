@@ -30,27 +30,14 @@ BACKUP_NAME_RE = re.compile(
     r"(?:\.nobackup)?$"
 )
 
-KEEP_VERSIONS = 5
-KEEP_DAYS = 3
+KEEP_VERSIONS = 2
+KEEP_DAYS = 0
 
 _SIDECAR_SUFFIXES = ("-shm", "-wal")
 
 
 @dataclass
 class BackupResult:
-    """The outcome of taking and verifying one backup. Three states.
-
-    Description: ``verified`` is the only thing a caller may act on.
-      ``taken`` distinguishes "the copy never happened" from "the copy
-      happened and could not be trusted", which matters for the message
-      the user sees but not for the decision, which is identical: do not
-      migrate.
-    Inputs (constructor): taken (bool), verified (bool), path (Path |
-      None - the backup file, which is DELETED when verification fails so
-      a bad copy cannot later be mistaken for a good one), reason (str |
-      None - why it is not verified; None when verified is True).
-    Output: a BackupResult instance.
-    """
 
     taken: bool
     verified: bool
@@ -128,15 +115,6 @@ def verify_backup(path: Path, expect_version: int) -> tuple:
 
 
 def list_backups(state_dir: Path) -> List[Path]:
-    """List every recognised backup file, newest first.
-
-    Description: recognised means matching BACKUP_NAME_RE. A file in the
-      state dir with a similar-looking name that does not match is
-      IGNORED rather than guessed at - retention must never delete
-      something it could not positively identify as its own artifact.
-    Inputs: state_dir (Path).
-    Output: list[Path] - sorted by embedded timestamp, newest first.
-    """
     state_dir = Path(state_dir)
     if not state_dir.is_dir():
         return []
@@ -195,27 +173,6 @@ def prune_backups(
 
 
 def _uniquify(target: Path) -> Path:
-    """Return a path that does not exist, adding a -N suffix if needed.
-
-    Description: a prior backup is NEVER overwritten. When the natural
-      name is taken (two migrations inside the same second, which a
-      crash-loop produces), a numeric suffix is appended instead of
-      failing - refusing to back up because a one-second-old backup
-      exists would abort the retry that needs the backup most.
-      THE SEQUENCE GOES BEFORE BACKUP_SUFFIX, NOT AFTER IT, AND BOTH
-      REASONS ARE LOAD BEARING. Appending it to the whole name would
-      produce "...Z.nobackup-2", which BACKUP_NAME_RE does not match - so
-      the file would drop out of list_backups, out of retention and out of
-      select_backup, invisibly - and which no ".nobackup" exclusion rule
-      matches either, so the very copy the suffix exists to keep off-box
-      would be the one that got shipped. A suffix that means something to
-      other tools has to be the LAST thing in the name.
-    Inputs: target (Path) - the natural, timestamped backup path.
-    Output: Path - target, or the same name with "-2", "-3", ... inserted
-      ahead of the suffix.
-    Raises: RuntimeError - after 999 collisions, which cannot happen
-      without something else being badly wrong.
-    """
     if not target.exists():
         return target
     name = target.name
@@ -249,14 +206,6 @@ def _parse_stamp(name: str) -> Optional[datetime]:
 
 
 def _remove_quietly(path: Path) -> None:
-    """Delete a file, ignoring its absence.
-
-    Description: used to destroy an unverifiable backup so it cannot
-      later be mistaken for a good one. A failure to delete is logged,
-      not raised - the caller is already on an abort path.
-    Inputs: path (Path).
-    Output: None.
-    """
     try:
         Path(path).unlink()
     except FileNotFoundError:
@@ -266,13 +215,5 @@ def _remove_quietly(path: Path) -> None:
 
 
 def sqlite_copy_is_wal_safe(conn: sqlite3.Connection) -> bool:
-    """Report whether a connection's journal mode is WAL.
-
-    Description: exists so a test (and a future CLI health check) can
-      assert the pragma actually took, rather than assuming it did
-      because the line is in the source.
-    Inputs: conn (sqlite3.Connection).
-    Output: bool - True when PRAGMA journal_mode reports "wal".
-    """
     row = conn.execute("PRAGMA journal_mode").fetchone()
     return row is not None and str(row[0]).lower() == "wal"

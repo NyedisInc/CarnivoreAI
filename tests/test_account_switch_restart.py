@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Dict, List, Optional
@@ -13,6 +14,7 @@ from src.config.provider_account_switch import ProviderAccountSwitchConfig
 from src.config.provider_accounts import ProviderAccount
 from src.core.account_switch import auto_restart, limit_detect
 from src.core.account_switch.rotate_state import RotationState
+from src.core.attention.screen_reuse import ScreenReuse
 from src.core.attention.usage_limit import LimitStop
 from src.core.account_switch.pane_account import UNREADABLE, PaneProfile
 from src.models.provider_ledger import (
@@ -142,6 +144,9 @@ class Manager:
     async def list_session_infos(self):
         return list(self.rows)
 
+    def _build_tmux_status_map(self):
+        return {}
+
     async def get_session_info(self, session_id):
         for r in self.rows:
             if r.session.id == session_id:
@@ -152,7 +157,7 @@ class Manager:
         self.respawned.append((name, kwargs))
         return dict(self.result)
 
-    def _tmux_socket_name(self):
+    def tmux_socket_name(self):
         return "unused"
 
 
@@ -166,7 +171,7 @@ class Evidence:
         self._started = started
         self._stop = stop
 
-    async def limit_stop(self, i):
+    async def limit_stop(self, i, **_):
         if i.tmux_session not in self.names:
             return None
         return self._stops.pop(0) if self._stops else self._stop
@@ -253,12 +258,7 @@ def clear_skip_log():
 
 @pytest.fixture(autouse=True)
 def blank_pane(monkeypatch):
-    real = auto_restart._tmux_output
-
-    async def no_capture(socket, *args):
-        return None if args and args[0] == "capture-pane" else await real(socket, *args)
-
-    monkeypatch.setattr(auto_restart, "_tmux_output", no_capture)
+    monkeypatch.setattr(auto_restart, "capture_screen", lambda socket, name: None)
 
 
 def run(manager, state, *, rotation=None, snap=None, switch=None, evidence=None, read=None, clock=100.0,
@@ -303,7 +303,7 @@ def test_a_transient_429_does_nothing(tmp_path, monkeypatch, state):
     monkeypatch.setattr(claude_reader, "locate_transcript", lambda uuid, working_dir=None: SimpleNamespace(path=path))
 
     class Known(Manager):
-        def _claude_uuid_for_tmux_name(self, name):
+        def claude_uuid_for_tmux_name(self, name):
             return "conv"
 
     manager = Known([info("cloude_a")])
@@ -514,7 +514,7 @@ def test_at_most_a_bounded_number_per_pass(state):
     names = [f"cloude_{i}" for i in range(6)]
 
     class OwnRecord(Evidence):
-        async def limit_stop(self, i):
+        async def limit_stop(self, i, **_):
             return LimitStop(f"rec-{i.tmux_session}", STOP.timestamp, STOP.resets_at, "seven_day")
 
     manager = Manager([info(n) for n in names])
@@ -537,10 +537,10 @@ def test_the_pool_includes_the_built_in_default_login(state):
 def test_the_real_evidence_refuses_an_unknown_conversation():
 
     class NoUuid:
-        def _tmux_socket_name(self):
+        def tmux_socket_name(self):
             return "unused"
 
-        def _claude_uuid_for_tmux_name(self, name):
+        def claude_uuid_for_tmux_name(self, name):
             return None
 
     assert asyncio.run(auto_restart.SessionEvidence(NoUuid()).limit_stop(info())) is None
@@ -558,10 +558,10 @@ def test_the_real_evidence_reads_the_transcript_tail(tmp_path, monkeypatch):
                         lambda uuid, working_dir=None: SimpleNamespace(path=path))
 
     class Known:
-        def _tmux_socket_name(self):
+        def tmux_socket_name(self):
             return "unused"
 
-        def _claude_uuid_for_tmux_name(self, name):
+        def claude_uuid_for_tmux_name(self, name):
             return "conv"
 
     evidence = auto_restart.SessionEvidence(Known())
@@ -584,10 +584,10 @@ def test_a_limit_stop_with_no_id_is_not_acted_on(tmp_path, monkeypatch):
                         lambda uuid, working_dir=None: SimpleNamespace(path=path))
 
     class Known:
-        def _tmux_socket_name(self):
+        def tmux_socket_name(self):
             return "unused"
 
-        def _claude_uuid_for_tmux_name(self, name):
+        def claude_uuid_for_tmux_name(self, name):
             return "conv"
 
     assert asyncio.run(auto_restart.SessionEvidence(Known()).limit_stop(info())) is None
@@ -798,15 +798,15 @@ def test_rotated_body_names_both_accounts_and_the_limit_and_renders_cleanly_with
     real = contracts.emit
     contracts.emit = events.append
     try:
-        frames.limit_rotation("rotated", session="Orchardco-2", from_account_id="a1", to_account_id="a2",
-                              limit_kind="weekly", from_name="claude-acme", to_name="claude-code-work")
-        frames.limit_rotation("rotated", session="Orchardco-2", from_account_id="", to_account_id="", limit_kind="other")
+        frames.limit_rotation("rotated", session="Cobalt-2", from_account_id="a1", to_account_id="a2",
+                              limit_kind="weekly", from_name="claude-evergreen", to_name="claude-code-larkspur")
+        frames.limit_rotation("rotated", session="Cobalt-2", from_account_id="", to_account_id="", limit_kind="other")
     finally:
         contracts.emit = real
     full = copy.render(events[0], get_kind("slack"), details_on=False).body
-    assert full == ("Orchardco-2 hit its weekly limit on claude-acme, was moved to claude-code-work and told to continue.")
+    assert full == ("Cobalt-2 hit its weekly limit on claude-evergreen, was moved to claude-code-larkspur and told to continue.")
     bare = copy.render(events[1], get_kind("slack"), details_on=False).body
-    assert bare == "Orchardco-2 hit its limit, was moved and told to continue."
+    assert bare == "Cobalt-2 hit its limit, was moved and told to continue."
     assert "None" not in bare and "{" not in bare and "[" not in bare
 
 
@@ -889,3 +889,56 @@ def test_the_baseline_survives_a_server_restart(tmp_path):
     again = RotationState(path, clock=lambda: NOW.timestamp() + 30 * 24 * 3600)
     assert again.baselined() and again.pre_existing("gone")
     assert not again.pre_existing("live") and not again.pre_existing("unknown")
+
+
+
+
+def _pane_row(activity: int) -> dict:
+    return {"pane_is_current": True, "pane_dead": "0", "pane_id": "%1", "pid": 11, "created_at_epoch": 7,
+            "pane_width": 80, "pane_height": 24, "window_activity": activity}
+
+
+def test_an_idle_non_limited_pane_causes_no_capture_and_a_forced_read_always_captures(monkeypatch):
+    from src.core.session_token_usage import claude_reader
+
+    monkeypatch.setattr(claude_reader, "locate_transcript", lambda uuid, working_dir=None: SimpleNamespace(path=None))
+    captures: List[str] = []
+
+    def fake_capture(socket, name):
+        captures.append(name)
+        return "just a prompt\n"
+
+    monkeypatch.setattr(auto_restart, "capture_screen", fake_capture)
+
+    class Known:
+        def tmux_socket_name(self):
+            return "unused"
+
+        def claude_uuid_for_tmux_name(self, name):
+            return "conv"
+
+    evidence = auto_restart.SessionEvidence(Known(), screens=ScreenReuse())
+    idle = _pane_row(int(time.time()) - 600)
+    assert asyncio.run(evidence.limit_stop(info(), row=idle)) is None
+    assert captures == ["cloude_a"]
+    for _ in range(3):
+        assert asyncio.run(evidence.limit_stop(info(), row=idle)) is None
+    assert captures == ["cloude_a"]
+    assert asyncio.run(evidence.limit_stop(info(), row=_pane_row(int(time.time())))) is None
+    assert len(captures) == 2
+    assert asyncio.run(evidence.limit_stop(info(), row=idle, force=True)) is None
+    assert len(captures) == 3
+
+
+def test_the_read_right_before_a_kill_is_forced(state):
+    forced: List[bool] = []
+
+    class Recording(Evidence):
+        async def limit_stop(self, i, *, row=None, force=False):
+            forced.append(force)
+            return await super().limit_stop(i)
+
+    manager = Manager([info()])
+    run(manager, state, evidence=Recording())
+    assert manager.respawned
+    assert forced[0] is False and forced[-1] is True

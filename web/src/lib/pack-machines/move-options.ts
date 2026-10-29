@@ -1,4 +1,3 @@
-/* not asleep */
 
 export interface MoveOption {
   key: string;
@@ -26,7 +25,6 @@ export interface MoveSession {
 const byName = (a: { name: string }, b: { name: string }): number =>
   a.name.toLowerCase().localeCompare(b.name.toLowerCase()) || a.name.localeCompare(b.name);
 
-/* not asleep */
 export function isLive(row: MoveSession): boolean {
   return row.asleep !== true && row.activity_status !== 'dead' && row.activity_status !== 'stopped';
 }

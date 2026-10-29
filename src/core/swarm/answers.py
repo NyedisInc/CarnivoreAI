@@ -5,14 +5,14 @@ import asyncio
 import json
 import re
 import sqlite3
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import structlog
 
 from src.core import db
 from src.core.db import transaction
 from src.core.mcp.caller import AgentCaller
-from src.core.swarm import body, facts, memory, push, receipts, routing, thread_port
+from src.core.swarm import body, fact_life, facts, memory, push, receipts, routing, thread_port
 from src.core.swarm.routing import QuestionRefused
 from src.core.trail_entry import utc_now
 from src.core.swarm.names import shown_name
@@ -56,6 +56,9 @@ def _apply_answer(conn: sqlite3.Connection, agent: Dict[str, Any], question_id: 
         conn.execute("UPDATE swarm_questions SET state = 'answered', answer_text = ?, answered_by = ?, answered_at = ? "
                      "WHERE id = ?", (text, f"agent:{agent['id']}", now, question_id))
         receipts.save(conn, question_id, agent["id"], receipt)
+        key = fact_life.conversation_key(conn, agent["id"])
+        for fact_id in receipt.fact_ids:
+            fact_life.record_use(conn, fact_id, key, now)
     question = conn.execute("SELECT text FROM swarm_questions WHERE id = ?", (question_id,)).fetchone()[0]
     return {"question": question, "receipt": receipt, "askers": routing.askers_of(conn, question_id)}
 
@@ -133,7 +136,8 @@ def _apply_owner_answer(conn: sqlite3.Connection, question_id: int, text: str, o
     return {"question": dict(q), "askers": askers, "tiers": list(tiers)}
 
 
-async def owner_answer(app_state: Any, question_id: int, decision: str, text: str, owner_message_ref: str) -> bool:
+async def owner_answer(app_state: Any, question_id: int, decision: str, text: str, owner_message_ref: str, *,
+                       structured: Optional[Dict[str, Any]] = None) -> bool:
     if decision != "answer" or not text.strip():
         logger.info("swarm_question_card_not_answered", question_id=question_id, decision=decision)
         return False
@@ -141,8 +145,10 @@ async def owner_answer(app_state: Any, question_id: int, decision: str, text: st
         raise QuestionRefused("an owner answer needs the owner's message")
     done = await body.run_db(lambda c: _apply_owner_answer(c, question_id, text, owner_message_ref))
     port = thread_port.get()
-    shown = (f"The owner answered your question {question_id} (their message {owner_message_ref}, attached by the server):"
+    shown = (f"The owner answered your question {question_id} (his message {owner_message_ref}, attached by the server):"
              f"\n\n{text}")
+    if structured:
+        shown += "\n\nThe same answers as JSON, keyed by your question ids:\n" + json.dumps(structured, ensure_ascii=False)
     for asker in done["askers"]:
         try:
             if port is not None:
@@ -197,3 +203,20 @@ async def kill_fact(app_state: Any, fact_id: str) -> List[int]:
     await asyncio.to_thread(push.notify_roster)
     logger.info("swarm_fact_killed_reopened", fact_id=fact_id, reopened=[q["id"] for q in reopened])
     return [q["id"] for q in reopened]
+
+
+async def forget(view: Any, caller: AgentCaller, args: Dict[str, Any]) -> Dict[str, Any]:
+    agent = await routing.caller_agent(view, caller)
+    fact_id = args.get("fact_id")
+    if not isinstance(fact_id, str) or not fact_id:
+        raise facts.FactRefused("fact_id is required")
+    try:
+        await body.run_db(lambda c: facts.forgettable(c, agent, fact_id))
+        reopened = await kill_fact(view.app.state, fact_id)
+    except facts.FactNotFound:
+        raise facts.FactRefused("no such fact") from None
+    except _DB_ERRORS as exc:
+        logger.warning("swarm_forget_failed", fact_id=fact_id, error_type=type(exc).__name__)
+        raise facts.FactRefused("the fact could not be deleted; try again") from None
+    logger.info("swarm_fact_forgotten", fact_id=fact_id, agent_id=agent["id"])
+    return {"fact_id": fact_id, "state": "killed", "reopened_question_ids": reopened}

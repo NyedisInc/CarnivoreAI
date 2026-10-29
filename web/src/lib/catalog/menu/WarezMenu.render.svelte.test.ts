@@ -17,7 +17,7 @@ const SOURCES: MenuSources = {
     storeNewest: 5,
     storeUpdates: 0,
     storeByKind: { skill: 7, theme: 16, mod: 1, plugin: 1 },
-    storeItems: [{ kind: 'skill', id: 'acme/scrooge', title: 'scrooge', installed: false }],
+    storeItems: [{ kind: 'skill', id: 'alex/scrooge', title: 'scrooge', installed: false }],
     installed: {
         skill: [{ key: 'sme', title: 'sme', word: 'on' }],
         theme: [{ key: 'green_crt', title: 'Green CRT', word: 'global' }],

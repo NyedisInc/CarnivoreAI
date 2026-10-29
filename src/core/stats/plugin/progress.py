@@ -42,8 +42,6 @@ def _refresh(key: str, state_dir: Path) -> None:
 
 
 def forget(state_dir: Path) -> None:
-    """Drop the kept progress of one state directory, so the next read measures it afresh (a rebuild swapped the
-    database file). Input: state_dir. Output: None."""
     from src.core.pipeline import lag
 
     lag.forget(Path(state_dir))

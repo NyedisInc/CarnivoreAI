@@ -4,11 +4,12 @@
   import { t } from '../i18n/index.svelte';
   import { closeRailMenu, railMenu, railMenuItems } from './rail-menu.svelte';
 
+  let { closed = false }: { closed?: boolean } = $props();
   let marker = $state<HTMLElement | null>(null);
 
 </script>
 
-{#if railMenu.at}
+{#if railMenu.at && railMenu.closed === closed}
   <span class="sbr-menu-anchor" bind:this={marker} use:placeAt={railMenu.at} aria-hidden="true"></span>
   {#if marker}
     

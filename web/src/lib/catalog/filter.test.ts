@@ -17,17 +17,17 @@ import type { CatalogItem, InstalledItem } from './types';
 
 const ITEMS: CatalogItem[] = [
     {
-        id: 'acme/deploy',
+        id: 'alex/deploy',
         name: 'deploy',
-        publisher: 'acme',
+        publisher: 'alex',
         latest: '1.0',
-        card: { title: 'Deploy Runner', brief: 'ships a build to a test machine', tags: ['cli', 'ops'] },
+        card: { title: 'Deploy Runner', brief: 'ships a build to the mini', tags: ['cli', 'ops'] },
         versions: [{ v: '1.0', scripts: 2 }],
     },
     {
-        id: 'acme/notes',
+        id: 'alex/notes',
         name: 'notes',
-        publisher: 'acme',
+        publisher: 'alex',
         latest: '2.0',
         card: { title: 'Note Taker', brief: 'writes meeting notes', tags: ['writing'] },
         versions: [{ v: '2.0', scripts: 0 }],
@@ -45,9 +45,9 @@ const ITEMS: CatalogItem[] = [
 const CARDS: CardView[] = cardViews(ITEMS, false);
 
 const LEDGER: Record<string, InstalledItem[]> = {
-    'acme/deploy': [{
+    'alex/deploy': [{
         install_id: 'i1',
-        item_id: 'acme/deploy',
+        item_id: 'alex/deploy',
         scope: 'global',
         revision: 4,
         update_available: true,
@@ -61,23 +61,23 @@ function ids(cards: readonly CardView[]): string[] {
 describe('the search box', () => {
     test('an empty query narrows nothing', () => {
         expect(ids(visibleCards(CARDS, NO_FILTERS, '', {}))).toEqual([
-            'acme/deploy',
-            'acme/notes',
+            'alex/deploy',
+            'alex/notes',
             'zoe/audit',
         ]);
     });
 
     test('it matches the title, the name, the brief, the publisher and a tag', () => {
-        expect(ids(visibleCards(CARDS, NO_FILTERS, 'runner', {}))).toEqual(['acme/deploy']);
-        expect(ids(visibleCards(CARDS, NO_FILTERS, 'notes', {}))).toEqual(['acme/notes']);
+        expect(ids(visibleCards(CARDS, NO_FILTERS, 'runner', {}))).toEqual(['alex/deploy']);
+        expect(ids(visibleCards(CARDS, NO_FILTERS, 'notes', {}))).toEqual(['alex/notes']);
         expect(ids(visibleCards(CARDS, NO_FILTERS, 'repo', {}))).toEqual(['zoe/audit']);
         expect(ids(visibleCards(CARDS, NO_FILTERS, 'zoe', {}))).toEqual(['zoe/audit']);
         expect(ids(visibleCards(CARDS, NO_FILTERS, 'security', {}))).toEqual(['zoe/audit']);
     });
 
     test('EVERY WORD MUST HIT, and each may hit a different field', () => {
-        expect(ids(visibleCards(CARDS, NO_FILTERS, 'acme cli', {}))).toEqual(['acme/deploy']);
-        expect(ids(visibleCards(CARDS, NO_FILTERS, 'acme security', {}))).toEqual([]);
+        expect(ids(visibleCards(CARDS, NO_FILTERS, 'alex cli', {}))).toEqual(['alex/deploy']);
+        expect(ids(visibleCards(CARDS, NO_FILTERS, 'alex security', {}))).toEqual([]);
     });
 
     test('it is case insensitive and ignores surrounding space', () => {
@@ -85,6 +85,7 @@ describe('the search box', () => {
     });
 
     test('NEGATIVE CONTROL: a query that matches nothing returns nothing', () => {
+        // could be passing because
         expect(ids(visibleCards(CARDS, NO_FILTERS, 'xyzzy', {}))).toEqual([]);
     });
 });
@@ -92,32 +93,32 @@ describe('the search box', () => {
 describe('the four flags', () => {
     test('installed keeps only rows the ledger carries', () => {
         const filters = { ...NO_FILTERS, installed: true };
-        expect(ids(visibleCards(CARDS, filters, '', LEDGER))).toEqual(['acme/deploy']);
+        expect(ids(visibleCards(CARDS, filters, '', LEDGER))).toEqual(['alex/deploy']);
         expect(ids(visibleCards(CARDS, filters, '', {}))).toEqual([]);
     });
 
     test('updates reads the ledger badge and nothing else', () => {
         const filters = { ...NO_FILTERS, updates: true };
-        expect(ids(visibleCards(CARDS, filters, '', LEDGER))).toEqual(['acme/deploy']);
-        const quiet = { 'acme/deploy': [{ ...LEDGER['acme/deploy']![0]!, update_available: false }] };
+        expect(ids(visibleCards(CARDS, filters, '', LEDGER))).toEqual(['alex/deploy']);
+        const quiet = { 'alex/deploy': [{ ...LEDGER['alex/deploy']![0]!, update_available: false }] };
         expect(ids(visibleCards(CARDS, filters, '', quiet as never))).toEqual([]);
     });
 
     test('scripts needs a COUNTED, POSITIVE number', () => {
         const filters = { ...NO_FILTERS, scripts: true };
-        expect(ids(visibleCards(CARDS, filters, '', {}))).toEqual(['acme/deploy']);
+        expect(ids(visibleCards(CARDS, filters, '', {}))).toEqual(['alex/deploy']);
     });
 
     test('untrusted narrows to the rows out of the untrusted list', () => {
         const filters = { ...NO_FILTERS, untrusted: true };
         expect(ids(visibleCards(CARDS, filters, '', {}))).toEqual([]);
         const untrusted = cardViews([ITEMS[0] as CatalogItem], true);
-        expect(ids(visibleCards(untrusted, filters, '', {}))).toEqual(['acme/deploy']);
+        expect(ids(visibleCards(untrusted, filters, '', {}))).toEqual(['alex/deploy']);
     });
 
     test('the flags are AND-ed, never OR-ed', () => {
         const filters = { ...NO_FILTERS, installed: true, scripts: true };
-        expect(ids(visibleCards(CARDS, filters, '', LEDGER))).toEqual(['acme/deploy']);
+        expect(ids(visibleCards(CARDS, filters, '', LEDGER))).toEqual(['alex/deploy']);
         const both = { ...NO_FILTERS, installed: true, untrusted: true };
         expect(ids(visibleCards(CARDS, both, '', LEDGER))).toEqual([]);
     });
@@ -125,8 +126,8 @@ describe('the four flags', () => {
 
 describe('the publisher and the tags', () => {
     test('a publisher is matched on the exact string the index spelled', () => {
-        const filters = { ...NO_FILTERS, publisher: 'acme' };
-        expect(ids(visibleCards(CARDS, filters, '', {}))).toEqual(['acme/deploy', 'acme/notes']);
+        const filters = { ...NO_FILTERS, publisher: 'alex' };
+        expect(ids(visibleCards(CARDS, filters, '', {}))).toEqual(['alex/deploy', 'alex/notes']);
     });
 
     test('null is EVERY publisher, which an empty string is not', () => {
@@ -136,7 +137,7 @@ describe('the publisher and the tags', () => {
 
     test('tags are AND-ed: every one named must be present', () => {
         expect(ids(visibleCards(CARDS, { ...NO_FILTERS, tags: ['ops'] }, '', {}))).toEqual([
-            'acme/deploy',
+            'alex/deploy',
             'zoe/audit',
         ]);
         expect(
@@ -145,7 +146,7 @@ describe('the publisher and the tags', () => {
     });
 
     test('the publisher list is de-duplicated and offers only what is there', () => {
-        expect(publishersOf(CARDS)).toEqual(['acme', 'zoe']);
+        expect(publishersOf(CARDS)).toEqual(['alex', 'zoe']);
     });
 
     test('the tag vocabulary is de-duplicated and BOUNDED', () => {
@@ -170,7 +171,7 @@ describe('what tells an empty catalog apart from a narrow filter', () => {
     test('any one of them is', () => {
         expect(isNarrowed(NO_FILTERS, 'a')).toBe(true);
         expect(isNarrowed({ ...NO_FILTERS, installed: true }, '')).toBe(true);
-        expect(isNarrowed({ ...NO_FILTERS, publisher: 'acme' }, '')).toBe(true);
+        expect(isNarrowed({ ...NO_FILTERS, publisher: 'alex' }, '')).toBe(true);
         expect(isNarrowed({ ...NO_FILTERS, tags: ['cli'] }, '')).toBe(true);
     });
 });
@@ -271,13 +272,13 @@ describe('warez sorts and the available filter', () => {
 
     test('available hides an item with any installed reference, installed shows only those', () => {
         const ledger: Record<string, InstalledItem[]> = {
-            'acme/notes': [{ install_id: 'i2', item_id: 'acme/notes', scope: 'project', revision: 1 }],
+            'alex/notes': [{ install_id: 'i2', item_id: 'alex/notes', scope: 'project', revision: 1 }],
         };
         expect(ids(visibleCards(CARDS, { ...NO_FILTERS, available: true }, '', ledger))).toEqual([
-            'acme/deploy',
+            'alex/deploy',
             'zoe/audit',
         ]);
-        expect(ids(visibleCards(CARDS, { ...NO_FILTERS, installed: true }, '', ledger))).toEqual(['acme/notes']);
+        expect(ids(visibleCards(CARDS, { ...NO_FILTERS, installed: true }, '', ledger))).toEqual(['alex/notes']);
         expect(isNarrowed({ ...NO_FILTERS, available: true }, '')).toBe(true);
     });
 });

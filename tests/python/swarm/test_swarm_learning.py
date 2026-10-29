@@ -88,7 +88,7 @@ def test_push_up_queues_a_discovery_and_a_parent_stamp_never_makes_it_an_owner_f
     assert stamped["origin"] == "agent"
     assert items(env, env.loki, "discovery")[0]["state"] == "stamped"
     events = run(question_events.learned_events(env.loki, 10))
-    assert [e["event"] for e in events] == ["learned"] and events[0]["fact_id"] == stamped["fact_id"]
+    assert events == []
 
 
 def test_a_tier_is_due_at_the_batch_size_or_after_a_day_and_the_desk_and_resume_line_carry_the_inbox(env):
@@ -112,7 +112,9 @@ def test_a_tier_is_due_at_the_batch_size_or_after_a_day_and_the_desk_and_resume_
     assert desk.gather(env.conn, env.loki).learning == []
 
 
-def test_an_answered_event_carries_the_receipt_and_its_facts(env):
+def test_a_question_and_its_answer_are_two_plain_messages_and_no_receipt(env):
+    from src.core.swarm import author_path
+
     env.as_agent(env.loki)
     lid = env.conn.execute("INSERT INTO swarm_learning (agent_id, kind, text, owner_message_ref, created_at) "
                            "VALUES (?, 'sealed_answer', 'use /model', 'huddle:msg:7', 'now')", (env.loki["id"],)).lastrowid
@@ -121,7 +123,12 @@ def test_an_answered_event_carries_the_receipt_and_its_facts(env):
     env.conn.execute("INSERT INTO swarm_question_askers (question_id, agent_id, asked_at) VALUES (?, ?, ?)", (qid, env.fixer["id"], utc_now()))
     env.conn.execute("INSERT INTO swarm_question_hops (question_id, agent_id, coverage, outcome, at) VALUES (?, ?, 1.0, 'timeout', "
                      "'2999-01-01T00:00:00.000000Z')", (qid, env.loki["id"]))
+    asked = [e for e in question_events._events(env.conn, env.loki["id"], 10) if e["kind"] == "agent"]
+    assert [(e["text"], e["author_agent_id"]) for e in asked] == [("how to swap models", env.fixer["id"])]
     run(answers.answer(VIEW, None, {"question_id": qid, "text": "use /model", "fact_ids": [fact]}))
-    ev = [e for e in question_events._events(env.conn, env.fixer["id"], 10) if e["event"] == "answered"][0]
-    assert ev["receipt"]["kind"] == "owner_fact" and "taught by you" in ev["receipt"]["rendered"]
-    assert [f["id"] for f in ev["receipt"]["facts"]] == [fact] and ev["receipt"]["facts"][0]["scope"] == "craft"
+    for chat in (env.fixer, env.loki):
+        entries = sorted(question_events._events(env.conn, chat["id"], 10), key=lambda e: e["at"])
+        author_path.annotate(env.conn, chat, entries)
+        said = [(e["kind"], e["text"], e["author_path"][-1]["agent_id"]) for e in entries]
+        assert said == [("agent", "how to swap models", env.fixer["id"]), ("agent", "use /model", env.loki["id"])]
+        assert not any("receipt" in e or "author_agent_id" in e for e in entries)

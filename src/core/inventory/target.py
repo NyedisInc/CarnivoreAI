@@ -1,21 +1,3 @@
-"""Resolve a ``target`` to one ``sessions`` row or one ``projects`` row, archived and shadowed rows included. Reads only.
-
-The inventory (and a purge before it) exists to account for rows the listings no longer show, so it resolves against
-the tables themselves, never the live or asleep listing.
-
-A SESSION target is accepted in this order (the first form that matches wins):
-
-1. ``session_uuid`` (the durable id);
-2. a ``ses_`` app id, matched to ``sessions.legacy_session_id`` (the id the app minted for the row);
-3. a DB row id, ``row:<id>`` (the form the unread store and terminal slots use) or a bare integer;
-4. a conversation id: the row's current ``claude_session_uuid``, else the one session the conversation index says
-   ran it (a conversation two sessions ran is refused with their ``session_uuid`` values);
-5. a tmux name, ONLY when exactly one row carries it. A name two rows share (a recreate keeps the old row)
-   is refused with the candidate ``session_uuid`` values, because a tmux name is not a session's identity.
-
-A PROJECT target is a ``projects.id`` (``project:<id>`` or a bare integer), a ``projects.uid``, the project's folder
-(an absolute path, compared by real path) or its display name when exactly one project carries it.
-"""
 
 from __future__ import annotations
 

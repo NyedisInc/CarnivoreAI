@@ -39,16 +39,6 @@ def _quote(value: str) -> str:
 
 
 def set_skill_rule(text: str, kind: str, value: str, enabled: bool) -> str:
-    """The config text with one skill rule switched on or off.
-
-    Inputs: text - the whole file. kind - ``name`` or ``path``. value - the
-    skill name, or the absolute SKILL.md path. enabled - False appends (or
-    keeps) one ``enabled = false`` rule as the LAST rule for that target;
-    True removes the target's ``enabled = false`` rules (re-enabling deletes
-    the entry rather than writing ``enabled = true``).
-    Output: the new text, equal to ``text`` when nothing needed to change.
-    Example: set_skill_rule("", "name", "sme", False)
-    """
     nl = "\r\n" if "\r\n" in text else "\n"
     lines = text.splitlines(keepends=True)
     matching: List[Tuple[int, int, bool]] = []

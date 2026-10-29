@@ -59,14 +59,6 @@ _PRIVATE = ("tool_args", "caller_env_id", "dedupe_key", "beast_eligible", "targe
 
 @dataclass
 class PendingAction:
-    """
-    Fields: ``id``; ``created_at`` (epoch seconds); ``expires_at`` (always None: nothing expires);
-    ``caller_session_id`` / ``caller_env_id`` / ``caller_tmux`` (the asking pane: registry id, env id, tmux name);
-    ``target_session_id``, ``target_tmux``, ``target_name`` (label) and ``target_epoch`` (the tmux instance pinned
-    at ask time, None when the target is not a local session); ``action`` (park name); ``tool`` / ``tool_args`` (the
-    call that parked it, for a replay); ``args_summary``; ``plain`` (the row's sentence); ``status``; ``reason``
-    (why refused); ``result``; ``execute`` (closure, None for an item restored from disk); ``args`` (shown).
-    """
 
     id: str
     created_at: float
@@ -152,7 +144,6 @@ class PendingActions:
                 logger.warning("agent_action_row_skipped", id=row.get("id"), error=str(exc)[:200])
                 continue
             if item.status == APPROVED and item.result is None:
-                # server stopped
                 item.result = {"content": [{"type": "text", "text": f"{item.action}: the server stopped while it ran; "
                                             "whether it finished is unknown"}], "isError": True}
             self._items.setdefault(item.id, item)

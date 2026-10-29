@@ -1,4 +1,3 @@
-/*  hidden  */
 import { saveChartView } from './state.svelte';
 import type { RangePreset, Resolution, StatsFilters } from './types';
 
@@ -8,7 +7,6 @@ export function setZoom(id: string, next: TimeWindow | null): void {
   saveChartView(id, (chart) => ({ ...chart, range: { ...chart.range, zoom: next } }));
 }
 
-/*  hidden  */
 export function setHidden(id: string, hidden: string[]): void {
   saveChartView(id, (chart) => ({ ...chart, display: { ...chart.display, hidden_series: hidden } }));
 }

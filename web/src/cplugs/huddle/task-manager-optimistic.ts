@@ -28,7 +28,7 @@ function joeChanged(item: HuddleItem): void {
 
 export function applyTick(item: HuddleItem, approved: boolean): Undo {
   const undo = snapshot(item);
-  item.state = approved ? 'done' : 'open';
+  item.state = approved ? 'done' : 'review';
   if (approved || isApproved(item.state) || item.status === 'done') joeChanged(item);
   return undo;
 }

@@ -10,7 +10,6 @@ function openApp(ctx, hash) {
   if (!ctx.appWindow.open(hash || undefined)) portUnknown(ctx);
 }
 
-/* nothing at all something else */
 function openSetupWizard(ctx) {
   const sm = ctx.serverManager;
   const base = sm.getPublishedUrl();
@@ -66,6 +65,7 @@ function handlers(ctx) {
       ctx.setQuitIntent('engine');
       ctx.app.quit();
     },
+    // there is nothing
     'update.install': () => { Promise.resolve(ctx.autoUpdate.install()).then((ok) => { if (!ok) ctx.autoUpdate.check(); }); },
     'update.check': () => {
       if (ctx.autoUpdate.getState().state === 'ready') ctx.autoUpdate.install();

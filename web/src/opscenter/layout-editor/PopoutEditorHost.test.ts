@@ -84,7 +84,7 @@ test('a dashboard pop-out adds a widget from its drawer and saves only its own b
   expect(drawer.querySelector('[data-zone-shelf]')).toBeNull();
   expect(drawer.querySelector('[data-zone-card]')).toBeNull();
 
-  const notes = drawer.querySelector<HTMLButtonElement>('.le-card[data-widget="core.notes"]')!;
+  const notes = drawer.querySelector<HTMLButtonElement>('[data-le-card][data-widget="core.notes"]')!;
   expect(notes.dataset['state']).toBe('addable');
   notes.click();
   await vi.advanceTimersByTimeAsync(10);

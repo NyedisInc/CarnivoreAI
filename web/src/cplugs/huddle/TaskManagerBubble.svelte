@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* padding */
+  /* the markdown body */
   import type { Snippet } from 'svelte';
   import { Icon } from '../sdk/ui';
   import { providerMark, t } from '../sdk';

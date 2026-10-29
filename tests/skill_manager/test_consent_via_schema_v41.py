@@ -50,9 +50,9 @@ def _seed_rows(path: Path) -> None:
                 "INSERT INTO installed_items (install_id, item_id, kind, publisher, name, version, "
                 "digest, scope, project_path, auto_update, source_index_url, consented_digest, "
                 "consented_body_sha, publisher_key_id, revision, installed_at, updated_at) "
-                "VALUES (?, ?, 'skill', 'acme', ?, '1.0.0', ?, ?, ?, 0, 'https://x.invalid/i.json', "
+                "VALUES (?, ?, 'skill', 'alex', ?, '1.0.0', ?, ?, ?, 0, 'https://x.invalid/i.json', "
                 "?, ?, 'RWkey', 1, ?, ?)",
-                (f"i{n}", f"acme/s{n}", f"s{n}", "d" * 64, scope, project, "d" * 64, "b" * 64,
+                (f"i{n}", f"alex/s{n}", f"s{n}", "d" * 64, scope, project, "d" * 64, "b" * 64,
                  STAMP, STAMP))
 
 

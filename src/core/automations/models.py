@@ -52,6 +52,7 @@ class ReportTooLarge(ValueError):
 
 
 class Delivery(BaseModel):
+    """How the owner hears of a run (section 2.1). ``notify_on`` None means the target's default (recipes: report, else failure)."""
 
     model_config = ConfigDict(extra="forbid")
     notify: bool = True
@@ -98,6 +99,9 @@ class CardTarget(BaseModel):
 
 
 class SessionMessageTarget(BaseModel):
+    """Send instructions to one EXISTING session, keyed on its durable ``session_uuid`` (it survives a recreate; a tmux name
+    or ``ses_`` id does not). Asleep: wake it (or skip the run). Gone: start a new session in ``project_id`` (or fail). Busy:
+    the message waits until its turn ends (Joe's ruling 3). A paired computer's session is refused: local only."""
 
     model_config = ConfigDict(extra="forbid")
     kind: Literal["session_message"]
@@ -116,6 +120,7 @@ class SessionMessageTarget(BaseModel):
 
 
 class CommandTarget(BaseModel):
+    """Run one command by its EXACT text from the owner's allow-list (``command_allowlist.py``): no shell, no other argv here."""
 
     model_config = ConfigDict(extra="forbid")
     kind: Literal["command"]

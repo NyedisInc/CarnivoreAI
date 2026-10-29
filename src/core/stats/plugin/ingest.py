@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 import structlog
 
 from src.core.pipeline import contract as C
-from src.core.stats.plugin import extract, rollup
+from src.core.stats.plugin import extract, rollup, usage_revision
 from src.core.stats.pricing import PRICE_SOURCE, PRICE_SOURCE_DATE, PRICE_VERSION, RATES_JSON, estimate
 
 logger = structlog.get_logger()
@@ -62,6 +62,7 @@ def _source(conn: sqlite3.Connection, event: C.Appended) -> Tuple[int, Optional[
             account = _account(event.family, event.conversation_id)
             if account:
                 conn.execute("UPDATE dim_source SET account_id = ? WHERE id = ?", (account, src))
+                usage_revision.bump(conn)
         return src, account
     if event.file_kind == "subagent":
         conversation, kind, parent = f"{event.conversation_id}:{Path(event.path).stem}", "subagent", event.conversation_id
@@ -116,8 +117,15 @@ def _note_models(conn: sqlite3.Connection, models: Set[str]) -> None:
     note_models(conn, models)
 
 
+def _source_meta(conn: sqlite3.Connection, src: int) -> Optional[tuple]:
+    row = conn.execute("SELECT first_minute, last_minute, cli_version, branch_hash, subagent_type, parent_conversation_id "
+                       "FROM dim_source WHERE id = ?", (src,)).fetchone()
+    return tuple(row) if row is not None else None
+
+
 def _apply_meta(conn: sqlite3.Connection, src: int, first: Optional[int], last: Optional[int],
-                meta: Dict[str, Any]) -> None:
+                meta: Dict[str, Any]) -> bool:
+    before = _source_meta(conn, src)
     conn.execute("UPDATE dim_source SET first_minute = CASE WHEN first_minute IS NULL OR ? < first_minute THEN ? "
                  "ELSE first_minute END, last_minute = CASE WHEN last_minute IS NULL OR ? > last_minute THEN ? "
                  "ELSE last_minute END, cli_version = COALESCE(?, cli_version), "
@@ -125,6 +133,7 @@ def _apply_meta(conn: sqlite3.Connection, src: int, first: Optional[int], last: 
                  "parent_conversation_id = COALESCE(parent_conversation_id, ?) WHERE id = ?",
                  (first, first, last, last, meta.get("cli_version"), meta.get("branch_hash"),
                   meta.get("subagent_type"), meta.get("parent_conversation_id"), src))
+    return _source_meta(conn, src) != before
 
 
 def appended(conn: sqlite3.Connection, event: C.Appended, now: Optional[float] = None) -> int:
@@ -183,8 +192,9 @@ def appended(conn: sqlite3.Connection, event: C.Appended, now: Optional[float] =
                  "wide = excluded.wide, state = excluded.state",
                  (src, newest, int(wide), json.dumps(state, separators=(",", ":"))))
     trim_idle(conn, clock)
-    if first is not None:
-        _apply_meta(conn, src, first, last, meta)
+    meta_moved = _apply_meta(conn, src, first, last, meta) if first is not None else False
+    if meta_moved and batch.empty:
+        usage_revision.bump(conn)
     if not batch.empty:
         rollup.advance_floor(conn, now)
         batch.flush(conn, {})
@@ -192,6 +202,7 @@ def appended(conn: sqlite3.Connection, event: C.Appended, now: Optional[float] =
         conn.execute("INSERT OR IGNORE INTO price_versions VALUES (?,?,?,?)",
                      (PRICE_VERSION, PRICE_SOURCE, PRICE_SOURCE_DATE, RATES_JSON))
         conn.execute("UPDATE stats_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'")
+        usage_revision.bump(conn)
         _note_moved()
     return used
 
@@ -216,6 +227,7 @@ def drop_paths(conn: sqlite3.Connection, paths: Tuple[str, ...]) -> int:
             dropped += 1
     if dropped:
         conn.execute("UPDATE stats_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'revision'")
+        usage_revision.bump(conn)
         _note_moved()
     return dropped
 

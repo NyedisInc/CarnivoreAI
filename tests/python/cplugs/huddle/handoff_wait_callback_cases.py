@@ -9,7 +9,7 @@ hf = importlib.util.module_from_spec(importlib.util.spec_from_loader("handoff", 
 sys.modules["handoff"] = hf
 loader.exec_module(hf)
 
-TOKEN = "tok_" + "b5a9f4e3" * 4
+TOKEN = "tok_" + "A1b2C3d4" * 4
 
 
 class Fake(http.server.BaseHTTPRequestHandler):
@@ -138,7 +138,7 @@ class WaitCallback(unittest.TestCase):
     def test_a_non_loopback_url_is_refused_and_nothing_is_sent(self):
         saved = hf.WAIT_URL
         try:
-            for url in ("https://example.com", "http://203.0.113.11:8000", "ftp://127.0.0.1/x", "http://localhost.example.net"):
+            for url in ("https://example.com", "http://192.168.1.5:8000", "ftp://127.0.0.1/x", "http://localhost.evil.com"):
                 hf.WAIT_URL = url
                 self.assertIn("not a loopback address", hf.wait_callback(42, TOKEN, "cleared", ""))
             hf.WAIT_URL = "http://[::1]:1"

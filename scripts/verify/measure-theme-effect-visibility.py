@@ -1,5 +1,13 @@
 """Measure whether each theme's background effect is VISIBLE, not merely running.
 
+THE INCIDENT THIS INSTRUMENT COMES FROM. All 23 themes shipped animated canvas
+backgrounds. Every automated check said they worked: canvas mounted, rAF loop
+live, status "running", clean teardown on theme switch. Measured here, the
+maximum composited RGB delta between the page with the effect running and the
+same page with the canvas hidden was 0/255 for all 23 - including matrix, whose
+canvas held pixels spanning the full 0-255 green range. The effects were
+painting perfectly underneath an opaque `body` background.
+
 "Running" is not "visible". Only a pixel diff distinguishes them, so this
 script takes one.
 
@@ -35,16 +43,16 @@ Usage:
     and JSON results to stdout, one object per line.
 """
 import argparse
-import io
 import json
 import os
-import subprocess
 import sys
-import time
-import urllib.request
+from typing import Any, Callable
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(HERE))
+
+sys.path.insert(0, HERE)
+from theme_harness import check_port, image_diff, run_theme_sweep  # noqa: E402
 THEMES_DIR = os.path.join(REPO_ROOT, "client", "css", "themes")
 SHOTS = os.path.join(HERE, ".theme-effect-shots")
 
@@ -102,7 +110,7 @@ SET_CANVAS_DISPLAY = """
 """ % CANVAS_SELECTOR
 
 
-def effect_themes():
+def effect_themes() -> list[str]:
     out = []
     for name in sorted(os.listdir(THEMES_DIR)):
         path = os.path.join(THEMES_DIR, name, "theme.json")
@@ -114,34 +122,11 @@ def effect_themes():
     return out
 
 
-def diff(png_a, png_b):
-    from PIL import Image, ImageChops
-    img_a = Image.open(io.BytesIO(png_a)).convert("RGB")
-    img_b = Image.open(io.BytesIO(png_b)).convert("RGB")
-    delta = ImageChops.difference(img_a, img_b)
-    bands = delta.split()
-    npx = img_a.size[0] * img_a.size[1]
-    mx = max(b.getextrema()[1] for b in bands)
-    mean = sum(
-        sum(i * c for i, c in enumerate(b.histogram())) for b in bands
-    ) / (3.0 * npx)
-    changed = sum(delta.convert("L").point(lambda v: 255 if v > 0 else 0).histogram()[255:])
-    return {"max": mx, "mean": round(mean, 3), "changedPct": round(100.0 * changed / npx, 2)}
+def diff(png_a: bytes, png_b: bytes) -> dict:
+    return image_diff(png_a, png_b, with_changed_pct=True)
 
 
-def wait_for_server(port, timeout=15):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        try:
-            with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=1) as resp:
-                if resp.status == 200:
-                    return
-        except OSError:
-            time.sleep(0.2)
-    raise RuntimeError(f"static server on port {port} never became ready")
-
-
-def measure(page, base, theme, screen):
+def measure(page: Any, base: str, theme: str, screen: str) -> tuple[dict, bytes, bytes]:
     page.goto(base, wait_until="load", timeout=20000)
     assert page.evaluate("window.innerWidth") == 1280, "viewport did not take"
     page.wait_for_function("() => !!(window.Themes && window.Themes.init)", timeout=15000)
@@ -174,7 +159,7 @@ def measure(page, base, theme, screen):
     return row, live, plate_b
 
 
-def verdict(row):
+def verdict(row: dict) -> str:
     if "error" in row:
         return "CANNOT EVALUATE: " + row["error"]
     probe = row.get("probe", {})
@@ -195,7 +180,22 @@ def verdict(row):
     return f"PASS: max delta {dmax}/255"
 
 
-def main():
+def measure_and_save(args: argparse.Namespace) -> Callable[[Any, str, str], dict]:
+    def run(page: Any, base: str, theme: str) -> dict:
+        row, live, plate = measure(page, base, theme, args.screen)
+        for suffix, data in (("on", live), ("off", plate)):
+            with open(os.path.join(SHOTS, f"{args.tag}_{theme}_{suffix}.png"), "wb") as fh:
+                fh.write(data)
+        return row
+    return run
+
+
+def add_verdict(row: dict) -> dict:
+    row["verdict"] = verdict(row)
+    return row
+
+
+def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("themes", nargs="?", default="", help="comma-separated theme ids")
     ap.add_argument("--screen", default="launchpad-screen")
@@ -203,66 +203,13 @@ def main():
     ap.add_argument("--port", type=int, default=5057)
     args = ap.parse_args()
 
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        print(
-            "playwright is not installed for this interpreter. This is an "
-            "instrument, not a runtime dependency: install it into a scratch "
-            "environment (pip install playwright && playwright install chromium) "
-            "and re-run.",
-            file=sys.stderr,
-        )
+    if not check_port(args.port):
         return 2
-
-    unsafe = {5060, 5061, 6000, 6665, 6666, 6667, 6668, 6669, 6697}
-    if args.port in unsafe:
-        print(f"port {args.port} is on Chromium's restricted list; pick another",
-              file=sys.stderr)
-        return 2
-
     themes = [t for t in args.themes.split(",") if t] or effect_themes()
     os.makedirs(SHOTS, exist_ok=True)
-
-    server = subprocess.Popen(
-        [sys.executable, os.path.join(HERE, "_theme_effect_static_server.py"), str(args.port)],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    )
-    rows = []
-    try:
-        wait_for_server(args.port)
-        base = f"http://127.0.0.1:{args.port}/"
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch(
-                args=[
-                    "--force-color-profile=srgb",
-                    "--disable-lcd-text",
-                    "--hide-scrollbars",
-                    "--use-mock-keychain",
-                ]
-            )
-            for theme in themes:
-                ctx = browser.new_context(
-                    viewport={"width": 1280, "height": 800},
-                    device_scale_factor=1,
-                    reduced_motion="no-preference",
-                )
-                page = ctx.new_page()
-                try:
-                    row, live, plate = measure(page, base, theme, args.screen)
-                    for suffix, data in (("on", live), ("off", plate)):
-                        name = f"{args.tag}_{theme}_{suffix}.png"
-                        with open(os.path.join(SHOTS, name), "wb") as fh:
-                            fh.write(data)
-                except Exception as exc:  # noqa: BLE001
-                    row = {"theme": theme, "error": f"{type(exc).__name__}: {exc}"}
-                row["verdict"] = verdict(row)
-                rows.append(row)
-                print(json.dumps(row), flush=True)
-                ctx.close()
-            browser.close()
-    finally:
-        server.terminate()
+    rows = run_theme_sweep(themes, args.port, measure_and_save(args), add_verdict)
+    if rows is None:
+        return 2
 
     print(f"\nscreenshots: {SHOTS}", file=sys.stderr)
     print("LOOK AT THEM. A delta is a number; only your eyes confirm it reads "

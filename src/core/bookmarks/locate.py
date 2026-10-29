@@ -27,12 +27,6 @@ def find_transcript(conversation: str, working_dir: Optional[str], roots: Option
     raise TranscriptUnavailable("this conversation's transcript is not on this computer")
 
 
-def restore_enabled() -> bool:
-    from src.cplugs.sdk import restore_points  # noqa: PLC0415
-
-    return restore_points.get() is not None
-
-
 def resolve_transcript(conversation: str, working_dir: Optional[str], roots: Optional[Sequence[Path]] = None) -> Path:
     try:
         return find_transcript(conversation, working_dir, roots)
@@ -42,14 +36,6 @@ def resolve_transcript(conversation: str, working_dir: Optional[str], roots: Opt
 
 
 def restore_from_points(conversation: str) -> Path:
-    """Put a missing conversation's transcript back on disk from its newest restore point. BLOCKING.
-
-    Description: the copies are the save plugin's restore points, asked through its port
-      (``sdk/restore_points.py``): hash-checked, and a file already there is never replaced.
-    Inputs: conversation (str) - a claude session uuid. Output: Path - the restored transcript.
-    Raises: TranscriptUnavailable (409) - the plugin is off, it holds no point, or the point could not be restored;
-      the message says which.
-    """
     from src.cplugs.sdk import restore_points  # noqa: PLC0415
 
     port = restore_points.get()

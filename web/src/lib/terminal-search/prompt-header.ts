@@ -1,4 +1,3 @@
-/*  hidden  */
 
 export interface PlacedPrompt {
     ordinal: number;

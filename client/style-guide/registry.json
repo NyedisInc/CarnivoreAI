@@ -252,6 +252,8 @@
   "excluded": {
     "web/src/admin/": "the hosted catalog admin site, built by vite.admin.config.ts into hosted/catalog/admin, not a Carnivore app surface",
     "web/src/lib/manager-frame/overlay-host-fixture.svelte": "vitest fixture: a minimal stand-in overlay page for overlay-host.test.ts; never rendered by the app",
+    "web/src/lib/base/FieldBind.fixture.svelte": "vitest fixture: a Field of every variant with a bound element for field-element.test.ts; never rendered by the app",
+    "web/src/lib/ui/PrefsArchive.fixture.svelte": "vitest fixture: reads both archive filters in a derived for prefs-archive.test.ts; never rendered by the app",
     "web/src/lib/base/IconButtonBind.fixture.svelte": "vitest fixture: an IconButton with a bound element for IconButton.test.ts; never rendered by the app",
     "web/src/opscenter/ui/InsetHostFixture.svelte": "vitest fixture: a host that calls provideInset() for Tabs.render.test.ts; never rendered by the app",
     "web/src/opscenter/shell/fixtures/": "vitest fixtures that mount CellFrame for tests; never rendered by the app",
@@ -269,26 +271,6 @@
     "web/src/opscenter/cells/task-manager-mk2/fixtures/": "vitest fixtures that mount a TM Mark II cell under a frame header for Cell.render.test.ts; never rendered by the app"
   },
   "files": {
-    "client/css/attribution-prompt.css": {
-      "section": "dialogs",
-      "classes": [
-        "attribution-prompt",
-        "attribution-prompt--picking",
-        "attribution-prompt--unknown",
-        "attribution-prompt__actions",
-        "attribution-prompt__check",
-        "attribution-prompt__footnote",
-        "attribution-prompt__hint",
-        "attribution-prompt__hints",
-        "attribution-prompt__list",
-        "attribution-prompt__meta",
-        "attribution-prompt__name",
-        "attribution-prompt__notice",
-        "attribution-prompt__pick",
-        "attribution-prompt__row",
-        "attribution-prompt__why"
-      ]
-    },
     "client/css/config-drawer.css": {
       "section": "chrome",
       "classes": [
@@ -403,15 +385,6 @@
         "screen"
       ]
     },
-    "client/css/resting-row-effort.css": {
-      "section": "motion",
-      "classes": [
-        "effort-fx",
-        "session-sidebar-row",
-        "session-sidebar-row-model",
-        "session-sidebar-row-model__spark"
-      ]
-    },
     "client/css/animation-types.css": {
       "section": "motion",
       "classes": [
@@ -426,6 +399,7 @@
         "effort-level",
         "hdtl-fill",
         "kaw-steam",
+        "mg-sheen",
         "modal-content",
         "modal-overlay",
         "mw-step",
@@ -526,13 +500,6 @@
         "home-opscenter"
       ]
     },
-    "client/css/launchpad-wrapper-pill.css": {
-      "section": "pills",
-      "classes": [
-        "launched-with",
-        "wrapper-pill"
-      ]
-    },
     "client/css/modal-stack.css": {
       "section": "dialogs",
       "classes": [
@@ -556,6 +523,7 @@
     "client/css/modal-glow.css": {
       "section": "dialogs",
       "classes": [
+        "mg-sheen",
         "modal-content",
         "sidebar-help__lightbox-body"
       ]
@@ -567,7 +535,6 @@
         "sidebar-help__lightbox-bar",
         "sidebar-help__lightbox-body",
         "sidebar-help__lightbox-caption",
-        "sidebar-help__lightbox-close",
         "sidebar-help__lightbox-grip",
         "sidebar-help__lightbox-img",
         "sidebar-help__lightbox-stage"
@@ -614,7 +581,6 @@
       "section": "dialogs",
       "classes": [
         "confirm-modal",
-        "confirm-modal__head",
         "confirm-modal__verb",
         "modal-body",
         "modal-btn",
@@ -632,6 +598,13 @@
       "section": "chrome",
       "classes": [
         "active"
+      ]
+    },
+    "client/css/modal-titlerow.css": {
+      "section": "dialogs",
+      "classes": [
+        "modal-titlerow",
+        "text-prompt-modal__head"
       ]
     },
     "client/css/session-restart-picker.css": {
@@ -745,14 +718,12 @@
     "client/css/session-sidebar-density.css": {
       "section": "chrome",
       "classes": [
-        "family-pill",
         "mark-unread-toggle",
         "oc-gauge__bar",
         "session-sidebar-attention",
         "session-sidebar-attention__detail",
         "session-sidebar-attention__head",
         "session-sidebar-attention__title",
-        "session-sidebar-list",
         "session-sidebar-live",
         "session-sidebar-note",
         "session-sidebar-notice",
@@ -783,19 +754,9 @@
     "client/css/session-sidebar-groups.css": {
       "section": "chrome",
       "classes": [
-        "menu-key",
         "session-sidebar-actions",
         "session-sidebar-group",
-        "session-sidebar-group-menu",
-        "session-sidebar-group-menu__chevron",
-        "session-sidebar-group-menu__colors",
         "session-sidebar-group__inactive-icon",
-        "session-sidebar-group-menu__icon",
-        "session-sidebar-group-menu__item",
-        "session-sidebar-group-menu__item--current",
-        "session-sidebar-group-menu__item--with-icon",
-        "session-sidebar-group-menu__label",
-        "session-sidebar-group-menu__sep",
         "session-sidebar-group__body",
         "session-sidebar-group__chevron",
         "session-sidebar-group__gutter",
@@ -866,7 +827,6 @@
         "session-sidebar-row-pin",
         "session-sidebar-row-provider",
         "session-sidebar-row-provider__lead",
-        "session-sidebar-row-provider__dnd",
         "session-sidebar-row-archived-icon",
         "session-sidebar-row-sleeping-icon",
         "session-sidebar-row-wake-icon",
@@ -899,7 +859,6 @@
         "session-sidebar-row-shells-icon",
         "session-sidebar-row-timers-icon",
         "session-sidebar-row-wake-arm",
-        "session-sidebar-row-wake-go",
         "session-sidebar-row-workflow-icon",
         "subagent-count--button",
         "timer-chip--button"
@@ -979,7 +938,6 @@
         "sidebar-help__feature-badge--deprecated",
         "sidebar-help__feature-body",
         "sidebar-help__feature-chip",
-        "sidebar-help__feature-chip--link",
         "sidebar-help__feature-detail",
         "sidebar-help__feature-list",
         "sidebar-help__feature-media-col",
@@ -990,7 +948,6 @@
         "sidebar-help__feature-steps",
         "sidebar-help__feature-summary",
         "sidebar-help__feature-text",
-        "sidebar-help__feature-trigger",
         "sidebar-help__footer",
         "sidebar-help__glyph",
         "sidebar-help__h",
@@ -999,7 +956,6 @@
         "sidebar-help__list",
         "sidebar-help__media-caption",
         "sidebar-help__media-gif-play",
-        "sidebar-help__media-gif-poster",
         "sidebar-help__media-img",
         "sidebar-help__media-item",
         "sidebar-help__media-item--failed",
@@ -1022,7 +978,6 @@
         "sidebar-help__release-count-n",
         "sidebar-help__release-counts",
         "sidebar-help__release-date",
-        "sidebar-help__release-head",
         "sidebar-help__release-name",
         "sidebar-help__releases",
         "sidebar-help__scroll",
@@ -1145,19 +1100,6 @@
           "project-item--archived",
           "project-list",
           "project-name",
-          "project-node",
-          "project-node--attention",
-          "project-node--virtual",
-          "project-node__attention-head",
-          "project-node__chevron",
-          "project-node__count",
-          "project-node__gutter",
-          "project-node__header",
-          "project-node__header--attention",
-          "project-node__row",
-          "project-node__sessions",
-          "project-node__title",
-          "project-node__toggle",
           "project-path",
           "project-presence-badge",
           "project-presence-badge-missing",
@@ -1182,7 +1124,6 @@
           "running-session-name",
           "running-session-rename",
           "running-session-rename-error",
-          "running-session-rename-input",
           "running-session-rename-unavailable",
           "running-session-row",
           "running-session-top",
@@ -1244,11 +1185,7 @@
           "badge",
           "badge-ended",
           "badge-external",
-          "badge-tmux",
-          "family-pill",
-          "family-pill--fact",
-          "family-pill--guess",
-          "family-pill--unknown"
+          "badge-tmux"
         ],
         "buttons": [
           "btn-icon",
@@ -1737,12 +1674,9 @@
         "bm-panel__bar",
         "bm-panel__caret",
         "bm-panel__empty",
-        "bm-panel__fold",
         "bm-panel__hint",
         "bm-panel__label",
         "bm-panel__list",
-        "bm-panel__more",
-        "bm-panel__name",
         "bm-panel__notice",
         "bm-panel__notice--error",
         "bm-panel__session",
@@ -1770,9 +1704,7 @@
       "section": "terminal",
       "classes": [
         "bv",
-        "bv-address",
         "bv-bar",
-        "bv-btn",
         "bv-canvas",
         "bv-compact",
         "bv-dialog",
@@ -1786,9 +1718,7 @@
     },
     "web/src/lib/browser/PopOutChoice.svelte": {
       "section": "dialogs",
-      "classes": [
-        "modal-btn"
-      ]
+      "classes": []
     },
     "web/src/lib/catalog/AutoUpdateSwitch.svelte": {
       "section": "ledger-catalog",
@@ -2100,15 +2030,6 @@
         "leader-confirm__list",
         "leader-confirm__lost",
         "modal-btn-danger"
-      ]
-    },
-    "web/src/cplugs/huddle/chat/LeaderRename.svelte": {
-      "section": "menus",
-      "classes": [
-        "hdc-rename",
-        "hdc-rename-input",
-        "hdc-rename-label",
-        "hdc-rename-row"
       ]
     },
     "web/src/lib/catalog/KindMark.svelte": {
@@ -2687,7 +2608,6 @@
         "drawer-deep-search",
         "ds",
         "ds--deep",
-        "ds-mode",
         "ds-mode-arrow",
         "ds-row",
         "oc-search"
@@ -2729,12 +2649,9 @@
       "section": "chrome",
       "classes": [
         "fdh",
-        "fdh-btn",
         "fdh-dots",
         "fdh-find",
         "fdh-input",
-        "fdh-item",
-        "fdh-item--off",
         "fdh-menu",
         "fdh-menu-anchor",
         "fdh-note",
@@ -2748,15 +2665,11 @@
       "section": "chrome",
       "classes": [
         "fdg",
-        "fdg-hit",
         "fdg-letter",
-        "fdg-list",
         "fdg-more",
         "fdg-note",
-        "fdg-open",
         "fdg-panel",
         "fdg-path",
-        "fdg-row",
         "fdg-tag"
       ]
     },
@@ -2776,18 +2689,6 @@
         "active",
         "home-in-main"
       ]
-    },
-    "web/src/lib/launchpad/AgentFamilyPill.svelte": {
-      "section": "pills",
-      "classes": []
-    },
-    "web/src/lib/launchpad/AttentionGroup.svelte": {
-      "section": "home",
-      "classes": []
-    },
-    "web/src/lib/launchpad/AttributionPrompt.svelte": {
-      "section": "dialogs",
-      "classes": []
     },
     "web/src/lib/launchpad/ChoiceModal.svelte": {
       "section": "dialogs",
@@ -2828,7 +2729,6 @@
         "pc-pop__foot",
         "pc-pop__head",
         "pc-pop__label",
-        "pc-pop__eye",
         "pc-pop__handle",
         "pc-pop__handle--hue",
         "pc-pop__hue",
@@ -2837,10 +2737,6 @@
         "pc-pop__row",
         "pc-pop__square"
       ]
-    },
-    "web/src/lib/launchpad/EndedSessionRow.svelte": {
-      "section": "home",
-      "classes": []
     },
     "web/src/lib/dialog-frame/AnchoredPopup.svelte": {
       "section": "menus",
@@ -2864,54 +2760,12 @@
         "modal-header"
       ]
     },
-    "web/src/lib/launchpad/NoProjectGroup.svelte": {
-      "section": "home",
-      "classes": []
-    },
     "web/src/lib/launchpad/ProjectFolderModal.svelte": {
       "section": "dialogs",
       "classes": []
     },
     "web/src/lib/launchpad/ProjectNameModal.svelte": {
       "section": "dialogs",
-      "classes": []
-    },
-    "web/src/lib/launchpad/ProjectNode.svelte": {
-      "section": "home",
-      "classes": []
-    },
-    "web/src/lib/launchpad/ProjectSessionRow.svelte": {
-      "section": "home",
-      "classes": []
-    },
-    "web/src/lib/launchpad/ProjectTree.svelte": {
-      "section": "home",
-      "classes": []
-    },
-    "web/src/lib/launchpad/RecentSessions.svelte": {
-      "section": "home",
-      "classes": [
-        "recent-session-open-error"
-      ]
-    },
-    "web/src/lib/launchpad/RunningSessionName.svelte": {
-      "section": "home",
-      "classes": []
-    },
-    "web/src/lib/launchpad/RunningSessionRow.svelte": {
-      "section": "home",
-      "classes": []
-    },
-    "web/src/lib/launchpad/RunningSessions.svelte": {
-      "section": "home",
-      "classes": []
-    },
-    "web/src/lib/launchpad/TreeSessionRows.svelte": {
-      "section": "home",
-      "classes": []
-    },
-    "web/src/lib/launchpad/WrapperPill.svelte": {
-      "section": "pills",
       "classes": []
     },
     "web/src/lib/publish-page/CardArt.svelte": {
@@ -3212,12 +3066,7 @@
     "web/src/lib/mini-rail/MiniRail.svelte": {
       "section": "chrome",
       "classes": [
-        "mr",
-        "mr-claw",
-        "mr-items",
-        "mr-menu-anchor",
-        "mr-settings",
-        "mr-tabs"
+        "mr"
       ]
     },
     "web/src/lib/app-alerts/AlertBadge.svelte": {
@@ -3230,8 +3079,7 @@
     },
     "web/src/lib/app-alerts/AlertBell.svelte": {
       "section": "chrome",
-      "classes": [
-      ]
+      "classes": []
     },
     "web/src/lib/app-alerts/AlertDot.svelte": {
       "section": "chrome",
@@ -3249,7 +3097,6 @@
         "aa-chip",
         "aa-chip--needs_you",
         "aa-chip--question",
-        "aa-close",
         "aa-count",
         "aa-detail",
         "aa-empty",
@@ -3272,8 +3119,7 @@
         "aa-title",
         "aa-wait",
         "aa-wait-open",
-        "aa-wait-wrap",
-        "modal-btn"
+        "aa-wait-wrap"
       ]
     },
     "web/src/lib/notes-header/NotesDrawer.svelte": {
@@ -3290,7 +3136,6 @@
     "web/src/lib/plugins-page/PluginsScreen.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "plugin-approval-mark",
         "plugin-catalog-pane"
       ]
     },
@@ -3326,11 +3171,49 @@
       "section": "ledger-catalog",
       "classes": []
     },
+    "web/src/lib/plugins-page/DeveloperZone.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "dev-zone",
+        "dev-zone__caret",
+        "dev-zone__label",
+        "dev-zone__line",
+        "dev-zone__row",
+        "dev-zone__sp",
+        "dev-zone__state",
+        "dev-zone__warn",
+        "plp-note"
+      ]
+    },
     "web/src/lib/plugins-page/ThirdPartySwitch.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
     "web/src/lib/plugins-page/SideloadSwitch.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "sideload-strip"
+      ]
+    },
+    "web/src/lib/plugins-page/SideloadLoadForm.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "sideload-form",
+        "sideload-form__fields",
+        "sideload-form__foot",
+        "sideload-form__title",
+        "sideload-form__warning"
+      ]
+    },
+    "web/src/lib/plugins-page/SideloadRowActions.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "sideload-row",
+        "sideload-row__source",
+        "sideload-row__warning"
+      ]
+    },
+    "web/src/lib/plugins-page/SideloadConfirm.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
@@ -3357,6 +3240,7 @@
         "plp-chip",
         "plp-chip__count",
         "plp-chips",
+        "plp-danger",
         "plp-dim",
         "plp-done",
         "plp-fail",
@@ -3400,7 +3284,6 @@
         "dps-ctx-modal",
         "dps-ctx__host",
         "dps-ctx__mark",
-        "dps-ctx__more",
         "dps-ctx__msg",
         "dps-ctx__note",
         "dps-ctx__restore-line",
@@ -3439,7 +3322,6 @@
     "web/src/lib/subagents/popup-list.css": {
       "section": "menus",
       "classes": [
-        "sal-close",
         "sal-name",
         "sal-note",
         "sal-num",
@@ -3509,7 +3391,6 @@
     "web/src/lib/session-skills/session-skills.css": {
       "section": "menus",
       "classes": [
-        "sal-chip",
         "sal-chip-row",
         "sal-chip-why",
         "sal-chips",
@@ -3556,7 +3437,6 @@
       "section": "terminal",
       "classes": [
         "tbg",
-        "tbg__btn",
         "tbg__file",
         "tbg__fileinput",
         "tbg__head",
@@ -3566,7 +3446,6 @@
         "tbg__range",
         "tbg__row",
         "tbg__row--stacked",
-        "tbg__select",
         "tbg__value"
       ]
     },
@@ -3601,26 +3480,6 @@
         "terminal-startup-notice__text"
       ]
     },
-    "web/src/lib/crosstalk/CrosstalkCard.svelte": {
-      "section": "terminal",
-      "classes": []
-    },
-    "web/src/lib/crosstalk/cards.css": {
-      "section": "terminal",
-      "classes": [
-        "crosstalk-card",
-        "crosstalk-card__direction",
-        "crosstalk-card__head",
-        "crosstalk-card__mark",
-        "crosstalk-card__meta",
-        "crosstalk-card__name",
-        "crosstalk-card__quote",
-        "crosstalk-card__quote--expanded",
-        "crosstalk-card__sender",
-        "crosstalk-card__time",
-        "crosstalk-card__toggle"
-      ]
-    },
     "web/src/lib/crosstalk/terminal-cards/CardStack.svelte": {
       "section": "terminal",
       "classes": []
@@ -3628,7 +3487,6 @@
     "web/src/lib/crosstalk/terminal-cards/terminal-cards.css": {
       "section": "terminal",
       "classes": [
-        "xtalk-card",
         "xtalk-card__direction",
         "xtalk-card__head",
         "xtalk-card__mark",
@@ -3653,8 +3511,7 @@
     },
     "web/src/lib/terminal-search/PromptHeaderControls.svelte": {
       "section": "terminal",
-      "classes": [
-      ]
+      "classes": []
     },
     "web/src/lib/terminal-search/PromptRail.svelte": {
       "section": "terminal",
@@ -3791,16 +3648,13 @@
     "web/src/lib/themes-page/ThemesScreen.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "oc-btn",
         "oc-chip",
         "oc-field",
         "oc-label",
         "oc-page__bar",
         "themes-active",
-        "themes-back",
         "themes-body",
         "themes-body--detail",
-        "themes-chip-n",
         "themes-grid",
         "oc-page__scroll",
         "themes-now",
@@ -3825,6 +3679,10 @@
         "pot-outcome",
         "pot-count",
         "pot-note",
+        "pot-bar",
+        "pot-fill",
+        "pot-meta",
+        "pot-log",
         "pot-foot"
       ]
     },
@@ -3846,7 +3704,6 @@
         "pt-error",
         "pt-line",
         "pt-note",
-        "pt-pick",
         "pt-publish",
         "pt-replica",
         "pt-replica-list",
@@ -3867,9 +3724,6 @@
     "web/src/lib/pack-migrate/migrate-wizard.css": {
       "section": "settings",
       "classes": [
-        "modal-btn",
-        "modal-btn-confirm",
-        "oc-btn",
         "pl-titlebar",
         "mw",
         "mw-actions",
@@ -3901,19 +3755,7 @@
       "section": "settings",
       "classes": []
     },
-    "web/src/lib/computers/ComputersPanel.svelte": {
-      "section": "settings",
-      "classes": []
-    },
     "web/src/lib/computers/InviteCard.svelte": {
-      "section": "settings",
-      "classes": []
-    },
-    "web/src/lib/computers/JoinPack.svelte": {
-      "section": "settings",
-      "classes": []
-    },
-    "web/src/lib/computers/PackNameField.svelte": {
       "section": "settings",
       "classes": []
     },
@@ -3933,7 +3775,6 @@
     "web/src/lib/computers/computers.css": {
       "section": "settings",
       "classes": [
-        "oc-field",
         "cmp-offers",
         "cmp-packname",
         "cmp-packname__field",
@@ -4017,9 +3858,7 @@
         "modal-btn",
         "pk-act",
         "pk-col",
-        "pk-field",
         "pk-meters",
-        "pk-select",
         "pk-tab",
         "pl-label",
         "pm-note"
@@ -4085,18 +3924,15 @@
       "section": "feedback",
       "classes": [
         "vb-banner",
-        "vb-dismiss",
         "vb-head",
         "vb-item",
         "vb-label",
         "vb-list",
         "vb-list--open",
         "vb-news",
-        "vb-reload",
         "vb-row",
         "vb-tag",
         "vb-text",
-        "vb-toggle",
         "vb-where"
       ]
     },
@@ -4128,7 +3964,6 @@
         "catalog-card__head",
         "catalog-card__media",
         "catalog-card__name",
-        "catalog-card__open",
         "catalog-card__slot",
         "catalog-card__state",
         "is-board",
@@ -4142,8 +3977,6 @@
         "oc-page__detail",
         "oc-page__scroll",
         "oc-rank__name",
-        "oc-seg",
-        "oc-seg__item",
         "oc-titlebar",
         "oc-titlebar__actions",
         "oc-titlebar__sub",
@@ -4152,7 +3985,6 @@
         "oc-toolbar__search",
         "pn-band",
         "pn-brief",
-        "pn-close",
         "pn-detail",
         "pn-dt",
         "pn-hero",
@@ -4168,7 +4000,6 @@
         "pn-sub",
         "pn-switch-note",
         "pn-title",
-        "pn-toggle",
         "pn-views",
         "session-row-menu",
         "session-row-menu__find",
@@ -4179,8 +4010,6 @@
         "t-name",
         "t-no",
         "wp-add",
-        "wp-add__caret",
-        "wp-add__main",
         "wp-body",
         "wp-body--reading",
         "wp-card",
@@ -4188,7 +4017,6 @@
         "wp-detail",
         "wp-grid",
         "wp-group",
-        "wp-help",
         "wp-hero__none",
         "wp-hero__stage",
         "wp-hero__well",
@@ -4199,13 +4027,11 @@
         "wp-menu__wicon",
         "wp-mk",
         "wp-place",
-        "wp-place__add",
         "wp-place__body",
         "wp-place__empty",
         "wp-place__head",
         "wp-place__more",
         "wp-place__name",
-        "wp-place__pick",
         "wp-place__wrap",
         "wp-pmark",
         "wp-podium",
@@ -4214,10 +4040,8 @@
         "wp-rail__count",
         "wp-rail__group",
         "wp-rail__label",
-        "wp-rail__row",
         "wp-rail__text",
         "wp-row",
-        "wp-row__x",
         "wp-screen",
         "wp-sectionlabel",
         "wp-sectionlabel__label",
@@ -4235,26 +4059,15 @@
         "sf__label",
         "sf__row",
         "sf__title",
-        "wp-chip",
         "wp-dock",
         "wp-dockwrap",
         "wp-find",
-        "wp-find__clear"
+        "oc-segmented"
       ]
     },
     "web/src/lib/hosts-page/AddHostModal.svelte": {
       "section": "ledger-catalog",
       "classes": []
-    },
-    "web/src/lib/hosts-page/HostsScreen.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "host-detail__error",
-        "host-detail__key",
-        "host-detail__notice",
-        "host-rotate",
-        "host-row-extra"
-      ]
     },
     "web/src/lib/hosts-page/FedConfirmModal.svelte": {
       "section": "ledger-catalog",
@@ -4274,43 +4087,6 @@
       "section": "ledger-catalog",
       "classes": [
         "fed-code"
-      ]
-    },
-    "web/src/lib/hosts-page/PeerState.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "host-state",
-        "host-state--connected",
-        "host-state--connecting",
-        "host-state--disconnected",
-        "host-state--identity_changed",
-        "host-state--incompatible",
-        "host-state--unpaired"
-      ]
-    },
-    "web/src/lib/hosts-page/PeerSessions.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "host-sessions",
-        "host-sessions__down",
-        "host-sessions__head",
-        "host-sessions__name",
-        "host-sessions__none",
-        "host-sessions__project",
-        "host-sessions__row"
-      ]
-    },
-    "web/src/lib/hosts-page/PeerDetail.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "host-detail__error",
-        "host-detail__notice",
-        "host-peer__actions",
-        "host-peer__grant",
-        "host-peer__grant-meta",
-        "host-peer__grants",
-        "host-peer__head",
-        "host-peer__none"
       ]
     },
     "web/src/opscenter/App.svelte": {
@@ -4419,6 +4195,8 @@
       "classes": [
         "files",
         "files-chip",
+        "files-path-actions",
+        "files-path-form",
         "files-status",
         "files-status--error",
         "files-tree",
@@ -4545,20 +4323,16 @@
     "web/src/opscenter/ui/log-viewer.css": {
       "section": "cells",
       "classes": [
-        "oc-chip",
         "oc-field",
         "oc-lv",
         "oc-lv-bar",
-        "oc-lv-copy",
         "oc-lv-dropped",
         "oc-lv-error",
         "oc-lv-event",
-        "oc-lv-field",
         "oc-lv-filters",
         "oc-lv-flash",
         "oc-lv-group",
         "oc-lv-json",
-        "oc-lv-level",
         "oc-lv-lines",
         "oc-lv-list",
         "oc-lv-live",
@@ -4630,11 +4404,11 @@
         "oc-new-wrap",
         "oc-project",
         "oc-project-link",
+        "oc-session-task",
         "oc-status",
         "oc-status-dot",
         "oc-status-dot-hollow",
         "oc-status-label",
-        "oc-task",
         "oc-task-detail",
         "oc-task-name",
         "oc-task-strong",
@@ -4783,6 +4557,7 @@
       "section": "cells",
       "classes": [
         "cell-tools",
+        "oc-frame-strip",
         "oc-frame-title",
         "oc-tl-controls",
         "oc-tl-dot",
@@ -4938,10 +4713,7 @@
     },
     "web/src/opscenter/layouts/LayoutNameModal.svelte": {
       "section": "dialogs",
-      "classes": [
-        "lnm-error",
-        "lnm-hint"
-      ]
+      "classes": []
     },
     "web/src/opscenter/layouts/MemberDown.svelte": {
       "section": "cells",
@@ -5252,11 +5024,8 @@
     "web/src/lib/blueprints/LaunchModal.svelte": {
       "section": "dialogs",
       "classes": [
-        "bp-launch__chip",
         "bp-launch__chips",
         "bp-launch__consent",
-        "bp-launch__consent-line",
-        "bp-launch__error",
         "bp-launch__line",
         "bp-launch__line--error",
         "bp-launch__line--muted",
@@ -5283,7 +5052,8 @@
     "web/src/lib/blueprints/ImportModal.svelte": {
       "section": "dialogs",
       "classes": [
-        "bp-modal__error"
+        "bp-modal__error",
+        "bp-modal__fields"
       ]
     },
     "web/src/lib/blueprints/BlueprintsScreen.svelte": {
@@ -5291,18 +5061,9 @@
       "classes": [
         "bp-card__actions",
         "bp-card__mark",
-        "bp-card__member",
-        "bp-card__member-folder",
-        "bp-card__member-label",
-        "bp-card__members",
         "bp-detail__actions",
         "bp-detail__error",
         "bp-detail__heading",
-        "bp-detail__member",
-        "bp-detail__member-body",
-        "bp-detail__member-label",
-        "bp-detail__member-line",
-        "bp-detail__members",
         "bp-detail__notice"
       ]
     },
@@ -5314,8 +5075,6 @@
         "bp-row__grid",
         "bp-row__head",
         "bp-row__picker",
-        "bp-row__prompt",
-        "bp-row__remove",
         "modal-label"
       ]
     },
@@ -5325,8 +5084,7 @@
         "bp-skills__add",
         "bp-skills__chip",
         "bp-skills__chips",
-        "bp-skills__none",
-        "bp-skills__remove"
+        "bp-skills__none"
       ]
     },
     "web/src/lib/blueprints/ProjectPicker.svelte": {
@@ -5472,7 +5230,6 @@
       "section": "chrome",
       "classes": [
         "menu-page-bar",
-        "menu-page-bar__back",
         "menu-page-bar__claw"
       ]
     },
@@ -5497,15 +5254,12 @@
         "lcb__box",
         "lcb__count",
         "lcb__extra",
-        "lcb__icon",
         "lcb__input",
         "lcb__line",
         "lcb__line--empty",
         "lcb__modes",
         "lcb__slot",
-        "lcb__tabs",
-        "lcb__to",
-        "lcb__to--none"
+        "lcb__tabs"
       ]
     },
     "web/src/opscenter/layouts/LayoutTabs.svelte": {
@@ -5529,7 +5283,16 @@
         "lcm",
         "lcm__count",
         "lcm__count--current",
-        "lcm__toggle"
+        "oc-frame-strip"
+      ]
+    },
+    "web/src/lib/drawer/GroupRulePanel.svelte": {
+      "section": "chrome",
+      "classes": [
+        "grp-rule",
+        "grp-rule__count",
+        "grp-rule__fields",
+        "grp-rule__icons"
       ]
     },
     "web/src/lib/icon-picker/IconPicker.svelte": {
@@ -5585,7 +5348,6 @@
     "web/src/lib/sidebar-shell/ShowPathModal.svelte": {
       "section": "dialogs",
       "classes": [
-        "sp-copy",
         "sp-field",
         "sp-path"
       ]
@@ -5654,6 +5416,10 @@
       "section": "chrome",
       "classes": []
     },
+    "web/src/lib/sidebar-shell/LayoutRow.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
     "web/src/lib/sidebar-shell/PackSection.svelte": {
       "section": "chrome",
       "classes": [
@@ -5702,7 +5468,6 @@
         "sf__input--number",
         "sf__label",
         "sf__notice",
-        "sf__reset",
         "sf__row",
         "sf__title",
         "sf__warn",
@@ -5830,7 +5595,6 @@
         "dash-list",
         "dash-list__grid",
         "dash-list__line",
-        "dash-list__new",
         "dash-list__new-cell",
         "dash-list__new-hint",
         "dash-list__new-word"
@@ -5854,28 +5618,21 @@
     "web/src/opscenter/layout-editor/WidgetDrawer.svelte": {
       "section": "cells",
       "classes": [
-        "le-card",
-        "le-card--placed",
         "le-card__meta",
         "le-card__name",
         "le-card__text",
-        "le-chip",
-        "le-chip--on",
         "le-drawer",
         "le-drawer--docked",
         "le-drawer--folded",
         "le-empty",
-        "le-fold",
         "le-foot",
         "le-foot__row",
         "le-ghost",
         "le-ghost--aimed",
         "le-hint",
-        "le-input",
         "le-list",
         "le-titlebar",
-        "le-tools",
-        "modal-btn"
+        "le-tools"
       ]
     },
     "web/src/opscenter/layout-editor/WidgetThumb.svelte": {
@@ -5929,12 +5686,8 @@
         "scc",
         "scc-answers",
         "scc-ask",
-        "scc-chip",
-        "scc-chip-count",
-        "scc-chips",
         "scc-confirm",
         "scc-count",
-        "scc-fold",
         "scc-head",
         "scc-label",
         "scc-list",
@@ -6070,6 +5823,14 @@
         "tm__actions",
         "toast-mode-option",
         "toast-mode-options"
+      ]
+    },
+    "web/src/lib/settings-page/config-bundle/CommandConsent.svelte": {
+      "section": "settings",
+      "classes": [
+        "cmds__id",
+        "cmds__name",
+        "cmds__part"
       ]
     },
     "web/src/lib/settings-page/ConfigBundlePanel.svelte": {
@@ -6671,9 +6432,6 @@
       "section": "ledger-catalog",
       "classes": [
         "dz-item",
-        "dz-look",
-        "dz-look--on",
-        "dz-looks",
         "dz-name",
         "dz-strip"
       ]
@@ -7005,8 +6763,6 @@
       "section": "charts",
       "classes": [
         "tw-row",
-        "tw-row__field",
-        "tw-row__check",
         "tw-row__actions",
         "tw-row__note"
       ]
@@ -7094,8 +6850,7 @@
       "section": "chrome",
       "classes": [
         "ap-confirm",
-        "ap-confirm__ask",
-        "ap-confirm__input"
+        "ap-confirm__ask"
       ]
     },
     "web/src/lib/approvals/AskForm.svelte": {
@@ -7107,9 +6862,7 @@
         "ak-foot",
         "ak-foot--pinned",
         "ak-host",
-        "ak-input",
         "ak-left",
-        "ak-link",
         "ak-meta",
         "ak-name",
         "ak-notice",
@@ -7120,7 +6873,6 @@
         "ak-question",
         "ak-spacer",
         "ak-tabs",
-        "modal-btn",
         "oc-check",
         "oc-check__hint",
         "oc-check__label",
@@ -7137,7 +6889,6 @@
         "aq-pager",
         "ask-modal",
         "modal-body",
-        "modal-btn",
         "modal-content",
         "modal-footer",
         "modal-overlay"
@@ -7154,7 +6905,6 @@
         "ap-foot",
         "ap-foot--pinned",
         "ap-input",
-        "ap-jump",
         "ap-note",
         "ap-note__label",
         "ap-notes",
@@ -7168,7 +6918,6 @@
         "ap-tab__n",
         "ap-tabrow",
         "ap-tabs",
-        "modal-btn",
         "modal-btn-secondary",
         "oc-check",
         "oc-check__hint",
@@ -7342,8 +7091,6 @@
         "pair__text",
         "pair__sub",
         "pair__form",
-        "pair__input",
-        "pair__submit",
         "pair__problem"
       ]
     },
@@ -7355,7 +7102,6 @@
       "section": "chrome",
       "classes": [
         "first-run",
-        "oc-btn",
         "first-run__bar",
         "first-run__wordmark",
         "first-run__label",
@@ -7368,17 +7114,15 @@
         "first-run__key",
         "first-run__secret",
         "first-run__form",
-        "first-run__input",
         "first-run__actions",
-        "first-run__go",
         "first-run__problem",
         "first-run__cells",
-        "first-run__cell",
-        "first-run__link",
-        "first-run__packs",
-        "first-run__pack",
-        "oc-btn"
+        "first-run__packs"
       ]
+    },
+    "web/src/lib/first-run/FirstRunAgent.svelte": {
+      "section": "chrome",
+      "classes": []
     },
     "web/src/lib/first-run/FirstRunJoin.svelte": {
       "section": "chrome",
@@ -7402,8 +7146,7 @@
     },
     "web/src/lib/drawer-tabs/NewSessionButton.svelte": {
       "section": "chrome",
-      "classes": [
-      ]
+      "classes": []
     },
     "web/src/opscenter/shell/HomeOpenMenu.svelte": {
       "section": "chrome",
@@ -7425,7 +7168,6 @@
     "web/src/opscenter/widgets/chrome/RefusalPlate.svelte": {
       "section": "cells",
       "classes": [
-        "oc-btn",
         "oc-refusal",
         "oc-refusal--brief",
         "oc-refusal--icon",
@@ -7478,9 +7220,7 @@
     "web/src/lib/community/CommentThread.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "modal-btn",
         "thr",
-        "thr__act",
         "thr__acts",
         "thr__body",
         "thr__gone",
@@ -7511,13 +7251,11 @@
       "classes": [
         "cmp",
         "cmp__acts",
-        "cmp__box",
         "cmp__count",
         "cmp__count--over",
         "cmp__note",
         "cmp__note--out",
-        "cmp__row",
-        "modal-btn"
+        "cmp__row"
       ]
     },
     "web/src/lib/community/Identicon.svelte": {
@@ -7539,13 +7277,9 @@
     "web/src/lib/community/ReportDialog.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "modal-btn",
         "rep",
         "rep__acts",
-        "rep__box",
-        "rep__field",
         "rep__heading",
-        "rep__label",
         "rep__note",
         "rep__note--out"
       ]
@@ -7624,15 +7358,12 @@
       "classes": [
         "oc-check",
         "signin",
-        "signin__code",
         "signin__fine",
         "signin__icon",
         "signin__lead",
-        "signin__link",
         "signin__note",
         "signin__note--out",
         "signin__or",
-        "signin__prov",
         "signin__providers",
         "signin__row",
         "signin__row--end"
@@ -7654,8 +7385,7 @@
         "acctpage__note",
         "acctpage__provider",
         "acctpage__sec",
-        "acctpage__who",
-        "modal-btn"
+        "acctpage__who"
       ]
     },
     "web/src/opscenter/layout-editor/WidgetRow.svelte": {
@@ -7665,24 +7395,17 @@
         "le-hit",
         "le-ico",
         "le-opts",
-        "le-row",
-        "le-row--refused",
         "le-row__card",
         "le-row__chev",
         "le-row__chev--open",
         "le-row__count",
-        "le-row__info",
         "le-row__reason",
-        "le-wrow",
-        "le-wrow--open"
+        "le-wrow"
       ]
     },
     "web/src/opscenter/layout-editor/ChartDeleteChip.svelte": {
       "section": "cells",
-      "classes": [
-        "le-chip--armed",
-        "le-chip--danger"
-      ]
+      "classes": []
     },
     "web/src/opscenter/layout-editor/AnalyticsFamilyFold.svelte": {
       "section": "cells",
@@ -7691,9 +7414,7 @@
         "le-chart-row--hidden",
         "le-chart-row__acts",
         "le-chart-row__name",
-        "le-drawer",
         "le-gallery",
-        "le-gallery__card",
         "le-gallery__cards",
         "le-gallery__cats",
         "le-gallery__charts",
@@ -7712,8 +7433,7 @@
       "classes": [
         "bt-file",
         "bt-panel",
-        "bt-row",
-        "modal-btn"
+        "bt-row"
       ]
     },
     "web/src/lib/byoai/CallsPanel.svelte": {
@@ -7742,9 +7462,7 @@
     },
     "web/src/lib/byoai/RoutingPanel.svelte": {
       "section": "settings",
-      "classes": [
-        "rtp-fold"
-      ]
+      "classes": []
     },
     "web/src/lib/byoai/byoai.css": {
       "section": "settings",
@@ -7771,7 +7489,6 @@
         "ai-extra",
         "ai-log",
         "ai-mark",
-        "ai-new",
         "ai-pager",
         "ai-pager__btns",
         "ai-route",
@@ -7787,7 +7504,6 @@
         "ai-spend__fill",
         "ai-spend__name",
         "ai-spend__num",
-        "ai-spend__row",
         "ai-spend__title",
         "ai-strip",
         "ai-strip__label",
@@ -7797,7 +7513,10 @@
         "ai-test",
         "ai-test__links",
         "ai-ticks",
-        "oc-field"
+        "oc-list__actions",
+        "oc-list__head",
+        "oc-list__main",
+        "oc-secret"
       ]
     },
     "web/src/widget-harness/FitProbe.svelte": {
@@ -7909,7 +7628,6 @@
         "ps-row__facts",
         "ps-row__head",
         "ps-row__name",
-        "ps-row__tools",
         "ps-rows",
         "ps-state",
         "ps-state--bad",
@@ -8143,18 +7861,6 @@
         "hdtl-asks"
       ]
     },
-    "web/src/cplugs/huddle/TaskManagerMove.svelte": {
-      "section": "chrome",
-      "classes": [
-        "hdm",
-        "hdm-menu",
-        "hdm-label",
-        "hdm-item",
-        "hdm-item--here",
-        "hdm-item--group",
-        "hdm-name"
-      ]
-    },
     "web/src/cplugs/huddle/TaskManagerSections.svelte": {
       "section": "chrome",
       "classes": [
@@ -8311,6 +8017,9 @@
       "section": "chrome",
       "classes": [
         "oc-inline-field",
+        "hdt-reply",
+        "hdt-reply--indent",
+        "hdt-reply--row",
         "hdt-actions",
         "hdt-actions--drop",
         "hdt-actions--row",
@@ -8490,95 +8199,13 @@
         "isum-rating-link"
       ]
     },
-    "web/src/public-site/site.css": {
-      "section": "brand",
-      "classes": [
-        "art-edge",
-        "art-ring",
-        "brand-link",
-        "continuity",
-        "continuity-foot",
-        "continuity-heading",
-        "continuity-inner",
-        "continuity-machine",
-        "continuity-stage",
-        "download",
-        "download-action",
-        "download-copy",
-        "download-detail",
-        "download-inner",
-        "hero",
-        "hero-actions",
-        "hero-art",
-        "hero-base",
-        "hero-claw",
-        "hero-content",
-        "hero-detail",
-        "hero-field",
-        "hero-lede",
-        "install-cmd",
-        "install-cmd__code",
-        "install-cmd__copy",
-        "install-cmd__label",
-        "install-cmd__row",
-        "install-note",
-        "interface",
-        "interface-figure",
-        "interface-frame",
-        "interface-intro",
-        "interface-notes",
-        "machine-core",
-        "machine-node",
-        "machine-path",
-        "node-index",
-        "path-trace",
-        "principle",
-        "principle-item",
-        "principle-lead",
-        "principle-rail",
-        "session-node",
-        "site-button",
-        "site-button--primary",
-        "site-button--quiet",
-        "site-footer",
-        "site-header",
-        "site-kicker",
-        "site-nav",
-        "site-shell",
-        "site-wrap",
-        "sr-only",
-        "text-link",
-        "viewer-away",
-        "viewer-joint",
-        "viewer-node",
-        "viewer-path",
-        "viewer-state",
-        "viewer-wire"
-      ]
-    },
-    "web/src/public-site/Continuity.svelte": {
-      "section": "brand",
-      "classes": []
-    },
-    "web/src/public-site/Page.svelte": {
-      "section": "brand",
-      "classes": []
-    },
-    "web/src/public-site/InstallCommand.svelte": {
-      "section": "brand",
-      "classes": []
-    },
     "web/src/lib/launch-profiles-page/ImportProfileModal.svelte": {
       "section": "ledger-catalog",
       "classes": [
         "lp-import",
-        "lp-import__check",
-        "lp-import__error",
         "lp-import__label",
         "lp-import__note",
-        "lp-import__script",
-        "lp-import__text",
-        "lp-import__warn"
+        "lp-import__script"
       ]
     },
     "web/src/lib/launch-profiles-page/LaunchProfileEditor.svelte": {
@@ -8586,67 +8213,45 @@
       "classes": [
         "lp-actions",
         "lp-add",
-        "lp-check",
         "lp-edit",
-        "lp-error",
         "lp-field",
         "lp-field--wide",
         "lp-fold",
         "lp-fold__body",
-        "lp-fold__head",
+        "lp-ghost",
         "lp-grid",
         "lp-hint",
         "lp-hint--warn",
         "lp-icon-mark",
         "lp-icon-row",
-        "lp-input",
-        "lp-input--mono",
-        "lp-label",
-        "lp-perms",
         "lp-picker",
         "lp-radio",
-        "lp-radio--off",
-        "lp-row",
-        "lp-warn"
+        "lp-row"
       ]
     },
     "web/src/lib/launch-profiles-page/LaunchProfilesScreen.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "lp-badge",
-        "lp-badge--default",
-        "lp-badge--warn",
-        "lp-check__line",
         "lp-code",
-        "lp-danger",
         "lp-detail",
         "lp-detail--none",
-        "lp-empty",
-        "lp-error",
-        "lp-head",
-        "lp-item",
-        "lp-item--on",
+        "lp-hidden",
+        "lp-hint-line",
         "lp-item__facts",
         "lp-item__label",
         "lp-item__main",
         "lp-item__mark",
         "lp-item__name",
         "lp-item__sub",
-        "lp-note",
+        "lp-line",
         "lp-preview",
         "lp-refusal",
-        "lp-refusal__count",
-        "lp-refusal__text",
         "lp-result",
         "lp-row",
-        "lp-rows",
-        "lp-select",
         "lp-split",
         "lp-split--solo",
         "lp-templates",
-        "lp-templates__head",
-        "lp-templates__list",
-        "lp-tools"
+        "oc-label"
       ]
     },
     "web/src/lib/notifications/destinations/DestinationCard.svelte": {
@@ -8737,7 +8342,6 @@
         "mx-link__row",
         "mx-list",
         "mx-picker",
-        "mx-reset",
         "mx-scroll",
         "mx-src",
         "mx-table",
@@ -8787,9 +8391,7 @@
       "classes": [
         "ph-ghead",
         "ph-ghead--muted",
-        "ph-ghead__chev",
         "ph-ghead__name",
-        "ph-ghead__open",
         "ph-ghead__tally"
       ]
     },
@@ -9119,16 +8721,11 @@
         "dash-card__confirm",
         "dash-card__confirm-row",
         "dash-card__confirm-text",
-        "dash-card__delete",
         "dash-card__end",
         "dash-card__head",
         "dash-card__home",
-        "dash-card__input",
         "dash-card__meta",
-        "dash-card__meta-row",
-        "dash-card__name",
-        "modal-btn",
-        "oc-btn"
+        "dash-card__meta-row"
       ]
     },
     "web/src/opscenter/layout-editor/WindowRows.svelte": {
@@ -9137,9 +8734,7 @@
         "le-wfold--open",
         "le-wfold__body",
         "le-wfold__chev",
-        "le-wfold__choice",
         "le-wfold__dot",
-        "le-wfold__head",
         "le-wfold__hint",
         "le-wfold__list",
         "le-wfold__none",
@@ -9274,6 +8869,11 @@
       "classes": [
         "hdc",
         "hdc-compose",
+        "hdc-compose--drop",
+        "hdc-keys",
+        "hdc-thinking",
+        "hdc-bubble",
+        "hdc-bubble--still",
         "hdc-entry",
         "hdc-input",
         "hdc-list",
@@ -9284,6 +8884,9 @@
         "hdc-notice",
         "hdc-placed",
         "hdc-scroll",
+        "hdc-pane",
+        "hdc-latest",
+        "hdc-latest-count",
         "hdc-text",
         "hdc-text--plain",
         "hdc-draft",
@@ -9317,24 +8920,42 @@
       "classes": [
         "hdc-bar",
         "hdc-bar--titled",
-        "hdc-confirm",
-        "hdc-confirm-no",
-        "hdc-confirm-row",
-        "hdc-confirm-text",
-        "hdc-confirm-yes",
-        "hdc-menu",
-        "hdc-menu-item",
-        "hdc-menu-wrap",
         "hdc-name",
         "hdc-spacer",
         "hdc-state",
-        "hdc-turn-off",
         "hdc-bar--framed",
         "hdc-bar--drag",
         "hdc-who-led",
         "hdc-filter",
         "oc-btn",
-        "oc-ibtn"
+        "oc-ibtn",
+        "hdc-brain"
+      ]
+    },
+    "web/src/cplugs/huddle/chat/ChatAskForm.svelte": {
+      "section": "chrome",
+      "classes": [
+        "hca",
+        "hca-att",
+        "hca-att-name",
+        "hca-bar",
+        "hca-body",
+        "hca-chip",
+        "hca-chip-slot",
+        "hca-clip",
+        "hca-hint",
+        "hca-n",
+        "hca-opt",
+        "hca-q",
+        "hca-rectext",
+        "hca-row",
+        "hca-star",
+        "hca-strip",
+        "hca-t",
+        "hca-tally",
+        "hca-v",
+        "hca-why",
+        "hca-x"
       ]
     },
     "web/src/cplugs/huddle/chat/ChatCard.svelte": {
@@ -9371,11 +8992,12 @@
       "section": "chrome",
       "classes": [
         "hdc-av",
-        "hdc-av-dir",
-        "hdc-av-dir--from",
-        "hdc-av-dir--to",
+        "hdc-av--link",
         "hdc-av-you",
-        "hdc-av-you--icon"
+        "hdc-av-you--icon",
+        "ident",
+        "pk-bd",
+        "pk-gw"
       ]
     },
     "web/src/cplugs/huddle/chat/AuthorPath.svelte": {
@@ -9387,7 +9009,6 @@
         "hdc-path",
         "hdc-path-crumbs",
         "hdc-path-more",
-        "hdc-path-sep",
         "hdc-path-time",
         "hdc-crumb--lead",
         "hdc-path--lead"
@@ -9449,19 +9070,6 @@
       "section": "swarm-characters",
       "classes": []
     },
-    "web/src/cplugs/huddle/chat/ReceiptRow.svelte": {
-      "section": "chrome",
-      "classes": [
-        "hdr",
-        "hdr-fact",
-        "hdr-failed",
-        "hdr-keys",
-        "hdr-label",
-        "hdr-line",
-        "hdr-scope",
-        "hdr-title"
-      ]
-    },
     "web/src/cplugs/huddle/chat/TrafficCard.svelte": {
       "section": "chrome",
       "classes": [
@@ -9473,6 +9081,8 @@
         "hdx-receipt",
         "hdx-receipt--bad",
         "hdx-text",
+        "hdx-to",
+        "hdx-to-name",
         "hdx--bare",
         "hdx-sum",
         "hdx-toggle"
@@ -10191,11 +9801,21 @@
       "section": "chrome",
       "classes": []
     },
+    "web/src/cplugs/huddle/ask/fields/AskPasteZone.svelte": {
+      "section": "chrome",
+      "classes": [
+        "hdq-paste"
+      ]
+    },
     "web/src/cplugs/huddle/ask/fields/AskRank.svelte": {
       "section": "chrome",
       "classes": []
     },
     "web/src/cplugs/huddle/ask/fields/AskText.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/cplugs/huddle/ask/fields/AskWhen.svelte": {
       "section": "chrome",
       "classes": []
     },
@@ -10314,6 +9934,26 @@
         "hdc-name",
         "hdc-state",
         "hdc-remove"
+      ]
+    },
+    "web/src/cplugs/huddle/TaskManagerThumb.svelte": {
+      "section": "chrome",
+      "classes": [
+        "hdc-thumb"
+      ]
+    },
+    "web/src/cplugs/huddle/chat/ChatSentImages.svelte": {
+      "section": "chrome",
+      "classes": [
+        "hdc-sent-images",
+        "hdc-sent-gone"
+      ]
+    },
+    "web/src/cplugs/huddle/TaskManagerImagePreview.svelte": {
+      "section": "chrome",
+      "classes": [
+        "hdc-preview",
+        "hdc-preview-img"
       ]
     },
     "web/src/opscenter/cells/changes/Cell.svelte": {
@@ -10626,6 +10266,13 @@
         "session-sidebar-railed"
       ]
     },
+    "web/src/lib/zone-shell/EditCell.svelte": {
+      "section": "chrome",
+      "classes": [
+        "oc-edit-badge",
+        "oc-edit-cell"
+      ]
+    },
     "web/src/lib/zone-shell/ZoneKeys.svelte": {
       "section": "chrome",
       "classes": [
@@ -10799,8 +10446,7 @@
     },
     "web/src/lib/widget-bars/BarPin.svelte": {
       "section": "chrome",
-      "classes": [
-      ]
+      "classes": []
     },
     "web/src/lib/widget-bars/PinnedKeyBadge.svelte": {
       "section": "chrome",
@@ -10888,12 +10534,18 @@
       "classes": [
         "lac",
         "lac-label",
-        "lac-link",
         "lac-name",
         "lac-panel",
         "lac-row",
         "lac-summary",
         "lac-tag"
+      ]
+    },
+    "web/src/lib/launch-picker/LaunchNamePin.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "lnp",
+        "lnp-label"
       ]
     },
     "web/src/lib/launch-picker/LaunchChoice.svelte": {
@@ -10940,6 +10592,9 @@
         "stm-carry-head",
         "stm-carry-row",
         "stm-carry-why",
+        "stm-carry-total",
+        "stm-verdict",
+        "stm-verdict-text",
         "stm-foot",
         "stm-modal",
         "modal-content",
@@ -10954,6 +10609,7 @@
     "web/src/lib/session-move/move-folder.css": {
       "section": "chrome",
       "classes": [
+        "mvf-choice",
         "mvf-row",
         "mvf-plan",
         "mvf-plan-row",
@@ -10976,13 +10632,11 @@
       "classes": [
         "ai-route",
         "ai-route__name",
-        "pk-select",
         "pw-arrow",
         "pw-body",
         "pw-chip",
         "pw-chip--now",
         "pw-chips",
-        "pw-edit",
         "pw-grid",
         "pw-group",
         "pw-grouphead",
@@ -11088,8 +10742,7 @@
     },
     "web/src/lib/drawer-tabs/ViewMenu.svelte": {
       "section": "chrome",
-      "classes": [
-      ]
+      "classes": []
     },
     "web/src/lib/sidebar-widgets/SidebarControls.svelte": {
       "section": "chrome",
@@ -11116,7 +10769,8 @@
         "sbr-rail__label",
         "sbr-rail__label--on",
         "sbr-rail__label-text",
-        "sbr-rail__sep"
+        "sbr-rail__sep",
+        "sbr-rail__zone"
       ]
     },
     "web/src/lib/sidebar-widgets/sidebar-rail.css": {
@@ -11282,6 +10936,14 @@
       "classes": []
     },
     "web/src/lib/sessions-page/SessionLine.svelte": {
+      "section": "sessions-page",
+      "classes": []
+    },
+    "web/src/lib/sessions-page/RowActionButton.svelte": {
+      "section": "sessions-page",
+      "classes": []
+    },
+    "web/src/lib/sessions-page/ProjectChip.svelte": {
       "section": "sessions-page",
       "classes": []
     },
@@ -11554,8 +11216,7 @@
     "web/src/lib/approvals/ApprovalReview.svelte": {
       "section": "chrome",
       "classes": [
-        "ar-host",
-        "ar-open"
+        "ar-host"
       ]
     },
     "web/src/lib/code-review/CodeReviewModal.svelte": {
@@ -11575,9 +11236,7 @@
         "cr-tag",
         "cr-text",
         "cr-title",
-        "cr-toggle",
         "modal-body",
-        "modal-btn",
         "modal-content",
         "modal-footer",
         "modal-overlay"
@@ -11597,9 +11256,7 @@
       "section": "chrome",
       "classes": [
         "session-sidebar-list--dragging",
-        "session-sidebar-row",
-        "session-sidebar-row-provider",
-        "session-sidebar-row-provider__dnd"
+        "session-sidebar-row"
       ]
     },
     "web/src/opscenter/cells/task-list/ListBody.svelte": {
@@ -11691,7 +11348,6 @@
       "classes": [
         "dps",
         "dps__bar",
-        "dps__chip",
         "dps__chips",
         "dps__host",
         "dps__ingest",
@@ -11700,7 +11356,6 @@
         "dps__led",
         "dps__led--dash",
         "dps__led--ring",
-        "dps__linkbtn",
         "dps__mark",
         "dps__more",
         "dps__more-host",
@@ -11713,9 +11368,7 @@
         "dps__status--note",
         "dps__tag",
         "dps__tag--backup",
-        "dps__tag--exported",
-        "is-on",
-        "oc-seg__item"
+        "dps__tag--exported"
       ]
     },
     "web/src/cplugs/huddle/TaskManagerMarker.svelte": {
@@ -12894,7 +12547,6 @@
         "cat-rail__group",
         "cat-rail__label",
         "cat-rail__name",
-        "cat-rail__row",
         "cat-rail__search",
         "cat-sec",
         "cat-sec__count",
@@ -12902,7 +12554,6 @@
         "catalog-card__ct",
         "catalog-card__head",
         "catalog-card__name",
-        "catalog-card__open",
         "catalog-card__thumb",
         "m-dialog",
         "m-dialog__body",
@@ -12922,7 +12573,6 @@
         "m1-copyssh",
         "m1-danger",
         "m1-danger__k",
-        "m1-empty",
         "m1-ghost",
         "m1-ghost__brief",
         "m1-ghost__icon",
@@ -12939,7 +12589,6 @@
         "m1-near__none",
         "m1-pane",
         "m1-pane__acts",
-        "m1-pane__back",
         "m1-pane__body",
         "m1-pane__btns",
         "m1-pane__head",
@@ -12950,7 +12599,6 @@
         "m1-prog",
         "m1-proj",
         "m1-proj__chev",
-        "m1-proj__head",
         "m1-proj__n",
         "m1-proj__name",
         "m1-proj__rows",
@@ -12976,8 +12624,6 @@
         "m1-top__act",
         "m1-top__id",
         "modal-btn",
-        "oc-btn",
-        "oc-btn--confirm",
         "oc-facet",
         "oc-facet--menu",
         "oc-facet__val",
@@ -13003,7 +12649,6 @@
         "pp-confirm__row",
         "pp-confirm__text",
         "pp-count",
-        "pp-destroy",
         "pp-dim",
         "pp-dot",
         "pp-err",
@@ -13017,7 +12662,6 @@
         "pp-health__warn",
         "pp-hint",
         "pp-ico",
-        "pp-input",
         "pp-invite",
         "pp-invite__code",
         "pp-job",
@@ -13059,7 +12703,6 @@
         "pp-st__mark",
         "pp-st__word",
         "pp-steps",
-        "pp-sw",
         "pp-swrow",
         "pp-tool",
         "pp-tools",
@@ -13090,6 +12733,10 @@
     },
     "web/src/lib/pack-roster/RosterJoin.svelte": {
       "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/drawer/GroupColorPicker.svelte": {
+      "section": "chrome",
       "classes": []
     },
     "web/src/lib/drawer/DrawerBar.svelte": {
@@ -13215,7 +12862,11 @@
         "cu-table",
         "cu-table-wrap",
         "cu-table__empty",
-        "cu-text"
+        "cu-text",
+        "cu-page",
+        "cu-page--main",
+        "cu-page__step",
+        "cu-page__off"
       ]
     },
     "web/src/lib/automations/advanced/AdvancedHead.svelte": {
@@ -13305,12 +12956,9 @@
     "web/src/opscenter/layout-editor/DrawerHead.svelte": {
       "section": "cells",
       "classes": [
-        "le-fold",
         "le-label",
         "le-title",
-        "le-views",
-        "le-views__btn",
-        "le-views__btn--on"
+        "le-views"
       ]
     },
     "web/src/opscenter/layout-editor/DrawerList.svelte": {
@@ -13325,7 +12973,6 @@
       "section": "cells",
       "classes": [
         "le-find",
-        "le-input",
         "le-kind"
       ]
     },
@@ -13337,6 +12984,7 @@
         "oc-search__clear",
         "oc-search__hint",
         "oc-search__icon",
+        "oc-search__lead",
         "oc-search__trail"
       ]
     },
@@ -13409,8 +13057,6 @@
         "sd-hit__name",
         "sd-hit__snip",
         "sd-hit__top",
-        "sd-ib",
-        "sd-ib--framed",
         "sd-list",
         "sd-mark",
         "sd-more",
@@ -13516,6 +13162,10 @@
       "classes": [
         "oc-frame-title--phone"
       ]
+    },
+    "web/src/lib/base/MenuItem.svelte": {
+      "section": "base-set",
+      "classes": []
     },
     "web/src/lib/base/Switch.svelte": {
       "section": "base-set",
@@ -14088,6 +13738,54 @@
         "hss-head--empty",
         "mk2-frame",
         "tkm-state"
+      ]
+    },
+    "web/src/lib/swarm-membership/SwarmRowFace.svelte": {
+      "section": "status-led",
+      "classes": [
+        "pk-sq",
+        "swarm-row-face"
+      ]
+    },
+    "web/src/cplugs/huddle/chat/MemoryPanel.svelte": {
+      "section": "chrome",
+      "classes": [
+        "hdc-memory",
+        "hdc-memory-inner",
+        "hdc-memory-head",
+        "hdc-memory-title",
+        "hdc-memory-pick",
+        "hdc-memory-body",
+        "hdc-memory-foot",
+        "hdc-memory-notice"
+      ]
+    },
+    "web/src/lib/cplug-ui/PageMenu.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/PageMain.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/PageSwitch.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/first-run/FirstRunProfiles.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
+    "web/src/lib/launch-profiles-page/LaunchProfileExamples.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "lp-examples",
+        "lp-examples__list",
+        "lp-examples__main",
+        "lp-examples__name",
+        "lp-examples__row",
+        "lp-examples__sets",
+        "lp-examples__text"
       ]
     }
   }

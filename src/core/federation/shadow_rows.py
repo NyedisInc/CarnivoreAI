@@ -15,6 +15,7 @@ from src.core.db_models import SESSION_ATTRIBUTION_DERIVED_DEEPEST, SESSION_LIFE
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.hosts.identity import PEER_ROOT_SCHEME
 from src.core.hosts.remote_project import bind_remote_project
+from src.core.session_sleep import SLEEP_SOURCES
 from src.core.session_project_binding import BINDING_MATCHED, ProjectBinding
 from src.core.trail_entry import utc_now
 
@@ -83,10 +84,15 @@ def _existing(conn: sqlite3.Connection, host_key: str, peer_uuid: str, local_uui
 
 
 def sync_peer(conn: sqlite3.Connection, *, host_key: str, peer_install_id: str,
-              rows: Sequence[Mapping[str, object]], complete: bool) -> Dict[str, Shadow]:
-    now, out, seen, skipped = utc_now(), {}, [], 0
+              rows: Sequence[Mapping[str, object]], complete: bool,
+              asleep: Optional[Sequence[Mapping[str, object]]] = None) -> Dict[str, Shadow]:
+    now, out, seen, skipped, rested = utc_now(), {}, [], 0, []
+    live = {str(r.get("session_uuid")) for r in rows}
+    todo = [(r, None) for r in rows] + [(r, r.get("source")) for r in (asleep or ()) if str(r.get("session_uuid")) not in live
+                                         and r.get("source") in SLEEP_SOURCES]
     with transaction(conn):
-        for row in rows:
+        for row, sleep_source in todo:
+            lifecycle = SESSION_LIFECYCLE_STOPPED if sleep_source else SESSION_LIFECYCLE_RUNNING
             if not usable(row):
                 skipped += 1
                 logger.info("peer_shadow_row_skipped", host=host_key, reason="unusable name, uuid, folder or label")
@@ -101,19 +107,20 @@ def sync_peer(conn: sqlite3.Connection, *, host_key: str, peer_install_id: str,
                 sid = conn.execute(
                     "INSERT INTO sessions (session_uuid, project_id, project_attribution, working_dir, tmux_socket, "
                     "tmux_name, origin, agent_type, agent_family, agent_family_source, title, lifecycle, "
-                    "last_seen_running_at, host_key, created_at, updated_at) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'running', ?, ?, ?, ?)",
-                    (local_uuid, wanted[0], wanted[1], wanted[2], PEER_SOCKET, name, PEER_ORIGIN, *wanted[4:], now,
-                     host_key, now, now)).lastrowid
+                    "lifecycle_source, last_seen_running_at, host_key, created_at, updated_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (local_uuid, wanted[0], wanted[1], wanted[2], PEER_SOCKET, name, PEER_ORIGIN, *wanted[4:], lifecycle,
+                     sleep_source, now, host_key, now, now)).lastrowid
             elif conn.execute(
-                    "SELECT 1 FROM sessions WHERE id = ? AND lifecycle = ? AND project_id IS ? AND project_attribution IS ? "
-                    "AND working_dir IS ? AND tmux_name IS ? AND agent_type IS ? AND agent_family IS ? "
-                    "AND agent_family_source IS ? AND title IS ?", (sid, SESSION_LIFECYCLE_RUNNING, *wanted)).fetchone() is None:
+                    "SELECT 1 FROM sessions WHERE id = ? AND lifecycle = ? AND lifecycle_source IS ? AND project_id IS ? "
+                    "AND project_attribution IS ? AND working_dir IS ? AND tmux_name IS ? AND agent_type IS ? "
+                    "AND agent_family IS ? AND agent_family_source IS ? AND title IS ?",
+                    (sid, lifecycle, sleep_source, *wanted)).fetchone() is None:
                 conn.execute(
                     "UPDATE sessions SET project_id = ?, project_attribution = ?, working_dir = ?, tmux_name = ?, "
                     "agent_type = ?, agent_family = ?, agent_family_source = ?, title = ?, lifecycle = ?, "
-                    "last_seen_running_at = ?, updated_at = ? WHERE id = ? AND origin = ? AND host_key = ?",
-                    (*wanted, SESSION_LIFECYCLE_RUNNING, now, now, sid, PEER_ORIGIN, host_key))
+                    "lifecycle_source = ?, last_seen_running_at = ?, updated_at = ? WHERE id = ? AND origin = ? AND host_key = ?",
+                    (*wanted, lifecycle, sleep_source, now, now, sid, PEER_ORIGIN, host_key))
             if conn.execute("SELECT 1 FROM peer_sessions WHERE host_key = ? AND peer_session_uuid = ? AND peer_row_id IS ? "
                             "AND peer_name = ? AND session_id = ?",
                             (host_key, peer_uuid, row.get("row_id"), name, sid)).fetchone() is None:
@@ -122,9 +129,18 @@ def sync_peer(conn: sqlite3.Connection, *, host_key: str, peer_install_id: str,
                     "VALUES (?, ?, ?, ?, ?) ON CONFLICT(host_key, peer_session_uuid) DO UPDATE SET "
                     "peer_row_id = excluded.peer_row_id, peer_name = excluded.peer_name",
                     (host_key, peer_uuid, row.get("row_id"), name, sid))
+            if sleep_source:
+                rested.append(sid)
+                continue
             seen.append(sid)
             out[name] = Shadow(sid, binding.project_id, project_name)
-        if complete and not skipped:  # could not be read
+        if asleep is not None and not skipped:
+            marks = ",".join("?" * len(rested))
+            conn.execute(
+                f"UPDATE sessions SET lifecycle_source = NULL WHERE origin = ? AND host_key = ? AND lifecycle = ? "
+                f"AND lifecycle_source IN ({','.join('?' * len(SLEEP_SOURCES))}) AND id NOT IN ({marks})",
+                (PEER_ORIGIN, host_key, SESSION_LIFECYCLE_STOPPED, *SLEEP_SOURCES, *rested))
+        if complete and not skipped:
             _prune(conn, host_key)
             marks = ",".join("?" * len(seen))
             conn.execute(
@@ -136,9 +152,13 @@ def sync_peer(conn: sqlite3.Connection, *, host_key: str, peer_install_id: str,
 
 def _prune(conn: sqlite3.Connection, host_key: str) -> None:
     cutoff = (datetime.now(timezone.utc) - timedelta(seconds=PRUNE_GRACE_SECONDS)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    for (sid,) in conn.execute("SELECT id FROM sessions WHERE origin = ? AND host_key = ? AND lifecycle = ? "
-                               "AND updated_at < ?", (PEER_ORIGIN, host_key, SESSION_LIFECYCLE_STOPPED, cutoff)).fetchall():
-        _try_delete(conn, "DELETE FROM sessions WHERE id = ?", (sid,))
+    for sid, source in conn.execute("SELECT id, lifecycle_source FROM sessions WHERE origin = ? AND host_key = ? "
+                                    "AND lifecycle = ? AND updated_at < ?",
+                                    (PEER_ORIGIN, host_key, SESSION_LIFECYCLE_STOPPED, cutoff)).fetchall():
+        if source not in SLEEP_SOURCES:
+            conn.execute(
+                "UPDATE swarm_agents SET session_row_id = NULL WHERE session_row_id = ? AND torn_down_at IS NOT NULL", (sid,))
+            _try_delete(conn, "DELETE FROM sessions WHERE id = ?", (sid,))
     _drop_projects(conn, host_key)
 
 

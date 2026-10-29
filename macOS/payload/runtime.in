@@ -38,4 +38,4 @@ linkify-it-py==2.2.0
 platformdirs==4.12.3
 backports.zstd>=1.0.0; python_version < "3.14"
 # DROPPED vs requirements.txt: pytest==7.4.3, pytest-asyncio==0.21.1 (tests), playwright==1.62.0 (lazy import in
-# src/core/browsers/manager.py, raises BrowserUnavailable; driver; needs a Chromium anyway)
+# src/core/browsers/manager.py, raises BrowserUnavailable; 45 MB driver; needs a Chromium anyway)

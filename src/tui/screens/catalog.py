@@ -9,6 +9,7 @@ from textual.widgets import Input, Label
 
 from src.tui import keys
 from src.tui.screens.read_board import Board, ReadBoardPane
+from src.tui.plain import plain
 from src.tui.strings import t
 
 CATALOG_PATH = "/api/v1/catalog/items"
@@ -70,8 +71,8 @@ class CatalogPane(ReadBoardPane):
                 continue
             card = item.get("card") or {}
             board.add_row(
-                card.get("title") or item.get("name") or "", item.get("kind") or "", item.get("publisher") or "",
-                item.get("latest") or "", _local(item), card.get("brief") or "",
+                plain(card.get("title") or item.get("name")), plain(item.get("kind")), plain(item.get("publisher")),
+                plain(item.get("latest")), plain(_local(item)), plain(card.get("brief")),
                 key=str(item.get("id") or id(item)),
             )
         self.query_one(".read-note", Label).update("" if board.row_count else t("tui.catalog.empty"))

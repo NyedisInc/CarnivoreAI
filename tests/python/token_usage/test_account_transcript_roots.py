@@ -16,8 +16,8 @@ from src.core.transcript_source import locate as sources
 
 EPOCH = 1700000000
 SESSIONS = {
-    "cloude_globex": ("11111111-aaaa-bbbb-cccc-000000000001", "claude-opus-5"),
-    "cloude_work": ("22222222-aaaa-bbbb-cccc-000000000002", "claude-sonnet-5"),
+    "cloude_dgai": ("11111111-aaaa-bbbb-cccc-000000000001", "claude-opus-5"),
+    "cloude_nyedis": ("22222222-aaaa-bbbb-cccc-000000000002", "claude-sonnet-5"),
 }
 
 
@@ -36,7 +36,7 @@ def two_profiles(tmp_path, monkeypatch):
     (home / ".claude" / "projects").mkdir(parents=True)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
     accounts = []
-    for account_id, (name, (uuid, model)) in zip(("globex", "nyedis"), SESSIONS.items()):
+    for account_id, (name, (uuid, model)) in zip(("dgai", "nyedis"), SESSIONS.items()):
         profile = tmp_path / "accounts" / account_id
         folder = profile / "projects" / "-tmp-work"
         folder.mkdir(parents=True)
@@ -80,7 +80,7 @@ def test_a_conversation_in_no_root_is_still_absent(two_profiles):
 
 
 def test_time_machine_locates_a_managed_account_transcript(two_profiles):
-    uuid, _model = SESSIONS["cloude_work"]
+    uuid, _model = SESSIONS["cloude_nyedis"]
     found = sources.locate("claude", uuid, "/tmp/work")
     assert found is not None and found.transcript.name == f"{uuid}.jsonl"
 

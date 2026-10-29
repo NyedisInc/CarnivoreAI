@@ -85,6 +85,13 @@ def get_agent(conn: sqlite3.Connection, agent_id: int) -> Optional[Dict[str, Any
     return _row(conn.execute("SELECT * FROM swarm_agents WHERE id = ?", (agent_id,)).fetchone())
 
 
+MEMBER_JOB_PREFIX = "member: "
+
+
+def is_member(agent: Dict[str, Any]) -> bool:
+    return agent.get("rank") == "feature" and str(agent.get("job") or "").startswith(MEMBER_JOB_PREFIX)
+
+
 def get_agent_by_session_row(conn: sqlite3.Connection, session_row_id: int) -> Optional[Dict[str, Any]]:
     return _row(conn.execute("SELECT * FROM swarm_agents WHERE session_row_id = ?", (session_row_id,)).fetchone())
 
@@ -148,11 +155,6 @@ def set_session_row(conn: sqlite3.Connection, agent_id: int, session_row_id: int
 
 
 def rebind_session_row(conn: sqlite3.Connection, agent_id: int, session_row_id: int) -> None:
-    """Point an ASLEEP agent at another sessions row (re-pointing a project agent to a promoted session, ``project_promote.py``).
-
-    Inputs: conn; agent_id; session_row_id (a row no other agent holds: the UNIQUE index refuses it).
-    Raises: AgentNotFound (unknown, torn down, or not asleep: a body must not be switched under a running wake), sqlite3.IntegrityError.
-    """
     with transaction(conn):
         cur = conn.execute("UPDATE swarm_agents SET session_row_id = ?, updated_at = ? WHERE id = ? AND state = 'asleep' AND torn_down_at IS NULL",
                            (session_row_id, utc_now(), agent_id))
@@ -164,11 +166,6 @@ def rebind_session_row(conn: sqlite3.Connection, agent_id: int, session_row_id: 
 def open_wake(
     conn: sqlite3.Connection, agent_id: int, *, reason: str, mode: str, authority: str
 ) -> Optional[int]:
-    """Insert the open wake row AND move ``asleep -> waking`` in ONE transaction.
-
-    Returns the new wake id, or None when the agent was not ``asleep`` (the caller joins the running body).
-    Raises: sqlite3.IntegrityError when an open wake already exists (``swarm_one_open_wake``), rolled back.
-    """
     now = utc_now()
     with transaction(conn):
         wake_id = conn.execute(
@@ -200,11 +197,6 @@ def update_wake(conn: sqlite3.Connection, wake_id: int, **fields: Any) -> None:
 
 
 def stamp_last_conversation(conn: sqlite3.Connection, agent_id: int) -> None:
-    """Record the row's conversation id on the agent's newest wake when that wake has none (call after the wake closed).
-
-    The rewind's conversation list reads ``swarm_wakes.conversation_uuid``; the id lives on the ``sessions`` row, which a
-    later fresh wake clears, so each wake is stamped as it ends.
-    """
     with transaction(conn):
         conn.execute(
             "UPDATE swarm_wakes SET conversation_uuid = (SELECT s.claude_session_uuid FROM swarm_agents a JOIN sessions s "
@@ -406,6 +398,5 @@ def decide_report(conn: sqlite3.Connection, report_id: int, new: str, expected: 
 
 
 def delete_report(conn: sqlite3.Connection, report_id: int) -> None:
-    """Remove a report whose cards could not be posted, so the child may report again."""
     with transaction(conn):
         conn.execute("DELETE FROM swarm_reports WHERE id = ?", (report_id,))

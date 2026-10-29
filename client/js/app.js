@@ -1,5 +1,4 @@
 
-// HEADER_BRAND_ICON_URL
 const HEADER_BRAND_ICON_URL = '/static/img/carnivore/carnivore-wordmark.png';
 const HEADER_BRAND_ICON_URL_2X = '/static/img/carnivore/carnivore-wordmark@2x.png';
 const HEADER_BRAND_EMOJI = '☁️';
@@ -22,7 +21,6 @@ function setHeaderIdentity(opts) {
     if (headerRowEl && subheaderEl) {
         if (opts.subheader) {
             headerRowEl.classList.add('header--home');
-            // .header-row, not a duplicate. `.header--home { display: grid }`
             document.body.classList.add('home-header-active');
             subheaderEl.textContent = opts.subheader;
             subheaderEl.hidden = false;
@@ -99,7 +97,7 @@ function _unwireHeaderTitleRename() {
     if (pencilEl && pencilEl.parentNode) pencilEl.parentNode.removeChild(pencilEl);
 }
 
-/* label: ' */
+/* the same words */
 function sessionDisplayName(sessionLike) {
     if (!sessionLike || typeof sessionLike !== 'object') return null;
     var row = {
@@ -127,11 +125,9 @@ class AppController {
     constructor() {
         this.currentScreen = null;
         this.logoutBtn = null;
-        //  hidden 
         this.settingsBtn = null;
         this.configEditorBtn = null;
         this.sessionNotesBtn = null;
-        this._healthPollerInterval = null;
     }
 
     _placeStatusLight(screen) {
@@ -156,8 +152,6 @@ class AppController {
         this.setupEventListeners();
 
         window.Auth.init();
-
-        this._startHealthPoller();
 
         if (window.Auth.isAuthenticated()) {
             console.log('App: User has token, verifying...');
@@ -205,36 +199,6 @@ class AppController {
             await window.Themes.init();
         } catch (e) {
             console.warn('App: Themes.init failed - registry will use fallback', e);
-        }
-    }
-
-    _startHealthPoller() {
-        if (this._healthPollerInterval) return;
-        this._healthPollerInterval = setInterval(() => this._pollHealth(), 15000);
-        this._pollHealth();
-    }
-
-    async _pollHealth() {
-        if (this.currentScreen === 'terminal') return;
-        const statusEl = document.getElementById('statusText');
-        if (!statusEl) return;
-        try {
-            const r = await fetch('/health', { method: 'GET', cache: 'no-store' });
-            let text;
-            if (r.ok) {
-                statusEl.className = 'status connected';
-                text = 'server OK';
-            } else {
-                statusEl.className = 'status error';
-                text = `server error · HTTP ${r.status}`;
-            }
-            statusEl.setAttribute('data-status', text);
-            statusEl.setAttribute('aria-label', text);
-        } catch (err) {
-            statusEl.className = 'status error';
-            const text = `server unreachable · ${err && err.message ? err.message : err}`;
-            statusEl.setAttribute('data-status', text);
-            statusEl.setAttribute('aria-label', text);
         }
     }
 
@@ -314,7 +278,7 @@ class AppController {
         }
     }
 
-    /*  hidden  */
+    /* on the terminal screen the current session */
     goHome() {
         if (this.currentScreen !== 'terminal') return;
         console.log('App: Home clicked, returning to launcher (session stays attached)');
@@ -332,7 +296,6 @@ class AppController {
         this.hideAllScreens();
         document.getElementById('auth-screen').classList.add('active');
         window.Auth.resolveEntry();
-        //  hidden 
         window.ScreenChrome.apply('auth');
         if (window.SessionSidebar) window.SessionSidebar.hide();
         this.currentScreen = 'auth';
@@ -358,11 +321,7 @@ class AppController {
         this.hideAllScreens();
         document.getElementById('launchpad-screen').classList.add('active');
         if (window.LaunchpadHost) window.LaunchpadHost.enter();
-        this.logoutBtn.classList.remove('hidden');
-        if (this.settingsBtn) this.settingsBtn.classList.remove('hidden');
-        if (this.configEditorBtn) this.configEditorBtn.classList.remove('hidden');
-        if (this.sessionNotesBtn) this.sessionNotesBtn.classList.remove('hidden');
-        //  hidden 
+        window.AppScreenEntry.revealAuthedChrome(this);
         if (window.SessionSidebar) {
             window.SessionSidebar.setActiveSession(null, null);
             window.SessionSidebar.show();
@@ -382,7 +341,7 @@ class AppController {
             window.Router.resetToLauncher();
         }
 
-        //  hidden 
+        // on the terminal screen
 
         if (!window.Launchpad.launchpadScreen) {
             window.Launchpad.init();
@@ -396,55 +355,13 @@ class AppController {
     async showTerminal(session, opts = {}) {
         console.log('App: Showing terminal screen');
         if (window.LaunchpadHost) window.LaunchpadHost.exit();
-        const nav = window.NavigationGeneration
-            ? window.NavigationGeneration.current() : null;
-        if (window.Router && typeof window.Router.clearError === 'function') {
-            window.Router.clearError(nav);
-        }
-        var cameFromTerminal = this.currentScreen === 'terminal';
-        this.hideAllScreens();
-        document.getElementById('terminal-screen').classList.add('active');
-        this.logoutBtn.classList.remove('hidden');
-        if (this.settingsBtn) this.settingsBtn.classList.remove('hidden');
-        if (this.configEditorBtn) this.configEditorBtn.classList.remove('hidden');
-        if (this.sessionNotesBtn) this.sessionNotesBtn.classList.remove('hidden');
-        this.currentScreen = 'terminal';
-        window.ScreenChrome.apply('terminal');
-        this._placeStatusLight('terminal');
-
-        var sessionName = (session && (session.tmux_session || session.name)) || null;
-        window.ThemeNavigation.applyForSession(session, sessionName);
-        this._syncSessionUrl(sessionName, cameFromTerminal);
-        if (window.SessionSidebar) {
-            window.SessionSidebar.show();
-            window.SessionSidebar.setActiveSession(session && session.id, sessionName);
-        }
-        var displayName = sessionDisplayName({ label: session && session.label,
-                                               name: sessionName });
-        setHeaderIdentity({
-            icon: 'cloude',
-            title: displayName || 'session'
-        });
-        setPageTitle({ label: session && session.label, name: sessionName });
-
-
-        if (!window.TerminalController.term) {
-            await window.TerminalController.init();
-        }
-
-
-        if (window.SlashCommandsBoot) {
-            window.SlashCommandsBoot.start(session && session.working_dir);
-        }
-
-        if (window.NavigationGeneration
-            && !window.NavigationGeneration.keep(nav, 'terminal connect')) return;
-        window.TerminalController.connectToSession(session, opts, { nav: nav });
-        this.focusTerminal();
+        await window.AppScreenEntry.enterTerminal(this, session, session,
+            'terminal connect', function (nav) {
+                window.TerminalController.connectToSession(session, opts, { nav: nav });
+            });
     }
 
     focusTerminal() {
-        // nothing at all
         setTimeout(() => {
             const input = document.querySelector('.xterm-helper-textarea');
             if (input) input.focus();
@@ -453,53 +370,11 @@ class AppController {
 
     async returnToExistingTerminal(session) {
         console.log('App: Returning to existing terminal', session && session.id);
-        const nav = window.NavigationGeneration
-            ? window.NavigationGeneration.current() : null;
-        if (window.Router && typeof window.Router.clearError === 'function') {
-            window.Router.clearError(nav);
-        }
-        var cameFromTerminal = this.currentScreen === 'terminal';
-        this.hideAllScreens();
-        document.getElementById('terminal-screen').classList.add('active');
-        this.logoutBtn.classList.remove('hidden');
-        if (this.settingsBtn) this.settingsBtn.classList.remove('hidden');
-        if (this.configEditorBtn) this.configEditorBtn.classList.remove('hidden');
-        if (this.sessionNotesBtn) this.sessionNotesBtn.classList.remove('hidden');
-        this.currentScreen = 'terminal';
-        window.ScreenChrome.apply('terminal');
-        this._placeStatusLight('terminal');
-
         var inner = (session && session.session) ? session.session : session;
-        var sessionName = (session && (session.tmux_session || session.name))
-            || (inner && (inner.tmux_session || inner.name))
-            || null;
-        window.ThemeNavigation.applyForSession(session, sessionName);
-        this._syncSessionUrl(sessionName, cameFromTerminal);
-        if (window.SessionSidebar) {
-            var activeSid = (inner && inner.id) || (session && session.id) || null;
-            window.SessionSidebar.show();
-            window.SessionSidebar.setActiveSession(activeSid, sessionName);
-        }
-        var reLabel = (session && session.label) || (inner && inner.label) || null;
-        var reDisplay = sessionDisplayName({ label: reLabel, name: sessionName });
-        setHeaderIdentity({
-            icon: 'cloude',
-            title: reDisplay || 'session'
-        });
-        setPageTitle({ label: reLabel, name: sessionName });
-
-
-        if (!window.TerminalController.term) {
-            await window.TerminalController.init();
-        }
-        if (window.SlashCommandsBoot) {
-            window.SlashCommandsBoot.start(session && session.working_dir);
-        }
-
-        if (window.NavigationGeneration
-            && !window.NavigationGeneration.keep(nav, 'terminal rejoin')) return;
-        window.TerminalController.reconnectToExistingSession(session, { nav: nav });
-        this.focusTerminal();
+        await window.AppScreenEntry.enterTerminal(this, session, inner,
+            'terminal rejoin', function (nav) {
+                window.TerminalController.reconnectToExistingSession(session, { nav: nav });
+            });
     }
 
     hideAllScreens() {
@@ -548,7 +423,7 @@ class AppController {
             const safeMessage = this._escapeHtml(message);
             const safeDetails = details ? this._escapeHtml(details) : null;
 
-            const headerHtml = `<div class="confirm-modal__head"><span class="confirm-modal__verb">${safeTitle}</span></div>`;
+            const headerHtml = `<div class="modal-titlerow"><span class="confirm-modal__verb">${safeTitle}</span></div>`;
 
             overlay.innerHTML = `
                 <div class="modal-content">

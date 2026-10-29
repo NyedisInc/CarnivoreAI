@@ -3,6 +3,8 @@ import * as S from './store';
 import { drawerController } from './controller-ref';
 import { readKey } from './storage';
 import { drawerEnv } from './env';
+import { refreshGroups } from '../sidebar-shell/interaction-globals';
+import { isDragging as rowDragging } from '../sidebar-shell/row-drag';
 
 export const FIELD = 'drawer_arrangement';
 export const PLACEHOLDER = '@';
@@ -59,9 +61,7 @@ interface SyncGlobals {
     AppEvents?: AppEventsApi;
     API?: unknown;
     CloudeI18n?: { t(key: string): string };
-    SessionSidebarRowDrag?: { isDragging?(): boolean };
     SessionSidebarSectionDrag?: { isDragging?(): boolean };
-    SessionSidebarGroupActions?: { refresh?(): unknown };
 }
 
 function g(): SyncGlobals {
@@ -256,9 +256,8 @@ function announce(key: string): void {
 }
 
 function dragging(): boolean {
-    const { SessionSidebarRowDrag: rows, SessionSidebarSectionDrag: sections } = g();
-    return !!((rows && typeof rows.isDragging === 'function' && rows.isDragging())
-        || (sections && typeof sections.isDragging === 'function' && sections.isDragging()));
+    const { SessionSidebarSectionDrag: sections } = g();
+    return rowDragging() || !!(sections && typeof sections.isDragging === 'function' && sections.isDragging());
 }
 
 function applyValue(value: SharedArrangement): void {
@@ -431,11 +430,6 @@ export async function hydrate(): Promise<void> {
     }
 }
 
-function refreshGroups(): void {
-    const actions = g().SessionSidebarGroupActions;
-    if (actions && typeof actions.refresh === 'function') actions.refresh();
-}
-
 export function noteRows(rows: readonly SyncRow[]): void {
     lastRows = Array.isArray(rows) ? rows.slice() as SyncRow[] : [];
     const api = prefs();
@@ -453,13 +447,13 @@ export function noteRows(rows: readonly SyncRow[]): void {
     Promise.resolve(api.hydrate(g().API)).then(followCommitted, (err: unknown) => {
         console.warn('[SessionSidebarSync] backstop re-read failed', (err as Error)?.message || err);
     });
-    refreshGroups();
+    void refreshGroups();
 }
 
 function onFrame(frame: unknown): void {
     if (!frame || typeof frame !== 'object') return;
     const f = frame as { type?: string; reason?: string };
-    if ((f.type === 'sessions.changed' && f.reason === 'groups') || f.type === 'events.hello') refreshGroups();
+    if ((f.type === 'sessions.changed' && f.reason === 'groups') || f.type === 'events.hello') void refreshGroups();
 }
 
 export function start(): void {

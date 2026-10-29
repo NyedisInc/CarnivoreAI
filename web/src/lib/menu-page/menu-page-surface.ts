@@ -1,4 +1,3 @@
-/* display: none position: fixed */
 
 export const SURFACE_MIN_WIDTH_PX = 1024;
 
@@ -38,7 +37,6 @@ export function findSurface(doc: Document, win: Pick<Window, 'innerWidth'>): HTM
     return null;
 }
 
-/* position: fixed */
 export function insetsOf(el: HTMLElement, win: Pick<Window, 'innerWidth' | 'innerHeight'>): SurfaceInsets {
     const box = el.getBoundingClientRect();
     const round = (n: number): number => Math.round(Math.max(0, n) * 100) / 100;

@@ -7,15 +7,19 @@ import re
 import stat
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, FrozenSet, Optional, Tuple
 
 import structlog
 
 from src.core.skill_fires.parse import HARNESS_CLAUDE, parse_claude_line
 from src.core.skill_watch.classify import classify_call
+from src.core.subagents.scan_inputs import AgentFilesSignature, agent_files_signature
 from src.core.timers.redact import redact
 
 logger = structlog.get_logger(__name__)
+
+SubsSeen = Tuple[AgentFilesSignature, Optional[str], Optional[str]]
 
 MAX_SPAN_BYTES = 4 * 1024 * 1024
 MAX_SPAN_LINES = 3000
@@ -145,6 +149,7 @@ class SpanState:
     cwd: Optional[str] = None
     sub_read: int = 0
     subs: Dict[str, Tuple[int, int]] = field(default_factory=dict)
+    subs_seen: Optional[SubsSeen] = None
 
     def __post_init__(self) -> None:
         self.pos = self.pos or self.offset
@@ -209,20 +214,36 @@ def _read_main(path: str, state: SpanState) -> bool:
     return True
 
 
+def _unchanged_files(files: AgentFilesSignature, state: SpanState) -> FrozenSet[str]:
+    prior = state.subs_seen
+    if files is None or prior is None or prior[1] != state.start_ts:
+        return frozenset()
+    before = dict(prior[0] or ())
+    return frozenset(name for name, times in files if times is not None and before.get(name) == times)
+
+
 def _read_subagents(path: str, state: SpanState) -> None:
     root = os.path.join(path[:-6] if path.endswith(".jsonl") else path, "subagents")
-    try:
-        names = sorted(n for n in os.listdir(root) if n.startswith("agent-") and n.endswith(".jsonl"))
-    except OSError:
+    listed = agent_files_signature(Path(root))
+    if listed is None:
         return
+    files = tuple(entry for entry in listed if entry[0].endswith(".jsonl"))
+    if state.subs_seen == (files, state.start_ts, state.end_ts):
+        return
+    names = [name for name, _ in files]
+    failed = set()
     start = _epoch(state.start_ts)
+    unchanged = _unchanged_files(files, state)
     for name in names[:MAX_SUBAGENT_FILES]:
         if state.sub_read >= MAX_SPAN_BYTES:
             break
+        if name in unchanged:
+            continue
         fpath = os.path.join(root, name)
         try:
             fd = os.open(fpath, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         except OSError:
+            failed.add(name)
             continue
         try:
             info = os.fstat(fd)
@@ -265,9 +286,12 @@ def _read_subagents(path: str, state: SpanState) -> None:
                                 state.facts.categories[category] = state.facts.categories.get(category, 0) + 1
             state.subs[fpath] = (info.st_ino, pos)
         except OSError as exc:
+            failed.add(name)
             logger.debug("skill_subagent_unreadable", error_type=type(exc).__name__)
         finally:
             os.close(fd)
+    kept = tuple(entry for entry in files if entry[0] not in failed)
+    state.subs_seen = (kept, state.start_ts, state.end_ts)
 
 
 def advance(path: str, state: SpanState) -> bool:

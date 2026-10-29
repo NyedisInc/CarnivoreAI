@@ -67,14 +67,14 @@ def _row_by_name(rows, name: str) -> dict:
 
 def test_an_asleep_rows_wire_payload_carries_its_project_name(conn):
     _persist(conn, "carnivore_bound", 8100)
-    pid = _add_project(conn, display_name="Quartzline", root="/tmp/quartzline")
+    pid = _add_project(conn, display_name="Riverbed", root="/tmp/riverbed")
     _bind(conn, name="carnivore_bound", project_id=pid)
     _sleep(conn, name="carnivore_bound")
 
     rows = list_sessions(conn)
     row = _row_by_name(rows, "carnivore_bound")
     assert row["project_id"] == pid
-    assert row["project_name"] == "Quartzline", (
+    assert row["project_name"] == "Riverbed", (
         "an asleep session's project name must reach the wire the same "
         "way its project_id already does - without it the sidebar files "
         "the row under 'unnamed project'"
@@ -82,7 +82,7 @@ def test_an_asleep_rows_wire_payload_carries_its_project_name(conn):
 
     payload = _session_record_payload(row)
     assert payload.project_id == pid
-    assert payload.project_name == "Quartzline"
+    assert payload.project_name == "Riverbed"
     assert payload.asleep is True
 
 

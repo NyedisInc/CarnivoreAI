@@ -1,37 +1,3 @@
-"""Creating the directory a managed account's login lives in, and nothing else.
-
-**THE REMOVAL RE-DERIVES ITS TARGET; IT NEVER DELETES A STORED STRING.**
-The only input is the validated slug, the path comes from
-:func:`managed_dir_for`, and the same symlink ladder the creation runs is
-run again before anything is removed. A stored pointer, which a
-hand-edited ``config.json`` can spell anything at all, is never the thing
-handed to ``rmtree``.
-
-**AND NO LEVEL OF IT MAY BE A SYMLINK.** ``mkdir`` follows one and
-``chmod`` narrows what it points AT, so a ``~/.carnivore`` that is a link
-into a directory somebody else owns would have this app create a
-credential store outside the root it thinks it owns and set that other
-directory to 0700 on the way past. Measured: with ``~/.carnivore`` linked
-to a 0755 scratch directory, the scratch directory came back 0700 with
-``accounts/claude1`` inside it. So every level is checked BEFORE anything
-is created, the refusal is the ordinary :class:`ManagedProfileError` the
-route already answers 409 for, and :func:`is_managed_path` is then the
-after-the-fact assertion that the leaf really did land under the root.
-
-**THE MODE IS VERIFIED, NOT ASSUMED.** ``Path.mkdir(mode=...)`` is
-masked by the process umask, and ``parents=True`` creates the
-intermediate directories with the default mode and ignores ``mode``
-entirely. So every level is chmod'ed after the fact when it is wider
-than 0700. A permissive umask must not be able to leave a credential
-store world readable.
-
-**THE PATH ITSELF IS DERIVED IN THE CONFIG PACKAGE**
-(:func:`src.config.provider_accounts.managed_dir_for`), not here, and it
-is re-exported below so a caller needs one import. The derivation has to
-live there because :func:`~src.config.provider_accounts.profile_dir_for`
-answers the same string for the reader, the login and the keychain
-lookup, and ``src/config`` may not import ``src/core``.
-"""
 
 from __future__ import annotations
 
@@ -67,8 +33,7 @@ MANAGED_DIR_MODE = 0o700
 
 
 class ManagedProfileError(Exception):
-    """A managed profile directory could not be created or secured.
-    """
+    pass
 
 
 def _refuse_a_symlink(path: Path) -> None:
@@ -81,44 +46,12 @@ def _refuse_a_symlink(path: Path) -> None:
 
 
 def _hold_at_mode(path: Path) -> None:
-    """Narrow one directory to 0700 when it is wider than that.
-
-    Description: called on every level, because ``mkdir(parents=True)``
-      ignores ``mode`` for the parents it creates and the process umask
-      masks it for the leaf. Only narrows, and only when it has to, so a
-      directory already at 0700 is not chmod'ed on every login.
-    Inputs: path (Path) - a directory that exists.
-    Output: None.
-    Raises: OSError - the mode could not be read or changed.
-    Example: _hold_at_mode(Path.home() / ".carnivore")
-    """
     current = stat.S_IMODE(path.stat().st_mode)
     if current & 0o077:
         path.chmod(MANAGED_DIR_MODE)
 
 
 def ensure_managed_dir(account_id: str) -> str:
-    """Create this account's profile directory at 0700, idempotently.
-
-    Description: creates ``~/.carnivore``, ``~/.carnivore/accounts`` and
-      the account's own directory, and holds all three at 0700. Calling
-      it twice creates nothing the second time and writes nothing inside
-      the directory, so an existing login is untouched.
-
-      **THE CALLER MUST RUN THIS BEFORE IT SPAWNS ANYTHING.** Codex does
-      not create ``CODEX_HOME`` for you: its own documentation says the
-      directory has to exist already. A build that spawned first would
-      produce a login that fails for a reason nobody would look for.
-    Inputs: account_id (str) - the account's own id, the validated slug.
-    Output: str - the absolute path, the same string
-      :func:`managed_dir_for` answers.
-    Raises:
-      ValueError: the id is not the validated slug shape.
-      ManagedProfileError: a level of the tree is a symbolic link, the
-        directory could not be created, its mode could not be held, or
-        the leaf did not land under the managed root.
-    Example: ensure_managed_dir("claude1")
-    """
     path = Path(managed_dir_for(account_id))
     _refuse_a_symlink(path.parent.parent)
     _refuse_a_symlink(path.parent)

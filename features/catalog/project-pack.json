@@ -9,6 +9,7 @@
     "docs/mcp-server.md"
   ],
   "examples": [
+    "An old hidden project holds 1.4 GB of source and dependencies in 6,000 files; packing leaves one archive of about 0.4 GB plus a manifest and a README in the same folder.",
     "Months later the project comes back: unpack folder checks the archive's checksum, restores every file, and moves the archive to the Trash."
   ],
   "how_to": [

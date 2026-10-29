@@ -9,7 +9,6 @@ function sessionLink(a) {
   return `session/${encodeURIComponent(a.tmuxName || a.sessionId)}`;
 }
 
-/* nothing opened */
 async function openTerminal(ctx, row) {
   let result;
   try {

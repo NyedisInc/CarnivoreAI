@@ -23,7 +23,9 @@ AWS_ACCESS_KEY_ID = re.compile(
 
 AWS_SECRET_ACCESS_KEY = re.compile(
     r"""(?ix)
-    aws[A-Za-z0-9_.\-]{0,64}(?:secret|access)[A-Za-z0-9_.\-]{0,64}
+    (?<![A-Za-z0-9_.\-])
+    (?=[A-Za-z0-9_.\-]*?aws)
+    (?P<name>[A-Za-z0-9_.\-]+)
     [^\w\r\n]{0,8}? [:=] [^\w\r\n]{0,8}?
     (?P<value>[A-Za-z0-9/+=]{40,%d})
     """ % (40 + BODY_MARGIN)
@@ -81,9 +83,22 @@ BEARER_TOKEN = re.compile(
     r"(?i:bearer)[ \t]+(?P<value>[A-Za-z0-9._~+/\-]{20,%d}=*)" % (512 + BODY_MARGIN)
 )
 
-JWT = re.compile(
-    r"(?P<value>eyJ[A-Za-z0-9_\-]{8,}\.eyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,})"
+_JWT_CHAR = r"[A-Za-z0-9_\-]"
+_JWT_HEADER_START = r"eyJ" + _JWT_CHAR + r"{8}"
+_JWT_PART_CHAR = r"(?:(?![\-_]" + _JWT_HEADER_START + r")" + _JWT_CHAR + r")"
+_P = _JWT_PART_CHAR
+_C = _JWT_CHAR
+_JWT_TEMPERED = (
+    r"eyJ" + _P + r"{8,}\." + _P + r"*\." + _P + r"{8,}\." + _P + r"*\." + _P + r"{8,}"
+    r"|(?:eyJ" + _P + r"{8,}\.){2,}" + _P + r"{8,}"
 )
+_JWT_PLAIN_JWS = r"(?(run)eyJ" + _C + r"{8,}\.eyJ" + _C + r"{8,}\." + _C + r"{8,}|(?!))"
+JWT_SOURCE = (
+    r"(?:(?<!" + _C + r")(?P<run>)|(?<=[\-_])(?=" + _JWT_HEADER_START + r"))"
+    r"(?:(?!" + _JWT_HEADER_START + r")" + _C + r")*"
+    r"(?P<value>" + _JWT_TEMPERED + r"|" + _JWT_PLAIN_JWS + r")"
+)
+JWT = re.compile(JWT_SOURCE)
 
 VENDOR_MARKER_RE = re.compile(
     r"ops_|gh[pousr]_|github_"

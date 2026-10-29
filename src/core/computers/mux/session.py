@@ -190,7 +190,6 @@ class MuxSession:
         await self.closed.wait()
 
     async def wait_closed(self) -> None:
-        """Block until the session is gone."""
         await self.closed.wait()
 
     def _control(self, ftype: int, sid: int, payload: bytes = b"") -> None:
@@ -303,7 +302,6 @@ class MuxSession:
             raise
 
     async def _keepalive(self) -> None:
-        """PING on an interval; close when nothing at all arrived within the idle timeout."""
         while True:
             await asyncio.sleep(self._ping_interval)
             if time.monotonic() - self._last_rx > self._idle_timeout:

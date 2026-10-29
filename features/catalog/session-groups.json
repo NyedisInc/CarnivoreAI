@@ -8,7 +8,7 @@
     "docs/icon-picker.md"
   ],
   "examples": [
-    "Keep a ashfield group and a backend group so a glance at the drawer tells you which side each agent is on.",
+    "Keep a frontend group and a backend group so a glance at the drawer tells you which side each agent is on.",
     "Pin the one session you check most often so it never scrolls away."
   ],
   "how_to": [
@@ -29,16 +29,41 @@
     "pin",
     "sidebar"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The add to choices opened from a session's row menu, with Group opening the list of groups",
+      "caption": "Moving a session into a group",
+      "file": "move.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "Clicking the pin mark on the last row moves it to a pinned band at the top",
+      "caption": "Pinning a session keeps it at the top of the drawer",
+      "file": "pin.gif",
+      "kind": "gif"
+    },
+    {
+      "alt": "The web-client row is dragged by its grip to the top of the terminals band",
+      "caption": "Dragging a row to reorder it",
+      "file": "drag.gif",
+      "kind": "gif"
+    },
+    {
+      "alt": "the research group heading with a small flask icon between its chevron and its name, in the group's red",
+      "caption": "A group wearing an icon, in the group's own color",
+      "file": "icon.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Session groups",
   "since": "2026-08-25",
   "status": "stable",
   "summary": "organize sessions into named groups in the sidebar, with pins, colors and icons that stick.",
   "surfaces": [
-    "client/js/session-sidebar-groups.js",
+    "web/src/lib/drawer/layouts-row-html.ts",
     "web/src/lib/drawer/group-store.ts",
-    "client/js/session-sidebar-group-colour.js",
-    "client/js/session-sidebar-group-icon.js",
+    "web/src/lib/drawer/group-color.ts",
+    "web/src/lib/drawer/group-icon.ts",
     "web/src/lib/item-menu/ItemMenuHost.svelte",
     "web/src/lib/sidebar-shell/HeadingRenameEditor.svelte"
   ],
@@ -47,6 +72,5 @@
     "The agents drawer: groups are the named bands above the ungrouped sessions.",
     "Move a session into one with its row menu, add to, then group.",
     "A group's icon: its heading menu (the three dots), icon."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

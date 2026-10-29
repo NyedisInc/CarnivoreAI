@@ -1,16 +1,3 @@
-"""The bookmark store: its own small SQLite file, ``bookmarks.db`` in the state directory.
-
-``cloude.db`` takes no schema change for this feature. A bookmark names a point in ONE Claude
-conversation (``claude_session_uuid`` plus the record's ``entry_uuid``) and belongs to the session
-row it was taken on (``session_uuid``, the durable row id). Because it keeps the conversation it
-points into, a bookmark taken before a rewind still works after it: the original transcript is
-on disk, so branching from (or rewinding to) a later bookmark is the way back.
-
-Every write names the keyed push topic ``bookmarks:<sessions.id>`` so an open panel re-reads (keyed on
-the row id because that is what the live listing hands a browser: ``session_row_id``), and the global key
-``bookmarks:*`` (:data:`ALL_KEY`) so the all-sessions list re-reads. Add and delete are the only writes to the
-table: a branch or a rewind opens a session and moves a conversation but leaves every bookmark as it was.
-"""
 
 from __future__ import annotations
 
@@ -28,7 +15,6 @@ from src.core.trail_entry import utc_now
 
 logger = structlog.get_logger()
 
-# state directory
 DB_FILENAME = "bookmarks.db"
 CREATED_BY = ("owner", "claude")
 MAX_LABEL_CHARS = 200

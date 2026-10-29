@@ -45,8 +45,10 @@ export function addDashboard(duplicate: boolean): Promise<boolean> {
   );
 }
 
+/* the home screen */
 export function makeHome(id: string): Promise<boolean> {
   const name = dashboardName(id);
+  // the home screen
   changeBoard(() => true);
   return run(() => activateDashboard(id), t('dashboards.announce_activated', { name }));
 }
@@ -72,11 +74,13 @@ export async function downloadDashboard(id: string): Promise<void> {
   }
 }
 
+/* the home screen */
 export function showDashboard(id: string): void {
   void viewBoard(id === homeBoards.active ? null : id);
   void openHome();
 }
 
+/* the home screen */
 export function openDashboard(id: string, editing: boolean): void {
   if (openDashboardPopout(id, window, editing) === null) dashboardsUi.notice = t('dashboards.popup_blocked');
 }

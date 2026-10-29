@@ -37,7 +37,6 @@ def reconcile_existing(
 ) -> RecordResult:
     from src.core.session_identity import RecordResult
 
-    # could not
     stored_session_id = existing.get("tmux_session_id")
     if (
         incoming_session_id is not None

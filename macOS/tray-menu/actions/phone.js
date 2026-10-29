@@ -7,7 +7,7 @@ async function changeBind(ctx, ip) {
   const tray = ctx.getTray();
   if (tray) tray.setToolTip(`Carnivore: restarting on ${ip}...`);
   try {
-    await ctx.serverManager.setBindHost(ip);
+    await ctx.serverManager.setBindHost(ip, { api: ctx.data.api() });
   } catch (err) {
     console.error('[bind-host] change failed:', err);
     ctx.dialog.showErrorBox('Bind IP change failed',

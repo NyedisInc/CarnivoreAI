@@ -22,7 +22,7 @@ PANE = AgentCaller("ses_a", "cloude_a", "ses_a")
 ASLEEP = "aaaaaaaa-1111-4111-8111-111111111111"
 TWIN_1 = "bbbbbbbb-2222-4222-8222-222222222222"
 TWIN_2 = "cccccccc-3333-4333-8333-333333333333"
-ORPHAN = "2c1d6510-966a-4ef2-8a91-bb3f0dc3b2dd"
+ORPHAN = "12d67d84-9428-4105-90d0-12b01f2d8670"
 
 
 def _info(name: str) -> SimpleNamespace:

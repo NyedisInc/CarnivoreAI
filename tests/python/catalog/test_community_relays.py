@@ -24,7 +24,7 @@ import pytest
 from src.core.catalog.token_store import CatalogSession, open_token_store
 from tests.helpers.hosted_routes_app import hosted_proxy_app
 
-ITEM = "/catalog/items/acme/sme"
+ITEM = "/catalog/items/harbor666/sme"
 CID = "1750000000000abcdef"
 
 COMMENT = {
@@ -57,7 +57,7 @@ WRITES = [
     ("post", ITEM + "/comments", {"body": "hi"}),
     ("put", f"{ITEM}/comments/{CID}", {"body": "hi"}),
     ("delete", f"{ITEM}/comments/{CID}", None),
-    ("post", "/catalog/reports", {"kind": "comment", "item_id": "acme/sme",
+    ("post", "/catalog/reports", {"kind": "comment", "item_id": "harbor666/sme",
                                    "comment_id": CID, "reason": "spam"}),
     ("put", "/catalog/me/profile", {"bio": "x"}),
     ("put", "/catalog/me/mail-preference", {"notify_replies": False}),
@@ -108,7 +108,7 @@ def test_reading_your_own_comments_needs_a_sign_in(tmp_path):
         assert app.sent[0].headers["authorization"] == "Bearer ACCESS-SECRET"
 
 
-def test_a_registration_check_403_passes_through_with_its_code(tmp_path):
+def test_a_registration_gate_403_passes_through_with_its_code(tmp_path):
     gate = {"code": "handle_required", "detail": "choose a handle first"}
     with hosted_proxy_app(tmp_path, responder=responder(403, gate)) as app:
         sign_in(app.state)
@@ -177,4 +177,4 @@ def test_a_traversal_segment_never_reaches_the_host(tmp_path):
 def test_the_routes_are_registered_in_the_aggregator(tmp_path):
     with hosted_proxy_app(tmp_path, responder=responder(), include_aggregator=True) as app:
         assert app.client.get(ITEM + "/comments").status_code == 200
-        assert app.paths() == ["/api/v1/items/acme/sme/comments"]
+        assert app.paths() == ["/api/v1/items/harbor666/sme/comments"]

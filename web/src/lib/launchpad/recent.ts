@@ -57,7 +57,6 @@ export interface RestartPlan {
     mustExplain: boolean;
 }
 
-/* could not */
 const UNAVAILABLE_STATES = ['probe_unavailable', 'never_probed'];
 
 export function stateOf(payload: RecentSessionsPayload | null | undefined): string {
@@ -82,7 +81,6 @@ export function restartPlan(opts: Partial<RestartOptions> | null | undefined): R
     return { mode: 'create_unidentified', sessionUuid: '', payload, mustExplain: true };
 }
 
-/* could not */
 export function describeRow(
     row: RecentSessionRecord,
     deriveName: (tmuxName: string) => string | null,
@@ -116,7 +114,6 @@ export function describeRow(
     };
 }
 
-/* running sessions */
 export function recentView(
     payload: RecentSessionsPayload | null | undefined,
     live: readonly LiveSession[] | null | undefined,
@@ -146,7 +143,6 @@ export function recentView(
     return { kind: 'rows', count, rows: rows.map((r) => describeRow(r, deriveName, t)) };
 }
 
-/* could not */
 export function isUnavailableState(state: string): boolean {
     return UNAVAILABLE_STATES.includes(state);
 }

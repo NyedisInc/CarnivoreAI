@@ -1,8 +1,13 @@
 
+tests/test_route_auth_inventory.py
+tests/test_setup_wizard_exposure.py
 tests/test_host_guard.py
 tests/test_totp_rate_limit.py
+tests/test_secret_detectors.py
+tests/test_secret_escape_boundary.py
 tests/test_stream_redactor.py
 tests/test_message_model_secrets.py
+tests/test_no_remote_assets.py
 tests/test_catalog_verify.py
 tests/test_provider_ledger_refresh_poke.py
 
@@ -14,14 +19,20 @@ tests/test_config_migration_v4.py
 tests/test_config_migration_v5.py
 tests/test_migration_trail.py
 tests/test_db_integrity_verdict.py
+tests/test_jsonl_shape_fixtures.py
 
 tests/test_hook_tokens.py
+tests/test_hook_token_authority.py
 tests/test_adopt_rekey_stored_id.py
 tests/test_adoption_three_outcomes.py
 tests/test_session_respawn_plan.py
 tests/test_session_project_binding.py
 tests/test_tmux_socket_isolation.py
+tests/test_tmux_socket_resolution.py
 
+tests/test_attention_resolve.py
 tests/test_codex_reader.py
+tests/test_status_model_chart_drift.py
+tests/test_session_status.py
 
 tests/test_no_unresolved_names.py

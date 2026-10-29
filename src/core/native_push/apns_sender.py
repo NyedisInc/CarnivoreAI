@@ -23,7 +23,6 @@ logger = structlog.get_logger()
 
 COALESCE_SECONDS = 10.0
 _COALESCE_KEYS_MAX = 2048
-# could not
 STATUS_NO_ANSWER = 0
 STATUS_NOT_SIGNED_IN = 403
 STATUS_INVALID = 422
@@ -67,13 +66,6 @@ class ApnsSender:
         return decoded if len(decoded) == payload_crypto.KEY_BYTES else None
 
     async def send_typed(self, row_id: str, type_id: str, payload: Dict[str, str], instance: str = "") -> Optional[int]:
-        """Push one typed ``{title, body, path}`` to ONE native device.
-
-        Output: None when the device is unknown; 200 on delivery or when coalesced; 410 when the relay says the
-        device is unregistered (the row and key are deleted); 0 when the relay could not be reached; 403 when no
-        account bearer is available; 422 when the key is missing or the payload cannot be sealed; else the relay's status.
-        Example: ``await sender.send_typed("d_0123456789ab", "session.finished", {...}, "session-1")``.
-        """
         row = next((r for r in await asyncio.to_thread(self._store.list) if r["id"] == row_id), None)
         if row is None:
             return None

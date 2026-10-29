@@ -18,6 +18,7 @@ const REPO = path.resolve(process.cwd(), '..');
 const win = globalThis as unknown as Record<string, unknown>;
 const mounted: ReturnType<typeof mount>[] = [];
 
+/** The drawer's <aside>, exactly as shipped. */
 function drawerMarkup(): string {
   const source = fs.readFileSync(path.join(REPO, 'client', 'index.html'), 'utf8');
   const start = source.indexOf('<aside id="session-sidebar-panel"');
@@ -46,7 +47,9 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
+/** Mount the bar and open the view menu. */
 function openMenu(): void {
+  // The view menu as the sidebar draws it: the top bar's controls (issue #1774), not the retired tab strip.
   const target = document.createElement('div');
   document.getElementById('session-sidebar-panel')!.append(target);
   mounted.push(mount(SidebarControls, { target }));

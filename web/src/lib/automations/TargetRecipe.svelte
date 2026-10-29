@@ -4,7 +4,7 @@
   import { t } from '../i18n/index.svelte';
   import Field from '../base/Field.svelte';
   import Select from '../base/Select.svelte';
-  import { codeLabel } from './format';
+  import { codeWords } from './logic/words';
 
   let { target = $bindable(), targets }: { target: AutomationTarget; targets: Targets } = $props();
   const recipes = $derived(targets.recipes);
@@ -36,14 +36,14 @@
         {#if reports.length}
           <optgroup label={t('automations.recipe.group_reports')}>
             {#each reports as recipe (recipe.recipe)}
-              <option value={recipe.recipe}>{codeLabel('automations.recipe', `${recipe.recipe}.label`)}</option>
+              <option value={recipe.recipe}>{codeWords('automations.recipe', `${recipe.recipe}.label`)}</option>
             {/each}
           </optgroup>
         {/if}
         {#if actions.length}
           <optgroup label={t('automations.recipe.group_actions')}>
             {#each actions as recipe (recipe.recipe)}
-              <option value={recipe.recipe}>{codeLabel('automations.recipe', `${recipe.recipe}.label`)}</option>
+              <option value={recipe.recipe}>{codeWords('automations.recipe', `${recipe.recipe}.label`)}</option>
             {/each}
           </optgroup>
         {/if}
@@ -53,7 +53,7 @@
   {#each fields as [key, spec] (key)}
     <div class="auto-fld">
       <Field
-        label={codeLabel('automations.param', key)}
+        label={codeWords('automations.param', key)}
         type={spec.type === 'string' ? 'text' : 'number'}
         data-recipe-param={key}
         min={spec.minimum}
@@ -65,4 +65,4 @@
     </div>
   {/each}
 </div>
-{#if current}<p class="auto-form__note">{codeLabel('automations.recipe', `${current.recipe}.description`)}</p>{/if}
+{#if current}<p class="auto-form__note">{codeWords('automations.recipe', `${current.recipe}.description`)}</p>{/if}

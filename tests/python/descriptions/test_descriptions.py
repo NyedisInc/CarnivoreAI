@@ -104,9 +104,9 @@ def _live(row_id, name, project_id, status="working"):
 @pytest.fixture()
 def family(world):  # noqa: F811
     with closing(connect(world.db)) as conn:
-        initech = companies.create_company(conn, "INITECH")["id"]
-        subco = companies.create_company(conn, "Brightfund", parent_id=initech)["id"]
-        companies.assign_project(conn, world.ids["alpha"], subco)
+        imc = companies.create_company(conn, "IMC")["id"]
+        ami = companies.create_company(conn, "Amerifund", parent_id=imc)["id"]
+        companies.assign_project(conn, world.ids["alpha"], ami)
         conn.execute("UPDATE projects SET short_description = 'the loan app' WHERE id = ?", (world.ids["alpha"],))
         conn.execute("UPDATE projects SET archived_at = 'x' WHERE id = ?", (world.ids["beta"],))
         live = _session(conn, U_LIVE, "cloude_a", world.ids["alpha"])
@@ -118,7 +118,7 @@ def family(world):  # noqa: F811
         conn.execute("UPDATE sessions SET short_description = 'naps' WHERE session_uuid = ?", (U_NAP,))
         conn.commit()
         ctx = roster.read_context(conn)
-    return SimpleNamespace(ctx=ctx, infos=[_live(live, "cloude_a", world.ids["alpha"])], initech=initech, subco=subco,
+    return SimpleNamespace(ctx=ctx, infos=[_live(live, "cloude_a", world.ids["alpha"])], imc=imc, ami=ami,
                            world=world)
 
 
@@ -149,15 +149,15 @@ def test_roster_family_lineage_and_filters(family):
     every = {e["tmux_name"]: e for e in roster.build_roster(family.ctx, family.infos, scope="all")["sessions"]}
     fam = every["cloude_a"]["family"]
     assert fam["project"]["name"] == "alpha" and fam["project"]["short_description"] == "the loan app"
-    assert fam["company"] == {"id": family.subco, "name": "Brightfund"}
-    assert fam["parent_companies"] == [{"id": family.initech, "name": "INITECH"}]
+    assert fam["company"] == {"id": family.ami, "name": "Amerifund"}
+    assert fam["parent_companies"] == [{"id": family.imc, "name": "IMC"}]
     run = lambda **kw: _names(roster.build_roster(family.ctx, family.infos, scope="all", **kw))  # noqa: E731
     assert run(has_description="short") == ["cloude_a", "cloude_nap"]
     assert run(has_description="long") == ["cloude_a"]
     assert run(has_description="none") == ["cloude_gone", "cloude_shelf"]
     assert run(has_description="missing") == ["cloude_gone", "cloude_nap", "cloude_shelf"]
-    assert run(company="initech") == ["cloude_a", "cloude_gone", "cloude_nap"]
-    assert run(company=str(family.subco)) == run(company="INITECH")
+    assert run(company="imc") == ["cloude_a", "cloude_gone", "cloude_nap"]
+    assert run(company=str(family.ami)) == run(company="IMC")
     assert run(project="beta") == ["cloude_shelf"]
 
 
@@ -181,7 +181,7 @@ def test_roster_route_and_mcp_adapter(client, family, monkeypatch):  # noqa: F81
             return []
 
     client.app.state.session_manager = Manager()
-    answer = client.get("/api/v1/sessions/roster", params={"scope": "around", "company": "INITECH"}).json()
+    answer = client.get("/api/v1/sessions/roster", params={"scope": "around", "company": "IMC"}).json()
     assert _names(answer) == ["cloude_a", "cloude_nap"]
     assert client.get("/api/v1/sessions/roster", params={"has_description": "maybe"}).status_code == 400
 
@@ -196,7 +196,7 @@ def test_roster_route_and_mcp_adapter(client, family, monkeypatch):  # noqa: F81
     assert "session_description_set" not in tools._UNGATED_WRITES
     import json
 
-    via_mcp = asyncio.run(tools.call_tool(Manager(), pane, "sessions_roster", {"scope": "all", "company": family.initech}))
+    via_mcp = asyncio.run(tools.call_tool(Manager(), pane, "sessions_roster", {"scope": "all", "company": family.imc}))
     assert not via_mcp.get("isError"), via_mcp
     body = json.loads(via_mcp["content"][0]["text"])
     assert _names(body) == ["cloude_a", "cloude_gone", "cloude_nap"] and "deliberate" in body["note"]

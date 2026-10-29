@@ -1,4 +1,3 @@
-/* nothing at all */
 import type { DisposableLike, TermLike } from './types';
 
 export const REFRESH_THROTTLE_MS = 300;
@@ -43,6 +42,7 @@ export class TerminalListeners {
         this.#unlisten();
     }
 
+    /* at the same time */
     #watch(): void {
         if (this.#lifeSub || typeof this.#host.onTerminal !== 'function') return;
         try {

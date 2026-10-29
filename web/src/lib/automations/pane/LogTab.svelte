@@ -8,7 +8,8 @@
   import Segmented from '../../base/Segmented.svelte';
   import State from '../../base/State.svelte';
   import * as api from '../api';
-  import { logEventLabel, reasonLabel } from '../format';
+  import { logEventLabel } from '../format';
+import { reasonWords } from '../logic/words';
   import { pageClock } from '../page-store.svelte';
 
   type Props = { automation: api.Automation; run: { run_id: string; number: number } | null };
@@ -63,7 +64,7 @@
     {:else}
       <List label={t('automations.page.pane.log.title')} data-log-lines>
         {#each shown as line, i (`${line.ts}-${i}`)}
-          <ListRow wrap primary={logEventLabel(line)} secondary={line.reason ? reasonLabel(line.reason) : undefined} meta={stamp(line.ts)} />
+          <ListRow wrap primary={logEventLabel(line)} secondary={line.reason ? reasonWords(line.reason) : undefined} meta={stamp(line.ts)} />
         {/each}
       </List>
     {/if}

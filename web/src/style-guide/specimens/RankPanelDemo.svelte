@@ -4,17 +4,17 @@
 
   const fires = (value: string): RankRow['metric'] => ({ value, unit: 'fires' });
   const rows: RankRow[] = [
-    { id: 'a', name: 'ship-it', line: 'run first for every release request', icon: 'skill', metric: fires('141') },
-    { id: 'b', name: 'ui-polish', line: 'front end styling help for any screen change', icon: 'skill', metric: fires('88') },
-    { id: 'c', name: 'code-review', line: 'a careful review of the pending changes on the current branch', icon: 'skill', metric: fires('63') },
-    { id: 'd', name: 'branch-sync', line: 'keeping a feature branch current with the main line', icon: 'skill', metric: fires('27') },
-    { id: 'e', name: 'run-tests', line: 'the whole test suite on the main line', icon: 'skill', metric: null },
-    { id: 'f', name: 'triage', line: 'every open issue on this repo, sorted by area', icon: 'skill', metric: fires('5') },
+    { id: 'a', name: 'work', line: 'run first for every feature or fix build request', icon: 'skill', metric: fires('312') },
+    { id: 'b', name: 'design-engineer', line: 'front end design skills for any UI change', icon: 'skill', metric: fires('187') },
+    { id: 'c', name: 'security-review', line: 'a complete security review of the pending changes on the current branch', icon: 'skill', metric: fires('96') },
+    { id: 'd', name: 'merge-and-load', line: 'merging or pushing to trunk, the merge lock, machine load', icon: 'skill', metric: fires('54') },
+    { id: 'e', name: 'full-suite', line: 'the whole python test suite on origin master', icon: 'skill', metric: null },
+    { id: 'f', name: 'issues', line: 'every open github issue on this repo, classified', icon: 'skill', metric: fires('9') },
   ];
   const idle: RankRow[] = [
-    { id: 'g', name: 'branch-sync', line: 'keeping a feature branch current with the main line', icon: 'skill', metric: { value: '46', unit: 'days' } },
-    { id: 'h', name: 'run-tests', line: 'the whole test suite on the main line', icon: 'skill', metric: { value: '38', unit: 'days' } },
-    { id: 'i', name: 'triage', line: 'every open issue on this repo, sorted by area', icon: 'skill', metric: null },
+    { id: 'g', name: 'merge-and-load', line: 'merging or pushing to trunk, the merge lock, machine load', icon: 'skill', metric: { value: '74', unit: 'days' } },
+    { id: 'h', name: 'full-suite', line: 'the whole python test suite on origin master', icon: 'skill', metric: { value: '51', unit: 'days' } },
+    { id: 'i', name: 'issues', line: 'every open github issue on this repo, classified', icon: 'skill', metric: null },
   ];
   const notMeasured = t('opscenter.session.mark.not_measured');
 </script>

@@ -1,4 +1,4 @@
-<!-- nothing at all -->
+
 <script lang="ts">
     import HighlightTiles, { type HighlightTile } from '../../opscenter/ui/HighlightTiles.svelte';
     import type { Translate } from '../sessions/types';

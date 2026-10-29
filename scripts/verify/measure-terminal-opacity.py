@@ -37,16 +37,15 @@ Usage:
 """
 import argparse
 import io
-import json
-import math
 import os
-import subprocess
 import sys
-import time
-import urllib.request
+from typing import Any
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(HERE))
+
+sys.path.insert(0, HERE)
+from theme_harness import check_port, image_diff, run_theme_sweep  # noqa: E402
 SHOTS = os.path.join(HERE, ".terminal-opacity-shots")
 
 DEFAULT_THEMES = ["matrix", "corporate_v2", "codex"]
@@ -85,52 +84,30 @@ SAMPLE_JS = """
 """
 
 
-def wait_for_server(port, timeout=15):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        try:
-            with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=1) as resp:
-                if resp.status == 200:
-                    return
-        except OSError:
-            time.sleep(0.2)
-    raise RuntimeError(f"static server on port {port} never became ready")
+def region_diff(png_a: bytes, png_b: bytes, box: tuple[int, int, int, int]) -> dict:
+    return image_diff(png_a, png_b, box)
 
 
-def region_diff(png_a, png_b, box):
-    from PIL import Image, ImageChops
-    img_a = Image.open(io.BytesIO(png_a)).convert("RGB")
-    img_b = Image.open(io.BytesIO(png_b)).convert("RGB")
-    crop = (box["x"], box["y"], box["x"] + box["width"], box["y"] + box["height"])
-    ca, cb = img_a.crop(crop), img_b.crop(crop)
-    delta = ImageChops.difference(ca, cb)
-    bands = delta.split()
-    npx = ca.size[0] * ca.size[1]
-    mx = max(b.getextrema()[1] for b in bands)
-    mean = sum(sum(i * c for i, c in enumerate(b.histogram())) for b in bands) / (3.0 * npx)
-    return {"max": mx, "mean": round(mean, 3)}
-
-
-def pixel_at(png, x, y):
+def pixel_at(png: bytes, x: int, y: int) -> tuple[int, int, int]:
     from PIL import Image
     img = Image.open(io.BytesIO(png)).convert("RGB")
     return img.getpixel((x, y))
 
 
-def relative_luminance(rgb):
-    def chan(c):
+def relative_luminance(rgb: tuple[int, int, int]) -> float:
+    def chan(c: int) -> float:
         c = c / 255.0
         return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
     r, g, b = (chan(c) for c in rgb)
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 
-def contrast_ratio(rgb_a, rgb_b):
+def contrast_ratio(rgb_a: tuple[int, int, int], rgb_b: tuple[int, int, int]) -> float:
     la, lb = relative_luminance(rgb_a) + 0.05, relative_luminance(rgb_b) + 0.05
     return round(max(la, lb) / min(la, lb), 2)
 
 
-def parse_css_color(s):
+def parse_css_color(s: str | None) -> tuple[int, int, int] | None:
     if not s:
         return None
     s = s.strip()
@@ -142,7 +119,7 @@ def parse_css_color(s):
     return None
 
 
-def measure(page, base, theme):
+def measure(page: Any, base: str, theme: str) -> tuple[dict, bytes, bytes, bytes]:
     page.goto(base, wait_until="load", timeout=20000)
     assert page.evaluate("window.innerWidth") == 1280, "viewport did not take"
     page.wait_for_function("() => !!(window.Themes && window.Themes.init)", timeout=15000)
@@ -204,64 +181,27 @@ def measure(page, base, theme):
     }, shot_on, shot_off, shot_fallback
 
 
-def main():
+def measure_and_save(page: Any, base: str, theme: str) -> dict:
+    row, on, off, fb = measure(page, base, theme)
+    for suffix, data in (("on", on), ("off", off), ("fallback", fb)):
+        with open(os.path.join(SHOTS, f"{theme}_{suffix}.png"), "wb") as fh:
+            fh.write(data)
+    return row
+
+
+def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("themes", nargs="?", default="")
     ap.add_argument("--port", type=int, default=5058)
     args = ap.parse_args()
 
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        print("playwright not installed in this interpreter; pip install playwright "
-              "&& playwright install chromium in a scratch venv", file=sys.stderr)
+    if not check_port(args.port):
         return 2
-
-    unsafe = {5060, 5061, 6000, 6665, 6666, 6667, 6668, 6669, 6697}
-    if args.port in unsafe:
-        print(f"port {args.port} is on Chromium's restricted list; pick another", file=sys.stderr)
-        return 2
-
     themes = [t for t in args.themes.split(",") if t] or DEFAULT_THEMES
     os.makedirs(SHOTS, exist_ok=True)
-
-    server = subprocess.Popen(
-        [sys.executable, os.path.join(HERE, "_theme_effect_static_server.py"), str(args.port)],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    )
-    rows = []
-    try:
-        wait_for_server(args.port)
-        base = f"http://127.0.0.1:{args.port}/"
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch(
-                args=[
-                    "--force-color-profile=srgb",
-                    "--disable-lcd-text",
-                    "--hide-scrollbars",
-                    "--use-mock-keychain",
-                ]
-            )
-            for theme in themes:
-                ctx = browser.new_context(
-                    viewport={"width": 1280, "height": 800},
-                    device_scale_factor=1,
-                    reduced_motion="no-preference",
-                )
-                page = ctx.new_page()
-                try:
-                    row, on, off, fb = measure(page, base, theme)
-                    for suffix, data in (("on", on), ("off", off), ("fallback", fb)):
-                        with open(os.path.join(SHOTS, f"{theme}_{suffix}.png"), "wb") as fh:
-                            fh.write(data)
-                except Exception as exc:  # noqa: BLE001
-                    row = {"theme": theme, "error": f"{type(exc).__name__}: {exc}"}
-                rows.append(row)
-                print(json.dumps(row), flush=True)
-                ctx.close()
-            browser.close()
-    finally:
-        server.terminate()
+    rows = run_theme_sweep(themes, args.port, measure_and_save)
+    if rows is None:
+        return 2
 
     print(f"\nscreenshots: {SHOTS}", file=sys.stderr)
     bad = [r for r in rows if "error" in r]

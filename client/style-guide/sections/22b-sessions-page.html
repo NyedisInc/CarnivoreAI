@@ -1,4 +1,7 @@
 <h2 class="sg-h2">sessions page</h2>
+<p class="sg-lead">One page for every agent session (claude and codex, never a shell), as a list, a pivot or a timeline. It wears the
+shared page frame (<code>Page.svelte</code>), the ledger chrome and the catalog bar. Epic #1784; the mockup is m1 r5, accepted by
+Alex (example-owner), 2026-10-14.</p>
 
 <h3 class="sg-h3" id="sessions-page-strip">title strip and filter bar</h3>
 <dl class="sg-facts">
@@ -18,6 +21,8 @@
         the view switch (<code>[data-view-switch]</code>, <code>ViewSwitch.svelte</code>: an icon-only base <code>Segmented</code>, list, pivot, timeline) and the live count <code>.sp-count</code> ("2 of 2") at the right end; pivot and timeline, which have no filter bar, draw the switch and count alone in a band <code>Toolbar</code> . A session row ends in <code>.sp-tail</code>: its action button and the drawer's session menu kebab (a right click on the row opens the same menu). The lens rail folds every inactive project under one inactive item (<code>[data-nested]</code> rows). Under 960px of bar the labels
         move into each select's "any" option (<code>.sp-bar--compact</code>).</dd>
     <dt>accent bar</dt>
+    <dd><code>.sp-sepbar</code>, 2px in <code>--oc-orange</code>, under the filter bar. The bar and "+ start" are two recorded
+        exceptions to the one-accent rule (Alex (example-owner), 2026-10-14, <code>docs/DECISIONS.md</code>).</dd>
     <dt>body</dt>
     <dd><code>.sp-body</code> holds the bar, the accent bar and <code>.sp-hosts</code>: one <code>.sp-host</code> per view, the
         list, pivot and timeline hosts, only the active one shown. The empty and loading line is the base <code>State</code> (loading or empty).</dd>
@@ -62,6 +67,9 @@
         started date, then the action button <code>[data-go]</code> (a base small <code>Button</code> in the action's color, always shown) with at least 16px clear of the date. No conversations column.
         The selection is one accent outline, <code>.sp-selbox</code>, that glides between rows (a transform, 120ms); a header sort or a
         listing change slides the rows that moved to their new places (FLIP, transform only, 200ms). Both stand still under reduced motion.</dd>
+    <dt>shared row parts</dt>
+    <dd><code>RowActionButton.svelte</code> is the one lead action button (<code>[data-go]</code>, a base <code>Button</code> with the open or wake icon and the action word) the list line, the side panel and the pivot chip all draw;
+        <code>ProjectChip.svelte</code> is the one project letter chip (<code>.sp-pchip</code>, tinted by the project's color) the line, the panel head, group headings and timeline project heads draw.</dd>
     <dt>closed sessions</dt>
     <dd><code>ClosedRows.svelte</code>: under a project's open sessions, a quiet bar (a base row <code>Button</code>, <code>[data-closed-head]</code>, a chevron, the word closed and the count) folds the project's closed
         sessions, open while the find box holds text; each is a session line (<code>.sp-row.sp-row--closed</code>, dimmed one step) with the transcript tag (on disk, or gone in
@@ -119,6 +127,12 @@
         conversations; hour and weekday are read in the viewer's time zone from the last time work happened. A tier or a time the
         data cannot place lands under "not measured" or "no data", never in a guessed bucket.</dd>
     <dt>axis bar</dt>
+    <dd><code>.sp-pv-axbar</code>: the rows and columns pickers reuse the filter bar's <code>.sp-g</code>, <code>.sp-gl</code>
+        and small base <code>Select</code>s, with swap (a small base <code>Button</code>, <code>[data-swap]</code>) between them and the
+        detail or compact switch in <code>.sp-seg</code>. An axis the data cannot answer is disabled and says why. The readout
+        (<code>.sp-pv-readout</code>) says the hovered chip's coordinates, the isolated slice, or the totals. Under it runs the
+        full-width accent bar (<code>.sp-sepbar</code>, Alex (example-owner)'s m1.13), the same one the list's bar wears; the filter
+        bar's own copy is dropped on this view so there is one.</dd>
     <dt>matrix</dt>
     <dd><code>.sp-pv-scroll</code> holds <code>.sp-pv-mx</code>, a grid whose corner (<code>.sp-pv-corner</code>), column heads
         (<code>.sp-pv-ch</code>) and row heads (<code>.sp-pv-rh</code>) stick on both axes. A head (a base row <code>Button</code>, <code>[data-hb]</code>) shows
@@ -146,6 +160,10 @@
 <h3 class="sg-h3" id="sessions-page-timeline">timeline view</h3>
 <dl class="sg-facts">
     <dt>shape</dt>
+    <dd><code>TimelineView.svelte</code> (<code>.sp-tl</code>): one lane per agent session on a time axis, never a shell, one trace per
+        session. The window bar (<code>.sp-tl-ctl</code>, with the base <code>Segmented</code> <code>.oc-segmented</code>: 1h, 6h, 24h, 7d) sits on top and
+        the full-width accent bar (<code>.sp-sepbar</code>, Alex (example-owner)'s m1.13) runs under it. The filter bar and the lens rail
+        belong to the list only; the find box narrows the lanes.</dd>
     <dt>readout and ruler</dt>
     <dd><code>.sp-tl-readout</code> says the moment (<code>.sp-tl-moment</code>), what the fleet was doing then
         (<code>.sp-tl-counts</code>) and the hovered or selected lane (<code>.sp-tl-detail</code>). The ruler
@@ -160,6 +178,7 @@
         and a finished turn; a moon (<code>.sp-tl-moon</code>) at the sleep moment is asleep; a tick (<code>.sp-tl-bk</code>) is a bookmark.
         A lane press opens the panel.</dd>
     <dt>project tool window</dt>
+    <dd><code>ProjectToolWindow.svelte</code> (<code>.pw</code>): the card the project menu's "project settings" and plugin panel items (closed reviews, crates) open, for a project of this computer only. One <code>popup-focus</code> card with a title strip (<code>.pw-title</code>, accent <code>.pw-label</code>, a small base <code>Button</code> close key, <code>[data-project-tool-close]</code>) over a scrolling body (<code>.pw-body</code>) that holds the Projects page's own transport block or panel rows; <code>.pw-tally</code> is the panel's count line. Escape, a press outside or the close key closes it.</dd>
     <dt>grouping and key</dt>
     <dd>Every section (needs you, running, asleep, the fold) groups its lanes under a project head (a base row <code>Button</code>, <code>[data-tl-grp]</code>), projects a to z,
         sessions a to z, no project last. A project with a chosen color draws ONE box (<code>.sp-tl-gbox[data-block]</code>) round its head and all its lanes, the list's block look; clicking the head folds the group to the head, which then wears the block alone. Its working bands (<code>.sp-tl-bd</code>) and finished line (<code>.sp-tl-wt</code>) take that color through <code>--tl-busy</code>; no color keeps green, and waiting, notice, dead and the moon keep their own colors. The key

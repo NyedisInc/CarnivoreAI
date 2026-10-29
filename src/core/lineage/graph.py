@@ -6,6 +6,7 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Sequence
 
+from src.core.db import after_commit
 from src.core.lineage import constants as K
 from src.core.session_timeline import push as timeline_push
 
@@ -56,7 +57,7 @@ def add_edge(conn: sqlite3.Connection, parent_type: str, parent_id: str, child_t
         conn.execute(f"INSERT INTO {K.EDGES_TABLE} (parent_type, parent_id, child_type, child_id, edge_kind, "
                      "link_basis, detail_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                      (*key, basis, json.dumps(detail or {}, sort_keys=True), created_at or now_iso()))
-        timeline_push.announce()
+        after_commit(conn, timeline_push.announce)
         return "added"
     outcome = "present"
     merged = _merged(row[1], detail)
@@ -67,7 +68,7 @@ def add_edge(conn: sqlite3.Connection, parent_type: str, parent_id: str, child_t
         conn.execute(f"UPDATE {K.EDGES_TABLE} SET link_basis = ? {where}", (basis, *key))
         outcome = "upgraded"
     if outcome != "present":
-        timeline_push.announce()
+        after_commit(conn, timeline_push.announce)
     return outcome
 
 

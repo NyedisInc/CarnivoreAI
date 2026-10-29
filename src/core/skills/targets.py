@@ -55,34 +55,6 @@ def copy_tree(
     exec_paths: frozenset[str] = frozenset(),
     skip_names: frozenset[str] = frozenset(),
 ) -> None:
-    """Copy a staged folder into a destination that must not yet exist.
-
-    Description: a REAL copy. Every directory lands at 0o700 and every
-      file at 0o644, neither taken from the source, EXCEPT the files named
-      in ``exec_paths``, which land at 0o755. ``symlinks=False`` would
-      make ``copytree`` follow a link; it never gets the chance, because
-      :func:`_refuse_symlinks` raises on the first one. Both are passed
-      because the filter is the guard and the flag is the backstop. On ANY
-      failure the partial destination is removed whole, so a refusal never
-      leaves a half-written folder a later pass could mistake for a
-      complete install.
-    Inputs: src (Path) - the verified staging directory. dst (Path) - the
-      install directory, which MUST NOT EXIST. exec_paths
-      (frozenset[str]) - keyword only, POSIX paths relative to ``src``
-      that are executable content the user consented to. DEFAULTS TO
-      EMPTY, so a caller makes a file executable by naming it and never
-      by forgetting to say otherwise. skip_names (frozenset[str]) - keyword
-      only, entry names left out of the copy when they sit directly in
-      ``src`` (the catalog install's sidecar); a symlink among them is
-      still refused first.
-    Output: None.
-    Raises:
-        FileExistsError: dst already exists. Merging into it would mean
-            merging with whatever a previous failed attempt left behind.
-        SymlinkInTree: the source tree contains a symlink.
-        OutsideTempWriteError: a test run aimed this at a real path.
-    Example: copy_tree(staging / "sme", claude_skills / "sme")
-    """
     assert_test_write_allowed(dst)
 
     def ignore(directory: str, names: list[str]) -> set[str]:
@@ -131,25 +103,6 @@ def ensure_trash_gitignore(trash_root: Path) -> None:
 
 
 def move_to_trash(target: Path, trash_root: Path, stamp: str) -> Path:
-    """Rename an existing folder out of a harness root into the trash.
-
-    Description: ``os.replace`` into ``<trash_root>/<name>-<stamp>``. The
-      trash is created 0o700 if it is absent. The destination must NOT
-      already exist: two displacements sharing a stamp would otherwise
-      have the second silently overwrite the first, and the thing being
-      overwritten is the user's own folder.
-    Inputs: target (Path) - the folder being displaced. trash_root (Path) -
-      from ``InstallRoots.trash_dir``. stamp (str) - a caller-supplied
-      uniquifier with no path separator in it.
-    Output: Path - where the folder now lives, so the caller can name it.
-    Raises:
-        ValueError: the stamp contains a path separator or a NUL, either
-            of which would aim the rename outside the trash root.
-        FileExistsError: the trash destination is already occupied.
-        TrashFolderIsLink: ``trash_root`` is a symlink (checked before any mkdir or chmod).
-        OutsideTempWriteError: a test run aimed this at a real path.
-    Example: move_to_trash(skills / "sme", trash, "20260915T101500")
-    """
     if "/" in stamp or "\\" in stamp or "\0" in stamp or not stamp.strip():
         raise ValueError(
             f"unusable trash stamp {stamp!r}: it is joined to a directory "

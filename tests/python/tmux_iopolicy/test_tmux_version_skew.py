@@ -21,7 +21,7 @@ def _bundled_tmux() -> Path:
     out = Path(os.environ.get("CARNIVORE_PAYLOAD_OUT") or cache / "out")
     candidates = [Path(env)] if env else []
     candidates += [out / "payload-arm64" / "bin" / "tmux", out / "payload-x86_64" / "bin" / "tmux",
-                   Path("/Users/example/worktrees/cloudecode/.payload-cache/x/tmux")]
+                   Path("/Users/alex/dev-worktrees/cloudecode/.payload-cache/x/tmux")]
     return next((c for c in candidates if c.is_file()), candidates[-1])
 
 

@@ -43,7 +43,7 @@ describe('the catalog resource', () => {
 
     store.hello({ resource_topics: ['catalog'] });
     await vi.advanceTimersByTimeAsync(0);
-    expect(listReads()).toBe(2);
+    expect(listReads()).toBe(2); // the resync read
     expect(poll.listPollers().map((p) => p.name)).not.toContain('catalog');
 
     await vi.advanceTimersByTimeAsync(10 * mod.CATALOG_POLL_MS);
@@ -55,7 +55,7 @@ describe('the catalog resource', () => {
 
     store.closed();
     await vi.advanceTimersByTimeAsync(mod.CATALOG_POLL_MS + 1);
-    expect(listReads()).toBeGreaterThanOrEqual(4);
+    expect(listReads()).toBeGreaterThanOrEqual(4); // down: the fallback poll is back
     mod.catalog.stop();
   });
 

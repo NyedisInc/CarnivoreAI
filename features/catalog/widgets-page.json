@@ -63,6 +63,12 @@
     "Menu tab, Widgets, all widgets.",
     "The #widgets link."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "alt": "The Widgets page: groups and fits on the left, the places podium above the widget cards, and the reading pane for the activity log widget on the right",
+      "caption": "The Widgets page with the activity log reading pane open",
+      "file": "widgets.png",
+      "kind": "screenshot"
+    }
+  ]
 }

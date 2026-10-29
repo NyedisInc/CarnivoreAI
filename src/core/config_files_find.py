@@ -33,21 +33,6 @@ def find(
     query: str,
     limit: int = FIND_LIMIT,
 ) -> tuple[list, bool]:
-    """
-    Description: every entry under one root (or one directory of it) whose
-      NAME contains ``query``, ignoring case, returned as a pruned tree: the
-      matches plus the folders on the way to them. A kept folder's
-      ``children`` holds only what leads to a match, so it says
-      ``children_loaded: False`` - it was not listed in full.
-    Inputs: root_id (str) - "user" or "workdir"; rel_path (str) - the
-      directory to search, relative to the root ("" for the root);
-      project_path (str|None); query (str); limit (int).
-    Output: (tree, truncated) - top-level node dicts, and whether a bound
-      stopped the search before it finished.
-    Raises: config_files.ConfigFileError - unknown root, a path the guard
-      refuses, a path that is not a directory, or an empty/overlong query.
-    Example: find("workdir", "", "/repo", "readme") -> ([{"name": "README.md", ...}], False)
-    """
     needle = (query or "").strip().lower()
     if not needle or len(needle) > MAX_QUERY_LEN:
         raise config_files.ConfigFileError("query must be 1 to 200 characters")

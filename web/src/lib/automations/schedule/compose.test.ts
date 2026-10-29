@@ -42,7 +42,7 @@ describe('pick <-> cron round trips', () => {
 });
 
 describe('the third tuesday', () => {
-  test('the team\'s example reads back as words and round-trips', () => {
+  test('Alex\'s example reads back as words and round-trips', () => {
     expect(cronToWords('0 17 * * 2#3')).toBe('the third tuesday of every month at 5:00 pm');
     expect(cronWords('0 17 * * 2#3').replace(/\s/g, ' ')).toBe('monthly, third tuesday at 5:00 PM');
     expect(parsePick('0 17 * * tue#3')).toMatchObject({ rep: 'nth', wd: 2, nth: 3, hour12: 5, ap: 'pm' });

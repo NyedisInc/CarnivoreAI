@@ -9,7 +9,7 @@ from src.cplugs.huddle.rules import TaskManagerInvalid
 
 KIND = blockers.CHILDREN
 FORK_ARG = "parent_waits"
-_NOT_FOR_A_HOLD = ("expect_by", "wait_check", "extend_reason")
+_NOT_FOR_A_HOLD = ("expect_by", "wait_check", "extend_reason", "wait_until")
 STOP_FIELD = "blocked"
 
 

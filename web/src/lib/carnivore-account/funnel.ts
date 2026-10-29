@@ -2,7 +2,7 @@ import { isAccountLoaded, isSignedIn, onAccountChange, refreshAccount } from './
 import { isGuestOk, type AccountFeature, type FunnelSource } from './features';
 
 export interface SignInRequest {
-    feature: AccountFeature;
+    feature: AccountFeature | null;
     src: FunnelSource;
 }
 
@@ -25,27 +25,43 @@ export function cancelPendingAccount(): void {
     told?.();
 }
 
+function runPending(): void {
+    const run = pending;
+    if (!run) return;
+    pending = null;
+    pendingCancelled = null;
+    run();
+}
+
 function onChange(): void {
     const now = isSignedIn();
     if (now && pending) {
-        const run = pending;
-        pending = null;
-        pendingCancelled = null;
-        run();
+        runPending();
     } else if (!now && wasSignedIn) {
         cancelPendingAccount();
     }
     wasSignedIn = now;
 }
 
+export async function settleSignIn(): Promise<void> {
+    try {
+        await refreshAccount();
+    } catch (error) {
+        console.warn('[account] could not read the account after sign in', error);
+    }
+    if (isSignedIn()) runPending();
+    else cancelPendingAccount();
+}
+
 export async function requireAccount(args: {
-    feature: AccountFeature;
+    feature: AccountFeature | null;
     src: FunnelSource;
     resume: () => void;
     cancelled?: () => void;
+    joins?: boolean;
 }): Promise<'resumed' | 'prompted'> {
     if (!isAccountLoaded()) await refreshAccount();
-    if (isSignedIn() || isGuestOk(args.feature)) {
+    if (isSignedIn() || (args.feature !== null && isGuestOk(args.feature))) {
         args.resume();
         return 'resumed';
     }
@@ -54,6 +70,12 @@ export async function requireAccount(args: {
         stopWatching = onAccountChange(onChange);
     }
     const alreadyOpen = pending !== null;
+    if (alreadyOpen && args.joins) {
+        const [held, heldCancelled] = [pending!, pendingCancelled];
+        pending = () => { held(); args.resume(); };
+        pendingCancelled = () => { heldCancelled?.(); args.cancelled?.(); };
+        return 'prompted';
+    }
     pendingCancelled?.();
     pendingCancelled = args.cancelled ?? null;
     pending = args.resume;

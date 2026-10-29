@@ -1,10 +1,9 @@
-/* CANNOT DETERMINE */
 import * as M from './group-membership';
+import { ruleOf, type GroupRule } from './group-rule';
 import { readKey, writeKey } from './storage';
 
 export const STATUS_UNKNOWN = 'unknown';
 export const STATUS_OK = 'ok';
-/* CANNOT DETERMINE */
 export const STATUS_UNAVAILABLE = 'unavailable';
 
 export const BAND_PINNED = 'pinned';
@@ -24,6 +23,7 @@ export interface SessionGroup {
     gradient: string | null;
     animation: string;
     icon: string | null;
+    rule: GroupRule | null;
 }
 
 export interface GroupState {
@@ -71,6 +71,7 @@ export function apply(body: unknown): GroupState {
             gradient: typeof g.gradient === 'string' ? g.gradient : null,
             animation: typeof g.animation === 'string' ? g.animation : 'none',
             icon: typeof g.icon === 'string' && g.icon ? g.icon : null,
+            rule: ruleOf(g.rule),
         }))
         .sort((x, y) => (x.position - y.position) || (x.group_uuid < y.group_uuid ? -1 : 1));
     M.rebuild(groups);
@@ -218,5 +219,8 @@ export function reset(): void {
 }
 
 export const setIdentities = M.setIdentities;
+export const setRuleContext = M.setRuleContext;
+export const countMatching = M.countMatching;
+export const subscribeRows = M.subscribeRows;
 export const uuidOfName = M.uuidOfName;
 export const memberRank = M.memberRank;

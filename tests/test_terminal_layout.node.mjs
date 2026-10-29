@@ -1,3 +1,6 @@
+// WHY THIS FILE EXISTS: the repo has no package.json / jest / mocha, so the
+// established pattern for testing client JS is a `vm`-sandboxed node script
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,10 +11,12 @@ import { installCloudeWeb, unrefTimer } from './helpers/cloude-web-sandbox.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/** Read one client JS module's source. Inputs: name (string). Output: string. */
 function readClientJs(name) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', 'js', name), 'utf8');
 }
 
+/** Read one client CSS file's source. Inputs: name (string). Output: string. */
 function readClientCss(name) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', 'css', name), 'utf8');
 }
@@ -43,10 +48,15 @@ let failures = 0;
 let passes = 0;
 const queue = [];
 
+/**
+ * Queue one named assertion block, run strictly in order by runQueue().
+ * Inputs: name (string), fn (function|async function). Output: void.
+ */
 function test(name, fn) {
     queue.push([name, fn]);
 }
 
+/** Run every queued test in order. Inputs: none. Output: Promise<void>. */
 async function runQueue() {
     for (const [name, fn] of queue) {
         try {
@@ -65,6 +75,9 @@ function settle(ms) {
     return new Promise((r) => setTimeout(r, ms));
 }
 
+// ---------------------------------------------------------------------------
+// Sandbox
+// ---------------------------------------------------------------------------
 
 function makeSandbox(options = {}) {
     const { width = 1200, withPin = false, stored = null } = options;
@@ -100,6 +113,11 @@ function makeSandbox(options = {}) {
         },
         lastSentCols: null,
         lastSentRows: null,
+        /**
+         * Stand-in for TerminalController#sendResize with the same dedup
+         * contract: one frame per distinct (cols, rows).
+         * Inputs: reason (string). Output: void.
+         */
         sendResize(reason) {
             const { cols, rows } = controller.term;
             if (cols === controller.lastSentCols && rows === controller.lastSentRows) return;
@@ -195,6 +213,8 @@ function setDocked(s, docked) {
     s.Pin.apply();
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('install observes #terminal and wires every resize source', () => {
     const s = makeSandbox();
@@ -239,6 +259,17 @@ test('requestFitAfterTransition ignores a transitionend for the wrong CSS proper
     assert.equal(s.wire.length, 1, 'the matching property must settle it');
 });
 
+test('requestFitAfterTransition still refits when no transitionend ever arrives (the fallback ceiling)', async () => {
+    const s = makeSandbox();
+    s.Layout.install(s.controller);
+    s.termEl.clientWidth = 640;
+    s.termEl.clientHeight = 480;
+    s.Layout.requestFitAfterTransition(s.termScreenEl, 'padding-left', 30, 'fallback-test');
+    await settle(30 + s.Layout.DEBOUNCE_MS + 60);
+    assert.equal(s.wire.length, 1, 'the fallback timer must settle a transition that never ends');
+    assert.equal(s.wire[0].reason, 'fallback-test');
+});
+
 test('a burst of layout events collapses to one fit and one pty_resize', async () => {
     const s = makeSandbox();
     s.Layout.install(s.controller);
@@ -266,6 +297,8 @@ test('a fit never scrolls the terminal - the scrollback race stays fixed', async
         'the resize pipeline must not contain a scroll command at all');
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 function modelFit(v) {
     const headerH = v.headerH ?? 58;
@@ -310,6 +343,8 @@ test('the header tool strip does not reduce terminal height', () => {
     assert.equal(overlaid.boxH, 844 - 58 - 16);
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('pinning the sidebar fits the terminal and sends the new size to tmux', async () => {
     const s = makeSandbox({ withPin: true, width: 390 });
@@ -339,6 +374,8 @@ test('pinning the sidebar fits the terminal and sends the new size to tmux', asy
     assert.ok(s.wire[s.wire.length - 1].cols > pinFrame.cols, 'cols must grow back');
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('docking measures the box in the same frame - nothing left to wait out', async () => {
     const s = makeSandbox({ withPin: true, width: 390 });
@@ -370,7 +407,7 @@ test('a rapid pin-then-unpin sends ZERO resizes - net state equals where it star
     await settle(400);
     const before = s.wire.length;
 
-    setDocked(s, true);
+    setDocked(s, true);   // docked
     setDocked(s, false);
     assert.equal(s.bodyClasses.has('session-sidebar-pinned'), false);
     s.termEl.clientWidth = 1170;
@@ -390,8 +427,8 @@ test('a rapid pin-unpin-pin (odd count) sends exactly ONE resize, for the final 
     const before = { cols: s.controller.term.cols, rows: s.controller.term.rows };
     const beforeWire = s.wire.length;
 
-    setDocked(s, true);
-    setDocked(s, false);
+    setDocked(s, true);   // docked
+    setDocked(s, false);  // undocked
     setDocked(s, true);
     assert.equal(s.bodyClasses.has('session-sidebar-pinned'), true);
     s.termEl.clientWidth = 850;
@@ -444,6 +481,8 @@ test('the pin does not refit on a phone, where it never docks', async () => {
         'and a re-evaluation that changes no layout must send nothing');
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('the app shell has a DEFINITE height, not min-height', () => {
     const body = ruleBody(readClientCss('styles.css'), 'body');
@@ -472,6 +511,7 @@ test('no CSS tooltip is left to overflow the terminal (issue #981)', () => {
     const css = readClientCss('styles.css');
     assert.equal(ruleBody(css, '.btn-icon[data-tooltip]::after'), '',
         'a CSS ::after tooltip shows instantly and beside the native one');
+    // there is nothing
     const tools = readClientCss('terminal-tools.css');
     assert.ok(!tools.includes('data-tooltip'),
         'a CSS tooltip in the terminal corner is what overflowed before');
@@ -499,6 +539,8 @@ test('terminal.js delegates the resize pipeline instead of growing', () => {
     assert.ok(src.includes("this._m('TerminalLayout').install(this)"));
     assert.ok(!src.includes('new ResizeObserver('),
         'the observer moved to terminal-layout.js; two of them would double-fire');
+    // server does not close on handshake timeout either
+    // client/js/terminal-input-ownership.js.
     const lines = src.split('\n').length;
     assert.ok(lines < 2770, `terminal.js must not grow, is ${lines} lines`);
 });

@@ -1,4 +1,4 @@
-<!-- label: ' -->
+
 <script lang="ts" module>
   export interface SelectOption {
     value: string;

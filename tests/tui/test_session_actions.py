@@ -34,7 +34,7 @@ def wrap(name: str, status: str, **extra: Any) -> dict[str, Any]:
             "label": name, "tmux_session": f"carnivore_{name}", "activity_status": status, **extra}
 
 
-ROWS = [wrap("live", "idle"), wrap("gone", "dead"), wrap("far", "idle", host_key="peer-x", host_label="hosta")]
+ROWS = [wrap("live", "idle"), wrap("gone", "dead"), wrap("far", "idle", host_key="peer-x", host_label="studio")]
 PROFILES = [{"id": "p1", "label": "plain", "harness": "claude"}, {"id": "p2", "label": "fast", "harness": "codex", "default": True}]
 
 
@@ -82,6 +82,9 @@ def test_actions_pilot(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(attach, "run", lambda plan: ran.append(plan) or 0)
     monkeypatch.setattr(attach, "socket_name", lambda: "cloude")
     monkeypatch.setattr(attach, "read_pane_size", lambda prefix, name: None)
+    monkeypatch.setattr(attach, "tmux_argv_prefix", lambda socket: ["tmux", "-L", socket])
+    probed: list[Any] = []
+    monkeypatch.setattr("src.tui.screens.sessions.probe_session", lambda prefix, name, env=None: probed.append(name))
     monkeypatch.delenv("TMUX", raising=False)
     monkeypatch.setattr(App, "suspend", lambda self: contextlib.nullcontext())
 
@@ -94,6 +97,7 @@ def test_actions_pilot(monkeypatch: pytest.MonkeyPatch) -> None:
 
             await pilot.press("enter")
             assert ran[0].argvs[0][-1] == "=carnivore_live" and ran[0].suspend
+            assert probed == ["carnivore_live"] and "-f" in ran[0].argvs[0]
 
             await pilot.press("u")
             await pilot.pause()
@@ -142,7 +146,8 @@ def test_actions_pilot(monkeypatch: pytest.MonkeyPatch) -> None:
     asyncio.run(run())
 
 
-def test_attach_plan_argv() -> None:
+def test_attach_plan_argv(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(attach, "tmux_argv_prefix", lambda socket: ["tmux", "-L", socket])
     outside = attach.plan_attach("n", "cloude", {"TMUX": "/tmp/tmux-1/other,1,0", "PATH": "/x"})
     assert outside.suspend and "TMUX" not in outside.env
     assert outside.argvs[0][-5:] == ("attach-session", "-f", "ignore-size", "-t", "=n")

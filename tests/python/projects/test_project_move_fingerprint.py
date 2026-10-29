@@ -61,7 +61,7 @@ def test_apply_quoting_a_stale_plan_is_412_and_changes_nothing(world, client):
     before = snapshot(world)
     answer = client.post(URL, json={"new_root": str(world.new), "move_folder": True, "apply": True,
                                     "plan_fingerprint": read["fingerprint"]})
-    assert answer.status_code == 412 and "changed since it was read" in answer.json()["detail"]["message"]
+    assert answer.status_code == 412 and answer.json()["detail"]["code"] == "plan_changed"
     assert snapshot(world) == before
 
 

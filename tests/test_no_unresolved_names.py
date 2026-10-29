@@ -1,3 +1,23 @@
+"""Every name used in src/ must resolve to something.
+
+WHY THIS FILE EXISTS. Twice now a NameError has reached the live server
+through a fully green suite:
+
+  * ``run_in_threadpool`` was imported inside one function and then used
+    by two others, which turned two new routes into bare HTTP 500s.
+  * ``launch_name_args_for_agent_type`` was moved to another module and
+    the call site updated without adding the import, which broke SESSION
+    CREATION entirely - the app's single most important operation.
+
+Neither was a syntax error, so ``py_compile`` and ``bash -n``-style
+checks pass happily; an undefined name is perfectly valid Python right up
+until the line executes. And neither was covered by a unit test, because
+the code paths that use them need a configured server.
+
+This is a static check with no imports and no server: walk the AST, track
+what each scope binds, and flag any Name/Attribute root that resolves to
+nothing. It catches the whole class rather than the two instances.
+"""
 
 import ast
 import builtins

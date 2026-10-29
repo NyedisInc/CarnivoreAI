@@ -85,7 +85,6 @@ def next_number(tx: "Tx", automation_id: str) -> int:
 
 
 def storage_for(state_dir: Path) -> CplugStorage:
-    """The automations storage under a state directory. Inputs: state_dir (Path). Output: CplugStorage."""
     return CplugStorage(Path(state_dir) / FOLDER_NAME, STORAGE, Path(state_dir))
 
 

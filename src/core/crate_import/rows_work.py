@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 import structlog
@@ -12,7 +11,7 @@ from src.core.crate_import import idmap as ids
 from src.core.crate_import import policy
 from src.core.crate_import import rows_write as rw
 from src.core.crate_import.keyrules import REF, rule_for
-from src.core.crate_import.model import W_DANGLING_REF
+from src.core.crate_import.model import W_DANGLING_REF, W_TASK_FILE_NOT_COPIED
 from src.core.inventory.model import MAIN_STORE
 from src.core.work.import_rows import import_rows
 
@@ -34,7 +33,6 @@ SWARM_PREFIX = "agent:"
 SKIP_SWARM_LIST = "swarm_list"
 SKIP_NO_PROJECT = "project_not_here"
 GROUP_PLACEHOLDER = -1
-_FILES_KEYS = ("files",)
 
 
 def map_list_key(ctx: rw.WriteCtx, value: Any) -> Tuple[Optional[str], str]:
@@ -56,22 +54,6 @@ def _text_key(row: Dict[str, Any]) -> Tuple[Any, str]:
 def _live_keys(ctx: rw.WriteCtx, list_key: str) -> Dict[Tuple[Any, str], int]:
     rows = ctx.conn.execute("SELECT id, created_at, text FROM work_items WHERE list_key = ? AND deleted = 0", (list_key,)).fetchall()
     return {_text_key({"created_at": r["created_at"], "text": r["text"]}): int(r["id"]) for r in rows}
-
-
-def rewrite_file_paths(node: Any, old_item: Any, new_item: Any) -> Any:
-    pattern = re.compile(rf"(^|/)files/{int(old_item)}/")
-    if isinstance(node, dict):
-        for key, value in node.items():
-            if key in _FILES_KEYS and isinstance(value, list):
-                for entry in value:
-                    if isinstance(entry, dict) and isinstance(entry.get("path"), str):
-                        entry["path"] = pattern.sub(lambda m: f"{m.group(1)}files/{int(new_item)}/", entry["path"])
-            else:
-                rewrite_file_paths(value, old_item, new_item)
-    elif isinstance(node, list):
-        for value in node:
-            rewrite_file_paths(value, old_item, new_item)
-    return node
 
 
 def _lineage_rows(events: Iterable[Dict[str, Any]], older: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -172,28 +154,13 @@ def _count(ctx: rw.WriteCtx, key: str, inserted: int, present: int = 0) -> None:
     counts.present += present
 
 
-def _finish_messages(ctx: rw.WriteCtx, data: Dict[str, Any], undo: Dict[str, Any]) -> None:
-    item_map = {int(k): v for k, v in undo["item_map"].items()}
-    for msg in data["messages"]:
-        new_id = undo["message_map"].get(str(msg.get("id")))
-        if new_id is None or not msg.get("parts"):
-            continue
-        try:
-            parts = json.loads(msg["parts"])
-        except (TypeError, ValueError):
-            continue
-        old_item = msg["item_id"]
-        rewrite_file_paths(parts, old_item, item_map[old_item])
-        ctx.conn.execute("UPDATE work_messages SET parts = ? WHERE id = ?", (json.dumps(parts, separators=(", ", ": ")), new_id))
-
-
 def _import_lists(ctx: rw.WriteCtx, plan: _Plan, rows: Dict[str, List[Dict[str, Any]]], label: str) -> Tuple[Set[int], Set[int]]:
     made: Set[int] = set()
     messages: Set[int] = set()
     sources: List[Tuple[int, Any]] = []
     for list_key in sorted(plan.by_list):
         data = _list_data(ctx, plan, list_key, rows, label)
-        undo = import_rows(ctx.conn, list_key, data, {}, replace_existing=False)
+        undo = import_rows(ctx.conn, list_key, data, {}, replace_existing=False, files=ctx.files)
         for table, name in ((ITEMS, "item_map"), (GROUPS, "group_map"), (MESSAGES, "message_map")):
             for old, new in undo[name].items():
                 ctx.idmap.put(table, old, new)
@@ -201,7 +168,6 @@ def _import_lists(ctx: rw.WriteCtx, plan: _Plan, rows: Dict[str, List[Dict[str, 
         made.update(int(k) for k in undo["item_map"])
         messages.update(int(k) for k in undo["message_map"])
         sources += [(item["id"], item["_source_item_id"]) for item in data["items"] if item.get("_source_item_id") is not None]
-        _finish_messages(ctx, data, undo)
         _count(ctx, ITEMS, len(undo["item_ids"]))
         _count(ctx, GROUPS, len(undo["group_ids"]))
         _count(ctx, MESSAGES, len(undo["message_map"]))
@@ -212,6 +178,8 @@ def _import_lists(ctx: rw.WriteCtx, plan: _Plan, rows: Dict[str, List[Dict[str, 
         mapped = ctx.idmap.get(ITEMS, source)
         if mapped is not None:
             ctx.conn.execute("UPDATE work_items SET source_item_id = ? WHERE id = ?", (mapped, ctx.idmap.get(ITEMS, old)))
+    for name in ctx.files.dropped if ctx.files is not None else []:
+        ctx.col.warn(W_TASK_FILE_NOT_COPIED, name)
     return made, messages
 
 

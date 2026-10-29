@@ -30,11 +30,12 @@ def resolve_trust(d: SidecarDefinition, consented: bool, pinned_key_id: str) -> 
     return False, "untrusted_publisher"
 
 
-def build_spec(d: SidecarDefinition, grants: FrozenSet[str], settings: Any, consented: bool = False, pinned_key_id: str = "") -> PluginSpec:
+def build_spec(d: SidecarDefinition, grants: FrozenSet[str], settings: Any, consented: bool = False, pinned_key_id: str = "",
+               *, consent_owed: bool = False) -> PluginSpec:
     m = d.manifest
     unrestricted, refusal = resolve_trust(d, consented, pinned_key_id)
     ctx = PluginContext(plugin_id=d.id, install_key=d.install_key, data_dir=d.folder, granted=frozenset(grants),
-                        manifest_tools=tuple(m.tools), tier=m.tier)
+                        manifest_tools=tuple(m.tools), topics=frozenset(m.topics), tier=m.tier)
     return PluginSpec(ctx=ctx, code_dir=d.code_root, entry=entry_module(m.entry), settings=dict(settings or {}), capabilities=CAPABILITIES,
                       subscriptions=frozenset(m.subscriptions), code_digest=m.code_digest, catalog_id=d.item_id, version=m.version,
-                      unrestricted=unrestricted, trust_refusal=refusal)
+                      unrestricted=unrestricted, trust_refusal=refusal, consent_owed=consent_owed)

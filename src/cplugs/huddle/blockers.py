@@ -100,7 +100,7 @@ class BlockerStore:
         return after
 
     def clear_hold(self, item_id: int, by: str) -> Optional[Dict[str, Any]]:
-        with closing(self._store._connect(True)) as conn, conn:
+        with self._store._immediate() as conn:
             found = conn.execute("SELECT 1 FROM work_items WHERE id = ? AND deleted = 0", (item_id,)).fetchone()
             if found is None or not clear_all(conn, item_id, by=by or rules.CARNIVORE_KEY, now=self._store._clock()):
                 return None

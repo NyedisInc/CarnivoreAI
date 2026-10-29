@@ -15,9 +15,29 @@ export function pluginSlices(): Array<[string, PluginSlice]> {
   return [...byId.entries()].sort(([a], [b]) => a.localeCompare(b));
 }
 
-export function registerPluginSlices(also?: (pluginId: string, slice: PluginSlice) => unknown): void {
-  for (const [pluginId, slice] of pluginSlices()) {
-    registerFragment(pluginId, slice);
-    also?.(pluginId, slice);
+export interface SliceFailure {
+  pluginId: string;
+  reason: string;
+}
+
+export function registerSlices(
+  slices: Array<[string, PluginSlice]>,
+  also?: (pluginId: string, slice: PluginSlice) => unknown,
+): SliceFailure[] {
+  const failures: SliceFailure[] = [];
+  for (const [pluginId, slice] of slices) {
+    try {
+      registerFragment(pluginId, slice);
+      also?.(pluginId, slice);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      failures.push({ pluginId, reason });
+      console.error('i18n: plugin catalog slice refused, its strings render as keys', { pluginId, reason });
+    }
   }
+  return failures;
+}
+
+export function registerPluginSlices(also?: (pluginId: string, slice: PluginSlice) => unknown): SliceFailure[] {
+  return registerSlices(pluginSlices(), also);
 }

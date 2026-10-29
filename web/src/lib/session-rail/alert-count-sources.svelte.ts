@@ -1,7 +1,6 @@
-/* last run failed */
 import { huddle, holdAggregate, startTaskManager } from '../../cplugs/huddle/huddle.svelte';
 import { AGGREGATE, needsYouTotal } from '../../cplugs/huddle/huddle-model';
-import { actionableOfGroups } from '../../opscenter/cells/task-manager-mk2/mk2-actionable';
+import { needsYouOfGroups } from '../../opscenter/cells/task-manager-mk2/mk2-head-count';
 import { badgeStatuses } from '../../cplugs/huddle/task-manager-prefs.svelte';
 import { taskManagerBadgeMenu } from '../../cplugs/huddle/task-manager-badge-menu';
 import { startAttentionSources } from '../attention-kinds/read.svelte';
@@ -29,11 +28,11 @@ registerAlertCount('core.task-manager-all', {
 });
 registerAlertCount('core.task-manager-mk2', {
   hold: () => { startTaskManager(); return holdAggregate(); },
-  read: (scope) => (scope?.projectId == null ? null : actionableOfGroups(huddle.groups, String(scope.projectId))),
+  read: (scope) => (scope?.projectId == null ? null : needsYouOfGroups(huddle.groups, String(scope.projectId))),
 });
 registerAlertCount('core.task-manager-mk2-all', {
   hold: () => { startTaskManager(); return holdAggregate(); },
-  read: () => actionableOfGroups(huddle.groups, null),
+  read: () => needsYouOfGroups(huddle.groups, null),
 });
 const changedFilesCount: AlertCountSource = {
   hold: (scope) => {

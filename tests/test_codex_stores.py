@@ -86,7 +86,7 @@ def test_pick_ignores_subagents_and_other_cwds():
     assert got == "u_here"
 
 NOW = datetime(2026, 9, 18, 12, 0, 0, tzinfo=timezone.utc)
-THREAD = "3fce7313-a048-4034-8b0d-72deecec7e53"
+THREAD = "ad166ca4-f8b4-989f-dee8-b5b4f34999e3"
 
 
 def _make_history_db(path, turns, *, projection_offset=1000):

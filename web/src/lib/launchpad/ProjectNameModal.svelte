@@ -1,4 +1,4 @@
-
+<!-- there is nothing -->
 <script lang="ts">
     import { t as reactiveT } from '../i18n/index.svelte';
     import { PROJECT_CREATE_KEYS } from '../../../../client/js/labels/project-create.js';
@@ -6,6 +6,8 @@
     import type { ProjectDetails } from './modal-types';
     import ModalShell from './ModalShell.svelte';
     import IconButton from '../base/IconButton.svelte';
+    import Button from '../base/Button.svelte';
+    import Field from '../base/Field.svelte';
 
     interface Props {
         title: string;
@@ -76,43 +78,31 @@
         </div>
     {/if}
     <div class="modal-input-group">
-        <label class="modal-label" for="modal-project-name"
-            >{t(PROJECT_CREATE_KEYS.nameLabel)}</label
-        >
-        <input
-            type="text"
-            class="modal-input"
+        <Field
+            label={t(PROJECT_CREATE_KEYS.nameLabel)}
+            help={t(PROJECT_CREATE_KEYS.nameHint)}
             id="modal-project-name"
             placeholder={t(PROJECT_CREATE_KEYS.namePlaceholder)}
             autocomplete="off"
-            bind:this={nameEl}
             bind:value={name}
             onkeydown={onNameKey}
+            bind:element={nameEl}
         />
-        <div class="modal-description">{t(PROJECT_CREATE_KEYS.nameHint)}</div>
     </div>
     <div class="modal-input-group">
-        <label class="modal-label" for="modal-project-description"
-            >{t(PROJECT_CREATE_KEYS.descriptionLabel)}</label
-        >
-        <input
-            type="text"
-            class="modal-input"
+        <Field
+            label={t(PROJECT_CREATE_KEYS.descriptionLabel)}
+            help={t(PROJECT_CREATE_KEYS.descriptionHint)}
             id="modal-project-description"
             placeholder={t(PROJECT_CREATE_KEYS.descriptionPlaceholder)}
             autocomplete="off"
-            bind:this={descEl}
             bind:value={description}
             onkeydown={onDescKey}
+            bind:element={descEl}
         />
-        <div class="modal-description">{t(PROJECT_CREATE_KEYS.descriptionHint)}</div>
     </div>
     {#snippet footer()}
-        <button class="modal-btn modal-btn-secondary" id="modal-cancel" onclick={() => close(null)}
-            >{t(PROJECT_CREATE_KEYS.cancel)}</button
-        >
-        <button class="modal-btn modal-btn-confirm" id="modal-confirm" onclick={submit}
-            >{confirmLabel}</button
-        >
+        <Button id="modal-cancel" onclick={() => close(null)}>{t(PROJECT_CREATE_KEYS.cancel)}</Button>
+        <Button variant="confirm" id="modal-confirm" onclick={submit}>{confirmLabel}</Button>
     {/snippet}
 </ModalShell>

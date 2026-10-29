@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 const TRUST: ApprovalItem = {
-  id: 'dlg:ses_1:ab', source: 'dialog', host: 'local', session_id: 'ses_1', session_name: 'brightfund',
+  id: 'dlg:ses_1:ab', source: 'dialog', host: 'local', session_id: 'ses_1', session_name: 'amerifund',
   kind: 'folder_trust', startup_kind: 'trust', fingerprint: 'a'.repeat(64),
   question: 'Quick safety check: Is this a project you created or one you trust?',
   body: 'This folder pre-approves 4 tool permissions in .claude/settings.json',
@@ -55,7 +55,7 @@ describe('a decoded startup screen', () => {
     expect(buttons.map((b) => b.title)).toEqual(['No, continue without these permissions', 'Yes, I trust this folder']);
     expect(card.querySelector('[data-qc-details] [data-approval-body]')?.textContent).toContain('pre-approves 4 tool permissions');
     expect(card.querySelector('[data-qc-badge]')?.textContent).toBe('startup');
-    expect(card.querySelector('[data-qc-headline]')?.textContent).toBe('brightfund wants to know if you trust this folder before claude reads or runs anything in it.');
+    expect(card.querySelector('[data-qc-headline]')?.textContent).toBe('amerifund wants to know if you trust this folder before claude reads or runs anything in it.');
     expect(card.querySelector('[data-qc-fact="screen"]')?.textContent).toBe('folder trust');
     expect(card.textContent).not.toContain('Quick safety check');
     expect(card.textContent).not.toContain('dismiss');
@@ -75,8 +75,8 @@ describe('a decoded startup screen', () => {
     const card = draw({ ...TRUST, kind: 'other', startup_kind: 'bypass_permissions',
       rows: [{ label: 'No, exit', role: 'option' }, { label: 'Yes, I accept', role: 'option' }] });
     const [exit, accept] = [...card.querySelectorAll<HTMLButtonElement>('[data-ap-option]')];
-    expect(exit!.classList.contains('modal-btn-danger')).toBe(true);
-    expect(accept!.classList.contains('modal-btn-confirm')).toBe(true);
+    expect(exit!.getAttribute('data-btn')).toBe('danger');
+    expect(accept!.getAttribute('data-btn')).toBe('confirm');
     expect(card.querySelector('[data-qc-fact="if_no"]')?.textContent).toBe('claude exits and the session stops');
   });
 

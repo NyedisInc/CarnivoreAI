@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import stat
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -22,10 +23,11 @@ from src.core.config_files_constants import (
     HIDE_PREFIXES,
     MAX_DIR_ENTRIES,
     MAX_READ_BYTES,
+    MAX_TREE_NODES,
     MORE_MARKER_KIND,
     TREE_MAX_DEPTH,
 )
-from src.core.config_files_io import atomic_write, classify, is_sensitive_name
+from src.core.config_files_io import atomic_write, atomic_write_bytes, classify, is_sensitive_name
 
 logger = structlog.get_logger()
 
@@ -35,28 +37,11 @@ class ConfigFileError(ValueError):
 
 
 class ConfigFileUnreadableError(ConfigFileError):
-    """Raised when a ROOT exists but its own contents could not be
-    enumerated (``OSError`` from ``iterdir()`` - typically a permissions
-    problem, not a bad request). This is the THREE-OUTCOME RULE's third
-    state for this endpoint: distinct from "listed, zero entries" (a
-    genuinely empty/absent directory) and from an ordinary
-    ``ConfigFileError`` (client sent something invalid). Routes layer
-    maps this to HTTP 503 rather than 400, so the client can render "I
-    could not check this" instead of silently treating it as "there is
-    nothing here" - see config_files.py's module docstring and
-    CLAUDE.md's THREE-OUTCOME RULE section for why that conflation is a
-    named, recurring bug class in this project.
-
-    A subdirectory (not the root itself) hitting the same OSError does
-    NOT raise this - it would abort the whole tree over one bad
-    subdirectory. That case sets ``TreeNode.list_error`` instead, so the
-    rest of the tree still renders and only that one node says it
-    could not be evaluated.
-    """
+    pass
 
 
 class NotAFileError(ConfigFileError):
-    """The resolved path is not a regular file (missing, or a directory)."""
+    pass
 
 
 class FileTooLargeError(ConfigFileError):
@@ -101,23 +86,6 @@ def file_revision(path: Path) -> tuple[Optional[str], Optional[int]]:
 
 @dataclass
 class TreeNode:
-    """One entry in the rendered file tree.
-
-    Inputs (fields): name (str) - basename; rel_path (str) - path
-      relative to the root, forward-slash separated; is_dir (bool);
-      is_executable (bool) - True for a .py/.cjs/.js/.sh file under
-      hooks/ or scripts/; is_sensitive (bool) - True for a
-      credentials/secret/key-shaped file (see SENSITIVE_*); read_only
-      (bool) - True for anything under a READONLY_COLLAPSED_DIRS root;
-      collapsed (bool) - hint to the frontend to render this subtree
-      closed by default; children (list[TreeNode]) - populated for
-      directories; children_loaded (bool) - whether `children` is the
-      COMPLETE answer for this node (see below); list_error (str|None) -
-      set instead of an empty `children` when THIS directory's own
-      entries could not be enumerated (OSError) - the three-outcome
-      rule's "could not evaluate", kept distinct from a directory that
-      was read successfully and is simply empty.
-    """
     name: str
     rel_path: str
     is_dir: bool
@@ -209,7 +177,14 @@ def _more_marker(count: int) -> dict:
             "more_not_shown": count}
 
 
-def _build_node(root: Path, path: Path, depth: int, max_depth: int, root_id: str) -> Optional[TreeNode]:
+@dataclass
+class _NodeBudget:
+
+    remaining: int
+
+
+def _build_node(root: Path, path: Path, depth: int, max_depth: int, root_id: str,
+                budget: Optional[_NodeBudget] = None) -> Optional[TreeNode]:
     name = path.name
     if _is_hidden(name, root_id):
         return None
@@ -223,6 +198,7 @@ def _build_node(root: Path, path: Path, depth: int, max_depth: int, root_id: str
     rel = str(path.relative_to(root)).replace(os.sep, "/")
     collapsed = read_only
     is_dir = path.is_dir()
+    descend = is_dir and depth < max_depth and not path.is_symlink()
     node = TreeNode(
         name=name,
         rel_path=rel,
@@ -231,23 +207,28 @@ def _build_node(root: Path, path: Path, depth: int, max_depth: int, root_id: str
         is_sensitive=is_sensitive,
         read_only=read_only,
         collapsed=collapsed,
-        children_loaded=(not is_dir) or depth < max_depth,
+        children_loaded=(not is_dir) or descend,
     )
 
-    if is_dir and depth < max_depth:
+    if descend:
         try:
             entries = _sorted_entries(path)
         except OSError as exc:
-            # could not
-            # could not
             logger.warning("config_files_listdir_failed", path=str(path), error=str(exc))
             node.list_error = exc.strerror or str(exc)
             entries = []
-        for child in entries[:MAX_DIR_ENTRIES]:
-            child_node = _build_node(root, child, depth + 1, max_depth, root_id)
+        shown = entries[:MAX_DIR_ENTRIES]
+        built = 0
+        for child in shown:
+            if budget is not None and budget.remaining <= 0:
+                break
+            if budget is not None:
+                budget.remaining -= 1
+            built += 1
+            child_node = _build_node(root, child, depth + 1, max_depth, root_id, budget)
             if child_node is not None:
                 node.children.append(child_node)
-        node.more_not_shown = max(0, len(entries) - MAX_DIR_ENTRIES)
+        node.more_not_shown = max(0, len(entries) - built)
 
     return node
 
@@ -258,58 +239,6 @@ def list_subtree(
     project_path: Optional[str],
     levels: int = TREE_MAX_DEPTH + 1,
 ) -> list:
-    """
-    Description: list the entries directly inside ONE directory of a root,
-      recursing ``levels - 1`` further levels beneath them. This is the
-      single tree-walking implementation; ``list_tree`` is this function
-      called on the root itself. A shallow read and a full read therefore
-      cannot drift in ordering, filtering, flags or shape - there is only
-      one code path producing any of them.
-    Inputs:
-      root_id (str) - "user" or "workdir".
-      rel_path (str) - directory to list, relative to the root, forward
-        slash separated. "" (or ".") means the root itself.
-      project_path (str|None) - required for "workdir".
-      levels (int) - how many LEVELS of nodes to return. 1 returns the
-        directory's own entries with no children; the default returns the
-        same full depth ``list_tree`` always has.
-    Output: list[dict] - the directory's entries, JSON-serializable, each
-      shaped exactly as ``list_tree`` shapes a node, and each ``rel_path``
-      relative to the ROOT (never to ``rel_path``) so it can be handed
-      straight back to this function or to ``read_file``.
-    Raises:
-      ConfigFileError - unknown/unavailable root, a path that fails
-        ``resolve_safe_path`` (traversal, absolute, hidden component, not
-        allow-listed), or a path that is not a directory.
-      ConfigFileUnreadableError - the requested directory exists but its
-        own entries could not be enumerated (OSError - typically
-        permissions). The three-outcome rule's third state for THIS
-        request, exactly as it is for a root: NOT the same as "listed,
-        zero entries", which returns an empty list normally.
-
-    SECURITY. The requested directory goes through ``resolve_safe_path``,
-    which is the same and only guard ``read_file`` and ``write_file`` use:
-    absolute paths refused, ``..`` refused, hidden components refused,
-    allow-list applied for non-BLOCKLIST_ONLY_ROOTS, and containment
-    checked COMPONENT-WISE with ``Path.relative_to`` after ``resolve()``
-    rather than with a string prefix test - so a sibling directory whose
-    name merely starts with the root's name ("/Users/example" against
-    "/Users/example") is not inside it, and a symlink bridge out of the
-    root resolves to where it really points and is refused there. Because
-    ``resolve()`` runs on every expansion, listing a directory one level at
-    a time is STRICTER than the full-tree walk, not weaker: the recursive
-    walk descends through a symlink without re-resolving, while every
-    shallow expansion re-checks containment from the root.
-
-    The depth-0 allow-list gate inside ``_build_node`` is keyed on the
-    node's TRUE depth below the root, which this function computes from
-    the resolved path rather than restarting the count at zero. Restarting
-    it would apply a top-level allow-list to entries that are not
-    top-level, and, worse, would let a caller reach a non-allow-listed
-    top-level name one segment at a time.
-    Example: list_subtree("user", "hooks", None, levels=1)
-      -> [{"name": "op-readonly-guard.py", "rel_path": "hooks/op-...", ...}]
-    """
     roots = resolve_roots(project_path)
     root = roots.get(root_id)
     if root is None:
@@ -321,7 +250,6 @@ def list_subtree(
 
     if not resolved.is_dir():
         if is_root:
-            # not a directory
             return []
         raise ConfigFileError("not a directory")
 
@@ -347,8 +275,10 @@ def list_subtree(
         ) from exc
 
     nodes = []
+    budget = _NodeBudget(MAX_TREE_NODES)
     for entry in entries[:MAX_DIR_ENTRIES]:
-        node = _build_node(root, entry, depth=base_depth, max_depth=max_depth, root_id=root_id)
+        node = _build_node(root, entry, depth=base_depth, max_depth=max_depth, root_id=root_id,
+                           budget=budget)
         if node is not None:
             nodes.append(node)
     out = [_node_to_dict(n) for n in nodes]
@@ -358,38 +288,49 @@ def list_subtree(
 
 
 def list_tree(root_id: str, project_path: Optional[str], max_depth: int = TREE_MAX_DEPTH) -> list:
-    """
-    Description: build the full hide-list-filtered file tree for one
-      root ("user" is additionally allow-listed; "workdir" is
-      not). A thin alias for ``list_subtree`` on the root itself, kept
-      because it is the name every existing caller and test uses and
-      because "the whole tree for this root" is worth saying directly.
-    Inputs:
-      root_id (str) - "user" or "workdir".
-      project_path (str|None) - required for "workdir".
-      max_depth (int) - recursion cap as a DEPTH (a root's direct children
-        are depth 0), so it permits ``max_depth + 1`` levels of nodes.
-        Defaults to TREE_MAX_DEPTH.
-    Output: list[dict] - top-level TreeNode entries, JSON-serializable
-      (dataclasses.asdict shape). For allow-listed roots the order is
-      ALLOWED_TOP_LEVEL_FILES then ALLOWED_TOP_LEVEL_DIRS then
-      READONLY_COLLAPSED_DIRS, each sorted alphabetically within its
-      group; "workdir" is files-then-dirs, alphabetical.
-    Raises:
-      ConfigFileError - unknown/unavailable root (client-caused; the
-        working directory/root simply doesn't apply here).
-      ConfigFileUnreadableError - the root exists but its own entries
-        could not be enumerated (OSError - typically permissions). This
-        is the three-outcome rule's third state: NOT the same as "root
-        exists, zero entries", which returns an empty list normally.
-    """
     return list_subtree(root_id, "", project_path, levels=max_depth + 1)
 
 
-def read_file(root_id: str, rel_path: str, project_path: Optional[str]) -> dict:
-    roots = resolve_roots(project_path)
-    root = roots[root_id] if root_id in roots else None
-    path = resolve_safe_path(root_id, rel_path, project_path)
+def _pinned_file(path_text: str, trusted_root: Optional[str] = None) -> tuple[Path, Path]:
+    path = Path(path_text)
+    if not path.is_absolute() or '\0' in path_text:
+        raise ConfigFileError("the opened file path changed or is invalid")
+    try:
+        resolved = path.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise ConfigFileError(f"the opened file path is unavailable: {exc}") from exc
+    if resolved != path:
+        raise ConfigFileError("the opened file path changed or is invalid")
+    try:
+        user_root = CLAUDE_HOME.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise ConfigFileError(f"the user config root is unavailable: {exc}") from exc
+    if path.is_relative_to(user_root):
+        try:
+            path = resolve_safe_path("user", path.relative_to(user_root).as_posix(), None)
+        except (OSError, RuntimeError) as exc:
+            raise ConfigFileError(f"the opened file path is unavailable: {exc}") from exc
+        return path, user_root
+    if trusted_root:
+        root = Path(trusted_root)
+        try:
+            root_is_stable = root.resolve() == root
+        except (OSError, RuntimeError) as exc:
+            raise ConfigFileError(f"the file's project root is unavailable: {exc}") from exc
+        if not root.is_absolute() or not root_is_stable or not path.is_relative_to(root):
+            raise ConfigFileError("the file's project root changed or is invalid")
+        return path, root
+    return path, Path(path.anchor)
+
+
+def read_file(root_id: str, rel_path: str, project_path: Optional[str], *, _pinned_absolute: bool = False,
+              _trusted_root: Optional[str] = None) -> dict:
+    if _pinned_absolute:
+        path, root = _pinned_file(rel_path, _trusted_root)
+    else:
+        roots = resolve_roots(project_path)
+        root = roots[root_id] if root_id in roots else None
+        path = resolve_safe_path(root_id, rel_path, project_path)
     if not path.is_file():
         raise NotAFileError("not a file")
     try:
@@ -426,47 +367,15 @@ def write_file(
     acknowledge_executable: bool = False,
     acknowledge_sensitive: bool = False,
     expected_sha256: Optional[str] = None,
+    *, _pinned_absolute: bool = False, _trusted_root: Optional[str] = None,
 ) -> dict:
-    """
-    Description: write one browsable file, always backing up the
-      previous bytes first (atomic tmp-file + fsync + os.replace, same
-      convention as ``Settings.update_settings_config()``).
-      ``.json``-suffixed files are parsed with ``json.loads`` before
-      anything touches disk - a parse failure raises and nothing is
-      written (and the exception message never includes file content,
-      only json.JSONDecodeError's own line/col/msg). A write to an
-      executable file (see EXECUTABLE_DIRS / EXECUTABLE_EXTENSIONS)
-      additionally REQUIRES ``acknowledge_executable=True``, and a write
-      to a sensitive file (see SENSITIVE_*) additionally REQUIRES
-      ``acknowledge_sensitive=True`` - the routes layer only sets either
-      flag after the client's confirm modal returned true; this is the
-      server-side half of that confirmation, not just a UI nicety.
-    Inputs:
-      root_id (str); rel_path (str); project_path (str|None) - see
-        resolve_safe_path().
-      content (str) - new file contents.
-      acknowledge_executable (bool) - must be True to write an
-        executable file; ignored (no effect) for non-executable files.
-      acknowledge_sensitive (bool) - must be True to write a sensitive
-        (credentials/secret/key-shaped) file; ignored for others.
-      expected_sha256 (str|None) - the ``sha256`` the caller's read
-        answered. When given, the write is REFUSED unless the file on disk
-        still hashes to it (a file gone since counts as changed); None
-        keeps the old last-save-wins behavior for callers that never read.
-    Output: dict - {"backed_up": bool, "is_executable": bool,
-      "is_sensitive": bool, "sha256": str | None, "mtime_ns": int | None} -
-      the last two are the NEW revision, the base for the next save (None
-      when the save landed but the file could not be re-read after it).
-    Raises: ConfigFileError - invalid/read-only path, malformed JSON for
-      a .json file, an executable write without acknowledgement, or a
-      sensitive write without acknowledgement. FileChangedOnDiskError -
-      ``expected_sha256`` no longer matches the file on disk.
-    """
-    path = resolve_safe_path(root_id, rel_path, project_path)
+    if _pinned_absolute:
+        path, root = _pinned_file(rel_path, _trusted_root)
+    else:
+        path = resolve_safe_path(root_id, rel_path, project_path)
+        roots = resolve_roots(project_path)
+        root = roots[root_id]
     app_config_guard.refuse_if_app_config(path, root_id=root_id, rel_path=rel_path)
-    roots = resolve_roots(project_path)
-    root = roots[root_id]
-
     is_executable, is_sensitive, read_only = classify(root, path)
     if read_only:
         raise ConfigFileError("this file is under a read-only root (plugins/)")
@@ -523,13 +432,15 @@ def write_file(
 
 def _backup_and_write(path: Path, content: str) -> bool:
     backed_up = False
+    mode: Optional[int] = None
     if path.exists():
+        mode = stat.S_IMODE(path.stat().st_mode)
         try:
             backup_path = path.with_suffix(path.suffix + ".bak")
-            backup_path.write_bytes(path.read_bytes())
+            atomic_write_bytes(backup_path, path.read_bytes(), mode)
             backed_up = True
         except OSError as exc:
             logger.warning("config_files_backup_failed", path=str(path), error=str(exc))
     path.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write(path, content)
+    atomic_write(path, content, mode=mode)
     return backed_up

@@ -17,7 +17,7 @@ def _draft(storage: Path, slug: str, widget: str, **extra: Any) -> Path:
     (folder / "files" / "web" / "src" / "Cell.svelte").write_text("<p>mine</p>\n")
     (folder / "BRIEF.md").write_text("brief\n")
     record: Dict[str, Any] = {"schema": 1, "slug": slug, "kind": "revision", "widget": widget, "title": slug, "created": "2026-10-19T14:02:27",
-                              "state": "built", "base_sha": "7d68db55c626", "session": None, **extra}
+                              "state": "built", "base_sha": "a9c32c7cf702", "session": None, **extra}
     (folder / "draft.json").write_text(json.dumps(record, indent=2) + "\n")
     return folder
 
@@ -64,8 +64,8 @@ def test_an_unreadable_record_is_left_alone(tmp_path: Path) -> None:
 
 
 def test_a_draft_built_against_an_older_checkout_is_stale_and_not_an_error(tmp_path: Path, monkeypatch) -> None:
-    folder = _draft(tmp_path, "tasks", "core.huddle-list", base_sha="7d68db55c626")
+    folder = _draft(tmp_path, "tasks", "core.huddle-list", base_sha="a9c32c7cf702")
     monkeypatch.setattr(store, "root_of", lambda _folder: tmp_path)
-    monkeypatch.setattr(store, "head_sha", lambda _repo: "73bdd18f67a5")
+    monkeypatch.setattr(store, "head_sha", lambda _repo: "5cb0aced572d")
     shown = store.summary(folder)
     assert shown["stale"] is True and shown["state"] == "built" and shown["widget"] == "core.task-list"

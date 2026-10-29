@@ -15,7 +15,7 @@ logger = structlog.get_logger()
 
 
 class SessionMoveRecordError(Exception):
-    """The row could not be written with a project pair the probe agrees with."""
+    pass
 
 
 @dataclass(frozen=True)

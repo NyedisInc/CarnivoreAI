@@ -27,7 +27,6 @@ export async function reportWidget(report: WidgetReport): Promise<boolean> {
       }),
     });
   } catch (error) {
-    // could not
     console.warn('widget_report_failed', { widget: report.widget, zone: report.zone, error: String(error) });
     return false;
   }

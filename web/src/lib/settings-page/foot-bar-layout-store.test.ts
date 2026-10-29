@@ -25,7 +25,7 @@ test('set() always writes both halves explicitly, never a sparse object', () => 
     };
     footBarLayout.set('collapsed', 'b');
     expect(footBarLayout.effective('collapsed')).toBe('b');
-    expect(footBarLayout.effective('open')).toBe('a');
+    expect(footBarLayout.effective('open')).toBe('a'); // untouched, still the default
     expect(written).toEqual([{ collapsed: 'b', open: 'a' }]);
 
     footBarLayout.set('open', 'c');

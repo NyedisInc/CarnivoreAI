@@ -1,5 +1,4 @@
 
-/*  hidden  display: flex display: none */
 .config-editor-picker-overlay[hidden] {
     display: none;
 }
@@ -38,12 +37,6 @@
 .config-editor-new-hint {
     color: var(--oc-text-muted);
     font-size: 0.75rem;
-}
-
-.config-editor-new-form select:focus,
-.config-editor-new-form input:focus {
-    outline: none;
-    border-color: var(--oc-orange);
 }
 
 .config-editor-git {
@@ -108,13 +101,11 @@
     padding-left: 0;
 }
 
-/* text-align: center */
 .config-editor-tree,
 .config-editor-list--roots {
     text-align: left;
 }
 
-/* <button> */
 .config-editor-toggle,
 .config-editor-file {
     display: flex;
@@ -122,13 +113,10 @@
     justify-content: flex-start;
     gap: 4px;
     width: 100%;
-    /* Explicit, for the bare `button` reset in styles.css, which pins
-     * height to 36px (40px under @media max-width 480px); min-height
-     * cannot lower a declared height. */
     height: 24px;
     min-height: 0;
-    padding: 0 6px 0 4px;
-    border: none;
+    padding: 0 5px 0 3px;
+    border: 1px solid transparent;
     background: transparent;
     border-radius: var(--oc-radius-sm);
     color: var(--oc-text-primary);
@@ -139,7 +127,6 @@
     cursor: pointer;
 }
 
-/* <button> overflow-y: auto transform: scale( */
 .config-editor-toggle:hover:not(:disabled),
 .config-editor-file:hover:not(:disabled),
 .config-editor-toggle:focus-visible,
@@ -160,13 +147,7 @@
     background: var(--oc-orange-tint);
 }
 
-/* The focus ring is INSET, so it paints inside the row's own box and adds
- * no width either. Declared last so it survives the `box-shadow: none`
- * above, which exists only to kill the reset's outset glow. */
-.config-editor-file:focus-visible:not(:disabled),
-.config-editor-toggle:focus-visible:not(:disabled) {
-    box-shadow: inset 0 0 0 1px var(--oc-orange);
-}
+/* reserved 1px border */
 
 .config-editor-toggle.config-editor-match,
 .config-editor-file.config-editor-match {
@@ -229,12 +210,10 @@
     height: 16px;
 }
 
-/* project files */
 .config-editor-toggle--root .config-editor-root-label {
     color: var(--oc-text-primary);
 }
 
-/* <button> flex-shrink: 0 min-width: 0 width: auto */
 .config-editor-node-name {
     min-width: 0;
     overflow: hidden;
@@ -266,7 +245,6 @@
     color: var(--oc-yellow);
 }
 
-/* @media (max-width width: 700px */
 
 .config-editor-toggle[data-git-letter]::after,
 .config-editor-file[data-git-letter]::after {

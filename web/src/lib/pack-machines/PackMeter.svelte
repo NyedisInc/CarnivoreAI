@@ -1,4 +1,4 @@
-<!-- title="memory 58% used" -->
+
 <script lang="ts">
   import { METER_CELLS, filledCells, levelOf, reserveCells } from './pack-meter-math';
 

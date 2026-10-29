@@ -7,6 +7,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
+from src.api.error_response import api_error
 from src.api.agent_auth import require_agent
 from src.core.mcp.caller import AgentCaller
 from src.core.notifications import agent_message
@@ -49,4 +50,4 @@ async def post_agent_message(
         return await agent_message.send(request.app.state.session_manager, caller.current_session_id, body.text)
     except agent_message.AgentNotifyError as exc:
         headers = {"Retry-After": str(exc.retry_after)} if exc.retry_after is not None else None
-        raise HTTPException(status_code=exc.status, detail=exc.message, headers=headers) from exc
+        raise api_error(exc.status, "agent_notify_refused", exc, headers=headers, session=caller.session_id) from exc

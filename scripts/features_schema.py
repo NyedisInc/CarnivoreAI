@@ -110,6 +110,8 @@ def _check_field(where: str, name: str, value: Any, rule: dict[str, Any]) -> lis
         return errors
     if kind == "boolean" and not isinstance(value, bool):
         return [f"{where}: field '{name}' must be a boolean"]
+    if kind == "integer" and value is not None and (not isinstance(value, int) or isinstance(value, bool)):
+        return [f"{where}: field '{name}' must be an integer, got {type(value).__name__}"]
     return []
 
 

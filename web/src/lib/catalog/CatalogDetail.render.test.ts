@@ -40,9 +40,9 @@ function plantApi(): void {
 
 let handle: Record<string, unknown> | null = null;
 
-function paint(kind: 'plugin' | 'skill' | 'theme' | 'mod', id = `acme/${kind}-one`, extra: Record<string, unknown> = {}, untrusted = false, itemExtra: Record<string, unknown> = {}): void {
+function paint(kind: 'plugin' | 'skill' | 'theme' | 'mod', id = `example-owner/${kind}-one`, extra: Record<string, unknown> = {}, untrusted = false, itemExtra: Record<string, unknown> = {}): void {
     const item = {
-        id, kind, publisher: 'acme', latest: '1.0.0',
+        id, kind, publisher: 'example-owner', latest: '1.0.0',
         card: { title: `${kind} one`, brief: 'does a thing' },
         versions: [{ version: '1.0.0' }],
         ...itemExtra,
@@ -89,7 +89,7 @@ describe.each(['plugin', 'skill'] as const)('a %s detail pane', (kind) => {
         expect(hero.querySelector('[data-detail-banner]')).not.toBeNull();
         expect(title.textContent).toBe(`${kind} one`);
         expect(title.firstElementChild?.className).toContain(`kind-mark--${kind}`);
-        expect(pane.querySelector('.detail__sub')?.textContent).not.toContain(`acme/${kind}-one`);
+        expect(pane.querySelector('.detail__sub')?.textContent).not.toContain(`example-owner/${kind}-one`);
         for (const [a, b] of [[band, hero], [hero, title], [title, brief], [brief, acts], [acts, ratings], [ratings, prov]]) {
             expect(after(a as Element, b as Element)).toBe(true);
         }
@@ -100,13 +100,13 @@ describe.each(['plugin', 'skill'] as const)('a %s detail pane', (kind) => {
 
     test('header is laid over the hero: title+author top left, rating+comments top right, X closes, no back button', async () => {
         let closed = 0;
-        paint(kind, `acme/${kind}-one`, { onClose: () => { closed += 1; } });
+        paint(kind, `example-owner/${kind}-one`, { onClose: () => { closed += 1; } });
         await settle();
         const hero = document.querySelector('[data-detail-hero]') as HTMLElement;
         const tl = hero.querySelector('[data-detail-ov="tl"]') as HTMLElement;
         const tr = hero.querySelector('[data-detail-ov="tr"]') as HTMLElement;
         expect(tl.querySelector('.detail__title')?.textContent).toBe(`${kind} one`);
-        expect(tl.querySelector('.detail__sub')?.textContent).toContain('by acme');
+        expect(tl.querySelector('.detail__sub')?.textContent).toContain('by example-owner');
         expect(tr.querySelector('[data-detail-rating]')?.textContent).toContain('4.5');
         expect(tr.querySelector('[data-detail-comments]')?.textContent).toBe('1 comment');
         const x = hero.querySelector('[data-detail-close]') as HTMLButtonElement;
@@ -165,13 +165,13 @@ describe('the advanced link', () => {
 
 describe('the hero by kind', () => {
     test('a theme with a palette is drawn by the themes page inspector, with the store acts and no second ratings block', async () => {
-        const palette = paletteOf('acme/theme-one', {
+        const palette = paletteOf('example-owner/theme-one', {
             digest: 'a'.repeat(64), version: '1.0.0', cssVars: { '--color-bg': '#112233' }, xterm: {}, ascii: false,
         });
-        paint('theme', 'acme/theme-one', { palette });
+        paint('theme', 'example-owner/theme-one', { palette });
         await settle();
         expect(document.querySelector('.detail__hero')).toBeNull();
-        const tins = document.querySelector('[data-inspector="acme/theme-one"]') as HTMLElement;
+        const tins = document.querySelector('[data-inspector="example-owner/theme-one"]') as HTMLElement;
         expect(tins.querySelector('[data-preview-size="large"]')).not.toBeNull();
         expect(tins.querySelectorAll('.tins-ui li').length).toBe(8);
         expect(tins.querySelector('[data-theme-apply], [data-theme-export], [data-theme-install-note]')).toBeNull();
@@ -180,7 +180,7 @@ describe('the hero by kind', () => {
     });
 
     test('a theme with no palette draws the letter slab and no swatches', async () => {
-        paint('theme', 'acme/theme-one');
+        paint('theme', 'example-owner/theme-one');
         await settle();
         expect(document.querySelector('.detail__hero--plate')).toBeNull();
         expect(document.querySelector('.detail__letter')?.getAttribute('data-glyph')).toBe('T');
@@ -188,7 +188,7 @@ describe('the hero by kind', () => {
     });
 
     test('a mod with no art draws the plug glyph, not a letter', async () => {
-        paint('mod', 'acme/mod-one');
+        paint('mod', 'example-owner/mod-one');
         await settle();
         expect(document.querySelector('.detail__letter')).toBeNull();
         expect(document.querySelector('[data-detail-banner] svg')).not.toBeNull();

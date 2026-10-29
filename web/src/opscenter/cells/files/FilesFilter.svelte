@@ -30,7 +30,6 @@
 
 <style>
   @layer components {
-    /* padding */
     .ff-row {
       flex: 0 0 auto;
       display: flex;

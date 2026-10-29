@@ -83,7 +83,7 @@ def seed(env: Env) -> Dict[str, int]:
     return {"q": q, "o": o, "d": d, "b": b}
 
 
-def test_ships_off_and_the_manifest_asks_for_the_huddle() -> None:
+def test_ships_off_and_the_manifest_asks_for_the_task_manager() -> None:
     d = runtime.find("tmdevtools")
     assert d.manifest.default_enabled is False and "huddle" in d.manifest.requires
     assert sorted(d.tools) == [FOLD_TOOL, SCROLL_TOOL, LIST_TOOL]
@@ -184,8 +184,8 @@ def test_list_projects_counts_by_status(env: Env) -> None:
     assert ok and by_name["carnivore"]["open_tasks"] == 2 and by_name["carnivore"]["counts"]["done"] == 1 and by_name["blog"]["open_tasks"] == 1
 
 
-def test_the_tools_say_so_when_the_huddle_is_off(env: Env) -> None:
+def test_the_tools_say_so_when_the_task_manager_is_off(env: Env) -> None:
     devtools_port.unregister()
     assert ports.get(devtools_port.NAME) is None
     ok, text = env.call(LIST_TOOL, {})
-    assert not ok and "tmdevtools_no_task_manager" in text
+    assert not ok and "tmdevtools_no_task_manager" in text and "the task manager is off, so it cannot be read" in text

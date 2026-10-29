@@ -152,19 +152,6 @@ async def restart_refusal(
     read_profile=None,
     claude_account: Optional[str] = None,
 ) -> Optional[str]:
-    """Why a restart must NOT go ahead, or None when it may.
-
-    Description: a restart is how a pane moves to the active account. When
-      the active account's profile is unusable ``account_env`` omits the
-      variable, so the pane would relaunch unchanged and report success.
-      This refuses instead, unless the pane already runs on that profile.
-    Inputs: socket (str); tmux_name (str); config_path, read_profile -
-      injectable (default config.json and ``pane_account.read_pane_profile``).
-      claude_account (str | None) - the session's own account, which is the
-      target instead of the global pointer.
-    Output: str | None - ``UNUSABLE_DETAIL`` or None.
-    Example: await restart_refusal('cloude', 'cloude_x')
-    """
     from src.core.account_switch import pane_account
 
     reader = read_profile or pane_account.read_pane_profile

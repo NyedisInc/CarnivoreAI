@@ -1,4 +1,3 @@
-/* keep awake */
 
 import { metaFor } from '../../engine/meta';
 import type { SessionInfo } from '../../api';

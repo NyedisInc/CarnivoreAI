@@ -53,14 +53,14 @@
 <section class="dz-sec">
     <h3 class="dz-k">{t(K.dizSecVersions)}</h3>
     <div class="dz-r dz-h">{m.versionsHead}</div>
-    {#each m.versions as v (v.line)}
+    {#each m.versions as v, i (i)}
         <div class="dz-r">{v.line}{#if v.mark}<span class="dz-mk">{v.mark}</span>{/if}</div>
     {/each}
 </section>
 <section class="dz-sec">
     <h3 class="dz-k">{t(K.dizSecWorks)}</h3>
     <p class="dz-p">{m.works}</p>
-    {#if m.swatches.length}<div class="dz-sw">{#each m.swatches as c (c)}<span class="sw" style:background={c} title={c}></span>{/each}</div>{/if}
+    {#if m.swatches.length}<div class="dz-sw">{#each m.swatches as c, i (i)}<span class="sw" style:background={c} title={c}></span>{/each}</div>{/if}
 </section>
 <section class="dz-sec">
     <h3 class="dz-k">{t(K.dizSecTrust)}</h3>

@@ -29,10 +29,10 @@
  * Copied from a read-only `sqlite3 .backup` of the shipped cloude.db.
  * @type {Array<string>}
  */
-const SAMPLE_NAMES = [
-    'cloude_Test', 'cloude_asd', 'cloude_config-sync-tool-2',
+const REAL_NAMES = [
+    'cloude_Test', 'cloude_asd', 'cloude_claude-config-sync-2',
     'cloude_console-msw4z3m5', 'cloude_fs2', 'cloude_fstest',
-    'cloude_scrolltest', 'cloude_ses_2a5a4495', 'cloude_test pause',
+    'cloude_scrolltest', 'cloude_ses_ec5bf2a3', 'cloude_test pause',
 ];
 
 /**
@@ -44,7 +44,7 @@ const SAMPLE_NAMES = [
  * Output: Array<object> - attachable rows.
  */
 function fixtureRows() {
-    const rows = SAMPLE_NAMES.map((name, i) => ({
+    const rows = REAL_NAMES.map((name, i) => ({
         name,
         created_by_cloude: i % 3 !== 0,
         created_at_epoch: Math.floor(Date.now() / 1000) - (3600 * (i + 1)),
@@ -55,7 +55,22 @@ function fixtureRows() {
         agent_family_source: i === 1 ? 'wrapper' : (i === 2 ? 'fingerprint' : 'unknown'),
         pinned_theme: null,
     }));
+    // ROW 4 HAS GENUINELY UNKNOWN OWNERSHIP. `created_by_cloude` is
+    // nullable on the wire: the server fills it from an ownership map
+    // that can simply have no entry for a name. Leaving every fixture row
+    // with a true/false answer would mean the rename gate's third state
+    // ('unknown', CANNOT DETERMINE) is never on screen and never measured
+    // - and that is the state most likely to be quietly folded into
+    // "external" by a `!r.x` somewhere.
     rows[4].created_by_cloude = null;
+    // A RENAME SETS A LABEL. It does NOT move `name`.
+    //
+    // This used to read `if (renamed[r.name]) r.name = renamed[r.name]`,
+    // which modelled a rename as a tmux rename-session - the very thing
+    // the label feature exists to make unreachable. A harness that moves
+    // the handle cannot tell a correct client from one that overwrites a
+    // label with a handle, because in that model there is nothing to
+    // overwrite. It made both look identical and both look fine.
     for (const r of rows) {
         if (labels[r.name] !== undefined) r.label = labels[r.name];
     }
@@ -73,6 +88,14 @@ let failNextListing = false;
  */
 const labels = {};
 
+/**
+ * Description: seed a label BEFORE the app boots, so a page can start
+ *   from "this session already has a label the user typed" - the state
+ *   the destructive rename path needs in order to have anything to
+ *   destroy. Without it every row starts label-less and the whole class
+ *   of defect is unreachable from this harness.
+ * Inputs: tmuxName (string); label (string). Output: void.
+ */
 window.__seedLabel = function (tmuxName, label) { labels[tmuxName] = label; };
 
 /**
@@ -82,8 +105,24 @@ window.__seedLabel = function (tmuxName, label) { labels[tmuxName] = label; };
  */
 window.__setListingFails = function (on) { failNextListing = on; };
 
+// AN IN-MEMORY GROUP SERVER, not a set of canned replies.
+//
+// The group routes are stateful - a create changes what a later list
+// returns, an assign changes what a later delete frees - so a stub that
+// returned fixed payloads could not represent a drag AT ALL: the row
+// would move and the next read would put it back. This keeps real state
+// and enforces the same invariants the real store does, including the
+// one that matters most: DELETING A GROUP FREES ITS MEMBERS RATHER THAN
+// DELETING THEM.
 const groupState = { groups: [], members: new Map(), seq: 0, failNext: null };
 
+/**
+ * Description: force the next group WRITE to fail with a given message,
+ *   so the verifier can measure what the UI does when a move does not
+ *   land - which must be "snap back and say why", never "look like it
+ *   worked".
+ * Inputs: message (string|null). Output: void.
+ */
 window.__failNextGroupWrite = function (message) { groupState.failNext = message; };
 
 /** Description: seed groups directly. Inputs: defs (Array). Output: void. */
@@ -158,6 +197,7 @@ window.API = {
         maybeFail();
         let freed = 0;
         for (const [name, u] of Array.from(groupState.members.entries())) {
+            // THE INVARIANT: the MEMBERSHIP goes, the session does not.
             if (u === uuid) { groupState.members.delete(name); freed += 1; }
         }
         groupState.groups = groupState.groups.filter((g) => g.group_uuid !== uuid);
@@ -177,9 +217,22 @@ window.API = {
         });
         return groupsBody();
     },
+    // THE WORK STAMPS, and the reason they are here. `last_work_at` is
+    // the list's own SORT KEY and, since 2026-09-21, the cozy and
+    // detailed rows DRAW it. With no records endpoint every row read
+    // "unrecorded" and the verifier measured a stamp that was never on
+    // screen, which is the "green check that looked at nothing" shape.
+    //
+    // THE ORDER IS DELIBERATELY THE ONE THE LIST ALREADY HAD. Stamps
+    // descend with the same index `created_at_epoch` descends by, so
+    // defaultSort produces the identical order it produced before -
+    // otherwise every ordering assertion below would be measuring the
+    // fixture rather than the app. THE LAST ROW KEEPS NO STAMP, because
+    // "never measured working" is a real third state the renderer has
+    // to keep distinct, and it already sorts last.
     async listSessionRecords() {
         const now = Date.now();
-        return SAMPLE_NAMES.slice(0, SAMPLE_NAMES.length - 1).map((name, i) => ({
+        return REAL_NAMES.slice(0, REAL_NAMES.length - 1).map((name, i) => ({
             tmux_name: name,
             last_work_at: new Date(now - (60000 * (i + 1))).toISOString(),
         }));
@@ -197,13 +250,27 @@ window.API = {
         }
         return fixtureRows();
     },
+    // ONE LIVE SESSION, so exactly one row carries a `session_id` and is
+    // therefore 'renameable'. Without it every row is 'unavailable' and
+    // the inline editor's open/commit/cancel path cannot be measured at
+    // all - which the verifier reported as CANNOT DETERMINE rather than
+    // passing, and this is the fix for that gap.
     async listSessions() {
+        // WHEN THE ATTACHABLE PROBE IS FORCED TO FAIL, the live list is
+        // empty too. The two endpoints answer different questions and a
+        // real server can genuinely fail one and not the other - but the
+        // scenario this flag exists to set up is "nothing could be
+        // listed", and a live row surviving it would turn that scenario
+        // into a different one without saying so.
         if (failNextListing) return [];
         return [{
+            // THE HANDLE NEVER MOVES. A rename writes a label.
             tmux_session: 'cloude_fstest',
             label: labels.cloude_fstest,
             session: { id: 'sess-fstest-0001' },
             activity_status: 'idle',
+            // A RESTING NOTE, so detailed's second line is measured with
+            // every part it can carry rather than with three of four.
             activity_hint: 'shell',
             unread: false,
             created_by_cloude: true,
@@ -218,11 +285,19 @@ window.API = {
             err.status = 409;
             throw err;
         }
+        // Records what it was ASKED TO STORE, which is what the rename
+        // assertions read back. The tmux name is deliberately unchanged
+        // in the response, exactly as the real endpoint leaves it.
         labels.cloude_fstest = name;
         window.__lastRenameValue = name;
         window.__renameCallCount = (window.__renameCallCount || 0) + 1;
         return { session: { id, tmux_session: 'cloude_fstest' }, label: name };
     },
+    // MUST RETURN SOMETHING TRUTHY. activateRow only calls
+    // returnToExistingTerminal when getSession resolves to a session, so
+    // a null here makes every switch a silent no-op - and a switch that
+    // does nothing cannot be counted, which hid a broken click-deferral
+    // from the rename checks entirely.
     async getSession() {
         return { session: { id: 'sess-fstest-0001' }, tmux_session: 'cloude_fstest' };
     },
@@ -231,6 +306,12 @@ window.API = {
     async destroySession() { return {}; },
     async destroyExternalSession() { return {}; },
 };
+// HOW MANY TIMES THE APP WAS ASKED TO SWITCH CONVERSATION. The inline
+// rename's whole difficulty is that the first click of a double-click
+// arrives BEFORE the double-click, so a broken deferral switches away
+// from the row a moment before the user finishes asking to edit it. That
+// failure still leaves an editor open, so it is invisible unless the
+// switch itself is counted.
 window.__switchCount = 0;
 window.App = {
     returnToExistingTerminal() { window.__switchCount += 1; },
@@ -243,16 +324,9 @@ window.TerminalController = { async destroySession() {} };
 <script src="../../client/js/session-sidebar-store.js"></script>
 <script src="../../client/js/session-sidebar-arrangement.js"></script>
 <script src="../../client/js/session-sidebar-fetch.js"></script>
-<script src="../../client/js/session-sidebar-rename.js"></script>
-<script src="../../client/js/session-sidebar-project-header.js"></script>
-<script src="../../client/js/session-sidebar-groups.js"></script>
-<script src="../../client/js/session-sidebar-clicks.js"></script>
 <script src="../../client/js/session-sidebar.js"></script>
 <script src="../../client/js/session-sidebar-pin.js"></script>
 <script src="../../client/js/session-sidebar-density.js"></script>
-<script src="../../client/js/session-sidebar-drop-target.js"></script>
-<script src="../../client/js/session-sidebar-reorder.js"></script>
-<script src="../../client/js/session-sidebar-group-actions.js"></script>
 <script>
 /**
  * Description: pull the real sidebar markup out of the shipped
@@ -288,6 +362,10 @@ window.__sidebarMeasure = function () {
     const rows = Array.prototype.slice.call(list.querySelectorAll('.session-sidebar-row'));
     return {
         innerWidth: window.innerWidth,
+        // GROUP GEOMETRY, MEASURED. Every band's real painted box, and
+        // for every row the band it is actually drawn inside - read by
+        // walking up from the row's own element, never from a state
+        // object that merely claims where it should be.
         groupsState: list.getAttribute('data-groups-state'),
         bands: Array.prototype.slice.call(
             list.querySelectorAll('.session-sidebar-group[data-group]'),
@@ -311,6 +389,14 @@ window.__sidebarMeasure = function () {
                 name: r.dataset.name,
                 band: owner ? owner.getAttribute('data-group') : null,
                 pinned: r.getAttribute('data-pinned'),
+                // The row's group chip is gone - "no i dont need to see
+                // the group name in the item". Its action moved into the
+                // row's overflow menu, and that menu was removed on
+                // 2026-09-08, so nothing on the row opens the group
+                // picker and there is nothing to measure here any more.
+                // The picker is reached by `g` on a focused row, by
+                // Alt+Arrow across a band edge, or by dragging onto a
+                // group header.
             };
         }),
         density: panel.getAttribute('data-density'),
@@ -336,8 +422,18 @@ window.__sidebarMeasure = function () {
             const box = r.getBoundingClientRect();
             const nameEl = r.querySelector('.session-sidebar-row-name');
             return {
+                // THE IDENTITY the app keys on.
                 name: r.dataset.name,
+                // WHAT A HUMAN ACTUALLY READS, off the rendered element
+                // rather than out of any model. `name` above cannot
+                // stand in for it: since the label feature the two are
+                // different strings by design, and every assertion that
+                // read `name` and called it "what the row shows" was
+                // describing an attribute nobody can see.
                 displayName: nameEl ? nameEl.textContent : null,
+                // The pixel box of the name, so a row that renders its
+                // text into zero width fails rather than passing on a
+                // string that is technically present.
                 displayWidth: nameEl ? nameEl.getBoundingClientRect().width : 0,
                 pinned: r.dataset.pinned,
                 tabindex: r.getAttribute('tabindex'),
@@ -347,12 +443,19 @@ window.__sidebarMeasure = function () {
                 pills: r.querySelectorAll('.family-pill').length,
                 badges: r.querySelectorAll('.session-sidebar-row-badge').length,
                 meta: r.querySelectorAll('.session-sidebar-row-meta').length,
+                // The 2026-09-21 redesign: the relative last-worked
+                // stamp and the resting note, counted as PAINTED
+                // elements so "the density adds something" is a measured
+                // claim and not a markup one.
                 whens: r.querySelectorAll('.session-sidebar-row-when').length,
                 hints: r.querySelectorAll('.session-sidebar-row-hint').length,
                 grips: r.querySelectorAll('[data-grip-session]').length,
                 pins: r.querySelectorAll('[data-pin-session]').length,
             };
         }),
+        // ITEM 64: the section headers, measured as real boxes. `count`
+        // is read off the rendered badge rather than off the model, so a
+        // header that claims a different number than it hides fails here.
         groups: Array.prototype.slice.call(
             list.querySelectorAll('.session-sidebar-group')
         ).map((gEl) => {
@@ -367,6 +470,9 @@ window.__sidebarMeasure = function () {
                     (gEl.querySelector('.session-sidebar-group__count') || {}).textContent
                 ),
                 label: (gEl.querySelector('.session-sidebar-group__label') || {}).textContent,
+                // A REAL GROUP KEEPS ITS KEBAB; a reserved band draws
+                // none (owner, 2026-09-21). Counted on the rendered
+                // header, so a leftover button is caught as a pixel.
                 menus: gEl.querySelectorAll('.session-sidebar-group__menu').length,
                 bandKind: (gEl.querySelector('.session-sidebar-group__headerrow') || {})
                     .dataset ? gEl.querySelector('.session-sidebar-group__headerrow')
@@ -376,11 +482,14 @@ window.__sidebarMeasure = function () {
                 bodyId: (gEl.querySelector('.session-sidebar-group__body') || {}).id,
                 headerHeight: hb.height,
                 headerTop: hb.top,
+                // The chevron's real rotation, so the glyph is verified to
+                // MOVE rather than merely to carry an attribute.
                 chevronTransform: getComputedStyle(
                     gEl.querySelector('.session-sidebar-group__chevron')
                 ).transform,
             };
         }),
+        // ITEM 66: the inline editor, if one is open.
         rename: (function () {
             const input = list.querySelector('.session-sidebar-rename-input');
             if (!input) return null;
@@ -388,6 +497,9 @@ window.__sidebarMeasure = function () {
             const rowEl = input.closest('.session-sidebar-row');
             return {
                 value: input.value,
+                // The limit the editor actually draws. A maxlength below
+                // the server's truncates silently - it raises nothing -
+                // so it has to be measured rather than assumed.
                 maxlength: input.getAttribute('maxlength'),
                 width: box.width,
                 height: box.height,

@@ -1,4 +1,3 @@
-/* cannot be opened */
 import { sessionsHash } from '../sessions-page/sessions-route';
 import { browserSessionsSearchHost } from '../sessions-search/host';
 import { hostWindow } from '../sessions/env';
@@ -25,12 +24,10 @@ export interface ConversationOpenHost {
 type Bag = Record<string, unknown>;
 const isBag = (v: unknown): v is Bag => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-/* }, tmux_session: */
 export function liveFromRows(rows: readonly unknown[], conversationId: string): LiveSession | null {
     for (const row of rows) {
         if (!isBag(row) || !isBag(row.session)) continue;
         const inner = row.session;
-        // conversation id
         if ((row.claude_session_uuid ?? inner.claude_session_uuid) !== conversationId || typeof inner.id !== 'string') continue;
         if (row.activity_status === 'dead') continue;
         const tmux = typeof row.tmux_session === 'string' ? row.tmux_session

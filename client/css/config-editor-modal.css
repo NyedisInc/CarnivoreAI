@@ -13,7 +13,6 @@
     position: relative;
 }
 
-/* padding */
 .config-editor-modal-overlay {
     padding: 0;
 }
@@ -31,7 +30,7 @@
 .config-editor-modal-back {
     display: flex;
     width: fit-content;
-    /* @media (max-width width: 700px width: fit-content */
+    /* @media (max-width: 700px) */
     width: auto;
     height: auto;
     align-items: center;
@@ -56,7 +55,6 @@
     outline: none;
 }
 
-/* @media (max-width width: 700px width: fit-content */
 
 .config-editor-modal-title {
     color: var(--oc-text-primary);
@@ -104,7 +102,6 @@
     flex-shrink: 0;
 }
 
-/* .settings-tab @media (max-width height: 36px width: 36px */
 .config-editor-mode-toggle button {
     width: auto;
     height: auto;
@@ -155,10 +152,6 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-}
-
-.config-editor-cm-host:focus-within {
-    border-color: var(--oc-orange);
 }
 
 .config-editor-cm-host .cm-editor {
@@ -318,9 +311,7 @@
     color: var(--oc-orange);
 }
 
-/* @media (max-width width: 700px */
 
-/* position: relative */
 .config-editor-inplace {
     position: absolute;
     inset: 0;

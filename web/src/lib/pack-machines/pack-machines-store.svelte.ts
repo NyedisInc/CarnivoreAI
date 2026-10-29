@@ -72,6 +72,7 @@ export interface MachineSnapshot {
 
 export interface PackMachine {
   install_id: string;
+  host_key?: string | null;
   label: string;
   is_self: boolean;
   is_master: boolean;
@@ -96,11 +97,17 @@ export interface PackMachinesView {
   machines: PackMachine[];
 }
 
+/* the push topic */
 export const PACK_MACHINES_POLL_MS = 15000;
 
 export const packMachines: Resource<PackMachinesView> = resource<PackMachinesView>(
   () => authFetch<PackMachinesView>('/pack/machines'),
-  { intervalMs: PACK_MACHINES_POLL_MS, name: 'pack-machines', topics: ['pack_machines'] },
+  {
+    intervalMs: PACK_MACHINES_POLL_MS,
+    name: 'pack-machines',
+    topics: ['pack_machines'],
+    body: { key: 'pack_machines', renewMs: 30000, read: (body) => (body as PackMachinesView | null) ?? null },
+  },
 );
 
 export const tracksMaster: Resource<{ tracks_master: boolean }> = resource<{ tracks_master: boolean }>(

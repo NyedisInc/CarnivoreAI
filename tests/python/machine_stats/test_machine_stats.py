@@ -19,6 +19,10 @@ class FakeSampler:
     def __init__(self, cpus):
         self.cpus = list(cpus)
         self.reads = 0
+        self.resets = 0
+
+    def reset_cpu_baseline(self):
+        self.resets += 1
 
     def read(self, max_age=2.0):
         self.reads += 1

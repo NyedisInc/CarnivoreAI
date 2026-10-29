@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* nothing spent yet */
   import {
     sessionUsage,
     releaseSessionUsage,
@@ -150,15 +149,12 @@
   let accountW = $state(0);
   const planWidth = $derived(Math.max(1, width - (account ? accountW : 0)));
   const plan = $derived(planFoot(planWidth, measured));
-  /*  hidden  */
   let labelsShortEl = $state<HTMLElement | null>(null);
   let labelsFullEl = $state<HTMLElement | null>(null);
   let labelWidths = $state<Record<'full' | 'short', number>>({ full: 0, short: 0 });
-  /*  hidden  */
   let measureElB = $state<HTMLDivElement | null>(null);
   let measuredB = $state<FootMeasureB | null>(null);
   const planB = $derived(planFootB(planWidth, measuredB));
-  /*  hidden  */
   let measureElC = $state<HTMLDivElement | null>(null);
   let measuredC = $state<FootMeasureC | null>(null);
   const planC = $derived(planFootC(planWidth, measuredC));
@@ -187,7 +183,7 @@
   const split = $derived(splitFoot(Math.max(0, width - workWidth), step));
   $effect(() => { step = split.state; });
 
-  /*  hidden  */
+  /* and the three */
   let footBarItems = $state(readFootBarItems());
   $effect(() => followFootBarItems((next) => { footBarItems = next; }));
   let footBarOrder = $state(readFootBarOrder());
@@ -196,7 +192,7 @@
   const adm = $derived(maskAdmitByItems(admitted(plan, split), footBarItems));
   const allMasked = $derived(maskAdmitByItems(ALL, footBarItems));
 
-  /*  hidden  */
+  /* there is nothing */
   function maskByItems<T extends Record<string, boolean>>(admit: T, modelKey: keyof T, effortKey: keyof T): T {
     const model = admit[modelKey] && footBarItems.model;
     return { ...admit, [modelKey]: model, [effortKey]: admit[effortKey] && footBarItems.effort && model };
@@ -221,7 +217,6 @@
     observer.observe(el);
     return () => observer.disconnect();
   });
-  /*  hidden  */
   $effect(() => {
     const full = labelsFullEl;
     const short = labelsShortEl;
@@ -233,7 +228,6 @@
     observer.observe(short);
     return () => observer.disconnect();
   });
-  /*  hidden  */
   $effect(() => {
     const el = measureElB;
     const work = workWidths;
@@ -243,7 +237,6 @@
     observer.observe(el);
     return () => observer.disconnect();
   });
-  /*  hidden  */
   $effect(() => {
     const el = measureElC;
     const work = workWidths;
@@ -292,7 +285,7 @@
     </span>
   {/if}
   </div>
-  <!-- hidden -->
+  
   {#if canMeasure && resolvedCollapsedOption === 'b'}<div class="oc-tf oc-tf-measure" aria-hidden="true" style={spacingStyle}
     data-usage-state={model.state} bind:this={measureElB}><FootMeters option={'b'} admit={allMaskedB} {core} {model} {payload} {context} {windows} {rowsByKey} {hasEffort}
       {markPreset} {footBarOrder} {leadScope} {leadWindow} /></div>
@@ -315,7 +308,6 @@
 
 <style>
   @layer components {
-    /* margin-left: auto */
     .oc-tf {
       box-sizing: border-box;
       min-height: var(--oc-foot-h);

@@ -98,6 +98,7 @@ class SendQueue:
 
 
 _queue = SendQueue()
+_targets: Dict[str, str] = {}
 _timer: Optional["asyncio.Task[None]"] = None
 
 
@@ -152,12 +153,14 @@ def queue_change(ctx: CplugContext, key: str) -> Pending:
     return pending
 
 
-async def queue_untold(ctx: CplugContext, keys: Iterable[str]) -> List[Dict[str, Any]]:
+async def queue_untold(ctx: CplugContext, keys: Iterable[str], targets: Optional[Mapping[str, str]] = None) -> List[Dict[str, Any]]:
     lists = (await _run(service.store(ctx).summary)).get("lists", {})
     out: List[Dict[str, Any]] = []
     for key in keys:
         untold = bool(lists.get(key, {}).get("untold"))
         if untold:
+            if targets and targets.get(key):
+                _targets[key] = targets[key]
             queue_change(ctx, key)
         out.append({"list": key, "status": QUEUED if untold else NOTHING})
     return out
@@ -180,6 +183,7 @@ async def queue_owner_write(ctx: CplugContext, item: Mapping[str, Any]) -> str:
 async def flush_list(ctx: CplugContext, key: str) -> Optional[Dict[str, Any]]:
     if _queue.drop(key) is None:
         return None
+    target = _targets.pop(key, None)
     _push(ctx)
     _released()
     store = service.store(ctx)
@@ -188,7 +192,7 @@ async def flush_list(ctx: CplugContext, key: str) -> Optional[Dict[str, Any]]:
         return {"list": key, "status": NOTHING}
     name = (await _run(lambda: service.project_names(ctx))).get(key)
     infos = await ctx.sessions.list()
-    return await sending.send_one_of_many(ctx, _run, key, name, infos, None)
+    return await sending.send_one_of_many(ctx, _run, key, name, infos, target)
 
 
 async def _flush_keys(ctx: CplugContext, keys: Iterable[str]) -> List[Dict[str, Any]]:
@@ -198,6 +202,8 @@ async def _flush_keys(ctx: CplugContext, keys: Iterable[str]) -> List[Dict[str, 
             outcome = await flush_list(ctx, key)
         except FLUSH_ERRORS as exc:
             logger.error("task_manager_send_queue_flush_failed", list=key, error_type=type(exc).__name__, error=str(exc)[:200])
+            _queue.note(key)
+            _arm(ctx)
             continue
         if outcome is not None:
             results.append(outcome)
@@ -252,6 +258,7 @@ def reset() -> None:
         _timer.cancel()
         _timer = None
     _queue.clear()
+    _targets.clear()
 
 
 def use_clock(clock: Callable[[], float]) -> None:

@@ -89,13 +89,6 @@ def hold_launch(is_swarm_body: bool, what: Optional[str] = None) -> None:
 
 
 async def set_enabled(app_state: Any, enabled: bool) -> Dict[str, Any]:
-    """Write the switch, announce it, and on a turn-on resume what a plugin start does. The ONE writer.
-
-    Inputs: app_state (``app.state``, for the resume; None in a context with no app); enabled (bool).
-    Output: the new status, {"enabled": bool}.
-    Raises: FileNotFoundError, ValueError, OSError - config.json could not be written (nothing changed).
-    Example: await set_enabled(request.app.state, False)
-    """
     async with toggle_lock:
         was_on = is_on()
 

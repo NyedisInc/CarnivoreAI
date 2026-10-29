@@ -47,9 +47,9 @@ def done(store: Any, card_id: int, args: Mapping[str, Any], by: str) -> Dict[str
         card = reads.one(conn, card_id)
     if card is None or card["column"] != "review":
         raise CardRefused("not_in_review" if card else "not_a_card", "that card is not in review" if card else "that item is not a card")
-    act = CardAct("done", by, {"expect_pass": args.get("expect_pass")})
+    act = CardAct("done", by, {"expect_pass": args.get("expect_pass"), "reason": args.get("reason") or "", "agent_close": bool(args.get("agent_close"))})
     store.update(card_id, actor=JOE, approve=True, expected_revision=args.get("expected_revision"), act=act)
-    for child in _accepted_children(store, card_id, swarm_only=by == "auto_done"):
+    for child in _accepted_children(store, card_id, swarm_only=by != "owner"):
         store.update(child, actor=JOE, approve=True, act=CardAct("done", by))
     _rollup_due(store, card_id, act.effects)
     return _answer(store, card_id, act.effects)
@@ -131,7 +131,7 @@ def delete(store: Any, card_id: int, args: Mapping[str, Any], by: str) -> Dict[s
         lane_of = conn.execute("SELECT lane FROM work_items WHERE id = ?", (card_id,)).fetchone()
     if by != "owner" and lane.is_task_manager(lane_of):
         raise CardRefused("refused", "the swarm never deletes a task manager task; only the owner does")
-    store.delete(card_id, actor=JOE)
+    store.delete(card_id, actor=JOE, reason=str(args.get("reason") or ""))
     return {"card": None, "effects": [], "data": {}}
 
 

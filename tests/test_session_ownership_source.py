@@ -30,6 +30,9 @@ class _StubSettings:
         self._log_dir = log_dir
         self.port = port
 
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
+
     def get_pinned_themes_path(self) -> Path:
         return self._log_dir / "pinned_themes.json"
 
@@ -116,11 +119,11 @@ async def test_owned_session_with_adopted_id_still_reports_owned(
     monkeypatch, tmp_path
 ):
     mgr = _bare_manager(monkeypatch, tmp_path)
-    _register(mgr, "adopted:cloude_ses_2a5a4495", "cloude_ses_2a5a4495", tmp_path)
-    mgr._owned.names.add("cloude_ses_2a5a4495")
-    _stub_status(monkeypatch, mgr, "cloude_ses_2a5a4495")
+    _register(mgr, "adopted:cloude_ses_ec5bf2a3", "cloude_ses_ec5bf2a3", tmp_path)
+    mgr._owned.names.add("cloude_ses_ec5bf2a3")
+    _stub_status(monkeypatch, mgr, "cloude_ses_ec5bf2a3")
 
-    info = await mgr.get_session_info(session_id="adopted:cloude_ses_2a5a4495")
+    info = await mgr.get_session_info(session_id="adopted:cloude_ses_ec5bf2a3")
     assert info is not None
     assert info.created_by_cloude is True, (
         "an `adopted:` id prefix is not evidence of adoption - it is what a "

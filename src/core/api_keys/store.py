@@ -44,7 +44,7 @@ class ApiKeyError(ValueError):
 
 
 class ApiKeyStoreError(OSError):
-    """The key file is unsafe (a symlink, not a regular file) and was refused."""
+    pass
 
 
 def is_api_key(value: Optional[str]) -> bool:

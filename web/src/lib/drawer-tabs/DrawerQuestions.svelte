@@ -146,7 +146,6 @@
       box-shadow: none;
     }
 
-    /*  hidden  */
     .dq-cell[data-dq-source='dialog'] :global(.ap-actions) {
       counter-reset: dq-opt;
     }

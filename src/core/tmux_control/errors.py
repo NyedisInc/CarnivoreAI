@@ -22,4 +22,4 @@ class ControlFallback(Exception):
 
 
 class ControlWriteUnknown(RuntimeError):
-    """Whether the bytes landed could not be measured; sending again could duplicate them."""
+    pass

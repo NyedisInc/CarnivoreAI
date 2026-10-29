@@ -38,7 +38,7 @@
 </script>
 
 {#if chip !== null}
-  <button
+  <button data-base-exempt="an inline chip sized to the session row label"
     type="button"
     class="timer-chip timer-chip--button"
     aria-haspopup="dialog"

@@ -153,7 +153,7 @@
       .ap-page .ap-keys { display: none; }
       .ap-page .ap-dc { display: none; position: fixed; inset: var(--overlay-top, env(safe-area-inset-top, 0px)) 0 0 0; z-index: 40; background: var(--oc-ground-page); }
       .ap-page .ap-dc[data-sheet="open"] { display: flex; animation: ap-sheet-in .18s ease-out 1; }
-      .ap-page .ap-dc-wrap { --ap-dc-clear: 84px;  padding: var(--oc-space-3) var(--oc-space-4) var(--ap-dc-clear); }
+      .ap-page .ap-dc-wrap { --ap-dc-clear: 84px; padding: var(--oc-space-3) var(--oc-space-4) var(--ap-dc-clear); }
       .ap-page [data-dc-back] { display: inline-flex; min-width: var(--oc-tap); }
       .ap-page .ap-rd-rel { margin-left: 0; }
       .ap-page .ap-rd-strip [data-btn] { flex: 1 1 auto; }

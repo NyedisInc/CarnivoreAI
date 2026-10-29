@@ -1,7 +1,18 @@
 export { openCplugPage, openPluginsPage, registerCplugPage } from './pages';
 export { floorSource, openFloorSession } from './floor.svelte';
+export { revealWish } from './task-manager-reveal.svelte';
+export { registerSwarmFace, unregisterSwarmFace } from './swarm-face.svelte';
+export type { MemberState, SwarmFaceProps } from './swarm-face.svelte';
+export { refreshSwarmRoster, registerSwarmRoster, swarmRosterAgents, unregisterSwarmRoster } from './swarm-roster.svelte';
+export type { SwarmRosterAgent, SwarmRosterReader } from './swarm-roster.svelte';
+export {
+  openSwarmAgentTerminal, registerSwarmAgentActions, renameSwarmAgent, SwarmActionsUnavailableError,
+  turnOffSwarmAgent, unregisterSwarmAgentActions, wakeSwarmAgent,
+} from './swarm-agent-actions';
+export type { SwarmAgentActions } from './swarm-agent-actions';
+export type { TaskClock } from './task-clock';
 export type { FloorCompany, FloorProject, FloorSession, FloorSource } from './floor.svelte';
-export { addTerminalCell, openSession, sessionRow, sessionRowForConversation, terminalAvailable } from './sessions.svelte';
+export { addTerminalCell, openSession, openSessionModal, sessionRow, sessionRowForConversation, terminalAvailable } from './sessions.svelte';
 export type { ListingRow } from './sessions.svelte';
 export { ApiError, auth as authState, authFetch, authFetchBlob } from '../../opscenter/api/auth.svelte';
 export { resourcePush } from '../../lib/resource-push/boot';
@@ -10,6 +21,7 @@ export { newClientId } from '../../lib/outbox/client-id';
 export type { NewOutboxEntry, OutboxResult } from '../../lib/outbox/outbox-model';
 export { familyOf, LIVENESS } from '../../lib/resource-push/store';
 export { t } from '../../lib/i18n/index.svelte';
+export { windowCalm, watchWindowCalm } from '../../lib/motion/window-calm';
 export { typedMatches } from '../../lib/approvals/approval-display';
 export type { ApprovalDisplay } from '../../lib/approvals/approvals-model';
 export { openModal } from '../../lib/modal';
@@ -17,6 +29,11 @@ export { truncatedTip } from '../../lib/tooltip/truncated-tip';
 export { promptText } from '../../lib/sidebar-shell/company-actions';
 export { announceFailure } from '../../lib/sidebar-shell/interaction-globals';
 export type { MenuNode } from '../../lib/drawer-tabs/add-component-menu';
+export { forwardMenuKey, menuRightClick, openMenu } from './menu';
+export type { PluginMenu } from './menu';
+export { declareWidgetActions } from '../../opscenter/widgets/menu/declared-actions.svelte';
+export type { DeclaredAction } from '../../opscenter/widgets/menu/declared-actions.svelte';
+export { useFrameHeader } from '../../opscenter/shell/frame-header.svelte';
 export { openAttachmentLightbox } from '../../lib/attachment-lightbox/open';
 export { openPage } from '../../lib/browser/select-push.svelte';
 export type { PageTarget } from '../../lib/browser/select-push.svelte';
@@ -46,6 +63,7 @@ export type { Contribution, PluginContext, SessionCardRow, SessionTabPayload, Se
 export { snippetParts } from '../../lib/conversation-snippet/snippet-parts';
 export type { SnippetPart } from '../../lib/conversation-snippet/snippet-parts';
 export { openConversation } from '../../lib/conversation-open/open';
+export { openCardOnBoard } from '../../lib/huddle-swarm/open-card';
 export type { ConversationTarget, OpenOutcome } from '../../lib/conversation-open/open';
 export { registerTaskManagerView, taskManagerView } from './task-manager-view';
 export type { TaskManagerFold, TaskManagerView } from './task-manager-view';

@@ -314,8 +314,7 @@ def test_a_third_party_context_only_ever_holds_allow_listed_sessions_and_project
     assert asyncio.run(ctx.sessions.get("ses_1")) == rows[0]
     with pytest.raises(PermissionError):
         asyncio.run(ctx.sessions.get("remote:peer-1:ses_1"))
-    with pytest.raises(PermissionError):
-        asyncio.run(ctx.sessions.durable_keys())
+    assert not hasattr(ctx.sessions, "durable_keys")
     monkeypatch.setattr(projects_service, "current_view", lambda *a, **k: None)
     monkeypatch.setattr(projects_service, "views_to_responses", lambda view, cls: [
         SimpleNamespace(id=1, name="p", path="/Users/x/secret", default_launch_profile="d")])
@@ -342,7 +341,7 @@ def test_start_and_wake_ride_their_own_permissions(rig, grant_tp, monkeypatch):
     assert hasattr(ctx.sessions, "wake") and hasattr(ctx.sessions, "asleep")
     assert not hasattr(ctx.sessions, "start")
     from src.cplugs.host import audit
-    assert [audit.sessions_permission(x) for x in ("list", "message", "start", "wake", "asleep")] \
+    assert [audit.sessions_permission_for(True)(x) for x in ("list", "message", "start", "wake", "asleep")] \
         == ["sessions.read", "sessions.message", "sessions.create", "sessions.control", "sessions.control"]
 
 

@@ -297,7 +297,6 @@ export function parseSchedule(text: string, timezone: string): Promise<ScheduleP
   return authFetch(`${BASE}/schedule/parse`, json('POST', { text, timezone }));
 }
 
-/* a new automation */
 export function createAutomation(draft: AutomationDraft): Promise<Automation> {
   return authFetch(BASE, json('POST', draft));
 }

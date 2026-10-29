@@ -1,3 +1,4 @@
+/* and the real */
 import type { Translate } from '../sessions/types';
 import { canWithdraw, isOpen, stageKey, stageOf, type FolderPhase } from './stages';
 import type { SubRow } from './types';

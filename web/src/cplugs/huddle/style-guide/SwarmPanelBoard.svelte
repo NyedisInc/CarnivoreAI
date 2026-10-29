@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { onMount } from 'svelte';
   import SwarmPanel from '../swarm/SwarmPanel.svelte';
   import { readCharacterPack, DEFAULT_PACK, type CharacterPack } from '../swarm/characters/pack-reader';

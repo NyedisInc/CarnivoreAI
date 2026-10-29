@@ -1,3 +1,4 @@
+/* with a plain */
 import type { RunningSessionRow, SessionRecord, Translate } from './types';
 
 export const INSTANCE_KEY_SEPARATOR = '\u0000';
@@ -12,7 +13,6 @@ export function instanceKey(name: string, epoch: number | string): string {
     return name + INSTANCE_KEY_SEPARATOR + epoch;
 }
 
-/* could not */
 export function resolveSessionAttribution(rows: SessionRecord[]): ResolvedAttribution {
     const byInstance = new Map<string, SessionRecord>();
     const instanceCollisions = new Set<string>();

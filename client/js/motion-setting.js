@@ -1,4 +1,3 @@
-/* animation: none */
 (function () {
     'use strict';
 
@@ -49,8 +48,16 @@
     var blinkTerms = new Set();
     var blinkStop = null;
 
+    function calmNow() {
+        return document.documentElement.getAttribute('data-calm') !== null;
+    }
+
+    function osReduced() {
+        return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
     function syncBlink() {
-        var blink = !typeOff('cursor-blink');
+        var blink = !typeOff('cursor-blink') && !calmNow() && !osReduced();
         blinkTerms.forEach(function (ref) {
             var term = ref.deref();
             if (!term) { blinkTerms.delete(ref); return; }
@@ -62,7 +69,14 @@
 
     function bindCursorBlink(term) {
         blinkTerms.add(new WeakRef(term));
-        if (!blinkStop) blinkStop = watchTypes(syncBlink);
+        if (!blinkStop) {
+            blinkStop = watchTypes(syncBlink);
+            document.addEventListener('carnivore:calm', syncBlink);
+            if (typeof matchMedia === 'function') {
+                var mq = matchMedia('(prefers-reduced-motion: reduce)');
+                if (mq && typeof mq.addEventListener === 'function') mq.addEventListener('change', syncBlink);
+            }
+        }
         syncBlink();
     }
 

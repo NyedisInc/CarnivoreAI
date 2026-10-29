@@ -119,17 +119,6 @@ def styles_by_group(conn: sqlite3.Connection) -> Dict[int, GroupStyle]:
 
 
 def validate_icon(icon: Optional[str]) -> None:
-    """Refuse an icon id the picker does not offer.
-
-    Description: None is "no icon" and always allowed. Anything else must
-      be a current or retired id of ``client/js/icons/icon-registry.js``,
-      read through ``src/core/icon_registry.py``.
-    Inputs: icon (str|None).
-    Output: None.
-    Raises: GroupIconUnknown - naming the id. IconRegistryUnavailable -
-      the registry could not be read, so nothing can be judged.
-    Example: validate_icon("flask")  # passes
-    """
     if icon is None:
         return
     if not icon_registry.known_ids().accepts(icon):

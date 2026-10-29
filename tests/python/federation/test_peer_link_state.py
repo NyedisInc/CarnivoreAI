@@ -120,11 +120,23 @@ def test_v44_adds_the_host_columns_and_peer_rows_round_trip(tmp_path):
         cols = {r[1] for r in conn.execute("PRAGMA table_info(hosts)")}
         assert {"kind", "peer_install_id", "peer_grant_id", "peer_state", "peer_back_kind"} <= cols
         assert conn.execute("SELECT kind FROM hosts WHERE key = 'local'").fetchone()[0] == "local"
-        row = peer_hosts.upsert(conn, install_id="AB-12-cd", label="hosta", grant_id="g", fid="f", initiator=True,
-                                ssh_target="hosta", peer_port=8000, back_kind="tcp")
+        row = peer_hosts.upsert(conn, install_id="AB-12-cd", label="studio", grant_id="g", fid="f", initiator=True,
+                                ssh_target="studio", peer_port=8000, back_kind="tcp")
         assert row.key == peer_hosts.host_key_for("AB-12-cd") and row.initiator and row.back_kind == "tcp" and row.peer_state == "disconnected"
         peer_hosts.set_state(conn, "AB-12-cd", "connected", 1)
         assert peer_hosts.get(conn, "AB-12-cd").peer_state == "connected"
-        assert peer_hosts.upsert(conn, install_id="AB-12-cd", label="hosta2", grant_id="g", fid="f",
-                                 initiator=True).label == "hosta2"
+        assert peer_hosts.upsert(conn, install_id="AB-12-cd", label="studio2", grant_id="g", fid="f",
+                                 initiator=True).label == "studio2"
         assert peer_hosts.delete(conn, "AB-12-cd") and peer_hosts.list_peers(conn) == []
+
+
+def test_identical_hellos_call_on_state_once_and_a_real_change_still_calls_it():
+    calls = []
+    link = PeerLink(peer_install_id="iid", establish=None, make_client=None, on_state=lambda s, p: calls.append((s, p)))
+    link._set(peer_link.CONNECTED, 1)
+    link._set(peer_link.CONNECTED, 1)
+    link._set(peer_link.CONNECTED, 1)
+    assert calls == [(peer_link.CONNECTED, 1)]
+    link._set(peer_link.CONNECTED, 2)
+    link._set(peer_link.DISCONNECTED)
+    assert calls == [(peer_link.CONNECTED, 1), (peer_link.CONNECTED, 2), (peer_link.DISCONNECTED, 2)]

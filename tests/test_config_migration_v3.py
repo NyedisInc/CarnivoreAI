@@ -38,11 +38,11 @@ def _live_v2_config() -> dict:
                     "accepts_model": False,
                 },
                 {
-                    "id": "keyc",
-                    "label": "keyc (keychain-backed)",
-                    "script": "keyc() (\n  command claude\n)",
-                    "entry": "keyc",
-                    "description": "the team keyc, verbatim.",
+                    "id": "cld",
+                    "label": "cld (keychain-backed)",
+                    "script": "cld() (\n  command claude\n)",
+                    "entry": "cld",
+                    "description": "Alex cld, verbatim.",
                     "default": False,
                     "accepts_model": False,
                 },
@@ -64,7 +64,7 @@ def test_v2_to_v3_never_changes_a_wrapper_id():
     after, _ = migrate_config_dict(_live_v2_config(), True, True)
     assert [w["id"] for w in without_standard_seeds(after["agents"]["wrappers"])] == [
         "claude-skip-permissions",
-        "keyc",
+        "cld",
     ]
 
 
@@ -81,7 +81,7 @@ def test_v2_to_v3_preserves_the_default_flag_and_which_wrapper_holds_it():
     after, _ = migrate_config_dict(_live_v2_config(), True, True)
     by_id = {w["id"]: w for w in without_standard_seeds(after["agents"]["wrappers"])}
     assert by_id["claude-skip-permissions"]["default"] is True
-    assert by_id["keyc"]["default"] is False
+    assert by_id["cld"]["default"] is False
 
 
 def test_v2_to_v3_keeps_every_legacy_command_key():
@@ -200,7 +200,7 @@ def test_every_starting_version_ends_up_current_with_families(start_version):
         assert w["family"] == "claude"
     assert [w["id"] for w in without_standard_seeds(new_data["agents"]["wrappers"])] == [
         "claude-skip-permissions",
-        "keyc",
+        "cld",
     ]
 
 

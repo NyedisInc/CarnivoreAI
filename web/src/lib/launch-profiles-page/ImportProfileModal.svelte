@@ -1,6 +1,7 @@
-<!-- and writes nothing -->
+
 <script lang="ts">
     import ModalShell from '../launchpad/ModalShell.svelte';
+    import { Button, Checkbox, Field, State } from '../base';
     import type { Translate } from '../sessions/types';
     import { errorText, type ImportPreview, type LaunchProfilesApi } from './api';
 
@@ -51,8 +52,8 @@
 <ModalShell title={t('launch_profiles.import.title')} dismissable={!busy} onCancel={() => close(null)}>
     <div class="lp-import" data-lp-import>
         <p class="lp-import__note">{t('launch_profiles.import.lead')}</p>
-        <label class="lp-import__label" for="lp-import-text">{t('launch_profiles.import.paste')}</label>
-        <textarea id="lp-import-text" class="lp-import__text" rows="5" spellcheck="false" disabled={busy} value={text} oninput={(e) => edited((e.currentTarget as HTMLTextAreaElement).value)}></textarea>
+        <Field id="lp-import-text" label={t('launch_profiles.import.paste')} multiline rows={5} data-mono spellcheck="false" disabled={busy}
+            bind:value={() => text, (v) => edited(v)} />
         <input type="file" accept="application/json,.json" aria-label={t('launch_profiles.import.file')} disabled={busy} onchange={(e) => void chooseFile(e)} />
         {#if preview}
             <p class="lp-import__label">{t('launch_profiles.import.parts', { name: preview.profile.id })}</p>
@@ -61,18 +62,18 @@
                 <p class="lp-import__label">{part.kind}</p>
                 <pre class="lp-import__script">{part.text}</pre>
             {/each}
-            {#if preview.endpoint_connection_missing}<p class="lp-import__warn">{t('launch_profiles.import.connection_missing')}</p>{/if}
+            {#if preview.endpoint_connection_missing}<State inline kind="warn" role="none" title={t('launch_profiles.import.connection_missing')} />{/if}
             {#if preview.exists}
-                <label class="lp-import__check"><input type="checkbox" bind:checked={replace} /> {t('launch_profiles.import.replace', { name: preview.profile.id })}</label>
+                <Checkbox label={t('launch_profiles.import.replace', { name: preview.profile.id })} bind:checked={replace} data-lp-import-replace />
             {/if}
-            <label class="lp-import__check"><input type="checkbox" bind:checked={accepted} /> {t('launch_profiles.import.accept')}</label>
+            <Checkbox label={t('launch_profiles.import.accept')} bind:checked={accepted} data-lp-import-accept />
         {/if}
-        {#if error}<p class="lp-import__error" role="alert">{error}</p>{/if}
+        {#if error}<State inline kind="error" title={error} />{/if}
     </div>
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" disabled={busy} onclick={() => close(null)}>{t('launch_profiles.import.cancel')}</button>
-        <button type="button" class="modal-btn modal-btn-secondary" disabled={busy || text.trim() === ''} onclick={() => void check()}>{t('launch_profiles.import.check')}</button>
-        <button type="button" class="modal-btn modal-btn-confirm" disabled={!canImport} onclick={() => void submit()}>{t('launch_profiles.import.go')}</button>
+        <Button disabled={busy} data-lp-import-cancel onclick={() => close(null)}>{t('launch_profiles.import.cancel')}</Button>
+        <Button disabled={busy || text.trim() === ''} data-lp-import-check onclick={() => void check()}>{t('launch_profiles.import.check')}</Button>
+        <Button variant="confirm" disabled={!canImport} data-lp-import-go onclick={() => void submit()}>{t('launch_profiles.import.go')}</Button>
     {/snippet}
 </ModalShell>
 
@@ -81,10 +82,7 @@
     .lp-import { display: flex; flex-direction: column; gap: 8px; min-width: 0; max-height: 60vh; overflow-y: auto; }
     .lp-import__note { margin: 0; color: var(--oc-text-secondary); font-size: 12px; }
     .lp-import__label { color: var(--oc-text-muted); font-size: 10px; letter-spacing: var(--oc-tracking-label, 0.6px); text-transform: uppercase; }
-    .lp-import__text { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--oc-line-rule); border-radius: 2px; background: var(--oc-ground-field); color: var(--oc-text-primary); font-family: var(--font-mono); font-size: 11px; }
+    .lp-import :global(textarea[data-field][data-mono]) { font-family: var(--font-mono); }
     .lp-import__script { max-height: 30vh; overflow: auto; margin: 0; padding: 8px; border: 1px solid var(--oc-line-rule); border-radius: 2px; background: var(--oc-ground-field); color: var(--oc-text-primary); font-family: var(--font-mono); font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .lp-import__check { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--oc-text-primary); }
-    .lp-import__warn, .lp-import__error { margin: 0; padding: 6px 8px; border-left: 2px solid var(--oc-yellow); background: var(--oc-ground-field); color: var(--oc-text-primary); font-size: 12px; overflow-wrap: anywhere; }
-    .lp-import__error { border-left-color: var(--oc-coral); }
   }
 </style>

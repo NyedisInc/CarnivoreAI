@@ -145,3 +145,11 @@ async def test_watch_keepalive_and_stop(tmp_path: Path) -> None:
     await task
     assert named == [SERVER_LOG]
     await watch.stop()
+
+
+def test_a_token_ending_one_entry_does_not_star_the_next_entrys_event(tmp_path: Path) -> None:
+    token = "sk-ant-api03-" + "A" * 60
+    log = _write(tmp_path / "server.log", [_line("first", key=token), _line("second_event_name")])
+    entries = read_entries(log)
+    assert [e["event"] for e in entries] == ["first", "second_event_name"]
+    assert token not in entries[0]["fields"]

@@ -12,6 +12,12 @@ import * as Fetch from './fetch';
 import * as GroupOrder from './group-order';
 import * as Membership from './group-membership';
 import * as GroupStore from './group-store';
+import * as GroupColor from './group-color';
+import * as GroupIcon from './group-icon';
+import * as Layouts from './layouts-model';
+import { rowParts as layoutRowParts } from './layouts-row-html';
+import { runMenuItem as runLayoutMenuItem } from './layouts-menu';
+import { wireLayoutsDrag } from './layouts-drag';
 import * as Pin from './pin';
 import * as Search from './search';
 import * as Store from './store';
@@ -24,6 +30,11 @@ import * as SectionVisibility from './section-visibility.svelte';
 import * as ClosedVisibility from './closed-visibility.svelte';
 import { openColorMenu } from '../sidebar-shell/heading-color-actions';
 import { WakeFocus } from '../sidebar-shell/wake-focus';
+import * as RowControls from './row-controls';
+import { onAsleepClick } from './wake-click';
+import { rowMenuSleepGlobal } from './row-menu-sleep';
+import { watchKeepAwakeRepaint } from './keep-awake-repaint';
+import { publishRunTable } from '../item-menu/run';
 
 let controller: SessionSidebarController | null = null;
 
@@ -92,6 +103,28 @@ export function publishDrawer(root: Record<string, unknown>, ctrl: SessionSideba
         MOBILE_STORAGE_KEY: Density.MOBILE_STORAGE_KEY, MOBILE_PREFERENCE_FIELD: Density.MOBILE_PREFERENCE_FIELD,
     };
     root.SessionSidebarColorMenu = { open: openColorMenu };
+    root.SessionSidebarGroupIcon = {
+        iconOf: GroupIcon.iconOf, markHtml: GroupIcon.markHtml, headingMark: GroupIcon.headingMark,
+        open: GroupIcon.open, close: GroupIcon.close, setIcon: GroupIcon.setIcon, MOUNT_ID: GroupIcon.MOUNT_ID,
+    };
+    wireLayoutsDrag();
+    root.SessionSidebarLayouts = {
+        isLayoutName: Layouts.isLayoutName, idOf: Layouts.idOf, rows: Layouts.rows, memberUuids: Layouts.memberUuids,
+        rowParts: layoutRowParts, memberBody: Layouts.memberBody, activate: Layouts.activate, rename: Layouts.rename,
+        runMenuItem: runLayoutMenuItem, blueprintsEnabled: Layouts.blueprintsEnabled, bandRows: Layouts.bandRows,
+    };
+    publishRunTable(root);
+    root.SessionSidebarWakeClick = { onAsleepClick };
+    root.SessionRowMenuSleep = rowMenuSleepGlobal;
+    root.SessionSidebarRowControls = {
+        escAttr: RowControls.escAttr, escHtml: RowControls.escHtml, pinLegendHtml: RowControls.pinLegendHtml,
+    };
+    root.SessionSidebarGroupColour = {
+        COLOURS: GroupColor.COLORS, GRADIENTS: GroupColor.GRADIENTS, ANIMATIONS: GroupColor.ANIMATIONS,
+        attrsFor: GroupColor.attrsFor, layoutRowAttrs: GroupColor.layoutRowAttrs, groupFxHtml: GroupColor.groupFxHtml,
+        layoutFxHtml: GroupColor.layoutFxHtml, open: GroupColor.open, openFor: GroupColor.openFor,
+        openFull: GroupColor.openFull, close: GroupColor.close, nextStyle: GroupColor.nextStyle, setStyle: GroupColor.setStyle,
+    };
     root.SessionSidebarSearch = {
         getQuery: Search.getQuery, filterActive: Search.filterActive, setQuery: Search.setQuery, matchesRow: Search.matchesRow,
         matchesLabel: Search.matchesLabel, noMatchesHtml: Search.noMatchesHtml, normalize: Search.normalize,
@@ -111,8 +144,8 @@ export function bootDrawer(): SessionSidebarController {
     setDrawerController(ctrl);
     publishDrawer(pageWindow(), ctrl);
     Sync.start();
+    watchKeepAwakeRepaint(() => ctrl.repaint());
     watchViewClass(() => reapplyForViewClass(ctrl));
-    //  hidden 
     if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) void ctrl.refreshNow();

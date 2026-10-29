@@ -1,3 +1,4 @@
+/* there is nothing */
 (function () {
     'use strict';
 

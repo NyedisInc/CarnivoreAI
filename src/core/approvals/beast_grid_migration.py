@@ -53,11 +53,6 @@ def stored_grid(state_dir: Path) -> Tuple[Dict[str, bool], Optional[str]]:
 
 
 def migrate(state_dir: Path, config_path: Path) -> bool:
-    """Carry the plugin state's grid into ``config.json`` once. Output: True when it wrote.
-
-    Inputs: state_dir (the app state directory); config_path (``config.json``). Never raises for a missing or broken config (logged; the
-      next boot tries again). Example: migrate(Path("/state"), Path("config.json")) -> True on the first boot after the move
-    """
     try:
         if "beast_grid" in (read_config(config_path).get("mcp") or {}):
             return False

@@ -24,10 +24,10 @@ TABLE: Mapping[str, Tuple[str, str]] = {
                             "finished with a review block). Only the owner approves."),
     "task_manager_state_request": ("task_manager.tasks.state.request",
                                    "Ask the owner to reopen an approved task, close an unapproved one, undo a closure, or delete one for good; "
-                                   "waits for their approval card."),
+                                   "waits for his approval card."),
     "task_manager_ask": ("task_manager.tasks.ask",
-                         "Ask the owner a question on a task only when blocked on their answer: typed questions (yes_no, single, "
-                         "multi, rank, text) with context; the owner is notified."),
+                         "Ask the owner a question on a task only when blocked on his answer: typed questions (yes_no, single, "
+                         "multi, rank, text) with context; he is notified."),
     "task_manager_reply": ("task_manager.tasks.reply",
                            "Reply on a task's thread: an info (fyi) or an answer to the owner's question (with quote). Pipe "
                            "tables and files allowed."),
@@ -60,10 +60,13 @@ TABLE: Mapping[str, Tuple[str, str]] = {
                                   "only."),
     "task_manager_entry_import": ("task_manager.entries.import",
                                   "File an add-box entry as one or more tasks: split requests, title and group each, set state "
-                                  "per their words."),
+                                  "per his words."),
     "task_manager_progress_set": ("task_manager.tasks.progress.set",
                                   "Show a worker's live phase (queued, running, testing, blocked, done) and a short note on a "
                                   "working task's row."),
+    "task_manager_file_remove": ("task_manager.tasks.files.remove",
+                                 "Delete one file you attached to a task: the thread says it was removed and its bytes go, unless "
+                                 "another task names them. The owner or the attaching agent only."),
     "task_manager_wait_update": ("task_manager.tasks.wait.update",
                                  "End a waiting task's wait as cleared or failed (with a reason); the task goes back to open."),
     "huddle_focus": ("task_manager.tasks.focus",

@@ -13,6 +13,7 @@ from src.config.provider_accounts import (
     ProviderAccountsConfig,
 )
 from src.core import config_writer, resource_push
+from src.core.read_caches.config_stat import CONFIG_READS
 from src.core.resource_push import topics as resource_topics
 
 logger = structlog.get_logger()
@@ -32,6 +33,11 @@ def read_block(config: Dict[str, Any]) -> List[ProviderAccount]:
 
 def list_accounts(config_path: Path) -> List[ProviderAccount]:
     resolved = Path(config_path).expanduser()
+    kept = CONFIG_READS.fetch(resolved, ACCOUNTS_KEY, lambda: tuple(_read_accounts(resolved)))
+    return [account.model_copy(deep=True) for account in kept]
+
+
+def _read_accounts(resolved: Path) -> List[ProviderAccount]:
     if not resolved.exists():
         raise FileNotFoundError(f"Auth config file not found: {resolved}")
     try:

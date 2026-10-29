@@ -92,10 +92,11 @@
 </script>
 
 {#if base}
+<div class="hdt-reply" data-task-manager-reply-wrap={item.id}>
+  {#if attached.chips.length}<TaskManagerChips chips={attached.chips} onRemove={attached.remove} />{/if}
   
   <form class="oc-inline-field oc-focus-host" class:hdt-actions--row={onRow} class:hdt-actions--drop={dropping} data-task-manager-actions={item.id}
         ondragover={onDragOver} ondragleave={() => (dropping = false)} ondrop={onDrop} data-task-manager-reply-on-row={onRow ? item.id : undefined} onsubmit={(event) => { event.preventDefault(); void sendPicked(); }}>
-    {#if attached.chips.length}<TaskManagerChips chips={attached.chips} onRemove={attached.remove} />{/if}
     <textarea class="oc-inline-field__input" data-field rows="1" bind:value={draft} bind:this={box} onkeydown={onKeydown} onpaste={onPaste}
               {placeholder} title={t('cplug.huddle.thread.keys_title')} aria-label={placeholder}
               data-huddle-reply={item.id}></textarea>
@@ -111,10 +112,12 @@
       </span>
     {/if}
   </form>
+</div>
 {:else}
+<div class="hdt-reply hdt-reply--indent" class:hdt-reply--row={onRow} data-task-manager-reply-wrap={item.id}>
+  {#if attached.chips.length}<TaskManagerChips chips={attached.chips} onRemove={attached.remove} />{/if}
 <form class="hdt-actions oc-focus-host" class:hdt-actions--row={onRow} class:hdt-actions--drop={dropping} data-task-manager-actions={item.id}
       ondragover={onDragOver} ondragleave={() => (dropping = false)} ondrop={onDrop} data-task-manager-reply-on-row={onRow ? item.id : undefined} onsubmit={(event) => { event.preventDefault(); void sendPicked(); }}>
-  {#if attached.chips.length}<TaskManagerChips chips={attached.chips} onRemove={attached.remove} />{/if}
   <textarea class="hdt-input" class:hdt-input--rows3={split} data-field={base ? '' : undefined} rows="1" bind:value={draft} bind:this={box} onkeydown={onKeydown} onpaste={onPaste}
             {placeholder} title={t('cplug.huddle.thread.keys_title')} aria-label={placeholder}
             data-huddle-reply={item.id}></textarea>
@@ -149,10 +152,29 @@
     {/if}
   {/if}
 </form>
+</div>
 {/if}
 
 <style>
   @layer components {
+    .hdt-reply {
+      display: flex;
+      flex-direction: column;
+      gap: var(--oc-space-1);
+      min-width: 0;
+    }
+
+    .hdt-reply--indent {
+      margin-left: var(--oc-space-2);
+    }
+
+    .hdt-reply--indent.hdt-reply--row {
+      margin-left: 0;
+    }
+
+    .hdt-reply > .hdt-actions {
+      margin-left: 0;
+    }
     .hdt-actions {
       display: flex;
       align-items: flex-end;

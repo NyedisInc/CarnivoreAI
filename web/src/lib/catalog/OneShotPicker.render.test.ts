@@ -134,6 +134,7 @@ describe('every refusal gets its own sentence', () => {
         'pane_not_an_agent',
         'pane_dialog_open',
         'paste_not_settled',
+        'paste_not_submitted',
         'body_has_escape',
         'body_too_large',
         'body_empty',

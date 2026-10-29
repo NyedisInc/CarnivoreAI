@@ -6,7 +6,6 @@ console.log('[TerminalLayout Module] Loading...');
 
     const DEBOUNCE_MS = 100;
 
-    /* getElementById('terminal') */
     function createTerminalLayout(deps) {
         const wiring = deps || {};
 
@@ -35,7 +34,6 @@ console.log('[TerminalLayout Module] Loading...');
         let onOrientationChange = null;
         /** @type {?function} see `onWindowResize`. */
         let onViewportResize = null;
-        /*  hidden  */
         let onVisibility = null;
 
         const MAX_FIT_RETRIES = 8;
@@ -134,7 +132,6 @@ console.log('[TerminalLayout Module] Loading...');
             arm(waitMs);
         }
 
-        /* padding */
         function requestFitAfterTransition(el, propertyName, fallbackMs, reason) {
             if (!el) { requestFit(reason); return; }
 

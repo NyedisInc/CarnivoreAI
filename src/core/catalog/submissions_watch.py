@@ -141,7 +141,6 @@ class SubmissionsWatch:
             await self.poll_once(reader)
 
     def _ensure_running(self, reader: Reader) -> None:
-        """Start the poller when a row is open and it is not already running."""
         if not self.running and self.next_delay() is not None:
             self._poller = asyncio.get_running_loop().create_task(self._run(reader))
 

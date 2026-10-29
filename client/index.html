@@ -9,7 +9,6 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Carnivore">
-    <!-- <span class="version" -->
     <meta name="cloude-app-version" content="{{VERSION}}">
     <meta name="cloude-client-build" content="{{CLIENT_BUILD}}">
     <meta name="theme-color" content="#0a0a0a">
@@ -23,9 +22,7 @@
 
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="stylesheet" href="/static/css/scrollbars.css" />
-    <!-- --color- -->
     <link rel="stylesheet" href="/static/css/header-actions.css" />
-    <!-- --color- -->
     <link rel="stylesheet" href="/static/css/toast.css" />
     <link rel="stylesheet" href="/static/css/toast-collapse.css" />
     <link rel="stylesheet" href="/static/css/session-sidebar.css" />
@@ -36,9 +33,7 @@
     <link rel="stylesheet" href="/static/css/status-dot.css" />
     <link rel="stylesheet" href="/static/css/status-led.css" />
     <link rel="stylesheet" href="/static/css/session-header-led.css" />
-    <!-- padding -->
     <link rel="stylesheet" href="/static/css/session-sidebar-density.css" />
-    <!-- padding -->
     <link rel="stylesheet" href="/static/css/session-sidebar-row-bodies.css" />
     <link rel="stylesheet" href="/static/css/session-sidebar-row-controls.css" />
     <link rel="stylesheet" href="/static/css/session-sidebar-keep-awake.css" />
@@ -49,11 +44,9 @@
     <link rel="stylesheet" href="/static/css/session-sidebar-colours.css" />
     <link rel="stylesheet" href="/static/css/session-sidebar-resize.css" />
     <link rel="stylesheet" href="/static/css/session-sidebar-rail.css" />
-    <!-- .session-sidebar-row-pin -->
     <link rel="stylesheet" href="/static/css/session-row-menu.css" />
     <link rel="stylesheet" href="/static/css/version-footer.css" />
-    <!-- --color- -->
-    <link rel="stylesheet" href="/static/css/launchpad-wrapper-pill.css" />
+    <link rel="stylesheet" href="/static/css/modal-titlerow.css" />
     <link rel="stylesheet" href="/static/css/session-restart-picker.css" />
     <link rel="stylesheet" href="/static/css/terminal-mascot.css" />
     <link rel="stylesheet" href="/static/css/wrapper-mark.css" />
@@ -75,16 +68,13 @@
     <link rel="stylesheet" href="/static/css/header-menu.css" />
     <link rel="stylesheet" href="/static/css/header-master-all.css" />
     <link rel="stylesheet" href="/static/css/home-bar.css" />
-    <link rel="stylesheet" href="/static/css/attribution-prompt.css" />
     <link rel="stylesheet" href="/static/css/ios-chrome.css" />
     <link rel="stylesheet" href="/static/css/slash-command-chips.css" />
     <link rel="stylesheet" href="/static/css/slash-commands-fab.css" />
 
-    <!-- .settings-section -->
 
     <link rel="stylesheet" href="/static/css/session-theme-tint.css" />
 
-    <!-- hidden -->
     <link rel="stylesheet" href="/static/css/screen-chrome.css" />
 
     <link rel="stylesheet" href="/static/css/terminal-opacity.css" />
@@ -94,7 +84,7 @@
     <link rel="stylesheet" href="/static/css/deep-link-notice.css" />
     <link rel="stylesheet" href="/static/css/effort-level.css" />
     <link rel="stylesheet" href="/static/css/animation-pause.css" />
-    <link rel="stylesheet" href="/static/css/resting-row-effort.css" />
+    <link rel="stylesheet" href="/static/css/animation-calm.css" />
     <link rel="stylesheet" href="/static/css/animation-types.css" />
     <link rel="stylesheet" href="/static/dist/app.css" />
 
@@ -109,13 +99,6 @@
 
     <link rel="stylesheet" href="/static/css/terminal-carnivore.css" />
     <link rel="stylesheet" href="/static/css/right-drawer.css" />
-    <!-- THE SAME GLOW SHIMMER, SCALED UP, FOR CENTERED MODALS (issue #918).
-         Targets `.modal-content` (the shared dialog chassis in styles.css),
-         and the help lightbox, reusing popup-focus.css's
-         own `--pf-angle` animation. Loads after styles.css and sidebar-help.css
-         (both earlier in this file) so its box-shadow
-         wins their equal-specificity rules; loads BEFORE popup-focus.css,
-         which stays the last sheet of all per the note below. -->
     <link rel="stylesheet" href="/static/css/modal-glow.css" />
     <link rel="stylesheet" href="/static/css/desktop-chrome.css" />
     <link rel="stylesheet" href="/static/css/popup-focus.css" />
@@ -129,10 +112,8 @@
     </div>
 
     <div class="header">
-        <!-- text-overflow: ellipsis -->
         <div class="header-row">
         <div class="header-home-spacer" aria-hidden="true"></div>
-        <!-- <button> -->
         <button type="button" id="session-sidebar-toggle" class="session-sidebar-toggle hidden"
                 data-auth-only
                 aria-expanded="false" aria-controls="session-sidebar-panel"
@@ -143,12 +124,10 @@
             <span id="headerAlertDot"></span>
         </button>
         <h1 id="appTitle">
-            <!-- HEADER_BRAND_ICON_URL -->
             <button type="button" id="header-icon" class="header-icon header-icon--wordmark"
                     aria-label="Carnivore, go to the home screen"><img data-brand-icon src="/static/img/carnivore/carnivore-wordmark.png" srcset="/static/img/carnivore/carnivore-wordmark@2x.png 2x" alt="" /></button>
             <span id="header-title-text"></span>
-            <!-- flex-shrink: 0 -->
-            <!-- could not -->
+            <!-- that does nothing -->
             <button type="button" id="launchpad-help-btn" class="btn-icon" aria-label="help">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="10"/>
@@ -156,10 +135,8 @@
                     <line x1="12" y1="17.5" x2="12" y2="17.5"/>
                 </svg>
             </button>
-            <!-- flex-shrink: 0 -->
         </h1>
         <div class="controls">
-            <!-- nothing at all -->
             <button id="logoutBtn" class="hidden" aria-label="Logout">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M7 2.5H3.75C3.05964 2.5 2.5 3.05964 2.5 3.75V12.25C2.5 12.9404 3.05964 13.5 3.75 13.5H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -184,7 +161,6 @@
                     <path d="M2 5.25C2 4.69772 2.44772 4.25 3 4.25H6.5L7.75 5.75H13C13.5523 5.75 14 6.19772 14 6.75V11.25C14 11.8023 13.5523 12.25 13 12.25H3C2.44772 12.25 2 11.8023 2 11.25V5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                 </svg>
             </button>
-            <!-- file editor -->
             <button type="button" id="sessionNotesBtn" class="btn-icon hidden" aria-label="notes" title="notes for this session" aria-pressed="false">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M3.25 2.5H9.25L12.75 6V13.5H3.25V2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
@@ -192,7 +168,6 @@
                     <path d="M5.75 9H10.25M5.75 11.25H8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
             </button>
-            <!-- hidden -->
             <button type="button" id="terminalSearchBtn" class="btn-icon"
                     aria-label="search session" title="search (Cmd+F)">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -200,8 +175,9 @@
                     <path d="m10.5 10.5 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
             </button>
+            <!-- the home screen -->
         </div>
-        </div>
+        </div><!-- /.header-row -->
         <div id="home-subheader" class="home-subheader" hidden></div>
     </div>
     <div class="session-sidebar-backdrop" id="session-sidebar-backdrop" hidden></div>
@@ -210,7 +186,6 @@
         <div id="session-sidebar-header" class="session-sidebar-header"></div>
         <div id="session-sidebar-wrail" class="sbr-rail-slot"></div>
         <div id="session-sidebar-stats" class="session-sidebar-stats"></div>
-        <!-- hidden -->
         <div id="session-sidebar-region" class="sbr-region">
         <div class="session-sidebar-scroll">
         <div id="session-sidebar-search" class="session-sidebar-search"></div>
@@ -219,14 +194,12 @@
         </div>
         <div id="session-sidebar-flyout" class="sbr-flyout-slot"></div>
         </div>
-        <!-- hidden -->
         <div id="session-sidebar-tabbody" class="session-sidebar-tabbody" hidden></div>
         <div id="session-sidebar-area-bar" class="session-sidebar-area-bar"></div>
         <div id="session-sidebar-ledger" class="session-sidebar-ledger"></div>
         <div id="session-sidebar-bar-slot" class="session-sidebar-bar-slot"></div>
         <div id="session-sidebar-live" class="session-sidebar-live"
              role="status" aria-live="polite"></div>
-        <!-- <button> -->
         <div id="session-sidebar-resize-handle" class="session-sidebar-resize-handle"
              role="separator" aria-orientation="vertical"
              aria-label="Resize the agents sidebar. Double-click to reset."
@@ -279,14 +252,12 @@
     <div id="sessions-screen"></div>
     <div id="settings-screen"></div>
 
-    <!-- hidden -->
     <div id="menu-page-bar"></div>
 
     <div id="ledger-screen"></div>
 
     <div id="plugin-main-view"></div>
 
-    <!-- position: fixed -->
     <div id="add-to-cascade-menu"></div>
     <div id="send-to-modal"></div>
     <div id="move-folder-modal"></div>
@@ -323,19 +294,24 @@
     <script src="/static/js/navigation-generation.js"></script>
     <script src="/static/js/solo-window.js"></script>
     <script src="/static/js/desktop-chrome.js"></script>
-    <!-- hidden -->
     <script src="/static/js/desktop-window-hidden.js"></script>
+    <script src="/static/js/desktop-window-calm.js"></script>
     <script src="/static/js/kebab-icon.js"></script>
     <script type="module" src="/static/js/browser-storage-migrate.js"></script>
     <script src="/static/js/boot-fetch-dedupe.js"></script>
+    <script src="/static/js/i18n/tr.js"></script>
     <script src="/static/js/api.js"></script>
-    <!-- file editor -->
     <script src="/static/js/module-loader.js"></script>
     <script src="/static/js/module-families.js"></script>
     <script src="/static/js/api-toasts.js"></script>
+    <script src="/static/js/api-catalog.js"></script>
+    <script src="/static/js/api-session-groups.js"></script>
+    <script src="/static/js/api-provider-ledger.js"></script>
+    <script src="/static/js/api-config-files.js"></script>
+    <script src="/static/js/api-projects.js"></script>
+    <script src="/static/js/api-session-lifecycle.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/preferences.js"></script>
-    <!-- before terminal.js -->
     <script src="/static/js/preferences-transport.js"></script>
 
     <script src="/static/js/preference-bridge.js"></script>
@@ -357,6 +333,9 @@
     <script src="/static/js/status-led.js"></script>
     <script src="/static/js/visibility-observer.js"></script>
     <script src="/static/js/animation-pauser.js"></script>
+    <script src="/static/js/animation-calm.js"></script>
+    <script src="/static/js/ambient-ticker.js"></script>
+    <script src="/static/js/modal-ring.js"></script>
     <script src="/static/js/session-transport.js"></script>
     <script src="/static/js/session-status-summary.js"></script>
     <script src="/static/js/toast-session-group.js"></script>
@@ -367,7 +346,9 @@
     <script src="/static/js/session-row-actions-confirm.js"></script>
     <script src="/static/js/session-row-actions.js"></script>
     <script src="/static/js/session-theme-tint.js"></script>
+    <!-- the project folder -->
     <script src="/static/js/folder-picker-modal.js"></script>
+    <!-- the home screen -->
     <script src="/static/js/providers.js"></script>
     <script src="/static/js/server-restart-watch.js"></script>
     <script src="/static/js/terminal-scroll-step.js"></script>
@@ -414,9 +395,9 @@
     <script src="/static/js/clipboard.js"></script>
     <script src="/static/js/terminal-file-drop.js"></script>
     <script src="/static/js/touch-select.js"></script>
+    <script src="/static/js/http-url.js"></script>
     <script src="/static/js/output-scan.js"></script>
     <script src="/static/js/copy-output.js"></script>
-    <!-- <script -->
     <script src="/static/js/terminal-prompt-join.js"></script>
     <script src="/static/js/terminal-prompt-ticks.js"></script>
     <script src="/static/js/terminal-prompt-scan.js"></script>
@@ -442,57 +423,33 @@
     <script src="/static/js/terminal-background-contrast.js"></script>
     <script src="/static/js/terminal-background-manifest.js"></script>
     <script src="/static/js/terminal-background.js"></script>
-    <script src="/static/js/themes/themeSelector.js"></script>
 
     <script src="/static/js/theme-navigation.js"></script>
 
     <script src="/static/js/theme-global-follow.js"></script>
 
+    <!-- on the terminal screen -->
     <script src="/static/js/session-theme-menu.js"></script>
 
-    <!-- the bottom bar -->
-    <script src="/static/js/session-sidebar-rename.js"></script>
+    <!-- the bottom bar the home screen -->
     <script src="/static/js/sidebar-help.js"></script>
     <script src="/static/js/effort-level.js"></script>
     <script src="/static/js/session-model-icon.js"></script>
     <script src="/static/js/agent-family-icon.js"></script>
     <script src="/static/js/wrapper-mark.js"></script>
-    <script src="/static/js/session-sidebar-row-controls.js"></script>
-    <script src="/static/js/session-sidebar-keep-awake.js"></script>
-    <script src="/static/js/session-sidebar-subagents.js"></script>
-    <script src="/static/js/session-sidebar-timers.js"></script>
-    <script src="/static/js/session-sidebar-project-header.js"></script>
-    <script src="/static/js/session-sidebar-groups.js"></script>
-    <script src="/static/js/session-sidebar-browsers.js"></script>
-    <script src="/static/js/session-sidebar-layouts.js"></script>
     <script src="/static/js/session-restart-live.js"></script>
     <script src="/static/js/session-restart-options.js"></script>
     <script src="/static/js/session-restart-picker.js"></script>
     <script src="/static/js/session-restart-direct.js"></script>
     <script src="/static/js/session-restore-offer.js"></script>
     <script src="/static/js/session-restart-return.js"></script>
-    <script src="/static/js/session-sidebar-plugin-clicks.js"></script>
-    <!-- the bottom bar -->
-    <script src="/static/js/session-sidebar-chrome-clicks.js"></script>
-    <script src="/static/js/session-sidebar-wake-click.js"></script>
-    <script src="/static/js/session-sidebar-restart-click.js"></script>
-    <script src="/static/js/session-sidebar-clicks.js"></script>
     <script src="/static/js/session-entry-toasts.js"></script>
     <script src="/static/js/app-events.js"></script>
     <script src="/static/js/dashboard-polls.js"></script>
     <script src="/static/js/launchpad-host.js"></script>
     <script src="/static/js/terminal-grid-host.js"></script>
-    <script src="/static/js/session-sidebar-drop-target.js"></script>
-    <script src="/static/js/session-sidebar-reorder.js"></script>
-    <script src="/static/js/session-sidebar-row-drag.js"></script>
     <script src="/static/js/session-row-menu-icons.js"></script>
     <script src="/static/js/text-prompt-modal.js"></script>
-    <script src="/static/js/session-sidebar-group-actions.js"></script>
-    <script src="/static/js/session-sidebar-group-colour.js"></script>
-    <script src="/static/js/session-sidebar-group-icon.js"></script>
-    <script src="/static/js/session-row-menu-actions.js"></script>
-    <script src="/static/js/session-row-menu-sleep.js"></script>
-    <script src="/static/js/session-sidebar-heading-actions.js"></script>
 
 
     <script src="/static/js/markdown-lite.js"></script>
@@ -512,11 +469,12 @@
 
     <script src="/static/js/app-boot-complete.js"></script>
 
+    <script src="/static/js/app-screen-entry.js"></script>
     <script src="/static/js/app.js"></script>
 
-    <!-- no inline script -->
     <script type="module" src="/static/js/i18n/boot.js"></script>
 
+    <!-- with a plain -->
     <script type="module" src="/static/dist/app.js"></script>
     <script type="module" src="/static/vendor/jungle-run/jungle-run-loader.js"></script>
 
@@ -528,7 +486,6 @@
 
     <div id="toast-container" class="toast-container" data-oc-base aria-live="polite"></div>
 
-    <!-- hidden -->
     <input type="file" id="cloude-image-attach-input" hidden />
 
     <div hidden>

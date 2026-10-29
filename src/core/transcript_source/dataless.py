@@ -1,10 +1,3 @@
-"""Recognise an iCloud placeholder ("dataless" file) a read could not materialize.
-
-Carnivore's server runs with dataless materialization OFF (``docs/tmux-launch-history.md``), so a read of
-a placeholder fails at once with EDEADLK ("Resource deadlock avoided") instead of downloading it. That is
-transient: the file is in iCloud and a per-file download request brings it back. PURE STDLIB, no project
-imports, so the capture path and the save pipeline both use it.
-"""
 
 from __future__ import annotations
 
@@ -25,9 +18,13 @@ def is_deadlock(exc: BaseException) -> bool:
     return False
 
 
+def is_dataless_stat(info: os.stat_result) -> bool:
+    return bool(getattr(info, "st_flags", 0) & SF_DATALESS)
+
+
 def is_dataless_file(path: Path) -> bool:
     try:
-        return bool(getattr(os.stat(path), "st_flags", 0) & SF_DATALESS)
+        return is_dataless_stat(os.stat(path))
     except OSError:
         return False
 

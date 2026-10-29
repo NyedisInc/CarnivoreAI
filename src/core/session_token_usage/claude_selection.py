@@ -1,30 +1,3 @@
-"""What the user SELECTED, read out of a Claude transcript.
-
-  Claude Code DOES write the change down, at the moment it happens, as a
-  local-command record in the same transcript:
-
-      Set model to `Sonnet 5` for this session only
-      Set model to `Opus 5 (1M context)` and saved as your default ...
-      Set effort level to xhigh (this session only): Deeper reasoning ...
-
-  This module turns one of those records into a ``Selection``. The reader
-  folds it in exactly as it folds an assistant turn, so the rule stays
-  the single one the forward scan already implies: WHATEVER CAME LAST IN
-  THE FILE WINS. A selection made after the last turn shows immediately;
-  a turn that runs after a selection confirms it and overwrites it with
-  what actually ran.
-
-  TWO THINGS IT DELIBERATELY DOES NOT DO. It never guesses a model id
-  from a name the table does not carry - an unrecognised name is returned
-  as a DISPLAY name with no id, so the panel prints what the user chose
-  and simply has no cost tier for it, rather than tinting it as a model
-  it is not. And it never invents an effort: a model change says nothing
-  about effort and leaves it alone, which is why the two halves of
-  ``Selection`` are independently optional.
-
-Inputs: n/a (module).
-Output: n/a (module).
-"""
 
 from __future__ import annotations
 

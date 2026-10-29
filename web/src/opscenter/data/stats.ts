@@ -43,7 +43,6 @@ const DIM = '--oc-spark-dim';
 const MID = '--oc-spark-mid';
 const LIT = '--oc-spark';
 
-/* running sessions */
 export const stats: StatCard[] = [
   {
     id: 'running',
@@ -179,7 +178,7 @@ function absent(status: string, message: string | null = null): Figure {
 }
 
 
-/* could not */
+/* could not look */
 export function deriveFigures(sources: FigureSources, now = Date.now()): Figures {
   const rows = sources.sessions.status === 'ok' ? (sources.sessions.data ?? []) : null;
   const sessionStatus = sources.sessions.status;

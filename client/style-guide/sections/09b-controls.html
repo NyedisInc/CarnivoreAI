@@ -1,4 +1,10 @@
 <h2 class="sg-h2">shared controls</h2>
+<p class="sg-lead">One vocabulary of small controls for every screen (Joe (ccsliinc), 2026-09-29: "one uniform, layered,
+hierarchical CSS with standard controls across all screens"). They are app-level primitives, named for what they are and not
+for the page that first used them, and they live in one place, <code>web/src/opscenter/controls.css</code>, in the
+cascade layers <code>primitives</code> (the controls) and <code>patterns</code> (the group, the grids, the well), whose order is
+declared once, first, in <code>client/css/layers.css</code>. A screen reaches for these before it writes a control of its own. The settings page is
+the first screen built from them; its chosen mockup is <code>docs/design/settings-appearance-options-2026-09-29.html</code>, option 1.</p>
 
 <h3 class="sg-h3" id="controls-group">the label column group</h3>
 <div class="sg-specimen">
@@ -62,6 +68,11 @@
         is empty) the frame around the box is not drawn, only the box; the border stays reserved but transparent so layout and
         the shared focus rule are unchanged. Give it an <code>ariaLabel</code>.</dd>
     <dt>bare</dt>
+    <dd><code>.oc-check--bare</code> (<code>&lt;Check bare ... /&gt;</code>, second row above): no frame and no padding, for a
+        check that sits inline in a row or a control strip that already has its own frame. Hover brightens the label and the
+        box; keyboard focus is still the shared rule, which lights the transparent border. Worked examples: the Task Manager's row
+        checks and its pop-out "hide completed" (Joe (ccsliinc), 2026-10-03: "need to remove outline on hide completed").
+        A check standing alone on a page keeps the frame.</dd>
 </dl>
 
 <h3 class="sg-h3" id="controls-seg">segmented choice</h3>
@@ -98,6 +109,12 @@
 </div>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>The segmented choice above, fixed to three words, for any tab that splits machine wide work from a session's
+        (Joe (ccsliinc), 2026-10-12, item 542: "sessions and global toggle for schedules and possibly other new tabs").
+        <code>&lt;ScopeFilter value onChange label /&gt;</code> is presentational; its model,
+        <code>ui/scope-filter.ts</code>, owns the scopes, <code>inScope(row, scope)</code> and the per device memory
+        (<code>readScope</code> / <code>writeScope</code>, one key per surface beside the remembered tabs). It sits at the
+        end of a <code>.oc-rc-bar</code> strip on top of a run chart. Worked example: the developer widget's scheduled tab.</dd>
 </dl>
 
 <h3 class="sg-h3" id="controls-choice">choice card</h3>
@@ -145,6 +162,23 @@
 </div>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>A list where position matters: a number, the item (a check when the list also shows and hides), and a move-earlier and
+        move-later pair (<code>.oc-ibtn</code>); an item that is off reads struck through
+        (<code>.oc-order__item--off</code>). <code>.oc-btn</code> is the app's one button, mirrored declaration for declaration
+        from the restart picker footer's <code>.modal-btn</code> family (Alex, 2026-09-25): quiet outline by default,
+        <code>.oc-btn--confirm</code> the calm tinted confirm, <code>.oc-btn--danger</code> the dark red interior with a bright
+        red outline, <code>.oc-btn--alert</code> the filled block for a rare alert only, <code>.oc-btn--sm</code> the compact
+        size for a row of small actions, and <code>.oc-btn--tool</code> the quiet text control in a cell header
+        (sort, view all, details). <code>.oc-ibtn--bare</code> is the quiet icon tool in a header (a cell's plus, the collapse
+        chevron, the favourites star): no frame until it is pointed at, the glyph turns accent while its menu is open.
+        <code>.oc-ibtn--close</code> rides on it for a close x (the widget header's): the destructive
+        <code>--oc-coral</code> only under the pointer.
+        <code>.oc-ibtn--float</code> is the faint floating icon (Joe, 2026-09-30): a 22px muted glyph at low opacity, placed
+        out of flow over a surface by its caller, full on its own hover, on keyboard focus or while what it opened is open,
+        and always full on a touch screen. The home pop-out glyph and an analytics card's details opener wear it.
+        <code>.oc-well</code> frames a preview with a hairline. Small labels are
+        <code>.oc-sub</code>, small notes <code>.oc-key</code>; sets of controls sit in <code>.oc-grid-2</code>,
+        <code>.oc-grid-3</code> or <code>.oc-grid-4</code>.</dd>
     <dt>focus</dt>
     <dd>Nothing here draws its own focus ring. Each control keeps a reserved 1px border and the one shared rule
         (<code>web/src/opscenter/focus.css</code>) brightens it.</dd>

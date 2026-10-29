@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+"""Plan (read only, never apply) the import of a real crate into a THROWAWAY install and print the project action, the conversations (class and reason), the files left in the crate, the plugin-data and backup-family lines.
+
+Usage: CARNIVORE_STATE_DIR=<temp dir> venv/bin/python3 tests/python/crate_import/probes/import_plan_probe.py <crate file> [--original]
+
+``--original`` plans the restore into the crate's own project folder (the restore dialog's default), judged against the real home folder.
+
+It lives under tests/ (not src/ or scripts/) because it builds the save plugin's backup source and vault and drives core directly, and neither a plugin nor production code may import across that boundary.
+
+The throwaway install is built under ``CARNIVORE_STATE_DIR`` (refused when it is the live state folder, or when it already holds a
+database). The review board plugin is ON, its ``boardsRoot`` is blank and the save plugin is ON with an empty vault, so the output is what a
+fresh install with the default boards folder would show. The crate file is only read. Exit 0 = planned, 1 = the plan is blocked, 2 = bad input.
+"""
 
 from __future__ import annotations
 

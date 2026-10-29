@@ -30,30 +30,6 @@ CURRENT_CONFIG_VERSION = 8
 def migrate_config_dict(
     data: Dict, has_cld: bool, has_cldor: bool
 ) -> Tuple[Dict, bool]:
-    """Pure migration: run every version step the config still needs.
-
-    Description: fail-safe by construction - a step that can't confidently
-      proceed makes this return ``(data, False)`` with the input
-      completely untouched (no partial mutation, no config_version
-      stamped), never raises. Steps run in order and only for versions the
-      config hasn't reached, so a v0 config runs 0->1, 1->2, 2->3 then
-      3->4, a v3 config runs only 3->4, and a v4 config does nothing at
-      all.
-    Inputs:
-      data (dict) - the parsed config.json.
-      has_cld (bool) / has_cldor (bool) - environment probe results (see
-        ``probe_shell_function``); pass explicitly so this function stays
-        pure/deterministic and trivially testable without shelling out.
-    Output: (dict, bool) - (possibly-new dict, whether anything changed).
-      The returned dict is always a NEW object when changed=True (the
-      input ``data`` is never mutated in place), so a caller holding a
-      reference to the original can still inspect the pre-migration
-      state.
-    Raises: never - logs a warning and returns (data, False) instead.
-    Example: migrate_config_dict({"agents": {}}, True, False) ->
-      ({..., "agents": {..., "wrappers": [claude, keyc]},
-        "config_version": 4}, True)
-    """
     try:
         existing_version = data.get("config_version", 0)
         if not isinstance(existing_version, int):
@@ -110,8 +86,8 @@ def migrate_config_file(config_path: Path) -> Dict:
     def migrate(data: Dict) -> Optional[Dict]:
         version = data.get("config_version", 0) if isinstance(data, dict) else None
         needs_probe = isinstance(version, int) and version < 1
-        has_cld = probe_shell_function("keyc") if needs_probe else False
-        has_cldor = probe_shell_function("clxor") if needs_probe else False
+        has_cld = probe_shell_function("cld") if needs_probe else False
+        has_cldor = probe_shell_function("cldor") if needs_probe else False
         new_data, changed = migrate_config_dict(data, has_cld, has_cldor)
         if not changed:
             return None

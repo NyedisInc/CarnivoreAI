@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import sqlite3
 import time
 from pathlib import Path
 from typing import List, Optional
@@ -15,6 +16,14 @@ logger = structlog.get_logger()
 
 
 _PURGE_GRACE_SECONDS = 86400
+
+
+class RefreshStoreNotReady(RuntimeError):
+    pass
+
+
+def _short(jti: str) -> str:
+    return jti[:8] + "…"
 
 
 class RefreshStore:
@@ -56,8 +65,13 @@ class RefreshStore:
                 await self._conn.close()
                 self._conn = None
 
+    def _require_conn(self) -> aiosqlite.Connection:
+        if self._conn is None:
+            raise RefreshStoreNotReady("RefreshStore.init() not called")
+        return self._conn
+
     async def issue(self, jti: str, user: str, exp: int) -> None:
-        assert self._conn is not None, "RefreshStore.init() not called"
+        self._require_conn()
         async with self._lock:
             await self._conn.execute(
                 "INSERT INTO refresh_tokens (jti, user, exp) VALUES (?, ?, ?)",
@@ -72,7 +86,7 @@ class RefreshStore:
         user: str,
         new_exp: int,
     ) -> bool:
-        assert self._conn is not None, "RefreshStore.init() not called"
+        conn = self._require_conn()
         now = int(time.time())
         async with self._lock:
             cur = await self._conn.execute(
@@ -84,37 +98,40 @@ class RefreshStore:
             await cur.close()
 
             if row is None:
-                logger.warning("refresh_rotate_unknown_jti", jti=old_jti)
+                logger.warning("refresh_rotate_unknown_jti", jti=_short(old_jti))
                 return False
 
             revoked, superseded_by, _superseded_at, old_exp = row
 
             if revoked:
-                logger.warning("refresh_rotate_revoked", jti=old_jti)
+                logger.warning("refresh_rotate_revoked", jti=_short(old_jti))
                 return False
             if superseded_by is not None:
                 logger.warning(
                     "refresh_rotate_already_superseded",
-                    jti=old_jti,
-                    superseded_by=superseded_by,
+                    jti=_short(old_jti),
+                    superseded_by=_short(superseded_by),
                 )
                 return False
             if old_exp <= now:
-                logger.warning("refresh_rotate_expired", jti=old_jti)
+                logger.warning("refresh_rotate_expired", jti=_short(old_jti))
                 return False
 
-            # BEGIN IMMEDIATE
-            await self._conn.execute(
-                "UPDATE refresh_tokens "
-                "SET superseded_by = ?, superseded_at = ? "
-                "WHERE jti = ?",
-                (new_jti, now, old_jti),
-            )
-            await self._conn.execute(
-                "INSERT INTO refresh_tokens (jti, user, exp) VALUES (?, ?, ?)",
-                (new_jti, user, int(new_exp)),
-            )
-            await self._conn.commit()
+            try:
+                await conn.execute(
+                    "UPDATE refresh_tokens "
+                    "SET superseded_by = ?, superseded_at = ? "
+                    "WHERE jti = ?",
+                    (new_jti, now, old_jti),
+                )
+                await conn.execute(
+                    "INSERT INTO refresh_tokens (jti, user, exp) VALUES (?, ?, ?)",
+                    (new_jti, user, int(new_exp)),
+                )
+                await conn.commit()
+            except sqlite3.Error:
+                await conn.rollback()
+                raise
             logger.info(
                 "refresh_rotated",
                 old_jti=old_jti[:8] + "…",
@@ -123,7 +140,7 @@ class RefreshStore:
             return True
 
     async def revoke(self, jti: str) -> None:
-        assert self._conn is not None, "RefreshStore.init() not called"
+        self._require_conn()
         async with self._lock:
             await self._conn.execute(
                 "UPDATE refresh_tokens SET revoked = 1 WHERE jti = ?",
@@ -133,7 +150,7 @@ class RefreshStore:
             logger.info("refresh_revoked", jti=jti[:8] + "…")
 
     async def revoke_chain(self, start_jti: str) -> int:
-        assert self._conn is not None, "RefreshStore.init() not called"
+        self._require_conn()
         count = 0
         async with self._lock:
             current: Optional[str] = start_jti
@@ -157,7 +174,7 @@ class RefreshStore:
         return count
 
     async def revoke_all(self) -> int:
-        assert self._conn is not None, "RefreshStore.init() not called"
+        self._require_conn()
         async with self._lock:
             cur = await self._conn.execute("UPDATE refresh_tokens SET revoked = 1 WHERE revoked = 0")
             count = cur.rowcount
@@ -167,7 +184,7 @@ class RefreshStore:
         return count
 
     async def is_valid(self, jti: str, grace_seconds: int = 10) -> bool:
-        assert self._conn is not None, "RefreshStore.init() not called"
+        self._require_conn()
         now = int(time.time())
         async with self._lock:
             cur = await self._conn.execute(
@@ -190,7 +207,7 @@ class RefreshStore:
         return True
 
     async def is_superseded(self, jti: str) -> bool:
-        assert self._conn is not None, "RefreshStore.init() not called"
+        self._require_conn()
         async with self._lock:
             cur = await self._conn.execute(
                 "SELECT superseded_at FROM refresh_tokens WHERE jti = ?",
@@ -201,7 +218,7 @@ class RefreshStore:
         return row is not None and row[0] is not None
 
     async def purge_expired(self) -> int:
-        assert self._conn is not None, "RefreshStore.init() not called"
+        self._require_conn()
         cutoff = int(time.time()) - _PURGE_GRACE_SECONDS
         async with self._lock:
             cur = await self._conn.execute(
@@ -216,7 +233,7 @@ class RefreshStore:
         return deleted
 
     async def _all_jtis(self) -> List[str]:
-        assert self._conn is not None
+        self._require_conn()
         async with self._lock:
             cur = await self._conn.execute("SELECT jti FROM refresh_tokens")
             rows = await cur.fetchall()

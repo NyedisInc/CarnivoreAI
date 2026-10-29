@@ -73,7 +73,6 @@ class OwnerKeys:
 
 
 def _regular(path: Path) -> bool:
-    """Whether ``path`` is a regular file and not a symlink. Output: bool."""
     try:
         return stat.S_ISREG(path.lstat().st_mode)
     except OSError:
@@ -160,14 +159,6 @@ def _top_entries(root: Path) -> List[os.DirEntry]:
 
 def task_units(root: Path, siblings: Dict[str, List[TaskLink]], owner: OwnerKeys,
                problems: Optional[List[str]] = None) -> Tuple[List[Unit], int]:
-    """The units of a ``task_item_id`` store the scope carries, and how many it leaves out.
-
-    Inputs: root (the store); siblings (board links by slug across the plugin's task-scoped stores, for the draft files); owner;
-      problems (collects a sentence per folder that could not be listed, see :func:`find_boards`).
-    Output: (units sorted by rel, out of scope count). A store with boards in it is cut into boards; one without is cut into the
-      top-level files named for a board.
-    Example: task_units(Path("/boards"), {}, OwnerKeys("project", item_ids=frozenset({592}))) -> ([Unit("a-592/boards/20261013-x", True)], 3)
-    """
     boards = find_boards(root, problems)
     units: Dict[str, Unit] = {}
     out_of_scope = 0

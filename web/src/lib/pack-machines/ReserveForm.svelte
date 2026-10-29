@@ -2,6 +2,9 @@
   import './pack-machines.css';
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
+  import Button from '../base/Button.svelte';
+  import Field from '../base/Field.svelte';
+  import NumberField from '../base/NumberField.svelte';
   import { packActivity, saveReserve, type ActiveReserve, type PackMachine, type ReserveConfig } from './pack-machines-store.svelte';
 
   interface Props {
@@ -12,18 +15,18 @@
 
   // svelte-ignore state_referenced_locally
   const start = reserve.config;
-  let inCpu = $state(start.in_use.cpu_pct);
-  let inMem = $state(start.in_use.mem_pct);
-  let awayCpu = $state(start.away.cpu_pct);
-  let awayMem = $state(start.away.mem_pct);
+  let inCpu = $state<number | null>(start.in_use.cpu_pct);
+  let inMem = $state<number | null>(start.in_use.mem_pct);
+  let awayCpu = $state<number | null>(start.away.cpu_pct);
+  let awayMem = $state<number | null>(start.away.mem_pct);
   let from = $state(start.schedule.in_use_from);
   let to = $state(start.schedule.in_use_to);
   let days = $state<number[]>([...start.schedule.days]);
   let keys = $state(start.keyboard_rule.enabled);
-  let idle = $state(start.keyboard_rule.idle_minutes);
+  let idle = $state<number | null>(start.keyboard_rule.idle_minutes);
 
   const DAYS = [0, 1, 2, 3, 4, 5, 6] as const;
-  const inRange = (n: number, low: number, high: number): boolean => Number.isInteger(n) && n >= low && n <= high;
+  const inRange = (n: number | null, low: number, high: number): boolean => n !== null && Number.isInteger(n) && n >= low && n <= high;
   const valid = $derived(
     [inCpu, inMem, awayCpu, awayMem].every((n) => inRange(n, 0, 90)) &&
       /^\d\d:\d\d$/.test(from) && /^\d\d:\d\d$/.test(to) && days.length > 0 && inRange(idle, 1, 240),
@@ -50,18 +53,12 @@
     {t('pack.machines.reserve_active', { level: t(`pack.machines.level.${reserve.level}`), cpu: reserve.cpu_pct, mem: reserve.mem_pct })}
   </p>
   <div class="pm-grid">
-    <label class="pm-field"><span class="oc-sub">{t('pack.machines.level.in_use')} {t('pack.machines.cpu')} %</span>
-      <input class="oc-field" type="number" min="0" max="90" bind:value={inCpu} data-reserve="in_use.cpu_pct" /></label>
-    <label class="pm-field"><span class="oc-sub">{t('pack.machines.level.in_use')} {t('pack.machines.mem')} %</span>
-      <input class="oc-field" type="number" min="0" max="90" bind:value={inMem} data-reserve="in_use.mem_pct" /></label>
-    <label class="pm-field"><span class="oc-sub">{t('pack.machines.level.away')} {t('pack.machines.cpu')} %</span>
-      <input class="oc-field" type="number" min="0" max="90" bind:value={awayCpu} data-reserve="away.cpu_pct" /></label>
-    <label class="pm-field"><span class="oc-sub">{t('pack.machines.level.away')} {t('pack.machines.mem')} %</span>
-      <input class="oc-field" type="number" min="0" max="90" bind:value={awayMem} data-reserve="away.mem_pct" /></label>
-    <label class="pm-field"><span class="oc-sub">{t('pack.machines.in_use_from')}</span>
-      <input class="oc-field" type="time" bind:value={from} data-reserve="schedule.in_use_from" /></label>
-    <label class="pm-field"><span class="oc-sub">{t('pack.machines.in_use_to')}</span>
-      <input class="oc-field" type="time" bind:value={to} data-reserve="schedule.in_use_to" /></label>
+    <NumberField label={`${t('pack.machines.level.in_use')} ${t('pack.machines.cpu')} %`} min={0} max={90} bind:value={inCpu} data-reserve="in_use.cpu_pct" />
+    <NumberField label={`${t('pack.machines.level.in_use')} ${t('pack.machines.mem')} %`} min={0} max={90} bind:value={inMem} data-reserve="in_use.mem_pct" />
+    <NumberField label={`${t('pack.machines.level.away')} ${t('pack.machines.cpu')} %`} min={0} max={90} bind:value={awayCpu} data-reserve="away.cpu_pct" />
+    <NumberField label={`${t('pack.machines.level.away')} ${t('pack.machines.mem')} %`} min={0} max={90} bind:value={awayMem} data-reserve="away.mem_pct" />
+    <Field label={t('pack.machines.in_use_from')} type="time" bind:value={from} data-reserve="schedule.in_use_from" />
+    <Field label={t('pack.machines.in_use_to')} type="time" bind:value={to} data-reserve="schedule.in_use_to" />
   </div>
   <div class="pm-days" role="group" aria-label={t('pack.machines.days')}>
     {#each DAYS as day}
@@ -72,11 +69,10 @@
   <Check label={t('pack.machines.keyboard_rule')} checked={keys} role="switch" data-reserve="keyboard_rule.enabled"
     onToggle={(next) => (keys = next)} />
   {#if keys}
-    <label class="pm-field"><span class="oc-sub">{t('pack.machines.keyboard_idle')}</span>
-      <input class="oc-field" type="number" min="1" max="240" bind:value={idle} data-reserve="keyboard_rule.idle_minutes" /></label>
+    <NumberField label={t('pack.machines.keyboard_idle')} min={1} max={240} bind:value={idle} data-reserve="keyboard_rule.idle_minutes" />
   {/if}
   <div class="pm-actions">
-    <button type="submit" class="modal-btn modal-btn-confirm" disabled={!valid || packActivity.busy !== null}
-      data-pm="reserve-save">{t('pack.machines.reserve_save')}</button>
+    <Button type="submit" variant="confirm" disabled={!valid || packActivity.busy !== null}
+      data-pm="reserve-save">{t('pack.machines.reserve_save')}</Button>
   </div>
 </form>

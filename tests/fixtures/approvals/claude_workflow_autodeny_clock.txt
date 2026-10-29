@@ -1,0 +1,19 @@
+ ⏺ Bash(cd /tmp/work; rm -f .tok/*)
+  ⎿  Waiting…
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Bash command · from the "threatmap-port-finish3" workflow
+ Run shell command
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ │ cd /tmp/work; rm -f .tok/*;
+ │ mint(){ out=$(ssh host "docker exec cp mint-session --email tm-$1@x.local" 2>&1); echo "$1:$out"; };
+ │ mint ta-p103 TenantAdmin; mint oa-p103 OrgAdmin
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ │ Dangerous rm operation on statically-unresolvable target: /tmp/work/.tok/*
+ ⚠ Claude Code will automatically deny this request in @@, to avoid blocking progress on an unattended session
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. No
+
+ Esc to cancel · Tab to amend

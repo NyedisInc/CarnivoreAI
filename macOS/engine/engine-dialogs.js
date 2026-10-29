@@ -3,7 +3,6 @@
 const ENGINE_RESTART = 'restart';
 const ENGINE_QUIT = 'quit';
 
-/*  hidden  */
 function createEngineDialogs({ dialog, loadTranslator, activate }) {
   const translator = async () => {
     try {
@@ -37,7 +36,6 @@ function createEngineDialogs({ dialog, loadTranslator, activate }) {
       return answer.response === 0 ? ENGINE_RESTART : ENGINE_QUIT;
     },
 
-    /* could not */
     async showRestartFailed(reason) {
       const t = await translator();
       await show({
@@ -46,7 +44,6 @@ function createEngineDialogs({ dialog, loadTranslator, activate }) {
       });
     },
 
-    /* could not */
     async showStopFailed(reason) {
       const t = await translator();
       await show({

@@ -3,7 +3,6 @@ import { visibilityObserver } from '../visibility-observer';
 let hidden = $state(typeof document !== 'undefined' && document.visibilityState === 'hidden');
 let listening = false;
 
-/*  hidden  */
 export function documentHidden(): boolean {
   if (!listening && typeof document !== 'undefined') {
     listening = true;

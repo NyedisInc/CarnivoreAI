@@ -19,10 +19,6 @@ NOT_USABLE_DETAIL = "no login on this computer can run that session's Claude acc
 
 
 def session_account_key(config_path: Path, session_uuid: str) -> Optional[str]:
-    """The claude account a session launches on here: its pin, else the active account, else None (the default login). Never raises.
-
-    Example: session_account_key(Path("config.json"), "u1") -> "acme"
-    """
     pinned = session_pin.pin_for(config_path, session_uuid)
     if pinned:
         return pinned

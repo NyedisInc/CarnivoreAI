@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* a fold chevron */
   import { FoldChevron, Icon } from '../sdk/ui';
   import { baseField } from './task-manager-base-field';
   import { t } from '../sdk';
@@ -249,7 +248,6 @@
       background: var(--oc-orange);
     }
 
-    /* border: box-shadow */
     .hds-head {
       position: sticky;
       top: var(--hd-stick-top, 0px);

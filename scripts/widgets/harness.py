@@ -1,11 +1,3 @@
-"""Drive the widget harness page: build it, serve it, draw a widget, fit-check it, shoot it.
-
-The harness (``web/src/widget-harness/``) draws ONE widget from its fixture
-in a box of one standard size, with the page clock frozen and no network, so
-the same request always gives the same pixels. This module is the Python half
-the capture script and the pytest gate share; nothing here knows any widget
-by name: the page publishes its own catalog (``?list=1``).
-"""
 
 from __future__ import annotations
 
@@ -28,7 +20,7 @@ READY_TIMEOUT_MS = 30_000
 
 
 class HarnessError(Exception):
-    """The harness could not be built, served or drawn: the run CANNOT DETERMINE (exit 2)."""
+    pass
 
 
 @dataclass

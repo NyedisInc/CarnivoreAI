@@ -1,6 +1,8 @@
 <script lang="ts">
+  /* The file drawer's */
   import { untrack } from 'svelte';
   import { t } from '../i18n/index.svelte';
+  import { Checkbox, IconButton } from '../base';
   import AnchoredPopup from '../dialog-frame/AnchoredPopup.svelte';
   import { filesRootPrefs, publishRootPrefs, writeRootPrefs, type TopFolder } from './roots-prefs.svelte';
   import {
@@ -43,7 +45,7 @@
   let options = $state<DrawerPrefs>(readDrawerPrefs());
   let ignoreStatus = $state<IgnoreStatus>('unknown');
   let menuOpen = $state(false);
-  let menuButton = $state<HTMLButtonElement | null>(null);
+  let menuButton = $state<HTMLElement | null>(null);
   let menu = $state<HTMLElement | null>(null);
   let timer: ReturnType<typeof setTimeout> | null = null;
   let sent = '';
@@ -157,69 +159,52 @@
 
 <div class="fdh">
   <div class="fdh-row">
-    <button type="button" id="config-editor-new" class="fdh-btn" aria-label={t('files.drawer.new_file')}
-      title={t('files.drawer.new_file')} onclick={() => onNewFile()}>
+    <IconButton variant="quiet" id="config-editor-new" label={t('files.drawer.new_file')} onclick={() => onNewFile()}>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
-    </button>
+    </IconButton>
     <span class="fdh-spacer"></span>
-    <button type="button" class="fdh-btn" data-action="collapse-all" aria-label={t('files.drawer.collapse_all')}
-      title={t('files.drawer.collapse_all')} onclick={() => onCollapseAll()}>
+    <IconButton variant="quiet" data-action="collapse-all" label={t('files.drawer.collapse_all')} onclick={() => onCollapseAll()}>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h8M5 8h8M5 12.5h8M2.5 3.5h.01M2.5 8h.01M2.5 12.5h.01" /></svg>
-    </button>
-    <button type="button" class="fdh-btn" data-action="refresh" aria-label={t('files.drawer.refresh')}
-      onclick={() => onRefresh()}>
+    </IconButton>
+    <IconButton variant="quiet" data-action="refresh" label={t('files.drawer.refresh')} onclick={() => onRefresh()}>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.55M13 2.5v2.5h-2.5" /></svg>
-    </button>
+    </IconButton>
     <div class="fdh-menu-anchor">
-      <button type="button" class="fdh-btn" data-action="options" bind:this={menuButton}
-        aria-label={t('files.drawer.options')}
+      <IconButton variant="quiet" data-action="options" bind:element={menuButton}
+        label={t('files.drawer.options')}
         aria-haspopup="dialog" aria-expanded={menuOpen} onclick={toggleMenu}>
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h.01M8 8h.01M12.5 8h.01" class="fdh-dots" /></svg>
-      </button>
+      </IconButton>
       {#if menuOpen}
         <AnchoredPopup class="fdh-menu" label={t('files.drawer.options')} anchor={menuButton} initialFocus="input:not(:disabled)" outside="capture"
           bind:element={menu} onClose={() => (menuOpen = false)}>
-          <label class="fdh-item">
-            <input type="checkbox" data-pref="hideDot" checked={options.hideDot}
-              onchange={() => toggle('hideDot')} />
-            <span>{t('files.drawer.hide_dot')}</span>
-          </label>
-          <label class="fdh-item" class:fdh-item--off={ignoreUnavailable}>
-            <input type="checkbox" data-pref="hideIgnored" checked={options.hideIgnored}
-              disabled={ignoreUnavailable} onchange={() => toggle('hideIgnored')} />
-            <span>{t('files.drawer.hide_ignored')}</span>
-          </label>
+          <Checkbox data-pref="hideDot" checked={options.hideDot} label={t('files.drawer.hide_dot')}
+            onchange={() => toggle('hideDot')} />
+          <Checkbox data-pref="hideIgnored" checked={options.hideIgnored} label={t('files.drawer.hide_ignored')}
+            disabled={ignoreUnavailable} onchange={() => toggle('hideIgnored')} />
           <div class="fdh-rule" role="separator"></div>
-          <label class="fdh-item">
-            <input type="checkbox" data-pref="showGlobalFolder" checked={rootPrefs.showGlobal}
-              onchange={(event) => void setRoots({ showGlobalFolder: event.currentTarget.checked })} />
-            <span>{t('files.drawer.show_global')}</span>
-          </label>
-          <label class="fdh-item" class:fdh-item--off={!rootPrefs.showGlobal}>
-            <input type="checkbox" data-pref="projectOnTop" checked={rootPrefs.topFolder === 'project'}
-              disabled={!rootPrefs.showGlobal}
-              onchange={(event) => void setRoots({ topFolder: event.currentTarget.checked ? 'project' : 'global' })} />
-            <span>{t('files.drawer.project_on_top')}</span>
-          </label>
+          <Checkbox data-pref="showGlobalFolder" checked={rootPrefs.showGlobal} label={t('files.drawer.show_global')}
+            onchange={(event) => void setRoots({ showGlobalFolder: event.currentTarget.checked })} />
+          <Checkbox data-pref="projectOnTop" checked={rootPrefs.topFolder === 'project'} label={t('files.drawer.project_on_top')}
+            disabled={!rootPrefs.showGlobal}
+            onchange={(event) => void setRoots({ topFolder: event.currentTarget.checked ? 'project' : 'global' })} />
           {#if rootsFailed}<p class="fdh-note" role="alert">{t('files.drawer.roots_failed')}</p>{/if}
         </AnchoredPopup>
       {/if}
     </div>
     {#if componentShown}
-      <button type="button" class="fdh-btn" data-action="as-component" aria-label={t('files.drawer.as_component')}
-        title={t('files.drawer.as_component')} onclick={() => onComponent?.()}>
+      <IconButton variant="quiet" data-action="as-component" label={t('files.drawer.as_component')} onclick={() => onComponent?.()}>
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5h11v11h-11zM2.5 6h11M6 6v7.5" /></svg>
-      </button>
+      </IconButton>
     {/if}
-    <button type="button" id="config-editor-close" class="fdh-btn" aria-label={t('files.drawer.close')}
-      onclick={() => onClose()}>
+    <IconButton variant="close" id="config-editor-close" label={t('files.drawer.close')} onclick={() => onClose()}>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
-    </button>
+    </IconButton>
   </div>
-  <label class="fdh-find oc-focus-host">
+<label class="fdh-find oc-focus-host">
     <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M4.5 8h7M6.5 12h3" /></svg>
     {#if scopeLabel}<span class="fdh-scope" data-role="find-scope">{scopeLabel}</span>{/if}
-    <input type="search" class="fdh-input" data-role="find-files" autocomplete="off" spellcheck="false"
+    <input type="search" class="fdh-input" data-role="find-files" data-base-exempt="the find box shares one frame with the scope crumb; the base search Field has no leading slot yet" autocomplete="off" spellcheck="false"
       placeholder={t('files.drawer.find')} aria-label={t('files.drawer.find_label')}
       bind:value={text} oninput={onInput} onkeydown={onFieldKeydown} />
   </label>
@@ -239,42 +224,11 @@
     display: flex;
     align-items: center;
     gap: 2px;
+    --oc-ibtn-size: 24px;
   }
 
   .fdh-spacer {
     flex: 1 1 auto;
-  }
-
-  .fdh-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    min-height: 0;
-    padding: 0;
-    border: none;
-    border-radius: var(--oc-radius-sm, 2px);
-    background: transparent;
-    color: var(--oc-text-secondary);
-    cursor: pointer;
-    flex-shrink: 0;
-    transform: none;
-    box-shadow: none;
-  }
-
-  .fdh-btn:hover:not(:disabled),
-  .fdh-btn:focus-visible,
-  .fdh-btn[aria-expanded='true'] {
-    color: var(--oc-text-primary);
-    background: var(--oc-ground-hover);
-    outline: none;
-    transform: none;
-    box-shadow: none;
-  }
-
-  .fdh-btn:focus-visible {
-    box-shadow: inset 0 0 0 1px var(--oc-orange);
   }
 
   svg {
@@ -303,23 +257,6 @@
     padding: 4px;
   }
 
-  .fdh-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 6px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    line-height: 16px;
-    color: var(--oc-text-primary);
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .fdh-item:hover {
-    background: var(--oc-ground-hover);
-  }
-
   .fdh-rule {
     height: 1px;
     margin: 4px 0;
@@ -332,18 +269,6 @@
     font-family: var(--font-mono);
     font-size: 12px;
     color: var(--oc-coral);
-  }
-
-  .fdh-item--off {
-    color: var(--oc-text-dim);
-    cursor: not-allowed;
-  }
-
-  .fdh-item input {
-    margin: 0;
-    width: 13px;
-    height: 13px;
-    accent-color: var(--oc-orange);
   }
 
   .fdh-find {

@@ -46,7 +46,6 @@ function runningHeader(snap, env) {
   const items = [{ type: 'header', id: 'header', label: t('menubar.header'), sublabel: runningStatus(snap, t), enabled: true }];
   const needYou = needYouItem(snap, env);
   if (needYou) items.push(needYou);
-  // could not
   if (snap.setup === 'incomplete') items.push(act('setup.finish', t('menubar.setup.finish'), { kind: 'setup.finish' }));
   return items;
 }

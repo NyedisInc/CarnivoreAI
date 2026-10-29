@@ -83,7 +83,7 @@ async def peer_items(open_db: Callable[[], sqlite3.Connection],
     if links is None:
         return []
     try:
-        peers = await asyncio.to_thread(peer_listing._read_peers, open_db)
+        peers = await asyncio.to_thread(peer_listing.read_peers, open_db)
     except (sqlite3.Error, OSError):
         return []
     done = await asyncio.gather(*(_one(p, links) for p in peers), return_exceptions=True)

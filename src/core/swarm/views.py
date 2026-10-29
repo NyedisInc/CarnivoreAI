@@ -4,7 +4,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Any, Dict, List, Optional, TypeVar
 
-from src.core.swarm import activity, alerts, body, settings as swarm_settings, store, thread_port
+from src.core.swarm import activity, alerts, body, owner_wait, settings as swarm_settings, store, thread_port
 from src.core.swarm.names import shown_name
 
 T = TypeVar("T")
@@ -83,13 +83,10 @@ def _stable_seed(agent_id: int, slot: Optional[int]) -> int:
     return (agent_id * 2654435761 + (slot or 0)) % 2**31 or 1
 
 
-_QUESTION_WAITING_SQL = ("SELECT DISTINCT k.agent_id FROM swarm_question_askers k JOIN swarm_questions q ON q.id = k.question_id "
-                         "WHERE q.state IN ('routing', 'open', 'reopened')")
-
-
 async def _live_fields(agents: List[Dict[str, Any]]) -> Dict[int, Dict[str, Any]]:
-    rungs = await alerts.roster_alerts(agents)
-    waiting = {r[0] for r in await body.run_db(lambda c: c.execute(_QUESTION_WAITING_SQL).fetchall())}
+    live = await body.run_db(owner_wait.live_questions)
+    rungs = await alerts.roster_alerts(agents, live)
+    waiting = owner_wait.asking_agents(live)
     return {a["id"]: {**rungs[a["id"]], **activity.current(a["id"]), "question_waiting": a["id"] in waiting} for a in agents}
 
 

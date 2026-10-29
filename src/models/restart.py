@@ -6,6 +6,14 @@ from pydantic import BaseModel, Field
 class RespawnSessionRequest(BaseModel):
     """Request body for ``POST /sessions/respawn``.
 
+    STILL NO COMMAND CROSSES THIS BOUNDARY, and that distinction is the
+    whole reason ``agent_type`` is safe to accept where a command is not.
+    A command would let a client run anything - a create wearing a
+    restart's clothes. An ``agent_type`` is an ID that must match a
+    wrapper the user has already configured on this machine; the server
+    resolves it to a command itself, and refuses an id it does not
+    recognise rather than falling back to the default wrapper.
+
     Why it is accepted at all: moving a session onto another wrapper
     (``claude-chrome``, say) previously required hand-editing
     ``sessions.agent_type`` in cloude.db. See
@@ -252,6 +260,16 @@ class RestartPreviewOption(BaseModel):
 
 class RestartPlanPreview(BaseModel):
     """The predicted outcome of a restart, with nothing picked.
+
+    READ ``actionable`` IN CONTEXT. It means "this verdict is one of the
+    three real rungs (agent/replay/shell)" rather than one of the two
+    that are answers (not_dead/cannot_determine). On the ``unchanged``
+    plan that coincides with "you may restart now". On the ``projected``
+    plan it does NOT: a live session can project an actionable rung while
+    being entirely un-restartable, which is the normal case this endpoint
+    exists to describe. Whether anything may actually be done is
+    ``pane_state`` plus ``unchanged.actionable``, never this field on
+    ``projected``.
     """
 
     kind: str = Field(
@@ -379,6 +397,9 @@ class RestartSessionResponse(BaseModel):
     the row was deleted mid-flight), and that is neither a failure nor an
     unqualified success: the user gets a working session that may show up
     as a second entry.
+
+    ``title_carried`` reports the label the session came back with, so the
+    caller can show what it actually got rather than what it asked for.
     """
     success: bool = True
     session: dict = Field(default_factory=dict)

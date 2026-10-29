@@ -25,7 +25,7 @@ from src.core.pack.skills import alerts  # noqa: E402
 from src.core.relay_identity.device_key import DeviceKey, b64url  # noqa: E402
 
 IDS = {"a": "install-a", "b": "install-b", "c": "install-c"}
-LABELS = {"a": "mac", "b": "hosta", "c": "third"}
+LABELS = {"a": "mac", "b": "studio", "c": "third"}
 KEYS = {n: DeviceKey.from_seed(bytes([i + 1]) * 32) for i, n in enumerate(IDS)}
 PUB = {IDS[n]: b64url(KEYS[n].raw_pub) for n in IDS}
 CAPS = ["pack.machine", capabilities.CAP_SETTINGS_SIGNED]
@@ -192,6 +192,7 @@ def test_tofu_migration_keeps_unsigned_merging_until_alpha_signs_then_refuses_wi
 
 
 class OldExchangeBody(BaseModel):
+    """The 1.16 exchange body: extra fields forbidden, so a ``settings_sig`` would be a 422 there."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -209,7 +210,7 @@ def test_signature_is_sent_only_to_a_peer_that_advertises_it(tmp_path):
     async def old_peer(method, path, body):
         OldExchangeBody(**body)
         sent.append(body)
-        return 200, {"snapshot": {**body["snapshot"], "install_id": IDS["b"], "label": "hosta"}, "settings": None}
+        return 200, {"snapshot": {**body["snapshot"], "install_id": IDS["b"], "label": "studio"}, "settings": None}
 
     async def new_peer(method, path, body):
         sent.append(body)

@@ -17,7 +17,6 @@ export interface WidgetLooks {
   defaults: Readonly<Partial<Record<'home' | 'drawer', WidgetLook>>>;
 }
 
-/*  hidden  */
 export type WidgetInstancing = 'singleton' | 'per-target';
 
 export const WIDGET_INSTANCINGS: readonly WidgetInstancing[] = ['singleton', 'per-target'];
@@ -92,7 +91,6 @@ export interface BooleanSettingField {
   hintKey?: string;
   keywordsKey?: string;
   default: boolean;
-  /* cannot be changed */
   disabledWhen?: string;
 }
 

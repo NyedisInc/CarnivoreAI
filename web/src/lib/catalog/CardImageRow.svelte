@@ -1,4 +1,4 @@
-
+<!-- on the card and -->
 <script lang="ts">
     import { PUBLISH_KEYS } from '../../../../client/js/labels/skill-publish.js';
     import type { Translate } from '../sessions/types';

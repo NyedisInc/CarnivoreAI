@@ -87,18 +87,14 @@ class PreparedLaunch:
     record: str
 
 
-async def prepare(plan: LaunchPlan, *, account_id: Optional[str] = None) -> PreparedLaunch:
-    """Materialize the plan's secrets and build its launch record.
-
-    ``account_id``: the account the pane launches on when one was chosen (picker, pin, recreate); None records the
-      active account.
-
-    Raises: KeyUnavailable (src.core.launch_profiles.secrets) when a referenced key is missing or the Keychain is locked.
-    Example: (await prepare(plan)).staged -> {"CARNIVORE_LAUNCH_SECRET_0": "<key>"}
-    """
-    staged = await materialize(plan) if plan.secret_refs else {}
+async def record_for(plan: LaunchPlan, account_id: Optional[str] = None) -> str:
     account = await asyncio.to_thread(recorded_account_id, plan.display.harness, account_id)
-    return PreparedLaunch(staged=staged, record=launch_record_json(plan, account))
+    return launch_record_json(plan, account)
+
+
+async def prepare(plan: LaunchPlan, *, account_id: Optional[str] = None) -> PreparedLaunch:
+    staged = await materialize(plan) if plan.secret_refs else {}
+    return PreparedLaunch(staged=staged, record=await record_for(plan, account_id))
 
 
 async def scrub_staging(backend: Any, staged: Dict[str, str]) -> None:

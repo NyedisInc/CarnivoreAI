@@ -1,3 +1,4 @@
+// Same harness style as the other *.node.mjs tests in this directory:
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,6 +27,7 @@ function test(name, fn) {
     }
 }
 
+/** Fresh module instance with a bare window/console. */
 function loadModule() {
     const listeners = [];
     const sandbox = {
@@ -143,7 +145,7 @@ test('pinToBottom survives a terminal whose scrollToBottom throws', () => {
     const { api } = loadModule();
     const term = fakeTerm(10, 500);
     term.scrollToBottom = () => { throw new Error('disposed'); };
-    api.pinToBottom(term);
+    api.pinToBottom(term);  // must not propagate
     assert.equal(api.isGestureActive(), false);
 });
 

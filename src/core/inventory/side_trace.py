@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.inventory import registry
 from src.core.inventory.claim_rows import annotate, open_side, trace_claims
 from src.core.inventory.model import (DELETE, KEEP, KIND_ENTRY, KIND_ROWS, REPORT, ROLE_KEY, Artifact, FieldRef,
@@ -29,7 +30,7 @@ def _sqlite_rows(path: Path, table: str, where: str, params: List[Any], store: s
     if not path.exists():
         return None
     try:
-        with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=10.0)) as conn:
+        with closing(connect_readonly(path, timeout=10.0)) as conn:
             if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone():
                 return None
             count = int(conn.execute(f"SELECT COUNT(*) FROM {table} WHERE {where}", params).fetchone()[0])

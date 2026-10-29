@@ -1,3 +1,4 @@
+// (client/css/terminal-tools.css, `.cloude-session-theme__item`).
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,6 +22,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read a CSS file from the client.
+ * @param {string} name  File name under client/css.
+ * @returns {string} File contents.
+ */
 function css(name) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', 'css', name), 'utf8');
 }
@@ -47,6 +53,9 @@ function simulateRowWidth(label, containerMax, canBreakAnywhere) {
     return { contentWidth, overflowsBy };
 }
 
+// ---------------------------------------------------------------------
+// The CSS contract - the actual regression guard
+// ---------------------------------------------------------------------
 
 test('.cloude-session-theme__item allows a break anywhere in the label', () => {
     const body = ruleBody(css('terminal-tools.css'), '.cloude-session-theme__item');
@@ -84,6 +93,8 @@ test('the picker container keeps its viewport clamp', () => {
         '.cloude-session-theme must stay clamped into the viewport');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('an unbreakable label overflows a clamped row without the fix', () => {
     const label = 'supercalifragilisticexpialidociousthemepack2000';

@@ -10,12 +10,14 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 from src.api.auth import require_auth
 from src.core.app_update import store
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/app-update", tags=["app-update"], dependencies=[Depends(require_auth)])
 
 
 class AutoUpdateSetting(BaseModel):
+    """The owner's desired switch. Example: {"enabled": true}"""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -87,5 +89,5 @@ async def report_state(body: UpdaterReport) -> dict:
     try:
         store.record_report(body.model_dump())
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_request", exc, step="report_state") from exc
     return store.status()

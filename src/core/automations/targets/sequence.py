@@ -5,8 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from src.core.automations import models as m
 from src.core.automations import targets
-from src.core.automations.targets.recipe import _tell
-from src.core.app_alerts import constants as alert_const
+from src.core.automations import notify_policy
 
 
 def validate_target(target: Dict[str, Any]) -> Optional[str]:
@@ -32,11 +31,11 @@ def _tell_once(automation: Dict[str, Any], run_row: Dict[str, Any], outcome: m.R
     delivery = automation["delivery"]
     if not delivery.get("notify", True) or outcome.status in m.LIVE_STATUSES:
         return
-    when = delivery.get("notify_on") or "failure"
-    if outcome.status == m.FAILED and when in ("failure", "always"):
-        _tell("automation_failed", automation, run_row["run_id"], alert_const.SEV_WARN, store)
-    elif outcome.status == m.SUCCEEDED and when in ("always", "report"):
-        _tell("automation_report", automation, run_row["run_id"], alert_const.SEV_INFO, store)
+    if outcome.status not in (m.FAILED, m.SUCCEEDED):
+        return
+    notice = notify_policy.decide(automation, outcome.status == m.FAILED)
+    if notice:
+        notify_policy.tell(notice, automation, run_row["run_id"], store)
 
 
 async def run(ctx: Any, automation: Dict[str, Any], run_row: Dict[str, Any]) -> m.RunOutcome:

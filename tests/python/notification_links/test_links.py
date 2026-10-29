@@ -25,7 +25,7 @@ class Clock:
         return self.t
 
 
-def make(bound="0.0.0.0", names=("mac", "mac.local"), ips=("192.0.2.13",), clock=None, calls=None):
+def make(bound="0.0.0.0", names=("mac", "mac.local"), ips=("10.0.0.5",), clock=None, calls=None):
     def machine_names():
         if calls is not None:
             calls.append(1)
@@ -61,8 +61,8 @@ def test_unknown_bind_is_no_link():
 
 
 def test_no_local_name_uses_lan_ip_and_skips_loopback_ips():
-    r = make(names=("mac",), ips=("127.0.0.1", "192.0.2.13")).resolve_blocking(None)
-    assert (r.kind, r.base) == ("lan_ip", "http://192.0.2.13:8123")
+    r = make(names=("mac",), ips=("127.0.0.1", "10.0.0.5")).resolve_blocking(None)
+    assert (r.kind, r.base) == ("lan_ip", "http://10.0.0.5:8123")
 
 
 def test_nothing_available_is_no_lan_address():

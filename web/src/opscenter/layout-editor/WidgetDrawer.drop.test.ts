@@ -76,7 +76,7 @@ let zoneApp: ReturnType<typeof mount> | null = null;
 let zoneHost: HTMLElement;
 const real = { ...editorSeams };
 
-const row = (widget: string): HTMLElement => document.querySelector<HTMLElement>(`.le-card[data-widget="${widget}"]`)!;
+const row = (widget: string): HTMLElement => document.querySelector<HTMLElement>(`[data-le-card][data-widget="${widget}"]`)!;
 const pointer = (el: HTMLElement, type: string, x: number, y: number): void => {
   el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: y }));
   flushSync();
@@ -173,7 +173,7 @@ describe('a drawer row carried onto the sidebar', () => {
     expect(drawerZone.glance.map((placement) => placement.widget)).toContain('core.notes');
   });
 
-  test('a widget the area already holds asks first: move here moves it to the mark, cancel leaves it', () => {
+  test('a widget the area already holds asks first (Joe, 2026-10-04): move here moves it to the mark, cancel leaves it', () => {
     drawerZone.add('core.keep-awake');
     flushSync();
     expect(drawerZone.items.map((item) => item.widget)).toEqual(['core.ledger', 'core.keep-awake']);
@@ -235,7 +235,7 @@ describe('a drawer row carried onto the sidebar', () => {
   });
 });
 
-describe('a family carried onto the sidebar', () => {
+describe('a family carried onto the sidebar (Joe (ccsliinc), 2026-10-03: "yes drop anywhere")', () => {
   test('the analytics row lands in the widget area as a fresh chart each time, never refused', () => {
     for (const _ of [1, 2]) {
       const card = row('core.analytics');

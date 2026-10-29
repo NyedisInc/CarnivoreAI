@@ -1,14 +1,3 @@
-"""What a plugin needs and who needs it (``docs/cplugs.md`` 16, Task Manager 414).
-
-Three kinds of need, with three strengths:
-
-* ``min_app_version`` and ``requires_core`` REFUSE turning the plugin on (:func:`enable_blockers`, route 409
-  ``requirements_unmet``): the app cannot run it at all.
-* ``requires`` (other plugins) is a WARNING when one is off (shown on the plugins page, enforced at run time by
-  ``gate.py``); it never refuses an enable.
-* Turning a plugin OFF while other enabled plugins need it answers 409 ``has_dependents`` with their ids until the
-  caller confirms (:func:`enabled_dependents`).
-"""
 
 from __future__ import annotations
 

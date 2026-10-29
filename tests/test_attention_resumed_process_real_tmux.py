@@ -21,7 +21,8 @@ from src.core.attention.evidence import (
     STATE_UNKNOWN,
     Evidence,
 )
-from src.core.attention.registry_read import REG_OK, read_registry_index
+from src.core.attention.registry_record import REG_OK
+from src.core.attention.registry_index import read_registry_index
 from src.core.attention.resolve import resolve_attention
 from src.core.attention.transcript_facts import read_transcript_facts
 from src.core.listing_attention import attention_reads_for_name
@@ -38,7 +39,7 @@ requires_tmux = pytest.mark.skipif(
     shutil.which("tmux") is None, reason="tmux not on PATH"
 )
 
-CONVERSATION = "967689f8-86d7-4941-86a1-d6e6baf4c9c9"
+CONVERSATION = "26003627-1a7b-42f9-baba-abacc8720544"
 
 CLAUDE_VERSION = "2.1.283"
 

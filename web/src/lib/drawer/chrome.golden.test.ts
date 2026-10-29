@@ -166,7 +166,7 @@ describe('the bottom bar', () => {
     await paint('bar-signed-out');
   });
   test('signed in, master all on', async () => {
-    accountChip.identity = { kind: 'member', name: 'todd', provider: 'github' };
+    accountChip.identity = { kind: 'member', name: 'joe', provider: 'github' };
     w.CloudeWeb = { masterAllEnabled: () => true, setMasterAll: () => {} };
     await paint('bar-signed-in-crown');
   });

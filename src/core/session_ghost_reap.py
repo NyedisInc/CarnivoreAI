@@ -76,7 +76,7 @@ async def drop_registration(
     release_token: bool = False,
 ) -> None:
     backend = manager._registry.backends.get(session_id)
-    task = getattr(backend, "_reader_task", None) if backend else None
+    task = backend._reader_task if backend is not None else None
     if task is not None:
         task.cancel()
         try:
@@ -89,9 +89,8 @@ async def drop_registration(
                 session_id=session_id,
                 error=str(exc),
             )
-    if backend is not None and hasattr(backend, "_reader_task"):
-        backend._reader_task = None
-        backend._running = False
+    if backend is not None:
+        backend.detach_reader()
     manager._wipe_session_state(session_id)
     logger.debug("registration_dropped", session_id=session_id, reason=reason)
     if release_token and tmux_name:

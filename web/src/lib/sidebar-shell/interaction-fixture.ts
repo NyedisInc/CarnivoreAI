@@ -2,12 +2,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { flushSync } from 'svelte';
+import { init as initGroupKeys } from '../drawer/group-actions';
+import * as Rename from '../drawer/rename';
+import { closeItemMenu } from '../item-menu/open.svelte';
+import { claim as claimChrome } from '../drawer/chrome-clicks';
 import { loadLegacyDrawer, paintDrawer, type LegacyWindow } from './legacy-fixture';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 const INTERACTION_SCRIPTS: readonly string[] = [
-    'session-sidebar-rename.js', 'session-sidebar-chrome-clicks.js', 'session-sidebar-group-actions.js',
 ];
 
 export type Event = [string, ...unknown[]];
@@ -103,6 +106,7 @@ function fakeApi(): Record<string, (...a: any[]) => Promise<unknown>> {
 }
 
 export function loadInteractions(sidebarShell: unknown): LegacyWindow {
+    // jsdom has no popover API; the shared menu driver shows its levels through it.
     const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
     proto.showPopover ??= function () {};
     proto.hidePopover ??= function () {};
@@ -115,7 +119,6 @@ export function loadInteractions(sidebarShell: unknown): LegacyWindow {
     const live = document.createElement('div');
     live.id = 'session-sidebar-live';
     document.body.appendChild(live);
-    w.SessionSidebarReorder = { announce(text: string) { live.textContent = text; }, afterRender() {} };
     const log = console.log;
     console.log = () => {};
     try {
@@ -125,7 +128,7 @@ export function loadInteractions(sidebarShell: unknown): LegacyWindow {
     } finally {
         console.log = log;
     }
-    w.SessionSidebarGroupActions.init();
+    initGroupKeys();
     const text = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent')!;
     Object.defineProperty(live, 'textContent', {
         get() { return text.get!.call(live); },
@@ -138,15 +141,14 @@ export function loadInteractions(sidebarShell: unknown): LegacyWindow {
     };
     w.SessionSidebar = ctrl;
     list.addEventListener('click', (e) => {
-        if (w.SessionSidebarChromeClicks.claim(ctrl, e)) return;
-        w.SessionSidebarRename.onListClick(e);
+        if (claimChrome(ctrl, e)) return;
+        Rename.onListClick(e);
     });
     w.API = fakeApi();
     w.App = {
         showConfirmModal: async (...args: unknown[]) => { events.push(['confirm', ...args]); return opts.confirm !== false; },
     };
     w.WriteFailureNotice = { report(text: string) { events.push(['failure', text]); } };
-    w.SessionRowMenuSleep = { releaseThisTab(o: { name: string }) { events.push(['release', o.name]); } };
     w.SessionSidebarGroupColour.open = (anchor: Element, uuid: string) => events.push(['colour-picker', anchor.getAttribute('data-group-menu'), uuid]);
     w.SessionSidebarGroupIcon.open = (anchor: Element, uuid: string) => events.push(['icon-picker', anchor.getAttribute('data-group-menu'), uuid]);
     w.CloudeWeb = {
@@ -160,7 +162,7 @@ export function loadInteractions(sidebarShell: unknown): LegacyWindow {
 
 export function startRun(o: RunOptions = {}): Harness {
     opts = o;
-    w.SessionSidebarGroupActions.closeMenu();
+    closeItemMenu();
     w.SessionSidebarStore.save([], [], [], {}, {});
     groups = startGroups();
     w.SessionSidebarGroupStore.apply(body());

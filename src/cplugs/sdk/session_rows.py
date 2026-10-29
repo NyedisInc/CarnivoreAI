@@ -6,7 +6,7 @@ from typing import Optional
 
 
 class SessionRowsUnreadable(RuntimeError):
-    """The session rows could not be read: an absence decided from this read would be a guess, so the caller decides nothing."""
+    pass
 
 
 @dataclass(frozen=True)

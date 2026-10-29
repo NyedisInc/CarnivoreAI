@@ -1,4 +1,3 @@
-// state directory
 
 'use strict';
 

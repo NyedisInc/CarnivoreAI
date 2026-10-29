@@ -56,7 +56,6 @@ export async function patchLook(id: number, body: LookPatch): Promise<void> {
 export const HOLD_MS = 500;
 export const HOLD_SLOP_PX = 8;
 
-/* <button use:nodeHold={(el) => */
 export function nodeHold(node: HTMLElement, onHold: (node: HTMLElement) => void): { update(next: (node: HTMLElement) => void): void; destroy(): void } {
   let hold = onHold;
   let timer: ReturnType<typeof setTimeout> | null = null;

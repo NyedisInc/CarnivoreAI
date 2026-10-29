@@ -94,15 +94,13 @@ export function formToProfile(f: FormState): LaunchProfile {
         icon: f.icon,
         description: f.description.trim() || null,
         default: f.default,
-        account: f.harness === 'claude' && f.accountMode === 'pinned'
-            ? { mode: 'pinned', account_id: f.accountId || null }
-            : { mode: 'follow_active', account_id: null },
+        account: { mode: 'follow_active', account_id: null },
         endpoint: structured && f.harness !== 'shell' && f.endpointMode === 'connection'
             ? { mode: 'connection', connection_id: f.connectionId || null }
             : { mode: 'native', connection_id: null },
-        model: f.modelMode === 'fixed' && f.harness !== 'shell'
+        model: f.modelMode === 'fixed' && f.harness !== 'shell' && f.harness !== 'custom'
             ? { mode: 'fixed', value: f.modelValue.trim() || null }
-            : { mode: f.modelMode === 'ask' ? 'ask' : 'default', value: null },
+            : { mode: f.modelMode === 'ask' && f.harness !== 'custom' ? 'ask' : 'default', value: null },
         permissions: postureSupported(f.harness, f.permissions) ? f.permissions : 'harness_default',
         flags: structured ? parseFlags(f.flagsText) : [],
         env: f.env.filter((r) => r.name.trim() !== '').map((r) => ({ name: r.name.trim(), value: r.value })),
@@ -114,9 +112,47 @@ export function formToProfile(f: FormState): LaunchProfile {
     };
 }
 
+export interface AgentPreset {
+    id: string;
+    harness: Harness;
+    binary: string;
+    icon: string | null;
+}
+
+export const AGENT_PRESETS: readonly AgentPreset[] = [
+    { id: 'pi', harness: 'custom', binary: 'pi', icon: 'logo-pi' },
+    { id: 'omp', harness: 'custom', binary: 'omp', icon: 'terminal' },
+    { id: 'claude', harness: 'claude', binary: 'claude', icon: null },
+    { id: 'codex', harness: 'codex', binary: 'codex', icon: null },
+    { id: 'copilot', harness: 'custom', binary: 'copilot', icon: 'logo-copilot' },
+    { id: 'devin', harness: 'custom', binary: 'devin', icon: 'logo-devin' },
+    { id: 'droid', harness: 'custom', binary: 'droid', icon: 'terminal' },
+    { id: 'kimi', harness: 'custom', binary: 'kimi', icon: 'logo-kimi' },
+    { id: 'opencode', harness: 'custom', binary: 'opencode', icon: 'logo-opencode' },
+    { id: 'kilo', harness: 'custom', binary: 'kilo', icon: 'logo-kilo' },
+    { id: 'hermes', harness: 'hermes', binary: 'hermes', icon: null },
+    { id: 'qoder', harness: 'custom', binary: 'qodercli', icon: 'logo-qoder' },
+    { id: 'qwen', harness: 'custom', binary: 'qwen', icon: 'logo-qwen' },
+    { id: 'letta', harness: 'custom', binary: 'letta', icon: 'terminal' },
+    { id: 'cursor', harness: 'custom', binary: 'cursor-agent', icon: 'logo-cursor' },
+    { id: 'mastra', harness: 'custom', binary: 'mastracode', icon: 'logo-mastra' },
+    { id: 'antigravity', harness: 'custom', binary: 'agy', icon: 'logo-antigravity' },
+    { id: 'grok', harness: 'custom', binary: 'grok', icon: 'logo-grok' },
+];
+
 export interface Template {
-    id: 'claude_subscription' | 'claude_openrouter' | 'claude_lmstudio' | 'codex_yolo' | 'shell';
+    id: string;
     preset: string | null;
+    agent?: AgentPreset;
+}
+
+export function commandOf(script: string): string {
+    return script.replace(/\s*"\$@"\s*$/, '');
+}
+
+export function scriptOf(command: string): string {
+    const c = command.trim();
+    return c === '' ? '' : `${c} "$@"`;
 }
 
 export const TEMPLATES: readonly Template[] = [
@@ -125,11 +161,20 @@ export const TEMPLATES: readonly Template[] = [
     { id: 'claude_lmstudio', preset: 'lmstudio' },
     { id: 'codex_yolo', preset: null },
     { id: 'shell', preset: null },
+    { id: 'custom_agent', preset: null, agent: { id: 'custom', harness: 'custom', binary: '', icon: null } },
+    ...AGENT_PRESETS.map((agent): Template => ({ id: `preset_${agent.id}`, preset: null, agent })),
 ];
 
 export function templateForm(t: Template, label: string, connections: readonly ConnectionOption[]): FormState {
     const base = { ...blankForm(), label, id: slugFromLabel(label) };
     const found = t.preset ? connections.find((c) => c.preset === t.preset && c.enabled) : undefined;
+    if (t.agent) {
+        const { harness, binary, icon } = t.agent;
+        const custom = harness === 'custom' || harness === 'hermes';
+        return { ...base, harness, icon, expert: custom, script: custom ? scriptOf(binary) : '',
+            permissions: harness === 'claude' || harness === 'codex' ? 'harness_default' : base.permissions,
+            shellProfile: true };
+    }
     switch (t.id) {
         case 'claude_openrouter':
         case 'claude_lmstudio':

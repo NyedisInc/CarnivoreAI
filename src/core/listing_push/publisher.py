@@ -19,6 +19,8 @@ WAKE_FRAME_TYPES = frozenset({"session.status", "sessions.changed", "session.ren
 
 DEFAULT_BACKSTOP_SECONDS = 5.0
 
+EVENT_BACKSTOP_SECONDS = 60.0
+
 DEFAULT_MIN_INTERVAL_SECONDS = 0.5
 
 DEFAULT_STALE_SECONDS = 2.0
@@ -57,6 +59,7 @@ class ListingPublisher:
         min_interval: float = DEFAULT_MIN_INTERVAL_SECONDS,
         stale_seconds: float = DEFAULT_STALE_SECONDS,
         after_pass: Optional[Callable[[], None]] = None,
+        feed: Optional[Callable[[], Awaitable[bool]]] = None,
     ) -> None:
         self._collections = list(collections)
         self._publish = publish
@@ -65,6 +68,7 @@ class ListingPublisher:
         self.min_interval = min_interval
         self.stale_seconds = stale_seconds
         self._after_pass = after_pass
+        self._feed = feed
         self.stream = secrets.token_hex(6)
         self.seq = 0
         self._rows: Dict[str, KeyedRows] = {}
@@ -85,16 +89,6 @@ class ListingPublisher:
 
 
     async def run_pass(self) -> Optional[Dict[str, Any]]:
-        """Run one pass, or join the pass already running, and return its frame.
-
-        Description: ONE pass is ever in flight. A caller that arrives while
-          one runs (the loop, a snapshot request on a cold server) awaits
-          that same pass instead of queueing a pass of its own, so a boot
-          resync storm costs one build, not one build per client.
-        Inputs: none.
-        Output: dict | None - the frame the pass published, or None when idle.
-        Example: frame = await publisher.run_pass()
-        """
         task = self._inflight
         if task is None or task.done():
             task = asyncio.ensure_future(self._pass_body())
@@ -113,8 +107,7 @@ class ListingPublisher:
                 logger.warning("listing_push_build_failed", collection=collection.name,
                                error=str(exc), error_type=type(exc).__name__)
                 continue
-            rows = keyed(result.rows, collection.key_of)
-            change = diff(self._rows.get(collection.name), rows)
+            rows, change = await asyncio.to_thread(self._keyed_diff, collection, result.rows)
             status = result.status_dict()
             if status != self._status.get(collection.name):
                 change = dict(change or {})
@@ -133,6 +126,10 @@ class ListingPublisher:
         frame = {"type": FRAME_TYPE, "stream": self.stream, "seq": self.seq, "changes": changes}
         self._publish(frame)
         return frame
+
+    def _keyed_diff(self, collection: Collection, result_rows: List[Dict[str, Any]]):
+        rows = keyed(result_rows, collection.key_of)
+        return rows, diff(self._rows.get(collection.name), rows)
 
     async def snapshot(self, max_age: Optional[float] = None) -> Dict[str, Any]:
         limit = self.stale_seconds if max_age is None else max_age
@@ -161,8 +158,17 @@ class ListingPublisher:
         logger.info("listing_push_started", backstop_seconds=self.backstop_seconds,
                     stream=self.stream)
         while True:
+            wait = self.backstop_seconds
+            if self._feed is not None and self._client_count() > 0:
+                try:
+                    if await self._feed():
+                        wait = max(wait, EVENT_BACKSTOP_SECONDS)
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("listing_push_feed_failed", error=str(exc), error_type=type(exc).__name__)
             try:
-                await asyncio.wait_for(self._wake.wait(), timeout=self.backstop_seconds)
+                await asyncio.wait_for(self._wake.wait(), timeout=wait)
             except asyncio.TimeoutError:
                 pass
             self._wake.clear()

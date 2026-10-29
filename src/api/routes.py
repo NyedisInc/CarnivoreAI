@@ -74,9 +74,11 @@ from src.api import session_move_routes
 from src.api import project_pack_routes
 from src.api import companies_routes
 from src.api import swarm_routes
+from src.api import swarm_memory_routes
 from src.api import swarm_card_routes
 from src.api import swarm_node_order_routes
 from src.api import swarm_switch_routes
+from src.api import swarm_member_routes
 from src.api import pack_machines_routes
 from src.api import computers_routes
 from src.api import pack_placement_routes
@@ -104,7 +106,6 @@ from src.api import provider_models_routes
 from src.api import server_control_routes
 from src.api import session_attach_command_routes
 from src.api import session_attach_routes
-from src.api import session_attribution_routes
 from src.api import session_crud_routes
 from src.api import companion_shell_routes
 from src.api import session_conversations_routes
@@ -123,6 +124,7 @@ from src.api import session_fork_routes
 from src.api import session_bookmark_routes
 from src.api import session_import_status_routes
 from src.api import session_input_routes
+from src.api import session_upload_view_routes
 from src.api import session_logs_routes
 from src.api import session_recent_routes
 from src.api import session_search_routes
@@ -170,7 +172,6 @@ from src.api import hosts_routes
 from src.api import federation_discovery_routes, federation_peer_routes, federation_pending_routes, federation_routes
 from src.core.version import freeze_startup_version
 
-# CLOUDE_APP_VERSION
 freeze_startup_version()
 
 from src.api import stats_event_routes, stats_feed_routes, stats_insight_routes, stats_maintenance_routes, stats_routes, stats_tripwire_routes
@@ -214,6 +215,7 @@ router.include_router(session_lease_routes.router)
 router.include_router(size_master_routes.router)
 router.include_router(session_rename_routes.router)
 router.include_router(session_input_routes.router)
+router.include_router(session_upload_view_routes.router)
 router.include_router(session_toast_routes.router)
 router.include_router(session_logs_routes.router)
 router.include_router(session_search_routes.router)
@@ -248,6 +250,8 @@ router.include_router(session_move_routes.router)
 router.include_router(project_pack_routes.router)
 router.include_router(companies_routes.router)
 router.include_router(swarm_routes.router)
+router.include_router(swarm_memory_routes.router)
+router.include_router(swarm_member_routes.router)
 router.include_router(swarm_card_routes.router)
 router.include_router(swarm_node_order_routes.router)
 router.include_router(swarm_switch_routes.router)
@@ -279,7 +283,6 @@ router.include_router(session_records_routes.router)
 router.include_router(session_purge_routes.router)
 router.include_router(session_listing_push_routes.router)
 router.include_router(session_recent_routes.router)
-router.include_router(session_attribution_routes.router)
 router.include_router(session_import_status_routes.router)
 router.include_router(one_shot_routes.router)
 router.include_router(skill_scout_routes.router)

@@ -1,4 +1,3 @@
-/* nothing at all something else */
 (function () {
     'use strict';
 
@@ -90,7 +89,6 @@
                 console.warn('AltScreenScroll: buffer read failed', err);
                 return 'unknown';
             }
-            // could not
             if (typeof type !== 'string' || typeof baseY !== 'number') return 'unknown';
             if (baseY > 0) return 'main';
 
@@ -158,6 +156,7 @@
             var state = detectState(term);
             if (state === 'main') return false;
             if (!rows) return true;
+            // there is nothing to scroll
             if (state === 'unknown') return true;
             if (openPending() && state !== 'transcript') return true;
             if (isTyping()) return true;

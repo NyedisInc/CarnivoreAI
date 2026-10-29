@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import Button from '../lib/base/Button.svelte';
+    import Field from '../lib/base/Field.svelte';
     import type { AdminHost } from './admin-host.svelte.js';
     import { t } from './text.js';
     import { ADMIN_KEYS } from '../../../client/js/labels/admin.js';
@@ -42,9 +43,8 @@
             <label class="admin-field" for="admin-email">
                 {t(ADMIN_KEYS.signinEmailLabel)}
             </label>
-            <input
-                id="admin-email"
-                class="admin-input"
+            <Field
+                id="admin-email" data-admin-grow
                 type="email"
                 autocomplete="email"
                 bind:value={address}
@@ -72,10 +72,8 @@
             <label class="admin-field" for="admin-code">
                 {t(ADMIN_KEYS.signinCodeLabel)}
             </label>
-            <input
-                id="admin-code"
-                class="admin-input admin-input--code"
-                type="text"
+            <Field
+                id="admin-code" data-admin-code data-admin-grow
                 inputmode="numeric"
                 autocomplete="one-time-code"
                 bind:value={code}

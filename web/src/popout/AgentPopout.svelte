@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* pop-out window */
   import { onMount } from 'svelte';
   import { auth, initAuth, startEvents } from '../opscenter/api';
   import { t } from '../lib/i18n/index.svelte';

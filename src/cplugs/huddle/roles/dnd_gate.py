@@ -26,8 +26,8 @@ TOOLS = frozenset({"task_manager_update", "task_manager_reply", "task_manager_fo
 
 def refusal_text(item_id: int) -> str:
     return (f"refused ({CODE}): you are on do not disturb and item {item_id} is not assigned to you. Do not take it. Ask the owner with "
-            f"task_manager_ask on item {item_id} (their answer lets you proceed, and so does their tagging it to you); if you must act now, "
-            f"repeat this call with reason (at least {MIN_REASON} characters, why this task is yours to take); it is posted on the task for the owner")
+            f"task_manager_ask on item {item_id} (his answer lets you proceed, and so does his tagging it to you); if you must act now, "
+            f"repeat this call with reason (at least {MIN_REASON} characters, why this task is yours to take); it is posted on the task for him")
 
 
 def _assigned(conn: Any, item_id: int, key: str) -> Optional[bool]:

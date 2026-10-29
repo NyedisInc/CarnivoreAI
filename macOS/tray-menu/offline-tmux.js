@@ -8,7 +8,6 @@ function listSessionsArgv(socket) {
   return ['-f', '/dev/null', '-S', socket, 'list-sessions', '-F', '#{session_name}'];
 }
 
-/* CANNOT DETERMINE sessions are gone */
 async function readAliveCount(input) {
   const { deps } = input;
   if (!input.tmuxBin) return { alive: null, tmuxRunning: null, error: 'tmux could not be found' };

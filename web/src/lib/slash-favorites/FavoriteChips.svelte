@@ -192,7 +192,7 @@
                         onpointercancel={onGripCancel}
                     ><span aria-hidden="true"></span></IconButton>
                 {/if}
-                <button
+                <button data-base-exempt="slash-menu-command-chip-and-color-swatches"
                     type="button"
                     class="command-button"
                     data-command={fav.command}
@@ -235,7 +235,7 @@
         >
             <span class="fav-swatches__label">{t('slash.favorites.color_for', { command: pickingFavorite.command })}</span>
             {#each FAVORITE_COLORS as color (color)}
-                <button
+                <button data-base-exempt="slash-menu-command-chip-and-color-swatches"
                     type="button"
                     class="fav-swatch"
                     data-color={color}
@@ -247,7 +247,7 @@
                     onclick={() => pickColor(pickingFavorite.command, color)}
                 ></button>
             {/each}
-            <button
+            <button data-base-exempt="slash-menu-command-chip-and-color-swatches"
                 type="button"
                 class="fav-swatch fav-swatch--none"
                 data-color=""

@@ -12,6 +12,12 @@ const ROOT = path.join(__dirname, '..');
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks it failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -88,14 +94,17 @@ const SCRIPTS = [
     'session-header-led.js',
 ];
 
+// ------------------------------------------------------------------ //
+// ------------------------------------------------------------------ //
 
-test('C: every state reads the way requested', () => {
+test('C: every state reads the way the owner asked for', () => {
     const { ctx } = makeContext();
     load(ctx, SCRIPTS);
     const UI = ctx.window.SessionStatusUI;
 
     assert.equal(UI.labelFor('idle'), 'idle - read, nothing running');
     assert.equal(UI.labelFor('finished_unread'), 'done - unread');
+    // waiting on the user
     assert.equal(UI.labelFor('notice'), 'your turn - the agent wants your attention');
     assert.equal(UI.labelFor('question'), 'your turn - the agent needs your permission');
     assert.equal(UI.labelFor('working'), 'working');
@@ -125,6 +134,8 @@ test('C: the label reaches the rendered title attribute', () => {
     );
 });
 
+// ------------------------------------------------------------------ //
+// ------------------------------------------------------------------ //
 
 test('E: a source is appended to the tooltip', () => {
     const { ctx } = makeContext();
@@ -161,6 +172,8 @@ test('E: the source changes the tooltip and NOTHING else', () => {
     assert.ok(sourced.includes('via hooks'));
 });
 
+// ------------------------------------------------------------------ //
+// ------------------------------------------------------------------ //
 
 test('D: a matching list row paints a light beside the title', () => {
     const { ctx, titleEl, wrapperEl } = makeContext();

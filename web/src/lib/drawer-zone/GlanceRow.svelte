@@ -54,7 +54,6 @@
 
 <style>
   @layer components {
-    /* padding */
     .dz-glances {
       display: flex;
       align-items: center;

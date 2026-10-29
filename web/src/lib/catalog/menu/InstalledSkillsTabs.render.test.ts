@@ -66,11 +66,11 @@ describe('INSTALLED > skills tabs', () => {
 
     test('with two computers the pack tab shows and draws the Pack skills table', async () => {
         machines.holder.data = { machines: PACK_OF_TWO };
-        stub.getPackSkills.mockResolvedValue({ role: 'receiver', read_only: true, alpha: { id: 'a', label: 'hostb' }, applied_gen: 1, rows: [] });
+        stub.getPackSkills.mockResolvedValue({ role: 'receiver', read_only: true, alpha: { id: 'a', label: 'nostromo' }, applied_gen: 1, rows: [] });
         const host = await show(skillsNode('pack'));
         expect(tabIds(host)).toEqual(['installed', 'stats', 'pack']);
         expect(selected(host)).toBe('pack');
-        expect(host.querySelector('[data-pks-readonly]')?.textContent).toContain('hostb');
+        expect(host.querySelector('[data-pks-readonly]')?.textContent).toContain('nostromo');
     });
 
     test('a tab click reports the node; stats draws the census, not the list', async () => {
@@ -95,9 +95,9 @@ describe('INSTALLED > skills tabs', () => {
 
 describe('the Pack page skills tab', () => {
     test('renders PackSkillsTab, the same table', async () => {
-        stub.getPackSkills.mockResolvedValue({ role: 'receiver', read_only: true, alpha: { id: 'a', label: 'hostb' }, applied_gen: 1, rows: [] });
+        stub.getPackSkills.mockResolvedValue({ role: 'receiver', read_only: true, alpha: { id: 'a', label: 'nostromo' }, applied_gen: 1, rows: [] });
         app = mount(PackPanels, { target: document.body, props: { tab: 'skills' } });
         await settle();
-        expect(document.querySelector('[data-pks-readonly]')?.textContent).toContain('hostb');
+        expect(document.querySelector('[data-pks-readonly]')?.textContent).toContain('nostromo');
     });
 });

@@ -67,10 +67,6 @@ def _owner_keys_for(store: stores.PluginStore, owner: units.OwnerKeys) -> set:
 
 def _scoped_units(store: stores.PluginStore, root: Path, owner: units.OwnerKeys,
                   siblings: Dict[str, List[units.TaskLink]], problems: List[str]) -> Tuple[List[units.Unit], int]:
-    """The units of a carried folder store this scope owns, and the count it leaves out. Output: (units, out of scope).
-
-    Inputs: ...; problems (collects a sentence per folder that could not be listed).
-    """
     if store.decl.scope_by == SCOPE_TASK:
         return units.task_units(root, siblings, owner, problems)
     return units.owner_units(root, _owner_keys_for(store, owner))

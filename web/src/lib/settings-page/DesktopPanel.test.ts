@@ -206,8 +206,8 @@ describe('DesktopPanel', () => {
         expect(row(wide, 'bind')!.textContent).toContain('every network this computer is on');
         expect(row(wide, 'tls')!.textContent).toContain('anyone on the network path can read it');
 
-        const one = await render(shellWith('secure'), prefs, '203.0.113.13');
-        expect(row(one, 'bind')!.textContent).toContain('203.0.113.13 only');
+        const one = await render(shellWith('secure'), prefs, '192.168.1.20');
+        expect(row(one, 'bind')!.textContent).toContain('192.168.1.20 only');
         expect(row(one, 'tls')!.textContent).toContain('encrypted (https)');
 
         const unmeasured = await render(shellWith('unknown'), prefs, null);

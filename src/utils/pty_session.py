@@ -1,5 +1,6 @@
 
 import asyncio
+import errno
 import os
 import pty
 import signal
@@ -7,6 +8,7 @@ import struct
 import fcntl
 import termios
 import select
+import time
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 import structlog
@@ -15,6 +17,11 @@ from src.core.session_backend import SessionBackend
 from src.core.tmux_listing import REASON_NOT_APPLICABLE, TmuxListing
 
 logger = structlog.get_logger()
+
+STOP_GRACE_SECONDS = 2.0
+STOP_POLL_SECONDS = 0.05
+
+CHILD_EXEC_FAILED_STATUS = 127
 
 
 class PTYSessionError(Exception):
@@ -45,6 +52,7 @@ class PTYSession:
         command: Optional[str] = None,
         initial_cols: Optional[int] = None,
         initial_rows: Optional[int] = None,
+        env: Optional[Dict[str, str]] = None,
     ):
         if self.running:
             raise PTYSessionError("Session is already running")
@@ -53,16 +61,7 @@ class PTYSession:
             self.pid, self.master_fd = pty.fork()
 
             if self.pid == 0:
-                os.chdir(str(self.working_dir))
-
-                env = os.environ.copy()
-                env['TERM'] = 'xterm-256color'
-                env['COLORTERM'] = 'truecolor'
-
-                if command:
-                    os.execvpe('/bin/bash', ['/bin/bash', '-c', command], env)
-                else:
-                    os.execvpe('/bin/bash', ['/bin/bash', '-l'], env)
+                self._exec_child(command, env)
 
             else:
                 self.running = True
@@ -86,9 +85,24 @@ class PTYSession:
                     working_dir=str(self.working_dir)
                 )
 
-        except Exception as e:
+        except (OSError, struct.error) as e:
             logger.error("pty_session_start_failed", error=str(e))
             raise PTYSessionError(f"Failed to start PTY session: {e}") from e
+
+    def _exec_child(self, command: Optional[str], extra_env: Optional[Dict[str, str]]) -> None:
+        try:
+            os.chdir(str(self.working_dir))
+            child_env = os.environ.copy()
+            child_env.update(extra_env or {})
+            child_env['TERM'] = 'xterm-256color'
+            child_env['COLORTERM'] = 'truecolor'
+            argv = ['/bin/bash', '-c', command] if command else ['/bin/bash', '-l']
+            os.execvpe('/bin/bash', argv, child_env)
+        except BaseException as exc:  # noqa: BLE001
+            try:
+                os.write(2, f"pty child failed to start: {exc}\n".encode("utf-8", "replace"))
+            finally:
+                os._exit(CHILD_EXEC_FAILED_STATUS)
 
     async def _read_output(self):
         loop = asyncio.get_event_loop()
@@ -105,11 +119,11 @@ class PTYSession:
                     if data and self.on_output:
                         await self._call_output_callback(data)
                 except OSError as e:
-                    if e.errno == 5:
+                    if e.errno == errno.EIO:
                         logger.info("pty_process_exited", session_id=self.session_id)
                         self.running = False
                         break
-                    elif e.errno == 35:
+                    elif e.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
                         await asyncio.sleep(0.01)
                         continue
                     else:
@@ -118,8 +132,8 @@ class PTYSession:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
-                logger.error("pty_read_error", error=str(e))
+            except Exception as e:  # noqa: BLE001
+                logger.error("pty_read_error", error=str(e), exc_info=True)
                 await asyncio.sleep(0.1)
 
     def _wait_for_output(self):
@@ -139,7 +153,7 @@ class PTYSession:
 
         try:
             os.write(self.master_fd, data)
-        except Exception as e:
+        except OSError as e:
             logger.error("pty_write_failed", error=str(e))
             raise PTYSessionError(f"Failed to write to PTY: {e}") from e
 
@@ -180,14 +194,6 @@ class PTYSession:
             except asyncio.CancelledError:
                 pass
 
-        if self.pid:
-            try:
-                os.kill(self.pid, signal.SIGTERM)
-                loop = asyncio.get_event_loop()
-                await loop.run_in_executor(None, os.waitpid, self.pid, 0)
-            except (ProcessLookupError, ChildProcessError):
-                pass
-
         if self.master_fd is not None:
             try:
                 os.close(self.master_fd)
@@ -195,17 +201,40 @@ class PTYSession:
                 pass
             self.master_fd = None
 
+        if self.pid:
+            await self._terminate_child(self.pid)
+
         logger.info("pty_session_stopped", session_id=self.session_id)
+
+    @staticmethod
+    def _reap(pid: int) -> bool:
+        try:
+            reaped, _status = os.waitpid(pid, os.WNOHANG)
+        except ChildProcessError:
+            return True
+        return reaped == pid
+
+    async def _terminate_child(self, pid: int) -> None:
+        for sig in (signal.SIGHUP, signal.SIGTERM):
+            try:
+                os.kill(pid, sig)
+            except ProcessLookupError:
+                break
+        deadline = time.monotonic() + STOP_GRACE_SECONDS
+        while not self._reap(pid):
+            if time.monotonic() >= deadline:
+                logger.warning("pty_child_killed", session_id=self.session_id, pid=pid)
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    return
+                deadline = time.monotonic() + STOP_GRACE_SECONDS
+            await asyncio.sleep(STOP_POLL_SECONDS)
 
     def is_alive(self) -> bool:
         if not self.running or not self.pid:
             return False
-
-        try:
-            os.kill(self.pid, 0)
-            return True
-        except (ProcessLookupError, PermissionError):
-            return False
+        return not self._reap(self.pid)
 
 
 class PTYBackend(SessionBackend):
@@ -222,7 +251,7 @@ class PTYBackend(SessionBackend):
     async def start(
         self,
         command: Optional[str] = None,
-        env: Optional[dict] = None,  # noqa: ARG002
+        env: Optional[dict] = None,
         initial_cols: Optional[int] = None,
         initial_rows: Optional[int] = None,
     ) -> None:
@@ -238,6 +267,7 @@ class PTYBackend(SessionBackend):
             command=command,
             initial_cols=initial_cols,
             initial_rows=initial_rows,
+            env=env,
         )
 
     async def stop(self) -> None:

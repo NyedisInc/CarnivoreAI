@@ -13,6 +13,7 @@ from typing import Deque, Dict, List, NamedTuple, Optional
 import structlog
 
 from src.core.hosts.tmux_control import ControlParser, Notification, _Block, _Desync
+from src.core.tmux_control import changes
 from src.core.tmux_control.errors import (
     ControlFallback,
     ControlPaneGone,
@@ -120,17 +121,6 @@ class ControlInput:
         return self._session
 
     async def send(self, pane_id: str, server_pid: int, data: bytes) -> None:
-        """Type ``data`` into the pane, exactly once, in order.
-
-        Inputs: pane_id (str) - ``%N``, resolved from the STORED tmux session name; server_pid
-          (int) - the server that id was resolved against; data (bytes) - any size (chunked).
-        Output: None once every byte is measured applied.
-        Raises: ControlUnavailable - nothing was sent. ControlStaleServer - the id belongs to a
-          server the client is not on; nothing was sent. ControlPaneGone - tmux says the pane is
-          gone (no retry). ControlFallback - the unapplied tail is on the exception, send it
-          through the subprocess path. ControlWriteUnknown - could not measure what landed.
-        Example: await ci.send("%3", pid, b"x" * 65536)
-        """
         if not data:
             return
         if not PANE_ID_RE.fullmatch(pane_id):
@@ -153,17 +143,6 @@ class ControlInput:
         await self._settle(pane_id, lines)
 
     async def active_pane(self, session: str) -> PaneRef:
-        """Ask the server which pane a session's keystrokes reach right now (one control round trip).
-
-        Description: resolved on EVERY write, through the live client, so the answer follows the session's
-          active window and pane exactly as today's ``-t =<session>`` does. The server pid in the answer
-          is the one the client is attached to.
-        Inputs: session (str) - the backend's STORED tmux session name (gotcha 4b).
-        Output: PaneRef.
-        Raises: ControlUnavailable - nothing was asked (client down, or a name unsafe for a control line).
-          ControlPaneGone - the session does not exist (tmux answers with another session's pane or an empty one).
-        Example: ref = await ci.active_pane("carnivore_ab")  # PaneRef(server_pid=812, pane_id="%3")
-        """
         if not SESSION_NAME_RE.fullmatch(session):
             raise ControlUnavailable("session name is not safe for a control line")
         async with self._order:
@@ -185,6 +164,14 @@ class ControlInput:
         if not pid_text.isdigit() or answered != session or not PANE_ID_RE.fullmatch(pane):
             raise ControlPaneGone(f"{SESSION_GONE_TEXT}: {session}")
         return PaneRef(int(pid_text), pane)
+
+    async def listen(self) -> bool:
+        try:
+            async with self._order:
+                await self._ensure_up()
+        except ControlUnavailable:
+            return False
+        return self._alive()
 
     async def close(self) -> None:
         conn, self._conn, self._server_pid = self._conn, None, None
@@ -216,18 +203,6 @@ class ControlInput:
             raise ControlFallback(rest)
 
     async def _recover(self, pane_id: str, lines: List[_Line]) -> None:
-        """Finish THIS caller's lines the client did not (under the order lock).
-
-        Description: a restarted client replays every pane's unacknowledged lines BEFORE any new
-          line is submitted (:meth:`_replay_all`), so the marker only ever covers older lines.
-          If the client cannot be kept up, the marker is read by a one-shot tmux and the caller's
-          unapplied lines are reported as a fallback. Only the caller's own lines are ever touched:
-          another caller's lines in flight on a healthy client are its own to finish, and ending
-          them here would type them twice (once by the client, once by the caller's fallback).
-        Inputs: pane_id (str); lines (the caller's lines of this send, some with no outcome yet).
-        Raises: ControlWriteUnknown - the marker could not be read; the caller's lines are dropped
-          (never replayed later) because whether they landed is unknown.
-        """
         async with self._order:
             mine = [ln for ln in lines if ln.outcome is None]
             with contextlib.suppress(ControlUnavailable):
@@ -457,6 +432,7 @@ class ControlInput:
                         if event.name == "exit":
                             why = "exit"
                             return
+                        changes.emit(self.socket_name, event.name)
                     elif isinstance(event, _Desync):
                         logger.warning("tmux_control_input_desync", detail=event.detail)
                         why = "desync"
@@ -472,6 +448,7 @@ class ControlInput:
             with contextlib.suppress(Exception):  # noqa: BLE001
                 await asyncio.wait_for(conn.proc.wait(), START_TIMEOUT_SECONDS)
             logger.info("tmux_control_input_client_ended", socket=self.socket_name, why=why)
+            changes.emit(self.socket_name, "sessions-changed")
 
     def _reply(self, conn: _Conn, block: _Block) -> bool:
         if not conn.inflight:

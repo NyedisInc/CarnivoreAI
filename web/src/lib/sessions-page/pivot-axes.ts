@@ -1,5 +1,6 @@
 import type { Translate } from '../sessions/types';
 import { activityMs, CONV_TIERS, needKind, recentBuckets, USED_TIERS } from './lenses';
+import { writeChoice } from './stored-choice';
 import { matchesFind, type PageRow, type Signals } from './filters';
 
 export const AXIS_ORDER = ['project', 'company', 'provider', 'computer', 'state', 'recency', 'used', 'hour', 'weekday', 'convs'] as const;
@@ -53,8 +54,8 @@ export function unavailable(key: AxisKey, flags: { historyFailed: boolean; listi
     return null;
 }
 
-function slug(s: string): string {
-    return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function bucketPart(s: string): string {
+    return encodeURIComponent(s);
 }
 
 export function workedAtMs(r: PageRow): number {
@@ -90,11 +91,11 @@ export function axisOf(key: AxisKey, r: PageRow, ctx: PivotContext): string {
         case 'project':
             return `p${r.groupKey}`;
         case 'company':
-            return `co-${slug(r.company ?? ctx.noCompany)}`;
+            return `co-${bucketPart(r.company ?? ctx.noCompany)}`;
         case 'provider':
             return `ag-${r.provider}`;
         case 'computer':
-            return `pc-${slug(r.computer ?? ctx.thisComputer)}`;
+            return `pc-${bucketPart(r.computer ?? ctx.thisComputer)}`;
         case 'state':
             return `st-${stateOf(r, ctx.sig)}`;
         case 'recency': {
@@ -137,7 +138,7 @@ function axisBuckets(key: AxisKey, rows: readonly PageRow[], ctx: PivotContext):
     if (key === 'company') {
         const names = [...new Set(rows.map((r) => r.company ?? ctx.noCompany))];
         return names
-            .map((name) => ({ id: `co-${slug(name)}`, label: name, sub: '', short: name === ctx.noCompany ? t('sessions.page.pivot.none_short') : name.slice(0, 5), ...(name === ctx.noCompany ? {} : { letter: name.replace(/[^A-Za-z0-9]/g, '').charAt(0).toUpperCase() || '?', companyName: name }), newest: newestOf(`co-${slug(name)}`, 'company') }))
+            .map((name) => ({ id: `co-${bucketPart(name)}`, label: name, sub: '', short: name === ctx.noCompany ? t('sessions.page.pivot.none_short') : name.slice(0, 5), ...(name === ctx.noCompany ? {} : { letter: name.replace(/[^A-Za-z0-9]/g, '').charAt(0).toUpperCase() || '?', companyName: name }), newest: newestOf(`co-${bucketPart(name)}`, 'company') }))
             .sort(byNewest);
     }
     if (key === 'provider') {
@@ -147,7 +148,7 @@ function axisBuckets(key: AxisKey, rows: readonly PageRow[], ctx: PivotContext):
         const names = [...new Set(rows.map((r) => r.computer ?? ctx.thisComputer))];
         return names
             .sort((a, b) => (a === ctx.thisComputer ? -1 : b === ctx.thisComputer ? 1 : a.localeCompare(b)))
-            .map((name) => ({ id: `pc-${slug(name)}`, label: name, sub: '', short: name === ctx.thisComputer ? t('sessions.page.pivot.here') : name }));
+            .map((name) => ({ id: `pc-${bucketPart(name)}`, label: name, sub: '', short: name === ctx.thisComputer ? t('sessions.page.pivot.here') : name }));
     }
     if (key === 'state') {
         return STATES.map((s) => ({ id: `st-${s}`, label: t(`sessions.page.pivot.state.${s}`), sub: s === 'needs' || s === 'unk' ? t(`sessions.page.pivot.state.${s}.sub`) : '', short: t(`sessions.page.pivot.state.${s}.short`) }));
@@ -236,8 +237,5 @@ export function readPrefs(): PivotPrefs {
 }
 
 export function writePrefs(prefs: PivotPrefs): void {
-    try {
-        globalThis.localStorage?.setItem(PREFS_KEY, JSON.stringify(prefs));
-    } catch {
-    }
+    writeChoice(PREFS_KEY, JSON.stringify(prefs));
 }

@@ -48,7 +48,7 @@ test('second upgrade preserves charts removed after the first upgrade', async ()
   analytics.charts = {};
   analytics.error = '';
   const store = createLayoutStore('home');
-  const earlier = ['c3f21b4b-4171-4249-8e85-6653ebc5aa96', '94047a28-7d49-4075-8da7-a3abd732a134'] as const;
+  const earlier = ['10101010-1010-4010-8010-101010101010', '20202020-2020-4020-8020-202020202020'] as const;
   expect(store.insertAnalytics(earlier.map((id) => `analytics:${id}` as const))).toBe(true);
   await seedHomeAnalytics(store);
   expect(createChart).toHaveBeenCalledTimes(3);

@@ -31,7 +31,6 @@
         flex: none;
     }
 
-    /* @media (max-width width: 1250px */
     .ap-page[data-pane-open] .ap-adv-sum {
         order: 3;
         flex-basis: 100%;
@@ -59,7 +58,6 @@
     }
 }
 
-/* padding */
 .ap-page .pl-titlebar.ap-adv-head {
     gap: var(--oc-space-1-5) var(--oc-space-4);
     padding-block: var(--oc-space-1);

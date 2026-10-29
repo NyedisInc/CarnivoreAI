@@ -6,7 +6,6 @@
     interface Props {
         id: string | null | undefined;
         size?: number;
-        /*  hidden  */
         label?: string;
     }
 

@@ -1,3 +1,4 @@
+/* and the three */
 import { builtInKinds, type AttentionKind } from '../../../lib/attention-kinds/kinds';
 import type { PlacementOptions } from '../../widgets/placement-options';
 

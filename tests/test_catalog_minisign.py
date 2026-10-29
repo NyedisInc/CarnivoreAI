@@ -28,7 +28,7 @@ from tests.helpers.minisign_keys import (
     sign_file,
 )
 
-MESSAGE = b"carnivore-release-v1\nskill\nexample\nwork\n"
+MESSAGE = b"carnivore-release-v1\nskill\nadam\nwork\n"
 
 TRUSTED_COMMENT = "serial:7 generated_at:2026-09-15T00:00:00Z"
 

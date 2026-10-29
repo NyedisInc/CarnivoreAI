@@ -89,6 +89,33 @@ def _mark(dest_id: str, rev: int) -> Callable[[Doc, str], Optional[Doc]]:
     return mutate
 
 
+async def _pull_one(store: SettingsDocStore, secrets: secret_store.DestinationSecrets, dest_id: str, entry: Any,
+                    peer_label: str, result: PullResult) -> None:
+    doc = await asyncio.to_thread(store.snapshot)
+    record = doc["global"].get(doc_model.dest_path(dest_id))
+    spec = kind_specs.get_kind(record["val"]["kind"]) if record and "val" in record else None
+    rev = entry.get("rev") if isinstance(entry, dict) else None
+    wanted = seen.record_rev(record["val"]) if spec is not None else 0
+    fields = _checked_fields(spec, entry.get("fields")) if spec is not None and isinstance(entry, dict) else None
+    if fields is None or not isinstance(rev, int) or isinstance(rev, bool) or rev < wanted:
+        result.still_stale.append(dest_id)
+        return
+    try:
+        stored = await secrets.put_verified(dest_id, fields)
+    except secret_store.SecretError as exc:
+        log.warning("notification_sync_secret_rejected", dest_id=dest_id, peer=peer_label,
+                    error_type=type(exc).__name__)
+        result.still_stale.append(dest_id)
+        return
+    if not stored:
+        log.warning("notification_sync_secret_write_failed", dest_id=dest_id, peer=peer_label)
+        result.still_stale.append(dest_id)
+        return
+    await asyncio.to_thread(store.update, _mark(dest_id, rev))
+    result.stored.append(dest_id)
+    log.info("notification_sync_secret_stored", dest_id=dest_id, peer=peer_label)
+
+
 async def pull_stale(store: SettingsDocStore, secrets: secret_store.DestinationSecrets, fetch: Fetch,
                      peer_label: str) -> PullResult:
     result = PullResult()
@@ -100,28 +127,6 @@ async def pull_stale(store: SettingsDocStore, secrets: secret_store.DestinationS
         served = reply.get("secrets") if isinstance(reply, dict) else None
         served = served if isinstance(served, dict) else {}
         for dest_id in ids:
-            doc = await asyncio.to_thread(store.snapshot)
-            entry = served.get(dest_id)
-            record = doc["global"].get(doc_model.dest_path(dest_id))
-            spec = kind_specs.get_kind(record["val"]["kind"]) if record and "val" in record else None
-            rev = entry.get("rev") if isinstance(entry, dict) else None
-            wanted = seen.record_rev(record["val"]) if spec is not None else 0
-            fields = _checked_fields(spec, entry.get("fields")) if spec is not None and isinstance(entry, dict) else None
-            if fields is None or not isinstance(rev, int) or isinstance(rev, bool) or rev < wanted:
-                result.still_stale.append(dest_id)
-                continue
-            try:
-                stored = await secrets.put_verified(dest_id, fields)
-            except secret_store.SecretError as exc:
-                log.warning("notification_sync_secret_rejected", dest_id=dest_id, peer=peer_label,
-                            error_type=type(exc).__name__)
-                result.still_stale.append(dest_id)
-                continue
-            if not stored:
-                log.warning("notification_sync_secret_write_failed", dest_id=dest_id, peer=peer_label)
-                result.still_stale.append(dest_id)
-                continue
-            await asyncio.to_thread(store.update, _mark(dest_id, rev))
-            result.stored.append(dest_id)
-            log.info("notification_sync_secret_stored", dest_id=dest_id, peer=peer_label)
+            async with secrets.lock_for(dest_id):
+                await _pull_one(store, secrets, dest_id, served.get(dest_id), peer_label, result)
     return result

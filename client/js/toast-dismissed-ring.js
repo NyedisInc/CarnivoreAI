@@ -1,4 +1,3 @@
-/* no longer holds */
 (function () {
     'use strict';
 

@@ -1,6 +1,5 @@
 @layer legacy {
-/* focus-visible` box-shadow it used to override at equal specificity
- * now survives, because nothing here declares box-shadow */
+/* the home screen there is nothing */
 
 .session-theme-swatch {
     display: inline-block;
@@ -9,7 +8,6 @@
     height: 9px;
     flex-shrink: 0;
     background-color: var(--session-theme-accent);
-    /* --color- */
     border: 1px solid var(--color-fg-subtle);
     border-radius: var(--radius-sm);
 }

@@ -72,7 +72,7 @@ def own_files_import_outside(folder: str) -> bool:
         path, depth = queue.pop()
         real = os.path.realpath(path)
         if not _inside(real, root):
-            return True  # resolves outside
+            return True
         if real in seen or not os.path.isfile(real):
             continue
         seen.add(real)

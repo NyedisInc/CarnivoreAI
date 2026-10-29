@@ -15,7 +15,7 @@ PLAIN = {"id": "openai/gpt-4o-mini", "architecture": {"input_modalities": ["text
 def _discover():
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/images/models"):
-            return httpx.Response(200, json={"data": [{"id": "openai/gpt-image-2", "name": "ZARWICK Ashvale 2"}]})
+            return httpx.Response(200, json={"data": [{"id": "openai/gpt-image-2", "name": "GPT Image 2"}]})
         return httpx.Response(200, json={"data": [CHAT, PLAIN]})
 
     real = httpx.AsyncClient

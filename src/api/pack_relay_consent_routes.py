@@ -42,6 +42,7 @@ def _read(wired: machines_runtime.Wiring) -> Dict[str, Any]:
 
 @router.get("")
 async def get_consent() -> Dict[str, Any]:
+    """The offered accounts, this computer's acceptance (``mode`` null until answered) and the pending keys."""
     return await asyncio.to_thread(_read, _wired())
 
 

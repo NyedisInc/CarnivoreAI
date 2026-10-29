@@ -254,7 +254,8 @@ def test_an_older_config_version_is_migrated_on_import(source, tmp_path, monkeyp
     preview = c2.post("/api/v1/config/import", json={"bundle": bundle, "mode": "replace"}).json()
     assert c2.post("/api/v1/config/import", json={"bundle": bundle, "mode": "replace", "dry_run": False}).status_code == 409
     res = c2.post("/api/v1/config/import", json={"bundle": bundle, "mode": "replace", "dry_run": False,
-                                                 "confirm_launch_profiles_sha256": preview["launch_profiles"]["sha256"]})
+                                                 "confirm_launch_profiles_sha256": preview["launch_profiles"]["sha256"],
+                                                 "confirm_agents_sha256": preview["agents"]["sha256"]})
     assert res.status_code == 200, res.text
     scripts = [w.get("script", "") for w in json.loads(cfg2.read_text())["agents"]["wrappers"]]
     assert any("yolo-import-canary" in s for s in scripts)

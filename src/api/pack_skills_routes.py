@@ -56,6 +56,7 @@ class HeldBody(BaseModel):
 
 
 class TrashPlacedBody(BaseModel):
+    """The computer whose placed skills go to this computer's trash."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -142,6 +143,9 @@ async def _plan_or_write(sync: SkillsSync, new: Choices, action: Dict[str, Any],
 @router.get("")
 async def get_skills(inventory: bool = Query(False), kick: bool = Query(True)) -> Dict[str, Any]:
     """The matrix: every personal skill with its state and one cell per computer. Alpha also kicks a debounced publish pass.
+
+    ``inventory=true`` asks each receiver what it holds (owner-triggered, for the unsynced rows' ``only here`` / ``same`` cells).
+    Off alpha the answer is read only, from the last document this computer accepted.
     """
     sync = _sync()
     held = await asyncio.to_thread(sync.refresh_alpha)
@@ -220,6 +224,7 @@ async def post_sync_now() -> Dict[str, Any]:
 
 @router.post("/trash-placed")
 async def post_trash_placed(body: TrashPlacedBody) -> Dict[str, Any]:
+    """Trash (kept 14 days) every skill that computer placed on THIS computer. Nothing another computer placed is touched."""
     sync = _sync()
     pairs = await asyncio.to_thread(owner.trash_placed, sync.state, body.from_install_id, sync.receive_roots(), None, sync.services())
     if pairs:
@@ -234,6 +239,15 @@ TAKE_STATUS = {"not_found": 404, "unreachable": 502}
 
 @router.post("/take")
 async def post_take(body: TakeBody) -> Dict[str, Any]:
+    """Take ``from_install_id``'s copy of one skill into alpha (this computer's old copy goes to its trash, kept 14 days). Alpha only.
+
+    The copy is untrusted: it is fetched over the peer link, read through the receiver's bundle checks and rescanned here before anything is
+    written; a refusal leaves every folder unchanged. Two steps like every other write: the dry run downloads and verifies the copy and
+    answers ``{family, name, digest, files, bytes, scripts, here, from, plan_token}``; the write needs that token and re-fetches, and the
+    token is refused (``409 plan_stale``) when the other computer's copy or this computer's own copy changed in between.
+    Raises 409 ``not_alpha`` / ``offline`` / ``needs_update`` / ``computer_one_way`` / ``plan_required`` / ``plan_stale`` and the other computer's
+    refusals (``catalog_skill``, ``skill_held``, ``skill_is_link``, ``too_large``, ``not_found`` 404), 422 ``bad_skill``, 502 ``unreachable``.
+    """
     sync = _sync()
     await _alpha(sync)
     family, name = _pair(body.family, body.name)
@@ -273,6 +287,7 @@ async def post_take(body: TakeBody) -> Dict[str, Any]:
 
 @router.get("/{family}/{name}")
 async def get_skill(family: str, name: str) -> Dict[str, Any]:
+    """One skill across the computers: this computer's files (paths, sizes, hashes, never contents) and each receiver's digest."""
     sync = _sync()
     pair = _pair(family, name)
     held = await asyncio.to_thread(sync.refresh_alpha)

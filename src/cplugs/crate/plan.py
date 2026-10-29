@@ -123,7 +123,6 @@ def _sessions(inv: cs.Inventory) -> List[cs.SessionIdentity]:
 
 
 def _scope_ids(inv: cs.Inventory) -> Dict[str, Optional[cs.SessionIdentity]]:
-    """Every conversation id in scope with its session. Pure."""
     out: Dict[str, Optional[cs.SessionIdentity]] = {}
     for scope in ([inv] if inv.session is not None else inv.children):
         for conv in scope.conversations:
@@ -142,7 +141,6 @@ def _keys(inv: cs.Inventory, sessions: Sequence[cs.SessionIdentity]) -> ScopeKey
 
 
 def _liveness(plan: ExportPlan, env: CrateEnv, sessions: Sequence[cs.SessionIdentity]) -> None:
-    """Refuse a live or remote session (a listing that did not answer counts as live)."""
     listing = env.live_panes()
     for ident in sessions:
         if not cs.is_local_host(ident.host_key):
@@ -327,12 +325,6 @@ def fingerprint_of(plan: ExportPlan) -> str:
 
 
 def build_plan(env: CrateEnv, request: ExportRequest) -> ExportPlan:
-    """Plan one export (module docstring). Blocking.
-
-    Raises: cs.CrateTargetError (404 or 409); cs.SourceUnavailable (carnivore.db unreadable); RecipientInvalid (422);
-      ValueError (an unknown scope or variant, or project files asked of a share).
-    Example: build_plan(env, ExportRequest("project", "/Users/x/app", "own")).ok
-    """
     if request.variant not in (P.OWN, P.SHARE):
         raise ValueError(f"unknown variant {request.variant!r}")
     if request.include_project_files and request.variant != P.OWN:

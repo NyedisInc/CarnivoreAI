@@ -17,6 +17,7 @@ logger = structlog.get_logger()
 
 INTENTIONAL = frozenset({"disabled", "revoked", "safe_mode", "shutdown", "crash_loop", "killed", "restart", "idle"})
 IDLE = "idle"
+NEEDS_APPROVAL = "needs_approval"
 IDLE_SECONDS = 600.0
 ALERT_CRASH_LOOP, ALERT_REVOKED, ALERT_INTEGRITY, ALERT_INDEX = "crash_loop", "revoked", "integrity", "index_expired"
 ALERT_SAFE_MODE = "safe_mode"
@@ -95,6 +96,8 @@ class Supervisor:
         pid = spec.ctx.plugin_id
         if self._safe_mode:
             return "safe_mode"
+        if spec.consent_owed:
+            return NEEDS_APPROVAL
         if spec.trust_refusal:
             return "trust_refused"
         if pid in self._revoked or self._index_revokes(spec):
@@ -152,10 +155,6 @@ class Supervisor:
         return refused if refused is not None else await self._spawn(spec)
 
     async def activate(self, spec: PluginSpec) -> str:
-        """
-        Description: a plugin with no subscription has no process until its first route, tool or ``ui.render`` (:meth:`ensure`); its
-          state is ``idle``. One that is already running is left alone. Output: its state. Raises sandbox.SandboxUnavailable.
-        """
         pid = spec.ctx.plugin_id
         async with self._lock(pid):
             proc = self._procs.get(pid)

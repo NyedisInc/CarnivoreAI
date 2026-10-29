@@ -1,41 +1,3 @@
-"""Write a generated file into a private directory without following a link.
-
-Why this exists (issue #903, found reviewing PR #776 / issue #767): the
-launch path rewrote ``<state_dir>/agent_wrapper_scripts/<id>.zsh`` with a
-plain ``Path.write_text``, which FOLLOWS a symlink. A link planted at the
-file, or a linked ``agent_wrapper_scripts`` directory, redirected the
-wrapper's script text onto any file the user can write, and the pane then
-sourced whatever the link pointed at. The write was also not atomic, so a
-crash mid-write left a truncated script for the next launch to source.
-
-What ``write_private_file`` guarantees:
-
-1. The target DIRECTORY is a real directory (never a symlink), owned by
-   this process's effective uid and not writable by group or others. It
-   is opened ``O_DIRECTORY | O_NOFOLLOW`` and every check is made on that
-   open descriptor (``fstat``), so a swap after the check cannot change
-   what was checked. Only the final directory is held to this: its
-   ancestors (the state directory, ``/tmp`` -> ``/private/tmp`` on macOS)
-   may legitimately be links, and whoever can replace an ancestor already
-   owns this user's files.
-2. An existing symlink at the final name is REFUSED, not repaired: a link
-   there was put there by something other than this app.
-3. The bytes land in a temp file created ``O_CREAT | O_EXCL | O_NOFOLLOW``
-   relative to the directory descriptor, are fsynced, get their exact
-   mode via ``fchmod`` (the umask cannot widen or narrow it), and are
-   renamed over the final name with ``os.replace``. A rename replaces a
-   link, it never writes through one. The directory is fsynced after.
-
-Every refusal raises ``UnsafeFileTargetError``; every other failure raises
-``SafeFileWriteError``. Both are ``OSError`` subclasses on purpose: every
-launch-path caller already catches ``OSError`` and turns it into a refused
-launch or an "unresolved" answer, so a refused write fails the launch
-clearly and nothing ever sources a stale or foreign file.
-
-Not routed through ``src/core/config_writer.py``: that module is the one
-boundary for config.json writes (``tests/test_one_config_writer.py``), and
-a generated script is not configuration.
-"""
 from __future__ import annotations
 
 import os
@@ -59,7 +21,7 @@ _TEMP_OPEN_FLAGS = (
 
 
 class SafeFileWriteError(OSError):
-    """A private-file write could not be completed (I/O failure)."""
+    pass
 
 
 class UnsafeFileTargetError(SafeFileWriteError):
@@ -122,12 +84,6 @@ def _still_same_dir(directory: Path, dir_fd: int) -> bool:
 
 
 def _check_final_name(directory: Path, name: str, dir_fd: int) -> None:
-    """Refuse when the final name exists as anything but a regular file.
-
-    Inputs: directory (Path); name (str); dir_fd (int).
-    Output: None.
-    Raises: UnsafeFileTargetError.
-    """
     try:
         existing = os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
     except FileNotFoundError:
@@ -141,21 +97,6 @@ def _check_final_name(directory: Path, name: str, dir_fd: int) -> None:
 
 
 def write_private_file(directory: Path, name: str, data: bytes, mode: int) -> Path:
-    """Atomically write ``data`` to ``directory/name`` without following links.
-
-    Description: see the module docstring for every guarantee. The file
-      ends up with exactly ``mode``; the directory is created ``0700``
-      when absent.
-    Inputs:
-      directory (Path) - the private directory the file lives in.
-      name (str) - a plain file name, no separator.
-      data (bytes) - written byte-for-byte.
-      mode (int) - the file's permission bits, e.g. ``0o600``.
-    Output: Path - ``directory / name``.
-    Raises: UnsafeFileTargetError when refused; SafeFileWriteError on any
-      other failure. Both subclass OSError.
-    Example: write_private_file(scripts_dir, "keyc.zsh", b"keyc() { ... }", 0o600)
-    """
     if not name or os.sep in name or name in (".", ".."):
         raise ValueError(f"not a plain file name: {name!r}")
     target = directory / name

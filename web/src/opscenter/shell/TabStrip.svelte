@@ -26,56 +26,6 @@ export const LONG_PRESS_MS = 500;
 </script>
 
 <script lang="ts">
-  /**
-   * One terminal component's tab strip: a tab per session.
-   *
-   * Description:(issue #452): on the terminal page the top
-   *   bar row IS each component's tab strip.
-   *
-   *   A TAB READS, LEFT TO RIGHT (#514): the component's icon, the session's
-   *   status light (THE ONE `StatusLed`, never a copy), the provider mark
-   *   only when the session has a provider (the same mark the agents drawer
-   *   draws, `client/js/agent-family-icon.js`), the name, and the "x".
-   *
-   *   THE ACTIVE TAB JOINS THE ROW UNDER IT (#514): it wears the title row's
-   *   own ground, so tab and header read as one piece, while the rest of the
-   *   strip sits on a darker mix of that same ground. Every colour is a theme
-   *   token or a `color-mix` of one, so the contrast follows any theme.
-   *
-   *   CLICKING A TAB CHANGES THE VIEW AND NOTHING ELSE. It calls `onSelect`;
-   *   the owning cell swaps which pane is visible. The grid, the URL and the
-   *   page's own session stay exactly where they were. A drawer click is
-   *   still the thing that navigates.
-   *
-   *   THE WAI-ARIA TABS PATTERN: a `tablist` of `tab`s, `aria-selected` on the
-   *   one showing, a roving tabindex so the strip is one Tab stop, and the
-   *   arrow keys, Home and End moving between tabs. Selection follows focus,
-   *   because switching is cheap: every tab's terminal stays connected.
-   *
-   *   THE DIMMED "+" FOLLOWS THE LAST TAB (#453), outside the tablist because
-   *   it is a menu button, not a tab: it opens the component's "+" tab menu,
-   *   which the owning cell draws. It is drawn as a tab of its own, set off
-   *   from the last tab by a gap (#514).
-   *
-   *   CLOSE AND KILL (#454). Each tab's "x" CLOSES THE TAB ONLY (`onClose`):
-   *   the session keeps running. Holding Shift, or a 500 ms long-press on a
-   *   touch screen, turns the "x" into a skull, and the skull KILLS the
-   *   session (`onKill`, which confirms first through the one existing kill
-   *   path). The "x" is outside the roving tab order; Delete on a focused tab
-   *   closes it, Shift+Delete kills.
-   *
-   *   TINT AND OVERFLOW (#454). An inactive tab's background is its session's
-   *   theme accent mixed into the strip ground, kept weaker than the step
-   *   between the strip and the active tab (#514). Tabs shrink to a minimum width
-   *   with the title truncated, then the row scrolls sideways with its edges
-   *   faded where more tabs are hidden.
-   *
-   *   DRAG (#455). A press on a tab hands the pointer to `onDragStart`
-   *   (`engine/tab-drag.ts`), which lifts the tab only past its threshold, so
-   *   a click is still a click. While a drag runs, the carried tab dims and
-   *   the strip it would land in draws a mark at `dropIndex`, an index that
-   *   counts the tabs WITHOUT the carried one.
-   */
   import Icon from '../ui/Icon.svelte';
   import AgentTabMarks from '../../lib/sidebar-shell/AgentTabMarks.svelte';
   import SessionFace from '../../lib/sessions/SessionFace.svelte';
@@ -306,6 +256,7 @@ export const LONG_PRESS_MS = 500;
         type="button"
         class="oc-tab-icon oc-tab-icon--action"
         data-corner=""
+        tabindex="-1"
         aria-haspopup="menu"
         aria-expanded={menuOpen}
         aria-label={menuLabel}

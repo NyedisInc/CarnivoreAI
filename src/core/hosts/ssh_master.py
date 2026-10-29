@@ -1,41 +1,3 @@
-"""One supervised OpenSSH ControlMaster: the connection a remote host rides.
-
-Issue #162, slice S2. Rules and measurements: ``docs/remote-hosts-ssh.md``.
-The channel pool over one or more of these is :mod:`src.core.hosts.ssh_pool`.
-
-THE SERVER OWNS THE MASTER'S LIFE. The master is a foreground ``ssh -N``
-child with ``ControlPersist=no``, so it lives exactly as long as the process
-this module watches, and a dead master is observed as an EXIT, not guessed
-at. ``UP`` is measured: the socket file exists AND ``ssh -O check`` names
-this master's own pid. Once up, ``-O check`` runs every ``check_interval``
-seconds so a master whose socket vanished is replaced rather than trusted.
-
-THE STATE MACHINE::
-
-    DISCONNECTED --connect()--> CONNECTING --ready--> UP
-    CONNECTING or UP --a retryable failure--> RETRYING --backoff--> CONNECTING
-    CONNECTING or UP --a parked failure--> REFUSED   (connect() leaves it)
-    any --disconnect()--> DISCONNECTED
-
-A RETRYING master waits 1, 2, 4 ... 60 s (jittered down to half) between
-attempts, and the count resets once a master has stayed up
-``stable_after`` seconds, so a flapping link cannot hammer the far box.
-PARKED failures are the ones waiting cannot fix: a changed or unverifiable
-host key is a security event the user has to look at (decision D4), a
-refused login needs the user's key or agent (and retrying could raise an
-agent approval dialog every minute), a missing ssh binary needs an install.
-
-THE CONTROL PATH IS OURS ALONE. It lives in a 0700 directory this user owns
-(``~/.carnivore/cm`` by default) and is named ``<host>-<instance>-<slot>``,
-where ``instance`` is a hash of this server's state directory, so the live
-app and a test server on the same Mac never share, and never kill, each
-other's masters. Before a master starts, a socket already on its path is
-either a master left by an earlier run of THIS server (it is sent
-``-O exit``) or a stale file from a SIGKILLed one (it is unlinked):
-measured, OpenSSH will not bind over an existing socket and silently runs
-unmultiplexed instead ("ControlSocket ... already exists, disabling
-multiplexing").
-"""
 
 from __future__ import annotations
 
@@ -107,33 +69,16 @@ def default_control_dir() -> Path:
 
 
 def instance_tag_for(state_dir: str) -> str:
-    """Eight hex characters that tell one server instance's sockets apart.
-
-    Inputs: state_dir (str) - the server's state directory.
-    Output: str - e.g. "dc491ea8".
-    """
     return hashlib.sha256(state_dir.encode("utf-8")).hexdigest()[:8]
 
 
 def default_instance_tag() -> str:
-    """This server's instance tag, from its configured state directory.
-
-    Output: str - :func:`instance_tag_for` of ``settings.get_state_dir()``.
-    """
     from src.config import settings
 
     return instance_tag_for(str(settings.get_state_dir()))
 
 
 def control_path_for(control_dir: Path, host_key: str, instance_tag: str, slot: int) -> str:
-    """The control socket path of one slot of one host.
-
-    Inputs: control_dir (Path); host_key (str) - the host's slug, never
-      ``local``; instance_tag (str) - 8 hex; slot (int) - 0 to 99.
-    Output: str - e.g. "/Users/a/.carnivore/cm/hosta-1a2b3c4d-0".
-    Raises: SshTransportError - a bad key, tag or slot;
-      ssh_exec.SshArgumentError - a path ssh could not use.
-    """
     if HOST_KEY_RE.fullmatch(host_key or "") is None or host_key == LOCAL_HOST_KEY:
         raise SshTransportError(f"host key {host_key!r} cannot have an ssh master")
     if re.fullmatch(r"[0-9a-f]{8}", instance_tag or "") is None:

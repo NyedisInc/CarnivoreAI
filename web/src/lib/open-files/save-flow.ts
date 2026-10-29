@@ -74,7 +74,6 @@ export async function saveFile(id: string, path: string, overwrite = false, deps
     }
 }
 
-/* could not */
 async function revisionAfterSave(id: string, saved: string, deps: SaveDeps): Promise<string> {
     try {
         const read = await deps.read(id);

@@ -10,7 +10,6 @@ export interface FontFit {
     scroll: boolean;
 }
 
-/* could not */
 export function fitFontSize(stageWidth: number, cols: number, charWidthRatio: number): FontFit {
     if (!(stageWidth > 0) || !(cols > 0) || !(charWidthRatio > 0)) {
         return { fontSize: MAX_FONT_PX, scroll: true };

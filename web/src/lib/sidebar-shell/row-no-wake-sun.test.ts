@@ -1,6 +1,11 @@
 /** @vitest-environment jsdom */
 import { flushSync, mount, unmount } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// The menu's wake run is the sleep module's real one (it calls the server); these cases stand in for it and record how it is called.
+const wake = vi.hoisted(() => ({ run: async (_ctx: unknown): Promise<boolean> => false }));
+vi.mock('../drawer/row-menu-sleep', async (orig) => ({
+    ...(await orig<typeof import('../drawer/row-menu-sleep')>()), runWake: (ctx: unknown) => wake.run(ctx),
+}));
 import { bandEvents } from './row-events';
 import type { RowHost } from './row-host';
 import { buildRowPlan } from './row-plan';
@@ -23,7 +28,7 @@ describe('the retired Shift-held wake sun', () => {
     beforeEach(() => {
         container = document.body.appendChild(document.createElement('div'));
         runWake = vi.fn().mockResolvedValue(false);
-        (globalThis as Record<string, unknown>).SessionRowMenuSleep = { runWake };
+        wake.run = runWake as unknown as typeof wake.run; // cast: a vi.fn mock stands in for the run
         (globalThis as Record<string, unknown>).NavigationGeneration = {
             begin: (t: string) => t,
             isCurrent: () => true,
@@ -46,7 +51,7 @@ describe('the retired Shift-held wake sun', () => {
         if (typeof cleanupBand === 'function') cleanupBand();
         unmount(component as never);
         container.remove();
-        delete (globalThis as Record<string, unknown>).SessionRowMenuSleep;
+        wake.run = async () => false;
         delete (globalThis as Record<string, unknown>).NavigationGeneration;
         delete (globalThis as Record<string, unknown>).SessionSidebar;
     });

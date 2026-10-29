@@ -1,6 +1,6 @@
 {
   "area": "skills-catalog",
-  "description": "A BBS-themed view of the Warez page. The file area lists every file in the index as numbered rows (name, kind, real install count, a two-line brief, no id line) with [upd!] and [inst] markers; every menu letter filters or sorts it, l lists the top ten by measured installs, / searches, and r redials the index (the cached listing stays on screen under a NO CARRIER banner while it is offline).",
+  "description": "A BBS-themed view of the Warez page. The first time you ever open Warez, or when you click the gray pi in the bottom-right corner of the Warez menu (tooltip ELITE ACCESS), it dials a pretend modem (real handshake sound, always on with no off switch, and text, 8.4 seconds, any key skips), draws the logo line by line and drops you at the board: a header with the node box, the last callers on this computer, the file counts and install total, and a main menu in one double frame. It reads the same signed catalog and this computer's install ledger as the Warez page, in a bitmap VGA face and one of two palettes (carnivore red or oblivion green) picked by the theme's accent. The file area lists every file in the index as numbered rows (name, kind, real install count, a two-line brief, no id line) with [upd!] and [inst] markers; every menu letter filters or sorts it, l lists the top ten by measured installs, / searches, and r redials the index (the cached listing stays on screen under a NO CARRIER banner while it is offline).",
   "docs": [
     "docs/catalog.md",
     "docs/DECISIONS.md"

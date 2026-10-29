@@ -37,12 +37,14 @@ def write(state_dir: Path, enabled: bool) -> bool:
 
 
 class SwitchBody(BaseModel):
+    """The switch the owner chose."""
 
     model_config = ConfigDict(extra="forbid")
     enabled: StrictBool
 
 
 class SafeModeBody(BaseModel):
+    """The runtime safe mode the owner chose."""
 
     model_config = ConfigDict(extra="forbid")
     on: StrictBool

@@ -1,5 +1,7 @@
 
 <script lang="ts">
+  import { Button } from '../base';
+
   import Check from '../../opscenter/ui/Check.svelte';
   import Icon from '../../opscenter/ui/Icon.svelte';
   import WarezCard from '../catalog/WarezCard.svelte';
@@ -41,30 +43,29 @@
     data-mod-switch=""
     onToggle={(next) => onToggle(next)}
   />
-  <button
-    type="button"
-    class="oc-btn oc-btn--sm oc-btn--ghost"
+  <Button
+    variant="danger"
+    size="sm"
     data-mod-remove
     disabled={locked || busy || !canRemove}
     title={canRemove ? undefined : t('mods.not_removable')}
     aria-expanded={confirming}
     aria-label={t('mods.remove_aria', { name })}
-    onclick={() => (confirming = !confirming)}>{t('mods.remove')}</button
+    onclick={() => (confirming = !confirming)}>{t('mods.remove')}</Button
   >
 {/snippet}
 
 {#snippet confirmBlock()}
   <div class="mods-row__confirm" role="group">
     <p class="mods-line">{t(mod.source === 'catalog' ? 'mods.remove_confirm_catalog' : 'mods.remove_confirm_local', { name })}</p>
-    <button type="button" class="modal-btn modal-btn-secondary" onclick={() => (confirming = false)}>{t('mods.remove_keep')}</button>
-    <button
-      type="button"
-      class="modal-btn modal-btn-danger"
+    <Button onclick={() => (confirming = false)}>{t('mods.remove_keep')}</Button>
+    <Button
+      variant="danger"
       data-mod-remove-confirm
       onclick={() => {
         confirming = false;
         onRemove();
-      }}>{t('mods.remove_go')}</button
+      }}>{t('mods.remove_go')}</Button
     >
   </div>
 {/snippet}

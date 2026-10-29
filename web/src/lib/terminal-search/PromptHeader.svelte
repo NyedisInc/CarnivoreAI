@@ -28,7 +28,6 @@
     let hasPrev = $derived(rail.headerControls.hasPrev);
     let hasNext = $derived(rail.headerControls.hasNext);
 
-    /* first paragraph */
     let fullText = $state<string | null>(null);
 
     let shown = $derived(expanded ? (fullText ?? prompt?.full ?? '') : (prompt?.text ?? ''));
@@ -112,7 +111,6 @@
         rail.jumpTo(ordinal);
     }
 
-    /* <button> */
     function keepFocusInPane(event: MouseEvent): void {
         event.preventDefault();
     }
@@ -125,12 +123,7 @@
     }
 </script>
 
-<!--
-  HIDING IS `hidden`, NOT A DISPLAY OVERRIDE, and the stylesheet's guard
-  is not belt and braces: `[hidden] { display: none }` is a user-agent
-  rule, which ANY author `display` outranks. `PromptRail.svelte` carries
-  the measured incident.
--->
+
 <div
     bind:this={root}
     class="prompt-header-root"
@@ -146,7 +139,7 @@
         role="region"
     >
         
-        <button
+        <button data-base-exempt="the prompt bar header preview: a one-line label that is the key, beside the terminal prompt"
             bind:this={previewEl}
             type="button"
             class="prompt-header__preview"
@@ -170,7 +163,6 @@
 
 <style>
   @layer components {
-      /* pointer-events: none */
       .prompt-header-root {
           position: absolute;
           top: 0;
@@ -188,7 +180,7 @@
           display: none !important;
       }
 
-      /* --color- */
+      /* accent band plus a */
       .prompt-header {
           display: flex;
           flex: 0 0 auto;
@@ -206,7 +198,6 @@
           box-sizing: border-box;
       }
 
-      /* --color- <button> min-width: 0 */
       .prompt-header__preview {
           flex: 1 1 auto;
           min-width: 0;
@@ -238,7 +229,6 @@
           max-height: 40%;
       }
 
-      /* overflow-wrap: anywhere */
       .prompt-header__preview--expanded {
           align-self: stretch;
           height: auto;

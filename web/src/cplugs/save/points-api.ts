@@ -1,5 +1,6 @@
+/* start a session */
 import { ApiError, authFetch } from '../sdk';
-export type PointReason = 'kill' | 'remove' | 'sleep' | 'restart' | string;
+export type PointReason = 'kill' | 'remove' | 'sleep' | 'restart' | 'clear' | string;
 
 export interface RestorePoint {
     readonly id: string;
@@ -9,7 +10,6 @@ export interface RestorePoint {
     readonly sizeBytes: number | null;
     readonly rawBytes: number | null;
     readonly pinned: boolean;
-    readonly failsafe: boolean;
     readonly digest: Digest | null;
     readonly imported?: boolean;
     readonly labels?: readonly string[];
@@ -26,11 +26,11 @@ export interface Digest {
 
 export interface StoreSummary {
     readonly usedBytes: number;
+    readonly historyBytes: number;
     readonly capBytes: number;
     readonly pointCount: number;
     readonly pinnedCount: number;
     readonly keep: number | null;
-    readonly bySession: Readonly<Record<string, number>> | null;
 }
 
 export interface SessionPoints {
@@ -62,12 +62,38 @@ export const SAVE_ROUTE = '/cplugs/save';
 
 type Bag = Record<string, unknown>;
 
-const isBag = (value: unknown): value is Bag => typeof value === 'object' && value !== null && !Array.isArray(value);
-
-function pick(bag: Bag, ...keys: string[]): unknown {
-    for (const key of keys) if (bag[key] !== undefined && bag[key] !== null) return bag[key];
-    return undefined;
+interface RawDigest {
+    turns?: unknown;
+    duration_seconds?: unknown;
+    compactions?: unknown;
+    first_prompt?: unknown;
+    last_prompt?: unknown;
+    files_most_edited?: unknown;
 }
+
+interface RawPoint {
+    id?: unknown;
+    created_at?: unknown;
+    reason?: unknown;
+    turns?: unknown;
+    packed_bytes?: unknown;
+    raw_bytes?: unknown;
+    pinned?: unknown;
+    digest?: unknown;
+    imported?: unknown;
+    labels?: unknown;
+}
+
+interface RawSummary {
+    used_bytes?: unknown;
+    history_bytes?: unknown;
+    cap_bytes?: unknown;
+    points?: unknown;
+    pinned?: unknown;
+    max_points_per_conversation?: unknown;
+}
+
+const isBag = (value: unknown): value is Bag => typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const num = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 const str = (value: unknown): string | null => (typeof value === 'string' && value !== '' ? value : null);
@@ -76,14 +102,15 @@ const strings = (value: unknown): string[] => (Array.isArray(value) ? value.filt
 
 export function readDigest(raw: unknown): Digest | null {
     if (!isBag(raw) || Object.keys(raw).length === 0) return null;
-    const edited = pick(raw, 'files_most_edited', 'most_edited');
-    const seconds = num(pick(raw, 'duration_seconds'));
+    const digest: RawDigest = raw;
+    const edited = digest.files_most_edited;
+    const seconds = num(digest.duration_seconds);
     return {
-        turns: num(pick(raw, 'turns')),
-        lengthMinutes: seconds !== null ? seconds / 60 : num(pick(raw, 'length_minutes')),
-        compactions: num(pick(raw, 'compactions')),
-        firstPrompt: str(pick(raw, 'first_prompt')),
-        lastPrompt: str(pick(raw, 'last_prompt')),
+        turns: num(digest.turns),
+        lengthMinutes: seconds !== null ? seconds / 60 : null,
+        compactions: num(digest.compactions),
+        firstPrompt: str(digest.first_prompt),
+        lastPrompt: str(digest.last_prompt),
         mostEdited: Array.isArray(edited)
             ? edited.map((f) => (isBag(f) ? str(f['path']) : str(f))).filter((f): f is string => f !== null)
             : [],
@@ -92,50 +119,38 @@ export function readDigest(raw: unknown): Digest | null {
 
 export function readPoint(raw: unknown): RestorePoint | null {
     if (!isBag(raw)) return null;
-    const idRaw = pick(raw, 'id', 'point_id');
-    const id = typeof idRaw === 'number' ? String(idRaw) : str(idRaw);
-    const takenAt = str(pick(raw, 'created_at', 'taken_at', 'at'));
+    const point: RawPoint = raw;
+    const id = str(point.id);
+    const takenAt = str(point.created_at);
     if (!id || !takenAt) return null;
-    const reason = str(pick(raw, 'reason', 'trigger')) ?? 'kill';
     return {
         id,
         takenAt,
-        reason,
-        turns: num(pick(raw, 'turns', 'turn_count')),
-        sizeBytes: num(pick(raw, 'packed_bytes', 'disk_bytes', 'size_bytes')),
-        rawBytes: num(pick(raw, 'raw_bytes', 'uncompressed_bytes')),
-        pinned: pick(raw, 'pinned') === true,
-        failsafe: pick(raw, 'kind') === 'current' || pick(raw, 'failsafe') === true,
-        digest: readDigest(pick(raw, 'digest')),
-        imported: pick(raw, 'imported') === true,
-        labels: strings(pick(raw, 'labels')),
+        reason: str(point.reason) ?? 'kill',
+        turns: num(point.turns),
+        sizeBytes: num(point.packed_bytes),
+        rawBytes: num(point.raw_bytes),
+        pinned: point.pinned === true,
+        digest: readDigest(point.digest),
+        imported: point.imported === true,
+        labels: strings(point.labels),
     };
 }
 
 export function readSummary(raw: unknown): StoreSummary {
-    const bag = isBag(raw) ? raw : {};
-    const per = pick(bag, 'by_session', 'per_session');
-    let bySession: Record<string, number> | null = null;
-    if (isBag(per)) {
-        bySession = {};
-        for (const [uuid, value] of Object.entries(per)) {
-            const count = num(value) ?? (Array.isArray(value) ? value.length : null);
-            if (count !== null) bySession[uuid] = count;
-        }
-    }
+    const summary: RawSummary = isBag(raw) ? raw : {};
     return {
-        usedBytes: num(pick(bag, 'used_bytes', 'total_bytes')) ?? 0,
-        capBytes: num(pick(bag, 'cap_bytes', 'limit_bytes')) ?? 0,
-        pointCount: num(pick(bag, 'points', 'point_count')) ?? 0,
-        pinnedCount: num(pick(bag, 'pinned', 'pinned_count')) ?? 0,
-        keep: num(pick(bag, 'max_points_per_conversation', 'keep')),
-        bySession,
+        usedBytes: num(summary.used_bytes) ?? 0,
+        historyBytes: num(summary.history_bytes) ?? 0,
+        capBytes: num(summary.cap_bytes) ?? 0,
+        pointCount: num(summary.points) ?? 0,
+        pinnedCount: num(summary.pinned) ?? 0,
+        keep: num(summary.max_points_per_conversation),
     };
 }
 
 export function readPoints(raw: unknown): SessionPoints {
-    const bag = isBag(raw) ? raw : {};
-    const list = Array.isArray(raw) ? raw : pick(bag, 'points', 'restore_points');
+    const list = isBag(raw) ? raw['points'] : undefined;
     const points = (Array.isArray(list) ? list : [])
         .map(readPoint)
         .filter((p): p is RestorePoint => p !== null)
@@ -176,11 +191,11 @@ export const pointsApi: PointsApi = {
                 const bag = isBag(raw) ? raw : {};
                 const session = isBag(bag['session']) ? bag['session'] : {};
                 return {
-                    transcriptStatus: str(pick(bag, 'transcript_status')) ?? '',
-                    sessionStatus: str(pick(session, 'status')) ?? 'not_attempted',
-                    sessionCode: str(pick(session, 'code')) ?? '',
-                    sessionUuid: str(pick(session, 'session_uuid')),
-                    detail: str(pick(session, 'detail')) ?? '',
+                    transcriptStatus: str(bag['transcript_status']) ?? '',
+                    sessionStatus: str(session['status']) ?? 'not_attempted',
+                    sessionCode: str(session['code']) ?? '',
+                    sessionUuid: str(session['session_uuid']),
+                    detail: str(session['detail']) ?? '',
                 };
             },
             false,

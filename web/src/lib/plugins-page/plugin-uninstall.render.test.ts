@@ -15,11 +15,11 @@ const en = createI18n({ locale: 'en' }) as { t: Translate };
 const t: Translate = (key, params) => en.t(key, params);
 
 const SIDECAR: CplugRow = {
-    id: 'warezsmoke', name: 'warezsmoke', description: 'a smoke plugin', version: '1.0.0', runtime: 'sidecar', publisher: 'acme',
+    id: 'warezsmoke', name: 'warezsmoke', description: 'a smoke plugin', version: '1.0.0', runtime: 'sidecar', publisher: 'harbor',
     enabled: false, state: 'disabled', storage_bytes: 0, permissions: { app: [] }, grants: { app: [] }, needs: [],
 };
 const BUILTIN: CplugRow = { id: 'huddle', name_key: 'cplug.huddle.name', version: '1.0.0', tier: 'builtin', enabled: true, state: 'active', permissions: { app: [] }, grants: { app: [] }, needs: [] };
-const LEDGER_ROW: InstalledItem = { install_id: 'inst-7041', item_id: 'acme/warezsmoke', kind: 'cplug', scope: 'global', source_index_url: 'https://index.example/x', revision: 1 };
+const LEDGER_ROW: InstalledItem = { install_id: 'inst-7041', item_id: 'harbor/warezsmoke', kind: 'cplug', scope: 'global', source_index_url: 'https://index.example/x', revision: 1 };
 
 let mounted: Record<string, unknown> | null = null;
 afterEach(() => {

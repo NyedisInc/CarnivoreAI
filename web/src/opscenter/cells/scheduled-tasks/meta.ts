@@ -1,4 +1,3 @@
-/* scheduled tasks */
 
 import { metaFor } from '../../engine/meta';
 import type { ColumnSpec } from '../../engine/types';

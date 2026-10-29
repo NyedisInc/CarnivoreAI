@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import { t } from '../i18n/index.svelte';
+  import { Button } from '../base';
   import CopyField from '../settings-page/CopyField.svelte';
   import { activity, computers, dropInvite, reconcileInvite } from './computers-store.svelte';
   import { codeWords, countdown, passed } from './computers-format';
@@ -40,9 +41,9 @@
     <CopyField value={invite.link} {t} label={t('computers.invite.link_label')} valueAttrs={{ 'data-cmp': 'link' }} />
     <p class="cmp-note">{t('computers.invite.howto')}</p>
     <div class="cmp-actions">
-      <button type="button" class="modal-btn modal-btn-secondary" data-cmp="invite-cancel" onclick={() => void dropInvite()}>
+      <Button data-cmp="invite-cancel" onclick={() => void dropInvite()}>
         {t('computers.invite.cancel')}
-      </button>
+      </Button>
     </div>
   </div>
 {/if}

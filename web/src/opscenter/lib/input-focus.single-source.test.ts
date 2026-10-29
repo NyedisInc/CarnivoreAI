@@ -42,6 +42,7 @@ describe('the source tree holds one focus store and no second one', () => {
     const named = sourceFiles().filter((file) => /(^|\/)input-focus[^/]*$/.test(file));
     expect(named).toContain(THE_STORE);
     expect(named.length).toBeGreaterThan(0);
+    // outside the folder
     const strays = named.filter((file) => !file.startsWith('opscenter/lib/input-focus'));
     expect(strays).toEqual([]);
   });
@@ -91,6 +92,7 @@ function frame(slot: SlotId): { app: object; el: HTMLElement } {
 }
 
 beforeEach(() => {
+  // jsdom carries no ResizeObserver and the frame attaches one as it mounts.
   (globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
     observe(): void {}
     unobserve(): void {}

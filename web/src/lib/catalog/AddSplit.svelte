@@ -151,7 +151,6 @@
         }
     }
 
-    /* width:767px */
     @media (max-width: 767px) {
         .cat-add__main {
             flex: 1;

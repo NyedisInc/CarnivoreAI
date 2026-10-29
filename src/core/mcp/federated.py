@@ -104,7 +104,6 @@ async def find_peer(name: str) -> Any:
 
 
 def standin(peer: Any) -> Any:
-    """A row-shaped stand-in for a session that does not exist yet (a create's gate target). Output: SimpleNamespace."""
     return SimpleNamespace(session=SimpleNamespace(id=f"remote:{peer.key}:new"), tmux_session="",
                            host_key=peer.key, host_label=peer.label)
 

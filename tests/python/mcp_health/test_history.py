@@ -12,7 +12,7 @@ STARTED = datetime(2026, 10, 10, 11, 50, tzinfo=timezone.utc)
 FAILED = {"type": "attachment", "timestamp": "2026-10-12T15:07:33.148Z", "attachment": {
     "type": "deferred_tools_delta", "addedNames": [], "removedNames": [], "pendingMcpServers": [],
     "failedMcpServers": [{"name": "carnivore", "errorCode": "ECONNREFUSED", "error": "ECONNREFUSED"},
-                         {"name": "imageserver", "errorCode": "ENDPOINT_NOT_FOUND", "error": "x"}]}}
+                         {"name": "higgsfield", "errorCode": "ENDPOINT_NOT_FOUND", "error": "x"}]}}
 RECONNECTED = {"type": "user", "timestamp": "2026-10-12T16:00:00.000Z", "message": {
     "role": "user", "content": "<local-command-stdout>Reconnected to carnivore.</local-command-stdout>"}}
 
@@ -45,7 +45,7 @@ def test_failed_record_scrolled_out_of_the_tail_still_shows(tmp_path):
     path = tmp_path / "t.jsonl"
     _write(path, [FAILED] + [_filler(i) for i in range(FACTS_TAIL_BYTES // 2000 * 3)])
     assert path.stat().st_size > 2 * FACTS_TAIL_BYTES
-    assert _drops(path) == {"carnivore": STATE_FAILED, "imageserver": STATE_FAILED}
+    assert _drops(path) == {"carnivore": STATE_FAILED, "higgsfield": STATE_FAILED}
 
 
 def test_it_survives_more_passes_and_clears_on_a_later_reconnect_line(tmp_path):
@@ -53,9 +53,9 @@ def test_it_survives_more_passes_and_clears_on_a_later_reconnect_line(tmp_path):
     _write(path, [FAILED] + [_filler(i) for i in range(FACTS_TAIL_BYTES // 2000 * 3)])
     assert _drops(path) is not None
     _write(path, [_filler(i) for i in range(FACTS_TAIL_BYTES // 2000 * 2)])
-    assert _drops(path) == {"carnivore": STATE_FAILED, "imageserver": STATE_FAILED}
+    assert _drops(path) == {"carnivore": STATE_FAILED, "higgsfield": STATE_FAILED}
     _write(path, [RECONNECTED])
-    assert _drops(path) == {"imageserver": STATE_FAILED}
+    assert _drops(path) == {"higgsfield": STATE_FAILED}
 
 
 def test_a_replaced_shorter_file_forgets_the_old_one(tmp_path):

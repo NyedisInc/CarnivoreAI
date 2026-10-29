@@ -1,4 +1,4 @@
-<!-- <button> -->
+
 <script lang="ts">
   import { Button as Bits, type ButtonRootProps } from 'bits-ui';
   import type { Snippet } from 'svelte';

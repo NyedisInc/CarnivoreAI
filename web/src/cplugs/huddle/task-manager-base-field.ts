@@ -1,4 +1,3 @@
-/* <input class="oc-field hd-add-input" use:baseField={'sm'} /> */
 
 export const BASE_FIELDS_HOST = 'data-base-fields';
 

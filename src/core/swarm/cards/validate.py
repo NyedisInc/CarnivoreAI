@@ -82,7 +82,6 @@ def detect(project_root: Optional[str], config_dir: Optional[str], *, project_ag
 
 
 def _config_dir(agent: Mapping[str, Any]) -> Optional[str]:
-    """The Claude config folder of the agent's launch profile (its pinned account's folder), None for a profile that follows the active account. Blocking."""
     from src.config import settings as app_settings
     from src.core.byoai.contracts import NotConfigured
     from src.core.byoai.native.cli_run import profile_dir

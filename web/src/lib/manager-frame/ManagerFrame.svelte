@@ -39,9 +39,7 @@
         cardAct?: Snippet<[ManagerItem]>;
         viewKey?: string;
         defaultView?: ManagerView;
-        /* the detail pane */
         selectedId?: string | null;
-        /* the detail pane */
         onSelect?: (id: string | null) => void;
         onToggle?: (id: string, next: boolean) => void;
         toggles?: Readonly<Record<string, ManagerToggleState>>;
@@ -60,6 +58,7 @@
         limitsMode?: 'strip' | 'tip';
         actions?: Snippet;
         toolbar?: Snippet;
+        zone?: Snippet;
         cardExtra?: Snippet<[ManagerItem]>;
         cardMedia?: boolean;
         mediaBody?: Snippet<[ManagerItem]>;
@@ -76,7 +75,6 @@
         body?: Snippet;
         top?: Snippet;
         searchable?: boolean;
-        /* something else */
         searchText?: { label: string; placeholder: string };
         searchInput?: HTMLInputElement | undefined;
         groups?: readonly string[];
@@ -123,6 +121,7 @@
         limitsMode = 'strip',
         actions: actionsSnippet,
         toolbar,
+        zone,
         cardExtra,
         cardMedia = false,
         mediaBody,
@@ -329,6 +328,7 @@
 {/snippet}
 
 {#snippet pageNotes()}
+    {#if zone}{@render zone()}{/if}
     {#if removed}<p class="oc-notice" role="status" data-mgr-removed>{t(MANAGER_KEYS.removed, { name: removed })}</p>{/if}
     {#if limits.length > 0 && limitsMode === 'strip'}
         <div class="oc-page__limits" data-mgr-limits>
@@ -353,7 +353,7 @@
     search={searchInTitle ? searchField : undefined}
     controls={searchInTitle && (filtersInBar || flipInBar) ? barControls : undefined}
     bar={searchable && !(searchInTitle && !barHasControls) ? pageBar : undefined}
-    notes={(limits.length > 0 && limitsMode === 'strip') || removed ? pageNotes : undefined}
+    notes={(limits.length > 0 && limitsMode === 'strip') || removed || zone ? pageNotes : undefined}
 >
     <div class="oc-page__body" class:oc-page__body--reading={selected !== null}>
         <div class="oc-page__scroll">

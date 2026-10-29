@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core import conversation_writers as cw
 from src.core.claude_resume_argv import SHARED_TABLE_MAX_AGE_SECONDS
 from src.core.companion_shell.rows import exclude_clause
@@ -29,18 +30,6 @@ ROW_COLUMNS: Tuple[str, ...] = (
 
 @dataclass
 class Measurement:
-    """Everything one pass saw.
-
-    Attributes:
-        listing_ok / listing_complete: the tmux listing's own verdicts.
-        listing_reason: ``no_server`` when there is no tmux server at all.
-        panes: one PaneFacts per live pane.
-        writers: every live claude process on the machine.
-        rows: ``sessions`` rows with a tmux identity (dicts).
-        groups: session_uuid -> group name.
-        rows_ok: False when the database could not be read.
-        writers_ok: False when ``ps`` could not run.
-    """
 
     listing_ok: bool = False
     listing_complete: bool = False
@@ -68,7 +57,7 @@ class Measurement:
 
 def read_rows(db_path: Path) -> Tuple[bool, List[Dict[str, Any]], Dict[str, str]]:
     try:
-        with closing(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=5)) as conn:
+        with closing(connect_readonly(db_path, timeout=READONLY_TIMEOUT_DEFAULT_S)) as conn:
             conn.row_factory = sqlite3.Row
             scope, params = host_scope(conn, LOCAL_HOST_KEY)
             rows = [dict(r) for r in conn.execute(

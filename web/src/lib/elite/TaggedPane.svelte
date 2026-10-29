@@ -22,8 +22,7 @@
     const info = $derived(t(K.taggedInfo, { n: rows.length }) + (rows.length ? ` ${sizeText(total)}` : ''));
     const totalRuns = $derived.by(() => {
         const mark = (v: string | number): string => `\u0001${v}\u0002`;
-        const key = rows.length === 1 ? K.taggedTotalOne : K.taggedTotal;
-        return t(key, { size: mark(sizeText(total)), n: mark(rows.length) }).split(/(\u0001[^\u0002]*\u0002)/).filter(Boolean).map((p) => (p.startsWith('\u0001') ? { b: true, s: p.slice(1, -1) } : { b: false, s: p }));
+        return t(K.taggedTotal, { size: mark(sizeText(total)), n: mark(rows.length), count: rows.length }).split(/(\u0001[^\u0002]*\u0002)/).filter(Boolean).map((p) => (p.startsWith('\u0001') ? { b: true, s: p.slice(1, -1) } : { b: false, s: p }));
     });
     const live = $derived(rows.length ? t(K.liveTagged, { n: rows.length, size: sizeText(total) }) : t(K.liveNoTagged));
 </script>

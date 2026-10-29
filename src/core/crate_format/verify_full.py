@@ -116,5 +116,7 @@ def drill(reader: CrateReader, report: "VerifyReport", scratch: Path) -> None:
         extract_all(reader, folder)
     except CrateError as exc:
         report.add(exc.code, None, str(exc))
+    except OSError as exc:
+        report.add("malformed", None, f"the drill could not extract a file: {exc.strerror or type(exc).__name__}")
     finally:
         shutil.rmtree(folder, ignore_errors=True)

@@ -1,6 +1,7 @@
 <script lang="ts">
-  /* the widgets page */
   import type { GroupRow } from './drawer-groups';
+  import Button from '../../lib/base/Button.svelte';
+  import IconButton from '../../lib/base/IconButton.svelte';
   import Icon from '../ui/Icon.svelte';
   import WidgetIcon from '../ui/WidgetIcon.svelte';
   import { hasOptions } from '../../lib/widget-menu/option-nodes';
@@ -48,11 +49,10 @@
   const cardId = $derived(`le-desc-${row.widgetId.replace(/[^A-Za-z0-9_-]/g, '-')}`);
 </script>
 
-<div class="le-wrow" class:le-wrow--open={describing}>
-  <button
-    type="button"
-    class="le-card le-row"
-    class:le-row--refused={row.state === 'refused'}
+<div class="le-wrow">
+  <Button
+    variant="row"
+    data-le-card=""
     data-widget={row.widgetId}
     data-state={row.state}
     data-type={row.type}
@@ -78,19 +78,17 @@
     {#if expanded !== null}
       <span class="le-row__chev" class:le-row__chev--open={expanded} aria-hidden="true"></span>
     {/if}
-  </button>
-  <button
-    type="button"
-    class="le-row__info"
+  </Button>
+  <IconButton
+    label={t(describing ? 'layout_editor.row.info_close' : 'layout_editor.row.info', { title: row.title })}
+    variant="quiet"
+    icon="info"
+    iconSize={13}
     data-widget-info-open={row.widgetId}
     aria-expanded={describing}
     aria-controls={cardId}
-    aria-label={t(describing ? 'layout_editor.row.info_close' : 'layout_editor.row.info', { title: row.title })}
-    title={t('layout_editor.row.info', { title: row.title })}
     onclick={() => (describing = !describing)}
-  >
-    <Icon name="info" size={13} />
-  </button>
+  />
 </div>
 {#if describing}
   <div class="le-row__card" id={cardId}>
@@ -106,7 +104,7 @@
     gap: 2px;
   }
 
-  .le-wrow > :global(.le-row) {
+  .le-wrow > :global([data-widget]) {
     flex: 1 1 auto;
     min-width: 0;
     min-height: 30px;
@@ -152,24 +150,10 @@
   }
 
 
-  .le-row__info {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    padding: 0;
-    border: var(--oc-border, 1px) solid transparent;
-    border-radius: var(--oc-radius-sm, 2px);
-    background: transparent;
-    color: var(--oc-text-muted);
-    cursor: pointer;
-  }
-
-  .le-row__info:hover,
-  .le-wrow--open .le-row__info {
-    border-color: var(--oc-line-rule);
-    color: var(--oc-text-primary);
+  .le-wrow :global([data-widget-info-open]) {
+    --_btn-ink: var(--oc-text-muted);
+    align-self: stretch;
+    height: auto;
   }
 
   .le-row__card {
@@ -178,7 +162,7 @@
     box-shadow: inset 1px 0 0 var(--oc-line-rule);
   }
 
-  :global(.le-drawer) .le-row.le-row--refused {
+  :global(.le-drawer) [data-widget][data-state='refused'] {
     opacity: 0.5;
     background-image: repeating-linear-gradient(
       135deg,

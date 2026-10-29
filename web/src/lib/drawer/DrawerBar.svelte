@@ -22,7 +22,7 @@
 
 <div class="session-sidebar-bar">
   <div class="session-sidebar-bar__group">
-    <button type="button" class="session-sidebar-bar__account" data-bar-action="account" aria-haspopup="menu" aria-expanded="false" aria-label={t('drawer.account.chip', { name })}>
+    <button data-base-exempt="the account chip: avatar, name and chevron in one drawer bar slot, no base equivalent" type="button" class="session-sidebar-bar__account" data-bar-action="account" aria-haspopup="menu" aria-expanded="false" aria-label={t('drawer.account.chip', { name })}>
       <span class="session-sidebar-bar__avatar" data-kind={member ? 'member' : 'lurker'} aria-hidden="true">{@html avatarInnerHtml(who)}</span>
       <span class="session-sidebar-bar__account-name">{name}</span>
       <span class="session-sidebar-bar__account-chevron" aria-hidden="true"><Icon name="chevron-up" size={12} /></span>

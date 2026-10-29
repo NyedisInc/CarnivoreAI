@@ -69,17 +69,6 @@ def _run_git(args: Sequence[str], repo: Path) -> Optional[str]:
 
 
 def staged_added_lines(repo: Path) -> Optional[Dict[str, List[Tuple[int, str]]]]:
-    """The lines each staged change ADDS, keyed by path.
-
-    Description: parses ``git diff --cached -U0``. Zero context lines
-      means every ``+`` line in the output is genuinely new, so the scan
-      cannot fire on content the commit is not introducing. Binary and
-      deleted files contribute nothing.
-    Inputs: repo (Path) - repository root.
-    Output: dict mapping path to a list of (line number in the new file,
-      line text), or None when git could not be asked.
-    Example: staged_added_lines(Path(".")) -> {"a.py": [(3, "x = 1")]}
-    """
     out = _run_git(
         ["diff", "--cached", "-U0", "--no-color", "--diff-filter=ACMR"], repo
     )
@@ -106,17 +95,6 @@ def staged_added_lines(repo: Path) -> Optional[Dict[str, List[Tuple[int, str]]]]
 def scan_staged(
     repo: Path, detectors: Sequence[str], excerpts: bool, pragma: bool,
 ) -> Tuple[Optional[List[FileFinding]], int, int]:
-    """Scan the lines the staged commit adds.
-
-    Description: each file's added lines are joined into one block,
-      scanned, and each finding's synthetic line number is mapped back to
-      its real position in the new file.
-    Inputs: repo (Path), detectors (sequence of str), excerpts (bool),
-      pragma (bool - whether an inline allow comment suppresses).
-    Output: (list[FileFinding] or None when git could not be asked, int
-      count of files examined, int count of pragma suppressions).
-    Example: scan_staged(Path("."), FILE_DETECTORS, True, True) -> ([], 0, 0)
-    """
     added = staged_added_lines(repo)
     if added is None:
         return None, 0, 0
@@ -225,12 +203,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    """Entry point.
-
-    Inputs: argv (sequence of str or None).
-    Output: int exit code - 0 clean, 1 findings, 2 could not determine.
-    Example: main(["--staged"]) -> 0
-    """
     args = build_parser().parse_args(argv)
     detectors = list(ALL_DETECTORS if args.all_detectors else FILE_DETECTORS)
     excerpts = not args.no_excerpt

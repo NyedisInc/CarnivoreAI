@@ -50,7 +50,7 @@
     },
     "Anchor": {
       "additionalProperties": false,
-      "description": "",
+      "description": "A named element of the mockup (``data-rb-anchor=\"<id>\"``) Joe may pin a note to.",
       "properties": {
         "id": {
           "pattern": "^[a-z][a-z0-9_-]{0,31}$",
@@ -73,7 +73,7 @@
     },
     "AnchorNote": {
       "additionalProperties": false,
-      "description": "",
+      "description": "A note Joe pinned to a declared anchor.",
       "properties": {
         "anchor": {
           "pattern": "^[a-z][a-z0-9_-]{0,31}$",
@@ -96,7 +96,7 @@
     },
     "Answer": {
       "additionalProperties": false,
-      "description": "",
+      "description": "Joe's answer to one prompt: ``options`` (choice, multi), ``checked`` (check) or ``text`` (question), plus a note.",
       "properties": {
         "prompt": {
           "pattern": "^[a-z][a-z0-9_-]{0,31}$",
@@ -622,7 +622,7 @@
     },
     "LiveDelivery": {
       "additionalProperties": false,
-      "description": "",
+      "description": "How a live send reached the owning session: ``pending``, ``told`` (the session was woken directly), ``posted`` (the session could not be\ntold, so it went to the task as Joe's reply instead, which moves the task) or ``undelivered`` (with a reason).",
       "properties": {
         "state": {
           "enum": [
@@ -671,7 +671,7 @@
     },
     "LiveDraft": {
       "additionalProperties": false,
-      "description": "``seq`` counts the overwrites (the page follows it); a milestone freezes the draft as a named revision. It carries a page,\nthe prompts and anchors, and the inline picks flag; no layer, no payload (those boards are not live).",
+      "description": "The ONE working draft of a live board (#1725, rulings R97 to R99): every change overwrites it and adds no revision, so a demo leaves no\npile of revisions. ``seq`` counts the overwrites (the page follows it); a milestone freezes the draft as a named revision. It carries a page,\nthe prompts and anchors, and the inline picks flag; no layer, no payload (those boards are not live).",
       "properties": {
         "seq": {
           "minimum": 1,
@@ -759,7 +759,7 @@
     },
     "LiveSend": {
       "additionalProperties": false,
-      "description": "NOT a round: a round answers an immutable revision, and the draft it was sent on is gone the next\ntime it is overwritten, so a send is kept only as the recent few in the live slot and is never cross-checked against a later draft. ``seq`` is the draft overwrite the owner saw.",
+      "description": "One send of Joe's during a live session. NOT a round: a round answers an immutable revision, and the draft it was sent on is gone the next\ntime it is overwritten, so a send is kept only as the recent few in the live slot and is never cross-checked against a later draft.\n``seq`` is the draft overwrite he saw.",
       "properties": {
         "n": {
           "minimum": 1,
@@ -1330,7 +1330,7 @@
     },
     "PayloadDraft": {
       "additionalProperties": false,
-      "description": "A payload page's working state (#1760): ONE draft per revision, overwritten in place by the board's autosave, never numbered.",
+      "description": "A payload page's working state (#1760): ONE draft per revision, overwritten in place by the board's autosave, never numbered. A\nnumbered ``Save`` is a milestone Joe's Send makes; the draft is only where the page's latest state survives a reload.",
       "properties": {
         "at": {
           "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
@@ -1352,7 +1352,7 @@
     },
     "Prompt": {
       "additionalProperties": false,
-      "description": "",
+      "description": "Something the revision asks Joe: ``choice`` (one option), ``multi`` (any), ``check`` (one box), ``question`` (text).",
       "properties": {
         "id": {
           "pattern": "^[a-z][a-z0-9_-]{0,31}$",
@@ -1519,7 +1519,7 @@
     },
     "RankItem": {
       "additionalProperties": false,
-      "description": "",
+      "description": "Drag (or press up and down) to order ``options``; the payload value is EVERY option id in Joe's order.",
       "properties": {
         "id": {
           "pattern": "^[a-z][a-z0-9_-]{0,31}$",
@@ -1840,7 +1840,7 @@
     },
     "Round": {
       "additionalProperties": false,
-      "description": "A payload send (#1760) carries ``payload`` (the state sent), ``save`` (the number of the save the send made on its revision) and ``diff``\n(against the previous send); its ``answers`` and ``anchor_notes`` are empty.",
+      "description": "One send of Joe's review on one revision. History: never rewritten, Joe's words stored as typed.\n\nA payload send (#1760) carries ``payload`` (the state sent), ``save`` (the number of the save the send made on its revision) and ``diff``\n(against the previous send); its ``answers`` and ``anchor_notes`` are empty.",
       "properties": {
         "id": {
           "pattern": "^n[1-9][0-9]*$",
@@ -1970,7 +1970,7 @@
     },
     "RoundContext": {
       "additionalProperties": false,
-      "description": "",
+      "description": "What Joe was looking at when he sent: theme, frame width, fit mode, view (each unknown for a converted round).",
       "properties": {
         "theme": {
           "anyOf": [
@@ -2332,7 +2332,7 @@
     },
     "Save": {
       "additionalProperties": false,
-      "description": "Not a revision.",
+      "description": "One numbered save of a payload page's state (#1760): every save is kept, Joe steps back through them. Not a revision.",
       "properties": {
         "n": {
           "minimum": 1,

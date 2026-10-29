@@ -14,7 +14,7 @@ from src.core.automations.store_schema import storage_for
 from src.core.automations.targets import sequence
 
 ACTION = {"kind": "recipe", "recipe": "sleep_idle_sessions"}
-MESSAGE = {"kind": "session_message", "session_uuid": "1d54c5e7-1c29-4e67-835c-e79ec618ae16", "text": "go", "if_gone": "fail"}
+MESSAGE = {"kind": "session_message", "session_uuid": "0f6c2d6e-1111-4c4c-9e9e-000000000003", "text": "go", "if_gone": "fail"}
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def world(tmp_path, monkeypatch):
         monkeypatch.setitem(targets.RUNNERS, kind, fake(kind))
     monkeypatch.setitem(targets.RUNNERS, "sequence", sequence.run)
     monkeypatch.setitem(targets.VALIDATORS, "sequence", sequence.validate_target)
-    monkeypatch.setattr(sequence, "_tell", lambda type_id, automation, run_id, severity, store=None: told.append(type_id))
+    monkeypatch.setattr(sequence.notify_policy, "tell", lambda type_id, automation, run_id, store=None: told.append(type_id))
     store = AutomationStore(storage_for(tmp_path), notify=lambda _t: None)
     return SimpleNamespace(store=store, calls=calls, told=told, outcomes=outcomes)
 

@@ -1,0 +1,48 @@
+{
+  "id": "timemachine",
+  "name": "Time Machine check plugin",
+  "area": "status-notifications",
+  "status": "beta",
+  "since": "2026-10-26",
+  "updated": "2026-10-26",
+  "summary": "an optional plugin, off until you switch it on, that checks every 15 minutes that Apple's Time Machine made a backup in the last 24 hours and raises one alert when it did not or cannot tell. A computer with no Time Machine disk set up gets no alert.",
+  "description": "The time machine check plugin runs tmutil once every 15 minutes (first pass a minute after it starts), off the event loop, and keeps one alert. A backup older than 24 hours raises it at once; a read that fails raises a cannot-tell alert on the second pass in a row, with a check access explainer that opens the Full Disk Access setting; a backup running right now changes nothing; a healthy backup, or a computer with no Time Machine destination, closes the alert. Its re-check now button posts to the plugin's own route. It ships off for everyone and needs only the notify permission.",
+  "surfaces": [
+    "src/cplugs/timemachine/service.py",
+    "src/cplugs/timemachine/checks.py",
+    "src/cplugs/timemachine/routes.py",
+    "web/src/cplugs/timemachine/index.ts"
+  ],
+  "api_routes": [
+    "POST /api/v1/cplugs/timemachine/check",
+    "PUT /api/v1/cplugs/timemachine"
+  ],
+  "docs": [
+    "docs/cplugs.md",
+    "docs/time-machine.md"
+  ],
+  "issues": [
+    2550
+  ],
+  "keywords": [
+    "time machine",
+    "tmutil",
+    "backup",
+    "full disk access",
+    "alert",
+    "plugin"
+  ],
+  "where": [
+    "The plugins page: the time machine check switch (link: #plugins). Its alert appears in the alert center with a re-check now button."
+  ],
+  "how_to": [
+    "Open the plugins page and switch on the time machine check; macOS asks nothing, but reading the newest backup needs Full Disk Access for Carnivore, and the cannot-tell alert's check access button opens that setting.",
+    "Press re-check now on the alert, or POST /api/v1/cplugs/timemachine/check, to run a pass at once."
+  ],
+  "examples": [
+    "A laptop away from its backup disk for two days gets the stale alert.",
+    "A new install without Full Disk Access gets the cannot-tell alert with the steps.",
+    "A computer that never set up Time Machine gets nothing."
+  ],
+  "media_exempt": "no screen of its own: a switch drawn by the generic plugins page and an alert drawn by the existing alert panel, so there is nothing new to capture"
+}

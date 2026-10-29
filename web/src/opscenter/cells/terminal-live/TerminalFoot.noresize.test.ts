@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+/* the bottom bar */
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
 import TerminalFoot from './TerminalFoot.svelte';
@@ -34,7 +35,7 @@ afterEach(async () => {
   document.body.replaceChildren();
   delete (globalThis as { TerminalLayout?: unknown }).TerminalLayout;
   requestFit.mockReset();
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom always has storage */ }
 });
 
 function setup(width: number, areaHeight = 800): { area: HTMLElement; pane: HTMLElement; target: HTMLElement } {
@@ -122,6 +123,7 @@ test('WIDTHS: columns only with room; stacked (accordion) below that; ALWAYS ful
     expect(layouts[width]?.right).toBe('0px');
     expect(layouts[width]?.bottom).toBe('');
   }
+  // underneath.
   for (const width of [600, 390]) {
     expect(layouts[width]?.stacked).toBe('true');
     expect(layouts[width]?.right).toBe('0px');
@@ -129,7 +131,7 @@ test('WIDTHS: columns only with room; stacked (accordion) below that; ALWAYS ful
   }
 });
 
-test('FULL WIDTH (issue #1053): the grown bar always covers the work segments, never stopping short of them', () => {
+test('FULL WIDTH (issue #1053, Joe, 2026-09-28): the grown bar always covers the work segments, never stopping short of them', () => {
   const { target } = setup(1440);
   bar(target).click();
   flushSync();

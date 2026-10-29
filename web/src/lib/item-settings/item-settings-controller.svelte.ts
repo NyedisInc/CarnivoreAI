@@ -1,4 +1,3 @@
-/* no longer holds */
 import { t as appT } from '../i18n/index.svelte';
 import type { Translate } from '../sessions/types';
 import { itemSettings } from './store.svelte';

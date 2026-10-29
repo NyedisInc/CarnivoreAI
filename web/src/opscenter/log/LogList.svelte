@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { t } from '../../lib/i18n/index.svelte';
+  import Button from '../../lib/base/Button.svelte';
   import LogRow from './LogRow.svelte';
   import { layout, windowAt } from './virtual';
   import type { LogRecord } from './types';
@@ -80,8 +81,8 @@
     <div style:height={`${bottom}px`}></div>
   </div>
   {#if !following && unseen > 0}
-    <button type="button" class="oc-btn oc-btn--sm oc-btn--confirm oc-lv-pill" data-log-jump onclick={() => onFollow(true)}>
-      {t('opscenter.log.jump', { count: unseen })}
-    </button>
+    <div class="oc-lv-pill">
+      <Button size="sm" variant="confirm" data-log-jump onclick={() => onFollow(true)}>{t('opscenter.log.jump', { count: unseen })}</Button>
+    </div>
   {/if}
 </div>

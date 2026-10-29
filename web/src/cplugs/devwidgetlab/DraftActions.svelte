@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import type { DraftSource } from './drafts-model';
 
   interface Props {
@@ -16,8 +17,8 @@
 <div class="dwl-actions">
   <span class="dwl-label">{t('cplug.devwidgetlab.drafts.title')}</span>
   <div class="dwl-seg">
-    <button type="button" class="oc-btn oc-btn--sm" data-draft-new disabled={!available} onclick={onnew}>{t('cplug.devwidgetlab.drafts.new')}</button>
-    <button type="button" class="oc-btn oc-btn--sm" data-draft-revise disabled={!available || !canRevise} onclick={onrevise}>{t('cplug.devwidgetlab.drafts.revise')}</button>
+    <Button size="sm" data-draft-new disabled={!available} onclick={onnew}>{t('cplug.devwidgetlab.drafts.new')}</Button>
+    <Button size="sm" data-draft-revise disabled={!available || !canRevise} onclick={onrevise}>{t('cplug.devwidgetlab.drafts.revise')}</Button>
   </div>
 </div>
 {#if !available}<p class="dwl-note dwl-actions-note">{t('cplug.devwidgetlab.drafts.no_checkout')}</p>{/if}

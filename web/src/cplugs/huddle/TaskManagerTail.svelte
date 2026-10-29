@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { Icon } from '../sdk/ui';
   import { TAIL_COUNT_MAX, TAIL_ORDER, kindsPresent, tailKindLook, type TailBadge, type TailKind } from './task-manager-tail-slots';
   import { countBadges } from './task-manager-status-folds.svelte';

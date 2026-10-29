@@ -1,4 +1,3 @@
-// own project
 
 'use strict';
 
@@ -38,7 +37,6 @@ function findProject(projects, folder, deps) {
   return null;
 }
 
-/* could not in order and */
 function createFinderDrop(deps) {
   const io = { fs: deps.fs, os: deps.os };
 
@@ -105,7 +103,6 @@ function wireFinderDrop({ app, opener, now = Date.now }) {
   let timer = null;
   let busy = Promise.resolve();
 
-  /* could not */
   function run(paths, at) {
     busy = busy.then(async () => {
       try {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Select from '../../lib/base/Select.svelte';
   import EmptyState from './EmptyState.svelte';
   import { framedTitle } from '../shell/frame-header.svelte';
   import { emptyLine } from './empty';
@@ -70,16 +71,12 @@
     {/if}
   {/if}
   <VizSettings {config} metric={false} range={false}>
-    <label>{t('impact.marker')} <select value={chosen} onchange={(event) => edit({ annotation_id: event.currentTarget.value })}>
-      <option value="">{t('impact.marker_newest')}</option>
-      {#each markers.data ?? [] as marker (marker.id)}<option value={marker.id}>{marker.label}</option>{/each}
-    </select></label>
-    <label>{t('viz.measure')} <select value={metric} onchange={(event) => edit({ metric: event.currentTarget.value })}>
-      {#each IMPACT_METRICS as item (item)}<option value={item}>{t(`impact.metric_${item}`)}</option>{/each}
-    </select></label>
-    <label>{t('impact.days')} <select value={String(days)} onchange={(event) => edit({ days: Number(event.currentTarget.value) })}>
-      {#each IMPACT_DAYS as item (item)}<option value={String(item)}>{item}</option>{/each}
-    </select></label>
+    <Select size="sm" label={t('impact.marker')} value={chosen} onchange={(event) => edit({ annotation_id: event.currentTarget.value })}
+      options={[{ value: '', label: t('impact.marker_newest') }, ...(markers.data ?? []).map((marker) => ({ value: marker.id, label: marker.label }))]} />
+    <Select size="sm" label={t('viz.measure')} value={metric} onchange={(event) => edit({ metric: event.currentTarget.value })}
+      options={IMPACT_METRICS.map((item) => ({ value: item, label: t(`impact.metric_${item}`) }))} />
+    <Select size="sm" label={t('impact.days')} value={String(days)} onchange={(event) => edit({ days: Number(event.currentTarget.value) })}
+      options={IMPACT_DAYS.map((item) => ({ value: String(item), label: String(item) }))} />
   </VizSettings>
 </section>
 

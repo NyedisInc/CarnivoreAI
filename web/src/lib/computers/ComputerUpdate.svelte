@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { t } from '../i18n/index.svelte';
+  import { Button } from '../base';
   import Check from '../../opscenter/ui/Check.svelte';
   import { auth, authFetch } from '../../opscenter/api/auth.svelte';
   import { resourcePush } from '../resource-push/boot';
@@ -50,8 +51,8 @@
         {t(`settings.app_update.state.${phase}`, { version: update.latest_version, percent: update.percent ?? 0, detail: update.detail ?? '' })}
       </span>
       {#if canInstall}
-        <button type="button" class="modal-btn modal-btn-secondary pk-act" data-cmp="update-now" disabled={busy}
-          onclick={() => void act('install')}>{t('settings.app_update.install')}</button>
+        <Button size="sm" data-cmp="update-now" disabled={busy}
+          onclick={() => void act('install')}>{t('settings.app_update.install')}</Button>
       {/if}
     </div>
     <Check label={t('settings.app_update.auto')} checked={update.auto_update} role="switch" disabled={busy} data-cmp="update-auto"

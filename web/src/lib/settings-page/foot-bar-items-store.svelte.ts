@@ -1,6 +1,6 @@
 
 import { FOOT_BAR_ITEM_DEFAULTS } from '../foot-bar-item-defaults';
-import { whenLegacyBootComplete } from '../legacy-boot';
+import { PreferenceField } from '../zone-shell/preference-field';
 
 export const FOOT_BAR_ITEMS_FIELD = 'foot_bar_items';
 
@@ -11,17 +11,6 @@ export const FOOT_BAR_ITEM_KINDS: readonly FootBarItemKind[] = [
 ];
 
 export type SparseFootBarItems = Partial<Record<FootBarItemKind, boolean>>;
-
-interface Bridge {
-    read(field: string, localReader: () => unknown): unknown;
-    write(field: string, value: unknown, localWriter: () => void): Promise<unknown>;
-    follow(field: string, apply: (value: unknown) => void): () => void;
-}
-
-function bridge(): Bridge | null {
-    const found = (globalThis as { PreferenceBridge?: Bridge }).PreferenceBridge;
-    return found && typeof found.read === 'function' ? found : null;
-}
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
@@ -39,20 +28,16 @@ export function sanitize(value: unknown): SparseFootBarItems {
 class FootBarItemsStore {
     value = $state<SparseFootBarItems>({});
 
-    #started = false;
+    readonly #pref = new PreferenceField(FOOT_BAR_ITEMS_FIELD, (value) => {
+        this.value = sanitize(value);
+    });
 
     start(target: Window | null = typeof window !== 'undefined' ? window : null): void {
-        if (this.#started) return;
-        this.#started = true;
-        this.reload();
-        bridge()?.follow(FOOT_BAR_ITEMS_FIELD, (value) => {
-            this.value = sanitize(value);
-        });
-        whenLegacyBootComplete(target, () => this.reload());
+        this.#pref.start(target);
     }
 
     reload(): void {
-        this.value = sanitize(bridge()?.read(FOOT_BAR_ITEMS_FIELD, () => null));
+        this.#pref.reload();
     }
 
     effective(kind: FootBarItemKind): boolean {
@@ -63,8 +48,7 @@ class FootBarItemsStore {
     set(kind: FootBarItemKind, on: boolean): void {
         const next: SparseFootBarItems = { ...this.value, [kind]: on };
         this.value = next;
-        const found = bridge();
-        if (found) void found.write(FOOT_BAR_ITEMS_FIELD, next, () => {});
+        void this.#pref.write(next);
     }
 }
 

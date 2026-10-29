@@ -50,6 +50,7 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
+/* the home screen */
 function home(phone: boolean): HTMLElement {
   viewport.wide = !phone;
   viewport.phone = phone;
@@ -87,7 +88,7 @@ test('NEGATIVE: a phone still draws its strip and no floating control', () => {
   expect(root.querySelector('.oc-app')!.classList.contains('oc-app-bare')).toBe(false);
 });
 
-test('the pop-out menu lists the home screen, its wallboard, every other dashboard and every tab that pops out', () => {
+test('the pop-out menu lists the home screen, its wallboard, every other dashboard and every tab that pops out (Joe, 2026-10-04)', () => {
   homeBoards.list = [{ id: 'home', name: 'main' }, { id: 'b-1a2b', name: 'wall' }];
   homeBoards.active = 'home';
   homeBoards.ready = true;

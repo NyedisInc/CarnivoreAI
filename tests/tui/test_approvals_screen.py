@@ -127,7 +127,7 @@ def test_approvals_keys_come_from_the_one_table() -> None:
 
 
 def test_a_typed_confirmation_is_approved_only_in_the_app() -> None:
-    purge = {"id": "act_p", "source": "agent_action", "confirm_text": "ledgerbot"}
+    purge = {"id": "act_p", "source": "agent_action", "confirm_text": "trader"}
     assert answer_request(purge, True) is None
     assert answer_request(purge, False) == ("/api/v1/agent-actions/act_p/deny", {})
     assert answer_request({**purge, "confirm_text": None}, True) == ("/api/v1/agent-actions/act_p/approve", {})

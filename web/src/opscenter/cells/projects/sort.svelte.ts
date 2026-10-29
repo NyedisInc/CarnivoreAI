@@ -1,4 +1,3 @@
-/* running sessions */
 
 import type { ProjectResponse } from '../../api';
 import { parseServerTime } from '../../lib/format';

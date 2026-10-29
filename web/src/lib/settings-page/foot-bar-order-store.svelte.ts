@@ -1,22 +1,11 @@
 
-import { whenLegacyBootComplete } from '../legacy-boot';
+import { PreferenceField } from '../zone-shell/preference-field';
 
 export const FOOT_BAR_ORDER_FIELD = 'foot_bar_order';
 
 export type FootBarOrderId = 'context' | 'window_5h' | 'window_7d';
 
 export const FOOT_BAR_ORDER_DEFAULT: readonly FootBarOrderId[] = ['context', 'window_5h', 'window_7d'];
-
-interface Bridge {
-    read(field: string, localReader: () => unknown): unknown;
-    write(field: string, value: unknown, localWriter: () => void): Promise<unknown>;
-    follow(field: string, apply: (value: unknown) => void): () => void;
-}
-
-function bridge(): Bridge | null {
-    const found = (globalThis as { PreferenceBridge?: Bridge }).PreferenceBridge;
-    return found && typeof found.read === 'function' ? found : null;
-}
 
 export function sanitize(value: unknown): FootBarOrderId[] {
     const kept: FootBarOrderId[] = [];
@@ -33,20 +22,16 @@ export function sanitize(value: unknown): FootBarOrderId[] {
 class FootBarOrderStore {
     value = $state<FootBarOrderId[]>([...FOOT_BAR_ORDER_DEFAULT]);
 
-    #started = false;
+    readonly #pref = new PreferenceField(FOOT_BAR_ORDER_FIELD, (value) => {
+        this.value = sanitize(value);
+    });
 
     start(target: Window | null = typeof window !== 'undefined' ? window : null): void {
-        if (this.#started) return;
-        this.#started = true;
-        this.reload();
-        bridge()?.follow(FOOT_BAR_ORDER_FIELD, (value) => {
-            this.value = sanitize(value);
-        });
-        whenLegacyBootComplete(target, () => this.reload());
+        this.#pref.start(target);
     }
 
     reload(): void {
-        this.value = sanitize(bridge()?.read(FOOT_BAR_ORDER_FIELD, () => null));
+        this.#pref.reload();
     }
 
     move(id: FootBarOrderId, direction: 'up' | 'down'): void {
@@ -56,8 +41,7 @@ class FootBarOrderStore {
         const next = [...this.value];
         [next[at], next[to]] = [next[to] as FootBarOrderId, next[at] as FootBarOrderId];
         this.value = next;
-        const found = bridge();
-        if (found) void found.write(FOOT_BAR_ORDER_FIELD, next, () => {});
+        void this.#pref.write(next);
     }
 }
 

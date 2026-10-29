@@ -48,7 +48,7 @@ describe('usage limit red skull', () => {
         const signals = { transport: 'disconnected', usage_limit: 'over limit' };
         expect(ledHtmlForStatus('working', signals)).toContain('data-inner="disconnected"');
         expect(ledHtmlForStatus('working', signals)).toBe(api.dotHtml('working', signals));
-        const off = { host_offline: 'hosta', usage_limit: 'over limit' };
+        const off = { host_offline: 'studio', usage_limit: 'over limit' };
         expect(ledHtmlForStatus('working', off)).toContain('data-inner="disconnected"');
         expect(ledHtmlForStatus('working', off)).toBe(api.dotHtml('working', off));
     });

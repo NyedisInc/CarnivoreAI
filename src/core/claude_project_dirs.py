@@ -108,15 +108,16 @@ def candidate_project_dirs(
     projects_dir: Optional[Path] = None,
     home: Optional[Path] = None,
     existing: Optional[Sequence[str]] = None,
+    default_dir: Optional[Path] = None,
 ) -> List[Path]:
     if projects_dir is not None:
         bases: Sequence[Path] = (projects_dir,)
     elif existing is not None:
-        bases = (default_projects_dir(),)
+        bases = (default_dir or default_projects_dir(),)
     else:
         from src.core.claude_config.profile_roots import PROJECTS_DIRNAME, profile_subdir_roots
 
-        bases = profile_subdir_roots(default_projects_dir(), PROJECTS_DIRNAME)
+        bases = profile_subdir_roots(default_dir or default_projects_dir(), PROJECTS_DIRNAME)
     known = set(existing) if existing is not None else None
     out: List[Path] = []
     for spelling in path_spellings(working_dir, home=home):

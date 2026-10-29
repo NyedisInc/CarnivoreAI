@@ -1,5 +1,5 @@
 <script lang="ts">
-  /*  hidden  */
+  /* the live client */
   import { untrack } from 'svelte';
   import { phoneTabSource } from '../layouts/phone.svelte';
   import { PRIMARY_SLOT } from '../engine/model';

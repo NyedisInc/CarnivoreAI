@@ -2,13 +2,12 @@ import { BROWSE_KEYS } from '../../../../client/js/labels/skill-browse.js';
 import { SKILL_KEYS, isUnsupported } from '../../../../client/js/labels/skill.js';
 import type { Translate } from '../sessions/types';
 import { MAX_PATH_CHARS, MAX_SCRIPT_FILES, boundedList, clipChars } from './bounds';
-import { refusalCodeOf } from './install-actions';
-import type { InstalledItem, UpdateDiff } from './types';
+import { refusalCodeOf, refusalPayloadOf } from './install-actions';
+import type { CplugFactsData, InstalledItem, UpdateDiff } from './types';
 
 export type LedgerOutcome =
     | { kind: 'ok'; row: InstalledItem | null }
     | { kind: 'stale'; row: InstalledItem | null }
-    /* server said no */
     | { kind: 'refused'; code: string }
     | { kind: 'unsupported' }
     | { kind: 'failed' };
@@ -49,6 +48,7 @@ export function offersAutoUpdate(row: InstalledItem | null | undefined): boolean
     return !!row && row.scope === 'global' && canWrite(row);
 }
 
+/* its own sentence */
 export function uninstallTargetLines(
     row: InstalledItem | null | undefined,
     t: Translate,
@@ -73,6 +73,8 @@ export interface ConsentText {
     digest: string | null;
     scripts: string[];
     diff: UpdateDiff | null;
+    requiresConsent: boolean;
+    cplugFacts: CplugFactsData | null;
 }
 
 function scriptsNamed(body: Record<string, unknown> | null): string[] {
@@ -95,13 +97,17 @@ export function consentSheetOf(
         digest: digest || null,
         scripts: scriptsNamed(body),
         diff: body && body.diff && typeof body.diff === 'object' ? (body.diff as UpdateDiff) : null,
+        requiresConsent: body?.requires_consent === true,
+        cplugFacts:
+            body && body.cplug_facts && typeof body.cplug_facts === 'object' && !Array.isArray(body.cplug_facts)
+                ? (body.cplug_facts as CplugFactsData)
+                : null,
     };
 }
 
 /* undefined outside a secure context */
 export function consentTextOf(error: unknown): ConsentText {
-    const body = (error as { body?: Record<string, unknown> | null } | null)?.body ?? null;
-    return consentSheetOf(body);
+    return consentSheetOf(refusalPayloadOf(error));
 }
 
 export function uninstallSheet(
@@ -157,25 +163,29 @@ export function updateConsentSheet(
     scripts: readonly string[],
     t: Translate,
     diff: UpdateDiff | null = null,
+    cplugFacts: CplugFactsData | null | undefined = undefined,
 ): Record<string, unknown> {
     const shipsScripts = scripts.length > 0;
+    const isCplug = cplugFacts !== undefined;
     const listed = boundedList(scripts, MAX_SCRIPT_FILES);
     const paths = listed.shown.map((entry) => clipChars(entry, MAX_PATH_CHARS) ?? '');
+    const baseLead = t(isCplug ? SKILL_KEYS.updateConsentCplugLead : SKILL_KEYS.updateConsentLead);
     return {
         title: t(SKILL_KEYS.updateTitle, { name }),
-        lead: shipsScripts
-            ? `${t(SKILL_KEYS.updateConsentLead)} ${t(SKILL_KEYS.consentScriptsRun)}`
-            : t(SKILL_KEYS.updateConsentLead),
+        lead: shipsScripts ? `${baseLead} ${t(SKILL_KEYS.consentScriptsRun)}` : baseLead,
         document: text,
         diff,
+        cplugFacts,
         documentMissing: text ? null : t(SKILL_KEYS.updateConsentUnavailable),
         linesHeading: shipsScripts ? t(SKILL_KEYS.consentScriptsHeading) : null,
         lines: listed.hidden > 0
             ? [...paths, t(SKILL_KEYS.filesMore, { count: listed.hidden })]
             : paths,
-        tickLabel: shipsScripts
-            ? t(SKILL_KEYS.consentCheckbox)
-            : t(SKILL_KEYS.updateConsentCheckbox),
+        tickLabel: isCplug
+            ? null
+            : shipsScripts
+              ? t(SKILL_KEYS.consentCheckbox)
+              : t(SKILL_KEYS.updateConsentCheckbox),
         confirmLabel: t(SKILL_KEYS.updateConsentConfirm),
         busyLabel: t(SKILL_KEYS.updateWorking),
         t,

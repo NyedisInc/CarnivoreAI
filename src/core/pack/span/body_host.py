@@ -62,6 +62,7 @@ class BodyPacket(BaseModel):
     account_key: Optional[str] = Field(default=None, pattern=r"^[a-z0-9][a-z0-9_-]{0,62}$")
     memory_files: List[MemoryFile] = Field(default_factory=list, max_length=memory_mirror.MAX_FILES)
     worktree_branch: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,100}$")
+    adopt_session_uuid: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9-]{1,64}$")
 
 
 def remote_state(state_dir: Path, home_install_id: str) -> Path:
@@ -93,7 +94,8 @@ def _write_files(state_dir: Path, home_install_id: str, packet: BodyPacket, repo
     except (ValueError, memory.SwarmFileError) as exc:
         raise BodyRefused("bad_memory_mirror", 422, str(exc)[:200]) from exc
     defn = definition.AgentDefinition(
-        slug=packet.slug, description=packet.job[:300], rank=packet.rank, effort=packet.effort, memory=memory.SCOPE_LOCAL,
+        slug=packet.slug, description=packet.job[:300], rank=packet.rank, effort=packet.effort,
+        memory=memory.SCOPE_LOCAL if packet.rank == "task" else memory.SCOPE_PROJECT,
         brief=body_create.brief_for(agent, packet.parent_name, str(mirror)) + f"\n\n{say.THREAD_LINE}\n",
         display_name=packet.display_name)
     memory.atomic_write(root / ".claude" / "agents" / f"{packet.slug}.md", definition.render_definition(defn))
@@ -150,6 +152,8 @@ async def host(request: Any, home_install_id: str, packet: BodyPacket) -> Dict[s
 
     seen = await asyncio.to_thread(read)
     live_row = seen["existing"][0] if seen["existing"] and seen["existing"][1] is None else None
+    if live_row is None and packet.adopt_session_uuid:
+        return await _adopt(request, state_dir, home_install_id, packet)
     if seen["refusal"] and live_row is None:
         raise BodyRefused("host_busy", 503, seen["refusal"])
     repo = seen["root"]
@@ -170,7 +174,7 @@ async def host(request: Any, home_install_id: str, packet: BodyPacket) -> Dict[s
     except memory.SwarmFileError as exc:
         raise BodyRefused("secret_in_packet", 422, str(exc)[:200]) from exc
     if live_row is not None:
-        return await _recreate(request, state_dir, live_row, _relay_env(packet.account_key, home_install_id))
+        return await _recreate(request, state_dir, live_row, _relay_env(packet.account_key, home_install_id), argv)
     try:
         made = await peer_create.create_pane(request, target_dir=repo, agent_type=packet.launch_profile or packet.harness,
                                              label=packet.display_name, model=packet.model, extra_args=argv,
@@ -178,22 +182,57 @@ async def host(request: Any, home_install_id: str, packet: BodyPacket) -> Dict[s
     except peer_create.PeerCreateRefused as exc:
         raise BodyRefused(exc.code, exc.status) from exc
 
-    def record() -> None:
-        with closing(db.connect(db.db_path_for(state_dir), create=False)) as conn:
-            with conn:
-                conn.execute("INSERT OR REPLACE INTO swarm_remote_bodies (session_row_id, home_install_id, home_agent_id, project_uid, "
-                             "rank, slug, definition_rev, mirror_dir, created_at, torn_down_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "
-                             "strftime('%Y-%m-%dT%H:%M:%SZ','now'), NULL)",
-                             (made["row_id"], home_install_id, packet.home_agent_id, packet.project_uid, packet.rank, packet.slug,
-                              packet.definition_rev, str(mirror_dir(state_dir, home_install_id, packet.home_agent_id))))
-
-    await asyncio.to_thread(record)
+    await asyncio.to_thread(_record, state_dir, home_install_id, packet, made["row_id"])
     made.pop("row_id", None)
     logger.info("swarm_remote_body_hosted", home_agent=packet.home_agent_id, rank=packet.rank)
     return made
 
 
-async def _recreate(request: Any, state_dir: Path, row_id: int, extra_env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+def _record(state_dir: Path, home_install_id: str, packet: BodyPacket, row_id: int) -> None:
+    with closing(db.connect(db.db_path_for(state_dir), create=False)) as conn:
+        with conn:
+            conn.execute("INSERT OR REPLACE INTO swarm_remote_bodies (session_row_id, home_install_id, home_agent_id, project_uid, "
+                         "rank, slug, definition_rev, mirror_dir, created_at, torn_down_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "
+                         "strftime('%Y-%m-%dT%H:%M:%SZ','now'), NULL)",
+                         (row_id, home_install_id, packet.home_agent_id, packet.project_uid, packet.rank, packet.slug,
+                          packet.definition_rev, str(mirror_dir(state_dir, home_install_id, packet.home_agent_id))))
+
+
+def _adoptable(state_dir: Path, session_uuid: str) -> Dict[str, Any]:
+    with closing(db.connect(db.db_path_for(state_dir), create=False)) as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT id, session_uuid, working_dir, archived_at, host_key, COALESCE(title, claude_title, tmux_name) AS label "
+                           "FROM sessions WHERE session_uuid = ?", (session_uuid,)).fetchone()
+        if row is None or row["archived_at"] or (row["host_key"] or "local") != "local" or not row["working_dir"]:
+            raise BodyRefused("adopt_refused", 409, "no such local session")
+        taken = conn.execute("SELECT 1 FROM swarm_agents WHERE session_row_id = ? UNION ALL SELECT 1 FROM swarm_remote_bodies "
+                             "WHERE session_row_id = ? AND torn_down_at IS NULL", (row["id"], row["id"])).fetchone()
+        if taken:
+            raise BodyRefused("adopt_refused", 409, "that session is already an agent's body")
+        return dict(row)
+
+
+async def _adopt(request: Any, state_dir: Path, home_install_id: str, packet: BodyPacket) -> Dict[str, Any]:
+    from src.core.swarm import project_promote
+
+    session = await asyncio.to_thread(_adoptable, state_dir, str(packet.adopt_session_uuid))
+    try:
+        argv = await asyncio.to_thread(_write_files, state_dir, home_install_id, packet, session["working_dir"])
+    except (body_create.CreateRefused, OSError) as exc:
+        raise BodyRefused("files_not_written", 503, f"{type(exc).__name__}") from exc
+    except memory.SwarmFileError as exc:
+        raise BodyRefused("secret_in_packet", 422, str(exc)[:200]) from exc
+    try:
+        await project_promote.stop_if_running(request.app.state, session)
+    except project_promote.PromoteRefused as exc:
+        raise BodyRefused("adopt_refused", 409, str(exc)[:200]) from exc
+    await asyncio.to_thread(_record, state_dir, home_install_id, packet, session["id"])
+    logger.info("swarm_remote_body_adopted", home_agent=packet.home_agent_id, row_id=session["id"])
+    return await _recreate(request, state_dir, session["id"], _relay_env(packet.account_key, home_install_id), argv)
+
+
+async def _recreate(request: Any, state_dir: Path, row_id: int, extra_env: Optional[Dict[str, str]] = None,
+                    argv: Optional[List[str]] = None) -> Dict[str, Any]:
     from src.api.recreate_action import recreate_by_uuid
     from src.core.crosstalk import directory
 
@@ -201,7 +240,8 @@ async def _recreate(request: Any, state_dir: Path, row_id: int, extra_env: Optio
     info = await body.run_db(lambda c: c.execute("SELECT session_uuid, agent_type FROM sessions WHERE id = ?", (row_id,)).fetchone())
     if info is None or not info["session_uuid"]:
         raise BodyRefused("session_row_gone", 409)
-    answer = await recreate_by_uuid(str(info["session_uuid"]), info["agent_type"] or "claude", get_manager=lambda: manager, fresh=False, extra_env=extra_env, fresh_if_transcript_absent=True)
+    answer = await recreate_by_uuid(str(info["session_uuid"]), info["agent_type"] or "claude", get_manager=lambda: manager, fresh=False, extra_env=extra_env, fresh_if_transcript_absent=True,
+                                    swarm_args=argv)
     if answer.status != "started":
         raise BodyRefused("recreate_refused", 409, answer.detail or "")
     now = await manager.get_session_info(answer.session_id)

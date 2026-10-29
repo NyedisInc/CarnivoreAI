@@ -1,4 +1,4 @@
-<!-- label: ' -->
+
 <script lang="ts" module>
     export interface FacetOption {
         readonly value: string;

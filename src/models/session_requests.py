@@ -2,6 +2,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 from .model_ids import describe_model_id_rejection, is_valid_model_id
+from .terminal_dims import TermCols, TermRows
 
 
 
@@ -23,7 +24,6 @@ class CreateSessionRequest(BaseModel):
         None,
         description="Optional human-readable project display name"
     )
-    # launch command
     label: Optional[str] = Field(
         None,
         description="Name for the new session; also passed to claude as --name"
@@ -32,11 +32,11 @@ class CreateSessionRequest(BaseModel):
         None,
         description="The folder a new project or agent lives in, used as-is"
     )
-    cols: Optional[int] = Field(
+    cols: Optional[TermCols] = Field(
         None,
         description="Client-measured terminal columns (xterm cell grid width)"
     )
-    rows: Optional[int] = Field(
+    rows: Optional[TermRows] = Field(
         None,
         description="Client-measured terminal rows (xterm cell grid height)"
     )
@@ -46,7 +46,7 @@ class CreateSessionRequest(BaseModel):
     )
     model: Optional[str] = Field(
         None,
-        description="OpenRouter model id; None launches Claude directly via 'keyc'",
+        description="OpenRouter model id; None launches Claude directly via 'cld'",
     )
     host_key: Optional[str] = Field(
         None,
@@ -73,7 +73,6 @@ class CreateSessionRequest(BaseModel):
     @field_validator("opening_prompt")
     @classmethod
     def _validate_opening_prompt(cls, v: Optional[str]) -> Optional[str]:
-        """Refuse a prompt that could not travel as one literal argument."""
         from .blueprints import check_opening_prompt
 
         return check_opening_prompt(v)
@@ -95,6 +94,11 @@ class CommandRequest(BaseModel):
 
 class SetUnreadRequest(BaseModel):
     """Request body for ``PATCH /sessions/{session_name}/unread``.
+
+    feat/hook-driven-status - the manual "mark unread for followup"
+    control. ``session_name`` in the URL is the literal tmux session name
+    (same convention as ``/sessions/{session_name}/theme``), not a
+    session_id, so it works for attachable-but-not-live sessions too.
     """
     unread: bool = Field(
         ..., description="True to mark unread for followup, False to clear"

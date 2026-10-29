@@ -1,4 +1,3 @@
-/*  hidden  */
 import { authFetch } from '../api/auth.svelte';
 import { labelResult } from './dimension-label';
 import type { AnswerMeta, QueryBody, QueryResult } from '../cells/analytics/types';
@@ -102,6 +101,7 @@ export function createQueryClient(deps: ClientDeps): { runQueries: (items: Query
   return { runQueries };
 }
 
+/* and the real */
 export const queryClient = createQueryClient({
   post: async (items, signal) => {
     const response = await authFetch<{ results: BatchItem[] }>('/stats/query-batch', { method: 'POST', body: JSON.stringify({ items }), signal });

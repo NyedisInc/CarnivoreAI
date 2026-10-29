@@ -1,3 +1,4 @@
+/* the panel itself */
 import { mountPanel, unmountPanel } from '../mount';
 import SoloPanel from './SoloPanel.svelte';
 

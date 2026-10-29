@@ -179,8 +179,7 @@ def test_a_symlinked_directory_does_not_switch_the_option_off(client, repo):
     assert _by_name(_by_name(tree, "src")["children"], "trace.log")["is_ignored"] is True
     lib = _by_name(tree, "lib")
     assert lib["is_ignored"] is False
-    assert lib["children"], "the walk no longer descends through a symlink; this test proves nothing"
-    assert all(c["is_ignored"] is False for c in lib["children"])
+    assert lib["children"] == [] and lib["children_loaded"] is False
 
 
 def test_expanding_a_symlinked_directory_is_still_marked(client, repo):

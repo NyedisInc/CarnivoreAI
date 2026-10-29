@@ -68,7 +68,7 @@ def test_raise_dedupes_into_one_row_with_a_count(world):
 
 
 def test_strings_are_catalog_keys_and_a_bad_raise_never_raises(world):
-    assert _raise(title_key="Server is down") is None
+    assert _raise(title_key="Spark is down") is None
     assert _raise(severity="fatal") is None
     assert world.client.get(BASE).json()["alerts"] == []
 

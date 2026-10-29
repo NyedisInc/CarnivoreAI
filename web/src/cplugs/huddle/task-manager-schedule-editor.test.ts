@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
+import { menuNode, openRowMenu } from './row-menu-driver.test.helper';
 
 const server = vi.hoisted(() => ({ items: [] as unknown[], writes: [] as { path: string; method: string; body: Record<string, unknown> | null }[] }));
 
@@ -193,8 +194,9 @@ describe('the editor', () => {
   test('the item menu opens the editor on an unscheduled item, and Escape closes it without a write', async () => {
     const host = await mountBody();
     await click(host, '[data-task-manager-toggle="2"]');
-    await click(host, '[data-task-manager-move-open="2"]');
-    await click(host, '[data-task-manager-menu-schedule="2"]');
+    openRowMenu(host, 2);
+    menuNode('schedule')!.click();
+    await tick();
     const editor = host.querySelector<HTMLElement>('[data-task-manager-schedule-editor="2"]')!;
     expect(editor).not.toBeNull();
     editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));

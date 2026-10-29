@@ -140,7 +140,6 @@ def report_unrecognized(
         try:
             listener(dict(payload))
         except (RuntimeError, TypeError, ValueError, OSError) as exc:
-            # could not
             logger.debug("shape_alert_listener_failed", error=str(exc))
     switch = enabled if enabled is not None else debug_trace.enabled
     if not switch():

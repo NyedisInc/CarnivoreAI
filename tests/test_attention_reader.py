@@ -5,6 +5,7 @@ import json
 from types import SimpleNamespace
 
 from src.core import attention_reader as reader_module
+from src.core.attention import screen_read
 from src.core.attention.codex_stores import read_codex_transcript
 from src.core.attention.watcher import WatchTarget
 from src.core.attention_reader import AttentionEvidenceReader
@@ -37,7 +38,8 @@ def test_concurrent_workers_share_bulk_reads_and_capture_idle_codex(monkeypatch)
         _build_tmux_status_map=status_map,
         _identity_for_instance=lambda name, epoch: {"agent_type": "codex"},
         _instance_index_for_listing=lambda *, socket, names: InstanceIndex(),
-        _tmux_socket_name=lambda: "cloude",
+        tmux_socket_name=lambda: "cloude",
+        _wrappers_reader=lambda: [],
         _registry=SimpleNamespace(
             sessions={name: SimpleNamespace(agent_type="codex") for name in names},
             backends={name: SimpleNamespace(socket_name="cloude") for name in names},
@@ -64,12 +66,16 @@ def test_concurrent_workers_share_bulk_reads_and_capture_idle_codex(monkeypatch)
 
 def test_capture_reads_viewport_on_explicit_socket_only(monkeypatch):
     calls = []
+    probes = []
 
     def run(command, **kwargs):
+        if "capture-pane" not in command:
+            probes.append(command)
+            return SimpleNamespace(returncode=0, stdout="3.5a", stderr="")
         calls.append((command, kwargs))
-        return SimpleNamespace(returncode=0, stdout=b"prompt")
+        return SimpleNamespace(returncode=0, stdout=b"prompt", stderr=b"")
 
-    monkeypatch.setattr(reader_module.subprocess, "run", run)
+    monkeypatch.setattr(screen_read.subprocess, "run", run)
     assert AttentionEvidenceReader._capture(None, "cloude_a") is None
     assert calls == []
     assert AttentionEvidenceReader._capture("cloude-test", "cloude_a") == "prompt"
@@ -77,7 +83,8 @@ def test_capture_reads_viewport_on_explicit_socket_only(monkeypatch):
     assert command[0].endswith("tmux") and command[1:3] == ["-L", "cloude-test"]
     assert kwargs["close_fds"] is False
     assert command[command.index("-S") + 1] == "0"
-    assert kwargs["timeout"] == reader_module.CAPTURE_TIMEOUT_SECONDS
+    assert kwargs["timeout"] == screen_read.CAPTURE_TIMEOUT_SECONDS
+    assert all(p[1:2] == ["-V"] or p[1:3] == ["-L", "cloude-test"] for p in probes), probes
 
 
 def test_codex_user_prompt_time_ignores_tool_and_assistant_messages(tmp_path):
@@ -145,7 +152,9 @@ def test_owned_lock_probe_is_one_bounded_command(monkeypatch):
         calls.append((command, kwargs))
         return SimpleNamespace(stdout="p12\nn/codex/thread-writer-locks/mine.lock\nn/elsewhere/other.lock\n")
 
-    monkeypatch.setattr(reader_module.subprocess, "run", run)
+    import subprocess
+
+    monkeypatch.setattr(subprocess, "run", run)
     assert codex_stores._owned_writer_uuids("/codex", {10, 11, 12}) == {"mine"}
     assert len(calls) == 1
     assert calls[0][0] == ["lsof", "-a", "-p", "10,11,12", "-Fn"]
@@ -199,7 +208,8 @@ def test_a_pass_reads_every_stored_row_once_not_per_pane(monkeypatch):
         _identity_for_instance=per_row,
         _writable_datastore_connection=per_row,
         _instance_index_for_listing=index_for,
-        _tmux_socket_name=lambda: "cloude",
+        tmux_socket_name=lambda: "cloude",
+        _wrappers_reader=lambda: [],
         _registry=SimpleNamespace(
             sessions={name: SimpleNamespace(agent_type="codex") for name in names},
             backends={name: SimpleNamespace(socket_name="cloude") for name in names},
@@ -223,7 +233,8 @@ def test_a_pane_the_index_did_not_ask_about_falls_back_to_its_own_reads(monkeypa
         _build_tmux_status_map=lambda: StatusMap({}, complete=False),
         _identity_for_instance=lambda name, epoch: calls.append(name) or {"agent_type": "codex"},
         _instance_index_for_listing=lambda **kw: (_ for _ in ()).throw(AssertionError("no index")),
-        _tmux_socket_name=lambda: "cloude",
+        tmux_socket_name=lambda: "cloude",
+        _wrappers_reader=lambda: [],
         _registry=SimpleNamespace(sessions={"cloude_a": SimpleNamespace(agent_type="codex")},
                                   backends={"cloude_a": SimpleNamespace(socket_name="cloude")}),
     )

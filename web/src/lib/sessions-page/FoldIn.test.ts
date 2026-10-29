@@ -103,7 +103,7 @@ describe('remembered folds', () => {
 
 describe('heading tags and the toggle', () => {
     function heading(project: Partial<HistoryProject>, onProjectAction = vi.fn(), extra: Record<string, unknown> = {}): HTMLElement {
-        const g = { key: 'p:1', label: 'Storefront', bits: [], measure: '', rows: [], count: 0, live: 0, project: proj(1, 'Storefront', project), provider: null } as unknown as LensGroup;
+        const g = { key: 'p:1', label: 'Shopify', bits: [], measure: '', rows: [], count: 0, live: 0, project: proj(1, 'Shopify', project), provider: null } as unknown as LensGroup;
         handle = mount(GroupSection, { target: document.body, props: { group: g, folded: false, t, onFold: vi.fn(), onProjectAction, children: createRawSnippet(() => ({ render: () => '<i></i>' })), ...extra } });
         flushSync();
         return document.querySelector<HTMLElement>('section.sp-sec')!;

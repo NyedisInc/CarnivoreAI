@@ -7,13 +7,14 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 from urllib.parse import urlencode
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.concurrency import run_in_threadpool
 
 from src.api import peer_auth
 from src.config import settings
 from src.core.federation import peer_fanout, peer_merge
 from src.models.project_history import ProjectHistoryResponse
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -112,6 +113,22 @@ async def get_projects_history(
     ),
 ) -> ProjectHistoryResponse:
     """One page of every project with its session history.
+
+    Description: groups are projects (plus a last "no project" group for
+      sessions whose project is unknown); see ``src/core/project_history/
+      query.py`` for the exact filter rule. ``has_transcript`` says whether
+      a closed row's conversation can be resumed from the live transcript
+      corpus. ``live_session_id`` is the app id a running row can be
+      opened under.
+    Inputs: the query parameters above.
+    Output: ProjectHistoryResponse. ``state='no_datastore'`` with no groups
+      when this install has no ``cloude.db`` - never rendered as "no projects".
+    Raises: HTTPException 400 - a parameter could not be understood (the
+      detail names it). HTTPException 503 - the datastore is unreadable.
+      A paired Mac's groups ride beside the local page as ``peer_groups`` (first page and no one-group drill-down
+      only), fetched at request time with each session tagged with its machine; one it cannot reach is named in
+      ``peer_unavailable``. A caller holding a peer token gets THIS Mac's own rows alone and nothing fans out.
+    Example: GET /api/v1/projects/history?state=running,asleep&include_empty=false
     """
     from src.api.session_record_payload import _family_name_for_row
     from src.core.db import DatastoreUnreadableError
@@ -125,7 +142,7 @@ async def get_projects_history(
             sort=sort, offset=offset, limit=limit, session_limit=session_limit,
         )
     except HistoryQueryError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "invalid_request", exc, step="get_projects_history") from exc
 
     try:
         read = await run_in_threadpool(
@@ -135,7 +152,7 @@ async def get_projects_history(
             include_conversations=include_conversations,
         )
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc, step="get_projects_history") from exc
     if read is None:
         return ProjectHistoryResponse(state="no_datastore")
     projects, rows = read

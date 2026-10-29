@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 from contextlib import closing
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Dict, List, Optional, Tuple
 
 import pytest
@@ -14,7 +15,7 @@ from src.core.pack.rollup_import import store as rollup_store
 from src.core.stats import config, pack_scope, project_groups, queries, rollup
 from src.core.stats.batch_store import BatchStore
 from src.core.stats.plugin import rollup as write
-from src.core.stats.plugin import schema
+from src.core.stats.plugin import schema, usage_revision
 from src.core.stats.plugin.extract import project_key
 from src.core.stats.store import StatsStore
 from src.models.stats import QueryRequest
@@ -23,7 +24,7 @@ from tests.stats import seed
 HOUR = 3600
 BASE = 1_760_000_000 // HOUR * HOUR
 RANGE = {"from": BASE - HOUR, "to": BASE + 12 * HOUR}
-HOSTA, HOSTB = "install-hosta", "install-hostb"
+STUDIO, MINI = "install-studio", "install-mini"
 MOVED_ROOT = "/work/moved"
 LOCAL_ONLY = ("conv-local", project_key("/work/local"))
 
@@ -104,9 +105,9 @@ def _place_project(state: Path, root: str, pack_state: str, home: Optional[str] 
 
 def test_pack_adds_the_peers_and_local_scope_does_not(world):
     state, store, tmp = world
-    hosta = Peer(tmp, HOSTA, state)
-    hosta.conversation("conv-hosta", project_key("/work/hosta"), [1, 2, 3], tokens=40)
-    hosta.send()
+    studio = Peer(tmp, STUDIO, state)
+    studio.conversation("conv-studio", project_key("/work/studio"), [1, 2, 3], tokens=40)
+    studio.send()
     assert _total(store, scope="local") == 200
     assert _total(store) == 200 + 3 * 40
     assert queries.execute(store, _query())["scope"] == "pack"
@@ -115,17 +116,17 @@ def test_pack_adds_the_peers_and_local_scope_does_not(world):
 
 def test_the_computer_filter_returns_only_that_computers_rows(world):
     state, store, tmp = world
-    hosta, hostb = Peer(tmp, HOSTA, state), Peer(tmp, HOSTB, state)
-    hosta.conversation("conv-hosta", project_key("/work/hosta"), [1, 2, 3], tokens=40)
-    hostb.conversation("conv-hostb", project_key("/work/hostb"), [4], tokens=7)
-    hosta.send()
-    hostb.send()
+    studio, mini = Peer(tmp, STUDIO, state), Peer(tmp, MINI, state)
+    studio.conversation("conv-studio", project_key("/work/studio"), [1, 2, 3], tokens=40)
+    mini.conversation("conv-mini", project_key("/work/mini"), [4], tokens=7)
+    studio.send()
+    mini.send()
     assert _total(store, filters={"host": "local"}) == 200
-    assert _total(store, filters={"host": HOSTA}) == 120
-    assert _total(store, filters={"host": HOSTB}) == 7
+    assert _total(store, filters={"host": STUDIO}) == 120
+    assert _total(store, filters={"host": MINI}) == 7
     assert _total(store) == 200 + 120 + 7
     ranked = queries.execute(store, _query(operation="ranking", group_by="host", top_n=5))["ranking"]
-    assert {row["key"]: row["value"] for row in ranked} == {"local": 200, HOSTA: 120, HOSTB: 7}
+    assert {row["key"]: row["value"] for row in ranked} == {"local": 200, STUDIO: 120, MINI: 7}
 
 
 def test_a_moved_conversation_counts_once_under_its_owner(world):
@@ -135,36 +136,36 @@ def test_a_moved_conversation_counts_once_under_its_owner(world):
             seed.execute(db, "INSERT INTO minute_usage VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                          (BASE + hour * HOUR + 60, "local", "claude", "conv-moved", project_key(MOVED_ROOT), "claude-opus",
                           "session", 10, 0, 0, 0, 500, "v1", 1, 1, 0, "ok"))
-    hosta = Peer(tmp, HOSTA, state)
-    hosta.conversation("conv-moved", project_key(MOVED_ROOT), [1, 2, 3], tokens=10)
-    hosta.send()
+    studio = Peer(tmp, STUDIO, state)
+    studio.conversation("conv-moved", project_key(MOVED_ROOT), [1, 2, 3], tokens=10)
+    studio.send()
     assert _total(store) == 200 + 20 + 10
-    assert _total(store, filters={"host": HOSTA}) == 10
+    assert _total(store, filters={"host": STUDIO}) == 10
     assert _total(store, filters={"host": "local"}) == 220
-    _place_project(state, MOVED_ROOT, "moved_away", moved_to=HOSTA)
+    _place_project(state, MOVED_ROOT, "moved_away", moved_to=STUDIO)
     assert _total(store) == 200 + 30
-    assert _total(store, filters={"host": HOSTA}) == 30
+    assert _total(store, filters={"host": STUDIO}) == 30
     assert _total(store, filters={"host": "local"}) == 200
     assert queries.execute(store, _query())["summary"]["contributing_conversations"] == 2
 
 
 def test_a_fully_unpriced_hour_is_kept_and_reads_unknown_not_free(world):
     state, store, tmp = world
-    hosta = Peer(tmp, HOSTA, state)
-    hosta.conversation("conv-free", project_key("/work/hosta"), [5], tokens=9, cost=None)
-    hosta.send()
-    assert _total(store, filters={"host": HOSTA}) == 9
-    cost = queries.execute(store, _query("estimated_cost_nano_usd", filters={"host": HOSTA}))
+    studio = Peer(tmp, STUDIO, state)
+    studio.conversation("conv-free", project_key("/work/studio"), [5], tokens=9, cost=None)
+    studio.send()
+    assert _total(store, filters={"host": STUDIO}) == 9
+    cost = queries.execute(store, _query("estimated_cost_nano_usd", filters={"host": STUDIO}))
     assert cost["summary"]["value"] is None
     assert cost["coverage"]["unpriced_usage_count"] == 1
 
 
 def test_counters_and_non_pack_metrics(world):
     state, store, tmp = world
-    hosta = Peer(tmp, HOSTA, state)
-    hosta.conversation("conv-hosta", project_key("/work/hosta"), [1, 2], tokens=5)
-    hosta.send()
-    assert queries.execute(store, _query("tool_calls", filters={"host": HOSTA}))["summary"]["value"] == 6
+    studio = Peer(tmp, STUDIO, state)
+    studio.conversation("conv-studio", project_key("/work/studio"), [1, 2], tokens=5)
+    studio.send()
+    assert queries.execute(store, _query("tool_calls", filters={"host": STUDIO}))["summary"]["value"] == 6
     working = queries.execute(store, _query("working_seconds"))
     assert working["scope"] == "local"
 
@@ -177,9 +178,9 @@ def test_no_peer_rollups_answers_local(world):
 
 def test_the_ledger_fingerprint_follows_a_peers_revision(world):
     state, store, tmp = world
-    hosta = Peer(tmp, HOSTA, state)
-    hosta.conversation("conv-hosta", project_key("/work/hosta"), [1], tokens=5)
-    hosta.send()
+    studio = Peer(tmp, STUDIO, state)
+    studio.conversation("conv-studio", project_key("/work/studio"), [1], tokens=5)
+    studio.send()
     request = _query()
 
     def fingerprint() -> str:
@@ -190,8 +191,8 @@ def test_the_ledger_fingerprint_follows_a_peers_revision(world):
             view.release()
 
     first = fingerprint()
-    hosta.conversation("conv-hosta", project_key("/work/hosta"), [2], tokens=5)
-    hosta.send()
+    studio.conversation("conv-studio", project_key("/work/studio"), [2], tokens=5)
+    studio.send()
     assert fingerprint() != first
     local = _query(scope="local")
     view = BatchStore(store)
@@ -203,17 +204,72 @@ def test_the_ledger_fingerprint_follows_a_peers_revision(world):
 
 def test_an_offline_computer_is_labeled_through_its_newest_hour_and_the_stored_answer_is_not_touched(world):
     state, store, tmp = world
-    hosta = Peer(tmp, HOSTA, state)
-    hosta.conversation("conv-hosta", project_key("/work/hosta"), [1, 2, 3], tokens=5)
-    hosta.send(now=BASE + 30 * HOUR)
-    online = pack_scope.computers(store, "mac", {HOSTA: True})
-    assert [c["id"] for c in online] == ["local", HOSTA] and all(c["through"] is None for c in online)
-    offline = pack_scope.computers(store, "mac", {HOSTA: False})
-    assert offline[1]["through"] == _iso(BASE + 4 * HOUR) and offline[1]["label"] == "hosta"
+    studio = Peer(tmp, STUDIO, state)
+    studio.conversation("conv-studio", project_key("/work/studio"), [1, 2, 3], tokens=5)
+    studio.send(now=BASE + 30 * HOUR)
+    online = pack_scope.computers(store, "mac", {STUDIO: True})
+    assert [c["id"] for c in online] == ["local", STUDIO] and all(c["through"] is None for c in online)
+    offline = pack_scope.computers(store, "mac", {STUDIO: False})
+    assert offline[1]["through"] == _iso(BASE + 4 * HOUR) and offline[1]["label"] == "studio"
     stored = {"ok": True, "result": queries.execute(store, _query())}
-    shown = pack_scope.annotate(store, [stored], {HOSTA: False}, "mac")
-    assert shown[0]["result"]["pack"]["offline"] == [{"id": HOSTA, "label": "hosta", "through": _iso(BASE + 4 * HOUR)}]
+    shown = pack_scope.annotate(store, [stored], {STUDIO: False}, "mac")
+    assert shown[0]["result"]["pack"]["offline"] == [{"id": STUDIO, "label": "studio", "through": _iso(BASE + 4 * HOUR)}]
     assert "pack" not in stored["result"]
-    assert pack_scope.annotate(store, [stored], {HOSTA: True}, "mac")[0]["result"]["pack"]["offline"] == []
-    dim = pack_scope.host_dimension(store, "mac", {HOSTA: True})
-    assert [(i["filter_value"], i["label"]) for i in dim["items"]] == [("local", "mac"), (HOSTA, "hosta")]
+    assert pack_scope.annotate(store, [stored], {STUDIO: True}, "mac")[0]["result"]["pack"]["offline"] == []
+    dim = pack_scope.host_dimension(store, "mac", {STUDIO: True})
+    assert [(i["filter_value"], i["label"]) for i in dim["items"]] == [("local", "mac"), (STUDIO, "studio")]
+
+
+def test_ownership_is_kept_across_a_live_activity_tick_and_redone_on_new_usage(world, monkeypatch):
+    state, store, tmp = world
+    studio = Peer(tmp, STUDIO, state)
+    studio.conversation("conv-studio", project_key("/work/studio"), [1, 2], tokens=40)
+    studio.send()
+    pack_scope._cache.clear()
+    runs: List[int] = []
+    real = pack_scope._owners
+    monkeypatch.setattr(pack_scope, "_owners", lambda *a, **k: (runs.append(1), real(*a, **k))[1])
+
+    def look() -> None:
+        view = BatchStore(store)
+        try:
+            assert pack_scope.ownership(store, view) is not None
+        finally:
+            view.release()
+
+    look()
+    with store.connect() as db:
+        db.execute("UPDATE stats_meta SET value=CAST(value AS INTEGER)+1 WHERE key='revision'")
+    look()
+    assert len(runs) == 1
+    with store.connect() as db:
+        usage_revision.bump(db)
+    look()
+    assert len(runs) == 2
+
+
+def test_a_project_group_change_redoes_the_ownership_while_homes_exist(world, monkeypatch):
+    state, store, tmp = world
+    studio = Peer(tmp, STUDIO, state)
+    studio.conversation("conv-studio", project_key("/work/studio"), [1, 2], tokens=40)
+    studio.send()
+    _place_project(state, "/work/moved", "moved_away", moved_to=STUDIO)
+    pack_scope._cache.clear()
+    runs: List[int] = []
+    real = pack_scope._owners
+    monkeypatch.setattr(pack_scope, "_owners", lambda *a, **k: (runs.append(1), real(*a, **k))[1])
+
+    def look() -> str:
+        view = BatchStore(store)
+        try:
+            return pack_scope.ownership(store, view).signature
+        finally:
+            view.release()
+
+    first = look()
+    assert look() == first and len(runs) == 1
+    groups = project_groups.groups_for(store)
+    monkeypatch.setattr(project_groups, "groups_for",
+                        lambda _store, **_kw: SimpleNamespace(group={**groups.group, "folder-new": "g-new"},
+                                                              group_of=groups.group_of))
+    assert look() != first and len(runs) == 2

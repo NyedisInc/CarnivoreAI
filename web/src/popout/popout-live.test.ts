@@ -71,6 +71,7 @@ test('the pop-out boots every push channel, resyncs on reconnect, and flags a ne
 
   server.build = 'bbb';
   connected = true;
+  const random = vi.spyOn(Math, 'random').mockReturnValue(0);
   send({ type: 'events.open' });
   send({ type: 'events.hello', resource_topics: ['huddle', 'client_build'], server_version: '1.0.0', client_build: 'bbb' });
   await vi.waitFor(() => expect(listing!.isLive()).toBe(true));
@@ -78,4 +79,5 @@ test('the pop-out boots every push channel, resyncs on reconnect, and flags a ne
   expect(taskManagerRead).toHaveBeenCalledTimes(3);
   expect(connection.live).toBe(true);
   expect(bannerKind(versionWatch)).toBe('client');
+  random.mockRestore();
 });

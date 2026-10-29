@@ -5,6 +5,12 @@ import { createFakeCtx, FakeCanvasUnsupported, matMul } from './helpers/fake-can
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion, recording the outcome.
+ * @param {string} name Test name shown in the output
+ * @param {function(): void} fn Body; throws to fail
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();

@@ -13,7 +13,7 @@ logger = structlog.get_logger()
 
 PLUGINS_ROOT = Path(__file__).resolve().parent
 MANIFEST_FILE = "cplug.json"
-ORDER_HINT: Tuple[str, ...] = ("huddle", "unread", "share", "save", "flow", "reviewboard", "tmdevtools", "crate", "devwidgetlab")
+ORDER_HINT: Tuple[str, ...] = ("huddle", "unread", "share", "save", "flow", "reviewboard", "publicboard", "tmdevtools", "crate", "devwidgetlab")
 
 
 class ShipListError(Exception):

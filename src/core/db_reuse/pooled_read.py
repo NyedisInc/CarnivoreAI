@@ -17,6 +17,10 @@ def fresh_for_read(conn: sqlite3.Connection) -> sqlite3.Connection:
     return conn
 
 
+def is_corrupt(exc: sqlite3.Error) -> bool:
+    return isinstance(exc, sqlite3.DatabaseError) and not isinstance(exc, sqlite3.OperationalError)
+
+
 class ReadPool:
 
     def __init__(self, opener: Callable[[Path], sqlite3.Connection]) -> None:

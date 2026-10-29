@@ -69,6 +69,8 @@ function buildHeaderTitle(document) {
     return { appTitle, titleText, renameInput, pencil };
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('REPRO: a bare overlay click listener fires for a click on a child input', () => {
     const { env } = load();
@@ -88,6 +90,8 @@ test('REPRO: a bare container click listener fires for a click on the rename inp
     assert.equal(navigated, 1, 'expected the unguarded listener to navigate away');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('overlay dismiss does NOT fire when the search input is clicked', () => {
     const { env, DismissGuard } = load();
@@ -127,6 +131,8 @@ test('overlay dismiss DOES fire for a click on the scrim itself', () => {
     assert.equal(closed, 1, 'click-outside-to-close must still work');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('container activate does NOT fire when the rename input is clicked', () => {
     const { env, DismissGuard } = load();
@@ -164,6 +170,8 @@ test('container activate DOES fire for a click on the container itself', () => {
     assert.equal(navigated, 1);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('every form control counts as interactive', () => {
     const { env, DismissGuard } = load();
@@ -220,6 +228,8 @@ test('an interactive element OUTSIDE the container does not count', () => {
     assert.equal(DismissGuard.isInteractiveTarget(e, box), false);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('outside dismiss ignores clicks inside the panel', () => {
     const { env, DismissGuard } = load();
@@ -284,6 +294,8 @@ test('outside dismiss unsubscribes', () => {
     assert.equal(dismissed, 0);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('no client module wires a bare overlay-click-to-close any more', () => {
     const jsDir = path.join(__dirname, '..', 'client', 'js');

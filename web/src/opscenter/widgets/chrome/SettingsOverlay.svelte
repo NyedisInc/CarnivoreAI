@@ -141,7 +141,6 @@
 
 <style>
   @layer components {
-    /* box-shadow */
     :global(.oc-configure) {
       position: fixed;
       inset: auto;

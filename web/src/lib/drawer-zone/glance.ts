@@ -21,7 +21,6 @@ export interface GlanceTileProps<T = unknown> {
 
 export type PlacementOptions = Readonly<Record<string, PlacementOptionValue>>;
 
-/* the glance area */
 export interface GlancePlacementOptions {
   schema: WidgetSettingsSchema;
   optionLabel?: (key: string, option: string) => string | undefined;

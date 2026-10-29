@@ -1,3 +1,4 @@
+/* the home screen */
 
 console.log('[AppEvents Module] Loading...');
 
@@ -70,6 +71,8 @@ console.log('[AppEvents Module] Loading...');
         });
         globalThis.addEventListener('authenticated', unparkIfNewToken);
         globalThis.addEventListener('focus', unparkIfNewToken);
+        globalThis.addEventListener('logged-out', function () { stop(); });
+        globalThis.addEventListener('auth-required', function () { stop(); });
     }
     if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
         document.addEventListener('visibilitychange', function () {

@@ -109,6 +109,14 @@ class AddProviderModelRequest(BaseModel):
 
 class LocalModelsResponse(BaseModel):
     """Response for ``GET /api/v1/providers/local/models``.
+
+    ALWAYS 200. An LM Studio box that is off is not an API error - it is a
+    STATE the picker has to render, and a 502 would make the client guess
+    at the difference between "the server is down" and "your local box is
+    down". Branch on ``state``, not on ``reachable``: the boolean is False
+    for both ``unreachable`` and ``not-configured``, which mean opposite
+    things to the person reading the screen. One says go check the machine;
+    the other says go set the address.
     """
     state: str = "not-configured"
     reachable: bool = False

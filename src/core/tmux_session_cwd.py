@@ -27,27 +27,16 @@ def probe_session_working_dir(
     timeout: float = CWD_PROBE_TIMEOUT_SECONDS,
     fmt: str = SESSION_PATH_FORMAT,
 ) -> Optional[str]:
-    """Read one tmux session's working directory, or answer that we cannot.
+    return probe_session_format(name, socket=socket, fmt=fmt, timeout=timeout)
 
-    Description: runs ``tmux -L <socket> display-message -p -t '=<name>'
-      '#{session_path}'``. The ``=`` prefix is tmux's EXACT-MATCH target
-      operator: without it tmux treats the target as a pattern, so a
-      session named ``fs`` would match ``fs2`` and this function would
-      confidently return a different session's directory. That is an
-      identity error, and it is silent, so it is worth the two
-      characters.
 
-      NEVER RAISES and NEVER GUESSES. Every failure - tmux absent, a
-      timeout, a non-zero exit, an empty answer, an undecodable byte
-      string - returns None, which means CANNOT DETERMINE and must not
-      be read as "no working directory".
-    Inputs: name (str) - the tmux session name. socket (str) - the tmux
-      socket the session lives on. timeout (float) - seconds. fmt (str) -
-      :data:`SESSION_PATH_FORMAT` (default) or :data:`PANE_PATH_FORMAT`.
-    Output: str | None - the session's working directory, or None when
-      it could not be determined.
-    Example: probe_session_working_dir('cloude_a', socket='cloude')
-    """
+def probe_session_format(
+    name: str,
+    *,
+    socket: str,
+    fmt: str,
+    timeout: float = CWD_PROBE_TIMEOUT_SECONDS,
+) -> Optional[str]:
     if not name:
         return None
     if any(sep in name for sep in _TARGET_SEPARATORS):

@@ -71,7 +71,6 @@ def install(state_dir: Path) -> None:
 
 
 def uninstall() -> None:
-    """Forget the lookup and the state directory (shutdown; tests). Output: None."""
     global _state_dir, _last
     lookup.configure(None)
     _state_dir = None

@@ -41,6 +41,7 @@ setLocale('en');
 
 const apps: ReturnType<typeof mount>[] = [];
 
+/** A `GET /auto-sleep` answer. */
 function state(over: Partial<AutoSleepState> = {}): AutoSleepState {
   return {
     enabled: true, idle_minutes: 60, min_idle_minutes: 5, max_idle_minutes: 10080,
@@ -49,6 +50,7 @@ function state(over: Partial<AutoSleepState> = {}): AutoSleepState {
   };
 }
 
+/** One `/sessions/list` row, the fields the cell reads. */
 function live(name: string, label: string, status: string): Record<string, unknown> {
   return {
     session: { id: `ses_${name}`, working_dir: '/Users/x/dev/carnivore', created_at: '2026-09-27T00:00:00Z' },

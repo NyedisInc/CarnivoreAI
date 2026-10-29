@@ -20,13 +20,23 @@ if str(ROOT) not in sys.path:
 
 # ruff: noqa: E402
 from src.core import test_write_guard  # noqa: E402
-from src.core.upload_sweeper import (  # noqa: E402
-    UPLOAD_DIR_NAME,
-    SweepOutcome,
-    UploadSweeper,
-    datastore_project_paths,
-    sweep_verdict,
-)
+from src.core.upload_sweeper import UploadSweeper, datastore_project_paths  # noqa: E402
+from src.core.uploads import bucket_guard  # noqa: E402
+from src.core.uploads.bucket_guard import SweepOutcome  # noqa: E402
+
+
+BUCKET_NAMES = (".carnivore_uploads", ".cloude_uploads")
+UPLOAD_DIR_NAME = BUCKET_NAMES[0]
+
+
+@pytest.fixture(autouse=True, params=BUCKET_NAMES)
+def _bucket_name(request, monkeypatch):
+    monkeypatch.setitem(globals(), "UPLOAD_DIR_NAME", request.param)
+    return request.param
+
+
+def sweep_verdict(base):
+    return bucket_guard.sweep_verdict(base, UPLOAD_DIR_NAME)
 
 
 def _seed_old_file(base: Path, name: str = "stale.png") -> Path:

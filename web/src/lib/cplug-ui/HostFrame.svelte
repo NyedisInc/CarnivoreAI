@@ -1,4 +1,4 @@
-<!-- could not -->
+
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import type { Translate } from '../sessions/types';

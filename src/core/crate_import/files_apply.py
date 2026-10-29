@@ -87,10 +87,6 @@ def _old_chunks(path: Path, length: int) -> Iterator[bytes]:
 
 
 def _backup(p: files_place.Placement, home: Path, old_length: int, old_sha: str, import_id: str, env: ImportEnv) -> Path:
-    """Copy the local file's bytes to the receipts folder (never replacing a backup already there). Output: the backup path.
-
-    Raises: ImportFailed (the file is no longer what was proved a prefix; the backup could not be written).
-    """
     assert p.dest is not None
     backup = env.backup_dir(import_id) / p.record.home / p.dest.relative_to(home)
     backup.parent.mkdir(parents=True, exist_ok=True, mode=0o700)

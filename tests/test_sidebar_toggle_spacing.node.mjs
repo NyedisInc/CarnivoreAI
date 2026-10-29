@@ -9,6 +9,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -21,6 +27,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read one stylesheet from client/css.
+ * @param {string} name  File name, e.g. `styles.css`.
+ * @returns {string} File contents.
+ */
 function css(name) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', 'css', name), 'utf8');
 }

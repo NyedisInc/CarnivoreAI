@@ -205,6 +205,30 @@ test('a token refused again after the re-auth parks the socket until a new token
     }
 });
 
+for (const evt of ['logged-out', 'auth-required']) {
+    test(`a ${evt} event closes the live event socket`, () => {
+        const listeners = {};
+        globalThis.addEventListener = (type, fn) => { (listeners[type] ||= []).push(fn); };
+        const events = load();
+        const sockets = [];
+        let closed = 0;
+        try {
+            globalThis.API = {
+                getToken: () => 'tok',
+                openWebSocket: () => { const ws = { readyState: 1, close() { closed += 1; } }; sockets.push(ws); return ws; },
+            };
+            events.start();
+            assert.equal(sockets.length, 1);
+            for (const fn of listeners[evt] ?? []) fn({});
+            assert.equal(closed, 1, 'the socket is closed');
+            assert.equal(events._state.stopped, true, 'no reconnect is scheduled');
+        } finally {
+            delete globalThis.addEventListener;
+            events.stop();
+        }
+    });
+}
+
 test('a page with no refresh path parks on a refused token instead of retrying it', () => {
     const events = load();
     delete globalThis.SocketAuthRecovery;

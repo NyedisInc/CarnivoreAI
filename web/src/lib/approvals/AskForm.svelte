@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
+  import { Button, Field } from '../base';
   import Tabs, { panelAttrs, type TabDef } from '../../opscenter/ui/Tabs.svelte';
   import { answerAll, approvals, noticeKey } from './approvals.svelte';
   import {
@@ -80,15 +81,15 @@
 
 {#snippet foot()}
   <div class="ak-foot" class:ak-foot--pinned={registerFoot !== undefined}>
-    <button type="button" class="ak-link" onclick={() => onJump(item)}>{t('approvals.jump')}</button>
+    <Button variant="quiet" size="sm" onclick={() => onJump(item)}>{t('approvals.jump')}</Button>
     <span class="ak-spacer"></span>
     {#if left > 0 && left < questions.length}<span class="ak-left" data-ask-left>{t('approvals.ask.left_out', { n: left })}</span>{/if}
     {#if questions.length > 1 && !onLast}
-      <button type="button" class="modal-btn modal-btn-confirm" data-ask-next disabled={busy}
-        onclick={() => go(current + 1)}>{t('approvals.ask.next')}</button>
+      <Button variant="confirm" data-ask-next disabled={busy}
+        onclick={() => go(current + 1)}>{t('approvals.ask.next')}</Button>
     {/if}
-    <button type="button" class={['modal-btn', onLast || questions.length < 2 ? 'modal-btn-confirm' : 'modal-btn-secondary']} data-ask-submit disabled={busy || unsupported || left === questions.length}
-      onclick={submit}>{t('approvals.ask.submit')}</button>
+    <Button variant={onLast || questions.length < 2 ? 'confirm' : 'secondary'} data-ask-submit disabled={busy || unsupported || left === questions.length}
+      onclick={submit}>{t('approvals.ask.submit')}</Button>
   </div>
 {/snippet}
 
@@ -115,7 +116,7 @@
             <Check role="checkbox" label={option.label} hint={option.description ?? ''} checked={draft.picks.includes(i)}
               disabled={busy} data-ask-option={option.label} onToggle={(next) => tick(i, next)} />
           {:else}
-            <button type="button" class="oc-choice" role="radio" aria-checked={!draft.useOther && draft.choice === i}
+            <button type="button" class="oc-choice" data-base-exempt="a radio choice card with a name and a description that previews on focus; the base RadioGroup is a native radio with no preview hook, and this screen's keys and tests ride the button" role="radio" aria-checked={!draft.useOther && draft.choice === i}
               disabled={busy} data-ask-option={option.label} onclick={() => pick(i)}
               onmouseenter={() => (peek = i)} onfocus={() => (peek = i)} onmouseleave={() => (peek = null)}>
               <span class="oc-choice__top"><span class="oc-radio" aria-hidden="true"></span><span class="oc-choice__name">{option.label}</span></span>
@@ -126,7 +127,7 @@
         {#if hasOtherRow(q)}
           <div class="ak-other" class:ak-other--on={q.multi_select ? draft.other.trim() !== '' : draft.useOther}>
             <label class="pl-label" for="ak-other">{t('approvals.other_label')}</label>
-            <input id="ak-other" class="oc-field ak-input" type="text" maxlength={ASK_TEXT_MAX} disabled={busy}
+            <Field id="ak-other" block maxlength={ASK_TEXT_MAX} disabled={busy}
               value={draft.other} placeholder={t('approvals.other_placeholder')} data-ask-other
               oninput={(event) => typeOther((event.currentTarget as HTMLInputElement).value)} />
           </div>
@@ -137,7 +138,7 @@
     {#if hasPreview(q)}
       <div class="ak-other ak-notes">
         <label class="pl-label" for="ak-notes">{t('approvals.ask.notes')}</label>
-        <input id="ak-notes" class="oc-field ak-input" type="text" maxlength={ASK_TEXT_MAX} disabled={busy}
+        <Field id="ak-notes" block maxlength={ASK_TEXT_MAX} disabled={busy}
           value={draft.notes} placeholder={t('approvals.ask.notes_placeholder')} data-ask-notes
           oninput={(event) => { drafts[current] = { ...draft, notes: (event.currentTarget as HTMLInputElement).value }; }} />
       </div>
@@ -177,7 +178,6 @@
     .ak :global(.oc-check) { white-space: normal; padding: var(--oc-space-2) 10px; }
     .ak :global(.oc-choice) { padding: var(--oc-space-2) 10px; }
     .ak-other { display: flex; flex-direction: column; gap: var(--oc-space-1); padding-top: var(--oc-space-1); }
-    .ak-input { width: 100%; box-sizing: border-box; font-size: var(--oc-fs-run-title); }
     .ak-preview {
       margin: 0; padding: var(--oc-space-2) 10px; max-height: 18em; overflow: auto; font-family: var(--font-mono); font-size: var(--oc-fs-body);
       color: var(--pl-text); white-space: pre-wrap; overflow-wrap: anywhere;
@@ -188,11 +188,5 @@
     .ak-spacer { flex: 1; }
     .ak-foot--pinned { flex: 1; }
     .ak-left { font-size: var(--oc-fs-body); color: var(--oc-yellow); }
-    .ak-foot .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .ak-foot .ak-link {
-      background: transparent; border: 0; padding: 0; color: var(--pl-muted); font-family: inherit; font-size: var(--oc-fs-body);
-      cursor: pointer; text-decoration: underline;
-    }
-    .ak-foot .ak-link:hover { color: var(--pl-text); }
   }
 </style>

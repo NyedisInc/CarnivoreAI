@@ -17,7 +17,7 @@ def test_old_read_posts_are_dropped_and_the_newest_is_the_preview():
     assert ids(slim.slim_thread(thread)) == [5]
 
 
-def test_open_questions_unread_posts_and_owners_newest_reply_stay():
+def test_open_questions_unread_posts_and_joes_newest_reply_stay():
     thread = [msg(1), msg(2, kind="question"), msg(3, "joe", "reply"), msg(4, kind="attention", unread=True),
               msg(5, "joe", "reply"), msg(6), msg(7, kind="question")]
     assert ids(slim.slim_thread(thread)) == [2, 4, 5, 7]

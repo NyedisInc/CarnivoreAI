@@ -8,12 +8,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from src.api.error_response import api_error
 from src.api.ai_common import api_errors
 from src.api.auth import require_auth
+from src.api.capped_reads import read_capped_body
 from src.core.byoai import gateway as gateway_module
-from src.core.byoai.contracts import ByoaiError, ToolSpec
+from src.core.byoai.contracts import UNATTENDED_AGENT_MODES, ByoaiError, ToolSpec
 from src.core.byoai.gateway import Gateway, Ref
 from src.core.byoai.serialize import jsonable
+from src.models.automations import UNATTENDED_PHRASE
 
 router = APIRouter(prefix="/ai", tags=["ai"], dependencies=[Depends(require_auth)])
 
@@ -101,6 +104,13 @@ class AgentBody(Dest):
     cwd: Optional[str] = None
     max_turns: Optional[int] = Field(default=None, ge=1)
     timeout_s: Optional[float] = Field(default=None, gt=0)
+    acknowledge_unattended: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _unattended_needs_the_phrase(self) -> "AgentBody":
+        if self.permission_mode in UNATTENDED_AGENT_MODES and self.acknowledge_unattended != UNATTENDED_PHRASE:
+            raise ValueError(f'permission mode {self.permission_mode} runs with no prompts; set acknowledge_unattended to "{UNATTENDED_PHRASE}"')
+        return self
 
 
 class SpeakBody(Dest):
@@ -126,7 +136,8 @@ async def _stream_chat(first: Any, rest: AsyncIterator[Any]) -> AsyncIterator[by
         async for delta in rest:
             yield _sse("delta", jsonable(delta))
     except ByoaiError as exc:
-        yield _sse("error", {"error": "provider_error", "detail": str(exc)})
+        failure = api_error(502, "byoai_provider_error", exc)
+        yield _sse("error", failure.detail)
 
 
 @router.post("/chat")
@@ -201,12 +212,9 @@ async def transcribe(request: Request, feature: Optional[str] = None, connection
         dest = Dest(feature=feature, connection=connection, model=model)
     except ValueError:
         raise HTTPException(400, {"error": "invalid", "detail": "give a feature, or a connection and model"}) from None
-    declared = int(request.headers.get("content-length") or 0)
-    if declared > MAX_AUDIO_BYTES:
-        raise HTTPException(413, {"error": "too_large", "detail": f"audio over {MAX_AUDIO_BYTES} bytes"})
-    audio = await request.body()
-    if not audio or len(audio) > MAX_AUDIO_BYTES:
-        raise HTTPException(400 if not audio else 413, {"error": "audio", "detail": "send the audio as the request body"})
+    audio = await read_capped_body(request, MAX_AUDIO_BYTES)
+    if not audio:
+        raise HTTPException(400, {"error": "audio", "detail": "send the audio as the request body"})
     options: Mapping[str, Any] = {k: v for k, v in request.query_params.items()
                                   if k not in ("feature", "connection", "model")}
     gw = gateway_module.get_gateway()

@@ -30,8 +30,6 @@ def unique_id(base: str, taken: Iterable[str]) -> str:
 
 
 def script_from_command(family_name: str, command: str) -> str:
-    """Turn a legacy one-line launch command into a forwarding wrapper script.
-    """
     text = command.strip()
     if any(token in text for token in _FORWARDING_TOKENS):
         return text
@@ -75,6 +73,8 @@ def ensure_family_defaults(wrappers: List) -> List:
     result = [dict(w) if isinstance(w, dict) else w for w in wrappers]
     dicts = [w for w in result if isinstance(w, dict)]
     for family in AGENT_FAMILIES:
+        if not family.seeded:
+            continue
         own = wrappers_for_family(dicts, family.name)
         if not own:
             seeded = standard_wrapper(family, (_id_of(w) for w in result))

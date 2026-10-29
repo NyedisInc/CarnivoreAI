@@ -154,39 +154,6 @@ def validate_archive(
     allow_scripts: bool = False,
     src_path: str | None = None,
 ) -> ValidatedArchive:
-    """Validate a fetched item tarball and compute its folder digest.
-
-    EVERY SAFETY RULE BELOW IS KIND-INDEPENDENT. The traversal checks, the
-    type checks, the duplicate fold, the member and byte caps and the
-    executable-content refusal are about BYTES and PATHS, and a theme's
-    bytes are not special. The kind decides exactly two strings: which
-    folder of the repository is kept, and which manifest the folder must
-    carry. Both come from :mod:`src.core.skills.kinds`.
-
-    :param path: the ``.tar.gz`` on disk.
-    :param publisher: the catalog publisher, already format-validated.
-    :param name: the item name, already format-validated.
-    :param kind: ``"skill"`` or ``"theme"``; decides the archive folder
-        and the required manifest. Defaults to a skill.
-    :param limits: the bounds to enforce.
-    :param src_path: the signed ``version.src.path``; the folder kept is
-        exactly this, and it is refused unless it is
-        ``<allowed folder for the kind>/<publisher>/<name>``. None keeps the
-        kind's current folder.
-    :param allow_scripts: keep executable content instead of refusing it.
-        DEFAULTS TO FALSE so no caller unlocks it by omission; only a
-        caller holding a recorded consent for these exact bytes passes
-        True. See the module docstring.
-    :returns: the approved members and the digest they hash to.
-    :raises ArchiveRefused: ``scripts_not_supported`` for executable
-        content when it is not allowed, ``archive_invalid`` for every
-        structural refusal.
-
-    Writes nothing to disk. The rules run in a fixed order so a refusal
-    detail is reproducible: raw name safety, prefix, exclusions, scope,
-    DERIVED PATH SAFETY, ASCII, duplicate, type, nested manifest, count,
-    header sum, executable content, then the body itself.
-    """
     manifest = kinds.manifest_name(kind)
     try:
         skill_rel = kinds.archive_root(kind, publisher, name, src_path) + "/"

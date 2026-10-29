@@ -19,9 +19,9 @@ Full model: <code>docs/session-status.md</code>.</p>
         <tr><td>light blue</td><td><code>notice</code></td><td>still working, wants attention</td><td>alone</td></tr>
         <tr><td>grey</td><td><code>idle</code>, <code>unknown</code></td><td>at rest and read; not measured</td><td>SHAPE: solid centre against hollow centre</td></tr>
         <tr><td>crisp green ring</td><td><code>finished_unread</code></td><td>a turn ended and nobody looked</td><td>a still ring with a cleared centre</td></tr>
-        <tr><td>dark grey</td><td><code>dead</code></td><td>the process exited</td></tr>
-        <tr><td>red</td><td>transport <code>disconnected</code></td><td>this browser lost its socket</td></tr>
-        <tr><td>red skull</td><td>the wrapper's <code>usage_limit</code> signal (inner state <code>limit</code>; not a ninth status)</td><td>the session hit its usage limit and stopped, whatever its status says (issue #1902)</td></tr>
+        <tr><td>dark grey</td><td><code>dead</code></td><td>the process exited</td><td>no ring; the label "dead, the process exited"</td></tr>
+        <tr><td>red</td><td>transport <code>disconnected</code></td><td>this browser lost its socket</td><td>the label "disconnected, no live connection"</td></tr>
+        <tr><td>red skull</td><td>the wrapper's <code>usage_limit</code> signal (inner state <code>limit</code>; not a ninth status)</td><td>the session hit its usage limit and stopped, whatever its status says (issue #1902)</td><td>the skull replaces the dot, STATIC, no ring; the label "over limit, resets oct 20 9pm"; a dead pane, a dropped socket and an unreachable computer outrank it</td></tr>
         <tr><td>grey moon</td><td><code>asleep</code> (a client paint)</td><td>put to sleep, row kept in place</td><td>the moon replaces the dot</td></tr>
         <tr><td>moon in the unread color</td><td><code>asleep</code> + <code>unread</code> (inner state <code>asleep-unread</code>)</td><td>asleep and flagged for follow-up: the manual mark unread outlives the sleep (issue #749)</td><td>the moon takes <code>--led-color-unread</code>, no ring</td></tr>
     </tbody>
@@ -49,16 +49,36 @@ and is never drawn as <code>idle</code>.</p>
     <dd><code>size</code> takes a CSS length (<code>'10px'</code>) and sets <code>--led-size</code>; <code>showLabel</code>
         prints the words next to the light, as this specimen does.</dd>
     <dt>themes</dt>
+    <dd>Reads the status custom properties in <code>client/css/status-led.css</code>, derived from the theme's signal
+        colours; <code>dead</code> is the one literal (<code>#494c4f</code>, Alex, 2026-09-25).</dd>
     <dt>access</dt>
     <dd>Every light has an accessible label and, being an icon, a tooltip in words, including where the status came from
         (<code>via registry</code>, <code>via transcript</code>). Reduced motion stops the breathing ring at full
         brightness.</dd>
 </dl>
 
+<h3 class="sg-h3" id="status-led-swarm-member">a swarm member's light is its character</h3>
+<dl class="sg-facts">
+    <dt>what</dt>
+    <dd>A session in the swarm draws its animated swarm character in the light's place, on the drawer row and the sessions
+        page row: <code>&lt;SessionFace member /&gt;</code> hands it to <code>&lt;SwarmRowFace facts member /&gt;</code>
+        (<code>.swarm-row-face</code>). Same footprint: the slot is the light's 9px box and the character overflows it, so the
+        row gains no width. The body is the agent's own swarm color and home shape.</dd>
+    <dt>states</dt>
+    <dd><code>memberState</code> runs the light's own ladder (<code>ledStateFor</code>) and names the character state: the eight
+        status states as themselves, unread at rest as <code>finished_unread</code> (the glow), the startup gate as
+        <code>startup_gate</code>, a lost socket or an unreachable computer as <code>unknown</code>, over the limit as the
+        alarm. An unread moon keeps <code>asleep</code> and wears the flag ring (<code>.swarm-row-face[data-unread]</code>,
+        <code>--oc-green</code>). The words are the light's own title, so dead and a lost socket stay told apart.</dd>
+    <dt>never</dt>
+    <dd>A non-member keeps the plain light, untouched (<code>StatusLed.parity.test.ts</code>).</dd>
+</dl>
+
 <h3 class="sg-h3" id="status-led-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">
     <li><strong>Changing one tree.</strong> Edit <code>led.ts</code> and <code>status-led.js</code> together or half the
         app's lights change; the parity test fails on purpose.</li>
+    <li><strong>Painting idle for unknown.</strong> "I did not look" and "I looked and found rest" are different claims.</li>
     <li><strong>"Fixing" a grey flash in the client.</strong> The watcher goes unknown only after three missed cycles; a
         grey flash under load is the server being honest (#524).</li>
     <li><strong>A copied light.</strong> A dot painted with a status colour next to a name is a second, drifting

@@ -12,9 +12,9 @@ from src.cplugs.save.vault.identity import Identity
 from src.cplugs.save.vault.store import Vault
 from src.cplugs.save.vault.units import Sources
 
-CONV = "d6bf57c2-fdbb-45a8-89f0-0857e3422fe3"
+CONV = "12345678-aaaa-bbbb-cccc-1234567890ab"
 ENC = "-Users-x-proj"
-CODEX_ID = "0b984f74-cd8c-44ce-8b76-d8a10b8f7ab7"
+CODEX_ID = "0199aaaa-bbbb-7ccc-8ddd-eeeeffff0001"
 
 
 def jsonl(lines: int, seed: int = 0, pad: int = 200) -> bytes:

@@ -59,14 +59,6 @@
         margin-top: var(--oc-space-3);
     }
 
-    .crt-form .pl-label {
-        font-size: var(--oc-fs-micro, 10px);
-        font-weight: 400;
-        letter-spacing: var(--oc-tracking-label, 0.6px);
-        text-transform: uppercase;
-        color: var(--oc-text-muted);
-    }
-
     .crt-ticks {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
@@ -75,12 +67,6 @@
 
     .crt-ticks:empty {
         display: none;
-    }
-
-    .crt-form__row {
-        display: flex;
-        flex-direction: column;
-        gap: var(--oc-space-1);
     }
 
     .crt-plan p {
@@ -128,7 +114,6 @@
         color: var(--oc-text-dim);
     }
 
-    /* padding */
     .crt-tty {
         container: crt-tty / inline-size;
         display: flex;
@@ -215,7 +200,7 @@
         padding: 2px 0;
     }
 
-    .crt-tty__note > :not(.crt-tty__tag) {
+    .crt-tty__note > :not(.oc-tag) {
         grid-column: 2;
     }
 
@@ -271,10 +256,6 @@
         min-height: 20px;
     }
 
-    .crt-tty__row:hover {
-        background: var(--oc-ground-hover);
-    }
-
     .crt-tty__line {
         grid-column: 1 / -1;
         min-width: 0;
@@ -314,51 +295,8 @@
         justify-self: end;
     }
 
-    .crt-tty__tag {
-        display: inline-flex;
-        align-items: center;
+    .crt-tty__row > .oc-tag {
         justify-self: start;
-        gap: 5px;
-        height: 16px;
-        padding: 0 6px;
-        border: 1px solid color-mix(in oklab, currentColor 45%, transparent);
-        border-radius: var(--oc-radius-sm);
-        font-size: var(--oc-fs-micro, 10px);
-        line-height: 1;
-        letter-spacing: var(--oc-tracking-label, 0.6px);
-        text-transform: uppercase;
-        white-space: nowrap;
-        color: var(--oc-text-muted);
-    }
-
-    .crt-tty__tag::before {
-        content: '';
-        flex: none;
-        width: 6px;
-        height: 6px;
-        border-radius: 1px;
-        background: currentColor;
-    }
-
-    .crt-tty__tag--ok {
-        color: var(--oc-green);
-    }
-
-    .crt-tty__tag--grow {
-        color: var(--oc-cyan);
-    }
-
-    .crt-tty__tag--warn {
-        color: var(--oc-yellow);
-    }
-
-    .crt-tty__tag--bad {
-        color: var(--oc-coral);
-    }
-
-    .crt-tty__tag--quiet::before {
-        background: none;
-        box-shadow: inset 0 0 0 1px currentColor;
     }
 
     @container crt-tty (max-width: 440px) {

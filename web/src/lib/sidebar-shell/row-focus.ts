@@ -1,4 +1,3 @@
-/* tabindex= */
 import { drawer, listElement, rg } from './row-globals';
 import { isBandOrderKey } from '../drawer/store-keys';
 

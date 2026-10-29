@@ -6,6 +6,7 @@ export type SortKey = (typeof SORT_KEYS)[number];
 
 export const VISIBLE_SORT_KEYS = SORT_KEYS.filter((key) => key !== 'index');
 
+/* the input is not mutated */
 export function sortCards(
     cards: readonly CardView[],
     key: SortKey,

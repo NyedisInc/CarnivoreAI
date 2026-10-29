@@ -110,7 +110,6 @@ async def _agent_handle(to: str, app_state: Any) -> str:
 
 
 async def _sender(view: Any, caller: AgentCaller, cards: list[dict], infos: list | None = None) -> dict:
-    """The authenticated caller's identity (an external token is its own key); ToolError when its pane is not listed."""
     if caller.external:
         return {'key': caller.current_session_id, 'id': caller.current_session_id,
                 'uuid': None, 'epoch': None, 'name': caller.token_name,
@@ -146,6 +145,9 @@ async def identities(view: Any, caller: AgentCaller, to: str, *, asleep: str = '
         raise ToolError(f'no agent matches {to!r}')
     if result.ambiguous:
         raise ToolError('ambiguous agent; choose one id: ' + ', '.join(c['id'] for c in result.matches[:10]))
+    if result.tier not in directory.EXACT_TIERS:
+        raise ToolError(f'no agent is named {to!r}; closest: ' + ', '.join(c['name'] for c in result.matches[:5])
+                        + '. Use agents_lookup and send to its id.')
     receiver_card = result.matches[0]
     if receiver_card.get('asleep'):
         if receiver_card.get('swarm_agent_id') is not None and asleep != 'poll':
@@ -198,17 +200,7 @@ async def settle(message_id: str, timeout: float = RECEIPT_WAIT_S) -> tuple:
             return status, (row or {}).get('reason')
 
 
-async def send(view: Any, caller: AgentCaller, *, to: str, text: str,
-               thread: str | None = None, in_reply_to: str | None = None,
-               expect_reply: bool = False, action: str = 'crosstalk_send',
-               owner_approved: bool = False, source: str = 'crosstalk', task_item: int | None = None) -> dict:
-    from src.core.mcp import beast_mode, write_tools
-    try:
-        sender, receiver = await identities(view, caller, to, asleep='allow')
-    except WakePending as slow:
-        return _queue_slow_wake(view, caller, slow, dict(
-            to=to, text=text, thread=thread, in_reply_to=in_reply_to, expect_reply=expect_reply, action=action,
-            owner_approved=owner_approved, source=source, task_item=task_item))
+def _check_message(text: Any, expect_reply: Any) -> None:
     if not isinstance(text, str) or not text.strip() or len(text) > store.MAX_TEXT:
         raise ToolError(f'text must contain 1 to {store.MAX_TEXT} characters')
     from src.core.session_one_shot_gate import MAX_BODY_BYTES
@@ -222,6 +214,20 @@ async def send(view: Any, caller: AgentCaller, *, to: str, text: str,
         raise ToolError('message contains control characters that the paste guard would alter')
     if not isinstance(expect_reply, bool):
         raise ToolError('expect_reply must be true or false')
+
+
+async def send(view: Any, caller: AgentCaller, *, to: str, text: str,
+               thread: str | None = None, in_reply_to: str | None = None,
+               expect_reply: bool = False, action: str = 'crosstalk_send',
+               owner_approved: bool = False, source: str = 'crosstalk', task_item: int | None = None) -> dict:
+    from src.core.mcp import beast_mode, write_tools
+    _check_message(text, expect_reply)
+    try:
+        sender, receiver = await identities(view, caller, to, asleep='allow')
+    except WakePending as slow:
+        return _queue_slow_wake(view, caller, slow, dict(
+            to=to, text=text, thread=thread, in_reply_to=in_reply_to, expect_reply=expect_reply, action=action,
+            owner_approved=owner_approved, source=source, task_item=task_item))
     if in_reply_to:
         parent = await asyncio.to_thread(store.get, in_reply_to)
         if parent is None or parent['receiver_key'] != sender['key'] or parent['sender_key'] != receiver['key']:

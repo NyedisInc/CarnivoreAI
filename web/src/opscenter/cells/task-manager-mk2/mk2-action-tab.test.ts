@@ -19,7 +19,7 @@ describe('G: what the action tab holds', () => {
   test('an open question shows, and the info beside it stays in the discussion tab', () => {
     expect(actionableIdOf(mk({ thread: [msg(4, 'question'), msg(6, 'info')] }))).toBe(4);
   });
-  test('a review waiting on the owner shows its block and no info beside it', () => {
+  test('a review waiting on him shows its block and no info beside it', () => {
     expect(actionableIdOf(mk({ ...REVIEW, thread: [msg(6, 'info')] }))).toBeNull();
   });
   test('nothing waiting is nothing', () => {

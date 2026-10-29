@@ -187,29 +187,37 @@ def test_respawn_without_dash_k_refuses_to_kill_a_live_agent(socket, tmp_path):
     assert ok and dead_after == "0", "a live pane must survive a stray respawn"
 
 
-def test_pipe_pane_streaming_survives_a_respawn(socket, tmp_path):
+@pytest.mark.asyncio
+async def test_pipe_pane_streaming_survives_a_respawn(socket, tmp_path, monkeypatch):
+    from src.config import settings
+    from src.core.tmux_backend import TmuxBackend
+
+    monkeypatch.setattr(settings, "log_directory", str(tmp_path))
     name = "piped"
-    log = tmp_path / "pipe.log"
-    log.write_text("")
     _tmux(
         socket,
         "new-session", "-d", "-s", name, "-c", str(tmp_path), "-x", "80", "-y", "24",
         'sh -c "echo BEFORE; sleep 1; exit 1"',
     )
     _tmux(socket, "set-option", "-t", name, "remain-on-exit", "on")
-    _tmux(socket, "pipe-pane", "-t", name, "-O", f"cat >> {log}")
+    backend = TmuxBackend.for_external(
+        session_name=name, working_dir=tmp_path, on_output=None, socket_name=socket)
+    await backend.ensure_pipe_pane()
     assert _wait_dead(socket, name)
 
-    _tmux(socket, "respawn-pane", "-t", name, 'sh -c "echo AFTER_PIPE; sleep 30"')
+    result = await backend.respawn(agent_command='sh -c "echo AFTER_PIPE; sleep 30"')
+    assert result.ok, result.detail
 
+    log = Path(backend._pipe_write_path())
     deadline = time.monotonic() + 6
     while time.monotonic() < deadline:
         if "AFTER_PIPE" in log.read_text(errors="replace"):
             break
         time.sleep(0.1)
     assert "AFTER_PIPE" in log.read_text(errors="replace"), (
-        "pipe-pane did not survive the respawn; the terminal would go blank"
+        "the respawned pane's first line never reached the pipe; the terminal would go blank"
     )
+    assert _tmux(socket, "display-message", "-p", "-t", f"={name}:", "#{pane_pipe}").stdout.strip() == "1"
 
 
 def test_remain_on_exit_still_set_after_a_respawn(socket, tmp_path):
@@ -236,7 +244,7 @@ def test_bare_shell_pane_reports_no_start_command(socket):
     assert start.strip() == "", f"expected no start command, got {start!r}"
 
     plan = resolve_respawn_plan(
-        probe_ok=True, pane_dead="1", pane_start_command=start, agent_command="keyc"
+        probe_ok=True, pane_dead="1", pane_start_command=start, agent_command="cld"
     )
     assert plan.kind == RESPAWN_SHELL
 
@@ -245,6 +253,6 @@ def test_missing_session_probe_is_cannot_determine(socket):
     ok, _fields = _pane_fields(socket, "no-such-session-here")
     assert ok is False
     plan = resolve_respawn_plan(
-        probe_ok=ok, pane_dead=None, pane_start_command=None, agent_command="keyc"
+        probe_ok=ok, pane_dead=None, pane_start_command=None, agent_command="cld"
     )
     assert plan.kind == RESPAWN_CANNOT_DETERMINE

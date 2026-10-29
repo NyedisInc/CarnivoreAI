@@ -18,6 +18,7 @@ from src.core.account_switch.launch_env import _config_path
 from src.core.account_switch import store
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.models import RestartAccountOption, RestartAccountsResponse
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -75,7 +76,7 @@ async def restart_accounts(session_uuid: str) -> RestartAccountsResponse:
     try:
         row = await run_in_threadpool(_read_row, session_uuid)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc, step="restart_accounts") from exc
     if row is None or restart_account.family_of(row["agent_type"]) != restart_account.ACCOUNT_FAMILY:
         return EMPTY
     config_path = _config_path()

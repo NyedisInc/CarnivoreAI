@@ -36,6 +36,6 @@
   "summary": "new cards reach the project agent as one deal request, held cards lapse to a hand-off or a stalled line after ten quiet minutes, and dealing lands off for every existing project until you turn it on.",
   "updated": "2026-10-07",
   "where": [
-    "The board screen arrives in a later slice."
+    "Backend only for now: the dealing switch is on the owner routes under /api/v1/swarm/cards/rules, and the deal request and lapse lines appear in the project agent's chat. The board screen arrives in a later slice."
   ]
 }

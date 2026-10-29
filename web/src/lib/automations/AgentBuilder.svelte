@@ -39,7 +39,6 @@
     try {
       [projects, logins, keys] = await Promise.all([listProjectChoices(), listClaudeLogins(), listAnthropicKeys()]);
     } catch {
-      // could not
       failed = true;
       projects = projects ?? [];
     }

@@ -8,7 +8,6 @@ const win = globalThis as unknown as Record<string, unknown>;
 afterEach(() => {
     delete win.CloudeWeb;
     delete win.SessionSidebarLayouts;
-    delete win.SessionSidebarBrowsers;
 });
 
 function memberRow(band: string): HTMLElement {

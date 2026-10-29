@@ -5,7 +5,6 @@
 </script>
 
 <script lang="ts">
-  /* waiting on you */
   import '../../../lib/ledger/ledger-chrome.css';
   import { untrack } from 'svelte';
   import type { CellProps } from '../../lib/cell';

@@ -1,4 +1,3 @@
-/* <script */
 (function () {
   'use strict';
   var STRING_PREFIX = 'cplug.reviewboard.layer.';

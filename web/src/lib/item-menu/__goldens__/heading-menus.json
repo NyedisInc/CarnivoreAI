@@ -243,6 +243,11 @@
         "key": "g"
       },
       {
+        "id": "group-rule",
+        "label": "rule",
+        "key": "u"
+      },
+      {
         "id": "sleep",
         "label": "sleep",
         "key": "s",
@@ -301,6 +306,11 @@
         "key": "g"
       },
       {
+        "id": "group-rule",
+        "label": "rule",
+        "key": "u"
+      },
+      {
         "id": "sleep",
         "label": "sleep",
         "key": "s",
@@ -356,6 +366,11 @@
         "id": "group-icon",
         "label": "icon",
         "key": "g"
+      },
+      {
+        "id": "group-rule",
+        "label": "rule",
+        "key": "u"
       },
       {
         "id": "sleep",

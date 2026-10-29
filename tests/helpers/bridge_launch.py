@@ -9,7 +9,7 @@ from pathlib import Path
 from src.config import settings
 from src.core.config_migration import migrate_config_file
 
-UUID = "439ac4a6-7ef4-4386-8b6b-1b838712cf87"
+UUID = "0198c8f0-1726-7222-8333-944445555666"
 PORT = 8123
 
 CONFIG = {
@@ -18,7 +18,7 @@ CONFIG = {
     "mcp": {"enabled": True, "channels": True},
     "agents": {
         "wrappers": [
-            {"id": "keyc", "family": "claude", "label": "keyc",
+            {"id": "cld", "family": "claude", "label": "cld",
              "script": 'claude "$@"', "default": True, "accepts_model": False},
         ],
     },
@@ -89,7 +89,7 @@ def seed_row(state: Path, socket: str, name: str, epoch: int, *, lifecycle_sourc
     ensure_db_migrated(state, 4, "0.8.2")
     with closing(connect(db_path_for(state))) as conn:
         record_instance(conn, socket=socket, name=name, epoch=epoch, origin=SESSION_ORIGIN_OBSERVED)
-        conn.execute("UPDATE sessions SET claude_session_uuid = ?, agent_type = 'keyc' WHERE tmux_name = ?", (UUID, name))
+        conn.execute("UPDATE sessions SET claude_session_uuid = ?, agent_type = 'cld' WHERE tmux_name = ?", (UUID, name))
         if lifecycle_source:
             conn.execute("UPDATE sessions SET lifecycle = 'stopped', lifecycle_source = ? WHERE tmux_name = ?",
                          (lifecycle_source, name))

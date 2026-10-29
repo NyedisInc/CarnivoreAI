@@ -17,7 +17,7 @@ from src.cplugs.reviewboard import document
 from src.cplugs.reviewboard.layers import shell
 from src.cplugs.reviewboard.requests import ReviseBody
 from tests.python.cplugs.reviewboard.boards import SIDECAR
-from tests.python.cplugs.reviewboard.harness import BASE, huddle_on, huddle_store, make_env
+from tests.python.cplugs.reviewboard.harness import BASE, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.layer_fixtures import OPTIONS, QUESTIONS, ROWS, layer_sidecar
 from tests.python.cplugs.reviewboard.test_publish import ANCHORS, create_body
 
@@ -107,7 +107,7 @@ def test_a_valid_anchor_declared_by_the_revision_is_accepted() -> None:
 @pytest.fixture
 def world(tmp_path: Path, monkeypatch):
     env = make_env(tmp_path)
-    huddle_on(env, monkeypatch)
+    task_manager_on(env, monkeypatch)
     env.app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
     with TestClient(env.app) as client:
         yield env, client
@@ -121,7 +121,7 @@ def layer_body(item_id: int, layer: Dict[str, Any], **over: Any) -> Dict[str, An
 
 
 def new_task(env) -> int:
-    return huddle_store(env).add("all", "layer board", actor="claude", title="Layer board")["id"]
+    return task_manager_store(env).add("all", "layer board", actor="claude", title="Layer board")["id"]
 
 
 @pytest.mark.parametrize("layer", [QUESTIONS, ROWS], ids=["questions", "rows"])

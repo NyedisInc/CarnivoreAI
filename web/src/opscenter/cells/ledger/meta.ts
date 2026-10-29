@@ -4,6 +4,12 @@ import type { AccountUsage, LedgerSnapshot, UsageWindow } from '../../api';
 import { ledger } from '../../api';
 import { parseServerTime } from '../../lib/format';
 import { t } from '../../../lib/i18n/index.svelte';
+import {
+  credentialLabel as ledgerCredentialLabel,
+  formatAge as ledgerFormatAge,
+  formatPercent as ledgerFormatPercent,
+  formatResetIn as ledgerFormatResetIn,
+} from '../../../lib/ledger/ledger-model';
 import { switchRank, type AccountSwitchState } from '../../../lib/account-switch/switch-model';
 
 export type LedgerTotal = LedgerSnapshot['total'];
@@ -86,20 +92,8 @@ export function credentialTone(state: string): Tone {
   }
 }
 
-const CREDENTIAL_LABEL_KEYS: Readonly<Record<string, string>> = {
-  ok: 'opscenter.ledger.credential.ok',
-  expired: 'opscenter.ledger.credential.expired',
-  missing: 'opscenter.ledger.credential.missing',
-  refused: 'opscenter.ledger.credential.refused',
-  rate_limited: 'opscenter.ledger.credential.rate_limited',
-  error: 'opscenter.ledger.credential.error',
-  unknown: 'opscenter.ledger.credential.unknown',
-};
-
 export function credentialLabel(state: string): string {
-  const known = CREDENTIAL_LABEL_KEYS[state];
-  if (known) return t(known);
-  return t('opscenter.ledger.credential.unrecognised', { state });
+  return ledgerCredentialLabel(state, t);
 }
 
 export function isUnmeasured(account: AccountUsage, nowMs: number): boolean {
@@ -115,41 +109,15 @@ export function barWidth(pct: number | null): number {
 }
 
 export function formatPercent(pct: number | null): string {
-  if (typeof pct !== 'number' || !Number.isFinite(pct)) return t('opscenter.value.unknown');
-  return `${Math.round(pct)}%`;
+  return ledgerFormatPercent(pct, t);
 }
 
 export function formatResetIn(resetsAt: string | null, nowMs: number): string {
-  if (typeof resetsAt !== 'string' || !resetsAt.trim()) return t('opscenter.value.unknown');
-  const at = parseServerTime(resetsAt);
-  if (!Number.isFinite(at)) return t('opscenter.value.unknown');
-  const delta = Math.round((at - nowMs) / 1000);
-  if (delta <= 0) return t('opscenter.ledger.reset_now');
-  if (delta < 60) return t('opscenter.ledger.reset_in_seconds', { count: delta });
-  if (delta < 3600) return t('opscenter.ledger.reset_in_minutes', { count: Math.floor(delta / 60) });
-  if (delta < 86400) {
-    const hours = Math.floor(delta / 3600);
-    const minutes = Math.floor((delta % 3600) / 60);
-    return minutes === 0
-      ? t('opscenter.ledger.reset_in_hours', { count: hours })
-      : t('opscenter.ledger.reset_in_hours_minutes', { hours, minutes });
-  }
-  const days = Math.floor(delta / 86400);
-  const hours = Math.floor((delta % 86400) / 3600);
-  return hours === 0
-    ? t('opscenter.ledger.reset_in_days', { count: days })
-    : t('opscenter.ledger.reset_in_days_hours', { days, hours });
+  return ledgerFormatResetIn(resetsAt, nowMs, t);
 }
 
 export function formatAge(iso: string | null, nowMs: number): string {
-  if (typeof iso !== 'string' || !iso.trim()) return t('opscenter.ledger.no_pass_yet');
-  const at = parseServerTime(iso);
-  if (!Number.isFinite(at)) return t('opscenter.ledger.no_pass_yet');
-  const ago = Math.max(0, Math.round((nowMs - at) / 1000));
-  if (ago < 60) return t('opscenter.time.ago_seconds', { count: ago });
-  if (ago < 3600) return t('opscenter.time.ago_minutes', { count: Math.floor(ago / 60) });
-  if (ago < 86400) return t('opscenter.time.ago_hours', { count: Math.floor(ago / 3600) });
-  return t('opscenter.time.ago_days', { count: Math.floor(ago / 86400) });
+  return ledgerFormatAge(iso, nowMs, t);
 }
 
 export function tightestTotal(total: LedgerTotal | null): UsageWindow | null {
@@ -164,7 +132,6 @@ export function tightestTotal(total: LedgerTotal | null): UsageWindow | null {
   };
 }
 
-/* label: ' */
 export function windowLabel(value: UsageWindow): string {
   if (value.label && value.label.trim()) return value.label.trim();
   if (value.kind && value.kind.trim()) return value.kind.trim();

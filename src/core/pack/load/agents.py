@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.pack.load import process_tree
+from src.core.tmux_control.reader import control_read
 from src.core.tmux_discovery import TmuxVersionSkewError, tmux_argv_prefix
 
 MAX_ROWS = 200
@@ -19,6 +20,10 @@ _SQL = ("SELECT s.id, s.session_uuid, s.tmux_socket, s.tmux_name, a.id, a.displa
 
 
 def _run(argv: List[str]) -> Optional[str]:
+    if len(argv) > 3 and argv[1] == "-L":
+        answered = control_read(argv[2], argv[3:])
+        if answered is not None:
+            return answered.decode("utf-8", errors="replace")
     try:
         done = subprocess.run(argv, capture_output=True, text=True, timeout=3, check=False)
     except (OSError, subprocess.SubprocessError):

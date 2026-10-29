@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* could not */
   import { t } from '../sdk';
   import type { CaptureOutcome } from './lab-model';
 

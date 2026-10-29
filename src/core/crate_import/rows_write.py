@@ -12,6 +12,7 @@ from src.core.crate_import import keymap
 from src.core.crate_import.keyrules import REF, rule_for
 from src.core.crate_import.model import W_DANGLING_REF, Collector
 from src.core.inventory.model import MAIN_STORE
+from src.core.work.file_refs import FileHome
 
 logger = structlog.get_logger()
 
@@ -47,6 +48,7 @@ class WriteCtx:
     counts: Dict[str, TableCounts] = field(default_factory=dict)
     created: Dict[str, List[Any]] = field(default_factory=dict)
     shapes: Dict[str, Tuple[Tuple[str, ...], Tuple[str, ...]]] = field(default_factory=dict)
+    files: Optional[FileHome] = None
 
     def table_counts(self, key: str) -> TableCounts:
         return self.counts.setdefault(key, TableCounts())

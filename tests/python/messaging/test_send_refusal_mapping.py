@@ -24,14 +24,14 @@ def _wire(monkeypatch, world, status: int, body: dict, headers: dict | None = No
 
     monkeypatch.setattr(client.http, "guarded_request", fake)
     world.rt.providers[world.pid].client = client.HttpProviderClient(
-        "p_x", "http://203.0.113.16:1", "tok-not-real", allow_private=True, allow_plain_http=True)
+        "p_x", "http://10.0.0.1:1", "tok-not-real", allow_private=True, allow_plain_http=True)
     if not store.list_bindings(session_uuid=UUID_A):
         bind(world, UUID_A, default=True)
 
 
 def _send(monkeypatch, world) -> HTTPException:
     async def identity(request, caller):
-        return UUID_A, "ledgerbot"
+        return UUID_A, "trader"
 
     monkeypatch.setattr(routes, "_caller_identity", identity)
     monkeypatch.setattr(routes, "runtime_of", lambda request: world.rt)

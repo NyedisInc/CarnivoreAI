@@ -235,7 +235,7 @@ test('side state: 404 is "missing", other failures "unknown"; debug always carri
 
 test('Watch in Terminal attaches read-only and never falls back to a claude; the attach command is exact', () => {
   const spec = { tmuxBin: '/opt/homebrew/bin/tmux', socketPath: '/tmp/tmux-501/cloude', tmuxName: 'carnivore_a', folder: '/w',
-    homeFolder: '/Users/example', shellBin: '/bin/zsh', claudeBin: 'claude', label: 'a' };
+    homeFolder: '/Users/j', shellBin: '/bin/zsh', claudeBin: 'claude', label: 'a' };
   const watch = scripts.buildSessionScript({ ...spec, readOnly: true });
   assert.match(watch, /attach-session -r -t "\$TARGET"/);
   assert.ok(!/CLAUDE_BIN"\s*$/m.test(watch) && !/exec "\$CLAUDE_BIN"/.test(watch), 'watch never starts claude');

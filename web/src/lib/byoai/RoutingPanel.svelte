@@ -9,7 +9,8 @@
     import { isStale, putDefault, putFeature, type Fetcher, type TargetRef } from './api';
     import { ai, attach, refresh } from './store.svelte';
     import RouteRow from './RouteRow.svelte';
-    import Icon from '../../opscenter/ui/Icon.svelte';
+    import Fold from '../base/Fold.svelte';
+    import State from '../base/State.svelte';
 
     interface Props {
         t?: Translate;
@@ -70,40 +71,27 @@
             {#if ai.features.length === 0}<p class="tm__sub" data-ai="features-none">{t('settings.ai.routing.features_none')}</p>{/if}
         </div>
         {#if addons.length > 0}
-            <button type="button" class="rtp-fold oc-key" data-ai="addons-head" aria-expanded={overridesOpen}
-                onclick={() => (overridesOpen = !overridesOpen)}>
-                <Icon name={overridesOpen ? 'chevron-down' : 'chevron-right'} size={12} />
-                {t('settings.ai.routing.addons', { count: addons.length })}
-                <span class="tm__sub">{t('settings.ai.routing.addons_note')}</span>
-            </button>
-            {#if overridesOpen}
-                <div data-ai="addon-features">
-                    {#each addons as feature (feature.id)}
-                        {#key JSON.stringify(feature.target)}
-                            <RouteRow {t} name={t(feature.label_key)} href={feature.owner?.href ?? null} capability={feature.capability} target={feature.target} {busy}
-                                onSet={(target) => void setFeature(feature.id, target)} onClear={() => void setFeature(feature.id, null)} />
-                        {/key}
-                    {/each}
-                </div>
-            {/if}
+            <div data-ai="addons">
+                <Fold label={t('settings.ai.routing.addons', { count: addons.length })} count={t('settings.ai.routing.addons_note')} bind:open={overridesOpen}>
+                    {#snippet children()}
+                        {#if overridesOpen}
+                            <div data-ai="addon-features">
+                                {#each addons as feature (feature.id)}
+                                    {#key JSON.stringify(feature.target)}
+                                        <RouteRow {t} name={t(feature.label_key)} href={feature.owner?.href ?? null} capability={feature.capability} target={feature.target} {busy}
+                                            onSet={(target) => void setFeature(feature.id, target)} onClear={() => void setFeature(feature.id, null)} />
+                                    {/key}
+                                {/each}
+                            </div>
+                        {/if}
+                    {/snippet}
+                </Fold>
+            </div>
         {/if}
     {:else if !ai.problem}
         <p class="tm__sub">{t('settings.ai.loading')}</p>
     {/if}
-    {#if note}<p class="tm__note" role="status" data-ai="note">{note}</p>{/if}
-    {#if problem || ai.problem}<p class="tm__problem" role="alert" data-ai="problem">{problem || ai.problem}</p>{/if}
+    {#if note}<State inline title={note} role="status" data-ai="note" />{/if}
+    {#if problem || ai.problem}<State kind="error" inline title={problem || ai.problem} data-ai="problem" />{/if}
 </div>
 
-<style>
-    .rtp-fold {
-        display: flex;
-        align-items: center;
-        gap: var(--oc-space-2);
-        width: 100%;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        text-align: left;
-        cursor: pointer;
-    }
-</style>

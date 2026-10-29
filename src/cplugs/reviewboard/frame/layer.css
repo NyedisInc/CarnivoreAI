@@ -1,13 +1,3 @@
-/*
- * THE LAYER'S STYLE (#1832): served as <style data-rb-layer> inside the sandboxed frame, where no app stylesheet loads.
- *
- * The Military Terminal look copied from the ledger and the restart picker (client/style-guide.html): a title strip with one accent-colored
- * uppercase label, 1px hairlines between regions drawn with box-shadow, mono type, small square corners, quiet outlined controls, the picked
- * one in the confirm outline (`.modal-btn-confirm`: the accent border on a transparent fill, tinted on hover), a destructive thing in a different
- * token. Color is --oc-* only; the fallbacks after each comma are the browser's own system colors for the instant before the board sends the
- * theme (the board's `theme` message sets every --oc-* on :root, so a theme change repaints this). Focus is the control's own border a little
- * brighter, no outline, no extra width (web/src/opscenter/focus.css, restated because that file does not load here).
- */
 .rbl, .rbl-item {
   --rbl-ink: var(--oc-text-primary, CanvasText);
   --rbl-dim: var(--oc-text-muted, GrayText);
@@ -25,7 +15,6 @@
   color: var(--rbl-ink);
 }
 .rbl *, .rbl-item * { box-sizing: border-box; }
-/*  hidden  */
 .rbl [hidden], .rbl-item [hidden] { display: none !important; }
 .rb-shell-title { display: none; }
 

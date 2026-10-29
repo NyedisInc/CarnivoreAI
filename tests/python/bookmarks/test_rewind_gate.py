@@ -103,7 +103,7 @@ def test_a_refused_respawn_puts_the_row_back_and_removes_the_copy(env, monkeypat
 
 
 def test_minus_k_comes_only_from_the_plan():
-    live = dict(probe_ok=True, pane_dead="0", pane_start_command='"keyc"', agent_command="keyc")
+    live = dict(probe_ok=True, pane_dead="0", pane_start_command='"cld"', agent_command="cld")
     assert resolve_respawn_plan(**live, live_restart_confirmed=True).kills_live_pane is True
     assert resolve_respawn_plan(**live).kills_live_pane is False
     assert resolve_respawn_plan(**{**live, "pane_dead": "1"}, live_restart_confirmed=True).kills_live_pane is False

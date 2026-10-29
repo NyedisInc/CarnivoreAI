@@ -58,7 +58,6 @@
     flushSync(() => (shown = lo ? `${words.slice(0, lo).join(' ')}…` : '…'));
   }
 
-  // not allowed
   $effect(() => {
     void faceText;
     void fitMode;

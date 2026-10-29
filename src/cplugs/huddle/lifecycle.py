@@ -61,14 +61,14 @@ def row_action(row: Mapping, item_status: str) -> Optional[str]:
                         bool(row["info_pending"]) if "info_pending" in keys else False)
 
 
-OWNER_TURN = "joe_turn"
-OWNER_OUTBOX = "joe_outbox"
+JOE_TURN = "joe_turn"
+JOE_OUTBOX = "joe_outbox"
 AGENT_ACTIVE = "agent_active"
 AGENT_IDLE = "agent_idle"
 EXTERNAL_WAIT = "external_wait"
 PARKED = "parked"
 DONE_POSITION = "done"
-POSITIONS = (OWNER_TURN, OWNER_OUTBOX, AGENT_ACTIVE, AGENT_IDLE, EXTERNAL_WAIT, PARKED, DONE_POSITION)
+POSITIONS = (JOE_TURN, JOE_OUTBOX, AGENT_ACTIVE, AGENT_IDLE, EXTERNAL_WAIT, PARKED, DONE_POSITION)
 SESSION_BUSY = ("working", "working_subagent")
 SESSION_BLOCKED = ("question", "notice")
 
@@ -78,14 +78,14 @@ def position(row: Mapping, item_status: str, *, list_held: bool = False, session
     if item_status in rules.APPROVED_STATES:
         return DONE_POSITION
     if item_status == WAITING_TO_SEND or (item_status == TODO and note_waiting(row, item_status)):
-        return OWNER_OUTBOX
+        return JOE_OUTBOX
     if item_status in (QUESTION, REVIEW) or row_action(row, item_status):
-        return OWNER_TURN
+        return JOE_TURN
     if item_status == TODO:
         return PARKED
     keys = row.keys()
     swarm_ref = row["swarm_ref"] if "swarm_ref" in keys else ""
-    if (item_status == WAITING or item_status == SCHEDULED or (row["kind"] == "waiting")
+    if (item_status == WAITING or item_status == SCHEDULED or triggers.is_pending(row) or (row["kind"] == "waiting")
             or (_col(row, "card_queued") and not _col(row, "owner_session_key"))
             or (row["card_holder"] if "card_holder" in keys else None) is not None
             or swarm_ref not in rules.NOT_A_CARD_REFS or list_held or session_state in SESSION_BLOCKED):
@@ -98,7 +98,7 @@ def position(row: Mapping, item_status: str, *, list_held: bool = False, session
 
 
 def blocks_schedule(row: Mapping, item_status: str) -> bool:
-    if position(row, item_status) != OWNER_TURN:
+    if position(row, item_status) != JOE_TURN:
         return False
     return item_status in (QUESTION, REVIEW) or row_action(row, item_status) != review.READ
 
@@ -191,12 +191,17 @@ def asking_ids(conn: sqlite3.Connection, item_ids: Sequence[int]) -> Set[int]:
         list(item_ids))}
 
 
+_BEHIND_WHERE = "id = ? AND deleted = 0 AND claude_read_seq < MIN(joe_seq, ?)"
+
+
+def any_behind(conn: sqlite3.Connection, seen: Iterable[Tuple[int, int]]) -> bool:
+    return any(conn.execute(f"SELECT 1 FROM work_items WHERE {_BEHIND_WHERE}", (item_id, seq)).fetchone() for item_id, seq in seen)
+
+
 def record_read(conn: sqlite3.Connection, seen: Iterable[Tuple[int, int]]) -> Set[str]:
     moved: Set[str] = set()
     for item_id, seq in seen:
-        row = conn.execute(
-            "SELECT list_key, joe_seq FROM work_items WHERE id = ? AND deleted = 0 AND claude_read_seq < MIN(joe_seq, ?)",
-            (item_id, seq)).fetchone()
+        row = conn.execute(f"SELECT list_key, joe_seq FROM work_items WHERE {_BEHIND_WHERE}", (item_id, seq)).fetchone()
         if row is None:
             continue
         list_key, joe_seq = row

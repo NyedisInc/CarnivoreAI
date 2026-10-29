@@ -68,17 +68,6 @@ KIND_SCHEMA = "schema"
 
 
 def _resolve_trail(trail: MigrationTrail) -> tuple:
-    """Read the trail and close any step that never recorded an outcome.
-
-    Description: design section 9.4 cases 1 to 4. Appends an
-      ``interrupted`` line for every ``started`` entry with no closer,
-      which is DETECTED (the line is on disk and nothing closes it), not
-      inferred from a missing artifact.
-    Inputs: trail (MigrationTrail).
-    Output: (TrailReadResult, list[TrailEntry], str) - the read result,
-      the entries that were marked interrupted by this call, and the
-      trail_status string for the version endpoint.
-    """
     read = trail.read()
     if read.status == TRAIL_READ_UNREADABLE:
         logger.error(
@@ -184,7 +173,6 @@ def ensure_db_migrated(
     is_fresh = not db_path.exists() or db_path.stat().st_size == 0
     started: Optional[TrailEntry] = None
 
-    # could not
     if is_fresh and trail_status != TRAIL_STATUS_UNREADABLE:
         try:
             started = trail.open_step(
@@ -219,7 +207,6 @@ def ensure_db_migrated(
         )
 
     with closing(conn):
-        # PRAGMA integrity_check
         verdict = boot_integrity_verdict(state_dir, conn).verdict
         if verdict != "ok":
             return _state(
@@ -388,25 +375,6 @@ def _audit_and_repair(
     app_version: Optional[str],
     _state,
 ) -> DatastoreState:
-    """Verify the objects behind an up-to-date version, and repair a gap.
-
-      NO BACKUP IS TAKEN, AND THAT IS A DECISION. Every statement the
-      repair can run is a ``CREATE ... IF NOT EXISTS`` for an object
-      measured absent, so it cannot drop, alter or rewrite anything and
-      there is no prior state a restore could return to. Backing up to
-      add a table would cost a multi-gigabyte copy on every boot that
-      finds one, which is how a safety net becomes the reason people
-      switch it off.
-
-      IT DOES NOT TOUCH ``meta.schema_version``. The version was right;
-      the objects behind it were not.
-    Inputs: conn (sqlite3.Connection) - the open datastore. current (int)
-      - the measured schema version, equal to CURRENT_SCHEMA_VERSION.
-      trail (MigrationTrail), app_version (str | None), _state (callable)
-      - ensure_db_migrated's DatastoreState factory.
-    Output: DatastoreState.
-    Example: _audit_and_repair(conn, 31, trail, "1.9.0", _state)
-    """
     audit = audit_schema(conn, current)
     if audit.status == AUDIT_CANNOT_DETERMINE:
         logger.warning(
@@ -457,7 +425,6 @@ def _audit_and_repair(
             detail=detail,
         )
     except OSError as exc:
-        # could not be written
         logger.error("db_schema_repair_trail_unwritable", error=str(exc))
 
     try:

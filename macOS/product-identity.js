@@ -13,7 +13,6 @@ const ENV_PREFIX = 'CARNIVORE_';
 const UPLOAD_DIR_NAME = '.carnivore_uploads';
 const BROWSER_KEY_PREFIX = 'carnivore.';
 const RELEASE_REPO = 'NyedisInc/CarnivoreAI';
-const LEGACY_RELEASE_REPOS = ['NyedisInc/CarnivoreAI'];
 const LEGACY_MENUBAR_STATE_DIR_NAMES = ['cloude-code-menubar'];
 
 module.exports = {
@@ -29,6 +28,5 @@ module.exports = {
     UPLOAD_DIR_NAME,
     BROWSER_KEY_PREFIX,
     RELEASE_REPO,
-    LEGACY_RELEASE_REPOS,
     LEGACY_MENUBAR_STATE_DIR_NAMES,
 };

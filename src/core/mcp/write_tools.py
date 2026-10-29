@@ -578,7 +578,7 @@ TOOLS: dict[str, tuple[str, dict, list, Callable[..., Awaitable[dict]]]] = {
 
 READ_TOOLS: dict[str, tuple[str, dict, list, Callable[..., Awaitable[dict]]]] = {
     "approval_wait": (
-        "Wait (up to 50 s) for the decision on a pending action you started.",
+        "Wait (up to 50 s) for the owner's decision on a pending action you started.",
         {"id": {"type": "string"}, "timeout": {"type": "number", "minimum": 0, "maximum": pending.MAX_WAIT_SECONDS}},
         ["id"], approval_wait,
     ),

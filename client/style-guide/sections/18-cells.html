@@ -61,7 +61,21 @@ Every cell lives in the same frame: <code>CellFrame</code> draws the hairline bo
         series. One unit wide is <code>.oc-stat-tile--compact</code> (its side inset is <code>--oc-widget-inset</code>, the same as every tile). Sizes 1 x 1 to 4 x 2 (<code>src/data/widgets.json</code>). A stored layout naming the retired strip
         (<code>core.stats</code>) gets the six tiles in its place on read (<code>engine/replaced-cells.ts</code>). A tile that reads a note rather than a figure wears <code>.oc-stat-tile--note</code>.</dd>
     <dt>git diff view</dt>
+    <dd><code>GitDiffView.svelte</code> (#148, opened from the file browser's "changed files" tab since #1406; the changes rail
+        that used to sit in every terminal cell is gone): one changed file's read-only diff, drawn in the terminal's editor host
+        over the body, never inside the pane. Mono text in a keyboard-focusable scroll box (<code>.oc-gd</code>,
+        <code>.oc-gd-text</code>), one <code>.oc-gd-line</code> per line: added in <code>--oc-green</code>, removed in
+        <code>--oc-coral</code>, hunk headers in the accent, file headers dim. A binary file, a secret-looking name, an untracked
+        folder, a cut diff (256 KB), a remote session and an unreadable diff each get their own sentence in
+        <code>.oc-gd-note</code>; unreadable is coral and is never drawn as an empty diff.</dd>
     <dt>repo:branch chip</dt>
+    <dd><code>GitChip.svelte</code> (#149): in the file browser's git status line (no longer in the terminal foot bars, 2026-10-07), one inline
+        chip (<code>.oc-gc</code>) in the foot bar's label type: the repo name (<code>.oc-gc-repo</code>, dim), the branch
+        (<code>.oc-gc-branch</code>, cut with an ellipsis, a short sha when HEAD is detached), a dirty dot
+        (<code>.oc-gc-dot</code>, <code>--oc-yellow-bright</code>) and ahead/behind (<code>.oc-gc-sync</code>, dim); the remote is in
+        the tooltip. As the bar narrows it drops ahead/behind, then the repo name, then the dot, never the branch
+        (<code>git-chip.ts</code>). A read that did not happen says "unknown" (dim), never blank and never clean; a folder
+        outside git and a remote session draw nothing. It shares the file browser's one pushed read per session.</dd>
     <dt>selected cell</dt>
     <dd>On a page of terminal cells, every cell has a border in its own session's accent, dimmed unless selected; the selected
         one (the one you type into) wears <code>.popup-focus</code> at full strength with a 5px glow. The border width never
@@ -75,9 +89,17 @@ Every cell lives in the same frame: <code>CellFrame</code> draws the hairline bo
 </dl>
 
 <h3 class="sg-h3" id="cells-widget-header">the widget header</h3>
+<p class="sg-lead">THE spec for every widget's title row (Joe (ccsliinc), 2026-10-12, item 538; <code>docs/DECISIONS.md</code>).
+One component draws it, <code>web/src/opscenter/shell/WidgetHead.svelte</code>; its rules are pure and tested in
+<code>shell/widget-head.ts</code>. A widget never draws a header of its own unless its record says so.</p>
 
 <dl class="sg-facts">
     <dt>title first</dt>
+    <dd>The title is the one thing the row keeps readable (Joe (ccsliinc), 2026-10-22). An analytics card's period label
+        (<code>analytics-period</code>, in the group the header draws) is MEASURED against the title, not set at a width: first it
+        shortens (<code>24 hours</code> to <code>24h</code>, <code>analytics-period--short</code>), then it is dropped with its
+        separator (<code>oc-head-sep</code>, the group <code>oc-head-group</code>) and rides in the title attribute of the name, and only then may the name
+        ellipsize. <code>cells/analytics/range-fit.ts</code>.</dd>
     <dt>geometry</dt>
     <dd>ONE height, 31px (<code>HEAD_ROW_PX</code>), for every widget on a desktop; below 1024 the whole row is the accordion
         button that folds the widget and stays 44px (<code>PHONE_HEAD_PX</code>). Padding 0 12px (<code>--oc-space-3</code>),
@@ -132,10 +154,32 @@ Every cell lives in the same frame: <code>CellFrame</code> draws the hairline bo
         <code>strip</code> and the head is always on (no tick); <code>closable: false</code> keeps the x out. Today only the
         terminal and the tabbed terminal set both (<code>TERMINAL_META</code>; a browser and a chart set them back).</dd>
     <dt>the show header tick</dt>
+    <dd>A checked item in the widget menu, PER COPY and synced across devices: a grid copy stores it in its own layout
+        (<code>Layout.headerOff</code>, the copies ticked off, carried by the home board and terminal page syncs through the
+        existing preferences route). On by default on the grid, a drawer card and a pop-out; OFF by default on a widget bar
+        slide-out (<code>headerShown</code>), keeping Alex (example-owner)'s 2026-10-11 no title bar ruling. A grid card whose header
+        is off keeps its title row minus the strip's ground and hairline (<code>.oc-frame-title--bare</code>); a drawer card or
+        slide-out section whose header is off draws no header at all (Joe (ccsliinc), 2026-10-23), its body starts under the
+        usual <code>--oc-space-3</code> inset, and its menu opens by a right-click or Shift+F10.</dd>
     <dt>drawer cards and slide-outs</dt>
+    <dd>The same header, drawn by <code>shell/PlacementHead.svelte</code>: the small widget icon at the far left opens the
+        copy's menu (<code>zone-shell/PlacementMenuHost.svelte</code>, the one widget menu: the widget's own actions, pop out, the show header tick, edit layout, close; in edit layout also its looks, settings and arranging), then the name and the cell's own groups, then the separator, then the close x (a gear and a pop out key no longer sit in the bar: Joe (ccsliinc), 2026-10-14, they live in the menu),
+        then the separator, then the close x, which takes the copy out of its area or bar at once, no confirm
+        (<code>drawerZone.remove</code>, <code>railStores[edge].remove</code>, the existing preferences route). The tick is
+        stored on the placement as <code>show_header</code> (<code>ZoneItem.options</code>, <code>HEADER_OPTION</code>, which
+        every copy may carry and a reset of its other options keeps). A drawer card starts with it on and, ticked off, lays
+        its icon over the body's top left as the way back; a rail section starts with it off, draws nothing then, and is
+        ticked on from its bar key's edit layout right-click menu ("show header"). A widget that draws its own head
+        (<code>ownHead</code>) fills the row with it there, and a drawer card's is always on. Below 1024 a card or a section
+        follows the grid's phone rule: no close x, and its controls are tap targets (<code>tap</code>, the same
+        <code>.oc-frame-title--phone</code> sizing). The pop-out window wears the same row with an inert icon
+        and no close x: the window's own chrome closes it.</dd>
 </dl>
 
 <h3 class="sg-h3" id="cells-widget-shell">the widget shell</h3>
+<p class="sg-lead">THE body every widget renders through (Joe (ccsliinc), 2026-10-19, item 1048: "build the shared widget shell";
+<code>docs/widget-spec.md</code> section 13). One component draws it, <code>web/src/opscenter/widgets/shell/WidgetShell.svelte</code>;
+the cell declares itself with <code>defineWidget</code> and binds it with <code>useWidget</code>.</p>
 
 <dl class="sg-facts">
     <dt>the body</dt>
@@ -208,6 +252,15 @@ facts use the server's period summaries and keep missing data distinct from zero
         <code>MemberDownRow.svelte</code> (issue #791), parameterized on the member record directly, so
         <code>AllDownModal.svelte</code> (below) can draw the same row outside a grid cell.</dd>
     <dt>top bar</dt>
+    <dd>THE DESKTOP HOME DRAWS NO BAR (Joe (ccsliinc), 2026-09-30, #1157): the shell is <code>.oc-app-bare</code>, one grid
+        track, and the one pop-out control floats over its top right corner (<a href="#chrome-home-header">the home screen
+        without a header</a>). <code>TopBar.svelte</code> (<code>.oc-topbar</code>, <code>--oc-topbar</code> tall) is drawn
+        only on a phone and in the pop-out window: the drawer button, the brand, the connection dot and word by the
+        wordmark, <code>.oc-topbar-spacer</code>, then the inbox door, the alert bell and the clock. In the pop-out window
+        <code>.oc-topbar-popout</code>, a quiet outlined button, is "focus main window" beside the accent
+        <code>.oc-topbar-title</code> label, "carnivore stats". The floating menu's "wallboard" opens <code>client/popout.html?view=wallboard</code>: the Home
+        analytics widgets alone (<code>.oc-app-wallboard</code>: no bar, no handles, read only, rows share the window height;
+        <code>.oc-wallboard-empty</code> is its one line when Home holds none), following the synced Home layout live.</dd>
     <dt>phone</dt>
     <dd>Below 1024px the grid becomes one column in <code>phoneOrder</code>, and the terminal page becomes the phone tab strip.</dd>
 </dl>
@@ -221,10 +274,78 @@ facts use the server's period summaries and keep missing data distinct from zero
         listed. Not to be confused with a saved Layout (a named view of several
         sessions, <code>layout:&lt;uuid&gt;</code>): the words "edit layout" are this mode's alone.</dd>
     <dt>on the surface</dt>
+    <dd>While editing, the body carries <code>.oc-layout-editing</code> and every widget (<code>.oc-cellslot</code>) wears a
+        1px dashed outline in <code>--oc-cyan</code> (Joe (ccsliinc), 2026-10-03: widget edit outlines are cyan, the glance
+        area alone is yellow); the engine's own splitters (<code>.oc-gutter</code>, not
+        <code>.oc-gutter-inert</code>) are drawn at rest so what resizes is visible (<code>EditOverlay.svelte</code>, CSS
+        only). There is no separate remove X and no chevron any more (mock section 1, option A, Joe (ccsliinc)
+        2026-09-30). Every surface that takes widgets wears the EDIT OUTLINE, "widgets can go here" (Joe, 2026-10-02):
+        the page's grid surface (<code>.oc-surface</code>) and the sidebar's widget area's widgets (<code>.dz-widgets--editing</code>) get a
+        1px dashed hairline in the edit gear's own token, <code>--oc-cyan</code>, drawn inside the edge.</dd>
     <dt>a short title for a narrow row</dt>
+    <dd>Task Manager item 51, 2026-10-11: a cell whose record carries <code>titleShortKey</code> prints that word in its title row
+        at 400px and under (<code>.oc-frame-name-short</code> in place of <code>.oc-frame-name-full</code>; "closed" for
+        "recently closed sessions"), and below 240px it gives up its count (<code>.oc-frame-count-narrow-drop</code>) so the
+        name and the word control fit whole. An empty note is just the text area: no centred message and no placeholder (Alex (example-owner), 2026-10-13, issue #1731).</dd>
     <dt>the notes widget's title row: edit | preview and the save disk</dt>
+    <dd>Joe (ccsliinc), 2026-10-12, Task Manager item 533: the widget is titled just "notes" and the toggle tells the rest of the
+        story. <code>NotesControls.svelte</code> draws the shared <code>EditorControls.svelte</code> (<code>.oc-notes-controls</code>, also the file editor's header controls in the terminal section: toggle, disk, and an optional close key <code>[data-notes-close]</code>, the base IconButton close variant) that puts a two item <code>.oc-seg</code>
+        (<code>.oc-notes-mode</code>, edit | preview, no side by side) and a save disk (<code>[data-notes-save]</code>, the <code>save</code> icon on a base quiet <code>IconButton</code>) in the widget header (<code>shell/WidgetHead.svelte</code>,
+        item 538) as its first option group, after its spacer, through the frame header's <code>action</code> slot: on the
+        grid, a drawer card, a widget bar section whose header is ticked on, and the pop-out, and ONLY while that header is
+        on screen (<code>FrameHeader.drawn</code>). The title stays on the left and the controls sit at the row's RIGHT END, after the
+        spacer (Joe (ccsliinc), 2026-10-12, item 533 follow-up: '"notes" stays on the left, the toggle and disk move to the
+        right end of the same row'). Below 1024 the folding phone row does the same: its heading
+        (<code>.oc-frame-name-wrap</code>) grows to take the free room, so the controls end the row; the toggle keeps its
+        44px height. The right drawer is a zone (wrapper package Z-2): its notes tab's own frame header is marked drawn from the start
+        (its row always names the notepad), and the tab wears THE widget header (<code>right-drawer/RightDrawerHead.svelte</code>
+        on <code>WidgetHead.svelte</code>): the icon that opens the one menu, the word notes on the left, its spacer, the
+        controls, the drawer's own open as widget (a header group and a declared menu item), then the close x at the very right
+        end, and never a second header. The
+        disk's color is the save state (<code>save-light.ts</code>): <code>[data-notes-light="error"]</code> in
+        <code>--oc-coral</code> on a failed, refused or oversized save, <code>[data-notes-light="pending"]</code> in
+        <code>--oc-yellow</code> while unsaved or saving, <code>[data-notes-light="saved"]</code> in <code>--oc-green</code>,
+        <code>[data-notes-light="off"]</code> dim with no note loaded. Its tooltip and aria label name the state; only an error
+        prints a short word after it (<code>.oc-notes-save-word</code>, beside the disk in <code>.oc-notes-disk-wrap</code>,
+        a live region that stays in the accessibility tree while empty). A click saves now, and after a failed or
+        oversized save retries; on a conflict it sends nothing and moves focus to the banner's load theirs and keep mine.
+        A press on the disk never takes focus from the box, and the store saves single flight, so a click right after
+        typing sends one write. The toggle's items (<code>.oc-seg__item</code>) reserve a transparent 1px edge so the shared focus rule can light
+        them, and both controls grow to <code>--oc-tap</code> on a coarse pointer. A copy whose header is ticked off, a widget bar
+        section left at its default (header off), and a host with no slot at all (a dynamic tab, a style guide
+        specimen, a test) draw the bar at the top of the body, the disk alone below the full height step. The session
+        rail's slide-out prints no title row while its section's header is off (<code>provideTitlelessHost</code>), and there the whole bar
+        shrinks to ONE corner icon over the note's top right (<code>.oc-notes-controls--corner</code>; a pencil while previewing, an eye while editing,
+        no tooltip; Alex (example-owner), 2026-10-13, issue #1731): no switch, no disk, no name, since the note autosaves; a save error keeps its
+        short word beside the icon (a quiet base <code>Button</code>), and pressing it retries. The slide-out's body has one small even inset and no inner border, the caret goes into
+        the text area when the user opens the widget (<code>shell/open-focus.svelte.ts</code>), never on a plain mount. A ticked rail section shows the controls in its header, and the
+        in-body bar of every other host names nothing and ends with the controls. The drawer's own open as widget is the quiet header tool (<code>.oc-ibtn--bare</code>), so the
+        title stays the one orange thing in its row.</dd>
     <dt id="cells-markdown-editor">the one markdown editor: box, preview and the hints key</dt>
+    <dd>Joe (ccsliinc), 2026-10-14, issue #1788: "if we can reuse the notes widget do it, work once not harder".
+        <code>web/src/lib/markdown-editor/MarkdownEditor.svelte</code> (<code>.oc-md-editor</code>) is the notepad's own box lifted out, so the notes widget
+        and the review board's notes panel draw ONE editor; plugins reach it through <code>cplugs/sdk/ui.ts</code>. It is presentational: the host owns the
+        text and when it is saved. The edit body is the field (<code>.oc-notes-field</code>, a size container) holding the mono text area
+        (<code>.oc-notes-text</code> on <code>--oc-ground-field</code>, no border, no resize); a host whose box sits loose in a larger surface
+        (the board's notes panel) passes <code>framed</code>, and the field (<code>.oc-notes-field--framed</code>) reserves a 1px hairline in the
+        control line color the review board tray's fields wear and carries <code>oc-focus-host</code>, so the one focus rule brightens that frame while the text area stays bare; the preview body is <code>.oc-notes-preview</code>, built as DOM
+        nodes from the markdown subset, never parsed HTML, with <code>.oc-md-editor__empty</code> under an empty one when the host names a line. A base quiet <code>IconButton</code> at the field's bottom right (<code>[data-md-hint-key]</code>, the <code>help</code> icon, clear of the notepad's corner icon at the
+        top right, lit while open) lays a compact cheat sheet over the text (<code>.oc-md-editor__hints</code>: a hairline frame on
+        <code>--oc-ground-panel</code>, the small tracked caption <code>.oc-md-editor__hints-title</code> in <code>--oc-text-muted</code>, and a two column
+        <code>.oc-md-editor__hint-list</code> of the literal source and what it renders as). It lists ONLY what the preview renders (<code>hints.ts</code>):
+        headings, bold, italic, inline code, a fenced block, bullet and numbered lists, a quote, a rule and http, https or mailto links. Escape or the key
+        closes it, and a press never takes focus from the box. A host with no header of its own passes <code>onMode</code> and gets the shared
+        <code>EditorControls</code> toggle in a row above the box (<code>.oc-md-editor__keys</code>, no disk); the notepad passes none, its toggle is in its header.</dd>
     <dt>the widget menu, one icon, everything inside</dt>
+    <dd>Joe (ccsliinc), 2026-10-01 (mock sections 4 and 5): the title row carries ONE icon, top left, the widget's own;
+        content controls (sort, view all, refresh) stay on the title row's right (option a1). In edit layout that icon
+        becomes the gear (<code>.oc-frame-corner--edit</code> in <code>CornerMenu.svelte</code>): a bare glyph with no box,
+        in <code>--oc-cyan</code>; a bare cell (a stat tile) draws it at the top right in a slot of its own
+        (<code>.oc-stat-tile--editing</code>; one unit wide, <code>.oc-stat-tile--compact</code>). Both open <code>CellMenu.svelte</code>
+        (drawn by the shared <code>CascadeMenu.svelte</code>, the one a drawer card's, a rail section's, a bar key's and a glance tile's menu draw too) with THE SAME LIST, composed by <code>lib/widget-menu/model.ts::buildWidgetMenu</code>: first the widget's own actions (<code>widgets/menu/declared-actions.svelte.ts</code>: the
+        frame's view all / refresh / clear and a card's sort orderings), so the keyboard reaches each content control from
+        the menu too; then pop out and the show header tick (a checked item, desktop only, never on a widget that draws its own head); edit layout (the bar sizes compact, cozy and detailed are NOT here: they live in the menu of the bar's empty area, Joe (ccsliinc), 2026-10-21); and close widget
+        (<code>.acm-item--danger</code>, <code>--oc-coral</code>), last behind its own hairline. In edit layout the list adds the widget's looks and settings and the arranging items (extend and pull back a row, move up and down, move to the drawer area). Each core item carries a 13px icon.</dd>
     <dt>the settings overlay</dt>
     <dd><code>widgets/chrome/SettingsOverlay.svelte</code> (<code>.oc-configure</code>, the <code>popup-focus</code>
         look; mock section 6, option A): a top-layer popover 260px wide tethered 8px beside the widget, right side
@@ -242,26 +363,183 @@ facts use the server's period summaries and keep missing data distinct from zero
         (<code>.oc-configure-foot</code>) has reset (a quiet <code>.oc-btn</code>, every field back to its default in one
         write) and done (<code>.oc-btn--confirm</code>, which only closes). Escape closes it.</dd>
     <dt>the widget info card</dt>
+    <dd><code>widgets/info/WidgetInfoCard.svelte</code> (<code>.oc-winfo</code>; mock section 9, option A): ONE renderer
+        the widget menu's info popover and the catalog page share, fed by <code>widgets/info/widget-info.ts</code> from the
+        declaration alone. A head row (<code>.oc-winfo-head</code>: the icon in the widget's own tone
+        <code>.oc-winfo-icon</code>, the name <code>.oc-winfo-name</code>, the version <code>.oc-winfo-version</code>), one
+        line saying what it shows (<code>.oc-winfo-about</code>), and a hairline-topped fact list
+        (<code>.oc-winfo-facts</code>: group and type, copies, sizes, the data it reads), labels small,
+        tracked and muted. The popover host (<code>WidgetInfoPopover.svelte</code>, <code>.oc-winfo-pop</code>,
+        <code>.oc-winfo-pop-body</code>, <code>.oc-winfo-pop-foot</code>) sits beside the widget like the settings
+        overlay, with "open in the catalog" and "close"; Escape or a press outside closes it.</dd>
     <dt>the no-show plate</dt>
     <dd><code>widgets/chrome/NoShowPlate.svelte</code> (<code>.oc-noshow</code>, <code>.oc-noshow-name</code>), drawn by the
         rail and drawer widget bodies when the measured box is under the widget's size class threshold
         (<code>widgets/no-show.ts</code>): the widget's icon and lowercase name in the dim text token, no hatch, no
         buttons. It is for a box that is merely tiny; the refusal plate is for a box the widget was not tested at.</dd>
     <dt>the refusal plate</dt>
+    <dd><code>widgets/chrome/RefusalPlate.svelte</code> (<code>.oc-refusal</code>), drawn by
+        <code>FrameFitBody.svelte</code> in place of a widget's body when its box is below the widget's floor or outside
+        the sizes it was tested at (<code>fits.tested</code>, a quarter of tolerance on width, height and aspect;
+        <code>docs/widget-spec.md</code>). Every widget goes everywhere (Joe (ccsliinc), 2026-10-03), so this plate is the
+        whole answer to a box it does not suit. The frame and title stay; the body keeps its real
+        size under a 135 degree hatch in <code>--oc-line-rule</code>, so the board never jumps. The plate
+        (<code>.oc-refusal-plate</code>, <code>--oc-ground-field</code> with a rule hairline) shows the generic widget icon
+        (<code>.oc-refusal-icon</code>, <code>components</code>) and "not available at this size"
+        (<code>.oc-refusal-title</code>), gives the reason in words (<code>.oc-refusal-detail</code>, "too small here" or "made for" the named sizes; no
+        numbers reach a person), says "resize to fit" (<code>.oc-refusal-hint</code>) while the frame's resize guide points somewhere, and offers
+        <code>.oc-btn</code> buttons in <code>.oc-refusal-actions</code>: "make it A x B" only where the frame can
+        apply it (a home row short of height), and "report", which raises a warn alert in the alert center. No red: a
+        refusal is calm. IT FITS EVERY BOX ITSELF (Joe (ccsliinc), 2026-10-03: "if there is any slipping it fails"): by
+        its measured height it steps down from full (130px and up) to brief (<code>.oc-refusal--brief</code>, 64px and
+        up: the icon and the title, no detail, no buttons) to icon (<code>.oc-refusal--icon</code>: the icon alone, the
+        title on hover and in <code>.oc-visually-hidden</code> for a screen reader), so a glance tile or a short strip
+        never pushes it past the edge. An analytics chart drawn below its own renderer's floor draws this plate too.</dd>
     <dt>the resize guide</dt>
+    <dd><code>widgets/chrome/ResizeGuide.svelte</code> (<code>.oc-resize-guide</code>), drawn by the frame
+        (<code>FrameFitBody.svelte</code>) over the body box while the widget is at a size it did not declare (Task Manager 62,
+        Joe (ccsliinc), 2026-10-06): a chevron from the icon set on each edge whose axis is off the target
+        (<code>.oc-resize-guide-chevron</code> with <code>--top</code>, <code>--right</code>, <code>--bottom</code>,
+        <code>--left</code>; <code>--flip</code> turns the right chevron into the left one), pointing the way that edge moves,
+        in the quiet secondary text; they pulse softly and hold still under <code>prefers-reduced-motion</code>. The target is
+        always a DECLARED size the box can reach: at or above the record's, the row's and a chart renderer's floor, inside the
+        widths the row lets the cell reach (a lone cell is the row's width; a size wider than the row is drawn at it), held until another is two units nearer (<code>resize-hint.ts</code>). An axis's chevrons
+        hide exactly when that axis equals the target's, in whole grid units. Over the not-available plate it shows in every
+        mode and the plate carries "resize to fit"; over a working body it shows in edit layout only, with
+        "resize to fit" in the middle (<code>.oc-resize-guide-message</code>, the plate's field ground and rule hairline).
+        It takes no pointer and is hidden from a screen reader.</dd>
     <dt>the widget drawer</dt>
+    <dd><code>WidgetDrawer.svelte</code> (<code>.le-drawer</code>; its title row, find box and rows are drawn by <code>DrawerHead.svelte</code>, <code>DrawerTools.svelte</code> and <code>DrawerList.svelte</code>) is the body of the left sidebar's EDIT LAYOUT TAB
+        (<code>EditLayoutBody.svelte</code>, <code>.le-drawer--docked</code>: in the column's flow, no frame of its own; Joe
+        (ccsliinc), 2026-10-01, <a href="#chrome-dynamic-tabs">dynamic tabs</a>). The sidebar docks, so a live pane is
+        resized only by the drawer's own width, never by the editor. Undocked (no sidebar) it is fixed over the right edge,
+        folding to its title row (<code>.le-drawer--folded</code>). Copied, not invented: the title row
+        (<code>.le-titlebar</code>, <code>.le-title</code>, <code>.le-label</code>) is the ledger's <code>.pl-titlebar</code>
+        family; the find field (a bare base <code>Field</code>) shares one line (<code>.le-find</code>) with
+        one kind select (<code>.le-kind</code>, an <code>.oc-field</code>; Joe (ccsliinc), 2026-10-03: "under find, i dont
+        like the pills, takes up a bunch of room"); the analytics gallery's category chips are small base <code>Button</code>s (<code>aria-pressed</code>); the foot (<code>.le-foot</code>) holds ONE base
+        confirm <code>Button</code>: done (Joe (ccsliinc), 2026-10-14: every change is final when made, so no undo, reset or cancel). Each card (a base <code>Button</code> <code>variant="row"</code>, <code>data-le-card</code>)
+        is a button: press or Enter adds the widget at its designed place, a drag (<code>.le-ghost</code> follows the
+        pointer) lands it on the screen's own drop marks or in the sidebar's widget area or glance area at their
+        insertion marks. ONE LIST, ANYTHING DROPS ANYWHERE (Joe (ccsliinc), 2026-10-03): there are no shelves for the sidebar
+        areas, no place is drawn refused and no ghost turns coral; a box the widget was not tested for draws the
+        not-available plate instead. There is no hidden count under the list. A widget
+        already on the screen is listed with <code>data-placed</code>, dimmed, with a green count
+        (<code>.le-row__count</code>, "on home", "on home x2"); a widget switched off on the widgets page is listed dimmer, on a
+        faint hatch, with its reason (<code>data-state="refused"</code>, <code>.le-row__reason</code>). The list is the compact list below
+        (it was grouped by family until 2026-10-03).</dd>
     <dt>widget drawer views, fuzzy find, icons and the options mark</dt>
+    <dd>Joe (ccsliinc), issue #1676: "widgets should all have icons that match the drawer icon and the top left icon on
+        homepage ... a few view options, tree view by default with type and then the widget inside sorted by name ... by name
+        only sorted ... a fuzzy search ... an icon showing if it has configurable views". THE VIEW SWITCH
+        (<code>.le-views</code>) sits in the title row: two
+        base quiet <code>IconButton</code> toggles (a folder for by type, a list for by name), the one in effect pressed.
+        BY TYPE is the default and a TREE: one fold per widget type (<code>.le-type</code>) drawn with the left sidebar's own
+        heading row (<code>.session-sidebar-group__headerrow</code>, <code>FoldChevron</code>), a count after the name
+        (<code>.le-type__count</code>), its widgets sorted by name under a hairline (<code>.le-type__body</code>). A plain
+        press folds one type, Shift+press sets every type to the state the pressed one moves to (the double chevron shows while
+        Shift is held), and the folds are kept for the session only. BY NAME is one flat list sorted by name. The choice is
+        kept per device class in <code>ui_preferences.widget_drawer_view</code> (desktop) and
+        <code>widget_drawer_view_mobile</code> (phone, inheriting the desktop's until it chooses). THE FIND BOX IS FUZZY in
+        both views: the letters of the query in order, case ignored, best match first, the matched letters of the name
+        highlighted (<code>.le-hit</code>, the accent, no bold). While a query is typed the tree draws every fold open for
+        the paint only and a press on a type heading does nothing, so clearing the query brings the stored folds back (the
+        left drawer's rule). THE ICON LEADS every row (<code>.le-ico</code>, a framed 28px well): the widget's registered icon
+        in its tone token, the same glyph the home frame draws in its top-left corner; the screenshot lives on the
+        description card. A widget with views or settings wears the OPTIONS MARK after its name
+        (<code>.le-opts</code>, a small settings glyph in <code>--oc-cyan</code>, the rail key's options chip color) with the
+        tooltip "has configurable views or settings".</dd>
     <dt>widget drawer rows: the compact list</dt>
+    <dd>Joe (ccsliinc), 2026-10-03: "compact list". The drawer lists ONE ROW PER WIDGET (a tree by type or a flat list by name, see above), with the find box and one kind select on top (all, kpi, list, monitor, feed, tool,
+        chart, from <code>manifest.type</code>; the kind chips went 2026-10-03). The family
+        headings are gone. <code>WidgetRow.svelte</code> (<code>.le-wrow</code>) is the row (a base row <code>Button</code>, <code>data-widget</code>, on the
+        drawer's <code>data-le-card</code>): the widget's icon first (<code>.le-ico</code>; the catalog screenshot and density ticks,
+        <code>WidgetThumb.svelte</code>, <code>.le-thumb</code>, moved to the description card), then its name. NO SIZES on the
+        row (Joe (ccsliinc), 2026-10-03: "remove the sizes from the drawer. put the small preview back"); the description
+        card lists them. Beside the row, never inside its button, the (i) (a base quiet <code>IconButton</code>, <code>data-widget-info-open</code>) folds the widget's description
+        card open under the row (<code>.le-row__card</code>, inset, a hairline on its left, no box), in the list's flow
+        so the sidebar never clips it. A family row (analytics) ends in a chevron (<code>.le-row__chev</code>) and folds
+        open <code>AnalyticsFamilyFold.svelte</code> (cleaned 2026-10-03, Joe: "the sub items dont look good"): one inset
+        column with a hairline on its left (<code>.le-gallery</code>), small tracked section labels
+        (<code>.le-gallery__label</code>: analytics gallery, your charts), the category chips
+        (<code>.le-gallery__cats</code>), the presets as compact two-line rows (base row <code>Button</code>s, <code>data-preset</code>: a quiet
+        <code>+</code>, <code>.le-gallery__plus</code>; the name, <code>.le-gallery__name</code>; one
+        sentence-case line, <code>.le-gallery__note</code>, with the chart kind, <code>.le-gallery__viz</code>, a dot,
+        <code>.le-gallery__sep</code>, and what it shows), the placement hint after them (<code>.le-gallery__hint</code>),
+        and each chart this browser has as one line (<code>.le-chart-row</code>: name left, <code>.le-chart-row__name</code>,
+        chips right, <code>.le-chart-row__acts</code>; a hidden one muted, <code>.le-chart-row--hidden</code>; a removed one also carries a delete chip,
+        <code>ChartDeleteChip.svelte</code>: a small danger base <code>Button</code> (coral), and after a first press
+        <code>data-armed</code> reading "delete?" for four seconds, a second press deletes, Esc or blur
+        cancels, no modal).
+        The drawer's one accent stays its title.</dd>
     <dt>the window rows: session, terminal and browser, each folding open</dt>
+    <dd><code>WindowRows.svelte</code> (<code>.le-windows</code>; Joe (ccsliinc), 2026-10-03: "i want the
+        session/terminal/browser list items with an hr separating from rest of list and if you click one of the top
+        three they fold down to show you whats available"): at the top of the drawer's list on the terminal page,
+        three <code>[data-le-card]</code> rows (<code>data-picker-entry</code>: an icon well, <code>.le-wfold__well</code>, the
+        thumbnail's framed well at a row's height; the kind's name; "N live" in the micro meta; a two-hairline chevron,
+        <code>.le-wfold__chev</code>), then ONE hairline (<code>hr.le-windows__rule</code>, <code>--oc-line-rule</code>)
+        before the widget rows. Pressing a row folds it open in place (<code>.le-wfold--open</code>; an accordion, one
+        open at a time) to the live sessions, console terminals or browsers it can add (<code>.le-wfold__body</code>,
+        inset with a hairline on its left like the (i) card; each a <code>[data-le-card]</code> row (<code>data-picker-row</code>)
+        led by a small green square, <code>.le-wfold__dot</code>; a quiet line, <code>.le-wfold__hint</code>, or
+        <code>.le-wfold__none</code> when none is live). A choice adds on a press and carries on a drag (screen, sidebar
+        widget area, glance area); one already on the screen is <code>data-placed</code> with the reason. The fold
+        stays open after a pick. Do: keep the three apart from the widgets by the one rule. Do not: swap the whole list
+        for a picker screen.</dd>
     <dt>the empty-space menu</dt>
+    <dd><code>EmptySpaceMenu.svelte</code> (Joe (ccsliinc), 2026-10-11: "add a right click to the all dead widget area space to
+        allow to quickly go into layout edit"): a right click, or Shift+F10 / the menu key on the focused grid, on space no
+        widget covers (a gap, a gutter, below the last row) opens the shared <code>CascadeMenu</code> at the pointer through a
+        zero size marker, <code>.oc-empty-menu-anchor</code>, with one item: edit layout, or done editing while the editor
+        is on. A right click on the empty space of a widget bar (the right or bottom rail: not a key, the handle, the pin or an open
+        widget; Joe (ccsliinc), 2026-10-11, "i want this on the sidebars") opens the same menu. A press on a widget is left alone. Do: reuse <code>CascadeMenu</code>. Do not: draw a second menu.</dd>
     <dt>the already-here prompt</dt>
+    <dd><code>DuplicatePrompt.svelte</code> (<code>.le-dupe</code>; Joe (ccsliinc), 2026-10-04: "you cannot disable an
+        already present item. you can however allow the drag and if you drop it somewhere it exists you give the user the
+        option to know this is already here do you want a second copy"): a placed widget's row is NEVER dimmed or
+        disabled; let go where it already is and a small top-layer card opens beside the drop point in the one popup
+        look (<code>popup-focus</code>): the question in mono (<code>.le-dupe__line</code>), then the answers
+        (<code>.le-dupe__row</code>, wrapping): cancel <code>.modal-btn-secondary</code>, move here, and add copy
+        <code>.modal-btn-confirm</code> where the area can hold two; a one-copy widget says so and offers move here as the
+        confirm. Escape or a press outside cancels. Do: ask, never act, on a drop where it already is. Do not: grey out a
+        row because its widget is placed.</dd>
     <dt>the widget description card</dt>
+    <dd><code>widgets/info/WidgetDescriptionCard.svelte</code> (<code>.oc-wdesc</code>; Joe (ccsliinc), 2026-10-03, "i was
+        thinking a description card"): the info card above with a preview (<code>.oc-wdesc-preview</code>, the widget's
+        thumbnail drawn wide) under the about line and three more facts: where it goes (a dashboard, the terminal page,
+        the sidebar widget area, a glance), its options (its settings labels, or "nothing to set") and who made it
+        (built in, or plugin and its vendor). The raw "fits" row is left out; "goes in" says it in places. Opened by a
+        drawer row's (i) and drawn at the top of the widgets page's detail pane.</dd>
     <dt>edit layout in a dashboard pop-out</dt>
     <dd><code>PopoutEditorHost.svelte</code> (no classes of its own): a dashboard pop-out's top bar offers "add widgets"
         (the bar's quiet <code>.oc-topbar-popout</code> outline), which turns edit layout on and draws the widget drawer
         UNDOCKED, the floating <code>.le-drawer</code> panel over the window's right edge, with no sidebar area or glance
         shelf (a pop-out has no sidebar).</dd>
     <dt>the dashboards page</dt>
+    <dd><code>DashboardsScreen.svelte</code> on the manager frame, reached from the menu's own dashboards row (Joe
+        (ccsliinc), 2026-10-02, <code>docs/dashboards.md</code>), redesigned on his 2026-10-03 word ("its not making me
+        understand what the page is? needs help"). It wears the page's two layers: the BAND holds the title bar (the
+        accent title, "N dashboards", the one <code>.oc-btn--confirm</code> "new dashboard") and the bar, whose first
+        line is the page's one sentence (<code>.oc-page__lede</code>: your active dashboard is your home screen; open any
+        other in its own window), then the search and the rarer tools (duplicate the home screen, import, both
+        <code>.oc-btn--sm</code>). The DATA is a grid of cards (<code>DashboardList.svelte</code>, <code>.dash-list</code>
+        on <code>.oc-page__items</code>), the home screen first, then a dashed "new dashboard" tile
+        (a base quiet button, <code>[data-dashboard-new-tile]</code>). Each card (<code>DashboardCard.svelte</code>, <code>.dash-card</code>, the catalog
+        card's frame) leads with a preview of its grid (<code>BoardPreview.svelte</code>, <code>.dash-preview</code> on
+        <code>.oc-well</code>: one hairline box per widget, <code>.dash-preview__box</code>, captioned in micro capitals),
+        then its name (a base row button, <code>[data-dashboard-rename]</code>: click to rename in place in the base bare field, Enter keeps,
+        Escape drops), the counts with export and delete quiet at the right (<code>.dash-card__meta-row</code>), and the
+        verbs as base small buttons. The home screen card is <code>.dash-card--home</code> (a green edge and
+        a green "home screen" tag, <code>.dash-card__home</code>, with the home icon) and offers "edit layout"; any other
+        offers set as home, open (its own window) and edit (its own window, edit layout on). Delete never shows on the
+        home screen and sits behind an inline confirm (<code>.dash-card__confirm</code>) with
+        <code>.modal-btn-secondary</code> to keep and <code>.modal-btn-danger</code> to go. Every action is a
+        <code>/api/v1/dashboards</code> route; the last outcome is the status line (<code>.dash-list__line</code>,
+        <code>role="status"</code>). Import (<code>BoardTransfer.svelte</code>) previews the file on the server first;
+        the preview is one calm <code>.oc-notice</code> with a <code>.modal-btn-secondary</code> cancel and a
+        <code>.modal-btn-confirm</code> import, a refusal a <code>.oc-notice--warn</code> sentence and one
+        <code>.oc-notice--muted</code> line per reason. Nothing is written until the confirm.</dd>
     <dt>thumbnails</dt>
     <dd><code>WidgetThumb.svelte</code> (<code>.le-thumb</code>): a feature-catalog screenshot of that widget where one
         exists (<code>layout-editor/thumbnails.ts</code>), otherwise the manifest's icon in its tone token over its width
@@ -335,6 +613,21 @@ facts use the server's period summaries and keep missing data distinct from zero
     <dd>Plate text <code>--oc-text-dim</code>; the terminal wears the page theme.</dd>
 </dl>
 
+<h3 class="sg-h3" id="cells-files-path">open a file path</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>The files widget's quiet base <code>Button</code> opens the shared <code>ModalShell</code> with one base
+        <code>Field</code> for an absolute or <code>~/</code> path (#2697). The menu offers the same action with
+        the registered <code>p</code> shortcut. It works without a selected session.</dd>
+    <dt>layout</dt>
+    <dd><code>.files-path-form</code> stacks the field and footer with <code>--oc-space-3</code>.
+        <code>.files-path-actions</code> aligns the quiet cancel and confirm open buttons to the end with
+        <code>--oc-space-2</code>. The shared controls own their colors, focus and error text.</dd>
+    <dt>states</dt>
+    <dd>Opening disables duplicate submission; a refusal stays beside the field. Success opens the existing file
+        screen, with Markdown rendered in preview and the shared edit toggle available.</dd>
+</dl>
+
 <h3 class="sg-h3" id="cells-changes">the changes cell</h3>
 <dl class="sg-facts">
     <dt>use</dt>
@@ -369,7 +662,17 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-task-manager-mk2">TM Mark II (the Task Manager, reshaped)</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>A copy of the Task Manager widget Joe reshapes step by step (<code>web/src/opscenter/cells/task-manager-mk2/Cell.svelte</code>
+        and the all projects view <code>task-manager-mk2-all</code>, issue #1710); its rows, replies and add box are the Task Manager's.</dd>
     <dt>header</dt>
+    <dd>The title strip prints the new Task Manager's count at its right (<code>Mk2Count.svelte</code>, the design's <code>.tm-head-count</code>): TWO per-task numbers (Joe (ccsliinc), 2026-10-23),
+        <code>N needs you</code> and <code>N unread</code> (<code>.mk2-head-n</code>), each the same number as its filter chip (needs you counts tasks; unread counts the UNREAD MESSAGES of the active unread tasks, so marking a task read drops it by everything that task had unread; the unread filter chip shows that same message number while its filter still lists tasks, and the rail icon badge counts what needs you), a zero left out. When the strip is too narrow for the words (an <code>@container oc-head</code> rule) each is the chip's icon (<code>.mk2-head-ico</code>) and its number (<code>.mk2-head-num</code>) and the words (<code>.mk2-head-words</code>) stay as its <code>aria-label</code> and <code>title</code>. The body's top is <code>Mk2Bar.svelte</code>
+        (<code>.mk2-bar</code>): the search field alone on its own row (<code>.mk2-search</code>, <code>.mk2-field</code>, the
+        bar's 20px <code>.oc-field</code>), and under it one row of the shared <code>.oc-chip</code> filter chips
+        (<code>.mk2-chips</code>, <code>.mk2-chip</code>) in the order all, needs you, unread, scheduled, pressed
+        shown with <code>aria-pressed</code>; a count rides a chip as <code>.mk2-chip-count</code>. The row follows the bar's own width
+        (a ResizeObserver, <code>data-mk2-chip-mode</code>): words with counts, then an icon (<code>.mk2-chip-icon</code>) with its count,
+        then the icon alone, the words always in the tooltip. There is no project dropdown in the header.</dd>
     <dt>task tabs</dt>
     <dd>An opened task draws the shared base <code>Tabs</code> strip, untouched (joined inside the widget frame), and its right end carries mark read
         (<code>Mk2MarkRead.svelte</code>, the base small button): no confirmation, a press holds the mark for five seconds and the button reads
@@ -394,6 +697,17 @@ facts use the server's period summaries and keep missing data distinct from zero
         opts the body in to Mark II's layout: no remove completed key or eye in the foot, and the tell carnivore key in the add row in the
         place of the add button (it adds when text is typed, tells when the box is empty), 20px high like the add field.</dd>
     <dt>task tabs</dt>
+    <dd>An opened or detailed row (compact is one line and shows none) shows <code>Mk2TaskTabs.svelte</code> first in its detail, on the new Task Manager's look restated on tokens in
+        <code>mk2-design.css</code> (<code>.mk2-design</code>; the source is the design's <code>task-design.css</code>, and the card's outer box is given back to the row):
+        the open card (<code>.tn-detail</code>), the shared page <code>Tabs</code>, untouched (action, discussion, details; the discussion
+        label carries its new count) and the selected body (<code>.tn-tabbody</code>). The reply box is the last thing in the body
+        (<code>.mk2-reply</code>), on the body's own ground and inside its padding. The action tab is Mark II's own: the one current actionable message first
+        (<code>.mk2-sched-keys</code> holds a scheduled task's pause and stop keys under the status rows, round 9, since the schedule block under the row is gone; <code>.mk2-actionable</code>: the open question, else the newest unread info; a mark read sends the task back to its own section at once), then label and value pairs
+        (<code>.mk2-rows</code>; round 10: the status value is the workers' live lines, one plain line each, <code>.mk2-worker</code>, dim when stale <code>.mk2-worker--stale</code>, and no status row when nothing real is said; no boxed note sits between the strip and the panel). Detailed is the same scroll box, only taller (<code>.tn-chat--tall</code>), with its show read and hide read key; the discussion is never drawn whole inline. The discussion and details tabs are the new Task Manager's, ported, not restyled
+        (<code>Mk2Discussion.svelte</code>, <code>Mk2Details.svelte</code>, <code>Mk2SharedViewer.svelte</code>): the conversation box
+        (<code>.tn-chat</code>, <code>.tn-message</code>, the new line <code>.tn-newline</code>, the earlier toggle <code>.tn-history-toggle</code>) and the ruled details
+        (<code>.tm-details</code>, the shared list <code>.tm-shared-list</code>, the viewer <code>.tm-resource-viewer</code>), with the task's GitHub issue link
+        (<code>.tn-resource</code>, shown here and nowhere else in Mark II). The task's crosstalk closes the details tab as foldable cards (<code>Mk2Crosstalk.svelte</code>: <code>.mk2-xt</code>, <code>.mk2-xt-card</code>, <code>.mk2-xt-head</code>, <code>.mk2-xt-who</code>, <code>.mk2-xt-time</code>, <code>.mk2-xt-line</code>, open <code>.mk2-xt-line--open</code>), closed by default, a click on the head opens one, and a line cut by its box reads whole on hover (the one cut-off-text tooltip). The conversation below the tabs is the Task Manager's own, unchanged.</dd>
 </dl>
 
 <h3 class="sg-h3" id="cells-task-manager-all"><span id="cells-huddle-all"></span>the all Task Manager lists cell</h3>
@@ -410,6 +724,27 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-crosstalk">the crosstalk cell</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>Agent to agent conversations, who wrote to whom, what is new and what went wrong
+        (<code>web/src/opscenter/cells/crosstalk/Cell.svelte</code>, <code>.xr</code>; redesigned 2026-10-20, Joe (ccsliinc), item 1062).
+        A caption strip in the ledger's title-row look says the scope (<code>.xr-cap</code>: the tracked uppercase accent label
+        <code>.xr-cap__label</code>, the project or session <code>.xr-cap__subject</code>, the count <code>.xr-cap__count</code>).
+        <code>ThreadList.svelte</code> is a listbox with one tab stop (<code>.xr-list</code>, <code>.xr-row</code>,
+        <code>.xr-hit</code>): a row is the last speaker, an arrow and the one spoken to (<code>.xr-line</code>, <code>.xr-name</code>,
+        <code>.xr-name--from</code>, <code>.xr-arrow</code>, <code>.xr-age</code>), then the delivery trouble in words
+        (<code>.xr-trouble</code>, <code>.xr-trouble--bad</code> in coral) and the last message (<code>.xr-preview</code>,
+        <code>.xr-count</code>). New activity is a green mark (<code>.xr-mark</code>, <code>.xr-row--new</code>); the open row is
+        <code>.xr-row--on</code>. The wrapping form for a narrow, tall box never cuts a name (<code>.xr-w</code>,
+        <code>.xr-w__main</code>, <code>.xr-w__pair</code>, <code>.xr-wn</code>, <code>.xr-wn--from</code>,
+        <code>.xr-w__trouble</code>, <code>.xr-w__preview</code>, <code>.xr-w__meta</code>); <code>.xr-row--more</code> holds the base button that pages older and
+        <code>.xr-sr</code> is the screen reader only "new:". <code>ThreadView.svelte</code> reads one conversation as a transcript
+        (<code>.xv</code>, <code>.xv--wrap</code>, <code>.xv--corner</code>): a head strip (<code>.xv-head</code>,
+        <code>.xv-side</code>, <code>.xv-and</code>, <code>.xv-count</code>), day breaks (<code>.xv-day</code>), messages with a
+        left hairline per side (<code>.xv-msg</code>, <code>.xv-msg--b</code>, <code>.xv-msg--indent</code>,
+        <code>.xv-msg--run</code>, <code>.xv-msg__head</code>, <code>.xv-from</code>, <code>.xv-to</code>, <code>.xv-arrow</code>,
+        <code>.xv-time</code>, <code>.xv-reply</code>, <code>.xv-text</code>, <code>.xv-text--folded</code>,
+        <code>.xv-facts</code>, <code>.xv-ask</code>, <code>.xv-trouble</code>,
+        <code>.xv-trouble--bad</code>), a dim notice line (<code>.xv-notice</code>, <code>.xv-notice__tag</code>), and
+        <code>.xv-scroll</code>, <code>.xv-older</code>; loading and a failed read are the base state (<code>.oc-state--inline</code>).</dd>
     <dt>layout</dt>
     <dd>Three layouts from the box (<code>.xr--side</code> from 560px: the conversation beside the list, <code>.xr-list-pane</code>
         and <code>.xr-pick</code> when none is open; <code>.xr--stack</code> when narrower and 320px tall: the list over the
@@ -491,6 +826,20 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-pipeline">the pipeline cell</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>The pipeline engine at a glance, as a chart (<code>web/src/opscenter/cells/pipeline/Cell.svelte</code>, Joe
+        (ccsliinc), 2026-10-12, #1689; the squares are item 519, the chart is item 542, #1701). On top, the body settings,
+        pipeline draws (<code>web/src/lib/pipeline-status/PipelineStatusPanel.svelte</code>) in its <code>compact</code> form
+        (<code>.ps--compact</code>): one strip (<code>.ps-top</code>, a title-row hairline) holding the status squares
+        (<code>PipelineSquares.svelte</code>, <code>.ps-sq</code>) with the status line small beside them. Under it the
+        running and queue sections (<code>ui/RunQueue.svelte</code>, see "running and queue"): each plugin on the key
+        being delivered now, then the next keys waiting. Under those the run chart (<code>ui/run-chart.css</code> over the
+        shared <code>DataTable</code>): one row per area and plugin, updated in place by the server, with the plugin's
+        friendly name (<code>.oc-rc-name</code>, never the raw id) behind its outcome mark (<code>.oc-rc-mark</code>), the
+        area (<code>.oc-rc-area</code>: the session, else the project, else "machine"), the last run time, how long ago and
+        the runs since the server started (<code>.oc-rc-muted</code>). Below 380px the runs go, below 260px the area too;
+        a phone row is two lines. No rebuild control sits in the widget (Joe (ccsliinc), 2026-10-12: "remove the refresh
+        icons not needed"): the rebuild is Settings, pipeline. Nothing
+        alerts, switches or approves anything.</dd>
     <dt>placement</dt>
     <dd>Hidden by default; placed in either rail or on a dashboard in edit layout, and it is the developer widget's
         pipeline tab. It is global, with no local sibling, so it never follows the selected session, and its icon wears
@@ -504,6 +853,17 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-pipeline-squares">the pipeline status squares</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>One square per plugin the pipeline engine reports (<code>web/src/lib/pipeline-status/PipelineSquares.svelte</code>,
+        model <code>squares.ts</code>, Joe (ccsliinc), 2026-10-12, item 519: "it had a bunch of squares on top showing status
+        with lots of data below it"), so a plugin added later gets its square with no change. <code>.ps-sq__row</code> holds one
+        <code>.ps-sq__item</code> per plugin: the square <code>.ps-sq__square</code>, drawn as the deleted job widget's
+        add-on icon (the deleted <code>Cell.svelte</code> at 0ccf20a2b^): 28px, a 1px reserved border so the shared focus rule has an
+        edge, the plugin's own manifest icon (<code>src/cplugs/&lt;id&gt;/cplug.json</code>, else <code>chart</code>) and its
+        state mark <code>.ps-sq__mark</code> in the bottom-right corner. The plugin's friendly name is the square's
+        accessible name and the detail's head, never a label on the row. The squares carry no rebuild control (Joe
+        (ccsliinc), 2026-10-12: "remove the refresh icons not needed"); the rebuild is the full panel's, in Settings,
+        pipeline. With no plugin reported (an engine not started answers only <code>{"state": "off"}</code>) no row
+        draws and the status line beside it says off.</dd>
     <dt>states</dt>
     <dd>By SHAPE as well as token, the deleted job widget's mapping: a filled circle in <code>--oc-green</code> caught up, a
         ring in <code>--oc-yellow</code> behind (files waiting), a diamond in <code>--oc-coral</code> failing (failing files,
@@ -530,6 +890,18 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-run-chart">the run chart</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>The shared look of the pipeline chart and the scheduled chart (<code>web/src/opscenter/ui/run-chart.css</code>, item
+        542): <code>.oc-rc</code> is the scrolling column, <code>.oc-rc-bar</code> a title-row strip under a hairline (a
+        box-shadow, never a border) that holds a control such as the scope filter, then the shared <code>DataTable</code>.
+        Cells: <code>.oc-rc-name</code> with <code>.oc-rc-name-text</code> in <code>--oc-text-bright</code>,
+        <code>.oc-rc-area</code> in <code>--oc-text-secondary</code>, times and counts in <code>.oc-rc-muted</code>
+        (<code>--oc-text-dim</code>, tabular figures). The words come from <code>opscenter/lib/run-chart.ts</code> (run time,
+        how long ago, next run) and the columns per width from its <code>columnsFor</code>. A FIGURE IS NEVER CUT OFF
+        (Joe (ccsliinc), 2026-10-12: "runtime is cutoff"): a figure column names its kind (<code>fit</code>), and
+        <code>columnsFor</code> gives it a <code>minCh</code>, the length of the widest value that kind prints in the
+        current language, which the shared <code>DataTable</code> turns into its track minimum (characters of the row's
+        own type plus the cell's padding); the name and the area share the rest and ellipsize (no tooltip on a name,
+        #1209).</dd>
     <dt>marks</dt>
     <dd><code>.oc-rc-mark</code> is the outcome by SHAPE as well as color: filled circle ok (<code>--oc-green</code>),
         diamond failed or error (<code>--oc-coral</code>), dash parked or skipped (<code>--oc-text-dim</code>), a cyan circle
@@ -542,6 +914,17 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-run-queue">running and queue</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>The two short sections the pipeline tab and the scheduled tab draw between their status and their chart
+        (<code>web/src/opscenter/ui/RunQueue.svelte</code>, look in <code>ui/run-queue.css</code>, rows from
+        <code>opscenter/lib/run-queue.ts</code>; Joe (ccsliinc), 2026-10-12, item 519 follow-up, #1689), COPIED from the
+        deleted job widget's running and waiting sections (0ccf20a2b^). <code>.oc-rq</code> holds two
+        sections, running then queue, each under <code>.oc-rq-head</code>: a small uppercase tracked
+        label in the accent with its figure (<code>.oc-rq-count</code>, dim, tabular) over a hairline (a box-shadow, never a
+        border). <code>.oc-rq-rows</code> holds one <code>.oc-rq-row</code> per item: the name (<code>.oc-rq-name</code>,
+        bright), the area or what ran it (<code>.oc-rq-area</code>, secondary), both ellipsized (no tooltip on a name,
+        #1209), and the time (<code>.oc-rq-time</code>, dim, tabular, an <code>auto</code> track, so it is never cut off). Each head sits in a
+        <code>.oc-rq-section</code>; a second section draws one inset hairline above itself, and a head that ends the strip draws none of
+        its own (the strip's closing hairline is the one), so every boundary is a single 1px rule (#1854).</dd>
     <dt>states</dt>
     <dd>An empty section says so in one dim line (<code>.oc-rq-none</code>). The queue draws at most eight rows and then
         <code>.oc-rq-more</code>, "+N more". A queued key held by a failure's retry reads its time in
@@ -566,6 +949,15 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-keep-awake">the keep awake cell</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>The sessions kept awake and whether this computer is held awake for them
+        (<code>web/src/opscenter/cells/keep-awake/Cell.svelte</code>, issue #899), from the one auto-sleep store
+        (<code>GET /auto-sleep</code>). A computer line (<code>.oc-ka-mac</code>) reads <code>mac_awake</code>: held awake,
+        kept awake but not held (no caffeinate on this build), or free to sleep. Then one row per kept-awake session: its
+        status light (the shared <code>StatusLed</code>, every signal passed), its name (<code>.oc-ka-name</code>), its
+        project from the <code>project</code> width step (<code>.oc-ka-project</code>), and the shared
+        <code>KeepAwakeIcon</code> cup, which turns keep awake off through <code>PUT /auto-sleep/keep-awake</code>. A kept
+        name the listing does not carry keeps its row with a not-measured light. No since-when column: nothing records
+        when a flag was turned on.</dd>
     <dt>placement</dt>
     <dd>Hidden by default on both pages, like the scheduled tasks cell; the Widgets list offers it. Its title mark is the
         <code>coffee</code> icon, the shared glyph's cup drawn still.</dd>
@@ -587,9 +979,53 @@ facts use the server's period summaries and keep missing data distinct from zero
         itself first, then <code>ScheduledRuns.svelte</code>, then <code>SentList.svelte</code>, then <code>LogViewer.svelte</code>. Only the selected monitor is mounted, so a tab not shown reads
         nothing. Every monitor is pushed, so nothing polls at idle.</dd>
     <dt>scheduled monitor</dt>
+    <dd>The scheduled chart, the run chart's look (item 542): one row per automation (its name, what ran its last run in
+        friendly words, "schedule", "missed run", "retry", "run now by you" or "run now by" an agent's session name, its
+        area, run time, how long ago, and the next run) and, in the sessions view, the Task Manager's scheduled task items with
+        their next fire. A <code>.oc-rc-bar</code> strip on top holds the scope filter (<code>ui/ScopeFilter.svelte</code>,
+        remembered per device): global (Carnivore's automations), sessions (the Task Manager items, read only while the Task Manager
+        plugin is on) or both. Below 440px only name, what ran it, how long ago and the next run show.</dd>
     <dt>sent monitor</dt>
+    <dd>The sent tab (Joe (ccsliinc), 2026-10-14, #1805: "a small flowing list like the others in the dev widget so i can monitor
+        when i send things"), the pipeline tab's layout. A <code>.oc-rc-bar.oc-rc-bar--split</code> strip on top holds a status
+        line on the left (<code>.oc-rc-line</code>, "3 in this browser, 1 not sent") and the "copy all" and "download" keys on the
+        right (<code>.oc-ob-keys</code> of the shared <code>.oc-btn oc-btn--sm</code>). Under it "in this browser"
+        (<code>OutboxRows.svelte</code>, the RunQueue look): one <code>.oc-rq-row.oc-ob-row</code> per copy the browser outbox still
+        holds, with its keys on the line under it, retry, copy and, on a refused one only, discard (<code>.oc-btn--danger</code>, the
+        destructive token, never the retry token); a refused row's state reads in <code>--oc-coral</code>. When the clipboard is
+        missing (plain HTTP) the text opens in <code>.oc-ob-copy</code> with a read-only <code>.oc-ob-text</code> box, selected, under
+        "select the text and copy it". Then the chart of the owner's recent sends (the shared <code>DataTable</code>): what was sent
+        with the run chart's mark, the task, where it stands with the agent (told with who and when, telling in a few seconds, holding,
+        read, filed, not told and why) and how long ago. Pushed, no polling at idle. The Task Manager off leaves the local section and one
+        line saying so.</dd>
     <dt>log monitor</dt>
+    <dd>The log tab (Joe (ccsliinc), 2026-10-15, #1827: "a log viewer to the dev widget as a new tab, top strip is buttons for each
+        status to filter each type. scrolling not all inclusive"), since #1861 the ONE shared viewer
+        <code>web/src/opscenter/log/LogViewer.svelte</code>, which the <code>#logs</code> page
+        (<code>LogsScreen.svelte</code>, the page frame with an <code>.oc-page__body.oc-lv-page</code> body) mounts too. It reads a
+        source (<code>LogSource</code>), never the network itself. The root wears <code>.oc-rc.oc-lv</code>. <code>LogToolbar.svelte</code>
+        draws the run chart's <code>.oc-rc-bar.oc-lv-bar</code> strip: one base <code>Button</code> (<code>size="sm"</code>, <code>data-level</code>) toggle per
+        level (<code>aria-pressed</code>, all on by default, remembered per device; an ON level turns its own border and text to its
+        token, error <code>--oc-coral</code>, warn <code>--oc-yellow</code>, info <code>--oc-cyan</code>, debug
+        <code>--oc-text-dim</code>), one pressed base <code>Button</code> per source seen inside <code>.oc-lv-group</code>, then after
+        <code>.oc-lv-spacer</code> the live server level in <code>.oc-lv-server-level</code> (the base <code>Select</code> under an
+        <code>.oc-label</code>), export as a base small <code>Button</code> and clear as a danger one. Under it <code>.oc-lv-filters</code> holds two
+        <code>SearchField</code>s (text, where <code>/pattern/</code> is a regular expression, and session) and the active field chips
+        (pressed base <code>Button</code>s; one filtered OUT wears the destructive <code>--oc-coral</code>); a broken pattern says why in
+        <code>.oc-lv-error</code>. <code>.oc-lv-status</code> carries "load older", the count, the announced drops and gaps in
+        <code>.oc-lv-warn</code>, a copy result in <code>.oc-lv-flash</code> and live or paused in <code>.oc-lv-live</code>.
+        <code>LogList.svelte</code> is <code>.oc-lv-wrap</code> around the virtual scroller <code>.oc-lv-list</code>; scrolled up, the
+        <code>.oc-lv-pill</code> (a confirm base <code>Button</code>) says "N new, jump to live". <code>LogRow.svelte</code> is <code>.oc-lv-rec</code>, one
+        fixed-height <code>.oc-lv-row</code>: the <code>.oc-ibtn.oc-lv-toggle</code>, <code>.oc-lv-time</code> (<code>.oc-lv-time--approx</code> when the time is borrowed from the nearest earlier timed line: dimmer, italic, led by "~"), the level word in
+        <code>.oc-lv-tag</code> (color is never the only cue), <code>.oc-lv-source</code>, then <code>.oc-lv-text</code> with the event
+        in <code>.oc-lv-event</code>, a traceback's line count in <code>.oc-lv-more</code> and each field as an
+        small base <code>Button</code> (<code>data-log-field</code>; click filters in, Alt-click out), and a quiet copy <code>Button</code> always shown. Open, the
+        record as JSON in <code>.oc-lv-json</code> and its continuation in <code>.oc-lv-lines</code> (a traceback in
+        <code>--oc-coral</code>), with <code>.oc-lv-dropped</code> when lines were cut. Pushed (the <code>server_log</code> topic), no
+        polling at idle.</dd>
     <dt>states</dt>
+    <dd>Reading and a failed read draw <code>.oc-rc-notice</code> (the failed read in <code>--oc-coral</code>); an empty chart
+        says "nothing here"; with the Task Manager plugin off the sessions view says "the task manager plugin is off".</dd>
     <dt>placement</dt>
     <dd>Hidden by default on both pages; the Widgets list and the drawer widget area offer it.</dd>
 </dl>
@@ -597,7 +1033,24 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-questions">the waiting on you cell (id questions)</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>Waiting on you: everything the top bell holds, in one list (<code>web/src/opscenter/cells/questions/Cell.svelte</code>): the open approvals,
+        the Task Manager items in "needs you", the automations whose latest run failed and the alerts in the top bell (the kinds are the shared contract the bell reads too, <code>web/src/lib/attention-kinds/</code>, <code>docs/widget-system.md</code> section 23), oldest first, one <code>.oc-qs-row</code> button each (a small icon, the
+        ask in two lines, then a tracked uppercase kind, the session, project or sender, and how long it has waited). It answers
+        nothing: a click opens the approval inbox on that session, the Task Manager item or the bell's panel. Every source is pushed
+        (<code>approvals</code>, <code>cplug.huddle.list</code> and the <code>app_alert.*</code> frames), so nothing polls at idle.
+        It took over the approvals widget, retired 2026-10-12: a saved one becomes a copy listing approvals only. EACH COPY LISTS ITS OWN SOURCES (Joe (ccsliinc), 2026-10-11): in the drawer's widget area and the session rails the widget may be
+        placed more than once, and a copy's settings (the gear in the area, the right-click menu in a rail's edit layout) are exactly four
+        checks, stored on that copy alone (Joe (ccsliinc), Task Manager 404, 2026-10-12: "the checkboxes are the options in the right click. all, or
+        the 3 we spoke about"): <strong>all</strong>, then approvals, Task Manager questions and automations that failed. A new copy is on all, which
+        lists everything, the bell's alerts too, and DISABLES the three kind checks (grayed, in the state they had); unchecking it frees them,
+        and the copy then lists exactly the kinds checked. The menu stays open while checking. The rail or bar key and the area head wear the
+        bell (<code>bell</code> icon) when all is on or two or more kinds are checked, and that kind's own icon and name when exactly one is; the
+        count is the copy's rail badge and the <code>.oc-qs-count</code> line at the top of the widget, a hairline-underlined tracked uppercase label
+        in <code>--oc-yellow</code> (<code>widgets/placement-options.ts</code>, <code>cells/questions/sources.ts</code>,
+        <code>cells/questions/placement.ts</code>). Each check is drawn as a square box (<code>.acm-box</code>, filled green via <code>.acm-box--on</code> when checked, the shape of <code>.oc-check__box</code>; a check disabled by all is dimmed whole); the single letter at a row's end is the menu's hotkey (<code>menu-key</code>), not a stray character. The widget body carries no filter of its own, and the top bell has none.</dd>
     <dt>states</dt>
+    <dd>Nothing waiting draws the base state (<code>.oc-state--inline</code>), "nothing waiting on you". A row that cannot open draws
+        the same state as an error (the coral bar).</dd>
     <dt>reads from the theme</dt>
     <dd>Rows are separated by a faint hairline (<code>--oc-line-faint</code>) and hover on <code>--oc-ground-hover</code>;
         an approval's icon is <code>--oc-yellow</code>, a Task Manager question's <code>--oc-cyan</code>, an alert's <code>--oc-text-secondary</code>; the meta line is
@@ -609,17 +1062,25 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-task-manager-list"><span id="cells-huddle-list"></span>the Task Manager list cell (id task-list)</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>The Task Manager's items as ONE FLAT LIST (<code>web/src/opscenter/cells/task-list/Cell.svelte</code>, Joe (ccsliinc), Task Manager item 653, issue #1772, mockup r5), built for the right widget bar's drawer where it sits beside the notepad and is sized the notepad's way (the drawer's left edge and the section divider, <code>docs/widget-system.md</code> section 24). One item per row, never nested: questions, reviews, working, waiting, scheduled, then open. A row (<code>ListRow.svelte</code>) is the status mark (the Task Manager's own icon and token), the title and how old it is; a question wears the 2px <code>--oc-yellow-bright</code> stripe and the same yellow age. A REVIEW row also carries the approve key (<code>ApproveKey.svelte</code>, <code>.hl-approve</code>, the <code>approve</code> seal icon in <code>--oc-orange</code>; Joe (ccsliinc), 2026-10-14, #1797) at the right of its line: one press approves it exactly as the Task Manager's own tick does, no confirm. THE LIST ITSELF IS <code>ListBody.svelte</code> (the guts, shared): the same list also fills the Task Manager PROJECT ROW's status modal (<code>StatusList.svelte</code>, #1798) with no group headers; a SCHEDULED row there is listed like any other and carries no link (the automations key was dropped in #1875).
+        A press opens the row in place, one at a time (<code>ListRowOpen.svelte</code>): a question shows the Task Manager's real answer form (<code>TaskManagerAskForm</code>; a lone single or yes/no question instead draws its pills inline with no "other" key, and the reply box under it is the other), a review its latest line and the reply box, the rest the latest line, each ending with an "open in task manager" ICON key (<code>.oc-ibtn</code>, the <code>external</code> icon, an <code>aria-label</code> and the title popover; Joe (ccsliinc), 2026-10-14, #1797: no big text buttons in the widget). The reply box's send key is the <code>send</code> icon there too (<code>HuddleReply</code> with <code>iconSend</code>).</dd>
     <dt>looks</dt>
+    <dd><strong>Compact</strong> rows are one 20px line (<code>.hl-sum</code>), <strong>two-line</strong> rows 36px with the latest post under the title (<code>.hl-line2</code>, the author <code>claude</code> in <code>--oc-orange</code>, <code>joe</code> in <code>--oc-text-dim</code>). The density choice (compact or two-line) is a radio pair in the widget's menu (Joe (ccsliinc), 2026-10-14); the hover keys are gone.</dd>
     <dt>which statuses</dt>
     <dd>Each copy lists only the statuses it ticks, from the right-click menu of its key or of the list: the shared cascade menu with the heading "show in list" and the Task Manager's six badge-menu checks and hotkeys (<code>q r o w a s</code>), stored on that copy's placement (<code>options.st_&lt;status&gt;</code>, absent is on), synced to every device. A tick keeps the menu open.</dd>
     <dt>reads from the theme</dt>
     <dd>Rows are separated by <code>--oc-line-rule</code>, hover on <code>--oc-ground-hover</code>, an open row sits on <code>--oc-ground-card</code>; titles are <code>--oc-text-primary</code>, the second line <code>--oc-text-muted</code>. No hardcoded color.</dd>
     <dt>placement</dt>
+    <dd>Hidden by default everywhere: it is a widget the owner adds to a bar (edit layout, drag it from the widgets drawer). Its header is on by default; under 160 x 96 the section draws the widget's icon and name instead.</dd>
 </dl>
 
 <h3 class="sg-h3" id="cells-files">the files widget (id files)</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>The session's files, its git facts and its changes in ONE dense, keyboard-first tree (<code>web/src/opscenter/cells/files/Cell.svelte</code>,
+        Joe (ccsliinc), Task Manager item 1030, issue #2009), on the widget shell. A file click opens it as a row of the left bar's files
+        list; a click that cannot open says why in the status line (<code>.files-status</code>, <code>.files-status--error</code> in
+        <code>--oc-coral</code>) and never falls back to another editor.</dd>
     <dt>looks</dt>
     <dd>The body starts at the host's top edge (<code>.files</code>, a column at 100%; only <code>.files-tree</code> scrolls). Its first line is
         the filter row (<code>FilesFilter.svelte</code>: <code>.ff-row</code> holding the base search <code>Field</code>). Every row is one 22px line (<code>FileRow.svelte</code>,
@@ -643,17 +1104,21 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-session-contents">the session resources cell (id session-contents)</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>What the selected session has loaded or can load, named "session resources" and wearing the <code>library</code> icon (<code>web/src/opscenter/cells/session-contents/Cell.svelte</code>, Joe (ccsliinc), issue #1873; the widget id stays <code>core.session-contents</code> so saved layouts keep working): for a Claude or Codex session, its instruction files (the CLAUDE.md or AGENTS.md chain), skills, agents, commands, hooks, output styles, settings layers, MCP servers and plugins, read only from <code>GET /sessions/{id}/contents</code>. It follows the session the widget rail hands it (<code>scope</code>), else the focused terminal, and reads when that session changes or its refresh key is pressed, never on a timer. A press on a row only selects it and shows its details; the open key at the right of a file row is the only thing that opens the file in the Files tab, and an item with no file (an MCP server, a settings key) has no open key.</dd>
     <dt>looks</dt>
+    <dd>A 26px sub row (<code>.sc-sub</code>) names the agent family and account in <code>--oc-text-dim</code> (<code>.sc-sub__who</code>) and carries the controls (<code>.sc-sub__controls</code>) when the widget header has no room for them. Under it the filter box is the shared field in <code>.sc-filter</code>. Each section is a fold row (the base fold: a caret that turns, the label, the count at the right, on <code>--oc-ground-titlerow</code>) over item rows (the base <code>List</code> and <code>ListRow</code>, dense): a scope icon at the left of the name (<code>.sc-row__scope</code>, a <code>folder</code> for project in <code>--oc-cyan</code>, a <code>globe</code> for global, a <code>plug</code> for a plugin in <code>--oc-orange</code>, each with its own tooltip and <code>aria-label</code>, never a letter), the name, the line count at the right (<code>.sc-row__lines</code>: "19 lines", which becomes "19L" when the row itself is narrow, by a container query on <code>.sc-row__body</code>, never the viewport; no separating dot), and for a file the open key (a quiet base <code>IconButton</code>, the <code>files</code> icon). The selected row is the base selected row (the accent bar and the selected layer). The sections scroll in <code>.sc-body</code>; under them the details footer (<code>.sc-details</code>) shows the selected item's name and its scope icon and word (<code>.sc-details__scope</code>), its line count and kind, the first eight lines of a prose file (<code>.sc-details__head</code>, read through the Files tab's guarded <code>/config-files/read</code> route; never for settings, MCP servers, hooks, plugins or profiles, and never for a file the server flags sensitive), its full source path (<code>.sc-details__path</code>) and its load status, and the bottom strip (<code>.sc-strip</code>) reads "selected item details" and "lines &ne; context tokens". A message (base state line) stands in for the list when no session is followed, the read failed or the session has no such files.</dd>
     <dt>the title row</dt>
     <dd>Four controls, in the widget header when it takes controls, else in the sub row: the scope option group (the base <code>Segmented</code> in its <code>iconOnly</code> form, with an icon per option: <code>folder</code> local, <code>globe</code> global, <code>list</code> all, one active, no cycling button), the empty sections toggle (a quiet <code>IconButton</code>, <code>folder-eye</code> while empty sections show, <code>folder-eye-off</code> while they hide; while the filter box has text, hiding also drops the sections the text emptied), the show path toggle (a quiet <code>IconButton</code>, the <code>path</code> icon: a route of two end points joined by a bending line, in <code>icons.ts</code>) and refresh. Pressed toggles take the base pressed look. The widget header's own icon menu and right-click menu apply, with local, global and all as a radio set, show empty sections and show path as ticks, and refresh. A plugin counts as global. The scope and the empty choice are the copy's own placement options (<code>options.scope</code>, <code>options.show_empty</code>), so two copies keep two choices; a host with no option writer remembers them per device and per copy.</dd>
     <dt>reads from the theme</dt>
     <dd>Rows are the base list rows; no hardcoded color.</dd>
     <dt>placement</dt>
+    <dd>Hidden by default everywhere: the owner adds it to a bar. Under 160 x 96 the section draws the widget's icon and name instead.</dd>
 </dl>
 
 <h3 class="sg-h3" id="cells-warroom">the war room page and its wall cell (id warroom)</h3>
 <dl class="sg-facts">
     <dt>what it is</dt>
+    <dd>A full menu page, <code>#warroom</code> (<code>web/src/lib/warroom/WarRoomScreen.svelte</code>, issue #135, Alex (example-owner), 2026-10-20), wearing the one page frame (<code>opscenter/ui/Page.svelte</code>) and mounting a layout grid (<code>web/src/lib/warroom/WarRoomGrid.svelte</code>, the terminal page's surface shape) from its own store, <code>warroomLayout</code>, the third page of the layout engine. Edit layout works on it as on Home, so any widget can be dropped beside the wall. It has no phone: the menu row and the page go away at 700px and narrower.</dd>
     <dt>the wall cell</dt>
     <dd>The one cell it places by default, <code>warroom</code> (<code>web/src/opscenter/cells/warroom/Cell.svelte</code>, widget <code>core.warroom</code>, one per surface), filling the page. It draws ONE uniform grid of equal tiles that fills the window (<code>.ww</code> inside a <code>.ww-fill</code> box; columns and rows from the tile count and the box's aspect, scrolling only below a minimum tile). A project's tiles sit together in reading order inside <code>.ww-cell</code>s, and one outline in the project's colour wraps their union (a border on the cell edges whose neighbour is another project), with a small uppercase <code>.ww-plabel</code> on its first cell. The hovered tile peeks by transform only, to ONE width at every tile count that the peek zoom slider sets (0 no zoom, 50 the default, 100 the largest). Four include switches (shells, browsers, asleep, paired computers) ride the host header as <code>.oc-chip</code> and are also switches in the widget menu, beside the peek zoom slider (<code>.ww-peek</code>: a <code>.ww-peek-label</code>, a thin-track <code>.ww-peek-range</code> with a small square accent thumb, and the number in <code>.ww-peek-val</code>), whose menu twin is a radio set of five stops.</dd>
     <dt>the tile</dt>
@@ -678,8 +1143,32 @@ facts use the server's period summaries and keep missing data distinct from zero
 <h3 class="sg-h3" id="cells-control-center">the session control center</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>The terminal status bar grown (issue #1053, Joe (ccsliinc): "a session control center when open and stats when
+        closed"): <code>.oc-tf-grown</code> holds the stats half (<code>FootStats.svelte</code>) and
+        <code>ControlCenter.svelte</code> (<code>web/src/lib/session-control/</code>) side by side when the grown bar
+        has 640px of its own, otherwise stacked, stats first, as a sheet sitting on the skinny bar. It is an overlay
+        over the bottom of the terminal, never a box in its column, and at most half the terminal area tall, so
+        growing it never resizes the session's pane. Three sections under small tracked labels (<code>.scc-section</code>, <code>.scc-head</code>,
+        <code>.scc-label</code>, a count in <code>.scc-count</code>): scheduled tasks (listed only), subagents and
+        background processes, as hairline rows (<code>.scc-list</code>, <code>.scc-row</code>: <code>.scc-type</code>,
+        <code>.scc-text</code>, <code>.scc-num</code>, a dim pid line in <code>.scc-meta</code>). A work segment's click
+        opens it on its section, whose label wears the accent.</dd>
     <dt>the stats grid</dt>
+    <dd><code>.oc-tfs</code> is one label column and one value column shared down every group (<code>subgrid</code>):
+        <code>.oc-tfs-group</code> per row of Alex's #422 order (context, model, tokens / the windows / cost, account),
+        hairlines between groups, each figure an <code>.oc-tfs-item</code> with its <code>.oc-tfs-label</code> (small
+        tracked uppercase, dim) and <code>.oc-tfs-value</code>. Meters are <code>.oc-tfs-bar</code> and
+        <code>.oc-tfs-bar-fill</code> on the bar's own five-step scale, the percent <code>.oc-tfs-pct</code> in the same
+        step, a reset <code>.oc-tfs-reset</code> (the recycle icon and a duration) with its clock time in
+        <code>.oc-tfs-dim</code> under a day out; <code>.oc-tfs-model</code> wears the cost tier and
+        <code>.oc-tfs-effort</code> the effort level; the compact foot's provider mark is
+        <code>.oc-tf-mark</code>. Plain figures are <code>.oc-tfs-num</code> (an account name
+        ellipsizes, <code>.oc-tfs-text</code>). An unknown account is left out, never "not available". No figures:
+        one sentence, <code>.oc-tfs-state</code>.</dd>
     <dt>scheduled tasks</dt>
+    <dd>Live tasks first, soonest first, in words: a pinned one-shot reads "once, today 3:52 pm" and counts down "in
+        32m", never the raw cron. Fired and canceled tasks fold into one quiet line, a base quiet Button (<code>[data-scc-fold]</code>) ("history
+        (4)"), whose rows open dimmed under it.</dd>
     <dt>the stops</dt>
     <dd>A row's stop (<code>data-scc-stop</code>) and a section's "stop all" (<code>data-scc-act</code>) are the base
         small Button and ARM: a question (<code>.scc-confirm</code>, <code>.scc-ask</code>) with the destructive answer

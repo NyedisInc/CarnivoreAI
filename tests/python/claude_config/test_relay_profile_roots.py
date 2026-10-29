@@ -8,7 +8,7 @@ from src.core.claude_config import profile_roots
 
 
 def test_relay_profile_sessions_root_is_listed(tmp_path, monkeypatch):
-    relay = tmp_path / ".carnivore" / "accounts" / "0123456789ab-acme-relay"
+    relay = tmp_path / ".carnivore" / "accounts" / "0123456789ab-larkspur-relay"
     (relay / "sessions").mkdir(parents=True)
     (tmp_path / ".carnivore" / "accounts" / "plain-account" / "sessions").mkdir(parents=True)
     config = tmp_path / "config.json"

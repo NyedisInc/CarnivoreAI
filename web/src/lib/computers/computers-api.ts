@@ -98,7 +98,6 @@ export const mintInvite = (): Promise<MintedInvite> => authFetch<MintedInvite>('
 export const cancelInvite = (id: string): Promise<unknown> =>
   authFetch(`/computers/invites/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
-/* could not */
 export const removeComputer = (installId: string): Promise<{ removed: boolean; peer_told: boolean }> =>
   authFetch(`/computers/peers/${encodeURIComponent(installId)}`, { method: 'DELETE' });
 

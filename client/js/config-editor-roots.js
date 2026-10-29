@@ -1,4 +1,4 @@
-/* <script */
+/* there is nothing */
 
 (function () {
 'use strict';
@@ -34,12 +34,10 @@ function workdirUnavailableNotice(label, projectPath) {
         + 'removed, or unmounted.';
 }
 
-/* Permission denied could not */
 function listErrorNotice(listError) {
     return `could not list contents: ${listError}`;
 }
 
-/* could not */
 function expandFailedNotice(detail) {
     return `could not load contents: ${detail}`;
 }
@@ -60,6 +58,7 @@ function getPrefs() {
     return { ...rootPrefs };
 }
 
+/* the project folder */
 function visibleRoots(resolved, prefs = rootPrefs) {
     const listed = CONFIG_EDITOR_ROOTS.filter((def) => (def.id === 'user' ? prefs.showGlobal : resolved));
     const ordered = prefs.topFolder === 'project'

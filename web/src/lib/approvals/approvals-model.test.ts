@@ -17,10 +17,10 @@ describe('approvals model', () => {
     expect(isRemote({ ...item, host: 'peer-abc' })).toBe(true);
   });
   it('names a remote item by its computer, short id only as a fallback', () => {
-    const raw = 'peer-86c51bb64fdd233bb5e1';
-    expect(hostName({ ...item, host: raw, host_label: 'hosta' })).toBe('hosta');
-    expect(hostName({ ...item, host: raw })).toBe('peer-86c51bb6...');
-    expect(hostName({ ...item, host: raw, host_label: raw.toLowerCase() })).toBe('peer-86c51bb6...');
+    const raw = 'peer-4D3F86DB2AE6CF5F23E5';
+    expect(hostName({ ...item, host: raw, host_label: 'studio' })).toBe('studio');
+    expect(hostName({ ...item, host: raw })).toBe('peer-4D3F86DB...');
+    expect(hostName({ ...item, host: raw, host_label: raw.toLowerCase() })).toBe('peer-4D3F86DB...');
   });
   it('builds the answer body with the fingerprint', () => {
     expect(answerBody(item, { option: 'yes' })).toEqual({ fingerprint: 'f'.repeat(64), choice: { option: 'yes' } });
@@ -59,7 +59,7 @@ describe('oldestFirst', () => {
   });
 });
 
-describe('every prompt shows its own options', () => {
+describe('every prompt shows its own options (Joe (ccsliinc), 2026-10-09)', () => {
   const base = { source: 'dialog' as const, host: 'local', session_id: 'ses_1', fingerprint: 'f'.repeat(64) };
   const kinds: [string, ApprovalItem, string[]][] = [
     ['a permission prompt with a "Yes, and ..." row', { ...base, id: 'p', kind: 'permission',

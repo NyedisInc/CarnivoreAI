@@ -74,7 +74,7 @@ def _index(**overrides) -> dict:
         "generated_at": "2026-09-15T00:00:00Z",
         "publishers": {
             "carnivore": {
-                "github_login": "acme",
+                "github_login": "Example-owner",
                 "keys": [{
                     "key_id": "5F522AB084F4E697",
                     "alg": "Ed",
@@ -437,7 +437,7 @@ def test_a_trailing_newline_is_refused_by_fullmatch_not_match(value, pattern):
 
 def test_a_revoked_version_is_held_to_the_same_shape():
     good = {
-        "item": "acme/sme", "version": "1.0.0", "since": "2026-09-15",
+        "item": "example-owner/sme", "version": "1.0.0", "since": "2026-09-15",
         "statement": "carnivore-revoke-v1", "sig": "x",
     }
     assert RevokedVersion(**good).version == "1.0.0"
@@ -447,8 +447,8 @@ def test_a_revoked_version_is_held_to_the_same_shape():
 
 def test_the_release_statement_refuses_both_shapes():
     fields = dict(
-        kind="skill", publisher="acme", name="sme", version="1.0.0",
-        repo="acme/CarnivoreAI-Skills", path="skills/acme/sme",
+        kind="skill", publisher="example-owner", name="sme", version="1.0.0",
+        repo="Example-owner/CarnivoreAI-Skills", path="skills/example-owner/sme",
         commit=COMMIT, digest=DIGEST,
     )
     assert release_statement(**fields).startswith(b"carnivore-release-v1\n")

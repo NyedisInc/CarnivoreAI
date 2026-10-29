@@ -1,36 +1,3 @@
-"""Detect iCloud fork artifacts in the Claude transcript corpus.
-
-THREE FACTS THIS REPORTS THAT A NAIVE SWEEP GETS WRONG.
-
-(b) THE CANONICAL SIBLING IS USUALLY EMPTY. In 53 of 75 measured local
-    pairs, ``<uuid>/`` contained ZERO files at any depth and the entire
-    session lived in ``<uuid> 2/``. Anything that treats the trailing
-    " 2" copy as the disposable duplicate destroys the only copy. That
-    is why ``sibling_state`` is a first-class field and not a footnote.
-
-(c) THE TWO SIDES DO NOT OVERLAP. Subagent artifacts are named from
-    random ids, so no filename appears on both sides of a pair: there is
-    nothing to reconcile and nothing that can be called redundant.
-
-WHAT THIS DELIBERATELY DOES NOT DO. It never deletes, never moves,
-never renames, and never emits a cleanup command. There is no code path
-in this module that mutates the filesystem. It is a detector; the
-decision of what to do with a fork belongs to a human holding a
-verified copy.
-
-WHY NOT ``message_ingest_findings``. That table records conditions
-raised while READING TRANSCRIPT CONTENT into a corpus database, keyed to
-the message gate contract. A forked directory is a filesystem condition
-that exists whether or not any database has ever been opened, and it
-must be observable on a machine with no corpus db at all. Forcing it
-into that table would make the detector depend on the thing it is
-supposed to warn about.
-
-THE THREE-OUTCOME RULE. A path that holds no forks, a path that could
-not be read, and a pair whose sibling state could not be established are
-three different answers here and are reported as three different
-answers. ``status`` is never ``ok`` when anything went unmeasured.
-"""
 
 from __future__ import annotations
 
@@ -49,7 +16,6 @@ STATUS_CANNOT_DETERMINE = "cannot_determine"
 SIBLING_NONEMPTY = "canonical_nonempty"
 SIBLING_EMPTY = "canonical_empty"
 SIBLING_MISSING = "canonical_missing"
-# could not
 SIBLING_UNKNOWN = "canonical_unknown"
 
 
@@ -76,11 +42,6 @@ class ConflictPair:
 
 @dataclass
 class ConflictReport:
-    """What one scan measured, including what it could not measure.
-
-    Inputs: constructed only by :func:`scan_for_conflicts`.
-    Output: n/a (data holder).
-    """
 
     root: str = ""
     status: str = STATUS_CLEAN
@@ -108,16 +69,6 @@ class ConflictReport:
 
 
 def _measure_tree(path: Path, report: ConflictReport) -> Optional[tuple]:
-    """Count files and bytes under one directory, or say it could not.
-
-    Description: an ``OSError`` anywhere in the walk makes the whole
-      measurement unknown rather than partial, because a partial count
-      reported as a total is the false-green this module exists to
-      prevent.
-    Inputs: path (Path), report (ConflictReport, mutated on failure).
-    Output: (file_count, byte_count) | None.
-    Example: _measure_tree(Path("/tmp"), ConflictReport())
-    """
     files = 0
     total = 0
     failed = False

@@ -5,7 +5,7 @@ import asyncio
 import secrets as _secrets
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Mapping, Optional
 
 import structlog
 
@@ -31,7 +31,7 @@ class DestinationLimit(Exception):
 
 
 class KeychainUnavailable(Exception):
-    """The secret could not be stored and read back, or the Keychain could not be read. Nothing was saved."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -127,15 +127,28 @@ class DestinationStore:
                     doc = doc_model.set_local(doc, key, approved)
             return doc
 
-        try:
-            doc = await asyncio.to_thread(self._docs.update, mutate)
-        except BaseException:
-            await self._drop_secret(dest_id)
-            raise
+        doc = await self._write_doc(mutate, lambda: self._drop_secret(dest_id))
         log.info("notification_destination_created", dest_id=dest_id, kind=kind, scope=scope)
         return CreateResult(await switch_origin.effective(view.destination_dict(doc, dest_id) or {}, doc, self._secrets), signing)
 
-    async def update(
+    async def _write_doc(self, mutate: Callable[[Doc, str], Optional[Doc]],
+                         undo: Optional[Callable[[], Awaitable[None]]]) -> Doc:
+        write = asyncio.ensure_future(asyncio.to_thread(self._docs.update, mutate))
+        write.add_done_callback(lambda t: t.cancelled() or t.exception())
+        try:
+            return await asyncio.shield(write)
+        except asyncio.CancelledError:
+            raise
+        except BaseException:
+            if undo is not None:
+                await undo()
+            raise
+
+    async def update(self, dest_id: str, **changes: Any) -> Dict[str, Any]:
+        async with self._secrets.lock_for(dest_id):
+            return await self._update(dest_id, **changes)
+
+    async def _update(
         self, dest_id: str, *, name: Optional[str] = None, enabled: Optional[bool] = None,
         config: Optional[Mapping[str, Any]] = None, secret_patch: Optional[Mapping[str, Any]] = None,
         local_only: bool = False, allow_private: Optional[bool] = None, allow_plain_http: Optional[bool] = None,
@@ -226,12 +239,7 @@ class DestinationStore:
                     d = doc_model.clear_local(d, key)
             return d
 
-        try:
-            doc = await asyncio.to_thread(self._docs.update, mutate)
-        except BaseException:
-            if patch:
-                await self._restore(dest_id, previous)
-            raise
+        doc = await self._write_doc(mutate, (lambda: self._restore(dest_id, previous)) if patch else None)
         log.info("notification_destination_updated", dest_id=dest_id, secrets_changed=bool(patch))
         return await switch_origin.effective(view.destination_dict(doc, dest_id) or {}, doc, self._secrets)
 

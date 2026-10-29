@@ -9,6 +9,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -34,7 +40,8 @@ function stripCssComments(sheet) {
 }
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'client', 'index.html'), 'utf8');
-const appJs = js('app.js');
+// The screen-entry steps moved out of app.js into app-screen-entry.js.
+const appJs = js('app.js') + js('app-screen-entry.js');
 const tools = stripCssComments(css('terminal-tools.css'));
 const styles = stripCssComments(css('styles.css'));
 const iosChrome = stripCssComments(css('ios-chrome.css'));

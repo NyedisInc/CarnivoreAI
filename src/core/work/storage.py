@@ -35,8 +35,6 @@ class WorkStorage(CplugStorage):
         ready.ensure(self.db_path, self.path, self._state_dir)
 
     def _legacy_waiting(self) -> bool:
-        """Whether a legacy ``huddle.db`` (in the folder, or the pre-plugin one under the state directory) is there to import.
-        Output: bool."""
         places = [self.path / DB_NAME] + ([self._state_dir / DB_NAME] if self._state_dir is not None else [])
         return any(place.exists() for place in places)
 
@@ -62,10 +60,6 @@ def folder(state_dir: Path) -> Path:
 
 
 def storage_for(state_dir: Path) -> WorkStorage:
-    """The work store's storage for this state directory. Creates nothing until the first write.
-
-    Inputs: state_dir (Path). Output: WorkStorage. Example: storage_for(state_dir).connect(False).close()
-    """
     return WorkStorage(folder(state_dir), Path(state_dir))
 
 

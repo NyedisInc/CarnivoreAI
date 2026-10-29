@@ -14,7 +14,7 @@ import structlog
 
 from src.core import resource_push
 from src.core.db import DatastoreError, DatastoreUnreadableError
-from src.core.resource_push import topics
+from src.core.resource_push import bodies, topics
 from src.core.stats.store import StatsStore
 from src.core.stats_feed import peers
 from src.core.stats_feed import state as feed_state
@@ -140,6 +140,8 @@ class StatsFeed:
                 continue
             changed = await self.refresh()
             if (changed or keepalive) and self.owner_leased():
+                if keepalive:
+                    bodies.skip_next("stats_feed")
                 self._notify(topics.STATS_FEED, LOCAL_KEY, 1.0)
             if keepalive:
                 next_keepalive = self._clock() + KEEPALIVE_S
@@ -248,6 +250,11 @@ class StatsFeed:
         if asking is not None:
             await asyncio.shield(asking)
         return self._served(window)
+
+    def push_body(self) -> Optional[Dict[str, Any]]:
+        if not self.owner_leased() or self._snap is None or self._ask_inflight():
+            return None
+        return {window: json.loads(self._served(window)) for window in WINDOWS}
 
     def _ask_inflight(self) -> bool:
         return self._ask_task is not None and not self._ask_task.done()

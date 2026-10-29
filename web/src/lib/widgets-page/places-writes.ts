@@ -1,4 +1,4 @@
-/* already exists the widgets page */
+/* the widgets page */
 import type { Translate } from '../sessions/types';
 import { drawerZone } from '../drawer-zone/zone-store.svelte';
 import { isRepeatable, zoneItemKey } from '../drawer-zone/zone-model';

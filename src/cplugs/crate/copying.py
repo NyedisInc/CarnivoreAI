@@ -14,7 +14,6 @@ from src.cplugs.sdk import crate_format as cf
 
 
 class CopyFailed(Exception):
-    """The second copy could not be made or proved. Fields: code; detail."""
 
     def __init__(self, code: str, detail: str) -> None:
         super().__init__(f"{code}: {detail}")

@@ -4,7 +4,6 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
@@ -26,8 +25,8 @@ from src.config import (
     AuthConfig,
     ProjectConfig,
     Settings,
+    settings,
 )
-from src.config.session import SessionConfig
 from src.models import (
     AttachableSession,
     CreateSessionRequest,
@@ -112,7 +111,7 @@ def _settings_with_agents(agents_cfg: AgentsConfig):
         default_working_dir=os.environ["DEFAULT_WORKING_DIR"],
         log_directory=os.environ["LOG_DIRECTORY"],
     )
-    fake_auth = SimpleNamespace(agents=agents_cfg, session=SessionConfig())
+    fake_auth = settings.load_auth_config().model_copy(update={"agents": agents_cfg})
     object.__setattr__(s, "load_auth_config", lambda: fake_auth)
     return s
 
@@ -154,7 +153,7 @@ def test_get_agent_command_tolerates_auth_config_failure():
     )
 
     def boom():
-        raise RuntimeError("auth config missing")
+        raise FileNotFoundError("auth config missing")
 
     object.__setattr__(s, "load_auth_config", boom)
     assert _sources(s.get_agent_command("codex")) == "codex-default.zsh"
@@ -317,49 +316,49 @@ def test_legacy_session_json_with_extra_unknown_field_loads():
 
 def test_backfill_owned_session_gets_claude():
     s = Session(id="ses_owned1", working_dir="/tmp", agent_type=None)
-    n = backfill_agent_type(s, owned_tmux_sessions={"cloude_owned1"})
+    n = backfill_agent_type(s)
     assert n == 1
     assert s.agent_type == "claude"
 
 
 def test_backfill_adopted_session_stays_none():
     s = Session(id="adopted:cloude_userone", working_dir="/tmp", agent_type=None)
-    n = backfill_agent_type(s, owned_tmux_sessions=set())
+    n = backfill_agent_type(s)
     assert n == 0
     assert s.agent_type is None
 
 
 def test_backfill_returns_zero_when_already_set():
     s = Session(id="ses_owned1", working_dir="/tmp", agent_type="codex")
-    n = backfill_agent_type(s, owned_tmux_sessions={"cloude_owned1"})
+    n = backfill_agent_type(s)
     assert n == 0
     assert s.agent_type == "codex"
 
 
 def test_backfill_idempotent_on_second_call():
     s = Session(id="ses_owned2", working_dir="/tmp", agent_type=None)
-    n1 = backfill_agent_type(s, owned_tmux_sessions={"cloude_owned2"})
-    n2 = backfill_agent_type(s, owned_tmux_sessions={"cloude_owned2"})
+    n1 = backfill_agent_type(s)
+    n2 = backfill_agent_type(s)
     assert n1 == 1
     assert n2 == 0
     assert s.agent_type == "claude"
 
 
 def test_backfill_returns_zero_for_none_session():
-    n = backfill_agent_type(None, owned_tmux_sessions=set())
+    n = backfill_agent_type(None)
     assert n == 0
 
 
 def test_backfill_owned_set_none_falls_back_to_id_prefix():
     owned_session = Session(id="ses_normal", working_dir="/tmp", agent_type=None)
-    n = backfill_agent_type(owned_session, owned_tmux_sessions=None)
+    n = backfill_agent_type(owned_session)
     assert n == 1
     assert owned_session.agent_type == "claude"
 
     adopted_session = Session(
         id="adopted:something", working_dir="/tmp", agent_type=None
     )
-    n2 = backfill_agent_type(adopted_session, owned_tmux_sessions=None)
+    n2 = backfill_agent_type(adopted_session)
     assert n2 == 0
     assert adopted_session.agent_type is None
 
@@ -367,5 +366,5 @@ def test_backfill_owned_set_none_falls_back_to_id_prefix():
 def test_backfill_handles_all_known_agent_types_unchanged():
     for at in ["claude", "codex", "hermes", "openclaw"]:
         s = Session(id=f"ses_{at}", working_dir="/tmp", agent_type=at)
-        assert backfill_agent_type(s, owned_tmux_sessions={"x"}) == 0
+        assert backfill_agent_type(s) == 0
         assert s.agent_type == at

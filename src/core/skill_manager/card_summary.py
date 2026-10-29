@@ -20,7 +20,7 @@ from src.core.byoai import gateway as gateway_module, registry
 from src.core.byoai.contracts import CAP_CHAT, ByoaiError, InvalidKey, LoginExpired, MissingKey, NotConfigured
 from src.core.companies import hero_art_prompt, hero_images
 from src.core.resource_push import topics as resource_topics
-from src.core.skill_manager import scan
+from src.core.skill_manager import ai_job, scan
 
 logger = structlog.get_logger()
 
@@ -86,25 +86,18 @@ def find(key: str) -> Optional[str]:
 
 
 def _read_fail(key: str) -> Dict[str, Any]:
-    try:
-        return json.loads(_fail_path(key).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    return ai_job.read_fail(_fail_path(key))
 
 
 def _note(key: str, reason: str, *, final: bool = False) -> None:
     attempts = MAX_JOBS if final else int(_read_fail(key).get("attempts", 0)) + 1
-    try:
-        hero_images.atomic_write(_fail_path(key), json.dumps({"attempts": attempts, "at": time.time(), "reason": reason}).encode())
-    except OSError as exc:
-        logger.warning("skill_card_summary_note_failed", error=type(exc).__name__)
+    ai_job.write_fail(_fail_path(key), attempts, reason, log_event="skill_card_summary_note_failed")
     logger.warning("skill_card_summary_failed", key=key, reason=reason)
 
 
 def enabled() -> bool:
     try:
-        gateway_module.get_gateway().resolve(FEATURE_ID, CAP_CHAT)
-        return True
+        return gateway_module.get_gateway().store.read().features.get(FEATURE_ID) is not None
     except (ByoaiError, OSError, ValueError) as exc:
         logger.info("skill_card_summary_off", reason=type(exc).__name__)
         return False
@@ -258,27 +251,15 @@ def _job(key: str, name: str, description: str, body: str) -> Dict[str, Any]:
     try:
         return generate(key, name, description, body)
     finally:
-        with _lock:
-            _inflight.discard(key)
+        ai_job.release(_inflight, _lock, key)
 
 
 def schedule(key: str, name: str, description: str, body: str = "") -> bool:
-    with _lock:
-        if key in _inflight:
-            return False
-        _inflight.add(key)
-    try:
-        _pool.submit(_job, key, name, description, body)
-    except RuntimeError:
-        with _lock:
-            _inflight.discard(key)
-        return False
-    return True
+    return ai_job.submit_once(_pool, _inflight, _lock, key, _job, key, name, description, body)
 
 
 def _due(key: str) -> bool:
-    note = _read_fail(key)
-    return not note or (int(note.get("attempts", 0)) < MAX_JOBS and time.time() - float(note.get("at", 0)) > RETRY_AFTER_SECONDS)
+    return ai_job.retry_due(_read_fail(key), max_jobs=MAX_JOBS, retry_after=RETRY_AFTER_SECONDS)
 
 
 def prune(current: Set[str]) -> int:

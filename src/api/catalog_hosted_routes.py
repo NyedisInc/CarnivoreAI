@@ -53,8 +53,6 @@ def install_id(request: Request) -> str:
 
 
 def _state_dir(request: Request) -> Path:
-    """The state directory the sign in store lives in.
-    """
     return request.app.state.services.settings_reader.state_dir()
 
 
@@ -74,19 +72,6 @@ async def _hosted(
     json_body: Optional[Dict[str, Any]] = None,
     bearer: Optional[str] = None,
 ) -> hosted_api.HostedAnswer:
-    """
-    Description: the ONE place the unreachable case becomes a status.
-      502 because the fault is upstream of this server, which is the same
-      rule ``src/api/catalog_routes.py`` follows for a transport refusal,
-      and it is never a 200 carrying zeros: reporting an outage as
-      "nobody has rated this yet" is the failure this whole layer is
-      written to avoid.
-    Inputs: request (Request); method (str); path (str); json_body (dict
-      | None); bearer (str | None). Keyword only after ``path``.
-    Output: HostedAnswer.
-    Raises: HTTPException(502) when the host could not be reached.
-    Example: answer = await _hosted(request, "GET", "/items/a/b/ratings")
-    """
     base_url = _catalog(request).api_base_url()
     try:
         answer = await hosted_api.call(
@@ -242,6 +227,10 @@ async def catalog_install_counts(
     sequentially. ONE CHUNK FAILING while another succeeds still answers
     200 with what was read (its ids are simply absent); EVERY chunk
     failing answers as the per item route does.
+
+    Inputs: payload (InstallCountsRequest) - 1 to 1000 item ids.
+    Output: InstallCountsResponse - id to {count, by_version}, measured ids only.
+    Example: POST {"ids": ["example-owner/sme"]} -> {"items": {"example-owner/sme": {"count": 2, "by_version": {"1.0.0": 2}}}}
 
     Raises:
         HTTPException(400): an id would traverse out of the items path.
@@ -399,7 +388,8 @@ async def finish_device_flow(
     dependencies=[Depends(require_auth)],
 )
 async def catalog_auth_session(request: Request) -> CatalogSessionResponse:
-    """
+    """Whether this machine is signed in to the catalog, and as whom.
+
     A LOCAL READ unless the access token is spent: then the shared rotator
     (``catalog_auth``) exchanges it once, and an unreachable host never
     reads as signed out because the sign in lives as long as the 30 day
@@ -427,6 +417,12 @@ async def catalog_auth_session(request: Request) -> CatalogSessionResponse:
 )
 async def catalog_auth_signout(request: Request) -> CatalogSessionResponse:
     """Sign this device out: end its hosted session, then forget the stored sign in.
+
+    The hosted session is revoked first, best effort with the held access
+    token, so the device disappears from the account's session list and the
+    token dies now rather than at its eight hour end. An unreachable host or
+    an already dead session never blocks the local sign out: what this
+    machine holds is cleared either way, bytes included.
     """
     await catalog_auth.sign_out(_state_dir(request), _catalog(request).api_base_url())
     return CatalogSessionResponse(signed_in=False, login=None)

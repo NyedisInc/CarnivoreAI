@@ -16,6 +16,7 @@ router = APIRouter(prefix="/swarm/switch", tags=["swarm"], dependencies=[Depends
 
 
 class SwarmSwitchSetting(BaseModel):
+    """The owner's desired switch state. Example: {"enabled": false}"""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -34,6 +35,7 @@ async def refuse_held_body(session_uuid: str) -> None:
 
 @router.get("")
 async def get_swarm_switch() -> Dict[str, Any]:
+    """Whether the Swarm runs on this computer. Output: {"enabled": bool}. Example: GET /api/v1/swarm/switch -> {"enabled": true}"""
     return switch.status()
 
 

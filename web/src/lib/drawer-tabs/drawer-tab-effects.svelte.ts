@@ -1,4 +1,3 @@
-/* nothing at all */
 import { untrack } from 'svelte';
 import { tabRegistry } from '../dynamic-tabs/registry';
 import { sidebarTabs } from '../dynamic-tabs/tab-store.svelte';

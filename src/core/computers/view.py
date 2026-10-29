@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import sqlite3
-from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from src.core.computers import add_over_ssh, store
+from src.core.db_reuse.kept_read import hot_read
 from src.core.federation import peer_hosts
 
 FID_SHORT_LEN = 6
@@ -83,11 +83,21 @@ def _main_note(entry: Dict[str, Any]) -> bool:
 
 
 def read_computers(conn: sqlite3.Connection, rt: Any, links: Any) -> List[Dict[str, Any]]:
-    rows = {r.peer_install_id: r for r in store.list_rows(conn)}
-    hosts = {h.peer_install_id: h for h in peer_hosts.list_peers(conn)}
+    return _entries(rt, links, store.list_rows(conn), peer_hosts.list_peers(conn))
+
+
+def _entries(rt: Any, links: Any, link_rows: Any, host_rows: Any) -> List[Dict[str, Any]]:
+    rows = {r.peer_install_id: r for r in link_rows}
+    hosts = {h.peer_install_id: h for h in host_rows}
     out = [computer_entry(rt, links, rows.get(iid), hosts.get(iid)) for iid in dict.fromkeys([*rows, *hosts])]
     _duplicates(out)
     return out
+
+
+def stored_computers(rt: Any, links: Any) -> List[Dict[str, Any]]:
+    link_rows, host_rows = hot_read(rt.open_db, ("computers_rows",),
+                                    lambda conn: (tuple(store.list_rows(conn)), tuple(peer_hosts.list_peers(conn))))
+    return _entries(rt, links, link_rows, host_rows)
 
 
 def _member_link(rt: Any) -> Dict[str, Any]:
@@ -98,8 +108,7 @@ def _member_link(rt: Any) -> Dict[str, Any]:
 
 
 def build_view(rt: Any, links: Any) -> Dict[str, Any]:
-    with closing(rt.open_db()) as conn:
-        computers = read_computers(conn, rt, links)
+    computers = stored_computers(rt, links)
     main = next((c for c in computers if c["role"] == "main" and c["transport"] == "tls"), None)
     has_members = any(c["role"] == "member" and c["transport"] == "tls" for c in computers)
     role = "member" if main is not None else "main" if has_members else "standalone"

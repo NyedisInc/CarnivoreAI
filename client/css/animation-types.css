@@ -25,8 +25,8 @@
 
 :root[data-anim-off~="dialog-glow"] .popup-focus,
 :root[data-anim-off~="dialog-glow"] .popup-focus-turn > .pf-sheen::before,
-:root[data-anim-off~="dialog-glow"] .modal-content::after,
-:root[data-anim-off~="dialog-glow"] .sidebar-help__lightbox-body::after {
+:root[data-anim-off~="dialog-glow"] .modal-content > .mg-sheen::before,
+:root[data-anim-off~="dialog-glow"] .sidebar-help__lightbox-body > .mg-sheen::before {
     animation: none !important;
 }
 
@@ -54,7 +54,6 @@
     transform: translateX(-75%);
 }
 
-/* keep awake */
 :root[data-anim-off~="sparks-steam"] .session-sidebar-row-model__spark,
 :root[data-anim-off~="sparks-steam"] .session-sidebar-row-model__spark::before,
 :root[data-anim-off~="sparks-steam"] .session-sidebar-row-model__spark::after,

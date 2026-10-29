@@ -1,6 +1,7 @@
 
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { Field, Radio, RadioGroup } from '../base';
   import { t as reactiveT } from '../i18n/index.svelte';
   import type { Translate } from '../sessions/types';
   import '../settings-page/panel-kit/panel-kit.css';
@@ -41,9 +42,9 @@
 
 <div class="tm" data-time-zone="panel">
   <p class="tm__sub" data-time-zone="current">{t('time_zone.current', { zone })}</p>
-  <input
-    class="oc-field"
+  <Field
     type="search"
+    block
     bind:value={query}
     placeholder={t('time_zone.search_placeholder')}
     aria-label={t('time_zone.search_label')}
@@ -51,24 +52,15 @@
     autocomplete="off"
     spellcheck="false"
   />
-  <div class="restart-picker__options" role="radiogroup" aria-label={t('time_zone.search_label')} aria-busy={saving} data-time-zone="list">
-    {#each shown as name (name)}
-      <label class="restart-picker__option" for={`time-zone-${name}`}>
-        <input
-          type="radio"
-          name="time-zone"
-          id={`time-zone-${name}`}
-          value={name}
-          data-time-zone-name={name}
-          checked={zone === name}
-          disabled={saving}
-          onchange={() => void pick(name)}
-        />
-        <span class="restart-picker__title">{name}</span>
-      </label>
-    {:else}
+  <div class="restart-picker__options" aria-busy={saving} data-time-zone="list">
+    <RadioGroup label={t('time_zone.search_label')} value={zone} name="time-zone" disabled={saving} onchange={(name) => void pick(name)}>
+      {#each shown as name (name)}
+        <Radio value={name} label={name} data-time-zone-name={name} />
+      {/each}
+    </RadioGroup>
+    {#if shown.length === 0}
       <p class="tm__sub" data-time-zone="none">{t('time_zone.none')}</p>
-    {/each}
+    {/if}
   </div>
   <p class="tm__note" data-time-zone="note">{t('time_zone.note')}</p>
   {#if saving}<p class="tm__sub" role="status">{t('time_zone.saving')}</p>{/if}

@@ -1,3 +1,5 @@
+// ----------------------------------------------------------------------
+// NO requestAnimationFrame (gotcha 9): the sandbox's rAF throws.
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -14,7 +16,7 @@ const MASTER_SRC = read('client/js/terminal-size-master.js');
 const VOTE_SRC = read('client/js/terminal-size-vote.js');
 const METRICS_SRC = read('client/js/terminal-metrics.js');
 const TERM_SRC = read('client/js/terminal.js');
-const API_SRC = read('client/js/api.js');
+const API_SRC = read('client/js/api.js') + read('client/js/api-session-lifecycle.js');
 const INDEX_HTML = read('client/index.html');
 
 globalThis.self = globalThis;
@@ -90,6 +92,7 @@ function client(sandbox, term) {
     return ctl;
 }
 
+/** A plain emulator stand-in with a styleable element. */
 function stubTerm() {
     const attrs = new Map();
     return {

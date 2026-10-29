@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../i18n/index.svelte';
+  import { Field } from '../base';
 
   let { expected, value = $bindable(''), disabled = false, id }:
     { expected: string; value?: string; disabled?: boolean; id: string } = $props();
@@ -7,7 +8,7 @@
 
 <div class="ap-confirm" data-approval-confirm={id}>
   <p class="ap-confirm__ask">{t('approvals.type_to_confirm', { name: expected })}</p>
-  <input class="oc-field ap-confirm__input" type="text" maxlength="1000" autocomplete="off" spellcheck="false"
+  <Field block maxlength={1000} autocomplete="off" spellcheck={false}
     data-approval-confirm-input bind:value {disabled} placeholder={expected}
     aria-label={t('approvals.type_to_confirm', { name: expected })} />
 </div>
@@ -27,12 +28,6 @@
       font-size: var(--oc-fs-label);
       color: var(--oc-coral);
       overflow-wrap: anywhere;
-    }
-
-    .ap-confirm__input {
-      width: 100%;
-      min-width: 0;
-      box-sizing: border-box;
     }
   }
 </style>

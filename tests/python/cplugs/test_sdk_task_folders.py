@@ -10,17 +10,17 @@ from src.cplugs.sdk import task_folders as tf
 
 def test_names_are_the_slug_plus_the_id():
     assert tf.project_folder_name("18", "Carnivore") == "carnivore-18"
-    assert tf.task_folder_name(592, "acme: watch what acme changed!") == "acme-watch-what-acme-changed-592"
+    assert tf.task_folder_name(592, "Alex: watch what Alex changed!") == "alex-watch-what-alex-changed-592"
     assert tf.project_folder_name("all", None) == tf.project_folder_name("agent:3", "Bob") == "no-project"
     assert tf.task_folder_name(7, "   ") == "task-7" and tf.project_folder_name("4", None) == "project-4"
     assert len(tf.task_folder_name(1, "x" * 500)) <= tf.MAX_SLUG + 2
-    long = tf.slugify("Board panel refactor, step 2: review board panel on the right", "task")
-    assert long == "board-panel-refactor-step-2-review-board-panel" and len(long) <= tf.MAX_SLUG
+    long = tf.slugify("Task Manager rebuild, Part 2: review board panel on the right", "task")
+    assert long == "task-manager-rebuild-part-2-review-board-panel" and len(long) <= tf.MAX_SLUG
 
 
 def test_the_layout_is_project_then_task(tmp_path: Path):
-    task = tf.ensure_task(tmp_path, 592, "18", "Carnivore", "acme: watch what acme changed")
-    assert task == tmp_path / "carnivore-18" / "acme-watch-what-acme-changed-592"
+    task = tf.ensure_task(tmp_path, 592, "18", "Carnivore", "Alex: watch what Alex changed")
+    assert task == tmp_path / "carnivore-18" / "alex-watch-what-alex-changed-592"
     assert tf.read_marker(task, tf.TASK_MARKER)["item_id"] == 592
     assert tf.read_marker(task.parent, tf.PROJECT_MARKER)["list"] == "18"
     personal = tf.ensure_task(tmp_path, 3, "all", None, "groceries")

@@ -1,13 +1,3 @@
-"""Crate references (plan 2.8): a recorded bundle by id, or a file in one of the crate folders by name. No route and no
-tool ever takes a client path.
-
-- A bundle resolves to its first location that is an existing regular file and not a symlink. A location under an
-  unmounted ``/Volumes`` reads ``unmounted``; none reachable is 409 ``bundle_unreachable`` naming each state.
-- A folder name must match the crate name pattern; ``share-...`` lives in ``<folder>/share``, ``crate-...`` in the folder
-  itself; its real parent must be that folder; it must be a regular file and not a symlink.
-
-Also here: the bundle view the routes answer, the manifest summary and the contents listing. Blocking.
-"""
 
 from __future__ import annotations
 

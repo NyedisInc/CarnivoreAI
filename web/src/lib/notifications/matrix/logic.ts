@@ -27,7 +27,6 @@ export function cellOf(settings: RoutingSettings, column: string, typeId: string
     return column === SCREEN ? settings.screen[typeId] : settings.ticks[column]?.[typeId];
 }
 
-/* cannot be changed */
 export function lockReason(row: TypeRow, column: string): '' | 'in_app' | 'health' {
     if (column === SCREEN) return '';
     if (!row.defaults.outside_locked_off) return '';

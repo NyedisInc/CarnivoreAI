@@ -71,6 +71,7 @@ class EventsClient:
 
     def start(self) -> None:
         if self._task is None or self._task.done():
+            self._auth_told = False
             self._task = asyncio.ensure_future(self.run())
 
     async def stop(self) -> None:

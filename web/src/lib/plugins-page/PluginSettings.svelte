@@ -24,7 +24,6 @@
     let error = $state<{ key: string; text: string } | null>(null);
     let advice = $state<readonly SettingsWarning[]>([]);
     const schema = $derived(plugin.settingsSchema);
-    /*  hidden  */
     const shown = $derived(schema ? visibleSchema(plugin.cplugId, schema) : null);
     const Extra = $derived(settingsExtraOf(plugin.cplugId));
 

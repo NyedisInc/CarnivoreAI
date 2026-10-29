@@ -1,4 +1,3 @@
-/*  hidden  */
 
 console.log('[Toast Module] Loading...');
 
@@ -12,7 +11,6 @@ const TOAST_SEVERITY = {
   PermissionRequest: 3,
   Notification: 2,
   Stop: 1,
-  // permission prompt
   [ATTACHMENT_KIND]: 1,
   [WRITE_FAILED_KIND]: 3,
 };
@@ -24,7 +22,7 @@ const CAP_DESKTOP = 3;
 const CAP_NARROW = 2;
 const NARROW_QUERY = '(max-width: 640px)';
 
-/*  hidden  */
+/* of its own - */
 const COALESCE_KEY = {
   [ATTACHMENT_KIND]: (t) => `${t.session_id}|${ATTACHMENT_KIND}`,
 };
@@ -62,7 +60,6 @@ class ToastManager {
   _container() {
     const el = document.getElementById(this.containerId);
     if (el && !this._containerPrepared) {
-      // permission prompt
       el.setAttribute('aria-live', 'polite');
       el.setAttribute('aria-relevant', 'additions text');
       this._containerPrepared = true;

@@ -25,6 +25,22 @@ NOTICE = (
 
 class ConfigBundle(BaseModel):
     """One exported configuration file, as parsed on import.
+
+    Attributes:
+      kind (str): always ``carnivore-config-bundle``.
+      schema_version (int): shape of this file; see constants.
+      app_version (str): version of the app that wrote it.
+      config_version (int): ``config_version`` of the config sections, so an
+        older bundle is migrated with the existing config migration.
+      exported_at (str): ISO 8601 UTC timestamp.
+      source_host (str): host name of the exporting machine, so an import
+        can say "this came from a different machine".
+      config (dict): allowlisted, redacted config.json sections.
+      ui_preferences (dict): the ``ui_preferences`` values.
+      pinned_themes (dict): tmux name to theme id.
+      redacted (list[str]): paths removed as credential-shaped.
+      omitted (list[str]): what is left out by design.
+      notice (str): human-readable statement of the above.
     """
 
     model_config = ConfigDict(extra="forbid")

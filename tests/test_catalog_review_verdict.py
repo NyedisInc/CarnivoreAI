@@ -42,7 +42,7 @@ BLOCKED_REVIEW = {
     "reviewed_at": "2026-09-19T00:00:00Z",
     "override": {
         "reason": "internal fixture, published deliberately for the test corpus.",
-        "by": "acme",
+        "by": "Example-owner",
         "at": "2026-09-19T00:05:00Z",
     },
 }
@@ -53,7 +53,7 @@ def _version(**overrides) -> dict:
         "v": "1.0.0",
         "src": {
             "repo": "carnivore-ai/catalog",
-            "path": "skills/acme/sme",
+            "path": "skills/alex/sme",
             "commit": COMMIT,
         },
         "digest": DIGEST,
@@ -74,10 +74,10 @@ def _version(**overrides) -> dict:
 
 def _item(**overrides) -> dict:
     item = {
-        "id": "acme/sme",
+        "id": "alex/sme",
         "kind": "skill",
         "name": "sme",
-        "publisher": "acme",
+        "publisher": "alex",
         "latest": "1.0.0",
         "card": {"title": "sme", "brief": "the sme skill"},
         "fm": {"description": "the sme skill"},
@@ -211,7 +211,7 @@ class TestTheOverride:
         block = ReviewBlock(**BLOCKED_REVIEW)
         assert block.override is not None
         assert block.override.reason.startswith("internal fixture")
-        assert block.override.by == "acme"
+        assert block.override.by == "Example-owner"
         assert block.override.at == "2026-09-19T00:05:00Z"
 
     def test_an_override_with_NO_REASON_is_refused(self):
@@ -238,7 +238,7 @@ class TestItReachesTheBrowser:
         assert review["warnings"][0]["file"] == "SKILL.md"
         assert review["warnings"][0]["line"] == 12
         assert review["override"]["reason"].startswith("internal fixture")
-        assert review["override"]["by"] == "acme"
+        assert review["override"]["by"] == "Example-owner"
 
     def test_NEGATIVE_CONTROL_a_verdictless_review_carries_no_verdict_out(self):
         item = CatalogItem.model_validate(

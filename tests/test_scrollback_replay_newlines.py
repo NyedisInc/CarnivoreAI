@@ -79,9 +79,9 @@ class _StubBackend:
 
 
 def test_capture_scrollback_normalizes_its_output():
-    stub = _StubBackend(b"drwxr-xr-x  contributor\ntotal 12\n")
+    stub = _StubBackend(b"drwxr-xr-x  jsugamele\ntotal 12\n")
     out = tmux_backend_mod.TmuxBackend.capture_scrollback(stub, lines=10)
-    assert out == b"drwxr-xr-x  contributor\r\ntotal 12\r\n"
+    assert out == b"drwxr-xr-x  jsugamele\r\ntotal 12\r\n"
     assert b"\n" not in out.replace(b"\r\n", b"")
 
 

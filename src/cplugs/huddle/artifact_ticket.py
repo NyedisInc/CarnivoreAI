@@ -1,8 +1,3 @@
-"""The viewer ticket: how an ``<iframe src>`` proves it may read one artifact (``artifacts.py``).
-
-An iframe (and a pop-out window) cannot send the app's bearer token, so the authenticated route ``POST .../artifacts/{id}/ticket`` mints a
-SIGNED, SHORT-LIVED ticket naming exactly one item and one file (``sdk/signed_links.py``), and the viewer route accepts only that.
-"""
 
 from __future__ import annotations
 

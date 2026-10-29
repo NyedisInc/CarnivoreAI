@@ -37,6 +37,8 @@
     var log = document.getElementById('log');
     function say(msg) { log.textContent += msg + '\n'; }
 
+    // Keep a live handle on the real reader so the test can verify what
+    // actually landed on the clipboard even after the API is dropped.
     window.__readClipboard = (navigator.clipboard && navigator.clipboard.readText)
         ? navigator.clipboard.readText.bind(navigator.clipboard)
         : null;
@@ -50,6 +52,8 @@
         ''
     ];
 
+    // Same output as a 30-column pane would hold it: xterm stores each
+    // visual row separately and marks continuations isWrapped.
     var NARROW = [];
     (function buildNarrow() {
         WIDE.forEach(function (line) {

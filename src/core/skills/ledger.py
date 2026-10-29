@@ -1,36 +1,3 @@
-"""The install ledger: which catalog items are installed, and what they wrote.
-
-WHY A DATABASE ROW AND NOT THE FOLDER ON DISK. A skill lands as a directory
-under a harness's skills root, and that directory records what the bytes ARE
-and nothing about where they came from: not which signed release produced
-it, not which publisher key was pinned when it landed, not which digest the
-user was shown before saying yes. Each of those is a fact about a DECISION,
-and a decision that can only be re-derived from the artefact is a decision
-an attacker who rewrites the artefact gets to make. The ledger is the
-authority on provenance and consent; the folder is the authority on nothing.
-
-The three rules this module exists to enforce, each in one place:
-
-A WRITE CARRIES THE REVISION IT READ. ``revision`` starts at 1 and steps by
-one on every write through :meth:`InstallLedger.update`. A caller passing a
-revision that is no longer current gets :class:`StaleRevision` carrying the
-CURRENT row, which the route renders as 409 ``stale_revision`` with that row
-attached, so the client that lost the race re-renders the truth instead of
-being told to retry against a state it still cannot see. The read and the
-compare-and-write happen inside ONE ``BEGIN IMMEDIATE``, so the window
-between them does not exist.
-
-THE STORE NEVER READS A CLOCK. Every timestamp is an ISO 8601 UTC string the
-caller supplies, taken from the app's ``Clock`` port
-(:mod:`src.core.sessions.ports`). A store that called ``time.time()`` itself
-could not be walked forward by a test, and the freshness rules this
-subsystem is built on are all about time.
-
-WHAT IS NOT HERE. Nothing in this module touches the filesystem, fetches
-anything, or decides whether an install is allowed. The shapes it reads and
-raises live in :mod:`src.core.skills.ledger_types` and are re-exported
-below, so one import still reaches the whole contract.
-"""
 
 from __future__ import annotations
 

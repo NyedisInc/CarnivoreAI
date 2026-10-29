@@ -40,7 +40,6 @@
         }
     }
 
-    /* width: 1100px */
     @container ap-page (max-width: 1100px) {
         .ap-page > * {
             --dr-w: 100cqi;

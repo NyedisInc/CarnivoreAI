@@ -1,5 +1,4 @@
 <script lang="ts" generics="Row extends Record<string, unknown>">
-  /* running sessions */
   import type { Snippet } from 'svelte';
   import type { ColumnSpec } from '../engine/types';
   import { t } from '../../lib/i18n/index.svelte';
@@ -30,7 +29,6 @@
     compact?: boolean;
     rowKey: (row: Row, index: number) => string;
     rowIdAttr?: string;
-    /* <button> role="button" */
     onActivate?: (row: Row, index: number) => void;
     canActivate?: (row: Row, index: number) => boolean;
     rowLabel?: (row: Row, index: number) => string;
@@ -47,10 +45,8 @@
 
   const tracks = $derived(columns.map((column) => `minmax(${trackMin(column)}, ${column.weight}fr)`).join(' '));
 
-  /* padding */
   const CELL_PAD_PX = 10;
 
-  /* padding */
   function trackMin(column: ColumnSpec): string {
     if (column.minCh === undefined) return `${column.minPx}px`;
     const head = column.headKey ? t(column.headKey).length + 1 : 0;
@@ -101,7 +97,7 @@
     {#each rows as row, index (rowKey(row, index))}
       {#if compact}
         <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-        <!-- role="button" -->
+        
         <div
           class="oc-table-row oc-table-row-compact"
           class:oc-table-row-action={acts(row, index)}
@@ -132,7 +128,7 @@
         </div>
       {:else}
         <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-        <!-- role="button" -->
+        
         <div
           class="oc-table-row"
           class:oc-table-row-action={acts(row, index)}
@@ -200,6 +196,7 @@
       box-shadow: none;
     }
 
+    /* and the focus ring */
     .oc-table-row-action {
       cursor: pointer;
     }

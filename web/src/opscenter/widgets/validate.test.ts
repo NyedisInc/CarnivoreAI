@@ -50,6 +50,14 @@ describe('validateManifest', () => {
     if (check.ok) expect(check.manifest).toBe(manifest);
   });
 
+  test('a snake_case settings key passes (kind_all already ships)', () => {
+    expect(refusalOf((m) => { m.settings.fields.kind_all = { kind: 'boolean', labelKey: 'widgets.acme.kind_all', default: true }; }).refusal).toBeNull();
+  });
+
+  test('a settings key starting with an underscore is refused', () => {
+    expect(refusalOf((m) => { m.settings.fields._bad = { kind: 'boolean', labelKey: 'widgets.acme.bad', default: true }; }).refusal).toBe('settings');
+  });
+
   test('a manifest with no settings and no maximum passes', () => {
     expect(refusalOf((m) => { delete m.settings; delete m.bounds.maxW; }).refusal).toBeNull();
   });
@@ -66,6 +74,14 @@ describe('validateManifest', () => {
 
   test.each<[ManifestRefusal, string, (m: Record<string, any>) => void]>([
     ['unknown-field', 'a misspelt field', (m) => { m.catgeory = 'tools'; }],
+    ['bounds', 'a misspelt nested bounds field (u166-02)', (m) => { m.bounds.minWidth = 4; }],
+    ['fits', 'a misspelt nested fits field', (m) => { m.fits.anysize = true; }],
+    ['densities', 'a misspelt density step field', (m) => { m.densities.width[0].minn = 1; }],
+    ['settings', 'a misspelt settings field key', (m) => { m.settings.fields.rows.mx = 3; }],
+    ['settings', 'a number whose min is above its max', (m) => { Object.assign(m.settings.fields.rows, { min: 9, max: 2, default: 3 }); }],
+    ['settings', 'a disabledWhen naming no field', (m) => { m.settings.fields.showArt.disabledWhen = 'ghost'; }],
+    ['settings', 'a disabledWhen naming a non-boolean field', (m) => { m.settings.fields.showArt.disabledWhen = 'rows'; }],
+    ['settings', 'a disabledWhen naming itself', (m) => { m.settings.fields.showArt.disabledWhen = 'showArt'; }],
     ['fits', 'no fits declaration', (m) => { delete m.fits; }],
     ['fits', 'a retired zone list (every widget goes everywhere)', (m) => { m.fits.zones = ['home']; }],
     ['fits', 'a retired suggested list', (m) => { m.fits.suggested = [{ w: 2, h: 1 }]; }],

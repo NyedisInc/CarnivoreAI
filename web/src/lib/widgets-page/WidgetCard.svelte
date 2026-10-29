@@ -9,6 +9,7 @@ export interface Mark {
 </script>
 
 <script lang="ts">
+    import { Button } from '../base';
     import type { Translate } from '../sessions/types';
     import type { WidgetManifest } from '../../opscenter/widgets/types';
     import PlaceAdd from './PlaceAdd.svelte';
@@ -72,7 +73,7 @@ export interface Mark {
                 <span class="catalog-card__name">
                     <WidgetTile {id} icon={manifest.icon} {group} />
                     <span class="wp-card__titles">
-                        <button type="button" class="catalog-card__title catalog-card__open" onclick={onOpen}>{name}</button>
+                        <Button variant="row" data-card-open onclick={onOpen}>{name}</Button>
                         <span class="catalog-card__group">{groupName}</span>
                     </span>
                 </span>

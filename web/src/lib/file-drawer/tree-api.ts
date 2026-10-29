@@ -1,5 +1,5 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
-import { openFromDrawer, type OpenResult } from '../open-files/open-bridge';
+import { openFromDrawer, openFromPath, type OpenResult } from '../open-files/open-bridge';
 import { sessionRefFor } from '../open-files/session-ref';
 
 export type RootId = 'workdir' | 'user';
@@ -30,6 +30,7 @@ export interface TreeAnswer {
 
 export class NoProjectFolder extends Error {}
 
+/* the project folder */
 function query(root: RootId, projectPath: string | null, extra: Record<string, string>): string {
   if (root === 'workdir' && !projectPath) throw new NoProjectFolder('no project folder');
   const params = new URLSearchParams({ root });
@@ -57,4 +58,8 @@ export async function openInFilesList(sessionId: string, root: RootId, path: str
     return 'unavailable';
   }
   return openFromDrawer({ ...ref, root, path, kind });
+}
+
+export function openPathInFilesList(path: string): Promise<void> {
+  return openFromPath(path);
 }

@@ -135,7 +135,6 @@ async def resume_after_failed_update(request: Any, row: Any) -> None:
     try:
         if await asyncio.to_thread(host.enabled, d.id):
             await host.restart_sidecar(d)
-            await live.mcp_health_switched(d.id, True)
         host.publish(CPLUGS_TOPIC)
     except Exception as exc:  # noqa: BLE001
         logger.warning("cplug_resume_after_failed_update_failed", cplug=d.id, error_type=type(exc).__name__)

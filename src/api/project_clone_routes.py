@@ -9,6 +9,7 @@ from src.models import CloneProjectRequest, ProjectResponse
 from typing import Optional
 
 from src.api.auth import require_auth
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -87,23 +88,19 @@ async def clone_project_from_github(body: CloneProjectRequest):
         )
     project_name = body.project_name or repo_name
 
+    parent_dir = body.parent_dir or settings.default_working_dir
     try:
-        parent = Path(body.parent_dir).expanduser().resolve()
+        parent = Path(parent_dir).expanduser().resolve()
     except (OSError, RuntimeError) as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid parent_dir: {body.parent_dir} ({e})",
-        )
+        raise api_error(400, "parent_dir_invalid", e, parent_dir=parent_dir) from e
     target = parent / repo_name
 
-    # already exists
     if target.exists():
         raise HTTPException(
             status_code=409,
             detail=f"Target directory already exists: {target}",
         )
 
-    # already exists
     _clone_view = projects_service.guard_writable(settings)
     if any(p["name"] == project_name for p in _clone_view.projects):
         raise HTTPException(
@@ -114,10 +111,7 @@ async def clone_project_from_github(body: CloneProjectRequest):
     try:
         parent.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to create parent directory {parent}: {e}",
-        )
+        raise api_error(500, "parent_dir_create_failed", e, parent=str(parent)) from e
 
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -190,7 +184,7 @@ async def clone_project_from_github(body: CloneProjectRequest):
         logger.warning(
             "project_save_collision_after_clone", name=project_name, error=str(e)
         )
-        raise HTTPException(status_code=409, detail=str(e))
+        raise api_error(409, "conflict", e, step="clone_project_from_github") from e
 
 
     logger.info(

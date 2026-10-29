@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-#
-#
 
-HEAVY_RUN_LOCK_DIR="${CLOUDE_HEAVY_RUN_LOCK_DIR:-$HOME/worktrees/cloudecode/.heavy-run}"
+HEAVY_RUN_LOCK_DIR="${CLOUDE_HEAVY_RUN_LOCK_DIR:-$HOME/dev-worktrees/cloudecode/.heavy-run}"
 HEAVY_RUN_SLOTS="${CLOUDE_HEAVY_RUN_SLOTS:-1}"
 HEAVY_RUN_POLL="${CLOUDE_HEAVY_RUN_POLL:-20}"
 HEAVY_RUN_MAX_WAIT="${CLOUDE_HEAVY_RUN_MAX_WAIT:-3600}"

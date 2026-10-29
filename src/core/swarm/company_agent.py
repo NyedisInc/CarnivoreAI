@@ -1,12 +1,3 @@
-"""Turning on a company's agent and its HQ repo (docs/swarm.md 4.1, 6.1 ``POST /swarm/companies/{id}/agent``, plan S7).
-
-``turn_on`` makes ``<projects folder>/<Company> HQ`` (a folder that already exists is refused with the reason, never adopted
-or overwritten), runs ``git init`` through the Swarm's own helper, registers it as a project filed under the company through
-the existing project write path, records it as ``companies.hq_project_id``, inserts the ``company`` rank agent on the
-Swarm-owned create path (thread ``agent:<id>``, ``swarm-upper``, high effort) and wakes it once. Folder trust is answered at that
-first wake by ``auto_trust`` (Carnivore made the folder, docs/swarm.md 4.4), with no card. A company that already has an agent is refused, except one whose body never started
-(a first wake that failed), which a second turn-on wakes again.
-"""
 
 from __future__ import annotations
 
@@ -61,10 +52,6 @@ def hq_path(company_name: str) -> str:
 
 
 def make_repo_folder(path: str) -> None:
-    """Create ``path`` (its parent first) as a fresh git repo; a folder already there is refused, never adopted.
-
-    Raises: TurnOnError (the path exists, or the folder could not be made a repo; a folder made here is removed again). Blocking.
-    """
     if os.path.lexists(path):
         raise TurnOnError(f"{path} already exists; Carnivore never adopts or overwrites a folder, so move it or rename the company")
     try:

@@ -33,7 +33,6 @@ function createAppWindow({ getUrl, windowState, shouldMirror, guard }) {
       }
       if (!mirror) return;
     }
-    // permission prompt
     if (!Notification.isSupported()) return;
     const note = new Notification({ title: title.slice(0, MAX_TITLE), body: body.slice(0, MAX_BODY) });
     note.on('click', () => openApproval(askSessionId));

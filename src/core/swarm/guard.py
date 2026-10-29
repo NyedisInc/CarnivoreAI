@@ -22,7 +22,7 @@ logger = structlog.get_logger()
 OWNER = "owner"
 DATA = "data"
 REFUSAL = "refused: this turn came from agent data, not from the owner"
-DATA_SAFE = frozenset({"swarm_ask", "swarm_answer", "swarm_pass", "swarm_remember", "swarm_suggest", "swarm_report",
+DATA_SAFE = frozenset({"swarm_ask", "swarm_answer", "swarm_pass", "swarm_remember", "swarm_forget", "swarm_suggest", "swarm_report",
                        "swarm_say", "swarm_conflict"}) | (CARD_TOOLS - OWNER_ONLY_CARD_TOOLS)
 
 

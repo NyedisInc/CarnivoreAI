@@ -1,10 +1,11 @@
-<!-- <button role="radio" aria-checked data-btn="quiet"> label: ' -->
+
 <script lang="ts" module>
   export interface SegmentedOption {
     value: string;
     label: string;
     icon?: string;
     disabled?: boolean;
+    title?: string;
     attrs?: Record<string, string>;
   }
 </script>
@@ -66,7 +67,7 @@
   {#each options as option (option.value)}
     <Button {...option.attrs} variant="quiet" size={size === 'sm' ? 'sm' : 'md'} role="radio" aria-checked={option.value === value}
       tabindex={option.value === stop ? 0 : -1} disabled={!enabled(option)} data-value={option.value}
-      aria-label={iconOnly && option.icon ? option.label : undefined} title={iconOnly && option.icon ? option.label : undefined}
+      aria-label={iconOnly && option.icon ? option.label : undefined} title={option.title ?? (iconOnly && option.icon ? option.label : undefined)}
       onclick={() => choose(option.value)}>
       {#if option.icon}<Icon name={option.icon} size={iconOnly ? 14 : 12} />{/if}{#if !(iconOnly && option.icon)}{option.label}{/if}
     </Button>

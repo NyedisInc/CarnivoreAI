@@ -675,7 +675,7 @@ class TestTheSnapshotShape:
         poller = build_poller(
             [claude_account()],
             identity=ClaudeIdentity(
-                email="acme@example.test",
+                email="alex@example.test",
                 organization_name="Example",
                 subscription_type="max",
             ),
@@ -684,7 +684,7 @@ class TestTheSnapshotShape:
         await poller.run_pass()
 
         answer = row(poller.snapshot(), "max-main")
-        assert answer.identity == "acme@example.test"
+        assert answer.identity == "alex@example.test"
         assert answer.plan == "max"
 
     @pytest.mark.asyncio
@@ -915,13 +915,13 @@ def test_a_row_carries_the_configured_accounts_own_short_name() -> None:
     state = poller_state.AccountState(
         account=ProviderAccount(
             id="claude1",
-            name="Claude Code - Studio",
+            name="Claude Code - Acme",
             provider="claude",
-            short_name="Studio",
+            short_name="Nyedis",
         )
     )
     row = poller_state.account_row(state)
-    assert row.short_name == "Studio"
+    assert row.short_name == "Nyedis"
 
 
 def test_a_row_with_no_short_name_carries_none() -> None:

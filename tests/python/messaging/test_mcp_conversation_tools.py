@@ -14,9 +14,9 @@ from tests.python.beast_mode.grid import arm as arm_beast  # noqa: E402
 
 from .conftest import CONV, JOE, OTHER_CONV, UUID_A
 
-NEW_CONV = "any;-;+15555550177"
-NUMBER_CONV = "any;-;+15555550188"
-CALLER = AgentCaller("ses_a", "cloude_ledgerbot", "ses_a")
+NEW_CONV = "any;-;+15165550177"
+NUMBER_CONV = "any;-;+15165550188"
+CALLER = AgentCaller("ses_a", "cloude_trader", "ses_a")
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def armed(world, monkeypatch):
     monkeypatch.setattr(route_adapters, "route_request",
                         lambda manager: SimpleNamespace(app=world.app, scope={}, headers={}, query_params={}))
     world.provider.listed += [contract.ConversationEntry(NEW_CONV, "build room", (JOE, "+1"), True),
-                              contract.ConversationEntry(NUMBER_CONV, "+1 (555) 555-0188", ("+1",), True)]
+                              contract.ConversationEntry(NUMBER_CONV, "+1 (516) 555-0188", ("+1",), True)]
     world.manager.gate_waited = True
     world.inbox = inbox
     return world
@@ -48,7 +48,7 @@ def _error(world, tool, args) -> str:
 def test_the_list_is_routable_only_and_never_shows_a_handle(armed):
     answer = _call(armed, "messaging_conversations_list", {})
     text = json.dumps(answer)
-    assert "+1555" not in text and "any;-;" not in text and "555" not in text
+    assert "+1516" not in text and "any;-;" not in text and "555" not in text
     names = {c["name"] for c in answer["available"]}
     assert names == {"joe", "build room", messaging_tools.UNNAMED}
     assert answer["registered"] == [{"id": armed.conv_id, "name": "joe"}]
@@ -64,7 +64,7 @@ def test_the_add_waits_with_beast_off_and_never_parks_a_handle(armed):
         r for r in store.list_conversations() if r["id"] == armed.conv_id]
     item = armed.inbox.get(answer["id"]) if hasattr(armed.inbox, "get") else None
     shown = json.dumps(answer) + (item.args_summary if item else "")
-    assert "build room" in shown and "+1555" not in shown and "any;-;" not in shown
+    assert "build room" in shown and "+1516" not in shown and "any;-;" not in shown
 
 
 def test_approve_registers_then_the_binding_works_end_to_end(armed, monkeypatch):
@@ -80,7 +80,7 @@ def test_approve_registers_then_the_binding_works_end_to_end(armed, monkeypatch)
     class Resolver:
         def __init__(self, manager): pass
         async def resolve(self, args, *, reach, tool):
-            return SimpleNamespace(live=True, info=armed.manager.infos["ses_a"], tmux_name="cloude_ledgerbot")
+            return SimpleNamespace(live=True, info=armed.manager.infos["ses_a"], tmux_name="cloude_trader")
         async def uuid_of(self, target): return UUID_A
 
     monkeypatch.setattr(session_target, "TargetResolver", Resolver)
@@ -91,7 +91,7 @@ def test_approve_registers_then_the_binding_works_end_to_end(armed, monkeypatch)
     for row in armed.manager.infos.values():
         row.host_key = None
     armed.manager.list_session_infos = listed
-    bound = _call(armed, "messaging_binding_create", {"target": "cloude_ledgerbot", "conversation": rows["builds"],
+    bound = _call(armed, "messaging_binding_create", {"target": "cloude_trader", "conversation": rows["builds"],
                                                       "direction": "both"})
     assert bound["status"] == "pending"
     asyncio.run(armed.inbox.approve(bound["id"]))

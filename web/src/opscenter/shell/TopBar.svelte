@@ -1,33 +1,5 @@
 <script lang="ts">
-  /**
-   * The home screen's strip on a PHONE, and the pop-out window's bar.
-   *
-   * Description: THE DESKTOP HOME HEADER IS GONE (#1157, the
-   *   mockup's section 6 option A). Above 1024 the home screen draws no bar at all: its
-   *   pop out and wallboard buttons became ONE floating pop-out control
-   *   (`HomeOpenMenu.svelte`), the inbox door was removed (the team,
-   *   an earlier date), the clock was removed (the device shows the time), the connection light and the user icon into the drawer's bottom
-   *   bar beside the version, and the session count was dropped. `App.svelte` mounts this
-   *   component only below 1024 and in the pop-out window, neither of which has a drawer
-   *   header on screen, so it keeps a 34px strip: the claw (which opens the drawer), the light
-   *   by the wordmark, then the alert bell.
-   *
-   *   TWO THINGS LEFT THIS BAR ON an earlier date, AND THEY LEFT FOR DIFFERENT
-   *   REASONS. The command field across the middle was ornament worn as
-   *   interface: a real `<input>` with no handler and no binding on it, so it
-   *   took typing and did nothing with it, and its placeholder advertised a
-   *   Cmd-K this app binds nowhere. The build number was not ornament at all,
-   *   it was in the wrong place. It went to the foot of the home screen's
-   *   left rail, and since that rail was removed the one build
-   *   readout is the agents drawer's bottom bar; it was MOVED, not copied,
-   *   because two places printing one fact is how they end up disagreeing. The demo chip stays
-   *   exactly where it was and is a different thing.
-   *
-   *   THE FIELD WAS THE BAR'S ONLY FLEXIBLE BOX, so taking it out took the
-   *   thing that was holding the right cluster against the right edge. That
-   *   job is `.oc-topbar-spacer` now, an empty flexible box after the light,
-   *   so the cluster stays put whether or not the demo chip is drawn.
-   */
+  /* the home screen */
   import Icon from '../ui/Icon.svelte';
   import { isDemo, transport } from '../api';
   import { t } from '../../lib/i18n/index.svelte';
@@ -44,7 +16,6 @@
   const member = $derived(accountChip.identity?.kind === 'member');
   const accountName = $derived(member ? (accountChip.identity?.name ?? '') : t('drawer.account.lurker'));
 
-  /* pop-out window */
   let { popout = false }: { popout?: boolean } = $props();
 
   const popoutBoard = popout && typeof window !== 'undefined' ? dashboardFromSearch(window.location.search) : null;
@@ -149,7 +120,7 @@
   </span>
   {/if}
   <span class="oc-topbar-spacer"></span>
-  <!-- display:none -->
+  
   {#if !popout}
     <AlertBell place="drawer" />
     
@@ -167,7 +138,7 @@
       </button>
     {/if}
   {/if}
-  <!-- focus main window -->
+  
   {#if popout}<PopoutBarActions />{/if}
 </header>
 
@@ -183,7 +154,6 @@
       white-space: nowrap;
     }
 
-    /* padding */
     :global(html[data-desktop-chrome]) .oc-topbar--popout {
       padding-left: max(var(--oc-space-5), var(--desktop-inset-left, 0px));
       -webkit-app-region: drag;
@@ -193,7 +163,6 @@
       -webkit-app-region: no-drag;
     }
 
-    /* align-items: center */
     .oc-topbar-word {
       display: block;
       height: 20px;

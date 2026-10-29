@@ -1,4 +1,4 @@
-<!-- <button> -->
+
 <script lang="ts">
   import IconButton from './IconButton.svelte';
 

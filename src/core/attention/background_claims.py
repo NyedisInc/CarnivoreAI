@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.core.attention.registry_read import REG_IDLE
+from src.core.attention.registry_record import REG_IDLE
 from src.core.background_work.measured import STATE_NONE
 
 

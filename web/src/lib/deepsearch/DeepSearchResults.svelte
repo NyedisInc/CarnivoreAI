@@ -3,8 +3,8 @@
 </script>
 
 <script lang="ts">
-  /*  hidden  */
   import { resourcePush } from '../resource-push/boot';
+  import { Button } from '../base';
   import { t } from '../i18n/index.svelte';
   import type { DrawerSearchController } from './provider-types';
   import LayoutToggle from './LayoutToggle.svelte';
@@ -96,14 +96,14 @@
   {#if controller.scope}
     <div class="dps__scope" data-testid="deepsearch-scope">
       <span class="dps__scope-name">{t('deepsearch.scope_bar', { name: controller.scope.name })}</span>
-      <button type="button" class="dps__linkbtn" onmousedown={(e) => e.preventDefault()} onclick={() => controller.clearScope()}>{t('deepsearch.scope_clear')}</button>
+      <Button variant="quiet" size="sm" data-scope-clear onmousedown={(e) => e.preventDefault()} onclick={() => controller.clearScope()}>{t('deepsearch.scope_clear')}</Button>
     </div>
   {/if}
   {#if chipsShown}
     <div class="dps__chips" role="group" aria-label={t('deepsearch.filter.label')} data-testid="deepsearch-chips">
       {#each KIND_FILTERS as kind (kind)}
-        <button type="button" class="dps__chip" class:is-on={controller.kind === kind} aria-pressed={controller.kind === kind} data-kind={kind}
-          onmousedown={(e) => e.preventDefault()} onclick={() => controller.setKind(kind)}>{t(`deepsearch.filter.${kind}`)}</button>
+        <Button size="sm" aria-pressed={controller.kind === kind} data-kind={kind}
+          onmousedown={(e) => e.preventDefault()} onclick={() => controller.setKind(kind)}>{t(`deepsearch.filter.${kind}`)}</Button>
       {/each}
     </div>
   {/if}
@@ -113,8 +113,10 @@
   {#if controller.phase === 'done' && controller.groups.length > 0}
     <ResultsList {controller} layout={controller.layout} />
     {#if controller.hasMore}
-      <button type="button" class="modal-btn modal-btn-secondary dps__more" disabled={controller.loadingMore}
-        onmousedown={(e) => e.preventDefault()} onclick={() => void controller.more()}>{t('deepsearch.more')}</button>
+      <div class="dps__more">
+        <Button disabled={controller.loadingMore}
+          onmousedown={(e) => e.preventDefault()} onclick={() => void controller.more()}>{t('deepsearch.more')}</Button>
+      </div>
     {/if}
     <p class="dps__keys">{t('deepsearch.keys')}</p>
   {/if}

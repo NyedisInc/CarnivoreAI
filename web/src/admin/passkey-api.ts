@@ -35,7 +35,6 @@ export class PasskeyApi {
         this.api = api;
     }
 
-    /* passkey sign in */
     async health(): Promise<boolean> {
         const body = record(await this.api.call('GET', '/health', null, false));
         return record(body.providers).passkey === true;

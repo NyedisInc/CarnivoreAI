@@ -150,7 +150,6 @@ export async function addWidget(id: SlotId): Promise<boolean> {
   return done;
 }
 
-/* the drawer let go */
 export async function dropWidget(id: SlotId, target: DropTarget): Promise<'landed' | 'placed' | 'unchanged'> {
   const store = live();
   if (!store) return 'unchanged';
@@ -197,7 +196,6 @@ export function removable(id: SlotId): boolean {
   return id !== PRIMARY_SLOT;
 }
 
-/*  hidden  */
 export async function removeWidget(id: SlotId): Promise<boolean> {
   const store = live();
   if (!store || !removable(id)) return false;
@@ -228,7 +226,6 @@ export function addAnalyticsWidget(copy?: ChartConfig, target?: DropTarget | nul
 
 const GRID_ROOT: Record<string, string> = { home: '#launchpad-screen', terminal: '#terminal-grid', warroom: '#warroom-screen' };
 
-/*  hidden  */
 export function addPanelWidget(kind: string, target?: DropTarget | null, title: string = kind): boolean {
   const store = live();
   const tail = panels().tail(kind);
@@ -281,7 +278,6 @@ export function hideAnalyticsWidget(id: SlotId): boolean {
   return true;
 }
 
-/*  hidden  */
 export function restoreAnalyticsWidget(id: SlotId, target?: DropTarget | null): boolean {
   const store = live();
   if (!store || !id.startsWith('analytics:')) return false;

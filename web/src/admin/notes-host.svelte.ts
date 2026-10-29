@@ -2,6 +2,7 @@ import { AdminApi, type Refusal } from './admin.js';
 import { refusalOf } from './refusal-of';
 import { listNotes, markNote, type NoteRow, type NoteStatus } from './notes.js';
 
+/* the notes panel */
 export interface NotesHost {
     readonly status: NoteStatus;
     readonly notes: NoteRow[];

@@ -61,7 +61,8 @@ def _login(account: str, token: str) -> Tuple[bool, str]:
 async def receive_gh_login(request: Request, principal: Principal = Depends(_require_credentials),
                            _allowed: None = Depends(restrictions_mod.require_peer_allowed(
                                restrictions_mod.ACTION_RECEIVE_CREDENTIALS))) -> JSONResponse:
-    """
+    """Log this machine's gh into ``account`` with the pushed token. Output: {account, ok: true} (never the token).
+
     Raises: HTTPException 403 not a peer, 422 ``bad_account`` / ``bad_token``, 409 ``account_mismatch`` /
     ``gh_insecure_storage`` / ``gh_missing`` / ``gh_login_failed`` (nothing logged in is left behind).
     """

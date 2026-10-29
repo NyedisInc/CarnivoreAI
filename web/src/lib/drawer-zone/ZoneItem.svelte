@@ -1,5 +1,6 @@
 <script lang="ts">
   import IconButton from '../base/IconButton.svelte';
+  import Segmented from '../base/Segmented.svelte';
   import LedgerCell from '../../opscenter/cells/ledger/Cell.svelte';
   import { META } from '../../opscenter/engine/meta';
   import { t } from '../i18n/index.svelte';
@@ -50,32 +51,14 @@
           <IconButton label={t('drawer_zone.drag', { title })} variant="quiet" icon="grip" data-zone-handle onpointerdown={onHandleDown} />
           <span class="dz-name">{title}</span>
           {#if views.length > 0}
-            <span class="dz-looks" role="group" aria-label={t('drawer_zone.view')}>
-              {#each views as one (one.id)}
-                <button
-                  type="button"
-                  class="dz-look"
-                  class:dz-look--on={view === one.id}
-                  data-zone-view={one.id}
-                  aria-pressed={view === one.id}
-                  onclick={() => drawerZone.setView(key, one.id)}>{t(one.titleKey)}</button
-                >
-              {/each}
-            </span>
+            <Segmented label={t('drawer_zone.view')} value={view ?? ''} size="sm"
+              options={views.map((one) => ({ value: one.id, label: t(one.titleKey), attrs: { 'data-zone-view': one.id } }))}
+              onchange={(next) => drawerZone.setView(key, next)} />
           {/if}
           {#if looks.length > 1}
-            <span class="dz-looks" role="group" aria-label={t('drawer_zone.look')}>
-              {#each looks as name (name)}
-                <button
-                  type="button"
-                  class="dz-look"
-                  class:dz-look--on={look === name}
-                  data-zone-look={name}
-                  aria-pressed={look === name}
-                  onclick={() => drawerZone.setLook(key, name)}>{t(`drawer_zone.look.${name}`)}</button
-                >
-              {/each}
-            </span>
+            <Segmented label={t('drawer_zone.look')} value={look ?? ''} size="sm"
+              options={looks.map((name) => ({ value: name, label: t(`drawer_zone.look.${name}`), attrs: { 'data-zone-look': name } }))}
+              onchange={(next) => drawerZone.setLook(key, next as typeof looks[number])} />
           {/if}
           <IconButton label={t('drawer_zone.up', { title })} variant="quiet" data-zone-up disabled={index === 0}
             onclick={() => drawerZone.step(key, -1)}>&#8593;</IconButton>
@@ -124,44 +107,9 @@
       letter-spacing: 0.06em;
     }
 
-    .dz-look {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 22px;
-      height: 22px;
-      padding: 0 var(--oc-space-1);
-      background: transparent;
-      border: var(--oc-border) solid transparent;
-      border-radius: var(--oc-radius-sm);
-      color: var(--oc-text-muted);
-      font: inherit;
-      cursor: pointer;
-      transition: color 120ms ease, background 120ms ease;
-    }
-
-    .dz-look:hover {
-      background: var(--oc-ground-hover);
-      color: var(--oc-text-primary);
-    }
-
     .dz-strip :global([data-zone-handle]) {
       cursor: grab;
       touch-action: none;
-    }
-
-    .dz-looks {
-      display: inline-flex;
-      gap: 2px;
-    }
-
-    .dz-look {
-      text-transform: lowercase;
-    }
-
-    .dz-look--on {
-      border-color: var(--oc-line-chrome);
-      color: var(--oc-text-primary);
     }
   }
 </style>

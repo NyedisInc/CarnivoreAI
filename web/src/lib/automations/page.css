@@ -1,5 +1,4 @@
 @layer components {
-    /* the detail pane */
     .ap-page {
         container: ap-page / inline-size;
         font-family: var(--font-mono);
@@ -290,7 +289,6 @@
         line-height: var(--oc-lh-body);
     }
 
-    /* padding */
     .ap-page[data-pane-open] > .oc-page__away > * {
         margin-right: var(--pn-dock);
     }
@@ -468,7 +466,6 @@
     color: var(--oc-orange);
 }
 
-/*  hidden  */
 @media (min-width: 701px) {
     .ap-page.pledger {
         overflow: clip;
@@ -498,7 +495,6 @@
         height: 44px;
     }
 
-    /* transform: none */
     .ap-page > .oc-page__away {
         top: 44px;
         transform: none;

@@ -1,3 +1,4 @@
+/* the widget menu */
 import { buildWidgetMenu } from '../../widget-menu/model';
 import { defineItemMenu } from '../registry';
 

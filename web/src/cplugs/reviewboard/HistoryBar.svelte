@@ -1,7 +1,7 @@
 <script lang="ts">
-  /* could not */
   import { tick } from 'svelte';
   import { t } from '../sdk';
+  import { Button, IconButton } from '../sdk/ui';
   import type { HistoryItem } from './board-model';
   import { isLiveDraft } from './live-model';
 
@@ -36,21 +36,21 @@
 <div class="rb-history" data-board-history>
   <div class="rb-track" bind:this={track} role="group" aria-label={t('cplug.reviewboard.history.label')}>
     {#if folded}
-      <button type="button" class="rb-step rb-step--fold" aria-label={t('cplug.reviewboard.history.folded_label')} onclick={onunfold}>
+      <Button size="sm" data-history="fold" aria-label={t('cplug.reviewboard.history.folded_label')} onclick={onunfold}>
         {t('cplug.reviewboard.history.folded', { from: folded.from, to: folded.to })}
-      </button>
+      </Button>
     {/if}
     {#each items as item (`${item.kind}:${item.id}`)}
       {#if item.kind === 'revision'}
-        <button type="button" class="rb-step" aria-current={item.id === current} aria-label={revisionLabel(item)} title={item.milestone ?? undefined}
-                data-history="revision" data-live-draft={isLiveDraft(item.id) ? '' : undefined} data-milestone={item.milestone ? '' : undefined} onclick={() => onpick(item.id)}>{item.id}</button>
+        <Button size="sm" aria-current={item.id === current} aria-label={revisionLabel(item)} title={item.milestone ?? undefined}
+                data-history="revision" data-live-draft={isLiveDraft(item.id) ? '' : undefined} data-milestone={item.milestone ? '' : undefined} onclick={() => onpick(item.id)}>{item.id}</Button>
       {:else}
-        <button type="button" class="rb-round" data-undelivered={item.undelivered} data-history="round"
-                aria-label={t(item.undelivered ? 'cplug.reviewboard.history.round_undelivered' : 'cplug.reviewboard.history.round', { id: item.id, revision: item.revision })}
-                onclick={() => {
-                  onpick(item.revision);
-                  onround?.(item.id);
-                }}></button>
+        <IconButton variant="quiet" data-undelivered={item.undelivered} data-history="round"
+                    label={t(item.undelivered ? 'cplug.reviewboard.history.round_undelivered' : 'cplug.reviewboard.history.round', { id: item.id, revision: item.revision })}
+                    onclick={() => {
+                      onpick(item.revision);
+                      onround?.(item.id);
+                    }}><span class="rb-diamond" aria-hidden="true"></span></IconButton>
       {/if}
     {/each}
   </div>

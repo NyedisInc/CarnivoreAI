@@ -2,6 +2,7 @@
 <script lang="ts">
     import { onDestroy, untrack } from 'svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
+    import { Button } from '../base';
     import type { Translate } from '../sessions/types';
     import { relative } from '../../opscenter/lib/format';
     import '../settings-page/panel-kit/panel-kit.css';
@@ -68,8 +69,8 @@
     <div class="tm__warn" role="alert" data-ps="rebuild-panel" data-ps-for={id}>
         <p>{t('pipeline.rebuild.warning')}</p>
         <div class="tm__actions">
-            <button type="button" class="modal-btn modal-btn-secondary" data-ps="cancel" onclick={() => ask(id)}>{t('pipeline.rebuild.cancel')}</button>
-            <button type="button" class="modal-btn modal-btn-danger" data-ps="confirm" disabled={busy} onclick={() => void confirm(id)}>{t('pipeline.rebuild.confirm')}</button>
+            <Button data-ps="cancel" onclick={() => ask(id)}>{t('pipeline.rebuild.cancel')}</Button>
+            <Button variant="danger" data-ps="confirm" disabled={busy} onclick={() => void confirm(id)}>{t('pipeline.rebuild.confirm')}</Button>
         </div>
     </div>
 {/snippet}
@@ -92,8 +93,8 @@
                     <div class="ps-row" data-ps-plugin={id}>
                         <div class="ps-row__head">
                             <span class="ps-row__name">{nameOf(id)}</span>
-                            <button type="button" class="oc-btn ps-row__tools" data-ps="rebuild" disabled={busy || plugin.rebuilding}
-                                aria-expanded={asking === id} onclick={() => ask(id)}>{t('pipeline.rebuild')}</button>
+                            <Button data-ps="rebuild" disabled={busy || plugin.rebuilding}
+                                aria-expanded={asking === id} onclick={() => ask(id)}>{t('pipeline.rebuild')}</Button>
                         </div>
                         <div class="ps-row__facts">
                             <span data-ps="lag">{plugin.rebuilding ? t('pipeline.plugin.rebuilding') : plugin.lag.files > 0 ? t('pipeline.plugin.waiting', { files: plugin.lag.files }) : t('pipeline.plugin.caught_up')}</span>

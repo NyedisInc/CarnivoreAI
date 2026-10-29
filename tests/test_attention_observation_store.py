@@ -12,7 +12,7 @@ from src.core.attention.evidence import (
     AttentionVerdict, REASON_PERMISSION, TIER_PANE,
 )
 from src.core.attention.ledger import AttentionLedger
-from src.core.attention.registry_read import parse_registry_record
+from src.core.attention.registry_record import parse_registry_record
 from src.core.attention.transcript_facts import TranscriptFacts, FACTS_NO_RECORD
 from src.core.attention.watcher import (
     AttentionWatcher, STALL_BACKSTOP_SECONDS, WatchTarget,

@@ -1,4 +1,3 @@
-/* something else */
 
 export interface ThumbnailSource {
   feature: string;

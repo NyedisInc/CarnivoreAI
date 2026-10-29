@@ -1,11 +1,3 @@
-"""Taking the old archive into the vault: preview, apply, undo and the receipts (S4). One service for the routes and the MCP tools, so there
-is no second implementation. Everything blocking runs off the loop. ONE IMPORT RUNS AT A TIME; a second caller is refused, never queued.
-
-PREVIEW reads every configured source READ ONLY and writes nothing into the vault or a source; it answers the counts and a fingerprint, and keeps
-the last few (counts only) in the state folder so an approval card replayed after a restart still finds its preview. APPLY needs that fingerprint: it plans again, refuses when the plan is not the one previewed (``plan_changed``) and only
-then files, add only, through ``adopt_points``, with the undo log outside the vault. A source path is checked: absolute, no ``..``, and never
-inside the vault. Step 7 plan: ``~/work``.
-"""
 
 from __future__ import annotations
 

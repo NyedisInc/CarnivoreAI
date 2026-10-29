@@ -50,7 +50,6 @@ export function parseRoute(hash: string): Route {
     return 'queue';
 }
 
-/* nothing at all */
 export function createTokenStore(scope: unknown): TokenStore {
     function storage(): Storage | null {
         try {
@@ -82,7 +81,6 @@ export function createTokenStore(scope: unknown): TokenStore {
 export interface AdminHost {
     readonly api: AdminApi;
     readonly step: Step;
-    /* passkey sign in */
     readonly passkeyAvailable: boolean;
     readonly hint: string;
     readonly pk: PasskeyHost;
@@ -259,7 +257,6 @@ export function createHost(deps: {
         if (QUEUE_STAGES.some((stage) => stage.id === tab)) queueStatus = tab;
     }
 
-    /* passkey sign in */
     async function reauth(): Promise<void> {
         tokens.write(await signInCeremony(passkeyApi, creds()));
     }

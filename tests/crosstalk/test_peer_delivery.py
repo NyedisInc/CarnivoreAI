@@ -39,8 +39,8 @@ def test_live_peer_grant_and_pinned_receipt(tmp_path, monkeypatch):
     with closing(opened()) as conn:
         local_id = get_meta(conn, 'install_id')
         key = fed_key.DeviceKey.from_seed(bytes([7]) * 32)
-        grant = grants.create_grant(conn, peer_install_id='peer-install', public_key=fed_key.public_key_b64(key), label='hosta')
-        peer_hosts.upsert(conn, install_id='peer-install', label='hosta', grant_id=grant.grant_id,
+        grant = grants.create_grant(conn, peer_install_id='peer-install', public_key=fed_key.public_key_b64(key), label='studio')
+        peer_hosts.upsert(conn, install_id='peer-install', label='studio', grant_id=grant.grant_id,
                           fid=grant.fid, initiator=False)
     token, _ = peer_token.mint(grant, local_id)
     info = SessionInfo(session=Session(id='ses_local', working_dir='/tmp', agent_type='claude',
@@ -161,7 +161,7 @@ def test_live_peer_grant_and_pinned_receipt(tmp_path, monkeypatch):
             receiver={'key': 'uuid-local', 'id': 'ses_local', 'uuid': 'uuid-local', 'epoch': 42,
                       'name': 'Receiver', 'provider': 'claude', 'model': None})
     capped = client.post(route, json={**body, 'id': 'm-peerorigin700', 'text': 'over loop cap'}, headers=headers)
-    assert capped.status_code == 409 and 'loop breaker' in capped.text
+    assert capped.status_code == 409 and capped.json()['detail']['code'] == 'crosstalk_refused'
     with closing(opened()) as conn:
         paused = conn.execute('SELECT paused FROM crosstalk_contacts WHERE pair_key=?',
                               (store.pair_key('uuid-local', remote_key),)).fetchone()[0]

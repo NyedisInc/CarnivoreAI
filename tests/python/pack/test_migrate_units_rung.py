@@ -26,7 +26,7 @@ def git(path: Path, *args: str) -> str:
 def test_a_non_git_root_with_a_repo_is_carried_as_units_and_an_old_target_keeps_tar(world) -> None:
     a, b, current, link = world
     root = a.projects / "quar"
-    repo = root / "BubblePop"
+    repo = root / "PillPanic"
     repo.mkdir(parents=True)
     git(repo, "init", "-q", "-b", "main")
     (repo / ".gitignore").write_text("*.log\n")
@@ -51,15 +51,15 @@ def test_a_non_git_root_with_a_repo_is_carried_as_units_and_an_old_target_keeps_
 
     made = asyncio.run(plan.plan_project(env, project, "iid-b", apply.guarded(request), target_caps=[scan.CARRY_TREE]))
     assert made.rung == "units" and not made.blocking, made.view()
-    assert [r.rel for r in made.carry.repos] == ["BubblePop"] and made.carry.files == ["note.txt"]
+    assert [r.rel for r in made.carry.repos] == ["PillPanic"] and made.carry.files == ["note.txt"]
     names = {c["name"]: c for c in made.checks}
     assert "junk.log" in names["left_behind"]["detail"] and "2 uncommitted" in names["carried_work"]["detail"]
 
     asyncio.run(apply.apply_project(env, made, request))
     landed = Path(b.project(project["uid"])["root"])
-    assert git(landed / "BubblePop", "rev-parse", "HEAD") == head
-    assert git(landed / "BubblePop", "status", "--porcelain") == git(repo, "status", "--porcelain")
-    assert (landed / "BubblePop" / "a.txt").read_text() == "one\nuncommitted\n"
+    assert git(landed / "PillPanic", "rev-parse", "HEAD") == head
+    assert git(landed / "PillPanic", "status", "--porcelain") == git(repo, "status", "--porcelain")
+    assert (landed / "PillPanic" / "a.txt").read_text() == "one\nuncommitted\n"
     assert (landed / "note.txt").read_text() == "loose\n"
-    assert not (landed / "BubblePop" / "junk.log").exists()
+    assert not (landed / "PillPanic" / "junk.log").exists()
     assert a.project(project["uid"])["pack_state"] == "moved_away"

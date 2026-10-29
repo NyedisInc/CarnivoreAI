@@ -6,7 +6,6 @@ const TITLE_BAR_STYLE = 'hiddenInset';
 const TRAFFIC_LIGHTS = Object.freeze({ x: 16, y: 8 });
 const INSET = Object.freeze({ top: 28, left: 78 });
 
-/* tabbingIdentifier: */
 function chromeOptions(kind) {
   if (typeof kind !== 'string' || !Object.prototype.hasOwnProperty.call(TABBING_ID, kind)) throw new Error(`unknown window kind: ${String(kind)}`);
   return { titleBarStyle: TITLE_BAR_STYLE, trafficLightPosition: { ...TRAFFIC_LIGHTS }, tabbingIdentifier: TABBING_ID[kind], fullscreenable: true };

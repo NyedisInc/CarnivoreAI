@@ -21,7 +21,7 @@ Subcommands:
                         ``updated``, and that an added/changed feature is
                         shown: where, how_to, examples and media (#846).
     render              write FEATURES.md, features/index.json, schema.json.
-    new-change          write one features/changes/<date>-<pr>-<slug>.json.
+    new-change          write one features/changes/<date>-[<pr>-]<slug>.json.
 
 Exit codes, every subcommand: 0 pass, 1 a violation was found, 2 could not
 determine (the environment could not be evaluated - not 0, not a pass).
@@ -63,6 +63,7 @@ FEATURES_DIR = REPO / "features"
 AREAS_FILE = FEATURES_DIR / "areas.json"
 CATALOG_DIR = FEATURES_DIR / "catalog"
 CHANGES_DIR = FEATURES_DIR / "changes"
+CHANGE_NAME_RX = re.compile(r"^\d{4}-\d{2}-\d{2}-(\d+-)?[a-z0-9][a-z0-9-]*\.json$")
 SCHEMA_FILE = FEATURES_DIR / "schema.json"
 INDEX_FILE = FEATURES_DIR / "index.json"
 FEATURES_MD = REPO / "FEATURES.md"
@@ -239,6 +240,14 @@ def _check_branch_rules(repo: Path) -> int:
 
     product_touched = [p for p in paths if _is_product_path(p)]
     change_files = [p for p in paths if p.startswith("features/changes/") and p.endswith(".json")]
+    misnamed = [p for p in change_files
+                if (repo / p).is_file() and not CHANGE_NAME_RX.match(Path(p).name)]
+    if misnamed:
+        print("features.py check --branch: VIOLATION - change entr(ies) not named "
+              "<YYYY-MM-DD>-[<pr>-]<slug>.json (lowercase kebab slug):", file=sys.stderr)
+        for p in misnamed:
+            print(f"  {p}", file=sys.stderr)
+        return 1
     if product_touched and not change_files:
         print("features.py check --branch: VIOLATION - product path(s) changed with no "
               "features/changes/ entry:", file=sys.stderr)
@@ -246,7 +255,7 @@ def _check_branch_rules(repo: Path) -> int:
             print(f"  {p}", file=sys.stderr)
         print("Add one, e.g.:", file=sys.stderr)
         print("  python3 scripts/features.py new-change --type fixed --features <catalog-id> "
-              "--summary \"<one line>\" --pr <N>", file=sys.stderr)
+              "--summary \"<one line>\" [--pr <N>]", file=sys.stderr)
         return 1
 
     stale = []
@@ -396,31 +405,6 @@ def _package_json_version(repo: Path) -> str | None:
 
 
 def _pending_release_tag(repo: Path, version_tags: list[str]) -> str | None:
-    """The release name a currently-untagged commit belongs to, if one is pending.
-
-    Root cause (issue reported against v1.12.18, reproduced back through
-    v1.12.16): a release is cut by (1) bumping ``macOS/package.json``'s
-    version, (2) letting ``scripts/dist-at-merge.sh`` regenerate and commit
-    ``features/index.json`` on that tip, THEN (3) tagging the tip ``vX.Y.Z``.
-    ``_release_for`` only ever answers with a tag that already exists, so at
-    step 2 the tag from step 3 is not there yet, and every change since the
-    previous tag - including the release's own - is stamped "Unreleased"
-    into the very ``index.json`` that ships inside that tag, permanently
-    (nothing re-renders after the tag lands).
-
-    Fix: once ``macOS/package.json``'s version has moved past every existing
-    ``v*`` tag (the bump from step 1 has landed) but no tag matches it yet
-    (step 3 has not happened), that version is already decided - so treat it
-    as the bucket for anything that would otherwise fall through to
-    "Unreleased", instead of "Unreleased" itself. Once the tag is actually
-    pushed, ``_release_for`` finds it directly and this function is never
-    consulted for those commits again.
-
-    Returns:
-        ``"vX.Y.Z"`` when a bump is pending and not yet tagged, else
-        ``None`` (no package.json version, or it is already tagged, or it is
-        not ahead of the newest existing tag).
-    """
     version = _package_json_version(repo)
     if version is None:
         return None
@@ -560,7 +544,8 @@ def cmd_new_change(args: argparse.Namespace) -> int:
         entry["details"] = args.details
     if args.issue is not None:
         entry["issue"] = args.issue
-    entry["pr"] = args.pr
+    if args.pr is not None:
+        entry["pr"] = args.pr
     if args.breaking:
         entry["breaking"] = True
 
@@ -578,7 +563,8 @@ def cmd_new_change(args: argparse.Namespace) -> int:
               file=sys.stderr)
         return 1
     CHANGES_DIR.mkdir(parents=True, exist_ok=True)
-    path = CHANGES_DIR / f"{date_str}-{args.pr}-{slug}.json"
+    pr_part = f"{args.pr}-" if args.pr is not None else ""
+    path = CHANGES_DIR / f"{date_str}-{pr_part}{slug}.json"
     if path.exists():
         print(f"features.py new-change: {path.relative_to(REPO)} already exists", file=sys.stderr)
         return 1
@@ -604,7 +590,7 @@ def build_parser() -> argparse.ArgumentParser:
     new_p.add_argument("--summary", required=True, help="one user-facing line")
     new_p.add_argument("--details", help="optional markdown detail")
     new_p.add_argument("--issue", type=int, help="issue number")
-    new_p.add_argument("--pr", type=int, required=True, help="PR number, known at claim time")
+    new_p.add_argument("--pr", type=int, help="PR number when there is one (the lean pipeline has none)")
     new_p.add_argument("--breaking", action="store_true")
     new_p.add_argument("--date", help="YYYY-MM-DD, default today")
     new_p.add_argument("--slug", help="override the auto-slug from --summary")

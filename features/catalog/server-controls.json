@@ -15,7 +15,14 @@
   "keywords": [
     "bind address"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The settings page's remote section showing the server bind address",
+      "caption": "The server section in settings",
+      "file": "general.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Server controls",
   "since": "2026-09-10",
   "status": "stable",
@@ -24,6 +31,5 @@
   "updated": "2026-10-22",
   "where": [
     "Settings, remote & security, access tab."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

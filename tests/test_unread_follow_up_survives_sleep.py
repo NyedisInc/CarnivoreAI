@@ -114,6 +114,9 @@ class _StubSettings:
         self._root = root
         self.port = 5001
 
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
+
     def get_pinned_themes_path(self) -> Path:
         return self._root / "pinned_themes.json"
 

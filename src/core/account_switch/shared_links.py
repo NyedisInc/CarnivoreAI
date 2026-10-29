@@ -1,30 +1,3 @@
-"""Make a profile able to resume a conversation that began under another one.
-
-THE FIX IS A SYMLINK, CREATED ONLY IF ABSENT, AND IT NEVER OVERWRITES.
-For each entry below, ``<profile>/<entry>`` is linked to the shared
-``~/.claude/<entry>`` when, and only when, nothing
-exists at that name in the profile (``lstat``, so a dangling link counts
-as present). An entry that already exists as a real file or directory is
-LEFT EXACTLY AS IT IS and reported ``present``; a link that points
-elsewhere is reported ``foreign_link`` and also left alone. Nothing is
-moved, merged or deleted, in either direction.
-
-LINKS ARE CREATED ONLY IN A MANAGED PROFILE. The app created that
-directory and owns its path (``docs/provider-ledger.md``); an unmanaged
-row names a directory the user made, and this app does not write into
-it. An unmanaged profile is still usable when it ALREADY resolves its
-transcripts to the shared directory, which :func:`resume_safe` measures.
-
-REMOVING A PROFILE CANNOT REACH THROUGH A LINK. ``shutil.rmtree``, which
-``managed_profiles.remove_managed_dir`` uses, unlinks a symlink it meets
-inside the tree and never descends into it; ``tests/test_account_switch_links.py``
-proves that against a real directory.
-
-NO CREDENTIAL IS READ OR WRITTEN HERE. The only filesystem calls are
-``lstat``, ``readlink``/``realpath``, ``mkdir`` of a missing shared
-directory, ``symlink``, and for the ``plans`` migration ``link``/``rename``
-into the shared directory and ``unlink``/``rmdir`` of what was moved.
-"""
 
 from __future__ import annotations
 
@@ -116,15 +89,6 @@ def entry_status(profile_dir: str, provider: str, entry: str) -> str:
 
 
 def resume_safe(profile_dir: str, provider: str) -> bool:
-    """Can a conversation from the shared directory be resumed here?
-
-    Description: READ ONLY. True for the default profile itself, and for
-      any profile whose required entry resolves to the shared one,
-      however it came to.
-    Inputs: profile_dir (str); provider (str).
-    Output: bool.
-    Example: resume_safe('~/.claude', 'claude')  # True
-    """
     if is_default_profile(provider, profile_dir):
         return True
     return all(
@@ -142,13 +106,6 @@ def _free_name(directory: str, name: str, tag: str) -> str:
 
 
 def _move_no_overwrite(src: str, dest: str) -> None:
-    """Move one entry to a name that does not exist, never replacing anything.
-
-    Description: a regular file is hard linked then unlinked, which fails
-      with ``FileExistsError`` instead of replacing; anything else is
-      renamed only after ``lstat`` finds the name free.
-    Raises: FileExistsError - the name was taken; OSError - the move failed.
-    """
     if os.path.isfile(src) and not os.path.islink(src):
         os.link(src, dest)
         os.unlink(src)
@@ -159,18 +116,6 @@ def _move_no_overwrite(src: str, dest: str) -> None:
 
 
 def _migrate_into_shared(own: str, shared: str, tag: str) -> bool:
-    """Move a profile's own directory's entries into the shared one, then remove it.
-
-    Description: see the module docstring. Never overwrites, never deletes
-      content: an entry whose name the shared side holds with the SAME bytes
-      is already there and is dropped from the profile; a clash with
-      different bytes keeps both. The profile's directory is removed only
-      when it is empty.
-    Inputs: own (str) - the profile's real directory; shared (str) - the
-      shared directory; tag (str) - the profile's name, for a renamed clash.
-    Output: bool - True when the profile's directory is gone and the link
-      can be made.
-    """
     moved = 0
     try:
         os.makedirs(shared, mode=0o700, exist_ok=True)

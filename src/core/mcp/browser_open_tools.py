@@ -43,7 +43,7 @@ async def browser_open(manager: Any, caller: AgentCaller, args: dict) -> dict:
 READ_TOOLS: dict = {}
 WRITE_TOOLS: dict = {
     "browser_open": (
-        "Open a page for the owner; every Carnivore window shows it as a sidebar row, full size in their center screen. "
+        "Open a page for the owner; every Carnivore window shows it as a sidebar row, full size in his center screen. "
         "huddle_artifact {item, artifact} opens a page you posted (artifact is message.artifact.id); "
         "url /static/popout.html?... opens a pop-out page; url http(s) opens a site. Optional title, color and icon "
         "style the row (restyle later with sidebar_row_look_set).",

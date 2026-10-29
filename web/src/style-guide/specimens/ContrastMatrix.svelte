@@ -1,5 +1,5 @@
 <script lang="ts">
-  /*  hidden  */
+  /* one row per theme */
   import {
     EXTRA_PAIRS,
     GROUND_ROLES,

@@ -77,8 +77,6 @@ def test_too_many_kinds_are_refused():
         ui_preferences.validate_changes({FIELD: {"v": 1, "kinds": many}})
 
 
-def test_the_deprecated_bell_kinds_field_stays_readable(store, config_path):
-    sent = {"v": 1, "kinds": {"huddle": False}}
-    assert store.update({"bell_kinds": sent}).status == COMMITTED
-    assert _stored(config_path)["bell_kinds"] == sent
-    assert FIELD not in _stored(config_path)
+def test_the_retired_bell_kinds_field_is_dropped_on_write():
+    assert "bell_kinds" in ui_preferences.RETIRED_FIELDS
+    assert "bell_kinds" not in ui_preferences.known_fields()

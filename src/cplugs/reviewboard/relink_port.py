@@ -22,11 +22,6 @@ class RelinkPort:
         self._ctx = ctx
 
     def relink(self, slug: str, item_id: int) -> bool:
-        """
-        Blocking: it runs the writer on its own event loop, so call it from a worker thread (a crate import is one), never from the loop.
-        Inputs: slug; item_id. Output: True when the board is linked to ``item_id`` now; False when it could not be (no board, no such task, the
-        Task Manager off, a board read only here, a failed write), logged with the reason. Example: port.relink("20261019-crate-carry-test", 1) -> True
-        """
         try:
             body = RelinkBody(item_id=item_id)
             asyncio.run(relink.relink(self._ctx, slug, body))

@@ -90,22 +90,6 @@ def archive_project_and_sessions(
     *,
     now: Optional[str] = None,
 ) -> dict:
-    """Archive a project and every one of its sessions that is not positively live.
-
-    Description: archives the project row, then stamps each non-archived
-      session row of the project whose ``lifecycle`` is not ``running`` through
-      ``session_store.archive_session`` (the same soft archive the asleep delete
-      uses), with the PROJECT's own ``archived_at`` as the stamp. That shared
-      stamp is how ``unarchive_project_and_sessions`` finds the rows this
-      cascade archived and no others. A running session is left alone and
-      counted: the archive does not refuse a project with a live session.
-      Runs on an already-archived project too, so stragglers get swept.
-    Inputs: conn (sqlite3.Connection); project_id (int); now (str | None).
-    Output: dict - ``changed`` (bool, the project row flipped now),
-      ``archived_at`` (str), ``sessions_archived`` (int), ``sessions_live`` (int).
-    Raises: ProjectNotFound - no row with that id.
-    Example: archive_project_and_sessions(conn, 3)['sessions_archived']  # 2
-    """
     changed = archive_project(conn, project_id, now=now)
     stamp = _project_archive_stamp(conn, project_id)
     archived = live = 0

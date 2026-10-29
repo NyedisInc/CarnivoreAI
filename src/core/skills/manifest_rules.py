@@ -1,42 +1,3 @@
-"""What a kind's MANIFEST is, beyond its name, as two more tables.
-
-**QUESTION 1: IS THE MANIFEST THE THING IT CLAIMS TO BE.** The archive
-validator checks that a folder CARRIES its manifest, which is a check
-about a path and is therefore kind-independent, exactly like every other
-rule in that file. Presence is not validity. A ``theme.json`` that is not
-JSON, or whose ``id`` disagrees with the folder it will be installed
-into, passes a presence check and then fails at
-``themes_routes._load_manifest``, which skips it with a warning. The
-result is an item that is INSTALLED AND INVISIBLE: bytes on disk, a
-ledger row, an update badge, and nothing in the picker. That is worse
-than a refusal, because a refusal names the problem at the moment
-somebody can still act on it. So a kind whose manifest has a STRUCTURE
-gets that structure checked before the copy lands.
-
-A skill's ``SKILL.md`` is prose with optional front matter and has no
-structure this layer may insist on: front matter is advisory, the
-previewer warns about unknown keys, and a skill with none is legal.
-``SHAPE_TEXT`` says exactly that, and it is a declaration rather than an
-omission - a future kind that forgets to declare anything raises instead
-of being waved through, which is the rule :mod:`kinds` already sets.
-
-**QUESTION 2: DOES THIS ITEM CARRY CODE.** The catalog counts executable
-content by the POSIX owner-execute bit and by the ``scripts/`` folder,
-and for a skill that is the whole answer: a skill's code is run by a
-shell, and a shell needs the bit.
-
-So script-bearing is kind-driven too: for a theme, a ``theme.json`` that
-DECLARES an ``effects`` entry makes the folder script-bearing whatever
-the mode bits say. It is read from the manifest rather than from a
-filename, because the manifest is what the client resolves the script
-through, and a rule that guessed ``effects.js`` would miss a theme that
-named its script something else.
-
-**BOTH ANSWERS FAIL TOWARDS THE REFUSAL.** A manifest that cannot be read
-is not a manifest that is fine: :func:`check_manifest` names the reason
-and :func:`declares_script` answers True, because "I could not tell
-whether this ships code" must never be spent as "it does not".
-"""
 
 from __future__ import annotations
 
@@ -154,17 +115,6 @@ def check_manifest(kind: str, folder: Path, *, expected_id: str) -> Optional[str
 
 
 def declares_script(kind: str, folder: Path) -> bool:
-    """Whether this folder's MANIFEST says it ships executable content.
-
-      A MANIFEST THAT CANNOT BE READ ANSWERS TRUE. Not knowing whether
-      something ships code is not evidence that it does not, and the only
-      consumer of this answer is a guard that refuses when it is True; a
-      False on a failed read would spend the refusal it could not earn.
-    Inputs: kind (str). folder (Path) - a staged or installed folder.
-    Output: bool.
-    Raises: ValueError on a kind this version does not know.
-    Example: declares_script("theme", staged)
-    """
     key = script_key(kind)
     if key is None and kind != kinds.KIND_PLUGIN:
         return False

@@ -23,21 +23,21 @@ import FlowBody from './FlowBody.svelte';
 const T = 1791743400;
 const lanes = [
   { id: 'owner', kind: 'owner', label: 'owner', parent: null, depth: 0, color: null },
-  { id: 's:b', kind: 'session', label: 'Daily Bulletin', parent: null, depth: 0, color: 0 },
-  { id: 's:f', kind: 'session', label: 'Harbor', parent: null, depth: 0, color: 1 },
-  { id: 'a:1', kind: 'subagent', label: 'worker: Fix NAS path', parent: 's:f', depth: 1, color: 2 },
+  { id: 's:b', kind: 'session', label: 'Daily Briefing', parent: null, depth: 0, color: 0 },
+  { id: 's:f', kind: 'session', label: 'Fleet', parent: null, depth: 0, color: 1 },
+  { id: 'a:1', kind: 'subagent', label: 'worker: Fix QNAP path', parent: 's:f', depth: 1, color: 2 },
 ];
-const base = { seed: { kind: 'huddle_item', id: '395', title: 'fix the nightly job path' }, window: { start: T - 100, end: T + 5000 },
+const base = { seed: { kind: 'huddle_item', id: '395', title: 'qnap nightly backup broken' }, window: { start: T - 100, end: T + 5000 },
                lanes, cursor: T + 3000, total: 7, full: true, warnings: [] };
 const items: FeedItem[] = [
-  { id: 'crosstalk:m-N8jp', kind: 'crosstalk', lane: 's:b', to: 's:f', t: T + 255.1, u: T + 255.3, label: 'briefing asks harbor', landed: true, delivered: true, thread: 't-qA4j' },
+  { id: 'crosstalk:m-N8jp', kind: 'crosstalk', lane: 's:b', to: 's:f', t: T + 255.1, u: T + 255.3, label: 'briefing asks fleet', landed: true, delivered: true, thread: 't-qA4j' },
   { id: 'work:s:f:call:tf1', kind: 'work', lane: 's:f', t: T + 270, u: T + 292.2, count: 3, tools: { huddle_add: 1, Agent: 1, crosstalk_reply: 1 }, duration_s: 22.2,
     calls: [{ tool: 'huddle_add', start: T + 270, end: T + 270.5 }] },
-  { id: 'launch:launch:tf2', kind: 'launch', lane: 's:f', to: 'a:1', t: T + 290, u: T + 290.1, label: 'Fix NAS path' },
+  { id: 'launch:launch:tf2', kind: 'launch', lane: 's:f', to: 'a:1', t: T + 290, u: T + 290.1, label: 'Fix QNAP path' },
   { id: 'a:1:say:1', kind: 'bubble', lane: 'a:1', t: T + 290.1, u: T + 290.1, role: 'task', text: 'do the thing' },
   { id: 'a:1:say:5', kind: 'bubble', lane: 'a:1', t: T + 2990, u: T + 2990, role: 'agent', text: 'done' },
   { id: 'return:return:tf2', kind: 'return', lane: 'a:1', to: 's:f', t: T + 3000, u: T + 3000, status: 'completed', duration_s: 2699.9, tool_count: 2 },
-  { id: 'task:card:2', kind: 'task', lane: 's:b', t: T + 2995, u: T + 2995, label: 'an item: in_progress -> review', change: 'moved', from_col: 'in_progress', to_col: 'review', item_id: 395 },
+  { id: 'task:card:2', kind: 'task', lane: 's:b', t: T + 2995, u: T + 2995, label: 'item 395: in_progress -> review', change: 'moved', from_col: 'in_progress', to_col: 'review', item_id: 395 },
 ];
 
 let app: ReturnType<typeof mount> | null = null;
@@ -77,14 +77,14 @@ describe('flow chat view', () => {
     expect(server.paths).toEqual(['/cplugs/flow/feed?seed=huddle_item&id=395']);
     const kinds = [...document.querySelectorAll('[data-flow-bubble], [data-flow-card]')].map((el) => el.getAttribute('data-flow-card') ?? `bubble:${el.getAttribute('data-flow-bubble')}`);
     expect(kinds).toEqual(['crosstalk', 'work', 'launch', 'bubble:task', 'bubble:agent', 'task', 'return']);
-    expect(entries()[0]).toContain('Daily Bulletin');
-    expect(entries()[0]).toContain('Harbor');
+    expect(entries()[0]).toContain('Daily Briefing');
+    expect(entries()[0]).toContain('Fleet');
     expect(entries()[0]).toContain('landed');
     const sub = [...document.querySelectorAll<HTMLElement>('.flw-entry')][3];
     expect(sub?.style.getPropertyValue('--_depth')).toBe('1');
     expect(document.querySelector('[data-flow-card="task"]')?.textContent).toContain('in_progress to review');
     expect(document.querySelector('.flw-calls')).toBeNull();
-    (document.querySelector('[data-flow-card="work"] .flw-more') as HTMLButtonElement).click();
+    (document.querySelector('[data-flow-card="work"] [data-flow-more]') as HTMLButtonElement).click();
     flushSync();
     expect(document.querySelector('.flw-calls')?.textContent).toContain('huddle_add');
   });
@@ -126,7 +126,7 @@ describe('flow chat view', () => {
       app = mount(FlowBody, { target: document.body });
       await settle();
       expect(server.paths).toEqual(['/cplugs/flow/feed?seed=huddle_item&id=412']);
-      expect(document.querySelector<HTMLInputElement>('.flw-field--id')?.value).toBe('412');
+      expect(document.querySelector<HTMLInputElement>('[data-flow-seed-id]')?.value).toBe('412');
       unmount(app);
       app = null;
       server.paths = [];

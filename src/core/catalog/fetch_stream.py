@@ -17,7 +17,6 @@ INDEX_UNAVAILABLE = "index_unavailable"
 
 TLS_VERIFY_FAILED = "tls_verify_failed"
 
-# not a guarantee
 _IDENTITY_HEADERS = {"Accept-Encoding": "identity"}
 
 _GZIP_WBITS = 16 + zlib.MAX_WBITS

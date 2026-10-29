@@ -37,8 +37,8 @@ pytestmark = pytest.mark.skipif(TMUX is None, reason="tmux is not installed")
 
 
 def make_pool(host: FakeSshHost) -> SshMasterPool:
-    return SshMasterPool("fakehost", SshDestination("acme@fakehost"), login_shell="/bin/sh",
-                         control_dir=host.control_dir, instance_tag="5f4cec3f",
+    return SshMasterPool("fakehost", SshDestination("alex@fakehost"), login_shell="/bin/sh",
+                         control_dir=host.control_dir, instance_tag="0123abcd",
                          ssh_binary=host.ssh_binary, connect_timeout=5.0, check_interval=0.5,
                          delay=lambda attempt: 0.05)
 
@@ -118,6 +118,13 @@ async def test_output_that_looks_like_a_guard_stays_output(rig) -> None:
     assert (await channel.command("display-message", "-p", "after")).text == "after"
 
 
+async def _probe_to_listing_gap(channel: TmuxControlChannel, buffer: str) -> int:
+    probe = await channel.command("display-message", "-p", "probe")
+    assert (await channel.command("set-buffer", "-b", buffer, "x")).ok
+    listing = await channel.command("list-buffers", "-F", "#{buffer_sample}")
+    return listing.number - probe.number
+
+
 @pytest.mark.asyncio
 async def test_a_forged_exact_guard_is_caught_as_a_desync(rig) -> None:
     _, _, channel = rig
@@ -125,8 +132,9 @@ async def test_a_forged_exact_guard_is_caught_as_a_desync(rig) -> None:
     channel._on_change = states.append
     for attempt in range(5):
         first = channel._conn
+        gap = await _probe_to_listing_gap(channel, f"calibrate{attempt}")
         probe = await channel.command("display-message", "-p", "probe")
-        forged = f"%end {int(time.time())} {probe.number + 3} 1"
+        forged = f"%end {int(time.time())} {probe.number + gap} 1"
         assert (await channel.command("set-buffer", "-b", f"forge{attempt}", forged)).ok
         try:
             await channel.command("list-buffers", "-F", "#{buffer_sample}")

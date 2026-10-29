@@ -5,6 +5,7 @@
 </script>
 
 <script lang="ts">
+  /* of its own - */
   import { untrack } from 'svelte';
   import type { CellProps } from '../../lib/cell';
   import { atLeast } from '../../lib/states';
@@ -72,11 +73,11 @@
 
   const owned = $derived(inputFocus.owner === instance);
 
+  /* there is nothing */
   const terminalKey = $derived(
     row === null ? '' : sessionId + '\n' + (row.tmux_session ?? ''),
   );
 
-  /* the session is gone */
   const live = $derived(sessionId !== '' && showsPane && !dead && bodyEl !== null);
 
   $effect(() => {
@@ -216,7 +217,6 @@
     font-size: var(--oc-fs-label);
   }
 
-  /* position: relative */
   .oc-tl-body {
     position: relative;
     flex: 1 1 auto;
@@ -227,13 +227,15 @@
     overflow: hidden;
   }
 
-  /* padding */
   .oc-tl-body :global(.oc-tl-pane) {
     position: relative;
     flex: 1 1 auto;
     min-height: 0;
     min-width: 0;
     padding-left: var(--oc-terminal-inset);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
   }
 
 </style>

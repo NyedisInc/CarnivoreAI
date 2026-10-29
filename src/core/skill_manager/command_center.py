@@ -154,19 +154,6 @@ def build_command_center(
     read_ledger: Callable[[], Iterable[Tuple[str, str]]],
     include_archived: bool = False,
 ) -> Dict[str, Any]:
-    """Build the whole matrix: columns, rows keyed by SKILL.md name, cells, and the generation stamp.
-
-    Description: ``read_ledger`` is called EXACTLY ONCE per build and returns (install-target path, item_id) pairs the
-      catalog ledger owns (a cell on one, matched by device and inode, is ``managed: "ledger"`` with its
-      ``managed_item_id``). Archived projects appear only with
-      ``include_archived`` and are read-only.
-    Inputs: profiles - known Claude profiles. projects - project view rows (id, name, path, root, archived_at).
-      home, codex_home - injected roots. read_ledger - the one ledger read. include_archived - archived toggle.
-    Output: {generation, include_archived, columns[], rows[{name, description, cells{column_id: [cell, ...]}}]}.
-      A cell is {state, location_id, folder, signature, files, bytes, managed, managed_item_id, shadowed_by}; a column with no skill
-      of that name holds one cell, state ``absent`` (folder exists) or ``none_yet`` (folder does not exist yet).
-    Example: build_command_center(profiles=ps, projects=rows, home=h, codex_home=c, read_ledger=lambda: [])["columns"]
-    """
     live = [p for p in projects if include_archived or not p.get("archived_at")]
     columns = _merge_columns(
         _personal_columns(profiles, home, codex_home) + [c for p in live for c in _project_columns(p, home)]

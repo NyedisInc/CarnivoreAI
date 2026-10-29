@@ -33,9 +33,6 @@ export interface UsageWindowView extends UsageMeter {
   key: string;
   label: string;
   labelText: string;
-  /** "reset in 1h 5m", or the undetermined sentence - for a caller with no
-   *  icon of its own (the ledger drawer). Never a clock date, even a day
-   *  or more out. */
   resetText: string;
   resetDuration: string;
   resetAria: string;

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
-from contextlib import closing
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Sequence, Tuple
 
@@ -11,6 +10,7 @@ import structlog
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, ValidationError, field_validator
 
 from src.core.db import DatastoreUnreadableError
+from src.core.db_reuse.kept_read import hot_read
 from src.core.federation import peer_fanout, peer_hosts
 from src.core.stats_feed.model import Classes, PeerWord, WindowSpec, fold, merge
 
@@ -120,7 +120,6 @@ def accept(raw: Any, pinned_install_id: Optional[str]) -> Optional[PeerAnswer]:
 
 
 def _failure(reason: str) -> Tuple[PeerWord, str]:
-    """The word for a peer that did not answer. Example: _failure("http_404") -> ("not_supported", "http_404")."""
     if reason == "http_404":
         return "not_supported", reason
     if reason in ("disconnected", "timeout", "unreachable"):
@@ -129,8 +128,7 @@ def _failure(reason: str) -> Tuple[PeerWord, str]:
 
 
 def _pinned(open_db: Any) -> Dict[str, peer_hosts.PeerRow]:
-    with closing(open_db()) as conn:
-        return {p.key: p for p in peer_hosts.list_peers(conn)}
+    return dict(hot_read(open_db, ("stats_feed_pinned",), lambda conn: {p.key: p for p in peer_hosts.list_peers(conn)}))
 
 
 async def pull_once(feed: "StatsFeed") -> bool:

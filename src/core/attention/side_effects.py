@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Callable, Optional, Tuple
 
 import structlog
@@ -17,8 +17,9 @@ from src.core.attention.evidence import FAMILY_CODEX, STATE_NEEDS_USER
 from src.core.attention.codex_identity import codex_bind_conversation
 from src.core.attention.codex_reader import CODEX_RECORD_ABSENT
 from src.core.attention.ledger import Transition
+from src.core.attention.manager_port import SideEffectsManager
 from src.core.attention.subagent_work import SubagentWorkStamp
-from src.core.attention.registry_read import STALE_CAUSE_CONVERSATION
+from src.core.attention.registry_record import STALE_CAUSE_CONVERSATION
 from src.core.attention.watcher import Observation, WatchTarget
 from src.core.db_models import SESSION_CLAUDE_UUID_SOURCE_REGISTRY
 from src.core.hosts.identity import instance_name, is_remote_backend
@@ -28,6 +29,7 @@ from src.core.session_activity import EVENT_PRE_TOOL_USE, EVENT_USER_PROMPT_SUBM
 from src.core.session_lineage_divergence import SESSION_START_SOURCE_REGISTRY
 from src.core.session_status import STATUS_UNKNOWN
 from src.core.toast_auto_ack import ACK_REASON_ANSWERED
+from src.models.utc_time import as_aware_utc
 from src.cplugs.sdk import transcript_events, turn_events
 
 logger = structlog.get_logger()
@@ -35,19 +37,15 @@ logger = structlog.get_logger()
 LIFECYCLE_SESSION_START: str = "SessionStart"
 
 
-def _naive_utc(at: Optional[datetime]) -> Optional[datetime]:
-    if at is None:
-        return None
-    if at.tzinfo is None:
-        return at
-    return at.astimezone(timezone.utc).replace(tzinfo=None)
+def _aware_utc(at: Optional[datetime]) -> Optional[datetime]:
+    return None if at is None else as_aware_utc(at)
 
 
 class AttentionSideEffects:
 
     def __init__(
         self,
-        manager: Any,
+        manager: SideEffectsManager,
         *,
         broadcast_toast_ack: Optional[Callable[[str, str], None]] = None,
         broadcast_rename: Optional[Callable[[str, str], None]] = None,
@@ -304,7 +302,7 @@ class AttentionSideEffects:
         self, session_id: str, event_kind: str, cutoff: Optional[datetime]
     ) -> None:
         acked = self._manager.auto_ack_toasts(
-            session_id, event_kind, _naive_utc(cutoff)
+            session_id, event_kind, _aware_utc(cutoff)
         )
         send = self._broadcast_toast_ack
         if send is None:

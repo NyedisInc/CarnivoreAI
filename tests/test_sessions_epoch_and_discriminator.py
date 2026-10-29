@@ -1,3 +1,29 @@
+"""Regressions for the imported-session identity fields (findings V2, V3
+and V8 of the second adversarial round).
+
+THE COMMON SUBJECT is the first-run import's STEP 5 - persisted sessions
+from session_metadata.json that have no live tmux row. It is not an edge
+case: the live install this import exists to protect carries exactly such
+a file, so this path runs on the user's real machine on first upgraded
+start. Both defects were therefore production behaviour, not hypotheses.
+
+  V2  The step-5 ``record_instance`` call did not pass ``session_id`` at
+      all, so every row it wrote carried a NULL discriminator whether or
+      not the entry knew one. A NULL can never cause a refusal, so the
+      instance-mismatch guard was silently unarmed for those rows.
+  V3  ``_stopped_epoch`` returned a synthesized ``0`` when an entry
+      recorded no epoch - which is the normal case, since the persisted
+      format has no epoch field. With ``origin='created'`` that row
+      entered ``owned_instances``, and the resolver's tier 2 then issued
+      a CONFIDENT NEGATIVE against the name forever.
+  V8  Nothing anywhere deletes a sessions row, so a wrong owned row is a
+      permanent negative opinion with no repair path.
+
+The V3 assertions are deliberately made at TWO layers: the mapping that
+chooses the value, and ``owned_instances``, which is the layer that
+actually decides whether a row can become an ownership opinion. Asserting
+only the mapping would leave the guarantee resting on a caller.
+"""
 
 from __future__ import annotations
 
@@ -34,6 +60,11 @@ LATER_EPOCH = 1787000000
 
 @pytest.fixture()
 def migrated_conn(tmp_path: Path):
+    """A connection to a fresh state dir migrated to the current schema.
+
+    Inputs: tmp_path (Path) - pytest's per-test directory.
+    Output: sqlite3.Connection - closed on teardown.
+    """
     ensure_db_migrated(tmp_path, config_version=4, app_version="0.0.0-test")
     conn = connect(db_path_for(tmp_path))
     try:
@@ -45,6 +76,11 @@ def migrated_conn(tmp_path: Path):
 
 
 def test_stopped_epoch_is_none_when_the_entry_records_none() -> None:
+    """The mapping layer: absent means None, never a manufactured 0.
+
+    The persisted session_metadata.json on the live install has no epoch
+    field at all, so this IS the production path.
+    """
     assert _stopped_epoch({}) is None
     assert _stopped_epoch({"session_id": "abc"}) is None
     assert _stopped_epoch({"tmux_created_epoch": None}) is None
@@ -52,12 +88,19 @@ def test_stopped_epoch_is_none_when_the_entry_records_none() -> None:
 
 
 def test_stopped_epoch_still_uses_a_recorded_epoch() -> None:
+    """A real recorded epoch must still be honoured, in both key spellings."""
     assert _stopped_epoch({"tmux_created_epoch": REAL_EPOCH}) == REAL_EPOCH
     assert _stopped_epoch({"created_at_epoch": REAL_EPOCH}) == REAL_EPOCH
     assert _stopped_epoch({"tmux_created_epoch": "1755000000"}) == REAL_EPOCH
 
 
 def test_null_epoch_row_never_becomes_an_ownership_opinion(migrated_conn) -> None:
+    """THE LAYER THAT ENFORCES IT. A NULL-epoch row is not an opinion.
+
+    Written with ``origin='created'`` - the origin that DOES qualify for
+    ownership - so this proves the exclusion comes from the NULL epoch
+    and not from the origin filter.
+    """
     with migrated_conn:
         result = record_instance(
             migrated_conn,
@@ -84,6 +127,12 @@ def test_null_epoch_row_never_becomes_an_ownership_opinion(migrated_conn) -> Non
 def test_null_epoch_row_does_not_disown_a_later_real_session(
     migrated_conn,
 ) -> None:
+    """THE OUTCOME THE USER WOULD HAVE SEEN. No confident negative.
+
+    Under the old synthesized 0, this row landed in owned_instances as
+    ``('cloude_work', 0)``, tier 2 fired on the name, and the user's real
+    later session badged owned=False permanently.
+    """
     with migrated_conn:
         record_instance(
             migrated_conn,
@@ -105,6 +154,11 @@ def test_null_epoch_row_does_not_disown_a_later_real_session(
 
 
 def test_a_real_stored_epoch_still_produces_the_negative(migrated_conn) -> None:
+    """Tier 2 must keep working where there IS evidence.
+
+    The fix must narrow the negative to rows that earned it, not remove
+    it - otherwise V3's cure reopens the wildcard hole tier 2 closed.
+    """
     with migrated_conn:
         record_instance(
             migrated_conn,
@@ -123,6 +177,7 @@ def test_a_real_stored_epoch_still_produces_the_negative(migrated_conn) -> None:
 
 
 def test_get_instance_with_a_none_epoch_matches_nothing(migrated_conn) -> None:
+    """An unknown epoch identifies no instance, so it must never MERGE."""
     with migrated_conn:
         record_instance(
             migrated_conn,
@@ -137,6 +192,12 @@ def test_get_instance_with_a_none_epoch_matches_nothing(migrated_conn) -> None:
 
 
 def test_two_null_epoch_rows_do_not_collide(migrated_conn) -> None:
+    """The documented cost of the fix, asserted so it is not a surprise.
+
+    The partial unique index excludes NULL epochs, so two entries for the
+    same name with no epoch produce two rows. Duplicate history is the
+    accepted trade against a fabricated identity.
+    """
     with migrated_conn:
         first = record_instance(
             migrated_conn, socket=SOCKET, name="cloude_work", epoch=None,
@@ -154,6 +215,12 @@ def test_two_null_epoch_rows_do_not_collide(migrated_conn) -> None:
 
 
 def test_persisted_session_id_reads_only_the_tmux_namespace() -> None:
+    """The app's own session id must NEVER be written as tmux's.
+
+    session_metadata.json's ``session_id`` is the APP's identifier and is
+    mapped to ``legacy_session_id``. Writing it into tmux_session_id
+    would manufacture a discriminator mismatch against every real row.
+    """
     assert _persisted_session_id({"tmux_session_id": "$3"}) == "$3"
     assert _persisted_session_id({"session_id": "abc"}) is None
     assert _persisted_session_id({"id": "abc"}) is None
@@ -162,6 +229,7 @@ def test_persisted_session_id_reads_only_the_tmux_namespace() -> None:
 
 
 def test_step_five_records_a_known_discriminator(migrated_conn) -> None:
+    """V2's fix: where the entry knows a tmux id, the row must carry it."""
     listing = TmuxListing.answered([], reason=None, detail="no live sessions")
     with migrated_conn:
         migrated_conn.execute("BEGIN IMMEDIATE")
@@ -194,6 +262,12 @@ def test_step_five_records_a_known_discriminator(migrated_conn) -> None:
 def test_step_five_null_discriminator_is_measured_not_forgotten(
     migrated_conn,
 ) -> None:
+    """The honest NULL: the live install records no tmux id, so NULL it is.
+
+    This asserts the shape of the user's REAL session_metadata.json - a
+    record with an app ``id`` and no tmux id and no epoch - and pins both
+    honest NULLs together.
+    """
     listing = TmuxListing.answered([], reason=None, detail="no live sessions")
     with migrated_conn:
         migrated_conn.execute("BEGIN IMMEDIATE")
@@ -223,6 +297,12 @@ def test_step_five_null_discriminator_is_measured_not_forgotten(
 
 
 def test_step_five_passes_session_id_structurally() -> None:
+    """AST proof at the CALL SITE, which is the layer that forgets.
+
+    A behavioural test only catches the entry shapes someone thought to
+    write. The defect was a missing keyword argument, so the proof is
+    that the keyword is present on that specific call.
+    """
     source = (ROOT / "src" / "core" / "session_import.py").read_text()
     tree = ast.parse(source)
 
@@ -248,6 +328,34 @@ def test_step_five_passes_session_id_structurally() -> None:
 
 
 def test_no_source_file_deletes_a_sessions_row() -> None:
+    """Pins the KNOWN GAP so the docstring describing it cannot go stale.
+
+    Verified by parsing, not by grep, for two independent reasons. The
+    shell's grep here behaves like ``-I`` and exits 1 with no output on
+    files it deems binary, so an empty grep is not evidence of absence.
+    And a text scan cannot tell EXECUTABLE SQL from PROSE ABOUT SQL - the
+    session_store docstring that documents this very gap contains the
+    phrase, and a naive scan reports the documentation as the defect.
+
+    So the scan walks the AST and inspects only string literals that are
+    NOT docstrings, which is where real SQL lives.
+
+    This test is expected to FAIL THE DAY A REAPER IS BUILT. That is the
+    point - whoever builds it must come here, read the intended design
+    recorded in session_store's module docstring (reap only against a
+    listing with ok=True), and update both together.
+
+    ONE EXEMPTION, AND IT IS DELIBERATELY NARROW. Schema v9 merges the
+    row pairs the tmux-rename defect produced, and a merge ends by
+    removing the discarded corpse. That is a ONE-SHOT, VERSIONED,
+    inside-a-transaction repair with no runtime path to it - a
+    completely different risk from a live reaper deciding a session is
+    gone. The exemption is a single FILE, checked further by
+    ``test_the_only_delete_lives_in_the_v9_merge`` below, which pins it
+    to a single FUNCTION. Widening it to a second file or a second
+    function fails one of the two tests, which is the property that
+    stops "one migration needed it" becoming a general licence.
+    """
     migration_steps = "core/db_steps.py"
     non_reaper_deleters = {
         "core/companion_shell/close.py",
@@ -300,6 +408,7 @@ def test_no_source_file_deletes_a_sessions_row() -> None:
 
 
 def test_session_store_documents_the_missing_repair_path() -> None:
+    """The gap must be NAMED in the module a maintainer actually opens."""
     import src.core.session_store as session_store
 
     doc = session_store.__doc__ or ""
@@ -313,6 +422,14 @@ def test_session_store_documents_the_missing_repair_path() -> None:
 
 
 def test_the_only_delete_lives_in_the_v9_merge() -> None:
+    """The second half of the exemption above: pin it to ONE function.
+
+    ``test_no_source_file_deletes_a_sessions_row`` exempts one FILE.
+    Left there, anything later added to that file could delete sessions
+    rows unnoticed. This walks the same AST and asserts every sessions
+    DELETE in it sits inside ``_v9_merge_rename_splits``, so the
+    exemption cannot spread by accident.
+    """
     path = ROOT / "src" / "core" / "db_steps.py"
     tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
 

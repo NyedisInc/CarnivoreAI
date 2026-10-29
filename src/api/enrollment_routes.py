@@ -18,7 +18,7 @@ from src.api.auth import limiter
 from src.config import settings
 from src.core import setup_state
 from src.core.computers import membership
-from src.core.message_host_identity import computer_display_name
+from src.core.hosts.machine_identity import computer_display_name
 from src.core.owner_identity.otpauth import ISSUER, build_otpauth_uri, sanitize_account
 
 logger = structlog.get_logger()
@@ -128,6 +128,9 @@ async def get_enrollment(request: Request, response: Response) -> dict[str, Any]
 @router.get("/auth/qr")
 async def qr_moved() -> None:
     """Tombstone for the old QR route: always 403 ``qr_moved``, serves nothing.
+
+    A stale login tab treats 403 as "paired, show the form"; a 404 would put a
+    false setup banner on it. Never reads the secret, sentinel or hatch.
     """
     raise HTTPException(
         status_code=403,

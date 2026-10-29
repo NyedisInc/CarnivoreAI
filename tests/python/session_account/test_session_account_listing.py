@@ -41,7 +41,7 @@ async def _settle():
 
 
 def _state():
-    return SimpleNamespace(session_manager=SimpleNamespace(_tmux_socket_name=lambda: "cloude"))
+    return SimpleNamespace(session_manager=SimpleNamespace(tmux_socket_name=lambda: "cloude"))
 
 
 @pytest.mark.asyncio

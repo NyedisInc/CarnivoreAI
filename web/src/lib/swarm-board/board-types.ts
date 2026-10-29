@@ -44,7 +44,6 @@ export interface CardView {
   phone_sent_at: number | null;
   summary: string;
   queued: boolean;
-  /*  hidden  */
   archived_at: number | null;
   auto_promote: boolean;
   owner_note: string;

@@ -96,3 +96,34 @@ test('a change to a session key goes nowhere near the Layout route', async () =>
   await vi.advanceTimersByTimeAsync(700);
   expect(put).not.toHaveBeenCalled();
 });
+
+test('a failed write is not retried on a timer, only on the next change (u163-01)', async () => {
+  put.mockRejectedValue(new ApiError('down', 503, null, { detail: { code: 'unavailable', detail: 'down' } }));
+  await change();
+  expect(put).toHaveBeenCalledTimes(1);
+  expect(hooks.announce).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(10_000);
+  expect(put).toHaveBeenCalledTimes(1);
+  setGroups(terminalLayout, { [PRIMARY_SLOT]: { tabs: [PRIMARY_SLOT, 'terminal:row:3'] } });
+  await vi.advanceTimersByTimeAsync(700);
+  expect(put).toHaveBeenCalledTimes(2);
+});
+
+test('leaving sends a change that an in-flight write deferred, on the revision that write returned (u163-02)', async () => {
+  let release: (value: unknown) => void = () => undefined;
+  put.mockImplementationOnce(() => new Promise((resolve) => (release = resolve)));
+  put.mockResolvedValueOnce(landed(5));
+  await change();
+  expect(put).toHaveBeenCalledTimes(1);
+  setGroups(terminalLayout, { [PRIMARY_SLOT]: { tabs: [PRIMARY_SLOT, 'terminal:row:3'] } });
+  const { flushShapeFinal, dropPending } = await import('./save-target.svelte');
+  const done = flushShapeFinal();
+  dropPending();
+  clearLayoutMode();
+  release(landed(4));
+  await done;
+  expect(put).toHaveBeenCalledTimes(2);
+  const [, shape, revision] = put.mock.calls[1]!;
+  expect(revision).toBe(4);
+  expect(shape.groups[PRIMARY_SLOT].tabs).toEqual(['terminal:row:1', 'terminal:row:3']);
+});

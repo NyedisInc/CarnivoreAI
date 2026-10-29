@@ -70,6 +70,7 @@ export function bufferIds(): string[] {
     return Object.keys(buffers);
 }
 
+/* there is nothing */
 export function moveBuffer(from: string, to: string): boolean {
     const b = buffers[from];
     if (!b || from === to || buffers[to]) return false;

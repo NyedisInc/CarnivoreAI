@@ -18,7 +18,7 @@ from src.cplugs.sdk.computer import local_computer
 async def relink(ctx: CplugContext, slug: str, body: RelinkBody) -> Dict[str, Any]:
     info = await ports.get().item_info(body.item_id)
     if info is None:
-        raise TaskNotFound(f"there is no huddle item {body.item_id} on this computer")
+        raise TaskNotFound(f"there is no task manager item {body.item_id} on this computer")
     now, here = revisions.utcnow(), local_computer()
 
     def build(current: Optional[Sidecar]):

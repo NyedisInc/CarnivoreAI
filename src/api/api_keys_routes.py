@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from src.api.auth import require_auth
 from src.core.api_keys.store import NAME_MAX, ApiKeyError, ApiKeyStoreError, get_store
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -42,7 +43,7 @@ async def create_api_key(body: CreateKeyBody) -> dict:
     try:
         row, secret = await asyncio.to_thread(get_store().create, body.name)
     except ApiKeyError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_request", exc, step="create_api_key") from exc
     except (sqlite3.Error, ApiKeyStoreError) as exc:
         raise _store_failed(exc) from exc
     return {"key": row, "secret": secret}

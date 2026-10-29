@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+/* and the three */
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { mount, unmount, flushSync, tick } from 'svelte';
 import TerminalFoot from './TerminalFoot.svelte';
@@ -35,7 +36,7 @@ vi.mock('../../../lib/background-work/background-work', async () => {
     ...actual,
     fetchBackgroundWork: vi.fn(async () => ({
       state: 'ok', family: 'claude', detail: '', as_of: null, owners: 'ok',
-      processes: [{ agent_id: 'a1', pid: 4768, start: 'Mon Sep 28 08:58:46 2026', task_id: 'bt0wu171w',
+      processes: [{ agent_id: 'a1', pid: 89199, start: 'Mon Sep 28 08:58:46 2026', task_id: 'bt0wu171w',
         started_at: '2026-09-28T12:58:46Z', children: 2, summary: 'ssh host echo ALIVE | head -12' }],
     })),
     terminateProcess: (...args: unknown[]) => terminate(...args),
@@ -191,6 +192,7 @@ test('a segment grows the bar into the control center on its own section; a seco
   }
 });
 
+// THE COLLAPSED BAR'S SHOWN ITEMS (issue #1053, Joe (ccsliinc), 2026-09-28):
 type G = { PreferenceBridge?: unknown };
 
 function installFootBarItems(stored: Record<string, boolean>): void {

@@ -8,6 +8,7 @@ from typing import Callable, Dict, Iterable, Optional, Tuple
 
 import structlog
 
+from src.core import libproc_snapshot
 from src.core.conversation_writers import same_process_start
 
 logger = structlog.get_logger()
@@ -20,15 +21,12 @@ Pair = Tuple[int, str]
 
 
 def read_lstarts(pids: Iterable[int]) -> Optional[Dict[int, str]]:
-    """``ps`` lstart for each pid still running, in one call; None when ps could not answer.
-
-    Inputs: pids (iterable of int). Output: dict pid -> lstart text (pids not
-      running are simply absent) | None on a failed or timed-out call.
-    Example: read_lstarts([os.getpid()]) -> {4242: 'Thu Oct 15 11:52:02 2026'}
-    """
     wanted = sorted({int(pid) for pid in pids})
     if not wanted:
         return {}
+    started = libproc_snapshot.start_text(wanted)
+    if started is not None:
+        return started
     try:
         done = subprocess.run(
             [PS_PATH, "-o", "pid=,lstart=", "-p", ",".join(str(pid) for pid in wanted)],

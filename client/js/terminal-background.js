@@ -21,15 +21,14 @@
     var ACTIVE_SESSION_EVENT = 'cloude:terminal-background-session';
 
     var overrides = {};
+    /* at the same time */
     var uploadedUrls = {};
     var uploadedFetching = {};
-    /* the bottom bar */
     var activeSession = null;
     var surfaces = [];
     var overridesLoaded = false;
 
 
-    /* could not */
     function effectiveDim(requested, xtermTheme) {
         var floor = minimumDim(xtermTheme);
         if (floor === null) return null;
@@ -103,6 +102,7 @@
         };
     }
 
+    // ---- painting -----------------------------------------------------
 
 
     function registerSurface(client) {
@@ -139,7 +139,6 @@
         return false;
     }
 
-    /* padding */
     function hostOf(client) {
         try {
             var el = (client && typeof client._containerEl === 'function')
@@ -221,8 +220,6 @@
             }
         }
 
-        // padding
-        // padding
         var scrim = null;
         if (paintUrl) {
             var parse = window.TerminalBackgroundOpacity
@@ -322,7 +319,7 @@
         }
         return api.uploadSessionBackgroundImage(name, file).then(function (entry) {
             overrides[name] = entry;
-            releaseUploadedImage();
+            releaseUploadedImage(name);
             repaint();
             return entry;
         });
@@ -337,7 +334,7 @@
         return api.deleteSessionBackgroundImage(name).then(function () {
             var entry = overrides[name];
             if (entry) delete entry.image;
-            releaseUploadedImage();
+            releaseUploadedImage(name);
             repaint();
         });
     }
@@ -347,7 +344,6 @@
         var next = name || null;
         var moved = next !== activeSession;
         activeSession = next;
-        // already exists
         if (moved) {
             try {
                 window.dispatchEvent(new CustomEvent(ACTIVE_SESSION_EVENT, {

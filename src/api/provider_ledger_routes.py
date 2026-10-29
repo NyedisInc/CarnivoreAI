@@ -1,32 +1,3 @@
-"""The usage ledger: one read of the poller, and the writes to config.json.
-
-THE READ NEVER FETCHES. ``GET /provider-ledger`` answers from the
-background poller's memory and opens no connection at all. A route that
-polled on demand would let one browser refresh spend the user's whole
-rate-limit budget, and the Claude usage endpoint admits only about
-thirty requests an hour per identity. An install whose loop has not
-started answers an EMPTY ledger with ``alive`` false, which is the
-honest reading; it does not build a poller, because starting a network
-loop from a GET is the one thing a read must never do.
-
-EVERY WRITE DOES TWO THINGS AFTERWARDS. It clears
-``settings._auth_config_cache``, because that cache holds a parsed
-document carrying the OLD account list and every other reader would
-serve the pre-write value until the process restarted; the same line
-every config-writing route ends on.
-And it asks the poller to re-read that account on its next tick, so an
-added or edited pointer produces a reading in seconds rather than after
-a three minute floor nobody can see.
-
-AND FOUR ROUTES SWITCH WHICH ACCOUNT NEW SESSIONS USE (issue #151), and
-they handle no credential either. The active account is a POINTER per
-provider in config.json (``src/core/account_switch/``); a switch writes an
-account id, links the profile's transcripts to the shared ones when they
-are absent, and nothing else. A running session keeps its account until
-it is restarted, which the user does through the existing restart path.
-
-Mounted under ``/api/v1`` from ``src/api/routes.py``.
-"""
 
 from __future__ import annotations
 
@@ -77,17 +48,6 @@ def _config_path() -> Path:
 
 
 def _unreadable(exc: Exception) -> HTTPException:
-    """The 500 this module answers when config.json cannot be used.
-
-    Description: REPORTED, NEVER DEFAULTED. Answering an empty account
-      list for a file that could not be read would be indistinguishable
-      from an install that has configured nothing, and a settings screen
-      would then offer to "add your first account" over a file it is
-      about to overwrite.
-    Inputs: exc (Exception) - the FileNotFoundError or ValueError raised.
-    Output: HTTPException - 500, carrying a code and a detail.
-    Example: raise _unreadable(exc)
-    """
     return HTTPException(
         status_code=500,
         detail={
@@ -225,7 +185,6 @@ async def put_provider_account(
     ):
         stated["short_name"] = stored.short_name
 
-    # could not
     if stated.get("managed"):
         try:
             profile_dir = await asyncio.to_thread(
@@ -452,15 +411,6 @@ async def finish_provider_account_setup(account_id: str) -> ProviderSetupResult:
 
 
 def _switch_state_now(path: Path) -> AccountSwitchState:
-    """Read the switch block and resolve each provider's active account.
-
-    Description: BLOCKING, run through ``asyncio.to_thread``. The
-      default-login rung reads ``.claude.json``'s two uuids and nothing
-      else; no credential store is opened.
-    Inputs: path (Path) - config.json.
-    Output: AccountSwitchState.
-    Raises: FileNotFoundError, ValueError - config.json unusable.
-    """
     switch = store.read_switch(path)
     accounts = poller_scan.with_auto_default(accounts_store.list_accounts(path))
     rows = poller.snapshot().accounts
@@ -498,14 +448,6 @@ async def _switch_state() -> AccountSwitchState:
 
 
 async def _running_elsewhere(request: Request) -> List[RunningElsewhere]:
-    """Running agent sessions still on an account other than the active one.
-
-    Description: FAIL-SOFT to an empty list: this is advice beside a switch
-      that already landed, and a listing that could not be taken must not
-      turn the switch into an error.
-    Inputs: request (Request) - carries the session manager.
-    Output: list[RunningElsewhere].
-    """
     manager = getattr(request.app.state, "session_manager", None)
     if manager is None:
         return []
@@ -521,7 +463,7 @@ async def _running_elsewhere(request: Request) -> List[RunningElsewhere]:
         }
         infos = await manager.list_session_infos()
         rows = await pane_account.running_elsewhere(
-            infos, socket=manager._tmux_socket_name(), accounts=accounts, active=active
+            infos, socket=manager.tmux_socket_name(), accounts=accounts, active=active
         )
     except (FileNotFoundError, ValueError, OSError, RuntimeError) as exc:
         logger.warning("provider_account_running_unavailable", error=type(exc).__name__)

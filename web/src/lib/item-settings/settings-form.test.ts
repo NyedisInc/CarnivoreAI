@@ -78,7 +78,7 @@ describe('the form draws every kind from the schema', () => {
         const { root } = form({ rows: 12 });
         expect(row(root, 'rows').dataset.chosen).toBe('1');
         expect(row(root, 'rows').querySelector<HTMLInputElement>('input')!.value).toBe('12');
-        expect(row(root, 'rows').querySelector('.sf__reset')?.textContent?.trim()).toBe('use default');
+        expect(row(root, 'rows').querySelector('[data-sf-reset]')?.textContent?.trim()).toBe('use default');
         expect(row(root, 'caption').dataset.chosen).toBe('0');
         expect(row(root, 'caption').querySelector('.sf__default')?.textContent).toBe('default');
     });
@@ -95,7 +95,7 @@ describe('the form draws every kind from the schema', () => {
         const text = row(root, 'caption').querySelector<HTMLInputElement>('input')!;
         text.value = 'mine';
         text.dispatchEvent(new Event('change', { bubbles: true }));
-        row(root, 'rows').querySelector<HTMLButtonElement>('.sf__reset')!.click();
+        row(root, 'rows').querySelector<HTMLButtonElement>('[data-sf-reset]')!.click();
         expect(changes).toEqual([['showSystem', false], ['rows', 30], ['order', 'oldest'], ['caption', 'mine'], ['rows', null]]);
     });
 

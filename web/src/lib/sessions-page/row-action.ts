@@ -1,3 +1,4 @@
+/* there is nothing */
 import type { HistorySession } from '../projects-shared/history-api';
 import { primaryAction } from '../projects-shared/ledger-model';
 

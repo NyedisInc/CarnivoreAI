@@ -32,7 +32,7 @@ def test_auth_and_revisioned_chart_round_trip(tmp_path):
     assert anonymous.get("/api/v1/stats/charts").status_code == 401
     client = _client(tmp_path)
     chart = {
-        "id": "e8213214-41aa-4fea-8c43-eb5ecb1234d9",
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "title": "Usage", "enabled": True,
         "series": [{"metric": "total_tokens"}],
         "filters": {}, "range": {"mode": "global"}, "display": {"type": "line"},
@@ -129,7 +129,7 @@ def test_chart_view_settings_round_trip_default_and_validation(tmp_path):
     assert parsed.range.zoom is None and parsed.display.hidden_series == []
 
     client = _client(tmp_path)
-    chart = {"id": "9eff1b51-c815-4e4b-87cc-fecc342b2ed3", **old,
+    chart = {"id": "550e8400-e29b-41d4-a716-446655440001", **old,
              "resolution": "hour", "filters": {"provider": "claude"},
              "range": {"mode": "global", "preset": "7d",
                        "zoom": {"from": "2026-09-20T00:00:00Z", "to": "2026-09-21T00:00:00Z"}},
@@ -185,7 +185,7 @@ def test_viz_options_validation_and_legacy_derive(tmp_path):
         raise AssertionError(f"accepted {bad}")
 
     client = _client(tmp_path)
-    cid = "aceeea12-fd87-4093-821f-e66dc998d10e"
+    cid = "550e8400-e29b-41d4-a716-446655440002"
     assert client.post("/api/v1/stats/charts", json={**base, "id": cid, "viz": "kpi"}).status_code == 201
     assert client.get(f"/api/v1/stats/charts/{cid}").json()["viz"] == "kpi"
     assert client.post("/api/v1/stats/charts", json={**base, "viz": "kpi", "options": {"x": 1}}).status_code == 422
@@ -195,8 +195,8 @@ def test_viz_options_validation_and_legacy_derive(tmp_path):
     legacy = {k: v for k, v in _json.loads(_json.dumps(client.get(f"/api/v1/stats/charts/{cid}").json())).items()
               if k not in ("id", "revision", "created_at", "updated_at", "viz", "options")}
     with store.connect() as db:
-        db.execute("INSERT INTO stats_charts VALUES (?,?,?,?,?)", ("6fdf75c1-27f6-4636-8afb-26082fa82bb5", 1, _json.dumps(legacy), 1, 1))
-    got = client.get("/api/v1/stats/charts/6fdf75c1-27f6-4636-8afb-26082fa82bb5").json()
+        db.execute("INSERT INTO stats_charts VALUES (?,?,?,?,?)", ("550e8400-e29b-41d4-a716-446655440003", 1, _json.dumps(legacy), 1, 1))
+    got = client.get("/api/v1/stats/charts/550e8400-e29b-41d4-a716-446655440003").json()
     assert got["viz"] == "timeline" and got["options"] == {}
 
 

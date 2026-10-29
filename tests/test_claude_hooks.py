@@ -294,3 +294,18 @@ def test_the_opt_out_setting_is_gone_from_the_config_model():
     from src.config.auth import AuthConfig
 
     assert "notifications" not in AuthConfig.model_fields
+
+
+def test_a_symlinked_settings_file_keeps_its_link_mode_and_unicode(settings_file, tmp_path):
+    real = tmp_path / "dotfiles" / "settings.json"
+    real.parent.mkdir()
+    _write(real, {"note": "café", "hooks": {"Stop": [_managed_entry()]}})
+    real.chmod(0o600)
+    settings_file.symlink_to(real)
+
+    assert strip_managed_hooks(settings_file) is True
+
+    assert settings_file.is_symlink()
+    assert (real.stat().st_mode & 0o777) == 0o600
+    assert "café" in real.read_text(encoding="utf-8")
+    assert CLOUDECODE_HOOKS_MARKER not in real.read_text(encoding="utf-8")

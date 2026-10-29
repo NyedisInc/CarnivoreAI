@@ -99,7 +99,7 @@ def test_identity_is_refused_and_age_above_quick_needs_it(tmp_path: Path, monkey
 
 def test_answers_are_scrubbed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     api = ApiWorld(tmp_path, monkeypatch)
-    token = "ghp_" + "Ab3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE3fG5"  # synthetic test value, never issued
+    token = "ghp_" + "Ab3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE3fG5"
 
     async def leaky(ctx: Any) -> dict:
         return {"note": f"the folder is named {token}"}

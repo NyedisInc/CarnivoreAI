@@ -52,8 +52,10 @@ function blankSequence(targets: Targets): AutomationTarget | null {
 
 export const SEQUENCE_MIN_STEPS = 2;
 export const SEQUENCE_MAX_STEPS = 4;
-const SEQUENCE_ACTION_KINDS = ['command', 'recipe'];
-const SEQUENCE_LAST_KINDS = [...SEQUENCE_ACTION_KINDS, 'session_message', 'blueprint_launch'];
+export const SEQUENCE_STEP_KINDS: readonly string[] = ['command', 'recipe'];
+export const SEQUENCE_LAST_KINDS: readonly string[] = [...SEQUENCE_STEP_KINDS, 'session_message', 'blueprint_launch'];
+export const SEQUENCE_OMITTED_BY_DESIGN: readonly string[] = ['agent'];
+const SEQUENCE_ACTION_KINDS = SEQUENCE_STEP_KINDS;
 
 export const TARGET_FORMS: Record<string, TargetForm> = {
   blueprint_launch: { component: TargetBlueprint, blank: blankBlueprint },

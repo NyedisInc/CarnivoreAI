@@ -1,4 +1,3 @@
-/* conversation id */
 import type { PackOp } from './op-text';
 
 interface Row {

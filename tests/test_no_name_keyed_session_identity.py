@@ -142,7 +142,7 @@ EXEMPTIONS = {
     ),
     (
         "src/core/session_manager.py",
-        "_claude_uuid_for_tmux_name",
+        "claude_uuid_for_tmux_name",
     ): (
         "KNOWN BUG, unfixed by this guard. Resolves the Claude conversation "
         "uuid to push an out-of-band rename into by newest-row-for-name; a "
@@ -167,7 +167,7 @@ EXEMPTIONS = {
         "src/core/automations/run_by.py",
         "session_name",
     ): (
-        "ALLOWED, display only (9a5ab921f, #1701). Reads ONLY the "
+        "ALLOWED, display only (cf8721356, item 542, #1701). Reads ONLY the "
         "title columns, once, when an agent presses run now, to word 'run "
         "now by <session>' in the run's notes. It never returns an id and "
         "decides no row and writes no session state; the pressing agent is "

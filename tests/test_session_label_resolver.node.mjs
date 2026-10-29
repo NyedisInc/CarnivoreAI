@@ -11,6 +11,12 @@ const ROOT = path.join(__dirname, '..');
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks it failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -23,6 +29,10 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Load session-label.js in a bare vm sandbox.
+ * @returns {object} window.SessionLabel from the sandbox.
+ */
 function loadResolver() {
     const fakeWindow = {};
     fakeWindow.window = fakeWindow;
@@ -40,8 +50,8 @@ const SL = loadResolver();
 
 test('a label wins over the tmux name', () => {
     assert.equal(
-        SL.resolve({ name: 'cloude_Media', label: 'Image Tool' }),
-        'Image Tool'
+        SL.resolve({ name: 'cloude_Media', label: 'Media Compression' }),
+        'Media Compression'
     );
 });
 
@@ -77,7 +87,7 @@ test('a tmux name that is ONLY the prefix resolves to null, not to ""', () => {
 
 test('a label keeps every character a human typed', () => {
     for (const label of [
-        'Image Tool',
+        'Media Compression',
         'client: acme',
         'v2.1.3 rollout',
         'say "hello"',
@@ -97,8 +107,8 @@ test('a label is NOT trimmed away, only its surrounding whitespace', () => {
 
 test('the toast field names resolve through the same one rule', () => {
     assert.equal(
-        SL.resolveToast({ session_label: 'Image Tool', session_name: 'cloude_Media' }),
-        'Image Tool'
+        SL.resolveToast({ session_label: 'Media Compression', session_name: 'cloude_Media' }),
+        'Media Compression'
     );
     assert.equal(
         SL.resolveToast({ session_label: null, session_name: 'cloude_Media' }),
@@ -114,9 +124,9 @@ test('stripPrefix:false changes the SPELLING of the fallback, not the rule', () 
         'cloude_Media'
     );
     assert.equal(
-        SL.resolve({ name: 'cloude_Media', label: 'Image Tool' },
+        SL.resolve({ name: 'cloude_Media', label: 'Media Compression' },
                    { stripPrefix: false }),
-        'Image Tool'
+        'Media Compression'
     );
     assert.equal(SL.resolve({}, { stripPrefix: false }), null);
     assert.equal(SL.resolve({ name: '  ' }, { stripPrefix: false }), null);

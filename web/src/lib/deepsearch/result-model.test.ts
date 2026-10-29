@@ -14,19 +14,19 @@ const groupOf = (extra: Record<string, unknown> = {}, hits: Array<Record<string,
 test('the name ladder: session name, else the first prompt on one line, else the folder, never a bare id', () => {
   expect(conversationName(groupOf({ session: 'nightly fix', first_prompt: 'p', working_dir: '/a/b' }), null, tr)).toBe('nightly fix');
   expect(conversationName(groupOf({ session: 'nightly fix' }), 'live name', tr)).toBe('live name');
-  expect(conversationName(groupOf({ first_prompt: 'the indexer  is\npegging the cpu', working_dir: '/a/app' }), null, tr)).toBe('the indexer is pegging the cpu');
+  expect(conversationName(groupOf({ first_prompt: 'plex  is\npegging the cpu', working_dir: '/a/media-stack' }), null, tr)).toBe('plex is pegging the cpu');
   const long = 'word '.repeat(40);
   const cut = conversationName(groupOf({ first_prompt: long }), null, tr);
   expect(cut.endsWith('...')).toBe(true);
   expect(cut.length).toBeLessThanOrEqual(83);
-  expect(conversationName(groupOf({ working_dir: '/Users/x/app-stack/' }), null, tr)).toBe('app-stack');
-  expect(conversationName(groupOf({ session: 'b3a4eaff-6f2a-4a8b-800d-13f65b4844c3', working_dir: '/a/homelab' }), null, tr)).toBe('homelab');
+  expect(conversationName(groupOf({ working_dir: '/Users/x/media-stack/' }), null, tr)).toBe('media-stack');
+  expect(conversationName(groupOf({ session: '3f2a9c1e-1111-2222-3333-444455556666', working_dir: '/a/homelab' }), null, tr)).toBe('homelab');
   expect(conversationName(groupOf({ session: 'deadbeefdeadbeef' }), null, tr)).toBe('untitled');
 });
 
 test('a state per conversation: computer, backup, live, asleep, none', () => {
   const live = { activity_status: 'working' };
-  expect(conversationState(groupOf({ host_key: 'peer-hostb', session_uuid: 's' }), live)).toBe('computer');
+  expect(conversationState(groupOf({ host_key: 'peer-mini', session_uuid: 's' }), live)).toBe('computer');
   expect(conversationState(groupOf({ host_key: 'local' }), undefined)).toBe('none');
   expect(conversationState(groupOf({ session_uuid: 's' }, [hitOf({ from_backup: true })]), live)).toBe('backup');
   expect(conversationState(groupOf({ session_uuid: 's' }), live)).toBe('live');
@@ -67,7 +67,7 @@ test('hits shown, hits hidden, and when the server must be asked', () => {
   expect(hiddenCount(g, true)).toBe(4);
   expect(needsFetch(g)).toBe(true);
   expect(needsFetch(groupOf({ matches: 3 }))).toBe(false);
-  const remote = groupOf({ matches: 9, host_key: 'peer-hostb' });
+  const remote = groupOf({ matches: 9, host_key: 'peer-mini' });
   expect(needsFetch(remote)).toBe(false);
   expect(hiddenCount(remote, false)).toBe(1);
   expect(hiddenCount(remote, true)).toBe(0);

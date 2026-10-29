@@ -14,8 +14,8 @@ from src.core.agent_wrappers import AgentWrapper
 def _live_wrappers_as_dicts():
     return [
         {"id": "claude-skip-permissions", "label": "claude", "family": "claude"},
-        {"id": "keyc", "label": "keyc (keychain-backed)", "family": "claude"},
-        {"id": "clxor", "label": "clxor (openrouter, keychain-backed)", "family": "claude"},
+        {"id": "cld", "label": "cld (keychain-backed)", "family": "claude"},
+        {"id": "cldor", "label": "cldor (openrouter, keychain-backed)", "family": "claude"},
         {"id": "cldl", "label": "cldl (lm studio)", "family": "local"},
         {"id": "claude-chrome", "label": "claude (chrome)", "family": "claude"},
     ]
@@ -29,8 +29,8 @@ def _live_wrappers_as_models():
 
 CLAUDE_WRAPPER_IDS = (
     "claude-skip-permissions",
-    "keyc",
-    "clxor",
+    "cld",
+    "cldor",
     "claude-chrome",
 )
 
@@ -79,8 +79,8 @@ def test_a_configured_wrapper_id_resolves_to_its_configured_label(wrappers):
 
 @pytest.mark.parametrize("wrapper_id,expected", [
     ("claude-skip-permissions", "claude"),
-    ("keyc", "keyc (keychain-backed)"),
-    ("clxor", "clxor (openrouter, keychain-backed)"),
+    ("cld", "cld (keychain-backed)"),
+    ("cldor", "cldor (openrouter, keychain-backed)"),
     ("cldl", "cldl (lm studio)"),
     ("claude-chrome", "claude (chrome)"),
 ])

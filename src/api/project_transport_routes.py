@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.api.error_response import refusal_error
 from src.api import peer_auth, project_replica_routes as replica_routes, projects_service
 from src.api.auth import require_auth
 from src.config import settings
@@ -102,7 +103,7 @@ async def sync_project(project_name: str, body: SyncBody) -> Dict[str, Any]:
       project is air-gapped); ``full`` resends everything. Per-machine failures are reported, not raised.
     Inputs: project_name; body (SyncBody). Output: {project_uid, results: [{machine, sent, refs?, reason?, error?}]}.
     Raises: HTTPException 404 unknown project/machine/replica, 409 ``project_moved_away`` or ``not_a_repo``.
-    Example: POST /api/v1/projects/ledgerbot/sync {"machine": "hosta"}
+    Example: POST /api/v1/projects/trader/sync {"machine": "studio"}
     """
     def read() -> Dict[str, Any]:
         with closing(_open()) as conn:
@@ -156,6 +157,11 @@ async def carry_to(project: Dict[str, Any], install_id: str, label: str, full: b
 @router.get("/projects/{project_name}/github-account", dependencies=[Depends(require_auth)])
 async def get_github_account(project_name: str) -> Dict[str, Any]:
     """Which gh account this project uses and where that came from (project, company, remote_owner, none or air_gap).
+
+    Output: {project_uid, name, air_gap, account, source, needs_card, rung, rung_reason, logged_in} (``logged_in`` lists this
+    computer's gh accounts for the picker, empty under air-gap, which runs no gh; ``rung`` is the transport rung a replica
+    would use, ``git``, ``carried`` or ``none`` with ``rung_reason`` one plain sentence). Raises: HTTPException 404 or 409.
+    Example: GET /api/v1/projects/trader/github-account
     """
     def read() -> Dict[str, Any]:
         with closing(_open()) as conn:
@@ -177,6 +183,13 @@ async def get_github_account(project_name: str) -> Dict[str, Any]:
 
 @router.put("/projects/{project_name}/github-account", dependencies=[Depends(require_auth)])
 async def put_github_account(project_name: str, body: GithubAccountBody) -> Dict[str, Any]:
+    """Store (or clear, with null) the gh account the project uses; it must be logged in on this computer.
+
+    On a replica checkout with a git repo, the per-repo credential helper for that account is written too (docs/pack.md 9.4);
+    the answer's ``helper`` says ``installed``, ``skipped`` or the failure code.
+    Raises: HTTPException 404 or 409 ``air_gap``, 422 ``bad_account`` or ``account_not_logged_in``.
+    Example: PUT /api/v1/projects/trader/github-account {"account": "example-owner"}
+    """
     def write() -> Dict[str, Any]:
         with closing(_open()) as conn:
             project = _live_project(conn, project_name)
@@ -217,7 +230,8 @@ def _card(conn: Any, project: Dict[str, Any], owner: Optional[str], account: Opt
 
 @router.get("/projects/{project_name}/publish-repo", dependencies=[Depends(require_auth)])
 async def get_publish_card(project_name: str) -> Dict[str, Any]:
-    """
+    """The publish-private-repo card: what would be created and what the owner still has to answer. Creates nothing.
+
     Output: {name, private: true, owner, account, account_source, asks: [owner|account], offered, reason}.
     Example: GET /api/v1/projects/notes/publish-repo
     """
@@ -232,6 +246,12 @@ async def get_publish_card(project_name: str) -> Dict[str, Any]:
 @router.post("/projects/{project_name}/publish-repo", dependencies=[Depends(require_auth)])
 async def post_publish_repo(project_name: str, body: PublishBody) -> Dict[str, Any]:
     """Create a PRIVATE GitHub repo for a project with no remote, push its first commit and remember the account.
+
+    Description: the owner's own click on the card. A secret scan runs first; a hit refuses and names the files. The owner
+      is the company's saved pointer unless the body gives one; with neither, 409 ``needs_answer`` carries the card.
+    Inputs: project_name; body (PublishBody: owner?, account?). Output: {url, owner, name, private: true}.
+    Raises: HTTPException 404, 409 (``air_gap``, ``has_remote``, ``needs_answer``, ``secrets_found`` with ``files``, ``gh_failed``).
+    Example: POST /api/v1/projects/notes/publish-repo {"owner": "NyedisInc", "account": "NyedisAdam"}
     """
     def run() -> Dict[str, Any]:
         with closing(_open()) as conn:
@@ -244,9 +264,9 @@ async def post_publish_repo(project_name: str, body: PublishBody) -> Dict[str, A
             try:
                 made = publish.publish(project["root"], name=card["name"], owner=card["owner"], account=card["account"], air_gap=False)
             except publish.PublishRefused as exc:
-                raise HTTPException(409, {"code": exc.code, "detail": exc.detail, "files": exc.files}) from exc
+                raise refusal_error(exc, status=409, extra={"files": exc.files}) from exc
             except github_account.AccountError as exc:
-                raise HTTPException(409, {"code": exc.code, "detail": exc.detail}) from exc
+                raise refusal_error(exc, status=409) from exc
             with transaction(conn):
                 github_account.store_project_account(conn, project["id"], card["account"])
             home.notify_changed()

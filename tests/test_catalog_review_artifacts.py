@@ -45,10 +45,10 @@ def artifact(name: str) -> dict:
 def _item_carrying(review: dict) -> CatalogItem:
     return CatalogItem.model_validate(
         {
-            "id": "acme/sme",
+            "id": "alex/sme",
             "kind": "skill",
             "name": "sme",
-            "publisher": "acme",
+            "publisher": "alex",
             "latest": "1.0.0",
             "card": {"title": "sme", "brief": "the sme skill"},
             "fm": {"description": "the sme skill"},
@@ -57,7 +57,7 @@ def _item_carrying(review: dict) -> CatalogItem:
                     "v": "1.0.0",
                     "src": {
                         "repo": "carnivore-ai/catalog",
-                        "path": "skills/acme/sme",
+                        "path": "skills/alex/sme",
                         "commit": "a" * 40,
                     },
                     "digest": "b" * 64,
@@ -166,7 +166,7 @@ class TestTheOverride:
         assert block.verdict == "blocked"
         assert block.override is not None
         assert block.override.reason == "corpus fixture, never published"
-        assert block.override.by == "acme"
+        assert block.override.by == "psyance"
 
     def test_the_reason_reaches_the_browser(self):
         payload = _round_tripped(artifact("fixture_blocked_with_override"))

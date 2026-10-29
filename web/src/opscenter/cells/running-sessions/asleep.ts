@@ -1,13 +1,10 @@
-/* running sessions */
 
 import type { SessionInfo, SessionRecord } from '../../api/types';
 
-/* running sessions */
 export type AsleepInfo = SessionInfo & { asleep: true; session_uuid: string };
 
 export const ASLEEP_KEY_PREFIX = 'asleep:';
 
-/* running sessions */
 export function isAsleepRow(row: SessionInfo): row is AsleepInfo {
   return (row as Partial<AsleepInfo>).asleep === true;
 }

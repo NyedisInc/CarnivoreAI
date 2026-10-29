@@ -104,13 +104,6 @@ def launchable_accounts(config_path: Path) -> List[ProviderAccount]:
 
 
 def require_launchable(config_path: Path, account_id: str) -> ProviderAccount:
-    """The launchable account with this id, or a :class:`PinError`.
-
-    Inputs: config_path (Path); account_id (str).
-    Output: ProviderAccount.
-    Raises: PinError - not a claude account, unknown, or one that could not
-      resume this conversation.
-    """
     account = find_account(all_accounts(config_path), account_id, PIN_PROVIDER)
     if account is None or not is_launchable(account):
         raise PinError("that account cannot start and resume this session")

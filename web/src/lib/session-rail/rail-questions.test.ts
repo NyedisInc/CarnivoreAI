@@ -25,6 +25,7 @@ import { follow, keyIn, keysIn, mountRails, unmountRails, written } from './rail
 
 setLocale('en');
 
+// jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};
@@ -89,7 +90,7 @@ describe('the right-click menu', () => {
     expect(find('approvals').getAttribute('aria-disabled')).toBeNull();
   });
 
-  test('outside edit layout a right-click on the key opens the same four checks (settings any time)', () => {
+  test('outside edit layout a right-click on the key opens the same four checks (huddle 404: settings any time)', () => {
     follow(RAIL_FIELD, one({ widget: 'core.questions' }));
     layoutEditor.active = false;
     flushSync();

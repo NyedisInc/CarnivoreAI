@@ -1,0 +1,39 @@
+{
+  "build": {
+    "extraResources": [
+      {
+        "to": "src"
+      },
+      {
+        "to": "client"
+      },
+      {
+        "to": "features"
+      },
+      {
+        "to": "requirements.txt"
+      },
+      {
+        "to": "requirements.lock"
+      },
+      {
+        "to": "setup_auth.py"
+      },
+      {
+        "to": "config.example.json"
+      },
+      {
+        "to": "nuke.sh"
+      },
+      {
+        "to": "uninstall.sh"
+      },
+      {
+        "to": "scripts/session_journal.py"
+      },
+      {
+        "to": ".env.example"
+      }
+    ]
+  }
+}

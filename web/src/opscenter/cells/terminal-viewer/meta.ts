@@ -12,11 +12,11 @@ export const VIEWER_KEYS = {
   remove: 'opscenter.menu.remove',
 } as const;
 
+/* and an empty string */
 export function sessionIdOf(instance: string, rows: SessionInfo[] | null): string {
   return sessionForSlot(instance, rows);
 }
 
-/* nothing at all */
 export function rowFor(rows: SessionInfo[] | null, sessionId: string): SessionInfo | null {
   if (!rows || !sessionId) return null;
   return rows.find((row) => row.session?.id === sessionId) ?? null;
@@ -24,7 +24,6 @@ export function rowFor(rows: SessionInfo[] | null, sessionId: string): SessionIn
 
 export const VIEWER_ACCEPTS_INPUT = true;
 
-/* the session is gone */
 export function showsReadOnlyNotice(acceptsInput: boolean, dead: boolean): boolean {
   return !acceptsInput && !dead;
 }
@@ -37,6 +36,7 @@ export interface Letterbox {
 
 export const MAX_VIEWER_SCALE = 2;
 
+/* there is nothing */
 export function letterbox(
   bodyWidth: number,
   bodyHeight: number,

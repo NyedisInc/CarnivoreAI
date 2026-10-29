@@ -11,6 +11,7 @@ const STARTUP_COMMAND_OUTCOMES = ['issued', 'none', 'failed', 'unknown'] as cons
 
 let panel: { setFailed?: (next: boolean) => void } | null = null;
 
+/** Mount a fresh instance into a fresh, attached container. */
 function paint(): { setFailed?: (next: boolean) => void } {
     const target = document.createElement('div');
     document.body.appendChild(target);

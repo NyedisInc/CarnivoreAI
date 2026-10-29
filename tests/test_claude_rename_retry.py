@@ -45,8 +45,8 @@ from src.core.claude_title_sync import (
     TITLE_UNCHANGED,
 )
 
-OLD = "Agent - Larkspur (alpha)"
-NEW = "Agent - Larkspur (Remotedesk)"
+OLD = "Agent - Hirschfeld (Helen)"
+NEW = "Agent - Hirschfeld (Rustdesk)"
 
 
 def _agreed_on(name: str) -> RenameMark:

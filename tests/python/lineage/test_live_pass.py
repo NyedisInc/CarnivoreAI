@@ -132,8 +132,8 @@ def test_the_script_is_a_dry_run_unless_told_and_idempotent_when_applied(world, 
 
 
 CODEX_PARENT = "01a06e76-0273-75b2-ac59-5838bf03fa3b"
-CODEX_FORK = "480a8393-8e3c-44fd-849c-0044ba493a41"
-CODEX_SUB = "6c112498-9a27-4b61-8002-5caa5d37f5bd"
+CODEX_FORK = "01a06e77-0000-75b2-ac59-000000000001"
+CODEX_SUB = "01a06e78-0000-75b2-ac59-000000000002"
 
 
 def _rollout(root, conversation, payload):

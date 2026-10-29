@@ -17,13 +17,12 @@ vi.mock('./leaders-source.svelte', async () => {
     const real = await import('./leaders');
     return {
         leaderIndex: () => real.indexLeaders(roster.agents as Parameters<typeof indexLeaders>[0]), watchLeaders: () => {},
-        leaderRoster: () => roster.agents, projectNameOf: (id: number) => ({ 1: 'one', 2: 'hq', 3: 'example', 4: 'loose' } as Record<number, string>)[id] ?? null,
+        leaderRoster: () => roster.agents, projectNameOf: (id: number) => ({ 1: 'one', 2: 'hq', 3: 'insiders', 4: 'loose' } as Record<number, string>)[id] ?? null,
     };
 });
 
 function stubs(): LegacyDrawer {
     return {
-        groups: {},
         projectHeader: { ledHtml: () => '', iconHtml: () => '', iconForBand: () => null },
     };
 }
@@ -80,7 +79,7 @@ describe('leader placement in the plan', () => {
             { id: 1, rank: 'alpha', display_name: 'Alpha', project_id: 71 },
             { id: 2, rank: 'company', display_name: 'Acme HQ', company_id: 7, project_id: 2 },
             { id: 3, rank: 'project', display_name: 'One lead', company_id: 7, project_id: 1 },
-            { id: 4, rank: 'project', display_name: 'Example agent', company_id: 7, project_id: 3 },
+            { id: 4, rank: 'project', display_name: 'Insiders agent', company_id: 7, project_id: 3 },
             { id: 5, rank: 'project', display_name: 'Loose agent', project_id: 4 },
         ];
         const plan = buildListPlan(stubs(), input([task]))!;

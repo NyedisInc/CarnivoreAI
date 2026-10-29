@@ -1,10 +1,7 @@
-/* could not */
 
 const ADOPT_MATCH = 'match';
 const ADOPT_MISMATCH = 'mismatch';
-/* CANNOT DETERMINE */
 const ADOPT_RUNNING_UNKNOWN = 'running-unknown';
-/* CANNOT DETERMINE */
 const ADOPT_BUNDLE_UNKNOWN = 'bundle-unknown';
 
 function normalizeVersion(value) {

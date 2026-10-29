@@ -13,10 +13,12 @@ from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.auth import require_auth
-from src.cplugs.host import identity, runtime
+from src.cplugs.host import frame_serving, identity, risk, runtime
+from src.cplugs.host import state as owner_state
 from src.cplugs.host.sidecar_registry import SidecarDefinition
 from src.cplugs.runtime import frames, sandbox
 from src.cplugs.runtime.process import REQUEST_TIMEOUT, ProcessEnded
+from src.cplugs.runtime.supervisor import NEEDS_APPROVAL
 from src.cplugs.sdk.manifest import ID_PATTERN
 
 logger = structlog.get_logger()
@@ -37,6 +39,7 @@ _calls: Dict[str, Deque[float]] = {}
 
 
 class ActBody(BaseModel):
+    """The owner's click: which plugin route, and the one session the gesture named."""
 
     model_config = ConfigDict(extra="forbid")
     cplug_id: str = Field(min_length=1, max_length=64)
@@ -47,6 +50,14 @@ class ActBody(BaseModel):
 
 def _error(status: int, code: str, detail: str, **headers: str) -> HTTPException:
     return HTTPException(status_code=status, detail={"code": code, "detail": detail}, headers=headers or None)
+
+
+def held_off(host: runtime.Host, d: SidecarDefinition, live: Any) -> HTTPException:
+    if not any(live.safe_mode().values()) and live.supervisor.state(d.id) in (NEEDS_APPROVAL, "disabled"):
+        st = owner_state.get(host.state_dir, d.manifest)
+        if risk.consent_owed(d.manifest.tier, d.manifest.code_digest, st.digest):
+            return _error(409, NEEDS_APPROVAL, f"{d.id} changed since it was approved; approve it in plugins")
+    return _error(409, "cplug_disabled", f"{d.id} is held off (switch, safe mode, revoked or failed)")
 
 
 def _admit(key: str, now: Optional[float] = None) -> bool:
@@ -70,9 +81,8 @@ async def _target(request: Request, cplug_id: str, route: Optional[str]) -> Tupl
     live = host.sidecar_runtime()
     if live is None:
         raise _error(503, "sidecar_runtime_unavailable", "the plugin runtime is not running")
-    held = _error(409, "cplug_disabled", f"{cplug_id} is held off (switch, safe mode, revoked or failed)")
     if any(live.safe_mode().values()) or live.supervisor.state(cplug_id) not in _LIVE_STATES:
-        raise held
+        raise held_off(host, d, live)
     try:
         key = host.install_key(cplug_id)
     except identity.LedgerUnreadable as exc:
@@ -84,7 +94,7 @@ async def _target(request: Request, cplug_id: str, route: Optional[str]) -> Tupl
     except sandbox.SandboxUnavailable as exc:
         raise _error(503, "sandbox_unavailable", "the plugin sandbox is not usable on this computer") from exc
     if live.supervisor.state(cplug_id) not in _LIVE_STATES:
-        raise held
+        raise held_off(host, d, live)
     if proc is None:
         raise _error(409, "cplug_not_running", f"{cplug_id} is on but its process is not running")
     return host, d, proc, key
@@ -141,18 +151,20 @@ async def _forward(proc: Any, cplug_id: str, params: Dict[str, Any]) -> Response
 async def forward_route(cplug_id: str, rest: str, request: Request) -> Response:
     """Forward one call to the plugin's declared route and answer its JSON. Output: the plugin's status and re-serialized body."""
     route, _, tail = rest.partition("/")
-    _host, _d, proc, _key = await _target(request, cplug_id, route)
+    _host, _d, proc, key = await _target(request, cplug_id, route)
     if len(tail) > MAX_TAIL_CHARS or len(request.url.query) > MAX_QUERY_CHARS:
         raise _error(414, "request_too_long", "the path or query is too long")
     body = await _read_body(request, request.method)
     params = {"route": route, "method": request.method, "path_params": {"rest": tail},
               "query": {k: request.query_params.getlist(k) for k in request.query_params}, "body": body, "actor": "owner"}
-    return await _forward(proc, cplug_id, params)
+    with frame_serving.serving(key):
+        return await _forward(proc, cplug_id, params)
 
 
 @router.post("/cplug-owner/act")
 async def owner_act(body: ActBody, request: Request) -> Response:
-    """
+    """The owner's click: mint a token for exactly this install and session, hand it to the plugin's route. Output: the plugin's JSON.
+
     Fenced against API keys (``/api/v1/cplug-owner``). The token never leaves the host: it rides in the ``route.handle`` params.
     """
     if len(json.dumps(body.body, ensure_ascii=True, default=str).encode()) > MAX_REQUEST_BYTES:

@@ -9,8 +9,9 @@ from typing import Any, Callable, Dict, List, Mapping, Optional
 import structlog
 
 from src.core.db import connect, db_path_for
+from src.core.flow_data import live
 from src.core.skills.ledger import InstallLedger
-from src.cplugs.host import activity_log, capabilities, dependencies, owner_switch, sidecar_index, sidecar_registry
+from src.cplugs.host import activity_log, capabilities, dependencies, flow_port, owner_switch, sidecar_index, sidecar_registry, sidecar_topics
 from src.cplugs.host.mcp_health_port import PLUGIN_ID as MCP_HEALTH_ID, HostMcpHealth
 from src.cplugs.host.runtime import CPLUGS_TOPIC
 from src.cplugs.runtime import guards, sandbox
@@ -64,7 +65,7 @@ class SidecarRuntime:
         self.supervisor = Supervisor(self.state_dir, app_version if app_version is not None else (dependencies.app_version() or "0"),
                                      self.dispatcher, self._supervisor_alert, self.effects.cancel, self._record_activity,
                                      safe_mode=True, children=self.children)
-        self.supervisor.on_stopped = lambda plugin_id: self.mcp_health_switched(plugin_id, False)
+        self.supervisor.on_stopped = self._on_stopped
         self.index = sidecar_index.IndexAdapter(self, self._catalog_cache)
         self.mcp_health: Optional[HostMcpHealth] = None
 
@@ -134,8 +135,10 @@ class SidecarRuntime:
             fn = toasters.setdefault(plugin_id, capabilities.toaster(plugin_id, self.app.state))
             self.on_loop(fn, ref, title)
 
-        def publish_topic(topic: str, _key: Optional[str]) -> None:
-            self.on_loop(self.host.publish, f"cplug_topic:{self._key(topic.split('.')[1])}")
+        def coalesce(topic: str, scope: str, interval: float, detail: Optional[str] = None) -> None:
+            self.on_loop(self.host.publish_coalesced, topic, scope, interval, detail)
+
+        publish_topic = sidecar_topics.make_publisher(self._key, coalesce)
 
         def invalidate_ui(plugin_id: str, surface: Optional[str]) -> None:
             if plugin_id == MCP_HEALTH_ID and surface in (None, "status_source") and self.mcp_health is not None:
@@ -168,13 +171,19 @@ class SidecarRuntime:
         async def mcp_links(ref: Optional[str]) -> Dict[str, Any]:
             return await live_port().mcp_links(ref)
 
+        def feed_topic(install_key: str, topic: str) -> None:
+            wire = sidecar_topics.wire_topic(install_key, topic, None)
+            coalesce(wire, wire, sidecar_topics.FEED_FOLD_S, None)
+
+        self.flow = flow = flow_port.FlowPort(lambda: self.state_dir, on_topic=feed_topic)
+
         return HostServices(activity=self._record_activity, list_sessions=list_sessions, get_session=get_session, toast=toast,
                             alert=self._plugin_alert, publish_topic=publish_topic, invalidate_ui=invalidate_ui,
-                            process_snapshot=process_snapshot, mcp_config=mcp_config, mcp_links=mcp_links)
+                            process_snapshot=process_snapshot, mcp_config=mcp_config, mcp_links=mcp_links,
+                            flow_run=flow.run, flow_run_part=flow.part, flow_feed=flow.feed, flow_tasks=flow.tasks)
 
 
     async def _render_mcp_status(self) -> Optional[Dict[str, Any]]:
-        """The mcphealth sidecar's validated ``status_source`` document, or None when it is not installed. Raises RuntimeError on a failed render."""
         from src.cplugs.host import sidecar_ui, ui_doc  # noqa: PLC0415
 
         d = sidecar_registry.find(MCP_HEALTH_ID)
@@ -186,6 +195,12 @@ class SidecarRuntime:
                                    tools=[t.get("name") for t in d.manifest.tools if isinstance(t, dict)])
         except ui_doc.UiDocError as exc:
             raise RuntimeError(exc.code) from exc
+
+    def _on_stopped(self, plugin_id: str) -> Any:
+        key = self._key(plugin_id)
+        self.flow.cache.forget(key)
+        live.drop_owners(f"{key}:")
+        return self.mcp_health_switched(plugin_id, False)
 
     async def mcp_health_switched(self, plugin_id: str, enabled: bool) -> None:
         if plugin_id != MCP_HEALTH_ID:
@@ -203,7 +218,6 @@ class SidecarRuntime:
         return {"env": self._env_safe(), "owner": self.route_safe, "off": not owner_switch.read(self.state_dir)}
 
     def status(self) -> Dict[str, Any]:
-        """What the plugins page shows. Output: {enabled, safe_mode: {env, owner, active}, sandbox: {ok, detail} | None}."""
         why = self.safe_mode()
         return {"enabled": not why["off"], "safe_mode": {"env": why["env"], "owner": why["owner"], "active": why["env"] or why["owner"]},
                 "sandbox": self.sandbox_probe}
@@ -232,7 +246,6 @@ class SidecarRuntime:
             self.supervisor.set_safe_mode(False)
 
     async def set_switch(self, on: bool) -> bool:
-        """Store and apply the master switch; turning on probes the sandbox. Output: False when the file could not be written."""
         if not owner_switch.write(self.state_dir, on):
             return False
         if on:
@@ -261,7 +274,6 @@ class SidecarRuntime:
         return self.sandbox_probe
 
     def _ledger_rows(self) -> List[Any]:
-        """Every install-ledger row, read on a connection of this thread. Blocking. Output: list; empty when the database does not exist yet."""
         path = db_path_for(self.state_dir)
         if not path.exists():
             return []

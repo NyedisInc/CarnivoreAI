@@ -20,14 +20,13 @@ function readDismissed(): string[] {
   }
 }
 
-export const view = $state({ dismissed: readDismissed(), cancelling: {} as Record<string, boolean>, note: {} as Record<string, string>, folded: {} as Record<string, boolean> });
+export const view = $state({ dismissed: readDismissed(), cancelling: {} as Record<string, boolean>, note: {} as Record<string, string>, folded: {} as Record<string, boolean>, details: {} as Record<string, boolean> });
 
 function writeDismissed(): void {
   view.dismissed = view.dismissed.slice(-DISMISSED_MAX);
   try {
     globalThis.localStorage?.setItem(DISMISSED_KEY, JSON.stringify(view.dismissed));
   } catch {
-    // storage refused
   }
 }
 

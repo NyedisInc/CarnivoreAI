@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>header icons and menu harness</title>
-<!-- hidden -->
 <link rel="stylesheet" href="../../client/css/styles.css" />
 <link rel="stylesheet" href="../../client/css/home-bar.css" />
 <link rel="stylesheet" href="../../client/css/session-sidebar.css" />
@@ -14,10 +13,6 @@
 <div id="header-mount"></div>
 <div id="launchpad-screen" class="screen active"></div>
 
-<!-- THE ONE RESOLVER for a session's displayed name. Loaded first,
-     exactly as client/index.html does it. Without it launchpad.js takes
-     its script-missing fallback branch and this harness would measure a
-     path no browser runs. -->
 <script src="../../client/js/session-label.js"></script>
 <script src="../../client/js/api.js"></script>
 <script src="../../client/js/session-status-ui.js"></script>
@@ -40,17 +35,23 @@
 function fixture() {
     return {
         projects: [
-            { id: 1, name: 'cloudecode', path: '/Users/example/Development/app', description: 'the app itself' },
+            { id: 1, name: 'cloudecode', path: '/Users/sam/Development/CloudeCode', description: 'the app itself' },
         ],
         presence: {
             status: 'ok',
-            projects: [{ id: 1, raw_path: '/Users/example/Development/app', presence: 'present' }],
+            projects: [{ id: 1, raw_path: '/Users/sam/Development/CloudeCode', presence: 'present' }],
             detail: null,
         },
         attachable: [
+            // OPEN + OURS -> live pencil.
             { name: 'cloude_open', created_by_cloude: true, created_at_epoch: 1000, window_count: 1, status: 'running', unread: false, agent_family: 'claude', agent_family_source: 'wrapper' },
+            // OURS BUT NOT OPEN -> the reported bug: badged TMUX, no id.
             { name: 'cloude_fs2', created_by_cloude: true, created_at_epoch: 1001, window_count: 1, status: 'idle', unread: false, agent_family: 'claude', agent_family_source: 'wrapper' },
+            // EXTERNAL -> adopt first.
             { name: 'someone_else', created_by_cloude: false, created_at_epoch: 1002, window_count: 1, status: 'idle', unread: false, agent_family: null, agent_family_source: 'unknown' },
+            // OWNERSHIP GENUINELY UNKNOWN. server_status.py fills this
+            // field with ownership_by_name.get(name), which is None for a
+            // name the map never answered for. Null is not False.
             { name: 'console-msw4z3m5', created_by_cloude: null, created_at_epoch: 1003, window_count: 1, status: 'idle', unread: false, agent_family: null, agent_family_source: 'unknown' },
         ],
         live: [
@@ -147,7 +148,15 @@ window.__headerIcons = function () {
         innerWidth: window.innerWidth,
         theme: document.documentElement.getAttribute('data-theme'),
         helpPaint: paint('#launchpad-help-btn'),
+        // The look the help button is SUPPOSED to have, read off a
+        // sibling that never lost it. Comparing the two is a stronger
+        // statement than any hardcoded colour: it keeps holding when
+        // the theme changes.
         siblingPaint: paint('#configEditorBtn'),
+        // The help control's position RELATIVE TO THE TITLE - the actual
+        // thing being asked for. A gap measured from the title's right
+        // edge, and a vertical centre delta, are the two numbers that say
+        // "beside it, in the middle"; an absolute x says nothing.
         helpVsTitle: (tr && hr) ? {
             gapFromTitleRight: hr.left - tr.right,
             helpCentreY: hr.top + hr.height / 2,
@@ -166,6 +175,9 @@ window.__headerIcons = function () {
                      paddingLeft: parseFloat(cs.paddingLeft) || 0,
                      paddingRight: parseFloat(cs.paddingRight) || 0 };
         })(),
+        // THE INVARIANT, not the numbers. Both flanks are measured the
+        // same way and compared to each other, so this keeps holding if
+        // any of the underlying widths is retuned.
         flanks: {
             left: outerW('.header-home-spacer') + outerW('#session-sidebar-toggle'),
             right: outerW('.controls'),
@@ -184,6 +196,15 @@ window.__headerIcons = function () {
 
 /**
  * Open the "new claude project" chooser and report its options.
+ *
+ * NO LONGER WIRED. This called `window.__lp.startNewClaudeProject()`,
+ * which no longer exists on this page - the bootstrap below does not
+ * mount a home screen at all (see the file header). The choice list
+ * (empty / clone / folder) is still real and is covered by
+ * `web/src/lib/launchpad/entry-flows.test.ts`; this stays defined,
+ * returning nothing, so a caller written against the old contract gets
+ * an empty answer instead of a thrown "not a function".
+ * @returns {Promise<object[]>} always [].
  */
 window.__newProjectChoices = async function () {
     return [];
@@ -205,10 +226,18 @@ window.__setDocked = function (on) {
     const header = doc.querySelector('.header');
     if (header) {
         document.getElementById('header-mount').appendChild(document.importNode(header, true));
+        // app.js stamps this on .header-row for the launchpad.
         const row = document.querySelector('.header-row');
         if (row) row.classList.add('header--home');
+        // SessionSidebar.show() strips `.hidden` off the toggle on the
+        // home screen. Reproduced here for the same reason.
         const tog = document.getElementById('session-sidebar-toggle');
         if (tog) tog.classList.remove('hidden');
+        // header-menu.js permanently re-parents logout/settings into its
+        // overflow panel, leaving exactly two inline controls. The
+        // harness does not boot it, so it does the same thing here -
+        // otherwise `.controls` would measure four buttons wide and the
+        // flank comparison would be against a header nobody ships.
         ['logoutBtn', 'settingsBtn'].forEach((id) => {
             const el = document.getElementById(id);
             if (el) el.remove();
@@ -224,6 +253,10 @@ window.__setDocked = function (on) {
         const cfg = document.getElementById('configEditorBtn');
         if (cfg) cfg.classList.remove('hidden');
     }
+    // NO HOME SCREEN IS MOUNTED HERE - see the file header. Everything
+    // this page measures (`helpPaint`, `helpVsTitle`, `togglePaint`,
+    // `flanks`) is read straight off the header markup just imported
+    // above, which needs no fetch and no render pass to settle.
     window.__headerReady = true;
 })();
 </script>

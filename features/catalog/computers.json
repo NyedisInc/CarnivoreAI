@@ -29,6 +29,7 @@
     "On the new computer run curl -fsSL https://carnivore.ai/install.sh | bash (someone must be logged in there), then type the 6-digit code from main's invite card at the prompt, or paste the join link. Pressing enter alone sets it up as a separate computer.",
     "Open pack, computers and press add a computer: the code (123 456), its countdown and the join link show on the invite card.",
     "List the linked computers, their state and direction with computers_list.",
+    "Ask an agent to add a computer over ssh: computer_add_preview shows the host key and anything blocking, then computer_add waits for the owner's approval and installs and joins that computer; follow it in computers_list.",
     "Main must be awake with Carnivore open: it dials the new computer, so no port is opened and no router is changed. A code lives 15 minutes and 3 wrong tries; 10 wrong codes in an hour switch codes off for an hour.",
     "On 1.16.0 a code join over the home network does not complete (pair over ssh, pack, ssh tab); the fix ships in the next release."
   ],
@@ -59,7 +60,6 @@
     "src/core/mcp/computers_tools.py",
     "src/core/computers/view.py",
     "src/core/computers/forget.py",
-    "web/src/lib/computers/ComputersPanel.svelte",
     "src/core/computers/add_over_ssh.py",
     "src/core/computers/add_preview.py"
   ],

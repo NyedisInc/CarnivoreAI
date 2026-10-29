@@ -11,6 +11,12 @@ const ROOT = path.join(__dirname, '..');
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -23,6 +29,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read one file from the repo.
+ * @param {...string} parts  Path segments below the repo root.
+ * @returns {string} File contents.
+ */
 function read(...parts) {
     return fs.readFileSync(path.join(ROOT, ...parts), 'utf8');
 }
@@ -57,9 +68,15 @@ function decl(body, prop) {
 
 const styles = read('client', 'css', 'styles.css');
 const cssRules = rules(styles);
+// SLICE 7: `client/js/launchpad.js` is gone. The home screen's
+// markup and its wiring are the Svelte shell and the modules
+// beside it; every assertion below is unchanged and simply reads
+// the files that now hold what it is about.
 const indexHtml = read('client', 'index.html');
 const anchorJs = read('client', 'js', 'anchor-popover.js');
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 function loadAnchorPopover(vw, vh) {
     const win = { innerWidth: vw, innerHeight: vh, visualViewport: null };
@@ -115,6 +132,8 @@ test('place() puts the menu right edge on the anchor right edge', () => {
         `menu right ${got.left + 213} must sit on the trigger right 1022.5`);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('.new-fab__menu is position: fixed', () => {
     const bodies = ruleBodies(cssRules, '.new-fab__menu');
@@ -142,6 +161,8 @@ test('no .new-fab__menu rule declares right', () => {
     }
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the pills still share a right edge', () => {
     const bodies = ruleBodies(cssRules, '.new-fab__menu');
@@ -170,7 +191,11 @@ test('every pill row is 44px at every breakpoint', () => {
     }
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('no comment places the speed-dial in the recent projects heading', () => {
     for (const [name, src] of [

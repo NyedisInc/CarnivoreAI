@@ -1,4 +1,4 @@
-/* nothing at all */
+/* nothing at all the home screen */
 (function () {
     'use strict';
 

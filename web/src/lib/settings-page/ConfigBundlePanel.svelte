@@ -8,17 +8,21 @@
     import State from '../base/State.svelte';
     import Tag from '../base/Tag.svelte';
     import type { Translate } from '../sessions/types';
+    import CommandConsent from './config-bundle/CommandConsent.svelte';
     import {
         bundleFilename,
         BundleFileError,
-        errorText,
+        commandRows,
+        confirmFor,
         fetchBundle,
+        isConsentStale,
         parseBundleText,
         sendImport,
         type Fetcher,
         type ImportAnswer,
         type ImportMode,
     } from './config-bundle/api';
+    import { errorText } from './panel-kit/error-text';
 
     interface Props {
         t?: Translate;
@@ -45,6 +49,9 @@
     let picker: HTMLInputElement | undefined = $state();
 
     const total = $derived(preview ? preview.counts.added + preview.counts.changed + preview.counts.removed : 0);
+    const commands = $derived(preview?.contains_commands ? commandRows(preview) : []);
+    let commandsAllowed = $state(false);
+    const canApply = $derived(commands.length === 0 || commandsAllowed);
 
     async function doExport(): Promise<void> {
         busy = true;
@@ -107,11 +114,12 @@
     }
 
     async function apply(): Promise<void> {
-        if (!bundle) return;
+        if (!bundle || !preview || !canApply) return;
         busy = true;
         problem = '';
+        let stale = false;
         try {
-            const done = await sendImport(bundle, mode, false, fetcher);
+            const done = await sendImport(bundle, mode, false, fetcher, commands.length ? confirmFor(preview) : {});
             note =
                 done.status === 'applied'
                     ? t('settings.configbundle.done', {
@@ -122,9 +130,17 @@
             preview = null;
         } catch (error) {
             problem = errorText(error);
+            stale = isConsentStale(error);
         } finally {
             busy = false;
         }
+        if (stale) await rePreview();
+    }
+
+    async function rePreview(): Promise<void> {
+        const refusal = problem;
+        await runPreview();
+        problem = problem || refusal;
     }
 </script>
 
@@ -191,11 +207,19 @@
                     <p class="cb__hint">{t('settings.configbundle.truncated', { count: preview.changes.length })}</p>
                 {/if}
             {/if}
+            {#if preview.kept}
+                <p class="cb__hint" data-cb="kept">{t('settings.configbundle.kept', { count: preview.kept })}</p>
+            {/if}
+            {#if commands.length}
+                {#key preview}
+                    <CommandConsent rows={commands} {busy} bind:ready={commandsAllowed} {t} />
+                {/key}
+            {/if}
             <div class="cb__actions">
                 <Button data-cb="cancel" disabled={busy} onclick={cancel}>
                     {t('settings.configbundle.cancel')}
                 </Button>
-                <Button variant="confirm" data-cb="apply" disabled={busy} onclick={() => void apply()}>
+                <Button variant="confirm" data-cb="apply" disabled={busy || !canApply} onclick={() => void apply()}>
                     {busy ? t('settings.configbundle.working') : t('settings.configbundle.apply')}
                 </Button>
             </div>

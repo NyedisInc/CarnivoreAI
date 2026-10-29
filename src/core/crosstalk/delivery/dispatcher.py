@@ -181,6 +181,24 @@ class Dispatcher:
         message = await asyncio.to_thread(store.claim_for, receiver_key)
         if message is None:
             return
+        try:
+            await self._deliver_claimed(receiver_key, info, message)
+        except BaseException as exc:
+            await self._fail_stranded(message['id'], exc)
+            raise
+
+    @staticmethod
+    async def _fail_stranded(message_id: str, exc: BaseException) -> None:
+        logger.error('crosstalk_delivery_aborted', message_id=message_id, error_type=type(exc).__name__,
+                     error=str(exc)[:300])
+        try:
+            row = await asyncio.to_thread(store.get, message_id)
+            if row is not None and row['status'] == 'delivering':
+                await asyncio.to_thread(store.finish, message_id, 'failed', 'delivery uncertain; manual review required')
+        except (sqlite3.Error, OSError) as inner:
+            logger.error('crosstalk_delivery_abort_unrecorded', message_id=message_id, error_type=type(inner).__name__)
+
+    async def _deliver_claimed(self, receiver_key: str, info: Any, message: dict) -> None:
         from src.core.crosstalk.delivery import claude_native, codex_appserver
         if message['receiver_id'] != info.session.id or message['receiver_epoch'] != info.session.tmux_created_epoch:
             if str(message.get('reason') or '').startswith('native_receipt_pending:'):

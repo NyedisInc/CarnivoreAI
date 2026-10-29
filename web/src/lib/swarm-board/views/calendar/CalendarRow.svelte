@@ -118,7 +118,6 @@
       color: var(--oc-text-secondary);
       font-size: var(--oc-fs-body);
     }
-    /* box-shadow */
     .sbcal-cell {
       position: relative;
       display: flex;

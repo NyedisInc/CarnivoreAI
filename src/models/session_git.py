@@ -10,6 +10,7 @@ GitFileKind = Literal["modified", "added", "deleted", "renamed", "copied", "type
 
 
 class GitFile(BaseModel):
+    """One changed path: porcelain v2 codes verbatim ('.' means unchanged on that side) plus a plain kind."""
 
     path: str
     orig_path: Optional[str] = Field(default=None, description="the old path of a rename or copy")

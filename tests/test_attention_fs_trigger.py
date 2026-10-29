@@ -282,7 +282,7 @@ def test_a_turn_short_of_its_quiet_window_gets_one_settle_reread() -> None:
     from datetime import timedelta
 
     from src.core.attention.evidence import Evidence, FAMILY_CLAUDE
-    from src.core.attention.registry_read import parse_registry_record
+    from src.core.attention.registry_record import parse_registry_record
     from src.core.attention.resolve import DONE_QUIET_SECONDS
     from src.core.attention.transcript_facts import FACTS_FOUND, TranscriptFacts
     from src.core.session_status import LIVENESS_LIVE

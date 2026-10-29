@@ -4,6 +4,14 @@
     venv/bin/python3 scripts/backup/phase_backup.py take P1            # before the install of phase P1
     venv/bin/python3 scripts/backup/phase_backup.py verify phase-P1-pre-20261016T120000Z
     venv/bin/python3 scripts/backup/phase_backup.py list
+
+``take`` writes ``phase-<id>-pre-<UTC>`` to ``/Volumes/Backup`` when that drive is mounted (the mini), else into the state
+directory's ``phase-backups/`` (Alex's Mac). It covers ``carnivore.db`` and ``huddle.db`` (verified online copies with a
+per-table row count and content digest), the plugin state file, the Task Manager attachments folder (sha256 per file)
+and ``config.json``. The tool NEVER deletes or rotates anything, so a set stays until a person moves it to the Trash.
+``verify`` checks the set against its manifest, then live data against the set (``--set-only`` skips the live half;
+``--allow-changed 'huddle.db:items'`` names what the phase was meant to change). Exit 0 ok, 1 differences, 2 could not
+determine. It reads live data read-only and writes only inside the destination.
 """
 
 from __future__ import annotations
@@ -74,7 +82,9 @@ def take(phase: str, state_dir: Path, dest: Path, config_files: List[Path], now:
         raise PhaseBackupError(f"{final} already exists")
     partial = dest / f".{final.name}.partial"
     try:
-        (partial / "db").mkdir(parents=True)
+        partial.mkdir(mode=targets.PRIVATE_DIR_MODE)
+        os.chmod(partial, targets.PRIVATE_DIR_MODE)
+        (partial / "db").mkdir()
         manifest = _build_manifest(phase, stamp, state_dir, found, partial)
         _write_manifest(partial, manifest)
         os.rename(partial, final)
@@ -142,7 +152,7 @@ def _find_set(ref: str, folders: List[Path]) -> Path:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--state-dir", help="the Carnivore state directory (default CARNIVORE_STATE_DIR or ~/Library/Application Support/Carnivore)")
-    parser.add_argument("--dest", help="folder holding sets (default /Volumes/ExampleDrive when mounted, else <state dir>/phase-backups)")
+    parser.add_argument("--dest", help="folder holding sets (default /Volumes/Backup when mounted, else <state dir>/phase-backups)")
     sub = parser.add_subparsers(dest="action", required=True)
     take_p = sub.add_parser("take", help="write a pinned set before a phase")
     take_p.add_argument("phase")
@@ -156,7 +166,6 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """Run the CLI. Inputs: argv (list[str] | None). Output: int exit code (0 ok, 1 differences, 2 could not determine)."""
     args = _parser().parse_args(argv)
     try:
         state_dir = targets.resolve_state_dir(args.state_dir)

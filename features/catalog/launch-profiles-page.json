@@ -2,11 +2,11 @@
   "id": "launch-profiles-page",
   "name": "Launch profiles page",
   "summary": "One page for every way a session can be launched: pick the harness, account, endpoint, model and permissions in a form, see the exact command it will run, and check, copy, share or delete it safely.",
-  "description": "A launch profile is a structured record of how an agent starts: the harness (claude, codex or a plain shell), the account it uses (follow the active one, or a pinned claude account), the endpoint (native, or one of your AI connections such as openrouter or lm studio), the model (the harness default, a fixed one, or ask at launch), and the permissions posture. Advanced fields (extra flags, environment variables, secret variables read from the keychain, the shell startup file, a before-launch step) and an expert custom command are folded away. A live preview shows the exact command and environment, with secrets as names and key hints only. The page replaces the wrappers page at the same menu row.",
+  "description": "A launch profile is a structured record of how an agent starts: the harness (claude, codex or a plain shell), the account it uses (it follows the active one; pinning an account is not available yet), the endpoint (native, or one of your AI connections such as openrouter or lm studio), the model (the harness default, a fixed one, or ask at launch), and the permissions posture. Advanced fields (extra flags, environment variables, secret variables read from the keychain, the shell startup file, a before-launch step) and an expert custom command are folded away. A live preview shows the exact command and environment, with secrets as names and key hints only. The page replaces the wrappers page at the same menu row.",
   "area": "settings",
   "status": "beta",
   "since": "2026-10-03",
-  "updated": "2026-10-12",
+  "updated": "2026-10-28",
   "surfaces": [
     "launch profiles page",
     "web/src/lib/launch-profiles-page/LaunchProfilesScreen.svelte"
@@ -26,7 +26,8 @@
   ],
   "issues": [
     1257,
-    1641
+    1641,
+    2593
   ],
   "keywords": [
     "launch profile",
@@ -42,6 +43,7 @@
   ],
   "how_to": [
     "Press new and pick a template: claude subscription, claude via openrouter, claude via lm studio, codex yolo or plain shell.",
+    "Or start a custom agent: pick custom agent (any command you type, with an icon you choose) or one of the ready presets (pi, oh-my-pi, claude code, codex cli, github copilot cli, devin, factory droid, kimi cli, opencode, kilo code, hermes agent, qoder cli, qwen code, letta, cursor cli, mastra code, antigravity cli, grok cli).",
     "Change the fields; the preview shows the exact command as you type.",
     "Press save. Use check to run the harness, duplicate to copy, make default to use it for new sessions of that harness.",
     "Delete asks you to move anything still using the launch profile to another one first.",
@@ -49,7 +51,8 @@
   ],
   "examples": [
     "Run claude through openrouter with a model picked from the connection's live list.",
-    "Keep a codex launch profile that skips all permission checks, marked clearly in the list."
+    "Keep a codex launch profile that skips all permission checks, marked clearly in the list.",
+    "Add qwen code as a launch profile with its logo; its sessions show that name and logo in the sidebar and tabs, with no status light."
   ],
   "media_exempt": "Screenshots are captured before the next version bump."
 }

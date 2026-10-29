@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { beforeAll, describe, expect, it } from 'vitest';
-import { knobs, loadRowInteractions, settle } from './row-interaction-fixture';
+import { loadRowInteractions, settle } from './row-interaction-fixture';
 import { legacyRun, names, play, ROW, same } from './row-interaction-play';
 import { sidebarShell } from './shell.svelte';
 import { claimOpenMenu } from '../drawer-tabs/open-menu';
@@ -90,6 +90,7 @@ describe('selecting and opening a row', () => {
     });
 
     it('a click on an asleep row wakes nothing, it arms the wake button (#1505)', async () => {
+        // the legacy twin
         const svelte = await play(w, async (g) => {
             await g.click(ROW('cloude_z'));
             expect(g.has(`${ROW('cloude_z')} .session-sidebar-row-wake-arm`)).toBe(true);
@@ -216,21 +217,12 @@ describe('the comparison can fail', () => {
         expect(run.dom).not.toContain('data-band="pinned"');
     });
 
-    it('the shell owns its rows; NEGATIVE CONTROL: if legacy did not stand aside, a key would act twice', async () => {
+    it('the shell owns its rows, so a key acts exactly once (the legacy listener that could act a second time is deleted)', async () => {
         const once = await play(w, async (g) => {
             expect(sidebarShell.owns(g.el(ROW('cloude_c')))).toBe(true);
             await g.key(ROW('cloude_c'), 'p');
         });
         expect(once.live).toBe('cloude_c pinned to the top');
         expect(JSON.parse(once.arrangement).pinned).toEqual(['cloude_c']);
-        const owns = sidebarShell.owns;
-        sidebarShell.owns = () => false;
-        try {
-            const twice = await play(w, async (g) => { await g.key(ROW('cloude_c'), 'p'); });
-            expect(twice.live).toBe('cloude_c unpinned');
-            expect(JSON.parse(twice.arrangement).pinned).toEqual([]);
-        } finally {
-            sidebarShell.owns = owns;
-        }
     });
 });

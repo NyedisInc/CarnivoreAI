@@ -78,7 +78,7 @@ def test_a_rename_split_pair_becomes_one_row(tmp_path, at_v8):
     _insert(at_v8, uuid="u2", name="cloude_Media", epoch=1787686975,
             sid="$0", origin="created", lifecycle="stopped",
             lifecycle_source="tmux_missing")
-    _insert(at_v8, uuid="u3", name="Image_Tool", epoch=1787686975,
+    _insert(at_v8, uuid="u3", name="Media_Compression", epoch=1787686975,
             sid="$0", origin="adopted", lifecycle="running",
             lifecycle_source="adopt")
     at_v8.commit()
@@ -89,7 +89,7 @@ def test_a_rename_split_pair_becomes_one_row(tmp_path, at_v8):
             "one session was showing as two; the merge is the whole point"
         )
         row = after[0]
-        assert row["tmux_name"] == "Image_Tool", (
+        assert row["tmux_name"] == "Media_Compression", (
             "the live name wins - it is what tmux actually reports"
         )
         assert row["lifecycle"] == "running"
@@ -134,7 +134,7 @@ def test_a_genuinely_dead_session_with_its_own_epoch_is_kept(tmp_path, at_v8):
     _insert(at_v8, uuid="u1", name="cloude_Media", epoch=1787686851,
             sid="$0", origin="created", lifecycle="stopped",
             lifecycle_source="tmux_missing")
-    _insert(at_v8, uuid="u3", name="Image_Tool", epoch=1787686975,
+    _insert(at_v8, uuid="u3", name="Media_Compression", epoch=1787686975,
             sid="$0", origin="adopted", lifecycle="running")
     at_v8.commit()
 
@@ -171,13 +171,13 @@ def test_a_row_without_a_tmux_id_is_never_merged(tmp_path, at_v8):
 
 def test_every_row_comes_out_with_a_label(tmp_path, at_v8):
     _insert(at_v8, uuid="ua", name="cloude_Media", epoch=900, sid="$4")
-    _insert(at_v8, uuid="ub", name="Image_Tool", epoch=901, sid="$5")
+    _insert(at_v8, uuid="ub", name="Media_Compression", epoch=901, sid="$5")
     at_v8.commit()
 
     with _to_v9(tmp_path) as conn:
         titles = {r["session_uuid"]: r["title"] for r in rows(conn)}
         assert titles["ua"] == "Media", "the cloude_ prefix is app-added"
-        assert titles["ub"] == "Image Tool"
+        assert titles["ub"] == "Media Compression"
 
 
 def test_an_existing_title_is_left_alone(tmp_path, at_v8):

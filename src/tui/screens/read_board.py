@@ -10,6 +10,7 @@ from textual.widgets import DataTable, Label
 
 from src.tui.api_client import AuthRequired, ServerUnavailable
 from src.tui.listing_store import LIVENESS
+from src.tui.plain import plain
 from src.tui.strings import t
 
 logger = structlog.get_logger(__name__)
@@ -99,4 +100,4 @@ class ReadBoardPane(Vertical):
         note.update("")
         summary = self.paint(board, self.data)
         board.move_cursor(row=min(row, max(board.row_count - 1, 0)))
-        self.query_one(".read-summary", Label).update(summary)
+        self.query_one(".read-summary", Label).update(plain(summary))

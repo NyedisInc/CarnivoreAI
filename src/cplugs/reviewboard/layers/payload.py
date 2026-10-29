@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Mapping
 
 from pydantic import TypeAdapter
@@ -8,7 +9,7 @@ from pydantic import TypeAdapter
 from src.cplugs.reviewboard.layers import rules
 from src.cplugs.reviewboard.layers.models import (LAYER_VERSION, MAX_LONG_TEXT, MAX_SHORT_TEXT, ChoiceItem, DateItem, Layer, LongTextItem, MultiItem, NumberItem,
                                                   QuestionsLayer, RankItem, RowsLayer, TextItem, ToggleItem, YesNoItem, is_real_day)
-from src.cplugs.reviewboard.schema import MAX_TEXT
+from src.cplugs.reviewboard.schema import MAX_PAYLOAD_BYTES, MAX_TEXT
 
 ENVELOPE = frozenset({"layer", "v", "values", "notes"})
 LAYER_ADAPTER: TypeAdapter = TypeAdapter(Layer)
@@ -54,8 +55,23 @@ def _row_problem(layer: RowsLayer, row_id: str, value: Any) -> str:
     return "" if _distinct_subset(value, ids) else "a pick-several value is a list of distinct choice ids of the row"
 
 
+def _size_problem(layer: Layer, payload: Mapping[str, Any]) -> str:
+    try:
+        size = len(json.dumps(payload, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8"))
+    except (TypeError, ValueError):
+        return ""
+    if size <= MAX_PAYLOAD_BYTES:
+        return ""
+    notes = payload.get("notes") if isinstance(payload.get("notes"), dict) else {}
+    longest = sorted(((-len(t), k) for k, t in notes.items() if isinstance(t, str)))[:3]
+    where = f" (the longest notes: {', '.join(k for _n, k in longest)})" if longest else ""
+    return f"the {layer.kind} layer's answers and notes come to {size} bytes; a board holds at most {MAX_PAYLOAD_BYTES}{where}: shorten them"
+
+
 def problems(layer: Layer, payload: Mapping[str, Any]) -> List[str]:
     out: List[str] = []
+    if (too_big := _size_problem(layer, payload)):
+        out.append(too_big)
     extra = sorted(set(payload) - ENVELOPE)
     if extra:
         out.append(f"the payload carries {', '.join(extra)}; a {layer.kind} payload holds layer, v, values and notes")

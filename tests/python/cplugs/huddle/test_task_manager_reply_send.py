@@ -25,7 +25,7 @@ def test_tell_text_appends_the_reply_words_after_the_list_line():
     assert service.send_text("12", "carnivore", 4) == service.send_text("12", "carnivore", 4, replies=[])
 
 
-def test_a_tell_after_owners_reply_names_that_task_and_message_only(client, app, pasted):
+def test_a_tell_after_joes_reply_names_that_task_and_message_only(client, app, pasted):
     store = TaskManagerStore(runtime.host_for(app).storage("huddle"), notify=lambda key: None)
     quiet = client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "no reply here"}).json()["id"]
     item = client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "moved files"}).json()["id"]

@@ -18,7 +18,7 @@ def _agents(run: Dict[str, Any], parent: Dict[str, Optional[str]], sent: Dict[st
         turns = sum(1 for b in mine if b["kind"] == "turn")
         a: Dict[str, Any] = {"id": lane["id"], "parent": parent.get(lane["id"]), "full": lane["label"], "kind": lane["kind"]}
         if lane["kind"] == "owner":
-            a.update(name="the owner", role="Owner", desc="Answers questions and approves the result.", mono="O")
+            a.update(name="Joe", role="Owner", desc="Answers questions and approves the result.", mono="J")
         elif lane["kind"] == "subagent":
             kind, _, title = lane["label"].partition(": ")
             a.update(name=kind, role="Subagent", desc=title, mono=kind[:1].upper())

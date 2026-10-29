@@ -103,7 +103,6 @@ export class TimelineLanes {
         }
     }
 
-    /* already running */
     #want(uuid: string): void {
         this.#stale.delete(uuid);
         if (this.#inFlight.has(uuid)) this.#dirty.add(uuid);

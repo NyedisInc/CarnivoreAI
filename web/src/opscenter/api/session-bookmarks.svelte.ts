@@ -1,32 +1,22 @@
 import { authFetch } from './auth.svelte';
 import { resource, type Resource } from './poll.svelte';
+import { sharedResources } from './shared-resource';
 import { ALL_BOOKMARKS_TOPIC, bookmarksTopic, type AllBookmarks, type BookmarkList } from '../../lib/bookmarks/api';
 
 export const BOOKMARKS_POLL_MS = 30000;
 
-const cache = new Map<string, { resource: Resource<unknown>; refs: number }>();
+const reads = sharedResources<string, unknown>();
 
 function hold<T>(key: string, path: string, topic: string): Resource<T> {
-  let entry = cache.get(key);
-  if (!entry) {
-    entry = {
-      resource: resource<T>(() => authFetch<T>(path), { intervalMs: BOOKMARKS_POLL_MS, topics: [topic], name: `session-bookmarks:${key}` }),
-      refs: 0,
-    };
-    cache.set(key, entry);
-  }
-  entry.refs += 1;
-  return entry.resource as Resource<T>;
+  return reads.hold(key, () => resource<unknown>(() => authFetch<T>(path), {
+    intervalMs: BOOKMARKS_POLL_MS,
+    topics: [topic],
+    name: `session-bookmarks:${key}`,
+  })) as Resource<T>;
 }
 
 function drop(key: string): void {
-  const entry = cache.get(key);
-  if (!entry) return;
-  entry.refs -= 1;
-  if (entry.refs <= 0) {
-    entry.resource.stop();
-    cache.delete(key);
-  }
+  reads.drop(key);
 }
 
 export function sessionBookmarks(rowId: number): Resource<BookmarkList> {

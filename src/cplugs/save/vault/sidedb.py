@@ -4,11 +4,13 @@ from __future__ import annotations
 import shutil
 import sqlite3
 from contextlib import closing
+from dataclasses import replace
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
 import structlog
 
+from src.cplugs.sdk.safe_io import READONLY_TIMEOUT_LONG_S, connect_readonly
 from src.cplugs.save.vault import constants as K
 from src.cplugs.save.vault.chunks import BlobStore
 from src.cplugs.save.vault.ingest import Pacer, SourceError, ingest_file
@@ -23,7 +25,7 @@ class SnapshotFailed(SourceError):
 
 def snapshot(source: Path, dest: Path) -> None:
     try:
-        with closing(sqlite3.connect(f"{source.resolve().as_uri()}?mode=ro", uri=True, timeout=30)) as live, \
+        with closing(connect_readonly(source, timeout=READONLY_TIMEOUT_LONG_S)) as live, \
                 closing(sqlite3.connect(str(dest))) as copy:
             live.backup(copy, pages=-1)
             verdict = copy.execute("PRAGMA integrity_check").fetchone()
@@ -52,9 +54,7 @@ def ingest_databases(blobs: BlobStore, staging: Path, state_dir: Path, databases
             except (SourceError, FileNotFoundError) as exc:
                 logger.error("vault_side_database_skipped", database=name, error=str(exc))
                 continue
-            entry.source_path, entry.size_seen, entry.mtime_ns = str(path), -1, 0
-            entry.mode = 0o600
-            entries.append(entry)
+            entries.append(replace(entry, source_path=str(path), size_seen=-1, mtime_ns=0, mode=0o600))
     finally:
         shutil.rmtree(staging, ignore_errors=True)
     return entries

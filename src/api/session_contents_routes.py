@@ -1,8 +1,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 
+from src.api.error_response import refusal_error
 from src.api.auth import require_auth
 from src.core.bookmarks.errors import BookmarkError
 from src.core.session_contents import gather
@@ -24,4 +25,4 @@ async def session_contents(session_uuid: str, request: Request) -> SessionConten
     try:
         return SessionContents(**await gather.read(session_uuid, socket))
     except BookmarkError as exc:
-        raise HTTPException(status_code=exc.status, detail={"code": exc.code, "message": str(exc)})
+        raise refusal_error(exc, session_uuid=session_uuid) from exc

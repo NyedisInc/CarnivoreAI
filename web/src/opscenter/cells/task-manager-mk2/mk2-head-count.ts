@@ -51,6 +51,11 @@ export function headCountsOf(entries: ReturnType<typeof entriesOf>): HeadCounts 
   return { unread: items.reduce((sum, item) => sum + unreadMessageCount(item), 0), needsYou: chipCount('needs_you', items) };
 }
 
+export function needsYouOfGroups(groups: readonly TaskManagerGroup[] | null, only: string | null): number | null {
+  const entries = only === null ? allEntriesOf(groups) : groupEntriesOf(groups, only);
+  return entries === null ? null : headCountsOf(entries).needsYou;
+}
+
 export function needsYouText(count: number): string {
   return count > 0 ? t('cplug.huddle.tm.n_needs_you', { n: count }) : '';
 }

@@ -51,7 +51,6 @@ class BundledSkillError(RuntimeError):
 
 @dataclass(frozen=True)
 class BundledCopy:
-    """One harness copy this call will write: its harness, the folder, and whether it already exists byte-identical."""
 
     harness: str
     directory: Path

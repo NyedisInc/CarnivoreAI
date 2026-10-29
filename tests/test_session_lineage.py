@@ -362,3 +362,13 @@ def test_a_branch_after_a_background_fork_attaches_to_the_real_origin(conn, anch
     assert branch["parent_session_id"] == origin["id"], (
         "the branch must descend from what the pane was running"
     )
+
+
+def test_a_cleared_anchor_binds_the_registry_conversation_instead_of_calling_it_a_sibling(conn, anchor):
+    _record(conn, "uuid-A", "startup")
+    _record(conn, "uuid-B", SESSION_FORK_KIND_CLEAR, pane_left_previous=True)
+    with transaction(conn):
+        conn.execute("UPDATE sessions SET claude_session_uuid = NULL WHERE id = ?", (anchor,))
+    result = _record(conn, "uuid-C", "registry")
+    assert result.outcome == LINEAGE_BOUND and result.row_id == anchor
+    assert get_instance(conn, socket=SOCKET, name=NAME, epoch=EPOCH)["claude_session_uuid"] == "uuid-C"

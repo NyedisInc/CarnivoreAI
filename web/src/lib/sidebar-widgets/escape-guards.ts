@@ -9,7 +9,6 @@ export function inTerminal(el: EventTarget | null): boolean {
   return el instanceof Element && !!el.closest('.xterm');
 }
 
-/*  hidden  */
 export function menuShowing(el: Element): boolean {
   if (el.closest('[hidden], [inert]')) return false;
   const check = (el as Element & { checkVisibility?: (opts?: object) => boolean }).checkVisibility;

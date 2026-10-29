@@ -18,6 +18,7 @@ const policy = require(path.join(macDir, 'app-lifecycle-policy.js'));
 const { TrayApiClient } = require(path.join(macDir, 'tray-api.js'));
 
 const queue = [];
+/** Queue one named case (sync or async); they run in order at the end. */
 function t(name, fn) { queue.push([name, fn]); }
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 function alive(pid) { try { process.kill(pid, 0); return true; } catch (err) { return err.code === 'EPERM'; } }

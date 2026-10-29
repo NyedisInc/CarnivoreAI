@@ -19,6 +19,7 @@ class Launcher(BaseModel):
 
 
 class LauncherSummary(BaseModel):
+    """`GET /launchers/summary`: this computer's launchers."""
 
     model_config = ConfigDict(extra="forbid")
 

@@ -1,4 +1,5 @@
 import { t } from '../../i18n/index.svelte';
+import { open as openGroupRule } from '../../drawer/group-rule-popup';
 import { addToNodes } from '../../add-to-menu/host';
 import { deleteGroup, moveGroup, renameGroup } from '../../sidebar-shell/heading-group-actions';
 import { sleepGroup } from '../../sidebar-shell/heading-project-actions';
@@ -19,6 +20,7 @@ defineItemMenu('group', {
                 { label: 'add', icon: 'add', id: 'add-members', children: () => addToNodes.forGroup(groupUuid), onPick: () => undefined },
                 { label: t('sidebar.group.colour.menu'), icon: 'colour', id: 'colour', onPick: () => hg().SessionSidebarGroupColour?.open(anchor, groupUuid) },
                 { label: t('sidebar.group.icon.menu'), icon: 'group-icon', id: 'group-icon', onPick: () => hg().SessionSidebarGroupIcon?.open(anchor, groupUuid) },
+                { label: t('sidebar.group.rule.menu'), icon: 'add', id: 'group-rule', onPick: () => openGroupRule(anchor, groupUuid) },
             ],
             [{ label: t('sidebar.heading.sleep'), icon: 'sleep', id: 'sleep', onPick: () => { void sleepGroup(groupUuid); } }],
             [

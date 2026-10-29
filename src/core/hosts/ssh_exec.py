@@ -237,13 +237,6 @@ def classify_ssh_failure(stderr_text: str) -> str:
 
 
 def first_line(text: str, limit: int = 300) -> str:
-    """The first non-empty, non-banner line of some output, bounded.
-
-    Description: strips the ``@`` frame of ssh's host key banner, so a
-      detail shows the sentence and not the decoration.
-    Inputs: text (str); limit (int) - maximum characters kept.
-    Output: str - "" when there is nothing to show.
-    """
     for line in (text or "").splitlines():
         line = line.strip().strip("@").strip()
         if line:
@@ -252,11 +245,6 @@ def first_line(text: str, limit: int = 300) -> str:
 
 
 def failure_detail(failure: str, stderr_text: str) -> str:
-    """One sentence for a failure: its meaning, then ssh's own words.
-
-    Inputs: failure (str) - a ``FAILURE_*`` name; stderr_text (str).
-    Output: str - e.g. "the host could not be reached (ssh: connect to ...)".
-    """
     meaning = FAILURE_MEANING.get(failure, failure.replace("_", " "))
     said = first_line(stderr_text)
     return f"{meaning} ({said})" if said else meaning
@@ -265,16 +253,6 @@ def failure_detail(failure: str, stderr_text: str) -> str:
 
 @dataclass(frozen=True)
 class ExecResult:
-    """What one ssh process did, with every way it can fail kept apart.
-
-    Attributes:
-        returncode: the exit status, or None when it was killed here.
-        stdout, stderr: the bytes read, each capped (never discarded).
-        timed_out: the deadline passed and the process was killed.
-        overflowed: an output cap was hit and the process was killed.
-        spawn_error: why the ssh binary could not be started, if it could not.
-        elapsed_ms: wall time from spawn to exit.
-    """
 
     returncode: Optional[int]
     stdout: bytes

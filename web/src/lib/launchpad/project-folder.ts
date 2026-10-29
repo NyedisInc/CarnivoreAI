@@ -20,6 +20,7 @@ export interface NameVerdict {
 
 const ACCEPTED: NameVerdict = { ok: true, code: null, params: {} };
 
+/* not a string */
 export function validateName(name: unknown): NameVerdict {
     const raw = typeof name === 'string' ? name : '';
     const trimmed = raw.trim();

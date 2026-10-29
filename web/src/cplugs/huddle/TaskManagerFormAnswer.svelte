@@ -7,7 +7,7 @@
   let { message }: { message: TaskManagerMessage } = $props();
 
   const form = $derived(findItem(message.item_id)?.thread.find((m) => m.id === message.answers_to)?.form ?? []);
-  const rows = $derived(formAnswerRows(message, form));
+  const rows = $derived(formAnswerRows(message, t, form));
 </script>
 
 <dl class="hdfa" data-task-manager-form-answers={message.id}>

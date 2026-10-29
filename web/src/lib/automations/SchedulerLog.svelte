@@ -8,7 +8,8 @@
   import { resourcePush } from '../resource-push/boot';
   import * as api from './api';
   import { t } from '../i18n/index.svelte';
-  import { logEventLabel, reasonLabel, refusalText } from './format';
+  import { logEventLabel, refusalText } from './format';
+import { reasonWords } from './logic/words';
   import { data, pageClock } from './page-store.svelte';
 
   let { automationId }: { automationId: string | null } = $props();
@@ -95,7 +96,7 @@
       {#each lines as line, index (`${line.ts}-${index}`)}
         <ListRow wrap>
           {#snippet primary()}<span data-log-name>{nameOf(line)}</span>{/snippet}
-          {#snippet secondary()}{logEventLabel(line)}{#if line.reason}{' '}{reasonLabel(line.reason)}{/if}{/snippet}
+          {#snippet secondary()}{logEventLabel(line)}{#if line.reason}{' '}{reasonWords(line.reason)}{/if}{/snippet}
           {#snippet meta()}<span class="ap-num">{clock.when(line.ts)}</span>{/snippet}
         </ListRow>
       {/each}

@@ -16,6 +16,26 @@ class LoadoutMemberPreview(BaseModel):
     verified INDEX and the local ledger, not from the list, because they
     are what the sheet uses to tell the user what they are about to get
     and which members will ask for a tick of their own.
+
+    Fields:
+        item_id: ``<publisher>/<name>``, as the loadout pinned it.
+        version: the exact version pinned. Never a range and never
+            "latest": a bundle names a set that was tested together.
+        kind: the member's own kind, from the index.
+        title: the member's card title, for a readable line.
+        scripts: how many executable members that version ships, from
+            the SIGNED count. Non-zero means this member needs its own
+            consent, which is never given by consenting to the bundle.
+        installed: this machine already has this item at this exact
+            version, so installing the loadout will not write it. A
+            no-op is not a failure and the sheet says so.
+        instructions_write: this member's signed review says it edits
+            CLAUDE.md, AGENTS.md or MEMORY.md. A notice, never a gate;
+            computed from the member's own review, not the manifest.
+        instructions_details: the reviewer's own sentences for those
+            findings, which name the file. Plain text, at most three, cut
+            at 200 characters, from the same signed review.
+        instructions_more: how many such findings are not in the list.
     """
 
     item_id: str

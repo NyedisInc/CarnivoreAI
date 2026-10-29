@@ -1,4 +1,3 @@
-/*  hidden  */
 import { isDismissTarget } from './task-manager-posts';
 
 export interface CloseCue {
@@ -6,7 +5,6 @@ export interface CloseCue {
   point: (id: number, event: Pick<PointerEvent, 'shiftKey' | 'target'>) => void;
   leave: (id: number) => void;
   key: (event: Pick<KeyboardEvent, 'shiftKey'>) => void;
-  /*  hidden  */
   clear: () => void;
   attach: (win?: Window) => () => void;
 }

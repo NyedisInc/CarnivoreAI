@@ -1,0 +1,876 @@
+{
+ "_provenance": "Issue #945. Records copied from two real Claude Code 2.1.283 conversations on 2026-09-27 (Carnivore-Featurelist 20:43 to 21:00Z, Argent-Deploy 18:49 to 18:51Z) through a key whitelist: every prose field is replaced with 'redacted', every tool output with its structural tags only, sessionId with {SESSION} and each shell output directory with {TASKS}. Keys, key order, record types, ids and timestamps are as written.",
+ "featurelist": {
+  "session": "62a72065-4220-494c-bdc6-2669b2798f4f",
+  "parent": [
+   {
+    "isSidechain": false,
+    "type": "user",
+    "message": {
+     "role": "user",
+     "content": "redacted prompt"
+    },
+    "timestamp": "2026-09-27T20:43:02.129Z",
+    "origin": {
+     "kind": "human"
+    },
+    "promptSource": "typed",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": [
+      {
+       "type": "tool_use",
+       "id": "toolu_01XUk8Vjge5KrFtmgtQu1NBK",
+       "name": "Agent",
+       "input": {
+        "description": "redacted",
+        "subagent_type": "redacted",
+        "model": "redacted",
+        "prompt": "redacted",
+        "run_in_background": "redacted"
+       },
+       "caller": {
+        "type": "direct"
+       }
+      }
+     ]
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:43:16.323Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "user",
+    "message": {
+     "role": "user",
+     "content": [
+      {
+       "tool_use_id": "toolu_01XUk8Vjge5KrFtmgtQu1NBK",
+       "type": "tool_result",
+       "content": "redacted"
+      }
+     ]
+    },
+    "timestamp": "2026-09-27T20:43:16.392Z",
+    "toolUseResult": {
+     "isAsync": true,
+     "status": "async_launched",
+     "agentId": "ef46830a20a635dd3",
+     "description": "redacted",
+     "resolvedModel": "claude-sonnet-5",
+     "prompt": "redacted",
+     "outputFile": "redacted",
+     "canReadOutputFile": true
+    },
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": [
+      {
+       "type": "text",
+       "text": "redacted"
+      }
+     ]
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:43:19.800Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "stop_hook_summary",
+    "timestamp": "2026-09-27T20:43:19.859Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "turn_duration",
+    "durationMs": 17793,
+    "pendingBackgroundAgentCount": 1,
+    "timestamp": "2026-09-27T20:43:19.865Z",
+    "isMeta": false,
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "user",
+    "message": {
+     "role": "user",
+     "content": "redacted prompt"
+    },
+    "timestamp": "2026-09-27T20:47:21.359Z",
+    "origin": {
+     "kind": "human"
+    },
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "user",
+    "message": {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "redacted"
+      }
+     ]
+    },
+    "isMeta": true,
+    "timestamp": "2026-09-27T20:47:21.359Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": []
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:47:25.431Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": [
+      {
+       "type": "text",
+       "text": "redacted"
+      }
+     ]
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:47:28.642Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "stop_hook_summary",
+    "timestamp": "2026-09-27T20:47:28.691Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "turn_duration",
+    "durationMs": 7371,
+    "pendingBackgroundAgentCount": 1,
+    "timestamp": "2026-09-27T20:47:28.695Z",
+    "isMeta": false,
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "enqueue",
+    "timestamp": "2026-09-27T20:50:35.863Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01XUk8Vjge5KrFtmgtQu1NBK</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "dequeue",
+    "timestamp": "2026-09-27T20:50:35.874Z",
+    "sessionId": "{SESSION}"
+   },
+   {
+    "isSidechain": false,
+    "type": "user",
+    "message": {
+     "role": "user",
+     "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01XUk8Vjge5KrFtmgtQu1NBK</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+    },
+    "timestamp": "2026-09-27T20:50:35.883Z",
+    "origin": {
+     "kind": "task-notification"
+    },
+    "promptSource": "system",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": []
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:50:39.739Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": [
+      {
+       "type": "tool_use",
+       "id": "toolu_01FOejzPYWkDBAskrheqgGaS",
+       "name": "SendMessage",
+       "input": {
+        "to": "redacted",
+        "summary": "redacted",
+        "message": "redacted",
+        "type": "redacted",
+        "recipient": "redacted",
+        "content": "redacted"
+       },
+       "caller": {
+        "type": "direct"
+       }
+      }
+     ]
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:50:42.283Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "user",
+    "message": {
+     "role": "user",
+     "content": [
+      {
+       "tool_use_id": "toolu_01FOejzPYWkDBAskrheqgGaS",
+       "type": "tool_result",
+       "content": "redacted"
+      }
+     ]
+    },
+    "timestamp": "2026-09-27T20:50:42.389Z",
+    "toolUseResult": {
+     "success": true,
+     "message": "Resuming agent ae6df4b",
+     "resumedAgentId": "ef46830a20a635dd3",
+     "pin": {
+      "id": "ef46830a20a635dd3",
+      "name": "ef46830a20a635dd3",
+      "ref": "caaeb8"
+     }
+    },
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": [
+      {
+       "type": "text",
+       "text": "redacted"
+      }
+     ]
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:50:44.068Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "stop_hook_summary",
+    "timestamp": "2026-09-27T20:50:44.250Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "turn_duration",
+    "durationMs": 8379,
+    "pendingBackgroundAgentCount": 1,
+    "timestamp": "2026-09-27T20:50:44.253Z",
+    "isMeta": false,
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "enqueue",
+    "timestamp": "2026-09-27T20:50:48.918Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>bas8u5mr6</task-id>\n<tool-use-id>toolu_01AkvIkTziFDJpJ77Qe3Or8G</tool-use-id>\n<status>failed</status>\n<summary>redacted</summary>\n</task-notification>"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "remove",
+    "timestamp": "2026-09-27T20:50:49.974Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>bas8u5mr6</task-id>\n<tool-use-id>toolu_01AkvIkTziFDJpJ77Qe3Or8G</tool-use-id>\n<status>failed</status>\n<summary>redacted</summary>\n</task-notification>"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "enqueue",
+    "timestamp": "2026-09-27T20:51:12.774Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01FOejzPYWkDBAskrheqgGaS</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "dequeue",
+    "timestamp": "2026-09-27T20:51:12.780Z",
+    "sessionId": "{SESSION}"
+   },
+   {
+    "isSidechain": false,
+    "type": "user",
+    "message": {
+     "role": "user",
+     "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01FOejzPYWkDBAskrheqgGaS</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+    },
+    "timestamp": "2026-09-27T20:51:12.786Z",
+    "origin": {
+     "kind": "task-notification"
+    },
+    "promptSource": "system",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": []
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:51:15.251Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": [
+      {
+       "type": "text",
+       "text": "redacted"
+      }
+     ]
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:51:16.030Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "stop_hook_summary",
+    "timestamp": "2026-09-27T20:51:16.092Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "turn_duration",
+    "durationMs": 494023,
+    "timestamp": "2026-09-27T20:51:16.096Z",
+    "isMeta": false,
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "enqueue",
+    "timestamp": "2026-09-27T20:56:03.374Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>bidpmkfge</task-id>\n<summary>redacted</summary>\n</task-notification>"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "remove",
+    "timestamp": "2026-09-27T20:56:03.404Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>bidpmkfge</task-id>\n<summary>redacted</summary>\n</task-notification>"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "enqueue",
+    "timestamp": "2026-09-27T20:56:10.831Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "dequeue",
+    "timestamp": "2026-09-27T20:56:10.836Z",
+    "sessionId": "{SESSION}"
+   },
+   {
+    "isSidechain": false,
+    "type": "user",
+    "message": {
+     "role": "user",
+     "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+    },
+    "timestamp": "2026-09-27T20:56:10.846Z",
+    "origin": {
+     "kind": "task-notification"
+    },
+    "promptSource": "system",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": []
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:56:12.624Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "message": {
+     "type": "message",
+     "role": "assistant",
+     "content": [
+      {
+       "type": "text",
+       "text": "redacted"
+      }
+     ]
+    },
+    "type": "assistant",
+    "timestamp": "2026-09-27T20:56:13.510Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "stop_hook_summary",
+    "timestamp": "2026-09-27T20:56:13.603Z",
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "isSidechain": false,
+    "type": "system",
+    "subtype": "turn_duration",
+    "durationMs": 2768,
+    "timestamp": "2026-09-27T20:56:13.606Z",
+    "isMeta": false,
+    "sessionId": "{SESSION}",
+    "version": "2.1.283"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "enqueue",
+    "timestamp": "2026-09-27T21:00:55.406Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>bcw5srws5</task-id>\n<tool-use-id>toolu_01PIvMDNWdeDuunvUq5tsR2g</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "remove",
+    "timestamp": "2026-09-27T21:00:55.433Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>bcw5srws5</task-id>\n<tool-use-id>toolu_01PIvMDNWdeDuunvUq5tsR2g</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+   },
+   {
+    "type": "queue-operation",
+    "operation": "enqueue",
+    "timestamp": "2026-09-27T21:00:55.599Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>bbspnbm6q</task-id>\n<summary>redacted</summary>\n</task-notification>"
+   }
+  ],
+  "agents": {
+   "ef46830a20a635dd3": {
+    "meta": {
+     "agentType": "general-purpose",
+     "description": "redacted",
+     "toolUseId": "toolu_01XUk8Vjge5KrFtmgtQu1NBK",
+     "spawnDepth": 1,
+     "requestShape": "background",
+     "requestNonInteractive": true,
+     "model": "sonnet"
+    },
+    "lines": [
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "type": "user",
+      "message": {
+       "role": "user",
+       "content": [
+        {
+         "tool_use_id": "toolu_01AkvIkTziFDJpJ77Qe3Or8G",
+         "type": "tool_result",
+         "content": "Command running in background with ID: bas8u5mr6. Output is being written to: {TASKS}/bas8u5mr6.output. You will be notified when it completes.",
+         "is_error": false
+        }
+       ]
+      },
+      "timestamp": "2026-09-27T20:50:05.490Z",
+      "toolUseResult": {
+       "stdout": "",
+       "stderr": "",
+       "interrupted": false,
+       "isImage": false,
+       "noOutputExpected": false,
+       "backgroundTaskId": "bas8u5mr6",
+       "timedOutAfterMs": 120000
+      },
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "type": "user",
+      "message": {
+       "role": "user",
+       "content": [
+        {
+         "tool_use_id": "toolu_01URRSqrw8b74VtMo7hcz4qH",
+         "type": "tool_result",
+         "content": "Monitor started (task bidpmkfge, redacted)"
+        }
+       ]
+      },
+      "timestamp": "2026-09-27T20:50:33.401Z",
+      "toolUseResult": {
+       "taskId": "bidpmkfge",
+       "timeoutMs": 330000,
+       "persistent": false
+      },
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "type": "user",
+      "message": {
+       "role": "user",
+       "content": "redacted prompt"
+      },
+      "isMeta": true,
+      "timestamp": "2026-09-27T20:50:42.347Z",
+      "origin": {
+       "kind": "coordinator"
+      },
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "attachment": {
+       "type": "hook_success"
+      },
+      "type": "attachment",
+      "timestamp": "2026-09-27T20:50:42.404Z",
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "attachment": {
+       "type": "queued_command",
+       "prompt": "<task-notification>\n<task-id>bas8u5mr6</task-id>\n<tool-use-id>toolu_01AkvIkTziFDJpJ77Qe3Or8G</tool-use-id>\n<status>failed</status>\n<summary>redacted</summary>\n</task-notification>"
+      },
+      "type": "attachment",
+      "timestamp": "2026-09-27T20:50:48.918Z",
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "type": "user",
+      "message": {
+       "role": "user",
+       "content": [
+        {
+         "tool_use_id": "toolu_01PIvMDNWdeDuunvUq5tsR2g",
+         "type": "tool_result",
+         "content": "Command running in background with ID: bcw5srws5. Output is being written to: {TASKS}/bcw5srws5.output. You will be notified when it completes.",
+         "is_error": false
+        }
+       ]
+      },
+      "timestamp": "2026-09-27T20:50:54.993Z",
+      "toolUseResult": {
+       "stdout": "",
+       "stderr": "",
+       "interrupted": false,
+       "isImage": false,
+       "noOutputExpected": false,
+       "backgroundTaskId": "bcw5srws5"
+      },
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "type": "user",
+      "message": {
+       "role": "user",
+       "content": [
+        {
+         "tool_use_id": "toolu_01OxDK3bpprlubyq9QYlk7dC",
+         "type": "tool_result",
+         "content": "Monitor started (task bbspnbm6q, redacted)"
+        }
+       ]
+      },
+      "timestamp": "2026-09-27T20:51:01.789Z",
+      "toolUseResult": {
+       "taskId": "bbspnbm6q",
+       "timeoutMs": 630000,
+       "persistent": false
+      },
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "message": {
+       "type": "message",
+       "role": "assistant",
+       "content": [
+        {
+         "type": "text",
+         "text": "redacted"
+        }
+       ]
+      },
+      "type": "assistant",
+      "timestamp": "2026-09-27T20:51:12.724Z",
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "attachment": {
+       "type": "hook_success"
+      },
+      "type": "attachment",
+      "timestamp": "2026-09-27T20:51:12.767Z",
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "type": "user",
+      "message": {
+       "role": "user",
+       "content": "redacted prompt"
+      },
+      "isMeta": true,
+      "timestamp": "2026-09-27T20:56:03.402Z",
+      "origin": {
+       "kind": "task-notification"
+      },
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "message": {
+       "type": "message",
+       "role": "assistant",
+       "content": [
+        {
+         "type": "text",
+         "text": "redacted"
+        }
+       ]
+      },
+      "type": "assistant",
+      "timestamp": "2026-09-27T20:56:10.671Z",
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "attachment": {
+       "type": "hook_success"
+      },
+      "type": "attachment",
+      "timestamp": "2026-09-27T20:56:10.827Z",
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "type": "user",
+      "message": {
+       "role": "user",
+       "content": "redacted prompt"
+      },
+      "isMeta": true,
+      "timestamp": "2026-09-27T21:00:55.432Z",
+      "origin": {
+       "kind": "task-notification"
+      },
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "ef46830a20a635dd3",
+      "attachment": {
+       "type": "queued_command",
+       "prompt": "<task-notification>\n<task-id>bbspnbm6q</task-id>\n<summary>redacted</summary>\n</task-notification>"
+      },
+      "type": "attachment",
+      "timestamp": "2026-09-27T21:00:55.599Z",
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     }
+    ]
+   }
+  }
+ },
+ "argent": {
+  "session": "9d9a067c-5131-eb65-aebd-4b8a1b194a47",
+  "parent": [
+   {
+    "type": "queue-operation",
+    "operation": "enqueue",
+    "timestamp": "2026-09-27T18:51:42.647Z",
+    "sessionId": "{SESSION}",
+    "content": "<task-notification>\n<task-id>bgmvzhmav</task-id>\n<tool-use-id>toolu_013y83TE07Aw0aAwrdjWxn4E</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+   }
+  ],
+  "agents": {
+   "42663cac05a267bf3": {
+    "meta": {
+     "agentType": "general-purpose",
+     "description": "redacted",
+     "toolUseId": "toolu_017IaNersc9EbwS4hhQn49Ec",
+     "spawnDepth": 1,
+     "requestShape": "background",
+     "requestNonInteractive": true,
+     "model": "opus"
+    },
+    "lines": [
+     {
+      "isSidechain": true,
+      "agentId": "42663cac05a267bf3",
+      "message": {
+       "type": "message",
+       "role": "assistant",
+       "content": [
+        {
+         "type": "tool_use",
+         "id": "toolu_013y83TE07Aw0aAwrdjWxn4E",
+         "name": "Monitor",
+         "input": {
+          "command": "redacted",
+          "description": "redacted",
+          "timeout_ms": 3000000
+         },
+         "caller": {
+          "type": "direct"
+         }
+        }
+       ]
+      },
+      "type": "assistant",
+      "timestamp": "2026-09-27T18:49:40.514Z",
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "42663cac05a267bf3",
+      "type": "user",
+      "message": {
+       "role": "user",
+       "content": [
+        {
+         "tool_use_id": "toolu_013y83TE07Aw0aAwrdjWxn4E",
+         "type": "tool_result",
+         "content": "Monitor started (task bgmvzhmav, redacted)"
+        }
+       ]
+      },
+      "timestamp": "2026-09-27T18:49:40.642Z",
+      "toolUseResult": {
+       "taskId": "bgmvzhmav",
+       "timeoutMs": 1800000,
+       "persistent": false
+      },
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     },
+     {
+      "isSidechain": true,
+      "agentId": "42663cac05a267bf3",
+      "message": {
+       "type": "message",
+       "role": "assistant",
+       "content": [
+        {
+         "type": "text",
+         "text": "redacted"
+        }
+       ]
+      },
+      "type": "assistant",
+      "timestamp": "2026-09-27T18:49:41.717Z",
+      "sessionId": "{SESSION}",
+      "version": "2.1.283"
+     }
+    ]
+   }
+  }
+ }
+}

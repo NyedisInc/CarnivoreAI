@@ -49,6 +49,7 @@ function feed(): unknown {
   };
 }
 
+/** The drawer's <aside>, exactly as shipped. */
 function drawerMarkup(): string {
   const source = fs.readFileSync(path.join(REPO, 'client', 'index.html'), 'utf8');
   const start = source.indexOf('<aside id="session-sidebar-panel"');
@@ -81,6 +82,7 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
+/** Let pending microtasks and timers settle, up to ~2 s, until `done` holds. */
 async function settle(done: () => boolean): Promise<void> {
   for (let i = 0; i < 200; i += 1) {
     await tick();

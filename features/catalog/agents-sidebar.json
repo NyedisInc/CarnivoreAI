@@ -7,7 +7,8 @@
   ],
   "examples": [
     "Keep every agent in view while you work in one of them.",
-    "Glance at the stats bar to see how many agents are working or waiting to be read and how many tokens are flowing, without opening anything."
+    "Glance at the stats bar to see how many agents are working or waiting to be read and how many tokens are flowing, without opening anything.",
+    "Hide studio while you work on this computer, then switch it back on to see everything again."
   ],
   "how_to": [
     "Every session is listed, grouped, with its light, name and folder.",
@@ -28,11 +29,11 @@
     "Hold shift and click a company, project or other heading to open or close everything underneath it at once; the chevron turns into a double chevron while shift is held. Shift+Enter does the same from the keyboard.",
     "Folds (including the providers panel) and row density are kept separately for the desktop and the phone: on a screen 700 pixels wide or less the drawer is the phone's, and what you fold or pick there does not move the desktop's. Pins and order are shared by every device.",
     "A project has no color until you pick one. Press a project heading's kebab and pick a swatch in its color row to set the project's color, or the crossed swatch at the start of the row to remove it; the swarm list's project header takes it at once.",
-    "Click the rate to cycle per second, minute, hour and day; click the small chart to cycle the last hour, 5 hours, day and 7 days (hatched slots were not measured). It says stats off or stats paused when that is the case. On a phone it scrolls away with the search row. Both choices are kept per browser. When the feed cannot be read it says so by name (sign in for stats, stats not on this install, stats not readable) instead of waiting. A longer window folds several minutes into each bar, and hovering a bar names the span it covers. If a paired computer is paused, off or unreachable, a hatched band marks the part of the chart that undercounts, in the danger color when it cannot be reached, and a small square beside the rate shows the same at any width.",
-    "The stats bar wears no box and shows no hover tips: the counts sit on the left and the token rate sits flush right, with at most one decimal (4.5M).",
+    "A small bar between the tabs and the search box shows three counts (active agents, in progress, waiting to be read, from this computer and paired ones) and the token rate: the up arrow is tokens generated, the down arrow is tokens in (fresh, cache write and cache read, split on hover). Click the rate to cycle per second, minute, hour and day; click the small chart to cycle the last hour, 5 hours, day and 7 days (hatched slots were not measured). It says stats off or stats paused when that is the case. On a phone it scrolls away with the search row. Both choices are kept per browser. When the feed cannot be read it says so by name (sign in for stats, stats not on this install, stats not readable) instead of waiting. A longer window folds several minutes into each bar, and hovering a bar names the span it covers. If a paired computer is paused, off or unreachable, a hatched band marks the part of the chart that undercounts, in the danger color when it cannot be reached, and a small square beside the rate shows the same at any width.",
+    "The stats bar wears no box and shows no hover tips: the counts sit on the left and the token rate sits flush right, with at most one decimal (4.5M). When the pack holds more than one computer, a wolf and that number (this computer and offline ones included) come first, before the counts.",
     "Untick \"show stats\" in the view menu to hide the counts and token bar under the tabs; hidden, it is not drawn and does not read the stats feed. On by default, kept separately for the desktop and the phone.",
     "Project, company, group and layout colors are drawn whenever one is set. Pick one from the heading's menu (swatches or any custom color).",
-    "Its heading folds like the others. The pinned heading shows no status light, folded or not.",
+    "The pack section under browsers lists this computer first, then each paired one, as rows that look like the agent rows and follow the drawer's compact, cozy or detailed view: the computer icon, a red wolf on the alpha, a light summing up that computer's agents, the name, then cpu, ram and disk flush right (as percents, then small meters, and in detailed a second line with the model, cores, memory and the reserve in use); click a row to open pack. Its heading folds like the others. The pinned heading shows no status light, folded or not.",
     "Drag a section heading (pinned, layouts, groups, companies, rogue agents, terminals, browsers, pack) to put the sections in any order; on a phone drag from the little icon at the heading's left, and the rest of the heading still scrolls. A focused heading moves one slot with alt plus the up or down arrow. Escape cancels a drag. The order is the same on every device, and a section added later joins at its usual place until you move it.",
     "Every group you made sits under one groups heading, built like layouts: click it to fold all the groups out of the way, and each group keeps its own fold, color and members. Drag a group's heading, or press alt plus the up or down arrow on it, to reorder the groups among themselves; drag the groups heading to move the whole block. While you drag a session row the groups heading stays open so every group is a drop target. Shift+click it to fold or open every group at once.",
     "The view menu (the three bars button) has show open sessions and show sleeping sessions, both ticked by default. Open lists your awake sessions and sleeping lists your asleep ones; they are independent, so untick one to hide that set, and with both unticked no awake or sleeping session shows. Show archived and show closed sessions are unticked by default. All are kept per device, so your phone can differ from your desktop.",
@@ -41,7 +42,9 @@
     "A group you made with no sessions in it is not drawn (it also hides when the view's filters leave it no row, such as sleeping members with sleeping hidden), and it returns the moment a session is in it. While you drag a row every group shows so you can drop into an empty one. The group itself stays saved.",
     "The view menu's hide empty sections tick, off by default, also hides the terminals and browsers headings while they hold nothing; a drag still shows them.",
     "Type in the search box and the list becomes two sections: AGENTS (every agent whose name, project or folder holds the text, asleep ones included even when show sleeping is off; a pinned agent is listed once, the match is in the accent, and each row offers open session and look around, with its three dots for the rest) and the top CONVERSATIONS (saved conversation hits, each with read around, go to session or resume, copy link and more). Under the box, similar terms from your saved conversations show from 2 letters: arrow down enters them, left and right move, enter takes one, escape goes back to the box. Enter opens the highlighted result. Starting a drag keeps the text.",
-    "In the pack section, click a computer to switch it off: its agents and projects leave the list and its row dims with the name struck through; click it again to bring them back. Every computer starts on, and a phone keeps its own switches."
+    "In the pack section, click a computer to switch it off: its agents and projects leave the list and its row dims with the name struck through; click it again to bring them back. Every computer starts on, and a phone keeps its own switches.",
+    "Right-click a session row (or press shift+f10) and pick join the swarm to make it a swarm agent under its project agent, keeping its conversation: a warning says joining restarts it and stops what it is doing, and ok goes ahead; a project with no project agent first says so plainly, and ok creates the project agent. A member's row shows its little swarm character in place of the status light, in its swarm color, its animation telling its status (working, a question, waiting to be read, asleep and the rest); hover it for the status in words. Leave the swarm, in the same menu, makes it a plain session again.",
+    "A session row's menu never offers do not disturb: a swarm member shows leave the swarm in its place and any other session shows join the swarm. Mute on the row means only one thing, no notifications from that session anywhere (pop-ups, phone push, texts and every destination, the swarm's own pushes and texts included); its status light keeps updating."
   ],
   "id": "agents-sidebar",
   "issues": [
@@ -60,7 +63,8 @@
     1547,
     1687,
     1785,
-    1863
+    1863,
+    2604
   ],
   "keywords": [
     "sidebar",
@@ -68,15 +72,28 @@
     "swarm",
     "archived sessions"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The agents drawer listing sessions grouped under projects and terminals",
+      "caption": "The agents drawer",
+      "file": "drawer.png",
+      "kind": "screenshot"
+    },
+    {
+      "kind": "screenshot",
+      "file": "stats-bar.png",
+      "caption": "The drawer stats bar",
+      "alt": "The stats bar at the top of the agents drawer showing session counts and the per-minute rate"
+    }
+  ],
   "name": "Agents sidebar",
   "since": "2026-08-25",
   "status": "stable",
   "summary": "a slide-out list of all your sessions, grouped and searchable, that docks beside the page on a wide screen.",
   "surfaces": [
     "client/css/scrollbars.css",
-    "client/js/session-sidebar-groups.js",
-    "client/js/session-sidebar-heading-actions.js",
+    "web/src/lib/drawer/layouts-row-html.ts",
+    "web/src/lib/sidebar-shell/heading-group-actions.ts",
     "web/src/lib/sidebar-shell/SidebarList.svelte",
     "web/src/lib/sidebar-shell/heading-events.ts",
     "web/src/lib/sidebar-shell/heading-project-actions.ts",
@@ -91,13 +108,13 @@
     "web/src/lib/drawer/row-icon-prefs.ts",
     "web/src/lib/item-menu/menus/row.ts",
     "web/src/lib/item-menu/menus/row-items.ts",
-    "client/js/session-row-menu-actions.js",
+    "web/src/lib/item-menu/run/index.ts",
     "web/src/lib/item-menu/row-open.ts",
+    "src/core/ui_preferences/drawer.py",
     "src/core/sessions/agent_update.py",
     "src/core/sessions/agent_update_warn.py",
     "src/core/sessions/codex_update.py",
     "src/api/agent_update_listing.py",
-    "src/core/ui_preferences.py",
     "web/src/lib/drawer/stats-visibility.svelte.ts",
     "web/src/lib/sidebar-shell/heading-color-actions.ts",
     "web/src/lib/sidebar-shell/tint.ts",
@@ -105,13 +122,12 @@
     "web/src/lib/sidebar-shell/section-drag.ts",
     "web/src/lib/drawer/section-order.ts"
   ],
-  "updated": "2026-10-24",
+  "updated": "2026-10-28",
   "where": [
     "The left panel, agents tab.",
     "Hide or show it with the panel button beside the logo.",
     "The stats bar sits at the top of the agents tab, between the tab row and the search box, the same height as the search field.",
     "The last section of the list, under browsers, is pack: one row per paired computer (shown with two or more). Click a computer to switch it off or on.",
     "Any section heading in the list is a drag handle for reordering the sections."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

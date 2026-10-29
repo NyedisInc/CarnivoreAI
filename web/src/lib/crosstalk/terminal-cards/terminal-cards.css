@@ -17,7 +17,7 @@
   overflow-y: auto;
   pointer-events: auto;
 }
-.xtalk-card {
+[data-xtalk-card] {
   box-sizing: border-box;
   display: block;
   width: min(100%, 420px);
@@ -35,8 +35,8 @@
   cursor: pointer;
   pointer-events: auto;
 }
-.xtalk-card[data-side="sent"] { border-left-color: var(--oc-green); }
-.xtalk-card:focus-visible { border-color: var(--oc-orange); }
+[data-xtalk-card][data-side="sent"] { border-left-color: var(--oc-green); }
+[data-xtalk-card]:focus-visible { border-color: var(--oc-orange); }
 .xtalk-card__head { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .xtalk-card__mark { display: inline-flex; flex: none; }
 .xtalk-card__direction { color: var(--oc-text-dim); text-transform: uppercase; letter-spacing: .08em; }

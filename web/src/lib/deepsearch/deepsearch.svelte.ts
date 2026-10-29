@@ -63,7 +63,6 @@ export class DeepSearchController implements DrawerSearchController {
   layout = $state<Layout>(readLayout());
   kind = $state<KindFilter>('all');
   scope = $state.raw<{ conversationId: string; name: string } | null>(null);
-  /*  hidden  */
   expanded = $state.raw<Record<string, true>>({});
   stale = $state.raw<string[]>([]);
   actionNote = $state('');
@@ -76,6 +75,8 @@ export class DeepSearchController implements DrawerSearchController {
   #timer: ReturnType<typeof setTimeout> | null = null;
   #abort: AbortController | null = null;
   #seq = 0;
+  #peerAbort: AbortController | null = null;
+  #peerSeq = 0;
   #searched = '';
   #suggestTimer: ReturnType<typeof setTimeout> | null = null;
   #suggestAbort: AbortController | null = null;
@@ -132,7 +133,6 @@ export class DeepSearchController implements DrawerSearchController {
     return { kinds: this.kind === 'all' ? undefined : this.kind, conversationId: this.scope?.conversationId };
   }
 
-  /*  hidden  */
   async expand(group: DeepGroup): Promise<void> {
     const id = group.conversationId;
     if (this.expanded[id]) return;
@@ -239,20 +239,24 @@ export class DeepSearchController implements DrawerSearchController {
     else this.loadingMore = true;
     let peerAnswer: DeepAnswer | null = null;
     let shownLocal = false;
+    if (offset === 0) this.#stopPeers();
+    const peerSeq = this.#peerSeq;
     const mergePeers = (): void => {
-      if (!shownLocal || peerAnswer === null || seq !== this.#seq) return;
+      if (!shownLocal || peerAnswer === null || peerSeq !== this.#peerSeq) return;
       this.#mergePeerAnswer(peerAnswer);
       peerAnswer = null;
     };
     const scopeArg = this.#scopeArg();
     if (offset === 0 && this.#api.peers && !scopeArg.conversationId) {
-      this.#api.peers(q, abort.signal, scopeArg).then(
+      const peerSignal = new AbortController();
+      this.#peerAbort = peerSignal;
+      this.#api.peers(q, peerSignal.signal, scopeArg).then(
         (answer) => {
           peerAnswer = answer;
           mergePeers();
         },
         (err) => {
-          if (seq === this.#seq && !abort.signal.aborted) console.warn('DeepSearch: the paired computers could not be asked', err);
+          if (peerSeq === this.#peerSeq && !peerSignal.signal.aborted) console.warn('DeepSearch: the paired computers could not be asked', err);
         },
       );
     }
@@ -430,6 +434,12 @@ export class DeepSearchController implements DrawerSearchController {
     return row ? this.pickHit(row.group, row.hit, DeepSearchController.nameOf(row.group)) : Promise.resolve(false);
   }
 
+  #stopPeers(): void {
+    this.#peerSeq++;
+    this.#peerAbort?.abort();
+    this.#peerAbort = null;
+  }
+
   cancel(): void {
     this.#stopSuggest();
     if (this.#timer !== null) {
@@ -439,6 +449,7 @@ export class DeepSearchController implements DrawerSearchController {
     this.#seq++;
     this.#abort?.abort();
     this.#abort = null;
+    this.#stopPeers();
     this.loadingMore = false;
     if (this.phase === 'searching') this.phase = this.groups.length ? 'done' : 'idle';
   }

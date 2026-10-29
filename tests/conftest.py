@@ -75,12 +75,51 @@ def hero_art_off(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
+def claude_credential_miss_cache_empty() -> None:
+    from src.core.provider_ledger import codex_credentials, credentials
+
+    credentials._misses.clear()
+    codex_credentials._misses.clear()
+
+
+@pytest.fixture(autouse=True)
 def agent_tool_switches_on(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> None:
     if request.node.get_closest_marker("real_agent_tool_switches") is not None:
         return
     from src.core.mcp import agent_tool_switches
 
     monkeypatch.setattr(agent_tool_switches, "current", lambda: agent_tool_switches.AgentToolSwitches(huddle=True, swarm=True))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def session_auth_config(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Path]:
+    from src.config import settings
+    from tests.helpers.config_isolation import assert_under_temp, build_test_config
+
+    config_path = build_test_config(tmp_path_factory.mktemp("cc_session_config"))
+    assert_under_temp(config_path, tmp_path_factory.getbasetemp())
+    with pytest.MonkeyPatch.context() as session_patch:
+        session_patch.setattr(settings, "auth_config_file", str(config_path))
+        settings.drop_auth_config_cache()
+        yield config_path
+    settings.drop_auth_config_cache()
+
+
+@pytest.fixture(autouse=True)
+def isolated_auth_config(
+    monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory,
+    session_auth_config: Path,
+) -> None:
+    if request.node.get_closest_marker("real_config_path") is not None:
+        return
+    from src.config import settings
+    from tests.helpers.config_isolation import assert_under_temp, build_test_config
+
+    config_path = build_test_config(tmp_path_factory.mktemp("cc_test_config"))
+    assert_under_temp(config_path, tmp_path_factory.getbasetemp())
+    monkeypatch.setattr(settings, "auth_config_file", str(config_path))
+    settings.drop_auth_config_cache()
+    request.addfinalizer(settings.drop_auth_config_cache)
 
 
 @pytest.fixture(autouse=True)
@@ -249,7 +288,7 @@ def _real_relay_start_when_marked(
 def claude_session_registry_isolation(monkeypatch, tmp_path_factory) -> None:
     empty = tmp_path_factory.mktemp("claude_sessions_registry")
     monkeypatch.setattr(
-        "src.core.attention.registry_read.default_registry_directory",
+        "src.core.attention.registry_index.default_registry_directory",
         lambda: str(empty),
     )
     monkeypatch.setattr(
@@ -259,6 +298,20 @@ def claude_session_registry_isolation(monkeypatch, tmp_path_factory) -> None:
     from src.core.claude_config import profile_roots
 
     profile_roots.reset_profile_roots_cache_for_tests()
+
+
+@pytest.fixture(autouse=True)
+def config_json_when_the_checkout_has_none(monkeypatch: pytest.MonkeyPatch, tmp_path_factory) -> None:
+    try:
+        from src.config import settings
+    except (ImportError, SystemExit, ValueError):
+        return
+    if Path(settings.auth_config_file).expanduser().exists():
+        return
+    path = tmp_path_factory.mktemp("auth_config") / "config.json"
+    path.write_text("{}")
+    monkeypatch.setattr(settings, "auth_config_file", str(path))
+    monkeypatch.setattr(settings, "_auth_config_cache", None)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -370,3 +423,12 @@ def no_builtin_default_login(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.core.provider_ledger import poller_scan
 
     monkeypatch.setattr(poller_scan, "with_auto_default", lambda accounts, label=None: accounts)
+
+
+@pytest.fixture(autouse=True)
+def _drop_listing_caches():
+    from src.core.ttl_flight import invalidate_all
+
+    invalidate_all()
+    yield
+    invalidate_all()

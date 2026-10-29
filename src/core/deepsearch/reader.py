@@ -18,7 +18,7 @@ logger = structlog.get_logger()
 
 
 class ConversationsUnavailable(Exception):
-    """The index could not be read (the database is unreadable or locked past its timeout)."""
+    pass
 
 
 class InvalidSearch(ValueError):
@@ -30,11 +30,6 @@ class ContextNotFound(LookupError):
 
 
 class ConversationIndex:
-    """The body search index of one install, read on a fresh connection off the event loop.
-
-    Inputs: state_dir (Path) - this install's state directory (``deepsearch.db`` and ``carnivore.db`` live there).
-    Example: ``await ConversationIndex(Path(settings.get_state_dir())).search("rsync")``
-    """
 
     def __init__(self, state_dir: Path) -> None:
         self._state_dir = Path(state_dir)
@@ -101,9 +96,6 @@ class ConversationIndex:
 
 
 def default_index() -> ConversationIndex:
-    """
-    The state directory is read off the settings singleton at call time, so a test points it at a temp dir with ``state_dir_override``.
-    """
     from src.config import settings  # noqa: PLC0415
 
     return ConversationIndex(Path(settings.get_state_dir()))

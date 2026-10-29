@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { Button as BaseButton } from '../base';
     import { errorCode } from './api';
     import { useRender } from './context';
     import type { UiNode } from './validate';
@@ -33,10 +34,10 @@
 <div class="cu-action" data-cu="button">
     {#if asking}
         <span class="cu-action__ask">{node.confirm}</span>
-        <button type="button" class={node.tone === 'danger' ? 'modal-btn modal-btn-danger' : 'modal-btn modal-btn-confirm'} onclick={go} disabled={busy}>{ctx.t('cplug_ui.confirm_yes')}</button>
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={() => (asking = false)}>{ctx.t('cplug_ui.confirm_no')}</button>
+        <BaseButton variant={node.tone === 'danger' ? 'danger' : 'confirm'} onclick={go} disabled={busy}>{ctx.t('cplug_ui.confirm_yes')}</BaseButton>
+        <BaseButton onclick={() => (asking = false)}>{ctx.t('cplug_ui.confirm_no')}</BaseButton>
     {:else}
-        <button type="button" class={node.tone === 'danger' ? 'modal-btn modal-btn-danger' : 'modal-btn modal-btn-secondary'} onclick={go} disabled={busy || unavailable}>{node.label}</button>
+        <BaseButton variant={node.tone === 'danger' ? 'danger' : 'secondary'} onclick={go} disabled={busy || unavailable}>{node.label}</BaseButton>
     {/if}
     {#if line}<span class="cu-action__line" role="status">{line}</span>{/if}
 </div>

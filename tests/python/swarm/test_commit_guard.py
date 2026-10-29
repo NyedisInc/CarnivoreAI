@@ -17,7 +17,7 @@ def test_codename_refused_plain_message_passes_and_repo_hook_still_runs(tmp_path
     monkeypatch.setattr(launch, "profile_names_chrome", lambda agent: False)
     state, repo = tmp_path / "state", tmp_path / "repo"
     repo.mkdir()
-    agent = {"id": 7, "slug": "elmfield", "rank": "task", "effort": "medium", "persona": "Elmfield"}
+    agent = {"id": 7, "slug": "warden", "rank": "task", "effort": "medium", "persona": "Warden"}
     argv = launch.swarm_argv(agent, state)
     settings_file = launch.settings_path(state, 7)
     assert argv[argv.index("--settings") + 1] == str(settings_file)
@@ -33,7 +33,7 @@ def test_codename_refused_plain_message_passes_and_repo_hook_still_runs(tmp_path
     own.chmod(0o755)
     env = {**env, **guard}
 
-    refused = _git(repo, env, "commit", "-q", "--allow-empty", "-m", "fix login, by ELMFIELD")
+    refused = _git(repo, env, "commit", "-q", "--allow-empty", "-m", "fix login, by WARDEN")
     assert refused.returncode != 0 and "codename" in refused.stderr
     assert not marker.exists()
     passed = _git(repo, env, "commit", "-q", "--allow-empty", "-m", "fix the motherboard probe")

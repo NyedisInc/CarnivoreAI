@@ -1,4 +1,3 @@
-/* position: fixed */
 
 .sg-app {
     display: flex;
@@ -659,7 +658,6 @@
         min-height: 44px;
     }
 
-    /* padding */
     .sg-coverage__summary,
     .sg-toc__summary {
         padding-top: 14px;
@@ -881,7 +879,6 @@
 .sg-tw__meta { flex: none; color: var(--oc-text-muted); font-size: var(--oc-fs-micro); }
 .sg-tw__said { margin: 0; }
 .sg-tw__said--clamped { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
-/* padding */
 .sg-tw__panel { display: flex; flex-direction: column; gap: var(--oc-space-4); padding: var(--oc-space-4); background: var(--oc-ground-raised); color: var(--oc-text-muted); }
 .sg-tw__reply { box-sizing: border-box; width: 100%; }
 

@@ -124,13 +124,6 @@ class IndexCache:
         )
 
     def _is_degraded(self, as_of: Optional[datetime]) -> bool:
-        """Whether the held index is older than the trust root allows.
-
-        Inputs: as_of (datetime | None) - the held index's own
-          ``generated_at``, timezone aware.
-        Output: bool - see
-          :func:`~src.core.catalog.index_freshness.is_degraded`.
-        """
         return is_degraded(
             as_of,
             now=datetime.fromtimestamp(self._clock.now(), tz=timezone.utc),

@@ -10,7 +10,6 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 PROVIDER_ACCOUNTS_KEY = "provider_accounts"
 
-# CLAUDE_CONFIG_DIR
 DEFAULT_CLAUDE_CONFIG_DIR = "~/.claude"
 
 DEFAULT_CODEX_HOME = "~/.codex"
@@ -31,6 +30,40 @@ class ProviderAccount(BaseModel):
     Description: a POINTER. Nothing on this model is a credential, and
       ``extra="forbid"`` is what keeps it that way; see the module
       docstring for why forbidding beats ignoring here.
+
+    Fields:
+        id: this install's own id for the account, a lowercase slug of
+            letters, digits and dashes. It must be unique within the
+            list, which :class:`ProviderAccountsConfig` enforces because
+            uniqueness is a property of the list and not of one row.
+        name: what the user calls the account on screen. Non-empty,
+            because a row nobody can tell from the next one is worse
+            than no row.
+        provider: which provider the account belongs to.
+        claude_config_dir: the Claude config dir this account's
+            credential lives under, stored as given. Required, and
+            checked non-empty, when ``provider`` is ``claude``; ignored
+            otherwise, so a codex row carries the harmless default.
+        codex_home: the Codex home, stored as given. The same rule in
+            the other direction.
+        managed: whether the app created this account's profile directory
+            under :data:`MANAGED_ROOT` and owns its path. ``False`` is
+            correct for every row written before this field existed,
+            because a user named those paths themselves, and it is
+            STORED rather than derived from "the path sits under the
+            managed root" so that moving the root later cannot silently
+            reclassify somebody's hand-made row.
+        color: the swatch this account is painted with, lowercase six
+            digit hex. ``None`` means NO COLOUR WAS CHOSEN, which is a
+            real state; the server never fabricates one.
+        short_name: an optional shorter form of ``name``, for a spot too
+            narrow for the full one (2026-09-24, the terminal cell foot
+            bar's account group). ``None`` is the honest default for
+            every account nobody has given a short form: a reader that
+            wants one derives it from THIS field, never by splitting or
+            pattern-matching ``name`` itself, which is free text a user
+            typed however they liked and carries no reliable structure
+            to split on.
     """
 
     model_config = ConfigDict(extra="forbid")

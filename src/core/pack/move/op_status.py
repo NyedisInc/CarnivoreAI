@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
+from src.core.pack import progress
 from src.core.pack.move import inflight
 from src.core.pack.identity import home
 from src.core.pack.migrate import ops as migrate_ops
@@ -70,6 +71,7 @@ def status_of(conn: sqlite3.Connection, row: sqlite3.Row, *, session: bool) -> D
         "interrupted": running and source and not in_process,
         "cancellable": running and source and in_process and blocked is None,
         "cancel_blocked": blocked,
+        "progress": progress.view(data["id"]),
     }
 
 

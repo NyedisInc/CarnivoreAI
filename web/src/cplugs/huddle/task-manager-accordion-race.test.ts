@@ -80,11 +80,11 @@ const GROUPS = () => [
 ];
 
 beforeEach(async () => {
-  Element.prototype.scrollTo = vi.fn();
+  Element.prototype.scrollTo = vi.fn(); // jsdom has no scrollTo; a bar click scrolls its project
   server.prefs = { revision: 3, settings: { hideCompleted: false } };
   server.groups = GROUPS();
   statusFolds.choices = {};
-  try { localStorage.removeItem(FOLDS_KEY); } catch {  }
+  try { localStorage.removeItem(FOLDS_KEY); } catch { /* storage may be unavailable */ }
   huddle.selected = AGGREGATE;
   huddle.groups = null;
   huddle.openId = null;

@@ -1,9 +1,7 @@
-/* file editor */
 
 (function () {
     'use strict';
 
-    /* file editor */
     var CONFIG_EDITOR = [
         '/static/vendor/codemirror/codemirror-bundle.js',
         '/static/js/config-editor-modal.js',

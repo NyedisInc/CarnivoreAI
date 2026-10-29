@@ -24,6 +24,7 @@ const i18n = createI18n({ locale: 'en' }) as {
 };
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
+/** Let every microtask and every timer shorter than `ms` settle. */
 function settle(ms = 0): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -215,10 +216,11 @@ describe('the install sheet honours them', () => {
     });
 
     test('an ordinary preview is painted whole, with no cut and no count', async () => {
+        // NEGATIVE CONTROL for
         await paintSheet({
             body: '# a skill',
             files: [{ path: 'SKILL.md', size: 10 }],
-            publisher: 'acme',
+            publisher: 'alex',
             version: '1.0',
             digest: 'abc',
             digest_prefix: 'abc',
@@ -232,7 +234,7 @@ describe('the install sheet honours them', () => {
         const values = [...document.querySelectorAll('.sheet__facts dd')].map((node) =>
             (node.textContent ?? '').trim(),
         );
-        expect(values).toContain('acme');
+        expect(values).toContain('alex');
         expect(values).toContain('skills.example');
     });
 });

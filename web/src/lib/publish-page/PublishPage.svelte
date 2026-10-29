@@ -1,4 +1,4 @@
-<!-- the empty page -->
+<!-- and the three -->
 <script lang="ts">
     import { tick, untrack } from 'svelte';
     import { layerShowing, ownsEscape } from '../sidebar-widgets/escape-guards';

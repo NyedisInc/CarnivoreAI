@@ -14,7 +14,7 @@ from src.core.subagents.shape_alert import register_contract_source
 REGISTRY_RECORD_CONTRACT_VERSION: int = 1
 
 MEASURED_AGAINST_CLAUDE_CODE: str = "2.1.282 to 2.1.283"
-MEASURED_ON: str = "not measured"
+MEASURED_ON: str = "2026-09-27"
 
 FILE_KIND_REGISTRY: str = "pid_registry"
 

@@ -103,7 +103,7 @@ def _record_epoch_for_already_registered(
 def probe_instances(manager: Any) -> Any:
     from src.config import settings
     from src.core.session_backend import build_backend
-    from src.core.tmux_listing import TmuxListing, coerce_listing
+    from src.core.tmux_listing import coerce_listing
     from src.core.tmux_socket_resolution import (
         configured_tmux_socket_name,
         resolve_probe_socket,
@@ -118,10 +118,7 @@ def probe_instances(manager: Any) -> Any:
             socket_name_override=socket_name,
         )
         actual_socket = getattr(probe, "socket_name", None) or socket_name
-        lister = getattr(probe, "list_attachable_sessions", None)
-        if lister is None:
-            return actual_socket, TmuxListing.answered([])
-        return actual_socket, coerce_listing(lister())
+        return actual_socket, coerce_listing(probe.list_attachable_sessions())
 
     configured = configured_tmux_socket_name(settings)
     return resolve_probe_socket(manager, configured, _list_for_socket)
@@ -149,9 +146,9 @@ async def readopt_surviving_sessions(
     from src.core.session_store import get_instance, sessions_table_ready
 
     if listing is None:
-        socket, listing = probe_instances(manager)
+        socket, listing = await asyncio.to_thread(probe_instances, manager)
     else:
-        socket = manager._tmux_socket_name()
+        socket = manager.tmux_socket_name()
     if not listing.ok:
         logger.warning(
             "boot_readopt_listing_unavailable",
@@ -170,7 +167,6 @@ async def readopt_surviving_sessions(
     try:
         conn = manager._datastore_connection()
         if conn is None or not sessions_table_ready(conn):
-            # could not
             logger.warning(
                 "boot_readopt_cannot_determine",
                 live_count=len(listing.names),
@@ -225,7 +221,6 @@ async def readopt_surviving_sessions(
             session_name=target.name,
             socket_name_override=socket,
         )
-        # already running
         await backend.attach_existing(needs_pipe_setup=True)
 
         session = session_for(target)
@@ -236,7 +231,6 @@ async def readopt_surviving_sessions(
         manager._instance_epochs[target.session_id] = target.epoch
         manager.hook_tokens.bind_name(target.session_id, target.name)
 
-        # already running
         try:
             await backend.set_session_environment(
                 target.name, manager.get_env_for_spawn(target.session_id),
@@ -300,11 +294,11 @@ async def readopt_surviving_sessions(
     )
     from src.core.session_agent_infer_sweep import sweep_live_sessions
 
-    sweep_live_sessions(manager)
+    await asyncio.to_thread(sweep_live_sessions, manager)
 
     from src.core.session_status_seed_read import seed_live_sessions
 
-    seed_live_sessions(manager)
+    await asyncio.to_thread(seed_live_sessions, manager)
 
     return ReadoptReport(
         outcome=READOPT_RAN, held=held, failed=failed, plan=plan

@@ -62,10 +62,10 @@ async def test_a_local_name_is_expanded_to_every_address_it_resolves_to(monkeypa
     d._timeout = 1.0
 
     async def fake(self, host, port, **kw):
-        return [(2, 1, 6, "", ("198.51.100.14", 0)), (2, 1, 6, "", ("198.51.100.13", 0))]
+        return [(2, 1, 6, "", ("10.0.0.9", 0)), (2, 1, 6, "", ("10.0.0.7", 0))]
 
     monkeypatch.setattr(asyncio.get_running_loop().__class__, "getaddrinfo", fake)
-    assert await d._expand(["air.local", "192.0.2.13", "198.51.100.13"]) == ["198.51.100.14", "198.51.100.13", "192.0.2.13"]
+    assert await d._expand(["air.local", "10.0.0.5", "10.0.0.7"]) == ["10.0.0.9", "10.0.0.7", "10.0.0.5"]
 
     async def boom(self, host, port, **kw):
         raise socket.gaierror("no")
@@ -81,7 +81,7 @@ def test_the_member_port_probe_uses_the_configured_host():
 
 def test_runtime_binds_the_member_listener_with_the_join_port_rule():
     from src.core.computers import runtime
-    assert runtime.bind_host("203.0.113.13") == "203.0.113.13"
+    assert runtime.bind_host("192.168.1.20") == "192.168.1.20"
     src = open(runtime.__file__).read()
     assert "host=ALL_BIND if bind == LOOPBACK_BIND else bind" in src
 
@@ -90,24 +90,24 @@ def test_observed_address_sits_right_after_the_names(monkeypatch):
     monkeypatch.setattr(JoinServer, "port", property(lambda self: 47111))
     js = JoinServer.__new__(JoinServer)
     js._lan_only = True
-    body = {"listen": {"addresses": ["192.0.2.13", "air.local", "192.0.2.17"], "port": 47110}}
-    addresses, _ = js._member_listen(body, "198.51.100.13")
-    assert addresses == ["air.local", "198.51.100.13", "192.0.2.13", "192.0.2.17"]
+    body = {"listen": {"addresses": ["10.0.0.5", "air.local", "10.0.0.6"], "port": 47110}}
+    addresses, _ = js._member_listen(body, "10.0.0.7")
+    assert addresses == ["air.local", "10.0.0.7", "10.0.0.5", "10.0.0.6"]
 
 
 def test_member_hello_addresses_pass_the_join_rules():
-    got = link_addresses.learned_listen(["a.b.local", "bad name.local", "air.local", "127.0.0.1", "192.0.2.13"], 47110, join_port=47111)
-    assert got == (["air.local", "192.0.2.13"], 47110)
+    got = link_addresses.learned_listen(["a.b.local", "bad name.local", "air.local", "127.0.0.1", "10.0.0.5"], 47110, join_port=47111)
+    assert got == (["air.local", "10.0.0.5"], 47110)
 
 
 def test_a_fallback_host_name_that_fails_validation_is_left_out(monkeypatch):
     def fake_run(argv):
-        return "" if "scutil" in argv[0] else "\tinet 192.0.2.13 netmask 0xff"
+        return "" if "scutil" in argv[0] else "\tinet 10.0.0.5 netmask 0xff"
     monkeypatch.setattr(link_addresses, "_run", fake_run)
     monkeypatch.setattr(socket, "gethostname", lambda: "my_mac.local")
-    assert link_addresses.local_addresses() == ["192.0.2.13"]
+    assert link_addresses.local_addresses() == ["10.0.0.5"]
     monkeypatch.setattr(socket, "gethostname", lambda: "air.local")
-    assert link_addresses.local_addresses() == ["air.local", "192.0.2.13"]
+    assert link_addresses.local_addresses() == ["air.local", "10.0.0.5"]
 
 
 def test_a_direction_change_kicks_the_dialer():

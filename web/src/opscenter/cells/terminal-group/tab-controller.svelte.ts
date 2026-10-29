@@ -39,9 +39,7 @@ import { transportFor } from '../terminal-live/connection.svelte';
 import { layoutActive } from '../../layouts/mode.svelte';
 import { anchorGone, removeAnchor } from '../../layouts/page.svelte';
 import type { TabSource } from '../../layouts/phone.svelte';
-import { openBrowserItemMenu, openRowMenu, uuidOfTmuxName } from '../terminal-live/row-menu';
-import { pageTabState } from './page-tab-state.svelte';
-import type { MenuNode } from '../../../lib/drawer-tabs/add-component-menu';
+import { createTabContextMenu } from './tab-context-menu.svelte';
 
 function displayName(label: string | null, tmuxName: string | null): string | null {
   const resolver = (globalThis as {
@@ -116,6 +114,7 @@ export function createTabController(instance: () => string, focusPane: (tab: str
       const row = rowFor(sessions.data, sessionId);
       const rowId = row ? null : rowIdOfSlot(id);
       const sleeping = sleepingFor(rowId);
+      // neither live nor asleep
       const stored = row || sleeping || rowId === null
         ? null
         : (recent.data?.sessions ?? []).find((rec) => rec.id === rowId) ?? null;
@@ -203,6 +202,7 @@ export function createTabController(instance: () => string, focusPane: (tab: str
 
   let newAnchor = $state<HTMLElement | null>(null);
 
+  /* there is nothing */
   let blueprintRows = $state<Blueprint[]>([]);
   $effect(() => {
     if (!newAnchor) return;
@@ -282,7 +282,6 @@ export function createTabController(instance: () => string, focusPane: (tab: str
     await Promise.all([asleep.refresh(), sessions.refresh()]);
   }
 
-  /* running sessions */
   const menuRows = $derived.by(() => {
     const live = (sessions.data ?? []) as SessionInfo[];
     const liveNames = new Set(live.map((row) => row.tmux_session).filter((n): n is string => !!n));
@@ -332,40 +331,7 @@ export function createTabController(instance: () => string, focusPane: (tab: str
       : [],
   );
 
-  let tabMenuAnchor = $state<HTMLElement | null>(null);
-  let tabMenuTab = $state<string | null>(null);
-
-  const tabMenuNodes = $derived<MenuNode[]>(
-    tabMenuTab === null ? [] : [{ id: 'close', label: t('opscenter.tabs.menu_close'), run: () => { const tab = tabMenuTab!; tabMenuAnchor = null; tabMenuTab = null; close(tab); } }],
-  );
-
-  function closeTabMenu(): void {
-    tabMenuAnchor = null;
-    tabMenuTab = null;
-  }
-
-  /* keep awake */
-  function openTabMenu(tab: string, anchor: HTMLElement, point: { x: number; y: number } | null): boolean {
-    const where = point ? { point } : {};
-    const pageId = pageIdOfTab(tab);
-    if (pageId !== null) {
-      const { kind, title } = pageTabState(pageId);
-      if (kind === 'file' || kind === 'page' || kind === 'browser') return openBrowserItemMenu(kind, pageId, title, anchor, where);
-      return openSmallMenu(tab, anchor);
-    }
-    const row = rowFor(sessions.data, sessionOf(tab));
-    if (row?.tmux_session) return openRowMenu(row, uuidOfTmuxName(row.tmux_session), anchor, where);
-    const sleeping = sleepingFor(rowIdOfSlot(tab));
-    const asleepRow = sleeping ? asleepRows([sleeping], new Set())[0] : undefined;
-    if (asleepRow) return openRowMenu(asleepRow, asleepRow.session_uuid, anchor, where);
-    return openSmallMenu(tab, anchor);
-  }
-
-  function openSmallMenu(tab: string, anchor: HTMLElement): boolean {
-    tabMenuTab = tab;
-    tabMenuAnchor = anchor;
-    return true;
-  }
+  const tabContext = createTabContextMenu({ sessionOf, sleepingFor, close });
 
   return {
     get tabs() {
@@ -393,14 +359,14 @@ export function createTabController(instance: () => string, focusPane: (tab: str
     select,
     close,
     kill,
-    openTabMenu,
+    openTabMenu: tabContext.open,
     swapWidgetTab,
     get tabMenuAnchor() {
-      return tabMenuAnchor;
+      return tabContext.anchor;
     },
     get tabMenuNodes() {
-      return tabMenuNodes;
+      return tabContext.nodes;
     },
-    closeTabMenu,
+    closeTabMenu: tabContext.close,
   };
 }

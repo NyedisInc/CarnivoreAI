@@ -1,4 +1,4 @@
-
+<!-- its own sentence -->
 <script lang="ts">
     import { BROWSE_KEYS } from '../../../../client/js/labels/skill-browse.js';
     import type { Translate } from '../sessions/types';

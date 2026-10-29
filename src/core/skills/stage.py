@@ -1,51 +1,3 @@
-"""Write an approved skill archive to a fresh directory, member by member.
-
-WHY THIS WRITES THE FILES ITSELF. ``tarfile``'s whole-archive helper and
-its single-member twin both build the destination path out of the member
-name, and the member name is the attacker's input. Every published tar
-defect since 2001 lives in that one sentence. This module never calls
-either of them: it takes the list :mod:`src.core.skills.validate` already
-approved, joins each relative path to the destination itself, checks the
-result is still inside the destination, and opens it with ``"xb"`` so an
-existing file is a failure rather than an overwrite. A test reads this
-file's source and fails the build if either helper's name reappears,
-because the obvious "simplification" is to call one of them.
-
-Python 3.12 does have the ``filter=`` hardening on those helpers, and this
-package deliberately does not rely on it. The hardening is a property of
-the interpreter the app happens to be running under, and the app's own
-bootstrap accepts any 3.12.x; a guarantee that depends on which patch
-release someone installed is not a guarantee. The interpreter version is
-LOGGED as an advisory and gates nothing.
-
-WHY 0o644 AND NEVER THE MEMBER'S MODE. The member's mode is a number the
-publisher chose. Copying it is how an archive gets to decide that a file
-on the user's disk is executable. So the mode written here is decided by
-THIS MODULE, from two facts: whether the caller passed ``allow_scripts``,
-which it does only while holding a recorded human consent for these exact
-bytes, and whether the validator classified this member as executable.
-``0o755`` is written for exactly the intersection and ``0o644`` for
-everything else; ``member.mode`` is never the source, in either mode.
-With ``allow_scripts`` off - the default, and every caller that does not
-say otherwise - the validator has already refused every executable
-member, so the exec branch is unreachable rather than merely unused.
-Parent directories are 0o700 because nothing but this user needs to
-traverse a staging directory.
-
-WHY THE DIGEST IS RECOMPUTED FROM DISK AFTERWARDS. The validator read the
-archive in one pass and this writer reads it in a second pass, so the two
-passes could in principle see different bytes (a file swapped underneath
-us between them). Re-hashing what actually landed closes that window and,
-more usefully, it is the only check that covers the WRITER: if this module
-ever truncated, mis-joined or mis-ordered a file, the digest of the staged
-copy would stop matching the digest the publisher signed. Note that the
-0o644 chmod cannot move the digest for a skill this version accepts,
-for a skill installed without ``allow_scripts``, because the validator
-refuses every executable member there, so every mode field on both sides
-is ``100644``.
-
-Example:
-"""
 
 from __future__ import annotations
 
@@ -77,7 +29,6 @@ FILE_MODE = 0o644
 EXEC_FILE_MODE = 0o755
 DIR_MODE = 0o700
 
-# something else
 EXEC_MODE_STRING = mode_string(True)
 
 
@@ -99,16 +50,6 @@ def _target_path(dest: Path, relpath: str) -> Path:
 
 
 def _ensure_parents(dest: Path, target: Path) -> None:
-    """Create the directories above a target, each owner-only.
-
-    :param dest: the staging directory, which already exists.
-    :param target: the file about to be written.
-    :returns: None.
-
-    Created one component at a time and chmodded explicitly, because the
-    process umask masks the mode ``mkdir`` is given and the 0o700 here is
-    a statement, not a request.
-    """
     parent = target.parent
     missing: list[Path] = []
     while parent != dest and dest in parent.parents:
@@ -175,30 +116,6 @@ def stage_archive(
     allow_scripts: bool = False,
     src_path: str | None = None,
 ) -> StagedSkill:
-    """Validate an item tarball, then write its members into a fresh directory.
-
-    :param archive_path: the ``.tar.gz`` on disk.
-    :param dest: a directory that MUST NOT exist; the caller supplies a
-        fresh unique path.
-    :param publisher: the catalog publisher, already format-validated.
-    :param name: the item name, already format-validated.
-    :param kind: ``"skill"`` or ``"theme"``; passed straight to
-        :func:`~src.core.skills.validate.validate_archive`, which is the
-        only thing in the staging path that cares. The WRITER is
-        kind-independent: it writes the members the validator approved,
-        at ``0o644``, whatever they describe.
-    :param limits: the bounds to enforce.
-    :param src_path: the signed ``version.src.path``, passed to the validator.
-    :param allow_scripts: keep executable content and write ``0o755`` on
-        the members the validator classified as executable. DEFAULTS TO
-        FALSE, so a caller unlocks it by saying so and never by omission;
-        the only callers that pass True hold a recorded human consent for
-        these exact bytes.
-    :returns: the staged directory and the digest recomputed from it.
-    :raises FileExistsError: if ``dest`` already exists.
-    :raises ArchiveRefused: ``scripts_not_supported`` or
-        ``archive_invalid``; nothing is left on disk when it does.
-    """
     logger.debug(
         "skill_archive_python_advisory",
         python=".".join(str(part) for part in sys.version_info[:3]),

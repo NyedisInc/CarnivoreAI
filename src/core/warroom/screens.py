@@ -9,7 +9,7 @@ from typing import Optional
 import structlog
 
 from src.core.scrollback_replay import normalize_replay_newlines
-from src.core.tmux_discovery import tmux_argv_prefix
+from src.core.tmux_transport.run import tmux_run
 
 logger = structlog.get_logger()
 
@@ -44,28 +44,12 @@ def parse_capture(stdout: bytes, tmux_name: str) -> PaneScreen:
 
 async def capture_screen(socket: str, tmux_name: str) -> PaneScreen:
     target = f"={tmux_name}:"
-    argv = tmux_argv_prefix(socket) + [
-        "display-message", "-p", "-t", target, _SIZE_FORMAT, ";",
-        "capture-pane", "-p", "-e", "-t", target,
-    ]
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            *argv, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
-        )
-    except OSError as exc:
-        logger.debug("warroom_capture_failed", error=type(exc).__name__)
+    done = await tmux_run(socket, "display-message", "-p", "-t", target, _SIZE_FORMAT, ";",
+                          "capture-pane", "-p", "-e", "-t", target, timeout=CAPTURE_TIMEOUT_SECONDS)
+    if done.error:
+        logger.debug("warroom_capture_failed", error=done.error)
         return PaneScreen("gone")
-    try:
-        stdout, _ = await asyncio.wait_for(proc.communicate(), CAPTURE_TIMEOUT_SECONDS)
-    except asyncio.TimeoutError:
-        try:
-            proc.kill()
-        except ProcessLookupError:
-            pass
-        await proc.wait()
-        logger.debug("warroom_capture_failed", error="TimeoutError")
-        return PaneScreen("gone")
-    return PaneScreen("gone") if proc.returncode != 0 else parse_capture(stdout, tmux_name)
+    return PaneScreen("gone") if done.returncode != 0 else parse_capture(done.stdout, tmux_name)
 
 
 async def capture_many(socket: str, names: dict[str, Optional[str]]) -> dict[str, PaneScreen]:

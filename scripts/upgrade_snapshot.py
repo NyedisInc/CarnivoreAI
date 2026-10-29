@@ -1,19 +1,4 @@
 #!/usr/bin/env python3
-"""Baseline and verify a CloudeCode upgrade, with three outcomes per check.
-
-THE OUTCOME MODEL, WHICH IS THE POINT OF THE FILE. Every check reports
-PASS, FAIL, or CANNOT DETERMINE, and the third never collapses into
-either of the others. ``src/core/db.py::get_schema_version`` documents
-what that collapse already cost this project once: it folds "no version
-recorded" and "a version that will not parse" onto the same ``0``, and a
-populated nine-project database migrated with zero backups because a
-gate read that ``0`` as a measurement.
-
-Read-only by construction. The database is opened with
-``PRAGMA query_only=ON``, which forbids every content write while still
-letting a WAL reader create the ``-shm`` index it legitimately needs -
-a ``mode=ro`` URI cannot promise the second half.
-"""
 
 from __future__ import annotations
 
@@ -42,16 +27,21 @@ def _install_dir() -> Path:
     return Path(env) if env else Path(__file__).resolve().parents[1]
 
 
-def _state_dir(install: Path) -> Tuple[Optional[Path], str]:
-    """Resolve the state directory holding cloude.db.
+def _existing_default_state_dir() -> Optional[Path]:
+    try:
+        from src.core import product_identity  # noqa: PLC0415
+    except ImportError:
+        return None
+    app_support = Path.home() / "Library" / "Application Support"
+    found = product_identity.resolve_named(
+        app_support,
+        product_identity.STATE_DIR_NAME,
+        product_identity.LEGACY_STATE_DIR_NAMES,
+    ).path
+    return found if found.exists() else None
 
-    Description: asks the APPLICATION to resolve it rather than restating
-      the precedence here, so this script cannot drift from the thing it
-      is checking. Falls back to the documented macOS default only when
-      the app will not import, and says which it used.
-    Inputs: install (Path) - the checkout.
-    Output: (Path | None, str) - the directory and how it was resolved.
-    """
+
+def _state_dir(install: Path) -> Tuple[Optional[Path], str]:
     override = os.environ.get("CLOUDE_BASELINE_STATE_DIR") or ""
     if override:
         return Path(override).expanduser(), "explicit --state-dir"
@@ -69,9 +59,9 @@ def _state_dir(install: Path) -> Tuple[Optional[Path], str]:
         return resolved, "resolved by src.config.settings"
     except BaseException as exc:  # noqa: BLE001
         why = f"{type(exc).__name__}: {exc}".strip().splitlines()[0][:120]
-        default = Path.home() / "Library" / "Application Support" / "CloudeCode"
-        if default.exists():
-            return default, f"documented default (src.config unavailable, {why})"
+        found = _existing_default_state_dir()
+        if found is not None:
+            return found, f"documented default (src.config unavailable, {why})"
         return None, f"UNRESOLVED (src.config unavailable, {why})"
 
 
@@ -224,7 +214,6 @@ def _snapshot() -> Dict[str, Any]:
 
 
 def cmd_baseline() -> int:
-    """Write a pre-upgrade baseline. Exit 2 when it is not usable."""
     snap = _snapshot()
     out_dir = Path(os.environ.get("CLOUDE_BASELINE_OUT_DIR") or ".")
     out_dir.mkdir(parents=True, exist_ok=True)

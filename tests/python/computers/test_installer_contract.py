@@ -1,3 +1,5 @@
+"""FIX-3 (#1530): the installer/door contract, the setup_status wiring, the blocked Local Network mapping, the left-a-pack tombstone,
+and the add-preview host key rule. Each assertion goes red without its fix."""
 
 from __future__ import annotations
 
@@ -34,7 +36,7 @@ def _refuse(code: int):
 
 def _probe(monkeypatch, code: int):
     monkeypatch.setattr(discovery.asyncio, "open_connection", _refuse(code))
-    return asyncio.run(discovery.probe_join_ports([{"name": "a", "addresses": ["192.0.2.13"], "lp": 9000}], timeout=1.0))
+    return asyncio.run(discovery.probe_join_ports([{"name": "a", "addresses": ["10.0.0.5"], "lp": 9000}], timeout=1.0))
 
 
 @pytest.mark.parametrize("code", [errno.EHOSTUNREACH, errno.ENETUNREACH])
@@ -87,7 +89,7 @@ def _link_deps(join):
                            pack=None, app_version="", notify=None, reserve_port=reserve, release_port=release, addresses=lambda: ["x.local"])
 
 
-_PARSED = SimpleNamespace(link_port=9000, hosts=["192.0.2.13", "192.0.2.17"], secret="s", invite_id="i", k="k")
+_PARSED = SimpleNamespace(link_port=9000, hosts=["10.0.0.5", "10.0.0.6"], secret="s", invite_id="i", k="k")
 
 
 def test_a_wrong_code_reports_tries_left():
@@ -114,8 +116,8 @@ def test_join_client_maps_a_dead_relay_socket_to_unreachable(monkeypatch):
     assert exc.value.code == "unreachable"
 
 
-def test_main_passes_setup_status_to_the_computers_runtime():
-    tree = ast.parse((ROOT / "src" / "main.py").read_text())
+def test_boot_passes_setup_status_to_the_computers_runtime():
+    tree = ast.parse((ROOT / "src" / "core" / "boot" / "federation.py").read_text())
     calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "ComputersRuntime"]
     assert calls and all("setup_status" in {k.arg for k in c.keywords} for c in calls)
 
@@ -139,7 +141,7 @@ def test_preview_probe_reads_the_root_health():
 @pytest.mark.parametrize(("held", "want"), [([("SHA256:other", "ED25519")], "changed"), ([("SHA256:fp", "RSA")], "same"), ([], "new")])
 def test_known_status_any_key_of_any_type_makes_a_change(monkeypatch, held, want):
     async def lookup(_d):
-        return "hosta", ["/k"]
+        return "studio", ["/k"]
 
     async def fps(_path, _name=None):
         return held

@@ -1,5 +1,5 @@
 
-import type { ProjectResponse } from '../../api';
+import type { ProjectResponse, SessionInfo } from '../../api';
 import { t } from '../../../lib/i18n/index.svelte';
 
 export function leaf(path: string): string {
@@ -18,10 +18,19 @@ export function projectFor(workingDir: string, projectRows: readonly ProjectResp
   return dirLeaf;
 }
 
-export function majorityProject(workingDirs: readonly string[], projectRows: readonly ProjectResponse[]): string {
+export function projectOfRow(info: SessionInfo, projectRows: readonly ProjectResponse[]): string {
+  if (info.project_name) return info.project_name;
+  if (typeof info.project_id === 'number') {
+    const match = projectRows.find((project) => project.id === info.project_id);
+    if (match) return match.name;
+  }
+  return projectFor(info.session.working_dir, projectRows);
+}
+
+export function majorityProject(rows: readonly SessionInfo[], projectRows: readonly ProjectResponse[]): string {
   const counts = new Map<string, number>();
-  for (const dir of workingDirs) {
-    const key = projectFor(dir, projectRows);
+  for (const row of rows) {
+    const key = projectOfRow(row, projectRows);
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   let best = '';

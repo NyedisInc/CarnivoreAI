@@ -6,6 +6,9 @@ from pathlib import Path
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
+from src.core.db_reuse.pooled_read import ReadPool
+
 logger = structlog.get_logger()
 
 
@@ -15,6 +18,16 @@ class _ClosingConnection(sqlite3.Connection):
             return super().__exit__(exc_type, exc_value, traceback)
         finally:
             self.close()
+
+
+def _open_read_only(path: Path) -> sqlite3.Connection:
+    conn = connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout=5000")
+    return conn
+
+
+_READS = ReadPool(_open_read_only)
 
 
 class StatsStore:
@@ -57,15 +70,25 @@ class StatsStore:
 
     def connect(self, *, readonly: bool = False) -> sqlite3.Connection:
         if readonly:
-            conn = sqlite3.connect(self.db_path.as_uri() + "?mode=ro", uri=True,
-                                   timeout=5, factory=_ClosingConnection)
+            conn = connect_readonly(self.db_path, timeout=READONLY_TIMEOUT_DEFAULT_S, factory=_ClosingConnection)
         else:
             conn = sqlite3.connect(self.db_path, timeout=5, factory=_ClosingConnection)
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA synchronous=NORMAL")
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA busy_timeout=5000")
+        try:
+            if not readonly:
+                conn.execute("PRAGMA journal_mode=WAL")
+                conn.execute("PRAGMA synchronous=NORMAL")
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=5000")
+        except sqlite3.Error:
+            conn.close()
+            raise
         return conn
+
+    def connect_read(self) -> sqlite3.Connection:
+        return _READS.lend(self.db_path)  # type: ignore[return-value]
+
+    def discard_read(self) -> None:
+        _READS.forget(self.db_path)
 
     def revision(self) -> int:
         with self.connect(readonly=True) as conn:

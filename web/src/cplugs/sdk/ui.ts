@@ -5,6 +5,18 @@ export { TASK_STATES, isTaskState, legacyTaskState, nextTaskState, type TaskStat
 export { default as Button } from '../../lib/base/Button.svelte';
 export { default as IconButton } from '../../lib/base/IconButton.svelte';
 export { buttonAttrs } from '../../lib/base/classes';
+export { default as Card } from '../../lib/base/Card.svelte';
+export { default as Checkbox } from '../../lib/base/Checkbox.svelte';
+export { default as Field } from '../../lib/base/Field.svelte';
+export { default as List } from '../../lib/base/List.svelte';
+export { default as ListRow } from '../../lib/base/ListRow.svelte';
+export { default as Radio } from '../../lib/base/Radio.svelte';
+export { default as RadioGroup, type RadioOption } from '../../lib/base/RadioGroup.svelte';
+export { default as State } from '../../lib/base/State.svelte';
+export { default as Tag } from '../../lib/base/Tag.svelte';
+export type { TagTone } from '../../lib/base/classes';
+export { default as Select, type SelectChoice } from '../../lib/base/Select.svelte';
+export { default as Segmented, type SegmentedOption } from '../../lib/base/Segmented.svelte';
 export { default as FoldChevron } from '../../opscenter/ui/FoldChevron.svelte';
 export { watchCascadeHint } from '../../lib/sidebar-shell/cascade-hint';
 export { default as Check } from '../../opscenter/ui/Check.svelte';

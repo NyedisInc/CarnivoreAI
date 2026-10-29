@@ -1,56 +1,9 @@
-"""Which index key this install trusts right now, and how that moves (#130).
-
-THE CHAIN HAS TWO LINKS AND ONE DIRECTION. The live pinned index key, then
-the pinned spare. :class:`IndexKeyChain` starts on the live key and moves
-to the spare exactly once, when a ``carnivore-index-key-revoked-v1``
-statement verifies (:mod:`src.core.catalog.index_key_revocation`). It never
-moves back: there is no statement that un-revokes, and the move is
-persisted.
-
-WHERE THE STATEMENT COMES FROM. Beside the index, on the same host and
-through the same hardened fetch: the index url's last path segment
-replaced by ``index-key-revoked``, plus ``.minisig``. It cannot ride
-INSIDE the index: after the move the index is signed by the spare, which
-the app would refuse before parsing a byte of it, and before the move
-whoever leaked the live key controls what the index says. It is fetched on
-EVERY round trip while the live key is still trusted, whatever the index
-answers (a 304 included), because a thief holding the live key serves
-perfectly valid indexes and nothing else would ever prompt a look. Once
-the move is made it is never fetched again. A 404, a transport failure or
-a statement that does not verify all mean "no move" and never touch the
-index fetch: a missing statement is the status quo.
-
-WHERE THE MOVE IS PERSISTED. Two rows in the existing
-``catalog_revocations_seen`` table (no schema change), written in ONE
-transaction. The move: ``index_key_id`` is the REVOKED key id, ``kind`` is
-:data:`KIND_INDEX_KEY_REVOKED`, ``subject`` is the successor key id,
-``since`` the signed date. Its first spare serial: same ``index_key_id``
-and ``subject``, ``kind`` :data:`KIND_INDEX_KEY_FIRST_SERIAL`, and the
-signed decimal serial in ``since`` (that column is the kind's payload).
-That table is append only and has no delete method, which is exactly the
-property a revocation needs.
-:meth:`~src.core.catalog.index_state.RevocationStore.seen` reads only the
-publisher kinds, so neither row mixes into publisher revocations.
-
-WHAT CARRIES ACROSS THE MOVE, AND WHAT DOES NOT.
-- Publisher revocations DO: they are signed by the publisher key, which an
-  index key compromise does not touch. :meth:`IndexKeyChain.chain_key_ids`
-  is every key id they were stored under.
-- The serial floor does NOT: it is keyed on the signing key, and the
-  spare's floor is the first serial its own statement signed (#130 review
-  M1, :mod:`src.core.catalog.index_key_revocation`). This is TUF's fast
-  forward recovery rule: whoever held the leaked key could push the old
-  key's floor up by ``MAX_SERIAL_JUMP`` per accepted index, and carrying
-  that floor over would let them brick the spare before it signed
-  anything; only the offline spare says where its own series starts.
-"""
 
 from __future__ import annotations
 
 import sqlite3
 from contextlib import closing
 from typing import Awaitable, Callable, Optional, Tuple
-from urllib.parse import urlsplit, urlunsplit
 
 import structlog
 
@@ -64,6 +17,7 @@ from src.core.catalog.index_key_revocation import (
     verify_index_key_revocation,
 )
 from src.core.catalog.log_safe import log_value
+from src.core.catalog.publisher_key_chain import PublisherKeyChain
 from src.core.catalog.trust_root import TrustRoot
 from src.core.db import transaction
 
@@ -79,11 +33,7 @@ StatementFetch = Callable[[str], Awaitable[Optional[Tuple[bytes, str]]]]
 
 
 def statement_url(index_url: str) -> str:
-    parts = urlsplit(index_url)
-    directory = parts.path.rsplit("/", 1)[0]
-    return urlunsplit(
-        parts._replace(path=f"{directory}/{STATEMENT_FILE_NAME}", query="", fragment="")
-    )
+    return catalog_client.sibling_url(index_url, STATEMENT_FILE_NAME)
 
 
 async def fetch_statement(index_url: str) -> Optional[Tuple[bytes, str]]:
@@ -197,6 +147,9 @@ class IndexKeyChain:
         self._fetch = fetch
         self._accepted: Optional[IndexKeyRevocation] = None
         self._loaded = False
+        self.publisher_chain = PublisherKeyChain(
+            trust_root=trust_root, open_db=open_db,
+        )
 
     def _load(self) -> None:
         live = self._pinned.index_key
@@ -213,7 +166,9 @@ class IndexKeyChain:
 
     def active_root(self) -> TrustRoot:
         self._load()
-        return active_trust_root(self._pinned, self._accepted)
+        return self.publisher_chain.apply(
+            active_trust_root(self._pinned, self._accepted)
+        )
 
     def chain_key_ids(self) -> Tuple[str, ...]:
         self._load()
@@ -231,14 +186,15 @@ class IndexKeyChain:
         )
 
     async def check(self, index_url: str) -> bool:
+        publisher_moved = await self.publisher_chain.check(index_url)
         if not self._wants_statement():
-            return False
+            return publisher_moved
         fetched = await self._fetch(index_url)
         if fetched is None:
-            return False
+            return publisher_moved
         accepted = verify_index_key_revocation(fetched[0], fetched[1], self._pinned)
         if accepted is None:
-            return False
+            return publisher_moved
         self._accepted = accepted
         try:
             with closing(self._open_db()) as conn:

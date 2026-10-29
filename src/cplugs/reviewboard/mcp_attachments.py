@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict, List
 
-from src.cplugs.reviewboard import attachments, wire
+from src.cplugs.reviewboard import attachment_removal, attachments, wire
 from src.cplugs.reviewboard.errors import BoardError, TooLarge
 from src.cplugs.reviewboard.mcp import CROSS_PROJECT
 from src.cplugs.reviewboard.scratch import Upload
@@ -33,10 +33,6 @@ def _local_files(caller: AgentCaller, value: Any) -> List[Upload]:
 
 
 def _uploads(caller: AgentCaller, args: Dict[str, Any]) -> List[Upload]:
-    """Every file the arguments carry, inline first (blocking: it may read local files). Output: list of Upload.
-
-    Raises: ToolError (an unknown argument, a bad board or flag), BoardError (a bad or oversize ``files`` value).
-    """
     unknown = sorted(set(args) - ARGS)
     if unknown:
         raise ToolError(f"unknown argument(s): {', '.join(unknown)}")
@@ -63,6 +59,26 @@ async def task_manager_board_attachment_add(ctx: CplugContext, caller: AgentCall
     return tool_result(scrub(answer))
 
 
+REMOVE_NAME = "task_manager_board_attachment_remove"
+REMOVE_ARGS = frozenset({"board", "file_id", CROSS_PROJECT})
+
+
+async def task_manager_board_attachment_remove(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
+    unknown = sorted(set(args) - REMOVE_ARGS)
+    if unknown:
+        raise ToolError(f"unknown argument(s): {', '.join(unknown)}")
+    for key in ("board", "file_id"):
+        if not isinstance(args.get(key), str) or not args[key]:
+            raise ToolError(f"{key} is required" + (": a slug from task_manager_boards_list" if key == "board" else ": the file_id from the board's attachments"))
+    if CROSS_PROJECT in args and not isinstance(args[CROSS_PROJECT], bool):
+        raise ToolError(f"{CROSS_PROJECT} must be true or false")
+    try:
+        answer = await attachment_removal.remove(ctx, args["board"], args["file_id"], caller=caller, cross_project=bool(args.get(CROSS_PROJECT, False)))
+    except BoardError as exc:
+        raise wire.tool_error(exc) from exc
+    return tool_result(scrub(answer))
+
+
 TOOLS: Dict[str, Any] = {
     NAME: ToolSpec(
         description=("Attach files to a review board (a spec, a PDF, a screenshot, notes): each file is stored as the board's task's own file "
@@ -79,8 +95,16 @@ TOOLS: Dict[str, Any] = {
                     "file_paths": {"type": "array", "maxItems": attachments.MAX_FILES, "items": {"type": "string"},
                                    "description": "Files by ABSOLUTE path on this computer (a session running here only; refused for a token)."},
                     "note": {"type": "string", "maxLength": attachments.MAX_NOTE, "description": "A line or two for the task's thread."},
-                    "request_review": {"type": "boolean", "description": "Default true: the task goes to review so it reaches the owner. false: post the info only."},
+                    "request_review": {"type": "boolean", "description": "Default true: the task goes to review so it reaches Joe. false: post the info only."},
                     CROSS_PROJECT: {"type": "boolean", "description": "Only to attach on a task of ANOTHER project's list (refused by default)."}},
         required=["board"], handler=task_manager_board_attachment_add, gate="agent",
         max_body_bytes=attachments.MAX_BODY_BYTES, pane_only_args=PANE_ONLY),
+    REMOVE_NAME: ToolSpec(
+        description=("Remove an attachment from a review board. This takes the file off the BOARD only: it stops showing under the paperclip and "
+                     "the board keeps a removed entry in its index (name, size, sha256, when) for the history. The file is deleted from the Task Manager too: its bytes "
+                     "go and the task's thread line says it was removed, unless another message on the task still carries the same file. Only the agent that attached the file (or the owner) may remove it; any other agent is refused 403 reviewboard_not_attacher. Get the file_id from the board's attachments list."),
+        properties={"board": {"type": "string", "description": "The board slug from task_manager_boards_list."},
+                    "file_id": {"type": "string", "description": "The attachment's file_id (8 hex characters)."},
+                    CROSS_PROJECT: {"type": "boolean", "description": "Only to remove on a task of ANOTHER project's list (refused by default)."}},
+        required=["board", "file_id"], handler=task_manager_board_attachment_remove, gate="agent"),
 }

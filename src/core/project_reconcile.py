@@ -18,19 +18,6 @@ def record_migration(conn: sqlite3.Connection, summary: Dict[str, Any]) -> None:
 
 
 def migration_summary(conn: sqlite3.Connection) -> Dict[str, Any]:
-    """What the last projects migration did, for the UI.
-
-    Description: three outcomes, not two. ``ok`` means a record was
-      found and parsed; ``never_run`` means this database has never
-      recorded one, which is a different fact from a clean run; and
-      ``unreadable`` means a record exists and could not be parsed,
-      which is a different fact again and must never render as either
-      neighbour.
-    Inputs: conn (sqlite3.Connection).
-    Output: dict - the stored summary with a ``state`` key added, or a
-      marker naming why there is no summary.
-    Example: migration_summary(conn)["state"] -> "ok"
-    """
     raw = get_meta(conn, META_PROJECT_RECONCILE_LAST)
     if not raw:
         return {

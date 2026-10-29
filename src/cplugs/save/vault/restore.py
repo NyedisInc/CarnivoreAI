@@ -1,17 +1,3 @@
-"""Restore: a manifest back to byte-identical files.
-
-EVERY FILE IS RE-HASHED as it is written (each chunk is checked against its name, then the whole against the manifest's
-length and sha256: the hash of the bytes for an old entry, the hash over the chunk list for a newer one), so a damaged vault
-produces an error, never a quiet wrong file. A restored file gets the permission bits and the modification time the source
-had (an entry from before they were recorded is restored owner-only). NEVER OVERWRITE: a destination that
-exists with the same bytes is reported ``already_present``; one that differs is a conflict, and a restore with any
-conflict writes nothing at all unless the caller asks to skip them. A file appears only whole (temp file, fsync, a hard
-link that fails if the name exists; on a volume that cannot hard link, a rename after a last check: the shared placer,
-``src/core/blobcodec/place.py``).
-
-:func:`restore_to_root` puts ``<target>/<home>/<rel>`` (what the export and import steps use); :func:`restore_to_homes`
-puts each file back into the Claude, Codex or state folder it came from (the restore route uses it).
-"""
 
 from __future__ import annotations
 
@@ -159,11 +145,6 @@ def restore_to_root(blobs: BlobStore, manifest: Manifest, target_root: Path, **k
 
 
 def restore_to_homes(blobs: BlobStore, manifest: Manifest, homes: Dict[str, Path], **kwargs) -> RestoreResult:
-    """Restore each file into its own home folder. Inputs: homes {'claude': ~/.claude, 'codex': ~/.codex, 'state': state dir}, optionally with a key such as
-    'claude/projects' that sends that top folder somewhere else (a Claude profile whose projects folder is shared).
-
-    Raises: RestoreError - a home is missing from ``homes`` or a destination resolves outside it.
-    """
     def destination(entry: FileEntry) -> Path:
         first, _, rest = entry.rel.partition("/")
         specific = homes.get(f"{entry.home}/{first}")

@@ -16,6 +16,7 @@ import {
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
+/** The real write-queue helpers, read off the module the terminal uses. */
 function realQueue(): ViewerSocketDeps['queue'] {
   const sandbox: Record<string, unknown> = { console: { log() {} } };
   sandbox.window = sandbox;

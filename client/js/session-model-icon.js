@@ -25,7 +25,6 @@ console.log('[SessionModelIcon Module] Loading...');
     var SHIMMER_EFFORTS = ['xhigh', 'max', 'ultracode'];
     var SHEEN_EFFORTS = ['high', 'xhigh'];
 
-    /* could not */
     function isTopped(tier, effort) {
         if (tier !== TOP_TIER) return false;
         if (typeof effort !== 'string') return false;

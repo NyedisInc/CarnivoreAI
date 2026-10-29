@@ -2,18 +2,17 @@
 <dl class="sg-facts">
     <dt id="settings-crate-panel">crates settings</dt>
     <dd>The crates plugin's block (<code>web/src/cplugs/crate/CratePanel.svelte</code>, a <code>settings-panel</code>
-        contribution) is the same <code>.tm</code> column cut into regions by hairlines (<code>.crt-region</code>, each under a
-        <code>.pl-label</code>): the folders, the running job, and the recorded crates as hairline rows (<code>.crt-row</code>:
-        <code>.crt-row__name</code> bright, <code>.crt-row__meta</code> and one <code>.crt-row__where</code> per copy dim, quiet
-        <code>.oc-btn--sm</code> verify and copy in <code>.crt-row__acts</code>); a folder or copy in trouble says so in
+        contribution) is the same <code>.tm</code> column holding base cards (one per region, titled): the folders, the running job
+        (<code>.crt-region</code>, a hairline above it), and the recorded crates as base list rows (name, then what it covers and when it was
+        written and verified, and one <code>.crt-row__where</code> per copy dim); each row's quiet small buttons (restore, verify, copy,
+        download and a coral remove) sit on their own wrapping line (<code>.crt-acts</code>); a folder or copy in trouble says so in
         <code>.tm__problem</code>. A job's progress is <code>JobProgress.svelte</code> (<code>.crt-job</code>, its
         <code>.crt-job__head</code> the tracked label, the phase and a quiet cancel): the shared fill <code>LimitGauge</code> with the
         byte and file counts under it, then the outcome, done in <code>.tm__note</code>, failed or cancelled in
         <code>.tm__problem</code>; it moves on its pushed job topic, never on a timer while the push is up.</dd>
     <dt id="settings-crate-restored">crates: restored list and download</dt>
-    <dd><code>web/src/cplugs/crate/RestoredList.svelte</code> is one more <code>.crt-region</code> under a <code>.pl-label</code>: the finished
-        restores as one-line hairline rows (<code>.crt-row.crt-row--line</code>) with the project name, when and the counts dim, and a quiet
-        <code>.oc-btn--sm</code> "undo" that opens <code>UndoDialog.svelte</code>; an undone restore keeps its row with no button. Every crate row
-        (recorded, found, and the project page's) also has a quiet <code>.oc-btn--sm</code> "download": an <code>&lt;a download&gt;</code> to the
-        streamed download route, so the browser saves the file with no script.</dd>
+    <dd><code>web/src/cplugs/crate/RestoredList.svelte</code> is one more base card: the finished restores as base list rows with the project
+        name, when and the counts dim, and a coral small "undo" that opens <code>UndoDialog.svelte</code>; an undone restore keeps its row
+        with no button. Every crate row (recorded, found, and the project page's) also has a quiet small "download" button that fetches the
+        streamed download route with the bearer token and saves the file.</dd>
 </dl>

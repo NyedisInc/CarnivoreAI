@@ -9,6 +9,7 @@ from typing import Any, Callable
 
 import structlog
 
+from src.core.db_reuse.kept_read import hot_read
 from src.core.pack.placement import queue as spawn_queue
 from src.core.pack.reserve import throttle as throttle_mod
 from src.core.swarm import switch as swarm_switch
@@ -58,8 +59,7 @@ async def drain(app_state: Any, open_db: Callable[[], sqlite3.Connection]) -> in
 
 
 def _count_waiting(open_db: Callable[[], sqlite3.Connection]) -> int:
-    with closing(open_db()) as conn:
-        return spawn_queue.count_queued(conn)
+    return hot_read(open_db, ("spawn_queue_waiting",), spawn_queue.count_queued)
 
 
 def _cancel(open_db: Callable[[], sqlite3.Connection], queue_id: int, reason: str) -> None:

@@ -86,7 +86,6 @@ function defaultPycacheDir() {
   return path.join(os.homedir(), 'Library', 'Caches', 'Carnivore', 'pycache');
 }
 
-/* PYTHONPYCACHEPREFIX */
 function pycacheEnv(cacheDir = defaultPycacheDir(), fsImpl = nodeFs) {
   try {
     fsImpl.mkdirSync(cacheDir, { recursive: true, mode: 0o700 });
@@ -98,7 +97,6 @@ function pycacheEnv(cacheDir = defaultPycacheDir(), fsImpl = nodeFs) {
   }
 }
 
-/* CARNIVORE_BUNDLED_TMUX CARNIVORE_PAYLOAD_PYTHON CARNIVORE_TMUX_STAGE_DIR */
 function applyPayloadEnv(payload, env, stageDir, cacheDir) {
   const tmux = stageDir ? stageTmux(payload.tmux, stageDir) : payload.tmux;
   const out = { ...env, CARNIVORE_BUNDLED_TMUX: tmux, CARNIVORE_PAYLOAD_PYTHON: payload.python, PYTHONNOUSERSITE: '1', ...pycacheEnv(cacheDir) };

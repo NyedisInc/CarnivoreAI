@@ -17,7 +17,7 @@ export const taskManagerTab: DynamicTabDef = {
   icon: 'swarm',
   order: 35,
   persist: false,
-  present: () => taskManagerPrefs.showTab && swarmIsOn(), //  hidden 
+  present: () => taskManagerPrefs.showTab && swarmIsOn(),
   focusOnAppear: false,
   open: () => taskManagerPrefs.showTab && swarmIsOn(),
   widgetArea: 'glance',

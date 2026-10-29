@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* session skills */
   import SessionSkillsPanel from './SessionSkillsPanel.svelte';
   import { setSkillsDrawer, skillsDrawerOpen } from './drawer.svelte';
 

@@ -153,6 +153,18 @@ async def request(connection: Connection, key: Optional[str], method: str, path:
     return response
 
 
+async def request_json(connection: Connection, key: Optional[str], method: str, path: str, *,
+                       list_ok: bool = False, **kwargs: Any) -> Any:
+    response = await request(connection, key, method, path, **kwargs)
+    try:
+        body = response.json()
+    except ValueError:
+        raise ByoaiError("the provider answered something that is not JSON") from None
+    if isinstance(body, dict) or (list_ok and isinstance(body, list)):
+        return body
+    raise ByoaiError("the provider answered something that is not a JSON object")
+
+
 @asynccontextmanager
 async def stream(connection: Connection, key: Optional[str], method: str, path: str, *,
                  json: Any = None, content: Optional[bytes] = None,

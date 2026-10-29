@@ -75,12 +75,12 @@ from src.core.transcript_manifest.ddl import apply_v54
 from src.core.db_ddl.search_index import apply_v55
 from src.core.hosts.ddl import apply_v40, apply_v96
 from src.core.launch_profiles.ddl import apply_v56
-from src.core.crosstalk.ddl import apply_v57, apply_v94
+from src.core.crosstalk.ddl import apply_v57, apply_v94, apply_v102
 from src.core.messaging.ddl import apply_v73, apply_v92
 from src.core.descriptions.ddl import apply_v74
 from src.core.companies.ddl import apply_v58, apply_v72
 from src.core.project_pack.ddl import apply_v75
-from src.core.swarm.ddl import apply_v59, apply_v60, apply_v62, apply_v63, apply_v64, apply_v65, apply_v66, apply_v67, apply_v68, apply_v69, apply_v70, apply_v71, rename_legacy
+from src.core.swarm.ddl import apply_v59, apply_v60, apply_v62, apply_v63, apply_v64, apply_v65, apply_v66, apply_v67, apply_v68, apply_v69, apply_v70, apply_v71, apply_v99, apply_v100, rename_legacy
 from src.core.pack.machines.ddl import apply_pack_machines
 from src.core.pack.relay.ddl import apply_pack_relay
 from src.core.pack.placement.ddl import apply_pack_placement
@@ -96,6 +96,7 @@ from src.core.pack.rollup_import.ddl import apply_v89
 from src.core.pack.trust_carry.ddl import apply_v87, apply_v88
 from src.core.flow_data.ddl import apply_mcp_surface, apply_v90
 from src.core.exports.ddl import apply_v93
+from src.core.session_group_rule import apply_v101
 from src.core.skills.consent_via_ddl import (
     CONSENT_VIA_COLUMN,
     DDL_V41_ADD_CONSENT_VIA,
@@ -140,29 +141,6 @@ def _step_v2_to_v3(conn: sqlite3.Connection) -> None:
 
 
 def _step_v3_to_v4(conn: sqlite3.Connection) -> None:
-    """Add ``projects.last_opened_at``, the launcher's ordering key.
-
-    Description: feat/db-is-authoritative. Purely additive - one nullable
-      column on ``projects``, no index - so a v3 reader that has not been
-      upgraded keeps working against the same file and every existing row
-      simply carries NULL.
-
-      IDEMPOTENT BY INSPECTION, NOT BY THE STATEMENT, exactly as v2 -> v3
-      is: SQLite's ``ALTER TABLE ADD COLUMN`` has no ``IF NOT EXISTS``, so
-      PRAGMA table_info is read first and the step no-ops when the column
-      is already there. That is what makes a retry after an INTERRUPTED
-      trail entry safe by construction.
-
-      A database that has never reached v3 has no ``projects`` table at
-      all, which cannot happen here - the chain runs in order and v0 -> v1
-      creates it - but the PRAGMA on a missing table returns no rows
-      rather than raising, so the guard degrades to attempting the ALTER
-      and surfacing SQLite's own error inside the caller's transaction
-      rather than corrupting anything.
-    Inputs: conn (sqlite3.Connection) - inside the caller's transaction.
-    Output: None.
-    Example: _step_v3_to_v4(conn)  # after _step_v2_to_v3
-    """
     existing = {
         str(row[1]) for row in conn.execute("PRAGMA table_info(projects)")
     }
@@ -341,59 +319,6 @@ def _v12_find_claude_uuid_duplicates(conn: sqlite3.Connection) -> List[Dict]:
 
 
 def _step_v11_to_v12(conn: sqlite3.Connection) -> None:
-    """Make ``ux_sessions_claude_uuid`` UNIQUE, unless the data disagrees.
-
-      THREE OUTCOMES, NEVER TWO, AND NEITHER COLLAPSE IS SAFE HERE.
-      Checked FIRST, before any DDL runs, via
-      :func:`_v12_find_claude_uuid_duplicates`:
-
-        duplicates found COULD NOT EVALUATE, not a failure of THIS step
-                          and not silently ignored. Neither index
-                          statement runs: ix_sessions_claude_uuid (v7)
-                          stays exactly as it was, so the database is not
-                          left with a dangling reference to an index that
-                          was dropped without its replacement existing.
-                          The exact uuid/row-id groups are recorded under
-                          META_SESSIONS_CLAUDE_UUID_DUPLICATES so a human
-                          can see precisely what to reconcile - never a
-                          silently-picked winner, per this project's own
-                          standing rule against inventing a verdict
-                          nobody measured.
-
-        CREATE UNIQUE INDEX itself fails despite the pre-check finding
-                          nothing (a defensive branch, not one the tests
-                          below expect to hit under normal SQLite
-                          behaviour) - caught narrowly as
-                          ``sqlite3.Error``, recorded the same way as a
-                          found duplicate, and NOT re-raised.
-
-      NEVER RAISES. This is the one property that matters most: the
-      caller (db_steps.run_chain, driven from db_migration.ensure_db_
-      migrated) commits every step from the database's current version up
-      to CURRENT_SCHEMA_VERSION as ONE transaction. An exception here
-      would roll back every step before it in the same run and drop the
-      whole app into DEGRADED_MIGRATION_FAILED / read-only - exactly the
-      "never block boot" posture db_migration.py already holds for every
-      other step, and a live database holding a duplicate uuid is a
-      finding to record, not a reason to take the app down.
-
-      DROPPING AN INDEX IS NOT THE "ADDITIVE ONLY" RULE THIS FILE'S
-      MODULE DOCSTRING WARNS AGAINST. That rule protects STORED DATA -
-      tables, columns, rows a restore could not reconstruct. An index is
-      derived, not stored fact (REVERSAL_SQL_V7's own comment says so),
-      and this step only ever drops ix_sessions_claude_uuid on the branch
-      where ux_sessions_claude_uuid has just been created to replace it -
-      the column stays exactly as indexable as before, only faster and
-      now constrained.
-
-      IDEMPOTENT. Both DDL statements carry IF NOT EXISTS / IF EXISTS, so
-      a retry after an INTERRUPTED trail entry re-runs cleanly whichever
-      branch applies; the duplicate check is a pure SELECT and costs
-      nothing to repeat.
-    Inputs: conn (sqlite3.Connection) - inside the caller's transaction.
-    Output: None.
-    Example: _step_v11_to_v12(conn)  # after _step_v10_to_v11
-    """
     duplicates = _v12_find_claude_uuid_duplicates(conn)
     if duplicates:
         set_meta(
@@ -493,15 +418,6 @@ def _step_v18_to_v19(conn: sqlite3.Connection) -> None:
 
 
 def _step_v19_to_v20(conn: sqlite3.Connection) -> None:
-    """Admit the 'opaque' session_ref_scheme, and correct the rows.
-
-      IT REWRITES NO TABLE. message_appearances references this table
-      ON DELETE CASCADE and PRAGMA foreign_keys is a no-op inside the
-      transaction every step runs in, so the standard rebuild recipe
-      cannot be made safe here. The CHECK is edited in place instead -
-      see src/core/message_scheme_repair.py for the full argument and
-      the measurements behind it.
-    """
     repair_session_ref_schemes(conn)
 
 
@@ -549,32 +465,6 @@ def _step_v24_to_v25(conn: sqlite3.Connection) -> None:
     conn.execute(DDL_V25_SESSIONS_KIND_BACKFILL)
 
 def _step_v25_to_v26(conn: sqlite3.Connection) -> None:
-    """Add the durable notification mute and its policy generation.
-
-      ``notification_policy_generation`` IS A COUNTER, NOT A CLOCK. It
-      steps by one on every policy change, mute and unmute alike. A
-      notification carries the generation it was queued under and the
-      dispatcher refuses anything that is not the current one, which is
-      what stops an alert queued before a mute from arriving after it and
-      what stops a muted backlog from replaying on unmute. Two changes
-      inside one clock tick are indistinguishable by timestamp; by
-      counter they are not.
-
-      NO BACKFILL, AND THAT IS THE POINT. Both columns are nullable with
-      no SQL default, and NULL here is a definite answer rather than an
-      unknown one: a mute can only ever be recorded in this column, so a
-      row that has none has never been muted. Existing rows, new sessions
-      and forks therefore all start unmuted without a single UPDATE.
-      Compare v25's ``kind``, where the fact lived in a transcript the
-      column could not see and NULL had to mean "never looked at".
-
-      IDEMPOTENT: each ALTER is guarded by ``column_exists`` because
-      SQLite's ADD COLUMN has no IF NOT EXISTS. A no-op on an install
-      whose sessions table was never created (pre-v2).
-    Inputs: conn (sqlite3.Connection) - inside the caller's transaction.
-    Output: None.
-    Example: _step_v25_to_v26(conn)  # after _step_v24_to_v25
-    """
     if not table_exists(conn, "sessions"):
         return
     if not column_exists(conn, "sessions", "notifications_muted"):
@@ -596,35 +486,6 @@ def _step_v27_to_v28(conn: sqlite3.Connection) -> None:
 
 
 def _step_v28_to_v29(conn: sqlite3.Connection) -> None:
-    """v28 -> v29: record the launched agent family on rows that lack one.
-
-    Description: NO DDL. ``sessions.agent_family`` already exists; it
-      simply never had a writer on the create path, which has written
-      ``agent_family_source='launched'`` beside a NULL family since the
-      column was added. The fix at the write site covers every new row;
-      this pass repairs the ones already stored, by resolving each row's
-      ``agent_type`` against the wrapper list config.json carries TODAY
-      and writing what it resolves to. A row that resolves to nothing -
-      a wrapper the user has since deleted - is LEFT NULL, because a
-      guess written into a record cannot be told from a measurement
-      afterwards.
-
-      THE BODY LIVES IN ``src/core/session_family_backfill.py``, like
-      ``carry_memberships`` does, because it needs the wrapper list and
-      that is not in this database. Read that module before changing
-      this step: it argues which resolver may be used and why a
-      could-not-read config writes nothing at all.
-
-      IDEMPOTENT BY ITS OWN WHERE CLAUSE - it reads only rows whose
-      family is NULL and writes only onto rows whose family is NULL - so
-      a re-run after an interrupted attempt finishes the remainder and
-      no-ops on the rest. ADDITIVE in the sense the module docstring
-      demands: it fills NULLs and overwrites nothing, the same shape as
-      v25's ``kind`` backfill.
-    Inputs: conn (sqlite3.Connection) - inside the caller's transaction.
-    Output: None.
-    Example: _step_v28_to_v29(conn)  # after _step_v27_to_v28
-    """
     run_backfill(conn)
 
 
@@ -946,7 +807,22 @@ def _step_v97_to_v98(conn: sqlite3.Connection) -> None:
     apply_v98(conn)
 
 
-# CURRENT_SCHEMA_VERSION
+def _step_v98_to_v99(conn: sqlite3.Connection) -> None:
+    apply_v99(conn)
+
+
+def _step_v99_to_v100(conn: sqlite3.Connection) -> None:
+    apply_v100(conn)
+
+
+def _step_v100_to_v101(conn: sqlite3.Connection) -> None:
+    apply_v101(conn)
+
+
+def _step_v101_to_v102(conn: sqlite3.Connection) -> None:
+    apply_v102(conn)
+
+
 STEPS: Dict[int, Callable[[sqlite3.Connection], None]] = {
     0: _step_v0_to_v1,
     1: _step_v1_to_v2,
@@ -1046,6 +922,10 @@ STEPS: Dict[int, Callable[[sqlite3.Connection], None]] = {
     95: _step_v95_to_v96,
     96: _step_v96_to_v97,
     97: _step_v97_to_v98,
+    98: _step_v98_to_v99,
+    99: _step_v99_to_v100,
+    100: _step_v100_to_v101,
+    101: _step_v101_to_v102,
 }
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 from typing import Awaitable, Callable, Dict, Optional, Tuple
 
@@ -34,6 +35,7 @@ class PeerLinks:
         self._key: Optional["fed_key.DeviceKey"] = None
         self._pins: Dict[str, Optional[str]] = {}
         self._up: set = set()
+        self._state_writer = ThreadPoolExecutor(max_workers=1, thread_name_prefix="peer-state")
         self._connect_listeners: list = []
         self._beat_hook: Optional[Callable[[str, PeerClient, list], Awaitable[None]]] = None
         self.transport_factory: Optional[Callable[[PeerRow, Callable[[Route], PeerClient]], Optional[Transport]]] = None
@@ -78,13 +80,19 @@ class PeerLinks:
         return self._key
 
     def _write_state(self, install_id: str, state: str, protocol: Optional[int]) -> None:
-        with closing(self._open_db()) as conn:
-            peer_hosts.set_state(conn, install_id, state, protocol)
+        try:
+            with closing(self._open_db()) as conn:
+                peer_hosts.set_state(conn, install_id, state, protocol)
+        except (sqlite3.Error, OSError) as exc:
+            logger.error("peer_state_write_failed", peer=install_id[:8], state=state, error_type=type(exc).__name__)
+
+    async def _write_state_ordered(self, install_id: str, state: str, protocol: Optional[int]) -> None:
+        await asyncio.get_running_loop().run_in_executor(self._state_writer, self._write_state, install_id, state, protocol)
 
     def _persist_state(self, install_id: str) -> Callable[[str, Optional[int]], None]:
         def write(state: str, protocol: Optional[int]) -> None:
             self._note_state(install_id, state)
-            asyncio.get_running_loop().run_in_executor(None, self._write_state, install_id, state, protocol)
+            asyncio.get_running_loop().run_in_executor(self._state_writer, self._write_state, install_id, state, protocol)
         return write
 
     async def _client_factory(self, grant_id: str, peer_install_id: str,
@@ -117,7 +125,7 @@ class PeerLinks:
         pin = await asyncio.to_thread(pinned)
         if pin is None:
             logger.warning("peer_link_not_started_no_grant", peer=row.peer_install_id[:8])
-            await asyncio.to_thread(self._write_state, row.peer_install_id, "unpaired", None)
+            await self._write_state_ordered(row.peer_install_id, "unpaired", None)
             return
         make = await self._client_factory(row.peer_grant_id, row.peer_install_id, pin)
         try:
@@ -127,7 +135,7 @@ class PeerLinks:
                 back_kind=row.back_kind)
         except (SshArgumentError, SshTransportError) as exc:
             logger.warning("peer_link_not_started_socket", peer=row.peer_install_id[:8], error=str(exc)[:200])
-            await asyncio.to_thread(self._write_state, row.peer_install_id, "disconnected", None)
+            await self._write_state_ordered(row.peer_install_id, "disconnected", None)
             return
         waits = {"settle": transport.settle, "delay": lambda _attempt: 0.5} if transport.settle is not None else {}
         link = PeerLink(peer_install_id=row.peer_install_id, establish=transport.establish, make_client=make,

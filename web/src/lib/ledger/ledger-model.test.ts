@@ -20,6 +20,7 @@ const i18n = createI18n({ locale: 'en' }) as {
 };
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
+/** A fixed instant, so nothing here depends on when it is run. */
 const NOW = Date.parse('2026-09-17T12:00:00Z');
 
 function account(over: Partial<LedgerAccount>): LedgerAccount {

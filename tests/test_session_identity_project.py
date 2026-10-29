@@ -58,12 +58,12 @@ def _persist(conn, name: str, epoch: int) -> None:
 
 def test_a_bound_session_carries_its_project_id_and_name(conn):
     _persist(conn, "cloude_bound", 7200)
-    pid = _add_project(conn, display_name="Fenford FIRFORD", root="/tmp/ravcrest-ravvale")
+    pid = _add_project(conn, display_name="Atlas UI", root="/tmp/proj-a")
     _bind(conn, name="cloude_bound", project_id=pid)
 
     row = identity_for_live_name(conn, socket=SOCKET, name="cloude_bound")
     assert row["project_id"] == pid
-    assert row["project_name"] == "Fenford FIRFORD"
+    assert row["project_name"] == "Atlas UI"
     assert row["agent_type"] == "codex-yolo"
     assert row["agent_family"] == "codex"
 

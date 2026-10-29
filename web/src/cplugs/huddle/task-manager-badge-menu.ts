@@ -15,7 +15,6 @@ export function badgeLabelKey(status: BadgeStatus): string {
 
 export const TASK_MANAGER_BADGE_HEADING = 'cplug.huddle.badge_menu.heading';
 
-/* label: ' */
 export function taskManagerBadgeNodes(): BadgeMenuNode[] {
   return BADGE_STATUSES.map((status) => ({
     id: status,

@@ -1,4 +1,4 @@
-<!-- CANNOT DETERMINE -->
+
 <script lang="ts">
     import { t as reactiveT } from '../i18n/index.svelte';
     import {
@@ -10,6 +10,8 @@
     import { validateName } from './project-folder';
     import ModalShell from './ModalShell.svelte';
     import IconButton from '../base/IconButton.svelte';
+    import Button from '../base/Button.svelte';
+    import Field from '../base/Field.svelte';
 
     interface Props {
         name: string;
@@ -57,7 +59,6 @@
                 else if (!dir) placeholder = t(PROJECT_CREATE_KEYS.folderParentUnavailable);
             })
             .catch(() => {
-                // CANNOT DETERMINE
                 if (live) placeholder = t(PROJECT_CREATE_KEYS.folderParentUnavailable);
             });
         const timer = setTimeout(() => parentEl?.focus(), 100);
@@ -119,20 +120,16 @@
         </div>
     {/snippet}
     <div class="modal-input-group">
-        <label class="modal-label" for="project-parent-input"
-            >{t(PROJECT_CREATE_KEYS.folderParentLabel)}</label
-        >
-        <input
-            type="text"
-            class="modal-input"
+        <Field
+            label={t(PROJECT_CREATE_KEYS.folderParentLabel)}
+            help={remote ? t(remote.creates ? PROJECT_CREATE_KEYS.folderRemoteHint : PROJECT_CREATE_KEYS.folderSshHint, { computer: remote.label }) : t(PROJECT_CREATE_KEYS.folderParentHint)}
             id="project-parent-input"
             {placeholder}
             autocomplete="off"
             spellcheck="false"
-            bind:this={parentEl}
             bind:value={parent}
+            bind:element={parentEl}
         />
-        <div class="modal-description">{remote ? t(remote.creates ? PROJECT_CREATE_KEYS.folderRemoteHint : PROJECT_CREATE_KEYS.folderSshHint, { computer: remote.label }) : t(PROJECT_CREATE_KEYS.folderParentHint)}</div>
     </div>
     <div class="modal-input-group">
         <div class="folder-picker-path" id="project-path-preview">
@@ -149,21 +146,12 @@
         </div>
     </div>
     {#snippet footer()}
-        <button
-            class="modal-btn modal-btn-secondary"
-            id="project-folder-cancel"
-            onclick={() => close(null)}>{t(PROJECT_CREATE_KEYS.cancel)}</button
-        >
+        <Button id="project-folder-cancel" onclick={() => close(null)}>{t(PROJECT_CREATE_KEYS.cancel)}</Button>
         {#if !remote || remoteBrowse === 'ok'}
-            <button class="modal-btn modal-btn-secondary" id="project-folder-browse" onclick={browse}
-                >{t(PROJECT_CREATE_KEYS.folderBrowse)}</button
-            >
+            <Button id="project-folder-browse" onclick={browse}>{t(PROJECT_CREATE_KEYS.folderBrowse)}</Button>
         {/if}
-        <button
-            class="modal-btn modal-btn-confirm"
-            id="project-folder-confirm"
-            disabled={!ready}
-            onclick={confirm}>{confirmLabel ?? t(PROJECT_CREATE_KEYS.confirmCreate)}</button
+        <Button variant="confirm" id="project-folder-confirm" disabled={!ready} onclick={confirm}
+            >{confirmLabel ?? t(PROJECT_CREATE_KEYS.confirmCreate)}</Button
         >
     {/snippet}
 </ModalShell>

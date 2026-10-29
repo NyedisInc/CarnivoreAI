@@ -10,6 +10,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from starlette.concurrency import run_in_threadpool
 
+from src.api.error_response import refusal_error
 from src.api import peer_auth
 from src.api.auth import require_auth
 from src.config import settings
@@ -27,6 +28,7 @@ _listing_slots = asyncio.Semaphore(MAX_CONCURRENT_LISTINGS)
 @router.get("/filesystem/project-folders", response_model=FolderListing,
             dependencies=[Depends(peer_auth.require_peer_sessions)])
 async def get_project_folders(request: Request, path: Optional[str] = Query(None, max_length=4096)) -> FolderListing:
+    """This computer's folders under its own project roots, directories only, for a paired computer's folder step."""
     principal = "peer" if peer_fanout.is_peer_call(request) else "owner"
     if _listing_slots.locked():
         logger.info("folder_browse_busy", principal=principal)
@@ -35,8 +37,7 @@ async def get_project_folders(request: Request, path: Optional[str] = Query(None
         async with _listing_slots:
             listing = await run_in_threadpool(list_project_folders, path, settings)
     except FolderBrowseRefused as exc:
-        logger.info("folder_browse_refused", principal=principal, code=exc.code, path_chars=len(path or ""))
-        raise HTTPException(status_code=exc.status, detail={"code": exc.code, "detail": exc.message}) from None
+        raise refusal_error(exc, principal=principal, path_chars=len(path or "")) from None
     logger.info("folder_browse_served", principal=principal, entries=len(listing.entries), truncated=listing.truncated)
     return listing
 

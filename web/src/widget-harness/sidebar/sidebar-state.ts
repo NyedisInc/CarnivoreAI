@@ -1,3 +1,4 @@
+/* the drawer closed */
 
 export const SIDEBAR_WIDTHS = ['min', 'default', 'wide', 'max'] as const;
 export type SidebarWidth = (typeof SIDEBAR_WIDTHS)[number];

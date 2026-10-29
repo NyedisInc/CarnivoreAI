@@ -42,11 +42,8 @@ from src.core.session_import import (
 )
 from src.core.session_store import count_sessions, list_sessions
 from src.core.tmux_listing_parse import parse_listing_row, resolve_ownership
-from src.core.tmux_listing import (
-    TmuxListing,
-    classify_listing_failure,
-    looks_like_no_server,
-)
+from src.core.tmux_listing import TmuxListing, classify_listing_failure
+from src.core.tmux_stderr import looks_like_no_server
 
 
 @dataclass
@@ -142,7 +139,7 @@ def test_defect_pipe_in_tmux_name_forges_the_instance_triple():
 
 
 def test_defect_sanitize_tmux_name_permits_the_delimiter():
-    from src.core.session_manager import _sanitize_tmux_name
+    from src.core.session_name_claim import sanitize_tmux_name as _sanitize_tmux_name
 
     assert _sanitize_tmux_name("api|prod") == "api_prod"
     assert "|" not in _sanitize_tmux_name("a|b|c")
@@ -265,12 +262,12 @@ def test_defect_import_hardcodes_the_default_socket(conn):
     )
     import inspect
 
-    import src.main as main_mod
+    from src.core.boot import first_run as boot_first_run
     from src.core.session_store import owned_instances
 
-    main_src = inspect.getsource(main_mod)
+    main_src = inspect.getsource(boot_first_run)
     call = main_src[main_src.index("run_first_run_import("):]
-    call = call[: call.index("\n                    )")]
+    call = call[: call.index("\n            )")]
     assert "socket=" in call
     assert "tmux_socket_name()" in call
 

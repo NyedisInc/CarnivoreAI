@@ -1,4 +1,4 @@
-/* pop-out window */
+/* there is nothing */
 
 import { readMigrating, writeMigrating } from '../lib/browser-storage-migrate';
 import { BROWSER_ID } from '../lib/browser/browser-id';
@@ -63,7 +63,6 @@ export function featuresFor(g: PopoutGeometry): string {
     return parts.join(',');
 }
 
-/* pop-out window */
 export function openHomePopout(win: Window = window): Window | null {
     const geometry = parseGeometry(readMigrating(POPOUT_GEOMETRY_KEY));
     const opened = win.open(POPOUT_PATH, POPOUT_WINDOW_NAME, featuresFor(geometry));
@@ -105,7 +104,6 @@ export function openWallboard(win: Window = window, board?: string): Window | nu
     return opened;
 }
 
-/* pop-out window */
 export function rememberGeometry(
     win: Window = window,
     delayMs: number = POPOUT_SAVE_DELAY_MS,
@@ -145,7 +143,6 @@ export function rememberGeometry(
     };
 }
 
-/* pop-out window */
 export function focusMainWindow(win: Window = window): boolean {
     const opener = win.opener as Window | null;
     if (!opener || opener.closed) return false;
@@ -158,7 +155,6 @@ export function hasMainWindow(win: Window = window): boolean {
     return !!opener && !opener.closed;
 }
 
-/* pop-out window */
 export const WIDGET_PARAM = 'widget';
 
 export const WIDGET_WINDOW_CAP = Object.freeze({ width: 900, height: 700 });
@@ -224,7 +220,6 @@ export function widgetGeometryKey(id: string): string {
     return `carnivore.popout.widget.${id}.geometry`;
 }
 
-/* pop-out window */
 export const AGENT_PARAM = 'agent';
 
 export function agentFromSearch(search: string): number | null {
@@ -270,7 +265,6 @@ export function openWidgetPopout(id: string, fits: WidgetFits, win: Window = win
     return opened;
 }
 
-/* pop-out window */
 export const BROWSER_PARAM = 'browser';
 
 export const BROWSER_GEOMETRY_KEY = 'carnivore.popout.browser.geometry';

@@ -4,6 +4,7 @@
     import type { Translate } from '../sessions/types';
     import type { PageRow } from './filters';
     import { dateWord } from './latest-line';
+    import { workedWord } from './lenses';
     import { homeWord } from './panel-format';
     import { transcriptPath } from '../projects-shared/ledger-model';
 
@@ -19,7 +20,7 @@
     const s = $derived(row.s);
     const path = $derived(transcriptPath(s));
     const workedText = $derived(
-        worked === null ? t('sessions.page.panel.facts.unmeasured') : worked >= 3600 ? t('sessions.page.group.worked', { h: Math.round(worked / 3600) }) : t('sessions.page.measure.worked_min', { m: Math.max(1, Math.round(worked / 60)) }),
+        worked === null ? t('sessions.page.panel.facts.unmeasured') : workedWord(worked, t),
     );
 </script>
 

@@ -4,10 +4,6 @@
 .pk-tab > * { max-width: 100%; }
 .modal-btn.pk-act { flex: 0 0 auto; align-self: center; min-height: 0; padding: 4px 12px; font-size: 12px; }
 .pk-meters { display: flex; flex-direction: column; gap: 6px; margin: 2px 0; }
-.pk-field, .pk-select { box-sizing: border-box; padding: 6px 10px; border: 1px solid var(--pl-line); border-radius: 2px;
-  background: transparent; color: var(--pl-text); font-family: var(--pl-mono); font-size: 12px; max-width: 100%; }
-.pk-select { min-width: 0; flex: 0 1 22rem; }
-.pk-field:hover, .pk-select:hover { border-color: var(--pl-accent-bright); }
 .pm-note, .cmp-note { max-width: 70ch; }
 @media (max-width: 700px) {
   .pk-meters { gap: 8px; }

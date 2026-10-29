@@ -17,13 +17,6 @@ TYPE_FOLDER_TRUST = "approval.folder_trust"
 
 
 def is_folder_trust_dialog(dialog: Any) -> bool:
-    """True only for the real startup trust dialog: its kind is trust AND its own text carries a startup-prompt marker.
-
-    The kind alone is a substring match on "trust" (``approvals.extract._classify``), so a permission prompt about
-    ``trust_utils.py`` or a question that mentions trust would pass it. The startup gate's marker list
-    (``session_startup_gate.STARTUP_PROMPT_MARKERS``) is the evidence the dialog really is claude's or codex's trust screen.
-    Example: is_folder_trust_dialog(SimpleNamespace(kind="folder_trust", question="Do you trust the contents of this directory?", body="", rows=())) is True
-    """
     if dialog is None or dialog.kind != KIND_TRUST:
         return False
     labels = [str(getattr(r, "label", "")) for r in getattr(dialog, "rows", ())]

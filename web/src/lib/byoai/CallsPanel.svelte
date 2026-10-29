@@ -9,6 +9,10 @@
     import { resourcePush } from '../resource-push/boot';
     import { fetchCallsPage, fetchCallsSummary, type CallFilters, type CallRow, type CallsPage, type CallsSummary, type Fetcher } from './api';
     import { costText, dayKey, dayLabel, firstLine, latencyText, modelName, tokensText } from './calls-logic';
+    import Button from '../base/Button.svelte';
+    import Segmented from '../base/Segmented.svelte';
+    import Select from '../base/Select.svelte';
+    import State from '../base/State.svelte';
     import CallsSummaryView from './CallsSummary.svelte';
     import { ai, attach } from './store.svelte';
 
@@ -110,43 +114,29 @@
 <div class="tm ai-calls" data-ai="calls">
     {#if summary}
         <div class="ai-bar" role="group" aria-label={t('settings.ai.calls.range')}>
-            <div class="oc-seg" role="radiogroup" aria-label={t('settings.ai.calls.range')}>
-                {#each RANGES as r (r)}
-                    <button type="button" class="oc-seg__item" role="radio" aria-checked={filters.range === r} data-ai-range={r}
-                        onclick={() => setFilter({ range: r })}>{r}</button>
-                {/each}
-            </div>
+            <Segmented label={t('settings.ai.calls.range')} value={filters.range} onchange={(r) => setFilter({ range: r as CallFilters['range'] })}
+                options={RANGES.map((r) => ({ value: r, label: r, attrs: { 'data-ai-range': r } }))} />
         </div>
         <CallsSummaryView {t} {summary} {featureName} onpick={(kind, key) => setFilter({ [kind]: key })} />
 
         <div class="ai-bar" role="group" aria-label={t('settings.ai.calls.filters')}>
-            <select class="oc-field" aria-label={t('settings.ai.calls.col.feature')} data-ai-filter="feature" value={filters.feature}
-                onchange={(e) => setFilter({ feature: e.currentTarget.value })}>
-                <option value="">{t('settings.ai.calls.all.feature')}</option>
-                {#each summary.options.feature as id (id)}<option value={id}>{featureName(id)}</option>{/each}
-            </select>
-            <select class="oc-field" aria-label={t('settings.ai.calls.col.connection')} data-ai-filter="connection" value={filters.connection}
-                onchange={(e) => setFilter({ connection: e.currentTarget.value })}>
-                <option value="">{t('settings.ai.calls.all.connection')}</option>
-                {#each summary.options.connection as id (id)}<option value={id}>{connectionName(id)}</option>{/each}
-            </select>
-            <select class="oc-field" aria-label={t('settings.ai.calls.col.model')} data-ai-filter="model" value={filters.model}
-                onchange={(e) => setFilter({ model: e.currentTarget.value })}>
-                <option value="">{t('settings.ai.calls.all.model')}</option>
-                {#each summary.options.model as id (id)}<option value={id}>{modelName(id).name}</option>{/each}
-            </select>
-            <div class="oc-seg" role="radiogroup" aria-label={t('settings.ai.calls.col.ok')}>
-                {#each RESULTS as r (r)}
-                    <button type="button" class="oc-seg__item" role="radio" aria-checked={filters.result === r} data-ai-result={r || 'all'}
-                        onclick={() => setFilter({ result: r })}>{t(`settings.ai.calls.result.${r || 'all'}`)}</button>
-                {/each}
-            </div>
-            {#if filtered}<button type="button" class="oc-btn" data-ai="calls-clear" onclick={clearAll}>{t('settings.ai.calls.clear')}</button>{/if}
+            <Select aria-label={t('settings.ai.calls.col.feature')} data-ai-filter="feature" value={filters.feature}
+                onchange={(e) => setFilter({ feature: e.currentTarget.value })}
+                options={[{ value: '', label: t('settings.ai.calls.all.feature') }, ...summary.options.feature.map((id) => ({ value: id, label: featureName(id) }))]} />
+            <Select aria-label={t('settings.ai.calls.col.connection')} data-ai-filter="connection" value={filters.connection}
+                onchange={(e) => setFilter({ connection: e.currentTarget.value })}
+                options={[{ value: '', label: t('settings.ai.calls.all.connection') }, ...summary.options.connection.map((id) => ({ value: id, label: connectionName(id) }))]} />
+            <Select aria-label={t('settings.ai.calls.col.model')} data-ai-filter="model" value={filters.model}
+                onchange={(e) => setFilter({ model: e.currentTarget.value })}
+                options={[{ value: '', label: t('settings.ai.calls.all.model') }, ...summary.options.model.map((id) => ({ value: id, label: modelName(id).name }))]} />
+            <Segmented label={t('settings.ai.calls.col.ok')} value={filters.result} onchange={(r) => setFilter({ result: r as CallFilters['result'] })}
+                options={RESULTS.map((r) => ({ value: r, label: t(`settings.ai.calls.result.${r || 'all'}`), attrs: { 'data-ai-result': r || 'all' } }))} />
+            {#if filtered}<Button data-ai="calls-clear" onclick={clearAll}>{t('settings.ai.calls.clear')}</Button>{/if}
         </div>
     {/if}
 
     {#if behind > 0}
-        <button type="button" class="ai-new" data-ai="calls-new" onclick={goFirst}>{t('settings.ai.calls.new', { n: behind })}</button>
+        <Button size="sm" data-ai="calls-new" onclick={goFirst}>{t('settings.ai.calls.new', { n: behind })}</Button>
     {/if}
 
     {#if page && page.calls.length > 0}
@@ -161,7 +151,7 @@
                 {#each day.rows as row (row.id)}
                     {@const model = modelName(row.model)}
                     <div class="ai-entry" class:ai-entry--fresh={fresh.has(row.id)} data-ai-call={row.id}>
-                        <button type="button" class="ai-row" aria-expanded={open === row.id} onclick={() => (open = open === row.id ? null : row.id)}>
+                        <Button variant="row" data-ai="call-row" aria-expanded={open === row.id} onclick={() => (open = open === row.id ? null : row.id)}>
                             <span class="ai-c ai-c--ts" data-ai-cell="ts">{timeText(row.ts)}</span>
                             <span class="ai-c ai-c--feature" data-ai-cell="feature">{featureName(row.feature)}</span>
                             <span class="ai-c ai-c--conn" data-ai-cell="connection">{connectionName(row.connection_id)}</span>
@@ -171,7 +161,7 @@
                             <span class="ai-c ai-c--tok ai-end" data-ai-cell="tokens">{tokens(row)}</span>
                             <span class="ai-c ai-c--cost ai-end" data-ai-cell="cost">{costText(row.cost_usd)}</span>
                             {#if !row.ok && row.error}<span class="ai-c ai-err" data-ai-cell="error">{firstLine(row.error)}</span>{/if}
-                        </button>
+                        </Button>
                         {#if open === row.id}
                             <dl class="ai-detail" data-ai="calls-detail">
                                 {#each [
@@ -190,8 +180,8 @@
         <div class="ai-pager" data-ai="calls-pager">
             <span class="tm__sub" data-ai="calls-count">{t('settings.ai.calls.range_of', { from: page.start.toLocaleString(), to: last.toLocaleString(), total: page.total.toLocaleString() })}</span>
             <span class="ai-pager__btns">
-                <button type="button" class="oc-btn" data-ai="calls-newer" disabled={page.prev === null} onclick={() => void load({ after: page!.prev! })}>{t('settings.ai.calls.newer')}</button>
-                <button type="button" class="oc-btn" data-ai="calls-older" disabled={page.next === null} onclick={() => void load({ before: page!.next! })}>{t('settings.ai.calls.older')}</button>
+                <Button data-ai="calls-newer" disabled={page.prev === null} onclick={() => void load({ after: page!.prev! })}>{t('settings.ai.calls.newer')}</Button>
+                <Button data-ai="calls-older" disabled={page.next === null} onclick={() => void load({ before: page!.next! })}>{t('settings.ai.calls.older')}</Button>
             </span>
         </div>
     {:else if page}
@@ -199,5 +189,5 @@
     {:else if !problem}
         <p class="tm__sub">{t('settings.ai.loading')}</p>
     {/if}
-    {#if problem}<p class="tm__problem" role="alert" data-ai="problem">{problem}</p>{/if}
+    {#if problem}<State kind="error" inline title={problem} data-ai="problem" />{/if}
 </div>

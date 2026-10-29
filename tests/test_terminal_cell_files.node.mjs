@@ -98,7 +98,7 @@ test('THE LOADER carries the session pin into the frozen snapshot', async () => 
         sessionActive: true,
         _currentSession: {
             pinned_theme: 'alien',
-            session: { working_dir: '/orchard' },
+            session: { working_dir: '/argent' },
         },
     };
 
@@ -106,7 +106,7 @@ test('THE LOADER carries the session pin into the frozen snapshot', async () => 
 
     assert.ok(received, 'positive control: the loader must have opened the '
         + 'panel at all, or this test asserts nothing about what it passed');
-    assert.equal(received._currentSession.working_dir, '/orchard',
+    assert.equal(received._currentSession.working_dir, '/argent',
         'the folder still travels, as it always did');
     assert.equal(received._currentSession.pinned_theme, 'alien',
         'and so does the pin, or the panel cannot wear the theme of the '

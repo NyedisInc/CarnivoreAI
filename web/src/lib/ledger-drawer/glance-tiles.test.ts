@@ -58,13 +58,13 @@ describe('providerGlanceTiles', () => {
     expect(tiles[1]!.data).toMatchObject({ accountId: 'b-claude', credentialState: 'expired', short: null });
   });
 
-  test('N entries give N tiles: two claude accounts are two tiles, not one per provider', () => {
-    const gmail = { ...account('auto-claude-default', 'claude', 'ok', windows(10)), name: 'the owner Gmail' } as AccountUsage;
-    const initech = { ...account('sam-initech', 'claude', 'ok', windows(0)), name: 'the owner INITECH', short_name: 'initech' } as AccountUsage;
-    const two = providerGlanceTiles(snapshot([gmail, initech]), NOW);
-    expect(two.map((tile) => tile.data.accountLabel)).toEqual(['the owner Gmail', 'initech']);
-    expect(two[1]!.data.accountName).toBe('the owner INITECH');
-    const four = providerGlanceTiles(snapshot([gmail, initech, account('acct-3', 'claude', 'ok', windows(5)), account('c', 'codex', 'ok', windows(5))]), NOW);
+  test('N entries give N tiles: two claude accounts are two tiles, not one per provider (Joe, 2026-10-02)', () => {
+    const gmail = { ...account('auto-claude-default', 'claude', 'ok', windows(10)), name: 'Joe Gmail' } as AccountUsage;
+    const imc = { ...account('joe-imc', 'claude', 'ok', windows(0)), name: 'Joe IMC', short_name: 'imc' } as AccountUsage;
+    const two = providerGlanceTiles(snapshot([gmail, imc]), NOW);
+    expect(two.map((tile) => tile.data.accountLabel)).toEqual(['Joe Gmail', 'imc']);
+    expect(two[1]!.data.accountName).toBe('Joe IMC');
+    const four = providerGlanceTiles(snapshot([gmail, imc, account('acct-3', 'claude', 'ok', windows(5)), account('c', 'codex', 'ok', windows(5))]), NOW);
     expect(four).toHaveLength(4);
     expect(new Set(four.map((tile) => tile.key)).size).toBe(4);
   });
@@ -80,7 +80,7 @@ describe('providerGlanceTiles', () => {
     expect(tile!.data.long).toBeNull();
   });
 
-  test('a chosen account narrows to it; one the ledger no longer lists falls back to every account', () => {
+  test('a chosen account narrows to it; one the ledger no longer lists falls back to every account (Joe, 2026-10-03)', () => {
     const snap = snapshot([account('a', 'claude', 'ok', windows(10)), account('b', 'claude', 'ok', windows(20))]);
     expect(providerGlanceTiles(snap, NOW, { [ACCOUNT_OPTION]: 'b' }).map((tile) => tile.key)).toEqual(['b']);
     expect(providerGlanceTiles(snap, NOW, { [ACCOUNT_OPTION]: 'deleted' }).map((tile) => tile.key)).toEqual(['a', 'b']);

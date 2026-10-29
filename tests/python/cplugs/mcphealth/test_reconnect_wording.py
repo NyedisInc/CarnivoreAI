@@ -10,7 +10,7 @@ FAILED = {"type": "attachment", "timestamp": "2026-10-09T19:00:00.000Z", "attach
     "type": "deferred_tools_delta", "addedNames": [], "removedNames": [], "pendingMcpServers": [],
     "failedMcpServers": [
         {"name": "carnivore", "errorCode": "ECONNREFUSED", "error": "ECONNREFUSED: x"},
-        {"name": "imageserver", "errorCode": "ENDPOINT_NOT_FOUND", "error": "MCP endpoint not found"}]}}
+        {"name": "higgsfield", "errorCode": "ENDPOINT_NOT_FOUND", "error": "MCP endpoint not found"}]}}
 RECONNECT = [
     {"parentUuid": "a", "isSidechain": False, "promptId": "p", "type": "user", "isMeta": True,
      "message": {"role": "user", "content": "<local-command-caveat>The command below was run directly in Claude "
@@ -31,8 +31,8 @@ def _names(records):
 
 
 def test_successfully_reconnected_clears_that_server_only():
-    assert _names([FAILED]) == ["carnivore", "imageserver"]
-    assert _names([FAILED] + RECONNECT) == ["imageserver"]
+    assert _names([FAILED]) == ["carnivore", "higgsfield"]
+    assert _names([FAILED] + RECONNECT) == ["higgsfield"]
 
 
 def test_the_history_scan_keeps_the_new_wording_past_the_tail(tmp_path):
@@ -40,23 +40,23 @@ def test_the_history_scan_keeps_the_new_wording_past_the_tail(tmp_path):
     path = tmp_path / "t.jsonl"
     path.write_text("".join(json.dumps(r) + "\n" for r in [FAILED] + RECONNECT))
     events = scan_mcp_events(str(path), 0, path.stat().st_size)
-    assert sorted(d.name for d in fold_mcp_health(events).dropped) == ["imageserver"]
+    assert sorted(d.name for d in fold_mcp_health(events).dropped) == ["higgsfield"]
 
 
 def test_a_failure_line_in_the_new_wording_does_not_heal():
     bad = json.loads(json.dumps(RECONNECT))
     bad[2]["message"]["content"] = "<local-command-stdout>Failed to reconnect to carnivore</local-command-stdout>"
-    assert _names([FAILED] + bad) == ["carnivore", "imageserver"]
+    assert _names([FAILED] + bad) == ["carnivore", "higgsfield"]
 
 
 def test_disabled_servers_come_from_project_settings_and_follow_edits(tmp_path):
     settings_dir = tmp_path / ".claude"
     settings_dir.mkdir()
     assert disabled.disabled_servers(str(tmp_path)) == frozenset()
-    (settings_dir / "settings.local.json").write_text(json.dumps({"disabledMcpjsonServers": ["imageserver"]}))
-    assert disabled.disabled_servers(str(tmp_path)) == {"imageserver"}
+    (settings_dir / "settings.local.json").write_text(json.dumps({"disabledMcpjsonServers": ["higgsfield"]}))
+    assert disabled.disabled_servers(str(tmp_path)) == {"higgsfield"}
     (settings_dir / "settings.json").write_text(json.dumps({"disabledMcpjsonServers": ["Claude.ai Docs"]}))
-    assert disabled.disabled_servers(str(tmp_path)) == {"imageserver", "claude_ai_docs"}
+    assert disabled.disabled_servers(str(tmp_path)) == {"higgsfield", "claude_ai_docs"}
     (settings_dir / "settings.local.json").write_text("{not json")
     assert disabled.disabled_servers(str(tmp_path)) == {"claude_ai_docs"}
     assert disabled.disabled_servers(None) == frozenset()

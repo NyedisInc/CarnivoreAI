@@ -9,6 +9,7 @@ export const ARCHIVED_SESSIONS_VISIBLE_KEY = 'carnivore.launchpad.deletedSession
 
 export const ARCHIVED_PROJECTS_VISIBLE_KEY = 'carnivore.launchpad.archivedVisible';
 
+/* the newest match */
 export type SearchDirection = 'bottom_up' | 'top_down';
 
 export const SEARCH_DIRECTION_KEY = 'carnivore.terminal.searchDirection';
@@ -60,9 +61,11 @@ export function writeFlag(key: string, on: boolean): void {
     }
 }
 
-let archivedSessionsVisible = $state<boolean | null>(null);
+let archivedSessionsVisible: boolean | null = null;
 
-let archivedProjectsVisible = $state<boolean | null>(null);
+let archivedProjectsVisible: boolean | null = null;
+
+let archivedVisibleVersion = $state(0);
 
 let searchDirection: SearchDirection | null = null;
 
@@ -73,6 +76,7 @@ let searchPromptsOnly: boolean | null = null;
 let searchPromptsOnlyVersion = $state(0);
 
 function resolveArchivedSessionsVisible(): boolean {
+    void archivedVisibleVersion;
     if (archivedSessionsVisible === null) {
         archivedSessionsVisible = readFlag(ARCHIVED_SESSIONS_VISIBLE_KEY);
     }
@@ -80,6 +84,7 @@ function resolveArchivedSessionsVisible(): boolean {
 }
 
 function resolveArchivedProjectsVisible(): boolean {
+    void archivedVisibleVersion;
     if (archivedProjectsVisible === null) {
         archivedProjectsVisible = readFlag(ARCHIVED_PROJECTS_VISIBLE_KEY);
     }
@@ -112,6 +117,7 @@ export const uiPrefs = {
 
     setArchivedSessionsVisible(on: boolean): void {
         archivedSessionsVisible = !!on;
+        archivedVisibleVersion += 1;
         writeFlag(ARCHIVED_SESSIONS_VISIBLE_KEY, archivedSessionsVisible);
     },
 
@@ -121,6 +127,7 @@ export const uiPrefs = {
 
     setArchivedProjectsVisible(on: boolean): void {
         archivedProjectsVisible = !!on;
+        archivedVisibleVersion += 1;
         writeFlag(ARCHIVED_PROJECTS_VISIBLE_KEY, archivedProjectsVisible);
     },
 
@@ -140,7 +147,6 @@ export const uiPrefs = {
         return resolveSearchPromptsOnly();
     },
 
-    /* the prompts-only toggle */
     setSearchPromptsOnly(on: boolean): void {
         searchPromptsOnly = !!on;
         searchPromptsOnlyVersion += 1;
@@ -150,6 +156,7 @@ export const uiPrefs = {
     reload(): void {
         archivedSessionsVisible = readFlag(ARCHIVED_SESSIONS_VISIBLE_KEY);
         archivedProjectsVisible = readFlag(ARCHIVED_PROJECTS_VISIBLE_KEY);
+        archivedVisibleVersion += 1;
         searchDirection = readChoice(
             SEARCH_DIRECTION_KEY,
             SEARCH_DIRECTIONS,
@@ -163,6 +170,7 @@ export const uiPrefs = {
     resetForTests(): void {
         archivedSessionsVisible = null;
         archivedProjectsVisible = null;
+        archivedVisibleVersion += 1;
         searchDirection = null;
         searchDirectionVersion += 1;
         searchPromptsOnly = null;

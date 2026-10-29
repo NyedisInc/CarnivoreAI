@@ -194,6 +194,9 @@ def test_every_screen_entry_calls_set_header_identity(screen_function: str) -> N
             if depth == 0:
                 break
     body = js[func_match.end():end]
+    if "AppScreenEntry.enterTerminal(" in body:
+        shared = (APP_JS.parent / "app-screen-entry.js").read_text(encoding="utf-8")
+        body += shared
     assert "setHeaderIdentity(" in body, (
         f"{screen_function}() never calls setHeaderIdentity() - this "
         "screen's header will silently show whatever the previous "

@@ -297,7 +297,6 @@
             pendingStart = null;
             untrack(() => startCeremony(p.direct));
             if (!p.direct) {
-                //  hidden 
                 let fired = false;
                 const up = (): void => { if (!fired) { fired = true; boardUp = true; } };
                 if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => setTimeout(up, 0));

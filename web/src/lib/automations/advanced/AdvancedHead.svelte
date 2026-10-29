@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
   import Button from '../../base/Button.svelte';
   import Switch from '../../base/Switch.svelte';

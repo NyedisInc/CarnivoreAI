@@ -99,7 +99,7 @@ def test_a_recreated_session_keeps_its_read_cursor(world, old, new):
     listed = call(world, old, "task_manager_tasks_list", {"list": "12"})
     assert listed["cursor"] > 0
     world.world.recreate(old, new)
-    world.client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "the owner adds after the read"})
+    world.client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "joe adds after the read"})
     told = world.client.post("/api/v1/cplugs/huddle/lists/12/send", json={"target": new}).json()
     assert f"since {listed['cursor']}" in told["text"] and "since 0" not in told["text"]
 

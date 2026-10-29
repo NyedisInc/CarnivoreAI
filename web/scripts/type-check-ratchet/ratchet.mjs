@@ -1,11 +1,10 @@
-/*  svelte-check */
+/* could not be read */
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const BASELINE_PATH = fileURLToPath(new URL('./baseline.json', import.meta.url));
 
-/*  svelte-check */
 export function countErrors(output) {
   const rows = output.split('\n');
   return {
@@ -25,7 +24,6 @@ export function judge(measured, baseline) {
   return { code: 0, message: `${measured.errors} type errors, equal to the baseline.` };
 }
 
-/*  svelte-check */
 function main() {
   const baseline = JSON.parse(readFileSync(BASELINE_PATH, 'utf8')).errors;
   const run = spawnSync('npx', ['svelte-check', '--tsconfig', './tsconfig.json', '--output', 'machine'], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });

@@ -1,7 +1,7 @@
 <script lang="ts">
-    /*  hidden  */
     import { onDestroy } from 'svelte';
     import Icon from '../../opscenter/ui/Icon.svelte';
+    import { Button, Field, IconButton } from '../base';
     import { viewport } from '../../opscenter/engine/viewport.svelte';
     import { t } from '../i18n/index.svelte';
     import { openBrowserSocket, type BrowserSocket, type ConnState, type ServerMessage } from './browser-socket';
@@ -20,16 +20,25 @@
         browserId,
         compact = false,
         focusAddress = false,
+        onClose,
     }: {
         browserId: string;
         compact?: boolean;
         focusAddress?: boolean;
+        onClose?: () => void;
     } = $props();
 
     let canvas = $state<HTMLCanvasElement | null>(null);
     let stage = $state<HTMLElement | null>(null);
     let ime = $state<HTMLTextAreaElement | null>(null);
     let addressInput = $state<HTMLInputElement | null>(null);
+
+    function captureAddress(node: HTMLInputElement): () => void {
+        addressInput = node;
+        return () => {
+            if (addressInput === node) addressInput = null;
+        };
+    }
 
     let conn = $state<ConnState>('connecting');
     let connDetail = $state('');
@@ -305,30 +314,21 @@
 
 <div class="bv" class:bv-compact={compact} data-browser-id={browserId}>
     <form class="bv-bar" onsubmit={go}>
-        <button type="button" class="bv-btn" disabled={!nav.canGoBack} aria-label={t('browser.back')} onclick={() => send({ type: 'back' })}>
-            <Icon name="back" size={14} />
-        </button>
-        <button type="button" class="bv-btn" disabled={!nav.canGoForward} aria-label={t('browser.forward')} onclick={() => send({ type: 'forward' })}>
-            <Icon name="arrow" size={14} />
-        </button>
+        <IconButton label={t('browser.back')} icon="back" iconSize={14} disabled={!nav.canGoBack} onclick={() => send({ type: 'back' })} />
+        <IconButton label={t('browser.forward')} icon="arrow" iconSize={14} disabled={!nav.canGoForward} onclick={() => send({ type: 'forward' })} />
         {#if nav.loading}
-            <button type="button" class="bv-btn" title={t('browser.stop')} aria-label={t('browser.stop')} onclick={() => send({ type: 'stop' })}>
-                <Icon name="close" size={14} />
-            </button>
+            <IconButton label={t('browser.stop')} icon="close" iconSize={14} onclick={() => send({ type: 'stop' })} />
         {:else}
-            <button type="button" class="bv-btn" aria-label={t('browser.reload')} onclick={() => send({ type: 'reload' })}>
-                <Icon name="reset" size={14} />
-            </button>
+            <IconButton label={t('browser.reload')} icon="reset" iconSize={14} onclick={() => send({ type: 'reload' })} />
         {/if}
-        <input
-            bind:this={addressInput}
+        <Field
+            {@attach captureAddress}
             bind:value={address}
-            class="bv-address"
-            type="text"
+            data-bv-address
             inputmode="url"
             autocomplete="off"
             autocapitalize="off"
-            spellcheck="false"
+            spellcheck={false}
             placeholder={t('browser.address.placeholder')}
             title={t('browser.address.where')}
             aria-label={t('browser.address')}
@@ -337,20 +337,23 @@
             onblur={() => (editing = false)}
         />
         {#if viewport.phone}
-            <button type="button" class="bv-btn" title={t('browser.keyboard.hint')} aria-label={t('browser.keyboard')} onclick={() => ime?.focus()}>
+            <Button size="icon" title={t('browser.keyboard.hint')} aria-label={t('browser.keyboard')} onclick={() => ime?.focus()}>
                 <Icon name="keyboard" size={14} />
-            </button>
+            </Button>
+        {/if}
+        {#if onClose}
+            <IconButton label={t('browser.menu.close')} icon="trash" iconSize={14} variant="close" data-bv-close onclick={onClose} />
         {/if}
     </form>
     {#if dialog}
         <div class="bv-dialog" role="alertdialog" aria-label={t('browser.dialog')}>
             <span class="bv-dialog-text">{dialog.message}</span>
             {#if dialog.kind === 'prompt'}
-                <input class="bv-address" type="text" bind:value={promptText} aria-label={t('browser.dialog.answer')} />
+                <Field data-bv-address bind:value={promptText} aria-label={t('browser.dialog.answer')} />
             {/if}
-            <button type="button" class="bv-btn bv-word" onclick={() => answer(true)}>{t('browser.dialog.ok')}</button>
+            <Button size="sm" onclick={() => answer(true)}>{t('browser.dialog.ok')}</Button>
             {#if dialog.kind !== 'alert'}
-                <button type="button" class="bv-btn bv-word" onclick={() => answer(false)}>{t('browser.dialog.cancel')}</button>
+                <Button size="sm" onclick={() => answer(false)}>{t('browser.dialog.cancel')}</Button>
             {/if}
         </div>
     {/if}
@@ -378,6 +381,7 @@
         <textarea
             bind:this={ime}
             class="bv-ime"
+            data-base-exempt="invisible one-pixel IME helper that only raises a phone keyboard"
             autocomplete="off"
             autocapitalize="off"
             spellcheck="false"
@@ -391,7 +395,7 @@
             <div class="bv-state" role="status">
                 <span>{stateLine}</span>
                 {#if conn === 'stopped' || conn === 'refused'}
-                    <button type="button" class="bv-btn bv-word" onclick={() => socket?.reopen()}>{t('browser.reopen')}</button>
+                    <Button size="sm" onclick={() => socket?.reopen()}>{t('browser.reopen')}</Button>
                 {/if}
             </div>
         {/if}
@@ -427,52 +431,25 @@
         padding: 3px 4px;
     }
 
-    .bv-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        flex: none;
-        min-width: 28px;
-        height: 28px;
-        padding: 0 6px;
-        background: none;
-        border: var(--oc-border, 1px) solid var(--oc-line-panel);
-        border-radius: var(--oc-radius);
-        color: var(--oc-text-secondary);
-        font: inherit;
-        font-size: 12px;
-        cursor: pointer;
+    .bv-bar,
+    .bv-dialog {
+        --oc-ibtn-size: 28px;
     }
 
-    .bv-btn:hover:not(:disabled),
-    .bv-btn:focus-visible {
-        background: var(--oc-ground-hover);
-        color: var(--oc-text-primary);
-        outline: none;
+    .bv-compact .bv-bar {
+        --oc-ibtn-size: 24px;
     }
 
-    .bv-btn:disabled {
-        opacity: 0.4;
-        cursor: default;
-    }
-
-    .bv-address {
+    .bv-bar :global([data-bv-address]),
+    .bv-dialog :global([data-bv-address]) {
         flex: 1 1 auto;
         min-width: 0;
         height: 28px;
-        padding: 0 8px;
-        background: var(--oc-ground-page);
-        border: var(--oc-border, 1px) solid var(--oc-line-panel);
-        border-radius: var(--oc-radius);
-        color: var(--oc-text-primary);
-        font: inherit;
         font-size: 16px;
     }
 
-    .bv-compact .bv-btn,
-    .bv-compact .bv-address {
+    .bv-compact .bv-bar :global([data-bv-address]) {
         height: 24px;
-        min-width: 24px;
     }
 
     .bv-dialog-text {

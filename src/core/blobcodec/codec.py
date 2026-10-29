@@ -79,7 +79,6 @@ def decompress_bounded(packed: bytes, codec: str, max_length: int) -> bytes:
     if len(out) > max_length:
         raise BlobCorrupt(f"{codec} stream inflates past its stated length of {max_length} bytes")
     if not decomp.eof:
-        # not allowed
         raise BlobCorrupt(f"{codec} stream is truncated or longer than its stated length of {max_length} bytes")
     if decomp.unused_data:
         raise BlobCorrupt(f"{codec} stream has {len(decomp.unused_data)} bytes after its end")

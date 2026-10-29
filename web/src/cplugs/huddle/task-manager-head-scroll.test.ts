@@ -31,7 +31,7 @@ function setup(): { scroller: HTMLElement; scrollTo: ReturnType<typeof vi.fn>; t
   return { scroller, scrollTo, toggle, head };
 }
 
-describe('project bar scroll', () => {
+describe('project bar scroll (item 385)', () => {
   test('the math: the dock is one bar per project above', () => {
     expect(projectScrollTop(600, 2, 30)).toBe(540);
     expect(projectScrollTop(10, 2, 30)).toBe(0);

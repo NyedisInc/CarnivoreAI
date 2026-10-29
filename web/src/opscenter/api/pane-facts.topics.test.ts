@@ -1,3 +1,4 @@
+/* frame, and the */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let reads: string[] = [];
@@ -59,7 +60,7 @@ describe('pane facts', () => {
 
     store.closed();
     await vi.advanceTimersByTimeAsync(mod.PANE_FACTS_POLL_MS + 1);
-    expect(count()).toBeGreaterThanOrEqual(4);
+    expect(count()).toBeGreaterThanOrEqual(4); // down: the fallback poll is back
     mod.releasePaneFacts('ses_1');
   });
 });

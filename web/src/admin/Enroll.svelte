@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import Button from '../lib/base/Button.svelte';
+    import Field from '../lib/base/Field.svelte';
     import type { AdminHost } from './admin-host.svelte.js';
     import { t } from './text.js';
     import { ADMIN_KEYS } from '../../../client/js/labels/admin.js';
@@ -22,19 +23,15 @@
         }}
     >
         <label class="admin-field" for="admin-enrol-code">{t(ADMIN_KEYS.enrollCodeLabel)}</label>
-        <input
-            id="admin-enrol-code"
-            class="admin-input admin-input--code"
-            type="text"
+        <Field
+            id="admin-enrol-code" data-admin-code data-admin-grow
             autocomplete="off"
             bind:value={code}
         />
         <label class="admin-field" for="admin-enrol-label">{t(ADMIN_KEYS.enrollLabelLabel)}</label>
-        <input
-            id="admin-enrol-label"
-            class="admin-input"
-            type="text"
-            maxlength="40"
+        <Field
+            id="admin-enrol-label" data-admin-grow
+            maxlength={40}
             autocomplete="off"
             bind:value={label}
         />

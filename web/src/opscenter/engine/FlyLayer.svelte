@@ -1,5 +1,4 @@
 <script module lang="ts">
-  /*  hidden  */
   import { tick } from 'svelte';
   import { META, metaFor } from './meta';
   import { anchorRect, navAnchors } from './navAnchors.svelte';
@@ -42,6 +41,7 @@
     return meta.titleName ?? t(meta.titleKey);
   }
 
+  /* there is nothing */
   export async function hideWithFlight(store: LayoutStore, id: SlotId, from: DOMRect | null): Promise<void> {
     const meta = metaFor(id, META);
     const to = anchorRect('components');
@@ -54,7 +54,6 @@
     navAnchors.components?.focus();
   }
 
-  /*  hidden  */
   export async function restoreWithFlight(store: LayoutStore, id: SlotId): Promise<void> {
     const meta = metaFor(id, META);
     const from = anchorRect('components');
@@ -69,6 +68,7 @@
     corner?.focus();
   }
 
+  /* there is nothing */
   export async function removeWithReflow(store: LayoutStore, id: SlotId): Promise<void> {
     const title = titleOf(id);
     const before = measureCells();

@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* cannot fork */
   import { t } from '../i18n/index.svelte';
   import { reanchorAccountMenu } from '../drawer-hud/account-menu.svelte';
 
@@ -8,7 +7,6 @@
   const BAR_SLOT_ID = 'session-sidebar-bar-slot';
   let footerEl = $state<HTMLElement | null>(null);
 
-  // cannot fork
   $effect(() => {
     if (!railed || !footerEl) return;
     const src = document.getElementById(BAR_SLOT_ID);
@@ -35,7 +33,7 @@
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-  <!-- <button> -->
+  
   <div class="mr-footer" role="group" aria-label={t('drawer.rail.footer')} bind:this={footerEl} onclick={onFooterClick}></div>
 
 <style>

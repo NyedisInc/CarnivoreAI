@@ -1,11 +1,3 @@
-"""Wake a dead-pane stop IN PLACE: respawn the agent in the husk tmux still holds, never a kill (#1726).
-
-NOTHING LIVE IS KILLED, BY THREE MEASUREMENTS. The socket must list the name (``present``), the exact instance
-``=name:`` must report the row's own creation epoch with ``#{pane_dead}`` = 1, and the respawn ladder re-reads the
-pane and answers ``not_dead`` for a live one; without ``-k`` tmux itself refuses ``respawn-pane`` on a live pane.
-A different instance under the name, a live pane, or a probe that could not run is refused and nothing is touched.
-A husk that is gone (``gone``) is not handled here: the caller falls through to the recreate.
-"""
 
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+/* the home screen */
 
 @layer components {
 :root {
@@ -20,7 +21,7 @@ body.session-sidebar-railed #session-sidebar-toggle {
     display: none;
 }
 
-/*  hidden  */
+/* the drawer closed the drawer toggle */
 body.session-sidebar-railed:has(#terminal-screen.active) .header {
     display: none;
 }

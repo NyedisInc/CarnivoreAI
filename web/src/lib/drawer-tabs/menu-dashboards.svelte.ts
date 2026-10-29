@@ -1,3 +1,4 @@
+/* the home screen */
 import { homeBoards } from '../../opscenter/engine/home-sync.svelte';
 import { openDashboardPopout } from '../../popout/popout';
 import { popOutHome } from '../../opscenter/shell/open-targets';
@@ -8,6 +9,7 @@ import { closeDrawerAfterSwitch } from './menu-hotkeys';
 export interface MenuDashboardRow {
   id: string;
   name: string;
+  /* the home screen */
   home: boolean;
   viewing: boolean;
 }
@@ -43,6 +45,7 @@ export function hideMenuPreview(id: string): void {
   if (menuPreview.id === id) menuPreview.id = null;
 }
 
+/* the home screen */
 export function openMenuDashboard(id: string): void {
   menuPreview.id = null;
   showDashboard(id);

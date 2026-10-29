@@ -13,7 +13,8 @@
   "examples": [
     "Turn on one personal skill on the alpha computer and watch the other computers go from syncing to in sync.",
     "Turn on keep every skill in sync, leaving out the few you want to stay on one computer.",
-    "a catalog (warez) skill on alpha shows on every other computer as 'from warez', installed there from that computer's own signed catalog at the same version"
+    "a catalog (warez) skill on alpha shows on every other computer as 'from warez', installed there from that computer's own signed catalog at the same version",
+    "if another computer becomes alpha without you, the bell says 'alpha is now <computer>' and 'make it alpha again' puts it back"
   ],
   "how_to": [
     "Open Warez, INSTALLED, skills and pick the pack tab (it shows when the Pack has two or more computers), or open the Pack page and pick its skills tab (the same table): one row per skill name with a provider icon for each family that holds it, one column per computer showing the worst state across the families; the header row stays put while you scroll.",
@@ -21,7 +22,8 @@
     "On any other computer the tab is read only and says to change it on alpha.",
     "A skill alpha no longer has shows missing on alpha with stop syncing and remove everywhere.",
     "Open the alert bell for the pack skills alerts: alpha changed, skills left behind by a computer you unpaired (remove what it placed moves them to the trash for 14 days), and a local edit that alpha's copy replaced (kept 14 days).",
-    "On a receiver each skill row says which computer placed it."
+    "On a receiver each skill row says which computer placed it.",
+    "a catalog skill you edited on alpha is held back with the reason 'edited after install on alpha, not synced'; reinstall it from warez or copy it to a new name to sync it as your own skill"
   ],
   "id": "pack-skill-sync",
   "issues": [

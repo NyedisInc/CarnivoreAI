@@ -12,13 +12,6 @@ _IN_FLIGHT: Set[str] = set()
 
 
 class RestartInFlightError(RuntimeError):
-    """A restart for this stored session is already running.
-
-    Description: raised by :func:`claim` when the key is held. Routes turn
-      it into a 409; it is never a server fault.
-    Inputs (constructor): session_uuid (str) - the contested row.
-    Output: a RestartInFlightError whose ``session_uuid`` names the row.
-    """
 
     def __init__(self, session_uuid: str) -> None:
         super().__init__(
@@ -44,10 +37,6 @@ def claim(session_uuid: str) -> Iterator[None]:
 
 
 IN_PROGRESS_CODE = "restart_in_progress"
-
-
-def http_detail(exc: RestartInFlightError) -> dict:
-    return {"code": IN_PROGRESS_CODE, "message": str(exc)}
 
 
 def in_flight(session_uuid: str) -> bool:

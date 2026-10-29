@@ -44,7 +44,7 @@ async def test_redial_over_a_surviving_master_restores_the_socket(monkeypatch, k
     monkeypatch.setattr(ssh_exec, "run_process", fake_run)
     directory = tempfile.mkdtemp(prefix="rd")
     out = os.path.join(directory, "out.sock")
-    dest = SshDestination("hosta")
+    dest = SshDestination("studio")
 
     async def dial() -> str:
         if kind == "tcp":

@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -12,6 +13,13 @@ const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const QUEUE_SRC = read('client/js/terminal-write-queue.js');
 const TERM_SRC = read('client/js/terminal.js');
 const INDEX_HTML = read('client/index.html');
+// The boot line is one call into client/js/terminal-client-factory.js
+// now, and the register() that hands it the class is the first of the
+// two lines, so it is what a loader cuts at to get the class alone.
+// The boot below that line does more than construct: it refuses by
+// name when the client factory did not load. A loader that wants the
+// class alone has to cut above the whole boot, so terminal.js carries
+// this marker line and says in place that it does not move.
 const TERM_SINGLETON = '// THE CLASS ENDS ABOVE.';
 
 function makeSandbox() {
@@ -159,6 +167,20 @@ test('a BURST still coalesces to one write per frame', () => {
     assert.equal(term.written[1].length, 9, 'both queued chunks merged');
 });
 
+test('a hidden tab (animation frames never fire) still drains the queue on the timer (u008-02)', async () => {
+    const { self, term, sandbox } = makeController();
+    sandbox.window.requestAnimationFrame = () => 1;
+    sandbox.requestAnimationFrame = () => 1;
+    vm.runInContext(read('client/js/terminal-layout-wait.js'), sandbox, { filename: 'terminal-layout-wait.js' });
+    assert.ok(sandbox.window.TerminalLayoutWait, 'positive control: the wait module loaded');
+    self.enqueue(chunk(3, 1));
+    self.enqueue(chunk(4, 2));
+    term.pendingCallback();
+    await new Promise((r) => setTimeout(r, sandbox.window.TerminalLayoutWait.FRAME_TIMEOUT_MS + 100));
+    assert.equal(term.written.length, 2, 'the queued bytes were written without any frame');
+    assert.equal(term.written[1].length, 4);
+});
+
 test('an overflow drops from the FRONT and writes exactly one marker', () => {
     const { self, term, sandbox } = makeController();
     let frame = null;
@@ -199,7 +221,7 @@ test('a chunk arriving between the callback and its frame does not double-write'
     let frame = null;
     sandbox.requestAnimationFrame = (fn) => { frame = fn; return 1; };
     self.enqueue(chunk(3, 1));
-    self.enqueue(chunk(4, 2));
+    self.enqueue(chunk(4, 2));        // queued behind it
     term.pendingCallback();
     self.enqueue(chunk(5, 3));
     assert.equal(term.written.length, 1,

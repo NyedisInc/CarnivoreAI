@@ -15,7 +15,6 @@
         return Array.prototype.indexOf.call(dt.types, 'Files') !== -1;
     }
 
-    /* one trailing space */
     function buildDropText(paths, quote) {
         var usable = [];
         for (var i = 0; i < paths.length; i++) {

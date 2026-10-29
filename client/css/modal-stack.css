@@ -1,5 +1,4 @@
 
-/*  hidden  overflow: hidden position: fixed */
 body.modal-stack-locked,
 html:has(body.modal-stack-locked) {
     overflow: hidden;

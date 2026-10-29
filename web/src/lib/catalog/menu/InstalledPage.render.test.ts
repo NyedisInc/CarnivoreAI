@@ -47,8 +47,8 @@ describe('an installed node is the kind\'s real page', () => {
         const host = show({ scope: 'installed', page: 'kind', kind: 'theme' });
         expect(host.querySelector('[data-installed-screen="theme"] .themes-screen')).not.toBeNull();
         expect([...host.querySelectorAll('.catalog-card__title')].map((n) => n.textContent?.trim())).toEqual(['Rogue']);
-        expect(host.querySelectorAll('.oc-chip').length).toBeGreaterThanOrEqual(3);
-        expect([...host.querySelectorAll('.oc-chip')].some((c) => /built in/.test(c.textContent ?? ''))).toBe(false);
+        expect(host.querySelectorAll('[data-theme-filter]').length).toBeGreaterThanOrEqual(3);
+        expect([...host.querySelectorAll('[data-theme-filter]')].some((c) => /built in/.test(c.textContent ?? ''))).toBe(false);
         expect(host.querySelector('.oc-titlebar')).toBeNull();
         expect(host.querySelector('[data-installed-page]')).toBeNull();
     });
@@ -59,7 +59,7 @@ describe('an installed node is the kind\'s real page', () => {
         mounted = mount(ThemesScreen, { target: host, props: { embedded: true } });
         flushSync();
         expect([...host.querySelectorAll('.catalog-card__title')].map((n) => n.textContent?.trim())).toEqual(['Matrix', 'Rogue']);
-        expect([...host.querySelectorAll('.oc-chip')].some((c) => /built in/.test(c.textContent ?? ''))).toBe(true);
+        expect([...host.querySelectorAll('[data-theme-filter]')].some((c) => /built in/.test(c.textContent ?? ''))).toBe(true);
     });
 
     test('a theme item node opens that theme in the Themes inspector', () => {

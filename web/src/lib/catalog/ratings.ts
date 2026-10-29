@@ -1,4 +1,3 @@
-/* could not */
 import { clipChars } from './bounds';
 import type { ItemRatings, RatingReview } from './types';
 
@@ -36,7 +35,6 @@ export interface RatingsView {
     average: number | null;
     histogram: HistogramRow[];
     texts: RatingTextView[];
-    /* could not nothing at all */
     textsMalformed: boolean;
 }
 

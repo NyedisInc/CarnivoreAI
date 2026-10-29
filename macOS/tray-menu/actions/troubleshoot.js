@@ -1,5 +1,3 @@
-// Copy Diagnostics
-// Copy Diagnostics
 
 'use strict';
 
@@ -15,7 +13,6 @@ const DEBUG_BOOT_ENV = 'CARNIVORE_DEBUG_BOOT';
 const PREVIEW_CHARS = 1500;
 const CRASH_NAME = /^(Carnivore|Electron|Python|python3)[^/]*\.(ips|crash)$/;
 
-/* CARNIVORE_STATE_DIR CLOUDE_STATE_DIR */
 function stateDir() {
   return process.env.CARNIVORE_STATE_DIR || process.env.CLOUDE_STATE_DIR
     || path.join(os.homedir(), 'Library', 'Application Support', 'Carnivore');
@@ -46,6 +43,7 @@ function newestCrashReport(ctx) {
   try {
     names = ctx.fs.readdirSync(dir).filter((n) => CRASH_NAME.test(n));
   } catch (error) {
+    // there is nothing
     return null;
   }
   const dated = names.map((n) => ({ n, at: ctx.fs.statSync(path.join(dir, n)).mtimeMs })).sort((a, b) => b.at - a.at);
@@ -70,41 +68,43 @@ async function killPortHolder(ctx) {
   const holder = await portTrust.identifyHolder(port, deps);
   const refusal = portTrust.killRefusal(holder, deps);
   if (refusal) {
-    ctx.dialog.showErrorBox('Carnivore will not stop that process', refusal);
+    ctx.dialog.showErrorBox(ctx.t('menubar.dialog.port.refuse_title'), refusal);
     return;
   }
   const answer = await ctx.dialog.showMessageBox({
-    type: 'warning', title: 'Stop the process holding the port?', message: `Stop PID ${holder.pid} (${holder.name})?`,
-    detail: `It is listening on port ${port}, so the Carnivore server cannot start.\n\nExecutable: ${holder.exe}\n`
-      + `Owner: uid ${holder.uid} (you)\nStarted: ${holder.start}\n\nIt gets SIGTERM, then SIGKILL after a few seconds.`,
-    buttons: ['Leave It Running', `Stop PID ${holder.pid}`], defaultId: 0, cancelId: 0,
+    type: 'warning', title: ctx.t('menubar.dialog.port.confirm_title'),
+    message: ctx.t('menubar.dialog.port.confirm_message', { pid: holder.pid, name: holder.name }),
+    detail: ctx.t('menubar.dialog.port.confirm_detail', { port, exe: holder.exe, uid: holder.uid, start: holder.start }),
+    buttons: [ctx.t('menubar.dialog.port.leave'), ctx.t('menubar.dialog.port.stop', { pid: holder.pid })], defaultId: 0, cancelId: 0,
   });
   if (answer.response !== 1) return;
   const outcome = await portTrust.killHolder(port, holder, deps);
-  ctx.dialog.showMessageBox({ type: outcome.stopped ? 'info' : 'warning', title: 'Kill Port Holder',
-    message: outcome.stopped ? 'The port holder was stopped.' : 'Nothing was stopped.', detail: outcome.detail, buttons: ['OK'] });
+  ctx.dialog.showMessageBox({ type: outcome.stopped ? 'info' : 'warning', title: ctx.t('menubar.dialog.port.done_title'),
+    message: ctx.t(outcome.stopped ? 'menubar.dialog.port.stopped' : 'menubar.dialog.port.not_stopped'),
+    detail: outcome.detail, buttons: [ctx.t('menubar.dialog.ok')] });
   ctx.refresh();
 }
 
 async function reinstallEnv(ctx) {
   const sm = ctx.serverManager;
   if (sm.getState() !== 'stopped' || sm.isProcessRunning()) {
-    ctx.dialog.showErrorBox('Stop the server first', `The server is running${sm.processPid ? ` (PID ${sm.processPid})` : ''}; `
-      + 'stop it from Server & Troubleshoot, then reinstall its environment.');
+    ctx.dialog.showErrorBox(ctx.t('menubar.dialog.env.stop_first_title'), sm.processPid
+      ? ctx.t('menubar.dialog.env.stop_first_detail_pid', { pid: sm.processPid })
+      : ctx.t('menubar.dialog.env.stop_first_detail'));
     return;
   }
   if (sm.payload) {
-    await ctx.dialog.showMessageBox({ type: 'info', title: 'Nothing to reinstall', message: 'This install has no Python environment to rebuild.',
-      detail: 'The server runs on the Python that ships inside the app. Reinstall or update the app to repair it.', buttons: ['OK'] });
+    await ctx.dialog.showMessageBox({ type: 'info', title: ctx.t('menubar.dialog.env.payload_title'),
+      message: ctx.t('menubar.dialog.env.payload_message'), detail: ctx.t('menubar.dialog.env.payload_detail'),
+      buttons: [ctx.t('menubar.dialog.ok')] });
     return;
   }
   const venv = path.join(sm.baseDir, 'venv');
   const aside = `${venv}.replaced-${Date.now()}`;
   const answer = await ctx.dialog.showMessageBox({
-    type: 'warning', title: 'Reinstall the server environment?', message: 'Rebuild the server\'s Python environment?',
-    detail: `The current one is moved aside, not deleted:\n${aside}\n\nA new one is created and its packages installed `
-      + '(one to two minutes, needs the network), then the server starts. No server process is running.',
-    buttons: ['Cancel', 'Reinstall'], defaultId: 0, cancelId: 0,
+    type: 'warning', title: ctx.t('menubar.dialog.env.confirm_title'), message: ctx.t('menubar.dialog.env.confirm_message'),
+    detail: ctx.t('menubar.dialog.env.confirm_detail', { aside }),
+    buttons: [ctx.t('menubar.dialog.cancel'), ctx.t('menubar.dialog.env.confirm_go')], defaultId: 0, cancelId: 0,
   });
   if (answer.response !== 1) return;
   try {
@@ -123,11 +123,11 @@ function handlers(ctx) {
   return {
     'server.console_log': () => {
       if (!ctx.fs.existsSync(sm.logFile)) {
-        ctx.dialog.showErrorBox('Carnivore: no server log', `There is no server log at ${sm.logFile} yet.`);
+        ctx.dialog.showErrorBox(ctx.t('menubar.dialog.log.missing_title'), ctx.t('menubar.dialog.log.missing_detail', { path: sm.logFile }));
         return;
       }
       ctx.execFile('/usr/bin/open', ['-a', 'Console', sm.logFile], (error) => {
-        if (error) ctx.dialog.showErrorBox('Carnivore: Console would not open the log', error.message);
+        if (error) ctx.dialog.showErrorBox(ctx.t('menubar.dialog.log.console_failed'), error.message);
       });
     },
     'server.reveal_logs': () => ctx.shell.openPath(path.dirname(sm.logFile)),
@@ -135,16 +135,15 @@ function handlers(ctx) {
     'server.copy_diagnostics': async () => {
       const read = await readDiagnostics(ctx);
       if (!read.text) {
-        ctx.dialog.showErrorBox('Carnivore: no diagnostics', `Diagnostics could not be collected: ${read.error}`);
+        ctx.dialog.showErrorBox(ctx.t('menubar.dialog.diag.none_title'), ctx.t('menubar.dialog.diag.none_detail', { error: read.error }));
         return;
       }
-      const more = read.text.length > PREVIEW_CHARS ? `\n\n... ${read.text.length - PREVIEW_CHARS} more characters` : '';
-      const answer = await ctx.dialog.showMessageBox({ type: 'info', title: 'Copy Diagnostics',
-        message: 'Copy these diagnostics? Secrets are redacted.', detail: read.text.slice(0, PREVIEW_CHARS) + more,
-        buttons: ['Cancel', 'Copy'], defaultId: 1, cancelId: 0 });
+      const more = read.text.length > PREVIEW_CHARS ? ctx.t('menubar.dialog.diag.more', { count: read.text.length - PREVIEW_CHARS }) : '';
+      const answer = await ctx.dialog.showMessageBox({ type: 'info', title: ctx.t('menubar.dialog.diag.copy_title'),
+        message: ctx.t('menubar.dialog.diag.copy_message'), detail: read.text.slice(0, PREVIEW_CHARS) + more,
+        buttons: [ctx.t('menubar.dialog.cancel'), ctx.t('menubar.dialog.diag.copy_go')], defaultId: 1, cancelId: 0 });
       if (answer.response === 1) ctx.clipboard.writeText(read.text);
     },
-    // Copy Diagnostics
     'server.export_diagnostics': () => {
       const userData = ctx.app.getPath('userData');
       return createExport({ readDiagnostics: () => readDiagnostics(ctx), dialog: ctx.dialog, shell: ctx.shell, fs: ctx.fs, t: ctx.t,
@@ -153,10 +152,12 @@ function handlers(ctx) {
     },
     'server.check_health': async () => {
       const health = await sm.getHealth();
-      ctx.dialog.showMessageBox({ type: health ? 'info' : 'warning', title: 'Check Health Now',
-        message: health ? 'The server answered its health check.' : 'The server did not answer its health check.',
-        detail: health ? `status ${health.status}, version ${health.version}, up ${health.uptime} s` : `Nothing answered on port ${sm.getPort()}.`,
-        buttons: ['OK'] });
+      ctx.dialog.showMessageBox({ type: health ? 'info' : 'warning', title: ctx.t('menubar.dialog.health.title'),
+        message: ctx.t(health ? 'menubar.dialog.health.answered' : 'menubar.dialog.health.silent'),
+        detail: health
+          ? ctx.t('menubar.dialog.health.answered_detail', { status: health.status, version: health.version, uptime: health.uptime })
+          : ctx.t('menubar.dialog.health.silent_detail', { port: sm.getPort() }),
+        buttons: [ctx.t('menubar.dialog.ok')] });
       ctx.refresh();
     },
     'server.start_debug': async () => {
@@ -175,7 +176,7 @@ function handlers(ctx) {
     'server.crash_report': () => {
       const report = newestCrashReport(ctx);
       if (report) ctx.shell.showItemInFolder(report);
-      else ctx.dialog.showMessageBox({ type: 'info', title: 'Newest Crash Report', message: 'No Carnivore crash reports.', buttons: ['OK'] });
+      else ctx.dialog.showMessageBox({ type: 'info', title: ctx.t('menubar.dialog.crash.title'), message: ctx.t('menubar.dialog.crash.none'), buttons: [ctx.t('menubar.dialog.ok')] });
     },
   };
 }

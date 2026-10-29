@@ -183,6 +183,7 @@ def _cap_body(request: Request, limit: int) -> None:
 
 @router.post("/offer")
 async def offer(request: Request, caller: str = Depends(_alpha_limited)) -> Any:
+    """Alpha's state document in, the pairs this computer needs bytes for out. Raises 403, 409 ``stale`` (with ``applied_gen``), 422 ``bad_document``."""
     try:
         _cap_body(request, MAX_OFFER_BODY)
         body = await request.json()
@@ -264,6 +265,7 @@ def _inventory() -> Dict[str, Any]:
 
 @router.get("/inventory")
 async def inventory(_caller: str = Depends(_alpha_limited)) -> Any:
+    """What this computer holds, for alpha's dry run (owner-triggered on alpha, never on a timer)."""
     return await run_in_threadpool(_inventory)
 
 
@@ -321,6 +323,7 @@ def export_dir() -> Path:
 
 
 class ExportBody(BaseModel):
+    """The one skill alpha's owner wants this computer's copy of."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -334,7 +337,8 @@ def _export_fail(exc: take_export.ExportError) -> JSONResponse:
 
 @router.post("/export")
 async def export_skill(body: ExportBody, caller: str = Depends(_alpha_limited)) -> Any:
-    """
+    """Bundle this computer's copy of one skill for the held alpha (a catalog install, a link or a skill the scan holds back is refused).
+
     Output: ``{blob_id, size, sha256, digest}``. Raises 404 ``not_found``, 413 ``too_large``, 422 ``bad_skill`` / ``catalog_skill`` / ``skill_is_link`` / ``skill_held``.
     """
     try:

@@ -1,32 +1,3 @@
-"""Push a CloudeCode rename through to Claude Code's own session name.
-
-WHY THIS EXISTS. CloudeCode's rename and Claude Code's rename are two
-different names for the same session, and until now only the first one
-moved. Claude Code has carried ``/rename <name>`` since v2.1.205 and
-``-n/--name`` at launch, and it keeps the result in its own transcript as
-a ``custom-title`` row - so the session the user renamed in the browser
-went on calling itself something else in the prompt bar, the ``/resume``
-picker and the terminal title.
-
-WHAT THIS CANNOT DO, and it shapes everything below: there is no
-``SessionRename`` hook event (verified against the shipped 2.1.248 binary:
-zero occurrences), and ``/rename`` does NOT fire ``UserPromptSubmit``,
-because Claude intercepts slash commands before they become prompts. So
-no EVENT can carry the news: CloudeCode can push a name TO Claude, and it
-can never be TOLD that a user typed ``/rename`` in the terminal.
-
-  PUSH_SENT       - the conversation is addressable; the child was run.
-  PUSH_DEFERRED   - no uuid is bound yet, or its transcript is measurably
-                    absent, or the label is one Claude would rewrite.
-                    Nothing was sent. This is NOT a failure: the name is
-                    already stored on our side, and Claude's copy can be
-                    pushed later or set by the user.
-  PUSH_UNSUPPORTED- this session is not a Claude session, or the running
-                    Claude is older than ``MIN_RENAME_VERSION``.
-
-Never invent a fourth meaning by returning PUSH_SENT for a send whose
-effect was not observed. A queued keystroke is not a rename.
-"""
 
 from __future__ import annotations
 
@@ -72,7 +43,6 @@ def name_is_pushable(label: str) -> bool:
     return all(ch == " " or ch.isprintable() for ch in label)
 
 
-# not a guarantee
 OOB_TIMEOUT_SECONDS: int = 15
 
 
@@ -151,23 +121,6 @@ def launch_name_args(
 
 
 def detect_claude_version() -> Optional[Tuple[int, int, int]]:
-    """
-    Description: reuses ``server_status.collect_claude_cli`` rather than
-      running its own probe. That module already solves the hard part -
-      ``claude`` is not on a non-interactive shell's PATH here, so it
-      walks absolute candidates - and a second resolver would be free to
-      disagree with the one the status page shows, which is how two
-      sources of truth start.
-
-      Returns None on ANY failure, and None means unsupported everywhere
-      it is consumed. Import errors and subprocess failures are caught
-      together on purpose: from this function's point of view they are
-      the same fact, which is "I could not establish a version", and the
-      caller must not send a command on the strength of a guess.
-    Inputs: none.
-    Output: tuple[int, int, int] | None.
-    Example: detect_claude_version() -> (2, 1, 248)
-    """
     try:
         from src.core.server_status import collect_claude_cli
 

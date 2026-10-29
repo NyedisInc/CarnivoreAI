@@ -1,3 +1,4 @@
+// What this file can and cannot cover:
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -42,6 +43,7 @@ async function runQueue() {
     }
 }
 
+/** Mark the current test as skipped rather than passed. */
 function skip(reason) {
     const e = new Error(reason);
     e.skip = true;

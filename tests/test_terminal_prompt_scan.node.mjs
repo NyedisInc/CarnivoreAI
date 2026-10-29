@@ -1,3 +1,5 @@
+// through a real
+// through a real
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -519,6 +521,8 @@ test('the current ordinal is the last prompt at or above the viewport', () => {
     assert.equal(Scan.currentOrdinalFor([], 10), 0);
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 const rowsOf = (lines) => lines.map((text) => ({ text, kind: 'plain' }));
 const CODEX_SESSION = [
     '  >_ OpenAI Codex (v0.163.0)', '', '› say only the word pong, then list three colors one per line', '',

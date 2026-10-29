@@ -1,9 +1,7 @@
 <script lang="ts">
-  /* position: relative */
-  import { badgeOf } from '../attention-kinds/bell-badge';
-  import { bellRows } from '../attention-kinds/read.svelte';
+  import { bellBadge } from '../attention-kinds/read.svelte';
 
-  const badge = $derived(badgeOf(bellRows()));
+  const badge = $derived(bellBadge());
 </script>
 
 {#if badge.severity}

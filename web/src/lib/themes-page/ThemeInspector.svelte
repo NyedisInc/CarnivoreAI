@@ -1,4 +1,4 @@
-
+<!-- and the three -->
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import ThemePreview from './ThemePreview.svelte';

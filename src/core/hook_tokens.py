@@ -1,36 +1,3 @@
-"""Durable per-session hook tokens, so a restart does not silence hooks.
-
-Restart the server and those two facts collide. The agent keeps posting
-perfectly well-formed hooks, forever, to a server that has forgotten the
-token, and every one is rejected:
-
-    POST /api/v1/hooks/claude-event  ->  {"detail":"invalid token"}  403
-
-Nothing about that is visible from the pane. And because everything
-downstream of hooks dies at once - activity status, toasts, session
-lineage - and the fallback tier reports a CONSTANT ``idle`` under this
-app's launch path, a session whose hooks are dead is indistinguishable
-from a healthy one sitting at a prompt.
-
-WHY PERSISTING IS THE RIGHT FIX AND NOT A WEAKENING. The original design
-kept the token in memory on purpose, so a compromised process could not
-learn one. That property is mostly notional here: the token is ALREADY
-readable by the same user, out of the pane's own environment
-(``tmux show-environment``), which is where the agent reads it from. A
-0600 file in the state dir adds no reader who could not already run that
-command. What the memory-only design actually bought was "the token stops
-being valid when the session ends", and that is preserved exactly - the
-entry is dropped on destroy, and any entry whose session is gone is
-garbage-collected on load.
-
-The loopback check is untouched and remains the layer that matters
-against anything off-box.
-
-THREE OUTCOMES, because a token store that fails quietly recreates the
-very bug it fixes. Load and save both report whether they worked; a
-caller that cannot persist is told so and can degrade to memory-only
-WITH the reason, rather than believing it is durable.
-"""
 
 from __future__ import annotations
 
@@ -77,24 +44,6 @@ def tokens_path(state_dir: Path) -> Path:
 def load_tokens(
     state_dir: Path, live_session_ids: Optional[Iterable[str]] = None
 ) -> LoadResult:
-    """Read the stored tokens, dropping any whose session is gone.
-
-    Description: ``live_session_ids``, when supplied, garbage-collects the
-      file. A token whose session no longer exists can never be presented
-      by anything, so keeping it is pure credential accumulation - the
-      file would grow for the life of the install. Passing None keeps
-      everything, which is correct before the session list is known.
-
-      A file that cannot be parsed yields an EMPTY store with status
-      ``unreadable`` rather than raising. That is a deliberate choice and
-      the reason ``status`` exists: the caller must be able to tell "no
-      tokens were stored" from "I could not read what was stored", and
-      only the second one warrants a warning to the user.
-    Inputs: state_dir (Path). live_session_ids (iterable[str] | None) -
-      session ids currently known; entries outside it are dropped.
-    Output: LoadResult.
-    Example: load_tokens(Path('/tmp')).status -> 'absent'
-    """
     path = tokens_path(state_dir)
     if not path.exists():
         return LoadResult(tokens={}, status=LOAD_ABSENT)

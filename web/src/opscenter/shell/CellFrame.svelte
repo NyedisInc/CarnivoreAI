@@ -40,7 +40,7 @@
     body,
   }: {
     meta: CellMeta;
-    /* could not */
+    /* could not determine */
     count?: number | null;
     suffix?: string | null;
     onRightControl?: () => void;
@@ -96,7 +96,6 @@
     cellHeader.takesBars = headShown && !phoneCollapsible && !cellHeader.content;
   });
 
-  /* could not */
   const cap = $derived(meta.phoneCap ?? 0);
   const overflow = $derived(
     viewport.phone && cap > 0 && total !== null && total > cap ? total - cap : 0,
@@ -128,7 +127,6 @@
     const element = wrap;
     const from = element ? element.getBoundingClientRect().height : 0;
     onToggleCollapse?.();
-    // display:none
     if (!element || phoneCollapsible || reducedMotion()) return;
     void tick().then(() => {
       const to = element.getBoundingClientRect().height;
@@ -138,8 +136,8 @@
     });
   }
 
+  /* there is nothing */
   function onGripDown(event: PointerEvent): void {
-    // position: fixed
     if (!viewport.wide || menuOpen || layoutZoom.isZoomed(meta.id)) return;
     const target = event.target as HTMLElement | null;
     if (target?.closest('button, input, select, textarea, a, [role=dialog], [popover]')) return;
@@ -380,7 +378,6 @@
       align-items: stretch;
       gap: var(--oc-space-2);
       min-width: 0;
-      /* padding */
       padding: 0 var(--oc-widget-inset);
       touch-action: none;
       cursor: grab;
@@ -404,12 +401,6 @@
       overflow: hidden;
     }
 
-    /* `display: grid` above is an AUTHOR rule and `[hidden] { display: none }` is
-       the browser's own, so the author rule wins and a folded panel would stay on
-       screen. Restating it here at the same weight is what actually folds it, and
-       it is `hidden` rather than a class because that is the one attribute that
-       also takes the panel out of the tab order and out of the accessibility
-       tree, which is what the accordion pattern requires of a shut panel. */
     .oc-frame-collapsewrap[hidden] {
       display: none;
     }
@@ -427,6 +418,7 @@
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
+      /* at the same time */
       contain: layout paint;
     }
 
@@ -457,6 +449,7 @@
         justify-content: center;
       }
 
+      /* and the three */
       .oc-frame-body {
         min-height: 0;
       }

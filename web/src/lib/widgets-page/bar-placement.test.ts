@@ -34,6 +34,7 @@ describe('writtenRails and restorePlan', () => {
     });
 
     test('an undo removes the widget first, so a partial failure can only drop it', () => {
+        // the bottom rail
         expect(restorePlan(['side', 'bottom'], before, after)).toEqual(['bottom', 'side']);
     });
 });

@@ -111,6 +111,9 @@ describe('CustomDomain', () => {
         expect(q('[data-cd-led]')?.getAttribute('data-cd-led')).toBe('ok');
         (q('[data-cd="remove"]') as HTMLButtonElement).click();
         await settle();
+        expect(calls).not.toContain('DELETE /phone-link/custom-domain');
+        (q('[data-cd="remove-sure"]') as HTMLButtonElement).click();
+        await settle();
         expect(calls).toContain('DELETE /phone-link/custom-domain');
     });
 

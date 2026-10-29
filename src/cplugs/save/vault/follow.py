@@ -12,11 +12,14 @@ import structlog
 
 from src.cplugs.save.vault import constants as K
 from src.cplugs.save.vault import folders, health, retention, units
+from src.cplugs.save.vault.stamp_memo import StampMemo
 from src.cplugs.save.vault.identity import Identity, ProjectIndex
 from src.cplugs.save.vault.location import VaultUnavailable
 from src.cplugs.save.vault.manifest import Manifest
 from src.cplugs.save.vault.legacy import LegacyProgress
 from src.cplugs.save.vault.store import STATUS_FAILED, STATUS_PARTIAL, STATUS_UNCHANGED, STATUS_WRITTEN, Vault
+from src.cplugs.save.vault.verified import Verified
+from src.cplugs.save.vault.workdirs import WorkingDirMemo
 from src.cplugs.sdk.vault_sources import VaultFolder
 from src.cplugs.sdk.blob_codec import Throttle
 from src.cplugs.sdk.vault_sources import SourceUnavailable
@@ -81,7 +84,9 @@ class Engine:
         self._queued: Set[str] = set()
         self._retry: Dict[str, Tuple[float, int]] = {}
         self._index: Optional[Dict[str, Tuple[int, int]]] = None
-        self._verified: Dict[str, Tuple[int, int]] = {}
+        self._plans = StampMemo()
+        self._workdirs = WorkingDirMemo()
+        self._verified = Verified()
         self._swept_at: Optional[float] = None
         self._side_at = self._assess_at = self._gc_at = 0.0
         self._legacy_pending = legacy is not None
@@ -102,7 +107,6 @@ class Engine:
         (self._queue.appendleft if front else self._queue.append)((unit, family))
 
     def enqueue_unit(self, unit: str, family: str) -> None:
-        """Ask for a unit to be captured soon (a lifecycle event the hook could not capture itself). Output: None."""
         self._enqueue(unit, family, front=True)
 
     def cancel(self) -> None:
@@ -116,10 +120,11 @@ class Engine:
                 index.update({f.source_path: (f.size_seen, f.mtime_ns) for f in newest.files})
         return index
 
-    def _refresh_index(self, vault: Vault, unit: str) -> None:
+    def _refresh_index(self, vault: Vault, unit: str) -> Optional[Manifest]:
         newest = vault.manifests.newest(unit)
         if self._index is not None and newest is not None:
             self._index.update({f.source_path: (f.size_seen, f.mtime_ns) for f in newest.files})
+        return newest
 
     def _sweep(self, vault: Vault, sources: units.Sources, now: float) -> None:
         skipped: List[str] = []
@@ -129,11 +134,12 @@ class Engine:
         uncovered_units: Set[str] = {f"?{name}" for name in skipped}
         for unit, plan in plans.items():
             newest = vault.manifests.newest(unit)
+            self._verified.revalidate_unit(unit, newest.point_id if newest else None)
             if plan.kind == units.KIND_CONVERSATION:
                 on_disk += 1
                 if newest is None:
                     uncovered_units.add(unit)
-            if needs_capture(plan, newest, self._verified):
+            if needs_capture(plan, newest, self._verified.signatures):
                 main = plan.main_path() or (plan.files[0].path if plan.files else None)
                 try:
                     mtime = os.stat(main).st_mtime if main else 0.0
@@ -142,6 +148,7 @@ class Engine:
                 todo.append((mtime, unit, plan.family))
         for _mtime, unit, family in sorted(todo, reverse=True):
             self._enqueue(unit, family)
+        self._verified.prune({str(f.path) for plan in plans.values() for f in plan.files})
         self._swept_at = now
         self._index = None
         self._uncovered_units = uncovered_units
@@ -175,12 +182,12 @@ class Engine:
             if not conv or row.get("gone_at") or row.get("dataless") or row.get("status") == "gone":
                 continue
             signature = (row["size"], row["mtime_ns"])
-            if self._index.get(row["path"]) != signature and self._verified.get(row["path"]) != signature:
+            if self._index.get(row["path"]) != signature and self._verified.signatures.get(row["path"]) != signature:
                 self._enqueue(conv, row.get("family") or units.FAMILY_CLAUDE)
         return True
 
     def _identity(self, plan: units.UnitPlan, index: ProjectIndex) -> Identity:
-        return index.complete(Identity(working_dir=units.peek_working_dir(plan.main_path())))
+        return index.complete(Identity(working_dir=self._workdirs.get(plan.main_path())))
 
     def _project_index(self) -> ProjectIndex:
         if self._projects is None:
@@ -191,17 +198,6 @@ class Engine:
             logger.warning("vault_projects_unavailable", error=str(exc))
             return ProjectIndex()
 
-    @staticmethod
-    def _stat_signatures(plan: units.UnitPlan) -> Dict[str, Tuple[int, int]]:
-        found: Dict[str, Tuple[int, int]] = {}
-        for planned in plan.files:
-            try:
-                st = os.stat(planned.path)
-            except OSError:
-                continue
-            found[str(planned.path)] = (st.st_size, st.st_mtime_ns)
-        return found
-
     def _backoff(self, unit: str, now: float) -> None:
         attempts = self._retry.get(unit, (0.0, 0))[1] + 1
         self._retry[unit] = (now + min(RETRY_MAX_SECONDS, RETRY_FIRST_SECONDS * 2 ** (attempts - 1)), attempts)
@@ -209,7 +205,7 @@ class Engine:
     def _drain(self, vault: Vault, sources: units.Sources, now: float) -> Tuple[int, int, int]:
         captured = unchanged = failed = 0
         projects = self._project_index()
-        scanner = units.Scanner(sources)
+        scanner = units.Scanner(sources, self._plans)
         held: List[Tuple[str, str]] = []
         handled = 0
         while self._queue and not self.throttle.cancelled and (handled == 0 or not self.throttle.expired()):
@@ -223,7 +219,7 @@ class Engine:
             if plan is None:
                 continue
             prior = vault.manifests.newest(unit)
-            seen = self._stat_signatures(plan)
+            quiet_before = time.time() - K.QUIET_TAIL_SECONDS
             outcome = vault.capture(plan, self._identity(plan, projects), K.REASON_FOLLOW if prior else K.REASON_BACKFILL,
                                     pace=self.throttle)
             self._damaged += outcome.damaged
@@ -241,10 +237,12 @@ class Engine:
                 self._dirty_since_assess = True
             elif outcome.status != STATUS_FAILED:
                 unchanged += 1
-                if outcome.status == STATUS_UNCHANGED and not outcome.failures:
-                    self._verified.update(seen)
-            self._refresh_index(vault, unit)
-            if self._uncovered_units is not None and vault.manifests.newest(unit) is not None:
+            newest = self._refresh_index(vault, unit)
+            if outcome.status == STATUS_UNCHANGED and not outcome.failures and newest is not None:
+                recorded = {f.source_path: (f.size_seen, f.mtime_ns) for f in newest.files}
+                self._verified.add(unit, outcome.point_id, {path: sig for path, sig in outcome.read_signatures.items()
+                                                            if recorded.get(path) != sig and sig[1] / 1e9 <= quiet_before})
+            if self._uncovered_units is not None and newest is not None:
                 self._uncovered_units.discard(unit)
         for unit, family in held:
             self._enqueue(unit, family)
@@ -316,6 +314,9 @@ class Engine:
             health.update(self._state_dir, unavailable=str(exc), started_at=self._started_at)
             logger.error("vault_unavailable", error=str(exc))
             return SliceResult(unavailable=str(exc))
+        if not self._verified.is_bound_to(vault.root):
+            self._verified.load(vault.root)
+            self._swept_at = self._index = None
         sources = self._sources()
         if self._swept_at is None or now - self._swept_at >= SWEEP_SECONDS:
             self._sweep(vault, sources, now)
@@ -331,4 +332,5 @@ class Engine:
         health.update(self._state_dir, active=True, unavailable="", started_at=self._started_at, last_ok_at=last_ok,
                       pending=len(self._queue), over_cap=bool(state.get("over_cap")), damaged=self._damaged,
                       legacy_unmigrated=self._legacy_failed, **coverage)
+        self._verified.save(vault.root)
         return SliceResult(captured, unchanged, failed, len(self._queue), bool(ready) or self._legacy_due(now))

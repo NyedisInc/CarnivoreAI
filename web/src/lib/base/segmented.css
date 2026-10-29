@@ -2,9 +2,12 @@
   .oc-segmented {
     display: inline-flex;
     max-width: 100%;
+    min-width: 0;
     border: var(--oc-border) solid var(--oc-line-control);
     border-radius: var(--oc-radius-control);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
   }
 
   .oc-segmented[data-fill] {
@@ -14,15 +17,20 @@
   .oc-segmented > [data-btn] {
     --_btn-radius: 0;
     --_btn-ink: var(--oc-text-muted);
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
+    max-width: none;
+    overflow: visible;
+  }
+
+  .oc-segmented[data-fill] > [data-btn] {
+    flex: 1 0 auto;
   }
 
   .oc-segmented > [data-btn] + [data-btn] {
     box-shadow: inset var(--oc-border) 0 0 var(--oc-line-control);
   }
 
-  /* padding */
   .oc-segmented[data-icon-only] > [data-btn] {
     --_btn-pad: var(--oc-space-1);
     flex: none;

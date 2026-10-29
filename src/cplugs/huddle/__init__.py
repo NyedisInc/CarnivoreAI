@@ -6,7 +6,7 @@ from typing import Any
 
 import structlog
 
-from src.cplugs.huddle import artifact_browser, artifact_port, board_port, capabilities, client_writes, conversation_release, devtools_port, files, held, held_resume, mcp, routes, schedule, schedule_port, service, send_queue, told_log, legacy_approvals, push_delta, turn_return
+from src.cplugs.huddle import artifact_browser, artifact_port, board_port, capabilities, client_writes, conversation_release, devtools_port, held, held_resume, mcp, routes, schedule, schedule_port, service, send_queue, task_sweep, told_log, legacy_approvals, push_delta, turn_return
 from src.cplugs.huddle.nudge import scheduler as nudge_scheduler
 from src.cplugs.huddle.roles import port as roles_port
 from src.cplugs.huddle.cards import policy as card_policy, tx as card_tx
@@ -23,11 +23,6 @@ logger = structlog.get_logger()
 
 
 async def _dealing_step(ctx: Any) -> bool:
-    """Land dealing OFF once: every project that exists now (and every queue already holding items) gets ``dealing = 0``, then the step's meta key is written (``docs/swarm-cards.md`` 9.4).
-
-    Description: the list is read strictly and with archived projects (an archived project that is unarchived later must not read on). Without the projects capability or when the project list cannot be read (an unreadable datastore reads as an empty list otherwise), nothing is written and the dealer stays fail-closed (no meta key, no deal).
-    Inputs: ctx. Output: True when the step ran now, False when it had already run or could not run.
-    """
     try:
         keys = await asyncio.to_thread(lambda: [str(p["id"]) for p in ctx.projects.list(include_archived=True, strict=True)])
     except (CapabilityMissing, OSError, ValueError, KeyError) as exc:
@@ -57,7 +52,7 @@ async def _start(ctx: Any) -> None:
     except (OSError, sqlite3.Error) as exc:
         logger.warning("task_manager_storage_open_failed", error=str(exc))
     try:
-        await asyncio.to_thread(files.sweep_orphans, ctx.storage)
+        await asyncio.to_thread(task_sweep.sweep_all, ctx.storage)
     except (OSError, sqlite3.Error) as exc:
         logger.warning("task_manager_orphan_sweep_failed", error=str(exc))
     await _dealing_step(ctx)

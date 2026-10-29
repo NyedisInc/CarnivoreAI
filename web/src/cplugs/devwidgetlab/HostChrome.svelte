@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import type { DrawerDock } from './lab-selection';
   import type { LabIcon } from '../sdk/widget-lab';
   import DockBar from './DockBar.svelte';
@@ -26,7 +27,7 @@
     {#if host === 'popout'}
       <header class="dwl-chrome-window" inert>
         <span class="dwl-chrome-window-title">{title}</span>
-        <button type="button" class="oc-btn oc-btn--sm" tabindex="-1">{t('cplug.devwidgetlab.chrome.focus_main')}</button>
+        <Button size="sm" tabindex={-1}>{t('cplug.devwidgetlab.chrome.focus_main')}</Button>
       </header>
     {/if}
 

@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
 import { bubbleKindOf, isFormAnswer } from './task-manager-bubbles';
+import { t } from '../sdk';
 import { formAnswerRows } from './task-manager-form-answer';
 import HuddleThread from './HuddleThread.svelte';
 
@@ -21,7 +22,7 @@ afterEach(() => {
 });
 
 describe('form answers are detected by structure', () => {
-  test('answers + answers_to make a form answer; a plain the owner message and Claude are untouched', () => {
+  test('answers + answers_to make a form answer; a plain Joe message and Claude are untouched', () => {
     expect(isFormAnswer(formAnswer as never)).toBe(true);
     expect(bubbleKindOf(formAnswer as never)).toBe('form_answer');
     expect(bubbleKindOf(typed as never)).toBe('owner');
@@ -30,7 +31,7 @@ describe('form answers are detected by structure', () => {
   });
 
   test('rows pair prompt and answer, and a skip stays a skip', () => {
-    const rows = formAnswerRows(formAnswer as never);
+    const rows = formAnswerRows(formAnswer as never, t);
     expect(rows.map((r) => [r.prompt, r.words, r.state, r.note])).toEqual([['ship?', 'yes', 'answered', 'after lunch'], ['when?', '', 'skipped', '']]);
   });
 });

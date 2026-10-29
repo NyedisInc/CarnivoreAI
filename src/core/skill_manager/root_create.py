@@ -44,18 +44,6 @@ def _under(leaf: Path, boundary: Path) -> bool:
 def creation_boundary(
     target: Target, scope: str, project_path: Optional[str]
 ) -> Optional[Path]:
-    """The existing directory a missing ``target.leaf_dir`` may be created under.
-
-    Description: PURE QUERY (``lstat`` and ``isdir`` only). None means this
-      root may not be created, and the planner then refuses ``root_absent``
-      as it always did. A boundary that is a symlink, or is not a directory,
-      is None.
-    Inputs: target (Target) - a skill root. scope (str). project_path (str |
-      None) - the resolved project for project scope.
-    Output: Path | None.
-    Example: creation_boundary(Target("claude", Path("~/.claude/skills")),
-      "global", None)  # Path("~/.claude") when it exists
-    """
     leaf = target.leaf_dir
     if scope == SCOPE_PROJECT:
         if not project_path:
@@ -77,20 +65,6 @@ def creation_boundary(
 
 
 def create_leaf_root(leaf: Path, boundary: Path) -> bool:
-    """Create ``leaf`` and any missing segments below ``boundary``, safely.
-
-    Description: walks from ``leaf`` up to ``boundary`` collecting segments,
-      refuses any that already exists as a symlink (``lstat``, never
-      followed), refuses a root whose realpath leaves the realpath of
-      ``boundary``, then ``os.mkdir``s each missing segment at 0o700 in
-      order. An existing directory is left alone.
-    Inputs: leaf (Path) - the skills folder. boundary (Path) - an existing
-      directory the leaf must sit strictly below.
-    Output: bool - True when at least one folder was made.
-    Raises: RootCreateRefused - ``skill_root_unsafe`` for a link or an
-      escape, ``skill_root_failed`` for an OS error.
-    Example: create_leaf_root(Path("/repo/.claude/skills"), Path("/repo"))
-    """
     real_boundary = Path(os.path.realpath(boundary))
     segments: List[Path] = []
     node = leaf

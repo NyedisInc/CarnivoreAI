@@ -1,4 +1,4 @@
-/* stdio: ['ignore', 'pipe', 'pipe'] */
+/* with a plain */
 
 'use strict';
 
@@ -56,14 +56,28 @@ class RotatingLogWriter {
   write(chunk) {
     if (this._closed || chunk == null || chunk.length === 0) return;
     const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk), 'utf8');
-    if (this._size > 0 && this._size + buf.length > this.maxBytes) {
-      fs.closeSync(this._fd);
-      rotate(this.filePath, this.backupCount);
-      this._fd = openPrivateAppend(this.filePath);
-      this._size = 0;
+    try {
+      if (this._size > 0 && this._size + buf.length > this.maxBytes) this._rotateNow();
+      fs.writeSync(this._fd, buf);
+      this._size += buf.length;
+    } catch (err) {
+      console.warn(`[log-rotation] could not write ${this.filePath}: ${err.code || err.message}`);
     }
-    fs.writeSync(this._fd, buf);
-    this._size += buf.length;
+  }
+
+  _rotateNow() {
+    try {
+      fs.closeSync(this._fd);
+    } catch (err) {
+    }
+    try {
+      rotate(this.filePath, this.backupCount);
+      this._size = 0;
+    } catch (err) {
+      console.warn(`[log-rotation] could not rotate ${this.filePath}: ${err.code || err.message}`);
+    }
+    this._fd = openPrivateAppend(this.filePath);
+    if (this._size === 0) this._size = currentSize(this.filePath);
   }
 
   end(finalChunk) {
@@ -81,15 +95,19 @@ function appendWithRotation(filePath, text, options = {}) {
   const maxBytes = options.maxBytes || DEFAULT_MAX_BYTES;
   const backupCount = options.backupCount != null ? options.backupCount : DEFAULT_BACKUP_COUNT;
   const buf = Buffer.from(String(text), 'utf8');
-  const size = currentSize(filePath);
-  if (size > 0 && size + buf.length > maxBytes) {
-    rotate(filePath, backupCount);
-  }
-  const fd = openPrivateAppend(filePath);
   try {
-    fs.writeSync(fd, buf);
-  } finally {
-    fs.closeSync(fd);
+    const size = currentSize(filePath);
+    if (size > 0 && size + buf.length > maxBytes) {
+      rotate(filePath, backupCount);
+    }
+    const fd = openPrivateAppend(filePath);
+    try {
+      fs.writeSync(fd, buf);
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch (err) {
+    console.warn(`[log-rotation] could not append to ${filePath}: ${err.code || err.message}`);
   }
 }
 

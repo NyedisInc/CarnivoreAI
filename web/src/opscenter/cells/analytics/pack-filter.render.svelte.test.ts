@@ -27,8 +27,8 @@ describe('the Pack scope on the wire', () => {
   });
 
   test('the computer filter rides along on a usage series and is dropped from a quota series', () => {
-    const filtered = { ...ctx, filters: { host: 'install-hosta' } };
-    expect(seriesBody(config, config.series[0]!, range, filtered).filters).toEqual({ host: 'install-hosta' });
+    const filtered = { ...ctx, filters: { host: 'install-studio' } };
+    expect(seriesBody(config, config.series[0]!, range, filtered).filters).toEqual({ host: 'install-studio' });
     expect(seriesBody(config, { metric: 'quota_utilization', operation: 'timeline' }, range, filtered).filters).toEqual({});
   });
 });
@@ -37,7 +37,7 @@ describe('a saved chart does not erase the computer filter', () => {
   test('the null filters the server stores on a chart and its series never override a set computer', () => {
     const nulls = { host: null, provider: null, model: null } as unknown as ChartConfig['filters'];
     const saved = { ...config, filters: nulls, series: [{ ...config.series[0]!, filters: nulls }] };
-    expect(seriesBody(saved, saved.series[0]!, range, { ...ctx, filters: { host: 'install-hosta' } }).filters).toEqual({ host: 'install-hosta' });
+    expect(seriesBody(saved, saved.series[0]!, range, { ...ctx, filters: { host: 'install-studio' } }).filters).toEqual({ host: 'install-studio' });
     const own = { ...saved, filters: { ...nulls, host: 'local' } } as ChartConfig;
     expect(seriesBody(own, own.series[0]!, range, ctx).filters).toEqual({ host: 'local' });
   });
@@ -47,21 +47,21 @@ describe('the computer select', () => {
   test('lists this computer and the peers from the dimension and sets the filter', () => {
     analytics.dimensions = { host: [
       { key: 'local', label: 'mac', filter_value: 'local' },
-      { key: 'install-hosta', label: 'hosta through 14:05', filter_value: 'install-hosta' },
+      { key: 'install-studio', label: 'studio through 14:05', filter_value: 'install-studio' },
     ] };
     const target = document.createElement('div');
     document.body.append(target);
     const view = mount(Controls, { target });
     flushSync();
     const selects = [...target.querySelectorAll('select')];
-    const host = selects.find((select) => [...select.options].some((option) => option.value === 'install-hosta'));
+    const host = selects.find((select) => [...select.options].some((option) => option.value === 'install-studio'));
     expect(host).toBeTruthy();
-    expect([...host!.options].map((option) => [option.value, option.textContent])).toEqual([['', 'all'], ['local', 'mac'], ['install-hosta', 'hosta through 14:05']]);
+    expect([...host!.options].map((option) => [option.value, option.textContent])).toEqual([['', 'all'], ['local', 'mac'], ['install-studio', 'studio through 14:05']]);
     expect(host!.closest('label')?.textContent).toContain('computer');
-    host!.value = 'install-hosta';
+    host!.value = 'install-studio';
     host!.dispatchEvent(new Event('change', { bubbles: true }));
     flushSync();
-    expect(analytics.filters.host).toBe('install-hosta');
+    expect(analytics.filters.host).toBe('install-studio');
     unmount(view);
   });
 });
@@ -70,9 +70,9 @@ describe('an offline computer', () => {
   test('its dimension entry reads "<computer> through <time>"', async () => {
     hoisted.authFetch.mockResolvedValue({ items: [
       { key: 'local', label: 'mac', filter_value: 'local' },
-      { key: 'install-hosta', label: 'hosta', filter_value: 'install-hosta', through: '2026-10-12T14:05:00Z' },
+      { key: 'install-studio', label: 'studio', filter_value: 'install-studio', through: '2026-10-12T14:05:00Z' },
     ] });
     const items = await dimensionValues('host', range.from, range.to);
-    expect(items.map((item) => item.label)).toEqual(['mac', `hosta through ${clockLabel('2026-10-12T14:05:00Z')}`]);
+    expect(items.map((item) => item.label)).toEqual(['mac', `studio through ${clockLabel('2026-10-12T14:05:00Z')}`]);
   });
 });

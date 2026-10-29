@@ -45,8 +45,8 @@ async def transcribe(target: Target, key: Optional[str], audio: bytes, mime: str
             fields[name] = str(options[name])
     fields.update({k: str(v) for k, v in (options.get("extra") or {}).items()})
     content, headers = multipart(fields, "file", audio_filename(mime), audio, mime)
-    body = (await transport.request(target.connection, key, "POST", "/audio/transcriptions",
-                                    content=content, headers=headers)).json()
+    body = (await transport.request_json(target.connection, key, "POST", "/audio/transcriptions",
+                                    content=content, headers=headers))
     duration = body.get("duration")
     return Transcript(text=str(body.get("text") or ""), language=body.get("language"),
                       duration_s=float(duration) if isinstance(duration, (int, float)) else None,
@@ -54,7 +54,7 @@ async def transcribe(target: Target, key: Optional[str], audio: bytes, mime: str
 
 
 async def list_models(connection: Connection, key: Optional[str]) -> List[ModelInfo]:
-    body = (await transport.request(connection, key, "GET", "/models")).json()
+    body = (await transport.request_json(connection, key, "GET", "/models"))
     return [ModelInfo(id=m["id"], capabilities=guess_capabilities(
                 m["id"], ("tts", "kokoro", "speech", "voice"), ("whisper", "transcribe", "stt", "parakeet")))
             for m in body.get("data", []) if isinstance(m, dict) and m.get("id")]

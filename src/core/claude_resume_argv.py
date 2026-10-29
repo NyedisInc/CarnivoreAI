@@ -13,6 +13,8 @@ from typing import Callable, Dict, List, Optional, Sequence
 
 import structlog
 
+from src.core import libproc_snapshot
+
 logger = structlog.get_logger()
 
 PS_TIMEOUT_SECONDS: float = 3.0
@@ -66,18 +68,9 @@ def read_ps_text(max_age: float = 0.0, timeout: float = PS_TIMEOUT_SECONDS) -> O
 
 
 def list_process_table(timeout: float = PS_TIMEOUT_SECONDS, *, max_age: float = 0.0) -> Optional[List[ProcessRow]]:
-    """Snapshot the whole process table in one `ps` call (or the shared one, see ``read_ps_text``).
-
-    Description: macOS has no `/proc`, so this is the one place a process
-      tree is ever read from - one call, walked in memory afterwards,
-      rather than one `ps` per pid. NEVER RAISES: every failure mode
-      answers None, which the caller must treat as "could not evaluate",
-      never as "no processes".
-    Inputs: timeout (float) - seconds. max_age (float) - accept a shared table this young.
-    Output: list[ProcessRow] | None - every process `ps` reported, or
-      None when the table could not be read at all.
-    Example: list_process_table()[0].command  # '/sbin/launchd'
-    """
+    snap = libproc_snapshot.snapshot(max_age)
+    if snap is not None:
+        return [ProcessRow(pid=r.pid, ppid=r.ppid, command=r.command) for r in snap]
     text = read_ps_text(max_age, timeout)
     if text is None:
         return None
@@ -138,30 +131,6 @@ def find_claude_commands_in_tree(
     *,
     max_depth: int = MAX_TREE_DEPTH,
 ) -> List[str]:
-    """Every claude command line in a pane pid's process tree.
-
-    Description: THE walk, breadth-first from `root_pid` INCLUSIVE, so
-      both process topologies a pane can have are covered without a
-      branch - see the module docstring. Factored out so the two readers
-      of a pane's claude process share one traversal:
-      :func:`find_resume_uuid_in_tree` reads a `--resume` uuid out of the
-      lines this returns, and `session_agent_infer_apply` reads the flag
-      set that names a wrapper out of the same lines. A second walk is
-      how the two would drift about which process they are describing.
-
-      Order is BFS-shallowest-first, which is the useful order: the pane
-      pid itself comes before its descendants, so a caller taking the
-      first entry gets the process closest to the pane.
-    Inputs: root_pid (int) - the pane's own foreground pid.
-      processes (Sequence[ProcessRow]) - a snapshot from
-      :func:`list_process_table`. max_depth (int) - BFS generation cap.
-    Output: list[str] - the full command line of every process in the
-      walk whose argv0 basename is `claude`. EMPTY means the tree was
-      walked and holds none, which is a measurement; a caller that could
-      not read the table at all must not call this.
-    Example: find_claude_commands_in_tree(99871, table)
-      # ['claude --dangerously-skip-permissions']
-    """
     return find_commands_in_tree(
         root_pid, processes, is_claude_command, max_depth=max_depth
     )

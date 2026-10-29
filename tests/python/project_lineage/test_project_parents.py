@@ -9,8 +9,8 @@ def _p(pid, root, **extra):
 
 
 def test_nearest_ancestor_wins_and_component_boundaries_hold():
-    rows = [_p(1, "/org"), _p(2, "/org/initech"), _p(3, "/org/initech/brightfund"), _p(4, "/org/initech/brightfund/support"),
-            _p(5, "/org/holdco"), _p(6, "/org/initech/brightfund/projects/PRJ-001")]
+    rows = [_p(1, "/org"), _p(2, "/org/imc"), _p(3, "/org/imc/amerifund"), _p(4, "/org/imc/amerifund/support"),
+            _p(5, "/org/imcx"), _p(6, "/org/imc/amerifund/projects/AMF-001")]
     assert parent_project_ids(rows) == {1: None, 2: 1, 3: 2, 4: 3, 5: 1, 6: 3}
 
 

@@ -16,7 +16,7 @@ describe('required skills strip', () => {
     });
     it('badges only carnivore items', () => {
         expect(isFirstParty('carnivore/huddle')).toBe(true);
-        expect(isFirstParty('acme/sme')).toBe(false);
+        expect(isFirstParty('alex/sme')).toBe(false);
         expect(isFirstParty(undefined)).toBe(false);
     });
 });

@@ -1,41 +1,3 @@
-"""Background scheduler that keeps the database integrity verdict fresh.
-
-WHY A THREAD AND NOT A COROUTINE. ``PRAGMA integrity_check`` is
-synchronous sqlite that walks every page of the file. On the event loop
-it blocks every WebSocket frame and every terminal keystroke for as long
-as it runs, which on a multi-gigabyte cloude.db is seconds - that is the
-exact defect this whole change exists to remove. It is therefore
-offloaded with ``asyncio.to_thread``; sqlite is opened per run inside
-that thread, never shared across threads, and the database is in WAL
-mode with a 30s busy timeout (``src.core.db.CONNECTION_PRAGMAS``) so the
-app's own writes proceed while it reads.
-
-WHY BOOT DOES NOT WAIT. ``start()`` creates a task and returns. Nothing
-on the startup path awaits the first check, and the task body catches
-every exception it can raise. This is the same fail-soft posture as
-``ensure_db_migrated``, ``claude_hooks.strip_managed_hooks`` and
-``CorpusIngestScheduler``: a failure here degrades a status field, it
-never costs the user their server.
-
-WHY A RESTART DOES NOT RE-CHECK. The loop asks
-:func:`src.core.db_integrity.seconds_until_due` before its first run, so
-a verdict that is still CURRENT is allowed to stand for its remaining
-life. A menubar app is quit and reopened all day; a loop that always
-checked on start would walk the whole file every time.
-
-CANCELLATION IS TWO MECHANISMS, ON PURPOSE. Cancelling the asyncio task
-alone would leave the worker thread running, because a thread cannot be
-interrupted from outside. ``aclose()`` therefore SETS a
-``threading.Event`` first and then cancels the task. The event is
-checked before the pragma opens the database, so a shutdown that arrives
-in the sleep window is recorded as ``cancelled`` rather than as a gap in
-the liveness record. A pragma already running cannot be stopped, so the
-wait is bounded and shutdown never hangs on it.
-
-THE INTERVAL IS A FLOOR, NOT A PERIOD. The sleep happens AFTER a run
-finishes, so a check that takes longer than the interval cannot stack up
-behind itself. There is exactly one worker at a time by construction.
-"""
 
 from __future__ import annotations
 
@@ -77,15 +39,6 @@ class DatabaseIntegrityScheduler:
         self._task: Optional[asyncio.Task] = None
 
     def start(self) -> bool:
-        """Create the background task. Returns immediately.
-
-        Description: never awaits a check, never raises. Returns False
-          when the checker is disabled or already running, so a caller
-          can log the reason instead of assuming it started.
-        Inputs: none.
-        Output: bool - True when a task was created by this call.
-        Example: DatabaseIntegrityScheduler(Path("/s")).start() -> True
-        """
         if not self.enabled:
             logger.info("db_integrity_disabled", env=ENABLE_ENV)
             return False
@@ -103,18 +56,6 @@ class DatabaseIntegrityScheduler:
         return True
 
     async def _loop(self) -> None:
-        """Wait until due, run one check off the loop, sleep, repeat.
-
-        Description: the first wait is computed from the artifact on
-          disk, so a restart inside a still-current window costs nothing.
-          Every exception the check could not name itself is logged here
-          and the loop continues, because a scheduler that dies on one
-          bad run is a scheduler whose death looks exactly like a
-          database with nothing wrong with it.
-        Inputs: none.
-        Output: None.
-        Example: awaited only by :meth:`start`.
-        """
         initial = seconds_until_due(self.state_dir, self.interval_seconds)
         if initial > 0:
             logger.info(
@@ -136,7 +77,6 @@ class DatabaseIntegrityScheduler:
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001
-                # could not
                 logger.warning(
                     "db_integrity_check_crashed",
                     error=f"{type(exc).__name__}: {exc}",

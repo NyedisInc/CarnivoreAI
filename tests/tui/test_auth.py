@@ -289,7 +289,7 @@ def test_cli_help_and_default_subcommand(capsys: pytest.CaptureFixture[str]) -> 
 
 def test_no_env_or_system_proxy_is_used(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     for var in ("HTTP_PROXY", "http_proxy", "ALL_PROXY", "all_proxy"):
-        monkeypatch.setenv(var, "http://198.51.100.16:3128")
+        monkeypatch.setenv(var, "http://10.9.9.9:3128")
     client = ApiClient(TokenStore(tmp_path), BASE)
     transport = client._http._transport_for_url(httpx.URL(BASE))
     assert type(transport) is httpx.AsyncHTTPTransport

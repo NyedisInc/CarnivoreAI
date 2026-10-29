@@ -8,17 +8,6 @@ _MILLISECOND_FLOOR = 1e12
 
 
 def parse_reset_at(value: object) -> Optional[datetime]:
-    """Read a provider reset stamp in any of its four forms.
-
-    Args:
-        value: whatever the payload carried: an ISO-8601 string, an int
-            or float of epoch seconds or milliseconds, a numeric string,
-            ``None``, or something else entirely.
-
-    Returns:
-        An aware datetime in UTC, or ``None`` when the value was absent
-        or unreadable.
-    """
     if isinstance(value, bool) or value is None:
         return None
     if isinstance(value, (int, float)):

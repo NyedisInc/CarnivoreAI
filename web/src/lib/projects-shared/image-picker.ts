@@ -1,4 +1,3 @@
-/*  hidden  <input type=file> */
 
 export const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
 

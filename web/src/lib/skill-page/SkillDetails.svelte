@@ -1,4 +1,4 @@
-<!-- the whole file -->
+
 <script lang="ts">
     import { latestVersion } from '../catalog/card';
     import { trustView } from '../catalog/trust';

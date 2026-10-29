@@ -1,4 +1,4 @@
-/*  hidden  */
+/* there is nothing */
 
 import { animationTypeOff } from '../../lib/motion/animation-types';
 import { motionReduced } from '../../lib/motion/motion';
@@ -55,7 +55,6 @@ function watched(): boolean {
   return typeof document.hasFocus === 'function' ? document.hasFocus() : true;
 }
 
-/*  hidden  animation: none */
 export function watchStillness(): () => void {
   if (typeof document === 'undefined' || typeof window === 'undefined') return () => {};
   const root = document.documentElement;

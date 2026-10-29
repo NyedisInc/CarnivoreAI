@@ -19,7 +19,14 @@
     "recreate",
     "reopen"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The home screen listing a claude session whose terminal ended",
+      "caption": "A session whose terminal is gone, listed as ended",
+      "file": "recent.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Recreate a lost session",
   "since": "2026-09-08",
   "status": "stable",
@@ -29,6 +36,5 @@
   "where": [
     "A session whose terminal process is gone but whose conversation is kept shows in the running list as ended; its menu offers to bring it back.",
     "After a reboot, the reopen offer does it for every lost session at once."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

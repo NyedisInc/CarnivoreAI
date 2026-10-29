@@ -77,6 +77,7 @@ def _receive(principal_id: str, body: CredentialBody) -> int:
 async def receive_credential(request: Request, principal: Principal = Depends(_require_credentials),
                              _allowed: None = Depends(restrictions_mod.require_peer_allowed(
                                  restrictions_mod.ACTION_RECEIVE_CREDENTIALS))) -> JSONResponse:
+    """Write the pushed access token and expiry into this machine's relay profile (no refresh token, ever)."""
     if not principal.is_peer or principal.grant is None:
         raise HTTPException(403, {"code": "peer_token_required", "detail": "only a paired computer relays a credential"})
     try:

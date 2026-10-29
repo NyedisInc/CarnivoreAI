@@ -12,7 +12,6 @@ export function glanceAreaElement(doc: Document = document): HTMLElement | null 
   return doc.querySelector<HTMLElement>('[data-glance-area]');
 }
 
-/* the glance area */
 export function glanceIndexAt(x: number, y: number, skip: string | null = null, doc: Document = document): number | null {
   const root = glanceAreaElement(doc);
   if (!root) return null;
@@ -29,7 +28,6 @@ export function glanceIndexAt(x: number, y: number, skip: string | null = null, 
   return index;
 }
 
-/* the glance area */
 function beginGlanceDrag(element: HTMLElement, event: PointerEvent, skip: string | null, handlers: ZoneDragHandlers): boolean {
   return beginGesture(element, event, {
     threshold: ZONE_DRAG_THRESHOLD,

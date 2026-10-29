@@ -105,12 +105,6 @@ def installed_codex_version(finder: Callable[[], Optional[str]] = find_installed
 
 
 def process_start_epochs(pids: Sequence[int]) -> Dict[int, float]:
-    """Start time (epoch seconds) of each pid, from one ``ps`` call.
-
-    Inputs: pids (Sequence[int]).
-    Output: dict[int, float] - a pid that could not be read is absent.
-    Example: process_start_epochs([4242]) -> {4242: 1792170000.0}
-    """
     if not pids:
         return {}
     try:

@@ -1,5 +1,4 @@
 'use strict';
-// could not
 
 const childProcess = require('node:child_process');
 const nodeFs = require('node:fs');

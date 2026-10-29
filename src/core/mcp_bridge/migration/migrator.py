@@ -123,7 +123,7 @@ class BridgeMigrator:
         return idle.refusal(info, observation, await self._evidence.quiet_seconds(info.tmux_session))
 
     async def _conversation_refusal(self, name: str) -> Optional[str]:
-        socket = self._manager._tmux_socket_name()
+        socket = self._manager.tmux_socket_name()
         target = await asyncio.to_thread(self._manager._resume_target_for_tmux_name, name, socket)
         if target.outcome == CONVERSATION_RESUMED:
             return None

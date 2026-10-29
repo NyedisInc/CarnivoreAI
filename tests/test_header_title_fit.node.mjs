@@ -23,6 +23,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read a CSS file from the client.
+ * @param {string} name  File name under client/css.
+ * @returns {string} File contents.
+ */
 function css(name) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', 'css', name), 'utf8');
 }
@@ -58,6 +63,8 @@ function loadModule() {
 
 const measure = (text) => text.length * 10;
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('h1 sets min-width: 0 so it can shrink below its own text', () => {
     const body = ruleBody(css('styles.css'), '.header h1');
@@ -88,6 +95,8 @@ test('the fixed-size header identity parts opt out of shrinking', () => {
     assert.match(ruleBody(styles, '.header-rename-pencil'), /flex-shrink:\s*0\s*;/);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('text that already fits is returned untouched', () => {
     const fit = loadModule();
@@ -97,7 +106,7 @@ test('text that already fits is returned untouched', () => {
 
 test('an over-wide string is elided to something that actually fits', () => {
     const fit = loadModule();
-    const full = 'cloude_config-sync-tool-2';
+    const full = 'cloude_claude-config-sync-2';
     const out = fit._elideToWidth(full, 180, measure);
     assert.notEqual(out, full, 'must have been shortened');
     assert.ok(measure(out) <= 180, `result must fit: ${out} = ${measure(out)}px`);
@@ -106,8 +115,8 @@ test('an over-wide string is elided to something that actually fits', () => {
 
 test('elision is in the MIDDLE, so the distinguishing tail survives', () => {
     const fit = loadModule();
-    const a = fit._elideToWidth('cloude_config-sync-tool-1', 180, measure);
-    const b = fit._elideToWidth('cloude_config-sync-tool-2', 180, measure);
+    const a = fit._elideToWidth('cloude_claude-config-sync-1', 180, measure);
+    const b = fit._elideToWidth('cloude_claude-config-sync-2', 180, measure);
     assert.notEqual(a, b, 'sibling session names must stay distinguishable');
     assert.ok(a.endsWith('1'), `tail lost: ${a}`);
     assert.ok(b.endsWith('2'), `tail lost: ${b}`);
@@ -125,7 +134,7 @@ test('the tail is favoured over the head when the budget is tight', () => {
 
 test('a wider budget never yields fewer characters', () => {
     const fit = loadModule();
-    const full = 'cloude_config-sync-tool-2';
+    const full = 'cloude_claude-config-sync-2';
     let previous = -1;
     for (let w = 40; w <= 400; w += 20) {
         const len = fit._elideToWidth(full, w, measure).length;
@@ -136,7 +145,7 @@ test('a wider budget never yields fewer characters', () => {
 
 test('degenerate budgets do not throw or produce garbage', () => {
     const fit = loadModule();
-    const full = 'cloude_config-sync-tool-2';
+    const full = 'cloude_claude-config-sync-2';
     assert.equal(fit._elideToWidth(full, 0, measure), full);
     assert.equal(fit._elideToWidth(full, -10, measure), full);
     assert.equal(typeof fit._elideToWidth(full, 1, measure), 'string');
@@ -153,6 +162,8 @@ test('setTitle and refresh are safe when the title is not mounted', () => {
     assert.doesNotThrow(() => fit.refresh());
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 function loadModuleWithLayout() {
     const env = createEnvironment({});
@@ -218,18 +229,18 @@ function loadModuleWithLayout() {
 
 test('a second setTitle() reuses the cached available width - no re-measurement', () => {
     const s = loadModuleWithLayout();
-    s.fit.setTitle('cloude_config-sync-tool-1');
+    s.fit.setTitle('cloude_claude-config-sync-1');
     const afterFirst = s.geometryCalls();
     assert.ok(afterFirst > 0, 'the first fit must have measured the geometry at all');
 
-    s.fit.setTitle('cloude_config-sync-tool-2');
+    s.fit.setTitle('cloude_claude-config-sync-2');
     assert.equal(s.geometryCalls(), afterFirst,
         'a title-only change must not re-measure the header geometry');
 });
 
 test('a window resize invalidates the cache - the NEXT fit re-measures', () => {
     const s = loadModuleWithLayout();
-    s.fit.setTitle('cloude_config-sync-tool-1');
+    s.fit.setTitle('cloude_claude-config-sync-1');
     const afterFirst = s.geometryCalls();
 
     s.fireResize();
@@ -239,7 +250,7 @@ test('a window resize invalidates the cache - the NEXT fit re-measures', () => {
 
 test('re-measuring after a resize still returns a title-appropriate fit', () => {
     const s = loadModuleWithLayout();
-    s.fit.setTitle('cloude_config-sync-tool-1');
+    s.fit.setTitle('cloude_claude-config-sync-1');
     const before = s.titleEl.textContent;
     s.fireResize();
     s.fit.refresh();

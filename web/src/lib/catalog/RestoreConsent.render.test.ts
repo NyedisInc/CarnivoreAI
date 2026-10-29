@@ -12,7 +12,7 @@ const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 const ROW: InstalledItem = {
-    install_id: 'i1', item_id: 'acme/deploy', name: 'deploy', scope: 'global', revision: 2, version: '1.0.0',
+    install_id: 'i1', item_id: 'alex/deploy', name: 'deploy', scope: 'global', revision: 2, version: '1.0.0',
     drift: { state: 'drifted', changed_files: ['SKILL.md'] },
 } as InstalledItem;
 
@@ -50,7 +50,7 @@ test('a script-bearing restore shows the script sheet unticked, then sends the c
     const target = document.createElement('div');
     document.body.appendChild(target);
     mounted = mount(DetailActions, { target, props: {
-        card: { id: 'acme/deploy', headline: 'deploy' }, installed: ROW, rowState: { kind: 'installed' },
+        card: { id: 'alex/deploy', headline: 'deploy' }, installed: ROW, rowState: { kind: 'installed' },
         host, t, onInstall() {}, onLedgerChange() {},
     } as never }) as never;
     (document.querySelector('[data-act="restore"]') as HTMLButtonElement).click();

@@ -1,4 +1,3 @@
-/* the detail pane */
 import { data } from '../page-store.svelte';
 
 export function escapeTaken(e: Event): boolean {

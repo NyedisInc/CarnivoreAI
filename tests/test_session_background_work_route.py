@@ -100,7 +100,7 @@ class _Manager:
     def tmux_socket_name(self) -> str:
         return self._socket
 
-    def _claude_uuid_for_tmux_name(self, tmux_name: str):
+    def claude_uuid_for_tmux_name(self, tmux_name: str):
         return None
 
 

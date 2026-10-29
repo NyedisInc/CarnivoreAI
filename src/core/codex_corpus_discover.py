@@ -28,50 +28,19 @@ def default_codex_root() -> Path:
 
 
 def codex_conversation_id(source_path_or_name: str) -> Optional[str]:
-    """Extract the uuidv7 conversation id from a rollout path or filename.
-
-    Description: pure string arithmetic over the filename, no file read -
-      the conversation id is the uuidv7 the codex rollout filename ends
-      with. A name that is not a rollout, or a rollout with no uuid, has
-      no id and returns None rather than a guess.
-    Inputs: source_path_or_name (str) - a full ``source_path``
-      (``codex-sessions/2026/09/05/rollout-...jsonl``), an absolute path,
-      or a bare filename.
-    Output: str | None - the uuidv7, or None when the name does not match
-      the rollout shape.
-    Example:
-      codex_conversation_id("codex-sessions/2026/09/05/"
-      "rollout-2026-09-05T19-21-32-01a06e76-0273-75b2-ac59-5838bf03fa3b.jsonl")
-      -> "01a06e76-0273-75b2-ac59-5838bf03fa3b"
-    """
     name = source_path_or_name.rsplit("/", 1)[-1]
     match = _ROLLOUT_UUID_RE.match(name)
     return match.group(1) if match is not None else None
 
 
 def _walk_codex(directory: Path, prefix: str, outcome: DiscoveryOutcome) -> None:
-    """Collect every ``rollout-*.jsonl`` at ANY depth under one directory.
-
-    Description: recursive on purpose. Codex nests rollouts under
-      ``YYYY/MM/DD/`` and could nest deeper; depth is not part of any
-      decision here (the conversation id comes from the filename, not the
-      path), so walking deeper adds rollouts without adding a guess. A
-      ``.jsonl`` that is not a rollout, or any other file, is
-      ``unrecognised`` - not a transcript, never ingested. A directory
-      that cannot be listed is ``unreadable`` via :func:`_iter_dir`.
-    Inputs: directory (Path), prefix (str - the ``source_path`` prefix for
-      items directly inside ``directory``), outcome (DiscoveryOutcome,
-      mutated).
-    Output: None.
-    Example: _walk_codex(Path("/c/sessions"), "codex-sessions", outcome)
-    """
     listing = _iter_dir(directory, outcome)
     if listing is None:
         return
-    for item in listing:
-        if item.is_dir():
+    for item, kind in listing:
+        if kind == "d":
             _walk_codex(item, f"{prefix}/{item.name}", outcome)
-        elif item.is_file():
+        elif kind == "f":
             if codex_conversation_id(item.name) is not None:
                 outcome.entries.append(
                     CorpusEntry(

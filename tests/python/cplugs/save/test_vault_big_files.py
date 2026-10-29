@@ -110,7 +110,7 @@ def test_the_resume_does_not_read_a_finished_file_again(tmp_path, monkeypatch):
 
 def test_the_engine_requeues_a_parked_unit_first_and_finishes_it_over_several_slices(tmp_path):
     world = World(tmp_path)
-    ids = [f"{n:08d}-810d-e10e-fb30-4f4c6232a9c6" for n in range(1, 4)]
+    ids = [f"{n:08d}-aaaa-bbbb-cccc-1234567890ab" for n in range(1, 4)]
     for conv in ids:
         world.write_conversation(jsonl(3000), conv=conv, subagents=0, tool_results=0)
     engine = Engine(lambda: world.vault, world.state, lambda: world.sources, throttle=Throttle(slice_seconds=0, sleep=lambda s: None))
@@ -141,7 +141,7 @@ def test_a_collection_does_not_wait_for_a_running_capture_and_a_capture_does_not
     began = time.monotonic()
     result = retention.collect_garbage(world.vault, grace=0)
     assert result.get("busy") == 1 and time.monotonic() - began < 1.0 and result["removed"] == 0
-    other = "5440f51e-018d-47a4-8fdf-c52dbf80f162"
+    other = "99999999-aaaa-bbbb-cccc-1234567890ab"
     world.write_conversation(jsonl(20), conv=other)
     began = time.monotonic()
     assert world.capture(other).status == STATUS_WRITTEN and time.monotonic() - began < 5.0
@@ -218,7 +218,7 @@ def test_stopping_the_follower_ends_the_running_slice_and_waits_for_the_thread()
 
 def test_coverage_is_judged_by_progress_not_by_the_age_of_the_first_backup(tmp_path):
     world = World(tmp_path)
-    ids = [f"{n:08d}-810d-e10e-fb30-4f4c6232a9c6" for n in range(1, 4)]
+    ids = [f"{n:08d}-aaaa-bbbb-cccc-1234567890ab" for n in range(1, 4)]
     for conv in ids:
         world.write_conversation(jsonl(3000), conv=conv, subagents=0, tool_results=0)
     clock = {"t": 1_000_000.0}

@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* active account */
   import LaunchChoice from '../../lib/launch-picker/LaunchChoice.svelte';
   import { rowsFromProfiles } from '../../lib/launch-picker/picker-model';
   import type { ProfileRow } from '../../lib/launch-profiles-page/api';

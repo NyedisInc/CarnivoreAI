@@ -41,6 +41,7 @@ beforeEach(() => {
     unobserve(): void {}
     disconnect(): void {}
   };
+  // the settings overlay
   (HTMLElement.prototype as unknown as { showPopover: () => void }).showPopover = function (): void {};
   fakeLedger.data = LEDGER;
   written = [];

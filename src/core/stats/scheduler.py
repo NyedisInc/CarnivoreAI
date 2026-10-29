@@ -21,6 +21,11 @@ from .store import StatsStore
 logger = structlog.get_logger()
 
 
+_EXPECTED_FAILURES = (OSError, sqlite3.Error, ValueError, RuntimeError, TimeoutError)
+_PROGRAMMING_ERRORS = (AttributeError, TypeError, LookupError)
+_PASS_FAILURES = _EXPECTED_FAILURES + _PROGRAMMING_ERRORS
+
+
 class StatsScheduler:
 
     def __init__(self, store: StatsStore, manager: Any, app_state: Any, config_path: Path) -> None:
@@ -211,8 +216,11 @@ class StatsScheduler:
                 self._status.update(result)
                 if result.get('state') == 'ok':
                     self._stale_reported = False
-            except (OSError, sqlite3.Error, ValueError, RuntimeError, TimeoutError) as exc:
-                logger.warning('stats_collection_failed', error_type=type(exc).__name__)
+            except _PASS_FAILURES as exc:
+                if isinstance(exc, _PROGRAMMING_ERRORS):
+                    logger.error('stats_collection_bug', error_type=type(exc).__name__, exc_info=True)
+                else:
+                    logger.warning('stats_collection_failed', error_type=type(exc).__name__)
                 self._status.update(state='error', error=type(exc).__name__)
                 if not self._stale_reported:
                     self._stale_reported = True

@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import Button from '../lib/base/Button.svelte';
+    import Field from '../lib/base/Field.svelte';
     import ReportsTab from './ReportsTab.svelte';
     import type { CommunityHost } from './community-host.svelte.js';
     import { refusalMessage, seenAtText } from './admin.js';
@@ -48,7 +49,7 @@
     {/if}
 
     <label class="admin-field" for="mod-reason">{t(ADMIN_KEYS.modReasonLabel)}</label>
-    <input id="mod-reason" class="admin-input" type="text" maxlength="200" value={host.reason}
+    <Field id="mod-reason" data-admin-grow maxlength={200} value={host.reason}
         oninput={(event) => host.setReason(event.currentTarget.value)} />
 
     <div class="admin-filters">
@@ -66,7 +67,7 @@
 
     {#if tab === 'item'}
         <label class="admin-field" for="mod-comment-item">{t(ADMIN_KEYS.modReviewsItemLabel)}</label>
-        <input id="mod-comment-item" class="admin-input" type="text" value={host.commentItem}
+        <Field id="mod-comment-item" data-admin-grow value={host.commentItem}
             oninput={(event) => host.setCommentItem(event.currentTarget.value)} />
         <Button disabled={host.busy}
             onclick={() => void host.loadItemComments()}>{t(ADMIN_KEYS.modItemLoad)}</Button>
@@ -145,7 +146,7 @@
 
     <h3 class="admin-list__name">{t(ADMIN_KEYS.modReviewsHeading)}</h3>
     <label class="admin-field" for="mod-review-item">{t(ADMIN_KEYS.modReviewsItemLabel)}</label>
-    <input id="mod-review-item" class="admin-input" type="text" value={host.reviewItem}
+    <Field id="mod-review-item" data-admin-grow value={host.reviewItem}
         oninput={(event) => host.setReviewItem(event.currentTarget.value)} />
     <Button disabled={host.busy}
         onclick={() => void host.loadReviews()}>{t(ADMIN_KEYS.modReviewsLoad)}</Button>

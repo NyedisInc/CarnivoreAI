@@ -48,7 +48,8 @@ def _restorable(request: Request, row) -> bool:
             dependencies=[Depends(require_auth)])
 async def get_skill_autopsy(request: Request, name: str,
                             days: int = Query(30, ge=1, le=MAX_DAYS)) -> SkillAutopsy:
-    """
+    """What happened after this skill fired on this mac, over the last ``days`` days.
+
     Inputs: name (str) - the skill's name; days (int, 1..365, default 30).
     Output: SkillAutopsy: counts of tool calls, tool errors, interrupts,
       corrections and tokens (null where the transcripts recorded none), the

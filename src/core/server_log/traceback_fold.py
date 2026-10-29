@@ -1,11 +1,3 @@
-"""Plain-text stderr blocks that fold into ONE log record (issue #1871).
-
-uvicorn and Python print a crash to stderr as text with no timestamp: an optional ``ERROR:    Exception in ASGI application``
-header, ``Traceback (most recent call last):``, indented frames (and ``...<N lines>...`` markers), then the exception line,
-and, for a chained error, ``During handling of the above exception, another exception occurred:`` (or ``The above exception
-was the direct cause...``) and another traceback. `records.group` uses the small state machine below to keep that whole block in
-one record: its summary is the LAST exception line, its detail is every line.
-"""
 
 from __future__ import annotations
 

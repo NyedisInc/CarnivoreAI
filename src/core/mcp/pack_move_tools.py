@@ -24,7 +24,7 @@ SPECS = (
                     "wait_seconds": {"type": "integer", "minimum": 0, "maximum": 3600, "description": "how long to wait for the turn to end (default 600)"}},
         required=("machine",), invoke=_move, reach=session_target.LIVE, needs_uuid=True,
         summary=lambda args, _t: f"move session {json.dumps(args.get('target'))} to {json.dumps(args.get('machine'))} after its turn ends",
-        example={"machine": "hosta"},
+        example={"machine": "studio"},
     ),
 )
 

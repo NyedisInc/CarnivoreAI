@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>toast stacking harness</title>
-<!-- could not -->
 <link rel="stylesheet" href="../../client/css/styles.css" />
 <link rel="stylesheet" href="../../client/css/toast.css" />
 <style>
@@ -42,6 +41,8 @@ window.__setTheme = async function (id) {
 /** Drop every toast without touching the (absent) server. @returns {void} */
 window.__reset = function () {
     window.ToastManager.clearAll();
+    // clearAll animates out over 220ms; strip the corpses so a following
+    // measurement cannot read a dismissing card as a live one.
     const c = document.getElementById('toast-container');
     while (c.firstChild) c.removeChild(c.firstChild);
     window.ToastManager._byId.clear();
@@ -85,6 +86,11 @@ window.__burst = function (n, kind, vary, spread) {
     }
 };
 
+/**
+ * POSITIVE CONTROL: exactly one toast, nothing else. The driver asserts
+ * it paints a real box before believing any "at most N cards" verdict.
+ * @returns {void}
+ */
 window.__control = function () {
     window.__reset();
     window.__burst(1, 'Stop');
@@ -101,7 +107,12 @@ window.__expand = function () {
 /**
  * Measure what is actually PAINTED: one bounding rect per rendered card,
  * plus the overflow row's box and the text it is showing.
-
+ *
+ * A card is counted only when its rect has non-zero width AND height and
+ * its computed visibility/display/opacity would let a human see it -
+ * "the element is in the DOM" is the assertion class this file exists to
+ * replace.
+ *
  * @returns {object} the whole measurement bundle.
  */
 window.__measure = function () {
@@ -152,7 +163,20 @@ window.__measure = function () {
 
 /**
  * Block until nothing is animating AND two consecutive frames agree.
-
+ *
+ * BOTH HALVES ARE LOAD BEARING, and the two-frame half alone was measured
+ * failing here. Cards transition in and out over 200ms
+ * (transform/opacity). getComputedStyle mid-transition returns the
+ * ANIMATED value, not the end value, so a read landing inside a running
+ * transition looks exactly like a rule that never applied. The usual
+ * remedy - poll until two frames agree - is not sufficient at the START
+ * of a transition: both frames can land at currentTime 0 and AGREE on the
+ * pre-transition value. Measured directly: three identical runs of the
+ * same twelve-toast burst returned opacity 0 / 0 / 1 with this function
+ * reporting settled every time. So the animations are drained first
+ * (Element.getAnimations, finish() rather than waiting out the wall
+ * clock) and the frame agreement is the second gate, not the only one.
+ *
  * @returns {Promise<boolean>} false when paint never settled.
  */
 window.__settle = async function () {

@@ -3,17 +3,9 @@ from __future__ import annotations
 
 import sqlite3
 
-import pytest
-
 from src.core.message_activity import (
-    ACTIVITY_KNOWN,
-    ACTIVITY_NONE,
-    ACTIVITY_UNKNOWN,
     backfill_transcript_activity,
-    classify_activity,
     install_transcript_activity,
-    merge_activity,
-    newest_ts_for_bodies,
 )
 
 
@@ -65,35 +57,6 @@ def test_the_backfill_is_idempotent():
         "SELECT id, newest_message_ts FROM message_transcripts ORDER BY id"
     ).fetchall()
     assert [tuple(r) for r in first] == [tuple(r) for r in second]
-
-
-def test_the_ingest_lookup_and_the_backfill_agree():
-    conn = _bodies_conn()
-    backfill_transcript_activity(conn)
-    for tid in (1, 2, 3):
-        ids = [
-            r[0] for r in conn.execute(
-                "SELECT body_id FROM message_appearances WHERE transcript_id = ?",
-                (tid,),
-            )
-        ]
-        stored = conn.execute(
-            "SELECT newest_message_ts FROM message_transcripts WHERE id = ?",
-            (tid,),
-        ).fetchone()[0]
-        assert newest_ts_for_bodies(conn, ids) == stored
-
-
-def test_the_ingest_lookup_survives_more_ids_than_sqlite_binds():
-    conn = _bodies_conn()
-    many = []
-    for i in range(2000):
-        conn.execute(
-            "INSERT INTO message_bodies VALUES (?, ?)",
-            (1000 + i, f"2026-02-{(i % 27) + 1:02d}T00:00:00Z"),
-        )
-        many.append(1000 + i)
-    assert newest_ts_for_bodies(conn, many) == "2026-02-27T00:00:00Z"
 
 
 def test_installing_on_an_archive_less_database_is_a_no_op_not_a_crash():

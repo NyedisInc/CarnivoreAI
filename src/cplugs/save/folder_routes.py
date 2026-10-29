@@ -113,8 +113,6 @@ def points_now(unit: str) -> FolderPoints:
 
 
 def restore_now(unit: str, point_id: Optional[str]) -> FolderRestoreResult:
-    """Blocking: restore one folder unit into a new sibling folder. Raises: HTTPException 404 (no such unit or point), 409 (the vault is
-    unavailable, or a damaged chunk), 500 (the folder could not be written)."""
     try:
         vault = RUNTIME.vault()
         target, result, used = folders.restore_folder(vault, unit, point_id)

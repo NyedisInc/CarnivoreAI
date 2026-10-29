@@ -10,11 +10,12 @@ const mk = (id: number, list: string, extra: Record<string, unknown> = {}) => ({
   revision: 1, created_seq: id, seq: id, deleted: false, thread: [], ...extra,
 });
 const msg = (id: number, author: 'joe' | 'claude', text: string) => ({ id, item_id: 5, author, kind: 'reply', text, answered: false, created_at: 1_700_000_000 + id, seq: id });
+/** Item 5 carries a thread (the last agent message is new), a note, a tag and a fork parent. */
 let asReview = false;
 const REVIEW = { state: 'review', review_description: 'check the tab strip at phone width', review_where: 'task manager II', review_action: 'tick' };
 const OPEN = (list: string) => mk(5, list, {
   ...(asReview ? REVIEW : {}),
-  from_inbox: { id: 9, text: 'raw words from the add box' }, title: 'ship the tabs', text: 'ship the tabs now', note: 'check phone width', unread: true, tagged_by: 'bot-ui', tagged_session_key: 'u-bot-ui', forked_from: 2,
+  from_inbox: { id: 9, text: 'raw words from the add box' }, title: 'ship the tabs', text: 'ship the tabs now', note: 'check phone width', unread: true, tagged_by: 'cv-ui', tagged_session_key: 'u-cv-ui', forked_from: 2,
   thread: [msg(1, 'claude', 'first reply, spec at https://example.com/spec'), msg(2, 'joe', 'my answer'), msg(3, 'claude', 'second reply')], thread_count: 3,
 });
 
@@ -58,6 +59,7 @@ import Mk2TaskTabs from './Mk2TaskTabs.svelte';
 import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
 
 cplugEnablement.enabled = { huddle: true };
+/** A file under `cells/`, from the web root vitest runs in. Inputs: relative path. Output: absolute path. */
 const CELLS = (rel: string): string => resolve(process.cwd(), 'src/opscenter/cells', rel);
 const apps: Array<ReturnType<typeof mount>> = [];
 
@@ -68,14 +70,16 @@ afterEach(() => {
   clearViewFilter();
   resetInspections();
   huddle.openId = null as never;
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom without storage: the widget keeps an in-memory value */ }
 });
 
+/** Settle the mocked reads. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 10; i += 1) { await Promise.resolve(); await tick(); }
   flushSync();
 }
 
+/** Mount a cell on project 7, inside a frame header when `hostId` is given. Output: the host element after it settled. */
 async function draw(cell: typeof Original, hostId?: string): Promise<HTMLElement> {
   const host = document.createElement('div');
   document.body.appendChild(host);
@@ -86,6 +90,7 @@ async function draw(cell: typeof Original, hostId?: string): Promise<HTMLElement
   return host;
 }
 
+/** Open task 5 by its row's toggle. Inputs: host. Output: the detail element. */
 async function open(host: HTMLElement): Promise<HTMLElement> {
   if (!host.querySelector('[data-task-manager-detail="5"]')) {
     (host.querySelector('[data-task-manager-toggle="5"]') as HTMLButtonElement).click();
@@ -176,7 +181,7 @@ describe('TM Mark II task tabs', () => {
     const message = chat.querySelector('.tn-message') as HTMLElement;
     expect(message.dataset.messageIndex).toBe('2');
     expect(classes(message)).toEqual(['tn-message-top', 'tn-md']);
-    expect(message.querySelector('.tn-message-top strong')?.textContent).toBe('bot-ui');
+    expect(message.querySelector('.tn-message-top strong')?.textContent).toBe('cv-ui');
     expect(message.querySelector('.tn-message-top .tn-subtle')?.textContent).toBe('carnivore \u00b7 agent');
     expect(message.querySelector('.tm-new-mark')?.textContent).toBe('new');
     expect(message.querySelector('.tn-md')?.textContent).toContain('second reply');
@@ -193,7 +198,7 @@ describe('TM Mark II task tabs', () => {
     expect(classes(details)).toEqual(['tn-overline', 'tn-md', '', 'tn-overline', 'tn-md', 'tn-overline', 'tn-md', 'tn-line between', 'tm-shared-list']);
     expect(details.querySelector('.tn-overline')?.textContent).toBe('task');
     expect([...details.querySelectorAll('dl > dt')].map((el) => el.textContent)).toEqual(['project', 'agent', 'parent']);
-    expect([...details.querySelectorAll('dl > dd')].map((el) => el.textContent)).toEqual(['Carnivore', 'bot-ui', 'task 2']);
+    expect([...details.querySelectorAll('dl > dd')].map((el) => el.textContent)).toEqual(['Carnivore', 'cv-ui', 'task 2']);
     expect(details.querySelector('.tn-md')?.textContent).toBe('ship the tabs now');
     expect(details.querySelectorAll('.tn-overline')[1]?.textContent).toBe('your note');
     expect(details.querySelectorAll('.tn-md')[1]?.textContent).toContain('check phone width');
@@ -212,7 +217,7 @@ describe('TM Mark II task tabs', () => {
   test('the github issue shows in the details tab only, never as a row of the action tab', async () => {
     const target = document.createElement('div');
     document.body.appendChild(target);
-    const url = 'https://github.com/NyedisInc/CarnivoreAI/issues/1710';
+    const url = 'https://github.com/Example-owner/CarnivoreAIDev/issues/1710';
     const item = { ...OPEN('7'), github_issue: url, review: { link: url } } as unknown as HuddleItem;
     apps.push(mount(Mk2TaskTabs, { target, props: { item } }));
     await settle();
@@ -222,7 +227,7 @@ describe('TM Mark II task tabs', () => {
     await settle();
     const link = target.querySelector('[data-mk2-issue]') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe(url);
-    expect(link.textContent).toContain('NyedisInc/CarnivoreAI #1710');
+    expect(link.textContent).toContain('Example-owner/CarnivoreAIDev #1710');
     expect(link.className).toBe('tn-resource');
     expect(link.closest('.tm-details')).not.toBeNull();
   });

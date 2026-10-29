@@ -31,7 +31,21 @@ function make(window: FeedWindow): Resource<FeedBody> {
       if (isFresher(held, body)) held = body;
       return held as FeedBody;
     },
-    { intervalMs: STATS_FEED_FALLBACK_MS, name: `stats-feed:${window}`, topics: [STATS_FEED_TOPIC] },
+    {
+      intervalMs: STATS_FEED_FALLBACK_MS,
+      name: `stats-feed:${window}`,
+      topics: [STATS_FEED_TOPIC],
+      body: {
+        key: 'stats_feed',
+        renewMs: 15000,
+        read: (bodies) => {
+          const pushed = (bodies as Partial<Record<FeedWindow, FeedBody>> | null)?.[window];
+          if (!pushed || (typeof document !== 'undefined' && document.hidden)) return null;
+          if (isFresher(held, pushed)) held = pushed;
+          return held;
+        },
+      },
+    },
   );
   return made;
 }

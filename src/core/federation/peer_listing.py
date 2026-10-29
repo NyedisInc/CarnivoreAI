@@ -6,6 +6,7 @@ import os
 import sqlite3
 import threading
 import time
+from types import SimpleNamespace
 from contextlib import closing
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Mapping, Optional
@@ -39,6 +40,8 @@ class Snapshot:
 
 
 _SNAPSHOTS: Dict[str, Snapshot] = {}
+PUSHED: set = set()
+_PUSHED_AT: Dict[str, float] = {}
 _OWNER_IDS: Dict[str, Dict[str, str]] = {}
 
 
@@ -50,13 +53,18 @@ _FAILED: Dict[str, float] = {}
 
 def reset() -> None:
     _SNAPSHOTS.clear()
+    PUSHED.clear()
+    _PUSHED_AT.clear()
     _OWNER_IDS.clear()
     _INFLIGHT.clear()
     _FAILED.clear()
+    _NO_ASLEEP.clear()
 
 
 def forget(peer_install_id: str) -> None:
     _SNAPSHOTS.pop(peer_install_id, None)
+    PUSHED.discard(peer_install_id)
+    _PUSHED_AT.pop(peer_install_id, None)
     _INFLIGHT.pop(peer_install_id, None)
     _FAILED.pop(peer_install_id, None)
 
@@ -88,15 +96,30 @@ def _sync_row(raw: Mapping[str, Any]) -> Dict[str, Any]:
             "agent_family": raw.get("agent_family"), "agent_family_source": raw.get("agent_family_source")}
 
 
-def _import(open_db: Callable[[], sqlite3.Connection], peer: "peer_hosts.PeerRow", data: Any) -> Optional[List[SessionInfo]]:
+def _asleep_sync_row(raw: Mapping[str, Any]) -> Dict[str, Any]:
+    return {"session_uuid": raw.get("session_uuid"), "name": raw.get("tmux_session"), "working_dir": raw.get("working_dir"),
+            "label": raw.get("label"), "agent_type": raw.get("agent_type"), "agent_family": raw.get("agent_family"),
+            "agent_family_source": raw.get("agent_family_source"), "source": raw.get("source")}
+
+
+def _import(open_db: Callable[[], sqlite3.Connection], peer: "peer_hosts.PeerRow", data: Any,
+            asleep: Any = None) -> Optional[List[SessionInfo]]:
     if not isinstance(data, list):
         return None
     accepted = [raw for raw in data[:shadow_rows.MAX_ROWS] if accept(raw, peer.peer_install_id)]
     with closing(open_db()) as conn:
         own = _own_uuids(conn, accepted)
         accepted = [raw for raw in accepted if str(raw.get("session_uuid")) not in own]
+        resting = None
+        if isinstance(asleep, list):
+            resting = [raw for raw in asleep[:shadow_rows.MAX_ROWS]
+                       if isinstance(raw, Mapping) and raw.get("origin_install_id") == peer.peer_install_id]
+            held = _own_uuids(conn, resting)
+            resting = [row for row in (_asleep_sync_row(raw) for raw in resting if str(raw.get("session_uuid")) not in held)
+                       if shadow_rows.usable(row)]
         shadows = shadow_rows.sync_peer(conn, host_key=peer.key, peer_install_id=peer.peer_install_id,
-                                        rows=[_sync_row(raw) for raw in accepted], complete=len(accepted) == len(data))
+                                        rows=[_sync_row(raw) for raw in accepted], complete=len(accepted) == len(data),
+                                        asleep=resting)
     _OWNER_IDS[peer.key] = {str(raw.get("tmux_session")): str(raw["session"]["id"]) for raw in accepted}
     rows: List[SessionInfo] = []
     for raw in accepted:
@@ -120,34 +143,104 @@ def _own_uuids(conn: sqlite3.Connection, accepted: List[Any]) -> set:
         (LOCAL_HOST_KEY, SESSION_LIFECYCLE_RUNNING, *ids))}
 
 
-def _parse_and_import(open_db: Callable[[], sqlite3.Connection], peer: "peer_hosts.PeerRow", body: Any) -> Optional[List[SessionInfo]]:
-    return _import(open_db, peer, body.json())
+def _parse_and_import(open_db: Callable[[], sqlite3.Connection], peer: "peer_hosts.PeerRow", body: Any,
+                      asleep_body: Any = None) -> Optional[List[SessionInfo]]:
+    return _import(open_db, peer, body.json(), asleep_body.json() if asleep_body is not None else None)
+
+
+_NO_ASLEEP: Dict[str, float] = {}
+NO_ASLEEP_SECONDS = 300.0
+
+
+async def _asleep_reply(client: Any, key: str) -> Any:
+    if time.monotonic() - _NO_ASLEEP.get(key, -1e9) < NO_ASLEEP_SECONDS:
+        return None
+    try:
+        reply = await client.request("GET", "/sessions/asleep", max_body=peer_http.MAX_LISTING_BODY)
+    except (PeerUnreachable, PeerRefused, httpx.HTTPError):
+        return None
+    if reply.status_code != 200:
+        _NO_ASLEEP[key] = time.monotonic()
+        return None
+    return reply
+
+
+_NO_MERGED: Dict[str, float] = {}
+
+
+async def _merged_reply(client: Any, key: str) -> Optional[tuple]:
+    if time.monotonic() - _NO_MERGED.get(key, -1e9) < NO_ASLEEP_SECONDS:
+        return None
+    try:
+        reply = await client.request("GET", "/sessions/list-and-asleep", max_body=peer_http.MAX_LISTING_BODY)
+    except (PeerUnreachable, PeerRefused, httpx.HTTPError):
+        return None
+    if reply.status_code != 200:
+        if reply.status_code in (403, 404, 405):
+            _NO_MERGED[key] = time.monotonic()
+        return None
+    try:
+        body = await asyncio.to_thread(reply.json)
+    except (ValueError, RecursionError):
+        _NO_MERGED[key] = time.monotonic()
+        return None
+    if not isinstance(body, dict) or not isinstance(body.get("list"), list) or not isinstance(body.get("asleep"), list):
+        _NO_MERGED[key] = time.monotonic()
+        return None
+    return SimpleNamespace(status_code=200, json=lambda: body["list"]), SimpleNamespace(status_code=200, json=lambda: body["asleep"])
+
+
+def _superseded(key: str, started: float) -> bool:
+    return key in PUSHED or _PUSHED_AT.get(key, -1e18) > started
 
 
 async def _fetch(peer: "peer_hosts.PeerRow", client: Any, open_db: Callable[[], sqlite3.Connection]) -> None:
-    key = peer.peer_install_id
+    key, started = peer.peer_install_id, time.monotonic()
     try:
-        response = await asyncio.wait_for(client.request("GET", "/sessions/list", max_body=peer_http.MAX_LISTING_BODY),
-                                          DEADLINE_SECONDS)
+        merged = await asyncio.wait_for(_merged_reply(client, key), DEADLINE_SECONDS)
+        if merged is not None:
+            response, asleep = merged
+        else:
+            response, asleep = await asyncio.wait_for(asyncio.gather(
+                client.request("GET", "/sessions/list", max_body=peer_http.MAX_LISTING_BODY), _asleep_reply(client, key)),
+                DEADLINE_SECONDS)
         rows = None
+        if _superseded(key, started):
+            return
         if response.status_code == 200:
-            rows = await asyncio.to_thread(_parse_and_import, open_db, peer, response)
+            rows = await asyncio.to_thread(_parse_and_import, open_db, peer, response, asleep)
     except (PeerUnreachable, PeerRefused, asyncio.TimeoutError, httpx.HTTPError, sqlite3.Error):
         logger.info("peer_listing_unavailable", peer=peer.key)
         rows = None
     except Exception as exc:  # noqa: BLE001
         logger.warning("peer_listing_fetch_failed", peer=peer.key, error_type=type(exc).__name__)
         rows = None
+    if _superseded(key, started):
+        return
     if rows is None:
         _FAILED[key] = time.monotonic()
     else:
         _SNAPSHOTS[key] = Snapshot(rows)
 
 
+async def ingest(peer: "peer_hosts.PeerRow", open_db: Callable[[], sqlite3.Connection],
+                 list_rows: List[Any], asleep_rows: List[Any]) -> bool:
+    try:
+        rows = await asyncio.to_thread(_import, open_db, peer, list_rows, asleep_rows)
+    except (sqlite3.Error, OSError, RecursionError) as exc:
+        logger.info("peer_listing_push_import_failed", peer=peer.key, error_type=type(exc).__name__)
+        return False
+    if rows is None:
+        return False
+    _SNAPSHOTS[peer.peer_install_id] = Snapshot(rows)
+    _PUSHED_AT[peer.peer_install_id] = time.monotonic()
+    return True
+
+
 async def refresh(peer: "peer_hosts.PeerRow", links: "peer_links.PeerLinks",
                   open_db: Callable[[], sqlite3.Connection], *, force: bool = False) -> None:
     client = links.client(peer.peer_install_id)
-    if client is None:
+    if client is None or peer.peer_install_id in PUSHED:
         return
     key, now = peer.peer_install_id, time.monotonic()
     task = _INFLIGHT.get(key)
@@ -200,7 +293,7 @@ async def peer_rows(open_db: Callable[[], sqlite3.Connection],
     if links is None:
         return []
     try:
-        peers = await asyncio.to_thread(_read_peers, open_db)
+        peers = await asyncio.to_thread(read_peers, open_db)
     except (sqlite3.Error, OSError):
         return []
     peers = [p for p in peers if not direction.is_one_way_toward(p.peer_install_id)]
@@ -215,7 +308,7 @@ async def peer_rows(open_db: Callable[[], sqlite3.Connection],
             if snap is None:
                 out += _shown(await _cold(open_db, peer), DISCONNECTED if word == HOST_STATE_UP else word)
             else:
-                stale = time.monotonic() - snap.at > STALE_SECONDS
+                stale = time.monotonic() - snap.at > STALE_SECONDS and peer.peer_install_id not in PUSHED
                 out += _shown(snap.rows, DISCONNECTED if word == HOST_STATE_UP and stale else word)
         except Exception as exc:  # noqa: BLE001
             logger.warning("peer_rows_failed", peer=peer.key, error_type=type(exc).__name__)
@@ -240,7 +333,7 @@ def _db_signature(path: str) -> Optional[tuple]:
     return None if marks[0] is None else tuple(marks)
 
 
-def _read_peers(open_db: Callable[[], sqlite3.Connection]) -> List["peer_hosts.PeerRow"]:
+def read_peers(open_db: Callable[[], sqlite3.Connection]) -> List["peer_hosts.PeerRow"]:
     global _PEERS_CACHE
     with _PEERS_LOCK:
         cached = _PEERS_CACHE

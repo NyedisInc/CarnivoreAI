@@ -22,10 +22,10 @@ from src.cplugs.host.secret_store import SecretError, SecretStore
 from src.cplugs.sdk import ManifestError
 from src.cplugs.sdk.manifest import parse_manifest
 
-TOKEN = "ghp_exampleTOKENvalue1234"  # synthetic test value, never issued
+TOKEN = "ghp_exampleTOKENvalue1234"
 OTHER = "other_secret_value_5678"
 WRITE_ENTRY = "network_hosts.write:api.example.com"
-BASE_PERMS = ["network_hosts:api.example.com", "network_hosts:cdn.example.org", "lan_hosts:http://203.0.113.13:8080",
+BASE_PERMS = ["network_hosts:api.example.com", "network_hosts:cdn.example.org", "lan_hosts:http://192.168.1.20:8080",
               "lan_hosts:http://nas.local:9000"]
 
 
@@ -41,7 +41,7 @@ def manifest_raw(**over):
             {"host": "api.example.com", "reason": "reads", "methods": ["GET", "POST"], "paths": ["/repos", "/user"],
              "auth": {"secret": "token", "header": "Authorization", "scheme": "Bearer"}},
             {"host": "cdn.example.org", "reason": "assets", "auth": {"secret": "cdn", "header": "X-Key", "scheme": ""}}],
-        "lan_hosts": [{"host": "http://203.0.113.13:8080", "reason": "printer"},
+        "lan_hosts": [{"host": "http://192.168.1.20:8080", "reason": "printer"},
                       {"host": "http://nas.local:9000", "reason": "nas"}],
     }
     raw.update(over)
@@ -78,7 +78,7 @@ class Rig:
         self.secrets = SecretStore(tmp_path, keychain=self.kc)
         self.log = EgressLog(tmp_path)
         self.dns: Dict[str, List[str]] = {"api.example.com": ["93.184.216.34"], "cdn.example.org": ["151.101.1.1"],
-                                          "nas.local": ["198.51.100.17"]}
+                                          "nas.local": ["192.168.1.30"]}
         self.resolved: List[str] = []
         self.peers: set = set()
         self.peers_complete = True
@@ -176,7 +176,7 @@ def test_an_ungranted_host_scheme_port_and_userinfo_are_refused(rig):
     rig.refused("https://api.example.com/repos", "permission_denied")
 
 
-@pytest.mark.parametrize("host", ["127.0.0.1", "2130706433", "0x7f.1", "0177.0.0.1", "[::1]", "[::ffff:127.0.0.1]", "198.51.100.15"])
+@pytest.mark.parametrize("host", ["127.0.0.1", "2130706433", "0x7f.1", "0177.0.0.1", "[::1]", "[::ffff:127.0.0.1]", "10.1.2.3"])
 def test_an_ip_literal_is_refused_unless_a_lan_entry_names_it(rig, host):
     rig.refused(f"https://{host}/repos", "ip_literal")
 
@@ -203,7 +203,7 @@ def test_a_name_resolving_to_a_never_address_is_refused_even_among_public_ones(r
     rig.refused("https://api.example.com/repos", "address_never")
 
 
-@pytest.mark.parametrize("answer", [["192.0.2.13"], ["203.0.113.17"], ["100.101.0.77"], ["fd12::1"], ["93.184.216.34", "192.0.2.13"]])
+@pytest.mark.parametrize("answer", [["10.0.0.5"], ["192.168.0.9"], ["100.64.1.1"], ["fd12::1"], ["93.184.216.34", "10.0.0.5"]])
 def test_a_name_resolving_private_is_refused_without_a_lan_grant(rig, answer):
     rig.dns["api.example.com"] = answer
     rig.refused("https://api.example.com/repos", "private_address")
@@ -244,30 +244,30 @@ def test_header_injection_size_rate_and_a_missing_secret_are_refused(rig):
 
 
 def test_a_granted_lan_entry_reaches_a_private_address_over_http_only_there(rig):
-    rig.dns["203.0.113.13"] = ["203.0.113.13"]
-    assert rig.get("http://203.0.113.13:8080/status").status == 200
+    rig.dns["192.168.1.20"] = ["192.168.1.20"]
+    assert rig.get("http://192.168.1.20:8080/status").status == 200
     call = rig.transport.calls[0]
-    assert (call["ip"], call["port"], call["tls"], call["host"]) == ("203.0.113.13", 8080, False, "203.0.113.13")
+    assert (call["ip"], call["port"], call["tls"], call["host"]) == ("192.168.1.20", 8080, False, "192.168.1.20")
     assert "authorization" not in {k.lower() for k, _ in call["headers"]}
-    assert rig.get("http://nas.local:9000/x").status == 200 and rig.transport.calls[1]["ip"] == "198.51.100.17"
+    assert rig.get("http://nas.local:9000/x").status == 200 and rig.transport.calls[1]["ip"] == "192.168.1.30"
     rig.transport.calls.clear()
-    rig.refused("http://203.0.113.13:9999/status", "ip_literal")
-    rig.refused("http://192.0.2.18:8080/status", "ip_literal")
+    rig.refused("http://192.168.1.20:9999/status", "ip_literal")
+    rig.refused("http://192.168.1.21:8080/status", "ip_literal")
 
 
 def test_lan_never_reaches_this_computer_a_peer_or_a_public_answer_and_needs_its_tick(rig):
-    rig.dns["203.0.113.13"] = ["203.0.113.13"]
-    rig.own.add("203.0.113.13")
-    rig.refused("http://203.0.113.13:8080/status", "address_never")
+    rig.dns["192.168.1.20"] = ["192.168.1.20"]
+    rig.own.add("192.168.1.20")
+    rig.refused("http://192.168.1.20:8080/status", "address_never")
     rig.own.clear()
-    rig.peers.add("198.51.100.17")
+    rig.peers.add("192.168.1.30")
     rig.refused("http://nas.local:9000/x", "address_never")
     rig.peers.clear()
     rig.dns["nas.local"] = ["8.8.8.8"]
     rig.refused("http://nas.local:9000/x", "address_not_private")
     rig.dns["nas.local"] = ["127.0.0.1"]
     rig.refused("http://nas.local:9000/x", "address_never")
-    rig.dns["nas.local"] = ["198.51.100.17"]
+    rig.dns["nas.local"] = ["192.168.1.30"]
     rig.grants.discard("lan_hosts:http://nas.local:9000")
     rig.refused("http://nas.local:9000/x", "scheme_refused")
 
@@ -301,7 +301,7 @@ def test_a_redirect_to_an_ungranted_host_a_private_resolution_or_too_many_hops_s
     assert lit.value.code == "ip_literal" and len(rig.transport.calls) == 1
     rig.transport.calls.clear()
     rig.transport.answers.append(redirect("https://cdn.example.org/x"))
-    rig.dns["cdn.example.org"] = ["198.51.100.16"]
+    rig.dns["cdn.example.org"] = ["10.9.9.9"]
     with pytest.raises(FetchRefused) as rebind:
         rig.get("https://api.example.com/repos/x")
     assert rebind.value.code == "private_address" and len(rig.transport.calls) == 1
@@ -422,10 +422,10 @@ def test_the_host_reads_grants_and_enabled_live(tmp_path):
 
 
 def test_lan_routes_fail_closed_when_the_peer_list_may_be_incomplete(rig):
-    rig.dns["203.0.113.13"] = ["203.0.113.13"]
+    rig.dns["192.168.1.20"] = ["192.168.1.20"]
     rig.peers_complete = False
     rig.refused("http://nas.local:9000/x", "peers_unknown")
-    rig.refused("http://203.0.113.13:8080/status", "peers_unknown")
+    rig.refused("http://192.168.1.20:8080/status", "peers_unknown")
     assert rig.get("https://api.example.com/repos").status == 200
     rig.peers_complete = True
     assert rig.get("http://nas.local:9000/x").status == 200
@@ -451,20 +451,20 @@ def test_peer_addresses_use_the_real_host_of_an_alias_and_fail_closed(monkeypatc
     import sqlite3
 
     _fake_peer_db(monkeypatch, ["studio"])
-    dns = {"studio": [], "100.101.0.77": ["100.101.0.77"]}
+    dns = {"studio": [], "100.64.0.7": ["100.64.0.7"]}
 
     def resolver(host, port):
         if not dns.get(host):
             raise netguard.Refused("dns_failed")
         return dns[host]
 
-    got = netguard.peer_addresses(resolver, lambda t: "100.101.0.77", lambda: 0.0)
-    assert got.addresses == {"100.101.0.77"} and got.complete
+    got = netguard.peer_addresses(resolver, lambda t: "100.64.0.7", lambda: 0.0)
+    assert got.addresses == {"100.64.0.7"} and got.complete
     netguard._peer_cache.clear()
     def no_ssh(t):
         raise OSError("no ssh")
     assert netguard.peer_addresses(resolver, no_ssh, lambda: 0.0).complete is False
     netguard._peer_cache.clear()
     _fake_peer_db(monkeypatch, ["studio"], raises=sqlite3.OperationalError("locked"))
-    assert netguard.peer_addresses(resolver, lambda t: "100.101.0.77", lambda: 0.0) == netguard.Peers(set(), False)
+    assert netguard.peer_addresses(resolver, lambda t: "100.64.0.7", lambda: 0.0) == netguard.Peers(set(), False)
     netguard._peer_cache.clear()

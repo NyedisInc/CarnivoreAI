@@ -78,7 +78,7 @@ export function createBoard(data: EliteData, t: Translate, hooks: BoardHooks): B
         const next = new Set(tagged);
         if (!next.delete(at)) next.add(at);
         tagged = next;
-        say(t(next.size === 1 ? K.echoTaggedOne : K.echoTaggedMany, { n: next.size }), 'tag');
+        say(t(K.echoTagged, { n: next.size, count: next.size }), 'tag');
     }
 
     function untag(ids: Iterable<string>): void {

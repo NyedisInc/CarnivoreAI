@@ -1,53 +1,15 @@
-"""Removing cloudecode's managed hook block from ``~/.claude/settings.json``.
-
-THIS MODULE USED TO INSTALL HOOKS. IT NOW ONLY TAKES THEM BACK OUT.
-
-CloudeCode learned a session's state by making Claude Code POST every
-lifecycle event to a loopback endpoint. That was measured wrong nine
-times in ten, because ``CLOUDECODE_SESSION_ID`` is a PANE-WIDE
-environment variable: the parent agent and every background agent it
-spawned posted under one session id, so a sub-agent's own tool call
-looked exactly like the user's turn resuming. The whole subsystem is
-gone, replaced by passive detection that reads what the harness already
-writes to disk (``src/core/attention/``).
-
-So the one job left here is CLEANING UP AFTER THE OLD VERSION. An install
-that ran any earlier build has our block sitting in the user's settings
-file, pointing at an endpoint that no longer exists, making Claude Code
-pay for a curl on every single event forever. :func:`strip_managed_hooks`
-is called once at startup and removes it.
-
-What it must never do:
-
-- **Touch a hook the user wrote.** Every managed command carries the
-  literal marker ``# cloudecode-managed``. Only entries bearing it are
-  dropped; everything else is written back byte-for-byte.
-- **Clobber a file it could not parse.** A read error or a syntax error
-  LOGS and BAILS, exactly as the old merge did.
-- **Leave litter behind.** An event key whose matcher list is emptied by
-  the strip is removed, and a ``hooks`` key emptied by that is removed
-  too, so a user who never had hooks of their own is left with the file
-  they would have had if CloudeCode had never run.
-- **Skip anyone.** There is deliberately NO opt-out check. The old
-  ``disable_claude_hooks`` setting is gone, and honouring it here would
-  skip the cleanup for exactly the users who asked not to have the block
-  in the first place - the ones most likely to still be carrying one
-  from before they set the flag.
-
-The write is atomic: write-to-tmp + rename. The file is left untouched
-when there was nothing of ours in it, so a steady-state boot does not
-rewrite the user's settings at all.
-"""
 
 from __future__ import annotations
 
 import json
 import os
+import stat
 from pathlib import Path
 from typing import Any
 
 import structlog
 
+from src.core.config_files_io import atomic_write
 from src.core.test_write_guard import assert_test_write_allowed
 
 logger = structlog.get_logger()
@@ -67,7 +29,6 @@ ACTIVITY_ONLY_EVENTS = (
 
 LIFECYCLE_EVENTS = ("SessionStart", "SessionEnd")
 
-# waiting on the user
 WORK_EVENTS = TOAST_EVENTS + ACTIVITY_ONLY_EVENTS
 
 
@@ -169,12 +130,12 @@ def strip_managed_hooks(settings_path: Path) -> bool:
 
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(path.suffix + ".cloudecode-tmp")
-        tmp.write_text(
-            json.dumps(merged, indent=2, sort_keys=False) + "\n",
-            encoding="utf-8",
+        target = path.resolve()
+        atomic_write(
+            target,
+            json.dumps(merged, indent=2, sort_keys=False, ensure_ascii=False) + "\n",
+            mode=stat.S_IMODE(target.stat().st_mode),
         )
-        tmp.replace(path)
         logger.info(
             "claude_hooks_settings_stripped",
             path=str(path),

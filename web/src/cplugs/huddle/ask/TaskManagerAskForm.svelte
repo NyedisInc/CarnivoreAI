@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* no longer holds */
+  /* no longer holds there is nothing */
   import { onMount } from 'svelte';
   import { baseField } from '../task-manager-base-field';
   import { t, truncatedTip } from '../../sdk';
@@ -7,7 +7,8 @@
   import Icon from '../../../opscenter/ui/Icon.svelte';
   import { mdPlain } from '../task-manager-markdown';
   import { createAsk } from './ask-state.svelte';
-  import { isDismissClick, optionForDigit, toggleChoice, type AskQuestion, type AskValue } from './ask-model';
+  import { EXTRA_KEY, isDismissClick, optionForDigit, toggleChoice, type AskQuestion, type AskValue } from './ask-model';
+  import AskPasteZone from './fields/AskPasteZone.svelte';
   import AskQuestionView from './AskQuestion.svelte';
   import './ask-form.css';
   import TaskManagerMarkdown from '../TaskManagerMarkdown.svelte';
@@ -22,7 +23,7 @@
   const left = $derived(ask.progress.requiredLeft);
   const alone = $derived(ask.questions.some((q) => !!q.command));
   const submitLabel = $derived(
-    ask.submitting ? t('cplug.huddle.ask.sending') : left > 0 ? t('cplug.huddle.ask.required_left', { n: left }) : t('cplug.huddle.ask.submit'),
+    ask.submitting ? t('cplug.huddle.ask.sending') : ask.uploading ? t('cplug.huddle.files.uploading') : left > 0 ? t('cplug.huddle.ask.required_left', { n: left }) : t('cplug.huddle.ask.submit'),
   );
 
   onMount(() => {
@@ -99,7 +100,7 @@
       {#if ask.read.ask.context}<div class="hdq-context"><TaskManagerMarkdown text={ask.read.ask.context} /></div>{/if}
       {#each ask.questions as question, at (question.id)}
         <AskQuestionView {question} number={at + 1} value={ask.values[question.id]} answer={ask.answers[question.id]} readonly={ask.answered} busy={ask.submitting}
-                         onChange={(patch) => change(question, patch)} onTake={() => ask.take(question.id)} />
+                         box={ask.attachments(question.id)} onChange={(patch) => change(question, patch)} onTake={() => ask.take(question.id)} />
       {/each}
       
       {#if !alone && (!ask.answered || ask.savedExtra)}
@@ -108,8 +109,10 @@
           {#if ask.answered}
             <div class="hdq-answer" data-ask-extra-answer><TaskManagerMarkdown text={ask.savedExtra} /></div>
           {:else}
-            <textarea class="hdq-input" use:baseField id={`hdq-extra-${messageId}`} rows="3" maxlength="4000" value={ask.extra} data-ask-extra-field
-                      placeholder={t('cplug.huddle.ask.extra_placeholder')} oninput={(event) => ask.setExtra(event.currentTarget.value)}></textarea>
+            <AskPasteZone box={ask.attachments(EXTRA_KEY)} id={EXTRA_KEY}>
+              <textarea class="hdq-input" use:baseField id={`hdq-extra-${messageId}`} rows="3" maxlength="4000" value={ask.extra} data-ask-extra-field
+                        placeholder={t('cplug.huddle.ask.extra_placeholder')} oninput={(event) => ask.setExtra(event.currentTarget.value)}></textarea>
+            </AskPasteZone>
           {/if}
         </div>
       {/if}
@@ -125,7 +128,7 @@
         {/if}
         {#if ask.error}<span class="hdq-note hdq-note--error" role="alert" data-ask-error>{ask.error}</span>{/if}
         <span class="hdq-foot-end">
-          <Button variant="confirm" data-ask-submit disabled={left > 0 || ask.submitting} aria-label={submitLabel} title={submitLabel}
+          <Button variant="confirm" data-ask-submit disabled={left > 0 || ask.submitting || ask.uploading} aria-label={submitLabel} title={submitLabel}
                   aria-busy={ask.submitting} onclick={() => void send()}><Icon name={ask.submitting ? 'hourglass' : 'send'} size={16} /></Button>
         </span>
       {/if}

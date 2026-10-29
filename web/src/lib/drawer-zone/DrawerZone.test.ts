@@ -29,7 +29,7 @@ const ONE: LedgerSnapshot = {
       short_name: null,
       provider: 'claude',
       plan: 'max 20x',
-      identity: 'acme',
+      identity: 'alex',
       credential_state: 'ok',
       fetched_at: null,
       next_poll_at: null,
@@ -117,7 +117,7 @@ describe('outside edit layout', () => {
 });
 
 describe('in edit layout', () => {
-  test('the cyan box wraps the widgets only: the glance area sits under it, and no sizer is drawn', () => {
+  test('the cyan box wraps the widgets only: the glance area sits under it, and no sizer is drawn (Joe, 2026-10-03)', () => {
     edit(true);
     const widgets = host!.querySelector('[data-zone-widgets]')!;
     expect(widgets.classList.contains('dz-widgets--editing')).toBe(true);

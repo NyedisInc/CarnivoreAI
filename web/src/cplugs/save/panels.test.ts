@@ -12,6 +12,7 @@ setLocale('en');
 const GB = 1024 ** 3;
 const USAGE: Usage = {
     used_bytes: 1.8 * GB,
+    history_bytes: 1.8 * GB,
     cap_bytes: 4 * GB,
     conversations: 600,
     points: 904,
@@ -112,6 +113,16 @@ describe('storage panel', () => {
         await click(target, '[data-tm="confirm"]');
         expect(calls.filter((c) => c.method === 'PUT').map((c) => c.body)).toEqual([{ cap_gb: 1 }]);
         expect(target.querySelector('[data-tm="warn"]')).toBeNull();
+    });
+
+    test('the meter and the lowering warning count history, which is what the cap limits (u127-02)', async () => {
+        const { fetcher, calls, state } = harness();
+        state.usage = { ...USAGE, used_bytes: 3 * GB, history_bytes: 0.5 * GB };
+        const target = await open(StoragePanel, fetcher);
+        expect(target.querySelector('[data-tm="figures"]')!.textContent).toContain('0.5 gb of 4.0 gb used');
+        await drag(target, 1);
+        expect(target.querySelector('[data-tm="warn"]')).toBeNull();
+        expect(calls.filter((c) => c.method === 'PUT').map((c) => c.body)).toEqual([{ cap_gb: 1 }]);
     });
 
     test('cancel puts the slider back and writes nothing', async () => {

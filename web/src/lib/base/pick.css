@@ -118,12 +118,9 @@
 
   @media (max-width: 1023px) {
     .oc-pick {
-      align-items: center;
+      box-sizing: border-box;
       min-height: var(--oc-tap);
-    }
-
-    .oc-pick__input {
-      margin-top: 0;
+      padding-block: calc((var(--oc-tap) - 1lh) / 2);
     }
   }
 }

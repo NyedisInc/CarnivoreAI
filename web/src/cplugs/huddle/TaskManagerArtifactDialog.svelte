@@ -5,7 +5,6 @@
 
   let panel = $state<HTMLElement | null>(null);
 
-  // Escape closes it
   $effect(() => {
     if (artifactDialog.open) void tick().then(() => panel?.focus());
   });

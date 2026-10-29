@@ -120,7 +120,7 @@ console.log('[AgentFamilyIcon Module] Loading...');
         unknown: 'agent not determined',
     };
 
-    /* could not */
+    /* could not determine */
     function normalize(family) {
         if (family == null) return 'unknown';
         var key = String(family).toLowerCase();

@@ -317,3 +317,30 @@ test('a phone fold (title-bar tap) is saved to that session\'s terminal_layouts 
   const sent = prefs.sets[0] as Arrangement;
   expect(sent.sessions[KEY]!.layout?.collapsed).toContain(PRIMARY_SLOT);
 });
+
+test('u161-02: a write that throws is kept and sent again, not lost with the cleared queue', async () => {
+  terminalLayout.bindSession('cloude_api', 1);
+  prefs.values[FIELD] = arrangement({});
+  startArrangementSync(null);
+  await hydrateArrangement();
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const real = prefs.set.bind(prefs);
+  vi.spyOn(prefs, 'set').mockRejectedValueOnce(new Error('layer fault')).mockImplementation(real);
+  terminalLayout.add('terminal', 'ses_x');
+  await settle();
+  await settle();
+  const last = prefs.sets.at(-1) as Arrangement;
+  expect(JSON.stringify(last.sessions[KEY]!.layout)).toContain('terminal:ses_x');
+});
+
+test('u161-03: a migration whose write throws is retried on the next hydrate', async () => {
+  localStorage.setItem(TABS_KEY_PREFIX + OTHER, JSON.stringify({ groups: { [PRIMARY_SLOT]: { tabs: [PRIMARY_SLOT, C] } }, active: {} }));
+  localStorage.setItem(SESSION_INDEX_KEY, JSON.stringify([]));
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const real = prefs.set.bind(prefs);
+  vi.spyOn(prefs, 'set').mockRejectedValueOnce(new Error('layer fault')).mockImplementation(real);
+  startArrangementSync(null);
+  await hydrateArrangement();
+  await hydrateArrangement();
+  expect(prefs.sets).toHaveLength(1);
+});

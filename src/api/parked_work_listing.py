@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
-from src.api.subagent_listing import _fresh_claude_observation
+from src.api.subagent_listing import fresh_claude_observation
 from src.core.attention.background_claims import (
     measurement_overrules_claims, standing_background_claims,
 )
@@ -24,7 +24,7 @@ def _open_background_summary(evidence: Any) -> Optional[str]:
 
 
 def parked_summary_for(watcher: Any, info: Any, now: datetime) -> Optional[str]:
-    observation = _fresh_claude_observation(watcher, info, now)
+    observation = fresh_claude_observation(watcher, info, now)
     if observation is None:
         return None
     evidence = observation.evidence
@@ -44,10 +44,16 @@ def mark_parked_work(session_manager: Any, infos: Iterable[Any]) -> None:
         info.background_open = background_open_for(watcher, info, now)
         info.background_processes = background_processes_for(watcher, info, now)
         info.usage_limit = usage_limit_for(watcher, info, now)
+        info.prompt_suggestion = prompt_suggestion_for(watcher, info, now)
+
+
+def prompt_suggestion_for(watcher: Any, info: Any, now: datetime) -> Optional[str]:
+    observation = fresh_claude_observation(watcher, info, now)
+    return getattr(observation.evidence, "prompt_suggestion", None) if observation is not None else None
 
 
 def background_open_for(watcher: Any, info: Any, now: datetime) -> Optional[int]:
-    observation = _fresh_claude_observation(watcher, info, now)
+    observation = fresh_claude_observation(watcher, info, now)
     if observation is None:
         return None
     evidence = observation.evidence
@@ -85,7 +91,7 @@ def usage_limit_for(watcher: Any, info: Any, now: datetime) -> Optional[UsageLim
 
 
 def background_processes_for(watcher: Any, info: Any, now: datetime) -> Optional[BackgroundProcessesInfo]:
-    observation = _fresh_claude_observation(watcher, info, now)
+    observation = fresh_claude_observation(watcher, info, now)
     if observation is None:
         return None
     measure = getattr(observation.evidence, "background_process", None)

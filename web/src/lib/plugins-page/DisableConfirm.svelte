@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import Button from '../base/Button.svelte';
     import type { Translate } from '../sessions/types';
 
     interface Props {
@@ -20,7 +21,7 @@
         {t('plugins.page.disable.body', { name, dependents: dependents.join(', ') })}
     </p>
     <div class="plp-actions">
-        <button type="button" class="modal-btn modal-btn-secondary" data-cplug-disable-cancel disabled={busy} onclick={onCancel}>{t('plugins.page.disable.cancel')}</button>
-        <button type="button" class="modal-btn modal-btn-danger" data-cplug-disable-confirm disabled={busy} onclick={onConfirm}>{t('plugins.page.disable.confirm')}</button>
+        <Button data-cplug-disable-cancel disabled={busy} onclick={onCancel}>{t('plugins.page.disable.cancel')}</Button>
+        <Button variant="danger" data-cplug-disable-confirm disabled={busy} onclick={onConfirm}>{t('plugins.page.disable.confirm')}</Button>
     </div>
 </div>

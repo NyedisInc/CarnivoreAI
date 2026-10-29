@@ -7,7 +7,8 @@ from typing import Optional
 
 import structlog
 
-from src.core.tmux_discovery import tmux_argv_prefix
+from src.core.tmux_control.reader import control_read_async
+from src.core.tmux_transport.run import tmux_run
 from src.models.session_pane_facts import SessionPaneFacts
 
 logger = structlog.get_logger()
@@ -81,33 +82,20 @@ def git_branch(cwd: str) -> Optional[str]:
 
 
 async def read_pane_facts(socket: str, tmux_name: str) -> SessionPaneFacts:
-    """Ask tmux about one session's active pane. Never raises.
+    answered = await control_read_async(socket, ["display-message", "-p", "-t", f"={tmux_name}:", _FORMAT])
+    if answered is not None:
+        return await _facts_with_branch(answered, tmux_name)
+    done = await tmux_run(socket, "display-message", "-p", "-t", f"={tmux_name}:", _FORMAT,
+                          timeout=READ_TIMEOUT_SECONDS)
+    if done.error:
+        logger.debug("pane_facts_read_failed", error=done.error)
+        return SessionPaneFacts()
+    if done.returncode != 0:
+        return SessionPaneFacts()
+    return await _facts_with_branch(done.stdout, tmux_name)
 
-    Inputs: socket (str) - the ``-L`` socket name; tmux_name (str) - the
-      session's STORED tmux name, never one derived from its id.
-    Output: SessionPaneFacts - all None when tmux could not be read.
-    Example: await read_pane_facts('cloude', 'cloude_x')
-    """
-    argv = tmux_argv_prefix(socket) + ["display-message", "-p", "-t", f"={tmux_name}:", _FORMAT]
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            *argv,
-            stdin=asyncio.subprocess.DEVNULL,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-    except OSError as exc:
-        logger.debug("pane_facts_read_failed", error=type(exc).__name__)
-        return SessionPaneFacts()
-    try:
-        stdout, _ = await asyncio.wait_for(proc.communicate(), READ_TIMEOUT_SECONDS)
-    except asyncio.TimeoutError:
-        proc.kill()
-        await proc.wait()
-        logger.debug("pane_facts_read_failed", error="TimeoutError")
-        return SessionPaneFacts()
-    if proc.returncode != 0:
-        return SessionPaneFacts()
+
+async def _facts_with_branch(stdout: bytes, tmux_name: str) -> SessionPaneFacts:
     facts = parse_display(stdout.decode("utf-8", errors="replace"), tmux_name)
     if facts.cwd:
         facts.git_branch = await asyncio.to_thread(git_branch, facts.cwd)

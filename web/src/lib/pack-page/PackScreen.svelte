@@ -1,4 +1,4 @@
-
+<!-- the page frame -->
 <script lang="ts">
     import { tick } from 'svelte';
     import { t } from '../i18n/index.svelte';

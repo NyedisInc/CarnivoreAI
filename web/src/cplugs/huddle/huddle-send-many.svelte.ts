@@ -1,7 +1,8 @@
+/* at the same time */
 import { ApiError, authFetch, t } from '../sdk';
 import { huddle, refreshLists } from './huddle.svelte';
 import {
-  AGGREGATE, refusalCode, serverKey, type HuddleItem, type TaskManagerListRow, type TaskManagerSession, type SendChoice,
+  AGGREGATE, refusalCode, serverKey, type HuddleItem, type TaskManagerListRow, type TaskManagerSession,
 } from './huddle-model';
 import { START_NEW, startSessionFor, STOP, waitUntilReady, type StartFailure } from './task-manager-send-start';
 import { applyQueue, type SendQueueState } from './task-manager-send-queue.svelte';
@@ -25,11 +26,9 @@ export interface SendAsk {
 
 export const sendPicks = $state<{
   picks: Record<string, string>;
-  /* could not */
   asking: SendAsk[] | null;
-  choices: Record<string, SendChoice>;
   reopen: SendAsk[] | null;
-}>({ picks: {}, asking: null, choices: {}, reopen: null });
+}>({ picks: {}, asking: null, reopen: null });
 
 export function listsToSend(selected: string, lists: readonly Pick<TaskManagerListRow, 'key' | 'untold'>[]): string[] {
   if (selected !== AGGREGATE) return [serverKey(selected)];
@@ -84,31 +83,36 @@ export async function sendLists(all: readonly string[], options: { queue?: boole
   const starting = all.filter((k) => sendPicks.picks[k] === START_NEW);
   const keys = all.filter((k) => !stopped.includes(k) && !starting.includes(k));
   for (const k of stopped) pickFor(k, null);
-  const started = await Promise.all(starting.map((k) => startAndSend(k)));
+  const startsRun = Promise.all(starting.map((k) => startAndSend(k)));
   if (!keys.length) {
+    const started = await startsRun;
     huddle.notice = [stopNotice(stopped), ...started.map((r) => r.notice)].filter(Boolean).join(' ');
     return started.length > 0 && started.every((r) => r.ok);
   }
   const targets = Object.fromEntries(keys.filter((k) => sendPicks.picks[k]).map((k) => [k, sendPicks.picks[k] as string]));
-  const queue = options.queue === true && !Object.keys(targets).length;
-  let results: SendResult[];
+  const queue = options.queue === true;
+  const [results, started] = await Promise.all([postSend(keys, queue, targets), startsRun]);
+  if (results === null) return false;
+  huddle.notice = [sendNotice(results, huddle.lists), stopNotice(stopped), ...started.map((r) => r.notice)].filter(Boolean).join(' ');
+  await settle(results);
+  return results.length === keys.length && results.every((r) => r.status === 'sent' || r.status === 'queued') && started.every((r) => r.ok);
+}
+
+async function postSend(keys: readonly string[], queue: boolean, targets: Record<string, string>): Promise<SendResult[] | null> {
   try {
     const body = await authFetch<{ results?: SendResult[]; queue?: SendQueueState } | null>('/cplugs/huddle/send', {
-      method: 'POST', body: JSON.stringify(queue ? { lists: keys, queue: true } : { lists: keys, targets }),
+      method: 'POST', body: JSON.stringify(queue ? { lists: keys, queue: true, ...(Object.keys(targets).length ? { targets } : {}) } : { lists: keys, targets }),
     });
-    results = Array.isArray(body?.results) ? body.results : [];
     if (body?.queue) applyQueue(body.queue);
+    return Array.isArray(body?.results) ? body.results : [];
   } catch (error) {
     const code = error instanceof ApiError ? refusalCode(error.payload) : null;
     huddle.notice = t('cplug.huddle.send.not_sent', {
       name: keys.map((k) => listName(k, huddle.lists)).join(', '),
       reason: refusedWords({ list: '', status: 'refused', code: code ?? undefined, reason: error instanceof Error ? error.message : '' }),
     });
-    return false;
+    return null;
   }
-  huddle.notice = [sendNotice(results, huddle.lists), stopNotice(stopped), ...started.map((r) => r.notice)].filter(Boolean).join(' ');
-  await settle(results);
-  return results.length === keys.length && results.every((r) => r.status === 'sent' || r.status === 'queued') && started.every((r) => r.ok);
 }
 
 async function settle(results: readonly SendResult[]): Promise<void> {
@@ -181,43 +185,8 @@ export function pickFor(list: string, id: string | null): void {
   sendPicks.picks = id ? { ...rest, [list]: id } : rest;
 }
 
-export async function readChoice(list: string): Promise<SendChoice> {
-  try {
-    const found = await authFetch<Partial<SendChoice> | null>(`/cplugs/huddle/lists/${encodeURIComponent(list)}/sessions`);
-    return keepChoice(list, found);
-  } catch (error) {
-    console.warn('huddle: could not read who tell claude may message', error);
-    return { sessions: [], default: null, reason: 'pick' };
-  }
-}
-
-export function keepChoice(list: string, found: Partial<SendChoice> | null): SendChoice {
-  const choice: SendChoice = { sessions: Array.isArray(found?.sessions) ? found.sessions : [], default: found?.default ?? null, reason: found?.reason ?? 'pick' };
-  sendPicks.choices = { ...sendPicks.choices, [list]: choice };
-  return choice;
-}
-
-const choiceReads = new Map<string, Promise<SendChoice>>();
-
-export function ensureChoice(list: string): Promise<SendChoice> {
-  const known = sendPicks.choices[list];
-  if (known) return Promise.resolve(known);
-  let pending = choiceReads.get(list);
-  if (!pending) {
-    pending = readChoice(list).finally(() => choiceReads.delete(list));
-    choiceReads.set(list, pending);
-  }
-  return pending;
-}
-
-export function needsPicker(choice: SendChoice | undefined): boolean {
-  return !!choice && choice.default === null;
-}
-
 export function resetSendPicks(): void {
   sendPicks.picks = {};
   sendPicks.asking = null;
   sendPicks.reopen = null;
-  sendPicks.choices = {};
-  choiceReads.clear();
 }

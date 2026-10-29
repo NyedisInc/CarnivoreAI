@@ -1,4 +1,4 @@
-<!-- display: none -->
+<!-- the page frame -->
 <script lang="ts">
     import { onMount, tick } from 'svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
@@ -66,14 +66,12 @@
     // svelte-ignore state_referenced_locally
     let now = $state(nowMs());
     let opener: HTMLElement | null = null;
-    /* could not */
     let configured = $state<readonly StoredAccount[] | null>(null);
     let busyRows = $state<Record<RowBusyKind, string | null>>({
         login: null,
         edit: null,
         remove: null,
     });
-    /* could not */
     let rowNotices = $state<Record<string, string>>({});
     let targetId = $state<string | null>(null);
     let adding = $state(false);
@@ -98,6 +96,7 @@
     );
     const total = $derived(ledger?.total ?? null);
     const loop = $derived(ledger?.loop ?? null);
+    /* there is nothing */
     const isEmpty = $derived(ledger !== null && failure === null && rows.length === 0);
 
     async function read(): Promise<void> {
@@ -250,7 +249,7 @@
 
                 {#if rows.length}
                     <div class="ledger-deck">
-                        <!-- running sessions -->
+                        
                         <AutoSwitchPanel />
                         {#if total}
                             <LedgerTotal {total} {now} {t} />

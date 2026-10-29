@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""Plan and APPLY the import of a real crate into a THROWAWAY install and print what it wrote. Never the live state folder.
+
+Usage: CARNIVORE_STATE_DIR=<temp dir> venv/bin/python3 tests/python/crate_import/probes/import_apply_probe.py <crate file> [project name]
+
+The install comes from ``import_plan_probe.throwaway_env``. A project named ``[project name]`` (default ``Mindustry3``) is seeded at
+``<projects>/<name>`` first, so the crate restores in relocate mode into a project that already exists, as on a second restore. The crate
+file is only read. Exit 0 = applied, 1 = the plan is blocked or the apply failed, 2 = bad input.
+"""
 
 from __future__ import annotations
 
@@ -33,7 +41,7 @@ def main(argv: List[str]) -> int:
     except RefusedState as exc:
         print(f"refused: {exc}")
         return 2
-    name = argv[1] if len(argv) == 2 else "Puzzlegame3"
+    name = argv[1] if len(argv) == 2 else "Mindustry3"
     target = projects / name
     target.mkdir(parents=True, exist_ok=True)
     with closing(connect(db_path_for(state))) as conn:

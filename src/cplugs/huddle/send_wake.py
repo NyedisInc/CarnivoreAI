@@ -12,13 +12,12 @@ from src.cplugs.sdk import CplugContext, session_bring_up
 
 logger = structlog.get_logger()
 
-# could not
 WAKE_FAILED = "wake_failed"
 WAKE_FAILED_REASON = "the session is asleep and did not wake"
 
 
 class WakeFailed(Exception):
-    """The project's asleep session could not be woken (refused, or it never reached its prompt)."""
+    pass
 
 
 def needs_wake(key: str, rows: List[Dict[str, Any]]) -> bool:

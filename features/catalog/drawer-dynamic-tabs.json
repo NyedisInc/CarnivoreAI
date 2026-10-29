@@ -12,7 +12,7 @@
     "Press a tab's key on the sidebar rail, or move between keys with the arrow keys.",
     "A tab with a close key (edit layout) closes with it, or with Delete while its key is focused.",
     "Menu and agents are remembered on this device; questions and edit layout appear only while they have something to show.",
-    "A tab with a pop out key in its title row (the huddle) opens in its own resizable window, remembered where you left it.",
+    "A tab with a pop out key in its title row (the task manager) opens in its own resizable window, remembered where you left it.",
     "On a phone, the back arrow on a page opened from the drawer returns to the drawer on the tab you left; a page opened from another page returns to that page first."
   ],
   "id": "drawer-dynamic-tabs",

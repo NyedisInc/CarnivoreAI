@@ -1,5 +1,5 @@
+// WHY THIS FILE EXISTS
 // could not reach
-// could not
 
 'use strict';
 
@@ -10,7 +10,6 @@ const ATTENTION_STATUSES = Object.freeze([
   'dead',
 ]);
 
-/* could not */
 const STATUS_UNKNOWN = 'unknown';
 
 const TRAY_STATES = Object.freeze([
@@ -23,7 +22,6 @@ const TRAY_STATES = Object.freeze([
   'ok',
 ]);
 
-/* could not */
 function countSessionSignals(sessions) {
   const rows = Array.isArray(sessions) ? sessions : [];
   let attention = 0;
@@ -138,7 +136,6 @@ function describeSignals(input) {
   else if (rawUpdate === 'current') update = 'up to date';
   else update = 'cannot determine';
 
-  // could not
   const rawSetup = (input && input.setupStatus) || null;
   let setup;
   if (rawSetup === 'complete') setup = 'complete';
@@ -160,7 +157,6 @@ function buildTooltip(input) {
   ].join('\n');
 }
 
-/* address in force */
 function describeBind(input) {
   const effective = (input && input.effectiveHost) || null;
   const configured = (input && input.configuredHost) || null;

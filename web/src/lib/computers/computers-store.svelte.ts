@@ -11,6 +11,7 @@ export const computers: Resource<api.ComputersView> = resource<api.ComputersView
   intervalMs: COMPUTERS_POLL_MS,
   name: 'computers',
   topics: ['computers', 'pack_machines'],
+  body: { key: 'computers', read: (body) => (body as api.ComputersView | null) ?? null },
 });
 
 export const activity = $state<{
@@ -63,7 +64,6 @@ export function reconcileInvite(view: api.ComputersView | null): void {
   else if (activity.inviteSeen) activity.invite = null;
 }
 
-/* could not */
 export function remove(installId: string, label: string): Promise<void> {
   return write(`remove:${installId}`, async () => {
     const done = await api.removeComputer(installId);

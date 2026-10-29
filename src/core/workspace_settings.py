@@ -1,82 +1,3 @@
-"""Global workspace settings: what a NEW terminal is born with.
-
-WHAT THIS IS
-
-    development_root   base directory for projects. Delivered to terminals
-                       as ``CLOUDE_DEV_ROOT``.
-    default_shell      which shell a new terminal runs. Delivered as
-                       ``SHELL``, which is what ``agents.shell_command``'s
-                       default ``$SHELL -i`` already expands.
-    env                arbitrary NAME=value pairs injected on spawn.
-    default_editor     the command that opens a file the app hands you.
-
-WHERE THEY LIVE, AND WHY
-
-That property is real and measured, not hoped for. ``Settings`` is
-declared ``extra="ignore"`` (src/config.py), so an OLDER build reading a
-NEWER config.json ignores these keys instead of refusing to start; and
-every config write path in this codebase is a raw-dict round trip, so
-that older build PRESERVES the keys it does not understand rather than
-dropping them on its next write. Additive scalar keys are therefore
-downgrade-safe. The projects table moved to SQLite because it needed row
-identity and reconciliation; a handful of global scalars needs neither.
-
-No ``CURRENT_CONFIG_VERSION`` bump accompanies this. A migration step
-exists to SEED a value an existing install could not otherwise reach, and
-there is nothing to seed here: an absent ``workspace`` block deserializes
-to the model's own defaults, which are all "unset". Materializing the key
-would freeze that user's block against every future default for no gain -
-the same reasoning ``_step_v3_to_v4`` gives for deliberately leaving an
-absent ``common_slash_commands`` absent.
-
-ENVIRONMENT VARIABLE NAMES ARE A SECURITY SURFACE, AND THE ANSWER IS NOT
-A BLANKET BLOCK
-
-Someone can type ``PATH``, ``LD_PRELOAD``, ``DYLD_INSERT_LIBRARIES`` or
-``ANTHROPIC_API_KEY`` into this screen. The instinct is to block them.
-That instinct is wrong here, and it is worth writing down why.
-
-This product's entire function is spawning interactive shells that run
-whatever the user types, as the user, on the user's own machine. An
-environment variable confers no capability that the terminal one click
-away does not already confer. A block on ``LD_PRELOAD`` stops nobody who
-could simply type the command; what it reliably does stop is the app's
-OWN documented wrapper mechanism, which legitimately sets ``ANTHROPIC_*``
-(see src/core/agent_wrappers.py). Blocking that would break a real
-workflow to prevent nothing.
-
-So the policy has three tiers, and only one of them refuses:
-
-  BLOCKED   ``CLOUDECODE_*``. Reserved for this app's own control
-            channel - the per-session hook id, token and URL minted in
-            SessionManager.get_env_for_spawn. The danger there is not
-            privilege, it is SILENCE: shadowing one of those does not
-            fail, it makes hook events route to the wrong session or
-            nowhere, with no error anywhere. Refused at save time.
-  WARNED    ``PATH``, ``HOME``, ``SHELL``, ``LD_*``, ``DYLD_*`` and any
-            credential-shaped name. Saved, and named back to the user in
-            the response so the UI can say what it just accepted.
-  ACCEPTED  everything else.
-
-Regardless of tier, a VALUE is never logged. Several of these will be
-secrets and a structlog line is the last place they should land.
-
-THE APP ALWAYS WINS THE MERGE
-
-``build_spawn_env`` layers the user's map FIRST and the app's own trio
-LAST. Precedence is not left to the user's ordering or to a validator
-someone might later loosen - the control channel is written after
-everything else, so it cannot be shadowed even if the block list above
-were removed tomorrow.
-
-WHAT THIS MODULE DELIBERATELY DOES NOT DO
-
-It does not decide a bind address. ``server_prefs.bind_host`` is a
-PREFERENCE that travels to the Python process as ``HOST``; the address
-actually bound is decided exactly once, by
-``src/core/setup_state.resolve_exposure``, downstream of anything written
-here. See ``validate_bind_host``.
-"""
 
 from __future__ import annotations
 
@@ -122,22 +43,6 @@ def _blank(value: Optional[str]) -> bool:
 
 
 def validate_development_root(raw: Optional[str]) -> str:
-    """Check a development root and return it normalized.
-
-    Args:
-        raw: The path the user typed. Empty/None means "unset".
-
-    Returns:
-        The expanded absolute path, or "" when unset.
-
-    Raises:
-        WorkspaceValidationError: The path does not exist, or exists and
-            is not a directory. Both messages name the path.
-
-    Example:
-        >>> validate_development_root("")
-        ''
-    """
     if _blank(raw):
         return ""
     path = Path(str(raw).strip()).expanduser()
@@ -154,22 +59,6 @@ def validate_development_root(raw: Optional[str]) -> str:
 
 
 def validate_shell(raw: Optional[str]) -> str:
-    """Check a default shell and return it normalized.
-
-    Args:
-        raw: An absolute path, or a bare name resolved against PATH.
-            Empty/None means "unset" (terminals keep inheriting the
-            server process's own SHELL).
-
-    Returns:
-        The absolute path to the shell, or "" when unset.
-
-    Raises:
-        WorkspaceValidationError: The shell could not be found, or is not
-            executable. A shell that is present but not executable is
-            called out specifically, because it is the case a bare
-            existence check would pass and tmux would then fail on.
-    """
     if _blank(raw):
         return ""
     text = str(raw).strip()

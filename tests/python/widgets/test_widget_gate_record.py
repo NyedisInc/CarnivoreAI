@@ -58,3 +58,28 @@ def test_editing_the_contract_record_makes_the_gate_record_stale() -> None:
     edited["sizes"] = ["small", "wide", "full"]
     assert record_digest(edited) != record_digest(RECORD)
     assert any("changed after" in r for r in refusal_reasons(edited, passing()))
+
+
+
+def test_a_keys_slice_is_marked_partial_and_written_beside_not_over_the_full_record(tmp_path) -> None:
+    from scripts.widgets.gate import _gate_record, gate_path
+
+    record = {"id": "core.x", "hosts": [], "sizes": [], "fixtures": ["data", "empty"], "remembers": []}
+    sliced = _gate_record(record, [], [], ["a", "b"], [], "named", ["core.x:1"])
+    full = _gate_record(record, [], [], ["a", "b"], [], "named", None)
+    assert sliced["partial"] is True and sliced["keys"] == ["core.x:1"]
+    assert full["partial"] is False and full["keys"] is None
+    assert gate_path(tmp_path, "core.x", ["core.x:1"]).name == "core.x.partial.json"
+    assert gate_path(tmp_path, "core.x", None).name == "core.x.gate.json"
+
+
+
+def test_run_options_are_frozen_and_the_capture_cli_never_turns_the_gate_switch_on() -> None:
+    import dataclasses
+
+    from scripts.widgets.capture import RunOptions, parse
+
+    options = RunOptions.from_args(parse([]))
+    assert options.defects is False
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        options.defects = True  # type: ignore[misc]

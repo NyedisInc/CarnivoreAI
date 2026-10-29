@@ -10,6 +10,8 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT_REL = Path("scripts") / "ci" / "check-js-syntax.sh"
 SCRIPT = REPO_ROOT / SCRIPT_REL
+PY_TOOL_REL = Path("scripts") / "js_syntax_check.py"
+PY_TOOL = REPO_ROOT / PY_TOOL_REL
 
 DEBRIS = "__js_syntax_scan_coverage_test__.js"
 
@@ -32,6 +34,8 @@ def _run(root: Path = REPO_ROOT) -> subprocess.CompletedProcess:
 def _scratch_repo(tmp_path: Path) -> Path:
     (tmp_path / SCRIPT_REL).parent.mkdir(parents=True)
     (tmp_path / SCRIPT_REL).write_bytes(SCRIPT.read_bytes())
+    (tmp_path / PY_TOOL_REL).parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / PY_TOOL_REL).write_bytes(PY_TOOL.read_bytes())
     for rel in [Path("macOS"), *UNCOVERED_UNTIL_2026_08_26]:
         (tmp_path / rel).mkdir(parents=True, exist_ok=True)
     return tmp_path
@@ -42,13 +46,12 @@ def test_clean_tree_parses_including_es_modules() -> None:
     assert done.returncode == 0, (
         "the committed tree no longer parses:\n" + done.stderr[-2000:]
     )
-    assert "as ES modules)" in done.stdout, (
-        "the checker no longer reports how many files needed the module "
-        "goal, so a silent regression to CommonJS-only parsing would be "
-        "invisible: " + done.stdout
-    )
-    matched = re.search(r"\((\d+) as ES modules\)", done.stdout)
+    matched = re.search(r"checked (\d+) modules, (\d+) scripts", done.stdout)
     assert matched is not None, done.stdout
+    assert int(matched.group(1)) > 0, (
+        "no file was classified as an ES module, so the theme tree fell out of the scan or the "
+        "classifier broke: " + done.stdout
+    )
 
 
 def test_es_module_source_does_not_false_fail(tmp_path: Path) -> None:
@@ -62,10 +65,10 @@ def test_es_module_source_does_not_false_fail(tmp_path: Path) -> None:
         "exactly the false-fail the module goal exists to prevent. "
         "stdout: %s stderr: %s" % (done.stdout[-800:], done.stderr[-800:])
     )
-    assert DEBRIS not in done.stderr, (
+    assert DEBRIS not in done.stdout + done.stderr, (
         "the planted ES module was named as broken: %s" % done.stderr[-800:]
     )
-    assert "1 file(s) parsed cleanly" in done.stdout, (
+    assert "checked 1 modules, 0 scripts" in done.stdout, (
         "the scan did not reach the one planted file, so the clean exit "
         "proves nothing: %s" % done.stdout[-800:]
     )
@@ -85,7 +88,7 @@ def test_scan_reaches_previously_unscanned_tree(relative_dir: Path,
         "tree is outside the default scan. stdout: %s stderr: %s"
         % (relative_dir, done.stdout[-800:], done.stderr[-800:])
     )
-    assert DEBRIS in done.stderr, (
+    assert DEBRIS in done.stdout + done.stderr, (
         "the checker failed but never named the broken file in %s, so it may "
         "have failed for an unrelated reason: %s"
         % (relative_dir, done.stderr[-800:])

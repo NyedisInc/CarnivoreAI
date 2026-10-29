@@ -1,3 +1,13 @@
+"""A15: the custom view frame, server side (#2174, epic #2063): ``sidecar_view.py`` and ``security_headers.build_view_csp``.
+
+The real app, the real stamp middleware, a real registry and install ledger. The browser half is ``web/src/lib/cplug-ui/bridge.test.ts``.
+
+Red mutations (each makes a named test fail):
+  * ``build_view_csp`` without ``sandbox allow-scripts`` or with a script-src wider than the view's own path (the exact-policy test);
+  * ``sidecar_view._file`` skipping the declared-file check or the symlink check (the declared-only and symlink tests);
+  * ``view_file`` skipping the ticket check (the ticket test).
+  * ``_file`` opening before the regular-file look (the fifo test hangs; #2184).
+"""
 
 from __future__ import annotations
 
@@ -21,6 +31,7 @@ APP_CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inli
 
 @pytest.fixture
 def world(tmp_path, monkeypatch):
+    """A live installed ``pet`` with one declared view behind the real routes. Output: namespace(root, state, flag, key)."""
     from src.cplugs.sdk import signed_links
     from src.main import app
 
@@ -41,7 +52,7 @@ def world(tmp_path, monkeypatch):
     record = identity.register_install(state, NAME, ITEM, {d.id for d in runtime.definitions()})
     (state / "cplugs" / record.uuid).mkdir(parents=True, exist_ok=True)
     (state / "cplugs" / record.uuid / "views.js").write_text("the data dir")
-    rows = [SimpleNamespace(item_id=ITEM, kind="cplug", source_index_url="https://index.example/v1")]
+    rows = [SimpleNamespace(item_id=ITEM, kind="cplug", source_index_url="https://index.example/v1", publisher_key_id="K")]
     before = sidecar_registry.current()
     sidecar_registry.install(sidecar_registry.SidecarRegistry(state, lambda: rows))
     assert sidecar_registry.current().reload() == 1 and sidecar_registry.find(NAME).manifest.views[0]["name"] == "walk"

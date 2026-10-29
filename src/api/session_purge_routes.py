@@ -18,6 +18,7 @@ from src.core.session_purge.apply import apply_plan, check_gates, one_purge_at_a
 from src.core.inventory.model import SessionNotFound
 from src.core.session_purge.model import PurgeBusy, PurgePlan, PurgeRefused
 from src.core.session_purge.plan import build_plan
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -26,6 +27,7 @@ NOTICE_REASON = "session_purged"
 
 
 class SessionPurgeRequest(BaseModel):
+    """``apply`` false plans; true runs, quoting ``plan_fingerprint`` and the owner's typed ``confirm_text``."""
 
     apply: bool = False
     plan_fingerprint: Optional[str] = Field(default=None, max_length=64)
@@ -64,7 +66,7 @@ def plan_and_maybe_apply(session_uuid: str, body: SessionPurgeRequest, beast_arm
     try:
         conn = connect(db_path_for(state_dir), create=False)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail={"message": f"the datastore is unreadable: {exc}"}) from exc
+        raise api_error(503, "datastore_unavailable", exc, step="purge_open") from exc
     with closing(conn):
         def fresh() -> PurgePlan:
             return build_plan(conn, session_uuid, state_dir=state_dir,
@@ -82,12 +84,11 @@ def plan_and_maybe_apply(session_uuid: str, body: SessionPurgeRequest, beast_arm
                 check_gates(plan, beast_armed=beast_armed, quoted=body.plan_fingerprint, typed=body.confirm_text)
                 done = apply_plan(conn, plan, state_dir=state_dir)
         except PurgeBusy as exc:
-            raise HTTPException(status_code=409, detail={"message": str(exc)}) from exc
+            raise api_error(409, "purge_busy", exc, session_uuid=session_uuid) from exc
         except PurgeRefused as exc:
-            raise HTTPException(status_code=exc.status, detail={"message": str(exc), "plan": render(plan)}) from exc
+            raise api_error(exc.status, "purge_refused", exc, extra={"plan": render(plan)}, session_uuid=session_uuid) from exc
         except (sqlite3.Error, OSError) as exc:
-            raise HTTPException(status_code=500, detail={
-                "message": f"the purge stopped before deleting anything: {type(exc).__name__}: {exc}"}) from exc
+            raise api_error(500, "purge_failed", exc, session_uuid=session_uuid) from exc
     return render(plan, done)
 
 

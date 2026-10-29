@@ -25,6 +25,8 @@ async def get_rollup(
     max_bytes: int = Query(rollup.PAGE_BYTES, ge=4096, le=rollup.MAX_PAGE_BYTES),
     principal: Principal = Depends(_require_machine),
 ) -> Dict[str, Any]:
+    """One page of this computer's own hour-grain usage and counters. Output: ``rollup.serve``'s dict (``available``,
+    ``revision``, ``complete``, ``next_cursor``, ``groups``...). Raises: 403, 422 ``rollup_cursor``, 503 ``stats_unavailable``."""
     if not principal.is_peer or principal.grant is None:
         raise HTTPException(403, {"code": "peer_token_required", "detail": "only a paired computer calls this"})
     if direction.contained(principal.grant.peer_install_id):

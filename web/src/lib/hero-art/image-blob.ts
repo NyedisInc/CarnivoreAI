@@ -1,19 +1,10 @@
-import { accessToken, auth, hasRefreshToken, refreshTokens } from '../../opscenter/api/auth.svelte';
+import { API_BASE, auth, authFetchBlob } from '../../opscenter/api/auth.svelte';
 
 const cache = new Map<string, Promise<string | null>>();
 
-async function fetchBlob(url: string, retrying = false): Promise<Blob> {
-    if (auth.state === 'signed-out') throw new Error('not signed in');
-    const token = accessToken();
-    const headers = new Headers();
-    if (token) headers.set('Authorization', `Bearer ${token}`);
-    const response = await fetch(url, { headers });
-    if (response.status === 401) {
-        if (!retrying && hasRefreshToken() && (await refreshTokens())) return fetchBlob(url, true);
-        throw new Error('not signed in');
-    }
-    if (!response.ok) throw new Error(`image answered ${response.status}`);
-    return response.blob();
+function fetchBlob(url: string): Promise<Blob> {
+    if (auth.state === 'signed-out') return Promise.reject(new Error('not signed in'));
+    return authFetchBlob(url.startsWith(API_BASE) ? url.slice(API_BASE.length) : url);
 }
 
 export function heroImageObjectUrl(url: string): Promise<string | null> {

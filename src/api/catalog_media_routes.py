@@ -1,16 +1,3 @@
-"""The catalog hero image, served same-origin to the signed-in app (S2 of #1342).
-
-``GET /api/v1/catalog/media/{sha256}`` answers ONLY a hash the current
-VERIFIED index names (404 for every other, so this is not a fetch proxy),
-fetches it from the index host once, verifies sha-256 and the WebP magic
-before writing it under the state directory, and serves it as
-``image/webp`` with ``nosniff``. The page paints it through an object URL
-(the CSP already allows ``blob:``), because an ``<img>`` cannot carry the
-bearer header.
-
-REGISTRATION ORDER IS LOAD BEARING: BEFORE ``catalog_routes`` in
-``src/api/routes.py``, whose greedy ``:path`` converter would swallow it.
-"""
 
 from __future__ import annotations
 

@@ -45,10 +45,43 @@ radio menu. Props: <code>buttonText</code>, <code>menuLabel</code>, <code>menu</
         name, secondary info to the right dimmed and middle-dot separated, a right-justified kebab. See
         <a href="#chrome">drawers</a>.</li>
     <li><strong>Home lists</strong>: running, recent and projects (<a href="#home">home</a>).</li>
+    <li><strong>Deep search results</strong> in the drawer, the deepsearch plugin's state of the search box
+        (<code>web/src/lib/deepsearch/DeepSearchResults.svelte</code>, styles in <code>web/src/lib/deepsearch/results.css</code>,
+        classes <code>dps__*</code>). A header row (<code>dps__bar</code>) holds the honest count at the left and the A / B toggle at the
+        right (<code>dps__seg</code> on the shared <code>oc-seg</code> choice: "ledger" and "best hits", small tracked uppercase labels,
+        remembered per device). Both layouts are one base <code>List</code> (<code>ResultsList.svelte</code>) of base
+        <code>ListRow</code>s with <code>wrap</code> (<code>HitRow.svelte</code>), and NOTHING IS HIDDEN (Joe (ccsliinc), 2026-10-22: "all
+        records should show all the buttons at once"): every hit shows its whole snippet, wrapped, the match in the accent
+        (<code>sd-mark</code>), and (in the CONTEXT mode only, Joe (ccsliinc), 2026-10-22: names, prompts and all results are just the result and one click opens it) ALL its action buttons at once as icon buttons in the row's actions slot (<code>sd-acts</code>,
+        <code>HitActions.svelte</code>: read around, go to session or resume, branch here, copy link, bookmark, and "more"
+        opening the one menu engine, <code>CascadeMenu</code>, in <code>dps__more-host</code>). A row never grows or shrinks on hover,
+        focus or pick; the arrow-key highlight is the row's selected tint with the accent bar (<code>is-active</code> is gone), the arrows
+        scroll it into view and one click on the row reads around. <strong>Ledger (A)</strong>: no caption row (variant D): each hit is one block, a head
+        line (state light <code>dps__led</code>, the conversation's name, tags, then who and a short clock muted at the right; the project, state and hit
+        count in the row's title), the excerpt under it (<code>dps__snip</code>, indented to the name, unclamped) and, in the context mode, the action
+        row under that, read around in the green confirm (<code>dps__btn--confirm</code>). <strong>Best hits (B)</strong>: the same rows with the name beside each snippet and a relative time;
+        speaker chips (<code>dps__chip</code>) ask the route for one kind. <code>dps__more-in</code> says "N more in this conversation" and
+        fetches the rest in place. Tags (<code>dps__tag</code>) are tracked uppercase micro in a 1px hairline; <strong>from backup</strong> is
+        the dashed info-hue sibling (<code>dps__tag--backup</code>, "claude code deleted the original; this text is read from a
+        conversation backup" on hover); <strong>exported, in bundle X</strong> is the quiet solid sibling in the secondary text token
+        (<code>dps__tag--exported</code>, "a full copy of this conversation is in that export bundle" on hover), shown when an export
+        bundle holds the conversation and refreshed by the <code>exports</code> push, never by a timer. A hit with no session, from a backup or on another computer offers read around and copy link
+        only. Stale conversations are one dim line (<code>dps__status--note</code>) above the results. The ingest line is the one coral
+        thing, and only while the index is paused (<code>dps__ingest--stalled</code>, save off); "show more" is the quiet
+        <code>modal-btn-secondary</code>. Above the groups sits the autocomplete list (<code>dps__suggest</code>, rows
+        <code>dps__sug</code> with the term <code>dps__sug-term</code> and its dim message count <code>dps__sug-n</code>): the index's own
+        terms for the word being typed, the highlighted row on the same hover ground and accent inset as a hit. With a computer paired,
+        a conversation that lives on another computer wears <code>dps__host</code> after its name (the computer's name, or "also on
+        studio" on this computer's own group when the other holds it too), and one that did not answer is one quiet dim line,
+        <code>dps__peer-down</code> ("studio did not answer"), under the status line: never coral, because this computer's own results are
+        whole. Reading around opens the context modal (see <a href="#dialogs">dialogs</a>).</li>
 </ul>
 
 <h3 class="sg-h3" id="tables-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">
+    <li><strong>A table where cards were asked for, and cards where a table fits.</strong> The provider ledger's table was
+        rejected for one card per account (#535); a sessions list stays a table. Compare means rows, one decision per item
+        means cards.</li>
     <li><strong>Accent dividers between rows.</strong> Grey, <code>--oc-line-faint</code>.</li>
     <li><strong>A literal column head.</strong> <code>headKey</code> is a catalog key.</li>
     <li><strong>Stretching at 2560px.</strong> Cap the content and centre it.</li>

@@ -195,7 +195,6 @@
     background: var(--_accent);
   }
 
-  /* a wrapping row */
   .hdq-lead {
     overflow: hidden;
     color: var(--oc-text-secondary);
@@ -214,7 +213,6 @@
     color: var(--oc-orange);
   }
 
-  /* a wrapping row */
   .hdq-pills {
     display: flex;
     flex-wrap: wrap;

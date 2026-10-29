@@ -35,12 +35,12 @@ export const HOST_RULES: readonly HostRule[] = [
     owners: ['lib/widget-bars/bar-pin-action.ts', 'lib/widget-bars/BarPin.svelte', 'lib/widget-menu/bar-menu.ts', 'lib/widget-menu/rail-menu.ts', 'opscenter/layout-editor/empty-space-menu.svelte.ts', 'lib/sidebar-widgets/rail-menu.svelte.ts'],
   },
   { name: 'peek-core', pattern: /createPeekCore\(/, owners: ['lib/widget-bars/peek-core.svelte.ts', 'lib/widget-bars/bar-visibility.svelte.ts', 'lib/sidebar-widgets/rail-visibility.svelte.ts'] },
+  // the widget menu
   { name: 'build-widget-menu', pattern: /buildWidgetMenu\(/, owners: ['lib/widget-menu/model.ts', 'lib/item-menu/menus/widget.ts'] },
   { name: 'active-scope', pattern: /activeScopeFor\(/, owners: ['lib/zone-shell/', 'opscenter/CellHost.svelte', 'opscenter/widgets/active-scope.ts'] },
   { name: 'frame-header', pattern: /provideFrameHeader\(|adoptFrameHeader\(/, owners: ['lib/zone-shell/', 'opscenter/shell/frame-header.svelte.ts'] },
   { name: 'tab-pane', pattern: /provideTabPane\(/, owners: ['lib/zone-shell/', 'opscenter/shell/frame-header.svelte.ts'] },
   { name: 'tab-pane-component', pattern: /(?<![A-Za-z])TabPane\.svelte/, owners: [] },
-  // the shared one
   { name: 'intersection-observer', pattern: /\bnew\s+(?:window\.|globalThis\.)?IntersectionObserver\b/, owners: [] },
   { name: 'document-keydown', pattern: /\b(?:document|doc|window|globalThis)\.addEventListener\(\s*['"]keydown['"]/, owners: ['lib/widget-bars/strip-escape.svelte.ts', 'lib/widget-bars/bar-drag.svelte.ts'], within: ['lib/sidebar-widgets/', 'lib/session-rail/', 'lib/mini-rail/', 'lib/widget-bars/'] },
   { name: 'widget-tab-parse', pattern: /['"`]widget:['"`]|startsWith\(\s*['"`]widget:/, owners: ['opscenter/engine/widget-tabs.ts'] },

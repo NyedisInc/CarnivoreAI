@@ -1,4 +1,3 @@
-/*  hidden  */
 body:has(#terminal-screen.terminal-screen--empty.active) :is(
     #sessionNotesBtn,
     #headerSessionThemeBtn,

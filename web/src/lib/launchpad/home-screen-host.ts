@@ -1,4 +1,3 @@
-/* could not */
 import { mountPanel, unmountPanel } from '../mount';
 import { SCREEN_ID } from './home-anchors';
 import { hostDocument } from '../sessions/env';
@@ -21,6 +20,7 @@ export function mountHomeScreen(): HTMLElement | null {
     return target;
 }
 
+/* the home screen */
 export function unmountHomeScreen(): void {
     unmountPanel(SCREEN_ID);
     screenEl = null;

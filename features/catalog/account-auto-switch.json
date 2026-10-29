@@ -17,7 +17,15 @@
     "auto switch",
     "rate limit"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "A small auto-switch accounts icon",
+      "caption": "The auto-switch control",
+      "file": "switch.png",
+      "kind": "icon",
+      "state": "off"
+    }
+  ],
   "name": "Account auto-switch",
   "since": "2026-09-25",
   "status": "stable",
@@ -30,6 +38,5 @@
   "where": [
     "The switch icon beside PROVIDER LEDGER on the home screen and in the drawer's PROVIDERS panel.",
     "The auto-switch accounts section on the Providers page."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

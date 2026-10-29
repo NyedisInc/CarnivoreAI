@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, Iterator, Mapping, Optional, Tuple
 
 import structlog
 
+from src.cplugs.sdk.safe_io import atomic_write_bytes
 from src.cplugs.reviewboard import document, layout, scratch_files, service
 from src.cplugs.reviewboard.errors import BadRequest, BoardExists, BoardNotFound, NotScratch, ReadOnlyBoard, StaleSidecar
 from src.cplugs.reviewboard.schema import Sidecar
@@ -31,10 +32,6 @@ class NoChange(Exception):
 
 @contextlib.contextmanager
 def locked(state_folder: Path, slug: str) -> Iterator[None]:
-    """Hold the board's lock for the block. Inputs: state_folder (the plugin's state folder); slug. Output: a context manager.
-
-    Raises: OSError (the lock file could not be opened).
-    """
     folder = Path(state_folder) / LOCK_DIR
     folder.mkdir(parents=True, exist_ok=True)
     with open(folder / f"{slug}.lock", "a") as handle:
@@ -46,23 +43,7 @@ def locked(state_folder: Path, slug: str) -> Iterator[None]:
 
 
 def write_atomic(path: Path, data: bytes) -> None:
-    temp = path.with_name(f".{path.name}.{secrets.token_hex(4)}.tmp")
-    try:
-        with open(temp, "wb") as handle:
-            handle.write(data)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temp, path)
-    except OSError:
-        with contextlib.suppress(OSError):
-            temp.unlink()
-        raise
-    with contextlib.suppress(OSError):
-        fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(fd)
-        finally:
-            os.close(fd)
+    atomic_write_bytes(path, data)
 
 
 def _member_path(folder: Path, name: str) -> Path:
@@ -90,7 +71,6 @@ def board_folder(root: Path, slug: str) -> Path:
 
 
 def _read_current(folder: Path) -> Tuple[Sidecar, bytes]:
-    """The board's current sidecar and its bytes. Raises: ReadOnlyBoard (unreadable, invalid or made by a newer Carnivore)."""
     path = folder / document.SIDECAR_FILE
     try:
         st = path.lstat()

@@ -133,11 +133,6 @@ def write_files(state_dir: Path, agent: Dict[str, Any], parent_name: Optional[st
 
 
 def register_project(conn: sqlite3.Connection, repo_dir: str, display_name: str) -> Dict[str, Any]:
-    """The ``projects`` row of this repo folder, created when none exists (a body always belongs to a project).
-
-    Inputs: conn (``db.connect``), repo_dir, display_name (the project's name; a clash gets ``-2``, ``-3`` ...).
-    Output: the project row dict (``id``, ``display_name``). Raises: CreateRefused when it cannot be registered.
-    """
     from src.core.project_store import normalize_root
     from src.core.project_writes import ProjectNameConflict, ProjectRootConflict, ProjectRootRefused, create_project
 
@@ -159,7 +154,6 @@ def register_project(conn: sqlite3.Connection, repo_dir: str, display_name: str)
 
 
 def _prepare(state_dir: Path, agent: Dict[str, Any]) -> Dict[str, Any]:
-    """Folder, git, files and project registration, in that order (blocking). Output: the project row dict."""
     ensure_repo(agent["repo_dir"])
     with closing(db.connect(db.db_path_for(state_dir), create=False)) as conn:
         parent = store.get_agent(conn, agent["parent_id"]) if agent.get("parent_id") is not None else None

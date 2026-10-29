@@ -10,7 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from src.cplugs.flow import build, service
+from src.cplugs.flow import service
+from src.core.flow_data.collect import build
 from src.cplugs.flow.views import events, model, page, tasks, text, tree
 from src.cplugs.host.activity_reader import ActivityReader
 from tests.python.cplugs.flow import fixture as fx
@@ -92,7 +93,7 @@ def test_tasks_are_items_with_their_card_moves_and_subagents(view):
     root = by_id["#395"]
     assert root["root"] and root["status"] == "review" and root["agent"] == f"s:{fx.B}"
     assert by_id["#408"]["status"] == "created" and by_id["#408"]["agent"] == f"s:{fx.F}"
-    assert by_id["S1"]["kind"] == "sub" and by_id["S1"]["status"] == "done" and by_id["S1"]["title"] == "Fix nightly_backup path"
+    assert by_id["S1"]["kind"] == "sub" and by_id["S1"]["status"] == "done" and by_id["S1"]["title"] == "Fix QNAP nightly_backup path"
 
 
 def test_delegations_carry_the_task_they_handed_over(view):
@@ -136,8 +137,8 @@ def test_final_result_is_absent_without_a_review_text(view):
 
 
 def test_final_result_uses_the_items_review_text(run):
-    run["marks"][0]["review"] = "**nas fixed** and fresh\nmore"
-    assert model.build_view(run, UTC)["final"]["text"] == "nas fixed and fresh"
+    run["marks"][0]["review"] = "**qnap fixed** and fresh\nmore"
+    assert model.build_view(run, UTC)["final"]["text"] == "qnap fixed and fresh"
 
 
 def test_edges_off_the_tree_are_counted_not_dropped(run):
@@ -154,7 +155,7 @@ def test_view_model_is_json_safe(view):
 def test_text_helpers():
     assert text.short("item 4: Done. Next step is here", 20).endswith("...") or len(text.short("item 4: Done. Next step is here", 20)) <= 23
     assert text.display_name("Agent - Infrastructure (Corporate)") == "Infrastructure"
-    assert text.monogram("Daily Bulletin") == "DB"
+    assert text.monogram("Daily Briefing") == "DB"
     assert tasks.column_of("todo") == "created" and tasks.column_of("weird") == "in_progress"
 
 

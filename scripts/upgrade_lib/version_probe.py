@@ -1,9 +1,26 @@
 #!/usr/bin/env python3
 """Thin CLI wrapper around src/core/version.py and src/core/update_check.py.
 
+WHY THIS EXISTS: upgrade.sh and rollback.sh both need to answer "what version
+is this install at" and "what release tags does the remote have" before they
+touch anything destructive. That logic already lives in
+``src/core/version.py`` (the single version resolver, THE RULE: a release is
+a git tag) and ``src/core/update_check.py`` (remote tag listing). This module
+does not reimplement either — it imports them and exposes what a shell
+script needs as small, independently testable functions, then a subcommand
+CLI on top so bash can call it as a subprocess.
+
 THREE-OUTCOME CONTRACT (see project CLAUDE.md's "three-outcome rule"): every
 subcommand exits with one of exactly three codes, and never invents a fourth
 meaning by conflating two of them:
+
+    0   pass       - the thing asked for was determined and is printed on stdout
+    2   fail       - the thing was determined and the answer is negative
+                      (tag not found, version does not match)
+    3   could-not-evaluate - it could not be determined at all (offline, no
+                      git, malformed repo, remote unreachable). A caller that
+                      treats 3 the same as 0 or 2 has reintroduced the bug
+                      this module exists to prevent.
 
 Exit code 1 is reserved for command-line usage errors (bad flags), which is
 a different category from all three outcomes above.
@@ -12,6 +29,7 @@ a different category from all three outcomes above.
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
@@ -28,16 +46,6 @@ def _install_src_on_path(install_dir: Path) -> None:
 
 
 def current_version(install_dir: Path) -> str:
-    """Resolve the version this install would report right now.
-
-    Description: delegates entirely to ``src.core.version.resolve_version``
-      run against ``install_dir`` — no independent version logic here.
-    Inputs:
-      install_dir (Path): repository root to resolve against.
-    Output: str - the resolved version, or "" when it could not be
-      determined (the resolver's own documented "give up honestly" case).
-    Example: current_version(Path("/opt/cloudecode")) -> "0.8.2"
-    """
     _install_src_on_path(install_dir)
     from src.core.version import resolve_version  # noqa: E402
 
@@ -56,11 +64,26 @@ def resolve_remote(install_dir: Path, config_path: Optional[Path]) -> str:
     return configured or discover_origin_remote(install_dir) or FALLBACK_REMOTE
 
 
+class TagListError(RuntimeError):
+    pass
+
+
 def list_release_tags(install_dir: Path, remote: str) -> list[str]:
     _install_src_on_path(install_dir)
-    from src.core.update_check import fetch_remote_tags  # noqa: E402
+    from src.core.update_check import UpdateCheckError, fetch_remote_tags  # noqa: E402
 
-    return fetch_remote_tags(remote)
+    try:
+        return fetch_remote_tags(remote)
+    except (UpdateCheckError, OSError, subprocess.SubprocessError) as exc:
+        raise TagListError(str(exc)) from exc
+
+
+def _tags_or_exit3(args: argparse.Namespace) -> tuple[Optional[list[str]], int]:
+    try:
+        return list_release_tags(Path(args.install_dir), args.remote), 0
+    except TagListError as exc:
+        print(f"could not list release tags from {args.remote}: {exc}", file=sys.stderr)
+        return None, 3
 
 
 def _cmd_current(args: argparse.Namespace) -> int:
@@ -84,35 +107,18 @@ def _cmd_remote(args: argparse.Namespace) -> int:
 
 
 def _cmd_tags(args: argparse.Namespace) -> int:
-    """Description: print every release tag on the remote, one per line.
-
-    Inputs: args (argparse.Namespace) with ``install_dir`` and ``remote``.
-    Output: int - 0 with tags on stdout (possibly zero lines, meaning FAIL
-      "no tags published" is left for the caller to interpret), 3 with a
-      reason on stderr when the remote could not be reached at all.
-    """
-    try:
-        tags = list_release_tags(Path(args.install_dir), args.remote)
-    except Exception as exc:
-        print(f"could not list release tags from {args.remote}: {exc}", file=sys.stderr)
-        return 3
+    tags, rc = _tags_or_exit3(args)
+    if tags is None:
+        return rc
     for tag in tags:
         print(tag)
     return 0
 
 
 def _cmd_latest(args: argparse.Namespace) -> int:
-    """Description: print the newest release tag on the remote.
-
-    Inputs: args (argparse.Namespace) with ``install_dir`` and ``remote``.
-    Output: int - 0 with the tag on stdout, 2 if the remote answered but
-      published no release tags, 3 if the remote could not be reached.
-    """
-    try:
-        tags = list_release_tags(Path(args.install_dir), args.remote)
-    except Exception as exc:
-        print(f"could not list release tags from {args.remote}: {exc}", file=sys.stderr)
-        return 3
+    tags, rc = _tags_or_exit3(args)
+    if tags is None:
+        return rc
     if not tags:
         print(f"{args.remote} published no release tags", file=sys.stderr)
         return 2
@@ -121,18 +127,9 @@ def _cmd_latest(args: argparse.Namespace) -> int:
 
 
 def _cmd_check_tag(args: argparse.Namespace) -> int:
-    """Description: verify one exact tag exists among the remote's release tags.
-
-    Inputs: args (argparse.Namespace) with ``install_dir``, ``remote``,
-      ``tag``.
-    Output: int - 0 if the tag exists, 2 if the remote answered but the tag
-      is not in the list, 3 if the remote could not be reached.
-    """
-    try:
-        tags = list_release_tags(Path(args.install_dir), args.remote)
-    except Exception as exc:
-        print(f"could not list release tags from {args.remote}: {exc}", file=sys.stderr)
-        return 3
+    tags, rc = _tags_or_exit3(args)
+    if tags is None:
+        return rc
     if args.tag not in tags:
         print(
             f"{args.tag} is not a published release tag on {args.remote}. "

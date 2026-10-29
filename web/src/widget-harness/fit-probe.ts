@@ -1,5 +1,5 @@
-/*  hidden  */
 
+import { innerX, innerY, isDrawn, overflowOf, shared } from './box-geometry';
 import catalog from '../../../client/js/i18n/catalog.en.js';
 
 export interface FitFinding {
@@ -35,44 +35,10 @@ export function cssPath(el: Element, root: Element): string {
   return parts.join(' > ');
 }
 
-function drawn(el: Element): boolean {
-  const box = el.getBoundingClientRect();
-  if (box.width <= 1 || box.height <= 1) return false;
-  if (typeof (el as HTMLElement).checkVisibility === 'function'
-    && !(el as HTMLElement).checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false;
-  const style = getComputedStyle(el);
-  if (style.clip && style.clip !== 'auto') return false;
-  if (style.clipPath && style.clipPath !== 'none' && style.position === 'absolute') return false;
-  return true;
-}
-
-function clipsX(el: Element): 'scroll' | 'clip' | null {
-  const x = getComputedStyle(el).overflowX;
-  if (x === 'auto' || x === 'scroll') return 'scroll';
-  if (x === 'hidden' || x === 'clip') return 'clip';
-  return null;
-}
-
-function clipsY(el: Element): 'scroll' | 'clip' | null {
-  const y = getComputedStyle(el).overflowY;
-  if (y === 'auto' || y === 'scroll') return 'scroll';
-  if (y === 'hidden' || y === 'clip') return 'clip';
-  return null;
-}
-
-function innerY(el: Element): { top: number; bottom: number } {
-  const box = el.getBoundingClientRect();
-  const style = getComputedStyle(el);
-  return {
-    top: box.top + (parseFloat(style.borderTopWidth) || 0),
-    bottom: box.bottom - (parseFloat(style.borderBottomWidth) || 0),
-  };
-}
-
 function clipperOfY(el: Element, cell: Element): Element {
   let at = el.parentElement;
   while (at && at !== cell) {
-    if (clipsY(at)) return at;
+    if (overflowOf(at, 'y')) return at;
     at = at.parentElement;
   }
   return cell;
@@ -91,7 +57,7 @@ function textRuns(cell: Element): TextRun[] {
   const range = cell.ownerDocument.createRange();
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const el = node.parentElement;
-    if (!el || !(node.textContent ?? '').trim() || el.closest('svg') || !drawn(el)) continue;
+    if (!el || !(node.textContent ?? '').trim() || el.closest('svg') || !isDrawn(el, true)) continue;
     if (insideMarked(el, cell, 'data-fit-clip')) continue;
     range.selectNodeContents(node);
     const box = visiblePart(range.getBoundingClientRect(), el, cell);
@@ -100,17 +66,15 @@ function textRuns(cell: Element): TextRun[] {
   return runs;
 }
 
-/*  hidden
- */
 function visiblePart(box: DOMRect, el: Element, cell: Element): DOMRect {
   let { left, right, top, bottom } = box;
   for (let at: Element | null = el; at && cell.contains(at); at = at.parentElement) {
     const edge = at.getBoundingClientRect();
-    if (clipsX(at)) {
+    if (overflowOf(at, 'x')) {
       left = Math.max(left, edge.left);
       right = Math.min(right, edge.right);
     }
-    if (clipsY(at)) {
+    if (overflowOf(at, 'y')) {
       top = Math.max(top, edge.top);
       bottom = Math.min(bottom, edge.bottom);
     }
@@ -119,26 +83,10 @@ function visiblePart(box: DOMRect, el: Element, cell: Element): DOMRect {
   return new DOMRect(left, top, Math.max(0, right - left), Math.max(0, bottom - top));
 }
 
-function shared(a: DOMRect, b: DOMRect): { x: number; y: number } {
-  return {
-    x: Math.min(a.right, b.right) - Math.max(a.left, b.left),
-    y: Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top),
-  };
-}
-
-function innerX(el: Element): { left: number; right: number } {
-  const box = el.getBoundingClientRect();
-  const style = getComputedStyle(el);
-  return {
-    left: box.left + (parseFloat(style.borderLeftWidth) || 0),
-    right: box.right - (parseFloat(style.borderRightWidth) || 0),
-  };
-}
-
 function clipperOf(el: Element, cell: Element): Element {
   let at = el.parentElement;
   while (at && at !== cell) {
-    if (clipsX(at)) return at;
+    if (overflowOf(at, 'x')) return at;
     at = at.parentElement;
   }
   return cell;
@@ -168,23 +116,23 @@ export function fitCheck(cell: Element): FitFinding[] {
   const scrollersSeen = new Set<Element>();
 
   for (const el of [cell, ...cell.querySelectorAll('*')]) {
-    if (!drawn(el)) continue;
+    if (!isDrawn(el, true)) continue;
     const box = el.getBoundingClientRect();
 
-    if (el !== cell && clipsX(el) === 'scroll' && !el.hasAttribute('data-fit-scroll-x')
+    if (el !== cell && overflowOf(el, 'x') === 'scroll' && !el.hasAttribute('data-fit-scroll-x')
       && el.scrollWidth > el.clientWidth + FIT_TOLERANCE_PX && !scrollersSeen.has(el)) {
       scrollersSeen.add(el);
       add(el, { rule: 'scrollbar-x', selector: cssPath(el, cell), px: el.scrollWidth - el.clientWidth,
         detail: `scrolls sideways: content ${el.scrollWidth}px in ${el.clientWidth}px` });
     }
-    if (el === cell && clipsX(el) === 'scroll' && el.scrollWidth > el.clientWidth + FIT_TOLERANCE_PX) {
+    if (el === cell && overflowOf(el, 'x') === 'scroll' && el.scrollWidth > el.clientWidth + FIT_TOLERANCE_PX) {
       add(el, { rule: 'scrollbar-x', selector: '(cell)', px: el.scrollWidth - el.clientWidth,
         detail: `the cell's content is ${el.scrollWidth}px wide in ${el.clientWidth}px` });
     }
 
     if (el !== cell && !insideMarked(el, cell, 'data-fit-clip')) {
       const clipperY = clipperOfY(el, cell);
-      if (clipperY === cell || clipsY(clipperY) !== 'scroll') {
+      if (clipperY === cell || overflowOf(clipperY, 'y') !== 'scroll') {
         const edge = innerY(clipperY);
         const past = Math.max(box.bottom - edge.bottom, edge.top - box.top);
         if (past > FIT_TOLERANCE_PX) {
@@ -197,7 +145,7 @@ export function fitCheck(cell: Element): FitFinding[] {
 
     if (el !== cell && !insideMarked(el, cell, 'data-fit-scroll-x') && !insideMarked(el, cell, 'data-fit-clip')) {
       const clipper = clipperOf(el, cell);
-      const scrolls = clipper !== cell && clipsX(clipper) === 'scroll';
+      const scrolls = clipper !== cell && overflowOf(clipper, 'x') === 'scroll';
       if (!scrolls) {
         const edge = innerX(clipper);
         const past = Math.max(box.right - edge.right, edge.left - box.left);

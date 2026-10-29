@@ -1,4 +1,5 @@
 
+(function () {
 const SERVER_RESTART_WATCH_DEFAULTS = Object.freeze({
     healthPath: '/health',
     firstDelayMs: 500,
@@ -9,7 +10,6 @@ const SERVER_RESTART_WATCH_DEFAULTS = Object.freeze({
     offlineRecheckMs: 1000,
 });
 
-/* header present */
 const RESTART_EXCLUDED_CLOSE_CODES = Object.freeze([4400, 4401, 4404]);
 
 const SERVER_RESTART_RESULT = Object.freeze({
@@ -161,3 +161,4 @@ ServerRestartWatch.STATUS = SERVER_RESTART_STATUS;
 
 window.ServerRestartWatch = ServerRestartWatch;
 console.log('[ServerRestartWatch Module] Exported as window.ServerRestartWatch');
+})();

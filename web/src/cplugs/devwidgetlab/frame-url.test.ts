@@ -43,7 +43,7 @@ describe('frame window', () => {
     expect(frameWidth(size({ name: 'phone', w: 358, h: null, viewport: 390 }))).toBe(390);
   });
 
-  it('draws every non-phone size in a desktop window, so the app\'s breakpoints see a desktop', () => {
+  it('draws every non-phone size in a desktop window, so the app\'s breakpoints see a desktop (item 1061, "Lab frames draw at desktop size")', () => {
     expect(frameWindowWidth(size({ w: 240 }))).toBe(1600);
     expect(frameWindowWidth(size({ w: 384 }))).toBe(1600);
     expect(frameWindowWidth(size({ w: 1700 }))).toBe(1732);

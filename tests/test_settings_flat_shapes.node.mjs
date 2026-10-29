@@ -1,3 +1,4 @@
+//     button { width: var(--control-size); height: var(--control-size);
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,6 +10,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -21,6 +28,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read one file from the repo root.
+ * @param {...string} parts  Path segments below the repo root.
+ * @returns {string} File contents.
+ */
 function read(...parts) {
     return fs.readFileSync(path.join(__dirname, '..', ...parts), 'utf8');
 }
@@ -58,8 +70,14 @@ function decl(r, prop) {
 const styles = read('client', 'css', 'styles.css');
 const styleRules = rules(styles);
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the default marker is a flat block, not a rounded outlined chip', () => {
     const badge = rule(styleRules, '.settings-wrapper-badge');
@@ -111,6 +129,8 @@ test('the family heading still reads as a grouping heading', () => {
         'a heading is not the accent; the rule under it does the grouping');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('no settings-screen class declares a pill or full radius', () => {
     const offenders = styleRules

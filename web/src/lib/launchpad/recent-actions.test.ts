@@ -1,3 +1,4 @@
+/* and the three */
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
@@ -239,6 +240,20 @@ describe('restarting says what happened to the conversation, every time', () => 
         expect(r.errors).toHaveLength(1);
         expect(r.errors[0]).toContain('tmux refused');
         expect(r.refreshed).toEqual([]);
+    });
+});
+
+describe('a follow-up that throws after a successful restart is not a failed restart (u141-06)', () => {
+    test('the restart landed, the refresh threw: no "restart failed" sentence, the row is freed, the open still runs', async () => {
+        const r = recorder({ restart: { conversation: 'resumed', row_reused: true } });
+        r.host.refreshRunningSessions = async () => { throw new Error('listing down'); };
+        const opened: string[] = [];
+        r.host.openSession = async (id: string) => { opened.push(id); };
+        await restartRecentSession({ sessionUuid: 'u9' }, r.host, t);
+        expect(r.restarted).toEqual(['u9']);
+        expect(r.errors).toEqual([]);
+        expect(isRestartInFlight({ sessionUuid: 'u9' })).toBe(false);
+        expect(r.refreshed).toContain('recent');
     });
 });
 

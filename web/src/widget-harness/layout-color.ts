@@ -1,16 +1,3 @@
-/**
- * Color arithmetic for the layout-defect detector's contrast rule.
- *
- * Description: runs in the real browser. A computed color can come back in any
- *   syntax the engine likes (`rgb()`, `color(srgb ...)`, `oklab()` out of a
- *   `color-mix()`), so nothing here parses css text: the browser paints the
- *   color into a one-pixel canvas and the pixel is read back, which is the one
- *   parser that agrees with what is drawn. The effective background of a text
- *   run is found by walking its ancestors and compositing each translucent
- *   background over the next one down (source-over), WCAG 2.x relative
- *   luminance and contrast ratio on the result. `layout-defects.ts` is the
- *   only caller; `docs/widget-spec.md`, "The layout-defect check".
- */
 
 export interface Rgba {
   r: number;
@@ -19,7 +6,6 @@ export interface Rgba {
   a: number;
 }
 
-/* could not */
 export interface Backdrop {
   color: Rgba;
   certain: boolean;

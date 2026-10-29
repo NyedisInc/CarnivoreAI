@@ -1,12 +1,3 @@
-"""The TARGET half of a session move (P5, #165; docs/pack.md 11): check, land, wake, undo. Also a copy and a fresh send (#1653): ``body["mode"]``.
-
-Runs on the machine RECEIVING the session and decides by ITS OWN restrictions, project and logins, never the caller's word. ``dry_run``
-answers every refusal and changes nothing (the source asks first, so a refusal happens before anything moves). A real receive files the
-conversation under ``ENC(target working dir)`` (in the default Claude projects folder, and in a relay profile's own when the login is relayed) through P4's transcript step, verifies the sha256 of every file, writes the row ASLEEP
-(keyed by ``session_uuid``, same conversation id) and wakes it through the one wake (``recreate_by_uuid``, which builds ``--resume <uuid>``
-once via ``resume_extra_args``). A failure at any point removes the row it made (or restores the row it changed) and answers a named
-refusal; the filed conversation copies stay (identical bytes, harmless). The source is never touched by any of it.
-"""
 
 from __future__ import annotations
 
@@ -53,13 +44,6 @@ def _working_dir(root: str, rel: str) -> str:
 
 
 def check(target: MoveTarget, sender: str, body: Mapping[str, Any]) -> Dict[str, Any]:
-    """Every refusal, in order, changing nothing. Output: {working_dir, project_id, launch, existing}.
-
-    Raises MigrateRefused: ``pack_restricted`` (403), ``project_not_on_target`` (409, with "make a replica" offered),
-      ``project_moved_away``, ``working_dir_missing``, ``launch_profile_not_on_target`` (names the profile), ``account_not_usable``, ``session_live_here``,
-      ``conversation_already_here`` (another row here already holds that conversation id: a second copy before the first fork's id is learned).
-    A copy or a fresh send ADDS an agent, so it is also refused ``pack_restricted`` when ``may_host_agents`` is off or ``max_agents`` is reached.
-    """
     check_allowed(target.env, body["project_uid"], None)
     if body.get("mode") in ("copy", "fresh"):
         rule = restrict.check(target.env.restrictions(), restrict.ACTION_HOST_AGENTS, project_uid=body["project_uid"], live_agents=restrict.live_agents())
@@ -172,7 +156,7 @@ async def receive(target: MoveTarget, sender: str, body: Mapping[str, Any], wake
     try:
         undo = await asyncio.to_thread(land, target, sender, body, seen)
         await asyncio.to_thread(record, step="wake")
-        mode = body.get("mode", "move")  # conversation id
+        mode = body.get("mode", "move")
         answer = await wake(uuid, body["row"].get("agent_type"), {**seen["launch"], "fork": mode == "copy", "fresh": mode == "fresh"})
         if answer.get("status") != "started":
             raise MigrateRefused("wake_refused", str(answer.get("detail") or answer.get("code") or answer.get("status")))

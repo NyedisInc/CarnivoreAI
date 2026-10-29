@@ -22,7 +22,7 @@ _SCHEMA = (
 
 
 class ApprovalsStoreError(RuntimeError):
-    """The approvals file could not be opened, read or written; the message names the step."""
+    pass
 
 
 class ActionFile:
@@ -86,11 +86,6 @@ class ActionFile:
 
 
 def open_in(state_dir: Optional[Path]) -> Optional[ActionFile]:
-    """The approvals file in ``state_dir``, or None when there is none or it cannot be opened (logged).
-
-    Description: a broken file must never take the gate down: the store then runs in memory as before and the
-      log says so. Inputs: state_dir (Path | None). Output: ActionFile | None.
-    """
     if state_dir is None:
         return None
     try:

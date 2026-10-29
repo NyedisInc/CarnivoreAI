@@ -10,6 +10,7 @@ setLocale('en');
 type Handle = { setGrid?: (next: { cols: number; rows: number } | null) => void };
 let panel: Handle | null = null;
 
+/** Mount a fresh instance into a fresh, attached container. */
 function paint(): Handle {
     const target = document.createElement('div');
     document.body.appendChild(target);

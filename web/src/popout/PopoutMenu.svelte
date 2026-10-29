@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* pop-out window */
   import type { WidgetManifest } from '../opscenter/widgets/types';
   import { t } from '../lib/i18n/index.svelte';
   import DeclaredTabMenu from '../lib/zone-shell/DeclaredTabMenu.svelte';

@@ -88,7 +88,7 @@ def test_secret_shaped_options_and_unsafe_keys_are_refused(env):
 
 def test_fal_shaped_key_with_a_colon_is_accepted():
     from src.core import relay_keychain
-    assert relay_keychain.is_safe_secret("5f4cec3f-f91a-4919-885b-8ebd9f894e71:deadbeefdeadbeefdeadbeefdeadbeef")
+    assert relay_keychain.is_safe_secret("0123abcd-0000-1111-2222-333344445555:deadbeefdeadbeefdeadbeefdeadbeef")
     assert not relay_keychain.is_safe_secret("a b") and not relay_keychain.is_safe_secret("a'b")
 
 

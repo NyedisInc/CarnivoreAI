@@ -17,7 +17,7 @@ import {
 const ID_PATTERN = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/;
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+$/;
 const TIER_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
-const SETTING_KEY_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
+const SETTING_KEY_PATTERN = /^[a-z][a-zA-Z0-9_]*$/;
 const CATALOG_KEY_PATTERN = /^[a-z0-9_]+(\.[a-z0-9_-]+)+$/;
 const KNOWN_FIELDS: ReadonlySet<string> = new Set([
   'id',
@@ -55,6 +55,11 @@ function need(ok: boolean, refusal: ManifestRefusal, detail: string): asserts ok
   if (!ok) throw new ManifestRefused(refusal, detail);
 }
 
+function onlyKeys(value: Record<string, unknown>, allowed: readonly string[], refusal: ManifestRefusal, where: string): void {
+  const stray = Object.keys(value).find((key) => !allowed.includes(key));
+  need(stray === undefined, refusal, `${where} has an unknown field: ${stray}`);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -86,6 +91,7 @@ function checkViews(value: unknown, ownId: string): void {
   const seen = new Set<string>();
   for (const view of value as unknown[]) {
     need(isRecord(view), 'views', 'a view must be an object');
+    onlyKeys(view, ['id', 'titleKey', 'widget'], 'views', 'a view');
     need(typeof view.id === 'string' && TIER_NAME_PATTERN.test(view.id) && !seen.has(view.id), 'views', `view id must be flat lowercase and unique: ${String(view.id)}`);
     seen.add(view.id as string);
     need(typeof view.titleKey === 'string' && CATALOG_KEY_PATTERN.test(view.titleKey), 'views', 'a view titleKey must be a catalog key');
@@ -97,6 +103,7 @@ function checkViews(value: unknown, ownId: string): void {
 function checkLooks(value: unknown): void {
   if (value === undefined) return;
   need(isRecord(value), 'looks', 'looks must be an object');
+  onlyKeys(value, ['names', 'defaults'], 'looks', 'looks');
   checkClosedList(value.names, WIDGET_LOOKS, 'looks', 'looks.names', false);
   need(isRecord(value.defaults), 'looks', 'looks.defaults must be an object');
   for (const [surface, look] of Object.entries(value.defaults)) {
@@ -111,6 +118,7 @@ function checkLooks(value: unknown): void {
 
 function checkBounds(value: unknown): void {
   need(isRecord(value), 'bounds', 'bounds must be an object');
+  onlyKeys(value, ['minW', 'minH', 'maxW', 'maxH'], 'bounds', 'bounds');
   need(isSize(value.minW) && isSize(value.minH), 'bounds', 'bounds.minW and bounds.minH must be sizes');
   for (const [max, min] of [
     ['maxW', 'minW'],
@@ -137,6 +145,7 @@ function checkFits(value: unknown, singleton: boolean): void {
   for (const retired of ['zones', 'suggested', 'tested', 'max', 'allowed']) {
     need(!(retired in value), 'fits', `fits.${retired} is retired: call out sizes by name in fits.sizes (docs/widget-spec.md section 10)`);
   }
+  onlyKeys(value, ['min', 'sizes', 'anySize', 'max_per_surface'], 'fits', 'fits');
   need(isFitSize(value.min), 'fits', 'fits.min must be {w, h} in whole grid units');
   const min = value.min as { w: number; h: number };
   need(typeof value.anySize === 'boolean', 'fits', 'fits.anySize must be true or false');
@@ -166,6 +175,7 @@ function checkLadder(value: unknown, axis: string, ceiling: unknown): void {
   let last = -1;
   for (const tier of value) {
     need(isRecord(tier), 'densities', `densities.${axis} holds a step that is not an object`);
+    onlyKeys(tier, ['name', 'min'], 'densities', `densities.${axis} step`);
     const { name, min } = tier;
     need(typeof name === 'string' && TIER_NAME_PATTERN.test(name), 'densities', `densities.${axis} has a bad step name: ${String(name)}`);
     need(!names.has(name), 'densities', `densities.${axis} repeats step ${name}`);
@@ -177,10 +187,19 @@ function checkLadder(value: unknown, axis: string, ceiling: unknown): void {
   }
 }
 
+const FIELD_KEYS_COMMON: readonly string[] = ['kind', 'labelKey', 'hintKey', 'keywordsKey'];
+const FIELD_KEYS_BY_KIND: Readonly<Record<string, readonly string[]>> = {
+  boolean: ['default', 'disabledWhen'],
+  number: ['default', 'min', 'max'],
+  enum: ['default', 'options', 'control'],
+  string: ['default', 'maxLength'],
+};
+
 function checkSettingField(key: string, field: unknown): void {
   const where = `settings.fields.${key}`;
-  need(SETTING_KEY_PATTERN.test(key), 'settings', `${where}: key must be camelCase letters and digits`);
+  need(SETTING_KEY_PATTERN.test(key), 'settings', `${where}: key must be letters, digits and underscores, starting with a lowercase letter`);
   need(isRecord(field), 'settings', `${where} must be an object`);
+  onlyKeys(field, [...FIELD_KEYS_COMMON, ...(FIELD_KEYS_BY_KIND[String(field.kind)] ?? [])], 'settings', where);
   need(typeof field.labelKey === 'string' && CATALOG_KEY_PATTERN.test(field.labelKey), 'settings', `${where}.labelKey must be a catalog key`);
   need(field.hintKey === undefined || (typeof field.hintKey === 'string' && CATALOG_KEY_PATTERN.test(field.hintKey)), 'settings', `${where}.hintKey must be a catalog key`);
   need(field.keywordsKey === undefined || (typeof field.keywordsKey === 'string' && CATALOG_KEY_PATTERN.test(field.keywordsKey)), 'settings', `${where}.keywordsKey must be a catalog key`);
@@ -194,6 +213,7 @@ function checkSettingField(key: string, field: unknown): void {
       need(typeof value === 'number' && Number.isFinite(value), 'settings', `${where}.default must be a number`);
       need(min === undefined || (typeof min === 'number' && value >= min), 'settings', `${where}.default is below its min`);
       need(max === undefined || (typeof max === 'number' && value <= max), 'settings', `${where}.default is above its max`);
+      need(min === undefined || max === undefined || (min as number) <= (max as number), 'settings', `${where}.min is above its max`);
       return;
     }
     case 'enum': {
@@ -217,10 +237,21 @@ function checkSettingField(key: string, field: unknown): void {
 function checkSettings(value: unknown): void {
   if (value === undefined) return;
   need(isRecord(value), 'settings', 'settings must be an object');
+  onlyKeys(value, ['version', 'fields', 'groups'], 'settings', 'settings');
   need(typeof value.version === 'number' && Number.isInteger(value.version) && value.version >= 1, 'settings', 'settings.version must be a whole number from 1');
   need(isRecord(value.fields), 'settings', 'settings.fields must be an object');
   for (const [key, field] of Object.entries(value.fields)) checkSettingField(key, field);
+  checkDisabledWhen(value.fields);
   if (value.groups !== undefined) checkSettingGroups(value.groups, value.fields);
+}
+
+function checkDisabledWhen(fields: Record<string, unknown>): void {
+  for (const [key, field] of Object.entries(fields)) {
+    const gate = (field as { disabledWhen?: unknown }).disabledWhen;
+    if (gate === undefined) continue;
+    const other = typeof gate === 'string' && gate !== key ? (fields[gate] as { kind?: unknown } | undefined) : undefined;
+    need(other?.kind === 'boolean', 'settings', `settings.fields.${key}.disabledWhen must name another boolean field of this schema`);
+  }
 }
 
 function checkSettingGroups(groups: unknown, declared: Record<string, unknown>): void {
@@ -229,6 +260,7 @@ function checkSettingGroups(groups: unknown, declared: Record<string, unknown>):
   const seen: string[] = [];
   for (const [at, group] of (groups as unknown[]).entries()) {
     need(isRecord(group) && typeof group.labelKey === 'string' && CATALOG_KEY_PATTERN.test(group.labelKey), 'settings', `settings.groups[${at}].labelKey must be a catalog key`);
+    onlyKeys(group as Record<string, unknown>, ['labelKey', 'fields', 'matrix'], 'settings', `settings.groups[${at}]`);
     const fields = (group as { fields?: unknown }).fields;
     need(Array.isArray(fields) && fields.length > 0 && fields.every((key) => typeof key === 'string' && keys.includes(key)), 'settings', `settings.groups[${at}].fields must list declared fields`);
     seen.push(...(fields as string[]));
@@ -284,6 +316,7 @@ function checkAll(value: unknown): WidgetManifest {
   checkFits(value.fits, value.instancing === 'singleton');
   const bounds = value.bounds as Record<string, unknown>;
   need(isRecord(value.densities), 'densities', 'densities must be an object with width and height');
+  onlyKeys(value.densities, ['width', 'height'], 'densities', 'densities');
   checkLadder(value.densities.width, 'width', bounds.maxW);
   checkLadder(value.densities.height, 'height', bounds.maxH);
   checkSettings(value.settings);

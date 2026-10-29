@@ -2,15 +2,16 @@
   import { onMount } from 'svelte';
   import AnchoredPopup from '../dialog-frame/AnchoredPopup.svelte';
   import '../subagents/popup-list.css';
+  import { Button } from '../base';
   import { t } from '../i18n/index.svelte';
   import type { Placement } from '../drawer-tabs/add-component-menu';
+  import { fireCountdown } from './timer-times';
   import { placeUnderAnchor } from '../dialog-frame/popup-placement';
   import {
     emptyMessage,
     fetchTimers,
     orderRows,
     scheduleText,
-    untilText,
     type SessionTimers,
     type TimerRow,
   } from './timers';
@@ -35,6 +36,12 @@
 
   const rows = $derived(payload ? orderRows(payload.timers) : []);
   const empty = $derived(payload ? emptyMessage(payload) : null);
+  const endedCount = $derived(
+    payload?.counts
+      ? payload.counts.fired + payload.counts.cancelled + payload.counts.superseded
+        + payload.counts.expired + payload.counts.lost + payload.counts.refused
+      : 0,
+  );
 
   onMount(() => {
     let live = true;
@@ -75,7 +82,7 @@
 
   function fires(row: TimerRow): string {
     if (row.status !== 'live') return '';
-    return untilText(row.fire_at, nowMs) ?? t('timers.list.no_fire_time');
+    return fireCountdown(row, nowMs) ?? t('timers.list.no_fire_time');
   }
 </script>
 
@@ -100,7 +107,7 @@
   <header class="sal-titlebar">
     <h2 class="sal-title">{t('timers.list.title')}</h2>
     <span class="sal-name">{name}</span>
-    <button type="button" class="sal-close" onclick={close}>{t('timers.list.close')}</button>
+    <Button size="sm" onclick={close}>{t('timers.list.close')}</Button>
   </header>
 
   {#if failure}
@@ -112,8 +119,8 @@
       <p class="sal-summary">
         {t('timers.list.summary', {
           live: payload.counts.live,
-          ended: payload.counts.total - payload.counts.live - payload.counts.unknown,
-          unknown: payload.counts.unknown,
+          ended: endedCount,
+          unknown: payload.counts.unknown + payload.counts.shape_unrecognized,
         })}
       </p>
     {/if}
@@ -147,7 +154,7 @@
           ? t('timers.list.background_unmeasured')
           : t('timers.list.background', { count: payload.background.open })}
       </p>
-      <!-- Daily Bulletin -->
+      
       {#each payload.background.parked as entry (entry.task_id)}
         <p class="sal-note" data-timers-parked data-timers-parked-live={entry.live}>{entry.summary}</p>
       {/each}

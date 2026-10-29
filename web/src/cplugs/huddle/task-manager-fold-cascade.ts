@@ -7,12 +7,10 @@ import { sectionAreas } from './task-manager-status-areas';
 import { setGroupsFolded } from './task-manager-groups.svelte';
 import { sectionFoldKey, setSectionsFolded, statusSubFoldKey, subFoldKey } from './task-manager-status-folds.svelte';
 
-/* <button onmousedown={keepShiftOffSelection}> */
 export function keepShiftOffSelection(event: MouseEvent): void {
   if (event.shiftKey) event.preventDefault();
 }
 
-/* <button {@attach cascadeCue()}> */
 export function cascadeCue(): Attachment<HTMLElement> {
   return (node) => watchCascadeHint(node);
 }

@@ -1,3 +1,5 @@
+/* the history bar */
+import { t } from '../sdk';
 import { deleteDraft, fetchDraft, relinkTask, resendRound, saveDraft, sendLiveKept, sendRoundKept } from './board-api';
 import type { BoardRevision, BoardSidecar, RoundContext } from './board-model';
 import { DraftSync } from './draft-sync';
@@ -57,7 +59,7 @@ export class ReviewLoop {
   }
 
   move(from: BoardRevision, to: BoardRevision): void {
-    this.edit((d) => (d ? carryDraft(d, from, to) : d));
+    this.edit((d) => (d ? carryDraft(d, from, to, { yes: t('cplug.reviewboard.tray.yes'), no: t('cplug.reviewboard.tray.no') }) : d));
   }
 
   async send(sidecar: BoardSidecar, context: RoundContext): Promise<void> {

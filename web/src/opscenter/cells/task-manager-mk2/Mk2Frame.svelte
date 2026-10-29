@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* padding */
   import { setContext, untrack, type Snippet } from 'svelte';
   import { DETAIL_SLOT } from '../../../cplugs/huddle/task-manager-detail-slot';
   import { BODY_OPTIONS, type BodyOptions } from '../../../cplugs/huddle/task-manager-body-options';
@@ -66,7 +65,6 @@
       font-size: var(--oc-fs-label);
     }
 
-    /*  hidden  */
     .mk2-frame:is([data-mk2-project-colors='off'], [data-mk2-status-bar='off']) :global(.hdr:not(.hdr--wrapped)) {
       padding-left: calc(var(--mk2-row-indent) - var(--mk2-pc) - var(--mk2-sb));
     }

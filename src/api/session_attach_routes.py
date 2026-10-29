@@ -24,6 +24,8 @@ from src.models import (
     RespawnSessionResponse,
     SuccessResponse,
 )
+from src.api.launch_profile_errors import gone_profile_error
+from src.api.error_response import api_error, refusal_error
 from typing import Any, List, Optional
 
 logger = structlog.get_logger()
@@ -65,15 +67,6 @@ async def list_attachable_sessions(request: Request):
 
 
 def attachable_rows(session_manager: Any) -> List[dict]:
-    """The ``/sessions/attachable`` body: adoptable tmux rows, self-adopt filtered.
-
-    Description: the one assembly of this listing; the route answers from
-      it and the listing push builds its ``attachable`` collection from it.
-    Inputs: session_manager (Any) - the app's SessionManager.
-    Output: list[dict] - adoptable rows.
-    Raises: HTTPException 503 - the tmux listing could not be determined.
-    Example: rows = attachable_rows(request.app.state.session_manager)
-    """
     listing = coerce_listing(session_manager.list_attachable_sessions())
     if not listing.ok:
         logger.warning(
@@ -163,20 +156,8 @@ async def adopt_session(request: Request, body: AdoptSessionRequest):
             initial_rows=rows,
         )
     except AdoptTargetGoneError as exc:
-        logger.warning(
-            "api_adopt_session_gone",
-            session_name=body.session_name,
-            detail=str(exc),
-        )
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "error": "session_gone",
-                "session_name": body.session_name,
-                "message": str(exc),
-                "refresh": True,
-            },
-        )
+        raise api_error(409, "session_gone", exc, session_name=body.session_name,
+                        extra={"session_name": body.session_name, "refresh": True}) from exc
 
     from src.core.session_status_seed_read import seed_live_sessions
 
@@ -212,6 +193,15 @@ async def respawn_session(request: Request, body: RespawnSessionRequest):
     the ladder in ``src.core.session_respawn``, gated on tmux's own
     ``#{pane_start_command}``. Accepting a command from the client would
     make this a create wearing a restart's clothes.
+
+    AN ``agent_type`` IS NOT A COMMAND, which is why it is safe here. It
+    is an id that must match a launch wrapper the user has already
+    configured on this machine; the server resolves it to a command
+    itself, and an id that is not in that list is a 400 rather than a
+    silent fall back to the default wrapper - see
+    ``src/core/session_agent_choice.py``. It exists because moving a
+    session onto another wrapper used to require hand-editing
+    ``sessions.agent_type`` in cloude.db.
 
     REPLACING WHAT IS RUNNING IS A SEPARATE, EXPLICIT REQUEST.
     ``confirm_restart_live`` is what turns this into ``respawn-pane -k``:
@@ -267,26 +257,18 @@ async def respawn_or_http(session_manager: Any, name: str, **kwargs: Any) -> dic
     try:
         return await session_manager.respawn_session(name, **kwargs)
     except LaunchProfileNotFound as exc:
-        logger.warning("respawn_launch_profile_missing", name=name, profile=exc.profile_id)
-        raise HTTPException(status_code=400, detail={
-            "code": exc.codes[0], "codes": list(exc.codes), "detail": str(exc),
-            "wrapper_options": create_seam.known_pick_ids(settings),
-        })
+        raise gone_profile_error(exc, create_seam.known_pick_ids(settings)) from exc
     except SecretError as exc:
         logger.warning("respawn_launch_secret_unavailable", name=name, error=str(exc))
-        raise HTTPException(status_code=409, detail={"code": "launch_secret_unavailable", "detail": str(exc)})
+        raise api_error(409, "launch_secret_unavailable", exc)
     except ProjectMovedAway:
         raise
     except swarm_switch.BodyHeld:
         raise HTTPException(status_code=409, detail=swarm_switch.refusal())
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "session_restart_invalid", exc, name=name) from exc
     except Exception as exc:  # noqa: BLE001
-        logger.error("respawn_session_failed", name=name, error=str(exc))
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to restart session {name!r}: {exc}",
-        )
+        raise api_error(500, "session_restart_failed", exc, name=name) from exc
 
 
 @router.delete(
@@ -322,17 +304,11 @@ async def destroy_external_session(request: Request, name: str, confirm_name: Op
     try:
         result = await session_manager.destroy_external_session(name)
     except HostUnavailable as e:
-        raise HTTPException(status_code=e.status, detail={"code": e.code, "detail": str(e)})
+        raise refusal_error(e, name=name) from e
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(
-            "external_session_destruction_failed", name=name, error=str(e)
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to destroy external session {name!r}: {e}",
-        )
+        raise api_error(400, "session_destroy_invalid", e, name=name) from e
+    except Exception as e:  # noqa: BLE001
+        raise api_error(500, "session_destroy_failed", e, name=name, external=True) from e
 
     msg = (
         f"External session {name!r} already gone"

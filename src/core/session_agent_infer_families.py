@@ -41,23 +41,6 @@ def infer_pane_agent(
     pane_current_command: Optional[str],
     wrappers: Sequence,
 ) -> PaneAgentInference:
-    """Run each family's process reader over one pane, in declared order.
-
-    Description: claude first (the unchanged ladder), then codex. An
-      unread table or a missing pane pid is ``unavailable`` from the
-      claude ladder and is returned as is: not having looked is never
-      evidence, and no later reader is asked. When no reader finds its
-      agent, the claude ladder's "not found" verdict is returned with no
-      family, which writes nothing.
-    Inputs: pane_pid (int | None) - the pane's foreground pid.
-      table (Sequence[ProcessRow] | None) - one ``ps`` snapshot, None when
-      it could not be read. pane_current_command (str | None) - tmux's
-      ``#{pane_current_command}``, corroboration only. wrappers
-      (Sequence) - every configured wrapper.
-    Output: PaneAgentInference.
-    Example: infer_pane_agent(pane_pid=4242, table=rows,
-        pane_current_command="node", wrappers=()).family -> 'codex'
-    """
     read = table is not None and pane_pid is not None
     claude_cmds = find_claude_commands_in_tree(int(pane_pid), table) if read else []
     claude = resolve_agent_inference(

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import AnchoredPopup from '../dialog-frame/AnchoredPopup.svelte';
   import './popup-list.css';
+  import { Button } from '../base';
   import { t } from '../i18n/index.svelte';
   import { elapsed } from '../../opscenter/lib/format';
   import type { Placement } from '../drawer-tabs/add-component-menu';
@@ -95,7 +96,7 @@
   <header class="sal-titlebar">
     <h2 class="sal-title">{t('subagents.list.title')}</h2>
     <span class="sal-name">{name}</span>
-    <button type="button" class="sal-close" onclick={close}>{t('subagents.list.close')}</button>
+    <Button size="sm" onclick={close}>{t('subagents.list.close')}</Button>
   </header>
 
   {#if failure}

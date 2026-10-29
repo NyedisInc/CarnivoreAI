@@ -1,12 +1,3 @@
-"""The fit table: widget x host x size, folded from the gate records and written as JSON for the Widget Lab page (issue #1944).
-
-Built from the ``cells`` each gate record carries (``scripts/widgets/verdicts.py::cells_of``), so the table and the verdict a submission
-is judged on come from the same draws. A cell is ``pass``, ``fail`` or ``unsupported`` (the widget does not declare that host or size);
-``red`` marks clipping or overflow. A widget whose run could not determine (no cells) is listed ``determined: false`` and counted as failing.
-
-Format ``FIT_TABLE_SCHEMA`` 1: ``{schema, generated_at, source_revision, hosts: {host: [size, ...]}, counts: {pass, fail, unsupported},
-widgets: [{widget, ok, determined, cells: {"host/size": {verdict, red, draws, reasons}}}]}``.
-"""
 
 from __future__ import annotations
 

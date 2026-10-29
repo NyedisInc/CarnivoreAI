@@ -11,6 +11,7 @@ from src.models import (
     describe_model_id_rejection,
     is_valid_model_id,
 )
+from src.api.error_response import api_error, soft_failure
 
 logger = structlog.get_logger()
 local_models_router = APIRouter()
@@ -40,10 +41,9 @@ async def list_local_models():
     try:
         host = settings.load_auth_config().providers.local_host
     except Exception as exc:  # noqa: BLE001
-        logger.warning("local_models_config_unreadable", error=str(exc))
         return LocalModelsResponse(
             state="not-configured",
-            detail=f"could not read the provider config: {exc}",
+            detail=soft_failure("provider_config_unreadable", exc, step="read_local_host"),
         )
 
     result = await run_in_threadpool(fetch_local_models, host)
@@ -84,7 +84,7 @@ async def add_provider_model(body: AddProviderModelRequest):
     try:
         models = settings.add_provider_model(body.model)
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        raise api_error(409, "conflict", e, step="add_provider_model") from e
 
     return ProviderModelsResponse(models=models)
 
@@ -107,6 +107,6 @@ async def remove_provider_model(model: str):
     try:
         models = settings.remove_provider_model(model)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise api_error(404, "not_found", e, step="remove_provider_model") from e
 
     return ProviderModelsResponse(models=models)

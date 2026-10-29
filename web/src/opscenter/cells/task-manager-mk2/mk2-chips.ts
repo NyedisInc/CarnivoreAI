@@ -22,7 +22,6 @@ export const MK2_CHIP_ICON: Readonly<Record<Mk2ChipId, string>> = Object.freeze(
 
 export type Mk2ChipMode = 'full' | 'count' | 'icon';
 
-/* padding */
 const CHIP_DIGIT_PX = 7;
 const COUNTED_CHIPS = 3;
 const CHIP_GAPS_PX = 12;

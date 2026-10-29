@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 import structlog
 
 from src.core import item_catalog
-from src.core.attention.transcript_records import _record_text
+from src.core.attention.transcript_records import record_text
 from src.core.bookmarks import compactions, locate, predecessor, rows, store, transcript_index
 from src.core.bookmarks.errors import EntryNotFound, TranscriptUnavailable
 
@@ -48,7 +48,6 @@ def clamp_turns(value: object) -> int:
 
 
 def _record_at(stream, node: transcript_index.Node) -> Optional[dict]:
-    """The parsed record on a node's byte span, or None when the span no longer holds one record."""
     stream.seek(node.offset)
     try:
         record = json.loads(stream.read(node.length))
@@ -61,8 +60,8 @@ def _record_at(stream, node: transcript_index.Node) -> Optional[dict]:
 def _text_of(record: dict, role: str) -> str:
     if role == "user":
         peer = transcript_index.peer_turn_text(record)
-        return (peer if peer is not None else _record_text(record)).strip()
-    return _record_text(record).strip()
+        return (peer if peer is not None else record_text(record)).strip()
+    return record_text(record).strip()
 
 
 def _before_boundary(index: transcript_index.TranscriptIndex, boundary: transcript_index.Node,

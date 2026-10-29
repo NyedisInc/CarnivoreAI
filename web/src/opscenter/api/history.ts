@@ -1,3 +1,4 @@
+/* there is nothing */
 
 import { isDemo } from './demo';
 
@@ -95,7 +96,6 @@ export const history = {
     if (!isDemo()) save(held);
   },
 
-  /* nothing at all */
   sample(key: string, value: number | null, stamp: number | null): void {
     if (isDemo()) return;
     if (stamp === null || value === null || !Number.isFinite(value)) return;

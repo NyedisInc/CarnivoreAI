@@ -25,8 +25,8 @@ from src.core.session_work_backfill import (  # noqa: E402
 
 from tests.helpers.subagent_fixture import CONV, PROJECT_DIR, WORKDIR, build_corpus  # noqa: E402
 
-KEPT = "c338fb0f-b40a-4633-803c-dd7ff6c8fa87"
-CODEX = "c42fab37-d644-4c36-88a8-7940a2266d70"
+KEPT = "5ab0c0de-0000-4000-8000-0000000000aa"
+CODEX = "5ab0c0de-0000-4000-8000-0000000000bb"
 
 
 @pytest.fixture
@@ -105,3 +105,12 @@ def test_what_counts_as_work():
 
 def test_the_boot_entry_point_never_raises_on_a_missing_database(tmp_path):
     assert run_boot_backfill(tmp_path / "nope.db") is None
+
+
+def test_newest_rows_win_when_old_rows_without_evidence_fill_the_batch(state, corpus):
+    with closing(connect(db_path_for(state))) as conn:
+        dead = _row(conn, "cloude_dead", uuid="00000000-0000-4000-8000-000000000001")
+        worked = _row(conn, "cloude_new_worked", uuid=CONV)
+        backfill_last_work_at(conn, projects_dir=corpus, max_rows=1)
+        assert _value(conn, worked) is not None
+        assert _value(conn, dead) is None

@@ -1,3 +1,5 @@
+// WHY THIS FILE EXISTS
+// with a plain
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -88,7 +90,7 @@ test('THE CAP IS REAL: backups never exceed backupCount', () => {
   assert.ok(
     !fs.existsSync(`${target}.6`),
     'a 6th backup exists - the cap of 5 is not being enforced, which is exactly ' +
-    'how server.log grew very large in the first place: an unbounded number of files'
+    'how server.log grew to 10.7 GB in the first place: an unbounded number of files'
   );
 });
 
@@ -167,7 +169,9 @@ test('rotate() with backupCount 0 truncates instead of keeping a numbered backup
 
 test('wiring (SOURCE-LEVEL): server.log is rotated at spawn by the detached spawn, never opened by a bare stream', () => {
   const spawnSrc = fs.readFileSync(path.join(macDir, 'engine', 'detached-spawn.js'), 'utf8');
-  assert.ok(/spawnDetachedEngine\(/.test(managerSrc), 'server-manager.js does not start the engine through spawnDetachedEngine');
+  const hostSpawnSrc = fs.readFileSync(path.join(macDir, 'engine-host', 'spawn.js'), 'utf8');
+  assert.ok(/getHost\(\)\.spawnEngine\(/.test(managerSrc), 'server-manager.js does not start the engine through the engine host');
+  assert.ok(/spawnDetachedEngine\(/.test(hostSpawnSrc), 'engine-host/spawn.js does not start the engine through spawnDetachedEngine');
   assert.ok(
     /require\(['"]\.\.\/log-rotation['"]\)/.test(spawnSrc) && /appendWithRotation\(logFile/.test(spawnSrc),
     'detached-spawn.js does not rotate server.log at spawn, so it has no rotation applied to it before the engine opens it'
@@ -178,7 +182,7 @@ test('wiring (SOURCE-LEVEL): server.log is rotated at spawn by the detached spaw
   );
   assert.ok(
     !/fs\.createWriteStream\(this\.logFile/.test(managerSrc),
-    'server.log is opened with a plain, non-rotating fs.createWriteStream - the exact defect that let it grow very large'
+    'server.log is opened with a plain, non-rotating fs.createWriteStream - the exact defect that let it grow to 10.7 GB'
   );
 });
 

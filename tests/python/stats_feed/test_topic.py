@@ -17,7 +17,7 @@ def _writers(root: Path) -> list:
 
 def test_advertised_and_notified_only_by_the_feed():
     assert topics.STATS_FEED in topics.RESOURCE_TOPICS and topics.STATS_FEED in topics.all_topics()
-    assert _writers(SRC) == ["core/stats_feed/feed.py"]
+    assert _writers(SRC) == ["api/resource_bodies.py", "core/stats_feed/feed.py"]
 
 
 def test_a_second_notifier_would_be_red(tmp_path):

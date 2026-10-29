@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { deleteSavedChart, tripwireCountFor } from '../cells/analytics/delete-chart';
+  import Button from '../../lib/base/Button.svelte';
   import { t } from '../../lib/i18n/index.svelte';
 
   const CONFIRM_MS = 4000;
@@ -43,17 +44,5 @@
   onDestroy(disarm);
 </script>
 
-<button type="button" class="le-chip le-chip--danger" class:le-chip--armed={armed} data-chart-delete={chartId} title={failure || undefined} disabled={busy}
-  onclick={() => void press()} onblur={disarm} onkeydown={(event) => { if (event.key === 'Escape' && armed) { event.stopPropagation(); disarm(); } }}>{label}</button>
-
-<style>
-  @layer components {
-  .le-chip--danger {
-    color: var(--oc-coral);
-  }
-
-  .le-chip--armed {
-    border-color: var(--oc-coral);
-  }
-  }
-</style>
+<Button size="sm" variant="danger" data-chart-delete={chartId} title={failure || undefined} disabled={busy}
+  onclick={() => void press()} onblur={disarm} onkeydown={(event) => { if (event.key === 'Escape' && armed) { event.stopPropagation(); disarm(); } }}>{label}</Button>

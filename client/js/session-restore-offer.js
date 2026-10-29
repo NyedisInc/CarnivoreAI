@@ -228,7 +228,7 @@
         var counts = headlineCounts(offer.reason, items);
         return '<div class="modal-content restore-offer__content" role="dialog" aria-modal="true" '
             + 'aria-labelledby="restore-offer-title">'
-            + '<div class="restore-offer__head">'
+            + '<div class="modal-titlerow restore-offer__head">'
             + '<span class="restore-offer__verb">&raquo; reopen sessions</span>'
             + '</div>'
             + '<div class="restore-offer__intro">'
@@ -252,9 +252,13 @@
             + '</div></div>';
     }
 
+    var releaseTrap = function () {};
+
     function close() {
         if (overlayEl && overlayEl.parentNode) overlayEl.parentNode.removeChild(overlayEl);
         overlayEl = null;
+        releaseTrap();
+        releaseTrap = function () {};
     }
 
     function render(api, offer, items) {
@@ -272,6 +276,15 @@
         var go = overlay.querySelector('#restore-offer-go');
         var no = overlay.querySelector('#restore-offer-no');
         var status = overlay.querySelector('.restore-offer__status');
+
+        releaseTrap = window.ModalStack && typeof window.ModalStack.trap === 'function'
+            ? window.ModalStack.trap(overlay, {
+                onEscape: function () {
+                    if (overlay.querySelector('#restore-offer-done')) close();
+                    else if (!no.disabled) no.click();
+                },
+            })
+            : function () {};
 
         function checkedMap() {
             var map = {};
@@ -423,7 +436,6 @@
         started = true;
         var client = api || window.API;
         setTimeout(function () { check(client); }, FIRST_CHECK_DELAY_MS);
-        //  hidden 
         var recheck = function () {
             if (typeof document !== 'undefined' && document.hidden) return;
             check(client);

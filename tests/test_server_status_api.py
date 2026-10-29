@@ -58,10 +58,10 @@ def _app(session_manager, authed: bool = True) -> FastAPI:
 def manager():
     return FakeSessionManager(
         attachable=[
-            {"name": "cloude_ses_2a5a4495", "created_by_cloude": True},
+            {"name": "cloude_ses_ec5bf2a3", "created_by_cloude": True},
             {"name": "someone-elses", "created_by_cloude": False},
         ],
-        backends={"adopted:cloude_ses_2a5a4495": "cloude_ses_2a5a4495"},
+        backends={"adopted:cloude_ses_ec5bf2a3": "cloude_ses_ec5bf2a3"},
     )
 
 
@@ -110,7 +110,7 @@ def test_status_is_503_without_a_session_manager():
 
 def test_ownership_map_is_read_from_the_session_manager(manager):
     assert status_routes.ownership_by_name(manager) == {
-        "cloude_ses_2a5a4495": True,
+        "cloude_ses_ec5bf2a3": True,
         "someone-elses": False,
     }
 
@@ -118,8 +118,8 @@ def test_ownership_map_is_read_from_the_session_manager(manager):
 def test_ownership_survives_an_adopted_id_on_an_app_created_session(manager):
     ownership = status_routes.ownership_by_name(manager)
     open_ids = status_routes.open_ids_by_name(manager)
-    assert open_ids == {"cloude_ses_2a5a4495": "adopted:cloude_ses_2a5a4495"}
-    assert ownership["cloude_ses_2a5a4495"] is True
+    assert open_ids == {"cloude_ses_ec5bf2a3": "adopted:cloude_ses_ec5bf2a3"}
+    assert ownership["cloude_ses_ec5bf2a3"] is True
 
 
 def test_ownership_map_is_empty_when_the_manager_cannot_answer():

@@ -2,10 +2,11 @@
 from datetime import datetime
 from enum import Enum
 from typing import List, Literal, Optional
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from src.core.hosts.ddl import HOST_STATE_UP, LOCAL_HOST_KEY, LOCAL_HOST_LABEL
 from src.models.auto_sleep import SleepHoldInfo
+from src.models.utc_time import as_aware_utc, utc_now
 
 
 class SessionStatus(str, Enum):
@@ -15,13 +16,17 @@ class SessionStatus(str, Enum):
     ERROR = "error"
 
 
-# Plan v3.2
 class LocalServerInfo(BaseModel):
     """A dev-server port detected on the host, surfaced to the UI."""
     port: int = Field(..., description="TCP port the server is bound to (1024-65535)")
     url: str = Field(..., description="Clickable URL the web client should render")
-    first_seen: datetime = Field(default_factory=datetime.utcnow)
-    last_seen: datetime = Field(default_factory=datetime.utcnow)
+    first_seen: datetime = Field(default_factory=utc_now)
+    last_seen: datetime = Field(default_factory=utc_now)
+
+    @field_validator("first_seen", "last_seen", mode="after")
+    @classmethod
+    def _stamps_are_aware_utc(cls, value: datetime) -> datetime:
+        return as_aware_utc(value)
 
     class Config:
         json_encoders = {
@@ -31,13 +36,22 @@ class LocalServerInfo(BaseModel):
 
 class Session(BaseModel):
     """Session model for Claude Code instance.
+
+    Phase 6 - ``agent_type`` labels which agent CLI was launched in this
+    session ("claude" / "codex" / "hermes" / "openclaw"). Optional + None
+    default so legacy ``session_metadata.json`` files (written before the
+    field existed) deserialize cleanly. The lifespan startup backfill in
+    ``SessionManager.lifespan_startup`` populates None-valued agent_type
+    on owned sessions to ``"claude"`` (the only agent type pre-Phase-6
+    sessions could have been). Adopted sessions stay None until Phase 7
+    fingerprint detection back-fills them.
     """
     id: str = Field(..., description="Unique session identifier")
     pty_pid: Optional[int] = Field(None, description="PTY process PID")
     working_dir: str = Field(..., description="Working directory path")
     status: SessionStatus = SessionStatus.CREATING
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_activity: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utc_now)
+    last_activity: datetime = Field(default_factory=utc_now)
     agent_type: Optional[str] = Field(
         None,
         description="Agent CLI type: 'claude' | 'codex' | 'hermes' | 'openclaw' (None = unknown / pre-Phase-6 / not yet fingerprinted)",
@@ -58,11 +72,15 @@ class Session(BaseModel):
         None,
         description="tmux #{session_created} of this instance; None = unmeasured",
     )
-    # the launch choice
     model: Optional[str] = Field(
         None,
-        description="OpenRouter model id this session was launched with (None = Claude direct via 'keyc')",
+        description="OpenRouter model id this session was launched with (None = Claude direct via 'cld')",
     )
+
+    @field_validator("created_at", "last_activity", mode="after")
+    @classmethod
+    def _stamps_are_aware_utc(cls, value: datetime) -> datetime:
+        return as_aware_utc(value)
 
     class Config:
         json_encoders = {
@@ -72,10 +90,15 @@ class Session(BaseModel):
 
 class LogEntry(BaseModel):
     """Log entry model for terminal output."""
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=utc_now)
     session_id: str
     content: str
     log_type: str = "stdout"
+
+    @field_validator("timestamp", mode="after")
+    @classmethod
+    def _stamps_are_aware_utc(cls, value: datetime) -> datetime:
+        return as_aware_utc(value)
 
     class Config:
         json_encoders = {
@@ -280,6 +303,10 @@ class SessionInfo(BaseModel):
         default=None,
         description="Configured label of the launch wrapper, or None if none can be named",
     )
+    agent_wrapper_icon: Optional[str] = Field(
+        default=None,
+        description="Icon id of the launch profile, or None",
+    )
     launched_with: Optional[dict] = Field(
         default=None,
         description="Launch profile label, account, model and permissions this session launched with, or None",
@@ -343,7 +370,6 @@ class SessionInfo(BaseModel):
             "(docs/rename-carnivore.md)."
         ),
     )
-    # did not answer
     startup_gate: str = Field(
         default="unknown",
         description=(
@@ -351,7 +377,6 @@ class SessionInfo(BaseModel):
             "'unknown'. See src.core.session_startup_gate."
         ),
     )
-    # could not be read
     notifications_muted: bool = Field(
         default=False,
         description=(
@@ -364,13 +389,11 @@ class SessionInfo(BaseModel):
     status_source: str = Field(
         default="none",
         description=(
-            "Provenance of activity_status: 'hook' | 'transcript' | "
-            "'seed_row' | 'tmux' | 'none'. See "
+            "Provenance of activity_status: 'registry' | 'pane' | "
+            "'transcript' | 'seed_row' | 'tmux' | 'none'. See "
             "src.core.session_status_source."
         ),
     )
-    # anything at all
-    # could not
     activity_hint: Optional[str] = Field(
         default=None,
         description=(
@@ -482,6 +505,14 @@ class SessionInfo(BaseModel):
         default=None,
         description="This session's one-line description, or null when none is written.",
     )
+    swarm_agent_id: Optional[int] = Field(default=None, description="The live Swarm agent whose body this session is, or null.")
+    swarm_rank: Optional[str] = Field(default=None, description="That agent's rank (feature for a member), or null.")
+    swarm_character_seed: Optional[int] = Field(default=None, description="That agent's character seed (its swarm sprite), or null.")
+    swarm_color_slot: Optional[int] = Field(default=None, description="That agent's color slot 1 to 8, or null.")
+    prompt_suggestion: Optional[str] = Field(
+        default=None,
+        description="The agent's suggested next prompt (its terminal's dim ghost text), or null.",
+    )
     background_open: Optional[int] = Field(
         default=None,
         description=(
@@ -500,7 +531,6 @@ class SessionInfo(BaseModel):
         default=None,
         description="The recorded usage-limit hit (kind, resets_at, message, since), or null.",
     )
-    # could not be read
     agent_update: Optional[AgentUpdateInfo] = Field(
         default=None,
         description=(

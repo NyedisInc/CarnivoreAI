@@ -1,39 +1,3 @@
-"""Hold a macOS idle-sleep assertion while any session is kept awake (issue #617).
-
-Keep-awake (issue #559) stops a session being AUTO-SLEPT, which is a
-Cloude-side action on that session's row. It never stopped the MAC ITSELF
-going to system idle sleep, which suspends every process on the box,
-including this server, out from under a session nobody meant to pause.
-
-**THE MECHANISM IS ONE ``caffeinate -i -w <server pid>`` CHILD PROCESS**:
-
-- ``-i`` blocks idle system SLEEP only. The display may still sleep on its
-  own timeout; this never touches that.
-- ``-w <server pid>`` ties caffeinate's own life to this server's: if the
-  server dies (crash, kill, restart), caffeinate sees its watched pid exit
-  and exits itself within seconds, so it can never outlive the process
-  that started it and never needs a second cleanup path.
-
-**IDEMPOTENT AND SINGLE-TRACKED**: :class:`MacAwakeGuard` holds at most one
-live child at a time, referenced by its own ``Popen`` handle, and
-``reconcile`` is the only entry point: called with the CURRENT size of the
-keep-awake list, it starts a child if one is wanted and none is running,
-stops the tracked child if none is wanted and one is running, and does
-nothing otherwise. **NEVER pkill or kill-by-name**: only ``self._proc``,
-the exact handle this guard itself launched, is ever terminated.
-
-**FAIL-SOFT WHEN CAFFEINATE IS MISSING** (a non-macOS build, or a Docker
-container with no ``/usr/bin/caffeinate``): logged once per attempt, and
-every session's own keep-awake and auto-sleep behaviour continues exactly
-as before; only the mac-level assertion is unavailable.
-
-Boot reconciliation (the OS may have been sleeping, or a keep-awake session
-existed from a previous run whose caffeinate did not survive the restart)
-is the caller's job: :func:`reconcile_at_boot` reads the stored
-``auto_sleep.keep_awake`` list and calls ``reconcile`` once, exactly the way
-:func:`src.core.auto_sleep.store.set_keep_awake`'s own caller does after
-every write.
-"""
 
 from __future__ import annotations
 
@@ -102,14 +66,6 @@ class MacAwakeGuard:
         return True
 
     def reconcile(self, keep_awake_count: int) -> None:
-        """Description: make the assertion match whether anyone wants it.
-
-        Inputs: keep_awake_count (int) - how many sessions currently have
-          keep-awake on. Any positive count wants the assertion; zero does
-          not.
-        Output: None. Never raises; every failure is logged and skipped.
-        Example: reconcile(1)  # starts caffeinate if not already running
-        """
         with self._lock:
             want = keep_awake_count > 0
             if want and not self.active:

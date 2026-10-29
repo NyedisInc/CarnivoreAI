@@ -349,7 +349,7 @@ def test_codex_login_uses_device_auth_unless_the_browser_is_on_this_computer(
     add(client, "codex1", MANAGED_CODEX)
     local = _codex_login_as(client, peer="127.0.0.1", host="127.0.0.1")
     client.manager._sidecars.login_sessions.clear()
-    lan = _codex_login_as(client, peer="198.51.100.18", host="198.51.100.10")
+    lan = _codex_login_as(client, peer="192.168.1.50", host="192.168.1.10")
     client.manager._sidecars.login_sessions.clear()
     forwarded = _codex_login_as(
         client, peer="127.0.0.1", host="127.0.0.1", via_peer=True

@@ -5,7 +5,7 @@ import asyncio
 import time
 from typing import Any
 
-from src.core.crosstalk import bus, store
+from src.core.crosstalk import bus, spawn_rules
 from src.core.federation import peer_links
 from src.core.flow_data import spawn_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
@@ -37,13 +37,8 @@ async def spawn(view: Any, caller: AgentCaller, body: Any, *, owner_approved: bo
     if not owner_approved and (parent.tmux_session != caller.tmux_name or parent_id != caller.current_session_id):
         raise ToolError('the authenticated caller is not the parent pane')
     parent_epoch = parent.session.tmux_created_epoch
-    task = body.task + (('\n\nWhen the work is complete, report the actual outcome to your parent with '
-                         'crosstalk_reply on this message. Include changes, checks, and blockers.') if body.report_back else '')
-    from src.core.session_one_shot_gate import MAX_BODY_BYTES
-    if len(task) > store.MAX_TEXT or len(task.encode('utf-8')) + 1024 > MAX_BODY_BYTES:
-        raise ToolError('task exceeds the crosstalk delivery limit')
-    if any((ord(c) < 32 and c not in '\n\t') or 127 <= ord(c) <= 159 for c in task):
-        raise ToolError('task contains control characters the delivery guard would alter')
+    task = spawn_rules.task_with_report_back(body.task, body.report_back)
+    spawn_rules.validate_paste_text(task)
     summary = f'on {peer.label}: spawn {body.provider} in {body.working_dir or body.project} for: {body.task[:160]}'
     shown = body.model_dump(exclude_none=True)
 

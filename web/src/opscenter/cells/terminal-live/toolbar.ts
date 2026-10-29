@@ -1,4 +1,3 @@
-/* keep awake */
 
 import { pickState, atLeast } from '../../lib/states';
 import type { CellSize } from '../../engine/types';
@@ -43,7 +42,6 @@ export const TOOLBAR_ITEMS: readonly ToolbarItem[] = [
 
 export const MENU_HOME: ReadonlySet<string> = new Set(['skills', 'plugins', 'files', 'notes', 'theme', 'background']);
 
-/* keep awake */
 export const AGENT_ONLY: ReadonlySet<string> = new Set(['skills', 'plugins']);
 
 export function itemApplies(id: string, family: string | null | undefined): boolean {

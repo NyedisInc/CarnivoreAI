@@ -40,11 +40,6 @@ def is_dataless(path: Path) -> bool:
 
 
 def iter_lines(path: Path) -> Iterator[Tuple[str, Optional[dict]]]:
-    """Yield ``(status, obj)`` for every line of one JSONL file. Output: iterator.
-
-    Inputs: path (Path). ``status`` is ``ok`` with the decoded object, or one of
-    the ``STATUS_*`` names with None. Raises OSError when the file cannot be opened.
-    """
     with path.open("rb") as handle:
         for raw in handle:
             if not raw.endswith(b"\n"):

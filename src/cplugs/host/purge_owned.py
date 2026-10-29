@@ -1,10 +1,3 @@
-"""The runtime data a plugin keeps OUTSIDE its own folder, as ``owns.files`` declares it (``docs/cplugs.md`` 1.2a, 3.3).
-
-A purge deletes a plugin's folder ``<state_dir>/cplugs/<id>/`` (``purge_guard``). Some plugins also write elsewhere under the
-app state directory (save keeps its restore points in ``time-machine/``); the manifest names those paths and this module prices
-and deletes exactly them. Every path is resolved and must stay inside the state directory; a symlink is unlinked, never
-followed, so a link planted under a declared path cannot reach a file outside it.
-"""
 
 from __future__ import annotations
 
@@ -20,7 +13,7 @@ logger = structlog.get_logger()
 
 
 class PurgePathRefused(ValueError):
-    """A declared path resolves outside the state directory; nothing was deleted."""
+    pass
 
 
 def _inside(state_dir: Path, rel: str) -> Path:

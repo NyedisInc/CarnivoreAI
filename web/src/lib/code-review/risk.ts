@@ -39,7 +39,6 @@ export interface ReviewLine {
   risks: RiskId[];
 }
 
-/* permission prompt */
 const CODE_KINDS: ReadonlySet<string> = new Set(['permission', 'codex_approval']);
 
 const SCRIPT_SHAPE = /^(#!\/|\$ \S)/m;

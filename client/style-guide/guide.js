@@ -1,35 +1,3 @@
-/**
- * The living style guide's page script (issue #610).
- *
- * WHAT IT DOES, IN ORDER.
- *   1. Reads `registry.json`: the section list and every class and
- *      component the app ships, filed by section.
- *   2. Loads every section fragment (`sections/NN-id.html`) and puts them
- *      in the page in registry order, then builds the table of contents.
- *   3. Appends to each section the registry's list of files, components
- *      and classes that section covers, so every shipped class has a
- *      visible entry in the guide.
- *   4. Starts the theme registry the home page uses (`window.Themes`, from
- *      client/js/themes/registry.js), fills the theme picker with every
- *      installed theme, and paints the default, Carnivore, or the theme
- *      named by `?theme=<id>`.
- *   5. Says it is ready (`window.StyleGuideReady`, `style-guide:ready`), so
- *      the compiled bundle can mount the real Svelte components into the
- *      fragments' `sg-live-*` containers.
- *
- * THE THEME SWITCH NEVER CHANGES THE USER'S THEME. The home page picks a
- * theme with `Themes.applyGlobal(id)`, which calls `applyTheme(id,
- * {persist: true})` and so saves the choice to the user's shared
- * preference. This page calls `Themes.applyTheme(id)` itself: the SAME
- * paint (`data-theme` on <html>, the manifest's `--color-*` values on
- * :root through ThemeVarWriter, from which `web/src/opscenter/tokens.css`
- * re-derives every `--oc-*` token) with nothing persisted. Theme effects
- * scripts are refused on this page because the consent gate is not loaded
- * (see the note in style-guide.html).
- *
- * NO INLINE SCRIPT, NO REMOTE LOAD. This file is served same-origin under
- * `script-src 'self'`; everything it fetches is same-origin too.
- */
 (function () {
     'use strict';
 
@@ -175,13 +143,6 @@
 
     var canvasCtx = null;
 
-    /**
-     * Relative luminance of any colour the browser can parse.
-     * Inputs: css (string) - rgb(), color(srgb ...), oklab(...) and so on;
-     *   getComputedStyle serialises a color-mix in its mixing space, so the
-     *   value is drawn onto a 1x1 canvas, which converts every form to sRGB.
-     * Output: number|null - 0..1, or null when there is no canvas.
-     */
     function luminance(css) {
         if (!canvasCtx) {
             canvasCtx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });

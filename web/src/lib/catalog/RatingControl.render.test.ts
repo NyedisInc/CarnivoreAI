@@ -13,7 +13,7 @@ const i18n = createI18n({ locale: 'en' }) as {
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
 const SAVED: ItemRatingWrite = {
-    item_id: 'acme/sme',
+    item_id: 'example-owner/sme',
     count: 3,
     average: 4.67,
     histogram: { '1': 0, '2': 0, '3': 0, '4': 1, '5': 2 },
@@ -69,7 +69,7 @@ function paint(recorder: Recorder, signedIn = true, extra: Record<string, unknow
     panel = mount(RatingControl, {
         target,
         props: {
-            itemId: 'acme/sme',
+            itemId: 'example-owner/sme',
             host: recorder.host,
             t,
             signedIn,
@@ -79,6 +79,7 @@ function paint(recorder: Recorder, signedIn = true, extra: Record<string, unknow
     }) as never;
 }
 
+/** Let every microtask settle. */
 function settle(): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, 0));
 }
@@ -128,7 +129,7 @@ describe('picking a rating and saving it', () => {
         await settle();
         expect(recorder.rated).toHaveLength(1);
         expect(recorder.rated[0]?.body.stars).toBe(4);
-        expect(recorder.rated[0]?.itemId).toBe('acme/sme');
+        expect(recorder.rated[0]?.itemId).toBe('example-owner/sme');
     });
 
     test('NEGATIVE CONTROL: with no recorded rating there is no comment or remove link and nothing is sent', async () => {
@@ -191,18 +192,18 @@ describe('picking a rating and saving it', () => {
 
 describe('withdrawing one', () => {
     test('remove is offered once a rating is known, from the read or a write', async () => {
-        const recorder = hostFor({ item_id: 'acme/sme', count: 2, removed: true });
+        const recorder = hostFor({ item_id: 'example-owner/sme', count: 2, removed: true });
         paint(recorder, true, { initialStars: 4 });
         await settle();
         expect(acts()[1]?.disabled).toBe(false);
         acts()[1]?.click();
         await settle();
-        expect(recorder.removed).toEqual(['acme/sme']);
+        expect(recorder.removed).toEqual(['example-owner/sme']);
         expect(document.body.textContent).toContain(i18n.t('skill.rating.removed'));
     });
 
     test('NOTHING TO REMOVE gets its own sentence, not the removal one', async () => {
-        const recorder = hostFor({ item_id: 'acme/sme', count: 2, removed: false });
+        const recorder = hostFor({ item_id: 'example-owner/sme', count: 2, removed: false });
         paint(recorder, true, { initialStars: 4 });
         await settle();
         acts()[1]?.click();
@@ -240,6 +241,7 @@ describe('when the write does not land', () => {
     });
 
     test('and a FAILED write never claims a rating was recorded', async () => {
+        // NEGATIVE CONTROL for
         const recorder = hostFor(new Error('down'));
         paint(recorder);
         await settle();

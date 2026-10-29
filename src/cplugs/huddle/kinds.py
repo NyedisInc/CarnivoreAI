@@ -37,7 +37,7 @@ def resolve(kind: Optional[str], actor: str, status: str) -> str:
         raise TaskManagerInvalid(f"kind must be one of {', '.join(MESSAGE_KINDS)}")
     if actor == JOE:
         if kind not in (None, REPLY, COMMENT):
-            raise TaskManagerForbidden("questions, info and attention are claude's; the owner replies or comments")
+            raise TaskManagerForbidden("questions, info and attention are claude's; joe replies or comments")
         return kind or REPLY
     if kind in (None, REPLY):
         return INFO

@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.db_models import SESSION_LIFECYCLE_RUNNING
 from src.core.product_identity import is_owned_session_name
 from src.core.self_check import constants as K
@@ -42,6 +43,7 @@ class Context:
     resolve_socket: SocketResolver
     tmux_path: Optional[str]
     claude_candidates: Tuple[str, ...]
+    codex_candidates: Tuple[str, ...] = ()
 
     @property
     def critical(self) -> List[Tuple[Path, bool]]:
@@ -86,7 +88,6 @@ class SystemIO:
         return os.path.isfile(path) and os.access(path, os.X_OK)
 
     def tmux_list(self, argv: List[str]) -> Optional[Tuple[int, str, str]]:
-        """Run the read-only ``list-sessions``. Output: (returncode, stdout, stderr) or None when it could not run."""
         try:
             done = subprocess.run(argv, capture_output=True, text=True, timeout=K.COMMAND_TIMEOUT_SECONDS, check=False)
         except (OSError, subprocess.SubprocessError):
@@ -95,8 +96,7 @@ class SystemIO:
 
     def live_session_count(self, db_file: Path) -> Optional[int]:
         try:
-            with closing(sqlite3.connect(f"{db_file.resolve().as_uri()}?mode=ro", uri=True,
-                                         timeout=K.COMMAND_TIMEOUT_SECONDS)) as conn:
+            with closing(connect_readonly(db_file, timeout=K.COMMAND_TIMEOUT_SECONDS)) as conn:
                 row = conn.execute("SELECT COUNT(*) FROM sessions WHERE lifecycle = ?",
                                    (SESSION_LIFECYCLE_RUNNING,)).fetchone()
         except sqlite3.Error:
@@ -201,6 +201,14 @@ def check_access(io: SystemIO, ctx: Context) -> CheckResult:
         return CheckResult(K.CHECK_ACCESS, K.FAIL, "cannot list the claude projects folder",
                            [f"{target}: {exc.strerror or type(exc).__name__}"])
     return CheckResult(K.CHECK_ACCESS, K.PASS, "claude projects folder is listable")
+
+
+def agents_report(io: SystemIO, ctx: Context) -> Dict[str, Dict[str, Any]]:
+    found = shutil.which("codex")
+    for candidate in ([found] if found else []) + [os.path.expanduser(c) for c in ctx.codex_candidates]:
+        if io.is_executable(candidate):
+            return {"codex": {"found": True, "path": candidate}}
+    return {"codex": {"found": False, "path": None}}
 
 
 _CHECKS = {K.CHECK_FILES: check_files, K.CHECK_SPACE: check_space, K.CHECK_TMUX: check_tmux,

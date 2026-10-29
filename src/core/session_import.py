@@ -1,41 +1,3 @@
-"""First-run import of sessions into cloude.db (design doc section 5.3).
-
-THE MOST DANGEROUS CODE IN THIS SUBSYSTEM, AND WHY.
-
-``meta.imported_from_json_at`` is a ONE-WAY LATCH over an input that
-disappears. Once it is stamped, this import never runs again on that
-install, ever. The live tmux session list it reads is not a file we can
-go back to - it is a process table, and by tomorrow it is different.
-
-So the failure mode is not "an error". It is SILENCE. If the tmux probe
-fails and the latch is stamped anyway, the user boots to an empty RECENT
-list, sees no error, and the import NEVER RETRIES. His session history is
-permanently gone while every screen looks correct. The JSON files still
-sit on disk and nothing ever reads them again.
-
-THE RULE THAT PREVENTS IT, stated once so it can be checked:
-
-    THE LATCH IS STAMPED ONLY ON THE ``listing.ok is True`` PATH.
-
-THE LATCH IS TWO KEYS, NOT ONE, AND BOTH ARE GUARDED.
-
-Both writes now live in :func:`_latch_sessions_stage`, which is called
-from exactly one place: the last statement of the success path, textually
-after the ``if not listing.ok`` guard returns. tests/test_session_import.py
-walks this module's AST and asserts that neither key is written anywhere
-outside that helper, that the helper has exactly one call site, and that
-the call site is after the gate. A future edit that adds a second latch
-write, or hoists this one above the guard, fails a test instead of
-quietly costing a user his history.
-
-WHAT A FAILED PROBE PRODUCES INSTEAD. Zero session rows, the latch left
-unset, ``meta.session_import_pending_reason`` set to the probe's own
-reason token, and a PENDING result the home screen renders as "session
-import could not run because tmux could not be listed". The next start
-retries. That is the third outcome: not pass, not fail, COULD NOT
-EVALUATE - and it reaches the roll-up rather than being folded into
-either neighbour.
-"""
 
 from __future__ import annotations
 
@@ -104,40 +66,21 @@ EVIDENCE_LADDER_VERSION = 1
 
 @dataclass(frozen=True)
 class FirstRunImportResult:
-    """What one :func:`run_first_run_import` call did, and what it could not.
-    """
 
     outcome: str
     sessions_imported: int = 0
     listing_reason: Optional[str] = None
     refusals: List[Dict[str, Any]] = field(default_factory=list)
     unmatched: List[Dict[str, Any]] = field(default_factory=list)
-    # could not
     unattributed: List[Dict[str, Any]] = field(default_factory=list)
     promoted: int = 0
     evidence_version: int = EVIDENCE_LADDER_VERSION
 
     @property
     def pending(self) -> bool:
-        """True when the import could not run and MUST be retried.
-
-        Inputs: none.
-        Output: bool.
-        """
         return self.outcome == IMPORT_PENDING_LISTING_UNAVAILABLE
 
     def home_screen_notice(self) -> Optional[str]:
-        """The sentence the home screen shows when the import is pending.
-
-        Description: names what could not be measured, per the
-          three-outcome rule's fourth line. Returns None on every other
-          outcome, so the presence of a notice means "act".
-        Inputs: none.
-        Output: str | None.
-        Example:
-          FirstRunImportResult(IMPORT_PENDING_LISTING_UNAVAILABLE,
-                               listing_reason='timeout').home_screen_notice()
-        """
         if not self.pending:
             return None
         reason = self.listing_reason or "unknown"
@@ -235,46 +178,6 @@ def run_first_run_import(
     log_dir: Optional[Path] = None,
     origin_probe: Optional[Callable[[str], Optional[str]]] = None,
 ) -> FirstRunImportResult:
-    """Import live tmux sessions, once per install, ever.
-
-    Description: design section 5.3, steps 2 through 8, with step 3 as the
-      hard gate. Runs inside the caller's transaction, so a failure
-      anywhere rolls the whole import back and - critically - leaves the
-      latch unstamped, which is what makes the retry honest rather than a
-      partial import wearing a completion badge.
-
-      THE ORDER MATTERS AND IS NOT REARRANGEABLE:
-
-        (there is no config-projects step any more. Projects are
-                DB-only and any legacy config copy is retired once by
-                ``projects_config_migration``, which main.py runs BEFORE
-                this import so the projects table is settled before
-                attribution in step 7 reads it.)
-        step 3  THE GATE. ``listing.ok is False`` returns PENDING right
-                here: zero session rows, latch untouched, reason
-                recorded. Every statement below is unreachable on that
-                path.
-        step 4  one row per live tmux session, ``origin`` from
-                :func:`session_store.observed_origin_for` - ``created``
-                or ``observed``, never ``adopted``.
-        step 5  persisted session metadata merged onto its live row by
-                name, or imported ``stopped`` when nothing matches,
-                which is what gives RECENT its first row.
-        step 7  project attribution, deepest match, ``unknown`` when the
-                cwd could not be probed.
-        step 8  stamp the latch. The ONLY stamp site in this module.
-    Inputs: conn (sqlite3.Connection) - caller owns the transaction.
-      listing (TmuxListing) - ONE ``tmux list-sessions`` result; read
-      ``ok`` before anything else. owned_tmux_names (set[str] | None) -
-      the legacy ``SessionManager.owned_tmux_sessions``. persisted_sessions
-      (Sequence[dict] | None) - entries from ``session_metadata.json``,
-      each with at least ``tmux_session``. socket (str). now (str | None).
-      working_dir_probe (callable | None) - name -> cwd, or None when it
-      cannot answer; absent probe means every row without an inline
-      ``working_dir`` gets attribution ``unknown``, never a guess.
-    Output: FirstRunImportResult.
-    Example: run_first_run_import(conn, listing=listing).outcome
-    """
     stamp = now or utc_now()
     owned = set(owned_tmux_names or ())
 
@@ -285,7 +188,6 @@ def run_first_run_import(
             outcome=IMPORT_ALREADY_DONE
         )
 
-    # --- step 3: THE GATE ------------------------------------------------
     if not listing.ok:
         set_meta(
             conn,

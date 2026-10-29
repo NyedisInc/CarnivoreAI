@@ -48,6 +48,7 @@ async def end_live(slug: str, body: LiveEndBody, ctx: CplugContext = Ctx) -> Dic
 
 @router.post("/boards/{slug}/live/send")
 async def send_live(slug: str, body: LiveSendBody, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Joe's send during a live session. Inputs: slug; body. Output: see the module docstring."""
     try:
         return await live_send.send(ctx, slug, body)
     except BoardError as exc:

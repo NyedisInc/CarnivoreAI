@@ -21,7 +21,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 from src.config import settings  # noqa: E402
 from src.core.db import connect, db_path_for  # noqa: E402
 from src.core.db_migration import ensure_db_migrated  # noqa: E402
-from src.core.hosts import remote_backend, store  # noqa: E402
+from src.core.hosts import remote_transport, store  # noqa: E402
 from src.core.hosts.identity import remote_session_id  # noqa: E402
 from src.core.hosts.registry import HostRegistry, HostUnavailable  # noqa: E402
 from src.core.session_manager import SessionManager  # noqa: E402
@@ -55,7 +55,7 @@ def _add_host(state: Path, fake: FakeSshHost) -> None:
     fake.add_tool("claude", 'echo "fake-claude:$*"; exec /bin/sh\n')
     with closing(connect(db_path_for(state), create=False)) as conn:
         with mock.patch.object(store, "generate_key", return_value=HOST):
-            store.create_host(conn, label="fake box", ssh_target="acme@fakehost", socket=SOCKET)
+            store.create_host(conn, label="fake box", ssh_target="alex@fakehost", socket=SOCKET)
         store.record_probe(conn, HOST, {
             "probe_state": "ok", "probe_detail": None, "login_shell": "/bin/sh",
             "login_path": f"{fake.bin_dir}:/usr/bin:/bin:/usr/sbin:/sbin",
@@ -77,11 +77,11 @@ async def rig(tmp_path, monkeypatch) -> AsyncIterator[Rig]:
     mgr = SessionManager()
     mgr.hosts = HostRegistry(
         mgr._datastore_connection,
-        pool_options=dict(control_dir=fake.control_dir, instance_tag="5f4cec3f",
+        pool_options=dict(control_dir=fake.control_dir, instance_tag="0123abcd",
                           ssh_binary=fake.ssh_binary, connect_timeout=5.0,
                           check_interval=0.5, delay=FAST),
         channel_options=dict(command_timeout=10.0, connect_timeout=10.0, delay=FAST),
-        host_options=dict(mirror_dir=mirrors, instance_tag="5f4cec3f", command_timeout=5.0))
+        host_options=dict(mirror_dir=mirrors, instance_tag="0123abcd", command_timeout=5.0))
     rig = Rig(mgr, fake, state)
     try:
         yield rig
@@ -195,7 +195,7 @@ async def test_a_hostile_project_name_never_runs_on_the_far_box(rig, monkeypatch
         assert not marker.exists()
         assert session.tmux_session == f"carnivore_x#(touch {marker})"
         return
-    monkeypatch.setattr(remote_backend, "escape_expanded", lambda verb, args: list(args))
+    monkeypatch.setattr(remote_transport, "escape_expanded", lambda verb, args: list(args))
     try:
         await create
     except (RuntimeError, ValueError):

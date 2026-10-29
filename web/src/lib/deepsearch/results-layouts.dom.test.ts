@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
 
 
+// The "more" menu is the engine's manual popover; jsdom has no popover API.
 (HTMLElement.prototype as { showPopover?: () => void }).showPopover ??= () => {};
 (HTMLElement.prototype as { hidePopover?: () => void }).hidePopover ??= () => {};
 
@@ -46,14 +47,14 @@ const settle = async (): Promise<void> => {
 };
 
 const hit = (line: number, extra: Record<string, unknown> = {}) => ({
-  line, kind: line % 2 ? 'assistant' : 'user', snippet: `we \u0002rsync\u0003 ${line}`, file_kind: 'conversation', at: '2026-10-15T08:31:00', entry_uuid: `u-${line}`, ...extra,
+  line, kind: line % 2 ? 'assistant' : 'user', snippet: `we \u0002restic\u0003 ${line}`, file_kind: 'conversation', at: '2026-10-15T08:31:00', entry_uuid: `u-${line}`, ...extra,
 });
 
 const ANSWER = () => ({
-  query: 'rsync', total_conversations: 4, total_matches: 12, stale: ['gone-1'],
+  query: 'restic', total_conversations: 4, total_matches: 12, stale: ['gone-1'],
   groups: ([
-    { conversation_id: 'conv-live', matches: 5, session_uuid: 's-live', session: 'nightly rsync fix', project: 'backup-tools', last_active: '2026-10-15T10:00:00', hits: [hit(1), hit(2), hit(3)] },
-    { conversation_id: 'conv-asleep', matches: 2, session_uuid: 's-asleep', session: null, first_prompt: 'move the rsync repo password\nout of the env file', also_on: ['hostb'], last_active: '2026-10-14T10:00:00', hits: [hit(4), hit(5)] },
+    { conversation_id: 'conv-live', matches: 5, session_uuid: 's-live', session: 'nightly restic fix', project: 'backup-tools', last_active: '2026-10-15T10:00:00', hits: [hit(1), hit(2), hit(3)] },
+    { conversation_id: 'conv-asleep', matches: 2, session_uuid: 's-asleep', session: null, first_prompt: 'move the restic repo password\nout of the env file', also_on: ['mini'], last_active: '2026-10-14T10:00:00', hits: [hit(4), hit(5)] },
     { conversation_id: 'conv-backup', matches: 1, session_uuid: null, session: null, first_prompt: null, working_dir: '/Users/x/backup-tools', last_active: '2026-10-02T10:00:00', hits: [hit(6, { from_backup: true })] },
     { conversation_id: 'conv-none', matches: 1, session_uuid: null, session: null, first_prompt: null, working_dir: null, hits: [hit(7, { file_kind: 'subagent' })] },
   ] as Array<Record<string, unknown>>).map((g) => ({ ...g, exported: wire.exported[g.conversation_id as string] })),
@@ -70,7 +71,7 @@ beforeEach(() => {
   localStorage.clear();
   host = document.createElement('div');
   document.body.appendChild(host);
-  wire.live = { 'conv-live': { activity_status: 'working', label: 'nightly rsync fix' } };
+  wire.live = { 'conv-live': { activity_status: 'working', label: 'nightly restic fix' } };
   wire.calls = [];
   wire.openedSession = [];
   wire.exported = {};
@@ -99,9 +100,9 @@ async function paint() {
     },
   };
   const controller = new DeepSearchController(api, async (t) => { opened.push(t); return 'switched'; }, undefined, (s) => { shown.push(s); });
-  controller.showActions = true;
-  await controller.run('rsync', 0);
-  controller.move(1);
+  controller.showActions = true; // the context mode draws the buttons
+  await controller.run('restic', 0);
+  controller.move(1);  // nothing is picked until an arrow or a click; these tests read the first hit picked
   mounted = mount(DeepSearchResults, { target: host, props: { controller } });
   await settle();
   return { controller, opened, shown };
@@ -123,7 +124,7 @@ test('A, the ledger, is the default: an honest count, one stale line, names by t
   expect(text(host.querySelector('.dps__status'))).toBe('12 hits in 4 conversations');
   expect(text(host.querySelector('[data-testid="deepsearch-stale"]'))).toBe('1 conversation changed since it was indexed; its hits are hidden until it is read again');
   expect(host.querySelector('.dps__cap')).toBeNull();
-  expect(namesShown()).toEqual(['nightly rsync fix', 'move the rsync repo password out of the env file', 'backup-tools', 'untitled conversation']);
+  expect(namesShown()).toEqual(['nightly restic fix', 'move the restic repo password out of the env file', 'backup-tools', 'untitled conversation']);
   expect([0, 1, 2, 3].map((n) => hitsOf(n)[0]!.getAttribute('title'))).toEqual([
     'backup-tools · live · 5 hits', 'asleep · 2 hits', 'original deleted · 1 hit', 'never opened here · 1 hit',
   ]);
@@ -133,7 +134,7 @@ test('A, the ledger, is the default: an honest count, one stale line, names by t
   }
   expect(text(host.querySelector('[data-testid="deepsearch-from-backup"]'))).toBe('from backup');
   expect(host.querySelector('[data-testid="deepsearch-from-backup"]')!.getAttribute('title')).toBe('claude code deleted the original; this text is read from a conversation backup');
-  expect(text(host.querySelector('[data-testid="deepsearch-host"]'))).toBe('also on hostb');
+  expect(text(host.querySelector('[data-testid="deepsearch-host"]'))).toBe('also on mini');
   expect(text(host.querySelector('.dps__tag:not(.dps__host):not(.dps__tag--backup)'))).toBe('subagent');
 });
 
@@ -141,7 +142,7 @@ test('A shows two hits a conversation, the match in the accent, and "N more" fet
   const { controller } = await paint();
   const firstGroupHits = hitsOf(0);
   expect(firstGroupHits).toHaveLength(2);
-  expect(firstGroupHits[0]!.querySelector('mark.sd-mark')!.textContent).toBe('rsync');
+  expect(firstGroupHits[0]!.querySelector('mark.sd-mark')!.textContent).toBe('restic');
   const row = firstGroupHits[0]!;
   const snip = row.querySelector(':scope > .sd-hit__snip')!;
   const top = row.querySelector(':scope > .sd-hit__top')!;
@@ -212,17 +213,17 @@ test('B, best hits first: no caption, one block per hit, one-line hits, the chip
   expect(host.querySelector('.dps__cap')).toBeNull();
   expect(namesShown()).toHaveLength(4);
   expect(host.querySelectorAll('.dps__hit').length).toBe(2 + 2 + 1 + 1);
-  expect(text(host.querySelector('.dps__hit .sd-hit__name'))).toBe('nightly rsync fix');
+  expect(text(host.querySelector('.dps__hit .sd-hit__name'))).toBe('nightly restic fix');
   expect(text(host.querySelector('.dps__hit .sd-r__meta'))).toBe('agent, 3h ago');
-  expect([...host.querySelectorAll('.dps__chip')].map((c) => c.textContent)).toEqual(['all', 'you', 'agent', 'tool']);
+  expect([...host.querySelectorAll('[data-testid="deepsearch-chips"] [data-kind]')].map((c) => c.textContent)).toEqual(['all', 'you', 'agent', 'tool']);
   expect(actionsOf(host.querySelector('.dps__hit'))).toEqual(['read', 'go', 'link', 'more']);
   await rightClick(host.querySelector('.dps__hit'));
   expect([...document.querySelectorAll('[role="menu"] [data-node]')].map((b) => b.getAttribute('data-node'))).toEqual(['read', 'go', 'branch', 'link', 'bookmark', 'scope']);
 
-  await click(host.querySelector('.dps__chip[data-kind="user"]'));
-  expect(searches.at(-1)).toMatchObject({ q: 'rsync', scope: { kinds: 'user' } });
-  expect(host.querySelector('.dps__chip[data-kind="user"]')!.getAttribute('aria-pressed')).toBe('true');
-  await click(host.querySelector('.dps__chip[data-kind="all"]'));
+  await click(host.querySelector('[data-testid="deepsearch-chips"] [data-kind="user"]'));
+  expect(searches.at(-1)).toMatchObject({ q: 'restic', scope: { kinds: 'user' } });
+  expect(host.querySelector('[data-testid="deepsearch-chips"] [data-kind="user"]')!.getAttribute('aria-pressed')).toBe('true');
+  await click(host.querySelector('[data-testid="deepsearch-chips"] [data-kind="all"]'));
   expect(searches.at(-1)!.scope).toMatchObject({ kinds: undefined });
 });
 
@@ -232,7 +233,7 @@ test('"only this conversation" narrows the search to it, shows all its hits and 
   await rightClick(host.querySelector('.dps__hit'));
   await click(document.querySelector('[role="menu"] [data-node="scope"]'));
   expect(searches.at(-1)).toMatchObject({ scope: { conversationId: 'conv-live' } });
-  expect(text(host.querySelector('[data-testid="deepsearch-scope"]'))).toBe('only in nightly rsync fix show all');
+  expect(text(host.querySelector('[data-testid="deepsearch-scope"]'))).toBe('only in nightly restic fix show all');
   expect(host.querySelectorAll('.dps__hit')).toHaveLength(5);
   expect(host.querySelector('[data-testid="deepsearch-chips"]'), 'chips wait for the way back').toBeNull();
   await click(host.querySelector('[data-testid="deepsearch-scope"] button'));
@@ -263,10 +264,10 @@ test('the layout toggle: lowercase labels, A checked by default, and the pick is
 
 test('a paired computer holds a conversation: its tag names the computer and only read and link are offered', async () => {
   const { controller } = await paint();
-  controller.groups = [{ ...controller.groups[1]!, hostKey: 'peer-hostb', hostLabel: 'hostb', alsoOn: [] }];
+  controller.groups = [{ ...controller.groups[1]!, hostKey: 'peer-mini', hostLabel: 'mini', alsoOn: [] }];
   controller.active = 0;
   await settle();
-  expect(text(host.querySelector('[data-testid="deepsearch-host"]'))).toBe('hostb');
+  expect(text(host.querySelector('[data-testid="deepsearch-host"]'))).toBe('mini');
   expect(host.querySelector('.dps__hit')!.getAttribute('title')).toBe('on another computer · 2 hits');
   expect(actionsOf(host.querySelector('.dps__hit'))).toEqual(['read', 'link']);
 });

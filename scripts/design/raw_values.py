@@ -12,7 +12,6 @@ KINDS = ("spacing", "font", "color")
 EXEMPT = (
     "web/src/opscenter/tokens.css",
     "web/src/lib/elite/",
-    "web/src/public-site/",
 )
 
 _COMMENTS = re.compile(r"/\*.*?\*/", re.S)

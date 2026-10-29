@@ -1,51 +1,3 @@
-"""Judging a fetched catalog index: is it signed, is it current, whose is it.
-
-THIS FUNCTION IS PURE, AND THAT IS A SECURITY PROPERTY RATHER THAN A
-STYLE ONE. Every input is an argument: the bytes, the signature, the
-trust root, the revocations already seen, the last serial verified, the
-current time, and the one serial the user has re-consented to. That last
-one is the clearest case of the rule: a consent is a NUMBER passed in for
-one call, never a mode this module can be left switched into. There is no
-file read, no network call, no environment
-lookup and no wall clock anywhere in this module or in its item level
-companion. A verifier that reached for any of those would have a branch a
-test could not steer, and the branch a test cannot steer is the branch
-that has never been proven able to refuse anything.
-``tests/test_catalog_verify.py`` asserts the absence of a clock by
-reading this file's own source.
-
-THE ORDER OF THE CHECKS IS THE DESIGN.
-
-  1. NO PINNED KEY MEANS NO INDEX. An unpinned client that accepted an
-     index would be trusting whoever served it. This refuses first, as
-     ``signature_invalid``, and it is the state a checkout ships in
-     today because an agent never holds a private key.
-  2. SIGNATURE BEFORE PARSE. The bytes are verified before a single one
-     of them reaches pydantic. A parser is an attack surface, and handing
-     unverified input to one is how a fetched document becomes something
-     far worse than a bad catalog. The signature must also be PREHASHED:
-     minisign will happily verify a legacy signature, and accepting one
-     would let a signer downgrade the construction the catalog committed
-     to.
-  3. Only then the envelope, the serial, freshness, the revocations, and
-     the items.
-
-ONE BAD ITEM COSTS ONE ITEM. The envelope is parsed with ``items`` left
-as raw values and each one is judged on its own in
-:mod:`src.core.catalog.verify_items`. The whole index is refused only
-when the envelope itself is unusable.
-
-STALENESS IS A BADGE, ROLLBACK IS A REFUSAL. An index that is merely old
-is still the index the publisher signed: the user is told "as of" and can
-still install. An index whose serial went BACKWARDS is an attacker
-replaying a correctly signed older document to hide a fix, and no amount
-of valid signature makes that acceptable.
-
-NOTHING HERE LOGS KEY MATERIAL, A SIGNATURE, OR THE INDEX BODY. Key ids,
-serials, counts, item ids and refusal reasons are logged. A digest is
-logged on a mismatch, because a digest is a public number and the
-mismatch is undebuggable without it.
-"""
 
 from __future__ import annotations
 
@@ -93,33 +45,6 @@ def _refuse(code: str, detail: str, **context: Any) -> VerifyRefusal:
 def _verify_signature(
     index_bytes: bytes, minisig_text: str, index_key: PublicKey,
 ) -> Union[VerifyRefusal, Signature]:
-    """Check the detached index signature, before anything parses the body.
-
-    Description: four refusals, all of them ``signature_invalid``, each
-      with a distinct detail so a log says which one happened.
-
-      1. The ``.minisig`` did not parse at all.
-      2. It names a key that is not the pinned index key. This is checked
-         here as well as inside
-         :func:`~src.core.catalog.minisign.verify` so the refusal can SAY
-         which key signed, instead of reporting the arithmetic failure
-         that would follow.
-      3. It is a LEGACY (raw message) signature. The catalog commits to
-         the prehashed construction, and accepting the other one would
-         let a signer choose the weaker framing. Like the key id above,
-         this is ALSO bound inside
-         :func:`~src.core.catalog.minisign.verify`, which is passed
-         ``expect_prehashed=True``; it is refused here first only so the
-         detail can SAY the algorithm was wrong rather than reporting
-         the arithmetic failure that would follow.
-      4. The mathematics disagreed, over the message or over the trusted
-         comment.
-    Inputs: index_bytes (bytes) - the body exactly as fetched.
-      minisig_text (str) - the detached signature file. index_key
-      (PublicKey) - the PINNED index key.
-    Output: the parsed Signature, or a VerifyRefusal.
-    Example: _verify_signature(body, sig_text, pinned).prehashed -> True
-    """
     try:
         signature = parse_signature(minisig_text)
     except MinisignFormatError as exc:

@@ -22,6 +22,7 @@ from src.core.session_transcript_status import (
     resolve_transcript_status,
 )
 from src.core.unread_store import UnreadStore
+from src.core.sessions.host_port import SessionHost
 
 _TURN_END_RUNGS: frozenset[str] = frozenset(
     {RUNG_TURN_END_NEW, RUNG_TURN_END_SEEN}
@@ -34,19 +35,6 @@ _READ_ERRORS: Tuple[type, ...] = (sqlite3.Error, OSError, ValueError, KeyError)
 
 @dataclass(frozen=True)
 class TranscriptReading:
-    """One transcript, read once: when it was last written, and what it says.
-
-    Description: the return of :func:`read_transcript_signal`. Both
-      halves come off a SINGLE presence resolution, which is the whole
-      reason this type exists rather than two functions - resolving the
-      path twice per poll would double the only I/O on this path.
-
-      - ``mtime``: the file's modification time, timezone-aware, or None
-        when there is no file or it could not be stat'ed.
-      - ``tail``: what the last decidable record says, never None.
-    Inputs: n/a.
-    Output: n/a (data holder).
-    """
 
     mtime: Optional[datetime]
     tail: TranscriptRest
@@ -58,20 +46,6 @@ def read_transcript_signal(
     *,
     session_id: Optional[str] = None,
 ) -> TranscriptReading:
-    """Read one conversation's transcript mtime and tail verdict, once.
-
-    Description: resolves the uuid to a file through
-      ``conversation_presence`` and then takes BOTH measurements off that
-      one path. THREE REFUSALS, kept apart: no uuid bound to the row, a
-      MEASURED absent transcript, and a file that could not be read.
-      None of them is evidence of rest, and only the middle one is
-      evidence of anything. Never raises.
-    Inputs: uuid (str | None) - ``sessions.claude_session_uuid``.
-      working_dir (str | None) - used only for the fast-path slug.
-      session_id (str | None) - for the failure log only.
-    Output: TranscriptReading.
-    Example: read_transcript_signal(uuid, '/Users/x/proj').tail.verdict
-    """
     if not uuid:
         return TranscriptReading(
             mtime=None,
@@ -149,27 +123,6 @@ class TranscriptTurnLedger:
         return self._seen.get(key)
 
     def observe(self, key: str, at: Optional[datetime]) -> bool:
-        """Record a turn end and say whether it was NEWER than what we held.
-
-        Description: False on a first sighting (the baseline rule above),
-          False for an older or equal timestamp, and False for a
-          timestamp that could not be read - there is no key to make a
-          claim idempotent on, so no claim is made. True ONLY for a
-          strictly newer turn end on an instance already being watched.
-
-          THE BASELINE ONLY EVER MOVES FORWARD. An older reading does
-          not rewind it, because rewinding would let the next ordinary
-          poll see the newer turn end again and claim it a second time -
-          the duplicate this whole class exists to prevent. Readings can
-          go backwards for real reasons: a tail window that a large tool
-          result pushed the newer marker out of, or a transcript rolled
-          over. Neither is evidence that a turn un-happened.
-        Inputs: key (str) - ``<tmux_name>@<epoch>``. at (datetime | None)
-          - the turn end's timestamp.
-        Output: bool - True means the caller owes exactly one unread
-          claim for this turn.
-        Example: ledger.observe('cloude_x@1', later) -> True
-        """
         if not key or at is None:
             return False
         previous = self._seen.get(key)
@@ -188,7 +141,7 @@ class TranscriptTurnLedger:
 _LEDGERS: "WeakKeyDictionary[Any, TranscriptTurnLedger]" = WeakKeyDictionary()
 
 
-def ledger_for(manager: Any) -> TranscriptTurnLedger:
+def ledger_for(manager: SessionHost) -> TranscriptTurnLedger:
     try:
         held = _LEDGERS.get(manager)
         if held is None:
@@ -200,7 +153,7 @@ def ledger_for(manager: Any) -> TranscriptTurnLedger:
 
 
 def transcript_status_for(
-    manager: Any,
+    manager: SessionHost,
     *,
     session_id: str,
     tmux_name: Optional[str],
@@ -209,30 +162,6 @@ def transcript_status_for(
     unread: bool,
     now: datetime,
 ) -> TranscriptStatus:
-    """Apply the hookless transcript ladder, and claim one unread if owed.
-
-    Description: THE SEAM. Runs the PURE ladder against the reading, then
-      does the one thing the ladder is not allowed to do - record the
-      turn end and set the AUTO unread flag, exactly once per newly-seen
-      turn, through the same ``UnreadStore`` the ``Stop`` hook writes.
-      Never raises: a failed write costs an unread badge, and must never
-      cost the listing.
-
-      THE ORDER MATTERS. The ledger is consulted BEFORE it is updated,
-      because the pure ladder needs to be told what was already known;
-      updating first would make every turn end look already-seen and the
-      unread claim would never fire at all.
-    Inputs: manager (SessionManager) - for the unread store only.
-      session_id (str) - for logs. tmux_name (str | None) and epoch
-      (int | None) - the instance the ledger and the flag key on.
-      reading (TranscriptReading | None). unread (bool) - the persisted
-      flag as it stands. now (datetime) - tz-aware clock.
-    Output: TranscriptStatus - ``answers`` is False when no rung
-      answered.
-    Example:
-      transcript_status_for(mgr, session_id=sid, tmux_name=n, epoch=e,
-                            reading=r, unread=False, now=now).state
-    """
     key = UnreadStore.compose_key(tmux_name, epoch) if tmux_name else ""
     ledger = ledger_for(manager)
     status = resolve_transcript_status(
@@ -251,14 +180,14 @@ def transcript_status_for(
 
 
 def _claim_unread(
-    manager: Any,
+    manager: SessionHost,
     session_id: str,
     tmux_name: Optional[str],
     epoch: Optional[int],
 ) -> None:
     if not tmux_name:
         return
-    store = getattr(manager, "_unread_store", None)
+    store = manager._unread_store
     if store is None:
         return
     try:

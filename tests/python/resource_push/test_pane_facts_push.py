@@ -118,10 +118,12 @@ def test_the_listing_carries_cwd_and_size() -> None:
         socket_name = None
 
         def __init__(self) -> None:
-            pass
+            from src.core.tmux_transport.local import LocalTransport
+
+            self._transport = LocalTransport()
 
         def _run_listing(self, *args: str):
-            return None, "s|0|zsh|42|1755000000|%1|1755000001|177|60|1|1|/a|b/c\n"
+            return None, "0|42|1755000000|%1|1755000001|177|60|1|1|1|3|s|zsh|/a|b/c\n"
 
     row = Probe().list_pane_status_all().sessions[0]
     assert (row["pane_width"], row["pane_height"], row["pane_current_path"]) == (177, 60, "/a|b/c")

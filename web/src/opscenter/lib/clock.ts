@@ -1,4 +1,3 @@
-/* scheduled tasks */
 import { t } from '../../lib/i18n/index.svelte';
 
 const DAY_MS = 86_400_000;

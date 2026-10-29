@@ -1,49 +1,3 @@
-"""What each catalog KIND is made of, as one table nothing may bypass.
-
-THE CATALOG CORE IS KIND-AGNOSTIC AND THIS IS THE ONE PLACE THAT IS NOT.
-Trust, signing, revocation, the folder digest, the extractor's safety
-rules, the ledger, the journal and the trash are identical for every
-kind: they are about BYTES and about PATHS, and a theme's bytes are not
-special. What differs between a skill and a theme is three facts, and all
-three live here so that adding a third kind is an entry in three dicts
-rather than a hunt through nine modules.
-
-THE THREE FACTS, AND WHY EACH ONE IS A FACT AND NOT A CONVENTION.
-
-1. **The manifest.** The file the consuming program keys on. Claude and
-   Codex load a skill folder because it holds ``SKILL.md``; this app
-   loads a theme folder because it holds ``theme.json``
-   (``src/api/themes_routes.py::_load_manifest``). A folder installed
-   without its manifest is installed and INVISIBLE, which is worse than a
-   refusal, so the manifest is also the last gate before a copy lands.
-
-2. **The archive folder.** The segment under the catalog repository's
-   root that a kind's folders live in. The extractor keeps
-   ``<folder>/<publisher>/<name>/**`` and drops everything else, so this
-   string decides which members of somebody else's repository tarball are
-   even considered. A theme published under ``themes/`` and extracted as
-   though it were under ``skills/`` would simply yield an empty folder,
-   which is a confusing refusal rather than an honest one.
-
-3. **The scopes.** A skill is a per-harness artifact and can be installed
-   for one project or for the whole machine. A THEME IS A PER-APP
-   RESOURCE: this app reads themes from exactly two directories and
-   neither of them is inside a project. The project-level equivalent
-   already exists and this catalog does not own it - it is the
-   ``<working_dir>/.cc.theme`` dotfile, which names a theme rather than
-   containing one. So ``theme`` declares GLOBAL only, and a project-scope
-   install of one is refused in the open rather than written somewhere
-   plausible.
-
-**AN UNKNOWN KIND RAISES; IT NEVER FALLS BACK.** Every lookup here is a
-``ValueError`` on a kind this version does not know, for the reason the
-``InstallRoots`` port already states: a default would write an item of an
-unrecognised shape into whichever directory happened to be first. The
-client refuses an unknown kind at parse time
-(``src/models/catalog.py::CatalogItem.kind``), so reaching one of these
-with a bad kind is a programming error, and a programming error that
-answers plausibly is the expensive kind.
-"""
 
 from __future__ import annotations
 
@@ -124,16 +78,6 @@ def archive_folder(kind: str) -> str:
 def archive_root(
     kind: str, publisher: str, name: str, src_path: str | None = None
 ) -> str:
-    """The ``<folder>/<publisher>/<name>`` an item's files live under.
-
-    Description: with no ``src_path`` this is the kind's current folder.
-      With the signed ``version.src.path`` it must be exactly
-      ``<allowed folder for that kind>/<publisher>/<name>``, else refused.
-    Inputs: kind, publisher, name (str); src_path (str | None).
-    Output: str, no trailing slash.
-    Raises: ValueError on an unknown kind or a src_path that is not allowed.
-    Example: archive_root("cplug", "h", "n", "cplugs/h/n")  # 'cplugs/h/n'
-    """
     _known(kind, ARCHIVE_FOLDERS_FOR)
     folders = ARCHIVE_FOLDERS_FOR[kind]
     if src_path is None:

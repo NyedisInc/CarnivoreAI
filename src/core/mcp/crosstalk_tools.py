@@ -52,7 +52,7 @@ async def agents_lookup(manager: Any, caller: AgentCaller, args: dict) -> dict:
 
 READ_TOOLS: dict = {
     "agents_lookup": (
-        "Find agents by name (\"@bot-Misc UI\"; case, spaces and dashes ignored), here and on paired computers: id (usable by every "
+        "Find agents by name (\"@Cv-Misc UI\"; case, spaces and dashes ignored), here and on paired computers: id (usable by every "
         "tool), name, provider, host, project, status; asleep means crosstalk_send wakes it. ambiguous true: pick by id. "
         "view roster instead lists this computer's sessions with descriptions and family (scope, has_description, project, company, detail).",
         {"view": {"type": "string", "enum": [AGENTS, ROSTER], "description": "agents (default): find by name. roster: list sessions with descriptions; implied by any roster argument"},

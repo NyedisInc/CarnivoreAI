@@ -44,7 +44,6 @@ function createWindowState({ dir, key = 'main', getDisplays, fsImpl, timers }) {
   const clock = timers || { setTimeout, clearTimeout };
   const file = () => path.join(dir(), FILE);
 
-  /* the whole file */
   function readAll() {
     let text;
     try {

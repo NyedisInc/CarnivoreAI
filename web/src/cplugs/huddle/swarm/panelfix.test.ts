@@ -4,6 +4,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { openFloorSession, type FloorSession } from '../../sdk/floor.svelte';
+import { activateRow } from '../../../lib/drawer/row-switch';
+
+vi.mock('../../../lib/drawer/row-switch', () => ({ activateRow: vi.fn(async () => {}), paintSelection: vi.fn() }));
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,7 +18,6 @@ function asleepSession(): FloorSession {
 afterEach(() => {
   document.body.innerHTML = '';
   delete (window as unknown as Record<string, unknown>).SessionSidebar;
-  delete (window as unknown as Record<string, unknown>).SessionSidebarClicks;
   delete (window as unknown as Record<string, unknown>).SessionSidebarWakeClick;
 });
 
@@ -27,9 +29,8 @@ describe('PANELFIX', () => {
     row.dataset.asleep = '1';
     document.body.append(row);
     const ctrl = {};
-    const activateRow = vi.fn(async () => {});
     const onAsleepClick = vi.fn(async () => true);
-    Object.assign(window, { SessionSidebar: ctrl, SessionSidebarClicks: { activateRow }, SessionSidebarWakeClick: { onAsleepClick } });
+    Object.assign(window, { SessionSidebar: ctrl, SessionSidebarWakeClick: { onAsleepClick } });
     await openFloorSession(asleepSession());
     expect(onAsleepClick).toHaveBeenCalledTimes(1);
     expect(onAsleepClick).toHaveBeenCalledWith(ctrl, row, activateRow);

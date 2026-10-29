@@ -17,7 +17,7 @@ PANEL = "settings > advanced > mcp tools"
 
 
 class ToolSwitchError(ValueError):
-    """A requested switch change is not allowed (unknown tool, or a tool that must stay on)."""
+    pass
 
 
 def overrides() -> dict[str, bool]:

@@ -42,12 +42,6 @@ def preview_blocking(env: CrateEnv, import_id: str) -> Dict[str, Any]:
 
 
 def undo_blocking(env: CrateEnv, import_id: str) -> Dict[str, Any]:
-    """Undo the restore (module docstring). Blocking. Output: the engine's report (``rows``, ``files_removed``, ``entries_removed``,
-    ``kept``, ``errors``) as ``{import_id, state: undone, undone_at, undo: {...}}``.
-
-    Raises CrateApiError: 404 ``import_not_found``; 409 ``job_busy`` (a crate job runs), ``already_undone``, ``nothing_to_undo``,
-    ``undo_blocked`` (detail: the blockers; nothing was written); 500 ``receipt_unreadable``.
-    """
     receipt = _receipt(env, import_id)
     if runner.running_request():
         raise conflict("job_busy", "a crate job is running; wait for it or cancel it first")

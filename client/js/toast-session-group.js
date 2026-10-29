@@ -1,4 +1,3 @@
-/* permission prompt */
 
 console.log('[ToastSessionGroup Module] Loading...');
 

@@ -1,41 +1,3 @@
-"""Prove a database's OBJECTS match what its schema_version claims.
-
-A version number is a CLAIM, not a measurement. ``meta.schema_version``
-says which steps the chain believes it walked; it says nothing at all
-about whether those steps did any work. Until this module existed
-nothing checked, and the failure mode is silent by construction:
-``ensure_db_migrated`` returns STATUS_OK on ``current ==
-CURRENT_SCHEMA_VERSION`` without opening sqlite_master, so a database
-missing half its tables boots clean and reports healthy.
-
-THE AUDIT COVERS ONLY UNGATED OBJECTS, AND THAT RESTRAINT IS THE WHOLE
-DESIGN. A step that legitimately does nothing on some installs cannot
-have its absence read as a defect. ``_step_v17_to_v18`` and
-``_step_v30_to_v31`` create nothing since #1680 removed the archive
-flag (they only advance the version);
-``_step_v23_to_v24`` and its neighbours no-op on a database with no
-``sessions`` table. An auditor that flagged those would fire on healthy
-installs, and a matcher that always finds something is worse than
-useless. So :data:`UNGATED_VERSION_DDL` carries only the steps that
-apply their DDL tuple with no condition in front of it.
-
-WHAT THIS CANNOT SEE: a step whose work is a DATA BACKFILL leaves no
-trace in sqlite_master, so ``_step_v28_to_v29`` - which fills
-``sessions.agent_family`` on rows that have none - is invisible here and
-is NOT repaired by this module. That is a stated limit, not an
-oversight: re-running a backfill is a data write and belongs to whoever
-can say the data is wrong, while creating a missing table is additive,
-idempotent and cannot destroy anything.
-
-COLUMNS ARE DECLARED FROM v40 ON, and only there. An ``ADD COLUMN`` with a
-default is as additive as a ``CREATE`` and, unlike a backfill, needs no
-judgement about data, so :data:`UNGATED_VERSION_COLUMNS` names the columns
-an ungated step adds and the repair adds a missing one before any index
-that needs it. v40's quad identity index cannot exist without
-``sessions.host_key``, which is why this started there (issue #162). The
-columns earlier steps added are not declared: that would be a sweep of
-its own, and nothing here depends on it.
-"""
 
 from __future__ import annotations
 
@@ -75,11 +37,12 @@ from src.core.db_ddl.search_index import DDL_V52, DDL_V55, V55_COLUMNS
 from src.core.transcript_manifest.ddl import DDL_V54
 from src.core.launch_profiles.ddl import V56_COLUMNS
 from src.core.companies.ddl import DDL_V58, V58_COLUMNS, V72_COLUMNS
-from src.core.swarm.ddl import DDL_V59, DDL_V62, DDL_V63, DDL_V64, DDL_V65, V60_COLUMNS, V65_COLUMNS, V66_COLUMNS, V67_COLUMNS, V68_COLUMNS, V69_COLUMNS, V70_COLUMNS, V71_COLUMNS
+from src.core.swarm.ddl import DDL_V59, DDL_V62, DDL_V63, DDL_V64, DDL_V65, V60_COLUMNS, V65_COLUMNS, V66_COLUMNS, V67_COLUMNS, V68_COLUMNS, V69_COLUMNS, V70_COLUMNS, V71_COLUMNS, V99_COLUMNS, V100_COLUMNS
 from src.core.project_colors.ddl import V61_COLUMNS
-from src.core.crosstalk.ddl import DDL_V57
+from src.core.crosstalk.ddl import DDL_V57, DDL_V102
 from src.core.messaging.ddl import DDL_V73, V92_COLUMNS
 from src.core.exports.ddl import DDL_V93
+from src.core.session_group_rule import DDL_V101
 from src.core.descriptions.ddl import V74_COLUMNS
 from src.core.project_pack.ddl import DDL_V75
 from src.core.pack.machines.ddl import DDL_PACK_MACHINES
@@ -106,7 +69,6 @@ AUDIT_OK = "ok"
 
 AUDIT_MISSING = "missing"
 
-# could not be read
 AUDIT_CANNOT_DETERMINE = "cannot_determine"
 
 UNGATED_VERSION_DDL: Dict[int, Tuple[str, ...]] = {
@@ -159,6 +121,8 @@ UNGATED_VERSION_DDL: Dict[int, Tuple[str, ...]] = {
     89: DDL_V89,
     90: DDL_V90,
     93: DDL_V93,
+    101: DDL_V101,
+    102: DDL_V102,
 }
 
 UNGATED_VERSION_COLUMNS: Dict[int, Tuple[Tuple[str, str, str], ...]] = {
@@ -191,6 +155,8 @@ UNGATED_VERSION_COLUMNS: Dict[int, Tuple[Tuple[str, str, str], ...]] = {
     94: V94_COLUMNS,
     95: V95_COLUMNS,
     96: V96_COLUMNS,
+    99: V99_COLUMNS,
+    100: V100_COLUMNS,
 }
 
 SUPERSEDED_OBJECTS: frozenset = frozenset({"ix_sessions_claude_uuid", TRIPLE_INSTANCE_INDEX, *V49_RETIRED})

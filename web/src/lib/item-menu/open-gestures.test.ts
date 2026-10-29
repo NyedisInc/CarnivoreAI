@@ -7,6 +7,7 @@ vi.mock('../companies', () => ({
     setCompanyColor: vi.fn(async () => ({})),
 }));
 
+// jsdom has no popover API; the shared menu driver shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};

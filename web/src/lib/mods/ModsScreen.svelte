@@ -1,5 +1,6 @@
-
+<!-- get more on warez -->
 <script lang="ts">
+  import { Button } from '../base';
   import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
   import ManagerFrame from '../manager-frame/ManagerFrame.svelte';
   import { t } from '../i18n/index.svelte';
@@ -85,7 +86,7 @@
         {/if}
 
         <p class="mods-more">
-          <button type="button" class="oc-btn" data-mods-get-more onclick={() => (onGetMore ? onGetMore() : openCatalogScreen({ kind: 'mod' }))}>{t('mods.page.get_more')}</button>
+          <Button data-mods-get-more onclick={() => (onGetMore ? onGetMore() : openCatalogScreen({ kind: 'mod' }))}>{t('mods.page.get_more')}</Button>
         </p>
       </div>
     {/snippet}

@@ -1,3 +1,4 @@
+/* the old flat value */
 import { describe, expect, test } from 'vitest';
 import { canSplit, normalizeRail, placeInLayout, railToStored, removeFromRail, resetOptionsInRail, sectionStyle, setOptionInRail, setViewInRail, singleSection, splitAt, stepInRail, type RailLayout } from './rail-sections';
 import { zoneItemKey } from '../drawer-zone/zone-model';
@@ -144,7 +145,7 @@ describe('the shared divider maths', () => {
   });
 });
 
-describe('copies of a widget with views', () => {
+describe('copies of a widget with views (Joe (ccsliinc), 2026-10-10)', () => {
   const spot = { section: 0, index: 99, split: null } as const;
 
   test('a second catalog drop adds a copy and a third another; a singleton moves instead', () => {
@@ -178,7 +179,7 @@ describe('copies of a widget with views', () => {
   });
 });
 
-describe('options per copy in a rail', () => {
+describe('options per copy in a rail (Joe (ccsliinc), 2026-10-11: the questions widget)', () => {
   const spot = { section: 0, index: 99, split: null } as const;
   const two = () => placeInLayout(placeInLayout(singleSection([]), spot, 'core.questions', undefined, 256), spot, 'core.questions', undefined, 256);
 

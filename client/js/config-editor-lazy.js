@@ -10,7 +10,6 @@ function needsFetch(node) {
     return !!(node && node.is_dir && node.children_loaded === false);
 }
 
-/* could not */
 async function childrenFor(rootId, node, projectPath) {
     if (node && node.list_error) {
         return {
@@ -30,7 +29,6 @@ async function childrenFor(rootId, node, projectPath) {
         return { status: 'loaded', nodes: (resp && resp.tree) || [] };
     } catch (err) {
         // could not be read
-        // could not
         const detail = (err && err.message) || String(err);
         console.warn(`ConfigEditorLazy: expand failed for ${rootId}:${node.rel_path}:`, err);
         return {

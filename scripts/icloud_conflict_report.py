@@ -75,12 +75,6 @@ def _render(report, limit: int) -> None:
 
 
 def main(argv=None) -> int:
-    """CLI entry point.
-
-    Inputs: argv (list[str] | None).
-    Output: int exit status - 0 clean, 1 forks found, 2 cannot determine.
-    Example: main(["--root", "/tmp"]) -> 0
-    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", default=None)
     parser.add_argument("--json", action="store_true")

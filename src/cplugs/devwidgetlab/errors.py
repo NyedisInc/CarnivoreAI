@@ -15,7 +15,6 @@ class CaptureUnavailable(LabError):
 
 
 class CaptureBusy(LabError):
-    """A capture is already running; the harness is built and driven one at a time."""
 
     status = 409
     code = "capture_busy"
@@ -40,7 +39,6 @@ class DraftNotFound(LabError):
 
 
 class DraftExists(LabError):
-    """A draft folder with that slug already exists (or the id belongs to a shipped widget)."""
 
     status = 409
     code = "draft_exists"
@@ -53,14 +51,12 @@ class NoCheckout(LabError):
 
 
 class BuildBusy(LabError):
-    """A draft build is already running; builds run one at a time."""
 
     status = 409
     code = "build_busy"
 
 
 class SessionUnavailable(LabError):
-    """The draft could not be handed to a Claude session (the session grant is missing, or the create route refused)."""
 
     status = 502
     code = "session_unavailable"

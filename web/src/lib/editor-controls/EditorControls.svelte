@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* file editor */
+  /* and the three */
   import { t } from '../i18n/index.svelte';
   import IconButton from '../base/IconButton.svelte';
   import type { SaveLight } from '../../opscenter/cells/notes/save-light';
@@ -96,7 +96,6 @@
       flex: 0 0 auto;
     }
 
-    /* padding */
     .oc-notes-mode :global(.oc-seg__item) {
       padding: 2px calc(var(--oc-space-2) - 1px);
       border: 1px solid transparent;

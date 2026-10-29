@@ -1,5 +1,11 @@
 """Capture ONE widget draw to a PNG plus metadata, through the shared harness: the Widget Lab's capture button.
 
+The whole-catalog runner (``capture.py``) answers "does every widget pass at every size". This is its single-draw sibling for
+a person at the Widget Lab page (``docs/widget-lab.md``): one widget, in one host, at one size, under one theme and fixture,
+optionally with a pasted JSON scenario laid over the fixture and optionally with the widget's own menu open. It reuses the
+same page, the same fixture server, the same fit check and junk-text scan and the same stage screenshot as the catalog
+runner (``harness.py``); nothing is drawn a second way.
+
   1. open the harness page for the draw (the page waits for the scenario when one is given, then draws, and with
      ``--state menu`` presses the widget's menu button and waits until the menu is open);
   2. read the page's own report: the fit findings, the fixture misses, the readable text, and whether the menu opened;
@@ -8,6 +14,10 @@
 
 The metadata names the widget, the source revision (git sha, and whether the tree had uncommitted changes), the host, the size
 (name, px, window), the theme, the fixture (kind, scenario or not, sha256 of the plain-data routes drawn) and the state.
+
+A missing widget, host, size or fixture, a scenario that does not check out, a scenario route the widget never asked
+for, a fit or junk-text finding, a menu that would not open, or a PNG that is not whole is a FAILED capture: the metadata
+says ``"ok": false`` with every reason, the exit status is 1, and nothing here ever reports a pass for it.
 
 Usage:
   venv/bin/python3 -m scripts.widgets.capture_one --widget core.notes --host home --size m --theme carnivore
@@ -172,10 +182,7 @@ def failures_of(draw: dict[str, Any]) -> list[str]:
 
 
 def capture(args: argparse.Namespace) -> dict[str, Any]:
-    """Run the capture and write the files. Output: the metadata dict (``ok`` false with ``failures`` when it failed).
-
-    Raises: HarnessError - the harness could not run (CANNOT DETERMINE).
-    """
+    from playwright.sync_api import Error as PlaywrightError  # noqa: PLC0415
     from playwright.sync_api import sync_playwright  # noqa: PLC0415
 
     scenario = args.scenario_file.read_text(encoding="utf-8") if args.scenario_file else None
@@ -204,6 +211,8 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
                 meta["failures"] = failures_of(draw)
             except CaptureFailed as exc:
                 meta["failures"].append(str(exc))
+            except PlaywrightError as exc:
+                raise HarnessError(f"playwright: {type(exc).__name__}: {exc}") from exc
             finally:
                 browser.close()
     finally:
@@ -221,7 +230,6 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main(argv: list[str]) -> int:
-    """Capture, print the metadata line, and return the exit status (0 clean, 1 failed, 2 cannot determine)."""
     args = parse(argv)
     if args.sidebar and args.host != "drawer":
         print("capture_one: --sidebar draws the left drawer, so --host must be drawer", file=sys.stderr)

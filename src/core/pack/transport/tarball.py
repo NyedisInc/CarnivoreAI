@@ -25,7 +25,6 @@ _ZSTD_CANDIDATES = ("/opt/homebrew/bin/zstd", "/usr/local/bin/zstd", "/usr/bin/z
 
 
 class TarballError(Exception):
-    """The archive could not be made or unpacked; ``code`` is the stable reason, the message never names a file's content."""
 
     def __init__(self, code: str, detail: str) -> None:
         super().__init__(detail)

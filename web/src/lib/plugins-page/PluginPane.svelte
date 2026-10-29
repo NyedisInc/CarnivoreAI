@@ -1,4 +1,4 @@
-<!-- could not -->
+
 <script lang="ts">
     import { SKILL_KEYS } from '../../../../client/js/labels/skill.js';
     import { Button } from '../base';
@@ -24,6 +24,7 @@
         onConfirmOff: () => void;
         onCancelOff: () => void;
         onGrant: (ticks: string[]) => void;
+        sheetStamp?: string;
         loadActivity: (cplugId: string) => Promise<ActivityRow[]>;
         purge?: (cplugId: string, confirmToken?: string) => Promise<PurgePrice>;
         onPurged?: () => void;
@@ -33,7 +34,7 @@
         t: Translate;
     }
 
-    const { plugin, tab, onTab, asking = false, busy = false, error = null, onConfirmOff, onCancelOff, onGrant, loadActivity, purge, onPurged, onUninstall, uninstalling = false, uninstallError = null, t }: Props = $props();
+    const { plugin, tab, onTab, asking = false, busy = false, error = null, onConfirmOff, onCancelOff, onGrant, sheetStamp = '', loadActivity, purge, onPurged, onUninstall, uninstalling = false, uninstallError = null, t }: Props = $props();
 
     const reason = $derived(paneReason(plugin, t));
     const tabs = $derived(paneTabs(plugin, t));
@@ -61,16 +62,19 @@
             {:else if tab === 'settings'}
                 <PluginSettings {plugin} {t} />
             {:else if tab === 'permissions'}
-                <PermissionSheet
-                    rows={plugin.permissions}
-                    missing={plugin.missing}
-                    waiting={plugin.state === 'needs_approval'}
-                    off={plugin.state === 'disabled'}
-                    warnings={plugin.warnings}
-                    {busy}
-                    {onGrant}
-                    {t}
-                />
+                {#key sheetStamp}
+                    <PermissionSheet
+                        rows={plugin.permissions}
+                        missing={plugin.missing}
+                        waiting={plugin.state === 'needs_approval'}
+                        off={plugin.state === 'disabled'}
+                        consent={plugin.consentRequired}
+                        warnings={plugin.warnings}
+                        {busy}
+                        {onGrant}
+                        {t}
+                    />
+                {/key}
                 {#if plugin.state !== 'removed'}<ActivityLog load={() => loadActivity(plugin.cplugId)} {t} />{/if}
             {:else}
                 <PluginData {plugin} {purge} {onPurged} {t} />

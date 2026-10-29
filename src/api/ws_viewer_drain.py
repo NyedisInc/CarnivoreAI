@@ -18,7 +18,6 @@ from src.core.perf_hooks.monitor import PERF, frame_topic
 
 logger = structlog.get_logger()
 
-# the socket closed
 _CLOSED_SOCKET_MARKERS = ("once a close message has been sent", "after sending 'websocket.close'")
 
 
@@ -31,20 +30,6 @@ def _client_gone(exc: BaseException, stream: BoundedStream) -> bool:
 
 
 async def _pump_text(queue: asyncio.Queue, stream: BoundedStream) -> None:
-    """Move text messages from a source queue into a viewer's outbox.
-
-    Description: A FEEDER, NOT A WRITER. It never touches the socket, so
-      adding a source of server-to-client messages cannot add a second
-      coroutine sending on it. The log monitor and the local-server
-      tracker each hand out their own unbounded fan-out queue; this is
-      where their output enters this viewer's bound and starts counting
-      against the same budget as its terminal bytes. Returns when the
-      viewer's stream is finished, which is the teardown signal.
-    Inputs: queue (asyncio.Queue) - the source's own subscription;
-      stream (BoundedStream) - this viewer's outbox.
-    Output: None.
-    Example: asyncio.create_task(_pump_text(log_queue, viewer_stream))
-    """
     try:
         while True:
             message = await queue.get()

@@ -1,20 +1,4 @@
 #!/usr/bin/env python3
-"""Report what ONE CloudeCode install can actually see, as JSON.
-
-THREE OUTCOMES. A field the running version has no concept of reports
-``NOT_SUPPORTED``; a field it has but could not read reports
-``CANNOT_DETERMINE`` with the error text attached under ``errors``.
-Neither is ever collapsed into an empty list, because an empty list and
-"this version cannot answer" are the difference between a real data-loss
-finding and a feature that simply does not exist yet.
-
-Inputs (argv): --install-dir DIR (required), --label TEXT (required),
-  --state-dir DIR (optional; when given, the cloude.db under it is
-  probed too).
-Output: one JSON object on stdout. Exit 0 whenever the probe itself ran,
-  regardless of what it found - a non-zero exit here would mean the
-  MEASUREMENT failed, not that the install is unhealthy.
-"""
 
 from __future__ import annotations
 
@@ -23,11 +7,14 @@ import hashlib
 import json
 import os
 import sqlite3
+from src.core.safe_io.readonly_db import connect_readonly
 import sys
 from pathlib import Path
 
 NOT_SUPPORTED = "NOT_SUPPORTED"
 CANNOT_DETERMINE = "CANNOT_DETERMINE"
+LEGACY_DB_NAME = "cloude.db"
+PROJECT_NAME_COLUMNS = ("display_name", "name")
 
 
 def sha256_of(path: Path) -> str:
@@ -80,7 +67,6 @@ def probe_settings(out: dict) -> None:
         return
     out["settings_constructible"] = True
 
-    # state directory
     if hasattr(settings, "get_state_dir"):
         try:
             out["state_dir"] = str(settings.get_state_dir())
@@ -99,8 +85,6 @@ def probe_settings(out: dict) -> None:
         return
     out["auth_config_loadable"] = True
 
-    # CANNOT_DETERMINE
-    # could not be read
     try:
         from src.core.project_authority import MODE_DB, resolve_projects
 
@@ -151,7 +135,6 @@ def probe_settings(out: dict) -> None:
             out["terminal_commands"] = CANNOT_DETERMINE
             out.setdefault("errors", []).append(f"terminal_commands: {e}")
 
-    # launch command
     cmds = {}
     getter = getattr(settings, "get_agent_command", None)
     if getter is None:
@@ -170,13 +153,24 @@ def probe_settings(out: dict) -> None:
         out["agent_commands"] = cmds
 
 
+def project_names(conn: sqlite3.Connection) -> "list[str] | str":
+    try:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(projects)")}
+        column = next((c for c in PROJECT_NAME_COLUMNS if c in columns), None)
+        if column is None:
+            return f"{CANNOT_DETERMINE}: projects has none of {PROJECT_NAME_COLUMNS}"
+        return sorted(r[0] for r in conn.execute(f'SELECT "{column}" FROM projects'))
+    except sqlite3.Error as e:
+        return f"{CANNOT_DETERMINE}: {e}"
+
+
 def probe_db(state_dir: Path, out: dict) -> None:
     try:
         from src.core.db import db_path_for  # noqa: PLC0415
 
         db_path = db_path_for(state_dir)
-    except Exception:
-        db_path = state_dir / "carnivore.db"
+    except (ImportError, AttributeError):
+        db_path = state_dir / LEGACY_DB_NAME
     out["db_path"] = str(db_path)
     out["db_exists"] = db_path.exists()
     if not db_path.exists():
@@ -185,7 +179,7 @@ def probe_db(state_dir: Path, out: dict) -> None:
         out["db_schema_version"] = NOT_SUPPORTED
         return
     try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        conn = connect_readonly(db_path)
     except sqlite3.Error as e:
         out["db_tables"] = CANNOT_DETERMINE
         out["db_row_counts"] = CANNOT_DETERMINE
@@ -215,12 +209,7 @@ def probe_db(state_dir: Path, out: dict) -> None:
             out["db_schema_version"] = row[0] if row else "ABSENT"
         except sqlite3.Error:
             out["db_schema_version"] = CANNOT_DETERMINE
-        try:
-            out["db_projects"] = sorted(
-                r[0] for r in conn.execute("SELECT name FROM projects")
-            )
-        except sqlite3.Error as e:
-            out["db_projects"] = f"{CANNOT_DETERMINE}: {e}"
+        out["db_projects"] = project_names(conn)
     finally:
         conn.close()
 

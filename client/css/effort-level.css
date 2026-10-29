@@ -1,37 +1,3 @@
-/* EFFORT LEVEL - the colour, and for the top levels the motion, of a
- * session's reasoning effort (issue #852).
-
- * ONE CLASS SET FOR BOTH TREES. The terminal foot bar's effort text
- * (web/src/opscenter/cells/terminal-live/TerminalFoot.svelte) and the
- * drawer's agent robot (client/js/session-model-icon.js) both wear
- * `.effort-level .effort--<level>`, built by one mapping
- * (client/js/effort-level.js, mirrored in web/src/lib/effort/), so the
- * text and the icon cannot drift apart. The motion is never a text
- * gradient, because the robot is an SVG stroked in currentColor and a
- * background-clip shimmer cannot reach it.
-
- * EVERY @keyframes IN THIS FILE ANIMATES TRANSFORM OR OPACITY ONLY (#1599,
- *"Rewrite the three expensive ones onto the
- * cheap properties"). The browser moves those on the compositor, from a
- * layer painted once; filter, mask-position and colour keyframes repaint
- * or re-rasterise every frame, and a page with several terminals paid for
- * it constantly. tests/python/design_system/test_cheap_animations.py fails
- * the build on any other animated property. The effects that used to animate
- * a property are now STATIC effects on a layer that is moved or faded:
- * a text-shadow glow under an opacity pulse (shimmer), a pre-brightened
- * copy of the robot under a window that slides with translateX (sheen, the
- * robot only), and three pre-coloured copies cross-faded by opacity (the
- * rainbow, #1821). NOTHING THAT MOVES SITS INSIDE A BACKDROP ROOT, A FILTER,
- * A MASK OR AN OPACITY BELOW 1 (tests/python/design_system/
- * test_effort_cheap_surfaces.py).
-
- * THE LEVEL IS WHAT THE HARNESS RECORDED, never a default: no class is
- * written for an unknown or absent effort, and the element keeps its own
- * colour.
-
- * Colour is --oc-* tokens only. The two purples are derived per theme in
- * web/src/opscenter/tokens.css. prefers-reduced-motion keeps every colour
- * and drops every animation and sparkle. */
 
 .effort-level {
     position: relative;

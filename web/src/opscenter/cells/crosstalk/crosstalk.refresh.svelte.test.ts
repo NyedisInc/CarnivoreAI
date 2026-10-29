@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
+/** Every path the widget asked the server for. */
 const asked = vi.hoisted(() => [] as string[]);
 
 const thread = (id: string, lastAt: number) => ({

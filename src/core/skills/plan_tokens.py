@@ -20,22 +20,6 @@ MAX_OUTSTANDING_TOKENS = MAX_CONCURRENT_STAGING - 2
 
 @dataclass(frozen=True)
 class StagedPlan:
-    """One staged copy, waiting for the install that previewed it.
-
-    Description: everything needed to redo the plan without redoing the
-      download. ``staging`` is the directory the whole attempt owns and
-      the one that gets discarded; ``staged`` is the ``StagedSkill`` the
-      extractor produced, carried whole so the install plans against the
-      digest the EXTRACTOR computed from those bytes.
-    Inputs (constructor): token (str) - the opaque id. staging (Path) -
-      the per-attempt staging directory. staged (StagedSkill) - what
-      came out of the archive. item_id (str), version (str), scope (str),
-      project_path (str | None) - what the preview was FOR, so an install
-      asking about something else does not silently reuse it.
-      created (float) - monotonic seconds, for the expiry.
-    Output: none, it is a record.
-    Example: plan.staged.digest
-    """
 
     token: str
     staging: Path

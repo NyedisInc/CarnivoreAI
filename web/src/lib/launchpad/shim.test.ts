@@ -5,6 +5,7 @@ import { describe, expect, test } from 'vitest';
 
 import { SHIM_MEMBERS } from './shim';
 
+/** Repo root, four levels up from web/src/lib/launchpad. */
 const repoRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 
 function legacyFiles(dir: string): string[] {
@@ -181,7 +182,6 @@ describe('the shim and its callers agree, in both directions', () => {
             'loadRunningSessions',
             'openProjectByName',
             'selectProject',
-            'sessionRecords',
             'showError',
             'showProviderModal',
         ]);
@@ -199,8 +199,8 @@ describe('the shim and its callers agree, in both directions', () => {
         const seen = uses.get('showError') ?? [];
         expect(seen).toContain('web/src/lib/launchpad/recent-actions.ts');
         expect(seen).toContain('web/src/lib/launchpad/running-host.ts');
-        expect(seen).toContain('client/js/session-row-menu-actions.js');
-        expect(uses.get('selectProject') ?? []).toContain('client/js/session-row-menu-actions.js');
+        expect(seen).toContain('web/src/lib/item-menu/run/run-env.ts');
+        expect(uses.get('selectProject') ?? []).toContain('web/src/lib/item-menu/run/folder-actions.ts');
     });
 
     test('NEGATIVE CONTROL: an alias to something else is not an alias to the shim', () => {

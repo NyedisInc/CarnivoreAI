@@ -9,6 +9,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -29,6 +35,12 @@ function js(name) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', 'js', name), 'utf8');
 }
 
+/**
+ * Strip `/* ... *\/` comments so prose cannot satisfy an assertion meant
+ * for a declaration.
+ * @param {string} sheet  Full stylesheet text.
+ * @returns {string} The stylesheet with comments removed.
+ */
 function stripCssComments(sheet) {
     return sheet.replace(/\/\*[\s\S]*?\*\//g, '');
 }

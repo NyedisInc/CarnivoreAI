@@ -44,7 +44,7 @@ describe('ai routing add-on features', () => {
     test('override off: the owned features are hidden and no add-ons heading shows', async () => {
         await render(fetcherWith(false));
         expect(names('[data-ai="features"]')).toHaveLength(1);
-        expect(document.body.querySelector('[data-ai="addons-head"]')).toBeNull();
+        expect(document.body.querySelector('[data-ai="addons"] [aria-expanded]')).toBeNull();
         expect(document.body.querySelector('[data-ai="addon-features"]')).toBeNull();
         expect(document.body.querySelector('[data-ai="route-owner-link"]')).toBeNull();
     });
@@ -52,7 +52,7 @@ describe('ai routing add-on features', () => {
     test('override on: the fold is closed by default and counts the overrides; opening it lists them, each name a link to the switch', async () => {
         await render(fetcherWith(true));
         expect(names('[data-ai="features"]')).toHaveLength(1);
-        const head = document.body.querySelector<HTMLButtonElement>('[data-ai="addons-head"]')!;
+        const head = document.body.querySelector<HTMLButtonElement>('[data-ai="addons"] [aria-expanded]')!;
         expect(head.textContent).toContain('plugin overrides (2)');
         expect(head.textContent).toContain('(overridden in add-on settings)');
         expect(head.getAttribute('aria-expanded')).toBe('false');

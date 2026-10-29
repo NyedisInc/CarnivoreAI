@@ -73,9 +73,17 @@ export async function runCplugCardAction(cplugId: string, row: SessionCardRow, c
   return action ? runSessionCardAction(action.id, row, context) : false;
 }
 
-function startEnabled(): void {
+export function startEnabled(cplugs: readonly CplugWeb[] = BUILTIN_CPLUGS): void {
   registerEnabledWidgets();
-  for (const a of BUILTIN_CPLUGS) if (a.start && cplugEnabled(a.manifest)) a.start();
+  for (const a of cplugs) {
+    const on = cplugEnabled(a.manifest);
+    try {
+      if (on) a.start?.();
+      else a.stop?.();
+    } catch (err) {
+      console.error(`cplug ${a.id}: ${on ? 'start' : 'stop'} failed`, err);
+    }
+  }
 }
 
 export function startCplugs(): void {

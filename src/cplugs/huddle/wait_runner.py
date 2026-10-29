@@ -12,7 +12,7 @@ import structlog
 from fastapi import HTTPException
 
 from src.cplugs.huddle import blockers, kinds, lineage, rules, service, wait_checks, wait_copy, waits
-from src.cplugs.huddle.roles import ask, unstick
+from src.cplugs.huddle.roles import ask, unstick, wait_stuck
 from src.cplugs.huddle.rules import TaskManagerError, TaskManagerStale
 from src.cplugs.sdk import CplugContext
 
@@ -20,6 +20,8 @@ logger = structlog.get_logger()
 
 PASS_LIMIT, CONCURRENCY = 20, 4
 CHECK_TIMEOUT_S = 15.0
+REOPEN_RETRY_S = 300.0
+
 RUN_ERRORS = (OSError, RuntimeError, ValueError, LookupError, AttributeError, subprocess.SubprocessError, HTTPException)
 EXPIRED_DETAIL, CLEARED_DETAIL, FAILED_DETAIL = "wait_expired", "wait_cleared", "wait_failed"
 CHILDREN_DONE_DETAIL = "children_done"
@@ -71,11 +73,19 @@ async def send_parker(ctx: CplugContext, wait: Mapping[str, Any], list_key: str,
         logger.warning("task_manager_wait_tell_failed", item=item_id, error_type=type(exc).__name__, error=str(exc)[:200])
 
 
+async def _hand_back_or_reopen(store: Any, wait: Mapping[str, Any], text: str, detail: str) -> Dict[str, Any]:
+    try:
+        return await _run(lambda: hand_back(store, wait["item_id"], text, detail))
+    except TaskManagerError:
+        await _run(lambda: waits.WaitStore(store).reopen(wait["id"], store._clock() + REOPEN_RETRY_S))
+        raise
+
+
 async def finish(ctx: CplugContext, wait: Mapping[str, Any], status: str, text: str, detail: str) -> Optional[Dict[str, Any]]:
     store = service.store(ctx)
     if not await _run(lambda: waits.WaitStore(store).claim_end(wait["id"], status, text)):
         return None
-    item = await _run(lambda: hand_back(store, wait["item_id"], text, detail))
+    item = await _hand_back_or_reopen(store, wait, text, detail)
     logger.info("task_manager_wait_ended", item=wait["item_id"], wait=wait["id"], status=status)
     await send_parker(ctx, wait, item["list"], wait["item_id"])
     return item
@@ -128,14 +138,15 @@ class WaitRunner:
 
     async def _first_expiry(self, wait: Mapping[str, Any]) -> None:
         store = self._store()
-        item = await _run(lambda: hand_back(store, wait["item_id"], wait_copy.challenge(wait["waiting_on"], wait["expect_by"]), EXPIRED_DETAIL))
+        item = await _hand_back_or_reopen(store, wait, wait_copy.challenge(wait["waiting_on"], wait["expect_by"]), EXPIRED_DETAIL)
         logger.info("task_manager_wait_expired", item=wait["item_id"], wait=wait["id"], extended=bool(wait["extended"]))
         await send_parker(self._ctx, wait, item["list"], wait["item_id"])
 
     async def _escalate(self, wait: Mapping[str, Any]) -> None:
         store = self._store()
         await _run(lambda: ask.carnivore_ask(store, wait["item_id"], category=ask.WAIT_STUCK, context=wait_copy.escalation(wait["waiting_on"], wait["expect_by"]),
-                                             options=ask.WAIT_OPTIONS, labels=ask.WAIT_LABELS))
+                                             options=ask.WAIT_OPTIONS, labels=ask.WAIT_LABELS, prompt=wait_stuck.prompt(wait["waiting_on"], wait["set_at"]),
+                                             extra_questions=(wait_stuck.UNTIL_QUESTION,)))
         logger.info("task_manager_wait_escalated", item=wait["item_id"], wait=wait["id"])
 
     def _hosts(self) -> List[str]:

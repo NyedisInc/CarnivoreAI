@@ -148,7 +148,7 @@
         >
             <div class="ledger-tpick__grid" style="--rows: {GRID_ROWS}">
                 {#each PALETTE_GRID as cell (cell.index)}
-                    <button
+                    <button data-base-exempt="a color swatch: the color is the button"
                         type="button"
                         class="ledger-tcell"
                         class:ledger-tcell--on={chosen === cell.index}

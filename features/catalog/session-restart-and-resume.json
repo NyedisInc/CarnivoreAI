@@ -18,7 +18,7 @@
     "Choose restart the agent. A picker shows what will happen: the launch profile dropdown starts on the one the agent was launched with, and says whether the conversation resumes.",
     "To replace an agent that is still running, tick the arm box first; the tick is the confirmation.",
     "Confirm. The session comes back in the same row with its conversation resumed.",
-    "On a claude session, click choose account under the launch profile to pick the account to restart on. Leave the box unticked for a one-time choice, which also clears a saved account. Closed, the link leaves the agent on its saved account, else the active one.",
+    "On a claude session, click choose account under the launch profile to pick the account to restart on. Tick \"always launch this agent under this account\" to keep it: every later restart, wake and recreate of that agent starts on it, whichever account is active. Leave the box unticked for a one-time choice, which also clears a saved account. Closed, the link leaves the agent on its saved account, else the active one.",
     "To restart at once, hold shift and open the row menu: restart now kills the running agent and resumes it in one click. If the pane was not measured running, the normal picker opens instead and says why."
   ],
   "id": "session-restart-and-resume",
@@ -30,7 +30,14 @@
     "resume",
     "respawn"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The restart dialog showing the agent choice, the resume option and the arm checkbox",
+      "caption": "The restart picker",
+      "file": "picker.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Restart and resume a session",
   "since": "2026-09-07",
   "status": "stable",
@@ -47,6 +54,5 @@
   "where": [
     "A session's row menu, restart the agent.",
     "A session's row menu with shift held, restart now (kills and resumes)."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

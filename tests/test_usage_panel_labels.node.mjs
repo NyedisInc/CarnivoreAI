@@ -1,3 +1,4 @@
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import assert from 'node:assert/strict';
 import { createI18n } from '../client/js/i18n/runtime.js';
@@ -26,10 +27,12 @@ let failures = 0;
 let passes = 0;
 const queue = [];
 
+/** Queue one named assertion block. Inputs: name, fn. Output: void. */
 function test(name, fn) {
     queue.push([name, fn]);
 }
 
+/** Run every queued test in order. Inputs: none. Output: Promise<void>. */
 async function runQueue() {
     for (const [name, fn] of queue) {
         try {
@@ -418,13 +421,14 @@ test('the reset aria sentence names a duration, or reads its own full sentence',
 });
 
 test('the box is titled with the session name, and falls back when it cannot be', () => {
-    const named = usagePanelLabels({ state: 'ok' }, t, { sessionName: 'Fenford-FIRFORD' });
-    assert.equal(named.title, 'Fenford-FIRFORD');
+    const named = usagePanelLabels({ state: 'ok' }, t, { sessionName: 'Atlas-UI' });
+    assert.equal(named.title, 'Atlas-UI');
     assert.equal(usagePanelLabels({ state: 'ok' }, t).title, t('usage.tokens.title'));
     assert.equal(usagePanelLabels({ state: 'ok' }, t, { sessionName: '   ' }).title,
         t('usage.tokens.title'), 'whitespace is not a name');
-    const absent = usagePanelLabels({ state: 'absent' }, t, { sessionName: 'orchard' });
-    assert.equal(absent.title, 'orchard');
+    // could not be read
+    const absent = usagePanelLabels({ state: 'absent' }, t, { sessionName: 'argent' });
+    assert.equal(absent.title, 'argent');
     assert.equal(absent.message, t('usage.state.absent'));
 });
 

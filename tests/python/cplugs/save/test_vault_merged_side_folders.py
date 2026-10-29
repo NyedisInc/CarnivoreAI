@@ -9,7 +9,7 @@ from tests.python.cplugs.save.test_vault_follow import drain, engine_for
 from tests.python.cplugs.save.vault_helpers import CONV, ENC, World, jsonl
 
 SHORT = "_from--Users-x-y"
-LONG = "_from-" + "-Users-contributor-" + "a" * 220
+LONG = "_from-" + "-Users-jsugamele-" + "a" * 220
 
 
 def _make(world: World) -> dict:

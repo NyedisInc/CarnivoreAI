@@ -1,19 +1,3 @@
-"""The exact bytes a publisher signs to release one catalog item.
-
-WHY THIS IS NOT INSIDE ``catalog.py``. Everything in that file is a
-SHAPE: what a name may look like, what an index document carries, what a
-parser refuses. This is a SERIALISATION, and it has one property none of
-those have: another program, in another language, in the publisher's
-build job, must reproduce these bytes exactly. One differing byte is a
-signature that does not verify, and on the verifying side that is
-indistinguishable from a forgery. So the layout lives on its own, spelled
-out line by line, where a change to it is obvious in a diff rather than
-buried in a file of field declarations.
-
-The shapes it holds fields to still come from :mod:`src.models.catalog`.
-The dependency runs ONE WAY, statement to shapes, because the statement
-is built out of validated fields and never the other way round.
-"""
 
 from __future__ import annotations
 
@@ -37,27 +21,6 @@ def release_statement(
     commit: str,
     digest: str,
 ) -> bytes:
-    """Render the exact bytes a publisher signs for one release.
-
-    Description: NINE LINES, EACH TERMINATED BY ONE LF (0x0A), in this
-      order and no other, encoded UTF-8::
-
-        carnivore-release-v1\\n
-        <kind>\\n
-        <publisher>\\n
-        <name>\\n
-        <version>\\n
-        <repo>\\n
-        <path>\\n
-        <commit>\\n
-        <digest>\\n
-
-      There is no trailing blank line, no CR anywhere, and no separator
-      other than the LF. The build job must reproduce these bytes exactly;
-      a single differing byte is a signature that does not verify, which
-      is why the layout is spelled out here rather than left to a format
-      string at the call site.
-    """
     fields = {
         "kind": kind,
         "publisher": publisher,
@@ -87,7 +50,9 @@ DELEGATION_STATEMENT_HEADER = "carnivore-publisher-key-v1"
 
 ANY_HANDLE = "*"
 
-CUSTODIES = ("self", "catalog", "first_party")
+CUSTODIES = ("self", "catalog", "first_party", "kms")
+
+KMS_HANDLES = ("carnivore", "external")
 
 _KEY_ID_RE = re.compile(r"^[0-9A-F]{16}$")
 _PUB_LINE_RE = re.compile(r"^[A-Za-z0-9+/]{1,200}={0,2}$")
@@ -119,6 +84,8 @@ def publisher_key_statement(
         raise ValueError(f"publisher key statement custody must be one of {CUSTODIES}")
     if handle == ANY_HANDLE and custody != "catalog":
         raise ValueError("a * delegation needs custody catalog")
+    if custody == "kms" and handle not in KMS_HANDLES:
+        raise ValueError(f"a kms delegation must name one of {KMS_HANDLES}")
     if not _KEY_ID_RE.match(key_id):
         raise ValueError("publisher key statement key_id is not 16 uppercase hex")
     if not _PUB_LINE_RE.match(pub):

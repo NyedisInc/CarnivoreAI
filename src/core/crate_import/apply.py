@@ -65,7 +65,6 @@ class ImportReceipt:
 
 
 def _changed(placed: files_apply.PlacedFiles, ctx: rows_write.WriteCtx, project: Dict[str, Any]) -> bool:
-    """Whether the run wrote anything at all (a file, a created row, a created project). Pure."""
     return bool(placed.written or placed.project_written or placed.backups.get("adopted") or project["created"] or any(c.inserted for c in ctx.counts.values()))
 
 
@@ -110,7 +109,9 @@ def _commit_rows(env: ImportEnv, a: an.Analysis, import_id: str, placed: files_a
                 tracked = row_journal.start(conn)
             except row_journal.JournalError as exc:
                 raise ImportFailed("journal_failed", f"the rows cannot be recorded for an undo: {exc}", rolled_back=True) from exc
-            ctx = rows_write.WriteCtx(conn, _prior_map(conn, a.source_install), a.prov.own, a.col)
+            ctx = rows_write.WriteCtx(conn, _prior_map(conn, a.source_install), a.prov.own, a.col,
+                                      files=task_files_in.file_home(Path(env.state), lambda entry: files_apply.record_undo(hooks, placed, entry),
+                                                              task_files_in.task_roots(env)))
             for old, new in a.sessions.translate.items():
                 ctx.idmap.put(rows_identity.SESSION_UUIDS, old, new)
             sanitized = a.rows.sanitized if a.rows else {}
@@ -305,7 +306,7 @@ def _locked(reader: CrateReader, env: ImportEnv, request: ImportRequest, crate_s
         hooks.checkpoint(hk.CP_BEFORE_COMMIT)
         ctx, project, changed = _commit_rows(env, a, import_id, placed, hooks, now)
     except Exception as exc:
-        report = undo.rollback(placed.log, files_apply.undo_roots(env))
+        report = undo.rollback(placed.log, [*files_apply.undo_roots(env), *plugin_data_in.undo_roots(placed.log, env, import_id)])
         logger.warning("crate_import_rolled_back", import_id=import_id, error_type=type(exc).__name__, removed=len(report.removed),
                        kept=len(report.kept), errors=len(report.errors))
         if isinstance(exc, ImportFailed):
@@ -325,7 +326,6 @@ def _locked(reader: CrateReader, env: ImportEnv, request: ImportRequest, crate_s
 
 
 def _leftovers(report: undo.UndoReport) -> str:
-    """A sentence naming files the undo could not remove (they changed, or the removal failed). Pure."""
     if not report.kept and not report.errors:
         return ""
     return f" (not removed: {', '.join((report.kept + report.errors)[:5])})"

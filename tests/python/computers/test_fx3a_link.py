@@ -197,7 +197,7 @@ async def test_a_handshake_cancelled_before_it_ran_still_closes_its_socket():
     gate = await ll._TlsGate.open(_StubListener(), loop, "127.0.0.1", 0)
     a, b = socket.socketpair()
     try:
-        gate._admit(a, "203.0.113.16")
+        gate._admit(a, "10.0.0.1")
         (pending,) = gate._pending
         gate._drop(pending)
         for _ in range(3):

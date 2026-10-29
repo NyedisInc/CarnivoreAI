@@ -66,6 +66,14 @@ describe('dialogCode', () => {
     const code = dialogCode({ body, question: 'Do you want to proceed?' });
     expect(code).toBe('set -e\n\n  rm -rf build');
   });
+  it('keeps a script line that starts with Environment: or Reason: (u136-04)', () => {
+    const body = ' Bash command\n   cat <<EOF\n   Environment: prod\n   Reason: nightly\n   EOF\n Do you want to proceed?\n 1. Yes\n 2. No';
+    expect(dialogCode({ body, question: 'Do you want to proceed?' })).toBe('cat <<EOF\nEnvironment: prod\nReason: nightly\nEOF');
+  });
+  it('keeps a first code line shaped like a title when no header is present (u136-04)', () => {
+    const body = '   touch config file\n Do you want to proceed?\n 1. Yes\n 2. No';
+    expect(dialogCode({ body, question: 'Do you want to proceed?' })).toBe('touch config file');
+  });
   it('returns an empty string for an empty body', () => {
     expect(dialogCode({ body: '', question: 'x' })).toBe('');
   });

@@ -89,7 +89,7 @@ class _Manager:
     def tmux_socket_name(self) -> str:
         return self._socket
 
-    def _claude_uuid_for_tmux_name(self, tmux_name: str):
+    def claude_uuid_for_tmux_name(self, tmux_name: str):
         return None
 
 
@@ -143,7 +143,7 @@ def test_stop_all_stops_only_the_named_and_guarded(pane):
 def _launch(task_id: str, n: int, agent: str | None) -> dict:
     record = {"parentUuid": f"p{n}", "isSidechain": agent is not None, "type": "user",
               "uuid": f"u{n}", "timestamp": "2026-09-28T16:00:0%dZ" % n,
-              "sessionId": "7934883d-4a9e-46ca-8516-10788d83b345", "cwd": "/w",
+              "sessionId": "c0ffee00-0000-4000-8000-000000000001", "cwd": "/w",
               "message": {"role": "user", "content": [
                   {"tool_use_id": f"toolu_{task_id}", "type": "tool_result",
                    "content": f"Command running in background with ID: {task_id}. Output is "
@@ -156,7 +156,7 @@ def _launch(task_id: str, n: int, agent: str | None) -> dict:
 
 
 def test_a_sub_agent_owns_the_shells_its_file_recorded(tmp_path):
-    conversation = "7934883d-4a9e-46ca-8516-10788d83b345"
+    conversation = "c0ffee00-0000-4000-8000-000000000001"
     project = tmp_path / "projects" / "-w"
     (project / conversation / "subagents").mkdir(parents=True)
     (project / f"{conversation}.jsonl").write_text(json.dumps(_launch("bparent01", 1, None)) + "\n")
@@ -166,6 +166,6 @@ def test_a_sub_agent_owns_the_shells_its_file_recorded(tmp_path):
     assert owners.state == "ok"
     assert owners.owner_of("bsubagnt1") == "a1b2c3"
     assert owners.owner_of("bparent01") is None
-    missing = read_owners("056cd146-57dd-4192-80f4-e5026cf33f9c", working_dir="/w",
+    missing = read_owners("c0ffee00-0000-4000-8000-00000000dead", working_dir="/w",
                           projects_dir=tmp_path / "projects")
     assert missing.state == "absent" and missing.owner_of("bsubagnt1") is None

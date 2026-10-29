@@ -9,6 +9,7 @@ function payload(overrides: Partial<FeatureCatalogPayload> = {}): FeatureCatalog
       { id: 'home', name: 'Home screen' },
     ],
     catalog: [],
+    changes: [],
     ...overrides,
   };
 }

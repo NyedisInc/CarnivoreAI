@@ -107,6 +107,7 @@ export default {
     'cplug.devwidgetlab.menu.title': 'widget lab',
     'cplug.devwidgetlab.filter.placeholder': 'find a widget',
     'cplug.devwidgetlab.filter.results': 'filter by check result',
+    'cplug.devwidgetlab.filter.clear': 'clear the search',
     'cplug.devwidgetlab.filter.all': 'all results',
     'cplug.devwidgetlab.filter.failing': 'failing ({count})',
     'cplug.devwidgetlab.filter.no_run': 'no run yet',

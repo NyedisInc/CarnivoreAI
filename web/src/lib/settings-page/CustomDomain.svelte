@@ -76,6 +76,7 @@
     }
 
     const submit = () => act(() => putCustomDomain(draft, fetcher));
+    let confirmingRemove = $state(false);
     const remove = () => act(() => deleteCustomDomain(fetcher));
 
     async function copy(which: string, text: string): Promise<void> {
@@ -96,9 +97,16 @@
 
 {#snippet removeButton()}
     <div>
-        <Button variant="danger" data-cd="remove" disabled={busy || !bound} onclick={() => void remove()}>
-            {t('phoneLink.customDomain.remove')}
-        </Button>
+        {#if confirmingRemove && bound}
+            <Button data-cd="remove-keep" disabled={busy} onclick={() => (confirmingRemove = false)}>{t('phoneLink.customDomain.remove_keep')}</Button>
+            <Button variant="danger" data-cd="remove-sure" disabled={busy} onclick={() => { confirmingRemove = false; void remove(); }}>
+                {t('phoneLink.customDomain.remove_sure')}
+            </Button>
+        {:else}
+            <Button variant="danger" data-cd="remove" disabled={busy || !bound} onclick={() => (confirmingRemove = true)}>
+                {t('phoneLink.customDomain.remove')}
+            </Button>
+        {/if}
     </div>
 {/snippet}
 

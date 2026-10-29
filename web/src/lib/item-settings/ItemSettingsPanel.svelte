@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import type { Translate } from '../sessions/types';
+    import Button from '../base/Button.svelte';
     import SettingsForm from './SettingsForm.svelte';
     import { createItemSettingsController, type ItemSettingsController } from './item-settings-controller.svelte';
     import type { ItemKind } from './api';
@@ -25,7 +26,7 @@
 
 {#if ctl.status === 'error'}
     <p class="sf__error" role="alert" data-settings-load-error>{t('item_settings.error.load_named', { reason: ctl.loadError ?? '' })}</p>
-    <button type="button" class="oc-btn" onclick={() => void ctl.load()}>{t('item_settings.retry')}</button>
+    <Button onclick={() => void ctl.load()}>{t('item_settings.retry')}</Button>
 {:else if ctl.item && schema && hasFields}
     {#if ctl.notice}<p class="sf__notice" role="status">{ctl.notice}</p>{/if}
     <SettingsForm

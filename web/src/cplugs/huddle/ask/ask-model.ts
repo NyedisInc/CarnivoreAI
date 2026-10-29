@@ -1,5 +1,5 @@
 
-export type AskType = 'yes_no' | 'single' | 'multi' | 'rank' | 'short_text' | 'long_text';
+export type AskType = 'yes_no' | 'single' | 'multi' | 'rank' | 'short_text' | 'long_text' | 'datetime';
 
 export interface AskOption {
   id: string;
@@ -46,6 +46,7 @@ export interface AskValue {
   other?: string;
   note?: string;
   touched?: boolean;
+  files?: { id: string; name: string }[];
 }
 
 export type AskValues = Record<string, AskValue>;
@@ -144,11 +145,14 @@ export function tookRecommendation(question: AskQuestion, value: AskValue | unde
   }
 }
 
-export function payloadOf(questions: readonly AskQuestion[], values: AskValues, extra = ''): Record<string, Record<string, unknown>> {
+export function payloadOf(questions: readonly AskQuestion[], values: AskValues, extra = '', extraFileIds: readonly string[] = []): Record<string, Record<string, unknown>> {
   const out: Record<string, Record<string, unknown>> = {};
   for (const q of questions) {
     const v = values[q.id];
-    const note = filled(v?.note) ? { note: (v?.note ?? '').trim() } : {};
+    const note = {
+      ...(filled(v?.note) ? { note: (v?.note ?? '').trim() } : {}),
+      ...(v?.files?.length ? { file_ids: v.files.map((f) => f.id) } : {}),
+    };
     if (!v || !isAnswered(q, v)) {
       if (Object.keys(note).length) out[q.id] = note;
       continue;
@@ -160,7 +164,7 @@ export function payloadOf(questions: readonly AskQuestion[], values: AskValues, 
     else if (q.type === 'rank') out[q.id] = { order: v.order ?? [], ...note };
     else out[q.id] = { text: (v.text ?? '').trim(), ...note };
   }
-  if (filled(extra)) out[EXTRA_KEY] = { text: extra.trim() };
+  if (filled(extra) || extraFileIds.length) out[EXTRA_KEY] = { text: extra.trim(), ...(extraFileIds.length ? { file_ids: [...extraFileIds] } : {}) };
   return out;
 }
 
@@ -177,15 +181,17 @@ export function answeredByComment(thread: ReadonlyArray<{ answers_to?: number; f
   return thread.some((m) => m.answers_to === questionId && m.freeform === true);
 }
 
-export function answerWords(answer: AskAnswer | undefined): string {
+export type Translate = (key: string, params?: Record<string, string | number>) => string;
+
+export function answerWords(answer: AskAnswer | undefined, tr: Translate): string {
   if (!answer) return '';
-  if (answer.skipped) return answer.dismissed ? 'dismissed' : '';
+  if (answer.skipped) return answer.dismissed ? tr('cplug.huddle.ask.dismissed') : '';
   if (answer.order) return (answer.labels ?? answer.order).join(' > ');
   const parts: string[] = [];
   if (answer.labels) parts.push(...answer.labels);
   else if (answer.label) parts.push(answer.label);
   if (answer.text) parts.push(answer.text);
-  if (answer.other) parts.push(`other: ${answer.other}`);
+  if (answer.other) parts.push(`${tr('cplug.huddle.ask.other')}: ${answer.other}`);
   return parts.join(', ');
 }
 
@@ -198,7 +204,6 @@ export function drawnQuestions<Q extends Pick<AskQuestion, 'command'>>(questions
   return command && questions.length > 1 ? [command] : [...questions];
 }
 
-/*  hidden  */
 export function hiddenSkips(all: readonly AskQuestion[], drawn: readonly AskQuestion[]): Record<string, Record<string, unknown>> {
   return Object.fromEntries(all.filter((q) => !drawn.includes(q)).map((q) => [q.id, { skipped: true }]));
 }

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
 
 
+// The "more" menu is the engine's manual popover; jsdom has no popover API.
 (HTMLElement.prototype as { showPopover?: () => void }).showPopover ??= () => {};
 (HTMLElement.prototype as { hidePopover?: () => void }).hidePopover ??= () => {};
 
@@ -90,9 +91,9 @@ async function paint() {
     const shown: unknown[] = [];
     const opened: unknown[] = [];
     const controller = new DeepSearchController({ search: async () => answer() }, async (target) => { opened.push(target); return 'switched'; }, undefined, (s) => { shown.push(s); });
-    controller.showActions = true;
+    controller.showActions = true; // the context mode draws the buttons
     await controller.run('flux', 0);
-    controller.move(1);
+    controller.move(1);  // nothing is picked until an arrow or a click; these tests read the first hit picked
     mounted = mount(DeepSearchResults, { target: host, props: { controller } });
     await settle();
     return { controller, shown, opened };
@@ -173,10 +174,10 @@ test('the footer buttons share one class family and a short label, a quiet line 
     wire.window = windowOf();
     openModalFor({ focus: 'bookmark', request: { conversationId: 'c-ada', fileKind: 'conversation', hostKey: null, at: '2026-10-13T14:30:00' } });
     await settle();
-    const buttons = [...host.querySelectorAll('.modal-footer .modal-btn')] as HTMLElement[];
+    const buttons = [...host.querySelectorAll('.modal-footer [data-btn]')] as HTMLElement[];
     expect(buttons.map((b) => b.textContent)).toEqual(['close', 'restore as clone', 'open agent']);
-    expect(buttons.every((b) => b.className.split(' ').filter((c) => c.startsWith('modal-btn-')).length === 1)).toBe(true);
-    expect(buttons[1]!.className).toBe(buttons[2]!.className);
+    expect(buttons.every((b) => b.hasAttribute('data-btn'))).toBe(true);
+    expect(buttons[1]!.getAttribute('data-btn')).toBe(buttons[2]!.getAttribute('data-btn'));
     expect(host.querySelector('[data-testid="context-restore-line"]')?.textContent).toContain('before refactor');
     expect(host.querySelector('.dps-ctx__msg[data-line="2"]')?.classList.contains('is-hit')).toBe(true);
     expect(host.querySelector('.dps-ctx__who')?.textContent).toContain(' · ');
@@ -195,8 +196,8 @@ test('no restore action without a bookmark, or for a conversation held by a pair
     unmount(mounted!);
     host.innerHTML = '';
     wire.window = windowOf();
-    openModalFor({ hostLabel: 'hosta', request: { conversationId: 'c-ada', fileKind: 'conversation', hostKey: 'peer-hosta', line: 2 } });
+    openModalFor({ hostLabel: 'studio', request: { conversationId: 'c-ada', fileKind: 'conversation', hostKey: 'peer-studio', line: 2 } });
     await settle();
     expect(host.querySelector('[data-testid="context-restore"]')).toBeNull();
-    expect(host.querySelector('[data-testid="context-host"]')?.textContent).toBe('hosta');
+    expect(host.querySelector('[data-testid="context-host"]')?.textContent).toBe('studio');
 });

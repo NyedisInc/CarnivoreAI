@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import structlog
 
@@ -74,7 +74,7 @@ async def _received(rt: Any, state: Any, event: contract.Event) -> None:
     bindings = await asyncio.to_thread(store.list_bindings, conversation_id=conv["id"]) if conv else []
     inbound = [b for b in bindings if b["direction"] in store.INBOUND]
     recent = await asyncio.to_thread(message_store.count_since, since=time.time() - 3600, direction="in",
-                                     conversation_id=conv["id"], accepted_only=True) if conv else 0
+                                     conversation_id=conv["id"], accepted_only=True, distinct_messages=True) if conv else 0
     verdict = accept.accept_received(message, enabled=bool(state.row["enabled"]), conversation_bound=conv is not None,
                                      inbound_bound=bool(inbound), owner_senders=state.owner_senders,
                                      recent_inbound=recent)
@@ -83,14 +83,7 @@ async def _received(rt: Any, state: Any, event: contract.Event) -> None:
     if not verdict.accepted:
         await _refuse(rt, state, event, base, verdict.reason or "", verdict.notice, conv)
         return
-    body = accept.clean_body(message.text)
-    if message.has_attachments:
-        body = (body + " " if body else "") + notices.copy()["messaging.batch.attachment"]
-    cards = await _names(rt)
-    targets = [routing.Target(b["id"], b["session_uuid"], cards.get(b["session_uuid"], b["session_uuid"][:8]),
-                              b["default"]) for b in inbound]
-    reply = await asyncio.to_thread(message_store.reply_binding, state.id, message.in_reply_to)
-    chosen = routing.route(body, targets, reply_binding=reply)
+    body, chosen, targets = await _route_message(rt, state, message, inbound)
     if chosen.reason:
         await _refuse(rt, state, event, {**base, "text": body}, chosen.reason, notices.WHICH_SESSION, conv,
                       handles=routing.handles(targets))
@@ -108,6 +101,17 @@ async def _received(rt: Any, state: Any, event: contract.Event) -> None:
         rt.wake(row["session_uuid"])
 
 
+async def _route_message(rt: Any, state: Any, message: contract.Message, inbound: List[Dict[str, Any]]) -> Tuple[str, routing.Route, List[routing.Target]]:
+    body = accept.clean_body(message.text)
+    if message.has_attachments:
+        body = (body + " " if body else "") + notices.copy()["messaging.batch.attachment"]
+    cards = await _names(rt)
+    targets = [routing.Target(b["id"], b["session_uuid"], cards.get(b["session_uuid"], b["session_uuid"][:8]),
+                              b["default"]) for b in inbound]
+    reply = await asyncio.to_thread(message_store.reply_binding, state.id, message.in_reply_to)
+    return body, routing.route(body, targets, reply_binding=reply), targets
+
+
 async def _refuse(rt: Any, state: Any, event: contract.Event, base: Dict[str, Any], reason: str, notice: Any,
                   conv: Any, **params: object) -> None:
     text = "" if reason in _DROP_BODY else base.get("text", accept.clean_body(event.message.text))
@@ -117,6 +121,17 @@ async def _refuse(rt: Any, state: Any, event: contract.Event, base: Dict[str, An
     if notice and conv:
         episode = f"hour:{int(time.time() // 3600)}" if notice == accept.NOTICE_RATE else event.message.message_id
         await rt.send_notice(state, conv["id"], notice, episode, **params)
+
+
+async def _edited_text(rt: Any, state: Any, message: contract.Message, conv: Any) -> Tuple[str, bool]:
+    original = set(await asyncio.to_thread(message_store.original_bindings, state.id, message.message_id))
+    bindings = await asyncio.to_thread(store.list_bindings, conversation_id=conv["id"]) if conv else []
+    inbound = [b for b in bindings if b["direction"] in store.INBOUND]
+    body, chosen, _targets = await _route_message(rt, state, message, inbound)
+    if chosen.reason or not chosen.text or (original and set(chosen.binding_ids) != original):
+        log.info("messaging_edit_retargeted", provider_id=state.id, message_id=message.message_id)
+        return body, True
+    return chosen.text, False
 
 
 async def _supersede(rt: Any, state: Any, event: contract.Event) -> None:
@@ -130,6 +145,8 @@ async def _supersede(rt: Any, state: Any, event: contract.Event) -> None:
         return
     new_text = accept.clean_body(message.text)
     unsent = event.type == contract.EVENT_UNSENT or not new_text
+    if not unsent:
+        new_text, unsent = await _edited_text(rt, state, message, conv)
     touched = await asyncio.to_thread(
         message_store.supersede, state.id, event.id, message.message_id, unsent=unsent, new_text=new_text,
         note_for=(notices.unsent_note if unsent else (lambda _old: notices.edited_note(new_text))))

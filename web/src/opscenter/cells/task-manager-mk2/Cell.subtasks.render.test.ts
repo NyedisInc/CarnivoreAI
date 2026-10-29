@@ -14,7 +14,7 @@ const CHECKS = [
 const saved = CHECKS.map((c) => ({ ...c }));
 const ITEMS = (list: string) => [
   mk(5, list, { title: 'ship the tabs', review_checks: saved }),
-  mk(6, list, { title: 'write the test', forked_from: 5, forked_from_title: 'ship the tabs', tagged_by: 'bot-ui' }),
+  mk(6, list, { title: 'write the test', forked_from: 5, forked_from_title: 'ship the tabs', tagged_by: 'cv-ui' }),
   mk(7, list, { title: 'wire the route', forked_from: 5, forked_from_title: 'ship the tabs', state: 'review' }),
   mk(8, list, { title: 'unrelated', forked_from: 2 }),
 ];
@@ -72,9 +72,10 @@ afterEach(() => {
   clearViewFilter();
   resetInspections();
   huddle.openId = null as never;
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom without storage: the widget keeps an in-memory value */ }
 });
 
+/** Settle the mocked reads. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 10; i += 1) { await Promise.resolve(); await tick(); }
   flushSync();
@@ -109,7 +110,7 @@ describe('TM Mark II subtasks tab', () => {
     const rows = [...body.querySelectorAll('[data-mk2-subtask]')];
     expect(rows.map((r) => (r as HTMLElement).dataset.mk2Subtask)).toEqual(['6', '7']);
     expect(rows.map((r) => [r.querySelector('.mk2-sub-title')?.textContent, r.querySelector('[data-mk2-subtask-status]')?.textContent, r.querySelector('[data-mk2-subtask-owner]')?.textContent]))
-      .toEqual([['write the test', 'open', 'bot-ui'], ['wire the route', 'in review', 'joe']]);
+      .toEqual([['write the test', 'open', 'cv-ui'], ['wire the route', 'in review', 'joe']]);
   });
 
   test('pressing a subtask opens that task', async () => {
@@ -138,7 +139,7 @@ describe('TM Mark II subtasks tab', () => {
 
   test('subtasksOf lists only live forks of the parent, with the owner the tag or the author', () => {
     const items = [...ITEMS('7'), mk(9, '7', { forked_from: 5, deleted: true })] as unknown as HuddleItem[];
-    expect(subtasksOf(5, items).map((r) => [r.id, r.owner])).toEqual([[6, 'bot-ui'], [7, 'joe']]);
+    expect(subtasksOf(5, items).map((r) => [r.id, r.owner])).toEqual([[6, 'cv-ui'], [7, 'joe']]);
     expect(subtasksOf(99, items)).toEqual([]);
   });
 });
@@ -150,7 +151,7 @@ describe('TM Mark II review checklist', () => {
     expect(boxes.map((b) => [b.getAttribute('role'), b.getAttribute('aria-checked'), b.querySelector('.oc-option__label')?.textContent])).toEqual([
       ['checkbox', 'true', 'tests pass'], ['checkbox', 'false', 'looks right on a phone'],
     ]);
-    expect(boxes[0]?.querySelector('.oc-option__reason')?.textContent).toMatch(/^ticked by owner \S/);
+    expect(boxes[0]?.querySelector('.oc-option__reason')?.textContent).toMatch(/^ticked by joe \S/);
     expect(boxes[1]?.querySelector('.oc-option__reason')).toBeNull();
   });
 

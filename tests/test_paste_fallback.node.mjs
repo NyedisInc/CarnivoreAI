@@ -1,3 +1,4 @@
+// The properties that matter:
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -5,6 +6,8 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { createEnvironment } from './mini-dom.mjs';
+
+const CATALOG = (await import('../client/js/i18n/catalog.en.js')).default;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -30,6 +33,11 @@ async function runQueue() {
     for (const t of queue) await t();
 }
 
+/**
+ * Read a file under client/.
+ * @param {...string} parts  Path segments under client/.
+ * @returns {string} File contents.
+ */
 function clientFile(...parts) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', ...parts), 'utf8');
 }
@@ -68,6 +76,8 @@ function load(opts = {}) {
     vm.runInContext(clientFile('js', 'fab-menu.js'), sandbox);
     vm.runInContext(clientFile('js', 'modal-stack.js'), sandbox);
     vm.runInContext(clientFile('js', 'paste-fallback.js'), sandbox);
+    sandbox.CloudeI18n = { t: (key) => CATALOG[key] ?? key };
+    vm.runInContext(clientFile('js', 'i18n', 'tr.js'), sandbox);
     vm.runInContext(clientFile('js', 'clipboard.js'), sandbox);
 
     return { env, calls, term, win: env.window };
@@ -81,6 +91,8 @@ function overlay(env) {
     return env.document.getElementById('pasteFallback');
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('NOTICE_Z beats every chrome layer that used to cover the pill', () => {
     const { win } = load();
@@ -169,6 +181,8 @@ test('the terminal pill delegates, so every existing caller is fixed at once', (
         'the pill must route to the notice when fab-menu.js is loaded');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('no read API opens the fallback rather than reporting a dead end', async () => {
     const { env, win, term } = load({ clipboard: undefined });
@@ -206,6 +220,7 @@ test('ONE INJECTION PATH: the fallback never writes to the socket itself', () =>
         assert.ok(!src.includes(forbidden),
             `paste-fallback.js must delegate injection, found ${forbidden}`);
     }
+    // client/js/terminal-input-ownership.js.
     assert.ok(clientFile('js', 'clipboard.js')
         .includes('window.PasteFallback.open(term, injectText, ticket)'));
 });

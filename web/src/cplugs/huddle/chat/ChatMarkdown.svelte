@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* <script */
   import { renderMarkdown } from '../../sdk';
 
   let { source }: { source: string } = $props();
@@ -34,6 +33,8 @@
     .hdc-md :global(ol) { margin: 4px 0; }
     .hdc-md :global(ul),
     .hdc-md :global(ol) { padding-left: 18px; }
+    .hdc-md :global(li > ul),
+    .hdc-md :global(li > ol) { margin: 0; }
     .hdc-md :global(code) {
       padding: 0 3px;
       border-radius: 2px;

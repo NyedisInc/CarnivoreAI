@@ -6,6 +6,7 @@ import sqlite3
 from fastapi import WebSocket, WebSocketDisconnect
 import structlog
 
+from src.api.error_response import sentence_for
 from src.models import (
     WSMessageType,
     WSPTYResizeMessage,
@@ -48,28 +49,6 @@ async def receive_messages(
     websocket: WebSocket, session_manager, session_id=None, stream=None,
     role: socket_role.TerminalSocketRole = socket_role.PRIMARY_ROLE,
 ):
-    """
-    Receive messages from the WebSocket client.
-
-    IT READS AND IT DOES NOT SEND. Its two replies - the pong and the
-    input-failure error - are OFFERED into the viewer's outbox so the
-    writer task delivers them, because a send from here would be a second
-    coroutine on this socket and two of those interleave frames into a
-    stream nothing reports as broken. With no stream (an older caller, a
-    test double) those replies are skipped rather than sent directly: a
-    dropped pong costs a keepalive, and a silent second writer costs a
-    corrupted terminal.
-
-    Args:
-        websocket: WebSocket connection
-        session_manager: SessionManager instance
-        session_id: the session this WS is bound to (None = current)
-        stream: this viewer's outbox (BoundedStream), or None
-        role: what this socket may do. ``accepts_input`` False drops
-            binary frames and resizes with a logged refusal and keeps
-            reading. Defaults to the primary role, so an older caller
-            behaves exactly as it always did.
-    """
     swarm_row_id = await _peer_swarm_body(websocket, session_manager, session_id)
 
     def report_input_failure(exc: Exception, length: int) -> None:
@@ -81,7 +60,7 @@ async def receive_messages(
         if viewer_fanout.is_viewer_stream(stream):
             viewer_fanout.offer_text(
                 stream,
-                WSErrorMessage(error="input_failed", message=str(exc)).model_dump_json(),
+                WSErrorMessage(error="input_failed", message=sentence_for("input_failed", 500)).model_dump_json(),
             )
 
     async def deliver_input(text: str) -> None:
@@ -137,6 +116,12 @@ async def receive_messages(
 
                         elif msg_type == WSMessageType.REPAINT:
                             await ws_repaint.repaint(websocket, session_id, stream)
+
+                        elif msg_type == WSMessageType.PAUSE and viewer_fanout.is_viewer_stream(stream):
+                            stream.paused = True
+                        elif msg_type == WSMessageType.RESUME and viewer_fanout.is_viewer_stream(stream):
+                            if getattr(stream, "paused", False):
+                                await ws_repaint.resume(websocket, session_id, stream)
 
                         elif msg_type == WSMessageType.PING:
                             if viewer_fanout.is_viewer_stream(stream):

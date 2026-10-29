@@ -66,6 +66,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -85,7 +90,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session working with plugins": [
@@ -155,11 +161,6 @@
       "key": "w"
     },
     {
-      "id": "huddle-do-not-disturb",
-      "label": "do not disturb",
-      "key": "q"
-    },
-    {
       "id": "mute",
       "label": "mute",
       "key": "m"
@@ -169,6 +170,11 @@
       "label": "restart the agent",
       "key": "h",
       "sep": true
+    },
+    {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "e"
     },
     {
       "id": "sleep",
@@ -190,7 +196,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session idle unread": [
@@ -265,6 +272,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -284,7 +296,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session idle unread with plugins": [
@@ -359,11 +372,6 @@
       "key": "w"
     },
     {
-      "id": "huddle-do-not-disturb",
-      "label": "do not disturb",
-      "key": "q"
-    },
-    {
       "id": "mute",
       "label": "mute",
       "key": "m"
@@ -373,6 +381,11 @@
       "label": "restart the agent",
       "key": "h",
       "sep": true
+    },
+    {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "e"
     },
     {
       "id": "sleep",
@@ -394,7 +407,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session finished unread": [
@@ -469,6 +483,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -488,7 +507,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session finished unread with plugins": [
@@ -563,11 +583,6 @@
       "key": "w"
     },
     {
-      "id": "huddle-do-not-disturb",
-      "label": "do not disturb",
-      "key": "q"
-    },
-    {
       "id": "mute",
       "label": "mute",
       "key": "m"
@@ -577,6 +592,11 @@
       "label": "restart the agent",
       "key": "h",
       "sep": true
+    },
+    {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "e"
     },
     {
       "id": "sleep",
@@ -598,7 +618,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session dead": [
@@ -668,6 +689,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -687,7 +713,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session dead not restartable": [
@@ -752,10 +779,15 @@
       "key": "m"
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j",
+      "sep": true
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
-      "key": "s",
-      "sep": true
+      "key": "s"
     },
     {
       "id": "send-to",
@@ -772,7 +804,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session asleep": [
@@ -836,10 +869,15 @@
       "key": "m"
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j",
+      "sep": true
+    },
+    {
       "id": "wake",
       "label": "wake agent",
-      "key": "e",
-      "sep": true
+      "key": "e"
     },
     {
       "id": "send-to",
@@ -851,7 +889,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session asleep unread": [
@@ -920,10 +959,15 @@
       "key": "m"
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j",
+      "sep": true
+    },
+    {
       "id": "wake",
       "label": "wake agent",
-      "key": "e",
-      "sep": true
+      "key": "e"
     },
     {
       "id": "send-to",
@@ -935,7 +979,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session asleep no key": [
@@ -994,11 +1039,17 @@
       "key": "m"
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "",
+      "disabled": "cannot change swarm membership: this agent has no stored session id",
+      "sep": true
+    },
+    {
       "id": "wake",
       "label": "wake agent",
       "key": "",
-      "disabled": "cannot tell which stored agent this row is, so it cannot be woken from here",
-      "sep": true
+      "disabled": "cannot tell which stored agent this row is, so it cannot be woken from here"
     },
     {
       "id": "send-to",
@@ -1012,7 +1063,8 @@
       "label": "kill agent",
       "key": "",
       "disabled": "cannot tell which stored agent this row is, so it cannot be woken from here",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session closed": [
@@ -1198,6 +1250,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -1217,7 +1274,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session update busy": [
@@ -1294,6 +1352,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -1313,7 +1376,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session mcp drop idle": [
@@ -1389,6 +1453,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -1408,7 +1477,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session mcp drop working": [
@@ -1485,6 +1555,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -1504,7 +1579,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session remote": [
@@ -1559,10 +1635,16 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session remote with plugins": [
@@ -1617,10 +1699,16 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session adopted": [
@@ -1705,7 +1793,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session not renameable": [
@@ -1776,6 +1865,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -1795,7 +1889,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session in group": [
@@ -1870,6 +1965,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -1889,7 +1989,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session shift held": [
@@ -1966,6 +2067,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -1985,7 +2091,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session no key": [
@@ -2045,6 +2152,12 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "",
+      "disabled": "cannot change swarm membership: this agent has no stored session id"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "",
@@ -2067,7 +2180,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session muted codex": [
@@ -2137,6 +2251,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -2156,7 +2275,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session kept awake": [
@@ -2226,6 +2346,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -2245,7 +2370,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "session home surface": [
@@ -2309,6 +2435,11 @@
       "sep": true
     },
     {
+      "id": "swarm-join",
+      "label": "join the swarm",
+      "key": "j"
+    },
+    {
       "id": "sleep",
       "label": "sleep agent",
       "key": "s"
@@ -2328,7 +2459,8 @@
       "id": "close",
       "label": "kill agent",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "browser": [
@@ -2357,7 +2489,8 @@
       "id": "close",
       "label": "close proxy browser",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "browser in group": [
@@ -2391,7 +2524,8 @@
       "id": "close",
       "label": "close proxy browser",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "page": [
@@ -2420,7 +2554,8 @@
       "id": "close",
       "label": "close page",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "file": [
@@ -2443,7 +2578,8 @@
       "id": "close",
       "label": "close file",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ],
   "layout": [
@@ -2477,7 +2613,8 @@
       "id": "close",
       "label": "remove layout",
       "key": "k",
-      "sep": true
+      "sep": true,
+      "danger": true
     }
   ]
 }

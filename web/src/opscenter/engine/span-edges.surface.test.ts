@@ -41,6 +41,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
+/** Mount the terminal surface at a stated size. */
 function mountSurface(): HTMLElement {
   const target = document.createElement('div');
   document.body.appendChild(target);

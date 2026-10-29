@@ -22,6 +22,11 @@ import ChatCard from './ChatCard.svelte';
 import { cardVariant, chatSlotId } from './chat-model';
 import type { HuddleItem } from '../huddle-model';
 
+// jsdom has no popover API; the one item menu shows its levels through it (#2613).
+const popoverProto = HTMLElement.prototype as unknown as Record<string, unknown>;
+popoverProto.showPopover ??= function () {};
+popoverProto.hidePopover ??= function () {};
+
 let app: object | null = null;
 
 async function mountChat(): Promise<HTMLElement> {
@@ -54,12 +59,12 @@ describe('buttons keep their own looks', () => {
     input.dispatchEvent(new Event('input', { bubbles: true }));
     flushSync();
     expect(send.classList.contains('oc-btn--confirm')).toBe(true);
-    (host.querySelector('.hdc-menu-key') as HTMLButtonElement).click();
+    host.querySelector('[data-chat-bar]')!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 10 }));
     flushSync();
-    (host.querySelector('.hdc-turn-off') as HTMLButtonElement).click();
+    (document.querySelector('[data-node="turn-off-agent"]') as HTMLButtonElement).click();
     flushSync();
-    const yes = host.querySelector('.hdc-confirm-yes') as HTMLButtonElement;
-    expect(yes.classList.contains('oc-btn--danger')).toBe(true);
+    const yes = document.querySelector('[data-node="turn-off-confirm"]') as HTMLButtonElement;
+    expect(yes.classList.contains('acm-item--danger')).toBe(true);
     expect(yes.classList.contains('oc-btn--confirm')).toBe(false);
   });
 });

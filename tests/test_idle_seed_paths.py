@@ -14,7 +14,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
 # ruff: noqa: E402
 from src.core.attention.codex_reader import CodexEvidence, CodexTranscriptFacts
-from src.core.attention.registry_read import REG_ABSENT, RegistryRecord
+from src.core.attention.registry_record import REG_ABSENT, RegistryRecord
 from src.core.auto_sleep.idle_seed import (
     SOURCE_CLAUDE_REGISTRY,
     SOURCE_CLAUDE_TRANSCRIPT,
@@ -68,7 +68,7 @@ def test_default_directory_registry_hit_reads_that_files_mtime(tmp_path, monkeyp
     registry_file = registry_dir / "4242.json"
     registry_file.write_text(json.dumps({"pid": 4242, "status": "idle"}))
     monkeypatch.setattr(
-        "src.core.attention.registry_read.default_registry_directory",
+        "src.core.attention.registry_index.default_registry_directory",
         lambda: str(registry_dir),
     )
     config_path = tmp_path / "config.json"
@@ -90,7 +90,7 @@ def test_no_default_hit_falls_back_to_a_managed_profile_directory(tmp_path, monk
     default_dir = tmp_path / "default_sessions"
     default_dir.mkdir()
     monkeypatch.setattr(
-        "src.core.attention.registry_read.default_registry_directory",
+        "src.core.attention.registry_index.default_registry_directory",
         lambda: str(default_dir),
     )
 
@@ -121,7 +121,7 @@ def test_no_hit_anywhere_reads_no_registry_candidate(tmp_path, monkeypatch):
     default_dir = tmp_path / "default_sessions"
     default_dir.mkdir()
     monkeypatch.setattr(
-        "src.core.attention.registry_read.default_registry_directory",
+        "src.core.attention.registry_index.default_registry_directory",
         lambda: str(default_dir),
     )
     config_path = tmp_path / "config.json"
@@ -138,7 +138,7 @@ def test_no_hit_anywhere_reads_no_registry_candidate(tmp_path, monkeypatch):
 
 def test_transcript_candidate_is_present_whenever_a_uuid_is_known(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "src.core.attention.registry_read.default_registry_directory",
+        "src.core.attention.registry_index.default_registry_directory",
         lambda: str(tmp_path / "empty"),
     )
     (tmp_path / "empty").mkdir()

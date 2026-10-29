@@ -53,7 +53,6 @@ export function isRemotable(nodes: readonly MenuNode[]): boolean {
   return nodes.every((node) => !node.swatches && !node.agent && !node.aggregateLightHtml && !node.glyphHtml && !node.locked && (!node.children || isRemotable(node.children)));
 }
 
-/* label: ' */
 export function toWire(nodes: readonly MenuNode[]): WireNode[] {
   return nodes.map((node) => ({
     id: node.id,

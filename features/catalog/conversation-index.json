@@ -6,7 +6,7 @@
   ],
   "examples": [
     "You remember discussing a flaky migration test last week but not which session it was; type flaky migration in the projects search box and the conversation opens with its summary and last messages.",
-    "You close forty old sessions before a trip; their summaries are written one at a time in the background by the Local server and are searchable as they land."
+    "You close forty old sessions before a trip; their summaries are written one at a time in the background by the Spark and are searchable as they land."
   ],
   "how_to": [
     "Close, remove or sleep a session: its last messages and details are saved at once and a summary is queued.",
@@ -24,6 +24,7 @@
     "summary",
     "recent messages",
     "fts5",
+    "spark",
     "local llm"
   ],
   "media_exempt": "A search box and settings panel on pages whose screenshots are recaptured before the next version bump.",

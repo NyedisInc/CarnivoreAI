@@ -1,12 +1,12 @@
 {
   "kind": "cplug",
-  "id": "acme/warezsmoke",
+  "id": "harbor/warezsmoke",
   "name": "warez smoke",
   "description": "A minimal sidecar plugin with one read tool, used to prove the store path end to end.",
   "version": "1.0.0",
   "api_version": 1,
   "min_app_version": "1.12.20",
-  "author": "acme",
+  "author": "harbor",
   "license": "MIT",
   "tier": "catalog",
   "scope": [

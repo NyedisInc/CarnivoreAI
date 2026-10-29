@@ -26,7 +26,6 @@ class VaultWalk:
     blockers: List[Tuple[str, str]] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     reconcile: List[Dict[str, Any]] = field(default_factory=list)
-    # could not be read
     troubled: Set[str] = field(default_factory=set)
 
 

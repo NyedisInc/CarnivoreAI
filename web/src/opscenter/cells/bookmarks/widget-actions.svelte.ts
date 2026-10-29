@@ -15,6 +15,7 @@ export class BookmarkWidgetActions {
   armed = $state(false);
   busy = $state<string | null>(null);
   notice = $state<Notice | null>(null);
+  confirmingDelete = $state<number | null>(null);
 
   async branch(rowId: number, point: Point): Promise<void> {
     await this.run('branch', async () => {
@@ -33,6 +34,13 @@ export class BookmarkWidgetActions {
   }
 
   async remove(mark: Bookmark): Promise<void> {
+    if (this.busy) return;
+    if (this.confirmingDelete !== mark.id) {
+      this.confirmingDelete = mark.id;
+      this.notice = { text: t('bookmarks.delete_confirm'), error: false };
+      return;
+    }
+    this.confirmingDelete = null;
     await this.run('remove', async () => {
       await deleteBookmark(mark.id);
       return null;
@@ -41,6 +49,7 @@ export class BookmarkWidgetActions {
 
   private async run(name: string, action: () => Promise<string | null>): Promise<void> {
     if (this.busy) return;
+    this.confirmingDelete = null;
     this.busy = name;
     this.notice = null;
     try {

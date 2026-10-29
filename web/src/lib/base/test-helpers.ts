@@ -10,7 +10,6 @@ export function cleanup(): void {
     document.body.innerHTML = '';
 }
 
-/* label: ' */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function show(component: Component<any>, props: Record<string, unknown> = {}): HTMLElement {
     const target = document.createElement('div');

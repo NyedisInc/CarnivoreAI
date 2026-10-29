@@ -1,3 +1,4 @@
+// start a session
 
 'use strict';
 

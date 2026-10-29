@@ -25,6 +25,7 @@ from src.core.session_transcript_status_read import (
     transcript_status_for,
 )
 from src.core.hosts.ddl import LOCAL_HOST_KEY, host_scope
+from src.core.sessions.host_port import SessionHost
 
 logger = structlog.get_logger(__name__)
 
@@ -33,7 +34,7 @@ _STORES: "WeakKeyDictionary[Any, SessionStatusSeeds]" = WeakKeyDictionary()
 _SEED_READ_ERRORS: Tuple[type, ...] = (sqlite3.Error, OSError, ValueError, KeyError)
 
 
-def seeds_for(manager: Any) -> SessionStatusSeeds:
+def seeds_for(manager: SessionHost) -> SessionStatusSeeds:
     try:
         store = _STORES.get(manager)
         if store is None:
@@ -50,28 +51,13 @@ def read_transcript_rest(
     *,
     session_id: Optional[str] = None,
 ) -> TranscriptRest:
-    """What the tail of a conversation's transcript says about rest.
-
-    Description: resolves the uuid to a file through
-      ``conversation_presence`` and classifies the last decidable record
-      in the bounded tail window. THREE REFUSALS, kept apart: no uuid
-      bound to the row, a MEASURED absent transcript, and a file that
-      could not be read. None of them is evidence of rest, and only the
-      middle one is evidence of anything.
-    Inputs: uuid (str | None) - ``sessions.claude_session_uuid``.
-      working_dir (str | None) - used only for the fast-path slug.
-      session_id (str | None) - for the failure log only; this function
-      never uses it to look anything up.
-    Output: TranscriptRest.
-    Example: read_transcript_rest(uuid, '/Users/x/proj').verdict
-    """
     return read_transcript_signal(
         uuid, working_dir, session_id=session_id
     ).tail
 
 
 def read_instance_row(
-    manager: Any,
+    manager: SessionHost,
     tmux_name: Optional[str],
     epoch: Optional[int],
     *,
@@ -93,7 +79,7 @@ def read_instance_row(
             "SELECT activity_state, activity_state_at, claude_session_uuid, "
             f"working_dir FROM sessions WHERE tmux_socket = ?{scope_sql} AND "
             "tmux_name = ? AND tmux_created_epoch = ?",
-            (manager._tmux_socket_name(), *scope_params, tmux_name, int(epoch)),
+            (manager.tmux_socket_name(), *scope_params, tmux_name, int(epoch)),
         ).fetchone()
         if not row:
             return None
@@ -121,15 +107,15 @@ def read_instance_row(
 
 
 def _resolve_epoch(
-    manager: Any, session_id: str, epoch: Optional[int]
+    manager: SessionHost, session_id: str, epoch: Optional[int]
 ) -> Optional[int]:
     if epoch is not None:
         return epoch
-    return (getattr(manager, "_instance_epochs", None) or {}).get(session_id)
+    return manager._instance_epochs.get(session_id)
 
 
 def derive_seed(
-    manager: Any,
+    manager: SessionHost,
     session_id: str,
     tmux_name: Optional[str],
     *,
@@ -177,7 +163,7 @@ def derive_seed(
 
 
 def seeded_status(
-    manager: Any,
+    manager: SessionHost,
     session_id: str,
     tmux_name: Optional[str],
     *,
@@ -198,7 +184,7 @@ def seeded_status(
 
 
 def seeded_display(
-    manager: Any,
+    manager: SessionHost,
     session_id: str,
     tmux_name: Optional[str],
     *,
@@ -238,7 +224,7 @@ def seeded_display(
         return (None, STATUS_SOURCE_NONE)
 
 
-def seed_live_sessions(manager: Any) -> Tuple[int, int]:
+def seed_live_sessions(manager: SessionHost) -> Tuple[int, int]:
     seeded = 0
     examined = 0
     try:
@@ -257,7 +243,7 @@ def seed_live_sessions(manager: Any) -> Tuple[int, int]:
     for session_id, session in sessions.items():
         try:
             examined += 1
-            authority = getattr(manager, "hook_tokens", None)
+            authority = manager.hook_tokens
             tmux_name = getattr(session, "tmux_session", None) or (
                 authority.name_for(session_id) if authority is not None else None
             )

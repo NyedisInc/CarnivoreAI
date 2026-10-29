@@ -32,7 +32,6 @@ export function captureRequest(
 
 export interface CaptureOutcome {
   ok: boolean;
-  /* could not */
   determined: boolean;
   failures: string[];
   widget?: string;
@@ -72,7 +71,6 @@ export interface MatrixState {
   reason: string;
   running: boolean;
   started: string | null;
-  /* could not */
   exit: number | null;
   table: FitTable | null;
 }
@@ -102,7 +100,6 @@ export function widgetOf(key: string): string {
   return key.startsWith(DRAFT_KEY_PREFIX) ? key : key.split(':')[0]!;
 }
 
-/* label: ' */
 export function distinctWidgets(leaves: readonly { key: string }[]): number {
   return new Set(leaves.map((leaf) => widgetOf(leaf.key))).size;
 }
@@ -111,7 +108,6 @@ function rowFor(table: FitTable | null, key: string): FitTable['widgets'][number
   return table?.widgets.find((one) => one.widget === key) ?? table?.widgets.find((one) => one.widget === widgetOf(key));
 }
 
-/* could not */
 export function widgetVerdict(table: FitTable | null, key: string): WidgetVerdict {
   const row = rowFor(table, key);
   if (!row) return 'none';
@@ -181,9 +177,8 @@ export function sizesToDraw(host: LabHost, picked: readonly string[]): LabSize[]
 
 export type FrameVerdict = 'pass' | 'fail' | 'clip';
 
-/* the widget does not declare it */
 export function frameVerdict(table: FitTable | null, widget: string, host: string, size: string): { verdict: FrameVerdict; reasons: string[] } | null {
-  const row = table?.widgets.find((one) => one.widget === widget);
+  const row = rowFor(table, widget);
   if (!row) return null;
   const state = cellState(row, `${host}/${size}`);
   if (state === 'unsupported') return null;

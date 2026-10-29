@@ -1,9 +1,3 @@
-"""Push subscriptions, one JSON file in the state directory (0600: it holds each subscription's auth secret).
-
-A subscription belongs to the authenticated owner (every route is owner only). ``device_id`` is optional and
-is set server-side only (never from a client body): the push route passes the link gate's verified device id for a
-subscription made over the phone link, so revoking that device calls :meth:`SubscriptionStore.remove_for_device`.
-"""
 
 from __future__ import annotations
 
@@ -31,7 +25,6 @@ def now_iso() -> str:
 class SubscriptionStore:
 
     def __init__(self, state_dir: Path) -> None:
-        """Input: the state directory. The file is created on the first write."""
         self._path = Path(state_dir) / FILE_NAME
         self._lock = threading.Lock()
 

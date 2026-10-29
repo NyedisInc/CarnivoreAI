@@ -1,5 +1,4 @@
-// could not
-// could not
+// WHY THIS FILE EXISTS
 
 'use strict';
 

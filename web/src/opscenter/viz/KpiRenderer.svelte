@@ -3,6 +3,9 @@
   import { framedTitle } from '../shell/frame-header.svelte';
   import EmptyState from './EmptyState.svelte';
   import SparkLine from './SparkLine.svelte';
+  import Checkbox from '../../lib/base/Checkbox.svelte';
+  import Field from '../../lib/base/Field.svelte';
+  import Select from '../../lib/base/Select.svelte';
   import StatTile from '../../lib/base/StatTile.svelte';
   import TripwireEditor from './TripwireEditor.svelte';
   import { analytics, chartTick } from '../cells/analytics/state.svelte';
@@ -11,9 +14,10 @@
   import { t } from '../../lib/i18n/index.svelte';
   import { describeDelta, formatMetric } from './format';
   import { emptyLine, emptyTopic, isBlank } from './empty';
-  import { PRESET_MS, defaultQuotaWindow, kpiPlan } from './plan';
-  import { runQueries, type BatchItem } from './query-client';
-  import { VIZ_KINDS, VIZ_SPECS, vizOf } from './specs';
+  import { defaultQuotaWindow, kpiPlan } from './plan';
+  import { planQuery } from './plan-query.svelte';
+  import { VIZ_SPECS, vizOf } from './specs';
+  import { metricOptions, rangeOptions, vizKindOptions } from './settings-options';
   import type { Tier } from './density';
   import { watchVisible } from './visible';
   import { declareSettingsPanel } from '../widgets/chrome/settings-panels.svelte';
@@ -23,30 +27,19 @@
   const framing = framedTitle();
   let root = $state<HTMLElement | undefined>();
   let visible = $state(false);
-  let outcome = $state<BatchItem | null>(null);
-  let failure = $state('');
-  const PRESETS = Object.keys(PRESET_MS) as RangePreset[];
 
   const series = $derived(config.series.find((item) => item.visible !== false));
   const compare = $derived((config.options?.compare_prior ?? VIZ_SPECS.kpi.options.compare_prior) !== false);
   const preset = $derived(config.range.preset ?? VIZ_SPECS.kpi.preset);
   const now = $derived(chartTick(config));
-  const planKey = $derived.by(() => {
-    const items = kpiPlan(config, { now, timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions) });
-    return JSON.stringify({ on: config.enabled, items });
-  });
+  const read = planQuery(
+    () => ({ on: config.enabled, items: kpiPlan(config, { now, timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions) }) }),
+    () => visible,
+  );
+  const outcome = $derived(read.outcomes?.[0] ?? null);
+  const failure = $derived(read.failure);
 
   onMount(() => (root ? watchVisible(root, (value) => { visible = value; }) : undefined));
-
-  $effect(() => {
-    const plan = JSON.parse(planKey) as { on: boolean; items: Parameters<typeof runQueries>[0] };
-    if (!plan.on || plan.items.length === 0) { outcome = null; failure = ''; return; }
-    if (!visible) return;
-    const abort = new AbortController();
-    runQueries(plan.items, abort.signal).then(([item]) => { failure = ''; outcome = item ?? null; })
-      .catch((cause: unknown) => { if (!abort.signal.aborted) failure = cause instanceof Error ? cause.message : t('analytics.query_failed'); });
-    return () => abort.abort();
-  });
 
   const result = $derived(outcome?.ok ? outcome.result : null);
   const message = $derived(failure || (outcome && !outcome.ok ? outcome.error.message : ''));
@@ -119,18 +112,12 @@
 
 {#snippet panel()}
   <div class="viz-kpi__edit" data-instance-settings="" aria-label={t('analytics.chart_settings')}>
-    <label>{t('analytics.title')} <input maxlength="80" value={config.title} oninput={(event) => edit({ title: event.currentTarget.value })} /></label>
-    <label>{t('viz.kind')} <select value={vizOf(config)} onchange={(event) => edit({ viz: event.currentTarget.value as ChartConfig['viz'], options: { ...VIZ_SPECS[event.currentTarget.value as Viz].options } })}>
-      {#each VIZ_KINDS as kind (kind)}<option value={kind}>{t(`viz.${kind}`)}</option>{/each}
-    </select></label>
-    <label>{t('analytics.metric')} <select value={series?.metric ?? ''} onchange={(event) => edit({ series: config.series.map((item) => item === series ? { ...item, metric: event.currentTarget.value, transform: event.currentTarget.value === 'quota_utilization' || event.currentTarget.value.startsWith('average_') ? 'total' : item.transform } : item) })}>
-      {#each analytics.catalog as metric (metric.id)}<option value={metric.id}>{metric.label || metric.id}</option>{/each}
-    </select></label>
-    <label>{t('analytics.range')} <select value={config.range.preset ?? ''} onchange={(event) => edit({ range: { ...config.range, preset: (event.currentTarget.value || null) as RangePreset | null, zoom: null } })}>
-      <option value="">{t('analytics.range_global')}</option>{#each PRESETS as item (item)}<option value={item}>{t(`analytics.preset_${item}`)}</option>{/each}
-    </select></label>
-    <label><input type="checkbox" checked={compare} onchange={(event) => edit({ options: { ...config.options, compare_prior: event.currentTarget.checked } })} /> {t('viz.compare_prior')}</label>
-    <label><input type="checkbox" checked={config.enabled} onchange={(event) => edit({ enabled: event.currentTarget.checked })} /> {t('analytics.enabled')}</label>
+    <Field label={t('analytics.title')} maxlength={80} value={config.title} oninput={(event) => edit({ title: event.currentTarget.value })} />
+    <Select size="sm" label={t('viz.kind')} value={vizOf(config)} options={vizKindOptions()} onchange={(event) => edit({ viz: event.currentTarget.value as ChartConfig['viz'], options: { ...VIZ_SPECS[event.currentTarget.value as Viz].options } })} />
+    <Select size="sm" label={t('analytics.metric')} value={series?.metric ?? ''} options={metricOptions(analytics.catalog)} onchange={(event) => edit({ series: config.series.map((item) => item === series ? { ...item, metric: event.currentTarget.value, transform: event.currentTarget.value === 'quota_utilization' || event.currentTarget.value.startsWith('average_') ? 'total' : item.transform } : item) })} />
+    <Select size="sm" label={t('analytics.range')} value={config.range.preset ?? ''} options={rangeOptions()} onchange={(event) => edit({ range: { ...config.range, preset: (event.currentTarget.value || null) as RangePreset | null, zoom: null } })} />
+    <Checkbox label={t('viz.compare_prior')} checked={compare} onchange={(event) => edit({ options: { ...config.options, compare_prior: event.currentTarget.checked } })} />
+    <Checkbox label={t('analytics.enabled')} checked={config.enabled} onchange={(event) => edit({ enabled: event.currentTarget.checked })} />
     <TripwireEditor {config} />
   </div>
 {/snippet}

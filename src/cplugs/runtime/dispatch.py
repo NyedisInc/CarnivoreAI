@@ -20,7 +20,6 @@ logger = structlog.get_logger()
 
 FAMILY_PER_SECOND = 20
 TOAST_PER_HOUR = 6
-TOPIC_MIN_INTERVAL = 1.0
 NOISY_WINDOW_SECONDS = 60.0
 MAX_OUTPUT_LINES = 500
 AI_TOP_LEVEL_KEYS = frozenset({"feature", "capability", "input"})
@@ -28,7 +27,7 @@ CONTROL_ACTIONS = frozenset({"restart", "stop", "sleep", "wake"})
 CODES = {"permission_denied": frames.PERMISSION_DENIED, "not_granted": frames.NOT_GRANTED, "dialog_open": frames.DIALOG_OPEN,
          "rate_limited": frames.RATE_LIMITED, "too_large": frames.TOO_LARGE, "timeout": frames.TIMEOUT,
          "disabled": frames.DISABLED, "invalid_params": frames.INVALID_PARAMS, "integrity": frames.PERMISSION_DENIED,
-         "unavailable": frames.METHOD_NOT_FOUND, "internal_error": frames.INTERNAL_ERROR}
+         "unavailable": frames.METHOD_NOT_FOUND, "not_found": frames.INVALID_PARAMS, "internal_error": frames.INTERNAL_ERROR}
 
 Async = Callable[..., Awaitable[Any]]
 
@@ -73,6 +72,10 @@ class HostServices:
     process_snapshot: Optional[Async] = None
     mcp_config: Optional[Async] = None
     mcp_links: Optional[Async] = None
+    flow_run: Optional[Async] = None
+    flow_feed: Optional[Async] = None
+    flow_tasks: Optional[Async] = None
+    flow_run_part: Optional[Async] = None
 
 
 class _Window:
@@ -103,8 +106,6 @@ class HostDispatcher:
         self._toast: Dict[str, _Window] = {}
         self._storage: Dict[str, HostStorage] = {}
         self._noisy: Dict[Tuple[str, str], Tuple[Optional[float], int]] = {}
-        self._last_topic: Dict[Tuple[str, str], float] = {}
-        self._pending_topics: Dict[Tuple[str, str], Optional[str]] = {}
 
 
     def _window(self, ctx: PluginContext, family: str) -> _Window:
@@ -170,6 +171,7 @@ class HostDispatcher:
             "projects.list": self._projects_list, "projects.git": self._projects_git,
             "projects.snapshot": self._projects_snapshot, "exports.write": self._exports_write, "log": self._log,
             "process.snapshot": self._process_snapshot, "mcp.config": self._mcp_config, "mcp.links": self._mcp_links,
+            "flow.run": self._flow_run, "flow.run_part": self._flow_run_part, "flow.feed": self._flow_feed, "flow.tasks": self._flow_tasks,
         }
 
 
@@ -253,24 +255,8 @@ class HostDispatcher:
         name, key = params.get("name"), params.get("key")
         if not isinstance(name, str) or name not in ctx.topics or not (key is None or isinstance(key, str)):
             raise guards.Refused("permission_denied", "undeclared topic", {"reason": "topic_not_declared"})
-        full = f"cplug.{ctx.plugin_id}.{name}"
-        now, slot = self._clock(), (ctx.plugin_id, name)
-        if now - self._last_topic.get(slot, -1e9) < TOPIC_MIN_INTERVAL:
-            self._pending_topics[slot] = key
-            return {"coalesced": True}
-        self._last_topic[slot] = now
-        self._service("publish_topic")(full, key)
+        self._service("publish_topic")(f"cplug.{ctx.plugin_id}.{name}", key)
         return {}
-
-    def flush_topics(self) -> int:
-        sent = 0
-        for slot, key in list(self._pending_topics.items()):
-            if self._clock() - self._last_topic.get(slot, -1e9) >= TOPIC_MIN_INTERVAL and self._svc.publish_topic:
-                self._last_topic[slot] = self._clock()
-                self._svc.publish_topic(f"cplug.{slot[0]}.{slot[1]}", key)
-                del self._pending_topics[slot]
-                sent += 1
-        return sent
 
     async def _ui_invalidate(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
         surface = params.get("surface")
@@ -348,6 +334,24 @@ class HostDispatcher:
     async def _mcp_links(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
         return await self._mcp_session(ctx, params, "mcp_links")
 
+    async def _flow_run(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
+        self._need(ctx, "flow.read")
+        return dict(await self._service("flow_run")(ctx.install_key, params))
+
+    async def _flow_run_part(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
+        self._need(ctx, "flow.read")
+        return dict(await self._service("flow_run_part")(ctx.install_key, params))
+
+    async def _flow_tasks(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
+        self._need(ctx, "flow.read")
+        return dict(await self._service("flow_tasks")(ctx.install_key, params))
+
+    async def _flow_feed(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
+        self._need(ctx, "flow.read")
+        if params.get("topic") not in ctx.topics:
+            raise guards.Refused("permission_denied", "undeclared topic", {"reason": "topic_not_declared"})
+        return dict(await self._service("flow_feed")(ctx.install_key, params))
+
     async def _projects_list(self, ctx: PluginContext, params: Dict[str, Any]) -> Dict[str, Any]:
         self._need(ctx, "sessions.read")
         return {"projects": [{"id": p["id"], "name": p["name"]} for p in await self._service("list_projects")()]}
@@ -363,6 +367,8 @@ class HostDispatcher:
         repo = self._repo(params.get("project"))
         try:
             return await asyncio.to_thread(git_ops.read, repo, params.get("op"))
+        except git_ops.GitUnavailable as exc:
+            raise guards.Refused("unavailable", str(exc)) from exc
         except git_ops.GitRefused as exc:
             raise guards.Refused("invalid_params", str(exc)) from exc
 
@@ -371,6 +377,8 @@ class HostDispatcher:
         repo = self._repo(params.get("project"))
         try:
             return {"ref": await asyncio.to_thread(git_ops.snapshot, repo, params.get("turn"))}
+        except git_ops.GitUnavailable as exc:
+            raise guards.Refused("unavailable", str(exc)) from exc
         except git_ops.GitRefused as exc:
             raise guards.Refused("invalid_params", str(exc)) from exc
 

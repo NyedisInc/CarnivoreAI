@@ -1,37 +1,3 @@
-"""The timers of one conversation: status per timer, counts, next fire.
-
-PURE DERIVATION over a :class:`~src.core.timers.index.TimerIndex`, a
-process fact and a clock. The rules, in the order they are applied:
-
-1. A call whose input fails its contract, or whose ``toolUseResult`` is an
-   object failing its contract, is ``shape_unrecognized``.
-2. A call whose result is a plain string (the harness refused it: "The
-   user doesn't want to proceed") is ``refused``: nothing was scheduled.
-3. WAKEUP: fires at ``scheduledFor`` (epoch ms) from its result, else at
-   the call's timestamp plus ``delaySeconds``. A later wakeup SUPERSEDES
-   it (Claude Code keeps one pending wakeup); ``stop: true`` CANCELS it
-   and every earlier one. It FIRED when a turn started at or after its
-   fire time (one second of slack for clock rounding).
-4. CRON: identified by the id its result carries. A later ``CronDelete``
-   naming that id CANCELS it. A recurring job past the auto-expiry its
-   result text records ("Auto-expires after N days") is EXPIRED. A
-   one-shot job FIRED when a turn started at or after its first fire.
-3b. SLEEP: a backgrounded shell whose command is plainly ``sleep N &&
-   ...`` (``index.py``'s ``SleepCall``), an informal timer with no
-   fired-record of its own. FIRED once ``now`` reaches its creation time
-   plus the delay; elapsed wall time, never a turn start, since nothing
-   in the transcript announces a background shell finished.
-5. LIVENESS, last. Timers live inside the claude process, so a timer that
-   survived rules 1-4 is ``live`` only when the process holding the
-   conversation is ALIVE and STARTED AT OR BEFORE the timer was created.
-   A process that is gone, or started after the timer (a restart, a
-   resume), lost it: ``lost``. A process that could not be measured
-   leaves it ``unknown``, never live and never zero.
-
-The next fire is the soonest ``fire_at`` among live timers; a recurring
-cron's is computed from now, and an expression :mod:`cron` cannot read
-gives no next fire rather than a guessed one.
-"""
 
 from __future__ import annotations
 

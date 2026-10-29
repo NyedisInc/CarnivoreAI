@@ -115,7 +115,7 @@ def test_observation_live_work_and_quiet_window() -> None:
 
 
 def test_named_reason_is_carried_and_an_unknown_one_refused() -> None:
-    live = dict(probe_ok=True, pane_dead="0", pane_start_command='"keyc"', agent_command="keyc --resume u",
+    live = dict(probe_ok=True, pane_dead="0", pane_start_command='"cld"', agent_command="cld --resume u",
                 live_restart_confirmed=True)
     plan = resolve_respawn_plan(**live, live_restart_reason=LIVE_RESTART_REASON_MCP_BRIDGE_MIGRATION)
     assert plan.kills_live_pane and plan.kill_reason == LIVE_RESTART_REASON_MCP_BRIDGE_MIGRATION
@@ -144,7 +144,7 @@ class FakeManager:
     async def get_session_info(self, session_id: str) -> Optional[SimpleNamespace]:
         return next((i for i in self.infos.values() if i.session.id == session_id), None)
 
-    def _tmux_socket_name(self) -> str:
+    def tmux_socket_name(self) -> str:
         return "test-socket"
 
     def _resume_target_for_tmux_name(self, name: str, socket: str) -> SimpleNamespace:

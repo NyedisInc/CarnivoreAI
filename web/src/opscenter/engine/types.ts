@@ -85,7 +85,6 @@ export interface Layout {
 
 export interface PhoneMark {
   tone: string;
-  /* could not */
   shape?: 'solid' | 'hollow';
   count?: number | null;
   label: string;
@@ -140,11 +139,9 @@ export interface ColumnSpec {
   weight: number;
   align?: 'start' | 'end';
   tone?: string;
-  /* running sessions */
   insetPx?: number;
   headInsetPx?: number;
   line?: 1 | 2;
-  /* padding */
   minCh?: number;
 }
 

@@ -1,4 +1,4 @@
-/* could not */
+/* could not evaluate */
 
 console.log('[ConfigEditorFilter Module] Loading...');
 
@@ -7,7 +7,6 @@ console.log('[ConfigEditorFilter Module] Loading...');
 
 const MATCH_LIMIT = 500;
 
-/*  hidden  */
 function isHidden(node, prefs) {
     if (!node || !prefs) return false;
     if (prefs.hideDot && String(node.name || '').startsWith('.')) return true;
@@ -15,7 +14,6 @@ function isHidden(node, prefs) {
     return false;
 }
 
-/*  hidden  */
 function visibleNodes(nodes, prefs) {
     return (nodes || []).filter((n) => !isHidden(n, prefs));
 }

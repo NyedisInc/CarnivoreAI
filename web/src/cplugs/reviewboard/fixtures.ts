@@ -19,7 +19,7 @@ export function round(n: number, on: string, over: Partial<BoardRound> = {}): Bo
 export function boardAnswer(over: Partial<BoardSidecar> = {}): BoardAnswer {
   const sidecar: BoardSidecar = {
     board: { slug: '20261013-bottom-bar', title: 'bottom bar', kind: 'mockup' },
-    task: { item_id: 41, computer: 'summit-m4' },
+    task: { item_id: 526, computer: 'mac-mini-m4' },
     revisions: [revision(1), revision(2), revision(3)],
     rounds: [round(1, 'r1')],
     ...over,

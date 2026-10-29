@@ -1,38 +1,7 @@
-"""The live session table, its output fan-out, log buffers and counters.
-
-``SessionRegistry`` is the single owner of everything this application
-knows about a session that is RUNNING RIGHT NOW: ``sessions`` (id to
-:class:`~src.models.Session`), ``backends`` (id to its
-:class:`~src.core.session_backend.SessionBackend`), ``subscribers`` (id
-to the queues watching its bytes), ``last_session_id`` (which one is
-"current"), ``log_buffers`` and ``command_counts``.
-
-**IT LANDED IN TWO PIECES AND BOTH ARE HERE NOW.** Slice S4 of plan v1
-moved the two containers with no external reader at all - the log
-buffers and the command counters - deliberately putting the pattern
-under test on the half that could not break a caller. Slice S4 of plan
-v2 moved the rest. Nothing in this class forwards anywhere and
-``SessionManager`` keeps no copy of any of it.
-
-**ONE PANE IS ONE REGISTRATION, and
-:meth:`registered_ids_for_tmux_name` is what lets a caller enforce
-that.** A tmux pane bound under two session ids means two backends
-tailing one FIFO, which is measurable from outside as
-``GET /sessions/list`` returning 22 rows for 21 live tmux sessions. That
-query has to run against the SAME ``backends`` dict the registration
-path writes; a second dict holding a copy answers every equality
-assertion correctly and still misses the second registration.
-
-**THE TRIM IS ON APPEND AND NOWHERE ELSE.** A buffer only ever grows
-through ``append_log``, so that is the one place a bound can be
-enforced; checking anywhere else would be a second answer to a question
-with one writer.
-"""
 
 from __future__ import annotations
 
 import base64
-from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 import structlog
@@ -46,21 +15,17 @@ from src.core.bounded_stream import (
 )
 from src.core.session_backend import SessionBackend
 from src.models import LogEntry, Session
+from src.models.utc_time import utc_now
 
 logger = structlog.get_logger()
 
 
 def _retire_replaced_reader(session_id: str, backend: SessionBackend) -> None:
-    task = getattr(backend, "_reader_task", None)
-    stopped = task is not None and not task.done()
-    if stopped:
-        task.cancel()
-    if hasattr(backend, "_running"):
-        backend._running = False
+    stopped = backend.detach_reader()
     logger.warning(
         "registry_replaced_live_backend",
         session_id=session_id,
-        tmux_session=getattr(backend, "tmux_session", None),
+        tmux_session=backend.tmux_session,
         reader_stopped=stopped,
         note=(
             "a second backend was registered under an id that already had "
@@ -162,15 +127,6 @@ class SessionRegistry:
         return self.sessions.get(session_id)
 
     def get_backend(self, session_id: str) -> Optional[SessionBackend]:
-        """The backend driving an id's pane, or None.
-
-        Description: None covers two different situations that this
-          container cannot tell apart - no such session, and a session
-          registered without a backend. A caller that needs to
-          distinguish them asks :meth:`get_session` as well.
-        Inputs: session_id (str).
-        Output: SessionBackend | None.
-        """
         return self.backends.get(session_id)
 
     def list_sessions(self) -> List[Session]:
@@ -205,7 +161,7 @@ class SessionRegistry:
         found = [
             sid
             for sid, backend in self.backends.items()
-            if getattr(backend, "tmux_session", None) == name
+            if backend.tmux_session == name
         ]
         if also and also in self.backends and also not in found:
             found.append(also)
@@ -260,7 +216,7 @@ class SessionRegistry:
     ) -> LogEntry:
         buf = self.log_buffers.setdefault(session_id, [])
         entry = LogEntry(
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             session_id=session_id,
             content=content,
             log_type=log_type,

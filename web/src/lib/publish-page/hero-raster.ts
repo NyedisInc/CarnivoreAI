@@ -3,7 +3,6 @@ import { HERO_H, HERO_W } from './hero-art';
 
 export type RasterType = 'image/png' | 'image/webp';
 
-/* could not */
 export type Encoder = (width: number, height: number, type: RasterType) => Promise<Blob | null>;
 
 export interface MadeHero { blob: Blob; type: RasterType; width: number; height: number }

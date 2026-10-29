@@ -6,7 +6,7 @@ import sqlite3
 import pytest
 
 from tests.stats import seed
-from src.core.stats import config, project_groups, queries
+from src.core.stats import config, project_groups, queries, query_buckets
 from src.core.stats.store import StatsStore
 from src.core.stats.plugin.extract import project_key
 from src.core.db import db_path_for
@@ -66,7 +66,7 @@ def test_minute_totals_and_unknown_price_remain_disclosed(store):
 
 
 def test_resolution_and_series_budgets(store):
-    with pytest.raises(queries.QueryLimit):
+    with pytest.raises(query_buckets.QueryLimit):
         queries.execute(store, _query(resolution="minute", to="2026-03-09T08:00:00Z"))
     with pytest.raises(ValueError):
         _query(timezone="Invented/Nowhere")
@@ -115,9 +115,9 @@ def test_rate_clips_dst_calendar_bucket_to_requested_hour(store):
     assert result["series"][0]["points"][0]["value"] == 1
     assert result["unit"] == "tokens/second"
     assert result["base_unit"] == "tokens"
-    assert queries._bucket_bounds("2026-03-08T00:00:00-05:00", "day",
+    assert query_buckets.bucket_bounds("2026-03-08T00:00:00-05:00", "day",
                                   __import__("zoneinfo").ZoneInfo("America/New_York"))[1] - \
-           queries._bucket_bounds("2026-03-08T00:00:00-05:00", "day",
+           query_buckets.bucket_bounds("2026-03-08T00:00:00-05:00", "day",
                                   __import__("zoneinfo").ZoneInfo("America/New_York"))[0] == 23 * 3600
 
 

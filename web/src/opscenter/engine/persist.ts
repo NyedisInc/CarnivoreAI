@@ -1,7 +1,6 @@
 
 import { META, isInstanceId } from './meta';
-import { isPluginSlot } from './plugin-kinds';
-import { MAX_VIEWERS, PRIMARY_SLOT, ROW_MAX, normalizeRow, resetLayout, rowFloor } from './model';
+import { MAX_VIEWERS, PRIMARY_SLOT, ROW_MAX, isViewerSlot, normalizeRow, resetLayout, rowFloor } from './model';
 import { dropRetiredCells } from './retired-cells';
 import { replaceCells } from './replaced-cells';
 import { MAX_SPAN, repairSpans } from './spans';
@@ -57,7 +56,7 @@ function readReserved(raw: unknown): Reservation[] | null {
 
 function slotKind(id: unknown, metas: MetaMap): 'singleton' | 'instance' | null {
   if (typeof id !== 'string') return null;
-  if (id in metas) return 'singleton';
+  if (Object.hasOwn(metas, id)) return 'singleton';
   return INSTANCE_ID.test(id) ? 'instance' : null;
 }
 
@@ -119,7 +118,6 @@ function positive(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0;
 }
 
-/*  hidden  */
 export function validate(
   raw: unknown,
   metas: MetaMap = META,
@@ -137,7 +135,7 @@ export function validate(
     const inner = validate(dropped.raw, metas, page, currentPrimarySessionId);
     return inner.layout ? { ...inner, migrated: true } : inner;
   }
-  const stored = readStoredGrid(raw, page, (id) => id in metas || isInstanceId(id as SlotId));
+  const stored = readStoredGrid(raw, page, (id) => Object.hasOwn(metas, id) || isInstanceId(id as SlotId));
   if (stored.kind === 'v7-refused') return { layout: null, refusal: 'tree', repaired: false };
   if (stored.kind === 'v7') {
     const inner = validate(stored.grid, metas, page, currentPrimarySessionId);
@@ -177,7 +175,7 @@ export function validate(
       if (!cellKind || typeof cell !== 'string') return { layout: null, refusal: 'cells', repaired: false };
       if (seenCells.has(cell)) return { layout: null, refusal: 'cells', repaired: false };
       seenCells.add(cell);
-      if (cellKind === 'instance' && cell !== PRIMARY_SLOT && !cell.startsWith('analytics:') && !isPluginSlot(cell)) viewers += 1;
+      if (cellKind === 'instance' && isViewerSlot(cell)) viewers += 1;
       if (!positive(slot['fr'])) repaired = true;
       const span = slot['span'];
       if (span !== undefined) {
@@ -216,7 +214,7 @@ export function validate(
     if (!kind || typeof id !== 'string') return { layout: null, refusal: 'cells', repaired: false };
     if (seenCells.has(id)) return { layout: null, refusal: 'cells', repaired: false };
     seenCells.add(id);
-    if (kind === 'instance' && id !== PRIMARY_SLOT && !id.startsWith('analytics:') && !isPluginSlot(id)) viewers += 1;
+    if (kind === 'instance' && isViewerSlot(id)) viewers += 1;
     hidden.push(id as SlotId);
   }
 
@@ -282,6 +280,7 @@ function refused(page: LayoutPage, notice: string, layout: Layout, session = '')
   return { layout, notice, stored: false };
 }
 
+/* gives the same there is nothing */
 const PERMANENT_REFUSALS: ReadonlySet<Refusal> = new Set<Refusal>([
   'unreadable',
   'oversize',
@@ -344,6 +343,28 @@ const pending = new Map<string, Layout>();
 let timer: ReturnType<typeof setTimeout> | undefined;
 let frame = 0;
 
+interface ToastSurface {
+  add(toast: Record<string, unknown>): void;
+}
+
+function announceOversizeSave(key: string): void {
+  const id = `layout-oversize:${key}`;
+  if (oversizeAnnounced.has(id)) return;
+  oversizeAnnounced.add(id);
+  const surface = (globalThis as { ToastManager?: ToastSurface }).ToastManager;
+  surface?.add({
+    id,
+    session_id: null,
+    kind: 'LayoutOversize',
+    title: t('opscenter.layout.save_oversize.title'),
+    body: t('opscenter.layout.save_oversize.body'),
+    session_label: t('opscenter.layout.save_oversize.surface'),
+    local: true,
+  });
+}
+
+const oversizeAnnounced = new Set<string>();
+
 export function flushSave(page?: LayoutPage, session = ''): void {
   if (timer !== undefined) {
     clearTimeout(timer);
@@ -361,7 +382,14 @@ export function flushSave(page?: LayoutPage, session = ''): void {
     const store = storage(key);
     if (!store) continue;
     try {
-      store.setItem(key, JSON.stringify(layout));
+      const text = JSON.stringify(layout);
+      if (text.length > MAX_BYTES) {
+        console.warn('opscenter: a layout is over the size limit and was not saved', { key, bytes: text.length, limit: MAX_BYTES });
+        announceOversizeSave(key);
+        continue;
+      }
+      store.setItem(key, text);
+      oversizeAnnounced.delete(`layout-oversize:${key}`);
     } catch {
     }
   }

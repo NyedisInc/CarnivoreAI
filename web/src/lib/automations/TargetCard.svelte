@@ -25,7 +25,6 @@
     try {
       projects = await listProjectChoices();
     } catch {
-      // could not
       failed = true;
       projects = [];
     }

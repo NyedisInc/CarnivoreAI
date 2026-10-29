@@ -7,7 +7,7 @@ from typing import Dict, Iterator, List, Optional, Tuple
 
 from src.core.self_check import constants as K
 from src.core.self_check import monitor
-from src.core.self_check.checks import Context, SystemIO, run_checks
+from src.core.self_check.checks import Context, SystemIO, agents_report, run_checks
 from src.core.tmux_socket_resolution import resolve_probe_socket
 
 ROOT = Path("/fake")
@@ -106,3 +106,22 @@ def test_probes_the_resolved_legacy_socket_and_no_server_with_live_sessions_fail
     io2 = FakeIO()
     tmux_status(pinned, io2)
     assert io2.probed == ["cloude"]
+
+
+def test_agents_report_names_codex_when_present_and_missing_when_not() -> None:
+    ctx = Context(**{**CTX.__dict__, "codex_candidates": ("/fake/codex",)})
+
+    class WithCodex(FakeIO):
+        def is_executable(self, path: str) -> bool:
+            return path in ("/fake/claude", "/fake/codex")
+
+    assert agents_report(WithCodex(), ctx) == {"codex": {"found": True, "path": "/fake/codex"}}
+    assert agents_report(FakeIO(), ctx) == {"codex": {"found": False, "path": None}}
+    assert "codex" not in K.ALL_CHECKS
+
+
+def test_report_carries_the_agents_beside_the_checks(monkeypatch) -> None:
+    monkeypatch.setattr(monitor, "run_checks", lambda ctx, io=None: run_checks(CTX, FakeIO()))
+    answer = monitor.report(CTX)
+    assert set(answer) == {"status", "checks", "agents"}
+    assert answer["agents"] == {"codex": {"found": False, "path": None}}

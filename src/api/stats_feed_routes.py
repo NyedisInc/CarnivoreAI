@@ -30,6 +30,14 @@ async def get_stats_feed(request: Request, window: str = Query("1h"), lease: boo
 
 @peer_router.get("/feed/local", response_model=None, dependencies=[Depends(peer_auth.require_peer_sessions)])
 async def get_stats_feed_local(request: Request) -> dict:
+    """THIS computer's own token numbers for a paired computer (peer token, sessions scope; the owner may read it too).
+
+    Output: ``{v, install_id, rev, now, state, data_through, rate, windows, gaps}``; ``windows`` holds sparse buckets
+      ``[start, fresh, cache_write, cache_read, out]`` for all four windows and is null while this computer has no
+      numbers (stats off or unavailable). It NEVER carries data imported from another computer (loop guard, F8).
+    A peer's read renews the peer lease, so this computer keeps its numbers fresh for it; it does not start this
+      computer's own peer pull.
+    """
     feed = install(request.app.state)
     if peer_fanout.is_peer_call(request):
         feed.touch_peer()

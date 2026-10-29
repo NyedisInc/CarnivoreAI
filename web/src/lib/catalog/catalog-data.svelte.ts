@@ -10,6 +10,7 @@ import { isAppOwnSource } from './app-own';
 import { anyUpdate, groupInstalled, sameCopy } from './installed-rows';
 import type { CatalogIndexState, CatalogItem, InstalledItem } from './types';
 
+/* and the three */
 export interface CatalogData {
     readonly index: CatalogIndexState | null;
     readonly items: readonly CatalogItem[];
@@ -22,7 +23,6 @@ export interface CatalogData {
     readonly failure: string | null;
     readonly loading: boolean;
     readonly refreshing: boolean;
-    /* nothing at all */
     readonly isEmpty: boolean;
     stateFor(id: string | null): InstallState;
     send(id: string | null, event: Parameters<typeof transition>[1]): void;

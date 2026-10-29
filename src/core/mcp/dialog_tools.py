@@ -1,6 +1,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from types import SimpleNamespace
 from typing import Any, Optional
 
@@ -44,9 +46,19 @@ def _body(args: dict) -> Any:
 def _shown(body: Any) -> dict:
     choice = body.choice
     kind = next(k for k in ("option", "options", "other", "dismiss", "plain") if getattr(choice, k) is not None)
-    value = {"option": choice.option, "options": choice.options, "other": f"{len(choice.other or '')} characters of text",
+    value = {"option": choice.option, "options": choice.options, "other": _shown_text(choice.other),
              "dismiss": True, "plain": choice.plain}[kind]
     return {"fingerprint": body.fingerprint[:12], "choice": {kind: value}}
+
+
+async def _choice_digest(body: Any) -> str:
+    canonical = json.dumps(body.choice.model_dump(exclude_none=True), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()[:16]
+
+
+def _choice_digest(body: Any) -> str:
+    canonical = json.dumps(body.choice.model_dump(exclude_none=True), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()[:16]
 
 
 async def _shown_dialog(manager: Any, info: Any) -> Optional[dict]:
@@ -101,7 +113,7 @@ async def session_dialog_answer(manager: Any, caller: AgentCaller, args: dict) -
     beast_eligible = not own and not await _held_for_owner(manager, info, body.fingerprint,
                                                            choice=body.choice.model_dump(exclude_none=True))
     return await park(manager, caller, info.session.id, info.tmux_session or "", "session_dialog_answer", summary,
-                      shown, run, dedupe_key=f"session_dialog_answer:{info.session.id}:{body.fingerprint}",
+                      shown, run, dedupe_key=f"session_dialog_answer:{info.session.id}:{body.fingerprint}:{_choice_digest(body)}",
                       beast_eligible=beast_eligible)
 
 

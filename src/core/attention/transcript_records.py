@@ -26,11 +26,15 @@ TASK_NOTIFICATION_KIND: str = "task-notification"
 
 SYSTEM_PROMPT_SOURCE: str = "system"
 
-# already running
 QUEUED_COMMAND_ATTACHMENT: str = "queued_command"
 
 
-def _record_text(record: Dict[str, Any]) -> str:
+__all__ = [
+    "record_text", "retired_ids", "is_task_notification", "is_real_user_prompt",
+    "is_interrupt", "is_local_command", "is_resume_placeholder",
+]
+
+def record_text(record: Dict[str, Any]) -> str:
     message = record.get("message")
     content = message.get("content") if isinstance(message, dict) else None
     if isinstance(content, str):
@@ -58,7 +62,7 @@ def _tag_value(text: str, tag: str) -> Optional[str]:
     return value or None
 
 
-def _retired_ids(text: str) -> List[str]:
+def retired_ids(text: str) -> List[str]:
     if TASK_NOTIFICATION_MARKER not in text or _tag_value(text, "status") is None:
         return []
     return [
@@ -68,14 +72,14 @@ def _retired_ids(text: str) -> List[str]:
     ]
 
 
-def _is_task_notification(record: Dict[str, Any]) -> bool:
+def is_task_notification(record: Dict[str, Any]) -> bool:
     origin = record.get("origin")
     if not isinstance(origin, dict):
         return False
     return origin.get("kind") == TASK_NOTIFICATION_KIND
 
 
-def _is_real_user_prompt(record: Dict[str, Any]) -> bool:
+def is_real_user_prompt(record: Dict[str, Any]) -> bool:
     if record.get("type") != "user":
         return False
     if record.get("isMeta") is True:
@@ -88,20 +92,20 @@ def _is_real_user_prompt(record: Dict[str, Any]) -> bool:
         return False
     if record.get("promptSource") == SYSTEM_PROMPT_SOURCE:
         return False
-    return not _is_task_notification(record)
+    return not is_task_notification(record)
 
 
-def _is_interrupt(record: Dict[str, Any]) -> bool:
+def is_interrupt(record: Dict[str, Any]) -> bool:
     if record.get("type") != "user":
         return False
     if record.get("isMeta") is True or record.get("isSidechain") is True:
         return False
     if record.get("toolUseResult") is not None:
         return False
-    return _record_text(record).strip() in INTERRUPT_MARKERS
+    return record_text(record).strip() in INTERRUPT_MARKERS
 
 
-def _is_local_command(record: Dict[str, Any]) -> bool:
+def is_local_command(record: Dict[str, Any]) -> bool:
     if record.get("type") == "system":
         return record.get("subtype") == LOCAL_COMMAND_SUBTYPE
     if record.get("type") != "user" or record.get("isSidechain") is True:
@@ -116,7 +120,7 @@ def _is_local_command(record: Dict[str, Any]) -> bool:
 SYNTHETIC_MODEL: str = "<synthetic>"
 
 
-def _is_resume_placeholder(record: Dict[str, Any]) -> bool:
+def is_resume_placeholder(record: Dict[str, Any]) -> bool:
     if record.get("type") != "assistant" or record.get("isSidechain") is True:
         return False
     if record.get("isApiErrorMessage") is True:

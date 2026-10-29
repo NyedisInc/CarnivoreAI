@@ -140,7 +140,7 @@ describe('manifest declarations', () => {
   });
 });
 
-describe('family copies in the area', () => {
+describe('family copies in the area (Joe (ccsliinc), 2026-10-03: "yes drop anywhere")', () => {
   test('two copies of a family with different targets are two items, keyed by target; a repeat target is refused', () => {
     let items = zm.addItem([], 'core.terminal', undefined, 'row:7');
     items = zm.addItem(items, 'core.terminal', undefined, 'row:8');
@@ -158,7 +158,7 @@ describe('family copies in the area', () => {
   });
 });
 
-describe('views', () => {
+describe('views (Joe (ccsliinc), 2026-10-10)', () => {
   test('a placement stored under an old all sessions id reads as the merged widget with that view', () => {
     const items = normalizeZone({ v: 1, items: [{ widget: 'core.tasks-all' }, { widget: 'core.automations-all', look: 'full' }, { widget: 'core.notes' }] })!;
     expect(items).toEqual([
@@ -225,7 +225,7 @@ describe('several copies of a widget with views', () => {
   });
 });
 
-describe('options per copy', () => {
+describe('options per copy (Joe (ccsliinc), 2026-10-11: the questions widget, "multiple instances")', () => {
   test('the questions widget may be placed more than once, a widget without options of its own may not', () => {
     expect(zm.isRepeatable('core.questions')).toBe(true);
     const two = addItem(addItem([], 'core.questions'), 'core.questions');

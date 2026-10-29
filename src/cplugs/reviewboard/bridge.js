@@ -1,4 +1,3 @@
-/*  hidden  */
 (function () {
   'use strict';
   var VERSION = 1;
@@ -73,7 +72,6 @@
     return ids;
   }
 
-  /* --color- */
   function themeAware() {
     var pattern = /var\(\s*--(oc|color)-/;
     var sheets = document.querySelectorAll('style:not([' + SCROLLBAR_ATTR + '])');
@@ -131,7 +129,6 @@
     box.style.setProperty('height', px + 'px');
   }
 
-  /*  hidden  */
   function makeSpacer(anchor, id) {
     var tag = anchor.tagName;
     var spacer = document.createElement(tag === 'TR' ? 'tr' : tag === 'LI' ? 'li' : 'div');

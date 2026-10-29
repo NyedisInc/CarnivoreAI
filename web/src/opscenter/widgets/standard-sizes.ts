@@ -1,4 +1,3 @@
-/* padding */
 
 import { DEFAULT_WIDTH_PX } from '../../lib/drawer/resize';
 
@@ -32,7 +31,6 @@ export const MIDDLE_UNITS: Readonly<FitSize> = Object.freeze({ w: 4, h: 4 });
 
 export const LARGE_CAP_PX: Readonly<FitSize> = Object.freeze({ w: 1440, h: 960 });
 
-/* padding */
 export const GLANCE_ROW_PADDING_PX = 4;
 
 export const DESKTOP_VIEWPORT_PX = 1600;

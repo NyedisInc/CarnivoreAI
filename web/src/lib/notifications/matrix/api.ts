@@ -21,7 +21,6 @@ export interface Family {
     readonly label_key: string;
 }
 
-/* cannot be changed */
 export interface Cell {
     readonly value: boolean;
     readonly source: 'global' | 'local' | 'locked' | 'default';

@@ -211,14 +211,6 @@ export interface TaskManagerSession {
   elsewhere?: boolean;
 }
 
-export type SendReason = 'last_task_manager_caller' | 'only_session' | 'pick' | 'picked' | 'lead';
-
-export interface SendChoice {
-  sessions: TaskManagerSession[];
-  default: string | null;
-  reason: SendReason;
-}
-
 export const TASK_MANAGER_FAMILY = 'cplug.huddle.list';
 
 export const ALL_LIST = 'all';
@@ -280,7 +272,6 @@ export function visibleItems(items: readonly HuddleItem[], hideCompleted: boolea
   return items.filter((i) => !i.placeholder && !(hideCompleted && isApproved(i.state)));
 }
 
-/*  hidden  */
 export function fullMove(all: readonly number[], visible: readonly number[], from: number, to: number): [number, number] {
   const moved = visible[from];
   if (moved === undefined) return [from, from];
@@ -363,7 +354,7 @@ export function unreadTotal(lists: readonly Pick<TaskManagerListRow, 'unread'>[]
 }
 
 export function moveTargets<T extends Pick<TaskManagerListRow, 'key'>>(lists: readonly T[], from: string): T[] {
-  return lists.filter((row) => row.key !== AGGREGATE && row.key !== from);
+  return lists.filter((row) => row.key !== AGGREGATE && row.key !== from && !isAgentList(row.key));
 }
 
 export function refusalCode(payload: unknown): string | null {
@@ -408,7 +399,6 @@ export function regroup(items: readonly HuddleItem[], groups: readonly TaskManag
   return sections.flatMap((s) => s.items).map((i, n) => (i.position === n ? i : { ...i, position: n }));
 }
 
-/*  hidden  */
 export function sectionIndex(all: readonly number[], visible: readonly number[], at: number): number {
   const next = visible[at];
   if (next !== undefined) return all.indexOf(next);

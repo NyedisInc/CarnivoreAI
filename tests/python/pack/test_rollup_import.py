@@ -88,7 +88,7 @@ def b_state(tmp_path):
     state.mkdir()
     assert ensure_db_migrated(state).status == "ok"
     with closing(connect(db_path_for(state))) as conn:
-        peer_hosts.upsert(conn, install_id=PEER, label="hosta", grant_id="g1", fid="f1", initiator=False)
+        peer_hosts.upsert(conn, install_id=PEER, label="studio", grant_id="g1", fid="f1", initiator=False)
     return state
 
 

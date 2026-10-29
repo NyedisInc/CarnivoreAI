@@ -70,6 +70,10 @@
                 <dt>{t('plugins.page.fact.publisher')}</dt>
                 <dd data-plugin-publisher>{plugin.publisher}</dd>
             {/if}
+            {#if plugin.pageProblem}
+                <dt>{t('plugins.page.fact.page')}</dt>
+                <dd data-plugin-page-problem>{t('plugins.page.fact.page_problem', { reason: plugin.pageProblem })}</dd>
+            {/if}
             {#if plugin.tools.length}
                 <dt>{t('plugins.page.fact.tools')}</dt>
                 <dd data-plugin-tools>{plugin.tools.join(', ')}</dd>

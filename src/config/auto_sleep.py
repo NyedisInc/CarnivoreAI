@@ -30,6 +30,24 @@ _UUID_SHAPE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z-]{0,63}$")
 
 class AutoSleepConfig(BaseModel):
     """Auto-sleep on or off, its idle threshold, and the sessions kept awake.
+
+    Fields:
+        enabled: whether idle agent sessions are put to sleep. Default True.
+        idle_minutes: how long a session must read ``idle`` continuously
+            before it is put to sleep.
+        unread_blocks_sleep: True keeps a session with the unread mark awake.
+            False (the default) lets it sleep once it has been idle
+            ``unread_idle_minutes`` (default 60); the mark stays on the asleep row.
+        unread_idle_minutes: the idle limit for an unread session, used
+            only when ``unread_blocks_sleep`` is False.
+        keep_awake: ``session_uuid`` values of the sessions never put to
+            sleep automatically.
+        mac_awake_always: True holds the Mac's idle-sleep assertion (the #617
+            ``caffeinate -i -w`` child) whatever the keep-awake list holds
+            (issue #1897, the tray's Keep Mac Awake). Default False.
+        pinned_by_device: RETIRED (issue #645, and no longer read by the
+            sleep pass since 2026-09-30: pins block nothing). Kept in the model
+            only so a stored block still parses.
     """
 
     model_config = ConfigDict(extra="forbid")

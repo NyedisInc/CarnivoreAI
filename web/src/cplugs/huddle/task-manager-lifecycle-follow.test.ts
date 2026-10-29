@@ -132,7 +132,7 @@ describe('the lifecycle stripe', () => {
 });
 
 describe('the tell button carries a small waiting badge and no queue link', () => {
-  test('the tell button carries the waiting badge and there is no queue link, sidebar or pop-out', async () => {
+  test('the tell button carries the waiting badge (Joe, 2026-10-10) and there is no queue link, sidebar or pop-out', async () => {
     for (const popout of [true, false]) {
       const host = await mountBody(popout);
       const button = host.querySelector<HTMLElement>('[data-task-manager-send]')!;
@@ -168,7 +168,7 @@ describe('the add box follows the active tab', () => {
   });
 });
 
-describe('one press tells every list into its own session ()', () => {
+describe('one press tells every list into its own session (item 44)', () => {
   test('no dropdown beside the key; lists with no session land in one pop-up, and a pick there sends them', async () => {
     const host = await mountBody();
     expect(host.querySelector('[data-huddle-send-target-pick]')).toBeNull();
@@ -195,7 +195,7 @@ describe('one press tells every list into its own session ()', () => {
   });
 
   for (const popout of [false, true]) {
-    test(`${popout ? 'pop-out' : 'sidebar'}: tick, then tell, and the count is 0 at once with no reload ()`, async () => {
+    test(`${popout ? 'pop-out' : 'sidebar'}: tick, then tell, and the count is 0 at once with no reload (item 61)`, async () => {
       huddle.selected = '12';
       server.waiting = { all: 0, '12': 0, '18': 0 };
       await refreshTaskManager();

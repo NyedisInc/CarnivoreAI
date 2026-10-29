@@ -90,13 +90,13 @@ export class SearchController implements KeyRoutingTarget {
             return promptCountLabel({
                 prompts: this.rail.prompts,
                 currentOrdinal: this.rail.currentOrdinal,
-            });
+            }, t);
         }
         return countLabel({
             history: this.history,
             query: this.query,
             results: this.results,
-        });
+        }, t);
     }
 
     get matchCount(): number | null {
@@ -170,8 +170,6 @@ export class SearchController implements KeyRoutingTarget {
 
         this.rail.show();
 
-        // display: none
-        //  hidden 
         if (focus) {
             flushSync();
             this.focusInput();

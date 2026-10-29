@@ -1,6 +1,8 @@
-/*  hidden  display: none */
 
 @layer legacy {
+@keyframes amb-join-dialog-glow {}
+@keyframes amb-join-avatar-spiral {}
+
 [data-anim-offscreen],
 [data-anim-offscreen]::before,
 [data-anim-offscreen]::after,
@@ -37,6 +39,8 @@
     animation-play-state: paused !important;
 }
 
+/* One rule for the whole app: an animation is removed outright, never merely paused. The pseudo-elements are
+ * spelled out because a pseudo-element is not valid inside :is(). */
 :root[data-motion="off"] *,
 :root[data-motion="off"] *::before,
 :root[data-motion="off"] *::after {

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { announceFailure, familyOf, resourcePush, stampLabel, t, truncatedTip } from '../sdk';
+  import { announceFailure, familyOf, resourcePush, stampLabel, t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import type { PanelReadState, ProjectPanelProps } from '../sdk';
   import { TASK_MANAGER_LIST_FAMILY, followTaskManagerDelta } from '../sdk/task-manager-delta';
   import { fetchBoards, openRound } from './board-api';
@@ -8,7 +9,6 @@
 
   const POLL_MS = 30000;
 
-  /* the shared one */
   function touchesProject(topic: string, key: string): boolean {
     if (familyOf(topic) !== TASK_MANAGER_LIST_FAMILY) return false;
     const listKey = topic.slice(TASK_MANAGER_LIST_FAMILY.length + 1);
@@ -88,7 +88,7 @@
         
         <span class="rb-closed-lead"><span class="ph-mark" title={stateWord}><span class="ph-led ph-led--closed" aria-hidden="true"></span><span class="oc-visually-hidden">{stateWord}</span></span></span>
         <span class="rb-closed-name">
-          <button type="button" class="rb-closed-title" use:truncatedTip={title} onclick={(e) => { e.stopPropagation(); open(board); }}>{title}</button>
+          <Button variant="quiet" size="sm" data-closed-title onclick={(e) => { e.stopPropagation(); open(board); }}>{title}</Button>
         </span>
         <span class="rb-closed-meta">
           <span class="rb-closed-task" title={board.task_title ?? undefined}>{board.task_title ?? t('cplug.reviewboard.closed.no_task')}</span>
@@ -96,21 +96,21 @@
         </span>
         <span class="rb-closed-when" title={t('cplug.reviewboard.closed.revised_at', { when: stampLabel(board.closed_at ?? null) })}>{age(board.closed_at ?? null)}</span>
         <span class="rb-closed-act">
-          <button
-            type="button"
-            class="oc-btn oc-btn--sm oc-btn--confirm"
+          <Button
+            variant="confirm"
+            size="sm"
             data-open-board={board.slug}
             aria-label={t('cplug.reviewboard.closed.open_label', { title })}
             onclick={(e) => { e.stopPropagation(); open(board); }}
-          >{t('cplug.reviewboard.closed.open')}</button>
+          >{t('cplug.reviewboard.closed.open')}</Button>
         </span>
         <span class="rb-closed-pad"></span>
       </div>
     {/each}
     {#if shown < count}
-      <button type="button" class="oc-btn rb-closed-more" data-show-all onclick={() => (expanded = true)}>
-        {t('projects.page.show_all', { count })}
-      </button>
+      <span class="rb-closed-more">
+        <Button size="sm" data-show-all onclick={() => (expanded = true)}>{t('projects.page.show_all', { count })}</Button>
+      </span>
     {/if}
     {#if failed}<p class="ph-empty" data-closed-failed><span class="ph-gone">{t('cplug.reviewboard.closed.failed')}</span></p>{/if}
   {/if}
@@ -122,10 +122,6 @@
       min-height: 28px;
       box-shadow: inset 0 -1px 0 var(--oc-line-faint);
       cursor: pointer;
-    }
-
-    .rb-closed-row:hover {
-      background: var(--oc-ground-hover);
     }
 
     .rb-closed-lead {
@@ -144,19 +140,12 @@
       min-width: 0;
     }
 
-    .rb-closed-title {
+    .rb-closed-name :global([data-closed-title]) {
+      --_btn-ink: var(--oc-text-primary);
+      --_btn-ink-hover: var(--oc-text-primary);
       min-width: 0;
-      overflow: hidden;
-      padding: 0;
-      border: 1px solid transparent;
-      background: none;
-      font: inherit;
       font-weight: 500;
-      color: var(--oc-text-primary);
-      text-align: left;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      cursor: pointer;
+      justify-content: flex-start;
     }
 
     .rb-closed-task {

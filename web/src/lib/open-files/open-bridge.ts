@@ -2,7 +2,7 @@ import { t } from '../i18n/index.svelte';
 import { dismissBrowserScreen, openBrowser } from '../browser/screen-host';
 import { BROWSER_ID } from '../browser/browser-id';
 import { panelInstance } from '../mount';
-import { deleteOpenFile, fileById, postOpenFile } from './api.svelte';
+import { deleteOpenFile, fileById, postOpenFile, postOpenFilePath } from './api.svelte';
 import { dropBuffer, isDirty } from './buffers.svelte';
 import { rememberSessionId, sessionUuidFor, type SessionRef } from './session-ref';
 import { appConfirm, type ConfirmFn } from './save-flow';
@@ -13,7 +13,6 @@ export interface OpenFromDrawer extends SessionRef {
     kind?: 'file' | 'diff';
 }
 
-/* server said no */
 export type OpenResult = 'opened' | 'unavailable' | 'refused';
 
 export async function openFromDrawer(request: OpenFromDrawer): Promise<OpenResult> {
@@ -35,6 +34,11 @@ export async function openFromDrawer(request: OpenFromDrawer): Promise<OpenResul
         globalThis.alert?.(t('files.editor.open_failed', { detail }));
         return 'refused';
     }
+}
+
+export async function openFromPath(path: string): Promise<void> {
+    const row = await postOpenFilePath(path);
+    if (!openBrowser(row.id)) throw new Error(t('opscenter.cell.files.open.refused'));
 }
 
 interface ShowingHandle {

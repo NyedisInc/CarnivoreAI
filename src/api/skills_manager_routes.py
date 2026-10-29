@@ -16,10 +16,9 @@ from src.api.peer_auth import require_peer_sessions
 from src.api.catalog_views import badge_for
 from src.api.remote_route_guard import refuse_remote
 from src.config import settings
-from src.config.provider_accounts import MANAGED_ROOT, profile_dir_for
+from src.config.provider_accounts import MANAGED_ROOT
 from src.core.account_switch.pane_account import read_pane_profile
 from src.core.live_install_roots import CODEX_HOME_ENV_VAR
-from src.core.provider_ledger import accounts_store
 from src.core.resource_push import notifier
 from src.core.resource_push.topics import LOCAL_SKILLS
 from src.core import session_change_notice
@@ -28,7 +27,7 @@ from src.core.skill_manager.inventory import build_inventory
 from src.core.skill_manager.local_skill_md import read_location_skill_md_hashed
 from src.core.skill_manager.overrides_apply import apply_override
 from src.core.skill_manager.remove import remove_location
-from src.core.skill_manager.roots import known_profiles, profile_groups
+from src.core.skill_manager.roots import configured_profiles, profile_groups
 from src.core.skill_manager.session_resolver import resolve_session_skills
 from src.core.skill_manager.types import OverrideError, Profile
 from src.core.skills.installer import trash_stamp
@@ -43,13 +42,7 @@ router = APIRouter(tags=["skills"])
 
 
 def _profiles(home: Path) -> List[Profile]:
-    try:
-        accounts = accounts_store.list_accounts(Path(settings.auth_config_file).expanduser())
-    except (FileNotFoundError, ValueError) as exc:
-        logger.warning("skills_inventory_accounts_unreadable", error=type(exc).__name__)
-        accounts = []
-    pairs = [(a.id, profile_dir_for(a)) for a in accounts if a.provider == "claude"]
-    return known_profiles(pairs, home=home, managed_root=MANAGED_ROOT)
+    return configured_profiles(home, Path(settings.auth_config_file).expanduser(), MANAGED_ROOT)
 
 
 def _codex_home(home: Path) -> Path:
@@ -306,7 +299,7 @@ async def get_session_skills(request: Request, session_id: str) -> Dict[str, Any
     codex_from_pane = False
     if info.tmux_session and family in ("claude", "codex"):
         variable = "CLAUDE_CONFIG_DIR" if family == "claude" else "CODEX_HOME"
-        pane = await read_pane_profile(manager._tmux_socket_name(), info.tmux_session, variable)
+        pane = await read_pane_profile(manager.tmux_socket_name(), info.tmux_session, variable)
         if pane.readable and pane.value:
             if family == "claude":
                 config_dir = pane.value

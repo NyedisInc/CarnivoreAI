@@ -78,8 +78,8 @@ def test_a_family_with_no_provider_answers_none():
         )
 
 
-acme = {"accountUuid": "acct-acme", "organizationUuid": "org-acme"}
-STUDIO = {"accountUuid": "acct-studio", "organizationUuid": "org-studio"}
+LARKSPUR = {"accountUuid": "acct-larkspur", "organizationUuid": "org-larkspur"}
+NYEDIS = {"accountUuid": "acct-nyedis", "organizationUuid": "org-nyedis"}
 
 
 @pytest.fixture
@@ -128,45 +128,45 @@ def _resolve():
 
 
 def test_the_default_login_resolves_to_the_profile_with_its_identity(home):
-    _write_identity(home["root"] / ".claude.json", acme)
+    _write_identity(home["root"] / ".claude.json", LARKSPUR)
     home["accounts"] = [
-        _profile(home, "studio", STUDIO),
-        _profile(home, "acme", acme),
+        _profile(home, "nyedis", NYEDIS),
+        _profile(home, "larkspur", LARKSPUR),
     ]
-    assert _resolve() == "acme"
+    assert _resolve() == "larkspur"
 
 
 def test_a_default_login_no_profile_matches_is_the_built_in_login(home):
     _write_identity(home["root"] / ".claude.json", {"accountUuid": "acct-other"})
-    home["accounts"] = [_profile(home, "studio", STUDIO)]
+    home["accounts"] = [_profile(home, "nyedis", NYEDIS)]
     assert _resolve() == poller_scan.AUTO_DEFAULT_ACCOUNT_ID
-    _write_identity(home["root"] / ".claude.json", STUDIO)
-    assert _resolve() == "studio"
+    _write_identity(home["root"] / ".claude.json", NYEDIS)
+    assert _resolve() == "nyedis"
 
 
 def test_no_configured_accounts_falls_back_to_the_auto_default_login(home):
-    _write_identity(home["root"] / ".claude.json", acme)
+    _write_identity(home["root"] / ".claude.json", LARKSPUR)
     home["accounts"] = []
     assert _resolve() == poller_scan.AUTO_DEFAULT_ACCOUNT_ID
-    home["accounts"] = [_profile(home, "acme", acme)]
-    assert _resolve() == "acme"
+    home["accounts"] = [_profile(home, "larkspur", LARKSPUR)]
+    assert _resolve() == "larkspur"
 
 
 def test_two_profiles_with_one_identity_are_ambiguous(home):
-    _write_identity(home["root"] / ".claude.json", acme)
-    first = _profile(home, "acme", acme)
-    home["accounts"] = [first, _profile(home, "acme2", acme)]
+    _write_identity(home["root"] / ".claude.json", LARKSPUR)
+    first = _profile(home, "larkspur", LARKSPUR)
+    home["accounts"] = [first, _profile(home, "larkspur2", LARKSPUR)]
     assert _resolve() is None
     home["accounts"] = [first]
-    assert _resolve() == "acme"
+    assert _resolve() == "larkspur"
 
 
 def test_identity_beats_a_row_still_pointing_at_the_default_dir(home):
-    pointer = _account(id="old", name="Studio", claude_config_dir=DEFAULT_CLAUDE_CONFIG_DIR)
-    _write_identity(home["root"] / ".claude.json", acme)
-    home["accounts"] = [pointer, _profile(home, "acme", acme)]
-    assert _resolve() == "acme"
-    home["accounts"] = [pointer, _profile(home, "studio", STUDIO)]
+    pointer = _account(id="old", name="Nyedis", claude_config_dir=DEFAULT_CLAUDE_CONFIG_DIR)
+    _write_identity(home["root"] / ".claude.json", LARKSPUR)
+    home["accounts"] = [pointer, _profile(home, "larkspur", LARKSPUR)]
+    assert _resolve() == "larkspur"
+    home["accounts"] = [pointer, _profile(home, "nyedis", NYEDIS)]
     assert _resolve() == "old"
 
 
@@ -186,7 +186,7 @@ def test_a_default_identity_without_a_uuid_is_null_and_logged(home, oauth, raw):
         _write_identity(default_file, oauth)
     else:
         default_file.write_text(raw)
-    home["accounts"] = [_profile(home, "acme", acme)]
+    home["accounts"] = [_profile(home, "larkspur", LARKSPUR)]
     with capture_logs() as logs:
         assert _resolve() == poller_scan.AUTO_DEFAULT_ACCOUNT_ID
     events = {entry["event"] for entry in logs}
@@ -194,14 +194,14 @@ def test_a_default_identity_without_a_uuid_is_null_and_logged(home, oauth, raw):
         "session_account_identity_absent",
         "session_account_identity_unreadable",
     }
-    _write_identity(default_file, acme)
+    _write_identity(default_file, LARKSPUR)
     os.utime(default_file, ns=(1, 2_000_000_000_000_000_000))
-    assert _resolve() == "acme"
+    assert _resolve() == "larkspur"
 
 
 def test_an_unchanged_identity_file_is_parsed_once(home, monkeypatch):
-    _write_identity(home["root"] / ".claude.json", acme)
-    home["accounts"] = [_profile(home, "acme", acme)]
+    _write_identity(home["root"] / ".claude.json", LARKSPUR)
+    home["accounts"] = [_profile(home, "larkspur", LARKSPUR)]
     calls = []
     real = default_login._parse_login_identity
     monkeypatch.setattr(
@@ -209,8 +209,8 @@ def test_an_unchanged_identity_file_is_parsed_once(home, monkeypatch):
         "_parse_login_identity",
         lambda path: calls.append(path) or real(path),
     )
-    assert _resolve() == "acme"
-    assert _resolve() == "acme"
+    assert _resolve() == "larkspur"
+    assert _resolve() == "larkspur"
     assert len(calls) == 2
 
 

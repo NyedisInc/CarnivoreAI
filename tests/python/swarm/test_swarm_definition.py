@@ -65,7 +65,7 @@ def test_fact_round_trip_index_and_secret_refusal(tmp_path):
     assert text.startswith(M.INDEX_START) and text.endswith("my own line\n")
     assert text.index("owner rule") < text.index("agent note")
 
-    secret = "ghp_" + "aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bD1fH3jL5"  # synthetic test value, never issued
+    secret = "ghp_" + "aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bD1fH3jL5"
     bad = M.Fact("f_000000000003", "t", "craft", "agent", "2026-10-05", f"token {secret}")
     with pytest.raises(M.SecretRefused) as ei:
         M.write_fact(mem, bad)

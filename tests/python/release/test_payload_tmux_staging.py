@@ -49,7 +49,7 @@ def test_staged_copies_are_candidates_so_a_server_born_from_an_old_bundle_still_
     monkeypatch.setattr(td, "server_version", lambda p, sock: ("answered", "tmux 3.7c"))
     assert td.candidate_tmux_paths()[0] == str(new)
     assert str(old) in td.candidate_tmux_paths()
-    assert td._select("sock") == str(old)
+    assert td._select("sock")[0] == str(old)
 
 
 def test_pane_client_env_strips_the_payload_variables(monkeypatch):

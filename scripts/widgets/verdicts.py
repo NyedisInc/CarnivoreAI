@@ -34,13 +34,6 @@ def unsupported_run(widget: str, host: str, size: str, why: str) -> dict[str, An
 
 
 def cells_of(renders: Iterable[Render], declared_hosts: Iterable[str], missing: Mapping[str, str] | None = None) -> list[dict[str, Any]]:
-    """Fold a widget's draws into its fit-table cells: one per (host, size), worst verdict over every theme, fixture and key.
-
-    Inputs: renders - the draws; declared_hosts - the hosts the contract record declares (a declared pop-out mirrors the home cells,
-      the pop-out window being the home host unchanged); missing - ``"host/size" -> reason`` for a declared pair that was never
-      drawn (these cells FAIL: a declared place nobody drew is not a pass).
-    Output: cells {host, size, verdict, draws, themes, fixtures, red, reasons}, sorted by host then size.
-    """
     cells: dict[tuple[str, str], dict[str, Any]] = {}
     for render in renders:
         cell = cells.setdefault((host_of(render), render.size), {"host": host_of(render), "size": render.size, "verdict": PASS, "draws": 0,

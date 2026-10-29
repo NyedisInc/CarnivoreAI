@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Pattern, Tuple
+from typing import Callable, Iterable, List, Match, Optional, Pattern, Tuple
 
 from src.core.message_model_secret_guards import (  # noqa: F401
     MAX_REPEATED_RUN,
@@ -12,9 +12,14 @@ from src.core.message_model_secret_guards import (  # noqa: F401
     REFERENCE_PREFIXES,
     has_mixed_alphabet,
     is_placeholder,
+    is_placeholder_jwt,
     shannon_entropy,
 )
+from src.core.secret_scanning import aws_name as _aws
 from src.core import message_model_secret_redaction as _redact
+from src.core.secret_scanning.accepted_matches import accepted_matches
+from src.core.secret_scanning.claimed_spans import ClaimedSpans
+from src.core.secret_scanning.deadline import Deadline
 
 DETECTOR_OP_SERVICE_ACCOUNT: str = "op_service_account_token"
 
@@ -103,6 +108,9 @@ class _VendorPattern:
     redact_regex: Pattern[str]
     check_payload: bool = True
     require_mixed_alphabet: bool = False
+    placeholder_check: Callable[[str], bool] = is_placeholder
+    accept: Optional[Callable[[Match[str]], bool]] = None
+    redact_accept: Optional[Callable[[Match[str]], bool]] = None
 
 
 _GITHUB_RE = re.compile(
@@ -115,8 +123,9 @@ _AWS_KEY_ID_RE = re.compile(
 )
 
 _AWS_SECRET_RE = re.compile(
-    r"""(?ix)
-    aws[A-Za-z0-9_.\-]{0,64}(?:secret|access)[A-Za-z0-9_.\-]{0,64}
+    r"""(?x)
+    (?<![A-Za-z0-9_.\-])
+    (?P<name>[A-Za-z0-9_.\-]+)
     [\"']? \s* [:=] \s* [\"']?
     (?P<value>[A-Za-z0-9/+=]{40})
     (?![A-Za-z0-9/+=])
@@ -168,9 +177,7 @@ _BEARER_RE = re.compile(
     r"(?i:bearer)[ \t]+(?P<value>[A-Za-z0-9._~+/\-]{20,}=*)"
 )
 
-_JWT_RE = re.compile(
-    r"(?P<value>eyJ[A-Za-z0-9_\-]{8,}\.eyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,})"
-)
+JWT_RE = re.compile(_redact.JWT_SOURCE)
 
 _VENDOR_PATTERNS: Tuple[_VendorPattern, ...] = (
     _VendorPattern(
@@ -187,6 +194,7 @@ _VENDOR_PATTERNS: Tuple[_VendorPattern, ...] = (
     _VendorPattern(
         DETECTOR_AWS_SECRET_ACCESS_KEY, _AWS_SECRET_RE,
         _redact.AWS_SECRET_ACCESS_KEY,
+        accept=_aws.accept, redact_accept=_aws.redact_accept,
     ),
     _VendorPattern(
         DETECTOR_GOOGLE_API_KEY, _GOOGLE_API_KEY_RE, _redact.GOOGLE_API_KEY,
@@ -244,7 +252,7 @@ _VENDOR_PATTERNS: Tuple[_VendorPattern, ...] = (
         DETECTOR_SLACK_APP_TOKEN, _SLACK_APP_RE, _redact.SLACK_APP_TOKEN,
     ),
     _VendorPattern(DETECTOR_BEARER_TOKEN, _BEARER_RE, _redact.BEARER_TOKEN),
-    _VendorPattern(DETECTOR_JWT, _JWT_RE, _redact.JWT),
+    _VendorPattern(DETECTOR_JWT, JWT_RE, _redact.JWT, placeholder_check=is_placeholder_jwt),
 )
 
 
@@ -274,7 +282,7 @@ def _finding(detector: str, value: str, offset: int) -> SecretFinding:
 
 def _vendor_guard_drops(pattern: _VendorPattern, value: str) -> bool:
     if pattern.check_payload and (
-        is_placeholder(value)
+        pattern.placeholder_check(value)
         or shannon_entropy(value) < MIN_VENDOR_ENTROPY_BITS_PER_CHAR
     ):
         return True
@@ -286,6 +294,7 @@ def scan_text(
     detectors: Optional[Iterable[str]] = None,
     *,
     trust_vendor_marker: bool = False,
+    deadline: Optional[Deadline] = None,
 ) -> List[SecretFinding]:
     wanted = frozenset(ALL_DETECTORS if detectors is None else detectors)
     unknown = wanted - frozenset(ALL_DETECTORS)
@@ -293,31 +302,42 @@ def scan_text(
         raise ValueError(f"unknown detector(s): {sorted(unknown)!r}")
 
     findings: List[SecretFinding] = []
-    claimed: List[Tuple[int, int]] = []
+    claimed = ClaimedSpans()
 
     for pattern in _VENDOR_PATTERNS:
         if pattern.detector not in wanted:
             continue
+        if deadline is not None:
+            deadline.check()
         regex = pattern.redact_regex if trust_vendor_marker else pattern.regex
-        for match in regex.finditer(text):
+        accept = pattern.redact_accept if trust_vendor_marker else pattern.accept
+        claims: List[Tuple[int, int]] = []
+        for match in accepted_matches(regex, text, accept):
+            if deadline is not None:
+                deadline.check()
             has_value = "value" in (match.groupdict() or {})
             group = "value" if has_value else 0
             value = match.group(group)
             if not trust_vendor_marker and _vendor_guard_drops(pattern, value):
                 continue
-            findings.append(
-                _finding(pattern.detector, value, match.start(group))
-            )
-            claimed.append((match.start(), match.end()))
+            start, end = match.span(group)
+            if claimed.overlaps(start, end):
+                continue
+            findings.append(_finding(pattern.detector, value, start))
+            claims.append((start, end))
+        if claims:
+            claimed.merge(claims)
 
     if DETECTOR_HIGH_ENTROPY_ASSIGNMENT in wanted:
+        if deadline is not None:
+            deadline.check()
         for match in _ASSIGNMENT_RE.finditer(text):
+            if deadline is not None:
+                deadline.check()
             value = match.group("value")
             start = match.start("value")
             end = match.end("value")
-            if any(
-                start < c_end and c_start < end for c_start, c_end in claimed
-            ):
+            if claimed.overlaps(start, end):
                 continue
             if is_placeholder(value):
                 continue

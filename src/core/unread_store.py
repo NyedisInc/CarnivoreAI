@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
+import threading
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Collection, Optional
 
 import structlog
 
@@ -22,6 +24,7 @@ class UnreadStore:
     def __init__(self, path: Path) -> None:
         self._path = path
         self._data: dict[str, dict] = {}
+        self._save_lock = threading.Lock()
         self._load()
 
     def _load(self) -> None:
@@ -47,68 +50,34 @@ class UnreadStore:
                     loaded[str(k)] = entry
             self._data = loaded
             logger.info("unread_state_loaded", count=len(self._data))
-        except Exception as exc:
+        except (OSError, ValueError, TypeError) as exc:
             logger.warning("failed_to_load_unread_state", error=str(exc))
 
     def _save(self) -> None:
         tmp: Optional[Path] = None
-        try:
-            self._path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = unique_tmp_path(self._path)
-            with tmp.open("w") as f:
-                json.dump(self._data, f, indent=2)
-                f.flush()
-                try:
-                    os.fsync(f.fileno())
-                except OSError:
-                    pass
-            os.replace(str(tmp), str(self._path))
-        except Exception as exc:
-            logger.error("failed_to_save_unread_state", error=str(exc))
-            # state directory
-            if tmp is not None:
-                try:
-                    tmp.unlink()
-                except OSError:
-                    pass
+        with self._save_lock:
+            try:
+                snapshot = {k: dict(v) for k, v in list(self._data.items())}
+                self._path.parent.mkdir(parents=True, exist_ok=True)
+                tmp = unique_tmp_path(self._path)
+                with tmp.open("w") as f:
+                    json.dump(snapshot, f, indent=2)
+                    f.flush()
+                    try:
+                        os.fsync(f.fileno())
+                    except OSError:
+                        logger.debug("unread_state_fsync_unsupported")
+                os.replace(str(tmp), str(self._path))
+            except (OSError, ValueError, TypeError) as exc:
+                logger.error("failed_to_save_unread_state", error=str(exc))
+                if tmp is not None:
+                    try:
+                        tmp.unlink()
+                    except OSError:
+                        pass
 
     @staticmethod
     def compose_key(tmux_name: str, epoch: Optional[int]) -> str:
-        """The storage key for one session instance.
-
-        Description: THE KEY IS THE INSTANCE, NOT THE NAME. tmux names are
-            reused - kill ``cloude_Infrastructure`` and make another one
-            and the new session answers to the same string. Keyed by name
-            alone, an unread flag set on the old conversation reappeared on
-            the new one, pointing the user at a Stop that happened in a
-            session that no longer exists. ``#{session_created}`` is what
-            separates the two, and it is the same identity rule
-            ``sessions.tmux_created_epoch`` uses everywhere else in this
-            codebase, reused rather than re-invented.
-
-            A restart-in-place does NOT move the epoch (measured on tmux
-            3.7c: ``respawn-pane -k`` replaces the pane's PROCESS, while
-            ``#{session_created}`` belongs to the SESSION), so the flag
-            survives exactly the operation the user thinks of as "restart"
-            and is dropped exactly when the session is genuinely a new one.
-
-            A ``None`` epoch means the probe could not answer, and that is
-            NOT a new instance - it is an unknown one. It composes to the
-            bare name, which is also the legacy key shape, so an
-            unmeasurable epoch degrades to the old behaviour instead of
-            silently minting a second entry for a session that already has
-            one.
-        Inputs:
-            tmux_name: literal tmux session name.
-            epoch: ``#{session_created}`` for that instance, or None when
-                it could not be measured.
-        Output: str - the dict key.
-        Example:
-            >>> UnreadStore.compose_key("cloude_a", 1757000000)
-            'cloude_a@1757000000'
-            >>> UnreadStore.compose_key("cloude_a", None)
-            'cloude_a'
-        """
         return f"{tmux_name}@{int(epoch)}" if epoch is not None else tmux_name
 
     @staticmethod
@@ -128,6 +97,13 @@ class UnreadStore:
             return None
 
     @staticmethod
+    def _row_id_of(key: str) -> Optional[int]:
+        try:
+            return int(key[len(ROW_KEY_PREFIX):])
+        except ValueError:
+            return None
+
+    @staticmethod
     def is_row_key(key: str) -> bool:
         return key.startswith(ROW_KEY_PREFIX)
 
@@ -137,23 +113,6 @@ class UnreadStore:
         tmux_name: Optional[str] = None,
         epoch: Optional[int] = None,
     ) -> bool:
-        """Does this session carry a MANUAL follow-up flag?
-
-        Description: the question an asleep row asks (issue #749): its
-            pane is gone, so only the reminder the user set can still be
-            true of it. Reads the row key, and also the manual half of
-            the named instance, so a flag written before the row key
-            existed (or while the row could not be read) still answers.
-            Never reads the auto half: that one belongs to a pane.
-        Inputs:
-            row_id: ``sessions.id``, or None.
-            tmux_name: the instance's tmux name, or None.
-            epoch: the instance's ``#{session_created}``, or None.
-        Output: bool.
-        Example:
-            >>> store.is_followed_up(42, "cloude_a", 1757000000)
-            True
-        """
         key = self.row_key(row_id)
         if key is not None and self._data.get(key, {}).get("manual"):
             return True
@@ -183,16 +142,6 @@ class UnreadStore:
         tmux_name: Optional[str],
         epoch: Optional[int] = None,
     ) -> bool:
-        """Move an instance-keyed manual flag onto its row, if one is there.
-
-        Description: the migration the sleep runs before it closes a pane
-            (issue #749), so a reminder written before this build, or
-            while the row could not be read, is not lost with the pane.
-            The auto half stays where it is. No flag, no row: no write.
-        Inputs: row_id (int | None). tmux_name (str | None). epoch (int |
-            None).
-        Output: bool - True when a flag was moved.
-        """
         key = self.row_key(row_id)
         if key is None or not tmux_name:
             return False
@@ -290,10 +239,18 @@ class UnreadStore:
             self._data.pop(key, None)
         self._save()
 
-    def prune(self, alive_names: set[str]) -> None:
+    def prune(
+        self,
+        alive_names: set[str],
+        live_row_ids: Optional[Collection[int]] = None,
+    ) -> None:
         dead = {
             key for key in self._data
-            if not self.is_row_key(key) and self.name_of(key) not in alive_names
+            if (
+                self.name_of(key) not in alive_names
+                if not self.is_row_key(key)
+                else live_row_ids is not None and self._row_id_of(key) not in live_row_ids
+            )
         }
         if not dead:
             return
@@ -305,3 +262,18 @@ class UnreadStore:
     @property
     def raw(self) -> dict[str, dict]:
         return self._data
+
+
+def live_session_row_ids(
+    connect: Callable[[], Optional[sqlite3.Connection]],
+) -> Optional[set[int]]:
+    conn = connect()
+    if conn is None:
+        return None
+    try:
+        return {int(r[0]) for r in conn.execute("SELECT id FROM sessions")}
+    except sqlite3.Error as exc:
+        logger.warning("unread_live_row_ids_unavailable", error=str(exc))
+        return None
+    finally:
+        conn.close()

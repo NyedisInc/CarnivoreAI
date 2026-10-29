@@ -1,4 +1,3 @@
-/* keyboard (`term.onData`), the Shift+Enter chord, the D-pad */
 
 console.log('[TerminalInputOwnership Module] Loading...');
 
@@ -10,7 +9,6 @@ console.log('[TerminalInputOwnership Module] Loading...');
             nav: window.NavigationGeneration
                 ? window.NavigationGeneration.current()
                 : null,
-            // /input-focus.svelte.ts), published on
             owner: window.TerminalInputFocus
                 ? window.TerminalInputFocus.current()
                 : null,

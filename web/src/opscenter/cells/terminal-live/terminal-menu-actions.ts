@@ -41,7 +41,6 @@ export function terminalMenuActions(input: TerminalMenuInput): DeclaredAction[] 
   ];
 }
 
-/* search terminal */
 export function tabMenuActions(input: TerminalMenuInput): DeclaredAction[] {
   const search = terminalMenuActions(input).filter((action) => action.id === 'search');
   return input.popOut ? [...search, { id: 'pop-out', label: input.popOut.label, group: SHOWS, run: input.popOut.run }] : search;
@@ -50,7 +49,6 @@ export function tabMenuActions(input: TerminalMenuInput): DeclaredAction[] {
 export interface WidgetMenuInput extends TerminalMenuInput {
   menu: readonly string[];
   background: (() => void) | null;
-  /* keep awake */
   keepAwake: { on: boolean; run: () => void } | null;
   bookmarks: (() => void) | null;
   rowActions: (() => void) | null;

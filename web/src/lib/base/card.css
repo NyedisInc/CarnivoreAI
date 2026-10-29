@@ -1,15 +1,4 @@
-/* .oc-card: ONE bordered level (on the Task Manager question card: "the question box looks
-   like shit, if we dont have solid inheritance of styles like bootstrap we are doomed to fail"). A card never nests a
-   bordered card: what sits inside is separated by hairlines and gap, and every child shares the body's one left
-   edge. The title strip copies the ledger's `.pl-titlebar` / `.pl-title` (web/src/lib/ledger/ledger-chrome.css): band
-   ground, inset hairline, the small tracked uppercase accent label as the card's ONE accent-colored thing.
-     .oc-card            raised surface, surface edge, panel corner
-       __head            the title strip (absent when the card has no title, lead or actions); it WRAPS: the title keeps its
-                         width (ellipsis, never below 12ch) and the actions drop to a second line when the line runs out; __toggle is its fold button when the card folds (actions stay outside it)
-       __lead __title __meta __actions
-       __body            the content column, one padding, gap between children
-       __foot            a hairline above, actions in a wrapping row
-     .oc-card--compact   the small padding step */
+/* a wrapping row */
 @layer patterns {
   .oc-card {
     --_on: var(--oc-surface-raised);

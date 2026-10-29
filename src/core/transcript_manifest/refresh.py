@@ -1,17 +1,3 @@
-"""One manifest refresh end to end: walk the roots, scan against the stored rows, optionally write.
-
-THE WALK IS THE EXISTING ONE. Claude files come from ``merged_claude_discovery`` over the account-aware
-roots (``claude_config.transcript_roots``: the default ``~/.claude/projects`` first, then every managed
-profile's own, de-duplicated by real path), codex rollouts from the codex discovery over
-``~/.codex/sessions``. Both classify by location only and report the directories they could not list;
-this module adds no second walker.
-
-A RESULT IS THE ONE SOURCE the archive freshness check and the backfill planner read, so both see the
-same files, with the same order (default root first, then the other claude roots, then codex).
-
-``write=False`` is a dry run: the database may be opened read-only, the rows are read (none when the
-table does not exist yet), the same decisions are made, and nothing is written.
-"""
 
 from __future__ import annotations
 
@@ -24,6 +10,7 @@ from typing import List, Optional, Sequence, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readonly
 from src.core.db import connect
 from src.core.transcript_corpus_discover import CorpusEntry, DiscoveryOutcome
 from src.core.transcript_manifest import constants as K
@@ -41,7 +28,6 @@ class Walk:
     observed: List[Observed]
     complete_roots: List[str]
     unreadable_roots: List[str]
-    # could not
     unreadable_dirs: int = 0
 
 
@@ -104,13 +90,6 @@ def walk(claude_roots: Optional[Sequence[Path]] = None, codex_home: Optional[str
 
 def refresh(db_path: Path, *, write: bool = True, claude_roots: Optional[Sequence[Path]] = None,
             codex_home: Optional[str] = None, conn: Optional[sqlite3.Connection] = None) -> ScanResult:
-    """Walk, scan against the stored rows, and (unless ``write`` is False) store the result.
-
-    Inputs: db_path (Path) - cloude.db; write (bool) - False is a dry run (the file is opened ``mode=ro``);
-      claude_roots, codex_home - overrides; conn - an open connection to use instead of ``db_path``.
-    Output: ScanResult. Raises: sqlite3.Error, OSError (a database that cannot be opened or written).
-    Example: refresh(db_path_for(state_dir), write=False).counts['added']
-    """
     found = walk(claude_roots, codex_home)
     now = utc_now()
     if conn is not None:
@@ -118,7 +97,7 @@ def refresh(db_path: Path, *, write: bool = True, claude_roots: Optional[Sequenc
     if write:
         opened = connect(Path(db_path), create=False)
     else:
-        opened = sqlite3.connect(f"{Path(db_path).resolve().as_uri()}?mode=ro", uri=True, timeout=30)
+        opened = connect_readonly(db_path, timeout=READONLY_TIMEOUT_LONG_S)
     with closing(opened):
         return _scan_on(opened, found, now, write)
 

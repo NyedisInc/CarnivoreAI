@@ -68,6 +68,7 @@ describe('the three-outcome contract on the whole group', () => {
         );
         expect(view.kind).toBe('unavailable');
         if (view.kind !== 'unavailable') return;
+        // its own sentence
         expect(view.detail).toBe('the last tmux probe timed out');
     });
 
@@ -155,8 +156,8 @@ describe('the restart gate is enforced at the render layer, not only by the quer
 
 describe('a row names itself the way the user named it', () => {
     test('the title leads, because it is what the user called the session', () => {
-        const r = describeRow(row({ title: '  Image Tool  ' }), derive, t);
-        expect(r.name).toBe('Image Tool');
+        const r = describeRow(row({ title: '  Media Compression  ' }), derive, t);
+        expect(r.name).toBe('Media Compression');
     });
 
     test('with no title the derived tmux name answers, then the directory', () => {

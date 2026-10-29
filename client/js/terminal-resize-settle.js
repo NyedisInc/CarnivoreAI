@@ -1,3 +1,4 @@
+/* there is nothing */
 (function () {
     'use strict';
 
@@ -10,7 +11,9 @@
         'handshake',
         'ws.onopen',
         'sidebar-pin',
-        'right-drawer'
+        'right-drawer',
+        'agent-drawer-dock',
+        'terminal-foot-bar'
     ];
 
     function isAnnounced(source) {

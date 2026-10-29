@@ -1,17 +1,3 @@
-"""A session's background processes, stopping them, and interrupting the session
-(issues #1044, #1053).
-
-FLAT, like ``timers.py`` and ``subagents.py``, for the same reason (gotcha 1).
-
-NO PATH ON THE WIRE, AND NO RAW COMMAND: ``summary`` went through the secret
-redaction first (``src/core/timers/redact.py``) and is truncated.
-
-A REFUSAL TO STOP IS NOT A 200. A refused pid answers 403 with a
-``{"code", "message"}`` detail, ``code`` one of
-``src.core.background_work.guard.REFUSALS``; a pane or process table that
-could not be measured answers 503; a pid that no longer runs is a 200 whose
-``outcome`` is ``already_gone``.
-"""
 
 from __future__ import annotations
 
@@ -19,7 +5,6 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-# could not
 BackgroundWorkState = Literal["ok", "absent", "unchecked", "not_applicable"]
 
 TerminateOutcome = Literal["terminated", "killed", "still_running", "already_gone"]

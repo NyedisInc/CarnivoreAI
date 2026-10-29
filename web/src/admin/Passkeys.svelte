@@ -2,6 +2,7 @@
 <script lang="ts">
     import { loadOnce } from './load-once.svelte.js';
     import Button from '../lib/base/Button.svelte';
+    import Field from '../lib/base/Field.svelte';
     import type { AdminHost } from './admin-host.svelte.js';
     import { t } from './text.js';
     import { ADMIN_KEYS } from '../../../client/js/labels/admin.js';
@@ -56,11 +57,9 @@
                 }}
             >
                 <label class="admin-field" for="admin-add-label">{t(ADMIN_KEYS.passkeysAddLabel)}</label>
-                <input
-                    id="admin-add-label"
-                    class="admin-input"
-                    type="text"
-                    maxlength="40"
+                <Field
+                    id="admin-add-label" data-admin-grow
+                    maxlength={40}
                     autocomplete="off"
                     bind:value={label}
                 />

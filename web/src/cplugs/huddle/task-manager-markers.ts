@@ -1,4 +1,3 @@
-/*  hidden  */
 import type { HuddleItem } from './huddle-model';
 
 export const MARKERS = ['diamond', 'square', 'triangle', 'circle', 'hexagon', 'pentagon', 'star', 'cross'] as const;

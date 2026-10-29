@@ -1,8 +1,8 @@
 {
   "id": "claude-code-mods",
   "name": "Claude Code mods",
-  "summary": "Installing one from warez runs claude code's checker and a consent sheet first.",
-  "description": "A mod is a Claude Code plugin that changes how Claude Code looks and behaves; it is code that runs with your permissions and is not sandboxed. The Mods page lists every mod Carnivore finds: the ones installed from the catalog, the ones registered in your Claude settings, and the ones sitting in ~/.claude/mods. Each row shows the name, version, a catalog or local tag, and whether the mod is on, off, or on in only some of your Claude settings files (for example on in 1 of 2). The switch registers or unregisters the mod in every settings file; remove sends a local mod's folder to the trash, or uninstalls a catalog mod through the catalog, after one confirm. Changes take effect in new sessions. Installing a mod from the warez page runs claude code's own checker (claude plugin validate --strict) on a staged copy, shows the events it handles and the calls it makes on a consent sheet with a trust tick (plus a second tick when the security review flagged it or did not run), refuses a blocked review, never updates a mod by itself, and takes it out of every settings file before its folder moves on uninstall.",
+  "summary": "A menu page for the Claude Code mods on this computer: each mod with its source (catalog or local), an on or off switch, remove, and a link to get more on warez. Installing one from warez runs claude code's checker and a consent sheet first.",
+  "description": "A mod is a Claude Code plugin that changes how Claude Code looks and behaves; it is code that runs with your permissions and is not sandboxed. The Mods page lists every mod Carnivore finds: the ones installed from the catalog, the ones registered in your Claude settings, and the ones sitting in ~/.claude/mods. Each row shows the name, version, a catalog or local tag, and whether the mod is on, off, or on in only some of your Claude settings files (for example on in 1 of 2). The switch registers or unregisters the mod in every settings file; remove sends a local mod's folder to the trash, or uninstalls a catalog mod through the catalog, after one confirm. A missing, unreadable or unwritable settings file, and an unreadable Claude account list, are said on the page and lock the controls instead of failing quietly. Changes take effect in new sessions. Installing a mod from the warez page runs claude code's own checker (claude plugin validate --strict) on a staged copy, shows the events it handles and the calls it makes on a consent sheet with a trust tick (plus a second tick when the security review flagged it or did not run), refuses a blocked review, never updates a mod by itself, and takes it out of every settings file before its folder moves on uninstall.",
   "area": "skills-catalog",
   "status": "beta",
   "since": "2026-10-09",
@@ -39,6 +39,7 @@
   ],
   "where": [
     "The drawer's menu tab: the mods row right after plugins, hotkey m while the menu has focus. Deep link #mods.",
+    "The skills-style 'get more on warez' button at the foot of the page opens warez on the mods chip.",
     "The install sheet that opens from a claude code mod on the warez page (menu tab, Warez, hotkey r)."
   ],
   "how_to": [

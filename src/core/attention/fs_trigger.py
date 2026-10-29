@@ -141,17 +141,6 @@ class FsTrigger:
         return True
 
     def rearm(self, desired: Mapping[str, Iterable[str]]) -> None:
-        """Make the watched set match ``desired``, within the cap.
-
-        Description: closes watches no longer wanted, opens new ones, and
-          when more paths are wanted than the cap allows keeps the ones
-          with the most recent events (ties keep what is already
-          watched, so a full set does not churn descriptors every pass).
-          A path that cannot be opened (not created yet, or gone) is
-          skipped quietly; the next rearm retries it.
-        Inputs: desired - path -> session ids read from that path.
-        Output: None.
-        """
         if self._kq is None:
             return
         wanted = {path: set(keys) for path, keys in desired.items() if path}

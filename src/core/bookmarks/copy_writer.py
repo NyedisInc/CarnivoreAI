@@ -76,16 +76,6 @@ def _carried(stream: BinaryIO, index: TranscriptIndex, new_session: str, source_
 
 def write_copy(index: TranscriptIndex, chain: List[Node], dest_dir: Path,
                new_session: Optional[str] = None) -> Tuple[str, Path]:
-    """Write the cut copy of ``index``'s transcript, keeping ``chain``. BLOCKING.
-
-    Inputs: index (TranscriptIndex) - the source's graph; chain (list[Node]) - from
-      ``cut.kept_chain``; dest_dir (Path) - the project directory (created 0700 if missing);
-      new_session (str | None) - the new conversation uuid (a fresh uuid4 by default).
-    Output: (new conversation uuid, path of the new transcript).
-    Raises: TranscriptUnavailable - nothing to copy, or the destination could not be written;
-      TranscriptChanged - the source moved underneath; FileExistsError never escapes (a fresh
-      uuid collides only by a broken RNG, and is reported as unavailable).
-    """
     if not chain:
         raise TranscriptUnavailable("there is nothing before that point to copy")
     new_session = new_session or str(uuid_module.uuid4())

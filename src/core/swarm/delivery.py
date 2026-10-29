@@ -536,7 +536,7 @@ async def _retry(app_state: Any, agent_id: int, text: str, source: str, authorit
             if state == "delivered":
                 return
             if state == "failed":
-                logger.info("swarm_delivery_dropped", agent_id=agent_id, source=source, code=code)
+                logger.warning("swarm_delivery_dropped", agent_id=agent_id, source=source, code=code)
                 return
         logger.info("swarm_delivery_expired", agent_id=agent_id, source=source)
     finally:
@@ -553,6 +553,7 @@ async def deliver_text(app_state: Any, agent_id: int, text: str, *, source: str,
         if state == "delivered":
             return "delivered"
         if state == "failed":
+            logger.warning("swarm_delivery_refused", agent_id=agent_id, source=source, code=code)
             return f"refused:{code}"
     else:
         code = AGENT_WAKING if await asyncio.to_thread(waking_for_agent, agent_id) else "pane_dialog_open"

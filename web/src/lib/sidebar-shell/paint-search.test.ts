@@ -9,7 +9,7 @@ let listEl: HTMLElement;
 
 function rows(): Record<string, unknown>[] {
     return [
-        { name: 'cloude_orchard', created_by_cloude: true, status: 'idle', project_id: 1, project_name: 'P', kind: 'agent' },
+        { name: 'cloude_argent', created_by_cloude: true, status: 'idle', project_id: 1, project_name: 'P', kind: 'agent' },
         { name: 'cloude_other', created_by_cloude: true, status: 'idle', project_id: 1, project_name: 'P', kind: 'agent' },
     ];
 }
@@ -38,49 +38,49 @@ beforeEach(() => {
 
 describe('the query and the repaint', () => {
     it('the query rides into the paint: only the matching row is drawn, and the list says a search is active', () => {
-        Search.setQuery('orchard');
+        Search.setQuery('argent');
         paintDrawer(makeCtrl(rows()));
-        expect(drawn()).toEqual(['cloude_orchard']);
+        expect(drawn()).toEqual(['cloude_argent']);
         expect(listEl.getAttribute('data-search-active')).toBe('1');
     });
 
     it('a query change alone forces a real repaint, even with the same rows', () => {
         const ctrl = makeCtrl(rows());
         paintDrawer(ctrl);
-        expect(drawn().sort()).toEqual(['cloude_orchard', 'cloude_other']);
-        Search.setQuery('orchard');
+        expect(drawn().sort()).toEqual(['cloude_argent', 'cloude_other']);
+        Search.setQuery('argent');
         paintDrawer(ctrl);
-        expect(drawn(), 'the query alone must be enough to change the picture').toEqual(['cloude_orchard']);
+        expect(drawn(), 'the query alone must be enough to change the picture').toEqual(['cloude_argent']);
     });
 
     it('SURVIVES REPAINT: a poll tick with new row objects keeps applying the SAME live query', () => {
         const ctrl = makeCtrl(rows());
-        Search.setQuery('orchard');
+        Search.setQuery('argent');
         paintDrawer(ctrl);
-        expect(drawn()).toEqual(['cloude_orchard']);
+        expect(drawn()).toEqual(['cloude_argent']);
         ctrl._rows = rows().map((r) => ({ ...r, unread: true }));
         paintDrawer(ctrl);
-        expect(drawn(), 'the filter must still be applied after an unrelated repaint').toEqual(['cloude_orchard']);
+        expect(drawn(), 'the filter must still be applied after an unrelated repaint').toEqual(['cloude_argent']);
     });
 
     it('an unchanged query on an unchanged picture rewrites nothing: the row is the same DOM node', () => {
         const ctrl = makeCtrl(rows());
-        Search.setQuery('orchard');
+        Search.setQuery('argent');
         paintDrawer(ctrl);
-        const before = listEl.querySelector('.session-sidebar-row[data-name="cloude_orchard"]');
+        const before = listEl.querySelector('.session-sidebar-row[data-name="cloude_argent"]');
         const html = listEl.innerHTML;
         paintDrawer(ctrl);
-        expect(listEl.querySelector('.session-sidebar-row[data-name="cloude_orchard"]')).toBe(before);
+        expect(listEl.querySelector('.session-sidebar-row[data-name="cloude_argent"]')).toBe(before);
         expect(listEl.innerHTML).toBe(html);
     });
 
     it('clearing the query is itself a change that repaints back to the unfiltered picture', () => {
         const ctrl = makeCtrl(rows());
-        Search.setQuery('orchard');
+        Search.setQuery('argent');
         paintDrawer(ctrl);
         Search.setQuery('');
         paintDrawer(ctrl);
-        expect(drawn().sort()).toEqual(['cloude_orchard', 'cloude_other']);
+        expect(drawn().sort()).toEqual(['cloude_argent', 'cloude_other']);
         expect(listEl.getAttribute('data-search-active')).toBe('0');
     });
 });

@@ -13,7 +13,7 @@ const plan = (over: Partial<PackAnswer> = {}): PackAnswer => ({
     repos: [{ path: '.' }], local_only: [], fingerprint: 'fp1', job: null, ...over,
 });
 
-describe('pack tags and menu items', () => {
+describe('pack tags and menu items (Joe, 2026-10-10)', () => {
     it('shows packed with its size, and a modified archive as a warning with its sentence', () => {
         expect(packTag({ state: 'packed', archive_bytes: 412_000_000, integrity: { status: 'ok', message: '', full: false } }, t)?.text)
             .toBe('projects.page.tag.packed {"size":"412 mb"}');

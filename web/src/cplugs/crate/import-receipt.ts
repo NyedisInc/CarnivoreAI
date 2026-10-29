@@ -49,7 +49,6 @@ export function parseImportReceipt(raw: unknown): ImportReceiptView | null {
     };
 }
 
-/* not asleep */
 export async function wakeRestoredSession(sessionUuid: string, fetcher: Fetcher = authFetch): Promise<WakeAnswer> {
     const answer = obj(await fetcher<unknown>(`/sessions/${encodeURIComponent(sessionUuid)}/wake`, { method: 'POST' }));
     return { status: str(answer?.status) ?? 'started', detail: str(answer?.detail) ?? '' };

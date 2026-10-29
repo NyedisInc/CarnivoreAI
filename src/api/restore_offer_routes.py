@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
+from src.api.error_response import sentence_of
 from src.api.auth import require_auth
 from src.core import session_change_notice
 from src.core import session_journal_store as store
@@ -157,7 +158,7 @@ async def _reopen_one(manager: Any, item: Dict[str, Any], agent_type: str) -> Di
         detail = exc.detail if isinstance(exc.detail, dict) else {}
         if detail.get("code") == swarm_switch.CODE:
             return {**base, "outcome": OUTCOME_REFUSED, "detail": detail.get("message"), "tmux_session": None}
-        return {**base, "outcome": OUTCOME_FAILED, "detail": str(exc.detail), "tmux_session": None}
+        return {**base, "outcome": OUTCOME_FAILED, "detail": sentence_of(exc.detail), "tmux_session": None}
     except (OSError, ValueError, RuntimeError) as exc:
         logger.error("session_restore_reopen_failed", session_uuid=item["session_uuid"],
                      error=f"{type(exc).__name__}: {exc}")

@@ -10,6 +10,7 @@ class WrapperDisplay:
 
     wrapper_id: Optional[str] = None
     label: Optional[str] = None
+    icon: Optional[str] = None
 
 
 NO_WRAPPER = WrapperDisplay()
@@ -32,12 +33,14 @@ def resolve_wrapper_for_display(
         if isinstance(wrapper, dict):
             wid = wrapper.get("id")
             label = wrapper.get("label")
+            icon = wrapper.get("icon")
         else:
             wid = getattr(wrapper, "id", None)
             label = getattr(wrapper, "label", None)
+            icon = getattr(wrapper, "icon", None)
         if not wid or str(wid).strip().lower() != normalized:
             continue
         text = (label or "").strip() or str(wid)
-        return WrapperDisplay(wrapper_id=str(wid), label=text)
+        return WrapperDisplay(wrapper_id=str(wid), label=text, icon=icon or None)
 
     return NO_WRAPPER

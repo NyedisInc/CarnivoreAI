@@ -1,5 +1,4 @@
 'use strict';
-/* a regular file */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');

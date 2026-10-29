@@ -196,7 +196,8 @@ async def put_direction(install_id: str, body: DirectionBody, request: Request) 
 
 @router.post("/join", status_code=202)
 async def post_join(body: JoinBody, request: Request) -> Dict[str, Any]:
-    """
+    """A set-up computer joins a pack from the Pack page (the owner's login is the proof). Output: ``JoinStatus``.
+
     422 ``bad_request`` or ``bad_link``, 409 ``already_joined``, 503 ``unavailable``. Join has no MCP tool (its input is a secret).
     """
     _rt()
@@ -211,7 +212,8 @@ async def post_join(body: JoinBody, request: Request) -> Dict[str, Any]:
 
 @router.post("/join/look", status_code=202)
 async def post_join_look(request: Request) -> Dict[str, Any]:
-    """
+    """Look for a pack from the Pack page (#1622, the owner's login is the proof): same flow as ``POST /auth/join/look``. Output: ``JoinStatus``.
+
     Status comes from ``GET /computers/join``. 409 ``already_joined``, 503 ``unavailable``. A look has no MCP tool (a join has none).
     """
     _rt()
@@ -272,6 +274,8 @@ async def _preview(rt: runtime.ComputersRuntime, dest: ssh_exec.SshDestination) 
 @router.post("/add/preview")
 async def post_add_preview(body: AddPreviewBody, request: Request) -> Dict[str, Any]:
     """What adding a computer over ssh would do, changing nothing (design 8). Output: ``AddPreview`` with its blockers.
+
+    422 ``bad_target``, 429 ``add_preview_rate``, 409 on a member or before setup. Example: body ``{"ssh_target": "alex@studio"}``.
     """
     rt = await _inviter()
     dest = _destination(body)
@@ -283,6 +287,9 @@ async def post_add_preview(body: AddPreviewBody, request: Request) -> Dict[str, 
 @router.post("/add", status_code=202)
 async def post_add(body: AddBody, request: Request) -> Dict[str, str]:
     """Install Carnivore on the target over ssh and join it to this pack (design 8). Output: ``{"job_id"}``; follow it with ``GET /computers/add/{job_id}``.
+
+    409 ``add_running`` for the same target, 409 ``target_blocked`` (with ``blockers``) when the fresh preview has one, 409 ``host_key_changed``
+    when the key is not the one the owner approved. Example: body ``{"ssh_target": "alex@studio", "host_key_sha256": "SHA256:..."}``.
     """
     rt = await _inviter()
     dest = _destination(body)

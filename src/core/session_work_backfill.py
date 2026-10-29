@@ -21,7 +21,6 @@ logger = structlog.get_logger(__name__)
 
 MAX_ROWS: int = 1000
 
-# conversation id
 _CLAUDE_FAMILIES = (DEFAULT_FAMILY,)
 
 
@@ -53,7 +52,6 @@ def is_work(record: Any) -> bool:
 def _transcript_for(
     conversation_uuid: str, working_dir: Optional[str], projects_dir: Optional[Path]
 ) -> Optional[Path]:
-    """The row's transcript in its own project directories, or None."""
     if not working_dir:
         return None
     for directory in candidate_project_dirs(working_dir, projects_dir=projects_dir):
@@ -95,7 +93,7 @@ def backfill_last_work_at(
         "WHERE last_work_at IS NULL AND claude_session_uuid IS NOT NULL "
         "AND claude_session_uuid != '' "
         "AND (agent_family IS NULL OR agent_family IN (%s)) "
-        "ORDER BY id LIMIT ?" % ",".join("?" * len(_CLAUDE_FAMILIES)),
+        "ORDER BY id DESC LIMIT ?" % ",".join("?" * len(_CLAUDE_FAMILIES)),
         (*_CLAUDE_FAMILIES, max_rows),
     ).fetchall()
     writes: List[Tuple[str, int]] = []

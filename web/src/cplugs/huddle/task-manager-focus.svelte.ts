@@ -1,4 +1,4 @@
-import { authFetch, familyOf, resourcePush } from '../sdk';
+import { authFetch, familyOf, resourcePush, revealWish } from '../sdk';
 import { huddle, selectList } from './huddle.svelte';
 import { AGGREGATE } from './huddle-model';
 import { focusOpens } from './huddle-density';
@@ -14,8 +14,6 @@ export interface TaskManagerFocus {
 }
 
 export const taskManagerFocus = $state<{ focus: TaskManagerFocus | null; applied: number }>({ focus: null, applied: 0 });
-
-export const revealWish = $state<{ id: number | null }>({ id: null });
 
 export function isFocused(id: number): boolean {
   return taskManagerFocus.focus?.items.includes(id) ?? false;

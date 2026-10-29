@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+/** A localStorage good enough for the reads these modules make. */
 function fakeStorage(seed: Record<string, string>) {
     const map = new Map(Object.entries(seed));
     return {

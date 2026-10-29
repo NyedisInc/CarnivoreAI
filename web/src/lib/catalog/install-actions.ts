@@ -11,7 +11,6 @@ export type InstallEvent =
     | { kind: 'verify' }
     | { kind: 'install' }
     | { kind: 'installed' }
-    /* server said no */
     | { kind: 'refused'; code: string }
     | { kind: 'update_found' }
     | { kind: 'dismiss' }
@@ -54,6 +53,7 @@ export function transition(state: InstallState, event: InstallEvent): InstallSta
     }
 }
 
+/* its own sentence */
 export function refusalCodeOf(error: unknown): string | null {
     if (!error || typeof error !== 'object') return null;
     const err = error as { body?: unknown; detail?: unknown };

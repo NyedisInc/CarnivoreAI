@@ -1,4 +1,3 @@
-/* already exists */
 
 export const TERMINAL_CONTAINER_ID = 'terminal-container';
 

@@ -1,3 +1,4 @@
+// and it says so
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -13,6 +14,12 @@ const macDir = path.join(__dirname, '..', 'macOS');
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -100,8 +107,8 @@ test('an empty stored value is not a preference either', () => {
 test('with no config preference the legacy menubar setting still wins', () => {
     const dir = fixture({ agents: {} });
     const manager = loadManager(dir);
-    manager._settings.bind_host = '198.51.100.21';
-    assert.equal(manager.getBindHost(), '198.51.100.21');
+    manager._settings.bind_host = '192.168.1.40';
+    assert.equal(manager.getBindHost(), '192.168.1.40');
 });
 
 test('config.json beats the legacy setting when both are present', () => {
@@ -209,6 +216,13 @@ test('the web app honours #settings and leaves it as the open page link', () => 
 
 test('the deep link is honoured from showLaunchpad, which BOTH login paths reach', () => {
     const fn = appSrc.slice(appSrc.indexOf('showLaunchpad() {'));
+    // WINDOW WIDENED 2026-08-31. A fixed byte slice over a function
+    // body is brittle: adding a comment inside showLaunchpad() pushes
+    // the thing being asserted past the end and this reports a
+    // FAILURE about the wrong subject entirely - the hook is still
+    // there, the window just stopped covering it. Widened rather than
+    // trimmed at the source, because shrinking a comment to fit a
+    // test's magic number is fitting the code to the harness.
     assert.match(fn.slice(0, 8000), /_openSettingsIfDeepLinked\(\)/);
 });
 

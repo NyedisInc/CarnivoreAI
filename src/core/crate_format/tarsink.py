@@ -1,18 +1,3 @@
-""":class:`CrateSink`: write a crate's tar container in one streaming pass, with fixed headers and deduplicated blobs.
-
-The container is ``tarfile.PAX_FORMAT``, uncompressed, written in order through a byte counter, so the sink never seeks
-and can write straight into an :class:`~src.core.crate_crypto.age.AgeWriter`. Every member is a regular file with mode 0o644, uid
-and gid 0, empty owner names and ``mtime = created_epoch``; there are no directory members and no links. Names are ASCII.
-tarfile writes a PAX extended header (typeflag ``x``) only for a name over 100 characters (a long rows part name, up to
-121, or a newer minor's name) or a member over 8 GiB; the fixed v1 members and blob names never need one.
-
-Example:
-    sink = CrateSink(out, created_epoch=1792267200, codec="zstd")
-    sink.add_member("CRATE", MAGIC)
-    ref = sink.add_blob(b"one chunk")
-    ...
-    sink.close()
-"""
 
 from __future__ import annotations
 

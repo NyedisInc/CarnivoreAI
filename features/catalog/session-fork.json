@@ -22,7 +22,20 @@
     "branch",
     "clone conversation"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The session row menu open, with fork to among its actions",
+      "caption": "Fork to in the row menu",
+      "file": "menu.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "Fork to dialog with provider, model, effort, prompt, name and worktree fields",
+      "caption": "Choose a provider and options for the new conversation",
+      "file": "picker.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Fork a session",
   "since": "2026-09-10",
   "status": "stable",
@@ -33,6 +46,5 @@
   "updated": "2026-10-03",
   "where": [
     "The three dots on a session's drawer row, then fork to (F)."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

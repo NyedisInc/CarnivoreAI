@@ -22,12 +22,12 @@ from src.core.stats import config, reset, wiring
 from tests.stats import seed
 from src.core.stats.store import StatsStore
 
-CHART = {"id": "e8213214-41aa-4fea-8c43-eb5ecb1234d9", "title": "Usage", "enabled": True,
+CHART = {"id": "550e8400-e29b-41d4-a716-446655440000", "title": "Usage", "enabled": True,
          "series": [{"metric": "total_tokens"}], "filters": {}, "range": {"mode": "global"},
          "display": {"type": "line"}}
 
 
-CONV = "7934883d-4a9e-46ca-8516-10788d83b345"
+CONV = "c0ffee00-0000-4000-8000-000000000001"
 
 
 def _line(ts: str, mid: str, tokens: int) -> str:

@@ -74,7 +74,11 @@ async def project_color_set(manager: Any, caller: AgentCaller, args: dict) -> di
             raise ToolError(f"project id {gone[0]} is gone; nothing was changed")
         done = []
         for pid, color in plan.items():
-            row = await _via_route(projects_routes.update_project(current[pid], UpdateProjectRequest(color=color)))
+            try:
+                row = await _via_route(projects_routes.update_project(current[pid], UpdateProjectRequest(color=color)))
+            except ToolError as exc:
+                landed = ", ".join(f"{d['id']} ({json.dumps(d['name'])})" for d in done) or "none"
+                raise ToolError(f"{exc}; project colors already changed: {landed}; stopped at project id {pid}") from exc
             done.append({"id": row.id, "name": row.name, "color": row.color})
         return _ok({"projects": done})
 
@@ -91,9 +95,8 @@ UNGATED_WRITES: frozenset = frozenset()
 WRITE_TOOLS = {
     "project_color_set": (
         "Recolor a project, or many in one owner approval: project + color, or colors {project id or name: #rrggbb}. "
-        "Colors are #rrggbb hexes; an empty string removes a project's color. All or nothing: any bad "
-        "project or color refuses the whole call before anything is filed. Waits for the owner's approval unless "
-        "Beast Mode is armed.",
+        "Empty string removes a color. Everything is validated first (a bad row refuses the call); writes then run in "
+        "order and a refusal stops there, naming rows already changed. Waits for approval unless Beast Mode is armed.",
         {"project": {"type": "integer", "minimum": 1, "description": "project id from projects_list (single form)"},
          "color": {"type": "string", "pattern": "^(#[0-9a-fA-F]{6})?$", "description": "#rrggbb, or empty to remove (single form)"},
          "colors": {"type": "object", "maxProperties": MAX_BULK,

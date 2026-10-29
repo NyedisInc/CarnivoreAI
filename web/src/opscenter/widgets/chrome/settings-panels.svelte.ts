@@ -1,4 +1,3 @@
-/* the settings overlay */
 import { untrack, type Snippet } from 'svelte';
 import type { SlotId } from '../../engine/types';
 

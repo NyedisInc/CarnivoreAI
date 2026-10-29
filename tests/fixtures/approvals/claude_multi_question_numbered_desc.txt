@@ -1,0 +1,18 @@
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☐ Movie  ☐ Playlist  ☐ Fuel  ✔ Submit  →
+
+Drawer test 1: best hacker movie?
+
+❯ 1. Hackers
+     1995. Hack the planet.
+  2. The Matrix
+     1999. There is no spoon.
+  3. Sneakers
+     1992. Too many secrets.
+  4. WarGames
+     1983. Shall we play a game?
+  5. Type something.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  6. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · ctrl+g to edit in Vim · Esc to cancel

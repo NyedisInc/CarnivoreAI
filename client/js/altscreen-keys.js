@@ -1,4 +1,4 @@
-/* anything at all lands on the row that was asked for */
+/* lands on the row that was asked for */
 (function () {
     'use strict';
 

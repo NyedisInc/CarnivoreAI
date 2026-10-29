@@ -10,11 +10,11 @@ export interface MenuRuleEntry {
 export const ALLOWED: readonly MenuRuleEntry[] = [
   {
     folder: 'terminal-live', widgets: ['core.terminal'], rules: ['body-menu-button'],
-    why: 'the terminal kebab stays; its tool strip is the terminal head\'s toolbar',
+    why: 'the terminal kebab stays (Joe (ccsliinc), 2026-10-14 #1785 Q11, restated 2026-10-19 item 1030 msg 5583); its tool strip is the terminal head\'s toolbar',
   },
   {
     folder: 'terminal-group', widgets: ['core.terminal'], rules: ['menu-without-declared-actions'],
-    why: 'the terminal component\'s tab strip: each tab\'s icon IS the component menu and "+" opens new tabs (frame-header.svelte.ts `strip`, #452, #514); the terminal is the one exception',
+    why: 'the terminal component\'s tab strip: each tab\'s icon IS the component menu and "+" opens new tabs (frame-header.svelte.ts `strip`, #452, #514); the terminal is the one exception (Joe (ccsliinc), 2026-10-19)',
   },
   {
     folder: 'running-sessions', widgets: ['core.running-sessions'], rules: ['body-menu-button'],

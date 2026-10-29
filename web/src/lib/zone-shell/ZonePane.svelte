@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  display: none */
   import { untrack, type Snippet } from 'svelte';
   import ZoneTabContext from './ZoneTabContext.svelte';
   import type { Zone } from './zone.svelte';

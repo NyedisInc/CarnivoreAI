@@ -1,5 +1,6 @@
 import './lab-events';
 import { params, fixtureKind, serveFixture, scenarioWanted, scenarioText } from './boot';
+import { twoFrames } from './two-frames';
 import '../app.css';
 import '../opscenter/app.css';
 import { mountPanel, unmountPanel } from '../lib/mount';
@@ -153,7 +154,7 @@ async function show(request: ShowRequest): Promise<ShowResult> {
   await document.fonts.ready;
   await settled(root);
   await animationsDone();
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await twoFrames();
   const cell = document.querySelector('[data-harness-cell]');
   const fit = cell ? [...fitCheck(cell), ...unavailableFindings(cell, size.declared === true)] : [];
   const menus = cell ? menuConformance(cell, widget.manifest) : [];
@@ -170,7 +171,7 @@ async function showSidebar(widget: NonNullable<ReturnType<typeof harnessWidget>>
   await document.fonts.ready;
   await settled(root);
   await animationsDone();
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await twoFrames();
   const area = document.getElementById('session-sidebar-ledger');
   area?.setAttribute('data-harness-cell', '');
   const cell = area && area.getBoundingClientRect().height > 0 ? area : null;

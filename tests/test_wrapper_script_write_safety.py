@@ -9,11 +9,11 @@ import pytest
 from src.core.agent_wrappers import AgentWrapper, render_wrapper_invocation
 from src.core.safe_file_write import SafeFileWriteError, UnsafeFileTargetError
 
-SCRIPT = "keyc() (\n    claude \"$@\"\n)\n"
+SCRIPT = "cld() (\n    claude \"$@\"\n)\n"
 
 
 def _wrapper() -> AgentWrapper:
-    return AgentWrapper(id="keyc", label="keyc", script=SCRIPT, entry="keyc")
+    return AgentWrapper(id="cld", label="cld", script=SCRIPT, entry="cld")
 
 
 def test_symlinked_script_file_is_refused_and_victim_untouched(tmp_path: Path) -> None:
@@ -21,21 +21,21 @@ def test_symlinked_script_file_is_refused_and_victim_untouched(tmp_path: Path) -
     scripts.mkdir(mode=0o700)
     victim = tmp_path / "victim.txt"
     victim.write_text("original\n")
-    (scripts / "keyc.zsh").symlink_to(victim)
+    (scripts / "cld.zsh").symlink_to(victim)
 
     with pytest.raises(UnsafeFileTargetError) as caught:
         render_wrapper_invocation(_wrapper(), scripts)
 
     assert caught.value.reason == "target_is_symlink"
     assert victim.read_text() == "original\n"
-    assert (scripts / "keyc.zsh").is_symlink()
+    assert (scripts / "cld.zsh").is_symlink()
 
 
 def test_dangling_symlink_is_refused_and_nothing_is_created(tmp_path: Path) -> None:
     scripts = tmp_path / "agent_wrapper_scripts"
     scripts.mkdir(mode=0o700)
     victim = tmp_path / "would-be-created.sh"
-    (scripts / "keyc.zsh").symlink_to(victim)
+    (scripts / "cld.zsh").symlink_to(victim)
 
     with pytest.raises(UnsafeFileTargetError):
         render_wrapper_invocation(_wrapper(), scripts)
@@ -65,7 +65,7 @@ def test_world_writable_scripts_directory_is_refused(tmp_path: Path) -> None:
         render_wrapper_invocation(_wrapper(), scripts)
 
     assert caught.value.reason == "directory_foreign_writable"
-    assert not (scripts / "keyc.zsh").exists()
+    assert not (scripts / "cld.zsh").exists()
 
 
 def test_a_refusal_is_an_oserror_so_launch_callers_fail_the_launch(tmp_path: Path) -> None:
@@ -78,28 +78,28 @@ def test_normal_write_is_byte_exact_private_and_leaves_no_temp(tmp_path: Path) -
 
     outer = render_wrapper_invocation(_wrapper(), scripts)
 
-    path = scripts / "keyc.zsh"
+    path = scripts / "cld.zsh"
     assert str(path) in outer
     assert path.read_bytes() == SCRIPT.encode()
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
     assert stat.S_IMODE(scripts.stat().st_mode) == 0o700
-    assert sorted(p.name for p in scripts.iterdir()) == ["keyc.zsh"]
+    assert sorted(p.name for p in scripts.iterdir()) == ["cld.zsh"]
 
 
 def test_rewrite_replaces_the_inode_atomically(tmp_path: Path) -> None:
     scripts = tmp_path / "agent_wrapper_scripts"
     render_wrapper_invocation(_wrapper(), scripts)
-    first = (scripts / "keyc.zsh").stat().st_ino
-    held_open = open(scripts / "keyc.zsh", "rb")  # noqa: SIM115
+    first = (scripts / "cld.zsh").stat().st_ino
+    held_open = open(scripts / "cld.zsh", "rb")  # noqa: SIM115
     try:
-        edited = AgentWrapper(id="keyc", label="keyc", script="keyc() { :; }\n", entry="keyc")
+        edited = AgentWrapper(id="cld", label="cld", script="cld() { :; }\n", entry="cld")
         render_wrapper_invocation(edited, scripts)
         assert held_open.read() == SCRIPT.encode()
     finally:
         held_open.close()
-    assert (scripts / "keyc.zsh").stat().st_ino != first
-    assert (scripts / "keyc.zsh").read_text() == "keyc() { :; }\n"
-    assert stat.S_IMODE((scripts / "keyc.zsh").stat().st_mode) == 0o600
+    assert (scripts / "cld.zsh").stat().st_ino != first
+    assert (scripts / "cld.zsh").read_text() == "cld() { :; }\n"
+    assert stat.S_IMODE((scripts / "cld.zsh").stat().st_mode) == 0o600
 
 
 def test_mode_is_exact_under_a_permissive_umask(tmp_path: Path) -> None:
@@ -109,5 +109,5 @@ def test_mode_is_exact_under_a_permissive_umask(tmp_path: Path) -> None:
         render_wrapper_invocation(_wrapper(), scripts)
     finally:
         os.umask(old)
-    assert stat.S_IMODE((scripts / "keyc.zsh").stat().st_mode) == 0o600
+    assert stat.S_IMODE((scripts / "cld.zsh").stat().st_mode) == 0o600
     assert stat.S_IMODE(scripts.stat().st_mode) == 0o700

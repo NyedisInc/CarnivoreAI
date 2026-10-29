@@ -15,6 +15,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.core.crosstalk.fork import history
+from src.core.crosstalk.spawn_rules import agent_cli_flags
 from src.core.crosstalk.fork.replay import render_replay
 from src.core.mcp.common import ToolError
 
@@ -58,14 +59,6 @@ class ForkRequest(BaseModel):
         if self.prompt is not None and len(self.prompt.encode('utf-8')) > 4000:
             raise ValueError('fork continuation prompt is at most 4000 bytes')
         return self
-
-
-def _flags(body: ForkRequest, beast: bool) -> list[str]:
-    flags = (['-c', f'model_reasoning_effort="{body.effort}"'] if body.to_provider == 'codex'
-             else ['--effort', body.effort]) if body.effort else []
-    if beast and body.to_provider == 'codex':
-        flags.append('--dangerously-bypass-approvals-and-sandbox')
-    return flags
 
 
 async def _source(view: Any, caller: Any, source_id: str, owner_approved: bool) -> Any:
@@ -180,7 +173,7 @@ async def fork(view: Any, caller: Any, body: ForkRequest, *, owner_approved: boo
                 suffix = ('\nContinue with this request: ' + body.prompt) if body.prompt else ''
                 replay = await asyncio.to_thread(render_replay, parts, max_bytes=8192 - len(suffix.encode('utf-8')))
                 opening = replay.text + suffix
-            extra += _flags(body, beast)
+            extra += agent_cli_flags(body.to_provider, body.effort, beast)
             if body.to_provider == 'codex':
                 extra += ['--cd', target_folder]
             request = CreateSessionRequest(working_dir=target_folder, agent_type=body.to_provider,

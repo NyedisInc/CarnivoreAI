@@ -133,31 +133,6 @@ def digest_theme_folder(theme_dir: Path) -> Optional[str]:
 
 
 def _compute_theme_folder_digest(theme_dir: Path) -> Optional[str]:
-    """The canonical digest of EVERY regular file in a theme folder, or None.
-
-    Description: the value a run-grant is keyed on. It delegates to
-      :func:`src.core.skills.digest.digest_directory`, which is the same
-      canonical rendering the catalog signs a release with, so a theme's
-      folder hashes to one number whether it is being installed or being
-      consented to. Symlinks, fifos and device nodes are skipped by that
-      function and directories are never followed.
-
-      BOUNDED FIRST, HASHED SECOND. The walk counts files and sums sizes
-      before a byte is read, so a folder over either ceiling costs a stat
-      per entry rather than a full read. Over either one answers
-      ``None``, which the ladder reads as unverifiable and refuses.
-
-      AN EMPTY FOLDER ANSWERS ``None`` RATHER THAN THE DIGEST OF NOTHING.
-      Every empty folder renders to the same bytes and so to the same
-      hash, which would let one unmeasurable theme match a grant given
-      for another.
-    Inputs: theme_dir (Path) - an installed or staged theme folder.
-    Output: str | None - 64 lowercase hex, or None when it could not be
-      measured.
-
-    Example:
-        digest_theme_folder(Path("themes/matrix"))
-    """
     try:
         files = 0
         total = 0
@@ -192,38 +167,6 @@ def _compute_theme_folder_digest(theme_dir: Path) -> Optional[str]:
 
 
 def digest_effects(theme_dir: Path, effects_filename: Optional[str]) -> Optional[str]:
-    """The digest a run-grant for this theme is keyed on, or None.
-
-    Description: THE NAME IS HISTORICAL AND THE SCOPE IS THE FOLDER. It
-      still starts from the ``effects`` field, because a theme that
-      declares no script has nothing to grant and because the filename
-      comes out of a ``theme.json`` a user can author: a name carrying a
-      separator or a parent reference is refused rather than resolved,
-      exactly as the client's ``effectsUrlFor`` refuses it, since this
-      value describes a file fetched from ``/themes/<id>/<file>`` and
-      that URL has no path shape either.
-
-      WHAT IT RETURNS IS THE FOLDER'S DIGEST, NOT THE FILE'S. An
-      ``effects.js`` may ``import`` a sibling, so a grant naming only the
-      entry point authorises code nobody measured; see the module
-      docstring for the exact bypass that closes. The declared entry
-      point is still measured first, because a theme that names a script
-      it does not ship has nothing anybody could consent to, and that
-      refusal has to survive the widening.
-
-      A theme that declares no script answers ``None``, and so does one
-      whose file or folder cannot be measured; the consent ladder tells
-      those two apart by looking at whether the manifest declared a
-      script at all.
-    Inputs:
-      theme_dir (Path) - the directory the manifest was loaded from.
-      effects_filename (str|None) - the manifest's ``effects`` field.
-    Output: str|None - the hex digest of the FOLDER, or None when there
-      is nothing to measure or it could not be measured.
-
-    Example:
-        digest_effects(Path("themes/matrix"), "effects.js")
-    """
     if not effects_filename or not isinstance(effects_filename, str):
         return None
     if "/" in effects_filename or "\\" in effects_filename or ".." in effects_filename:

@@ -8,7 +8,7 @@ const REGISTRATION_CODES: ReadonlySet<string> = new Set([
 ]);
 
 export type RefusalKind =
-    | { kind: 'sign_in'; feature: AccountFeature | 'generic'; src: string }
+    | { kind: 'sign_in'; feature: AccountFeature | null; src: string }
     | { kind: 'register' }
     | null;
 
@@ -27,10 +27,10 @@ export function classifyRefusal(status: number, body: unknown): RefusalKind {
     if (code === 'account_required') {
         const feature = field(body, 'feature');
         const known = (ACCOUNT_FEATURES as readonly string[]).includes(feature ?? '');
-        return { kind: 'sign_in', feature: known ? (feature as AccountFeature) : 'generic', src: 'refusal' };
+        return { kind: 'sign_in', feature: known ? (feature as AccountFeature) : null, src: 'refusal' };
     }
-    if (status === 403 && code === 'unauthorized') return { kind: 'sign_in', feature: 'generic', src: 'refusal' };
-    if (code === 'session_revoked') return { kind: 'sign_in', feature: 'generic', src: 'revoked' };
+    if (status === 403 && code === 'unauthorized') return { kind: 'sign_in', feature: null, src: 'refusal' };
+    if (code === 'session_revoked') return { kind: 'sign_in', feature: null, src: 'revoked' };
     if (code && REGISTRATION_CODES.has(code)) return { kind: 'register' };
     return null;
 }
@@ -60,7 +60,8 @@ function onRefusal(event: Event): void {
     signingIn = true;
     const done = (): void => { signingIn = false; };
     void requireAccount({
-        feature: verdict.feature as AccountFeature,
+        feature: verdict.feature,
+        joins: true,
         src: verdict.src,
         resume: done,
         cancelled: done,

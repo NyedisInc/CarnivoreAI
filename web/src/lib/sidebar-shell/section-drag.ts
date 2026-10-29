@@ -1,4 +1,3 @@
-/* and writes nothing */
 import * as G from '../drawer/group-store';
 import {
     isSectionId, moveSection, resolveSectionOrder, setPreviewOrder, stepSection, type SectionId,
@@ -185,7 +184,6 @@ function onPointerMove(e: PointerEvent): void {
     place(d, list, e.clientY);
 }
 
-/* and writes nothing */
 function onEscape(e: KeyboardEvent): void {
     if (e.key !== 'Escape' || !drag || !drag.active) return;
     e.preventDefault();

@@ -21,7 +21,6 @@ async function waitForExit(pid, budgetMs, pollMs) {
   return true;
 }
 
-/* CANNOT DETERMINE */
 async function terminateProcess(pid, opts = {}) {
   const graceMs = Number.isFinite(opts.graceMs) ? opts.graceMs : 3000;
   const killMs = Number.isFinite(opts.killMs) ? opts.killMs : 2000;

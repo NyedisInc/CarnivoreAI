@@ -9,6 +9,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let passes = 0;
 let failures = 0;
 
+/**
+ * Run one named check.
+ * @param {string} name  What is being asserted.
+ * @param {Function} fn  The body; throws to fail.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -21,6 +27,11 @@ function test(name, fn) {
     }
 }
 
+/**
+ * Read one file from the client directory.
+ * @param {...string} parts  Path segments below `client/`.
+ * @returns {string} File contents.
+ */
 function clientFile(...parts) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', ...parts), 'utf8');
 }
@@ -328,6 +339,7 @@ test('CHANGE 2: the two kebab rows render at every width, and only on the termin
             assert.equal(r.value, 'flex',
                 `${row.id} must render at ${width}px on the terminal screen`);
         }
+        // nothing.
         for (const screen of ['launchpad-screen', 'auth-screen', 'archive-screen']) {
             const r = resolve({ ...row, screen }, 'display', 1280);
             assertParsed(r);
@@ -346,6 +358,7 @@ test('CHANGE 2: the two kebab rows reuse the header button box, they do not rest
     assert.ok(!/fab-menu-btn|session-editor-fab/.test(src),
         'the kebab rows must carry nothing of the old FAB');
 
+    // of its own -
     const scoped = flatten(clientFile('css', 'header-menu.css'))
         .filter((r) => r.selector.includes('headerSessionThemeBtn')
             || r.selector.includes('headerDetachBtn'));

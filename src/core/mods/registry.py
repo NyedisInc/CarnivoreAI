@@ -84,10 +84,6 @@ def _mutator(path: str, enabled: bool):
 
 
 def _write_group(group: Group, path: str, enabled: bool) -> str:
-    """Apply one change to one real file, never raising on a filesystem error.
-
-    Output: one of OK, MISSING, UNPARSEABLE, CHANGED, UNWRITABLE (a backup or write failed; nothing was written).
-    """
     try:
         return _write_group_inner(group, path, enabled)
     except OSError as exc:

@@ -1,4 +1,3 @@
-/* active account */
 import type { AccountChoice, RestartAccounts } from './account-types';
 import type { PickerRow } from './picker-model';
 
@@ -15,13 +14,11 @@ export function startAccountId(answer: RestartAccounts): string {
     return answer.selected_id ?? answer.options[0]?.id ?? '';
 }
 
-/* active account */
 export function summaryOf(answer: RestartAccounts): AccountChoice | undefined {
     const hit = answer.options.find((o) => o.id === answer.selected_id);
     return answer.pinned || answer.active_id === undefined || answer.active_id === answer.selected_id ? hit : undefined;
 }
 
-/* active account */
 export function tagKeys(option: AccountChoice, answer: RestartAccounts): string[] {
     const keys: string[] = [];
     if (answer.pinned) {

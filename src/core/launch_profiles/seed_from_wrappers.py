@@ -13,10 +13,6 @@ _STRUCTURED_SEEDS = ("claude", "codex", "shell")
 
 
 def _seed_structure(family: str, script: str) -> Dict[str, Any]:
-    """The structured fields for a family's shipped seed script.
-
-    Example: 'command claude --dangerously-skip-permissions "$@"' -> {"permissions": "skip_all", "flags": []}.
-    """
     if family == "shell":
         return {"permissions": "harness_default", "flags": []}
     words = shlex.split(script.replace('"$@"', ""))

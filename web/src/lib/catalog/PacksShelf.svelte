@@ -1,4 +1,4 @@
-<!-- the reading pane -->
+
 <script lang="ts">
     import { BROWSE_KEYS } from '../../../../client/js/labels/skill-browse.js';
     import { SKILL_KEYS } from '../../../../client/js/labels/skill.js';

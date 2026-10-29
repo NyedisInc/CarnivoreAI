@@ -24,7 +24,6 @@ export const NO_FILTERS: CatalogFilters = {
     tags: [],
 };
 
-/* anything at all */
 export function isNarrowed(filters: CatalogFilters, query: string): boolean {
     return (
         filters.installed ||
@@ -78,6 +77,7 @@ export function matchesFilters(
     return true;
 }
 
+/* the input is not mutated */
 export function visibleCards(
     cards: readonly CardView[],
     filters: CatalogFilters,

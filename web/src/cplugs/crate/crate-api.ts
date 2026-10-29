@@ -74,7 +74,6 @@ export interface ProjectFilesView {
     readonly skippedFolders: number | null;
     readonly skippedBytes: number | null;
     readonly specials: readonly string[];
-    /* project files */
     readonly large: boolean;
     readonly warnBytes: number | null;
 }

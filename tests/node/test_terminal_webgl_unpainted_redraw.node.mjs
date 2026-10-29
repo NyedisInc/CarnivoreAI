@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -323,7 +324,7 @@ test('a browser tab (no bridge) ignores the message; the preload and the host wi
     const preload = fs.readFileSync(path.join(ROOT, 'macOS/app-window-preload.js'), 'utf8');
     const host = fs.readFileSync(path.join(ROOT, 'macOS/window-host.js'), 'utf8');
     assert.match(preload, /ipcRenderer\.on\('carnivore:window-hidden'/);
-    assert.match(host, /'carnivore:window-hidden', win\.isMinimized\(\) \|\| !win\.isVisible\(\)/);
+    assert.match(host, /const hidden = win\.isMinimized\(\) \|\| !win\.isVisible\(\);[\s\S]*'carnivore:window-hidden', hidden/);
     for (const name of ['minimize', 'restore', 'hide', 'show']) assert.ok(host.includes(`'${name}'`), name);
     assert.match(fs.readFileSync(path.join(ROOT, 'client/index.html'), 'utf8'), /desktop-window-hidden\.js/);
 });

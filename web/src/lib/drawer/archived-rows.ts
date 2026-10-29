@@ -1,4 +1,3 @@
-/* not asleep */
 
 export const ARCHIVED_NAME_PREFIX = 'archived:';
 

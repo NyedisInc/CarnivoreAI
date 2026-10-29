@@ -1,4 +1,3 @@
-/* running sessions */
 
 import { authFetch } from './auth.svelte';
 import { pushedRows, resource, type Resource } from './poll.svelte';
@@ -11,6 +10,7 @@ export const asleep: Resource<SessionRecord[]> = resource<SessionRecord[]>(
   { intervalMs: ASLEEP_POLL_MS, name: 'asleep', demo: () => [], pushed: ['asleep'] },
 );
 
+/* pick a wrapper */
 export const WAKE_WRAPPER_NEEDED = 'wrapper_needed';
 
 export const WAKE_TRANSCRIPT_MISSING = 'transcript_missing';
@@ -23,7 +23,6 @@ export interface SleepResult {
   code?: string | null;
 }
 
-/* conversation id */
 export async function sleepSession(sessionUuid: string): Promise<SleepResult> {
   return authFetch<SleepResult>(`/sessions/${encodeURIComponent(sessionUuid)}/sleep`, { method: 'POST' });
 }
@@ -35,7 +34,6 @@ export interface WakeResult {
   wrapper_options?: string[];
 }
 
-/* not asleep */
 export async function wakeSession(sessionUuid: string, agentType?: string, startFresh?: boolean): Promise<WakeResult> {
   const init: RequestInit = { method: 'POST' };
   const body: Record<string, unknown> = {};
@@ -61,7 +59,6 @@ export function wakeOrPick(sessionUuid: string, name: string, label: string): Pr
 const wakesInFlight = new Map<string, Promise<WakeResult | null>>();
 
 async function wakeOrPickOnce(sessionUuid: string, name: string, label: string): Promise<WakeResult | null> {
-  // at the gesture
   const host = globalThis as { NavigationGeneration?: { begin(t: string): unknown }; WakeFocus?: { afterWake(u: string, n: unknown): unknown } };
   const nav = host.NavigationGeneration ? host.NavigationGeneration.begin(`wake:${name}`) : null;
   let answer = await wakeSession(sessionUuid);

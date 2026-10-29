@@ -25,7 +25,7 @@ PEER_KEY = peer_hosts.host_key_for("AB-12")
 def conn(tmp_path):
     ensure_db_migrated(tmp_path)
     with closing(connect(db_path_for(tmp_path), create=False)) as c:
-        peer_hosts.upsert(c, install_id="AB-12", label="hosta", grant_id="g", fid="f", initiator=True)
+        peer_hosts.upsert(c, install_id="AB-12", label="studio", grant_id="g", fid="f", initiator=True)
         c.execute("INSERT INTO hosts (key, label, ssh_target, socket, enabled, created_at, updated_at) "
                   "VALUES ('ssh-box', 'box', 'box', 'carnivore-remote', 1, 'x', 'x')")
         for key in (PEER_KEY, "ssh-box"):

@@ -358,11 +358,11 @@ def test_an_empty_prefetch_reports_every_name_absent():
 
 def test_listing_does_not_reread_the_watchers_attention_evidence(monkeypatch):
     from src.core import listing_attention
-    from src.core.attention import registry_read
+    from src.core.attention import registry_index
 
     scans: list = []
     tails: list = []
-    monkeypatch.setattr(registry_read, "read_registry_index", lambda: scans.append(1) or {})
+    monkeypatch.setattr(registry_index, "read_registry_index", lambda: scans.append(1) or {})
     monkeypatch.setattr(listing_attention, "transcript_facts_for", lambda *args, **kw: tails.append(args))
 
     readers = listing_gather.ListingReaders(
@@ -428,7 +428,6 @@ LIVE_CONTAINERS = (
     (None, "_instance_epochs"),
     ("_theme_store", "pinned_themes"),
     ("hook_tokens", "tmux_names"),
-    (None, "_activity_tracker"),
 )
 
 

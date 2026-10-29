@@ -35,7 +35,7 @@ RULES = """\
 - [ ] Every control, toggle, view and filter is ALSO an action of the definition, so `useWidget` declares it to the one widget menu
   (`declareWidgetActions`); a persistent choice is a `settings` entry in the widget's manifest, never a private body toggle.
 - [ ] The widget's one menu opens from its icon on the rail and from the icon at the top left of its title strip (click, right-click, Shift+F10 on the
-  focused icon). The host owns both icons, so a draft draws nothing for it. Rows get NO menu of their own (an item
+  focused icon). The host owns both icons, so a draft draws nothing for it. Rows get NO menu of their own (Joe (ccsliinc), 2026-10-19, item 1030
   message 5597); no action is reachable only by a modifier (Shift+click): it is a widget menu item.
 - [ ] Mounting the cell only READS: no write, nothing created, no focus taken until the owner acts. The rail icon's menu mounts the cell unseen while
   its panel is closed so the declared actions are there (`docs/widget-spec.md` section 11 rule 5); a widget that owns a live pane declares `keepAlive`

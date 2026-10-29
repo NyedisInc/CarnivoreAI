@@ -83,7 +83,7 @@ describe('the settings mode matrix', () => {
         flushSync();
         const ask = target.querySelector('[data-matrix-ask="bOff"]')!;
         expect(ask.textContent).toContain('x.row.b_confirm');
-        expect(ask.querySelector('.modal-btn-danger')).not.toBeNull();
+        expect(ask.querySelector('[data-matrix-ask-confirm][data-btn="danger"]')).not.toBeNull();
         expect(changes, 'the tick waits on the confirm').toEqual([]);
         (target.querySelector('[data-matrix-ask-cancel]') as HTMLElement).click();
         flushSync();

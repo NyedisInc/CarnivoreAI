@@ -61,13 +61,14 @@ def refresh(locations: Iterable[Any], scanned_root_keys: Iterable[str]) -> None:
 
 
 def _seed(home: Path) -> List[_Record]:
+    from src.config import settings
     from src.config.provider_accounts import MANAGED_ROOT
-    from src.core.skill_manager.roots import enumerate_roots, known_profiles, profile_groups
+    from src.core.skill_manager.roots import configured_profiles, enumerate_roots, profile_groups
     from src.core.skill_manager.scan import scan_root
     from src.core.skill_manager.types import CLAUDE, SCOPE_PERSONAL
 
     out: List[_Record] = []
-    for group in profile_groups(known_profiles([], home=home, managed_root=MANAGED_ROOT)):
+    for group in profile_groups(configured_profiles(home, Path(settings.auth_config_file).expanduser(), MANAGED_ROOT)):
         roots = enumerate_roots(group=group, project_path=None, home=home, codex_home=home / ".codex", plugin_scope=dict)
         for root in (r for r in roots if r.harness == CLAUDE and r.scope == SCOPE_PERSONAL):
             for skill in scan_root(root)[0]:

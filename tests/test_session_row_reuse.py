@@ -52,7 +52,7 @@ def _insert_session(conn, **overrides):
         "tmux_session_id": "$0",
         "working_dir": "/home/x/proj",
         "agent_type": "claude",
-        "title": "Media Studio",
+        "title": "Media Pipeline",
         "claude_session_uuid": "claude-abc",
         "lifecycle": "stopped",
         "activity_state": "working",
@@ -161,7 +161,7 @@ def test_an_archived_row_comes_back_unarchived(conn):
 def test_the_title_survives_a_restart(conn):
     row_id = _insert_session(conn)
     _rebind(conn, row_id)
-    assert _row(conn, row_id)["title"] == "Media Studio", (
+    assert _row(conn, row_id)["title"] == "Media Pipeline", (
         "the user's own label for the session was lost by the restart"
     )
 
@@ -178,7 +178,7 @@ def test_the_restarted_row_is_still_resolvable_by_its_uuid(conn):
     src = resolve_restart_source(conn, session_uuid="s-1")
     assert src.parent_id == row_id
     assert src.claude_session_uuid == "claude-abc"
-    assert src.title == "Media Studio"
+    assert src.title == "Media Pipeline"
 
 
 def test_working_dir_is_not_blanked_when_the_probe_cannot_answer(conn):
@@ -362,7 +362,7 @@ def test_persist_creation_reuses_the_named_row_instead_of_inserting(conn):
     after = _row(conn, row_id)
     assert int(after["tmux_created_epoch"]) == NEW_EPOCH
     assert after["lifecycle"] == "running"
-    assert after["title"] == "Media Studio"
+    assert after["title"] == "Media Pipeline"
     assert after["claude_session_uuid"] == "claude-abc"
 
 

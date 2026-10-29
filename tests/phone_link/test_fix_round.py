@@ -249,7 +249,7 @@ def test_a_key_file_must_be_absolute_private_and_ours(tmp_path):
 
 
 @pytest.mark.parametrize("ip,ok", [("8.8.8.8", True), ("2001:4860:4860::8888", True), ("127.0.0.1", False),
-                                   ("::1", False), ("198.51.100.15", False), ("203.0.113.15", False),
+                                   ("::1", False), ("10.1.2.3", False), ("192.168.0.4", False),
                                    ("169.254.1.1", False), ("0.0.0.0", False), ("::", False),
                                    ("::ffff:127.0.0.1", False), ("fe80::1", False), ("junk", False)])
 def test_only_public_client_addresses_are_accepted(ip, ok):

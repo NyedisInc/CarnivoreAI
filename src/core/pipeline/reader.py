@@ -103,11 +103,6 @@ def check_cursor(path: str, size: int, offset: int, serial: Optional[str], seria
 
 
 def request_download(path: Union[str, Path]) -> bool:
-    """Ask iCloud to download exactly one placeholder file, on its own thread. Never raises, never blocks.
-
-    Output: True when a request was started, False when one for this path is already running.
-    Inputs: path - the placeholder file. Example: request_download('/Users/x/.../agent-1.jsonl')
-    """
     name = str(path)
     with _helpers_lock:
         if name in _downloading:
@@ -132,7 +127,7 @@ def _download(path: str) -> bool:
     except subprocess.TimeoutExpired:
         logger.warning("pipeline_icloud_download_timeout", path=path)
         return False
-    except OSError as exc:  # not executable
+    except OSError as exc:
         logger.warning("pipeline_icloud_download_unavailable", path=path, error=str(exc))
         return False
     if done.returncode != 0:

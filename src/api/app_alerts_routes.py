@@ -30,7 +30,6 @@ def _db_path() -> Path:
 
 
 def _state_dir() -> Path:
-    """This install's state directory. Separate function so tests can point it at a temp dir."""
     return app_settings.get_state_dir()
 
 
@@ -132,7 +131,8 @@ async def recheck_alert(alert_id: int) -> Dict[str, Any]:
 
 @router.post("/open-system-settings")
 async def open_system_settings(body: SystemSettingsBody) -> Dict[str, Any]:
-    """
+    """Open one allow-listed System Settings pane on this Mac. Output: {opened: true, pane}.
+
     The pane is looked up in ``kinds.SYSTEM_PANES``; the caller never supplies a URL. 501 off macOS, 502 when ``open`` fails.
     Example: POST /alerts/open-system-settings {"pane": "full_disk_access"}
     """

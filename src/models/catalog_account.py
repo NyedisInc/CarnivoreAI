@@ -8,6 +8,14 @@ from pydantic import BaseModel, Field
 
 class CatalogDeviceSession(BaseModel):
     """One signed in device of the catalog account.
+
+    Fields:
+        sid: the session id, what a revoke names. Not a credential.
+        client: the app that signed in, "" when it did not say.
+        label: the device's own name, "" when it did not say.
+        created_at: unix seconds the device signed in.
+        last_refresh_at: unix seconds of its last token refresh.
+        current: True for the session making this request.
     """
 
     sid: str

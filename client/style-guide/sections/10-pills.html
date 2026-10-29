@@ -1,4 +1,6 @@
 <h2 class="sg-h2">pills, badges and chips</h2>
+<p class="sg-lead">Short evidence beside a name: a host, a wrapper, a state, a count. Small, square-cornered, one word or
+two, and never the only place something important is said.</p>
 
 <h3 class="sg-h3" id="pills-status">status pill</h3>
 <div class="sg-specimen">
@@ -17,27 +19,6 @@
         rings and every signal. A pill is for states that are not a session's attention state.</dd>
     <dt>access</dt>
     <dd>With <code>showLabel={false}</code> the label still reaches the accessible name; do not drop the label prop.</dd>
-</dl>
-
-<h3 class="sg-h3" id="pills-family">agent family and wrapper pills</h3>
-<div class="sg-specimen">
-    <div class="sg-specimen__label"><span>live</span><code>web/src/lib/launchpad/AgentFamilyPill.svelte</code><code>WrapperPill.svelte</code></div>
-    <div class="sg-specimen__body"><div id="sg-live-family-pills"></div></div>
-</div>
-<dl class="sg-facts">
-    <dt>three outcomes</dt>
-    <dd>A recorded family is SOLID (<code>.family-pill--fact</code>), an inferred one is DASHED
-        (<code>.family-pill--guess</code>), and nothing known says "unknown family" in words
-        (<code>.family-pill--unknown</code>). Never collapse a guess into a fact or an unknown into "claude". Props:
-        <code>family</code> and <code>source</code> straight off the <code>/sessions/list</code> WRAPPER level
-        (<code>agent_family</code>, <code>agent_family_source</code>), never the nested <code>info.session</code> (gotcha 1).</dd>
-    <dt>wrapper</dt>
-    <dd><code>&lt;WrapperPill label={row.agent_wrapper_label} /&gt;</code> renders nothing for a null label; its
-        <code>title</code> is the full sentence (<code>RUNNING_SESSION_KEYS.wrapperTitle</code>).</dd>
-    <dt>themes</dt>
-    <dd>The family pills read <code>--color-family-fact-*</code> and <code>--color-family-guess-*</code>; the legacy
-        <code>.badge-tmux</code>, <code>.badge-external</code> and <code>.badge-ended</code> read the
-        <code>--color-badge-*</code> manifest values. Both are legacy <code>--color-*</code> reads kept for these badges only.</dd>
 </dl>
 
 <h3 class="sg-h3" id="pills-chips">chips and counts</h3>
@@ -59,7 +40,7 @@
 
 <h3 class="sg-h3" id="pills-subagents">subagent count</h3>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/session-sidebar-subagents.js</code><span>styles live</span><code>client/css/subagent-count.css</code></div>
+    <div class="sg-specimen__label"><span>markup copied from</span><code>web/src/lib/sidebar-shell/row-chips.ts</code><span>styles live</span><code>client/css/subagent-count.css</code></div>
     <div class="sg-specimen__body">
         <button type="button" class="subagent-count subagent-count--button" aria-label="2 subagents running, 7 launched in this conversation">2 sub</button>
         <span class="subagent-count subagent-count--rollup" title="3 subagents running in this group">3 sub</span>
@@ -105,7 +86,7 @@
 
 <h3 class="sg-h3" id="pills-timers">timer chip</h3>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>markup copied from</span><code>client/js/session-sidebar-timers.js</code><span>styles live</span><code>client/css/timer-chip.css</code></div>
+    <div class="sg-specimen__label"><span>markup copied from</span><code>web/src/lib/sidebar-shell/row-chips.ts</code><span>styles live</span><code>client/css/timer-chip.css</code></div>
     <div class="sg-specimen__body">
         <button type="button" class="timer-chip timer-chip--button" aria-label="2 live timers, next fires in 18m"><svg class="timer-chip__glyph" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4"></circle><path d="M5 2.6V5l1.6 1"></path></svg>18m</button>
         <button type="button" class="timer-chip timer-chip--button" aria-label="1 live timer"><svg class="timer-chip__glyph" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4"></circle><path d="M5 2.6V5l1.6 1"></path></svg>1 timer</button>
@@ -138,6 +119,4 @@
     <li><strong>Colour-only status.</strong> A green dot with no word. Every chip carries its word.</li>
     <li><strong>A pill for prose.</strong> A badge holds a word or two; a sentence goes in a tooltip or a line.</li>
     <li><strong>A pill-shaped radius.</strong> Chips use 2px to <code>--radius-sm</code> corners, not 999px.</li>
-    <li><strong>Reading the family off the wrong level.</strong> <code>info.session.agent_family</code> is undefined and
-        renders "unknown family" for every row. It lives on the wrapper.</li>
 </ul>

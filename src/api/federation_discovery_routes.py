@@ -13,7 +13,8 @@ from pydantic import BaseModel
 
 from src.api.auth import require_auth
 from src.config import settings
-from src.core.db import DatastoreUnreadableError, connect, db_path_for
+from src.core.db import DatastoreUnreadableError, db_path_for
+from src.core.db_reuse.core_read import lend_pooled_or_raise
 from src.core.federation import discovery as disc
 from src.core.hosts import roster_push, store
 
@@ -39,7 +40,7 @@ def _service(request: Request) -> disc.Discovery:
 
 def _known_targets() -> List[str]:
     try:
-        with closing(connect(db_path_for(settings.get_state_dir()), create=False)) as conn:
+        with closing(lend_pooled_or_raise(db_path_for(settings.get_state_dir()))) as conn:
             return [h.ssh_target for h in store.list_hosts(conn) if h.ssh_target]
     except (DatastoreUnreadableError, store.HostsUnavailable, sqlite3.DatabaseError, OSError):
         return []

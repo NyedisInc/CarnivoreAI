@@ -105,15 +105,6 @@ def scan_skill(skill_dir: Path, name: str) -> SkillScan:
 
 
 def scan_root(root: Path, family: str) -> RootScan:
-    """Scan every valid skill folder directly under ``root``.
-
-    Description: dot names, plain files and names failing :func:`rules.skill_name_problem` (``synced``, bundled skills)
-      are skipped silently. A root that is a link, sits under a link, or raises OSError is not healthy. An absent root is
-      healthy and empty: absence never deletes anywhere, so it can only make skills show as missing on alpha.
-    Inputs: root (Path) - ``~/.claude/skills`` or ``~/.agents/skills``; family (str) - for the log only.
-    Output: RootScan.
-    Example: scan_root(Path.home() / ".claude" / "skills", "claude").skills["sme"].digest
-    """
     if symlinked_intermediate(root) is not None or root.is_symlink():
         return RootScan(root, False, f"cannot read {root}")
     if not os.path.lexists(root):

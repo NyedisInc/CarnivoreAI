@@ -18,7 +18,7 @@ from src.core.notifications.settings_doc import view  # noqa: E402
 from .conftest import slack_body  # noqa: E402
 from .test_settings_and_destinations import BASE, make_client  # noqa: E402
 
-PRIVATE_URLS = ["https://203.0.113.13/hook", "https://192.0.2.13/x", "https://127.0.0.1:9000/x", "https://[fd00::1]/x",
+PRIVATE_URLS = ["https://192.168.1.20/hook", "https://10.0.0.5/x", "https://127.0.0.1:9000/x", "https://[fd00::1]/x",
                 "https://ntfy.lan/x", "https://box.local/x", "https://router.home.arpa/x", "https://localhost/x"]
 
 
@@ -50,7 +50,7 @@ def test_private_host_refused_while_off_and_accepted_when_on(service, url):
 
 def test_ntfy_private_base_follows_the_switch(service):
     client = make_client(service)
-    body = {"kind": "ntfy", "name": "n", "config": {"base_url": "https://203.0.113.13"}, "secrets": {"topic": "t"}}
+    body = {"kind": "ntfy", "name": "n", "config": {"base_url": "https://192.168.1.20"}, "secrets": {"topic": "t"}}
     assert fields_of(client.post(f"{BASE}/destinations", json=body)) == {"base_url": validate.PRIVATE_ADDRESS}
     assert client.post(f"{BASE}/destinations", json={**body, "allow_private": True}).status_code == 201
 
@@ -76,11 +76,11 @@ def test_other_kinds_refuse_the_field(service):
 
 def test_patch_round_trips_and_the_url_check_uses_the_value_in_force(service):
     client = make_client(service)
-    dest = client.post(f"{BASE}/destinations", json=webhook("https://203.0.113.13/x", allow_private=True)).json()["destination"]["id"]
+    dest = client.post(f"{BASE}/destinations", json=webhook("https://192.168.1.20/x", allow_private=True)).json()["destination"]["id"]
     assert client.get(f"{BASE}/destinations").json()["destinations"][0]["allow_private"] is True
-    ok = client.patch(f"{BASE}/destinations/{dest}", json={"secrets": {"url": "https://192.0.2.19/y"}})
+    ok = client.patch(f"{BASE}/destinations/{dest}", json={"secrets": {"url": "https://10.1.1.1/y"}})
     assert ok.status_code == 200
-    bad = client.patch(f"{BASE}/destinations/{dest}", json={"allow_private": False, "secrets": {"url": "https://198.51.100.19/z"}})
+    bad = client.patch(f"{BASE}/destinations/{dest}", json={"allow_private": False, "secrets": {"url": "https://10.1.1.2/z"}})
     assert fields_of(bad) == {"url": validate.PRIVATE_ADDRESS}
     off = client.patch(f"{BASE}/destinations/{dest}", json={"allow_private": False})
     assert off.status_code == 200 and off.json()["destination"]["allow_private"] is False
@@ -88,22 +88,22 @@ def test_patch_round_trips_and_the_url_check_uses_the_value_in_force(service):
 
 def test_the_guard_honors_the_switch_through_the_view(service):
     client = make_client(service)
-    client.post(f"{BASE}/destinations", json=webhook("https://203.0.113.13/x", allow_private=True))
+    client.post(f"{BASE}/destinations", json=webhook("https://192.168.1.20/x", allow_private=True))
     client.post(f"{BASE}/destinations", json=webhook("https://example.com/x"))
     spec = kind_specs.get_kind("webhook")
     on = [v for v in view.DocRoutingView(service.docs.snapshot()).destinations() if v.config.get("allow_private")]
     off = [v for v in view.DocRoutingView(service.docs.snapshot()).destinations() if not v.config.get("allow_private")]
     assert len(on) == 1 and len(off) == 1
-    assert base.policy_for(spec, on[0].config, "https://203.0.113.13/x").allow_private is True
+    assert base.policy_for(spec, on[0].config, "https://192.168.1.20/x").allow_private is True
     assert base.policy_for(spec, off[0].config, "https://example.com/x").allow_private is False
 
 
 def test_the_switch_is_a_local_key_only_and_delete_removes_it(service, config_path):
     client = make_client(service)
-    dest = client.post(f"{BASE}/destinations", json=webhook("https://203.0.113.13/x", allow_private=True)).json()["destination"]["id"]
+    dest = client.post(f"{BASE}/destinations", json=webhook("https://192.168.1.20/x", allow_private=True)).json()["destination"]["id"]
     doc = service.docs.snapshot()
     key = view.allow_private_key(dest)
-    assert doc["local"][key] == "https://203.0.113.13:443" and key.startswith("local/")
+    assert doc["local"][key] == "https://192.168.1.20:443" and key.startswith("local/")
     assert "allow_private" not in json.dumps(doc["global"])
     client.delete(f"{BASE}/destinations/{dest}")
     assert key not in service.docs.snapshot()["local"]
@@ -122,7 +122,7 @@ def test_a_global_record_claiming_the_switch_is_ignored(service):
 
 def test_the_bundle_export_never_carries_the_switch(service, config_path):
     client = make_client(service)
-    client.post(f"{BASE}/destinations", json=webhook("https://203.0.113.13/x", allow_private=True))
+    client.post(f"{BASE}/destinations", json=webhook("https://192.168.1.20/x", allow_private=True))
     doc = config_writer.read_config(config_path)
     assert "notification_routing" in doc and "allow_private" in json.dumps(doc["notification_routing"])
     projected = bundle.project(doc, {})

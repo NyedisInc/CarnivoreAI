@@ -45,7 +45,6 @@ function loadLocalMobileMode(): string | null {
     return raw !== null && MODES.indexOf(raw) !== -1 ? raw : null;
 }
 
-/* the shared one */
 function loadDesktopMode(): string {
     const bridge = (drawerEnv() as BridgeGlobals).PreferenceBridge;
     if (bridge && typeof bridge.read === 'function') {

@@ -109,7 +109,6 @@
   --oc-theme-light-line-2: #cbcfda;
   --oc-theme-light-line-3: #c9cfda;
 
-  /* running sessions */
   --oc-spark: #2be393;
   --oc-spark-mid: #1f7f55;
   --oc-spark-dim: #174a37;
@@ -129,8 +128,10 @@
   --oc-fs-hint: 11px;
   --oc-fs-micro: 10px;
   --oc-tracking-wordmark: -0.5px;
+  /* is gone with */
   --oc-tracking-title: 0.8px;
   --oc-tracking-label: 0.6px;
+  --oc-tracking-micro: 0.4px;
 
   --oc-topbar: 54px;
   --oc-pad-top: 16px;
@@ -138,7 +139,6 @@
   --oc-pad-bottom: 13px;
   --oc-pad-left: 16px;
   --oc-gutter: 12px;
-  /* padding */
   --oc-space-1: 4px;
   --oc-space-2: 8px;
   --oc-space-3: 12px;
@@ -176,7 +176,6 @@
   --oc-row-h-dense: 22px;
   --oc-row-h: var(--oc-rowheight);
   --oc-row-h-roomy: 32px;
-  /* padding */
   --oc-task-pad-x: var(--oc-space-3);
   --oc-task-pad-y: var(--oc-space-3);
   --oc-task-gap: var(--oc-space-3);
@@ -191,7 +190,6 @@
   --oc-z-modal: 1100;
   --oc-z-toast: 1200;
   --oc-z-tooltip: 1300;
-  /* padding */
   --oc-terminal-inset: 8px;
   --oc-stats-h: 69px;
   --oc-titlerow-h: 37px;
@@ -235,19 +233,6 @@
   --oc-ground-titlerow: var(--color-header-bg, #02161e);
   --oc-ground-band: var(--oc-ground-chrome);
   --oc-ground-content: var(--oc-ground-page);
-  /* A component's tab strip (#514): the title row's own ground taken darker,
-     so the active tab, which wears the title row's ground, joins the row
-     under it and everything else in the strip steps back. Mixing 18% toward
-     BLACK (it was 40, which read as a black bar on every dark theme, the owner
-     (contributor), an earlier date) is a fixed absolute step, so on a dark ground it lands a shade
-     darker (as intended) but on a LIGHT ground it crushes a light grey into
-     a mid grey the icons and inactive-tab text painted over it cannot clear
-     4.5:1 against (issue #975). `--color-tabstrip-bg` lets a theme override
-     the result directly through its own manifest instead of changing this
-     shared formula for every theme; no theme sets it, so every other
-     theme's computed output is unchanged; the reset above (issue #995) is
-     what keeps that override from leaking into a differently-themed scope.
-     derived, overridable */
   --oc-ground-tabstrip: var(--color-tabstrip-bg, color-mix(in srgb, var(--oc-ground-titlerow) 82%, black));
   --oc-ground-tab-inactive: color-mix(in srgb, color-mix(in srgb, color-mix(in srgb, var(--oc-ground-tabstrip) 85%, var(--oc-ground-titlerow)) 91%, var(--oc-text-primary)) 25%, var(--oc-ground-titlerow));
   --oc-ground-tab-inactive-hover: color-mix(in srgb, var(--oc-ground-tab-inactive) 90%, var(--oc-text-primary));
@@ -271,9 +256,9 @@
   --oc-state-selected: color-mix(in srgb, var(--_on, var(--oc-ground-content)), var(--oc-orange) 12%);
   --oc-line-hairline: var(--color-border, #1f2e30);
   --oc-line-control: color-mix(in srgb, var(--oc-ground-content), var(--oc-text-primary) 55%);
+  /* and the three */
   --oc-line-button: color-mix(in srgb, var(--oc-ground-panel), var(--oc-text-primary) 65%);
   --oc-line-button-hover: color-mix(in srgb, var(--oc-ground-panel), var(--oc-text-primary) 85%);
-  /* --color- */
   --oc-backdrop: color-mix(in srgb, var(--oc-ground-page) 82%, transparent);
   --oc-backdrop-soft: color-mix(in srgb, var(--oc-ground-page) 40%, transparent);
   --oc-line-panel: var(--color-border, #1f2e30);
@@ -301,16 +286,10 @@
   --oc-yellow: var(--color-warning, #dbca76);
   --oc-yellow-bright: var(--color-warning, #e4c13c);
   --oc-coral: var(--color-danger, #e78475);
-  /* THE TWO EFFORT PURPLES (issue #852). No manifest carries a purple, so
-     both take their LIGHTNESS from the theme's own text colour (a light
-     text means a dark ground and the other way round) and fix only the
-     hue and chroma: light purple is a pastel lavender, deep purple a
-     saturated violet. Measured against --color-bg over all 42 shipped
-     themes: light worst 5.33 (gameboy), deep worst 3.67 (snes), median
-     10.1 and 6.3. derived */
   --oc-purple-light: oklch(from var(--color-fg, #cbd6d9) calc(0.3 + 0.55 * l) 0.1 310);
   --oc-purple-deep: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.5 * l) 0.2 292);
   --oc-violet: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.55 * l) 0.13 295);
+  --oc-pink: oklch(from var(--color-fg, #cbd6d9) calc(0.3 + 0.5 * l) 0.16 350);
   --oc-kind-mod: oklch(from var(--color-fg, #cbd6d9) calc(0.30 + 0.40 * l) 0.13 40);
   --oc-kind-skill: oklch(from var(--color-fg, #cbd6d9) calc(0.22 + 0.50 * l) 0.20 292);
   --oc-kind-theme: oklch(from var(--color-fg, #cbd6d9) calc(0.30 + 0.62 * l) 0.02 80);
@@ -355,7 +334,6 @@
   --oc-scrollbar-track: color-mix(in oklab, var(--oc-text-primary) 8%, var(--oc-ground-panel));
 }
 
-/* --color- */
 [data-session-theme="carnivore-light"] {
   --oc-violet: #743677;
 }
@@ -381,6 +359,7 @@
     --oc-series-8: #e58bc0;
     --oc-purple-light: #caa5e7;
     --oc-purple-deep: #9672fe;
+    --oc-pink: #f08cc0;
     --oc-kind-mod: #da7957;
     --oc-kind-skill: #9672fe;
     --oc-kind-theme: #dfd7ca;

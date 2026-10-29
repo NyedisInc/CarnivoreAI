@@ -68,7 +68,7 @@ describe('refusePlacement', () => {
   });
 });
 
-describe('the compact list', () => {
+describe('the compact list (Joe (ccsliinc), 2026-10-03)', () => {
   test('drawerList is one flat list of the same rows, addable before placed before switched off', () => {
     const list = drawerList(inputs({ disabled: (id) => id === 'core.files' }));
     expect(list.rows.map((row) => row.widgetId).sort()).toEqual(ids(drawerGroups(inputs())).sort());

@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* running sessions */
   import CascadeMenu from '../../lib/drawer-tabs/CascadeMenu.svelte';
   import type { MenuNode } from '../../lib/drawer-tabs/add-component-menu';
   import { t } from '../../lib/i18n/index.svelte';

@@ -8,6 +8,7 @@ const mk = (id: number, list: string, extra: Record<string, unknown> = {}) => ({
   id, list, text: `item ${id}`, note: '', position: id, created_by: 'joe', state: 'open', kind: 'task',
   revision: 1, created_seq: id, seq: id, deleted: false, thread: [], github_issue: '', ...extra,
 });
+/** Two open items and two closed (done) ones. */
 const ITEMS = (list: string) => [mk(1, list, { section: 'open', status: 'open' }), mk(2, list, { section: 'working', status: 'working' }), mk(3, list, { section: 'review', status: 'review' })];
 
 vi.mock('../../api/auth.svelte', async (importOriginal) => {
@@ -57,6 +58,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** Mount the session cell under the menu host. Output: the host element after the body settled. */
 async function draw(): Promise<HTMLElement> {
   const host = document.createElement('div');
   document.body.appendChild(host);
@@ -68,9 +70,12 @@ async function draw(): Promise<HTMLElement> {
 }
 
 const order = (host: HTMLElement): number[] => [...host.querySelectorAll('[data-huddle-item]')].map((row) => Number(row.getAttribute('data-huddle-item')));
+/** Settle the store and the DOM. Output: Promise<void>. */
 async function settle(): Promise<void> { for (let i = 0; i < 6; i += 1) { await Promise.resolve(); await tick(); } flushSync(); }
+/** Push a live read into the store the way another agent's change does. Inputs: items. Output: void. */
 function push(items: unknown[]): void {
   huddle.body = { ...(huddle.body as object), items } as typeof huddle.body;
+  // a pinned widget reads its project out of the aggregate (#1710 round 7)
   huddle.groups = (huddle.groups ?? []).map((g) => (g.list === '7' ? { ...g, items } : g)) as typeof huddle.groups;
 }
 

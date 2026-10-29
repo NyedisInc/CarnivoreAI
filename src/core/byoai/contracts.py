@@ -91,16 +91,11 @@ class ProviderHTTPError(ByoaiError):
 
 
 class ProviderTimeout(ByoaiError):
-    """The provider (or a CLI) did not answer in time."""
+    pass
 
 
 class ByoaiUnreachable(ByoaiError):
-    """The provider could not be reached at all: connection refused, DNS failure,
-    connect timeout, no route, or a CLI binary that is missing or will not start.
-
-    Distinct from ProviderTimeout (it connected, then was slow): a caller can
-    use a spare slot on this and retry on that.
-    """
+    pass
 
 
 class Unsupported(ByoaiError):
@@ -308,6 +303,9 @@ class MediaResult:
     items: Tuple[MediaItem, ...]
     raw: Any = None
     usage: Optional[Usage] = None
+
+
+UNATTENDED_AGENT_MODES: Tuple[str, ...] = ("bypassPermissions", "dontAsk", "danger-full-access")
 
 
 @dataclass(frozen=True)

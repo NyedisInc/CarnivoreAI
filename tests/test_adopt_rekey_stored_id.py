@@ -105,7 +105,7 @@ def _seed_row(state_dir: Path, manager: SessionManager, *, name: str,
     with closing(connect(db_path_for(state_dir))) as conn:
         record_instance(
             conn,
-            socket=manager._tmux_socket_name(),
+            socket=manager.tmux_socket_name(),
             name=name,
             epoch=epoch,
             origin=SESSION_ORIGIN_CREATED,

@@ -68,6 +68,7 @@ describe('the poll gate re-reads storage on the host handoff', () => {
     await vi.runOnlyPendingTimersAsync();
     expect(probe.status).toBe('ok');
 
+    // the home screen
     store.removeItem(ACCESS_KEY);
     store.removeItem(REFRESH_KEY);
     poll.pauseAll();

@@ -161,7 +161,7 @@ describe('pill submit', () => {
     expect(host.querySelector('[data-ask-answer="ho"]')!.textContent).toContain('ran it');
   });
 
-  test('a question answered by the owner\'s chat comment says so', async () => {
+  test('a question answered by the owner\'s chat comment says so (item 492)', async () => {
     huddle.body = { list: 'all', items: [{ id: 1, list: 'all', text: 'h', title: '', thread: [{ id: 11, item_id: 1, author: 'joe', kind: 'reply', text: 'do x', answers_to: 10, freeform: true }] }] } as never;
     const host = await open(post([CMD], { answered: true }));
     expect(host.querySelector('[data-ask-option]')).toBeNull();

@@ -18,6 +18,7 @@ vi.mock('../../api/auth.svelte', async (importOriginal) => {
       if (path === '/cplugs/huddle') return { revision: 1, settings: { view: 'area', hideCompleted: false } };
       if (path === '/cplugs/huddle/focus') return { focus: null };
       if (path === '/cplugs/huddle/lists') return { cursor: 0, lists: [{ key: '7', name: 'Carnivore', project_id: 7, items: 4, open: 4, review: 0, questions: 0, claude_seq: 0, unread: 2 }] };
+      // the live read adds a query string (live_only, hide_completed), so the path is matched without it
       if (path.startsWith('/cplugs/huddle/aggregate')) return { cursor: 0, groups: [{ list: '7', name: 'Carnivore', project_id: 7, revision: 1, groups: [], items: ITEMS('7') }] };
       const one = /^\/cplugs\/huddle\/lists\/(\d+)(?:\?.*)?$/.exec(path);
       if (one) return { list: one[1], revision: 1, cursor: 0, groups: [], items: ITEMS(one[1] as string) };
@@ -94,8 +95,10 @@ describe('TM Mark II beside the original task manager cell', () => {
   });
 });
 
+/** The item ids a host draws, sorted. Inputs: host. Output: string[]. */
 const itemIds = (host: HTMLElement): string[] => [...host.querySelectorAll('[data-huddle-item]')].map((el) => el.getAttribute('data-huddle-item') ?? '').sort();
 
+/** Press one Mark II chip and let the list redraw. Inputs: host; chip id. Output: Promise<void>. */
 async function press(host: HTMLElement, chip: string): Promise<void> {
   (host.querySelector(`[data-task-manager-mk2-chip="${chip}"]`) as HTMLButtonElement).click();
   await tick();

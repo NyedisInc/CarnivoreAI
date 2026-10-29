@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import Button from '../../lib/base/Button.svelte';
     import { t } from '../../lib/i18n/index.svelte';
     import { asleep, recent, sessions, wakeOrPick } from '../api';
     import { authFetch } from '../api/auth.svelte';
@@ -33,9 +34,15 @@
             }
         } catch (failure) {
             error = t('layout.member.asleep.wake_failed', { name, reason: (failure as Error).message });
+        } finally {
+            try {
+                await Promise.all([asleep.refresh(true), sessions.refresh(true)]);
+            } catch (failure) {
+                console.warn('layouts: the listing refresh after a wake failed', { name, error: (failure as Error).message });
+            } finally {
+                busy = false;
+            }
         }
-        await Promise.all([asleep.refresh(true), sessions.refresh(true)]);
-        busy = false;
     }
 
     interface Picker {
@@ -49,7 +56,7 @@
         if (busy || !uuid) return;
         const picker = (globalThis as { SessionRestartPicker?: Picker }).SessionRestartPicker;
         if (!picker) {
-            error = t('layout.member.dead.recreate_failed', { name, reason: 'the restart picker did not load' });
+            error = t('layout.member.dead.recreate_failed', { name, reason: t('layout.member.dead.picker_missing') });
             return;
         }
         busy = true;
@@ -83,15 +90,13 @@
     {#if downAs === 'asleep'}
         <p class="lmd-title">{t('layout.member.asleep.title')}</p>
         <p class="lmd-body">{t('layout.member.asleep.body', { name })}</p>
-        <button class="modal-btn modal-btn-confirm" data-member-action="wake" disabled={busy} onclick={() => void wake()}
-            >{busy ? t('layout.member.asleep.waking') : t('layout.member.asleep.wake')}</button
-        >
+        <Button variant="confirm" data-member-action="wake" disabled={busy} onclick={() => void wake()}
+            >{busy ? t('layout.member.asleep.waking') : t('layout.member.asleep.wake')}</Button>
     {:else if downAs === 'dead'}
         <p class="lmd-title">{t('layout.member.dead.title')}</p>
         <p class="lmd-body">{t('layout.member.dead.body', { name })}</p>
-        <button class="modal-btn modal-btn-confirm" data-member-action="recreate" disabled={busy} onclick={() => void recreate()}
-            >{busy ? t('layout.member.dead.recreating') : t('layout.member.dead.recreate')}</button
-        >
+        <Button variant="confirm" data-member-action="recreate" disabled={busy} onclick={() => void recreate()}
+            >{busy ? t('layout.member.dead.recreating') : t('layout.member.dead.recreate')}</Button>
     {:else}
         <p class="lmd-title">{t('layout.member.gone.title')}</p>
         <p class="lmd-body">{t('layout.member.gone.body')}</p>

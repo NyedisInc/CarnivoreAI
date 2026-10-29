@@ -151,7 +151,7 @@ describe('"notes" on the left, the controls at the right end', () => {
     resetRightDrawerForTest();
   });
 
-  test('rail slide-out, header off: no title row, no name and no control at all; edit, preview and save are menu items', async () => {
+  test('rail slide-out, header off: no title row, no name and no control at all; edit, preview and save are menu items (Joe (ccsliinc), 2026-10-23)', async () => {
     const manifest = CORE_MANIFESTS[coreWidgetId('notes')];
     if (!manifest) throw new Error('no core notes manifest');
     sizes[`session-rail:${manifest.id}`] = { width: 480, height: 400 };

@@ -16,9 +16,7 @@ from src.core.session_label import (
     LABEL_MAX_CHARS,
     InvalidLabel,
     label_from_tmux_name,
-    sanitize_tmux_name,
     set_label,
-    unique_tmux_name,
     validate_label,
 )
 
@@ -28,7 +26,7 @@ from src.core.session_label import (
 @pytest.mark.parametrize(
     "label",
     [
-        "Image Tool",
+        "Media Compression",
         "the one with the weird ffmpeg bug",
         "client: acme (v2)",
         "cost/benefit 50%",
@@ -55,59 +53,16 @@ def test_a_label_is_stripped_of_surrounding_whitespace():
 
 
 
-@pytest.mark.parametrize(
-    "label,expected",
-    [
-        ("Image Tool", "Image_Tool"),
-        ("client: acme", "client_acme"),
-        ("dot.separated", "dot_separated"),
-        ("lots    of     space", "lots_of_space"),
-        ("__trim me__", "trim_me"),
-        ("cost/benefit", "cost_benefit"),
-    ],
-)
-def test_the_filter_produces_a_tmux_safe_name(label, expected):
-    assert sanitize_tmux_name(label) == expected
-
-
-def test_a_label_that_sanitises_to_nothing_still_yields_a_usable_name():
-    out = sanitize_tmux_name("!!!")
-    assert out
-    assert ":" not in out and "." not in out and " " not in out
-
-
-def test_the_filter_drops_characters_tmux_would_mangle_anyway():
-    out = sanitize_tmux_name("build 🚀 now")
-    assert out.isascii()
-
-
-def test_two_different_labels_that_collide_get_distinct_tmux_names():
-    first = unique_tmux_name("client: acme", taken=set())
-    second = unique_tmux_name("client. acme", taken={first})
-    assert first != second
-    assert second.startswith(first)
-
-
-def test_a_free_name_is_not_suffixed():
-    assert unique_tmux_name("solo", taken=set()) == "solo"
-
-
-def test_the_uniquifier_terminates_under_heavy_collision():
-    taken = {"busy"} | {f"busy_{n}" for n in range(2, 60)}
-    out = unique_tmux_name("busy", taken=taken)
-    assert out not in taken
-
-
 
 
 def test_setting_a_label_writes_title_and_touches_no_identity_column(conn):
     add_row(conn, uuid="u-lab", name="cloude_Media", epoch=1787686975,
             tmux_session_id="$0")
 
-    assert set_label(conn, session_uuid="u-lab", label="Image Tool")
+    assert set_label(conn, session_uuid="u-lab", label="Media Compression")
 
     row = row_by_uuid(conn, "u-lab")
-    assert row["title"] == "Image Tool"
+    assert row["title"] == "Media Compression"
     assert row["tmux_name"] == "cloude_Media", (
         "renaming a LABEL must not touch the tmux name - that is the "
         "field whose movement split one session into two rows"
@@ -141,7 +96,7 @@ def test_an_invalid_label_never_reaches_the_table(conn):
     "tmux_name,expected",
     [
         ("cloude_Media", "Media"),
-        ("Image_Tool", "Image Tool"),
+        ("Media_Compression", "Media Compression"),
         ("cloude_my_long_thing", "my long thing"),
         ("cloude_", "cloude"),
         ("plain", "plain"),

@@ -89,6 +89,11 @@ export function togglePin(name: string, visibleNames: readonly string[]): boolea
     return next;
 }
 
+export function pinSession(name: string): void {
+    if (S.isPinned(name)) return;
+    S.save(S.current().pinned.concat([name]), S.current().order);
+}
+
 export function move(name: string, delta: number, visibleNames: readonly string[]): MoveResult | null {
     const names = S.dedupe(visibleNames);
     const idx = names.indexOf(name);

@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-#
-#
 set -uo pipefail
 
 lock="${1:-}"

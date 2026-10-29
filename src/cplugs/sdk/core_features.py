@@ -21,7 +21,6 @@ class CoreFeature:
 
     @property
     def name_key(self) -> str:
-        """The catalog key naming it on the plugins page. Output: str."""
         return f"{NAME_KEY_PREFIX}{self.id}"
 
 

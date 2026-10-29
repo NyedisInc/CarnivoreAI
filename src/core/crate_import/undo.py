@@ -64,7 +64,6 @@ def marker_entry(path: Path, match: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _undo_marker(entry: Dict[str, Any], path: str, info: os.stat_result, report: UndoReport) -> None:
-    """Remove a marker file the import wrote, only while it is a regular file holding every logged field (someone else's file is kept)."""
     import json
 
     try:
@@ -109,11 +108,6 @@ def dir_entry(path: Path, side: Optional[Path] = None) -> Dict[str, Any]:
 
 
 def creation_entries(dest: Path, root: Path, sha256: str, length: int, scope: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """The undo entries of a file about to be CREATED after the rows committed: a ``dir`` entry for each folder between ``root`` and
-    the file that does not exist yet (outermost first, so the newest-first replay removes the file, then the inner folders) and the
-    ``file`` entry. ``scope`` names which root the replay must resolve (``{"store": [plugin, data]}``, ``{"receipt": True}`` or
-    ``{"task_files": True}``); the replay derives the root from the install, never from the entry. Blocking (it looks at the disk).
-    Example: creation_entries(Path('/b/x/a.json'), Path('/b'), 'ab', 3, {'store': ['p', 'd']})[-1]['op'] -> 'file'"""
     missing: List[Path] = []
     folder = Path(dest).parent
     while folder != Path(root) and is_within(str(folder), str(root)) and not os.path.lexists(folder):
@@ -128,8 +122,6 @@ def _allowed(path: str, roots: Sequence[Path]) -> bool:
 
 
 def _in_side(entry: Dict[str, Any], path: str) -> bool:
-    """Whether the entry names a side folder (a name ending in a crate date) and ``path`` is that folder or lies inside it.
-    The one reach beyond the allowed roots: an import restoring project files makes its OWN new folder anywhere. Pure."""
     side = str(entry.get("side") or "")
     if not side or not os.path.isabs(side) or not is_within(path, side):
         return False

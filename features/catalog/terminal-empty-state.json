@@ -13,7 +13,7 @@
   "keywords": [
     "empty state"
   ],
-  "media_exempt": "screenshots are not shipped in the open-source tree",
+  "media_exempt": "the panel ships but nothing reaches it since 2026-09-28 (#1066, #1067: /session and the sessions row open the projects page), so there is no screen to capture",
   "name": "Empty pane state",
   "since": "2026-09-22",
   "status": "stable",

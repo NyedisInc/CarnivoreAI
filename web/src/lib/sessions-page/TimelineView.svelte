@@ -1,10 +1,10 @@
 
 <script lang="ts">
+    import ProjectChip from './ProjectChip.svelte';
     import { onMount, tick } from 'svelte';
     import { visibilityObserver } from '../visibility-observer';
     import { ageFormatter } from '../projects-shared/format';
     import { motionReduced } from '../motion/motion';
-    import { projectColorVar } from '../project-colors/palette';
     import { projectColorOf } from '../project-colors/store.svelte';
     import type { Translate } from '../sessions/types';
     import StatusLed from '../StatusLed.svelte';
@@ -56,7 +56,7 @@
     const ticks = $derived(rulerTicks(clock, windowMin, trackW));
     const step = $derived(windowMin <= 60 ? 5 : 15);
     const count = (gs: readonly LaneGroup[]): number => gs.reduce((n, g) => n + g.rows.length, 0);
-    const eligible = (r: PageRow): boolean => r.s.row_id !== null;
+    const eligible = (r: PageRow): boolean => r.s.row_id !== null && r.computer === null;
     const name = (r: PageRow): string => r.s.label ?? r.s.title;
 
     const groupIds = $derived([
@@ -242,7 +242,7 @@
     {@const pc = laneColor(g.projectRef, projectColorOf)}
     <Button variant="row" data-tl-grp aria-expanded={!shut[id]} data-block={pc && shut[id] ? '' : undefined} style={pc ? `--sp-block: ${pc}` : undefined} onclick={() => (shut[id] = !shut[id])}>
         <span class="sp-tl-car">{shut[id] ? '>' : 'v'}</span>
-        <span class="sp-pchip" style:--pc={projectColorVar(projectColorOf(g.projectRef?.id ?? null))}>{(g.project.charAt(0) || '?').toUpperCase()}</span>
+        <ProjectChip name={g.project} projectId={g.projectRef?.id ?? null} />
         <b>{g.project}</b>
         <span>{n}</span>
     </Button>
@@ -264,7 +264,7 @@
         data-pc={pc ? '' : undefined}
         style:--tl-busy={pc}
         aria-selected={selected === uuid ? 'true' : undefined}
-        use:onscreen={{ uuid, rowId: quiet ? null : r.s.row_id }}
+        use:onscreen={{ uuid, rowId: quiet || !eligible(r) ? null : r.s.row_id }}
         onclick={(e) => laneClick(e, r)}
         onkeydown={(e) => laneKey(e, r)}
         onpointerenter={(e) => e.pointerType !== 'touch' && (hover = uuid)}
@@ -290,7 +290,7 @@
                 {#each d.sleeps as s (s.x0)}<span class="sp-tl-moon" style:left={px(s.x0)}><StatusLed status="asleep" size="8px" /></span>{/each}
                 {#if d.span}
                     {@const span = d.span}
-                    <button type="button" class="sp-tl-cv" style:left={px(span.x0)} style:width={px(span.x1 - span.x0)} aria-label={t('sessions.page.tl.open', { name: name(r) })}>
+                    <button data-base-exempt="a bar and a mark drawn on the timeline axis, positioned by percent" type="button" class="sp-tl-cv" style:left={px(span.x0)} style:width={px(span.x1 - span.x0)} aria-label={t('sessions.page.tl.open', { name: name(r) })}>
                         {#if span.x0 > 0}<i class="sp-tl-cap" data-end="l"></i>{/if}
                         {#if span.x1 < 100}<i class="sp-tl-cap" data-end="r"></i>{/if}
                         {#each d.busy as b (b.x0)}<i class="sp-tl-bd" style:left={px(((b.x0 - span.x0) / (span.x1 - span.x0)) * 100)} style:width={px(((b.x1 - b.x0) / (span.x1 - span.x0)) * 100)}></i>{/each}
@@ -298,7 +298,7 @@
                 {/if}
                 {#each d.waits as w (`${w.kind}${w.x0}`)}<i class="sp-tl-wt" data-kind={w.kind} style:left={px(w.x0)} style:width={px(w.x1 - w.x0)}></i>{/each}
                 {#each d.marks as k (k.bookmarkId)}
-                    <button type="button" class="sp-tl-bk" style:left={px(k.x)} aria-pressed={pending?.bookmarkId === k.bookmarkId} aria-label={t('sessions.page.tl.mark', { at: momentText(Date.parse(k.at)) })} onclick={() => pickMark(r, k)}></button>
+                    <button data-base-exempt="a bar and a mark drawn on the timeline axis, positioned by percent" type="button" class="sp-tl-bk" style:left={px(k.x)} aria-pressed={pending?.bookmarkId === k.bookmarkId} aria-label={t('sessions.page.tl.mark', { at: momentText(Date.parse(k.at)) })} onclick={() => pickMark(r, k)}></button>
                 {/each}
             {/if}
         </div>

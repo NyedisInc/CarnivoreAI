@@ -63,7 +63,6 @@ export function dateFormatFor(locale) {
     return fmt;
 }
 
-/* could not */
 export function selectForm(entry, params, locale, onProblem) {
     if (typeof entry === 'string') return entry;
     if (!entry || typeof entry !== 'object') return null;
@@ -113,7 +112,6 @@ export function interpolate(template, params, locale, onProblem) {
     });
 }
 
-/* not usable */
 export function formatEntry(entry, params, locale, onProblem) {
     const form = selectForm(entry, params, locale, onProblem);
     if (form === null) return null;

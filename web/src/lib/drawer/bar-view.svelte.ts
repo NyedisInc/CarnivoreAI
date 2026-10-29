@@ -10,7 +10,6 @@ export interface VersionView {
 export interface BarView {
     crown: boolean;
     version: VersionView | null;
-    /* the account chip */
     identity?: AccountIdentity | null;
 }
 

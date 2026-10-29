@@ -1,4 +1,4 @@
-import { hasOpenQuestion, type HuddleItem } from '../huddle-model';
+import type { HuddleItem } from '../huddle-model';
 import { statusOf } from '../huddle-status';
 import type { AuthorCrumb, SwarmAgentState, SwarmEntry, SwarmQuestion } from './chat-api';
 
@@ -16,9 +16,7 @@ export function chatSlotId(agentId: number): string {
 
 export function needsOwner(entry: SwarmEntry): boolean {
   if (entry.kind !== 'card') return false;
-  if (decisionOf(entry.item)) return false;
-  const status = statusOf(entry.item);
-  return status === 'question' || status === 'review' || hasOpenQuestion(entry.item);
+  return entry.waits_on_owner === true && !decisionOf(entry.item);
 }
 
 export function visibleEntries(entries: readonly SwarmEntry[], waitingOnly: boolean): SwarmEntry[] {
@@ -66,8 +64,10 @@ export function decisionKeys(item: HuddleItem): DecisionKeys | null {
   return keys && ref.startsWith('choice:') && ref.endsWith(':no') ? { ...keys, yes: null } : keys;
 }
 
-export function messageEntryId(ref: string | null | undefined): string | null {
-  return ref && /^huddle:msg:[1-9][0-9]*$/.test(ref) ? ref.slice('huddle:'.length) : null;
+export function cardLineId(entry: { kind: string; event?: string; ref?: string }): number | null {
+  if (entry.kind !== 'event' || entry.event !== 'card') return null;
+  const found = /^card:([1-9][0-9]*)$/.exec(entry.ref ?? '');
+  return found ? Number(found[1]) : null;
 }
 
 export function decisionOf(item: HuddleItem): 'done' | 'done_with_note' | null {
@@ -90,14 +90,13 @@ export function fallbackText(entry: unknown): string {
   return textField(entry, 'text');
 }
 
-/* anything at all */
 export function draws(entry: SwarmEntry): boolean {
   switch (entry.kind) {
     case 'card':
     case 'traffic':
       return true;
     case 'event':
-      return !!entry.receipt || !!textField(entry, 'text');
+      return !!textField(entry, 'text');
     default:
       return !!fallbackText(entry);
   }
@@ -160,7 +159,7 @@ export function headOf(entry: SwarmEntry): EntryHead | null {
   return { path, at: question?.asked_at ?? entry.at, more: Math.max(0, (question?.askers?.length ?? 0) - 1) };
 }
 
-export type Direction = 'to' | 'from' | null;
+export type Direction = 'from' | null;
 
 export interface BurstParty {
   key: string;
@@ -186,18 +185,26 @@ export type ChatRow =
   | { kind: 'fold'; id: string; entries: SwarmEntry[] };
 
 export function isQuiet(entry: SwarmEntry): boolean {
-  return entry.kind === 'event' && !entry.receipt;
+  return entry.kind === 'event';
+}
+
+function selfParty(self: ChatSelf, own: AuthorCrumb, path: AuthorCrumb[] = []): BurstParty {
+  return { key: `self:${self.id}`, dir: null, path: [...path, own], agentId: self.id, sessionUuid: null, owner: false };
+}
+
+export function recipientOf(entry: SwarmEntry, look: PartyLookup = {}): BurstParty | null {
+  if (entry.kind !== 'traffic' || entry.direction !== 'out') return null;
+  const uuid = entry.peer_session_uuid || null;
+  const agentId = (uuid ? (look.idOfUuid?.(uuid) ?? null) : null) ?? (entry.peer ? (look.idOfName?.(entry.peer) ?? null) : null);
+  const name = entry.peer || '';
+  return { key: `to:${uuid ?? agentId ?? name}`, dir: null, path: [{ kind: 'agent', name, agent_id: agentId }], agentId, sessionUuid: uuid, owner: false };
 }
 
 export function partyOf(entry: SwarmEntry, self: ChatSelf, look: PartyLookup = {}): BurstParty | null {
   if (entry.kind === 'traffic') {
+    if (entry.direction === 'out') return selfParty(self, { kind: 'agent', name: self.name, agent_id: self.id });
     const uuid = entry.peer_session_uuid || null;
     const byUuid = uuid ? (look.idOfUuid?.(uuid) ?? null) : null;
-    if (entry.direction === 'out') {
-      const agentId = byUuid ?? (entry.peer ? (look.idOfName?.(entry.peer) ?? null) : null);
-      const name = entry.peer || '';
-      return { key: `to:${uuid ?? agentId ?? name}`, dir: 'to', path: [{ kind: 'agent', name, agent_id: agentId }], agentId, sessionUuid: uuid, owner: false };
-    }
     const path = entry.author_path?.length ? entry.author_path : [{ kind: 'agent' as const, name: entry.peer || '', agent_id: null }];
     const last = path[path.length - 1];
     const agentId = typeof last?.agent_id === 'number' ? last.agent_id : byUuid;
@@ -210,7 +217,7 @@ export function partyOf(entry: SwarmEntry, self: ChatSelf, look: PartyLookup = {
   const agentId = typeof author.agent_id === 'number' ? author.agent_id : null;
   if (agentId !== null && agentId === self.id) {
     const own: AuthorCrumb = { kind: author.kind === 'sysop' ? 'sysop' : 'agent', name: self.name || author.name, agent_id: agentId };
-    return { key: `self:${agentId}`, dir: null, path: [...head.path.slice(0, -1), own], agentId, sessionUuid: null, owner: false };
+    return selfParty(self, own, head.path.slice(0, -1));
   }
   return { key: `from:${author.kind}:${agentId ?? author.name}`, dir: 'from', path: head.path, agentId, sessionUuid: null, owner: false };
 }
@@ -265,4 +272,30 @@ export function quoteOf(entry: SwarmEntry): ChatQuote {
 
 export function quotedOrder(quote: ChatQuote, reply: string): string {
   return `> ${quote.text}\n\n${reply}`;
+}
+
+export function awaitingReply(entries: readonly SwarmEntry[]): boolean {
+  for (let i = entries.length - 1; i >= 0; i -= 1) {
+    const kind = entries[i]?.kind;
+    if (kind === 'owner') return true;
+    if (kind === 'agent' || kind === 'card') return false;
+  }
+  return false;
+}
+
+export const COMPOSER_MAX_LINES = 10;
+export const COMPOSER_MAX_SHARE = 0.4;
+
+export function composerCap(line: number, chrome: number, room: number): number {
+  const rest = 2 * line + chrome;
+  return Math.max(rest, Math.min(COMPOSER_MAX_LINES * line + chrome, COMPOSER_MAX_SHARE * room));
+}
+
+export function composerGhost(draft: string, suggestion: string | null | undefined): string {
+  return draft === '' && suggestion ? suggestion : '';
+}
+
+export function tabAccepts(key: string, draft: string, suggestion: string | null | undefined): string | null {
+  const ghost = composerGhost(draft, suggestion);
+  return key === 'Tab' && ghost ? ghost : null;
 }

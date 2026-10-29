@@ -54,7 +54,6 @@ export interface CplugRow {
     readonly settings_schema?: WidgetSettingsSchema;
     readonly dependencies?: CplugDependencies;
     readonly needs?: readonly string[];
-    /* could not */
     readonly detail?: string | null;
     readonly storage_bytes?: number;
     readonly runtime?: 'sidecar' | 'compiled';
@@ -66,6 +65,9 @@ export interface CplugRow {
     readonly declared_tools?: readonly string[] | null;
     readonly install_key?: string | null;
     readonly views?: readonly CplugViewRow[] | null;
+    readonly page?: { readonly menu: string; readonly main: string } | null;
+    readonly page_problem?: string | null;
+    readonly topics?: readonly string[] | null;
     readonly preview?: string | null;
     readonly unverified?: boolean;
     readonly changed_files?: readonly string[];
@@ -149,7 +151,6 @@ export interface CplugItem extends ManagerItem {
     readonly tier: string;
     readonly surfaces: CplugSurfaces;
     readonly missing: readonly string[];
-    /* could not */
     readonly heldReason: string | null;
     readonly storageBytes: number | null;
     readonly thirdParty: boolean;
@@ -159,6 +160,8 @@ export interface CplugItem extends ManagerItem {
     readonly installKey?: string | null;
     readonly declared?: { readonly routes: readonly string[]; readonly tools: readonly string[] };
     readonly views?: readonly CplugViewRow[];
+    readonly page?: { readonly menu: string; readonly main: string } | null;
+    readonly pageProblem?: string | null;
     readonly tools: readonly string[];
 }
 
@@ -262,6 +265,8 @@ export function toCplugItem(row: CplugRow, t: Translate): CplugItem {
         installKey: thirdParty ? (row.install_key ?? null) : null,
         declared: thirdParty ? { routes: row.routes ?? [], tools: row.declared_tools ?? [] } : undefined,
         views: thirdParty ? (row.views ?? []) : undefined,
+        page: thirdParty ? (row.page ?? null) : undefined,
+        pageProblem: thirdParty && row.page_problem ? row.page_problem : null,
         tools: thirdParty ? (row.tools ?? []) : [],
     };
 }
@@ -322,26 +327,6 @@ export async function setCplugEnabled(
     } catch (error) {
         throw dependencyRefusal(error, t);
     }
-    await onChanged();
-    return toCplugItem(row, t);
-}
-
-export async function grantCplug(
-    cplugId: string,
-    ticks: readonly string[],
-    t: Translate,
-    fetcher: typeof authFetch = authFetch,
-    onChanged: () => Promise<void> = refreshEnablement,
-): Promise<CplugItem> {
-    const path = `${CPLUGS_ROUTE}/${encodeURIComponent(cplugId)}`;
-    const current = await fetcher<CplugRow>(path);
-    const sheet = await fetcher<CplugSheet>(`${path}/sheet`);
-    const body = {
-        revision: current.revision ?? 0,
-        grants: { app: [...(current.permissions?.app ?? [])] },
-        consent: { digest: sheet.digest, body_sha: sheet.body_sha, grants_sha: sheet.grants_sha, ticks: [...ticks] },
-    };
-    const row = await fetcher<CplugRow>(path, { method: 'PUT', body: JSON.stringify(body) });
     await onChanged();
     return toCplugItem(row, t);
 }

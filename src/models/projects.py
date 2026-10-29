@@ -27,6 +27,11 @@ class ProjectResponse(BaseModel):
     SECOND request (GET /projects/presence) keyed by raw path, and two
     config entries sharing a path therefore resolved to the same id and
     drew the same children twice.
+
+    Both are Optional because the degraded config.json fallback has
+    neither: a config entry has no row and therefore no id. ``None`` there
+    is the honest answer and is rendered as "this project has no children
+    we can prove", never as row 0.
     """
     id: Optional[int] = Field(None, description="projects table row id, null in config fallback")
     name: str = Field(..., description="Project display name")
@@ -127,7 +132,7 @@ class SetProjectsCompanyRequest(BaseModel):
 
 
 class ProjectCompanyResult(BaseModel):
-    """One project's outcome in a batch filing: ``{"project_id": 4, "ok": true, "name": "ledgerbot", "error": null}``."""
+    """One project's outcome in a batch filing: ``{"project_id": 4, "ok": true, "name": "trader", "error": null}``."""
     project_id: int
     ok: bool
     name: Optional[str] = Field(None, description="The project's display name once filed; null when it failed")
@@ -190,9 +195,12 @@ class CloneProjectRequest(BaseModel):
             "github.com/owner/repo, or owner/repo (gh CLI shorthand)."
         ),
     )
-    parent_dir: str = Field(
-        default="~/projects",
-        description="Directory on the server in which the cloned folder will be created.",
+    parent_dir: Optional[str] = Field(
+        default=None,
+        description=(
+            "Directory on the server in which the cloned folder will be created. "
+            "Omitted: the configured projects folder (``default_working_dir``)."
+        ),
     )
     description: Optional[str] = Field(None, description="Project description")
     project_name: Optional[str] = Field(
@@ -202,7 +210,8 @@ class CloneProjectRequest(BaseModel):
 
 
 class ProjectMoveRequest(BaseModel):
-    """
+    """Body of ``POST /projects/{project_name}/move`` (Joe (ccsliinc), 2026-10-07).
+
     ``move_folder`` false re-points only: the folder is already at ``new_root``
     (moved on another Mac and delivered by iCloud). True renames the folder
     here first. ``apply`` false answers the plan and changes nothing.

@@ -28,6 +28,8 @@ export function sessionMenuContext(session: HistorySession, live: SessionListIte
             background_open: live?.background_open ?? null,
             timers_live: live?.timers_live ?? null,
             notifications_muted: !!wire.notifications_muted,
+            swarm_agent_id: wire.swarm_agent_id ?? (session as unknown as Record<string, unknown>).swarm_agent_id ?? null,
+            swarm_rank: wire.swarm_rank ?? (session as unknown as Record<string, unknown>).swarm_rank ?? null,
         },
         { surface: 'sidebar', renameable: asleep ? !!session.session_uuid : !!(live?.session?.id ?? session.live_session_id) },
     );

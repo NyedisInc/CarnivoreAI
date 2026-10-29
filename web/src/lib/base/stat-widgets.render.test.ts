@@ -15,6 +15,7 @@ afterEach(() => {
     document.body.innerHTML = '';
 });
 
+/** A snippet that renders fixed markup. */
 const html = (markup: string) => createRawSnippet(() => ({ render: () => markup }));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

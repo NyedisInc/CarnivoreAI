@@ -20,7 +20,7 @@ def _testsrv():
 
 
 def test_a_provisional_join_reads_linking_until_the_first_link(monkeypatch) -> None:
-    monkeypatch.setattr(join_job, "_job", join_job.JoinJob(state="joined", main_label="hostb"))
+    monkeypatch.setattr(join_job, "_job", join_job.JoinJob(state="joined", main_label="nostromo"))
     monkeypatch.setattr(join_job, "first_run_state", lambda: "join_pending")
     assert join_job.window_status()["state"] == "linking"
     assert join_job.join_status()["state"] == "joined"
@@ -37,7 +37,7 @@ def test_other_job_states_pass_through(monkeypatch) -> None:
 def test_only_a_testslot_name_is_honored() -> None:
     slot = {"CARNIVORE_SETTINGS_ENV_FILE": "/slot/env"}
     assert discovery.testslot_instance_name({**slot, "CARNIVORE_TESTSRV_BONJOUR": "testslot_2"}) == "testslot_2"
-    for bad in ("", "Example-hostb", "testslot", "testslot2", "testslot_1\n", "xtestslot_1"):
+    for bad in ("", "Adams-Mac-mini", "testslot", "testslot2", "testslot_1\n", "xtestslot_1"):
         assert discovery.testslot_instance_name({**slot, "CARNIVORE_TESTSRV_BONJOUR": bad}) is None
     assert discovery.testslot_instance_name({"CARNIVORE_TESTSRV_BONJOUR": "testslot_2"}) is None
     assert discovery.testslot_instance_name({}) is None

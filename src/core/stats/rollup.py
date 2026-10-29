@@ -57,7 +57,6 @@ def encode_cursor(rev: int, hour: int, conversation_id: str) -> str:
 
 
 def decode_cursor(cursor: Optional[str]) -> Tuple[int, int, str]:
-    """A cursor back to (rev, hour, conversation id); None is the start. Raises: ValueError for a cursor we did not issue."""
     if not cursor:
         return (-1, -1, "")
     try:

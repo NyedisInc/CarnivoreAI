@@ -35,18 +35,6 @@ export function searchHitRows(list: readonly SidebarRow[], q: string): SidebarRo
     return hits.sort((a, b) => a.rank - b.rank || a.at - b.at).map((h) => h.row);
 }
 
-const HTML_ESCAPES: ReadonlyArray<readonly [string, string]> = [['&', '&amp;'], ['<', '&lt;'], ['>', '&gt;'], ['"', '&quot;'], ["'", '&#39;']];
-const escapeText = (text: string): string => HTML_ESCAPES.reduce((acc, [raw, esc]) => acc.split(raw).join(esc), text);
-const unescapeText = (text: string): string => [...HTML_ESCAPES].reverse().reduce((acc, [raw, esc]) => acc.split(esc).join(raw), text);
-
-export function markLayoutName(html: string, q: string): string {
-    return html.replace(/(<span class="session-sidebar-row-name"[^>]*>)([^<]*)/, (whole, open: string, text: string) => {
-        const parts = matchParts(unescapeText(text), q);
-        if (!parts.match) return whole;
-        return `${open}${escapeText(parts.before)}<mark class="sd-mark">${escapeText(parts.match)}</mark>${escapeText(parts.after)}`;
-    });
-}
-
 export function hitPlan(row: SidebarRow, q: string, name: string): SearchHitPlan {
     const field = matchedField(row, q);
     const project = typeof row.project_name === 'string' && row.project_name ? row.project_name : null;
@@ -75,8 +63,9 @@ export function searchParts(
             session.pin = null;
         } else if (plan.type === 'browser') {
             (plan as BrowserRowPlan).pin = null;
-        } else if (plan.type === 'legacy') {
-            plan.html = markLayoutName(plan.html, q);
+        } else if (plan.type === 'layout') {
+            const parts = matchParts(plan.parts.name.text, q);
+            plan.nameMatch = parts.match ? parts : null;
         }
         return plan;
     });

@@ -1,4 +1,4 @@
-
+<!-- the project folder there is nothing -->
 <script lang="ts">
   import type { AutomationTarget, ProjectChoice, Targets } from './api';
   import { t } from '../i18n/index.svelte';

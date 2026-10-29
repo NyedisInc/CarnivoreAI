@@ -21,7 +21,6 @@ class StatsStillOn(RuntimeError):
 
 
 class NotEnoughSpace(RuntimeError):
-    """The state directory cannot hold the rebuilt file."""
 
     def __init__(self, free: int, needed: int) -> None:
         super().__init__("not enough free disk space")

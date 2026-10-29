@@ -10,6 +10,12 @@ const ROOT = path.resolve(__dirname, '..');
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -39,6 +45,7 @@ function shippedHtmlFiles() {
 }
 
 test('client/index.html exists and is non-trivial', () => {
+    // the whole file
     const idx = path.join(ROOT, 'client', 'index.html');
     assert.ok(fs.existsSync(idx), 'client/index.html is missing');
     assert.ok(fs.readFileSync(idx, 'utf8').length > 5000,

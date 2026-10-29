@@ -66,13 +66,6 @@ def source_trusted(folder: Optional[str], trust_path=None) -> bool:
 
 
 def project_trusted(folder: Optional[str], profile_dirs: Iterable[Optional[str]]) -> bool:
-    """
-    ``profile_dirs`` holds each session's claude config dir: None is the default login, "" is a profile that could not be resolved
-    (never trusted). A trust yes lives in that profile's own ``.claude.json``, so a acme session's yes is read there. No session,
-    or only default-login sessions, reads the default config exactly as before. EVERY profile must trust it: this never carries a yes
-    that a moving session's own profile would not have given.
-    Example: project_trusted("/p/app", ["/Users/me/.carnivore/accounts/acme"]) -> True
-    """
     dirs = set(profile_dirs) or {None}
     for profile in dirs:
         if profile == "":

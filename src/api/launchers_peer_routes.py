@@ -19,6 +19,7 @@ router = APIRouter(tags=["launchers"])
 @router.get("/launchers/summary", response_model=peer_launchers.LauncherSummary,
             dependencies=[Depends(peer_auth.require_peer_sessions)])
 async def get_launchers_summary() -> peer_launchers.LauncherSummary:
+    """This computer's launchers: id, name, family. No flag, env, secret, account or command."""
     return peer_launchers.summary_of(settings.get_launch_profiles())
 
 

@@ -6,19 +6,15 @@ from typing import Callable, Mapping, Optional, Tuple
 
 import structlog
 
-from src.core.attention.registry_pane import descends_from, falls_back_to_pane, registry_for_pane
-from src.core.attention.registry_read import (
-    RegistryRecord,
-    read_registry_index,
-    registry_for_session,
-)
+from src.core.attention.parent_map import descends_from
+from src.core.attention.registry_pane import falls_back_to_pane, registry_for_pane
+from src.core.attention.registry_record import RegistryRecord
+from src.core.attention.registry_index import read_registry_index, registry_for_session
 
 logger = structlog.get_logger()
 
-# could not be read
 ForegroundReader = Callable[[int], Optional[Tuple[int, int]]]
 
-# could not be read
 ParentsReader = Callable[[], Optional[Mapping[int, int]]]
 
 

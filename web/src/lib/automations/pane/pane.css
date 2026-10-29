@@ -1,5 +1,4 @@
 @layer components {
-    /*  hidden  */
     .ap-page > * {
         --pn-w: 100cqi;
         --pn-dock: 0px;
@@ -457,7 +456,6 @@
             display: grid;
             grid-template-columns: 14px 40px 108px minmax(0, 1fr) 70px 44px 64px 60px 60px;
             gap: 0 var(--oc-space-1-5);
-            /* padding */
             --ap-rr-head-end: 62px;
             padding: 0 var(--ap-rr-head-end) var(--oc-space-1-5) var(--oc-space-2);
             color: var(--oc-text-dim);

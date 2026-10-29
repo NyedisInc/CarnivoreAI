@@ -73,10 +73,10 @@ console.log('[TerminalAddons Module] Loading...');
 
     var UNPAINTED_POLL_MS = 100;
 
-    /*  hidden  display: none */
     function isPainted(el, doc) {
         if (!el || !el.isConnected) return false;
         if (doc && doc.visibilityState === 'hidden') return false;
+        if (global.CarnivoreWindowHidden === true) return false;
         if (typeof el.checkVisibility === 'function') {
             return el.checkVisibility({ visibilityProperty: true, contentVisibilityAuto: true });
         }
@@ -86,7 +86,6 @@ console.log('[TerminalAddons Module] Loading...');
         return style.visibility !== 'hidden' && style.display !== 'none';
     }
 
-    /*  hidden  visibility: hidden */
     function redrawWhenPaintedAgain(term, rec) {
         if (!term || typeof term.onRender !== 'function') return;
         var doc = global.document;
@@ -159,8 +158,6 @@ console.log('[TerminalAddons Module] Loading...');
         if (passTimer === null) passTimer = setTimeout(runPass, UNPAINTED_POLL_MS);
     }
 
-    /*  hidden
- */
     function refreshLive() {
         focusTimer = null;
         for (var i = 0; i < records.length; i += 1) {

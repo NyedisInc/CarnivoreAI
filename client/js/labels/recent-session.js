@@ -1,6 +1,7 @@
 
+import { reasonOf } from './error-reason.js';
+
 export const RECENT_KEYS = {
-    /* cannot be determined */
     count: 'session.recent.count',
     countUnavailable: 'session.recent.count.unavailable',
     unavailableTitle: 'session.recent.unavailable.title',
@@ -53,7 +54,6 @@ function pickNamed(plainKey, namedKey, title, t) {
     return trimmed ? t(namedKey, { title: trimmed }) : t(plainKey);
 }
 
-/* could not */
 export function recentCountLabel(count, t) {
     return t(RECENT_KEYS.count, { count });
 }
@@ -69,13 +69,6 @@ export function unavailableDetail(notice, t) {
 
 export function loadFailedNotice(error, t) {
     return t(RECENT_KEYS.loadFailed, { reason: reasonOf(error, t) });
-}
-
-export function reasonOf(error, t) {
-    const message = error && typeof error === 'object' && 'message' in error
-        ? String(error.message || '').trim()
-        : '';
-    return message || t(RECENT_KEYS.serverUnreachable);
 }
 
 /* could not be read */
@@ -96,7 +89,6 @@ export function restartNotice(result, t) {
         );
     }
     if (result.row_reused === false) {
-        // could not
         const detail = typeof result.detail === 'string' ? result.detail.trim() : '';
         if (detail) return detail;
         return pickNamed(

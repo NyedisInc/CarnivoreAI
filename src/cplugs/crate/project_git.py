@@ -12,6 +12,7 @@ import structlog
 
 from src.cplugs.crate import constants as K
 from src.cplugs.crate.project_files import skipped_component
+from src.cplugs.sdk import app_info
 from src.cplugs.sdk import crate_format as cf
 
 log = structlog.get_logger()
@@ -100,7 +101,7 @@ def _untracked(status: bytes, strip: str = "") -> Tuple[bool, List[str]]:
 
 def snapshot(root: str) -> Optional[GitSnapshot]:
     git = shutil.which("git")
-    if git is None:
+    if git is None or not app_info.git_available():
         return None
     try:
         if _run(git, root, ("rev-parse", "--is-inside-work-tree"), 16)[:2] != (0, b"true\n"):

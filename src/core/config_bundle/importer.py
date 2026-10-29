@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Mapping, Optional
+from typing import Any, Dict, List, Literal, Mapping, Optional, Set
 
 import structlog
 from pydantic import ValidationError
@@ -13,11 +13,15 @@ from src.core.config_bundle import constants
 from src.core.config_bundle.bundle import ConfigBundle, clean_pins, project
 from src.core.config_bundle.merge import carry_secrets, deep_merge, diff, flatten
 from src.core.config_bundle.redact import redact
+from src.core.config_bundle.wrapper_merge import merge_wrappers
 from src.core.launch_profiles import bundle_guard
 
 logger = structlog.get_logger()
 
 Mode = Literal["merge", "replace"]
+
+AGENTS_KEY = "agents"
+WRAPPERS_KEY = "wrappers"
 
 
 class ImportRefused(Exception):
@@ -53,8 +57,8 @@ def _migrate_sections(bundle: ConfigBundle, sections: Dict[str, Any]) -> Dict[st
     if bundle.config_version == current:
         return sections
     needs_probe = bundle.config_version < 1
-    has_cld = config_migration_steps.probe_shell_function("keyc") if needs_probe else False
-    has_cldor = config_migration_steps.probe_shell_function("clxor") if needs_probe else False
+    has_cld = config_migration_steps.probe_shell_function("cld") if needs_probe else False
+    has_cldor = config_migration_steps.probe_shell_function("cldor") if needs_probe else False
     migrated, changed = config_migration.migrate_config_dict(
         {**sections, "config_version": bundle.config_version}, has_cld, has_cldor
     )
@@ -73,6 +77,25 @@ def _validate_sections(sections: Mapping[str, Any]) -> None:
         raise ImportRefused(_validation_paths(exc)) from exc
 
 
+def _refuse_ambiguous_wrapper_ids(sections: Mapping[str, Any]) -> None:
+    agents = sections.get(AGENTS_KEY)
+    rows = agents.get(WRAPPERS_KEY) if isinstance(agents, Mapping) else None
+    if not isinstance(rows, list):
+        return
+    seen: Set[str] = set()
+    problems: List[str] = []
+    for index, row in enumerate(rows):
+        wrapper_id = row.get("id") if isinstance(row, Mapping) else None
+        if not isinstance(wrapper_id, str) or not wrapper_id.strip():
+            problems.append(f"agents.wrappers.{index}.id: missing")
+        elif wrapper_id in seen:
+            problems.append(f"agents.wrappers.{index}.id: {wrapper_id!r} appears more than once")
+        else:
+            seen.add(wrapper_id)
+    if problems:
+        raise ImportRefused(problems)
+
+
 def prepare(bundle: ConfigBundle) -> Prepared:
     if bundle.schema_version > constants.BUNDLE_SCHEMA_VERSION:
         raise ImportRefused(
@@ -82,6 +105,7 @@ def prepare(bundle: ConfigBundle) -> Prepared:
     allowed = {k: v for k, v in bundle.config.items() if k in constants.EXPORTED_SECTIONS}
     sections, stripped = redact(allowed, "config")
     sections = _migrate_sections(bundle, sections)
+    _refuse_ambiguous_wrapper_ids(sections)
     _validate_sections(sections)
 
     values = {
@@ -141,6 +165,10 @@ def build_document(
             continue
         merged = deep_merge(existing, incoming) if mode == "merge" else incoming
         candidate[name] = carry_secrets(existing, merged)
+        if name == AGENTS_KEY and isinstance(candidate[name], dict):
+            local_wrappers = existing.get(WRAPPERS_KEY) if isinstance(existing, Mapping) else None
+            candidate[name] = {**candidate[name],
+                               WRAPPERS_KEY: merge_wrappers(local_wrappers, candidate[name].get(WRAPPERS_KEY))}
 
     changes = dict(prepared.ui_changes)
     if mode == "replace":

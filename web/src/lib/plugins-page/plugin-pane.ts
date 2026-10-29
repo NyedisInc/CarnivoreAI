@@ -51,6 +51,9 @@ export function paneReason(plugin: CplugItem, t: Translate): PaneReason | null {
     }
     if (plugin.state === 'needs_approval') {
         const labels = plugin.permissions.filter((p) => plugin.missing.includes(p.name)).map((p) => p.label);
+        if (labels.length === 0) {
+            return { kind: 'grant', lead: t('plugins.page.pane.reason.approve'), more: t('plugins.page.pane.reason.approve_more') };
+        }
         return { kind: 'grant', lead: t('plugins.page.pane.reason.grant'), more: t('plugins.page.pane.reason.grant_more', { names: labels.join(', ') }) };
     }
     return null;

@@ -50,7 +50,7 @@ SPECS = (
         name="themes_list", route="src.api.themes_routes:list_themes", gate=ra.READ,
         description="Every installed theme (bundled and user): id, name, source and colors. Pick one for "
                     "session_theme_set. The global theme is the owner's setting in the app (preferences_update needs "
-                    "the owner to tick app settings tools).",
+                    "him to tick app settings tools).",
         invoke=lambda call: call.route(call.request),
     ),
 )

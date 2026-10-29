@@ -1,4 +1,3 @@
-/*  hidden  */
 import { tick } from 'svelte';
 import { beginGesture, captureRows, pickTarget, type CellDragMerge } from './pointer';
 import { terminalLayout, type DropTarget } from './layout.svelte';
@@ -38,6 +37,7 @@ export type TabDrop =
   | { kind: 'zone'; slot: string; zone: Zone }
   | { kind: 'out'; target: DropTarget };
 
+/* frame, and the */
 export interface BodyTarget extends Box {
   slot: string;
   tabs: string[];
@@ -98,7 +98,6 @@ function measure(root: HTMLElement): DragSurface {
   };
 }
 
-/*  hidden  */
 export function measureStrips(root: ParentNode): StripTarget[] {
   const strips: StripTarget[] = [];
   for (const el of root.querySelectorAll<HTMLElement>('[data-tab-group]')) {
@@ -221,6 +220,7 @@ export function componentMerge(id: string): CellDragMerge {
   };
 }
 
+/* there is nothing */
 export function beginTabDrag(handle: HTMLElement, event: PointerEvent, tab: string): boolean {
   if (!viewport.wide || event.pointerType === 'touch') return false;
   return run(handle, event, tab, TAB_THRESHOLD);
@@ -256,7 +256,6 @@ export function beginDrawerTabDrag(start: DrawerDragStart): boolean {
   return run(document.body, pointerOf(start), tab, 0);
 }
 
-/* already running */
 function beginAsleepTabDrag(start: DrawerDragStart): boolean {
   const rec = (asleep.data ?? []).find((r) => r.asleep && r.tmux_name === start.name);
   if (!rec || typeof rec.id !== 'number') return false;

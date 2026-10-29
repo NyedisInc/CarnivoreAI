@@ -13,6 +13,7 @@ from src.models.agents import ReorderFavoritesRequest, SetFavoriteColorRequest
 from typing import Optional
 
 from src.api.auth import require_auth
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -26,6 +27,18 @@ def _config_path() -> Path:
 async def get_common_commands():
     """
     Get the user's starred slash commands, with short descriptions.
+
+    Response shape:
+        ``commands``         - flat list of command strings. UNCHANGED
+                               from the original response, so any client
+                               written against the old shape keeps working.
+        ``command_details``  - parallel list of
+                               ``{"command", "description"}`` objects,
+                               added for the mobile chip labels.
+        ``defaulted``        - True when the user has never starred
+                               anything and these are the built-in
+                               defaults. Lets the UI say so instead of
+                               implying the user picked them.
 
     Config entries may be bare strings (historical form) or objects with
     a user-authored ``description``; see
@@ -48,12 +61,12 @@ async def get_common_commands():
             status_code=500,
             detail="Configuration not found. Run setup_auth.py first."
         )
-    except Exception as e:
-        logger.error("common_commands_retrieval_error", error=str(e))
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("common_commands_retrieval_error", error=str(e), error_type=type(e).__name__)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve common commands: {str(e)}"
-        )
+            detail="Failed to retrieve common commands"
+        ) from e
 
 
 @router.post("/config/common-commands/favorite", dependencies=[Depends(require_auth)])
@@ -87,7 +100,7 @@ async def toggle_favorite_command(body: ToggleFavoriteCommandRequest):
         raw, declared = slash_favorites.read_raw(path)
         entries = slash_favorites.toggle(raw, declared, body.command, body.favorite)
         slash_favorites.write(path, entries)
-        settings._auth_config_cache = None
+        settings.drop_auth_config_cache()
         result = slash_favorites.payload(path)
         logger.info(
             "common_command_favorite_toggled",
@@ -96,7 +109,7 @@ async def toggle_favorite_command(body: ToggleFavoriteCommandRequest):
         )
         return result
     except slash_favorites.FavoritesError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise api_error(400, "invalid_request", e, step="toggle_favorite_command") from e
     except FileNotFoundError as e:
         logger.error("auth_config_missing", error=str(e))
         raise HTTPException(
@@ -105,18 +118,11 @@ async def toggle_favorite_command(body: ToggleFavoriteCommandRequest):
         )
     except ValueError as e:
         logger.error("common_command_favorite_config_invalid", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise api_error(500, "internal_error", e, step="toggle_favorite_command") from e
 
 
 def _stale_conflict(path: Path, error: Exception) -> HTTPException:
-    return HTTPException(
-        status_code=409,
-        detail={
-            "code": "favorites_stale",
-            "message": str(error),
-            "current": slash_favorites.payload(path),
-        },
-    )
+    return api_error(409, "favorites_stale", error, extra={"current": slash_favorites.payload(path)})
 
 
 def _favorites_write(apply) -> dict:
@@ -126,7 +132,7 @@ def _favorites_write(apply) -> dict:
     except slash_favorites.FavoritesStale as e:
         raise _stale_conflict(path, e)
     except slash_favorites.FavoritesError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise api_error(400, "invalid_request", e, step="_favorites_write") from e
     except FileNotFoundError as e:
         logger.error("auth_config_missing", error=str(e))
         raise HTTPException(
@@ -135,8 +141,8 @@ def _favorites_write(apply) -> dict:
         )
     except ValueError as e:
         logger.error("common_command_favorite_config_invalid", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
-    settings._auth_config_cache = None
+        raise api_error(500, "internal_error", e, step="_favorites_write") from e
+    settings.drop_auth_config_cache()
     return slash_favorites.payload(path)
 
 
@@ -176,7 +182,7 @@ async def reorder_favorites(body: ReorderFavoritesRequest):
     return result
 
 
-def _user_scope_roots(request: Request) -> tuple[Optional[Path], Optional[Path]]:
+def user_scope_roots(request: Request) -> tuple[Optional[Path], Optional[Path]]:
     services = getattr(request.app.state, "services", None)
     install_roots = getattr(services, "install_roots", None)
     if install_roots is None:
@@ -196,6 +202,12 @@ async def get_slash_commands(
     request: Request, project_path: Optional[str] = None
 ):
     """
+    Get the full slash-command palette: built-in/skill/workflow commands
+    scraped from the official docs at release time, merged with commands
+    and skills discovered on THIS machine at request time (user scope,
+    installed plugins, and - when `project_path` is given - that
+    project's own `.claude/commands` and `.claude/skills`).
+
     A separate endpoint from `/config/common-commands` (Task 2's decision,
     see project docs): common-commands is a small hand-curated "favorites"
     row shown at the top of the palette and its response shape (a bare
@@ -221,7 +233,7 @@ async def get_slash_commands(
             fewer groups.
     """
     try:
-        claude_home, codex_skills_root = _user_scope_roots(request)
+        claude_home, codex_skills_root = user_scope_roots(request)
         groups = build_command_groups(
             project_path=project_path,
             claude_home=claude_home,
@@ -235,9 +247,9 @@ async def get_slash_commands(
             project_scoped=bool(project_path),
         )
         return {"groups": payload}
-    except Exception as e:
-        logger.error("slash_commands_retrieval_error", error=str(e))
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("slash_commands_retrieval_error", error=str(e), error_type=type(e).__name__)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve slash commands: {str(e)}"
-        )
+            detail="Failed to retrieve slash commands"
+        ) from e

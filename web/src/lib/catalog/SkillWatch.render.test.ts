@@ -74,12 +74,12 @@ describe('autopsy section', () => {
 });
 
 const ROW = (over: Partial<InstalledItem>): InstalledItem => ({
-    install_id: 'i1', item_id: 'acme/deploy', name: 'deploy', scope: 'global', revision: 2, version: '1.0.0',
+    install_id: 'i1', item_id: 'alex/deploy', name: 'deploy', scope: 'global', revision: 2, version: '1.0.0',
     ...over,
 });
 const actions = (row: InstalledItem, host: Partial<CatalogHost>) =>
     paint(DetailActions as never, {
-        card: { id: 'acme/deploy', headline: 'deploy' }, installed: row, rowState: { kind: 'installed' },
+        card: { id: 'alex/deploy', headline: 'deploy' }, installed: row, rowState: { kind: 'installed' },
         host: host as CatalogHost, onInstall() {}, onLedgerChange() {},
     });
 

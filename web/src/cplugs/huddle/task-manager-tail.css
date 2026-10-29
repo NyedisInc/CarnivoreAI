@@ -1,4 +1,3 @@
-/* padding */
 @layer components {
   [data-task-manager-level] {
     container: hdt / inline-size;

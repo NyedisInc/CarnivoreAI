@@ -24,6 +24,7 @@ console.log('[ConfigEditorModal Module] Loading...');
         return !!(activeFile && activeFile.dirty);
     }
 
+    /* there is nothing */
     async function confirmDiscardIfDirty() {
         if (!isDirty()) return true;
         return window.App.showConfirmModal(
@@ -117,7 +118,6 @@ console.log('[ConfigEditorModal Module] Loading...');
     }
 
     function buildShell(rootId, relPath, projectPath, subtitle) {
-        //  hidden 
         const stacked = window.ModalStack.depth() > 0;
         const backBtn = stacked
             ? '<button type="button" class="config-editor-modal-back" id="config-editor-modal-back" ' +

@@ -7,7 +7,6 @@ export const FRAME_PATH = '/static/dist/widget-lab/index.html';
 export const FIXTURE_CHOICES = ['data', 'empty', 'stress'] as const;
 export type FixtureChoice = (typeof FIXTURE_CHOICES)[number];
 
-/* padding */
 export const STAGE_PADDING_PX = 16;
 
 export const FRAME_MIN_WIDTH_PX = 400;
@@ -57,7 +56,6 @@ export function frameWindowWidth(size: LabSize): number {
   return Math.max(size.viewport, DESKTOP_WINDOW_MIN_PX, size.w + 2 * STAGE_PADDING_PX);
 }
 
-/* padding */
 export function frameHeight(size: LabSize): number {
   return Math.max((size.h ?? 0) + 2 * STAGE_PADDING_PX, FRAME_MIN_HEIGHT_PX);
 }

@@ -4,10 +4,11 @@ from __future__ import annotations
 import sqlite3
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
+from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.core.db import DatastoreError
 from src.core.flow_data import mcp_events
@@ -33,5 +34,5 @@ async def list_mcp_events(tool: Optional[str] = None, session_id: Optional[str] 
     try:
         rows = await run_in_threadpool(lambda: mcp_events.recent(tool=tool, session_id=session_id, since=since, limit=limit))
     except (sqlite3.Error, DatastoreError) as exc:
-        raise HTTPException(status_code=503, detail=f"the event log could not be read: {type(exc).__name__}")
+        raise api_error(503, "datastore_unavailable", exc, step="mcp_events") from exc
     return McpEvents(events=rows, retention_days=mcp_events.RETENTION_DAYS)

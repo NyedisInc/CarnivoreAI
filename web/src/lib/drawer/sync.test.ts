@@ -1,4 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const rowDrag = vi.hoisted(() => ({ on: false }));
+vi.mock('../sidebar-shell/row-drag', async (orig) => ({
+    ...(await orig<typeof import('../sidebar-shell/row-drag')>()), isDragging: () => rowDrag.on,
+}));
 import { fakeStorage, freshDrawer, type FreshDrawer } from './test-support';
 
 const FIELD = 'drawer_arrangement';
@@ -119,7 +124,7 @@ async function browser(
         localStorage: fakeStorage(seed),
         Preferences: prefs,
         AppEvents: { isConnected: () => true, subscribe: (fn: (f: unknown) => void) => { frames.push(fn); return () => {}; } },
-        SessionSidebarGroupActions: { refresh: () => groupRefreshes.push(1) },
+        API: { listSessionGroups: async () => { groupRefreshes.push(1); return { groups: [] }; } },
     };
     const d = await freshDrawer(env);
     d.Store.load();
@@ -334,12 +339,11 @@ describe('two browsers', () => {
         const b = await browser(server);
         await a.tick(ROWS);
         await b.tick(ROWS);
-        let drag = true;
-        b.d.env.SessionSidebarRowDrag = { isDragging: () => drag };
+        rowDrag.on = true;
         a.S.save(['carnivore_c'], [], []);
         await settle();
         b.S.save([], ['carnivore_b', 'carnivore_a'], []);
-        drag = false;
+        rowDrag.on = false;
         await settle();
         await settle();
         expect((server.values[FIELD] as Values).pinned, 'the other device pin must survive the drop').toEqual(['U-C']);

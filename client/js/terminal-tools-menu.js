@@ -1,4 +1,3 @@
-/*  hidden  */
 
 console.log('[TerminalToolsMenu Module] Loading...');
 
@@ -16,7 +15,6 @@ console.log('[TerminalToolsMenu Module] Loading...');
 
         var termWrapper = null;
 
-        /*  hidden  */
         var fileInputEl = null;
 
         var ICONS = {
@@ -60,7 +58,6 @@ console.log('[TerminalToolsMenu Module] Loading...');
             ];
         }
 
-        /*  hidden  */
         function wire(wrapper, input) {
             termWrapper = wrapper;
             fileInputEl = input || fileInputEl;

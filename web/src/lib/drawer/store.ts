@@ -1,4 +1,3 @@
-/* CANNOT DETERMINE could not */
 import {
     GROUP_KEYS, isBandOrderKey, isFoldKey, MAX_FOLDS,
 } from './store-keys';
@@ -164,7 +163,6 @@ export function current(): ArrangementState {
     return state;
 }
 
-/* storage refused */
 export function save(
     pinned: readonly string[], order: readonly string[], collapsed?: readonly string[],
     ids?: Record<string, string>, bands?: Record<string, string[]>,

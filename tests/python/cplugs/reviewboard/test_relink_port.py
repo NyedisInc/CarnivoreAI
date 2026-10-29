@@ -13,14 +13,14 @@ from src.cplugs.reviewboard import relink_port
 from src.cplugs.sdk import ports
 from src.cplugs.sdk import crate_import as sdk_import
 from src.cplugs.sdk.computer import local_computer
-from tests.python.cplugs.reviewboard.harness import BASE, Env, huddle_on, huddle_store, make_env
+from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.test_publish import create_body
 
 
 @pytest.fixture
 def world(tmp_path: Path, monkeypatch):
     env = make_env(tmp_path)
-    huddle_on(env, monkeypatch)
+    task_manager_on(env, monkeypatch)
     env.app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
     with TestClient(env.app) as client:
         relink_port.register(env.host.context("reviewboard", background=True))
@@ -39,9 +39,9 @@ def test_the_sdk_asks_for_the_name_the_board_registers() -> None:
 
 def test_the_import_env_relinks_a_board_through_the_boards_own_writer(world) -> None:
     env, client = world
-    old = huddle_store(env).add("all", "the task the crate had", actor="claude", title="Old")["id"]
+    old = task_manager_store(env).add("all", "the task the crate had", actor="claude", title="Old")["id"]
     slug = client.post(f"{BASE}/boards", json=create_body(old)).json()["slug"]
-    restored = huddle_store(env).add("all", "the restored task", actor="claude", title="Restored")["id"]
+    restored = task_manager_store(env).add("all", "the restored task", actor="claude", title="Restored")["id"]
     relink_board = sdk_import.relink_board_of()
     assert relink_board(slug, restored) is True
     task = sidecar_of(env, slug)["task"]
@@ -52,7 +52,7 @@ def test_the_import_env_relinks_a_board_through_the_boards_own_writer(world) -> 
 
 def test_a_task_this_computer_does_not_have_is_not_a_relink(world) -> None:
     env, client = world
-    old = huddle_store(env).add("all", "t", actor="claude", title="Old")["id"]
+    old = task_manager_store(env).add("all", "t", actor="claude", title="Old")["id"]
     slug = client.post(f"{BASE}/boards", json=create_body(old)).json()["slug"]
     assert sdk_import.relink_board_of()(slug, 99999) is False
     assert sidecar_of(env, slug)["task"]["item_id"] == old

@@ -28,7 +28,6 @@
     lead?: Snippet<[RankRow]>;
     trail?: Snippet<[RankRow]>;
     separated?: boolean;
-    /* the reading pane */
     onSelect?: (id: string) => void;
   }
 

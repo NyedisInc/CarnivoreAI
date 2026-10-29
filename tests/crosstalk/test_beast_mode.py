@@ -29,7 +29,7 @@ def test_arm_approves_only_scope_and_records_external_identity(monkeypatch, tmp_
                             action=action, args_summary=summary, execute=execute,
                             external_client="token-one", beast_eligible=beast_eligible)
 
-    eligible = add("session_restart", "on hosta: restart")
+    eligible = add("session_restart", "on studio: restart")
     loop = add("crosstalk_resume", "resume a paused pair")
     dialog = add("session_send_keys", "YOUR OWN open dialog: type Enter", beast_eligible=False)
     always_waits_tool = "project_delete"

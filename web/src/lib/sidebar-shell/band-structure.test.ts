@@ -19,8 +19,17 @@ function head(key: string, bandKind: HeadingPlan['bandKind'], menu: HeadingMenuP
     };
 }
 
+function layoutPlan(key: string): RowPlan {
+    const parts = {
+        attrs: { class: 'session-sidebar-row', 'data-name': key }, lightHtml: '', toggle: null, icon: null,
+        name: { attrs: { class: 'session-sidebar-row-name' }, text: key, fxHtml: '' }, subtitle: '', pin: { name: key, pinned: false },
+        menuContext: {},
+    };
+    return { type: 'layout', key, parts, pin: {}, menu: null, nameMatch: null, members: null } as unknown as RowPlan;
+}
+
 function row(key: string): RowPlan {
-    return { type: 'legacy', key, html: `<div class="session-sidebar-row" data-name="${key}">${key}</div>`, members: null };
+    return layoutPlan(key);
 }
 
 function section(key: string, h: HeadingPlan, rows: RowPlan[], extra: Partial<SectionPlan> = {}): SectionPlan {

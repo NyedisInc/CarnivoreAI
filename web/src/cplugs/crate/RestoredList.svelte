@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { openModal, stampLabel, t as reactiveT, type Translate } from '../sdk';
+    import { Button, Card, List, ListRow, State } from '../sdk/ui';
     import type { Fetcher } from './crate-api';
     import UndoDialog from './UndoDialog.svelte';
     import type { RestoredImport } from './undo-api';
@@ -24,28 +25,25 @@
     }
 </script>
 
-<section class="crt-region" data-crt-restored>
-    <span class="pl-label">{t('cplug.crate.restored.label')}</span>
-    {#if restored && restored.length === 0}
-        <p class="tm__sub" data-crt-restored-empty>{t('cplug.crate.restored.empty')}</p>
-    {/if}
-    {#each restored ?? [] as row (row.importId)}
-        <div class="crt-row crt-row--line" data-crt-restored-row={row.importId} data-crt-restored-state={row.state}>
-            <span class="crt-row__name">{nameOf(row)}</span>
-            <span class="crt-row__meta">
-                {#if row.state === 'undone'}
-                    {t('cplug.crate.restored.undone', { when: row.undoneAt ? stampLabel(row.undoneAt) : '' })}
-                {:else}
-                    {#if row.finishedAt}{stampLabel(row.finishedAt)}{/if}
-                    {t('cplug.crate.restored.counts', { sessions: row.sessions, files: row.files ?? 0 })}
-                {/if}
-            </span>
-            <span class="crt-row__acts">
-                {#if row.state === 'done' || row.state === 'done_with_warnings'}
-                    <button type="button" class="oc-btn oc-btn--sm" data-crt-undo={row.importId} disabled={busy}
-                        aria-label={t('cplug.crate.restored.undo_label', { name: nameOf(row) })} onclick={() => void undo(row)}>{t('cplug.crate.restored.undo')}</button>
-                {/if}
-            </span>
-        </div>
-    {/each}
-</section>
+<Card title={t('cplug.crate.restored.label')} data-crt-restored>
+    {#snippet children()}
+        {#if restored && restored.length === 0}
+            <State kind="empty" inline title={t('cplug.crate.restored.empty')} data-crt-restored-empty />
+        {/if}
+        <List label={t('cplug.crate.restored.label')}>
+            {#snippet children()}
+                {#each restored ?? [] as row (row.importId)}
+                    {#snippet actions()}
+                        <Button size="sm" variant="danger" data-crt-undo={row.importId} disabled={busy}
+                            aria-label={t('cplug.crate.restored.undo_label', { name: nameOf(row) })} onclick={() => void undo(row)}>{t('cplug.crate.restored.undo')}</Button>
+                    {/snippet}
+                    <ListRow wrap data-crt-restored-row={row.importId} data-crt-restored-state={row.state} primary={nameOf(row)}
+                        secondary={row.state === 'undone'
+                            ? t('cplug.crate.restored.undone', { when: row.undoneAt ? stampLabel(row.undoneAt) : '' })
+                            : [row.finishedAt ? stampLabel(row.finishedAt) : '', t('cplug.crate.restored.counts', { sessions: row.sessions, files: row.files ?? 0 })].filter(Boolean).join(' ')}
+                        actions={row.state === 'done' || row.state === 'done_with_warnings' ? actions : undefined} />
+                {/each}
+            {/snippet}
+        </List>
+    {/snippet}
+</Card>

@@ -1,3 +1,5 @@
+import type { ProjectResponse, SessionInfo, SessionRecord } from '../../api/types';
+import type { AttachableSession } from '../../../lib/sessions/types';
 import { ago, DAY, epochAgo, HOUR, MIN } from './clock';
 
 export const TERMINAL_ROW_ID = 9001;
@@ -16,8 +18,8 @@ export const PROJECTS: readonly MadeUpProject[] = [
   { id: 4, name: 'infra-tools', path: '/work/infra-tools', description: 'deploy scripts and monitors' },
 ];
 
-export function projectList(): unknown[] {
-  return PROJECTS.map((project, index) => ({
+export function projectList(): ProjectResponse[] {
+  return PROJECTS.map((project, index): ProjectResponse => ({
     id: project.id,
     name: project.name,
     path: project.path,
@@ -52,7 +54,7 @@ const SESSIONS: readonly SessionSeed[] = [
 
 export const SESSION_NAMES: readonly string[] = SESSIONS.map((seed) => seed.tmux);
 
-function sessionInfo(seed: SessionSeed): unknown {
+function sessionInfo(seed: SessionSeed): SessionInfo {
   return {
     session: {
       id: `ses_${seed.tmux.replace('cloude_', '').replace(/-/g, '')}`,
@@ -91,11 +93,11 @@ function sessionInfo(seed: SessionSeed): unknown {
   };
 }
 
-export function sessionList(): unknown[] {
+export function sessionList(): SessionInfo[] {
   return SESSIONS.map(sessionInfo);
 }
 
-function record(uuid: string, title: string, project: MadeUpProject, agent: string, lastAgo: number, extra: Record<string, unknown>): unknown {
+function record(uuid: string, title: string, project: MadeUpProject, agent: string, lastAgo: number, extra: Partial<SessionRecord>): SessionRecord {
   return {
     session_uuid: uuid,
     origin: 'created',
@@ -120,30 +122,29 @@ function record(uuid: string, title: string, project: MadeUpProject, agent: stri
   };
 }
 
-export function recentRecords(): unknown[] {
+export function recentRecords(): SessionRecord[] {
   return [
-    record('42d1dabc-aa1b-4005-8fe8-68547e615854', 'billing retries', PROJECTS[0]!, 'claude', 35 * MIN, {}),
-    record('9b4badce-a4d8-4b39-853f-b532a0bb79f9', 'docs search', PROJECTS[1]!, 'claude', 3 * HOUR, {}),
-    record('ce4766df-b42e-40ae-8173-7d5bc9735903', 'push tokens', PROJECTS[2]!, 'codex', 9 * HOUR, {}),
-    record('fb8299db-b89d-4621-89e4-828e13c5ed64', 'backup monitor', PROJECTS[3]!, 'claude', DAY, {}),
-    record('d559c781-2309-47a5-8eac-c6bb9a01bcc5', 'old invoice export', PROJECTS[0]!, 'claude', 4 * DAY, { archived_at: ago(2 * DAY) }),
+    record('6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d101', 'billing retries', PROJECTS[0]!, 'claude', 35 * MIN, {}),
+    record('6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d102', 'docs search', PROJECTS[1]!, 'claude', 3 * HOUR, {}),
+    record('6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d103', 'push tokens', PROJECTS[2]!, 'codex', 9 * HOUR, {}),
+    record('6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d104', 'backup monitor', PROJECTS[3]!, 'claude', DAY, {}),
+    record('6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d105', 'old invoice export', PROJECTS[0]!, 'claude', 4 * DAY, { archived_at: ago(2 * DAY) }),
   ];
 }
 
-export function asleepRecords(): unknown[] {
+export function asleepRecords(): SessionRecord[] {
   return [
-    record('2804398b-27cb-4a69-8836-fb7ecce0c98e', 'release notes', PROJECTS[1]!, 'claude', 6 * HOUR, { asleep: true }),
-    record('85f33938-0dee-471e-8a14-cc34cc2245a2', 'onboarding flow', PROJECTS[2]!, 'claude', 11 * HOUR, { asleep: true }),
+    record('6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d201', 'release notes', PROJECTS[1]!, 'claude', 6 * HOUR, { asleep: true }),
+    record('6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d202', 'onboarding flow', PROJECTS[2]!, 'claude', 11 * HOUR, { asleep: true }),
   ];
 }
 
-/* conversation id */
 function liveUuid(seed: SessionSeed): string {
-  return `cb96a0bf-7f44-60c6-fd67-e08557f3${String(seed.rowId).padStart(4, '0')}`;
+  return `6d1f0c52-8a3e-4b1d-9c47-2e5a7b90${String(seed.rowId).padStart(4, '0')}`;
 }
 
-export function attachableRows(): unknown[] {
-  return SESSIONS.map((seed) => ({
+export function attachableRows(): AttachableSession[] {
+  return SESSIONS.map((seed): AttachableSession => ({
     name: seed.tmux,
     label: seed.label,
     created_by_cloude: true,
@@ -159,7 +160,7 @@ export function attachableRows(): unknown[] {
   }));
 }
 
-export function liveRecords(): unknown[] {
+export function liveRecords(): SessionRecord[] {
   const live = SESSIONS.map((seed) => record(liveUuid(seed), seed.label, seed.project, seed.agent, seed.activeAgo, {
     lifecycle: 'running', tmux_name: seed.tmux, closed_at: null, closed_basis: null, id: seed.rowId, unread: seed.unread,
     created_at: ago(seed.startedAgo), tmux_created_epoch: epochAgo(seed.startedAgo),
@@ -167,9 +168,9 @@ export function liveRecords(): unknown[] {
   return [...live, ...asleepRecords(), ...recentRecords()];
 }
 
-export function companionList(): unknown[] {
+export function companionList(): SessionInfo[] {
   const seed = SESSIONS[0]!;
-  const info = sessionInfo(seed) as Record<string, unknown> & { session: Record<string, unknown> };
+  const info = sessionInfo(seed);
   return [{
     ...info,
     session: { ...info.session, id: 'ses_billingapish', tmux_session: `${seed.tmux}_sh`, agent_type: 'shell' },

@@ -45,12 +45,6 @@ def _persist_locked() -> None:
 
 
 def configure(state_directory: Optional[Path]) -> None:
-    """Point the list at its file in the state directory and load what a previous run left (call once at startup).
-
-    Inputs: state_directory (the app state dir; None detaches persistence). Output: None. Rows come back in stored
-    order with their ids, keys and targets; a row whose target is gone (a deleted artifact, the Task Manager off) is kept and
-    listed with ``src`` None, as for a row opened this run (``browser_open_routes._page_info``).
-    """
     global _file, _clock
     with _lock:
         _file = None if state_directory is None else store.path_in(state_directory)

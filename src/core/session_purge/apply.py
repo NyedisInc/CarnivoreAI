@@ -88,12 +88,6 @@ def _db_phase(conn: sqlite3.Connection, plan: PurgePlan, db_arts: List[Artifact]
 
 
 def apply_plan(conn: sqlite3.Connection, plan: PurgePlan, *, state_dir: Path) -> Dict[str, Any]:
-    """Run a plan that passed :func:`check_gates`. Output: {receipt, status, artifacts, removed, failed}.
-
-    Raises: PurgeRefused 412 (the database changed since the plan), OSError (the receipt could not be written:
-      nothing was deleted), sqlite3.Error (the database transaction failed and rolled back: nothing was deleted;
-      the receipt says so).
-    """
     started = _now()
     receipt = receipt_path(state_dir, plan)
     _write_receipt(receipt, plan, "started", started)

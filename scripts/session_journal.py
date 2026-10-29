@@ -35,6 +35,13 @@ Description: a THIN wrapper over the same modules the app runs
   snapshot  runs one journal pass NOW (so the record is current to the
             second before a reboot) and takes an ONLINE backup of the
             database with the sqlite3 ``.backup`` command, never a file copy.
+
+  ``src.main`` is never imported. On 2026-09-22 a bare
+  ``from src.main import ...`` with no state dir ran the rebrand's
+  state-directory migration against live state.
+Inputs: command line - ``status`` | ``snapshot``.
+Output: text on stdout. Exit 0, 2 when the journal is unreadable or a
+  measurement or the backup failed.
 """
 
 from __future__ import annotations
@@ -86,21 +93,6 @@ def _reexec_under_venv_if_needed() -> None:
 
 
 def _default_state_dir() -> Optional[Path]:
-    """A read-only guess at the state directory, used only when unset.
-
-    Description: checks ``Path.exists()`` alone against the current
-      product name, then each legacy name, in that order, and returns
-      the first that exists. Never calls
-      ``src.config.state_paths.state_dir()``, which performs the
-      Carnivore-rename directory migration as a side effect - a guess
-      made by this read-only/backup tool must never rename anything on
-      disk. Requires ``sys.path`` to already carry the server root, same
-      as every other import in this module.
-    Inputs: none.
-    Output: Path | None - an existing directory, or None when neither the
-      current nor any legacy name exists (the caller keeps refusing).
-    Example: _default_state_dir() -> Path("~/Library/.../Carnivore")
-    """
     from src.core import product_identity
 
     app_support = Path.home() / "Library" / "Application Support"
@@ -113,18 +105,6 @@ def _default_state_dir() -> Optional[Path]:
 
 
 def _bootstrap():
-    """Resolve CLOUDE_STATE_DIR (explicit or a safe default) and return settings.
-
-    Description: an explicit ``CLOUDE_STATE_DIR`` always wins outright.
-      When it is unset, tries :func:`_default_state_dir` - a read-only
-      guess - and sets the environment variable from it so every
-      downstream reader (``settings``, ``state_paths``) sees the same
-      value this function used. Refuses only when neither an explicit
-      value nor a guess is available.
-    Inputs: none (reads the environment, and ``sys.path`` for the import
-      below).
-    Output: Settings module.
-    """
     sys.path.insert(0, os.getcwd())
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     _resolve_state_dir_env()
@@ -187,6 +167,7 @@ def status(settings) -> int:
 
 def snapshot(settings) -> int:
     from src.core.db import db_path_for
+    from src.core.safe_io.readonly_db import readonly_uri
     from src.core.session_journal_task import observe_pass
 
     state = Path(settings.get_state_dir())
@@ -197,7 +178,7 @@ def snapshot(settings) -> int:
         return 2
     print(f"journal pass: {result}")
     out = state / "session-journal" / f"pre-reboot-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.db"
-    proc = subprocess.run([SQLITE_BIN, f"file:{db}?mode=ro", f".backup '{out}'"],
+    proc = subprocess.run([SQLITE_BIN, readonly_uri(db), f".backup '{out}'"],
                           capture_output=True, text=True, timeout=300, check=False)
     if proc.returncode != 0 or not out.exists():
         print(f"database backup FAILED: {proc.stderr.strip()}")

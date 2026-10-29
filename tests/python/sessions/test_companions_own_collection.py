@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import types
 from types import SimpleNamespace
 
 import pytest
 
 from src.api.session_companion_routes import companion_infos, list_companions
 from src.api.session_listing_collections import listing_collections
+from src.core.session_manager import SessionManager
 from src.core.sessions.registry import SessionRegistry
 
 
@@ -22,6 +24,7 @@ def _state():
     manager = SimpleNamespace(
         _registry=reg, _status_map_for_listing=lambda: {}, _owned=SimpleNamespace(instances_from_db=lambda: None),
         _session_info_for=info)
+    manager.companion_infos = types.MethodType(SessionManager.companion_infos, manager)
     return SimpleNamespace(session_manager=manager), reg, built
 
 

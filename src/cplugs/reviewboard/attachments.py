@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
-from src.cplugs.reviewboard import ports, revisions, scratch, service, store, wire
+from src.cplugs.reviewboard import attachment_guard, attachment_secrets, ports, revisions, scratch, service, store, wire
 from src.cplugs.reviewboard.errors import (BadRequest, BoardError, TaskManagerRefused, NoTaskManager, ReadOnlyBoard, ScratchBoard, StoreFailed,
                                            TaskNotFound, TooLarge, Unlinked)
 from src.cplugs.reviewboard.scratch import Upload
@@ -33,7 +33,9 @@ MAX_ATTACHMENTS = 500
 MAX_NOTE = 2000
 MAX_THREAD_TEXT = 4000
 FILE_ID = re.compile(r"^[0-9a-f]{8}$")
+ATTACHER = "attached_by"
 ENTRY_FIELDS = ("file_id", "item_id", "message_id", "name", "mime", "bytes", "sha256", "added_at", "revision")
+REMOVED_AT = "removed_at"
 _MAX_REVIEW_SUMMARY = 300
 _MAX_REVIEW_DESCRIPTION = 4000
 
@@ -77,11 +79,12 @@ def check_uploads(uploads: Sequence[Upload]) -> List[Tuple[str, bytes]]:
             data, name = check_bytes(upload.data, upload.name)
         except UploadRefused as exc:
             raise BadRequest(f"{upload.name[:80]}: {exc}") from exc
+        attachment_guard.check_type(name, data)
         out.append((name, data))
     return out
 
 
-def _is_entry(entry: Any) -> bool:
+def is_entry(entry: Any) -> bool:
     if not isinstance(entry, dict) or not set(ENTRY_FIELDS) <= entry.keys():
         return False
     ints = ("item_id", "message_id", "bytes")
@@ -92,7 +95,22 @@ def _is_entry(entry: Any) -> bool:
 def entries_of(sidecar: Dict[str, Any]) -> List[Dict[str, Any]]:
     block = (sidecar.get("ext") or {}).get(EXT_ID) if isinstance(sidecar, dict) else None
     files = block.get("files") if isinstance(block, dict) else None
-    return [{k: e[k] for k in ENTRY_FIELDS} for e in files if _is_entry(e)] if isinstance(files, list) else []
+    if not isinstance(files, list):
+        return []
+    out = []
+    for e in files:
+        if is_entry(e):
+            row = {k: e[k] for k in ENTRY_FIELDS}
+            if isinstance(e.get(ATTACHER), str) and e[ATTACHER]:
+                row[ATTACHER] = e[ATTACHER]
+            if is_removed(e):
+                row[REMOVED_AT] = e[REMOVED_AT] if isinstance(e[REMOVED_AT], str) else ""
+            out.append(row)
+    return out
+
+
+def is_removed(entry: Dict[str, Any]) -> bool:
+    return REMOVED_AT in entry
 
 
 def _with_urls(entries: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -100,7 +118,8 @@ def _with_urls(entries: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
         port: Optional[ports.BoardPort] = ports.get()
     except NoTaskManager:
         port = None
-    return [{**e, "url": port.file_url(e["item_id"], e["file_id"]) if port is not None else None} for e in entries]
+    return [{**{k: v for k, v in e.items() if k != ATTACHER}, "url": port.file_url(e["item_id"], e["file_id"]) if port is not None else None}
+            for e in entries]
 
 
 
@@ -108,7 +127,9 @@ async def listing(ctx: CplugContext, slug: str) -> Dict[str, Any]:
     root = wire.board_root(ctx)
     found = await asyncio.to_thread(service.board, root, slug)
     sidecar = found.get("sidecar") if found.get("status") == "ok" else None
-    return {"slug": slug, "attachments": _with_urls(entries_of(sidecar or {}))}
+    entries = entries_of(sidecar or {})
+    return {"slug": slug, "attachments": _with_urls([e for e in entries if not is_removed(e)]),
+            "removed": [{k: v for k, v in e.items() if k != ATTACHER} for e in entries if is_removed(e)]}
 
 
 def _linked_task(found: Dict[str, Any], slug: str) -> int:
@@ -137,7 +158,7 @@ def thread_text(title: str, names: str, note: str) -> str:
     if any(ord(c) < 32 and c not in "\n\t" for c in text):
         raise BadRequest("the note and the board title may not contain control characters")
     if len(text) > MAX_THREAD_TEXT:
-        raise BadRequest(f"the thread line is over the huddle's {MAX_THREAD_TEXT} character limit; shorten the note or attach fewer files")
+        raise BadRequest(f"the thread line is over the task manager's {MAX_THREAD_TEXT} character limit; shorten the note or attach fewer files")
     return text
 
 
@@ -167,6 +188,7 @@ def _index(root: Path, state_folder: Path, slug: str, new: List[Dict[str, Any]])
 async def attach(ctx: CplugContext, slug: str, uploads: Sequence[Upload], *, note: Optional[str] = None, request_review: bool = True,
                  caller: Optional[AgentCaller] = None, cross_project: bool = False) -> Dict[str, Any]:
     checked = check_uploads(uploads)
+    await asyncio.to_thread(attachment_secrets.refuse_secrets, checked, slug=slug)
     note = (note or "").replace("\r\n", "\n").replace("\r", "\n").strip()
     if len(note) > MAX_NOTE:
         raise BadRequest(f"note is at most {MAX_NOTE} characters")
@@ -175,7 +197,7 @@ async def attach(ctx: CplugContext, slug: str, uploads: Sequence[Upload], *, not
     item_id = _linked_task(found, slug)
     port = ports.get()
     if await port.item_info(item_id) is None:
-        raise TaskNotFound(f"there is no huddle item {item_id} on this computer")
+        raise TaskNotFound(f"there is no task manager item {item_id} on this computer")
     await port.check_caller(caller, item_id, cross_project)
     if len(entries_of(found["sidecar"])) + len(checked) > MAX_ATTACHMENTS:
         raise TooLarge(f"a board holds at most {MAX_ATTACHMENTS} attachments")
@@ -187,7 +209,8 @@ async def attach(ctx: CplugContext, slug: str, uploads: Sequence[Upload], *, not
     if posted.get("message_id") is None:
         _refusal(posted, item_id)
     now = revisions.stamp(revisions.utcnow())
-    new = [{"file_id": f["id"], "item_id": item_id, "message_id": int(posted["message_id"]), "name": f["name"], "mime": f["mime"],
+    attacher = await port.caller_key(caller)
+    new = [{**({ATTACHER: attacher} if attacher else {}), "file_id": f["id"], "item_id": item_id, "message_id": int(posted["message_id"]), "name": f["name"], "mime": f["mime"],
             "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "added_at": now}
            for f, (_name, data) in zip(posted["files"], checked)]
     answer = {"slug": slug, "message_id": int(posted["message_id"]), "review": posted.get("review")}
@@ -205,17 +228,12 @@ async def attach(ctx: CplugContext, slug: str, uploads: Sequence[Upload], *, not
 
 
 def _refusal(posted: Dict[str, Any], item_id: int) -> None:
-    """Raise the board's refusal for an attach the Task Manager did not make (``message_id`` None; nothing was stored).
-
-    Inputs: posted (``BoardPort.attach_files``'s answer); item_id. Output: never returns.
-    Raises: StoreFailed (a file could not be written), TaskManagerRefused (the Task Manager refused the info), TaskNotFound (the item is gone).
-    """
     code = posted.get("code")
     if code == "store_failed":
         raise StoreFailed(f"{posted.get('refused')}, so nothing was attached")
     if code:
         raise TaskManagerRefused(f"the task refused the attach ({code}): {posted.get('refused')}", extra={"task_code": code})
-    raise TaskNotFound(f"huddle item {item_id} is gone, so nothing was attached")
+    raise TaskNotFound(f"task manager item {item_id} is gone, so nothing was attached")
 
 
-__all__ = ["EXT_ID", "MAX_BODY_BYTES", "MAX_FILES", "MAX_TOTAL_BYTES", "attach", "check_uploads", "decode_inline", "entries_of", "listing"]
+__all__ = ["EXT_ID", "MAX_BODY_BYTES", "MAX_FILES", "MAX_TOTAL_BYTES", "REMOVED_AT", "attach", "check_uploads", "decode_inline", "entries_of", "is_entry", "is_removed", "listing"]

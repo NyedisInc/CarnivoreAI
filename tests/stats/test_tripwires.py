@@ -120,12 +120,12 @@ def test_deleting_a_chart_deletes_only_its_tripwires(tmp_path):
     from src.api.stats_routes import router as stats_router
     store, client = _setup(tmp_path)
     client.app.include_router(stats_router, prefix="/api/v1")
-    chart = {"id": "e8213214-41aa-4fea-8c43-eb5ecb1234d9", "title": "Usage", "enabled": True,
+    chart = {"id": "550e8400-e29b-41d4-a716-446655440000", "title": "Usage", "enabled": True,
              "series": [{"metric": "total_tokens"}], "filters": {}, "range": {"mode": "global"},
              "display": {"type": "line"}}
     assert client.post("/api/v1/stats/charts", json=chart).status_code == 201
     mine = [_create(client, chart_id=chart["id"]), _create(client, chart_id=chart["id"], name="b")]
-    other = _create(client, chart_id="8119ad68-a761-468b-82e2-82827144e4fc", name="c")
+    other = _create(client, chart_id="660e8400-e29b-41d4-a716-446655440000", name="c")
     loose = _create(client, name="d")
     assert client.delete(f"/api/v1/stats/charts/{chart['id']}?revision=9").status_code == 409
     assert len(client.get("/api/v1/stats/tripwires").json()) == 4

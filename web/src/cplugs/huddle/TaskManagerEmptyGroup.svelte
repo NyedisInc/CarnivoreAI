@@ -20,7 +20,6 @@
 
 <style>
   @layer components {
-    /* box-shadow */
     .hdeg-head {
       position: relative;
       display: flex;

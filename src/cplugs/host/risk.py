@@ -18,6 +18,10 @@ def needs_consent(tier: str) -> bool:
     return tier not in FIRST_PARTY_TIERS
 
 
+def consent_owed(tier: str, code_digest: str, consented_digest: str) -> bool:
+    return needs_consent(tier) and (not code_digest or consented_digest != code_digest)
+
+
 def warnings_for(permissions: Tuple[str, ...]) -> List[Dict[str, Any]]:
     reads = [p for p in permissions if p in _READS_TRANSCRIPTS]
     out: List[Dict[str, Any]] = []

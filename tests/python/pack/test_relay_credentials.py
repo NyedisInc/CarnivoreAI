@@ -101,15 +101,15 @@ def _expiry_ms(hours: float = 8) -> Tuple[datetime, int]:
 SENDER = "install-a"
 
 
-def _name(key: str = "acme", sender: str = SENDER) -> str:
+def _name(key: str = "larkspur", sender: str = SENDER) -> str:
     return target_side.relay_profile_name(key, sender)
 
 
-def _service(home: Path, key: str = "acme", sender: str = SENDER) -> str:
+def _service(home: Path, key: str = "larkspur", sender: str = SENDER) -> str:
     return claude_keychain_services(target_side.relay_profile_dir(key, sender, home))[0]
 
 
-def _receive(exe: str, home: Path, expiry_ms: int, *, key: str = "acme", sender: str = SENDER, **extra: Any) -> int:
+def _receive(exe: str, home: Path, expiry_ms: int, *, key: str = "larkspur", sender: str = SENDER, **extra: Any) -> int:
     return target_side.receive(sender, key, _name(key, sender), FAKE_TOKEN, expiry_ms,
                                scopes=extra.pop("scopes", ["user:inference"]), home=home, security_bin=exe, **extra)
 
@@ -162,12 +162,12 @@ def test_relay_refuses_an_account_whose_setting_is_off_and_never_sends_a_refresh
     when, expiry_ms = _expiry_ms()
     credential = FakeCredential(FAKE_TOKEN, when)
 
-    assert asyncio.run(relay.push_account("acme", credential)) == []
+    assert asyncio.run(relay.push_account("larkspur", credential)) == []
     assert sent == [] and not (root / "calls.jsonl").exists()
 
     with open_db() as conn:
-        targets.set_machines(conn, "acme", ["peer-b"], "iid-owner")
-    assert asyncio.run(relay.push_account("acme", credential)) == ["peer-b"]
+        targets.set_machines(conn, "larkspur", ["peer-b"], "iid-owner")
+    assert asyncio.run(relay.push_account("larkspur", credential)) == ["peer-b"]
     assert len(sent) == 1
     assert set(sent[0]) == {"account_key", "profile", "access_token", "expires_at", "scopes", "subscription_type",
                             "rate_limit_tier"}
@@ -176,11 +176,11 @@ def test_relay_refuses_an_account_whose_setting_is_off_and_never_sends_a_refresh
         row = targets.list_all(conn)[0]
     assert (row.state, row.last_expiry_pushed) == ("pushed", expiry_ms)
 
-    assert asyncio.run(relay.push_account("acme", credential)) == []
+    assert asyncio.run(relay.push_account("larkspur", credential)) == []
     with open_db() as conn:
-        assert targets.set_machines(conn, "acme", [], "iid-owner") == ["peer-b"]
+        assert targets.set_machines(conn, "larkspur", [], "iid-owner") == ["peer-b"]
     later = FakeCredential(FAKE_TOKEN, when + timedelta(hours=8))
-    assert asyncio.run(relay.push_account("acme", later)) == [] and len(sent) == 1
+    assert asyncio.run(relay.push_account("larkspur", later)) == [] and len(sent) == 1
 
     with pytest.raises(ValidationError):
         CredentialBody.model_validate({**sent[0], "refresh_token": "x"})
@@ -198,7 +198,7 @@ def test_a_rotated_access_token_with_a_newer_expiry_is_pushed_again_and_an_older
 
     with open_db() as conn:
         apply_pack_relay(conn)
-        targets.set_machines(conn, "acme", ["peer-b"], "iid-owner")
+        targets.set_machines(conn, "larkspur", ["peer-b"], "iid-owner")
     sent: List[Dict[str, Any]] = []
 
     async def post(method: str, path: str, body: Optional[dict]) -> Tuple[int, Any]:
@@ -208,17 +208,17 @@ def test_a_rotated_access_token_with_a_newer_expiry_is_pushed_again_and_an_older
     relay = owner_side.Relay(open_db=open_db, peer=lambda iid: (post, [owner_side.CAP_CREDENTIALS]), notify=lambda: None,
                              self_id="iid-owner")
     when, first_ms = _expiry_ms()
-    assert asyncio.run(relay.push_account("acme", FakeCredential(FAKE_TOKEN, when))) == ["peer-b"]
+    assert asyncio.run(relay.push_account("larkspur", FakeCredential(FAKE_TOKEN, when))) == ["peer-b"]
 
     rotated = FakeCredential(FAKE_TOKEN + "-rotated", when + timedelta(hours=8))
-    assert asyncio.run(relay.push_account("acme", rotated)) == ["peer-b"]
+    assert asyncio.run(relay.push_account("larkspur", rotated)) == ["peer-b"]
     assert [b["expires_at"] for b in sent] == [first_ms, first_ms + 8 * 3600 * 1000]
     assert sent[1]["access_token"] == rotated.access_token and rotated.refresh_token not in json.dumps(sent)
     with open_db() as conn:
         assert targets.list_all(conn)[0].last_expiry_pushed == first_ms + 8 * 3600 * 1000
 
-    assert asyncio.run(relay.push_account("acme", rotated)) == []
-    assert asyncio.run(relay.push_account("acme", FakeCredential(FAKE_TOKEN, when))) == [] and len(sent) == 2
+    assert asyncio.run(relay.push_account("larkspur", rotated)) == []
+    assert asyncio.run(relay.push_account("larkspur", FakeCredential(FAKE_TOKEN, when))) == [] and len(sent) == 2
 
 
 
@@ -261,7 +261,7 @@ def test_relay_profile_is_bound_to_the_sending_peer(fake_security, tmp_path):
     assert _service(home, sender="install-a") != _service(home, sender="install-b")
     assert (root / "items" / _service(home, sender="install-a")).read_text() == first
     with pytest.raises(target_side.RelayRefused) as caught:
-        target_side.receive("install-b", "acme", _name(sender="install-a"), FAKE_TOKEN, expiry_ms, scopes=[],
+        target_side.receive("install-b", "larkspur", _name(sender="install-a"), FAKE_TOKEN, expiry_ms, scopes=[],
                             home=home, security_bin=exe)
     assert caught.value.code == "bad_profile"
     service_b = _service(home, sender="install-b")
@@ -271,9 +271,9 @@ def test_relay_profile_is_bound_to_the_sending_peer(fake_security, tmp_path):
     assert (caught.value.code, caught.value.status) == ("relay_peer_conflict", 409)
     assert (root / "items" / service_b).read_text() == other
     _receive(exe, home, expiry_ms + 1000, sender="install-a")
-    assert target_side.revoke("install-b", "acme", home=home, security_bin=exe) is False
+    assert target_side.revoke("install-b", "larkspur", home=home, security_bin=exe) is False
     assert (root / "items" / service_b).exists()
-    assert target_side.revoke("install-a", "acme", home=home, security_bin=exe) is True
+    assert target_side.revoke("install-a", "larkspur", home=home, security_bin=exe) is True
     assert not (root / "items" / _service(home, sender="install-a")).exists()
 
 
@@ -317,7 +317,7 @@ def test_mcp_cannot_enable_the_relay_or_receiving():
         routed.append(args)
         return {}
 
-    for fn, args in ((pack_relay_tools._set, {"account": "work", "machines": ["hosta"]}),
+    for fn, args in ((pack_relay_tools._set, {"account": "work", "machines": ["studio"]}),
                      (pack_machines_tools._restrictions_set, {"machine": "self", "may_receive_credentials": True})):
         with pytest.raises(ToolError):
             fn(SimpleNamespace(route=route, request=None, args=args))
@@ -406,7 +406,7 @@ def receive_app(fake_security, tmp_path, monkeypatch):
 
 
 def _body(**over: Any) -> Dict[str, Any]:
-    body = {"account_key": "acme", "profile": _name(), "access_token": FAKE_TOKEN,
+    body = {"account_key": "larkspur", "profile": _name(), "access_token": FAKE_TOKEN,
             "expires_at": _expiry_ms()[1], "scopes": ["user:inference"]}
     body.update(over)
     return body
@@ -441,7 +441,7 @@ def test_receive_route_answers_422_401_403_409(receive_app, tmp_path):
     assert r.status_code == 403 and r.json()["detail"]["code"] == "pack_restricted"
     state["receive"] = True
 
-    owner_of.add("acme")
+    owner_of.add("larkspur")
     r = client.post(url, json=_body())
     assert r.status_code == 409 and r.json()["detail"]["code"] == "relay_owner_conflict"
     owner_of.clear()
@@ -494,7 +494,7 @@ def test_revoke_route_owner_403_foreign_marker_refused_own_marker_deleted(receiv
     from types import SimpleNamespace
 
     from src.api.peer_auth import Principal
-    url = "/api/v1/federation/pack/credentials/acme"
+    url = "/api/v1/federation/pack/credentials/larkspur"
     service = _service(tmp_path / "home")
     state["principal"] = owner
     assert client.delete(url).status_code == 403
@@ -600,9 +600,9 @@ def test_relay_consent_gates_push_and_write_migrates_and_lists_pending(receive_a
     r = client.post(url, json=_body())
     assert r.status_code == 403 and r.json()["detail"]["code"] == "relay_not_accepted" and writes == []
     monkeypatch.undo() if False else monkeypatch.delattr(cs_mod._default, "relay_consent")
-    state["consent"] = consent_mod.Consent(consent_mod.MODE_LIST, (consent_mod.offer_key(SENDER, "acme"),))
-    assert client.post("/api/v1/federation/pack/credentials", json=_body(account_key="acme2",
-           profile=_name("acme2"))).status_code == 403 and writes == []
+    state["consent"] = consent_mod.Consent(consent_mod.MODE_LIST, (consent_mod.offer_key(SENDER, "larkspur"),))
+    assert client.post("/api/v1/federation/pack/credentials", json=_body(account_key="larkspur2",
+           profile=_name("larkspur2"))).status_code == 403 and writes == []
 
     async def post(method: str, path: str, body: Optional[dict]) -> Tuple[int, Any]:
         reply = client.post(url, json=body)
@@ -617,12 +617,12 @@ def test_relay_consent_gates_push_and_write_migrates_and_lists_pending(receive_a
 
     with open_db() as conn:
         apply_pack_relay(conn)
-        targets.set_machines(conn, "acme", ["peer-b"], SENDER)
+        targets.set_machines(conn, "larkspur", ["peer-b"], SENDER)
     published = consent_mod.published(state["consent"])
     relay = owner_side.Relay(open_db=open_db, peer=lambda iid: (post, [owner_side.CAP_CREDENTIALS]), notify=lambda: None,
                              self_id=SENDER, accepts=lambda iid, account: consent_mod.peer_accepts(published, SENDER, account))
     cred = FakeCredential(FAKE_TOKEN, _expiry_ms()[0])
-    assert asyncio.run(relay.push_account("acme", cred)) == ["peer-b"] and len(writes) == 1
+    assert asyncio.run(relay.push_account("larkspur", cred)) == ["peer-b"] and len(writes) == 1
     assert (root / "items" / _service(tmp_path / "home")).exists()
     with open_db() as conn:
         targets.set_machines(conn, "work", ["peer-b"], SENDER)
@@ -643,7 +643,7 @@ def test_relay_consent_gates_push_and_write_migrates_and_lists_pending(receive_a
 
     from src.core.pack.machines import exchange
     cs.save_relay_consent(consent_mod.Consent("list", ("iid-a:work",), ("iid-a:work",)))
-    entry = SimpleNamespace(label="hosta", snapshot={"credential_offers": [
+    entry = SimpleNamespace(label="studio", snapshot={"credential_offers": [
         {"account_key": "work", "label": "Claude Code - Work"}, {"account_key": "play", "label": "Claude Code - Play"}]})
     roster = {"iid-a": entry, "iid-gone": SimpleNamespace(label="old", snapshot={"credential_offers": [
         {"account_key": "ghost", "label": "Unpaired"}]})}

@@ -12,7 +12,7 @@ from src.core.attention.background_claims import (
 from src.core.attention.evidence import (
     FAMILY_CLAUDE, REASON_SUBAGENTS, STATE_BUSY, Evidence,
 )
-from src.core.attention.registry_read import parse_registry_record
+from src.core.attention.registry_record import parse_registry_record
 from src.core.attention.resolve import resolve_attention
 from src.core.attention.transcript_facts import classify_transcript_records
 from src.core.auto_sleep.live_work import hold_for
@@ -23,16 +23,16 @@ from src.core.background_work.measured import (
 from src.core.session_status import LIVENESS_LIVE
 
 CLAUDE = 52033
-SNAP = "/Users/example/.carnivore/accounts/sam-initech/shell-snapshots/snapshot-zsh-1790808101319-5u4phq.sh"
-UUID = "c8cae45c-a817-4123-86de-e1d544b2f6c7"
+SNAP = "/Users/j/.carnivore/accounts/joe-imc/shell-snapshots/snapshot-zsh-1790808101319-5u4phq.sh"
+UUID = "22d19d17-0000-4000-8000-000000000001"
 STARTED_MS = int(datetime(2026, 9, 30, 23, 11, 14, tzinfo=timezone.utc).timestamp() * 1000)
 NOW = datetime(2026, 9, 30, 23, 30, tzinfo=timezone.utc)
 
 
 def _table(extra: Dict[int, tuple] = None) -> ProcessSnapshot:
     rows = {
-        4663: (61987, "zsh -c source ~/.zshrc; claude --resume x"),
-        CLAUDE: (4663, "claude --dangerously-skip-permissions --chrome --mcp-config={...}"),
+        51909: (61987, "zsh -c source ~/.zshrc; claude --resume x"),
+        CLAUDE: (51909, "claude --dangerously-skip-permissions --chrome --mcp-config={...}"),
         52102: (CLAUDE, "npm exec @modelcontextprotocol/server-sequential-thinking"),
         52230: (52102, "node /u/.npm/_npx/de/node_modules/.bin/mcp-server-sequential-thinking"),
         52103: (CLAUDE, "npm exec @modelcontextprotocol/server-memory"),
@@ -50,7 +50,7 @@ def _no_stdout(pid: int) -> Optional[str]:
 
 def _registry(status: str, version: str = "2.1.283"):
     return parse_registry_record({
-        "pid": CLAUDE, "sessionId": UUID, "cwd": "/Users/example/kitchen",
+        "pid": CLAUDE, "sessionId": UUID, "cwd": "/Users/j/hockey",
         "startedAt": STARTED_MS, "version": version, "kind": "interactive",
         "entrypoint": "cli", "status": status,
         "updatedAt": STARTED_MS + 60_000, "statusUpdatedAt": STARTED_MS + 60_000,
@@ -113,7 +113,7 @@ def test_a_real_tool_shell_child_is_running_counted_once_with_its_children():
 
 def test_a_shell_without_a_snapshot_counts_by_its_task_output_stdout():
     table = _table({70000: (CLAUDE, "/bin/bash -c sleep 100")})
-    stdout = {70000: "/private/tmp/claude-1000/x/tasks/bt0wu171w.output"}
+    stdout = {70000: "/private/tmp/claude-501/x/tasks/bt0wu171w.output"}
     measure = measure_background(CLAUDE, table, stdout_of=stdout.get)
     assert (measure.state, measure.count) == (STATE_RUNNING, 1)
 
@@ -131,7 +131,7 @@ def test_unmeasurable_is_unknown_never_none():
 
 
 
-def test_kitchen_stale_claim_no_process_record_idle_is_overruled_to_none():
+def test_hockey_stale_claim_no_process_record_idle_is_overruled_to_none():
     evidence = _evidence("idle", NONE)
     assert evidence.transcript.open_background_tasks == 2
     assert measurement_overrules_claims(evidence)
@@ -203,13 +203,13 @@ def test_the_reader_takes_one_ps_snapshot_per_pass(monkeypatch):
     from src.core.attention_reader import AttentionEvidenceReader
 
     calls = []
-    rows = [SimpleNamespace(pid=CLAUDE, ppid=4663, command="claude")]
+    rows = [SimpleNamespace(pid=CLAUDE, ppid=51909, command="claude")]
     monkeypatch.setattr(claude_resume_argv, "list_process_table",
                         lambda *a, **k: calls.append(1) or rows)
     reader = AttentionEvidenceReader(SimpleNamespace(), lambda sid: (sid, 1))
     first = reader._process_snapshot(NOW)
     assert reader._process_snapshot(NOW) is first and len(calls) == 1
-    assert first.commands[CLAUDE] == "claude" and reader._process_parents(NOW) == {CLAUDE: 4663}
+    assert first.commands[CLAUDE] == "claude" and reader._process_parents(NOW) == {CLAUDE: 51909}
     monkeypatch.setattr(claude_resume_argv, "list_process_table", lambda *a, **k: None)
     reader._snapshot_taken_at -= 60
     assert reader._process_snapshot(NOW.replace(minute=31)) is UNREADABLE

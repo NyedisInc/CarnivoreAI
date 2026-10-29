@@ -9,16 +9,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port, reply as huddle_reply, send_queue
+from src.cplugs.huddle import board_port, reply as task_manager_reply, send_queue
 from src.cplugs.reviewboard import scan
-from tests.python.cplugs.reviewboard.harness import BASE, Env, huddle_on, huddle_store, make_env
+from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.test_publish import create_body
 
 
 @pytest.fixture
 def world(tmp_path: Path, monkeypatch):
     env = make_env(tmp_path)
-    ctx = huddle_on(env, monkeypatch)
+    ctx = task_manager_on(env, monkeypatch)
     env.app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
     with TestClient(env.app) as client:
         yield env, client, ctx
@@ -28,7 +28,7 @@ def world(tmp_path: Path, monkeypatch):
 @pytest.fixture
 def board(world):
     env, client, _ctx = world
-    item = huddle_store(env).add("all", "redo the bottom bar", actor="claude", title="Part 3 bottom bar")["id"]
+    item = task_manager_store(env).add("all", "redo the bottom bar", actor="claude", title="Part 3 bottom bar")["id"]
     r = client.post(f"{BASE}/boards", json=create_body(item))
     assert r.status_code == 200, r.text
     return r.json()["slug"], item
@@ -42,24 +42,24 @@ def round_body(**over):
 
 
 def thread(env: Env, item: int) -> list:
-    return [m for m in huddle_store(env).item(item)["thread"] if m.get("category") != "status"]
+    return [m for m in task_manager_store(env).item(item)["thread"] if m.get("category") != "status"]
 
 
 def sidecar(env: Env, slug: str) -> dict:
     return json.loads((env.board(slug) / "sidecar.json").read_text())
 
 
-def test_a_round_lands_as_owners_reply_through_the_reply_boxs_function(world, board, monkeypatch):
+def test_a_round_lands_as_joes_reply_through_the_reply_boxs_function(world, board, monkeypatch):
     env, client, _ = world
     slug, item = board
     calls = []
-    real = huddle_reply.post_reply
+    real = task_manager_reply.post_reply
 
     async def spy(*args, **kwargs):
         calls.append((args[1], kwargs.get("parts")))
         return await real(*args, **kwargs)
 
-    monkeypatch.setattr(huddle_reply, "post_reply", spy)
+    monkeypatch.setattr(task_manager_reply, "post_reply", spy)
     r = client.post(f"{BASE}/boards/{slug}/rounds", json=round_body())
     assert r.status_code == 200, r.text
     out = r.json()
@@ -116,7 +116,7 @@ def test_a_failed_delivery_keeps_the_round_and_resend_posts_it_once(world, board
     slug, item = board
     board_port.unregister()
     out = client.post(f"{BASE}/boards/{slug}/rounds", json=round_body()).json()
-    assert out["delivery"]["state"] == "undelivered" and "huddle" in out["delivery"]["reason"] and out["state"] == "undelivered"
+    assert out["delivery"]["state"] == "undelivered" and "task manager" in out["delivery"]["reason"] and out["state"] == "undelivered"
     assert sidecar(env, slug)["rounds"][0]["delivery"]["state"] == "undelivered"
     count = len(thread(env, item))
     board_port.register(ctx)
@@ -167,7 +167,7 @@ def test_drafts_are_kept_on_the_server_and_a_stale_write_is_refused(world, board
 def test_relink_moves_later_rounds_and_keeps_the_old_link(world, board):
     env, client, _ = world
     slug, item = board
-    other = huddle_store(env).add("all", "another task", actor="claude", title="Other")["id"]
+    other = task_manager_store(env).add("all", "another task", actor="claude", title="Other")["id"]
     out = client.patch(f"{BASE}/boards/{slug}/task", json={"item_id": other})
     assert out.status_code == 200 and out.json()["task"]["item_id"] == other
     history = sidecar(env, slug)["task"]["history"]
@@ -195,7 +195,7 @@ def test_a_round_on_a_review_task_reopens_it_with_the_joe_replied_lineage_row(wo
 
     env, client, _ = world
     slug, item = board
-    store = huddle_store(env)
+    store = task_manager_store(env)
     assert store.item(item)["state"] == "review"
     r = client.post(f"{BASE}/boards/{slug}/rounds", json=round_body())
     assert r.status_code == 200, r.text
@@ -203,4 +203,4 @@ def test_a_round_on_a_review_task_reopens_it_with_the_joe_replied_lineage_row(wo
     assert store.item(item)["state"] == "open"
     with closing(store._connect(False)) as conn:
         rows = [(x["from"], x["to"], x["by"], x["detail"]) for x in lineage.for_item(conn, item)]
-    assert rows[-1] == ("review", "open", "owner", "owner replied")
+    assert rows[-1] == ("review", "open", "owner", "joe replied")

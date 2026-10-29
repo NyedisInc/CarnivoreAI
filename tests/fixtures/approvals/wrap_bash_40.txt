@@ -1,0 +1,33 @@
+           Claude Code v2.1.285
+ ▐▛███▛█   rig-model[1m]
+▝▜██████▀  API Usage Billing
+ ▝▝   ▝▝   /…/T/tmprigwkkkk/cw
+
+
+❯ RIG:bash40 please
+
+⏺ Bash(touch rigfile-with-a-fairly-long-
+      name.txt)
+  ⎿  Waiting…
+
+────────────────────────────────────────
+ Bash command
+ Tip: auto mode handles these prompts
+ for you — choose "switch to auto mode"
+ below
+
+   touch rigfile-with-a-fairly-long-n
+   ame.txt
+   make a file
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and always allow access to
+      /private/var/folders/cz/l7vtxb4d71
+      s6qxc4zsycd8400000gp/T/tmprigwkkkk
+      /cw from this project
+   3. Yes, and switch to auto mode ·
+      auto mode handles these prompts
+   4. Nor you
+
+ Esc to cancel · Tab to amend

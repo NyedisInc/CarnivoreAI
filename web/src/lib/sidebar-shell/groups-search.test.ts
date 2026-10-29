@@ -14,7 +14,7 @@ beforeAll(() => {
 function applyGroups(): void {
     GroupStore.apply({
         status: 'ok',
-        groups: [{ group_uuid: 'g1', name: 'work stuff', position: 0, members: ['cloude_example_app'] }],
+        groups: [{ group_uuid: 'g1', name: 'work stuff', position: 0, members: ['cloude_lantern_app'] }],
     });
 }
 
@@ -33,17 +33,17 @@ function draw(rows: Record<string, any>[], query: string, dragging = false): str
 function fixtureRows() {
     return [
         {
-            name: 'cloude_example_app', label: 'Example App', is_pinned: true,
+            name: 'cloude_lantern_app', label: 'Lantern App', is_pinned: true,
             project_id: 10, project_name: 'ProjectFoo', status: 'idle',
             created_by_cloude: true, session_id: null,
         },
         {
-            name: 'cloude_orchard', label: null, is_pinned: false,
+            name: 'cloude_argent', label: null, is_pinned: false,
             project_id: 10, project_name: 'ProjectFoo', status: 'idle',
             created_by_cloude: true, session_id: null,
         },
         {
-            name: 'cloude_fenford_firford', label: 'Fenford-FIRFORD', is_pinned: false,
+            name: 'cloude_atlas_ui', label: 'Atlas-UI', is_pinned: false,
             project_id: 20, project_name: 'Design', status: 'idle',
             created_by_cloude: true, session_id: null,
         },
@@ -72,31 +72,31 @@ it('no query: the ordinary, unfiltered picture - every row, PINNED + its group +
     const html = body('');
     assert.deepEqual(
         namesIn(html).sort(),
-        ['cloude_orchard', 'cloude_carnivore_share', 'cloude_fenford_firford', 'cloude_example_app', 'cloude_rogue_one'].sort(),
+        ['cloude_argent', 'cloude_carnivore_share', 'cloude_atlas_ui', 'cloude_lantern_app', 'cloude_rogue_one'].sort(),
     );
-    assert.equal((html.match(/data-name="cloude_example_app"/g) || []).length, 3);
+    assert.equal((html.match(/data-name="cloude_lantern_app"/g) || []).length, 3);
     assert.ok(html.includes('work stuff'));
     assert.ok(html.includes('ProjectFoo'));
     assert.ok(html.includes('Design'));
 });
 
 it('filter by SESSION DISPLAY NAME: the matching row is listed ONCE, under AGENTS, with no section headings around it', async () => {
-    const html = body(Search.normalize('orchard'));
-    assert.deepEqual(namesIn(html), ['cloude_orchard']);
-    assert.equal((html.match(/data-name="cloude_orchard"/g) || []).length, 1);
+    const html = body(Search.normalize('argent'));
+    assert.deepEqual(namesIn(html), ['cloude_argent']);
+    assert.equal((html.match(/data-name="cloude_argent"/g) || []).length, 1);
     assert.ok(html.includes('data-group="search:agents"'), 'the flat AGENTS section');
     assert.ok(!html.includes('data-group="pinned"') && !html.includes('work stuff') && !html.includes('Design'));
 });
 
 it('filter by TMUX NAME: matches the handle even when a label hides it from the display name', async () => {
-    const html = body(Search.normalize('example_app'));
-    assert.deepEqual(namesIn(html), ['cloude_example_app']);
+    const html = body(Search.normalize('lantern_app'));
+    assert.deepEqual(namesIn(html), ['cloude_lantern_app']);
 });
 
 it('a PROJECT NAME matches: every agent in that project is listed, each once', async () => {
     const html = body(Search.normalize('ProjectFoo'));
-    assert.deepEqual(namesIn(html).sort(), ['cloude_example_app', 'cloude_orchard']);
-    assert.equal((html.match(/data-name="cloude_example_app"/g) || []).length, 1, 'a pinned hit is listed once, not under PINNED and its project');
+    assert.deepEqual(namesIn(html).sort(), ['cloude_argent', 'cloude_lantern_app']);
+    assert.equal((html.match(/data-name="cloude_lantern_app"/g) || []).length, 1, 'a pinned hit is listed once, not under PINNED and its project');
 });
 
 it('a GROUP NAME no longer keeps its members: a header match is not a session name', async () => {
@@ -107,7 +107,7 @@ it('a GROUP NAME no longer keeps its members: a header match is not a session na
 it('"pinned" does not keep PINNED: only a row that matches is listed, and a pinned one wears no pin', async () => {
     const html = body(Search.normalize('pin'));
     assert.deepEqual(namesIn(html), []);
-    const named = body(Search.normalize('exampl'));
+    const named = body(Search.normalize('lante'));
     assert.ok(named.includes('data-group="search:agents"'));
     assert.ok(!named.includes('oc-tag') && !named.includes('data-pin-session'), 'a pinned hit draws no pin in a search');
 });
@@ -115,31 +115,31 @@ it('"pinned" does not keep PINNED: only a row that matches is listed, and a pinn
 it('a saved Layout row and a browser row in a search draw no pin, keep the kebab; the normal drawer keeps both pins', async () => {
     const extra = [
         {
-            name: 'layout:l1', kind: 'layout', layout_uuid: 'l1', label: 'Alpha Layout', member_count: 0, member_names: [], _members: [],
+            name: 'layout:l1', kind: 'layout', layout_uuid: 'l1', label: 'Main Layout', member_count: 0, member_names: [], _members: [],
             created_at_epoch: 0, last_work_at: null, project_id: null, project_name: null, working_dir: null,
         },
         {
-            name: 'browser:0123456789abcdef', kind: 'browser', label: 'Alpha Browser', status: 'idle', host: 'example.com',
+            name: 'browser:0123456789abcdef', kind: 'browser', label: 'Main Browser', status: 'idle', host: 'example.com',
             project_id: null, project_name: null, session_id: null,
         },
     ];
     const rows = [...fixtureRows(), ...extra];
-    const searched = draw(rows, Search.normalize('alpha'));
-    assert.ok(searched.includes('Alpha Layout') && searched.includes('Alpha Browser'), 'both rows are search hits');
+    const searched = draw(rows, Search.normalize('main'));
+    assert.ok(searched.includes('Main Layout') && searched.includes('Main Browser'), 'both rows are search hits');
     assert.ok(searched.includes('data-search-section'), 'the agents section is drawn');
     assert.ok(searched.includes('data-row-menu'), 'the kebab stays');
-    assert.match(searched, /session-sidebar-row-name"[^>]*><mark class="sd-mark">Alpha<\/mark> Layout/, 'the match is marked in the layout name');
+    assert.match(searched, /session-sidebar-row-name"[^>]*><mark class="sd-mark">Main<\/mark> Layout/, 'the match is marked in the layout name');
     assert.ok(searched.includes('session-sidebar-row-subtitle'), 'the muted member count stays at the right');
     assert.ok(searched.includes('session-sidebar-row-provider'), 'the layout glyph sits in the light slot');
     const agents = searched.slice(searched.indexOf('data-search-section'));
-    const browserRow = agents.slice(agents.indexOf('Alpha Browser') - 600, agents.indexOf('Alpha Browser') + 600);
+    const browserRow = agents.slice(agents.indexOf('Main Browser') - 600, agents.indexOf('Main Browser') + 600);
     assert.ok(!browserRow.includes('session-sidebar-row-pin'), 'a browser hit draws no pin');
     const normal = draw(rows, '');
     assert.ok(normal.includes('session-sidebar-row-pin'), 'the normal drawer keeps its pins');
 });
 
-it('empty groups hide: nothing in Design or the rogue bucket matches "orchard", so neither section appears at all', async () => {
-    const html = body(Search.normalize('orchard'));
+it('empty groups hide: nothing in Design or the rogue bucket matches "argent", so neither section appears at all', async () => {
+    const html = body(Search.normalize('argent'));
     assert.ok(!html.includes('Design'));
     assert.ok(!html.includes('rogue'));
 });
@@ -166,14 +166,14 @@ it('a drag in flight keeps the query and the sections, so the empty-pinned drop 
 
 it('filtering never mutates saved state: the group store and the row fixtures are unchanged by any of the above', async () => {
     const before = JSON.stringify(GroupStore.current());
-    body(Search.normalize('orchard'));
+    body(Search.normalize('argent'));
     body(Search.normalize('work stuff'));
     body('');
     assert.equal(JSON.stringify(GroupStore.current()), before, 'no query may touch the group store');
     const rows = fixtureRows();
     draw(rows, '');
     const snapshot = JSON.stringify(rows);
-    draw(rows, Search.normalize('orchard'));
+    draw(rows, Search.normalize('argent'));
     assert.equal(JSON.stringify(rows), snapshot, 'filtering must not write is_pinned, band_key or anything else onto a row');
 });
 

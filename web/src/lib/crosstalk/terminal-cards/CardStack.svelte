@@ -1,6 +1,7 @@
 <script lang="ts">
   import { providerMark, t } from '../../../cplugs/sdk';
   import { onEventFrame } from '../../../cplugs/sdk/terminal';
+  import { Button } from '../../base';
   import { cardSettings } from './prefs.svelte';
   import { dismissKept, keptFor } from './keep.svelte';
   import { CARD_TTL_MS, cardOf, sideEnabled, sideOf, withCard, type Card, type CardFrame } from './model';
@@ -20,6 +21,15 @@
   function dismiss(card: Card): void {
     if (cardSettings.keepCards) dismissKept(card.id, card.side);
     else drop(card.id);
+  }
+
+  function holdMiddle(event: MouseEvent): void {
+    if (event.button === 1) event.preventDefault();
+  }
+
+  /* middle click dismisses */
+  function middleDismiss(event: MouseEvent, card: Card): void {
+    if (event.button === 1) dismiss(card);
   }
 
   function receive(frame: CardFrame): void {
@@ -51,7 +61,7 @@
 {#if shown.length}
   <div class="xtalk-layer" class:xtalk-layer--keep={cardSettings.keepCards} data-xtalk-layer>
     {#each shown as card (card.id)}
-      <button class="xtalk-card" type="button" data-message-id={card.id} data-side={card.side} aria-label={t('crosstalk.cards.dismiss')} onclick={() => dismiss(card)}>
+      <Button variant="row" data-xtalk-card data-message-id={card.id} data-side={card.side} aria-label={t('crosstalk.cards.dismiss')} onclick={() => dismiss(card)} onmousedown={holdMiddle} onauxclick={(event: MouseEvent) => middleDismiss(event, card)}>
         <span class="xtalk-card__head">
           <span class="xtalk-card__mark" aria-hidden="true">{@html providerMark(card.provider || null, 14).svg}</span>
           <span class="xtalk-card__direction">{t(card.side === 'sent' ? 'crosstalk.cards.to' : 'crosstalk.cards.from')}</span>
@@ -60,7 +70,7 @@
           <time class="xtalk-card__time">{timeOf(card.at)}</time>
         </span>
         <span class="xtalk-card__quote">{card.preview}</span>
-      </button>
+      </Button>
     {/each}
   </div>
 {/if}

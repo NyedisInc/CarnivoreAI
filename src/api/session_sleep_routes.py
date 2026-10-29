@@ -7,17 +7,19 @@ from typing import Any, Dict, List, Optional
 import structlog
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from src.api import asleep_themes, asleep_wake_listing
 from src.api import recreate_routes as rr
-from src.api.auth import require_auth
 from src.api.peer_auth import require_peer_sessions
-from src.api.session_record_payload import _session_record_payload
+from src.api.session_record_payload import _session_record_payload, attach_host_labels
 from src.core import restart_inflight, session_change_notice, session_sleep, unread_follow_up
 from src.core.pipeline import triggers as save_triggers
+from src.core.ttl_flight import TtlFlight
 from src.core.session_recreate_presence import TMUX_GONE, TMUX_PRESENT, TMUX_UNKNOWN
 from src.models import SessionRecord, SuccessResponse
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -83,31 +85,6 @@ async def sleep_by_uuid(
     source: str = session_sleep.LIFECYCLE_SOURCE_SLEPT,
     fresh_ok: bool = False,
 ) -> SleepResponse:
-    """Stop this session's agent and close its tmux session; keep the row, asleep.
-
-    Description: reads the row by its durable key, runs the gates (not
-      deleted, has a tmux identity, running, conversation id known), then
-      MEASURES presence on the row's own socket. ``unknown`` refuses: not
-      having looked is not a licence to kill. ``present`` closes the
-      session (``session_sleep.close_for_sleep``); ``gone`` has nothing to
-      close. Then the asleep marker is written onto exactly the instance
-      that was read, so the row stays in the running lists, greyed, and is
-      never offered as a loss. The uploads bucket and the pinned theme are
-      kept, unlike a kill, because the session is coming back to them.
-      THE ONE SLEEP. The route below and the auto-sleep pass
-      (``src/core/auto_sleep/sleeper.py``, issue #559) both call this, so
-      there is no second teardown path.
-    Inputs: app_state - ``app.state`` (session manager, local servers, the
-      events hub). session_uuid (str). source (str) - the marker written,
-      ``slept_by_user`` for the route, ``slept_by_timer`` for the auto-sleep
-      pass (:func:`auto_sleep_by_uuid`, issue #715). fresh_ok (bool) - a Swarm
-      sleep: skip the conversation gate (``session_sleep.sleep_refusal``).
-    Output: SleepResponse.
-    Raises: HTTPException 400 (unsafe tmux name), 404 (no such row), 409
-      (a restart, recreate or wake of this row is in flight, or the row
-      never had a tmux session), 503 (datastore unreadable), 500 (tmux
-      refused the kill).
-    """
     try:
         with restart_inflight.claim(session_uuid):
             row = rr._resolved(await run_in_threadpool(rr._read_row, session_uuid), session_uuid)
@@ -132,11 +109,7 @@ async def sleep_by_uuid(
                         app_state.session_manager, name=name, socket=socket
                     )
                 except RuntimeError as exc:
-                    logger.error("session_sleep_close_failed", tmux_name=name, error=str(exc))
-                    raise HTTPException(
-                        status_code=500,
-                        detail=f"failed to close {name!r} for sleep: {exc}",
-                    )
+                    raise api_error(500, "session_sleep_failed", exc, tmux_name=name) from exc
                 after = await run_in_threadpool(rr._measure_presence, name, socket)
                 if after.outcome != TMUX_GONE:
                     logger.error("session_sleep_still_present", tmux_name=name,
@@ -150,7 +123,7 @@ async def sleep_by_uuid(
                     )
             moved = await run_in_threadpool(_record_sleep, row, source)
     except restart_inflight.RestartInFlightError as exc:
-        raise HTTPException(status_code=409, detail=restart_inflight.http_detail(exc))
+        raise api_error(409, restart_inflight.IN_PROGRESS_CODE, exc) from exc
 
     session_change_notice.publish(
         app_state, session_change_notice.build_structural_notice("slept")
@@ -283,35 +256,6 @@ async def wake_by_uuid(
     account_id: Optional[str] = None, account_pinned: bool = False, extra_env: Optional[Dict[str, str]] = None,
     fork: bool = False, fresh: bool = False, start_fresh: bool = False,
 ) -> WakeResponse:
-    """Bring an asleep session back, resumed into the same conversation.
-
-    Description: THE ONE WAKE, called by the route below and by the crosstalk
-      bus when an agent addresses an asleep session (docs/crosstalk.md).
-      Refuses a row that is not asleep (a live session has nothing to wake,
-      and a closed one belongs to Recent's restart), then runs
-      ``recreate_by_uuid`` under a wrapper and the same one-per-row claim
-      ``POST /sessions/recreate`` takes. THE WRAPPER is ``agent_type`` when the
-      user picked one (validated by the recreate's own gate), else the row's
-      recorded wrapper when it is a configured one and not an inference
-      (``session_wake_choice``). With neither, nothing is launched and the
-      answer is ``refused`` with ``code 'wrapper_needed'`` and the configured
-      ids, which the client turns into the wrapper picker (issue #714). Every
-      gate of the recreate path applies unchanged; a refusal there is a
-      ``status='refused'`` answer and the row stays asleep. A DEAD-PANE STOP
-      (``session_sleep.is_dead_pane_stop``, #1726) whose husk is still on the
-      socket is woken IN PLACE instead (``session_wake_in_place``: the row's own
-      dead husk only, ``respawn_session`` with no kill); its husk measured gone
-      recreates as any asleep row does.
-    Inputs: app_state (``app.state``); session_uuid (str); agent_type (str | None); account_id / extra_env - the
-      account and trusted pane variables a MOVED session launches with (``pack/move/account.py``), None for a normal wake;
-      account_pinned (bool) - the picker's box with ``account_id`` (``recreate_by_uuid`` applies it); fork / fresh (bool) - a COPY sent
-      from another computer resumes as a fork, a FRESH one starts with no conversation (``recreate_by_uuid``). start_fresh (bool) - the
-      user's "start fresh" after a ``transcript_missing`` refusal: a new conversation ONLY on a measured absence (``fresh_if_transcript_absent``).
-    Output: WakeResponse.
-    Raises: HTTPException 404, 409 (not asleep, or a restart of this row
-      in flight; ``swarm_off`` for a Swarm agent's body while the global
-      Swarm switch is off, docs/swarm.md 4.10), 400, 503, 500 as recreate does.
-    """
     from src.api.recreate_action import recreate_by_uuid
     from src.api.session_wake_in_place import wake_dead_pane
     from src.config import settings
@@ -319,6 +263,7 @@ async def wake_by_uuid(
     from src.core.session_wake_choice import recorded_wake_agent
 
     from src.api.swarm_switch_routes import refuse_held_body
+    from src.core.swarm import plain_wake
 
     await refuse_held_body(session_uuid)
     picked = (agent_type or "").strip()
@@ -341,6 +286,7 @@ async def wake_by_uuid(
                     logger.info("session_wake", session_uuid=session_uuid, status=in_place.status,
                                 agent_type=picked or None, picked=bool(picked), in_place=True)
                     if in_place.status == "started":
+                        await plain_wake.adopt(app_state, session_uuid, in_place.session_id, False)
                         session_change_notice.publish(
                             app_state, session_change_notice.build_structural_notice("woken"))
                     return in_place
@@ -361,9 +307,10 @@ async def wake_by_uuid(
                 **({"fresh_if_transcript_absent": True} if start_fresh else {}),
             )
     except restart_inflight.RestartInFlightError as exc:
-        raise HTTPException(status_code=409, detail=restart_inflight.http_detail(exc))
+        raise api_error(409, restart_inflight.IN_PROGRESS_CODE, exc) from exc
     if result.status == "started":
         await run_in_threadpool(_carry_crosstalk_grants, session_uuid, old_epoch)
+        await plain_wake.adopt(app_state, session_uuid, result.session_id, bool(fresh or start_fresh))
         session_change_notice.publish(
             app_state, session_change_notice.build_structural_notice("woken")
         )
@@ -442,9 +389,9 @@ async def kill_asleep_session(request: Request, session_uuid: str, confirm_name:
         with restart_inflight.claim(session_uuid):
             performed = await run_in_threadpool(_kill)
     except restart_inflight.RestartInFlightError as exc:
-        raise HTTPException(status_code=409, detail=restart_inflight.http_detail(exc))
+        raise api_error(409, restart_inflight.IN_PROGRESS_CODE, exc) from exc
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc, step="_kill") from exc
     if performed:
         save_triggers.schedule_for_uuid(session_uuid, save_triggers.EVENT_REMOVE)
         session_change_notice.publish(
@@ -457,21 +404,59 @@ async def kill_asleep_session(request: Request, session_uuid: str, confirm_name:
 @router.get(
     "/sessions/asleep",
     response_model=List[SessionRecord],
-    dependencies=[Depends(require_auth)],
+    dependencies=[Depends(require_peer_sessions)],
 )
-async def list_asleep_sessions(request: Request) -> List[SessionRecord]:
-    """Every asleep session, newest first.
+async def list_asleep_sessions(request: Request):
+    """Every asleep session, newest first. A paired computer gets only the rows this one owns, slim (``peer_serve.serve_asleep_to_peer``).
 
     Description: read from the stored rows; an asleep session has no tmux
       session for a live listing to find. Empty when the datastore does not
       exist yet.
     Raises: HTTPException 503 - the datastore exists but is unreadable.
     """
+    if getattr(request.state, "peer_grant", None) is not None:
+        return JSONResponse(await _peer_asleep_rows())
     return await asleep_record_rows(request.app.state)
+
+
+async def _peer_asleep_rows() -> List[Dict[str, Any]]:
+    from src.api import peer_auth
+    from src.core.federation import peer_serve
+
+    return list(await PEER_ASLEEP_CACHE.get(lambda: run_in_threadpool(peer_serve.serve_asleep_to_peer, peer_auth.open_db)))
+
+
+@router.get("/sessions/list-and-asleep", dependencies=[Depends(require_peer_sessions)])
+async def list_and_asleep(request: Request):
+    """``/sessions/list`` and ``/sessions/asleep`` in ONE call: ``{"list": [...], "asleep": [...]}`` (issue #2632).
+
+    Description: each half is exactly what its own route answers THIS caller (the owner's rows plus the paired computers', or a paired
+      computer's own-rows-only slim copy), so a client that read both gets the same data for one request. The two old routes stay.
+    Example: GET /api/v1/sessions/list-and-asleep -> {"list": [SessionInfo...], "asleep": [SessionRecord...]}
+    """
+    from src.api.session_crud_routes import list_sessions
+
+    infos = await list_sessions(request)
+    if getattr(request.state, "peer_grant", None) is not None:
+        asleep: List[Any] = await _peer_asleep_rows()
+    else:
+        asleep = [r.model_dump(mode="json") for r in await asleep_record_rows(request.app.state)]
+    return JSONResponse({"list": [i.model_dump(mode="json") for i in infos], "asleep": asleep})
+
+
+PEER_ASLEEP_CACHE: TtlFlight = TtlFlight("peer_asleep_rows", 1.0)
+
+
+ASLEEP_CACHE: TtlFlight = TtlFlight("asleep_rows", 1.0)
 
 
 async def asleep_record_rows(app_state: Any, infos: Optional[List[Any]] = None,
                              wake_shared: Optional[Dict[str, Any]] = None) -> List[SessionRecord]:
+    return list(await ASLEEP_CACHE.get(lambda: _assemble_asleep_rows(app_state, infos, wake_shared)))
+
+
+async def _assemble_asleep_rows(app_state: Any, infos: Optional[List[Any]] = None,
+                                wake_shared: Optional[Dict[str, Any]] = None) -> List[SessionRecord]:
     from src.core.db import DatastoreUnreadableError
     from src.core.db_reuse.core_read import lend_pooled_read
 
@@ -483,18 +468,25 @@ async def asleep_record_rows(app_state: Any, infos: Optional[List[Any]] = None,
         conn = lend_pooled_read(db_path)
         if conn is None:
             raise DatastoreUnreadableError(f"{db_path.name} cannot be opened at {db_path}", db_path)
-        found = session_sleep.asleep_rows(conn)
+        try:
+            found = session_sleep.asleep_rows(conn)
+            attach_host_labels(conn, found)
+        finally:
+            conn.close()
         return found, asleep_themes.read_dotfile_themes(found)
 
     try:
         rows, dotfile_themes = await run_in_threadpool(_read)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc, step="_read") from exc
     manager = getattr(app_state, "session_manager", None)
     store = getattr(manager, "_unread_store", None)
     themes = getattr(manager, "_theme_store", None)
     if themes is not None:
         themes = asleep_themes.PrefetchedThemes(themes, dotfile_themes)
-    records = [_session_record_payload(row, store, themes) for row in rows]
+    records = await run_in_threadpool(lambda: [_session_record_payload(row, store, themes) for row in rows])
     await asleep_wake_listing.stamp_next_wake(app_state, records, infos, wake_shared)
+    from src.api.swarm_member_listing import mark_swarm_members
+
+    await mark_swarm_members(records, row_attr="id")
     return records

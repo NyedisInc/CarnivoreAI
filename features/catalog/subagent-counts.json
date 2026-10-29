@@ -2,7 +2,7 @@
   "id": "subagent-counts",
   "name": "Subagent counts and list",
   "summary": "See how many subagents each session is running, summed per group and across sessions, and open a read-only list of them.",
-  "description": "The session listing carries running and total subagent counts, measured by the attention watcher once per cycle and never collapsed from \"not measured\" or \"not applicable\" (codex) into zero. In the agents drawer the presentation depends on the row's density: cozy shows a clickable chip beside the status light, detailed shows a plain green count beside the agent icon instead, and every other density shows neither. The running sessions cell always shows its own chip. Drawer headings and the running sessions header show sums, at every density. Clicking a chip opens a read-only list of the session's subagents: status, type, description and age. A subagent's activity also moves its parent session's last-worked time forward (never backward), so a session whose subagents are busy stays bold and near the top of the drawer and project ordering. The opscenter home dashboard has a SUBAGENTS stat tile (its own tile since the stat strip split, #1157) that shows the total running-subagent count across every live session, summed only from sessions the watcher actually measured, with the number of sessions it covers under it; a session that was never measured, or that cannot run subagents (codex), contributes nothing to that total, and the tile shows nothing rather than a fake zero when no session has been measured yet.",
+  "description": "The session listing carries running and total subagent counts, measured by the attention watcher once per cycle and never collapsed from \"not measured\" or \"not applicable\" (codex) into zero. In the agents drawer the presentation depends on the row's density: cozy shows a clickable chip beside the status light, detailed shows a plain green count beside the agent icon instead, and every other density shows neither. Since 2026-09-28 (Joe), EVERY density, compact included, also draws a small icon-only marker beside the status light while a subagent is running or a background shell/monitor is parked (replacing the plain square badge issue #1039's follow-up had added): no visible count, its hover title carries the count and the parked reason. The running sessions cell always shows its own chip. Drawer headings and the running sessions header show sums, at every density. Clicking a chip opens a read-only list of the session's subagents: status, type, description and age. A subagent's activity also moves its parent session's last-worked time forward (never backward), so a session whose subagents are busy stays bold and near the top of the drawer and project ordering. The opscenter home dashboard has a SUBAGENTS stat tile (its own tile since the stat strip split, #1157) that shows the total running-subagent count across every live session, summed only from sessions the watcher actually measured, with the number of sessions it covers under it; a session that was never measured, or that cannot run subagents (codex), contributes nothing to that total, and the tile shows nothing rather than a fake zero when no session has been measured yet.",
   "area": "sessions",
   "status": "stable",
   "since": "2026-09-26",
@@ -13,7 +13,26 @@
     "running sessions cell",
     "opscenter home stats strip"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "A running-sessions row with a green subagent count chip beside its status light",
+      "caption": "The subagent count chip, drawn while a session has running subagents",
+      "file": "chip.png",
+      "kind": "icon"
+    },
+    {
+      "alt": "The subagent list popup open beside its chip, listing two running subagents with their descriptions and age",
+      "caption": "The read-only subagent list, opened by clicking the chip",
+      "file": "list.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The opscenter home's SUBAGENTS stat tile, showing 2 running subagents in 1 session",
+      "caption": "The home dashboard's SUBAGENTS tile, with the total running-subagent count",
+      "file": "home-total.png",
+      "kind": "screenshot"
+    }
+  ],
   "api_routes": [
     "GET /api/v1/sessions/list",
     "GET /api/v1/sessions/{session_id}/subagents"
@@ -52,6 +71,5 @@
   "examples": [
     "A session running three background research agents shows '3 SUB' on its row; clicking it lists each agent's task and how long it has been running.",
     "Two live sessions with 3 and 1 subagents running show 4 on the home dashboard's SUBAGENTS tile, without opening either session."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

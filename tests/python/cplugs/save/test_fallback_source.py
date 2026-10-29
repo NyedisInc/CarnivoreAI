@@ -78,7 +78,7 @@ def test_a_damaged_chunk_is_unavailable_not_wrong_bytes_and_an_unreachable_vault
         source.reader(CONV, entry.source_path, "conversation").read(0, 10)
 
     def unreachable():
-        raise VaultUnavailable("the vault is on /Volumes/ExampleDrive, which is not mounted")
+        raise VaultUnavailable("the vault is on /Volumes/Backup, which is not mounted")
 
     with pytest.raises(OSError):
         list(BackupTranscripts(unreachable).conversations())

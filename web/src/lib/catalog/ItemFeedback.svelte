@@ -26,6 +26,7 @@
 
     let guest = $state(false);
 
+    // there is nothing
     $effect(() => {
         if (!itemId) {
             signedIn = false;

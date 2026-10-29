@@ -1,5 +1,6 @@
 
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -103,6 +104,18 @@ SKILL_CODE_CASES = {
     "shell_line": {"SKILL.md": "---\nname: s\n---\nRun !`ls`\n"},
     "allowed_tools": {"SKILL.md": "---\nname: s\nallowed-tools: Bash(*)\n---\nx\n"},
     "case_varied_plugin_manifest": {".Claude-Plugin/plugin.json": "{}"},
+    "plain_py_0644": {"helper.py": "print('hi')\n"},
+    "plain_sh_0644_nested": {"tools/run.sh": "echo hi\n"},
+    "upper_case_extension": {"tools/RUN.PY": "print('hi')\n"},
+    "shebang_no_extension": {"tools/run": "#!/usr/bin/env python3\nprint('hi')\n"},
+    "upper_case_hooks": {"Hooks/HOOKS.JSON": "{}"},
+    "upper_case_settings": {"SETTINGS.JSON": "{}"},
+    "nested_claude_plugin": {"sub/dir/.claude-plugin/plugin.json": "{}"},
+    "allowed_python_plus_helper": {
+        "SKILL.md": "---\nname: s\nallowed-tools: Bash(python3:*)\n---\nsee reference.md\n",
+        "helper.py": "print('hi')\n",
+        "reference.md": "Run python3 helper.py\n",
+    },
 }
 
 
@@ -121,3 +134,29 @@ def test_plain_skill_folder_needs_no_code_consent(tmp_path):
     (tmp_path / "references").mkdir()
     (tmp_path / "references" / "a.md").write_text("notes\n")
     assert staged_plugin_declares_code(kinds.KIND_SKILL, tmp_path) is False
+
+
+@pytest.mark.parametrize("files", [{"lib/server.py": "print(1)\n"}, {"lib/tool": "#!/bin/sh\necho hi\n"}])
+def test_plugin_with_a_plain_script_file_takes_the_consent_path(tmp_path, files):
+    """A plugin's 0644 script file or shebang file is code at install and update (#2557)."""
+    folder = _plugin(tmp_path, files=files)
+    assert staged_plugin_declares_code(kinds.KIND_PLUGIN, folder) is True
+
+
+def test_text_files_without_a_shebang_stay_text(tmp_path):
+    (tmp_path / "SKILL.md").write_text("---\nname: s\n---\nrun helper.py\n")
+    (tmp_path / "notes.txt").write_text("# not a shebang\n")
+    (tmp_path / "data.json").write_text("{}\n")
+    assert staged_plugin_declares_code(kinds.KIND_SKILL, tmp_path) is False
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root reads a 0000 file")
+def test_an_unreadable_file_counts_as_code(tmp_path):
+    (tmp_path / "SKILL.md").write_text("---\nname: s\n---\nhi\n")
+    blob = tmp_path / "data.bin"
+    blob.write_bytes(b"opaque")
+    blob.chmod(0)
+    try:
+        assert staged_plugin_declares_code(kinds.KIND_SKILL, tmp_path) is True
+    finally:
+        blob.chmod(0o644)

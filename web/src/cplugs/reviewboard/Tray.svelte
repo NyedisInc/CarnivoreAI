@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
-  import { Icon, Markdown } from '../sdk/ui';
+  import { Button, Field, Icon, IconButton, List, ListRow, Markdown } from '../sdk/ui';
   import type { BoardRevision, BoardSidecar } from './board-model';
   import PromptRow from './PromptRow.svelte';
   import { confirmKey, type Confirm } from './round-confirm';
@@ -73,13 +73,18 @@
     {#if !editable}
       <p class="rb-label">{t('cplug.reviewboard.tray.rounds_here', { id: revision.id })}</p>
       {#if roundsHere.length === 0}<p class="rb-note-text">{t('cplug.reviewboard.tray.none_sent')}</p>{/if}
-      <ul class="rb-list">
+      <List>
         {#each roundsHere as round (round.id)}
-          <li><button type="button" class="rb-row" data-tray-round={round.id} onclick={() => onround(round.id)}>
-            <span class="rb-row-title">{t('cplug.reviewboard.round.title', { id: round.id, revision: round.revision })}</span>
-            <span class="rb-row-meta">{round.sent_at}</span></button></li>
+          <ListRow>
+            <Button variant="row" data-tray-round={round.id} onclick={() => onround(round.id)}>
+              <span class="rb-row-line">
+                <span class="rb-row-title">{t('cplug.reviewboard.round.title', { id: round.id, revision: round.revision })}</span>
+                <span class="rb-row-meta">{round.sent_at}</span>
+              </span>
+            </Button>
+          </ListRow>
         {/each}
-      </ul>
+      </List>
     {:else}
       {#if phase === 'with_claude' && isDraftEmpty(draft)}
         <p class="rb-note-text" data-waiting>{t('cplug.reviewboard.tray.waiting', { id: `r${latest.n + 1}` })}</p>
@@ -88,13 +93,13 @@
         <div class="rb-changed" data-changed>
           <p class="rb-label">{t('cplug.reviewboard.tray.changed', { id: latest.id })}</p>
           <div class="rb-note-text" data-changed-summary><Markdown text={latest.summary} /></div>
-          <button type="button" class="rb-link" data-answers-round onclick={() => onround(answersRound)}>{t('cplug.reviewboard.tray.answers_round', { id: answersRound })}</button>
+          <Button variant="quiet" size="sm" data-answers-round onclick={() => onround(answersRound)}>{t('cplug.reviewboard.tray.answers_round', { id: answersRound })}</Button>
         </div>
       {/if}
       {#if stale}
         <div class="rb-notice" data-moved-notice role="status">
           <p>{t('cplug.reviewboard.tray.landed', { latest: latest.id, mine: draftRevision.id })}</p>
-          <button type="button" class="modal-btn modal-btn-secondary" data-move-notes onclick={onmove}>{t('cplug.reviewboard.tray.move', { id: latest.id })}</button>
+          <Button data-move-notes onclick={onmove}>{t('cplug.reviewboard.tray.move', { id: latest.id })}</Button>
         </div>
       {/if}
 
@@ -111,30 +116,29 @@
           <p class="rb-label">{t('cplug.reviewboard.tray.pin')}</p>
           <div class="rb-pills">
             {#each shown.anchors as anchor (anchor.id)}
-              <button type="button" class="rb-pill" aria-pressed={anchorIds.includes(anchor.id)} data-anchor-pin={anchor.id}
-                      onclick={() => (openAnchors = openAnchors.includes(anchor.id) ? openAnchors.filter((x) => x !== anchor.id) : [...openAnchors, anchor.id])}>{anchor.label}</button>
+              <Button size="sm" aria-pressed={anchorIds.includes(anchor.id)} data-anchor-pin={anchor.id}
+                      onclick={() => (openAnchors = openAnchors.includes(anchor.id) ? openAnchors.filter((x) => x !== anchor.id) : [...openAnchors, anchor.id])}>{anchor.label}</Button>
             {/each}
           </div>
           {#each shown.anchors.filter((a) => anchorIds.includes(a.id)) as anchor (anchor.id)}
-            <textarea class="rb-field" rows="2" aria-label={t('cplug.reviewboard.tray.note_for', { anchor: anchor.label })} data-anchor-note={anchor.id}
-                      placeholder={t('cplug.reviewboard.tray.note_for', { anchor: anchor.label })} value={anchorNoteOf(draft, anchor.id)}
-                      oninput={(e) => edit((d) => setAnchorNote(d, anchor.id, (e.currentTarget as HTMLTextAreaElement).value))}></textarea>
+            <Field multiline block rows={2} aria-label={t('cplug.reviewboard.tray.note_for', { anchor: anchor.label })} data-anchor-note={anchor.id}
+                   placeholder={t('cplug.reviewboard.tray.note_for', { anchor: anchor.label })} value={anchorNoteOf(draft, anchor.id)}
+                   oninput={(e) => edit((d) => setAnchorNote(d, anchor.id, (e.currentTarget as HTMLInputElement).value))} />
           {/each}
         </div>
       {/if}
 
-      <textarea class="rb-field rb-general" rows="3" aria-label={t('cplug.reviewboard.tray.note')} placeholder={t('cplug.reviewboard.tray.note_placeholder')}
-                data-general-note value={draft?.note ?? ''} oninput={(e) => edit((d) => setNote(d, (e.currentTarget as HTMLTextAreaElement).value))}></textarea>
+      <Field multiline block rows={3} aria-label={t('cplug.reviewboard.tray.note')} placeholder={t('cplug.reviewboard.tray.note_placeholder')}
+             data-general-note value={draft?.note ?? ''} oninput={(e) => edit((d) => setNote(d, (e.currentTarget as HTMLInputElement).value))} />
     {/if}
   </div>
 
   {#if editable}
     <footer class="rb-fold-foot">
-      <button type="button" class="modal-btn modal-btn-secondary rb-foot-key" aria-label={t('cplug.reviewboard.tray.clear')} title={t('cplug.reviewboard.tray.clear')}
-              disabled={!draft} data-tray-clear onclick={clearAll}><Icon name="trash" size={16} /></button>
+      <IconButton label={t('cplug.reviewboard.tray.clear')} icon="trash" variant="danger" iconSize={16} disabled={!draft} data-tray-clear onclick={clearAll} />
       <span class="rb-count" data-unanswered>{t('cplug.reviewboard.tray.unanswered', { left })}</span>
-      <button type="button" class="modal-btn modal-btn-confirm rb-foot-key" aria-label={t('cplug.reviewboard.tray.send')} title={t('cplug.reviewboard.tray.send')}
-              disabled={!canSend} data-tray-send onclick={onsend}><Icon name="send" size={16} /></button>
+      <Button variant="confirm" size="icon" aria-label={t('cplug.reviewboard.tray.send')} title={t('cplug.reviewboard.tray.send')}
+              disabled={!canSend} data-tray-send onclick={onsend}><Icon name="send" size={16} /></Button>
     </footer>
   {/if}
 </section>

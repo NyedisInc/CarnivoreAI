@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the widget menu */
   import type { Component } from 'svelte';
   import { provideFrameHeader } from '../frame-header.svelte';
   import { metaFor } from '../../engine/meta';

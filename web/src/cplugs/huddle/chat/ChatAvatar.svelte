@@ -1,34 +1,40 @@
 <script lang="ts">
-  import { ownerIdentity, t } from '../../sdk';
-  import { Icon, Identicon } from '../../sdk/ui';
-  import { Character } from '../swarm/characters';
+  import { ownerIdentity } from '../../sdk';
+  import { Identicon } from '../../sdk/ui';
+  import { Character, type CharacterState } from '../swarm/characters';
   import type { NodeLooks } from '../swarm/node-look';
   import { avatarColorOf, avatarSeedOf, initialsOf, rosterAgent } from './chat-avatar';
+  import { fullPathOf, lineageTip, openAuthorTerminal, pathTip } from './agent-open';
   import type { BurstParty } from './chat-model';
 
-  let { party, name, looks = null }: { party: BurstParty; name: string; looks?: NodeLooks | null } = $props();
+  let { party, name, looks = null, pose, size = 28, link = false }: { party: BurstParty; name: string; looks?: NodeLooks | null; pose?: CharacterState; size?: number; link?: boolean } = $props();
 
   const node = $derived(party.owner ? null : (looks?.of({ agentId: party.agentId, sessionUuid: party.sessionUuid }) ?? null));
   const agent = $derived(node ? null : rosterAgent(party.agentId));
-  const label = $derived(party.dir ? t(`cplug.huddle.chat.burst.${party.dir}`) : '');
   const owner = $derived(party.owner ? ownerIdentity() : null);
   const member = $derived(owner?.kind === 'member' && owner.name ? owner.name : '');
+  const linked = $derived(link && !party.owner && (party.agentId !== null || !!party.sessionUuid));
+  const tip = $derived(linked ? pathTip(fullPathOf(party.path, party.agentId)) : '');
 </script>
 
-<span class="hdc-av" data-chat-dir={party.dir ?? 'none'}>
-  {#if party.dir}
-    <span class="hdc-av-dir hdc-av-dir--{party.dir}" title={label} aria-label={label} role="img"><Icon name={party.dir === 'to' ? 'arrow-out' : 'arrow-in'} size={12} /></span>
-  {/if}
+{#if linked}
+  <button type="button" class="hdc-av hdc-av--link" data-base-exempt="the agent node square is the drawn face of this control; base Button draws a labelled box" data-chat-dir={party.dir ?? 'none'} data-chat-node={party.agentId ?? party.sessionUuid}
+          aria-label={name} use:lineageTip={tip} onclick={() => openAuthorTerminal(party.agentId, party.sessionUuid)}>{@render square()}</button>
+{:else}
+  <span class="hdc-av" data-chat-dir={party.dir ?? 'none'}>{@render square()}</span>
+{/if}
+
+{#snippet square()}
   {#if party.owner}
     <span class="hdc-av-you" class:hdc-av-you--icon={!!member} data-chat-owner-av={member ? 'icon' : 'initials'} aria-hidden="true">
       {#if member}<Identicon handle={member} size={26} />{:else}{initialsOf(party.path[party.path.length - 1]?.name ?? '')}{/if}
     </span>
   {:else if node}
-    <Character state={node.state} size={28} seed={node.seed} color={node.color} tell={node.tell} pack={looks?.pack} rank={node.agent.rank} shape={node.shape} background={node.background} label={name} />
+    <Character state={pose ?? node.state} {size} seed={node.seed} color={node.color} tell={node.tell} pack={looks?.pack} rank={node.agent.rank} shape={node.shape} background={node.background} label={name} />
   {:else}
-    <Character state="unknown" size={28} seed={avatarSeedOf(agent, name)} color={avatarColorOf(agent)} label={name} />
+    <Character state={pose ?? 'idle'} {size} seed={avatarSeedOf(agent, name)} color={avatarColorOf(agent)} label={name} />
   {/if}
-</span>
+{/snippet}
 
 <style>
   @layer components {
@@ -39,13 +45,17 @@
       flex: none;
     }
 
-    .hdc-av-dir {
-      display: inline-flex;
-      flex: none;
+    .hdc-av--link {
+      padding: 0;
+      border: 1px solid transparent;
+      border-radius: var(--oc-control-radius, 2px);
+      background: none;
+      cursor: pointer;
     }
 
-    .hdc-av-dir--from { color: var(--oc-cyan); }
-    .hdc-av-dir--to { color: var(--oc-text-dim); }
+    .hdc-av :global(.pk-gw) { display: none; }
+    .hdc-av :global(.pk-bd) { filter: none; }
+    .hdc-av :global(.ident) { border: 0; }
 
     .hdc-av-you {
       display: grid;
@@ -54,7 +64,6 @@
       height: 28px;
       flex: none;
       border-radius: var(--oc-control-radius, 2px);
-      box-shadow: inset 0 0 0 1px var(--oc-green-dim);
       color: var(--oc-green);
       font-size: 9px;
       letter-spacing: 0.04em;

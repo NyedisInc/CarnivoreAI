@@ -30,7 +30,6 @@
 
 <style>
   @layer components {
-    /* box-shadow */
     .sbkey {
       display: flex;
       flex-wrap: wrap;

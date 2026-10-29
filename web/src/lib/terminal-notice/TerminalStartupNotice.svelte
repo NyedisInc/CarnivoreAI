@@ -1,4 +1,4 @@
-<!-- position: absolute -->
+
 <script lang="ts">
     import { t } from '../i18n/index.svelte';
 
@@ -42,7 +42,6 @@
           box-sizing: border-box;
           padding: var(--oc-space-2) 10px;
 
-          /* padding */
           background: var(--oc-ground-raised);
           border: 1px solid var(--oc-line-panel);
           border-left: 3px solid var(--oc-coral);

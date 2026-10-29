@@ -45,7 +45,7 @@ def test_ps_reruns_when_the_pane_pid_set_changes(monkeypatch) -> None:
     assert len(calls) == 2
 
 
-def test_ps_reruns_when_a_watched_quinwick_ashmont(monkeypatch, tmp_path) -> None:
+def test_ps_reruns_when_a_watched_file_changes(monkeypatch, tmp_path) -> None:
     calls = _count_ps(monkeypatch)
     transcript = tmp_path / "t.jsonl"
     transcript.write_text("a")

@@ -65,8 +65,6 @@ class Ref:
 
 @dataclass
 class Outcome:
-    """What one :func:`install_exact` did. ``code`` is empty when in sync; ``placed`` is true only when this call created the ledger
-    row; ``replaced_edit`` when a receiver-edited copy was swapped; ``disk`` the digest on disk after a 409 (the pack's own bytes)."""
 
     state: str
     code: str = ""

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+/** A localStorage that holds a token, so the auth gate reads signed in. */
 function signedInStorage() {
   const map = new Map<string, string>([['claude_tunnel_token', 'an-access-token']]);
   return {

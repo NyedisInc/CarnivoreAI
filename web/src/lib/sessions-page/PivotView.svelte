@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import RowActionButton from './RowActionButton.svelte';
     import { tick } from 'svelte';
     import Icon from '../../opscenter/ui/Icon.svelte';
     import Button from '../base/Button.svelte';
@@ -283,10 +284,7 @@
         <div class="sp-pv-foot">
             <span class="sp-pv-when">{age(r.s.last_activity_at)}</span>
             {#if action}
-                <Button size="sm" data-go={action} aria-label={t(`sessions.page.act.${action}.label`, { name })} onclick={() => onAct(action, r)}>
-                    {#if action === 'open'}<Icon name="prompt-open" size={14} />{:else if action === 'wake'}<Icon name="bolt" size={14} />{/if}
-                    <span>{t(`sessions.page.act.${action}`)}</span>
-                </Button>
+                <RowActionButton {action} {name} {t} onclick={() => onAct(action, r)} />
             {/if}
         </div>
     </div>

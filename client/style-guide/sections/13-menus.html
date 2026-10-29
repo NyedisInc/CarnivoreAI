@@ -26,7 +26,19 @@
         anywhere else closes all of them; focus returns to the anchor. A refused leaf may keep the menu open and say why in
         <code>status</code>.</dd>
     <dt>hotkeys</dt>
+    <dd>Every item of every menu has a key by default (Alex, #1411), from ONE registry,
+        <code>web/src/lib/menu-keys/menu-keys.ts</code>, so a verb keeps its letter in every menu: n new, r rename,
+        c color, y copy, b load blueprint, a agent on/off, i set image, x remove image, g regenerate art, o company,
+        v archive or restore, d delete. An item with no entry takes the first free letter of its label; one menu level
+        never repeats a key; a refused item has none. The three primitives (<code>CascadeMenu.svelte</code>,
+        the engine <code>CellMenu.svelte</code>, <code>zone-shell/PlacementMenuHost.svelte</code> (the one host of the bar key, section header, drawer card, glance tile, pop-out and tab menus; its settings form is <code>.pmh-form</code>), <code>RailKeyMenu.svelte</code> and <code>GlanceMenu.svelte</code> all draw through <code>CascadeMenu.svelte</code> since 2026-10-14 (the old panel component is retired), <code>item-menu/ItemMenuHost.svelte</code>, the one item menu every kebab, right-click and Shift+F10 opens) call <code>assignMenuKeys</code> and
+        <code>pressMenuKey</code>; no menu handles keys itself. A key fires only from a keydown inside that open menu,
+        never from a text field, and it CLICKS its item, so a destructive one still opens its confirm. The key is drawn
+        by <code>MenuKey.svelte</code>, <code>&lt;kbd class="menu-key"&gt;</code>: right-aligned, dim mono
+        (<code>--oc-text-dim</code>, <code>--font-mono</code>), aria-hidden. The row menus take their letters from the same registry since wrapper package S-6 part 2.</dd>
     <dt>"+" menu</dt>
+    <dd>Headings at the top level, sessions in submenus grouped by project, and it never lists a session already open as a
+        tab in that component (Alex, #596, PR #600); a section with nothing left hides.</dd>
     <dt>catalog keys</dt>
     <dd><code>drawer.add.*</code>, <code>opscenter.tabs.*</code>, <code>opscenter.components.*</code>.</dd>
 </dl>
@@ -74,9 +86,8 @@
         row menu, the drawer group menu, the header kebab menu, the terminal tools and server controls menus, the session
         theme picker, the components popover, the add component menu, a panel's corner menu, a terminal cell's options menu,
         the background popover and the file drawer's options menu. Every centered dialog wears a scaled-up version of the
-        same shimmer, duplicating this file's angle/keyframe recipe (its own <code>--mg-angle</code> and
-        <code>modal-glow-orbit</code>, not this file's <code>--pf-angle</code> - a shared declaration is disallowed by
-        <code>tests/test_popup_focus_style.node.mjs</code>) - see <a href="#dialogs">dialogs, "glow"</a> and
+        same shimmer, reusing this file's compositor-only turn recipe through its own <code>mg-sheen</code> child and
+        <code>modal-glow-turn</code> keyframes (<code>popup-focus-turn</code> stays declared only here) - see <a href="#dialogs">dialogs, "glow"</a> and
         <code>client/css/modal-glow.css</code>.</dd>
     <dt>row menu</dt>
     <dd>The kebab on a session, browser, page, file or Layout row opens the ONE item menu (wrapper package S-6 part 2): the
@@ -104,11 +115,19 @@
         Before that, the legacy panel opened them as a nested flyout via <code>window.CloudeWeb.addToMenu</code>. Hovering any other item in this panel retracts the flyout, the
         same as hovering a sibling retracts a submenu anywhere else. A leaf pick collapses the whole nested tree, this
         panel included; Escape or ArrowLeft on the flyout's own top level backs out of it alone. The chevron
-        (<code>.session-row-menu__chevron</code>, and the group heading kebab's twin
-        <code>.session-sidebar-group-menu__chevron</code>) is the same glyph as <code>CascadeMenu.svelte</code>'s own
+        (<code>.session-row-menu__chevron</code>) is the same glyph as <code>CascadeMenu.svelte</code>'s own
         <code>.acm-chevron</code>.</dd>
     <dt>spacers between groups</dt>
+    <dd>Both kebab menus group their entries with a hairline (Task Manager item 262): open / navigate, identity (rename, pin,
+        filing), info (show path, copy session id, crosstalk), schedule and notifications, lifecycle (restart, sleep or
+        wake), and delete alone at the end; a group with no entry for a row draws nothing. The row menu (the one item menu) draws
+        <code>CascadeMenu</code>'s hairline, <code>--oc-line-rule</code>. A menu entry sets
+        <code>separatorBefore</code> on the first entry of a group; the row menu derives it from the entry's
+        <code>order</code> band (<code>GROUP_STARTS</code> in <code>web/src/lib/item-menu/menus/row-items.ts</code>).</dd>
     <dt>component options</dt>
+    <dd>A tab's own icon opens <code>CellMenu.svelte</code>, the component options menu. It shows ONLY actions (Alex,
+        #603): a disabled action's reason lives in that button's tooltip (<code>data-tooltip</code>), never as a printed line. It is not
+        mounted on this page because its actions write the layout that syncs to every device.</dd>
     <dt>overflow</dt>
     <dd>At 620px of cell width a terminal cell's tool icons collapse into the session kebab menu, keeping every action in
         its session's context. When you add a bar icon, re-check that width: the keep-awake cup moved it from 600 to 640px.</dd>
@@ -178,6 +197,9 @@
         with the ledger's title strip (<code>.sal-titlebar</code>, <code>.sal-title</code> in the accent). Data only:
         status, type, description, age, from <code>GET /sessions/{id}/subagents</code>, read once on open.</dd>
     <dt>states</dt>
+    <dd>Running, done and unknown are three words in three tokens (<code>.sal-status--running</code> green,
+        <code>--done</code> dim, <code>--unknown</code> yellow). Not applicable and unreadable are said in a sentence
+        (<code>.sal-note</code>), never as an empty table or a zero.</dd>
     <dt>access</dt>
     <dd><code>role="dialog"</code> named "subagents of NAME"; Escape, the close control or a click elsewhere closes
         it and focus returns to the chip.</dd>
@@ -215,7 +237,7 @@
         wears the skill list's shell and <code>popup-list.css</code>, with
         <code>.sal-table--skills</code> for its column widths, <code>.sal-section</code> for the "recent use" heading,
         <code>.sal-error</code> for a refused switch and <code>.sal-row--unseen</code> to dim a skill the agent cannot
-        see. The switch is a <code>.sal-close</code> button with <code>role="switch"</code>.</dd>
+        see. The switch is a base Button with <code>role="switch"</code>.</dd>
     <dt>access</dt>
     <dd><code>role="dialog"</code> named "session skills", not modal. It takes focus only when a click opened it (never
         when restored on load) and Escape closes it while focus is inside, so the terminal keeps its own Escape. Open or
@@ -227,8 +249,8 @@
         and a shadowed copy have no switch.</dd>
     <dt>skill scout (#1083)</dt>
     <dd><code>ScoutSection.svelte</code> under the skills list, claude sessions only: a <code>.sal-scout</code> row holding a
-        <code>.sal-close</code> button and a <code>.sal-scout-hint</code> note, then a <code>.sal-chips</code> list whose
-        <code>.sal-chip-row</code> pairs a <code>.sal-chip</code> (quiet outlined add button, the accent only on hover)
+        base Button and a <code>.sal-scout-hint</code> note, then a <code>.sal-chips</code> list whose
+        <code>.sal-chip-row</code> pairs a base Button (the add key)
         with the agent's reason in <code>.sal-chip-why</code>, always rendered as text. A chip goes through
         <code>quickAdd</code> and the install sheet, so consent is never skipped. Routes:
         <code>POST</code> and <code>GET /api/v1/sessions/{id}/skills/scout</code>.</dd>
@@ -253,7 +275,39 @@
 </div>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd><strong>A TOOLTIP ONLY SAYS WHAT AN ICON-ONLY CONTROL DOES</strong> (Alex (example-owner), 2026-10-01, #1209: "only leave
+        tool tips when describing what an icon does"; narrowed the same day: "you still have tooltips on items names here").
+        It goes on an icon-only button or toggle and on an (i) mark whose job is to explain. An item's name never gets one
+        authored on it, and neither does a heading, group header, section title, label, row, chip, meter, or a button or
+        link that already shows text. <code>tests/python/design_system/test_tooltips_icon_only.py</code> fails when a
+        heading, name or label element carries one. Where a removed tooltip was the only accessible name, keep an
+        <code>aria-label</code>.</dd>
+    <dd><strong>CUT-OFF TEXT REVEALS ITS WORDS, AND THAT IS NOT A TOOLTIP</strong> (Joe (ccsliinc), 2026-10-14: "all cutoff
+        text with ..., thats not a tool tip its reading the damn words. and tool tips and info are 2 things."). Any text the
+        screen cuts short with an ellipsis or a line clamp, in either frontend tree, shows its full words on hover after the
+        shared delay, and only while it is actually cut off; a name that fits shows nothing. You write nothing for it:
+        <code>revealCutOffText</code> in <code>web/src/lib/tooltip/cut-off-reveal.ts</code> runs from the one controller and
+        sets <code>data-tooltip</code> from script, so the ratchet above (no authored tooltip on a name) still holds. An
+        element that authors its own tip keeps it; <code>truncatedTip</code> remains for a site whose full text differs from
+        its visible text. <code>cut-off-reveal.test.ts</code> and <code>row-name-title.test.ts</code> hold it.</dd>
+    <dd><strong>IT MUST TELL THE READER SOMETHING THE SCREEN DOES NOT</strong> (Alex (example-owner), 2026-10-12, #1686: "remove
+        all the dumb shit ones that just state the fucking obvious"): a keyboard shortcut, why a control is off, a unit or
+        time window, what a click will do to your data, or the only name of a glyph nobody could guess. The plain name of a
+        self-evident icon (house, gear, X, magnifier, trash, arrows, a pencil, a plus, any drawer tab) is NOT such a thing:
+        keep it as <code>aria-label</code> and draw no tip. <code>tooltipTargetFor</code> in
+        <code>web/src/lib/tooltip/tooltip.ts</code> also drops, on its own, a tip whose words (less one leading open, close,
+        show, hide, fold, unfold, toggle, go to or pop out) are already in the control's visible text and that is not
+        clipped; <code>web/src/lib/tooltip/tooltip-obvious.test.ts</code> holds it.</dd>
+    <dd>The app has ONE tooltip (Alex (example-owner), 2026-09-27, #981): shown only after the pointer or keyboard focus rests
+        750ms (<code>SHOW_DELAY_MS</code>, the one setting for every tooltip), one look, never two at once. Give a control
+        its words with <code>title</code> or <code>data-tooltip</code> (never both) and keep <code>aria-label</code> for its
+        name. Nothing to wire: <code>installSharedTooltip()</code> runs once at boot and serves <code>client/js</code> and
+        <code>web/</code> alike.</dd>
     <dt>look</dt>
+    <dd>It reads as a tooltip, not a menu (Alex (example-owner), 2026-10-01: "it shouldn't look like a menu. it should look like
+        a tooltip."): small mono text on a quiet raised ground (<code>--oc-ground-raised</code>), a neutral hairline
+        (<code>--oc-line-frame</code>), a 2px corner, no accent edge, no glow, no shadow, and a small pointer toward its
+        target. It does not wear <code>.popup-focus</code>, which belongs to menus and popups. It takes no pointer events.</dd>
     <dt>behaviour</dt>
     <dd>One <code>.cc-tooltip</code> box on <code>&lt;body&gt;</code>, in the look above. While the pointer is
         inside an element its <code>title</code> (and every ancestor's) waits in <code>data-tooltip-title</code>, so the
@@ -261,6 +315,9 @@
         left, right; default top) is a preference that flips when it does not fit. A press or Escape hides it until the
         pointer leaves; a touch never shows it.</dd>
     <dt>cut-off text</dt>
+    <dd>Text clipped with an ellipsis (a Task Manager row's title) may show its complete text in this same box: the
+        <code>truncatedTip</code> action (<code>web/src/lib/tooltip/truncated-tip.ts</code>) sets <code>data-tooltip</code>
+        on hover only when the line is measurably clipped (Joe (ccsliinc), 2026-10-10), so a line that fits shows nothing.</dd>
     <dt>none</dt>
     <dd>A kebab carries no tooltip: its icon speaks for itself. <code>data-tooltip-off</code> on a region silences it (the
         header's folded menu, whose rows print their labels); an empty value on the nearest carrier means none; a control
@@ -271,15 +328,30 @@
 </dl>
 
 <h3 class="sg-h3" id="menus-widget">a widget's menus: the one widget menu</h3>
+<p>A widget draws no menu of its own (<code>docs/widget-spec.md</code> section 11, Joe (ccsliinc), 2026-10-19). The host draws
+    the one widget menu; the widget declares its controls into it with <code>declareWidgetActions</code> and hands the controls
+    themselves up into the host header. The menu opens from the widget's icon on the rail and the icon at the top left of its title
+    strip, on a click, a right-click or Shift+F10; both icons are the host's, so a widget wires nothing for them. A widget's rows
+    get no menu of their own (Joe (ccsliinc), 2026-10-19, item 1030 message 5597: "not every line. just the icon on rail and icon
+    on top left"). Menu items take their letters from the one registry. The Widget Lab's starter cell is a working copy.</p>
 
 <h3 class="sg-h3" id="menus-mistakes">common mistakes</h3>
-<p><strong>Agent menu, rename (issue #1371).</strong> A Swarm leader's chat menu adds <em>rename agent</em>
-    (<code>LeaderRename.svelte</code>): the item opens an inline field (<code>.hdc-rename</code>, <code>.hdc-rename-label</code>,
-    <code>.hdc-rename-input</code>, <code>.hdc-rename-row</code>) in the menu, like the turn-off confirm row.</p>
+<p><strong>Agent chat menu (issue #2613).</strong> The agent chat's title strip (<code>ChatBar.svelte</code>) draws no menu button and no dropdown of its own (#2567): it declares its rows to the one item menu, and
+    the strip takes a right click (<code>menuRightClick</code>) and Shift+F10 (<code>forwardMenuKey</code>) into the menu (in a widget frame the rows are also declared to the widget's one menu). A Task Manager row does the same (<code>task-manager-row-menu.ts</code>).
+    <em>rename agent</em> asks through the one text prompt; <em>turn off</em> asks in a fold-out row (a leader types its name in the modal).</p>
 <ul class="sg-mistakes">
+    <li><strong>Hint text inside a menu.</strong> "there is no row below this one" printed in the options menu was removed
+        (#603). <strong>A disabled item is grayed and its reason is its tooltip</strong> (Alex (example-owner), 2026-10-21, #2071):
+        every menu (<code>CascadeMenu</code> <code>blocked</code>, the row menu, the widgets place menu) draws the item dim with
+        <code>aria-disabled</code> (it keeps focus and hover), <code>data-tooltip</code> carries the reason, and no reason line is printed.
+        A tap on a disabled item on a touch screen shows the tip and runs nothing.</li>
     <li><strong>Decorative divider lines.</strong> The border above the old menu note line was removed with the note (#603). A <code>sep</code> separates groups of actions, nothing more.</li>
     <li><strong>A second menu component.</strong> Reuse <code>CascadeMenu</code>; #527 added radio items to it rather than
         forking.</li>
+    <li><strong>A widget's own options kebab.</strong> The files redesign draft drew a three-dot button in its body that opened
+        a private <code>CascadeMenu</code> (collapse all, refresh, show dot files): a second widget menu beside the host's one
+        (2026-10-19). Its items belong in the one widget menu through <code>declareWidgetActions</code>; only the terminal keeps
+        a kebab. <code>menu-conformance.test.ts</code> and the gate fail it.</li>
     <li><strong>A session entry without its light and mark.</strong> Pass <code>agent</code> facts; the order is light, mark,
         name.</li>
     <li><strong>A literal label.</strong> Several row menu labels are still literals in
@@ -287,6 +359,10 @@
     <li><strong>A CSS tooltip.</strong> An <code>::after</code> bubble reading <code>attr(title)</code> showed instantly and the
         native one followed it, two looks at once (#981). Set <code>title</code> or <code>data-tooltip</code> on an icon-only control; the one tooltip
         does the rest.</li>
+    <li><strong>A tooltip on a heading, label or text button.</strong> "expand the terminals group (9 agents)" over a
+        drawer heading looked like a menu and said what the text already says (#1209). Only an icon whose glyph is not
+        self-evident or an (i) mark carries one, and a name cut off by an ellipsis gets none (an item's name never does);
+        give the heading an <code>aria-label</code> if it needs a spoken name.</li>
     <li><strong>A tooltip that states the obvious.</strong> A <code>title</code> or <code>data-tooltip</code> on anything
         that repeats its visible text, names a self-evident icon (house, gear, X, magnifier, trash, arrows, any drawer tab),
         or glues open, close, show or fold onto a name already on screen ("open SysOp" on a node labeled SysOp, "swarm" on

@@ -26,7 +26,20 @@
     "group icon",
     "glyph"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "a filter field over an eight column grid of small green line icons, the folder icon ringed as selected",
+      "caption": "The icon picker in a green parent, folder chosen",
+      "file": "picker.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "the group icon popup opened beside the research group's menu: a filter field over an eight column grid of icons in the group's color",
+      "caption": "The picker opened from a group's menu",
+      "file": "group-popup.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Icon picker",
   "since": "2026-09-27",
   "status": "beta",
@@ -35,12 +48,11 @@
     "web/src/lib/icon-picker/IconPicker.svelte",
     "web/src/lib/icon-picker/IconMark.svelte",
     "client/js/icons/icon-registry.js",
-    "client/js/session-sidebar-group-icon.js"
+    "web/src/lib/drawer/group-icon.ts"
   ],
   "updated": "2026-09-27",
   "where": [
     "The style guide's icons section shows it live (/static/style-guide.html#icons-picker).",
     "In the app it opens from the surfaces that adopt it: group headings, launch profiles, widgets and tabs."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

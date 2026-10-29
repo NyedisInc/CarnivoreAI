@@ -138,6 +138,7 @@ export async function play(w: Record<string, any>, steps: Steps, groups: unknown
         live: document.getElementById('session-sidebar-live')?.textContent || '',
         snaps: snaps.slice(),
     };
+    // Nothing left open for the next run.
     const input = document.querySelector(`#session-sidebar-list ${BOX}`);
     if (input) input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     closeRowMenu();

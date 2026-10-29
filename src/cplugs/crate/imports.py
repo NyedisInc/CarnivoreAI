@@ -63,7 +63,6 @@ def ref_of(source: Mapping[str, Any]) -> CrateRef:
 
 
 def _blocked(code: str, detail: str, source: Mapping[str, Any]) -> Dict[str, Any]:
-    """The answer for a crate that could not be planned. Pure."""
     return {"version": 1, "ok": False, "fingerprint": "", "source": dict(source), "blockers": [{"code": code, "detail": detail}],
             "warnings": []}
 
@@ -112,13 +111,6 @@ def _refused(fresh: Mapping[str, Any]) -> CrateApiError:
 
 
 async def start(ctx: Any, body: Mapping[str, Any], *, allow_made_here: bool = True) -> Dict[str, Any]:
-    """``POST /imports``: re-plan, require the quoted fingerprint, start the restore as a job. Output: ``{job_id, import_id}``.
-
-    Body: the plan body plus ``fingerprint``. The plugin must hold ``imports.write``. An engine refusal after the job starts
-    (another move or import holds the lock: ``busy``) ends the job ``failed`` with that code; nothing was written.
-    Raises: CrateApiError 403 permission_missing; 409 plan_changed (detail: the fresh plan), blocked (the blockers), job_busy;
-    507 no_space; and the plan's own refusals.
-    """
     fingerprint = body.get("fingerprint")
     if not isinstance(fingerprint, str) or not _HEX64.match(fingerprint):
         raise invalid("bad_fingerprint", "fingerprint is the 64 character fingerprint the plan answered")

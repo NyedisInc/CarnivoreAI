@@ -68,6 +68,7 @@ cplugEnablement.enabled = { huddle: true };
 let app: ReturnType<typeof mount> | null = null;
 const written: [string, unknown][] = [];
 
+/** Let the reads, the store and the effects settle. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 12; i += 1) { await Promise.resolve(); await tick(); }
   flushSync();

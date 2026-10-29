@@ -5,7 +5,6 @@
 </script>
 
 <script lang="ts">
-  /* running sessions */
   import type { CellProps } from '../../lib/cell';
   import { atLeast } from '../../lib/states';
   import { elapsed, relative, leftTruncate } from '../../lib/format';
@@ -36,8 +35,9 @@
   } from '../../api';
   import { hostOffline, usageLimitLabel } from '../../../lib/led';
   import { hueDotToken, hueLabelToken } from '../../lib/status-hue-tokens';
+  import { DENSITY_OPTION, densityOf, nameLines, type SessionsDensity } from './density';
   import { columnsFor, phoneColumns, phoneElapsed, taskFor } from './meta';
-  import { projectFor, majorityProject } from './project';
+  import { projectOfRow, majorityProject } from './project';
   import { asleepRows, isAsleepRow } from './asleep';
   import { runningSessionsSortPref, sortRows, SORT_KEYS } from './sort.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
@@ -45,7 +45,7 @@
   import WidgetShell from '../../widgets/shell/WidgetShell.svelte';
   import ShellScroll from '../../widgets/shell/ShellScroll.svelte';
   import { useWidget } from '../../widgets/shell/define-widget.svelte';
-  import { declareWidgetActions } from '../../widgets/menu/declared-actions.svelte';
+  import { declareWidgetActions, type DeclaredAction } from '../../widgets/menu/declared-actions.svelte';
   import { menuActions, sortActions } from '../../widgets/menu/header-actions';
   import CascadeMenu from '../../../lib/drawer-tabs/CascadeMenu.svelte';
   import type { MenuNode } from '../../../lib/drawer-tabs/add-component-menu';
@@ -54,9 +54,12 @@
   const { meta } = $derived(props);
   const limit = $derived(props.limit ?? null);
   const phone = $derived(props.phone ?? false);
+  const options = $derived(props.options);
+  const onOption = $derived(props.onOption);
 
   const widget = useWidget(RUNNING_SESSIONS_WIDGET, () => props);
 
+  /* there is nothing */
   let newAnchor = $state<HTMLElement | null>(null);
   const newMenu = $derived<MenuNode[]>([
     { id: 'session', label: t('opscenter.session.new.session'), run: () => void startSessionInProject() },
@@ -109,7 +112,7 @@
   const liveRows = $derived((sessions.data ?? []) as SessionInfo[]);
   const subagentTotal = $derived(runningTotal(liveRows));
   const projectRows = $derived(projects.data ?? []);
-  const majority = $derived(majorityProject(liveRows.map((row) => row.session.working_dir), projectRows));
+  const majority = $derived(majorityProject(liveRows, projectRows));
 
   const liveOrdered = $derived(sortRows(liveRows, runningSessionsSortPref.value, projectRows, nowMs));
 
@@ -154,7 +157,15 @@
       lastSeconds === null ? t('opscenter.value.not_measured') : relative(Math.floor(lastSeconds / 60));
     return t('opscenter.session.detail', { source, dir, last: lastText });
   }
+  function placeFor(row: SessionInfo): string {
+    const dir = leftTruncate(row.session.working_dir, 28);
+    const lastSeconds = elapsedSeconds(row.session.last_activity, nowMs);
+    const last = lastSeconds === null ? t('opscenter.value.not_measured') : relative(Math.floor(lastSeconds / 60));
+    return t('opscenter.session.place', { dir, last });
+  }
 
+
+  /* there is nothing */
   function isHollow(row: SessionInfo): boolean {
     if (row.startup_gate === 'awaiting_startup_prompt') return false;
     const key = normalizeStatus(row.activity_status);
@@ -163,6 +174,19 @@
   }
 
   const frameHeader = $derived(widget.frame);
+
+  const choosable = $derived(!!onOption && !phone);
+  const density = $derived(densityOf(options));
+  const taskLines = $derived(nameLines(options, choosable));
+  const secondLine = $derived(!phone && (choosable ? taskLines > 1 : plan.detail));
+  const DENSITIES: readonly { id: SessionsDensity; key: string }[] = [
+    { id: 'compact', key: 'opscenter.session.density.compact' },
+    { id: 'normal', key: 'opscenter.session.density.normal' },
+  ];
+  const densityChoices = $derived<DeclaredAction[]>(
+    DENSITIES.map((one) => ({ id: `density:${one.id}`, label: t(one.key), checked: density === one.id, run: () => onOption?.(DENSITY_OPTION, one.id) })),
+  );
+  $effect(() => (frameHeader && choosable ? declareWidgetActions(frameHeader.hostId, 'density', densityChoices) : undefined));
   $effect(() => (frameHeader ? declareWidgetActions(frameHeader.hostId, 'sort', sortActions(sortMenu)) : undefined));
   $effect(() =>
     frameHeader ? declareWidgetActions(frameHeader.hostId, 'new', menuActions(newMenu, 'new:', (node) => node.label)) : undefined,
@@ -211,7 +235,7 @@
     rows={shownRows}
     showHead={!phone && plan.head}
     compact={phone}
-    rowHeight={plan.detail ? 42 : 37}
+    rowHeight={secondLine ? 42 : 37}
     headHeight={33}
     {rowKey}
     rowIdAttr="data-session-id"
@@ -232,10 +256,10 @@
       {#if column.key === 'id'}
         {index + 1}
       {:else if column.key === 'task'}
-        <span class="oc-task">
+        <span class="oc-session-task">
           <span class="oc-task-name" class:oc-task-strong={phone}>{taskFor(row)}</span>
-          {#if plan.detail && !phone}
-            <span class="oc-task-detail">{detailFor(row)}</span>
+          {#if secondLine}
+            <span class="oc-task-detail">{choosable ? placeFor(row) : detailFor(row)}</span>
           {/if}
         </span>
       {:else if column.key === 'agent'}
@@ -248,7 +272,7 @@
           </span>
         {/if}
       {:else if column.key === 'project'}
-        {@const name = projectFor(row.session.working_dir, projectRows)}
+        {@const name = projectOfRow(row, projectRows)}
         
         <span class="oc-project" class:oc-project-link={!phone && name !== majority}>{name}</span>
       {:else if column.key === 'elapsed'}
@@ -332,14 +356,15 @@
   }
 
 
-  .oc-task {
+  .oc-session-task {
     display: flex;
     flex-direction: column;
     min-width: 0;
     gap: var(--oc-space-0-5);
   }
 
-  .oc-task-name {
+  .oc-task-name,
+  .oc-project {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -368,12 +393,6 @@
     display: inline-flex;
     align-items: center;
     min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .oc-project {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;

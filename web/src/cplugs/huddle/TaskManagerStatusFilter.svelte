@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { t } from '../sdk';
   import { Icon } from '../sdk/ui';
   import { taskManagerPrefs } from './task-manager-prefs.svelte';
@@ -121,6 +120,8 @@
       pointer-events: none;
       transition: transform 0.14s ease-out, visibility 0s linear 0.14s;
     }
+
+    .hdf-card:not([data-open='on']) { animation: none; }
 
     .hdf-card[data-open='on'] {
       transform: scaleX(1);

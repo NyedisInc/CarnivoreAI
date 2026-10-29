@@ -2,6 +2,7 @@
 <script lang="ts">
     import ModalShell from '../launchpad/ModalShell.svelte';
     import { t } from '../i18n/index.svelte';
+    import { Button } from '../base';
     import ProjectPicker from './ProjectPicker.svelte';
     import { blueprintError, exportBlueprint } from './api';
 
@@ -32,10 +33,7 @@
 </script>
 
 <ModalShell title={t('blueprint.export')} dismissable={!busy} onCancel={() => close(!!done)}>
-    <div class="modal-input-group">
-        <label class="modal-label" for="bp-export-project">{t('blueprint.export')}</label>
-        <ProjectPicker id="bp-export-project" value={projectPath} onChange={(p) => (projectPath = p)} />
-    </div>
+    <ProjectPicker id="bp-export-project" label={t('blueprint.export')} value={projectPath} onChange={(p) => (projectPath = p)} />
     {#if error}
         <p class="bp-modal__error" role="alert">{error}</p>
     {/if}
@@ -43,10 +41,10 @@
         <p class="bp-modal__ok">{done}</p>
     {/if}
     {#snippet footer()}
-        <button class="modal-btn modal-btn-secondary" disabled={busy} onclick={() => close(!!done)}>{t('blueprint.cancel')}</button>
-        <button class="modal-btn modal-btn-primary" disabled={busy || !projectPath || !!done} onclick={() => void submit()}>
+        <Button disabled={busy} onclick={() => close(!!done)}>{t('blueprint.cancel')}</Button>
+        <Button variant="confirm" data-bp-confirm disabled={busy || !projectPath || !!done} onclick={() => void submit()}>
             {t('blueprint.export')}
-        </button>
+        </Button>
     {/snippet}
 </ModalShell>
 

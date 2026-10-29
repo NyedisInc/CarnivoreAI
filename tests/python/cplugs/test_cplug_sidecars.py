@@ -40,7 +40,7 @@ def test_every_shipped_plugin_but_the_pending_ones_has_a_valid_sidecar() -> None
     assert all(bad[k][0] == sidecar.MISSING for k in bad), "a pending plugin may be missing its sidecar, not carry a broken one"
 
 
-def test_no_plugin_awaits_a_sidecar_and_huddle_carries_one() -> None:
+def test_no_plugin_awaits_a_sidecar_and_the_task_manager_carries_one() -> None:
     assert set(sidecar.PENDING) == set()
     assert (PLUGINS / "huddle" / sidecar.SIDECAR_NAME).is_file()
 
@@ -126,7 +126,7 @@ def test_refuse_mode_raises_and_warn_mode_does_not(tmp_path: Path) -> None:
         sidecar.audit_ship_list([manifest], tmp_path, enforcement="refuse")
 
 
-def test_loading_the_real_ship_list_no_longer_warns_about_huddle() -> None:
+def test_loading_the_real_ship_list_no_longer_warns_about_the_task_manager() -> None:
     runtime._definitions = None
     try:
         with structlog.testing.capture_logs() as logs:

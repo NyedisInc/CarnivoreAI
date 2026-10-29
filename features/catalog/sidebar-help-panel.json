@@ -13,6 +13,7 @@
     "Open the menu (the menu key in the rail, or the menu in the drawer) and choose documentation; it opens the documentation page.",
     "Use the contents list at the top to jump to a section: getting started, the sidebar, what the marks mean, terminals and layouts, the status bar and control center, accounts and providers, launch profiles, skills, plugins, widgets and themes, settings and config, keyboard shortcuts, remote access and security, and all features. Each section has its own link, /#docs/<section>.",
     "Type in the search box (press / to focus it) to keep only the sections that contain your words; clear it to see the whole guide.",
+    "In \"what the marks mean\", press \"open the legend\" to open the legend as a wide card (full screen on a phone): every status light, model robot, provider mark and row icon, one row each.",
     "At the end, all features lists every feature by area. Click a row to expand it into where it is, how to use it, and its media - text on the left, screenshots or a GIF on the right at wide widths.",
     "What changed in each release is on the changelog page (menu, changelog), which has its own search."
   ],
@@ -31,11 +32,30 @@
     "features by release",
     "changelog"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The documentation page filtered to its all features section, showing the feature list with one feature row",
+      "caption": "The help panel",
+      "file": "panel.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "Clicking a feature row in the help panel's feature list, revealing an inset panel with where it is, how to use it, and its media in a two-column layout",
+      "caption": "Expanding a feature",
+      "file": "feature-expand.gif",
+      "kind": "gif"
+    },
+    {
+      "alt": "Clicking a whole release row, revealing an inset panel with the full summary, its facts, and the referenced feature's full detail in a two-column layout",
+      "caption": "Expanding a release row",
+      "file": "release-row-expand.gif",
+      "kind": "gif"
+    }
+  ],
   "name": "Documentation and legend",
   "since": "2026-09-24",
   "status": "stable",
-  "summary": "",
+  "summary": "the documentation page, opened from the menu, is a short user guide with a contents list at the top, a search box, and every feature listed by area at the end; its \"what the marks mean\" section opens the legend for the status lights and other marks.",
   "surfaces": [
     "client/js/sidebar-help.js",
     "web/src/lib/help/HelpFeatures.svelte",
@@ -50,6 +70,5 @@
   "where": [
     "The menu in the drawer or rail: documentation.",
     "The #docs link, or #docs/<section> for one section."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

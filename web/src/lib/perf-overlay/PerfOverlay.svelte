@@ -62,7 +62,6 @@
 
 <style>
   @layer components {
-  /* box-shadow */
   .perf-ov {
     position: fixed;
     right: 8px;

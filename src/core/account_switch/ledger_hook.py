@@ -1,18 +1,3 @@
-"""What runs after a ledger pass that moved a reading (issues #151, #521, #671).
-
-Three consumers, in this order. :mod:`profile_setup` first brings every
-managed claude profile whose login reads ``ok`` to a launchable state
-(first-run setup marked done, the shared MCP file synced and the profile's
-copies of it removed, folder trust copied), so
-the two after it see the accounts as they will be launched onto. Then
-auto-switch moves a provider's pointer (:mod:`auto_switch`, which never
-touches a session), then the restart pass restarts claude sessions blocked
-on their account's limit onto the (now current) active account
-(:mod:`auto_restart`). The last two are no-ops unless the auto-switch toggle
-is on; the first runs whatever the toggle says, because a manual switch and
-a new session need a ready profile too. Kept apart so the module that only
-moves a pointer keeps no route to a session at all.
-"""
 
 from __future__ import annotations
 

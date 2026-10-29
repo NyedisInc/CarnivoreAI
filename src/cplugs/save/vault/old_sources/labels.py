@@ -77,13 +77,10 @@ class LabelBook:
         return book
 
     def _add(self, conv: Optional[str], label: str) -> None:
-        """Record one label for a conversation id (a record with no id is ignored: nothing to attach it to)."""
         if conv:
             self.by_conv.setdefault(str(conv), []).append(label)
 
     def _add_entry(self, entry: Mapping[str, object], label: str) -> None:
-        """Record ``label`` for a cleanup entry's conversation id AND for the id of every file it lists (``files[].path`` stem), so a sub-agent
-        file carries its conversation's verdict even when its own id is not the conversation's."""
         self._add(entry.get("conversation_id"), label)  # type: ignore[arg-type]
         for item in entry.get("files") or []:  # type: ignore[attr-defined]
             file_id = names.file_id(str(item.get("path") or "")) if isinstance(item, dict) else None

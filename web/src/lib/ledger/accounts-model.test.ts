@@ -31,7 +31,7 @@ describe('the id derived from a name', () => {
     });
 
     test('punctuation and runs of spaces collapse to ONE dash, never two', () => {
-        expect(slugFromName('  acme!!  personal  ')).toBe('acme-personal');
+        expect(slugFromName('  Alex!!  personal  ')).toBe('alex-personal');
     });
 
     test('digits survive, so "claude 20x" keeps the thing that tells it apart', () => {
@@ -44,7 +44,7 @@ describe('the id derived from a name', () => {
     });
 
     test('every derived id the form will send matches the server shape', () => {
-        const names = ['work max', 'acme!!  personal', 'claude 20x', 'a--b', '-lead-', 'Ünïcode'];
+        const names = ['work max', 'Alex!!  personal', 'claude 20x', 'a--b', '-lead-', 'Ünïcode'];
         for (const name of names) {
             const slug = slugFromName(name);
             if (slug === '') continue;

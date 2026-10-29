@@ -1,3 +1,4 @@
+/* the home screen */
 import { t } from '../../lib/i18n/index.svelte';
 import { whenLegacyBootComplete } from '../../lib/legacy-boot';
 import { authFetch } from '../api/auth.svelte';
@@ -111,7 +112,6 @@ function current(): HomeValue {
   };
 }
 
-/*  hidden  */
 function referencedAnalytics(): Set<string> {
   const ids = new Set<string>();
   for (const board of current().boards) {
@@ -352,6 +352,9 @@ async function migrate(api: PreferencesApi): Promise<void> {
       const theirs = parseHome(api.committedValue(HOME_LAYOUT_FIELD));
       if (theirs) applyHome(theirs);
     }
+  } catch (error) {
+    console.warn('[home layout] migration failed', error);
+    known = false;
   } finally {
     inflight = false;
   }
@@ -382,7 +385,6 @@ async function pullServer(): Promise<void> {
   }
 }
 
-/* pop-out window */
 export function startHomeSync(options: { popout?: boolean; board?: string | null; edit?: boolean; target?: Window | null } = {}): void {
   if (started) return;
   started = true;

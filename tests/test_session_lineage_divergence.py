@@ -44,8 +44,8 @@ SOCKET = "cloude"
 NAME = "cloude_Agent_-_Cloude_Code"
 EPOCH = 1_788_813_811
 
-PANE_UUID = "deab833f-234e-44d2-be54-ddaf69c8db4b"
-SIBLING_UUID = "e51254a9-f3c8-452a-8e03-007f28fbd995"
+PANE_UUID = "2629dba5-234e-44d2-be54-ddaf69c8db4b"
+SIBLING_UUID = "0f1a21b4-10ea-4310-ac3c-72dbe54463e7"
 
 
 @pytest.fixture()
@@ -156,7 +156,7 @@ def test_a_sibling_startup_does_not_insert_a_row(conn, pane):
 def test_a_sibling_resume_does_not_insert_a_row(conn, pane):
     before = _row_count(conn)
 
-    result = _record(conn, "5fa9eb3b-9d82-4853-8d03-1c191a75fe65", "resume")
+    result = _record(conn, "9f0e1d2c-0000-4000-8000-000000000001", "resume")
 
     assert result.outcome == LINEAGE_SIBLING
     assert _row_count(conn) == before

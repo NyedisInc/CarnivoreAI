@@ -298,7 +298,7 @@ def test_a_listener_check_that_cannot_measure_does_not_sleep(world, how):
 
         world.sleeper._take_listeners = broken
     else:
-        world.manager._registry.backends[sid] = SimpleNamespace(pid=4312)
+        world.manager._registry.backends[sid] = SimpleNamespace(pid=999999)
     assert _run(world) == []
     assert world.calls == []
 
@@ -385,3 +385,10 @@ def test_leader_swarm_agents_sleep_without_an_alert_on_any_channel(world, monkey
     assert len(slept) == 1
     contracts.uninstall_sink()
     assert len(world.hub.frames) == alerts and len(emitted) == alerts
+
+
+def test_an_early_return_clears_last_passes_holds(world):
+    world.sleeper.holds = {"ses_old": ("carnivore_old", object())}
+    _config(world, auto_sleep={"enabled": False})
+    assert _run(world) == []
+    assert world.sleeper.holds == {}

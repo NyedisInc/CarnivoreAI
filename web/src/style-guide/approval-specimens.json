@@ -11,15 +11,15 @@
     "plan_fingerprint": "7a01be"
    },
    "target": "",
-   "summary": "PURGE asleep session quartz held-tell test for good: 41 database rows, 6 files. Plan 7a01be.",
+   "summary": "PURGE asleep session trader held-tell test for good: 41 database rows, 6 files. Plan 7a01be.",
    "plain": "",
-   "confirm_text": "quartz held-tell test",
+   "confirm_text": "trader held-tell test",
    "live": false
   },
   "display": {
    "verb": "purge",
    "object": "session",
-   "name": "quartz held-tell test",
+   "name": "trader held-tell test",
    "tone": "danger",
    "consequences": [
     {
@@ -38,7 +38,7 @@
     },
     {
      "key": "summary",
-     "value": "PURGE asleep session quartz held-tell test for good: 41 database rows, 6 files. Plan 7a01be."
+     "value": "PURGE asleep session trader held-tell test for good: 41 database rows, 6 files. Plan 7a01be."
     }
    ]
   }
@@ -51,8 +51,8 @@
   "input": {
    "action": "session_delete",
    "args": {},
-   "target": "quartz held-tell test",
-   "summary": "DELETE session quartz held-tell test (its tmux session is killed)",
+   "target": "trader held-tell test",
+   "summary": "DELETE session trader held-tell test (its tmux session is killed)",
    "plain": "",
    "confirm_text": "",
    "live": true
@@ -60,7 +60,7 @@
   "display": {
    "verb": "delete",
    "object": "session",
-   "name": "quartz held-tell test",
+   "name": "trader held-tell test",
    "tone": "danger",
    "consequences": [
     {
@@ -75,7 +75,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "DELETE session quartz held-tell test (its tmux session is killed)"
+     "value": "DELETE session trader held-tell test (its tmux session is killed)"
     }
    ]
   }
@@ -88,8 +88,8 @@
   "input": {
    "action": "session_delete",
    "args": {},
-   "target": "quartz held-tell test",
-   "summary": "DELETE asleep session quartz held-tell test",
+   "target": "trader held-tell test",
+   "summary": "DELETE asleep session trader held-tell test",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -97,7 +97,7 @@
   "display": {
    "verb": "delete",
    "object": "session",
-   "name": "quartz held-tell test",
+   "name": "trader held-tell test",
    "tone": "danger",
    "consequences": [
     {
@@ -112,7 +112,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "DELETE asleep session quartz held-tell test"
+     "value": "DELETE asleep session trader held-tell test"
     }
    ]
   }
@@ -127,8 +127,8 @@
    "args": {
     "pane_live": true
    },
-   "target": "quartz held-tell test",
-   "summary": "restart session quartz held-tell test",
+   "target": "trader held-tell test",
+   "summary": "restart session trader held-tell test",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -136,7 +136,7 @@
   "display": {
    "verb": "restart",
    "object": "session",
-   "name": "quartz held-tell test",
+   "name": "trader held-tell test",
    "tone": "danger",
    "consequences": [
     {
@@ -151,7 +151,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "restart session quartz held-tell test"
+     "value": "restart session trader held-tell test"
     }
    ]
   }
@@ -167,7 +167,7 @@
     "project": 3
    },
    "target": "",
-   "summary": "DELETE project \"meadow willow 2026\" for good",
+   "summary": "DELETE project \"Fantasy Hockey 2026\" for good",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -175,7 +175,7 @@
   "display": {
    "verb": "delete",
    "object": "project",
-   "name": "meadow willow 2026",
+   "name": "Fantasy Hockey 2026",
    "tone": "danger",
    "consequences": [
     {
@@ -194,7 +194,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "DELETE project \"meadow willow 2026\" for good"
+     "value": "DELETE project \"Fantasy Hockey 2026\" for good"
     }
    ]
   }
@@ -246,7 +246,7 @@
   "input": {
    "action": "session_stop",
    "args": {},
-   "target": "quartz held-tell test",
+   "target": "trader held-tell test",
    "summary": "stop (sleep) the session",
    "plain": "",
    "confirm_text": "",
@@ -255,7 +255,7 @@
   "display": {
    "verb": "stop",
    "object": "session",
-   "name": "quartz held-tell test",
+   "name": "trader held-tell test",
    "tone": "confirm",
    "consequences": [
     {
@@ -285,8 +285,8 @@
    "args": {
     "target": "u2"
    },
-   "target": "quartz held-tell test",
-   "summary": "session_wake on asleep quartz held-tell test",
+   "target": "trader held-tell test",
+   "summary": "session_wake on asleep trader held-tell test",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -294,7 +294,7 @@
   "display": {
    "verb": "wake",
    "object": "session",
-   "name": "quartz held-tell test",
+   "name": "trader held-tell test",
    "tone": "confirm",
    "consequences": [
     {
@@ -305,7 +305,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "session_wake on asleep quartz held-tell test"
+     "value": "session_wake on asleep trader held-tell test"
     }
    ]
   }
@@ -320,8 +320,8 @@
    "args": {
     "pane_live": false
    },
-   "target": "quartz held-tell test",
-   "summary": "restart session quartz held-tell test",
+   "target": "trader held-tell test",
+   "summary": "restart session trader held-tell test",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -329,7 +329,7 @@
   "display": {
    "verb": "restart",
    "object": "session",
-   "name": "quartz held-tell test",
+   "name": "trader held-tell test",
    "tone": "confirm",
    "consequences": [
     {
@@ -340,7 +340,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "restart session quartz held-tell test"
+     "value": "restart session trader held-tell test"
     }
    ]
   }
@@ -354,12 +354,12 @@
    "action": "project_move",
    "args": {
     "project": 3,
-    "new_root": "/Users/you/Development/Org/Personal/quartz",
+    "new_root": "/Users/you/Development/Org/Personal/trader",
     "move_folder": true,
     "plan_fingerprint": "abc123"
    },
    "target": "",
-   "summary": "move project \"meadow willow 2026\" to \"/Users/you/Development/Org/Personal/quartz\": rename the folder (2 sessions; plan abc123)",
+   "summary": "move project \"Fantasy Hockey 2026\" to \"/Users/you/Development/Org/Personal/trader\": rename the folder (2 sessions; plan abc123)",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -367,13 +367,13 @@
   "display": {
    "verb": "move",
    "object": "project",
-   "name": "meadow willow 2026",
+   "name": "Fantasy Hockey 2026",
    "tone": "confirm",
    "consequences": [
     {
      "key": "moves_to",
      "params": {
-      "to": "~/Development/Org/Personal/quartz"
+      "to": "~/Development/Org/Personal/trader"
      }
     },
     {
@@ -388,7 +388,7 @@
    "detail": [
     {
      "key": "new_root",
-     "value": "/Users/you/Development/Org/Personal/quartz"
+     "value": "/Users/you/Development/Org/Personal/trader"
     },
     {
      "key": "fingerprint",
@@ -396,7 +396,7 @@
     },
     {
      "key": "summary",
-     "value": "move project \"meadow willow 2026\" to \"/Users/you/Development/Org/Personal/quartz\": rename the folder (2 sessions; plan abc123)"
+     "value": "move project \"Fantasy Hockey 2026\" to \"/Users/you/Development/Org/Personal/trader\": rename the folder (2 sessions; plan abc123)"
     }
    ]
   }
@@ -410,12 +410,12 @@
    "action": "project_move",
    "args": {
     "project": 3,
-    "new_root": "/Users/you/Development/Org/Personal/quartz",
+    "new_root": "/Users/you/Development/Org/Personal/trader",
     "move_folder": false,
     "plan_fingerprint": "abc123"
    },
    "target": "",
-   "summary": "move project \"meadow willow 2026\" to \"/Users/you/Development/Org/Personal/quartz\": re-point (folder already there)",
+   "summary": "move project \"Fantasy Hockey 2026\" to \"/Users/you/Development/Org/Personal/trader\": re-point (folder already there)",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -423,13 +423,13 @@
   "display": {
    "verb": "move",
    "object": "project",
-   "name": "meadow willow 2026",
+   "name": "Fantasy Hockey 2026",
    "tone": "confirm",
    "consequences": [
     {
      "key": "moves_to",
      "params": {
-      "to": "~/Development/Org/Personal/quartz"
+      "to": "~/Development/Org/Personal/trader"
      }
     },
     {
@@ -444,7 +444,7 @@
    "detail": [
     {
      "key": "new_root",
-     "value": "/Users/you/Development/Org/Personal/quartz"
+     "value": "/Users/you/Development/Org/Personal/trader"
     },
     {
      "key": "fingerprint",
@@ -452,7 +452,7 @@
     },
     {
      "key": "summary",
-     "value": "move project \"meadow willow 2026\" to \"/Users/you/Development/Org/Personal/quartz\": re-point (folder already there)"
+     "value": "move project \"Fantasy Hockey 2026\" to \"/Users/you/Development/Org/Personal/trader\": re-point (folder already there)"
     }
    ]
   }
@@ -465,11 +465,11 @@
   "input": {
    "action": "project_create",
    "args": {
-    "name": "meadow willow 2026",
-    "path": "/Users/you/carnivore-projects/meadow-willow-2026"
+    "name": "Fantasy Hockey 2026",
+    "path": "/Users/you/carnivore-projects/fantasy-hockey-2026"
    },
    "target": "",
-   "summary": "create project \"meadow willow 2026\" in \"/Users/you/carnivore-projects/meadow-willow-2026\"",
+   "summary": "create project \"Fantasy Hockey 2026\" in \"/Users/you/carnivore-projects/fantasy-hockey-2026\"",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -477,24 +477,24 @@
   "display": {
    "verb": "create",
    "object": "project",
-   "name": "meadow willow 2026",
+   "name": "Fantasy Hockey 2026",
    "tone": "confirm",
    "consequences": [
     {
      "key": "in_folder",
      "params": {
-      "path": "~/carnivore-projects/meadow-willow-2026"
+      "path": "~/carnivore-projects/fantasy-hockey-2026"
      }
     }
    ],
    "detail": [
     {
      "key": "path",
-     "value": "/Users/you/carnivore-projects/meadow-willow-2026"
+     "value": "/Users/you/carnivore-projects/fantasy-hockey-2026"
     },
     {
      "key": "summary",
-     "value": "create project \"meadow willow 2026\" in \"/Users/you/carnivore-projects/meadow-willow-2026\""
+     "value": "create project \"Fantasy Hockey 2026\" in \"/Users/you/carnivore-projects/fantasy-hockey-2026\""
     }
    ]
   }
@@ -508,10 +508,10 @@
    "action": "project_rename",
    "args": {
     "project": 3,
-    "name": "meadow willow 2027"
+    "name": "Fantasy Hockey 2027"
    },
    "target": "",
-   "summary": "rename project \"meadow willow 2026\" to \"meadow willow 2027\"",
+   "summary": "rename project \"Fantasy Hockey 2026\" to \"Fantasy Hockey 2027\"",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -519,13 +519,13 @@
   "display": {
    "verb": "rename",
    "object": "project",
-   "name": "meadow willow 2026",
+   "name": "Fantasy Hockey 2026",
    "tone": "confirm",
    "consequences": [
     {
      "key": "new_name",
      "params": {
-      "name": "meadow willow 2027"
+      "name": "Fantasy Hockey 2027"
      }
     },
     {
@@ -536,7 +536,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "rename project \"meadow willow 2026\" to \"meadow willow 2027\""
+     "value": "rename project \"Fantasy Hockey 2026\" to \"Fantasy Hockey 2027\""
     }
    ]
   }
@@ -552,7 +552,7 @@
     "project": 3
    },
    "target": "",
-   "summary": "archive project \"meadow willow 2026\"",
+   "summary": "archive project \"Fantasy Hockey 2026\"",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -560,7 +560,7 @@
   "display": {
    "verb": "archive",
    "object": "project",
-   "name": "meadow willow 2026",
+   "name": "Fantasy Hockey 2026",
    "tone": "confirm",
    "consequences": [
     {
@@ -575,7 +575,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "archive project \"meadow willow 2026\""
+     "value": "archive project \"Fantasy Hockey 2026\""
     }
    ]
   }
@@ -591,7 +591,7 @@
     "project": 3
    },
    "target": "",
-   "summary": "restore project \"meadow willow 2026\"",
+   "summary": "restore project \"Fantasy Hockey 2026\"",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -599,7 +599,7 @@
   "display": {
    "verb": "restore",
    "object": "project",
-   "name": "meadow willow 2026",
+   "name": "Fantasy Hockey 2026",
    "tone": "confirm",
    "consequences": [
     {
@@ -614,7 +614,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "restore project \"meadow willow 2026\""
+     "value": "restore project \"Fantasy Hockey 2026\""
     }
    ]
   }
@@ -751,7 +751,7 @@
     "project_id": 3
    },
    "target": "",
-   "summary": "make \"meadow willow 2026\" (project) the HQ project of \"Personal\" (folders and sessions untouched)",
+   "summary": "make \"Fantasy Hockey 2026\" (project) the HQ project of \"Personal\" (folders and sessions untouched)",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -765,7 +765,7 @@
     {
      "key": "home_set",
      "params": {
-      "project": "meadow willow 2026"
+      "project": "Fantasy Hockey 2026"
      }
     },
     {
@@ -776,7 +776,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "make \"meadow willow 2026\" (project) the HQ project of \"Personal\" (folders and sessions untouched)"
+     "value": "make \"Fantasy Hockey 2026\" (project) the HQ project of \"Personal\" (folders and sessions untouched)"
     }
    ]
   }
@@ -794,8 +794,8 @@
      "option": "Yes"
     }
    },
-   "target": "quartz held-tell test",
-   "summary": "answer the dialog on quartz held-tell test with option Yes",
+   "target": "trader held-tell test",
+   "summary": "answer the dialog on trader held-tell test with option Yes",
    "plain": "",
    "confirm_text": "",
    "live": false
@@ -803,7 +803,7 @@
   "display": {
    "verb": "answer",
    "object": "session_dialog",
-   "name": "quartz held-tell test",
+   "name": "trader held-tell test",
    "tone": "confirm",
    "consequences": [
     {
@@ -820,7 +820,7 @@
    "detail": [
     {
      "key": "summary",
-     "value": "answer the dialog on quartz held-tell test with option Yes"
+     "value": "answer the dialog on trader held-tell test with option Yes"
     }
    ]
   }
@@ -835,29 +835,29 @@
    "args": {
     "target": "u1"
    },
-   "target": "quartz held-tell test",
-   "summary": "send a message to quartz held-tell test: 42 characters",
-   "plain": "send a message to quartz held-tell test: 42 characters",
+   "target": "trader held-tell test",
+   "summary": "send a message to trader held-tell test: 42 characters",
+   "plain": "send a message to trader held-tell test: 42 characters",
    "confirm_text": "",
    "live": false
   },
   "display": {
    "verb": "session send message",
    "object": "",
-   "name": "quartz held-tell test",
+   "name": "trader held-tell test",
    "tone": "confirm",
    "consequences": [
     {
      "key": "summary",
      "params": {
-      "text": "send a message to quartz held-tell test: 42 characters"
+      "text": "send a message to trader held-tell test: 42 characters"
      }
     }
    ],
    "detail": [
     {
      "key": "summary",
-     "value": "send a message to quartz held-tell test: 42 characters"
+     "value": "send a message to trader held-tell test: 42 characters"
     }
    ]
   }

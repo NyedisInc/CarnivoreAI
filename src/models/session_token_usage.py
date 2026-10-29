@@ -1,32 +1,3 @@
-"""What one session has spent, and how full its context is.
-
-FLAT, ONE LEVEL, NO WRAPPER. Gotcha 1 in CLAUDE.md is the most repeated
-bug in this project: ``SessionInfo`` puts some fields on the wrapper and
-some on a nested ``.session``, and reading the wrong level returns
-``undefined`` silently, which looks exactly like a backend that did not
-send the field. This model has one level so that trap cannot be rebuilt
-here.
-
-EVERY NUMBER IS OPTIONAL AND ``None`` NEVER MEANS ZERO. ``state`` is the
-only field that is always populated, and it says which of the three
-outcomes produced this row:
-
-  ``ok``        a transcript was found and read; the counts are measured.
-  ``absent``    the session has no transcript or no conversation id yet.
-                Nothing was spent because nothing has run.
-  ``unchecked`` we could not tell. An unreadable file, a family with no
-                reader, a corpus that is not where we looked.
-
-``absent`` and ``unchecked`` MUST NOT COLLAPSE. A brand new session that
-has cost nothing and a session whose transcript we failed to open look
-identical if both report zeros, and only one of them is honestly zero.
-The client prints a dash for ``unchecked`` and zeros for ``absent``.
-
-NO PATH IS ON THE WIRE. The reader knows exactly which file it read and
-deliberately does not say: a transcript path carries the user's home
-directory, their project names and, through the iCloud spelling, their
-Apple account. The server logs it at debug; the client never sees it.
-"""
 
 from __future__ import annotations
 

@@ -2,6 +2,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { t } from '../lib/i18n/index.svelte';
+    import { Button, Field } from '../lib/base';
     import { claimSecret, isInstalledApp, keepSession, navigate, pairStatus, submitCode, verifyOtp, type ClaimResult, type Failure } from './pair-api';
 
     type Phase = 'checking' | 'claiming' | 'otp' | 'done' | 'scan' | 'entry';
@@ -81,11 +82,11 @@
             <p class="pair__sub">{t('pair.otp.hint')}</p>
             <form class="pair__form" onsubmit={finish}>
                 <label class="pair__sub" for="pair-otp">{t('pair.otp.label')}</label>
-                <input id="pair-otp" class="oc-field pair__input" bind:value={otp} maxlength="6" inputmode="numeric"
-                    pattern="[0-9]*" autocomplete="one-time-code" autocorrect="off" spellcheck="false" data-pair="otp-code" disabled={busy} />
-                <button type="submit" class="oc-btn oc-btn--confirm pair__submit" data-pair="otp-submit" disabled={busy || otp.trim().length !== 6}>
+                <Field id="pair-otp" bind:value={otp} maxlength={6} inputmode="numeric"
+                    pattern="[0-9]*" autocomplete="one-time-code" autocorrect="off" spellcheck={false} data-pair="otp-code" disabled={busy} />
+                <Button type="submit" variant="confirm" data-pair="otp-submit" disabled={busy || otp.trim().length !== 6}>
                     {busy ? t('pair.entry.working') : t('pair.entry.submit')}
-                </button>
+                </Button>
             </form>
         {:else if phase === 'done'}
             <p class="pair__text" role="status" data-pair="paired">{t('pair.done')}</p>
@@ -94,17 +95,17 @@
             <p class="pair__sub">{phase === 'entry' ? t('pair.app.hint') : t('pair.scan.hint')}</p>
             <p class="pair__sub" data-pair="per-address-hint">{t('pair.per_address_hint')}</p>
             {#if phase === 'scan' && !showForm}
-                <button type="button" class="oc-btn" data-pair="no-camera" onclick={() => (showForm = true)}>{t('pair.scan.no_camera')}</button>
+                <Button data-pair="no-camera" onclick={() => (showForm = true)}>{t('pair.scan.no_camera')}</Button>
             {/if}
             {#if phase === 'entry' || showForm}
                 <form class="pair__form" onsubmit={submit}>
                     <label class="pair__sub" for="pair-code">{t('pair.entry.label')}</label>
-                    <input id="pair-code" class="oc-field pair__input" bind:value={typed} maxlength="8" inputmode="text"
-                        autocomplete="one-time-code" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                    <Field id="pair-code" bind:value={typed} maxlength={8} inputmode="text"
+                        autocomplete="one-time-code" autocapitalize="characters" autocorrect="off" spellcheck={false}
                         data-pair="code" disabled={busy} />
-                    <button type="submit" class="oc-btn oc-btn--confirm pair__submit" data-pair="submit" disabled={busy || typed.trim().length === 0}>
+                    <Button type="submit" variant="confirm" data-pair="submit" disabled={busy || typed.trim().length === 0}>
                         {busy ? t('pair.entry.working') : t('pair.entry.submit')}
-                    </button>
+                    </Button>
                 </form>
             {/if}
         {/if}

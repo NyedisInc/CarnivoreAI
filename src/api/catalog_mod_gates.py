@@ -61,10 +61,6 @@ def register_installed(request: Any, install_id: str) -> str:
 
 
 def unregister_planned(plan: Any) -> None:
-    """Unregister the folders a replace is about to displace, so Claude never sees a half-moved mod (blocking).
-
-    Raises: HTTPException 409 when a settings file could not be changed (nothing has moved yet).
-    """
     refuse_unless_clean(_results([str(t.directory) for t in plan.targets if t.displaces is not None], False))
 
 

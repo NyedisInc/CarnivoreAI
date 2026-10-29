@@ -13,6 +13,7 @@ from src.core.project_authority import (
     require_writable,
     resolve_projects,
 )
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -29,36 +30,17 @@ def current_view(
 
 
 def readonly_http_error(exc: ProjectsReadOnlyError) -> HTTPException:
-    return HTTPException(
-        status_code=503,
-        detail=(
-            "cloude.db is unreachable, so project changes are refused. "
-            "Projects live only in cloude.db, so there is nothing else to "
-            f"apply this to. ({exc.detail})"
-        ),
-    )
+    return api_error(503, "projects_read_only", None, reason=exc.detail)
 
 
 def open_db_or_503(settings: Any):
-    """Open the authoritative database for a write, or raise 503.
-
-    Description: the write path opens its own connection rather than
-      reusing the one ``resolve_projects`` used and closed, because
-      sqlite3 connections are thread-affine and the two calls can land on
-      different worker threads.
-    Inputs: settings (Any) - the Settings singleton.
-    Output: sqlite3.Connection - caller must close it.
-    Raises: HTTPException 503 - the database could not be opened.
-    """
-    from src.core.db import DatastoreUnreadableError, connect, db_path_for
+    from src.core.db import DatastoreUnreadableError, db_path_for
+    from src.core.db_reuse.core_read import lend_pooled_or_raise
 
     try:
-        return connect(db_path_for(settings.get_state_dir()), create=False)
+        return lend_pooled_or_raise(db_path_for(settings.get_state_dir()))
     except DatastoreUnreadableError as exc:
-        raise HTTPException(
-            status_code=503,
-            detail=f"cloude.db is unreachable, so the change was refused. ({exc})",
-        )
+        raise api_error(503, "datastore_unavailable", exc, step="open_db_or_503") from exc
 
 
 def guard_writable(settings: Any) -> ProjectsView:
@@ -76,24 +58,24 @@ def authority_payload(settings: Any) -> Dict[str, Any]:
 
 
 def _storage_by_project(view: ProjectsView) -> Dict[int, Dict[str, Any]]:
-    """The pack ``storage`` object per project id for a list read; empty when the datastore is not readable.
-
-    Inputs: view (ProjectsView). Output: dict[int, dict]. Never raises: a listing must not fail because the
-    pack table could not be read (a project then shows ``storage`` null, "not measured").
-    """
     import sqlite3
     from contextlib import closing
 
     from src.config import settings
-    from src.core.project_pack import jobs
-    from src.core.project_pack.view import storage_by_project
+    from src.core.db import db_path_for
+    from src.core.db_reuse.change_cache import HOT_READS
+    from src.core.project_pack import jobs, store
+    from src.core.project_pack.view import storage_from_rows
+
+    def read_rows() -> Dict[int, Dict[str, Any]]:
+        with closing(open_db_or_503(settings)) as conn:
+            return store.all_rows(conn)
 
     if view.degraded:
         return {}
     try:
-        with closing(open_db_or_503(settings)) as conn:
-            roots = {item["id"]: item["root"] for item in view.projects}
-            return storage_by_project(conn, roots, jobs.progress_of)
+        rows = HOT_READS.fetch(db_path_for(settings.get_state_dir()), ("project_storage_rows",), read_rows)
+        return storage_from_rows(rows, {item["id"]: item["root"] for item in view.projects}, jobs.progress_of)
     except (HTTPException, sqlite3.Error) as exc:
         logger.warning("project_storage_list_unreadable", error=str(exc))
         return {}
@@ -148,30 +130,10 @@ def resolve_target(conn: Any, name: str) -> Dict[str, Any]:
     except ProjectNotFound:
         raise HTTPException(status_code=404, detail=f"Project '{name}' not found")
     except ProjectNameAmbiguous as exc:
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                f"'{name}' does not identify one project: {exc}. "
-                "Rename one of them before editing either."
-            ),
-        )
+        raise api_error(409, "project_ambiguous", exc, name=name) from exc
 
 
 def touch_project_best_effort(settings: Any, working_dir: str) -> Optional[Dict]:
-    """Mark a project most-recently-opened in the datastore.
-
-    Description: the replacement for ``Settings.move_project_to_top``,
-      called when a session starts in a directory. Best-effort in the
-      same way the original was - a session must never fail to start
-      because the launcher's ordering could not be updated - but unlike
-      the original it distinguishes "no project at that path" (a normal
-      miss, returns None) from "the datastore could not be reached" (a
-      warning in the log), rather than swallowing both in one bare
-      ``except Exception``.
-    Inputs: settings (Any) - the Settings singleton. working_dir (str).
-    Output: dict | None - the touched row, or None if nothing matched or
-      the update could not be attempted.
-    """
     from contextlib import closing
 
     from src.core.project_writes import touch_project_by_path

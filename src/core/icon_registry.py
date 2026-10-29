@@ -28,7 +28,7 @@ UNAVAILABLE_CODE = "icon_registry_unavailable"
 
 
 class IconRegistryUnavailable(Exception):
-    """The registry file could not be read, or named no icon at all."""
+    pass
 
 
 @dataclass(frozen=True)

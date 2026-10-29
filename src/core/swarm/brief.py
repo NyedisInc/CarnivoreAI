@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
+from src.core.swarm import fact_life
 from src.core.swarm.definition import EFFORTS
 from src.core.swarm.memory import SwarmFileError, refuse_secrets
 
@@ -97,8 +98,8 @@ def _todo(s: BriefSpec) -> str:
             f"context could finish it. When the work is done, call `swarm_card_finish` with a "
             f"one-paragraph result and short how-to-validate steps (the server refuses a "
             f"finish without them). If you cannot go on, call `swarm_card_release` with the "
-            f"reason. Never mark a card done: Done is the owner's call. Keep what you learn "
-            f"with `swarm_remember`, or pass it as `remember` on `swarm_card_finish`. If the order is unclear, ask {s.parent_name} with "
+            f"reason. Set `needs_owner` on the finish: false when the work is checked and complete (the card goes straight to Done), true only when the owner must answer, pick or do something before it can close, saying what in `owner_ask` (the card waits in Review). Memory is for rules only: "
+            f"{fact_life.MEMORY_BAR} Save one with `swarm_remember`, or pass it as `remember` on `swarm_card_finish`. If the order is unclear, ask {s.parent_name} with "
             f"`swarm_ask` before guessing: give a one-sentence `summary` the owner can answer without "
             f"reading code (no file names, line numbers or code; say what the choice changes for "
             f"the owner) and put every detail in `question`.\n")
@@ -124,14 +125,16 @@ def _report(s: BriefSpec) -> str:
     return (f"## {SECTION_REPORT}\n\nWhen the work meets the done-means list, file one "
             f"report with `swarm_report`: what you did, what changed, what you checked and "
             f"what is left. Questions go to {s.parent_name} with `swarm_ask`, a plain one-sentence "
-            f"`summary` first and every detail in `question`. Texts are for "
+            f"`summary` first and every detail in `question`; several questions at once go in ONE "
+            f"`swarm_ask` with typed `questions`, each marking your recommendation, never as a numbered "
+            f"list. Texts are for "
             f"top-priority alerts only.\n")
 
 
 def _done_rule(s: BriefSpec) -> str:
     if s.rank == "task":
         end = ("Your parent closes you once it accepts your report; your definition and "
-               "local memory are then erased, so file anything worth keeping with "
+               "local memory are then erased, so file a lasting rule that meets the memory bar with "
                "`swarm_remember` (or `remember` on `swarm_card_finish`) before you report.")
     else:
         end = ("When your report is accepted you go to sleep, not away: your memory is "

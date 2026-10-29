@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import secrets
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional
@@ -53,6 +54,7 @@ class ByoaiStore:
         self._path = Path(config_path)
         self._keys = keys or keys_module.KeyStore()
         self._clock = clock
+        self._touched = threading.local()
 
     @staticmethod
     def _block(data: Mapping[str, Any]) -> ByoaiConfig:
@@ -79,10 +81,21 @@ class ByoaiStore:
             block = self._block(data)
             change(block)
             block.revision += 1
-            checked = ByoaiConfig.model_validate(block.model_dump())
+            try:
+                checked = ByoaiConfig.model_validate(block.model_dump())
+            except ValidationError as exc:
+                raise ByoaiError(_first_error(exc)) from None
             return {**data, BYOAI_KEY: checked.model_dump(mode="json")}
 
-        outcome = config_writer.commit(self._path, mutate, precondition=precondition)
+        self._touched.items = {}
+        landed = False
+        try:
+            outcome = config_writer.commit(self._path, mutate, precondition=precondition)
+            landed = outcome.wrote
+        finally:
+            if not landed:
+                self._restore_keys(self._touched.items)
+            self._touched.items = {}
         if outcome.status == config_writer.STALE_REVISION:
             raise StaleRevision(f"byoai revision is {self._block(outcome.data).revision}")
         if not outcome.wrote:
@@ -90,6 +103,27 @@ class ByoaiStore:
         written = self._block(outcome.data)
         _notify_listeners(written.revision)
         return written
+
+    def _remember_key(self, connection_id: str) -> None:
+        items: Dict[str, Optional[str]] = getattr(self._touched, "items", {})
+        if connection_id in items:
+            return
+        previous = self._keys.get(connection_id)
+        if previous is None and not self._keys.confirmed_gone(connection_id):
+            return
+        items[connection_id] = previous
+        self._touched.items = items
+
+    def _restore_keys(self, items: Mapping[str, Optional[str]]) -> None:
+        for connection_id, previous in items.items():
+            try:
+                if previous is None:
+                    self._keys.delete(connection_id)
+                else:
+                    self._keys.set(connection_id, previous)
+            except ByoaiError as exc:
+                logger.error("byoai_key_restore_failed", connection_id=connection_id,
+                             error_type=type(exc).__name__)
 
     @staticmethod
     def _find(block: ByoaiConfig, connection_id: str) -> ConnectionConfig:
@@ -102,10 +136,12 @@ class ByoaiStore:
         preset = get_preset(item.preset)
         if auth_style(preset, item.options) in (AUTH_NONE, AUTH_CLI_ACCOUNT):
             raise ByoaiError(f"{preset.id} takes no key")
+        self._remember_key(item.id)
         item.key_hint = self._keys.set(item.id, key)
         item.key_host = key_origin(item.base_url)
 
     def _clear_key(self, item: ConnectionConfig) -> None:
+        self._remember_key(item.id)
         if not self._keys.delete(item.id) and not self._keys.confirmed_gone(item.id):
             raise ByoaiError("the keychain could not be reached, so the key was not removed; unlock it and try again")
         item.key_host = None

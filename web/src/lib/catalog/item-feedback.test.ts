@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
+// EVERYTHING THE MOCK FACTORY TOUCHES MUST BE `vi.hoisted`, INCLUDING THE
 const { authFetchCalls, authFetchAnswers, FakeApiError } = vi.hoisted(() => {
     class FakeApiError extends Error {
         readonly status: number;
@@ -41,25 +42,25 @@ const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, 
 
 describe('developerOf', () => {
     test('a handle opens the in-app profile and carries no github link by itself', () => {
-        expect(developerOf({ publisher: 'acme', author: null })).toEqual({
-            kind: 'publisher', handle: 'acme', profileHandle: 'acme', githubHref: null,
+        expect(developerOf({ publisher: 'example-owner', author: null })).toEqual({
+            kind: 'publisher', handle: 'example-owner', profileHandle: 'example-owner', githubHref: null,
         });
     });
 
     test('a server-stamped github login gives exactly https://github.com/<login>', () => {
-        const dev = developerOf({ publisher: 'acme', publisherGithub: 'acme-dev', author: null });
-        expect(dev).toMatchObject({ githubHref: 'https://github.com/acme-dev' });
+        const dev = developerOf({ publisher: 'example-owner', publisherGithub: 'example-owner', author: null });
+        expect(dev).toMatchObject({ githubHref: 'https://github.com/example-owner' });
     });
 
     test('a hostile handle or login never becomes a url or a profile', () => {
-        for (const bad of ['example.net/x', '../', 'Not A Handle', 'a/b', 'x?y=1']) {
+        for (const bad of ['evil.com/x', '../', 'Not A Handle', 'a/b', 'x?y=1']) {
             const dev = developerOf({ publisher: bad, publisherGithub: bad, author: null });
             expect(dev).toEqual({ kind: 'publisher', handle: bad, profileHandle: null, githubHref: null });
         }
     });
 
     test('a publisher present but the author also set - publisher wins', () => {
-        const dev = developerOf({ publisher: 'acme', author: 'NYX-9' });
+        const dev = developerOf({ publisher: 'example-owner', author: 'NYX-9' });
         expect(dev.kind).toBe('publisher');
     });
 
@@ -93,7 +94,7 @@ describe('sendNote', () => {
 
     test('an absent field on the answer comes back null, never undefined or a default', async () => {
         authFetchAnswers.push({});
-        const answer = await sendNote('acme/sme', 'hello');
+        const answer = await sendNote('example-owner/sme', 'hello');
         expect(answer).toEqual({ itemId: null, createdAt: null });
     });
 });

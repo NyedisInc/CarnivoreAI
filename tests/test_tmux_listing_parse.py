@@ -15,13 +15,12 @@ os.environ.setdefault("TOTP_SECRET", "testsecretnotreal")
 os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
 # ruff: noqa: E402
-from src.core.tmux_listing import (
+from src.core.tmux_listing import REASON_NO_SERVER, classify_listing_failure
+from src.core.tmux_stderr import (
     REASON_CONNECT_FAILED,
-    REASON_NO_SERVER,
     STDERR_CONNECT_FAILED,
     STDERR_NO_SERVER,
     STDERR_UNRECOGNISED,
-    classify_listing_failure,
     classify_tmux_stderr,
     looks_like_no_server,
 )
@@ -106,7 +105,7 @@ def test_a_socket_path_containing_parentheses_does_not_confuse_the_errno():
 
 
 def test_the_no_server_ALLOWLIST_is_exactly_one_errno():
-    from src.core.tmux_listing import _NO_SERVER_CONNECT_ERRNOS
+    from src.core.tmux_stderr import _NO_SERVER_CONNECT_ERRNOS
 
     assert _NO_SERVER_CONNECT_ERRNOS == frozenset({"no such file or directory"})
 
@@ -199,7 +198,7 @@ def test_the_split_is_BOUNDED_to_the_leading_field_count():
 
 
 def test_the_app_cannot_MINT_a_name_containing_the_delimiter():
-    from src.core.session_manager import _sanitize_tmux_name
+    from src.core.session_name_claim import sanitize_tmux_name as _sanitize_tmux_name
 
     assert FIELD_SEPARATOR not in _sanitize_tmux_name("api|prod")
     assert _sanitize_tmux_name("api|prod") == "api_prod"

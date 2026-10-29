@@ -21,6 +21,7 @@
   ],
   "how_to": [
     "Set CARNIVORE_ENGINE_HOST=launchd-agent, or write {\"strategy\": \"launchd-agent\"} to engine-host.json in the app's data folder, then open the app: the engine login service is registered and starts at login with no Dock icon and no window.",
+    "Turn 'start the engine at login' off to unregister the service; turn 'open carnivore in the background at login' on to also open the app with no window at login.",
     "Click the Dock icon while only the service runs: a real window opens and adopts the running engine.",
     "Uninstall Carnivore (the tray, or uninstall.sh) or run nuke.sh: the app unregisters the engine login service, both LaunchAgent labels go, your privacy rows are reset and your projects stay; terminal sessions keep running unless you add --stop-tmux."
   ],

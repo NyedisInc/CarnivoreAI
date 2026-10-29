@@ -115,6 +115,10 @@
         snapshot says its state in words and draws no figure (never zero). It reads the Pack roster store, pushed on <code>pack_machines</code>, with no timer
         while the push is up, and shares no clock with any other widget. Colours are <code>--oc-*</code> tokens only.</dd>
     <dt>runway</dt>
+    <dd><code>RunwayRenderer.svelte</code> (classes <code>viz-runway</code>, <code>viz-runway__row</code>, <code>viz-runway__verdict</code>): per provider account, the ledger's current
+        window in the shared <code>LimitGauge</code> with its pace marker and one sentence, "hits limit in 2h 10m, resets in 3h", from the burn slope of the stats quota
+        series (<code>runway.ts</code>, a straight line over the readings since the last reset). Yellow when it hits before the reset, coral at the limit;
+        unmeasured burn or reset reads unknown, never safe. Read only: the ledger never refreshes a token for this.</dd>
     <dt>swimlanes</dt>
     <dd><code>SwimlanesRenderer.svelte</code> (ECharts custom series; classes <code>viz-swim</code>, <code>viz-swim__canvas</code>, <code>viz-swim__key</code>): one lane per active conversation over
         the range, blocks of working (green), waiting (yellow) and idle (muted) from the activity minutes, with a thin cyan strip along each block's foot
@@ -134,6 +138,18 @@
     <dd><code>HealthRenderer.svelte</code> (classes <code>viz-health</code>, <code>viz-health__grid</code>, <code>viz-health__state</code>): the stats collector's own vital signs from the coverage read: state with the age of
         its last pass (coral past 45 seconds), backlog and replay, newest usage, missing sources, database size. Unmeasured reads unknown, never zero or fine.</dd>
     <dt>empty</dt>
+    <dd><code>EmptyState.svelte</code> (class <code>viz-empty</code>; inside a timeline card it sits in <code>analytics-empty</code>) is the ONE empty state of
+        every analytics card, timeline and every renderer alike: a single line at the label size in <code>--oc-text-muted</code>, mono, on the
+        card's own text edge, saying what will appear and when ("token use shows here once an agent replies in this period"). It
+        REPLACES the headline, readouts and chart; it never shows a giant "no data", a zero count, or the same sentence twice, and
+        a card still loading shows nothing or "loading history", never "no data". The line comes from <code>viz/empty.ts</code>
+        (<code>emptyTopic</code> picks tokens, cost, activity, waiting, starts, subagents, quota, ranking, conversations, live, vitals,
+        events, accounts or chart from the metric; the copy is <code>viz.empty_state.*</code> in the catalog). A blank figure is null OR
+        zero (<code>isBlank</code>). A grid that would draw bare axes under the line hides its canvas but keeps the box
+        (<code>viz-heat__canvas--empty</code>). A strip of figures (vitals, health) LEAVES OUT a figure that was not measured instead
+        of printing "no data", and says the one line only when nothing at all was measured. On a timeline an empty bucket of an
+        additive metric is drawn as zero (<code>cells/analytics/gap-fill.ts</code>), so a line drops to the floor instead of breaking.
+        <p class="viz-empty">token use shows here once an agent replies in this period</p></dd>
     <dt>settings</dt>
     <dd><code>VizSettings.svelte</code>: the edit-layout strip of the leaderboard, treemap, heat and live-ops renderers (title, renderer, metric, grouping, range,
         enabled, plus the renderer's own option), through <code>changeAnalyticsConfig</code> so undo and cancel cover it.</dd>

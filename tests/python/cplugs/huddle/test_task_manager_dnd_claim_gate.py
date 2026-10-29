@@ -9,7 +9,7 @@ from tests.python.cplugs.huddle.roles_rig import BASE
 from tests.python.cplugs.huddle.test_task_manager_routes import app, client, note, pasted  # noqa: F401
 from tests.python.cplugs.huddle.test_task_manager_tags import World, add, run, store_of
 
-REASON = "requested me in chat to take this one"
+REASON = "the owner asked me in chat to take this one"
 
 
 @pytest.fixture

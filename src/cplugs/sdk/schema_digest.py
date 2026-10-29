@@ -7,7 +7,7 @@ from typing import List
 from src.core.skills.digest import MODE_REGULAR, DigestEntry, digest_entries, hash_file
 
 SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas" / "extensions"
-SCHEMA_SET_DIGEST = "201fd58f8299b30df70ee17d891e519180cfa3e9cba76f4b6d0e4f7b69f052be"
+SCHEMA_SET_DIGEST = "9b289adc273449dd48f7031bcc4c388c173924f759dcd44fbf4db9054b5a2ff9"
 
 
 def schema_set_digest(root: Path = SCHEMA_DIR) -> str:

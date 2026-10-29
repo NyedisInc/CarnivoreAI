@@ -1,4 +1,4 @@
-<!-- position: relative -->
+<!-- as a duplicate -->
 <script lang="ts">
     import { t } from '../i18n/index.svelte';
     import IconButton from '../base/IconButton.svelte';
@@ -50,8 +50,8 @@
     aria-label={t('terminal.search.label')}
 >
     <div class="terminal-search__row">
-        <!-- something else -->
-        <input
+        
+        <input data-base-exempt="the terminal search box: panel key handling and focus bind this exact input (Field exposes its input only in the search variant)"
             bind:this={inputEl}
             bind:value={controller.query}
             oninput={() => controller.onType()}
@@ -66,7 +66,7 @@
         />
         
         <span class="terminal-search__count" aria-live="polite">{controller.countText}</span>
-        
+        <!-- the newest match -->
         
         <button
             type="button"
@@ -151,7 +151,7 @@
     </div>
 </div>
 
-<!-- hidden  pointer-events: none -->
+
 <div class="terminal-prompt-rail-host">
     <PromptRail rail={controller.rail} />
 </div>
@@ -164,7 +164,6 @@
 
 <style>
   @layer components {
-        /* --color- */
         :global(.terminal-container) {
             --terminal-search-match-bg: #4d3b30;
             --terminal-search-match-border: #8a5a44;
@@ -181,10 +180,6 @@
             right: 39px;
             z-index: 1110;
 
-            /* 560px fits a full path or a long flag beside the counter and
-             * the four controls without the field collapsing, and still
-             * leaves the pane readable behind it; the calc is the same
-             * "never overflow" clamp as before, now counting the rail. */
             width: min(560px, calc(100% - 54px));
             box-sizing: border-box;
             padding: 6px var(--oc-space-2);
@@ -211,7 +206,6 @@
             gap: 6px;
         }
 
-        /* min-width: 0 */
         .terminal-search__input {
             flex: 1 1 auto;
             min-width: 0;
@@ -244,7 +238,6 @@
             white-space: nowrap;
         }
 
-        /* the prompts-only toggle */
         .terminal-search__tip {
             display: inline-flex;
             flex: 0 0 auto;

@@ -1,4 +1,3 @@
-/* --color- */
 
 .text-prompt-modal.na-flow .modal-content {
     max-width: 500px;
@@ -127,7 +126,6 @@
     color: var(--oc-text-muted);
 }
 
-/* padding */
 .folder-picker-list {
     overflow-x: hidden;
     padding: 4px;

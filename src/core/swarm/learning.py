@@ -11,7 +11,7 @@ import structlog
 
 from src.core import db
 from src.core.db import transaction
-from src.core.swarm import push, settings, store
+from src.core.swarm import fact_life, push, settings, store
 from src.core.trail_entry import utc_now
 
 logger = structlog.get_logger()
@@ -73,9 +73,9 @@ def _cut(text: str) -> str:
 def render(items: List[Dict[str, Any]]) -> List[str]:
     if not items:
         return []
-    lines = ["", f"learning inbox ({len(items)} waiting). Each item is something to remember. Stamp one with swarm_remember "
-             "(title, scope craft or project, learning_id): the server copies the text, so the words stay exactly as written. "
-             "Leave an item you will not keep."]
+    lines = ["", f"learning inbox ({len(items)} waiting). Stamp an item with swarm_remember "
+             "(title, scope craft or project, learning_id) ONLY if it meets the memory bar; the server copies the text, so the "
+             "words stay exactly as written. Leave every other item. " + fact_life.MEMORY_BAR]
     for item in items:
         who = _KIND_LABEL.get(item["kind"], item["kind"])
         lines += [f"- item {item['id']} ({who}):", *(QUOTE + ln for ln in _cut(item["text"]).splitlines() or [""])]

@@ -1,10 +1,9 @@
 
-/* keep awake */
 export const LETTERS = Object.freeze([
     { letter: 'n', meaning: 'new agent or session, show conversation backups, show status counts', verbs: ['new'], ids: ['new-session', 'new-in-folder', 'new-agent', 'agent', 'sort:name', 'show-restores', 'show-counts'], shares: 'show conversation backups is the timeline widget menu and show counts the TM Mark II widget menu, neither of which draws a new item' },
     { letter: 't', meaning: 'new terminal', ids: ['new-terminal-here', 'terminal', 'sort:project', 'show-stats', 'show-shells'], shares: 'sort and show-stats are widget and view menu items, no new-terminal item there; show shells is the war room widget menu' },
     { letter: 'b', meaning: 'new browser, bookmark, background, blueprint, show browsers, show bookmarks, back (close the open crosstalk conversation)', ids: ['browser', 'bookmark', 'load-blueprint', 'background', 'show-browsers', 'show-bookmarks', 'close-thread'], shares: 'show browsers is the war room widget menu and close the conversation the crosstalk widget menu, each of which draws none of the others; show bookmarks is the timeline widget menu, which also draws bookmark this: the clash rule keeps b on show bookmarks (earlier) and bookmark this takes its label\'s first free letter' },
-    { letter: 'p', meaning: 'pin, project colors', ids: ['pin', 'pin-bar', 'project', 'scope:project', 'project-colors'], shares: 'the + menu draws project and no pin; this project is the crosstalk widget menu scope choice, which draws no pin; project colors is the TM Mark II widget menu, which draws no pin' },
+    { letter: 'p', meaning: 'pin, project colors, open a file path', ids: ['pin', 'pin-bar', 'project', 'scope:project', 'project-colors', 'open-path'], shares: 'the + menu draws project and no pin; this project is the crosstalk widget menu scope choice, which draws no pin; project colors is the TM Mark II widget menu, which draws no pin; open path is the files widget menu, which draws none of the other p items' },
     { letter: 'g', meaning: 'go: send to, group icon, art, new group, git ignored files, group by area, open in terminal app', ids: ['send-to', 'group-icon', 'regenerate-art', 'group', 'git-ignored-files', 'group-by-area', 'open-in-terminal'], shares: 'the group heading draws the icon, the row menu send to, the + menu new group, the files widget menu git ignored files, the TM Mark II widget menu group by area, the terminal widget menu open in terminal app (o is its pop out)' },
     { letter: 'f', meaning: 'fork, focus the main window', ids: ['fork', 'focus-main-window'], shares: 'focus is the widget menu, fork the row menu' },
     { letter: 'c', meaning: 'color, change the folder a session lives in, collapse all folders, show paired computers, show compacts, accordion', ids: ['pick-color', 'colour', 'color', 'color-style', 'move-to-folder', 'collapse-all', 'show-computers', 'show-compacts', 'accordion'], shares: 'accordion is the TM Mark II widget menu; show compacts is the timeline widget menu; show computers is the war room widget menu; colour is a Layout or group row item and move to folder a live agent row item: no row menu draws both (every other letter is taken by an item a live agent row draws); collapse all is the files widget menu' },
@@ -23,9 +22,9 @@ export const LETTERS = Object.freeze([
     { letter: 'l', meaning: 'later: schedule; show leaders; lock this device; list project first', ids: ['schedule', 'sort:last_used', 'show-leaders', 'logout', 'list-project-first'], shares: 'the account and view menus draw neither schedule nor the sort; list project first is the files widget menu' },
     { letter: 'k', meaning: 'close, kill, remove from the bar', ids: ['close', 'close-widget', 'remove-widget', 'close-tab'] },
     { letter: 'y', meaning: 'copy (yank), open a copy of a conversation backup', verbs: ['copy'], ids: ['copy-path', 'copy-session-id', 'open-copy'] },
-    { letter: 'i', meaning: 'show path, set image, include dot files', ids: ['show-path', 'set-image', 'include-dot-files'], shares: 'set image is the swarm node menu, include dot files the files widget menu' },
+    { letter: 'i', meaning: 'show path, set image, include dot files, edit the rail icons', ids: ['show-path', 'set-image', 'include-dot-files', 'edit-rail-icons', 'done-rail-icons'], shares: 'set image is the swarm node menu, include dot files the files widget menu, the rail icons the sidebar rail menu' },
     { letter: 'x', meaning: 'x-talk, remove image, clear color', ids: ['crosstalk', 'remove-image', 'clear-company-color'], shares: 'image and color clearing never sit beside crosstalk' },
-    { letter: 'q', meaning: 'quiet: messaging, do not disturb; squeeze long sleeps', ids: ['messaging', 'huddle-do-not-disturb', 'squeeze-sleeps'], shares: 'the same bind-or-silence slot; squeeze long sleeps is the timeline widget menu, which draws neither' },
+    { letter: 'q', meaning: 'quiet: messaging; squeeze long sleeps', ids: ['messaging', 'squeeze-sleeps'], shares: 'the same bind-or-silence slot; squeeze long sleeps is the timeline widget menu, which draws neither' },
     { letter: 'u', meaning: 'mark unread, mark read', ids: ['mark-unread', 'mark-read'], shares: 'mark read is drawn only on a finished unread row, beside the mark unread toggle (clear unread); the earlier item keeps u and the clash rule gives the later one a free letter' },
     { letter: 'j', meaning: 'make project lead, just changes', ids: ['huddle-project-lead', 'just-changes'], shares: 'just changes is the files widget menu, project lead the row menu' },
     { letter: 'r', meaning: 'rename (any rename-* id), recent sort, reload, show restarts, mark all as read', verbs: ['rename'], ids: ['sort:recent', 'reload', 'show-restarts', 'mark-all-read'], shares: 'reload is the files widget menu, which draws no rename or sort; show restarts is the timeline widget menu and mark all as read the crosstalk widget menu, neither of which draws a rename or sort' },
@@ -56,7 +55,6 @@ const BY_VERB = Object.freeze(
 const KEYABLE = /[a-z0-9]/;
 const FALLBACK = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
-/* something else */
 const RESERVED = new Set([BY_VERB.delete, BY_VERB.archive, BY_ID.close]);
 
 
@@ -65,7 +63,6 @@ export function registeredKey(id) {
     return BY_ID[id] ?? BY_VERB[id.split('-')[0] ?? ''] ?? null;
 }
 
-/* label: ' */
 export function assignMenuKeys(items) {
     const used = new Set();
     const out = items.map((item) => {

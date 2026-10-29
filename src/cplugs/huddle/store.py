@@ -5,20 +5,22 @@ import sqlite3
 import time
 from contextlib import closing
 from datetime import datetime
-from typing import Callable, ContextManager, Dict, List, Mapping, Optional, Sequence
+from typing import Callable, ContextManager, Dict, List, Mapping, Optional, Sequence, Set
 
 import structlog
 
 from src.cplugs.huddle.cards import flow
 from src.cplugs.huddle.cards.flow import CardAct
 from src.cplugs.huddle import actor_log, fork as forks, from_project, groups, github_issue, item_marker, kinds, lane, lifecycle, lineage, original_ask, perceived_ask as perceived_ask_mod, review, review_checks as review_checks_mod, rules, title as titles
-from src.cplugs.huddle import status_lines
-from src.cplugs.huddle import blockers, child_hold, files as item_files, item_owner, moves, late_results, owner_guards, provisional, quotes, reply_return, review_lock, rich_ask, schedule_offer, sends, triggers, wait_guard, waits
+from src.cplugs.huddle import status_lines, store_identity
+from src.cplugs.huddle import blockers, child_hold, files as item_files, item_owner, moves, late_results, owner_guards, provisional, quotes, reopen_state, reply_return, review_lock, rich_ask, schedule_offer, sends, triggers, waits
 from src.cplugs.huddle.rules import CLAUDE, JOE, TaskManagerForbidden, TaskManagerInvalid, TaskManagerNotFound, TaskManagerStale
 from src.cplugs.huddle.wire import ITEM_COLS, MSG_COLS, item_dict, message_dict, numbers_in_view
 from src.cplugs.huddle.store_claims import StoreClaims
+from src.cplugs.huddle.store_files import StoreFiles
 from src.cplugs.huddle.store_reads import StoreReads, thread_asks
-from src.core.db_reuse.change_cache import CACHE
+from src.cplugs.huddle.store_triggers import StoreTriggers
+from src.cplugs.sdk.change_cache import CACHE
 from src.cplugs.sdk import CplugStorage, work
 from src.cplugs.sdk.storage import CplugSchemaError
 
@@ -27,7 +29,7 @@ logger = structlog.get_logger()
 OPTIONAL_COLUMNS = frozenset({*review.FIELDS, review_checks_mod.FIELD, titles.FIELD, item_marker.COLUMN, item_marker.LEGACY_REASON_COLUMN, github_issue.FIELD, perceived_ask_mod.FIELD})
 
 
-class TaskManagerStore(StoreReads, StoreClaims):
+class TaskManagerStore(StoreReads, StoreClaims, StoreFiles, StoreTriggers):
 
     def __init__(self, storage: CplugStorage, notify: Callable[[str], None],
                  clock: Callable[[], float] = time.time, view: str = lifecycle.VIEW_AREA,
@@ -40,6 +42,9 @@ class TaskManagerStore(StoreReads, StoreClaims):
 
     def _connect(self, write: bool) -> sqlite3.Connection:
         return self._storage.connect(write)
+
+    def _immediate(self) -> ContextManager[sqlite3.Connection]:
+        return work.write_tx(self._connect, set(), self._commit_notify)
 
     def _read_connection(self) -> sqlite3.Connection:
         return self._storage.connect_read()
@@ -79,10 +84,6 @@ class TaskManagerStore(StoreReads, StoreClaims):
             out.update(CACHE.fetch(path, ("numbers", key, self._view), lambda key=key: self._numbers(conn, [key])))
         return out
 
-    def numbers(self, list_keys: Sequence[str]) -> Dict[int, int]:
-        with closing(self._read_connection()) as conn:
-            return self._numbers_cached(conn, list_keys)
-
     def _acted_on(self, item_id: int) -> None:
         if self._acted is None:
             return
@@ -109,7 +110,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
             sends.stamp_joe(conn, [item_id], seq)
 
     def mark_seen(self, item_id: int, message_id: Optional[int] = None, through: Optional[int] = None) -> dict:
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             if message_id is not None:
                 changed = kinds.read_post(conn, item_id, message_id)
@@ -168,9 +169,9 @@ class TaskManagerStore(StoreReads, StoreClaims):
         reviewing = {**review.clean_fields(review_fields or {}), **titles.clean_fields(title), **item_marker.clean_fields(marker),
                      **github_issue.clean_field(github_issue_url), **perceived_ask_mod.clean_fields(perceived_ask)}
         if note and actor != JOE:
-            raise TaskManagerForbidden("only the owner writes an item's note")
+            raise TaskManagerForbidden("only joe writes an item's note")
         now = self._clock()
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             group_id = groups.check_group(conn, list_key, group)
             seq = self._next_seq(conn)
             item_id = self._insert_item(conn, list_key, text, actor=actor, seq=seq, now=now, note=note, kind=kind, group_id=group_id,
@@ -192,7 +193,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
         rules.check_actor(actor)
         target = rules.check_list_key(list_key) if list_key is not None else None
         now = self._clock()
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             parent = self._row(conn, item_id)
             forks.check_parent(actor, parent, parent_state)
             fork_change = forks.plan_state(actor, forks.NEW_ITEM, fork_state)
@@ -254,7 +255,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
                wait: Optional[Mapping[str, object]] = None, wait_by: str = "", review_checks: Optional[Sequence[str]] = None) -> dict:
         rules.check_actor(actor)
         state = rules.canonical_state(state)
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             rules.check_not_swarm_card(actor, row["swarm_ref"])
             if expected_revision is not None and expected_revision != row["revision"]:
@@ -272,22 +273,23 @@ class TaskManagerStore(StoreReads, StoreClaims):
             new_note = row["note"]
             if note is not None:
                 if actor != JOE:
-                    raise TaskManagerForbidden("only the owner writes an item's note")
+                    raise TaskManagerForbidden("only joe writes an item's note")
                 new_note = rules.clean_text(note, "note", rules.MAX_NOTE, allow_blank=True)
             flagging = item_marker.clean_fields(marker)
-            reviewing = {**review.clean_fields(review_fields or {}), **review_checks_mod.build(review_checks), **titles.clean_fields(title), **flagging,
-                         **github_issue.clean_field(github_issue_url), **perceived_ask_mod.clean_fields(perceived_ask)}
+            reviewing = {**review.clean_fields(review_fields or {}), **review_checks_mod.build(review_checks), **titles.clean_fields(title), **flagging, **github_issue.clean_field(github_issue_url), **perceived_ask_mod.clean_fields(perceived_ask)}
             claude_done = bool(row["claude_done"])
             if actor == CLAUDE and state is not None:
                 claude_done = state == rules.REVIEW
             elif actor == JOE and state == rules.OPEN:
                 claude_done = False
             restored = reply_return.restore_to_done(conn, row, actor, state, act, decided)
+            reopened = None if moves.is_swarm_lane(row) or not reopen_state.is_reopen(actor, row["state"], approve) else reopen_state.state_after_reopen(conn, row)
             if restored is not None:
                 new_state, decided = rules.DONE, restored
+            elif reopened is not None:
+                new_state, claude_done = reopened, reopened == rules.REVIEW
             else:
-                new_state = rules.next_state(actor, row["state"], approve=approve, state=state,
-                                             note=new_note, claude_done=claude_done, swarm_lane=moves.is_swarm_lane(row))
+                new_state = rules.next_state(actor, row["state"], approve=approve, state=state, note=new_note, claude_done=claude_done, swarm_lane=moves.is_swarm_lane(row))
             review_lock.check_tick(conn, row, new_state, actor, act=act, decided=decided, now=self._clock())
             new_state, decided = moves.repeat_tick(row, actor, new_state, decided, act)
             new_state, decided = moves.checkpoint(conn, row, new_state, actor, act, decided, self._clock())
@@ -306,7 +308,6 @@ class TaskManagerStore(StoreReads, StoreClaims):
             holding = child_hold.plan(conn, row, wait, new_state, actor, act)
             parking = (waits.prepare_park(conn, row, wait, wait_by, self._clock())
                        if not holding and wait is not None and actor == CLAUDE and new_state == rules.WAITING and act is None and not moves.is_swarm_lane(row) else None)
-            wait_guard.check(conn, row, new_state, actor, trigger_change, parking)
             ends_claim = actor == CLAUDE and state == rules.OPEN
             if not review_changed and trigger_change is None and parking is None and not holding and not (ends_claim and row["claude_working"]) and (
                     new_text, new_note, new_state, claude_done, new_kind) == (
@@ -349,7 +350,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
         rules.check_actor(actor)
         if actor != JOE:
             raise TaskManagerForbidden("only the owner ticks a review check")
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             stored = review_checks_mod.tick(row[review_checks_mod.FIELD], check_id, checked, actor, self._clock())
             before = review_checks_mod.parse(row[review_checks_mod.FIELD])
@@ -370,7 +371,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
             return [r["id"] for r in rows if r is not None and reply_return.awaiting_answer(conn, r)]
 
     def retire_swarm_ref(self, item_id: int) -> None:
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             ref = row["swarm_ref"]
             if ref in rules.NOT_A_CARD_REFS or ref.startswith(rules.CLOSED_REF_PREFIX):
@@ -401,21 +402,23 @@ class TaskManagerStore(StoreReads, StoreClaims):
             raise TaskManagerNotFound(f"no deleted huddle item {item_id}")
         return {"id": item_id, "list": row["list_key"], "deleted": True, "revision": row["revision"]}
 
-    def delete(self, item_id: int, *, actor: str, expected_revision: Optional[int] = None) -> dict:
+    def delete(self, item_id: int, *, actor: str, expected_revision: Optional[int] = None, reason: str = "") -> dict:
         if rules.check_actor(actor) != JOE:
-            raise TaskManagerForbidden("only the owner deletes an item")
-        with closing(self._connect(True)) as conn, conn:
+            raise TaskManagerForbidden("only joe deletes an item")
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             if expected_revision is not None and expected_revision != row["revision"]:
                 raise TaskManagerStale("the item changed since you read it", current=item_dict(row))
-            flow.on_tombstone(conn, [row], self._clock(), actor_log.by_for(actor))
+            flow.on_tombstone(conn, [row], self._clock(), actor_log.by_for(actor), detail=reason)
             seq = self._next_seq(conn)
             conn.execute("UPDATE work_items SET deleted = 1, flag_color = NULL, flag_reason = NULL, seq = ?, updated_at = ?, revision = revision + 1 WHERE id = ?",
                          (seq, self._clock(), item_id))
             sends.stamp_joe(conn, [item_id], seq)
             triggers.cancel(conn, item_id)
+            named = moves.thread_file_names(conn, item_id)
             moves.purge(conn, item_id)
         moves.remove_folder(item_files.item_dir(self._storage, item_id))
+        moves.remove_task_files(item_id, store_identity.of(self._storage), named)
         self._commit_notify(row["list_key"])
         triggers.nudge()
         logger.info("task_manager_item_deleted", item=item_id)
@@ -430,7 +433,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
             here = moving["list_key"]
         if here == list_key:
             return self.item(item_id) if group is groups.UNSET else groups.GroupWriter(self).set_group(item_id, group, actor=actor)
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             source = row["list_key"]
             target_group = groups.check_group(conn, list_key, None if group is groups.UNSET else group)
@@ -449,70 +452,12 @@ class TaskManagerStore(StoreReads, StoreClaims):
         logger.info("task_manager_item_moved", item=item_id, source=source, target=list_key, actor=actor)
         return self.item(item_id)
 
-    def next_trigger_due(self) -> Optional[float]:
-        with closing(self._read_connection()) as conn:
-            return triggers.next_due(conn)
-
-    def scheduled_items(self) -> List[dict]:
-        tag = item_owner.TAG_COLUMN
-        with closing(self._read_connection()) as conn:
-            rows = conn.execute(f"SELECT i.id AS id, i.list_key AS list_key, i.title AS title, i.text AS text, i.{tag} AS {tag}, {triggers.JOINED_COLS} "
-                                "FROM work_item_triggers t CROSS JOIN work_items i ON i.id = t.item_id WHERE i.deleted = 0").fetchall()
-        return [{"id": r["id"], "list": r["list_key"], "title": r["title"], "text": r["text"], item_owner.TAG_COLUMN: r[item_owner.TAG_COLUMN],
-                 triggers.FIELD: triggers.wire(r)} for r in rows]
-
-    def claim_due_triggers(self) -> List[dict]:
-        now = self._clock()
-        due: List[dict] = []
-        touched = set()
-        with closing(self._connect(True)) as conn, conn:
-            ids = triggers.due_ids(conn, now)
-            seq = self._next_seq(conn) if ids else 0
-            for item_id in ids:
-                row = conn.execute(f"SELECT {ITEM_COLS} FROM work_items WHERE id = ?", (item_id,)).fetchone()
-                parked = row["state"] == rules.TODO
-                on_joe = not parked and lifecycle.blocks_schedule(row, lifecycle.status(row, bool(lifecycle.asking_ids(conn, [item_id]))))
-                blocked = not parked and not on_joe and row["state"] == rules.WAITING
-                if not triggers.claim(conn, item_id, now, deliver=not (parked or on_joe or blocked)):
-                    continue
-                conn.execute("UPDATE work_items SET seq = ? WHERE id = ?", (seq, item_id))
-                touched.add(row["list_key"])
-                if parked or on_joe or blocked:
-                    if not conn.execute("SELECT repeat_rule FROM work_item_triggers WHERE item_id = ?", (item_id,)).fetchone()[0]:
-                        triggers.record_error(conn, item_id, triggers.SKIP_PARKED if parked else triggers.SKIP_JOE if on_joe else triggers.SKIP_WAITING, now)
-                    continue
-                due.append({"id": row["id"], "list": row["list_key"], "title": row["title"], "text": row["text"]})
-        for key in sorted(touched):
-            self._commit_notify(key)
-        return due
-
-    def claim_now(self, item_id: int) -> dict:
-        with closing(self._connect(True)) as conn, conn:
-            row = self._row(conn, item_id)
-            if row["state"] in rules.APPROVED_STATES or row["state"] == rules.TODO:
-                raise rules.TaskManagerInvalid("an approved or back-burner item is not sent; reopen it first")
-            triggers.claim_now(conn, item_id, self._clock())
-            conn.execute("UPDATE work_items SET seq = ? WHERE id = ?", (self._next_seq(conn), item_id))
-        self._commit_notify(row["list_key"])
-        triggers.nudge()
-        return {"id": row["id"], "list": row["list_key"], "title": row["title"], "text": row["text"]}
-
-    def record_trigger_error(self, item_id: int, message: str) -> None:
-        with closing(self._connect(True)) as conn, conn:
-            row = conn.execute("SELECT list_key FROM work_items WHERE id = ? AND deleted = 0", (item_id,)).fetchone()
-            if row is None:
-                return
-            triggers.record_error(conn, item_id, message, self._clock())
-            conn.execute("UPDATE work_items SET seq = ? WHERE id = ?", (self._next_seq(conn), item_id))
-        self._commit_notify(row["list_key"])
-        logger.warning("task_manager_trigger_failed", item=item_id, error=message[:200])
-
     def remove_completed(self, list_key: str, *, actor: str) -> dict:
         if rules.check_actor(actor) != JOE:
-            raise TaskManagerForbidden("only the owner removes items")
+            raise TaskManagerForbidden("only joe removes items")
         rules.check_list_key(list_key)
         marks = ",".join("?" for _ in rules.APPROVED_STATES)
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             gone = conn.execute(
                 f"SELECT {ITEM_COLS} FROM work_items WHERE list_key = ? AND deleted = 0 AND state IN ({marks}) ORDER BY position, id",
                 (list_key, *sorted(rules.APPROVED_STATES))).fetchall()
@@ -530,11 +475,11 @@ class TaskManagerStore(StoreReads, StoreClaims):
 
     def reorder(self, list_key: str, ids: Sequence[int], *, actor: str, expected_revision: int) -> dict:
         if rules.check_actor(actor) != JOE:
-            raise TaskManagerForbidden("only the owner reorders a list")
+            raise TaskManagerForbidden("only joe reorders a list")
         rules.check_list_key(list_key)
         if not isinstance(ids, (list, tuple)) or not all(isinstance(i, int) and not isinstance(i, bool) for i in ids):
             raise TaskManagerInvalid("ids must be a list of item ids")
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             revision = self._list_revision(conn, list_key)
             stored = conn.execute(f"SELECT {ITEM_COLS} FROM work_items WHERE list_key = ? AND deleted = 0 {groups.ITEM_ORDER}", (list_key,)).fetchall()
             rows = [(r["id"], r["lane"]) for r in stored]
@@ -554,7 +499,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
         return self.list_items(list_key)
 
     def note_system(self, item_id: int, text: str) -> None:
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             seq = self._next_seq(conn)
             forks.post_info(conn, item_id, text, seq=seq, now=self._clock())
@@ -562,7 +507,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
         self._commit_notify(row["list_key"])
 
     def stamp_from_project(self, item_id: int, project_id: str, project_name: str) -> bool:
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             if not from_project.is_unset(row):
                 return False
@@ -574,13 +519,13 @@ class TaskManagerStore(StoreReads, StoreClaims):
 
     def mark_answered(self, item_id: int, *, actor: str) -> dict:
         rules.check_actor(actor)
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             rules.check_not_swarm_card(actor, row["swarm_ref"])
             wait_asked = conn.execute("SELECT 1 FROM work_messages WHERE item_id = ? AND kind = 'question' AND answered = 0 AND category = ?",
                                       (item_id, "wait_stuck")).fetchone() is not None
             if wait_asked and actor != JOE:
-                raise TaskManagerForbidden("the owner answers a stuck-wait question (push, drop or wait longer); it cannot be closed for the owner")
+                raise TaskManagerForbidden("the owner answers a stuck-wait question (push, drop or wait longer); it cannot be closed for him")
             if conn.execute("SELECT 1 FROM work_messages WHERE item_id = ? AND kind = 'question' AND answered = 0",
                             (item_id,)).fetchone():
                 seq = self._next_seq(conn)
@@ -609,7 +554,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
              offer: Optional[Mapping[str, str]] = None, ack_through: Optional[int] = None) -> dict:
         text = rules.clean_text(text, "text", rules.MAX_MESSAGE, allow_blank=allow_blank)
         kinds.resolve(kind, actor, lifecycle.OPEN)
-        with closing(self._connect(True)) as conn, conn:
+        with self._immediate() as conn:
             row = self._row(conn, item_id)
             kind = kinds.resolve(kind, actor, lifecycle.status(row, item_id in lifecycle.asking_ids(conn, [item_id])))
             if kind == kinds.ANSWER:
@@ -635,6 +580,7 @@ class TaskManagerStore(StoreReads, StoreClaims):
                 "INSERT INTO work_messages (item_id, author, kind, text, created_at, seq, author_key, parts, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (item_id, actor, kind, text, self._clock(), seq, author_key or (rules.OWNER_KEY if actor == JOE else ""), parts, category))
             message_id = cur.lastrowid
+            item_files.require_present(self._storage, parts)
             conn.execute("UPDATE work_items SET seq = ? WHERE id = ?", (seq, item_id))
             if actor == CLAUDE:
                 owner_guards.after_agent_post(conn, row, kind, text, author_key, seq=seq, now=self._clock())
@@ -663,8 +609,10 @@ class TaskManagerStore(StoreReads, StoreClaims):
         return {"item": self.item(item_id), "message": message}
 
     def accept_schedule(self, item_id: int, message_id: int) -> dict:
-        with closing(self._connect(True)) as conn, conn:
+        touched: Set[str] = set()
+        with work.write_tx(self._connect, touched, self._commit_notify) as conn:
             row = self._row(conn, item_id)
+            touched.add(row["list_key"])
             found = conn.execute("SELECT parts FROM work_messages WHERE id = ? AND item_id = ? AND author = ?", (message_id, item_id, CLAUDE)).fetchone()
             offer = schedule_offer.read(found["parts"]) if found else None
             if found is None or offer is None:
@@ -677,6 +625,5 @@ class TaskManagerStore(StoreReads, StoreClaims):
             conn.execute("UPDATE work_messages SET parts = ?, seq = ? WHERE id = ?", (schedule_offer.accept(found["parts"], stamp), seq, message_id))
             conn.execute("UPDATE work_items SET seq = ? WHERE id = ?", (seq, item_id))
             message = message_dict(conn.execute(f"SELECT {MSG_COLS} FROM work_messages WHERE id = ?", (message_id,)).fetchone())
-        self._commit_notify(row["list_key"])
         logger.info("task_manager_schedule_accepted", item=item_id, message=message_id)
         return {"offer": message["schedule"], "message": message}

@@ -42,7 +42,7 @@ SPECS = (
                     "unless Beast Mode is armed.",
         properties={**_NAME, "machine": {"type": "string"}, "full": {"type": "boolean"}}, required=("project",), invoke=_sync,
         summary=lambda args, _t: f"carry new commits of project {json.dumps(args.get('project'))} to {json.dumps(args.get('machine') or 'its replicas')}",
-        example={"project": "demo", "machine": "hosta"},
+        example={"project": "demo", "machine": "studio"},
     ),
     ra.RouteTool(
         name="project_github_account_get", route="src.api.project_transport_routes:get_github_account", gate=ra.READ,
@@ -56,7 +56,7 @@ SPECS = (
                     "the project is air-gapped. Waits for the owner unless Beast Mode is armed.",
         properties={**_NAME, "account": {"type": ["string", "null"], "maxLength": 64}}, required=("project",), invoke=_account_set,
         summary=lambda args, _t: f"use GitHub account {json.dumps(args.get('account'))} for project {json.dumps(args.get('project'))}",
-        example={"project": "demo", "account": "acme"},
+        example={"project": "demo", "account": "example-owner"},
     ),
     ra.RouteTool(
         name="project_publish_preview", route="src.api.project_transport_routes:get_publish_card", gate=ra.READ,

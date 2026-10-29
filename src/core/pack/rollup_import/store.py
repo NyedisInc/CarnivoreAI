@@ -13,7 +13,6 @@ from src.core.pack.rollup_import.ddl import COUNTER_TABLE, STATE_TABLE, USAGE_TA
 
 logger = structlog.get_logger()
 
-# conversation id
 MAX_ID_CHARS = 256
 COST_AT = 6
 

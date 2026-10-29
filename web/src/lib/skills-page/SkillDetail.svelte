@@ -4,14 +4,14 @@
     import { MANAGER_KEYS } from '../manager-frame/manager-model';
     import {
         CLAUDE_STATE_KEYS,
-        switchable,
-        targetFile,
         type ContextChoice,
         type SkillItem,
     } from './skills-model';
     import ContentsBlock from '../catalog/ContentsBlock.svelte';
     import UsageFacts from '../catalog/UsageFacts.svelte';
     import type { InstalledItem } from '../catalog/types';
+    import { canSwitchHarness, deciderOf, removeBlock } from '../skill-page/model';
+    import { originOf, whyNot, writesNote } from '../skill-page/skill-words';
     import SkillHealth from './SkillHealth.svelte';
     import SkillProvenance from './SkillProvenance.svelte';
     import type { Tripwire } from './skill-state';
@@ -49,41 +49,6 @@
     const CODEX_CHOICES = ['on', 'off'] as const;
 
     let asking = $state<string | null>(null);
-
-    function decider(harness: 'claude' | 'codex'): SkillLocationRow | undefined {
-        const mine = group.locations.filter((l) => l.harness === harness);
-        return mine.find((l) => l.shadowed_by === null) ?? mine[0];
-    }
-
-    function canSwitch(harness: 'claude' | 'codex'): boolean {
-        return group.locations.some((l) => l.harness === harness && switchable(l, context));
-    }
-
-    function whyNot(harness: 'claude' | 'codex'): string {
-        const loc = decider(harness);
-        if (harness === 'codex' && loc && loc.toggle.kind !== 'none' && !loc.read_only) {
-            return t('skills.detail.codex_global_only');
-        }
-        return t('skills.detail.not_switchable', { reason: loc?.toggle.reason ?? loc?.scope ?? '' });
-    }
-
-    function writesNote(harness: 'claude' | 'codex'): string {
-        const file = targetFile(context, harness);
-        if (harness === 'codex') {
-            return t(file === 'project' ? 'skills.detail.writes_codex_project' : 'skills.detail.writes_codex_user');
-        }
-        return t(file === 'local' ? 'skills.detail.writes_local' : 'skills.detail.writes_user');
-    }
-
-    function originOf(loc: SkillLocationRow): string {
-        if (loc.scope === 'plugin') return t('skills.loc.origin_plugin', { plugin: loc.plugin ?? '' });
-        if (loc.scope === 'system') return t('skills.loc.origin_system');
-        const managed = loc.managed;
-        if (!managed) return t('skills.loc.origin_foreign');
-        const params = { item: managed.item_id ?? '', version: managed.version ?? '' };
-        if (managed.source === 'sidecar') return t('skills.loc.origin_sidecar', params);
-        return t(managed.update_available ? 'skills.loc.origin_catalog_update' : 'skills.loc.origin_catalog', params);
-    }
 
     function scopeOfId(id: string | null): string {
         const winner = group.locations.find((l) => l.location_id === id);
@@ -123,10 +88,10 @@
     <section class="sk-section" aria-label={t('skills.detail.state')}>
         <h3 class="oc-label">{t('skills.detail.state')}</h3>
         {#each item.harnesses as harness (harness)}
-            {@const loc = decider(harness)}
+            {@const loc = deciderOf(group, harness)}
             <div class="sk-harness" data-harness={harness}>
                 <span class="sk-harness__name">{t(`skills.harness.${harness}`)}</span>
-                {#if canSwitch(harness)}
+                {#if canSwitchHarness(group, harness, context)}
                     <div
                         class="sk-states"
                         role="group"
@@ -144,11 +109,11 @@
                             >
                         {/each}
                     </div>
-                    <p class="sk-note" data-skill-writes>{writesNote(harness)}</p>
+                    <p class="sk-note" data-skill-writes>{writesNote(context, harness, t)}</p>
                     {#if harness === 'codex'}<p class="sk-note" data-skill-codex-note>{t('skills.detail.codex_note')}</p>{/if}
                 {:else}
                     <p class="sk-note" data-skill-locked>
-                        {t(CLAUDE_STATE_KEYS[loc?.state ?? 'on'] ?? 'skills.state.on')}. {whyNot(harness)}
+                        {t(CLAUDE_STATE_KEYS[loc?.state ?? 'on'] ?? 'skills.state.on')}. {whyNot(group, harness, t)}
                     </p>
                 {/if}
             </div>
@@ -171,7 +136,7 @@
                         <dd>{loc.link_target}</dd>
                     {/if}
                     <dt>{t('skills.loc.origin')}</dt>
-                    <dd data-skill-origin>{originOf(loc)}</dd>
+                    <dd data-skill-origin>{originOf(loc, t)}</dd>
                     {#if loc.shadowed_by}
                         <dt>{t('skills.mark.shadowed')}</dt>
                         <dd>{t('skills.loc.shadowed_by', { scope: scopeOfId(loc.shadowed_by) })}</dd>
@@ -190,9 +155,9 @@
                         </ul>
                     </div>
                 {/if}
-                {#if loc.read_only}
+                {#if removeBlock(loc) === 'read_only'}
                     <p class="sk-note" data-skill-readonly>{t('skills.loc.read_only')}</p>
-                {:else if loc.managed?.source === 'ledger'}
+                {:else if removeBlock(loc) === 'catalog'}
                     <div class="mgr-actions__row">
                         <p class="sk-note" data-skill-catalog-managed>{t('skills.loc.catalog_managed')}</p>
                         <button type="button" class="oc-btn" data-skill-open-catalog onclick={onOpenCatalog}

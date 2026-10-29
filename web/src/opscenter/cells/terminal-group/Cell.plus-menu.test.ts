@@ -9,6 +9,7 @@ import { inputFocus } from '../../lib/input-focus.svelte';
 import type { SlotId } from '../../engine/types';
 import { installPopoverPolyfill } from '../../../lib/popover-jsdom-polyfill';
 
+// layer (issue #860 / #875); jsdom has neither method.
 installPopoverPolyfill();
 
 vi.mock('../terminal-live/client', () => ({ startLiveTerminal: () => null }));

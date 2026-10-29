@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
-  import { EditorControls, Icon, saveLight, type SaveLight } from '../sdk/ui';
+  import { Button, EditorControls, IconButton, saveLight, type SaveLight } from '../sdk/ui';
   import type { BoardRevision } from './board-model';
   import type { PayloadLoop } from './payload-loop.svelte';
   import { savesOf } from './payload-model';
@@ -41,16 +41,16 @@
   <EditorControls showMode={false} light={disk} saveState={loop.draftState} saveDisabled={disk.tone === 'off'} saveProps={diskProps} onSave={() => void loop.saveNow()} />
 
   <span class="rb-saves" data-payload-saves>
-    <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.payload.older')} title={t('cplug.reviewboard.payload.older')}
-            disabled={saves.length === 0 || viewed?.n === 1} data-payload-older onclick={() => onstep(-1)}><Icon name="chevron-left" size={16} /></button>
+    <IconButton label={t('cplug.reviewboard.payload.older')} icon="chevron-left" variant="quiet" iconSize={16}
+                disabled={saves.length === 0 || viewed?.n === 1} data-payload-older onclick={() => onstep(-1)} />
     <span class="rb-label rb-position" data-payload-position>{position}</span>
-    <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.payload.newer')} title={t('cplug.reviewboard.payload.newer')}
-            disabled={!viewed} data-payload-newer onclick={() => onstep(1)}><Icon name="chevron-right" size={16} /></button>
+    <IconButton label={t('cplug.reviewboard.payload.newer')} icon="chevron-right" variant="quiet" iconSize={16}
+                disabled={!viewed} data-payload-newer onclick={() => onstep(1)} />
   </span>
 
-  <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.payload.note_key')} title={t('cplug.reviewboard.payload.note_key')}
-          aria-expanded={noteOpen} data-filled={loop.note.trim() !== ''} data-payload-note-key onclick={onnote}><Icon name="chat" size={16} /></button>
+  <IconButton label={t('cplug.reviewboard.payload.note_key')} icon="chat" variant="quiet" iconSize={16}
+              aria-expanded={noteOpen} data-filled={loop.note.trim() !== ''} data-payload-note-key onclick={onnote} />
 
-  <button type="button" class="oc-btn oc-btn--sm rb-send" class:oc-btn--ghost={!loop.payload} class:oc-btn--confirm={!!loop.payload} title={t('cplug.reviewboard.payload.send_title')}
-          disabled={!loop.payload || loop.sending} data-payload-send onclick={onsend}>{t('cplug.reviewboard.payload.send')}</button>
+  <Button size="sm" variant={loop.payload ? 'confirm' : 'secondary'} title={t('cplug.reviewboard.payload.send_title')}
+          disabled={!loop.payload || loop.sending} data-payload-send onclick={onsend}>{t('cplug.reviewboard.payload.send')}</Button>
 </span>

@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { t as reactiveT } from '../i18n/index.svelte';
+    import { Button } from '../base';
     import type { Translate } from '../sessions/types';
     import '../settings-page/panel-kit/panel-kit.css';
     import { errorText } from '../settings-page/panel-kit/error-text';
@@ -61,18 +62,18 @@
 <div class="tm" data-na="panel">
     <p class="tm__sub">{t('settings.native_alerts.what')}</p>
     <div>
-        <button type="button" class="oc-btn oc-btn--confirm" data-na="on" disabled={busy} onclick={() => void turnOn()}>
+        <Button variant="confirm" data-na="on" disabled={busy} onclick={() => void turnOn()}>
             {t('settings.native_alerts.on')}
-        </button>
+        </Button>
     </div>
     {#if rows && rows.length > 0}
         <ul class="tm__figs" data-na="list">
             {#each rows as row (row.id)}
                 <li data-na-row={row.id}>
                     {row.platform} {row.environment}: {resultText(row)}
-                    <button type="button" class="oc-btn oc-btn--sm" data-na="remove" disabled={busy} onclick={() => void remove(row.id)}>
+                    <Button variant="danger" size="sm" data-na="remove" disabled={busy} onclick={() => void remove(row.id)}>
                         {t('settings.native_alerts.remove')}
-                    </button>
+                    </Button>
                 </li>
             {/each}
         </ul>

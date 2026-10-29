@@ -1,39 +1,3 @@
-"""Previewing and launching a blueprint, one member at a time (issue #759).
-
-A LAUNCH IS SEQUENTIAL, ON PURPOSE. Two creates racing each other claim
-tmux names without a lock between them (``session_manager.create_session``
-claims, then registers), so members are brought up one after another, each
-with its own label. Per member, in order:
-
-  1. family   the agent family resolves against the configured wrappers
-              (an unknown wrapper id is refused, never silently claude).
-  2. folder   the existing folder is resolved, or the git worktree is made
-              (``src/core/project_worktree.py``: argv only, contained).
-  3. project  the folder is registered as a launcher project if it is not
-              one (the catalog's project-scope gate installs only into a
-              known project), or reused when it is.
-  4. skills   any missing harness skill root under the member's folder is
-              created first (THIS LAUNCH ONLY, never the catalog's general
-              install path - ``create_member_roots``, contained to the
-              folder, symlinks refused); then each missing catalog skill
-              goes through THE catalog install route itself
-              (``catalog_install_routes.run_install``) at project scope:
-              the same signature, digest and consent gates, the same
-              consent body. There is no second install path, so there is
-              no second place consent could be skipped.
-  5. session  the create route itself (``session_crud_routes.create_session``)
-              with the member's label and opening prompt.
-
-A FAILED STEP ENDS THAT MEMBER, NEVER THE LAUNCH. Its outcome names the
-step and the code; the members after it still launch. Nothing is rolled
-back: a session that started stays started, which is the honest answer for
-a pane that is already running an agent. ``members`` in the request
-relaunches a subset, and a relaunch reuses the worktree and project the
-first attempt made.
-
-THE LAUNCHED MEMBERS BECOME A LAYOUT (two or more), named after the
-blueprint and uniquified, through the Layouts store (slice A, #745).
-"""
 
 from __future__ import annotations
 
@@ -43,6 +7,7 @@ from contextlib import closing
 from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
+from src.api.error_response import sentence_of
 from fastapi import HTTPException, Request
 
 from src.api.catalog_consent import carries_scripts, preview_body
@@ -77,7 +42,6 @@ logger = structlog.get_logger()
 
 
 class StepFailed(Exception):
-    """One member step could not go ahead. Carries the Problem."""
 
     def __init__(self, step: str, code: str, detail: str) -> None:
         super().__init__(detail)
@@ -168,10 +132,6 @@ async def make_folder(plan: Any, root: str) -> None:
 
 
 def find_project(folder: str) -> Optional[Dict[str, Any]]:
-    """The launcher project at this folder (archived included), or None.
-
-    Raises: StepFailed ``projects_unavailable`` - the list could not be read.
-    """
     view = resolve_projects(settings.get_state_dir(), include_archived=True)
     if view.mode != MODE_DB:
         raise StepFailed("project", "projects_unavailable", "the project list could not be read")
@@ -323,7 +283,7 @@ def _row_identity(request: Request, session: Any) -> Tuple[Optional[int], Option
 async def create_member_session(request: Request, member: BlueprintSession, folder: str,
                                 cols: Optional[int], rows: Optional[int]) -> LaunchedSession:
     from src.api.session_crud_routes import create_session
-    from src.core.session_label import sanitize_tmux_name
+    from src.core.session_name_claim import sanitize_tmux_name
     from src.models import CreateSessionRequest
 
     body = CreateSessionRequest(
@@ -333,7 +293,7 @@ async def create_member_session(request: Request, member: BlueprintSession, fold
     try:
         session = await create_session(request, body)
     except HTTPException as exc:
-        raise StepFailed("session", f"create_{exc.status_code}", str(exc.detail)) from None
+        raise StepFailed("session", f"create_{exc.status_code}", sentence_of(exc.detail)) from None
     row_id, session_uuid = await asyncio.to_thread(_row_identity, request, session)
     if member.theme and getattr(session, "tmux_session", None):
         request.app.state.session_manager.set_pinned_theme(session.tmux_session, member.theme)
@@ -424,12 +384,6 @@ async def launch_member(request: Request, index: int, member: BlueprintSession, 
                         consents: Dict[str, InstallConsent], cols: Optional[int],
                         rows: Optional[int], existing: Optional[Tuple[LaunchedSession, bool]] = None,
                         ) -> MemberOutcome:
-    """Run the five steps for one member; a failed step ends it with an outcome.
-
-    ``existing`` is ``blueprints_reuse.LiveSessions.match``'s answer: a member that is
-    already running is ``reused`` (nothing created, its theme untouched); one that is
-    asleep is ``woken`` through the wake route, and otherwise left as it is.
-    """
     folder = FolderView(mode=member.folder.mode)
     project = None
     skills: List[SkillView] = []

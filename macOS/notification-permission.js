@@ -25,7 +25,6 @@ function isWaiting({ dir, fsImpl, now }) {
   }
 }
 
-/* permission prompt */
 function request({ dir, Notification, t, fsImpl }) {
   const f = fsImpl || fs;
   if (!Notification.isSupported()) return readState({ dir, fsImpl: f });

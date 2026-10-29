@@ -251,7 +251,7 @@
         border-top: 5px solid var(--oc-orange);
     }
 
-    /* padding */
+    /* reserved 1px border */
     .ap-page .ap-row {
         min-height: 56px;
         padding: var(--oc-space-2) calc(var(--oc-space-3) - var(--oc-border));

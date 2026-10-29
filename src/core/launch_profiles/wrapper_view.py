@@ -11,10 +11,6 @@ from src.core.launch_profiles.seed_from_wrappers import profile_from_wrapper
 
 
 def structured_script(profile: LaunchProfile) -> str:
-    """The wrapper script a structured profile is equivalent to (permissions, flags and a fixed model).
-
-    Example: a claude skip_all profile -> 'command claude --dangerously-skip-permissions "$@"'
-    """
     spec = AGENT_FAMILY_BY_NAME[profile.harness]
     if profile.harness == "shell":
         return spec.default_script

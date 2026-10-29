@@ -23,8 +23,8 @@ from src.core import ui_preferences
 from src.core.ui_preferences_store import COMMITTED, REJECTED_INVALID, UiPreferencesStore
 
 FIELD = "drawer_arrangement"
-U1 = "57eef513-b456-4dba-8e5f-1acebde60c78"
-U2 = "dc491ea8-3c79-435b-8003-48c57f87b10f"
+U1 = "0f1e2d3c-4b5a-4968-8776-65544332211a"
+U2 = "1a2b3c4d-5e6f-4a0b-9c8d-7e6f5a4b3c2d"
 
 
 def arrangement(**over):
@@ -136,7 +136,7 @@ def test_company_fold_keys_are_accepted_and_a_stale_projects_open_is_ignored(sto
 
 
 def test_a_computer_switched_off_is_a_fold_key_on_both_device_lists(store):
-    key = "host-off:ea8be107-7c96-46ef-8c06-76cea92f42fa"
+    key = "host-off:5f0c1e22-aaaa-4bbb-8ccc-0123456789ab"
     result = store.update({FIELD: arrangement(collapsed=[key], mobile={"collapsed": [key]})})
     assert result.status == COMMITTED, result.detail
     assert result.values[FIELD]["collapsed"] == [key]

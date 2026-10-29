@@ -34,7 +34,6 @@ export function heldScope(row: number): SessionScope {
   return { sessionId: '', rowId: row, workingDir: '', projectId: null };
 }
 
-/* label: ' */
 export function pinnedAgentFor(row: number, live: readonly PinRow[] | null, asleepRows: readonly PinAsleepRow[] | null, recentRows: readonly PinAsleepRow[] | null, complete: boolean): PinnedAgent {
   const unknown: PinnedAgent = { state: 'unknown', name: '', suffix: '', scope: null };
   const found = (live ?? []).find((info) => info.session_row_id === row);

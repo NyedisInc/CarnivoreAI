@@ -101,7 +101,7 @@ def test_a_session_with_no_conversation_is_refused(world: dict) -> None:
 
 
 def test_a_conversation_with_no_transcript_is_refused(world: dict) -> None:
-    plan = _plan(world, world["source"], conversation="d04307f7-ccde-41b0-818c-76c6d98ca4c8")
+    plan = _plan(world, world["source"], conversation="0bad0bad-1111-4222-8333-444455556666")
     assert mp.CONVERSATION_MISSING in _codes(plan)
 
 

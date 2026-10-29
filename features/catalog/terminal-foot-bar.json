@@ -27,7 +27,14 @@
   "keywords": [
     "toolbar"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The terminal's bottom bar showing the folder, running zsh and the pane size",
+      "caption": "The bar under a terminal",
+      "file": "foot.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Status bar",
   "since": "2026-09-24",
   "status": "stable",
@@ -39,6 +46,5 @@
   "updated": "2026-10-24",
   "where": [
     "The thin bar under the terminal you are looking at."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

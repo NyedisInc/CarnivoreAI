@@ -1,4 +1,3 @@
-/* measuring nothing */
 
 import type { RowId } from './types';
 import type { SeamTrack, SurfaceTracks } from './tracks';

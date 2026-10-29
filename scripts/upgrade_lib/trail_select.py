@@ -6,6 +6,18 @@ script; never imports the application, so it keeps working after
 `git checkout tags/<old>` has swapped `src/` out from under it. Standard
 library only.
 
+WHY A PYTHON HELPER RATHER THAN PURE BASH. Section 9.2 argues the trail
+is JSONL so a bash script can read it without a SQLite client. That
+argument is honoured: nothing here opens a database. It is NOT extended
+to "parse JSON in bash", because the answer this program produces selects
+the file that OVERWRITES the user's live database, and a hand-rolled
+`grep`/`cut` JSON reader gets subtly wrong answers on escaped strings
+rather than failing loudly. scripts/upgrade_lib/upgrade_rollback_common.sh
+already resolves and calls a Python interpreter for `resolve_state_dir`
+and `resolve_state_file`, so this adds no new dependency to the rollback
+path - it adds no *SQLite* dependency, which is the constraint that
+actually mattered.
+
 THE SELECTION RULE, IN TWO STEPS, BECAUSE ONE IS NOT ENOUGH.
 Section 9.8 says: "find the last schema/config entry with started_at
 before the target code entry's started_at". That sentence identifies the
@@ -146,18 +158,26 @@ def select_for_kind(steps: List[Step], kind: str, code_step: Step) -> Dict[str, 
             )
             return item
         item["outcome"] = OUTCOME_CANNOT_DETERMINE
-        item["reason"] = (
+        head = (
             f"{kind} was at v{version_at_target} when this install reached "
             f"code {code_step.to_version}, but no backup was ever taken AT "
-            f"v{version_at_target}: the next recorded {kind} move started "
-            f"from v{swallowing[0].from_version}"
-            + (
-                f" (a jump v{swallowing[0].from_version}->"
-                f"v{swallowing[0].to_version} that ran several steps in one "
-                "run and took one backup, at its start)"
-                if swallowing else ""
+            f"v{version_at_target}: "
+        )
+        if swallowing:
+            first = swallowing[0]
+            detail = (
+                f"the next recorded {kind} move started from "
+                f"v{first.from_version} (a jump v{first.from_version}->"
+                f"v{first.to_version} that ran several steps in one run and "
+                "took one backup, at its start)"
             )
-            + ". Refusing to restore a different version's backup."
+        else:
+            detail = (
+                f"the later {kind} moves record no from_version, so none can "
+                f"be matched to v{version_at_target}"
+            )
+        item["reason"] = (
+            head + detail + ". Refusing to restore a different version's backup."
         )
         return item
 
@@ -213,17 +233,6 @@ def render_confirmation(plan: Dict[str, Any]) -> str:
 
 
 def build_plan(steps: List[Step], target: str) -> Tuple[int, Dict[str, Any]]:
-    """Assemble the full restore plan for a code rollback, or refuse.
-
-    Description: refuses as a whole if ANY data kind could not be
-      resolved. A partial restore - database rolled back, config left
-      forward, or the reverse - is a state neither version was ever
-      tested in, and it would be produced silently.
-    Inputs: steps (list[Step]) - coalesced, sorted. target (str) - the
-      code version being rolled back to.
-    Output: (exit_code, plan) - EXIT_OK with a plan carrying
-      "confirmation", or EXIT_REFUSED with a plan carrying "error".
-    """
     code_step = find_target_code(steps, target)
     if code_step is None:
         seen = sorted({

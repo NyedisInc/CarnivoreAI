@@ -2,8 +2,11 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
     import { t } from '../i18n/index.svelte';
+    import { Button, Field } from '../base';
     import Icon from '../../opscenter/ui/Icon.svelte';
+    import FirstRunAgent from './FirstRunAgent.svelte';
     import FirstRunJoin from './FirstRunJoin.svelte';
+    import FirstRunProfiles from './FirstRunProfiles.svelte';
     import { fetchJoinStatus, type JoinStatus } from './join-api';
     import {
         fetchEnrollment,
@@ -22,7 +25,7 @@
         finishFirstRun(): void;
     }
 
-    type Phase = 'checking' | 'remote' | 'choose' | 'scan' | 'confirm' | 'done' | 'join';
+    type Phase = 'checking' | 'remote' | 'choose' | 'scan' | 'confirm' | 'agent' | 'profiles' | 'done' | 'join';
 
     let { entry = 'first-run' }: { entry?: 'first-run' | 'remote' | 'joined' } = $props();
 
@@ -66,7 +69,6 @@
         }
     }
 
-    /* already running */
     async function openEntry(): Promise<void> {
         const status = await fetchJoinStatus();
         if (status && (status.state === 'finding' || status.state === 'connecting' || status.state === 'linking' || status.state === 'joined')) {
@@ -117,6 +119,14 @@
             return;
         }
         auth().acceptLogin(result.response);
+        phase = 'agent';
+    }
+
+    function afterAgent(): void {
+        phase = 'profiles';
+    }
+
+    async function afterProfiles(): Promise<void> {
         phase = 'done';
         await settleAfterPairing();
     }
@@ -151,12 +161,12 @@
             <span class="first-run__icon"><Icon name="authenticator" size={48} strokeWidth={1.5} /></span>
             <h1 class="first-run__head">{t('first_run.title')}</h1>
             <div class="first-run__actions">
-                <button type="button" class="oc-btn oc-btn--confirm first-run__go" data-first-run="choose-new" onclick={() => void load()}>
+                <Button variant="confirm" data-go data-first-run="choose-new" onclick={() => void load()}>
                     {t('first_run.choose.new')}
-                </button>
-                <button type="button" class="oc-btn first-run__go" data-first-run="choose-join" onclick={() => ((joinStart = 'join'), (phase = 'join'))}>
+                </Button>
+                <Button data-go data-first-run="choose-join" onclick={() => ((joinStart = 'join'), (phase = 'join'))}>
                     {t('first_run.choose.join')}
-                </button>
+                </Button>
             </div>
         {:else if phase === 'join'}
             <FirstRunJoin start={joinStart} resume={joinResume} onBack={() => (phase = 'choose')} />
@@ -168,49 +178,53 @@
             {#if enrollment}
                 <p class="first-run__text">{t('first_run.scan')}</p>
                 <img class="first-run__qr" src={enrollment.qrImage} alt={t('first_run.qr_alt')} width="264" height="264" />
-                <button type="button" class="oc-btn" data-first-run="reveal" aria-expanded={keyOpen} onclick={() => (keyOpen = !keyOpen)}>
+                <Button data-first-run="reveal" aria-expanded={keyOpen} onclick={() => (keyOpen = !keyOpen)}>
                     {t('first_run.key.reveal')}
-                </button>
+                </Button>
                 {#if keyOpen}
                     <div class="first-run__key">
                         <code class="first-run__secret" data-first-run="key">{grouped}</code>
-                        <button type="button" class="oc-btn" data-first-run="copy" onclick={copyKey}>
+                        <Button data-first-run="copy" onclick={copyKey}>
                             {copied ? t('first_run.key.copied') : t('first_run.key.copy')}
-                        </button>
+                        </Button>
                     </div>
                 {/if}
-                <button type="button" class="oc-btn oc-btn--confirm first-run__go" data-first-run="next" onclick={() => (phase = 'confirm')}>
+                <Button variant="confirm" data-go data-first-run="next" onclick={() => (phase = 'confirm')}>
                     {t('first_run.next')}
-                </button>
+                </Button>
             {:else if loadFailure}
                 <p class="first-run__problem" role="alert" data-first-run-error={loadFailure}>{t(loadKey)}</p>
                 {#if loadFailure === 'load'}
-                    <button type="button" class="oc-btn" data-first-run="retry" onclick={() => void load()}>{t('first_run.retry')}</button>
+                    <Button data-first-run="retry" onclick={() => void load()}>{t('first_run.retry')}</Button>
                 {/if}
             {/if}
         {:else if phase === 'confirm'}
             <h1 class="first-run__head">{t('first_run.title')}</h1>
             <form class="first-run__form" onsubmit={submit}>
                 <label class="first-run__tag" for="first-run-code">{t('first_run.confirm.label')}</label>
-                <input id="first-run-code" class="oc-field first-run__input" value={code} oninput={onCodeInput} maxlength="6"
-                    inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" autocorrect="off" spellcheck="false"
+                <Field id="first-run-code" value={code} oninput={onCodeInput} maxlength={6}
+                    inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" autocorrect="off" spellcheck={false}
                     data-first-run="code" disabled={busy} />
                 <div class="first-run__actions">
-                    <button type="button" class="oc-btn" data-first-run="back" disabled={busy} onclick={() => (phase = 'scan')}>{t('first_run.back')}</button>
-                    <button type="submit" class="oc-btn oc-btn--confirm" data-first-run="finish" disabled={busy || code.length !== 6}>
+                    <Button data-first-run="back" disabled={busy} onclick={() => (phase = 'scan')}>{t('first_run.back')}</Button>
+                    <Button type="submit" variant="confirm" data-first-run="finish" disabled={busy || code.length !== 6}>
                         {t('first_run.confirm.go')}
-                    </button>
+                    </Button>
                 </div>
             </form>
             {#if codeFailure}<p class="first-run__problem" role="alert" data-first-run-error={codeFailure}>{t(`first_run.error.${codeFailure}`)}</p>{/if}
+        {:else if phase === 'agent'}
+            <FirstRunAgent onContinue={afterAgent} />
+        {:else if phase === 'profiles'}
+            <FirstRunProfiles onContinue={() => void afterProfiles()} />
         {:else}
             <p class="first-run__text" role="status" data-first-run="paired">{t('first_run.done')}</p>
             {#if restarting}<p class="first-run__text" data-first-run="restarting">{t('first_run.done.restarting')}</p>{/if}
             {#if manual}
                 <p class="first-run__text" data-first-run="manual">{t('first_run.done.manual')}</p>
-                <button type="button" class="oc-btn oc-btn--confirm first-run__go" data-first-run="continue" onclick={() => auth().finishFirstRun()}>
+                <Button variant="confirm" data-go data-first-run="continue" onclick={() => auth().finishFirstRun()}>
                     {t('first_run.done.continue')}
-                </button>
+                </Button>
             {/if}
         {/if}
     </div>

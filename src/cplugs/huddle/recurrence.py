@@ -8,7 +8,7 @@ from datetime import date, datetime, time as dtime, timedelta
 from typing import Any, Dict, Mapping, Optional
 from zoneinfo import ZoneInfo
 
-from src.core.time_zone import app_time_zone
+from src.cplugs.sdk.time_zone import app_time_zone
 from src.cplugs.huddle.rules import TaskManagerInvalid
 
 DAILY, WEEKLY, HOURLY, MONTHLY = "daily", "weekly", "hourly", "monthly"

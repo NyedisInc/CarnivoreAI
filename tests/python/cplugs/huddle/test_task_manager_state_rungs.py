@@ -142,7 +142,7 @@ def test_a_fresh_file_and_a_migrated_file_end_with_the_same_schema(tmp_path: Pat
 
 
 def test_no_code_writes_items_state_outside_the_known_write_points():
-    allowed = {"store.py", "answer_writer.py", "fork.py", "state_rungs.py", "item_owner.py", "ask.py", "closure_undo.py"}
+    allowed = {"store.py", "answer_writer.py", "fork.py", "state_rungs.py", "item_owner.py", "ask.py", "wait_stuck.py", "closure_undo.py", "store_triggers.py"}
     root = Path(__file__).resolve().parents[4] / "src" / "cplugs" / "huddle"
     pattern = re.compile(r"UPDATE work_items SET[^\"']*\bstate\s*=", re.S)
     writers = {p.name for p in root.rglob("*.py") if pattern.search(p.read_text(encoding="utf-8"))}

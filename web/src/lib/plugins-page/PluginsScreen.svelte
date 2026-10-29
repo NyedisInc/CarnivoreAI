@@ -17,11 +17,13 @@
     import { browserCatalogHost } from '../catalog/catalog';
     import type { CardView } from '../catalog/card';
     import type { SheetOutcome } from '../catalog/types';
-    import ThirdPartySwitch from './ThirdPartySwitch.svelte';
-    import SideloadSwitch from './SideloadSwitch.svelte';
+    import DeveloperZone from './DeveloperZone.svelte';
+    import SideloadRowActions from './SideloadRowActions.svelte';
+    import { createSideloadStore } from './sideload-store.svelte';
     import CardMediaImg from '../catalog/CardMediaImg.svelte';
     import Icon from '../../opscenter/ui/Icon.svelte';
     import IconButton from '../base/IconButton.svelte';
+    import Button from '../base/Button.svelte';
     import AddSplit from '../catalog/AddSplit.svelte';
     import { addProjectsOf } from '../catalog/add-projects';
     import { SKILL_KEYS } from '../../../../client/js/labels/skill.js';
@@ -29,7 +31,8 @@
     import CatalogPluginCredit from './CatalogPluginCredit.svelte';
     import { CATALOG_ITEM_PREFIX, createCatalogPlugins, type CatalogPluginItem, type CatalogPlugins } from './catalog-plugins.svelte';
     import { readTab, writeTab } from '../../opscenter/ui/tab-memory';
-    import { CPLUG_ITEM_PREFIX, createCplugsAdapter, grantCplug, listActivity, type ActivityRow, type CplugItem, type CplugsAdapter } from './cplugs-adapter';
+    import { grantCplug, readSheet, sheetStamp, type GrantOptions } from './cplug-grant';
+    import { CPLUG_ITEM_PREFIX, createCplugsAdapter, listActivity, type ActivityRow, type CplugItem, type CplugSheet, type CplugsAdapter } from './cplugs-adapter';
     import { PANE_TAB_MEMORY, PANE_TABS, isPaneTab, type PaneTab, type PurgePrice } from './plugin-pane';
     import { hasPluginSettings, pluginLinkOf, type PluginLink } from './plugin-settings-link';
 
@@ -45,20 +48,25 @@
         onSelect?: (cplugId: string, tab: string) => void;
         onChanged?: () => void;
         storeOnly?: boolean;
-        grant?: (cplugId: string, ticks: string[]) => Promise<unknown>;
+        grant?: (cplugId: string, ticks: string[], options: GrantOptions) => Promise<unknown>;
+        loadSheet?: (cplugId: string) => Promise<CplugSheet>;
         loadActivity?: (cplugId: string) => Promise<ActivityRow[]>;
         purge?: (cplugId: string, confirmToken?: string) => Promise<PurgePrice>;
         catalog?: CatalogPlugins | null;
     }
 
-    const { adapter, t = appT, embedded = false, focusId = null, focusTab = null, onSelect: onPick, onChanged, storeOnly = false, grant = (id, ticks) => grantCplug(id, ticks, t), loadActivity = listActivity, purge, catalog: catalogProp }: Props = $props();
+    const { adapter, t = appT, embedded = false, focusId = null, focusTab = null, onSelect: onPick, onChanged, storeOnly = false, grant = (id, ticks, options) => grantCplug(id, ticks, t, undefined, undefined, options), loadSheet = readSheet, loadActivity = listActivity, purge, catalog: catalogProp }: Props = $props();
+
+    let seenSheets = $state<Record<string, CplugSheet>>({});
 
     // svelte-ignore state_referenced_locally
     const pageAdapter: ManagerAdapter & Partial<CplugsAdapter> = adapter ?? createCplugsAdapter(t);
     // svelte-ignore state_referenced_locally
     const ctl = createManagerController(pageAdapter, t(MANAGER_KEYS.errorTitle));
     // svelte-ignore state_referenced_locally
-    const actions = createPluginActions({ ctl, adapter: pageAdapter, grant, onAsk: (id) => (selectedId = id) });
+    const actions = createPluginActions({ ctl, adapter: pageAdapter, grant, seenSheet: (id) => seenSheets[id], onAsk: (id) => (selectedId = id) });
+    // svelte-ignore state_referenced_locally
+    const sideloads = adapter ? null : createSideloadStore(undefined, () => void ctl.load());
 
     let seenSig: string | null = null;
     $effect(() => {
@@ -68,7 +76,6 @@
         if (before !== null && before !== sig) onChanged?.();
     });
 
-    /* could not */
     async function openCatalogSheet(card: CardView, prefill: { scope: 'project'; projectPath: string } | { scope: 'global'; projectPath: null }): Promise<SheetOutcome | null> {
         if (openModalCount() > 0) return null;
         return (await openModal(InstallSheet as never, { card, host: browserCatalogHost(), t, prefill } as never)) as SheetOutcome | null;
@@ -164,6 +171,18 @@
         tellHost();
     }
 
+    let sheetRead = 0;
+    $effect(() => {
+        const item = ctl.items.find((row) => row.id === selectedId) as CplugItem | undefined;
+        if (paneTab !== 'permissions' || !item?.consentRequired || (item.state !== 'disabled' && item.state !== 'needs_approval')) return;
+        const id = item.cplugId;
+        const mine = ++sheetRead;
+        loadSheet(id).then(
+            (sheet) => { if (mine === sheetRead) seenSheets = { ...seenSheets, [id]: sheet }; },
+            () => { if (mine === sheetRead) { const { [id]: _gone, ...rest } = seenSheets; seenSheets = rest; } },
+        );
+    });
+
     function tellHost(): void {
         if (selectedId?.startsWith(CPLUG_ITEM_PREFIX)) onPick?.(selectedId.slice(CPLUG_ITEM_PREFIX.length), paneTab);
     }
@@ -237,20 +256,20 @@
     {@const plugin = item as CplugItem}
     {#if plugin.state === 'needs_approval'}
         
-        <button
-            type="button"
-            class="plugin-approval-mark"
+        <Button
+            size="sm"
             data-plugin-approval-mark={plugin.cplugId}
             aria-label={t('plugins.page.approval.open', { name: plugin.name })}
             title={t('plugins.page.approval.open', { name: plugin.name })}
             onclick={() => openSheet(plugin.id)}
         >
             {t('plugins.page.approval.mark')}
-        </button>
+        </Button>
     {:else if plugin.thirdParty && plugin.state === 'active' && plugin.declared}
         
         <StatusChip cplugId={plugin.cplugId} installKey={plugin.installKey ?? null} declared={plugin.declared} unverified={plugin.unverified} {t} />
     {/if}
+    {#if sideloads && plugin.unverified}<SideloadRowActions store={sideloads} name={plugin.cplugId} {t} />{/if}
     {#if hasPluginSettings(plugin)}
         
         <IconButton label={t('plugins.page.settings.open', { name: plugin.name })} variant="quiet" icon="gear" iconSize={14}
@@ -288,7 +307,7 @@
         {@const entry = item as CatalogPluginItem}
         {@const act = catalog.act(entry.itemId)}
         {#if act.kind === 'update'}
-            <button type="button" class="oc-btn oc-btn--sm oc-btn--confirm catalog-card__btn" data-act="update" disabled={catalogToggles[item.id]?.busy === true} onclick={() => void runAct(item.id, () => catalog.update(entry.itemId))}>{t(SKILL_KEYS.actionUpdate)}</button>
+            <Button variant="confirm" size="sm" data-act="update" disabled={catalogToggles[item.id]?.busy === true} onclick={() => void runAct(item.id, () => catalog.update(entry.itemId))}>{t(SKILL_KEYS.actionUpdate)}</Button>
         {:else if act.kind === 'add'}
             <AddSplit projects={addProjects} haveGlobal={false} haveAnyProject={false} onAdd={(target, path) => void runAct(item.id, () => catalog.add(entry.itemId, target, path ?? null))} {t} />
         {/if}
@@ -304,12 +323,12 @@
             options={projectOptions}
             onChange={(next) => void catalog.pick(next === '' ? null : next)}
         />
-        
-        {#if !adapter}
-            <ThirdPartySwitch {t} />
-            <SideloadSwitch {t} />
-        {/if}
     {/if}
+{/snippet}
+
+
+{#snippet developerZone()}
+    <DeveloperZone {t} {sideloads} />
 {/snippet}
 
 {#snippet detailCatalog(item: ManagerItem)}
@@ -331,6 +350,7 @@
         error={ctl.toggles[plugin.id]?.error ?? null}
         onConfirmOff={() => actions.confirm()}
         onCancelOff={() => actions.cancel()}
+        sheetStamp={seenSheets[plugin.cplugId] ? sheetStamp(seenSheets[plugin.cplugId]!) : ''}
         onGrant={(ticks) => void actions.grantFromSheet(plugin, ticks)}
         {loadActivity}
         {purge}
@@ -396,6 +416,7 @@
         onToggle={requestToggle}
         toggles={{ ...ctl.toggles, ...catalogToggles }}
         toolbar={catalog ? toolbar : undefined}
+        zone={catalog && !adapter ? developerZone : undefined}
         onRetry={() => void ctl.load()}
         onClose={embedded ? undefined : close}
         emptyText={t('plugins.page.empty')}
@@ -415,22 +436,19 @@
             color: var(--oc-text-secondary);
         }
 
-        .plugin-approval-mark {
+        :global([data-plugin-approval-mark]) {
+            --_btn-edge: var(--oc-yellow);
+            --_btn-ink: var(--oc-yellow);
             align-self: flex-start;
+            min-height: 0;
             padding: 1px 6px;
-            border: 1px solid var(--oc-yellow);
-            border-radius: var(--pl-radius-sm, 2px);
-            background: transparent;
-            color: var(--oc-yellow);
-            font-family: var(--font-mono);
-            font-size: 10px;
+            font-size: var(--oc-fs-micro);
             letter-spacing: var(--oc-tracking-label, 0.6px);
             text-transform: uppercase;
-            cursor: pointer;
         }
 
-        .plugin-approval-mark:hover {
-            background: var(--oc-ground-field);
+        :global([data-act='update']) {
+            min-height: 44px;
         }
     }
 </style>

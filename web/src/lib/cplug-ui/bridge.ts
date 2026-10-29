@@ -1,6 +1,6 @@
 import { sanitizeRects, type Rect } from './hit-regions';
 
-export const VERBS = ['route.call', 'tool.call', 'ui.state', 'overlay.hit_regions'] as const;
+export const VERBS = ['route.call', 'tool.call', 'ui.state', 'overlay.hit_regions', 'ui.share'] as const;
 export type Verb = (typeof VERBS)[number];
 
 export interface Declared {
@@ -13,14 +13,20 @@ export interface InboundMessage {
     readonly data: unknown;
 }
 
+export type ViewRole = 'panel' | 'menu' | 'page' | 'overlay';
+
 export interface BridgeOptions {
     readonly nonce: string;
+    readonly role?: ViewRole;
+    readonly features?: () => readonly string[];
+    readonly theme?: () => Readonly<Record<string, string>>;
     readonly frame: () => { postMessage: (message: unknown, targetOrigin: string) => void } | null;
     readonly declared: Declared;
     readonly callRoute: (route: string, payload: unknown) => Promise<unknown>;
     readonly viewport: () => { w: number; h: number };
     readonly onState?: (state: string) => void;
     readonly onHitRegions?: (rects: Rect[]) => void;
+    readonly onShare?: (value: unknown, show: boolean) => { ok: true } | { ok: false; error: string };
     readonly onReload?: () => void;
 }
 
@@ -34,7 +40,7 @@ export function newNonce(): string {
     return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function createBridge(options: BridgeOptions): { handle: (event: InboundMessage) => void; init: () => void } {
+export function createBridge(options: BridgeOptions): { handle: (event: InboundMessage) => void; init: () => void; send: (verb: string, body?: Record<string, unknown>) => void } {
     let loads = 0;
     let dropped = false;
     const reply = (id: unknown, body: Record<string, unknown>): void => {
@@ -61,7 +67,12 @@ export function createBridge(options: BridgeOptions): { handle: (event: InboundM
         }
     };
 
+    let ready = false;
     return {
+        send(verb: string, body: Record<string, unknown> = {}): void {
+            if (dropped || !ready) return;
+            options.frame()?.postMessage({ ...body, verb, nonce: options.nonce }, '*');
+        },
         handle(event: InboundMessage): void {
             const frame = options.frame();
             if (dropped || !frame || event.source !== frame) return;
@@ -79,6 +90,11 @@ export function createBridge(options: BridgeOptions): { handle: (event: InboundM
                 case 'ui.state':
                     if (typeof m.state === 'string' && STATE_WORD.test(m.state)) options.onState?.(m.state);
                     return;
+                case 'ui.share': {
+                    const shared = options.onShare?.(m.value, m.show === true) ?? { ok: false, error: 'unavailable' };
+                    reply(id, shared);
+                    return;
+                }
                 case 'overlay.hit_regions':
                     options.onHitRegions?.(sanitizeRects(m.rects, options.viewport()));
                     return;
@@ -93,7 +109,10 @@ export function createBridge(options: BridgeOptions): { handle: (event: InboundM
                 }
                 return;
             }
-            options.frame()?.postMessage({ verb: 'init', nonce: options.nonce }, '*');
+            ready = true;
+            const theme = options.theme?.();
+            options.frame()?.postMessage({ verb: 'init', nonce: options.nonce, role: options.role ?? 'panel', features: [...(options.features?.() ?? [])],
+                ...(theme ? { theme } : {}) }, '*');
         },
     };
 }

@@ -40,10 +40,10 @@ from src.core.claude_title_sync_apply import sync_claude_title
 from src.core.sessions.hook_token_authority import HookTokenAuthority
 from src.core.sessions.registry import SessionRegistry
 
-UUID = "555e13eb-d81f-4923-8b71-56690254a320"
-TMUX_NAME = "cloude_Larkspur-2"
-OLD = "Agent - Larkspur (alpha)"
-NEW = "Agent - Larkspur (Remotedesk)"
+UUID = "560a0e05-b778-4784-ae2c-4edd46da22d0"
+TMUX_NAME = "cloude_Hirschfeld-2"
+OLD = "Agent - Hirschfeld (Helen)"
+NEW = "Agent - Hirschfeld (Rustdesk)"
 CLAUDE_PATH = "/nonexistent/claude-for-tests"
 
 
@@ -74,8 +74,11 @@ class _FakeManager:
         self._registry.sessions["ses_test"] = _FakeSession(TMUX_NAME, "/tmp/p")
         self.hook_tokens = HookTokenAuthority(lambda: Path(state_dir))
 
-    def _tmux_socket_name(self):
+    def tmux_socket_name(self):
         return "cloude"
+
+    def _name_read_connection(self) -> tuple:
+        return self._conn, False
 
     def _writable_datastore_connection(self):
         return self._conn
@@ -84,12 +87,11 @@ class _FakeManager:
 
 @pytest.fixture(autouse=True)
 def _isolated_claude_registry(tmp_path, monkeypatch):
-    from src.core.attention import registry_read
+    from src.core.attention import registry_index
 
     directory = tmp_path / "claude-registry"
     directory.mkdir()
-    monkeypatch.setattr(
-        registry_read, "default_registry_directory", lambda: str(directory)
+    monkeypatch.setattr(registry_index, "default_registry_directory", lambda: str(directory)
     )
     return directory
 

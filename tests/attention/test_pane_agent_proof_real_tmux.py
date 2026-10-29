@@ -13,7 +13,7 @@ from typing import Iterator, Optional, Tuple
 import pytest
 
 from src.core.attention.pane_agent_proof import registered_agent_in_foreground
-from src.core.attention.registry_read import read_registry_index
+from src.core.attention.registry_index import read_registry_index
 from src.core.session_one_shot_gate import PANE_NOT_AN_AGENT, OneShotRefused, check_can_paste
 from tests.socket_guard import TEST_SOCKET_NAME
 

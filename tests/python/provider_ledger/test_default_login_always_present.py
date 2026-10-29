@@ -63,8 +63,8 @@ def test_an_empty_list_gets_the_default_row(home):
 
 def test_a_managed_row_gets_the_default_row_beside_it(home):
     _identity(home / ".claude.json", MINE)
-    member = _managed(home, "sam-initech", OTHER)
-    assert _ids(poller_scan.with_auto_default([member])) == ["sam-initech", AUTO]
+    joe = _managed(home, "joe-imc", OTHER)
+    assert _ids(poller_scan.with_auto_default([joe])) == ["joe-imc", AUTO]
 
 
 def test_a_codex_row_never_stands_for_the_claude_default(home):
@@ -81,13 +81,13 @@ def test_a_configured_row_at_the_default_dir_is_not_duplicated(home, spelling):
 
 def test_a_profile_signed_in_as_the_default_identity_is_not_duplicated(home):
     _identity(home / ".claude.json", MINE)
-    same = _managed(home, "sam-main", MINE)
+    same = _managed(home, "joe-main", MINE)
     assert poller_scan.with_auto_default([same]) == [same]
 
 
 def test_a_default_login_with_no_readable_identity_is_still_listed(home):
-    other = _managed(home, "sam-initech", OTHER)
-    assert _ids(poller_scan.with_auto_default([other])) == ["sam-initech", AUTO]
+    other = _managed(home, "joe-imc", OTHER)
+    assert _ids(poller_scan.with_auto_default([other])) == ["joe-imc", AUTO]
 
 
 def test_it_is_never_written_to_the_configured_list(home):
@@ -99,16 +99,16 @@ def test_it_is_never_written_to_the_configured_list(home):
 
 
 def test_the_default_row_is_the_active_account_when_no_pointer_is_set(home):
-    member = _managed(home, "sam-initech", OTHER)
-    accounts = poller_scan.with_auto_default([member])
+    joe = _managed(home, "joe-imc", OTHER)
+    accounts = poller_scan.with_auto_default([joe])
     active = effective_active(accounts, ProviderAccountSwitchConfig(), "claude")
     assert (active.account_id, active.source) == (AUTO, "default_login")
 
 
 def test_activating_the_default_row_means_no_pointer(home):
     assert pointer_for(poller_scan.default_login_row()) is None
-    member = _managed(home, "sam-initech", OTHER)
-    assert pointer_for(member) == "sam-initech"
+    joe = _managed(home, "joe-imc", OTHER)
+    assert pointer_for(joe) == "joe-imc"
 
 
 def _usage(account_id: str, short: float, state: str = "ok") -> AccountUsage:
@@ -128,32 +128,32 @@ def _snapshot(rows: List[AccountUsage]) -> LedgerSnapshot:
 
 
 def test_auto_switch_can_move_onto_the_default_login(home):
-    member = _managed(home, "sam-initech", OTHER)
-    accounts = poller_scan.with_auto_default([member])
-    switch = ProviderAccountSwitchConfig(auto_switch=True, active_claude="sam-initech")
-    snap = _snapshot([_usage("sam-initech", 99.5), _usage(AUTO, 5)])
+    joe = _managed(home, "joe-imc", OTHER)
+    accounts = poller_scan.with_auto_default([joe])
+    switch = ProviderAccountSwitchConfig(auto_switch=True, active_claude="joe-imc")
+    snap = _snapshot([_usage("joe-imc", 99.5), _usage(AUTO, 5)])
     moved = auto_switch.plan_switches(snap, accounts, switch, now=NOW)
-    assert [(d.from_account_id, d.to_account_id) for d in moved] == [("sam-initech", AUTO)]
+    assert [(d.from_account_id, d.to_account_id) for d in moved] == [("joe-imc", AUTO)]
     assert auto_switch._pointer_of_decision(accounts, moved[0]) is None
 
 
 def test_auto_switch_can_move_off_the_default_login(home):
-    member = _managed(home, "sam-initech", OTHER)
-    accounts = poller_scan.with_auto_default([member])
+    joe = _managed(home, "joe-imc", OTHER)
+    accounts = poller_scan.with_auto_default([joe])
     switch = ProviderAccountSwitchConfig(auto_switch=True)
-    snap = _snapshot([_usage("sam-initech", 5), _usage(AUTO, 99.5)])
+    snap = _snapshot([_usage("joe-imc", 5), _usage(AUTO, 99.5)])
     moved = auto_switch.plan_switches(
         snap, accounts, switch, now=NOW, linkable=lambda _a: True
     )
-    assert [(d.from_account_id, d.to_account_id) for d in moved] == [(AUTO, "sam-initech")]
+    assert [(d.from_account_id, d.to_account_id) for d in moved] == [(AUTO, "joe-imc")]
 
 
 @pytest.mark.parametrize("state", ["expired", "missing", "refused", "unknown"])
 def test_the_default_login_is_not_a_candidate_unless_its_credential_is_ok(home, state):
-    member = _managed(home, "sam-initech", OTHER)
-    accounts = poller_scan.with_auto_default([member])
-    switch = ProviderAccountSwitchConfig(auto_switch=True, active_claude="sam-initech")
-    snap = _snapshot([_usage("sam-initech", 99.5), _usage(AUTO, 5, state=state)])
+    joe = _managed(home, "joe-imc", OTHER)
+    accounts = poller_scan.with_auto_default([joe])
+    switch = ProviderAccountSwitchConfig(auto_switch=True, active_claude="joe-imc")
+    snap = _snapshot([_usage("joe-imc", 99.5), _usage(AUTO, 5, state=state)])
     assert auto_switch.plan_switches(snap, accounts, switch, now=NOW) == []
 
 

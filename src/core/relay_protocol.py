@@ -1,31 +1,3 @@
-"""The relay publisher's wire format, the token source and the backoff.
-
-THE WIRE FORMAT IS THE RELAY'S, NOT OURS. The authoritative description
-is ``relay/README.md`` on branch ``feat/spectator-relay``: connect to
-``/publish`` under subprotocol ``cloude.relay.publish.v1`` with an
-``Authorization: Bearer <token>`` header; the first frame is a ``links``
-frame declaring every live share as (link id, sha256 of its token,
-session id), plus this process's stable ``publisher_id``; a later
-``links`` frame REPLACES the set, so dropping a link id ends that share;
-data frames carry UTF-8 text that is ALREADY scrubbed here on the Mac;
-a ``size`` frame carries a link's pane grid ahead of each paint, and the
-relay answers a viewer joining with a ``joined`` frame naming the link.
-
-THIS IS THE V1 WIRE FORMAT. The v2 device-identity publisher
-(``carnivore.relay.publish.v2``: relay token, proof of possession, derived
-link ids with a nonce and no session id, ``reauth``) is built by
-``src/core/relay_identity/publish_auth.py``; the publisher picks one per
-connection attempt.
-
-THE PUBLISHER ID IS RANDOM, PER PROCESS, AND ONLY IN MEMORY
-(:func:`new_publisher_id`). It is never derived from the publish token,
-never written anywhere and never logged. It is how the relay knows a new
-connection is the same Mac server returning, so that connection reclaims
-its own links instead of being refused while the relay still holds the
-old, dead socket. The full set is declared on every connection and again
-on every refresh, changed or not, so a declaration the relay could not act
-on at the time is repaired by the next one.
-"""
 
 from __future__ import annotations
 

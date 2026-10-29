@@ -1,59 +1,4 @@
 #!/usr/bin/env python3
-"""Measure the ENDED session row in a REAL browser, in two themes.
-
-Every number below comes from getBoundingClientRect() or
-getComputedStyle() inside a real Chromium loading the real launchpad.js
-and the real stylesheets through tests/manual/ended-sessions-harness.html.
-Nothing here infers a box from a state object.
-
-WHY THIS EXISTS BESIDE A GREEN NODE SUITE. This project has shipped three
-visibly-broken features through green suites: a badge that rendered the
-literal ``~~claude`` while every test read ``.textContent``; a button that
-fell through to the bare user-agent stylesheet while "the button exists"
-passed; and a feature with 282 passing state assertions that rendered
-zero pixels. Markup assertions prove the DOM is right. They prove nothing
-about what a human sees.
-
-THE THREE CLAIMS MEASURED HERE, none of which markup can settle:
-
-  1. The ENDED marker occupies a real, non-zero box that is actually
-     displayed - not ``display:none``, not zero-width, not the same
-     colour as its own background.
-  2. The `stopped` status dot is DISTINGUISHABLE from the `idle` dot.
-     This one is the reason the file is worth writing: ``idle`` and
-     ``unknown`` in this app were once two different colour tokens that
-     resolve to the SAME value under the `claude` theme, so a
-     could-not-determine rendered as a definite answer and no markup test
-     could have seen it. A new dot that repeated that mistake would look
-     correct in every assertion about class names.
-  3. Clicking an ended row's body does NOT attach. Dropping
-     ``role="button"`` from the markup stops it looking clickable; only a
-     real click through a real delegated listener proves it is not.
-
-TWO THEMES, AND WHY THESE TWO. `claude` is where --color-fg-faint and
---color-fg-subtle are both #959595, so it is the theme in which a
-colour-only distinction is invisible. `terminal` has a genuinely
-different palette (#000 background, different greys). `gameboy` and
-`matrix` are deliberately NOT used: they set several tokens to the same
-value, so a test can pass there for the wrong reason.
-
-POSITIVE CONTROLS. A verifier that only ever asserts absence cannot tell
-a working check from a broken one. So: the LIVE row must still be
-clickable and must still attach, and the delete button must actually
-remove the row. If a control fails, the run reports CANNOT DETERMINE
-rather than PASS - a measurement taken with a broken instrument is not a
-measurement.
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS  - every assertion measured and held
-  1  FAIL  - something was measured and was wrong
-  2  CANNOT DETERMINE - the measurement could not be taken at all
-             (playwright missing, browser would not launch, harness never
-             became ready, a positive control did not hold). Never
-             reported as a pass.
-
-Run: python3 scripts/verify_ended_session_marking.py
-"""
 
 from __future__ import annotations
 
@@ -72,11 +17,6 @@ from lib_csp_static_server import serve  # noqa: E402
 
 
 class Report:
-    """Collects results so one run reports every finding, not just the first.
-
-    Three buckets on purpose: a failed positive control is NOT a failure
-    of the thing under test, it means the run could not evaluate it.
-    """
 
     def __init__(self) -> None:
         self.failures: list[str] = []
@@ -249,7 +189,6 @@ def _h(box: dict | None) -> str:
 
 
 def main() -> int:
-    """Run the verification. Output: int - 0 pass, 1 fail, 2 cannot determine."""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:

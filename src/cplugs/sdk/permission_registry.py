@@ -53,6 +53,7 @@ REGISTRY: Tuple[Permission, ...] = (
     _row("sessions.read.remote", MEDIUM),
     _row("ledger.read", MEDIUM),
     _row("mcp.health.read", MEDIUM, declarable=True),
+    _row("flow.read", MEDIUM, declarable=True),
     _row("projects.git.read", MEDIUM),
     _row("feed.view: raw", HIGH),
     _row("sessions.message", HIGH, declarable=True),

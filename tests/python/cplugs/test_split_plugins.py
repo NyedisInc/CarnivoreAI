@@ -87,28 +87,28 @@ def test_migration_runs_once_and_never_overrides_an_owner_choice(tmp_path: Path)
     assert migrate(tmp_path, config) == {}
 
 
-OWNER_PRE_SPLIT_CONFIG = {
+JOE_PRE_SPLIT_CONFIG = {
     "config_version": 8,
     "message_archive": {"enabled": False},
     "save_pipeline": {"capture_scope": "all"},
     "byoai": {
         "revision": 5,
         "connections": [
-            {"id": "custom-0001", "preset": "custom", "label": "llm-a", "base_url": "http://127.0.0.1:1/v1",
+            {"id": "custom-5a57", "preset": "custom", "label": "spark", "base_url": "http://127.0.0.1:1/v1",
              "options": {"protocol": "openai_chat", "capabilities": ["chat"], "auth": "none"}, "enabled": True},
-            {"id": "ollama-0001", "preset": "ollama", "label": "llm-b", "base_url": "http://127.0.0.1:2", "enabled": True},
+            {"id": "ollama-86cb", "preset": "ollama", "label": "mini", "base_url": "http://127.0.0.1:2", "enabled": True},
         ],
         "defaults": {},
         "features": {
-            "pipeline.summary": {"connection": "custom-0001", "model": "model-a", "voice": None},
-            "pipeline.summary.spill": {"connection": "ollama-0001", "model": "model-b", "voice": None},
+            "pipeline.summary": {"connection": "custom-5a57", "model": "nemotron-3-super", "voice": None},
+            "pipeline.summary.spill": {"connection": "ollama-86cb", "model": "qwen2.5:latest", "voice": None},
         },
     },
 }
 
 
-def test_owners_pre_split_install_keeps_save_and_leaves_the_handoff_summary_and_retired_archive_off(tmp_path: Path) -> None:
-    config = _config(tmp_path, OWNER_PRE_SPLIT_CONFIG)
+def test_joes_pre_split_install_keeps_save_and_leaves_the_handoff_summary_and_retired_archive_off(tmp_path: Path) -> None:
+    config = _config(tmp_path, JOE_PRE_SPLIT_CONFIG)
     owner_state.update(tmp_path, runtime.find("huddle").manifest, None, lambda st: replace(st, enabled=True))
     assert migrate(tmp_path, config) == {"save": True}
     assert _stored(tmp_path) == {"save": True}

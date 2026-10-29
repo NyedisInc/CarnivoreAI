@@ -21,6 +21,7 @@ export interface DynamicTabDef {
   railAction?: () => void;
   /* the main area is as it was */
   mainView?: import('svelte').Component;
+  mainViewOnPhone?: boolean;
   badge?: () => number | null;
   tone?: TabTone | (() => TabTone);
   widgetArea: WidgetAreaState;

@@ -42,6 +42,7 @@ describe('the palette itself', () => {
     });
 
     test('the original eight are still the first eight, hex for hex and name for name', () => {
+        // file.
         expect(ACCOUNT_COLORS.slice(0, 8)).toEqual([
             { hex: '#a3e635', name: 'lime' },
             { hex: '#2dd4bf', name: 'teal' },

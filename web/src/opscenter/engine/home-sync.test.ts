@@ -229,3 +229,14 @@ test('a phone fold (title-bar tap) is saved to the server on the tap, in the hom
   expect(prefs.sets).toHaveLength(2);
   expect(prefs.sets[1]!.layout.collapsed.includes('themes')).toBe(was);
 });
+
+test('u161-03: a migration whose write throws is retried on the next hydrate', async () => {
+  storeLocal(!homeLayout.state.layout.heroCollapsed);
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const real = prefs.set.bind(prefs);
+  vi.spyOn(prefs, 'set').mockRejectedValueOnce(new Error('layer fault')).mockImplementation(real);
+  startHomeSync({ target: null });
+  await hydrateHome();
+  await hydrateHome();
+  expect(prefs.sets).toHaveLength(1);
+});

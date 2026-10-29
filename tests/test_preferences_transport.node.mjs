@@ -114,6 +114,8 @@ test('a reconnect refresh with no argument reads through the page API client', a
     }
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('terminal.js dispatches preferences.changed to the transport', () => {
     const src = fs.readFileSync(path.join(CLIENT, 'terminal.js'), 'utf8');

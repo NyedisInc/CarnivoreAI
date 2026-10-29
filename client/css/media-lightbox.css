@@ -1,4 +1,3 @@
-/* position: fixed */
 @layer legacy {
     .sidebar-help__lightbox {
         position: fixed;
@@ -23,38 +22,17 @@
         outline: none;
     }
 
-    /* box-shadow */
     .sidebar-help__lightbox-bar {
         flex: 0 0 auto;
-        display: flex;
-        align-items: center;
         justify-content: space-between;
         gap: 10px;
-        min-height: var(--oc-titlerow-h, 37px);
-        padding: 0 8px 0 12px;
-        background: var(--oc-ground-titlerow);
-        box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
         cursor: move;
         touch-action: none;
         user-select: none;
     }
 
-    .sidebar-help__lightbox-close {
+    [data-help-lightbox-close] {
         flex: 0 0 auto;
-        padding: 4px 10px;
-        background: transparent;
-        border: none;
-        box-shadow: inset 0 0 0 1px var(--oc-line-faint);
-        color: var(--oc-text-primary);
-        font-family: var(--font-mono);
-        font-size: var(--oc-fs-micro, 10px);
-        letter-spacing: var(--oc-tracking-label, 0.6px);
-        text-transform: uppercase;
-        cursor: pointer;
-    }
-
-    .sidebar-help__lightbox-close:hover {
-        background: var(--oc-ground-hover);
     }
 
     .sidebar-help__lightbox-stage {

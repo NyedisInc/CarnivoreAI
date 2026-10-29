@@ -36,10 +36,6 @@ def argv_of(entry: str) -> List[str]:
 
 
 def clean_entry(value: Any) -> str:
-    """One entry, stripped and checked. Inputs: value. Output: str. Raises: CommandListInvalid ``command_invalid``.
-
-    Example: clean_entry("  /usr/bin/git pull --ff-only ") -> "/usr/bin/git pull --ff-only"
-    """
     if not isinstance(value, str):
         raise CommandListInvalid("command_invalid", "text")
     text = value.strip()

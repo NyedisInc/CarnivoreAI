@@ -1,5 +1,7 @@
 
 <script lang="ts">
+  import Button from '../base/Button.svelte';
+  import Field from '../base/Field.svelte';
   import { tick } from 'svelte';
   import { t } from '../i18n/index.svelte';
   import { activity, join, look } from '../computers/computers-store.svelte';
@@ -9,7 +11,7 @@
   import { HELPER_LINE } from '../first-run/join-api';
 
   let value = $state('');
-  let field = $state<HTMLInputElement | null>(null);
+  let fieldRow = $state<HTMLElement | null>(null);
   let picked = $state<string | null>(null);
   let declined = $state<string[]>([]);
   const status = $derived(activity.join);
@@ -20,7 +22,7 @@
   const offers = $derived(!activity.looking ? [] : found.filter((c) => !declined.includes(c.fid)).map((c) => ({ fid: c.fid, label: c.label ?? `${c.name} ${c.fid_short}` })));
 
   function startLook(): void { picked = null; declined = []; void look(); }
-  function accept(offer: { fid: string }): void { picked = offer.fid; void tick().then(() => field?.focus()); }
+  function accept(offer: { fid: string }): void { picked = offer.fid; void tick().then(() => fieldRow?.querySelector('input')?.focus()); }
   function bodyOf(candidate?: string): { code?: string; link?: string; candidate_fid?: string } {
     const text = value.trim();
     const base = text.startsWith('carnivore://') ? { link: text } : { code: text.replace(/\s+/g, '') };
@@ -31,16 +33,15 @@
 <section class="m1-sec" data-sec="join" data-cmp="join"><h3 class="pp-k">{t('roster.sets.join')}</h3>
   <form class="pp-form" onsubmit={(e) => { e.preventDefault(); void join(bodyOf(picked ?? undefined)); }}>
     <p class="pp-hint" data-cmp="join-warning">{t('roster.sets.join_hint')}</p>
-    <div class="pp-fieldrow"><label class="pp-k" for="rs-join-code">{t('roster.sets.code_label')}</label>
-      <input id="rs-join-code" class="oc-field pp-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" bind:value bind:this={field}
+    <div class="pp-fieldrow" bind:this={fieldRow}><Field block label={t('roster.sets.code_label')} id="rs-join-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" bind:value
         placeholder={t('computers.join.placeholder')} data-cmp="join-input" /></div>
-    <div class="pp-acts"><button type="submit" class="oc-btn oc-btn--confirm" data-cmp="join-go" disabled={value.trim() === '' || running || activity.busy !== null}>{t('computers.join.go')}</button></div>
+    <div class="pp-acts"><Button type="submit" variant="confirm" data-cmp="join-go" disabled={value.trim() === '' || running || activity.busy !== null}>{t('computers.join.go')}</Button></div>
   </form>
   {#if candidates.length > 0}
     <div class="pp-form" data-cmp="join-pick">
       <p class="pp-hint">{t('computers.join.pick')}</p>
       <div class="pp-acts">{#each candidates as pack (pack.fid)}
-        <button type="button" class="oc-btn" data-fid={pack.fid} onclick={() => void join(bodyOf(pack.fid))}>{pack.name} {pack.fid_short}</button>
+        <Button data-fid={pack.fid} onclick={() => void join(bodyOf(pack.fid))}>{pack.name} {pack.fid_short}</Button>
       {/each}</div>
     </div>
   {/if}

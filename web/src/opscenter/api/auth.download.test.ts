@@ -23,7 +23,7 @@ test('no Content-Disposition leaves a plain Blob', async () => {
 
 test('a named non-JSON file (a huddle attachment) comes back as a File, a named JSON export stays parsed', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('png-bytes', { status: 200, headers: { 'Content-Type': 'image/png', 'Content-Disposition': 'inline; filename="a.png"' } })));
-    const file = await authFetch<Blob>('/cplugs/huddle/items/1/files/49759e95');
+    const file = await authFetch<Blob>('/cplugs/huddle/items/1/files/ab12cd34');
     expect(file).toBeInstanceOf(File);
     expect((file as File).name).toBe('a.png');
     expect(file.type).toBe('image/png');
@@ -34,11 +34,11 @@ test('a named non-JSON file (a huddle attachment) comes back as a File, a named 
 test('authFetchBlob answers a stored .json file byte for byte, and a file that is not valid JSON too (issue #1788)', async () => {
     const exact = '{ "big": 9007199254740993,\n  "k": 1, "k": 2 }\n';
     vi.stubGlobal('fetch', () => Promise.resolve(new Response(exact, { status: 200, headers: { 'Content-Type': 'application/json', 'Content-Disposition': 'attachment; filename="data.json"' } })));
-    expect(await (await authFetchBlob('/cplugs/huddle/items/1/files/49759e95')).text()).toBe(exact);
+    expect(await (await authFetchBlob('/cplugs/huddle/items/1/files/ab12cd34')).text()).toBe(exact);
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('not json {', { status: 200, headers: { 'Content-Type': 'application/json' } })));
-    expect(await (await authFetchBlob('/cplugs/huddle/items/1/files/49759e95')).text()).toBe('not json {');
+    expect(await (await authFetchBlob('/cplugs/huddle/items/1/files/ab12cd34')).text()).toBe('not json {');
     vi.stubGlobal('fetch', () => Promise.resolve(new Response(exact, { status: 200, headers: { 'Content-Type': 'application/json' } })));
-    expect(JSON.stringify(await authFetch<unknown>('/cplugs/huddle/items/1/files/49759e95'))).not.toBe(exact);
+    expect(JSON.stringify(await authFetch<unknown>('/cplugs/huddle/items/1/files/ab12cd34'))).not.toBe(exact);
 });
 
 test('a 204 answer has its empty body drained, so the browser does not cancel the request unread (ERR_ABORTED on POST /ui/activity)', async () => {

@@ -12,6 +12,8 @@ change and again before calling it done.</p>
             <li>Use <code>--oc-*</code> tokens for every colour; derive with <code>color-mix()</code> when none fits.</li>
             <li>Show selection and hover as the <code>--oc-orange-tint</code> ground (#431, PR #459).</li>
             <li>Divide list items with grey <code>--oc-line-faint</code> hairlines, and prefer more space to less.</li>
+            <li>Draw buttons like the restart picker footer: an outline for cancel, a tinted interior inside a bright edge
+                for confirm and destroy (Alex, 2026-09-25, #637).</li>
             <li>Copy one of <a href="#meters">the three meters</a> (segmented, limit gauge, bottom bar) for any meter (#637).</li>
             <li>Keep the accent for ONE thing per surface.</li>
             <li>Draw every icon in a tab at 14x14; the Shift skull alone at 16 (#569, #606).</li>
@@ -20,22 +22,50 @@ change and again before calling it done.</p>
                 (PR #548).</li>
             <li>Make toggle icons grey when off and coloured with a small living detail when on (#151, PR #560).</li>
             <li>Cap and centre content at wide widths; stack at 1023px.</li>
+            <li>Give every section its own title strip and a 24px gap, and make the one that holds the next step the
+                primary one (<a href="#panels-sections">a column of sections</a>; Alex, 2026-10-24, #2469 round 3: "I need
+                better overall visual separation for intuitive.").</li>
+            <li>Order a detail column by what the person does next: the next step, then what the thing is, then the proof.
+                History goes in the side column, and the details of a clicked step open in the middle, not below the fold
+                (Alex, 2026-10-24, #2469 round 1: "move it to the right under how the card looks").</li>
+            <li>Open a view with a button that only opens; the view has its own close or back at its top and foot, and
+                Escape closes it (Alex, 2026-10-24, #2469 round 1: "The rules button shouldn't be a toggle that's not
+                intuitive.").</li>
+            <li>Give every set of status marks a key that is always in view beside them, never a tooltip or a toggle, and
+                draw each mark so it differs by shape (Alex, 2026-10-24, #2469 round 2: "I need a key somewhere of all
+                these symbols").</li>
+            <li>Keep a status vocabulary to five stages or fewer; the publish page has four: submitted, in review, approved,
+                rejected (Alex, 2026-10-24, #2469 round 3: "no more than five stages").</li>
+            <li>Put several kinds of thing in <a href="#tabs">tabs</a> at the top, each with its own search, yours first,
+                never one mixed list (Alex, 2026-10-24, #2469 round 1: "separate tabs at the top with its own
+                filter").</li>
+            <li>Guide a submission of several steps with a stepper: named steps, one plain line of explanation each, back
+                and next; the steps of doing are never statuses (Alex, 2026-10-24, #2469 round 1: "a multi step wizard to
+                guide you through these steps").</li>
         </ul>
     </div>
     <div class="sg-rules__col">
         <p class="sg-rules__head sg-rules__head--dont">do not</p>
         <ul>
+            <li>Invent a look from tokens: PR #598 used only tokens and was rejected ("looks the same. Not Military Terminal at
+                all.").</li>
+            <li>Ship a native <code>&lt;select&gt;</code> or <code>datalist</code> unless the owner asked for one by name.</li>
             <li>Hardcode a hex, rgb or named colour in a component.</li>
             <li>Mark selection with a red outline (#431: "that looks horrible").</li>
             <li>Use accent-coloured dividers.</li>
             <li>Ship a filled accent or red block for an ordinary act (#592, #598, #637); the filled
                 <code>.modal-btn-alert</code> is for a rare alert only.</li>
             <li>Redraw, recolour or stretch the brand art (<a href="#brand">brand</a>).</li>
+            <li>Add corner targeting brackets to app buttons ("i dont' need the corners flare").</li>
             <li>Mix icon sizes in one row, or draw a second robot, kebab or provider mark (#569).</li>
             <li>Add decorative divider lines to a dropdown menu.</li>
             <li>Stretch content edge to edge at 2560px, or scroll sideways at 390px.</li>
             <li>Use a pill-shaped radius or a hover lift, scale or glow on a button.</li>
+            <li>Tell sections apart by a muted label and a faint rule alone (#2469 round 3); every section gets a
+                strip.</li>
             <li>Mark two sections as primary, or make every strip equally loud.</li>
+            <li>Squeeze two parts side by side until one is 150px wide; stack them at that pane width instead (#2469
+                round 4).</li>
         </ul>
     </div>
 </div>
@@ -52,6 +82,10 @@ change and again before calling it done.</p>
             <li>On a settings surface, say in plain words what a feature does, not how it works, beside one large switch.</li>
             <li>Name the act on a button: "kill and restart", "uninstall".</li>
             <li>Tell sleep from kill: sleep keeps the row in place with a moon, kill files it under recently closed (PR #538).</li>
+            <li>Print the bare state word on a list row ("rejected"); counts and reasons live in the item's detail (#2469
+                round 4 ruling 1).</li>
+            <li>Write a result as a word beside its mark (passed, did not pass, note, skipped); a mark that carries its word
+                needs no key (#2469 round 4 ruling 1).</li>
         </ul>
     </div>
     <div class="sg-rules__col">
@@ -64,6 +98,8 @@ change and again before calling it done.</p>
             <li>Use em dashes, en dashes or emoji anywhere, the catalog included.</li>
             <li>Print absent as zero, or unknown as idle.</li>
             <li>Say "ok" or "yes" on a button.</li>
+            <li>Keep a readout that does not change what the reader does next; a limit shows beside the button it holds
+                (Alex, 2026-10-24, #2469 round 1 dropped the publish page's limits strip).</li>
         </ul>
     </div>
 </div>
@@ -101,7 +137,7 @@ change and again before calling it done.</p>
             <li>Put search in the header (#428, PR #461).</li>
             <li>"Fix" a grey status flash in the client: it is the watcher under load (#524).</li>
             <li>Recolour a token and assume the visible box changed; grep the served <code>app.css</code> for the selector that
-                paints it (<code>a1459054</code>).</li>
+                paints it (<code>81e01faf</code>).</li>
             <li>Key anything on a tmux name; key on the session uuid (gotcha 4b).</li>
             <li>Let a chrome element vote on, or resize, the terminal pane.</li>
             <li>Wait on a bare <code>requestAnimationFrame</code> for work a hidden tab must do (gotcha 9).</li>
@@ -129,6 +165,8 @@ change and again before calling it done.</p>
         <ul>
             <li>Trust a render at the default theme alone: it cannot tell a token from a literal.</li>
             <li>Treat a skipped or could-not-run check as a pass (exit 2 means could not determine).</li>
+            <li>Answer the question you expected instead of the one in the screenshot ("are the icons the same" meant the robot
+                glyphs).</li>
             <li>Run <code>npm ci</code> through a symlinked <code>web/node_modules</code>; it empties the shared install.</li>
         </ul>
     </div>

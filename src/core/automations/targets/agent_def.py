@@ -11,6 +11,17 @@ EDIT_TOOLS = ("Edit", "Write", "NotebookEdit")
 
 _TOOL_ENTRY = re.compile(r"[A-Za-z_][A-Za-z0-9_.*-]{0,127}(\([A-Za-z0-9_./:*=@+-]([A-Za-z0-9_./:*=@+ -]{0,254}[A-Za-z0-9_./:*=@+-])?\))?")
 
+_UNCONFINED_PROGRAMS = frozenset({"sh", "bash", "zsh", "dash", "fish", "env", "eval", "exec", "sudo", "xargs", "python", "python3",
+                                  "node", "perl", "ruby", "php", "osascript", "awk", "find", "ssh", "curl", "wget", "nohup", "time"})
+
+
+def unconfined_bash_pattern(tool: str) -> bool:
+    if not tool.startswith("Bash(") or not tool.endswith(")"):
+        return False
+    first = (tool[5:-1].split() or [""])[0].split(":")[0]
+    return first == "" or first.startswith("*") or first.rsplit("/", 1)[-1] in _UNCONFINED_PROGRAMS
+
+
 LEVELS = {"read_only": ("dontAsk", False), "edits_in_folder": ("acceptEdits", True), "unattended": ("bypassPermissions", False)}
 
 
@@ -49,6 +60,8 @@ class AgentDef(BaseModel):
             raise ValueError("tools_not_allowed_for_level: read_only carries no Edit, Write, NotebookEdit or Bash")
         if self.permission == "edits_in_folder" and "Bash" in bare:
             raise ValueError("tools_not_allowed_for_level: Bash needs a command pattern at edits_in_folder")
+        if self.permission == "edits_in_folder" and any(unconfined_bash_pattern(t) for t in self.tools):
+            raise ValueError("tools_not_allowed_for_level: a Bash pattern at edits_in_folder may not start with a wildcard or name a shell or interpreter")
         return self
 
     def mode(self) -> Tuple[str, bool]:

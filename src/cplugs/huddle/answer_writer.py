@@ -36,7 +36,7 @@ class AnswerWriter:
     @staticmethod
     def _answer_id(conn: Any, row: Any) -> Optional[int]:
         found = conn.execute("SELECT id FROM work_messages WHERE item_id = ? AND author = 'joe' AND parts LIKE ? ORDER BY id DESC LIMIT 1",
-                             (row["item_id"], f'{{"v": 2, "answers_to": {int(row["id"])},%')).fetchone()
+                             (row["item_id"], f'{rich_ask.ANSWERS_TO_PREFIX}: {int(row["id"])},%')).fetchone()
         return int(found[0]) if found else None
 
     def read(self, message_id: int) -> Dict[str, Any]:
@@ -63,7 +63,7 @@ class AnswerWriter:
 
     def submit(self, message_id: int, answers: Any, ack_through: Optional[int] = None) -> Dict[str, Any]:
         store = self._store
-        with closing(store._connect(True)) as conn, conn:
+        with store._immediate() as conn:
             row = self._question(conn, message_id)
             if row["answered"]:
                 return self._replay(conn, row, answers)
@@ -86,7 +86,7 @@ class AnswerWriter:
             carnivore = None
             if row["category"] in carnivore_ask.CARNIVORE_CATEGORIES:
                 carnivore = {"category": row["category"], "choice": carnivore_ask.apply(
-                    conn, item, row["category"], checked.get(carnivore_ask.QUESTION_ID, {}).get("choice", ""), store._clock())}
+                    conn, item, row["category"], checked.get(carnivore_ask.QUESTION_ID, {}).get("choice", ""), store._clock(), checked)}
             store._mark(conn, item["id"], JOE, seq)
             message = message_dict(conn.execute(f"SELECT {MSG_COLS} FROM work_messages WHERE id = ?", (cur.lastrowid,)).fetchone())
         store._commit_notify(item["list_key"])

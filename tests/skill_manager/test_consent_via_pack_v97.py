@@ -44,8 +44,8 @@ def v96_state(tmp_path) -> Path:
             conn.execute(
                 "INSERT INTO installed_items (install_id, item_id, kind, publisher, name, version, digest, scope, project_path, "
                 "auto_update, source_index_url, publisher_key_id, revision, installed_at, updated_at, consent_via) "
-                "VALUES (?, ?, 'skill', 'acme', ?, '1.0.0', ?, 'global', '', 0, 'https://x.invalid/i.json', 'RWkey', 1, ?, ?, ?)",
-                (f"i{n}", f"acme/s{n}", f"s{n}", "d" * 64, STAMP, STAMP, via))
+                "VALUES (?, ?, 'skill', 'alex', ?, '1.0.0', ?, 'global', '', 0, 'https://x.invalid/i.json', 'RWkey', 1, ?, ?, ?)",
+                (f"i{n}", f"alex/s{n}", f"s{n}", "d" * 64, STAMP, STAMP, via))
             conn.execute("INSERT INTO installed_item_targets (install_id, harness, path) VALUES (?, 'claude', ?)", (f"i{n}", f"/h/s{n}"))
         set_meta(conn, db_models.META_SCHEMA_VERSION, "96")
         conn.commit()

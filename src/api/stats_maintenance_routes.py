@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import asyncio
-import sqlite3
+from typing import Any
 
 import structlog
 from fastapi import HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
 from src.api.stats_routes import _store, _run, router
-from src.core.pipeline.plugin_db import PluginUnavailable
 from src.core.session_change_notice import publish
 from src.core.stats import config, reset
 
@@ -37,7 +36,8 @@ def _backfill(store, scheduler) -> dict:
 
 
 @router.get("/maintenance", response_model=None)
-async def get_maintenance(request: Request):
+async def get_maintenance(request: Request) -> dict[str, Any]:
+    """Disk size, the clear job's state and the backfill progress for the maintenance screen."""
     store = _store(request)
     settings = await _run(config.get_settings, store)
     scheduler = getattr(request.app.state, "stats_scheduler", None)
@@ -47,11 +47,16 @@ async def get_maintenance(request: Request):
             "backfill": await asyncio.to_thread(_backfill, store, scheduler)}
 
 
+def _fail(job: reset.ClearJob, exc: BaseException) -> None:
+    job.state, job.error = "failed", type(exc).__name__
+    logger.error("stats_clear_failed", error_type=type(exc).__name__, error=str(exc)[:200])
+
+
 async def _clear(request: Request, store, job: reset.ClearJob) -> None:
     try:
         await asyncio.to_thread(reset.clear_stats, store, job)
-    except (OSError, sqlite3.Error, reset.StatsStillOn, reset.NotEnoughSpace, PluginUnavailable) as exc:
-        job.state, job.error = "failed", type(exc).__name__
+    except Exception as exc:  # noqa: BLE001
+        _fail(job, exc)
         return
     scheduler = getattr(request.app.state, "stats_scheduler", None)
     if scheduler is not None:
@@ -61,7 +66,7 @@ async def _clear(request: Request, store, job: reset.ClearJob) -> None:
 
 
 @router.post("/clear", response_model=None, status_code=202)
-async def post_clear(request: Request, value: ClearRequest):
+async def post_clear(request: Request, value: ClearRequest) -> dict[str, Any]:
     """Start clearing collected stats and reclaiming the disk; poll `/stats/maintenance`."""
     if not value.confirm:
         raise HTTPException(422, detail={"code": "confirm_required"})

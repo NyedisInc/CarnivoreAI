@@ -62,12 +62,13 @@ test('an analytics chart on the grid: config opens its own panel with edit layou
   expect(layoutEditor.active).toBe(false);
   expect(configureSheet.slot, 'the frame no longer closes it outside edit layout').toBe(slot);
   expect(document.querySelector('[data-test-panel]')).not.toBeNull();
+  // there is nothing
   withdraw();
   flushSync();
   expect(configureSheet.slot).toBeNull();
 });
 
-test('a widget in the sidebar widget area: settings... is an item of its icon menu in edit layout; the hover gear and the header gear are gone', () => {
+test('a widget in the sidebar widget area: settings... is an item of its icon menu in edit layout; the hover gear and the header gear are gone (item 685)', () => {
   layoutEditor.active = true;
   layoutEditor.page = 'home';
   const root = place(PlacementBody, { host: 'drawer', manifest: CORE_MANIFESTS['core.activity-log']! });

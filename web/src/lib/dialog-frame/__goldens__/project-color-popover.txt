@@ -1,4 +1,4 @@
-<div aria-label="custom color" class="pc-pop popup-focus" data-project-color-popover="" role="dialog" style="left: 8px; top: 8px;" tabindex="-1">
+<div aria-label="custom color" class="oc-anchored pc-pop popup-focus" data-project-color-popover="" role="dialog" style="left: 8px; top: 8px;" tabindex="-1">
   <div class="pc-pop__head">
     <span class="pc-pop__label">
       "custom color"
@@ -13,17 +13,17 @@
         <label class="pc-pop__chan">
           <span>
             "r"
-          <input data-channel="r" max="255" min="0" step="1" type="number">
+          <input data-channel="r" data-field="" data-size="sm" max="255" min="0" step="1" type="number">
         <label class="pc-pop__chan">
           <span>
             "g"
-          <input data-channel="g" max="255" min="0" step="1" type="number">
+          <input data-channel="g" data-field="" data-size="sm" max="255" min="0" step="1" type="number">
         <label class="pc-pop__chan">
           <span>
             "b"
-          <input data-channel="b" max="255" min="0" step="1" type="number">
+          <input data-channel="b" data-field="" data-size="sm" max="255" min="0" step="1" type="number">
   <div class="pc-pop__foot">
-    <button class="modal-btn modal-btn-secondary" data-project-color-cancel="" type="button">
+    <button data-btn="secondary" data-button-root="true" data-project-color-cancel="true" tabindex="0" type="button">
       "cancel"
-    <button class="modal-btn modal-btn-confirm" data-project-color-ok="" type="button">
+    <button data-btn="confirm" data-button-root="true" data-project-color-ok="true" tabindex="0" type="button">
       "ok"

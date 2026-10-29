@@ -1,6 +1,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import asyncio.subprocess
 import os
 import re
 import sys
@@ -80,6 +82,15 @@ def _hook(event: str, args: Tuple[Any, ...]) -> None:
         _counts[key] += 1
 
 
+_real_create_subprocess_exec = asyncio.subprocess.create_subprocess_exec
+
+
+async def _audited_create_subprocess_exec(program, *args, **kwargs):
+    if _active and not type(asyncio.get_running_loop()).__module__.startswith("asyncio"):
+        sys.audit("subprocess.Popen", program, [program, *args], None, None)
+    return await _real_create_subprocess_exec(program, *args, **kwargs)
+
+
 def start() -> None:
     global _installed, _active
     with _lock:
@@ -88,6 +99,7 @@ def start() -> None:
         _counts.clear()
         if not _installed:
             sys.addaudithook(_hook)
+            asyncio.create_subprocess_exec = asyncio.subprocess.create_subprocess_exec = _audited_create_subprocess_exec
             _installed = True
         _active = True
 

@@ -18,10 +18,12 @@ describe('where a refusal leaves the flow', () => {
     });
 
     test('a body that was not a code keeps it too', () => {
+        // there is nothing
         expect(stepAfterRefusal('bad_code')).toBe('code');
     });
 
     test('a dead challenge sends you back to the start', () => {
+        // NEGATIVE CONTROL for
         expect(stepAfterRefusal('code_expired')).toBe('address');
         expect(stepAfterRefusal('unknown_flow')).toBe('address');
     });
@@ -48,6 +50,7 @@ describe('which failure means the feature is not built here', () => {
     });
 
     test('the GITHUB not-configured code does NOT', () => {
+        // NEGATIVE CONTROL for
         expect(isEmailUnconfigured('auth_not_configured')).toBe(false);
     });
 

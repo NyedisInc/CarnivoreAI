@@ -34,7 +34,6 @@ export const fetchTokens = async (fetcher: Fetcher = authFetch): Promise<McpToke
 export const setEnabled = (enabled: boolean, fetcher: Fetcher = authFetch): Promise<{ enabled: boolean }> =>
     fetcher('/mcp-admin/settings', { method: 'PUT', body: JSON.stringify({ enabled }) });
 
-/* app settings tools */
 export interface AgentTools { readonly huddle: boolean; readonly swarm: boolean; readonly app_settings: boolean }
 
 export async function fetchAgentTools(fetcher: Fetcher = authFetch): Promise<AgentTools> {

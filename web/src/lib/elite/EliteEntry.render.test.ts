@@ -36,14 +36,15 @@ class FakeAudioContext {
 }
 
 const ITEMS: CatalogItem[] = [
-    { id: 'acme/deploy', name: 'deploy', kind: 'skill', publisher: 'acme', latest: '1.0', card: { title: 'Deploy Runner' }, versions: [] },
+    { id: 'alex/deploy', name: 'deploy', kind: 'skill', publisher: 'alex', latest: '1.0', card: { title: 'Deploy Runner' }, versions: [] },
     { id: 'zoe/dusk', name: 'dusk', kind: 'theme', publisher: 'zoe', latest: '1.0', card: { title: 'Dusk' }, versions: [] },
 ] as unknown as CatalogItem[];
 
 const LEDGER = [
-    { install_id: 'i1', item_id: 'acme/deploy', name: 'Deploy Runner', scope: 'global', installed_at: '2026-10-16T10:00:00Z', updated_at: '2026-10-16T10:00:00Z' },
+    { install_id: 'i1', item_id: 'alex/deploy', name: 'Deploy Runner', scope: 'global', installed_at: '2026-10-16T10:00:00Z', updated_at: '2026-10-16T10:00:00Z' },
 ] as unknown as InstalledItem[];
 
+/** A catalog host that answers the reads the board makes and refuses the rest. */
 function hostFor(): CatalogHost {
     const refuse = () => Promise.reject(new Error('the test never calls this'));
     return {
@@ -51,7 +52,7 @@ function hostFor(): CatalogHost {
         refreshIndex: refuse,
         opened: () => Promise.resolve({}),
         listInstalled: () => Promise.resolve({ items: LEDGER }),
-        catalogSession: () => Promise.resolve({ signed_in: true, login: 'acme' }),
+        catalogSession: () => Promise.resolve({ signed_in: true, login: 'harbor' }),
         itemInstalls: refuse,
         installCounts: refuse,
         listProjects: () => Promise.resolve([]),
@@ -59,6 +60,7 @@ function hostFor(): CatalogHost {
     } as unknown as CatalogHost;
 }
 
+/** Let every microtask and every timer shorter than `ms` settle. */
 const settle = (ms = 0): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const press = (code: string, key: string, altKey = false): void => {

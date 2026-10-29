@@ -1,10 +1,3 @@
-"""The per-day count of billed SMS messages, kept per destination and persisted across restarts (issue #1278).
-
-One small JSON file in the state directory maps a destination id to ``{"day": "YYYY-MM-DD", "count": n}`` (the
-local calendar day). A new day starts a fresh count. The file is written atomically after every change, and an
-unreadable or malformed file reads as an empty one (the cap then restarts from zero, never from a guess).
-With no path the count lives in memory only (tests).
-"""
 
 from __future__ import annotations
 

@@ -33,18 +33,18 @@ const NOW = 1_800_000_000;
 
 const research = [
   { kind: 'company', name: 'Nyedis', agent_id: 3 },
-  { kind: 'project', name: 'Orchardco', agent_id: null },
-  { kind: 'agent', name: 'Orchard-Research', agent_id: 9 },
+  { kind: 'project', name: 'Cobalt', agent_id: null },
+  { kind: 'agent', name: 'Argent-Research', agent_id: 9 },
 ];
 const askCard = (askers: unknown[]) => ({
   kind: 'card', id: 'item:196', at: NOW - 600, card: 'question', author_path: research,
   item: {
-    id: 196, list: 'all', text: 'Orchard-Research asked: "raw words"', note: '', position: 1, created_by: 'claude', state: 'open', kind: 'question',
+    id: 196, list: 'all', text: 'Argent-Research asked: "raw words"', note: '', position: 1, created_by: 'claude', state: 'open', kind: 'question',
     revision: 1, created_seq: 1, seq: 1, deleted: false, status: 'question', thread: [], swarm_ref: 'question:196',
   },
   question: {
     summary: 'keep the old dlp vendor for one more quarter?', task: 'researching new dlp providers',
-    details: 'NOTE 1 red proof as ordered is impossible.', askers, asked_at: NOW - 240,
+    details: 'P7c card #195, NOTE 1 red proof as ordered is impossible.', askers, asked_at: NOW - 240,
   },
 });
 const asker = (name: string, id: number | null, path: unknown[] = [{ kind: 'agent', name, agent_id: id }]) => ({ agent_id: id, name, author_path: path });
@@ -73,11 +73,11 @@ afterEach(() => {
 
 describe('the question card', () => {
   test('path with +N and the time since, then task, summary, a full details toggle; no title row, no "asked:" prefix', async () => {
-    server.entries = [askCard([asker('Orchard-Research', 9, research), asker('Orchard-QnA', 11), asker('Gone-Agent', null)])];
+    server.entries = [askCard([asker('Argent-Research', 9, research), asker('Cobalt-QnA', 11), asker('Gone-Agent', null)])];
     const host = await mountChat();
     const card = host.querySelector('[data-huddle-item="196"]') as HTMLElement;
-    const crumbs = [...card.querySelectorAll('[data-chat-author-path] nav > .hdc-crumb')].map((c) => c.textContent?.trim());
-    expect(crumbs).toEqual(['Nyedis', 'Orchardco', 'Orchard-Research']);
+    const crumbs = [...card.querySelectorAll('[data-chat-author-path] > .hdc-path-crumbs > .hdc-crumb')].map((c) => c.textContent?.trim());
+    expect(crumbs).toEqual(['Argent-Research']);
     expect(card.querySelector('[data-chat-askers-more]')?.textContent).toBe('+2');
     expect(card.querySelector('[data-chat-since]')?.textContent).toBe('4m');
     expect(card.querySelector('[data-chat-ask-task]')?.textContent).toContain('researching new dlp providers');
@@ -93,7 +93,7 @@ describe('the question card', () => {
     flushSync();
     const details = card.querySelector('[data-chat-ask-details]') as HTMLElement;
     expect(details.textContent).toContain('NOTE 1 red proof as ordered is impossible.');
-    expect([...details.querySelectorAll('[data-chat-ask-askers] .hdc-crumb-name')].map((n) => n.textContent)).toEqual(['Orchard-QnA', 'Gone-Agent']);
+    expect([...details.querySelectorAll('[data-chat-ask-askers] .hdc-crumb-name')].map((n) => n.textContent)).toEqual(['Cobalt-QnA', 'Gone-Agent']);
     expect(details.querySelector('[data-chat-ask-routing]')).toBeNull();
     expect(details.textContent).not.toMatch(/routing|checked on the way up/);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
@@ -105,30 +105,34 @@ describe('the question card', () => {
   });
 
   test('a single asker shows no +N', async () => {
-    server.entries = [askCard([asker('Orchard-Research', 9, research)])];
+    server.entries = [askCard([asker('Argent-Research', 9, research)])];
     const host = await mountChat();
     expect(host.querySelector('[data-chat-askers-more]')).toBeNull();
   });
 });
 
 describe('the header row on every message', () => {
-  test('a live crumb opens that agent\'s chat; a crumb with no live agent is plain text; the owner gets no name line', async () => {
+  test('the name only, its lineage on hover; the name and the node open the agent (its chat with no live terminal); the owner gets no name line', async () => {
     server.entries = [
-      askCard([asker('Orchard-Research', 9, research)]),
-      { kind: 'owner', id: 'msg:1', at: NOW - 30, text: 'go', author_path: [{ kind: 'owner', name: 'acme', agent_id: null }] },
+      askCard([asker('Argent-Research', 9, research)]),
+      { kind: 'owner', id: 'msg:1', at: NOW - 30, text: 'go', author_path: [{ kind: 'owner', name: 'alex', agent_id: null }] },
       { kind: 'agent', id: 'ag:1', at: NOW - 7200, text: 'done', author_path: [{ kind: 'sysop', name: 'SysOp', agent_id: 1 }] },
     ];
     const host = await mountChat();
     const card = host.querySelector('[data-huddle-item="196"]') as HTMLElement;
-    expect(card.querySelector('button[data-crumb-kind="project"], span[data-crumb-kind="project"]')?.tagName).toBe('SPAN');
-    const company = card.querySelector('[data-crumb-kind="company"]') as HTMLElement;
-    expect(company.tagName).toBe('BUTTON');
-    company.click();
-    expect(agentPage.id).toBe(3);
-    (card.querySelector('[data-crumb-kind="agent"]') as HTMLButtonElement).click();
+    expect(card.querySelector('[data-crumb-kind="company"], [data-crumb-kind="project"]')).toBeNull();
+    const name = card.querySelector('[data-crumb-kind="agent"]') as HTMLButtonElement;
+    expect(name.tagName).toBe('BUTTON');
+    expect(name.getAttribute('data-tooltip')).toBe('Nyedis / Cobalt / Argent-Research');
+    const node = host.querySelector('[data-entry-id="item:196"] button.hdc-av--link') as HTMLButtonElement;
+    expect(node.getAttribute('data-tooltip')).toBe('Nyedis / Cobalt / Argent-Research');
+    node.click();
+    expect(agentPage.id).toBe(9);
+    agentPage.id = null;
+    name.click();
     expect(agentPage.id).toBe(9);
     const owner = host.querySelector('[data-entry-id="msg:1"]') as HTMLElement;
-    expect(owner.querySelector('[data-crumb-kind="owner"], .hdc-crumb-name')).toBeNull();
+    expect(owner.querySelector('[data-crumb-kind="owner"], .hdc-crumb-name, .hdc-av--link')).toBeNull();
     expect(owner.querySelector('[data-chat-dir]')?.getAttribute('data-chat-dir')).toBe('none');
     expect(owner.querySelector('[data-chat-burst-time]')?.textContent).toBe('30s');
     const sysop = host.querySelector('[data-entry-id="ag:1"]') as HTMLElement;
@@ -137,19 +141,18 @@ describe('the header row on every message', () => {
     expect(sysop.querySelector('[data-chat-burst-time]')?.textContent).toBe('2h');
   });
 
-  test('the crumb row stays one line in a 320 px drawer: names shrink with an ellipsis and carry no tooltip (#1404, #1209)', async () => {
-    server.entries = [askCard([asker('Orchard-Research', 9, research), asker('Orchard-QnA', 11)])];
+  test('the header row stays one line in a 320 px drawer: the name shrinks with an ellipsis (#1404)', async () => {
+    server.entries = [askCard([asker('Argent-Research', 9, research), asker('Cobalt-QnA', 11)])];
     const host = await mountChat();
     const card = host.querySelector('[data-huddle-item="196"]') as HTMLElement;
-    const names = [...card.querySelectorAll('[data-chat-author-path] nav .hdc-crumb-name')] as HTMLElement[];
-    expect(names.map((n) => n.textContent)).toEqual(['Nyedis', 'Orchardco', 'Orchard-Research']);
-    expect(names.every((n) => n.title === '')).toBe(true);
-    expect([...card.querySelectorAll('.hdc-crumb--link')].every((b) => b.hasAttribute('data-agent-drawer-opener'))).toBe(true);
+    const names = [...card.querySelectorAll('[data-chat-author-path] .hdc-crumb-name')] as HTMLElement[];
+    expect(names.map((n) => n.textContent)).toEqual(['Argent-Research']);
+    expect(names.every((n) => n.title === '' && !n.hasAttribute('data-tooltip'))).toBe(true);
     const css = authorPathSource;
     const rule = (sel: string): string => css.match(new RegExp(`\\n\\s*\\${sel}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
     expect(rule('.hdc-path-crumbs')).toMatch(/flex-wrap:\s*nowrap/);
     expect(rule('.hdc-path-crumbs')).toMatch(/min-width:\s*0/);
-    for (const sel of ['.hdc-path-sep', '.hdc-path-more', '.hdc-path-time']) expect(rule(sel)).toMatch(/flex:\s*none/);
+    for (const sel of ['.hdc-path-more', '.hdc-path-time']) expect(rule(sel)).toMatch(/flex:\s*none/);
     expect(rule('.hdc-crumb-name')).toMatch(/text-overflow:\s*ellipsis/);
   });
 

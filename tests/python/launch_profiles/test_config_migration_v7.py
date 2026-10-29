@@ -17,8 +17,8 @@ def _config():
     seed = AGENT_FAMILY_BY_NAME
     return {"config_version": 6, "agents": {"wrappers": [
         _w("claude", "claude", seed["claude"].default_script),
-        _w("keyc", "claude", 'keyc "$@"', default=True),
-        _w("clxor", "claude", "clxor() {\n  export NEUTRAL_BASE=https://example.invalid\n  command claude \"$@\"\n}", accepts_model=True, entry="clxor"),
+        _w("cld", "claude", 'cld "$@"', default=True),
+        _w("cldor", "claude", "cldor() {\n  export NEUTRAL_BASE=https://example.invalid\n  command claude \"$@\"\n}", accepts_model=True, entry="cldor"),
         _w("codex-yolo", "codex", 'codex --yolo "$@"', default=True, icon="bolt"),
         _w("hermes-default", "hermes", "hermes", default=True, icon="hermes"),
         _w("openclaw-default", "openclaw", 'openclaw tui "$@"', default=True, icon="claw"),
@@ -45,9 +45,9 @@ def test_seed_from_eight_wrappers():
             assert by_id[pid]["harness"] == wrapper["family"]
             assert by_id[pid]["label"] == wrapper["label"] and by_id[pid]["icon"] == wrapper["icon"]
     assert [i for i, p in by_id.items() if p["custom_command"] is None] == ["claude", "shell-default"]
-    assert by_id["clxor"]["model"]["mode"] == "ask" and by_id["keyc"]["model"]["mode"] == "default"
+    assert by_id["cldor"]["model"]["mode"] == "ask" and by_id["cld"]["model"]["mode"] == "default"
     assert by_id["hermes-default"]["custom_command_ack_no_args"] is True
-    assert by_id["keyc"]["custom_command_ack_no_args"] is False
+    assert by_id["cld"]["custom_command_ack_no_args"] is False
     for p in profiles:
         LaunchProfile.model_validate(p)
     assert seed_launch_profiles(after) is after

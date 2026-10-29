@@ -29,15 +29,6 @@ KEEP_ENTRY = ".gitignore"
 
 
 def _entry_age_seconds(entry: os.DirEntry, now: float) -> float | None:
-    """How old this entry is, or None when that could not be measured.
-
-    Description: ``lstat``, never ``stat``. Following a link would judge
-      an entry's age by its TARGET's mtime, and the removal would then act
-      on something whose lifetime has nothing to do with the age measured.
-    Inputs: entry (os.DirEntry). now (float) - epoch seconds.
-    Output: float | None - None means UNKNOWN, which the caller must treat
-      as "leave it alone", never as "old enough".
-    """
     try:
         return now - entry.stat(follow_symlinks=False).st_mtime
     except OSError as exc:
@@ -48,19 +39,6 @@ def _entry_age_seconds(entry: os.DirEntry, now: float) -> float | None:
 
 
 def sweep_directory(directory: Path, ttl_seconds: int, now: float) -> int:
-    """Remove every entry directly inside ``directory`` older than the ttl.
-
-    Description: ONE level deep, like the upload sweeper, so the blast
-      radius is exactly the entries this app created. An absent directory
-      is zero removals and not an error: nothing has been staged or
-      trashed yet is the ordinary state. An entry whose age could not be
-      measured is LEFT, because "I could not tell how old this is" is not
-      "it is old enough".
-    Inputs: directory (Path) - staging or a trash root. ttl_seconds (int).
-      now (float) - epoch seconds, passed in so one pass uses one clock.
-    Output: int - how many entries were removed.
-    Example: sweep_directory(staging, STAGING_TTL_SECONDS, time.time())
-    """
     try:
         with os.scandir(directory) as entries:
             candidates = list(entries)

@@ -1,27 +1,3 @@
-"""
-File CREATION for the file editor.
-
-Split from ``src/core/config_files.py`` (which owns list/read/write and the
-allowed-roots / hide-list constants) purely for this project's 500-line
-file rule; the two are one feature and share every guard.
-
-WHAT THIS DOES NOT DO: it does not create DIRECTORIES. Creating a file
-inside an existing directory is the whole scope. ``mkdir -p`` on a
-client-supplied path is a second, larger decision - it can materialise a
-tree the tree view never showed, it interacts with the allow-list in ways
-``resolve_safe_path`` was not written to answer, and there is no undo.
-Asking for ``skills/newthing/SKILL.md`` under a root with no ``newthing/``
-therefore FAILS with a message that says exactly that, rather than half
-working. If directory creation is wanted later it belongs here, as its own
-function with its own tests.
-
-SECURITY: the create path goes through ``config_files.resolve_safe_path()``
-- the same and only path guard the read and write paths use. There is no
-second, more permissive resolver here. That function rejects absolute
-paths, ``..`` components, hidden/state entries, anything that escapes the
-root after ``resolve()``, and (for the allow-listed roots) a top-level name
-outside the allow-list.
-"""
 from __future__ import annotations
 
 import json
@@ -35,6 +11,16 @@ from src.core.config_files import ConfigFileError
 
 logger = structlog.get_logger()
 
+CONFIRM_EXECUTABLE = "executable"
+CONFIRM_SENSITIVE = "sensitive"
+
+
+class ConfirmationRequiredError(ConfigFileError):
+
+    def __init__(self, message: str, acknowledge: str) -> None:
+        super().__init__(message)
+        self.acknowledge = acknowledge
+
 
 def create_file(
     root_id: str,
@@ -44,36 +30,6 @@ def create_file(
     acknowledge_executable: bool = False,
     acknowledge_sensitive: bool = False,
 ) -> dict:
-    """
-    Description: create ONE new file under a browsable root. Refuses to
-      overwrite: if anything already exists at the resolved path - file,
-      directory or symlink - the call fails and nothing is touched. The
-      parent directory must already exist; this function never creates
-      one (see the module docstring). Everything else matches
-      ``config_files.write_file``: ``.json`` content is parsed before it
-      touches disk, an executable destination (hooks/, scripts/) requires
-      ``acknowledge_executable``, a credentials/secret/key-shaped name
-      requires ``acknowledge_sensitive``, a read-only root is refused, and
-      the write itself is atomic.
-    Inputs:
-      root_id (str) - "user" or "workdir".
-      rel_path (str) - forward-slash relative path for the NEW file.
-      content (str) - initial contents; "" is allowed.
-      project_path (str|None) - required when root_id != "user".
-      acknowledge_executable (bool) - must be True when the new file would
-        be classified executable.
-      acknowledge_sensitive (bool) - must be True when the new file's name
-        is credentials/secret/key-shaped.
-    Output: dict - {"created": True, "rel_path": str, "is_executable":
-      bool, "is_sensitive": bool}.
-    Raises: ConfigFileError - every client-caused failure: invalid or
-      escaping path (via ``resolve_safe_path``), an empty path, a path
-      naming an existing entry, a missing parent directory, a read-only
-      root, malformed JSON, or a missing acknowledgement. The routes layer
-      maps this to HTTP 400.
-    Example: create_file("user", "notes.md", "# hi", None)
-      -> {"created": True, "rel_path": "notes.md", ...}
-    """
     if not (rel_path or "").strip().strip("/"):
         raise ConfigFileError("a file name is required")
 
@@ -97,14 +53,16 @@ def create_file(
     if read_only:
         raise ConfigFileError("this location is under a read-only root (plugins/)")
     if is_executable and not acknowledge_executable:
-        raise ConfigFileError(
+        raise ConfirmationRequiredError(
             "a file here is executed automatically by claude code - "
-            "create refused without explicit confirmation"
+            "create refused without explicit confirmation",
+            CONFIRM_EXECUTABLE,
         )
     if is_sensitive and not acknowledge_sensitive:
-        raise ConfigFileError(
+        raise ConfirmationRequiredError(
             "this name looks like credentials/a secret/a private key - "
-            "create refused without explicit confirmation"
+            "create refused without explicit confirmation",
+            CONFIRM_SENSITIVE,
         )
 
     if path.suffix == ".json":

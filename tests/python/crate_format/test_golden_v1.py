@@ -26,8 +26,8 @@ from tests.python.crate_format import mutate
 from tests.python.inventory.world import CONV_A
 
 ROOT = Path(__file__).resolve().parents[3]
-ANCHORS: Dict[str, str] = {"v1": "ba119bc8cbdcea6fc4f2b869463f2373ad356e248c34b6b59e3783b56550eb5e",
-                           "v1.1": "4c90584f467f09f69e28f47f091893f1fbabd0c7a6939c84149e53c64adf2fec"}
+ANCHORS: Dict[str, str] = {"v1": "e056f49c95a4c7af4a68e8005c0dc4302e35cc9a008255fd2f31758612721366",
+                           "v1.1": "6bfae4519ac6f689d3f9788da708400740c9fecab0f86e4e1a0723b0a20fac14"}
 CRATES = [fx.name for fx in B.FIXTURES]
 PLAIN = [name for name in CRATES if not name.endswith(".age")]
 AGE = "session-own.crate.age"

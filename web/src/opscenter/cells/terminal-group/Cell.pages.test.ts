@@ -189,7 +189,7 @@ test('new proxy browser creates one and lands it as a tab here', async () => {
   expect(tabsFor(terminalLayout, A)).toEqual([A, pageTabId(NEW_ID)]);
 });
 
-test('the frame title row names the showing page, never "terminal", and fenmont on a session tab', async () => {
+test('the frame title row names the showing page, never "terminal", and lets go on a session tab', async () => {
   setGroups(terminalLayout, { [A]: { tabs: [A, PAGE_TAB] } });
   const root = draw();
   await settle();

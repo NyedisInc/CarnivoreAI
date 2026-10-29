@@ -11,7 +11,6 @@ console.log('[TextPromptModal Module] Loading...');
             .replace(/'/g, '&#39;');
     }
 
-    /* label: ' */
     function open(options) {
         const opts = options || {};
         const esc = opts.escapeHtml || defaultEscapeHtml;

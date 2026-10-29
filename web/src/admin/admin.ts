@@ -48,6 +48,7 @@ export interface SubmissionRow {
     gate_outcome?: string;
     report_sha256?: string;
     overridable?: boolean;
+    override?: { reason: string; by?: string; by_login?: string; at?: string };
     revocation_state?: string;
     revocation_reason?: string;
     revoked_at?: string;
@@ -86,6 +87,31 @@ export interface ReportGate {
     findings?: ReportFinding[];
 }
 
+export interface ReportReview {
+    status?: string;
+    verdict?: string;
+    summary?: string;
+    model?: string;
+    reviewed_at?: string;
+    warnings?: Array<{ kind: string; detail: string; file?: string; line?: number }>;
+    coverage?: {
+        text_files: number;
+        total_chars: number;
+        reviewed_chars: number;
+        omitted_files: number;
+        truncated_files: number;
+        binary_files: number;
+        complete: boolean;
+    };
+}
+
+export interface ReportCodeInventory {
+    file_count: number;
+    total_bytes: number;
+    files: Array<{ path: string; bytes: number }>;
+    truncated: boolean;
+}
+
 export interface ReportDiff {
     first_release?: boolean;
     unavailable?: boolean;
@@ -102,6 +128,8 @@ export interface GateReport {
     app_sha?: string;
     grade?: string;
     gates?: ReportGate[];
+    review?: ReportReview;
+    code_inventory?: ReportCodeInventory;
     diff?: ReportDiff;
 }
 

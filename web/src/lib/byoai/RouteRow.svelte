@@ -8,6 +8,7 @@
     import type { Connection, TargetRef } from './api';
     import { capabilityIcon } from './capability-icons';
     import { offeredCapabilities, voicesOf } from './form-logic';
+    import Button from '../base/Button.svelte';
     import ModelPicker from './ModelPicker.svelte';
     import { defaultModelId, modelFacts, modelItems, type PickItem } from './picker-logic';
     import { ai, loadModels, presetOf } from './store.svelte';
@@ -72,19 +73,19 @@
 
 <div class="ai-route" data-ai-route={capability} data-ai-route-name={name}>
     <p class="ai-route__name"><span class="ai-route__icon" data-ai-capability-icon={capability}><Icon name={capabilityIcon(capability)} size={16} /></span>{#if href}<a class="ai-route__link" {href} data-ai="route-owner-link" onclick={follow}>{name}</a>{:else}{name}{/if}</p>
-    <div class="tm__field">
-        <span class="oc-key">{t('settings.ai.route.connection')}</span>
+    <div class="oc-form-field">
+        <span class="oc-label">{t('settings.ai.route.connection')}</span>
         <ModelPicker {t} items={connectionRows} value={connectionId} onChange={pickConnection} label={t('settings.ai.route.connection')} grouped={false}
             emptyLabel={unsetLabel || t('settings.ai.route.unset')} disabled={busy} dataAi="route-connection" />
     </div>
-    <div class="tm__field">
-        <span class="oc-key">{t('settings.ai.route.model')}</span>
+    <div class="oc-form-field">
+        <span class="oc-label">{t('settings.ai.route.model')}</span>
         <ModelPicker {t} items={modelRows} value={model} onChange={(id) => (model = id)} label={t('settings.ai.route.model')} allowCustom placeholder={modelPlaceholder}
             loading={!!connectionId && !listed} disabled={busy || !connectionId} dataAi="route-model" />
     </div>
     {#if capability === 'speak'}
-        <div class="tm__field">
-            <span class="oc-key">{t('settings.ai.route.voice')}</span>
+        <div class="oc-form-field">
+            <span class="oc-label">{t('settings.ai.route.voice')}</span>
             <ModelPicker {t} items={voiceRows} value={voice} onChange={(id) => (voice = id)} label={t('settings.ai.route.voice')} grouped={false} allowCustom
                 disabled={busy || !connectionId} dataAi="route-voice" />
         </div>
@@ -92,8 +93,8 @@
         <span aria-hidden="true"></span>
     {/if}
     <div class="ai-route__tools">
-        <button type="button" class="oc-btn oc-btn--confirm" disabled={busy || !connectionId || !dirty} data-ai="route-set"
-            onclick={() => onSet({ connection: connectionId, model: model.trim() || null, voice: voice.trim() || null })}>{t('settings.ai.route.set')}</button>
-        <button type="button" class="oc-btn" disabled={busy || !target} data-ai="route-clear" onclick={onClear}>{t('settings.ai.route.clear')}</button>
+        <Button variant="confirm" disabled={busy || !connectionId || !dirty} data-ai="route-set"
+            onclick={() => onSet({ connection: connectionId, model: model.trim() || null, voice: voice.trim() || null })}>{t('settings.ai.route.set')}</Button>
+        <Button disabled={busy || !target} data-ai="route-clear" onclick={onClear}>{t('settings.ai.route.clear')}</Button>
     </div>
 </div>

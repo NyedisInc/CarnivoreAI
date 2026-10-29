@@ -6,14 +6,14 @@
       "size": "large",
       "rule": "low-contrast",
       "shape": "data",
-      "reason": "asleep rows keep the 50% fade (#537); low contrast is intended"
+      "reason": "owner ruling, 2026-10-07: asleep rows keep the 50% fade (#537); low contrast is intended"
     },
     {
       "widget": "core.running-sessions",
       "size": "full",
       "rule": "low-contrast",
       "shape": "data",
-      "reason": "asleep rows keep the 50% fade (#537); low contrast is intended"
+      "reason": "owner ruling, 2026-10-07: asleep rows keep the 50% fade (#537); low contrast is intended"
     }
   ]
 }

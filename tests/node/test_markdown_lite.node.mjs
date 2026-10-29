@@ -5,15 +5,16 @@ const require = createRequire(import.meta.url);
 globalThis.window = {};
 const log = console.log;
 console.log = () => {};
+require('../../client/js/http-url.js');
 require('../../client/js/markdown-lite.js');
 console.log = log;
 const render = (md) => globalThis.window.MarkdownLite.render(md);
 
 {
-    const html = render('- **LEAN**\n- second\n');
+    const html = render('- **LEAN** (Alex (Harbor666),\n  2026-09-28; more)\n- second\n');
     assert.equal((html.match(/<li>/g) || []).length, 2, html);
     assert.equal((html.match(/<ul>/g) || []).length, 1, html);
-    assert.ok(html.includes('<li><strong>LEAN</strong></li>'), html);
+    assert.ok(html.includes('<li><strong>LEAN</strong> (Alex (Harbor666), 2026-09-28; more)</li>'), html);
     assert.ok(!html.includes('<p>'), html);
 }
 

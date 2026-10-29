@@ -14,8 +14,6 @@ export interface SessionCore {
     status?: string | null;
     created_at?: string | null;
     last_activity?: string | null;
-    task_lead?: boolean | null;
-    do_not_disturb?: boolean | null;
     agent_type?: string | null;
     pinned_theme?: string | null;
     tmux_session?: string | null;
@@ -24,6 +22,8 @@ export interface SessionCore {
 
 export interface SessionListItem {
     session?: SessionCore | null;
+    task_lead?: boolean | null;
+    do_not_disturb?: boolean | null;
     activity_status?: string | null;
     unread?: boolean | null;
     startup_gate?: string | null;
@@ -31,6 +31,7 @@ export interface SessionListItem {
     usage_limit?: UsageLimit | null;
     automation?: { automation_id: string; run_id: string; name: string } | null;
     messaging?: { directions: string[]; held: number } | null;
+    /* there is nothing */
     activity_hint?: string | null;
     parked_summary?: string | null;
     host_key?: string | null;
@@ -54,6 +55,7 @@ export interface SessionListItem {
     agent_family?: string | null;
     agent_family_source?: string | null;
     agent_wrapper_label?: string | null;
+    agent_wrapper_icon?: string | null;
     launched_with?: LaunchedWith | null;
     pinned_theme?: string | null;
     session_backend?: string | null;
@@ -77,6 +79,7 @@ export interface AttachableSession {
     agent_family?: string | null;
     agent_family_source?: string | null;
     agent_wrapper_label?: string | null;
+    agent_wrapper_icon?: string | null;
     launched_with?: LaunchedWith | null;
     pinned_theme?: string | null;
     session_row_id?: number | null;
@@ -119,7 +122,6 @@ export interface SessionRecord {
     agent_family_source?: string | null;
 }
 
-/* did not answer */
 export interface ListingState {
     ok: boolean;
     reason: string | null;

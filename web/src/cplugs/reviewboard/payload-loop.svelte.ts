@@ -11,6 +11,13 @@ const MAX_REASON = 120;
 
 export type DraftState = 'idle' | 'pending' | 'saving' | 'saved' | 'failed';
 
+interface DraftWrite {
+  slug: string;
+  revision: string;
+  key: string;
+  body: Payload;
+}
+
 export class PayloadLoop {
   payload = $state<Payload | null>(null);
   viewing = $state<number | null>(null);
@@ -31,7 +38,7 @@ export class PayloadLoop {
   private layer: BoardLayer | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private flight = false;
-  private again = false;
+  private again: DraftWrite | null = null;
   private quietUntil = 0;
   private dirty = false;
 
@@ -151,16 +158,21 @@ export class PayloadLoop {
     const { slug, revision, key } = this;
     const body = this.working;
     if (!slug || !revision || !body || !this.dirty) return;
+    return this.write({ slug, revision, key, body }, keepalive);
+  }
+
+  private async write(job: DraftWrite, keepalive: boolean): Promise<void> {
+    const { slug, revision, key, body } = job;
     if (this.flight) {
-      this.again = true;
+      this.again = job;
       return;
     }
-    if (samePayload(body, this.persisted)) {
+    if (key === this.key && samePayload(body, this.persisted)) {
       if (this.draftState === 'pending') this.draftState = 'saved';
       return;
     }
     this.flight = true;
-    this.draftState = 'saving';
+    if (key === this.key) this.draftState = 'saving';
     let ok = false;
     try {
       await savePayloadDraft(slug, { revision, payload: body }, keepalive);
@@ -180,9 +192,10 @@ export class PayloadLoop {
       this.draftRefused = false;
       this.draftState = this.timer !== null ? 'pending' : 'saved';
     }
-    if (this.again) {
-      this.again = false;
-      await this.writeDraft(keepalive);
+    const next = this.again;
+    if (next) {
+      this.again = null;
+      await this.write(next, keepalive);
     }
   }
 

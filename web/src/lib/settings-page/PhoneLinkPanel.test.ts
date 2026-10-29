@@ -154,6 +154,15 @@ describe('PhoneLinkPanel', () => {
             (q('[data-pl="paired-revoke"]') as HTMLButtonElement).click();
             await vi.advanceTimersByTimeAsync(10);
             await settle();
+            expect(calls).not.toContain('DELETE /phone-link/devices/d1');
+            (q('[data-pl="paired-revoke-keep"]') as HTMLButtonElement).click();
+            await settle();
+            expect(q('[data-pl="paired-revoke"]')).not.toBeNull();
+            (q('[data-pl="paired-revoke"]') as HTMLButtonElement).click();
+            await settle();
+            (q('[data-pl="paired-revoke-sure"]') as HTMLButtonElement).click();
+            await vi.advanceTimersByTimeAsync(10);
+            await settle();
             expect(calls).toContain('DELETE /phone-link/devices/d1');
             expect(calls).toContain('DELETE /phone-link/pairing-window');
         } finally {
@@ -176,6 +185,27 @@ describe('PhoneLinkPanel', () => {
             expect(q('[data-pl="qr"]')).not.toBeNull();
             expect(q('[data-pl="note"]')?.textContent).toContain('did not finish');
         } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a hidden tab does not poll, and polling resumes when the tab is shown', async () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+        const visibility = vi.spyOn(document, 'visibilityState', 'get');
+        try {
+            const calls = await render();
+            const reads = () => calls.filter((c) => c === 'GET /phone-link').length;
+            const before = reads();
+            visibility.mockReturnValue('hidden');
+            await vi.advanceTimersByTimeAsync(9000);
+            await settle();
+            expect(reads()).toBe(before);
+            visibility.mockReturnValue('visible');
+            await vi.advanceTimersByTimeAsync(3000);
+            await settle();
+            expect(reads()).toBeGreaterThan(before);
+        } finally {
+            visibility.mockRestore();
             vi.useRealTimers();
         }
     });
@@ -235,9 +265,17 @@ describe('PhoneLinkPanel', () => {
         expect(document.body.textContent ?? '').not.toBe('');
     });
 
-    test('revoke sends DELETE for that device', async () => {
+    test('revoke asks first, and only the second click sends DELETE for that device (u150-04)', async () => {
         const calls = await render();
         (q('[data-pl="revoke"]') as HTMLButtonElement).click();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(calls).not.toContain('DELETE /phone-link/devices/d1');
+        (q('[data-pl="revoke-keep"]') as HTMLButtonElement).click();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(q('[data-pl="revoke"]')).not.toBeNull();
+        (q('[data-pl="revoke"]') as HTMLButtonElement).click();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        (q('[data-pl="revoke-sure"]') as HTMLButtonElement).click();
         await new Promise((resolve) => setTimeout(resolve, 10));
         expect(calls).toContain('DELETE /phone-link/devices/d1');
     });

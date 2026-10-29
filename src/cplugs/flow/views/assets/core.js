@@ -24,7 +24,7 @@ const STATUS = { created: "Created", in_progress: "In progress", review: "In rev
 
 const chip = id => `<span class="chip" style="--c:${col[id]}">${esc(ag[id].name)}</span>`;
 const pill = s => `<span class="pill ${s}">${s === "done" ? icon("ok") : icon("edit")}${STATUS[s] || esc(s)}</span>`;
-const taskKind = t => t.kind === "sub" ? "Subagent task" : (t.root ? "Huddle item" : "Huddle item, filed");
+const taskKind = t => t.kind === "sub" ? "Subagent task" : (t.root ? "task manager item" : "task manager item, filed");
 function taskCard(t, opts) {
   const o = opts || {}, who = o.who ? `<div class="who">${chip(t.agent)}<span class="mono">${esc(t.time)}</span></div>` : "";
   const c = el("div", "card", `<div class="top"><span class="id">${esc(t.id)}</span><span class="kind">${taskKind(t)}</span></div><div class="ti">${esc(t.title)}</div>${who}${pill(t.status)}`);
@@ -47,7 +47,6 @@ function rpath(pts, r = 9) {
   }
   const z = pts[pts.length - 1]; return d + ` L${z[0]} ${z[1]}`;
 }
-/* <path> */
 function arrow(svg, defs, id, pts, color, dash, label, extra) {
   const mid = "m-" + id; marker(defs, mid, color);
   const p = svgEl("path", { d: rpath(pts), class: "ep" + (dash ? " dash" : "") + (extra ? " " + extra : ""), style: "--c:" + color, "marker-end": `url(#${mid})` });

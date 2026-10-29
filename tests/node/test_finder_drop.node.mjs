@@ -241,12 +241,12 @@ await test('6 folder targets: ids are checked, main resolves the folder, reveal 
 });
 
 await test('7 open in editor: first use and every change ask first, a cancel runs nothing, the folder is not part of the approval', async () => {
-  const folder = mkdir('ravcrest-ravvale'); const folder2 = mkdir('corridge-cormont');
+  const folder = mkdir('proj-a'); const folder2 = mkdir('proj-b');
   const rows = [sessionRow('ses_1', folder), sessionRow('ses_2', folder2)];
   const dir = mkdir('ud');
   const a = targetRig({ rows, editor: '/usr/bin/curl -o /tmp/x', answer: 1, dir });
   assert.equal((await a.t.openInEditor('ses_1')).reason, 'cancelled'); assert.deepEqual(a.log.execs, []);
-  assert.equal(a.log.dialogs.length, 1); assert.match(a.log.dialogs[0].detail, /"\/usr\/bin\/curl"\n"-o"\n"\/tmp\/x"\n"[^"]*ravcrest-ravvale"/, 'the exact argv, one element per line');
+  assert.equal(a.log.dialogs.length, 1); assert.match(a.log.dialogs[0].detail, /"\/usr\/bin\/curl"\n"-o"\n"\/tmp\/x"\n"[^"]*proj-a"/, 'the exact argv, one element per line');
   assert.equal(fs.existsSync(path.join(dir, 'editor-command-confirmed.json')), false);
   const b = targetRig({ rows, editor: '/usr/local/bin/code -w', answer: 0, dir });
   assert.equal((await b.t.openInEditor('ses_1')).ok, true); assert.equal(b.log.dialogs.length, 1); assert.equal(b.log.execs.length, 1);

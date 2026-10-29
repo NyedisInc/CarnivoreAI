@@ -16,7 +16,6 @@ export interface ChoiceOptions {
     title: string;
     hint?: string;
     items: ChoiceItem[];
-    /* could not */
     emptyMessage?: string | null;
     emptyKind?: string;
 }

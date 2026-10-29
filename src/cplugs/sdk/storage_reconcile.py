@@ -109,11 +109,6 @@ def canonical(migrations: Sequence[str]) -> Canonical:
 
 
 def plan(conn: sqlite3.Connection, migrations: Sequence[str], version: int) -> Plan:
-    """Decide which rungs a file at ``version`` needs, by the objects it holds.
-
-    Inputs: conn; migrations; version (int) - the file's ``user_version``, below ``len(migrations)``.
-    Output: Plan. Raises: ReconcileRefused when a rung is partly present.
-    """
     shape = canonical(migrations)
     present = objects(conn)
     out = Plan()

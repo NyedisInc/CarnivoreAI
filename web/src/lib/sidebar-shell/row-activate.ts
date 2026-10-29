@@ -1,4 +1,7 @@
 import { t } from '../i18n/index.svelte';
+import { runWake } from '../drawer/row-menu-sleep';
+import { activate as activateBrowserRow } from '../drawer/browser-rows';
+import { runRestart as runRestartFlow } from '../drawer/restart-click';
 import { closeMenuPagesExcept } from '../menu-page/menu-page-shell.svelte';
 import { announce } from './interaction-globals';
 import {
@@ -6,7 +9,6 @@ import {
 } from './row-globals';
 import { ARM_GRACE_MS, armWake, disarmWake, isArmableRow, refocusRow, wakeArm } from './wake-arm.svelte';
 
-/* a double click wakes once */
 const waking = new Set<string>();
 
 export function paintSelection(ctrl: RowController): void {
@@ -48,13 +50,12 @@ async function performWake(ctrl: RowController, rowEl: Element): Promise<void> {
     for (const r of ctrl._rows || []) {
         if (r && r.name === name) { row = r; break; }
     }
-    const run = g.SessionRowMenuSleep?.runWake;
-    if (!row || typeof run !== 'function') return;
+    if (!row) return;
     const sessionUuid = String(row.session_uuid || '');
     if (sessionUuid && waking.has(sessionUuid)) return;
     if (sessionUuid) waking.add(sessionUuid);
     try {
-        await run({
+        await runWake({
             name, label: (row.label != null && String(row.label)) || '', sessionUuid, surface: 'sidebar',
         });
     } finally {
@@ -62,7 +63,6 @@ async function performWake(ctrl: RowController, rowEl: Element): Promise<void> {
     }
 }
 
-/*  hidden  */
 function inVisibleDrawer(rowEl: Element): boolean {
     if (!rowEl.isConnected || !closestTo(rowEl, '#session-sidebar-list')) return false;
     const panel = closestTo(rowEl, '.session-sidebar-panel');
@@ -107,6 +107,14 @@ function openLayoutMember(ctrl: RowController, rowEl: Element): boolean {
     return true;
 }
 
+async function markActiveRowRead(name: string): Promise<void> {
+    try {
+        await rg().API?.setSessionUnread(name, false);
+    } catch (err) {
+        console.error('SessionSidebar: mark read on the active row failed:', err);
+    }
+}
+
 export async function activateRow(ctrl: RowController, rowEl: Element): Promise<void> {
     const g = rg();
     const name = dataOf(rowEl, 'name');
@@ -114,12 +122,11 @@ export async function activateRow(ctrl: RowController, rowEl: Element): Promise<
     if (dataOf(rowEl, 'asleep') === '1') return;
     if (dataOf(rowEl, 'closed') === '1') return;
     if (dataOf(rowEl, 'archived') === '1') return;
-    if (g.SessionSidebarBrowsers?.activate?.(ctrl, name)) return;
+    if (activateBrowserRow(ctrl, name)) return;
     if (g.SessionSidebarLayouts?.activate?.(ctrl, name)) return;
     if (openLayoutMember(ctrl, rowEl)) return;
     const NG = g.NavigationGeneration;
     if (ctrl._pendingSelection?.name === name && (!NG || NG.isCurrent(ctrl._pendingSelection.nav))) return;
-    // the session underneath
     if (name === ctrl._activeTmuxName && !ctrl._pendingSelection && g.CloudeWeb?.browsers?.showing?.()) {
         g.CloudeWeb.browsers.dismiss?.();
         ctrl._closeAfterSwitch?.();
@@ -129,6 +136,7 @@ export async function activateRow(ctrl: RowController, rowEl: Element): Promise<
     if (name === ctrl._activeTmuxName && !ctrl._pendingSelection && !onHome) {
         closeMenuPagesExcept(null);
         ctrl._closeAfterSwitch?.();
+        void markActiveRowRead(name);
         return;
     }
     const sessionId = dataOf(rowEl, 'sessionId') || null;
@@ -184,7 +192,7 @@ export async function runRowAction(ctrl: RowController, btnEl: Element): Promise
     const rowEl = closestTo(btnEl, '.session-sidebar-row')
         || document.querySelector(`.session-sidebar-row[data-name="${CSS.escape(name)}"]`);
     if (action === actions.ACTION_RESTART) {
-        await g.SessionSidebarRestartClick?.runRestart(ctrl, name, rowEl);
+        await runRestartFlow(ctrl, name, rowEl);
         return;
     }
     if (!(rowEl && dataOf(rowEl, 'active') === '1') && !(await actions.confirm(action, name))) return;
@@ -202,7 +210,6 @@ export async function closeLiveRow(ctrl: RowController, name: string, rowEl: Ele
         const sessionId = rowEl ? dataOf(rowEl, 'sessionId') || null : null;
         if (sessionId) await g.API?.destroySession(sessionId);
         else await g.API?.destroyExternalSession(name);
-        ctrl._lastSig = null;
         await ctrl._fetchAndRender?.();
     } catch (err) {
         console.error(`SessionSidebar: ${action} failed:`, err);

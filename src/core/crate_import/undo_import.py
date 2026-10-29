@@ -1,19 +1,3 @@
-"""
-``undo.rollback`` already removes what a FAILED import placed. This module undoes a restore that ended: it removes exactly what
-that import wrote and nothing else.
-
-| Part | How it is undone |
-|---|---|
-| database rows (``carnivore.db`` and the side databases) | the import's row journal (``row_journal``, ``row_undo``): a row it inserted goes while it still hashes as the import left it; a row it deleted (a tombstone) comes back; a row it changed is changed back |
-| files (transcripts, project files, boards, the relink sidecar's old bytes, backup points, orphan transcripts, plugin-store and task files) | the plugin's undo log, replayed by ``undo.rollback``: a file goes only while it still hashes to the crate's bytes, a relinked sidecar gets its old bytes back, a backup point goes through the backup plugin |
-| config (drawer members, account pins), ``.cc.theme``, the reboot journal | the records the entries step and the journal step left, each undone only while it still reads as the import wrote it |
-
-Nothing is written until :func:`plan_undo` is clean. It BLOCKS (writes nothing, says why) when: the import is not a finished one
-with an undo record; a later import from the same source followed it; the record is not complete; a database cannot be read; or a
-step cannot be undone cleanly (the backup plugin or a plugin store the log names is off). A row or file that CHANGED since the
-import, or that something added since points at, is KEPT and listed; that is not a blocker. Order: side databases, ``carnivore.db``,
-config, files, then the ledger entry moves to ``undone``. Running it again finishes whatever is left. Blocking; holds the move lock.
-"""
 
 from __future__ import annotations
 

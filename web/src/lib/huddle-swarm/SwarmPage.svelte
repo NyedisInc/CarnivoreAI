@@ -11,6 +11,7 @@
     import SwarmPanel from '../../cplugs/huddle/swarm/SwarmPanel.svelte';
     import SwarmSeatRefusal from '../../cplugs/huddle/swarm/SwarmSeatRefusal.svelte';
     import SwarmBoard from '../swarm-board/SwarmBoard.svelte';
+    import { boardFocus, isFresh } from '../swarm-board/board-focus.svelte';
     import { lineageFloor, type FloorItem, type FloorTarget } from '../../cplugs/huddle/swarm/floor';
     import { SWARM_TABS, SWARM_TAB_KEY } from '../../cplugs/huddle/swarm/swarm-page';
     import { createSwarmLive, openFloorTarget, turnOnSeat } from '../../cplugs/huddle/swarm/swarm-live.svelte';
@@ -37,6 +38,9 @@
 
     let chosen = $state(readTab(SWARM_TAB_KEY, SWARM_TABS, ''));
     const tab = $derived(chosen || swarmSettings.page_default_view);
+    $effect(() => {
+        if (isFresh(boardFocus.request)) chosen = 'board';
+    });
     const tabs = $derived<TabDef[]>(SWARM_TABS.map((id) => ({ id, label: t(`cplug.huddle.swarm.page.tab.${id}`) })));
 
     function pick(id: string): void {
@@ -59,7 +63,7 @@
 
     function go(target: FloorTarget, terminal = false): void {
         openFloorTarget(target, terminal);
-        close?.();
+        if (terminal || target.kind !== 'agent') close?.();
     }
 
     async function turnOn(target: Extract<FloorTarget, { kind: 'turn_on' }>): Promise<void> {
@@ -131,6 +135,7 @@
         min-width: 0;
     }
 
+    /* the page frame */
     .pkg-body--scroll {
         flex: 1;
         min-height: 0;

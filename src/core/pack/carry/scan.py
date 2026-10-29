@@ -43,6 +43,18 @@ class CarrySet:
     def has_content(self) -> bool:
         return bool(self.repos or self.files or self.worktrees)
 
+    def total_bytes(self, *, air_gap: bool = False) -> int:
+        total = 0
+        for r in self.repos:
+            counts = dict(ln.split(": ", 1) for ln in (_git(os.path.join(self.root, r.rel), "count-objects", "-v", air_gap=air_gap) or "").splitlines() if ": " in ln)
+            total += sum(int(counts.get(k, "0")) for k in ("size", "size-pack") if counts.get(k, "0").isdigit()) * 1024
+        for f in self.files:
+            try:
+                total += os.lstat(os.path.join(self.root, f)).st_size
+            except OSError:
+                continue
+        return total
+
     def view(self, carries_wip: bool = False) -> Dict[str, Any]:
         units: List[Dict[str, Any]] = [{"kind": "repo", "path": r.rel, "state": "dirty" if r.dirty else "clean"} for r in self.repos]
         units += [{"kind": "worktree", "path": w, "state": "outside the folder"} for w in self.worktrees]
@@ -115,12 +127,6 @@ def scan_project(root: str, *, air_gap: bool = False) -> CarrySet:
 
 
 def blockers(found: CarrySet, target_label: str, target_caps: Collection[str]) -> Optional[Tuple[str, str]]:
-    """Why this folder cannot reach ``target_label`` whole, as (code, plain sentence), or None when everything travels.
-
-    Without ``pack.carry_tree`` only the root repo's commits travel, so nested repos and loose files are missing; worktrees outside the folder travel only with it too (S4).
-    A root repo with files but no commit has nothing a bundle can hold (``target_copy_empty``).
-    Example: blockers(scan_project(r), "hosta", []) -> ("content_not_carried", "hosta runs an older carnivore and cannot take BubblePop (nested repo); update hosta, then send again")
-    """
     can = CARRY_TREE in target_caps
     lost = [] if can else [f"{r.rel} (nested repo)" for r in found.nested]
     lost += [] if can else [f"{os.path.basename(w)} (worktree outside the folder)" for w in found.worktrees]

@@ -116,7 +116,6 @@ export type HeroOutcome = 'none' | 'making' | 'sent' | 'failed';
 export interface SendPlan {
     image: ImagePlan;
     send(): Promise<ActionResult<{ submission_id?: string; item_id?: string }>>;
-    /* could not */
     imageBase64(): Promise<string | null>;
     media(imageBase64: string): Promise<ActionResult<unknown>>;
     onHero?(state: HeroOutcome): void;

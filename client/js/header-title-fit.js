@@ -1,5 +1,5 @@
-/* text-overflow: ellipsis */
 
+(function () {
 console.log('[HeaderTitleFit Module] Loading...');
 
 const ELLIPSIS = '…';
@@ -40,6 +40,7 @@ function elideToWidth(text, maxWidth, measure) {
     return best;
 }
 
+/* and the real */
 function makeMeasurer(el) {
     const cs = window.getComputedStyle(el);
     const ruler = document.createElement('span');
@@ -61,13 +62,12 @@ function makeMeasurer(el) {
     return measure;
 }
 
-function outerWidth(el, cs) {
+function outerBoxWidth(el, cs) {
     return el.getBoundingClientRect().width +
         (parseFloat(cs.marginLeft) || 0) +
         (parseFloat(cs.marginRight) || 0);
 }
 
-/* flex-shrink: 0 flex: 0 1 auto */
 function slotWidth(el) {
     const parent = el.parentElement;
     if (!parent) return 0;
@@ -82,7 +82,7 @@ function slotWidth(el) {
         if (cs.display === 'none') continue;
         visible++;
         if (child === el) continue;
-        avail -= outerWidth(child, cs);
+        avail -= outerBoxWidth(child, cs);
     }
 
     const gap = parseFloat(pcs.columnGap) || parseFloat(pcs.gap) || 0;
@@ -93,7 +93,6 @@ function slotWidth(el) {
     return avail;
 }
 
-/* flex-shrink: 0 */
 function availableWidth(titleEl) {
     const h1 = titleEl.parentElement;
     if (!h1 || !h1.parentElement) return 0;
@@ -109,7 +108,7 @@ function availableWidth(titleEl) {
         if (cs.display === 'none') continue;
         visible++;
         if (child === titleEl) continue;
-        avail -= outerWidth(child, cs);
+        avail -= outerBoxWidth(child, cs);
     }
 
     const gap = parseFloat(hcs.columnGap) || parseFloat(hcs.gap) || 0;
@@ -151,7 +150,7 @@ const HeaderTitleFit = {
         this._cachedWidth = null;
     },
 
-    /*  hidden  */
+    /* could not be determined */
     _measuredWidth(el) {
         if (this._cachedWidth !== null) return this._cachedWidth;
         const w = availableWidth(el);
@@ -198,3 +197,4 @@ if (document.readyState === 'loading') {
 }
 
 console.log('[HeaderTitleFit Module] Exported as window.HeaderTitleFit');
+})();

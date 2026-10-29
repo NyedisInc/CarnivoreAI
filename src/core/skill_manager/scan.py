@@ -1,12 +1,3 @@
-"""Read one skills root: its folders, their SKILL.md, nothing outside them.
-
-READ ONLY. ``os.scandir`` plus ``lstat``; every folder name goes through
-:func:`src.core.skills.roots.unsafe_name_reason` (a dot folder is the harness's
-``.system`` or this app's ``.carnivore-trash``, never a skill); SKILL.md is read
-at most :data:`MAX_SKILL_MD_BYTES` and only when it is a regular file, or a link
-whose realpath stays inside the folder's own realpath. Parsed results are
-memoised by ``(path, mtime_ns, size)`` so a steady-state rescan reads nothing.
-"""
 
 from __future__ import annotations
 
@@ -84,12 +75,6 @@ def read_skill_md(skill_md: str, fallback_name: str) -> Optional[_Parsed]:
 
 
 def _skill_md_path(folder_path: str) -> Optional[str]:
-    """``<folder>/SKILL.md`` when it may be read, else None.
-
-    Description: a regular file is read; a link is read only when its realpath
-    stays inside the folder's own realpath, so a SKILL.md pointing at another
-    file on the machine is never opened.
-    """
     candidate = os.path.join(folder_path, "SKILL.md")
     if not os.path.lexists(candidate):
         return None

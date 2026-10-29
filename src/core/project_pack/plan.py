@@ -1,9 +1,3 @@
-"""The shared shape of a pack or unpack plan: every check named, nothing changed, a fingerprint to quote.
-
-A PLAN IS A MEASUREMENT, NOT A PROMISE (the ``project_move`` rule). The apply builds a FRESH plan, refuses
-unless every check passes, and refuses a caller that did not quote the fingerprint of the plan it read (428
-missing, 412 changed; ``project_move/fingerprint.py``, reused). A check that could not be measured FAILS.
-"""
 
 from __future__ import annotations
 

@@ -34,6 +34,7 @@ export const declaringLog = { live: 0, made: 0, runs: [] as number[] };
 
 export const DECLARED_PROBE_ACTION = 'probe-act';
 
+/* the widget menu */
 export function DeclaringProbe(anchor: Node, _props: ProbeProps): void {
   const header = useFrameHeader();
   const copy = ++declaringLog.made;

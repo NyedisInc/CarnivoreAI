@@ -1,0 +1,21 @@
+←  ☒ Git reads  ☒ Changed =  ☐ Rail spot  ☐ First theme  ✔ Submit  →
+
+Where does the changes rail live?
+
+❯ 1. Right column in the cell     ┌──────────────────────────────────────────┐
+    (Recommended)                 │ ┌ cv-api ─────────────────────┬ changes  │
+  2. Drawer tab                   ├─── ✂ ─── 17 lines hidden ────────────────┤
+  3. Footer chip + popover        └──────────────────────────────────────────┘
+
+                                  Notes: press n to add notes
+
+──────────────────────────────────────────────────────────────────────────────
+  Chat about this
+
+Enter to select · ↑/↓ to navigate · n to add notes · Tab to switch questions ·
+Esc to cancel
+
+
+
+─────────────────────────────────────────────────────────────── Cv-PackChats ─
+

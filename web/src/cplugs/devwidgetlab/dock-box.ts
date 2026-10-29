@@ -1,3 +1,4 @@
+/* the panel itself */
 import type { LabHost, LabSize } from '../sdk/widget-lab';
 import { frameWidth } from './frame-url';
 import { sizesToDraw } from './lab-model';

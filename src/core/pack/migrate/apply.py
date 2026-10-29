@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 import structlog
 
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
+from src.core.pack import progress
 from src.core.pack.move import inflight
 from src.core.pack.carry import send
 from src.core.pack.identity import home
@@ -86,6 +87,7 @@ async def stage_project(env: SourceEnv, plan: Plan, request: Request, *, op_id: 
     await open_op(env, op_id, kind="project", subject_uid=project["uid"], source_install_id=env.install_id,
                   target_install_id=plan.target_install_id, fingerprint=plan.fingerprint, parent_id=parent_id,
                   step="prepare", detail={"name": project["display_name"], "rung": plan.rung, "target_root": plan.target_root})
+    progress.bind(op_id)
     work = os.path.join(env.outbox, op_id)
     os.makedirs(work, mode=0o700, exist_ok=True)
     air_gap = bool(project.get("air_gap"))

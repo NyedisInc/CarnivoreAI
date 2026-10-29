@@ -28,11 +28,9 @@ from src.core.transcript_import_plan import (
     PLAN_NOT_A_CONVERSATION,
     PLAN_NOT_A_SESSION_REF,
     dedupe_by_uuid,
-    git_top_level,
-    match_project,
     plan_transcript,
-    truncate_title,
 )
+from src.core.transcript_import_paths import git_top_level, match_project, truncate_title
 from src.core.transcript_import_write import apply_plans, display_name_for
 
 UUID_A = "aaaaaaaa-1111-2222-3333-444444444444"
@@ -138,10 +136,10 @@ def test_a_sidechain_user_record_never_supplies_the_title(tmp_path: Path):
             "timestamp": "2026-03-01T10:00:00.000Z",
             "message": {"content": "internal subagent brief"},
         }
-    ] + conversation("/Users/x/proj", UUID_A, text="what requested")
+    ] + conversation("/Users/x/proj", UUID_A, text="what the owner asked")
     path = write_transcript(tmp_path / "slug", UUID_A, records)
     facts = read_transcript_facts(str(path))
-    assert facts.first_user_text == "what requested"
+    assert facts.first_user_text == "what the owner asked"
 
 
 
@@ -150,7 +148,7 @@ def test_a_sidechain_user_record_never_supplies_the_title(tmp_path: Path):
     "cwd",
     [
         "/private/tmp",
-        "/private/tmp/claude-1000/x/junstone/forktest",
+        "/private/tmp/claude-501/x/scratchpad/forktest",
         "/tmp/permtest-45244",
         "/var/folders/ab/cd/T/x",
     ],
@@ -168,7 +166,7 @@ def test_a_scratch_cwd_is_excluded(tmp_path: Path, cwd):
     "cwd",
     [
         "/Users/x/Development/fstest",
-        "~/work",
+        "/Users/x/Scratch/scratch-lab/hlv3-proj",
         "/Users/x/Development/Production/permtest",
     ],
 )
@@ -218,8 +216,8 @@ def test_the_deepest_containing_project_wins():
 def test_a_git_repository_root_folds_a_subdirectory_in(tmp_path: Path):
     repo = tmp_path / "repo"
     (repo / ".git").mkdir(parents=True)
-    (repo / "ashfield").mkdir()
-    assert git_top_level(str(repo / "ashfield"), home=str(tmp_path)) == str(repo)
+    (repo / "frontend").mkdir()
+    assert git_top_level(str(repo / "frontend"), home=str(tmp_path)) == str(repo)
 
 
 def test_the_git_walk_stops_at_home(tmp_path: Path):
@@ -274,10 +272,10 @@ def test_a_single_unbreakable_word_is_cut_hard():
 
 
 def test_a_colliding_display_name_widens_by_path_not_by_a_counter():
-    assert display_name_for("/a/b/reports", []) == "reports"
-    assert display_name_for("/a/personal/reports", ["reports"]) == "personal/reports"
+    assert display_name_for("/a/b/qnap", []) == "qnap"
+    assert display_name_for("/a/personal/qnap", ["qnap"]) == "personal/qnap"
     assert (
-        display_name_for("/a/x/y/reports", ["reports", "y/reports"]) == "x/y/reports"
+        display_name_for("/a/x/y/qnap", ["qnap", "y/qnap"]) == "x/y/qnap"
     )
 
 
@@ -363,7 +361,7 @@ def test_two_conversations_in_one_directory_share_one_project(db, tmp_path: Path
 def test_a_scratch_transcript_does_not_land_in_the_database(db, tmp_path: Path):
     plans = _plans_for(
         tmp_path,
-        [(UUID_A, "/Users/x/proj"), (UUID_B, "/private/tmp/claude-1000/x")],
+        [(UUID_A, "/Users/x/proj"), (UUID_B, "/private/tmp/claude-501/x")],
     )
     apply_plans(db, plans)
     uuids = [
@@ -485,7 +483,7 @@ def test_a_scheduled_task_is_titled_by_its_task_name(tmp_path: Path):
             "timestamp": "2026-03-01T09:00:00.000Z",
             "message": {
                 "content": (
-                    '<scheduled-task name="update-check" '
+                    '<scheduled-task name="docker-update-check" '
                     'file="/Users/x/.claude/scheduled-tasks/d/SKILL.md">go'
                     "</scheduled-task>"
                 )
@@ -494,7 +492,7 @@ def test_a_scheduled_task_is_titled_by_its_task_name(tmp_path: Path):
     ]
     path = write_transcript(tmp_path / "slug", UUID_A, records)
     facts = read_transcript_facts(str(path))
-    assert facts.first_user_text == "scheduled task: update-check"
+    assert facts.first_user_text == "scheduled task: docker-update-check"
 
 
 def test_prose_after_an_envelope_is_still_the_title(tmp_path: Path):
@@ -530,3 +528,19 @@ def test_a_conversation_with_no_typed_message_gets_no_title(tmp_path: Path):
     assert plan.outcome == PLAN_IMPORT
     assert plan.title is None
     assert plan.title_source is None
+
+
+def test_transcripts_are_classified_before_the_write_lock_is_taken(db, tmp_path: Path, monkeypatch):
+    from src.core import transcript_import_write as writer
+
+    plans = _plans_for(tmp_path, [(UUID_A, "/Users/x/proj")])
+    inside = []
+    real = writer.classify_transcript
+
+    def spy(path):
+        inside.append(db.in_transaction)
+        return real(path)
+
+    monkeypatch.setattr(writer, "classify_transcript", spy)
+    assert apply_plans(db, plans).sessions_written == 1
+    assert inside == [False]

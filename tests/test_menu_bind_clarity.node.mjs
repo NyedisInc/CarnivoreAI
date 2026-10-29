@@ -1,3 +1,4 @@
+// WHY THIS FILE EXISTS
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -59,10 +60,10 @@ test('an UNKNOWN bind puts no address in the row at all', () => {
 test('an unknown bind says it is unknown rather than leaving a blank', () => {
   const row = trayStatus.describeBind({
     effectiveHost: null,
-    configuredHost: '198.51.100.18',
+    configuredHost: '192.168.1.50',
   });
   assert.match(row.label, /unknown|not measured/i);
-  assert.match(row.detail, /198\.51\.100\.18/);
+  assert.match(row.detail, /192\.168\.1\.50/);
   assert.match(row.detail, /configur/i);
 });
 

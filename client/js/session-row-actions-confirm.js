@@ -11,17 +11,18 @@ console.log('[SessionRowActionsConfirm Module] Loading...');
             primaryLabel: 'close',
             details:
                 'this cannot be undone. the running process is terminated, ' +
-                'and files uploaded to this session are removed from the ' +
-                "project's .cloude_uploads folder. the transcript is kept " +
-                'and stays under ~/.claude/projects.',
+                "the project's uploads folder is deleted with every file in " +
+                'it, including files other sessions in that folder uploaded. ' +
+                'the transcript is kept and stays under ~/.claude/projects.',
         },
         [ACTION_REMOVE]: {
             title: 'remove session',
             primaryLabel: 'remove',
             details:
                 'this cannot be undone. this session already exited, so no ' +
-                'running process is stopped, but files uploaded to it are ' +
-                "removed from the project's .cloude_uploads folder. the " +
+                "running process is stopped, but the project's uploads folder " +
+                'is deleted with every file in it, including files other ' +
+                'sessions in that folder uploaded. the ' +
                 'leftover tmux shell is cleared and carnivore forgets the ' +
                 'entry. the transcript is kept and stays under ' +
                 '~/.claude/projects.',

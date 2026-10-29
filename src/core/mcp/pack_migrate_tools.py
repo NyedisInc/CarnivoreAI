@@ -43,7 +43,7 @@ SPECS = (
         name="project_migrate_plan", route="src.api.pack_migrate_routes:migrate_project", gate=ra.READ,
         description="Plan moving a project to a paired computer: the code rung (git clone, carried bundle or one-way tar), the checks "
                     "(live agents are listed; the move stops them itself), what moves, and the plan_fingerprint to quote. Changes nothing.",
-        properties={**_PROJECT, **_PLAN}, required=("project", "machine"), invoke=_project(False), example={"project": "demo", "machine": "hosta"},
+        properties={**_PROJECT, **_PLAN}, required=("project", "machine"), invoke=_project(False), example={"project": "demo", "machine": "studio"},
     ),
     ra.RouteTool(
         name="project_migrate", route="src.api.pack_migrate_routes:migrate_project", gate=ra.ACT,
@@ -51,12 +51,12 @@ SPECS = (
                     "the plan_fingerprint of project_migrate_plan. Answers an op_id (pack_op_get). Waits for the owner unless Beast Mode is armed.",
         properties={**_PROJECT, **_APPLY}, required=("project", "machine", "plan_fingerprint"), invoke=_project(True),
         summary=lambda args, _t: f"move project {json.dumps(args.get('project'))} to {json.dumps(args.get('machine'))} (it stays here, inactive)",
-        example={"project": "demo", "machine": "hosta", "plan_fingerprint": "0123456789abcdef"},
+        example={"project": "demo", "machine": "studio", "plan_fingerprint": "0123456789abcdef"},
     ),
     ra.RouteTool(
         name="company_migrate_plan", route="src.api.pack_migrate_routes:migrate_company", gate=ra.READ,
         description="Plan moving every active project of a company to one paired computer. Changes nothing.",
-        properties={**_COMPANY, **_PLAN}, required=("company", "machine"), invoke=_company(False), example={"company": "acme", "machine": "hosta"},
+        properties={**_COMPANY, **_PLAN}, required=("company", "machine"), invoke=_company(False), example={"company": "acme", "machine": "studio"},
     ),
     ra.RouteTool(
         name="company_migrate", route="src.api.pack_migrate_routes:migrate_company", gate=ra.ACT,
@@ -64,7 +64,7 @@ SPECS = (
                     "Quote the plan_fingerprint of company_migrate_plan. Waits for the owner unless Beast Mode is armed.",
         properties={**_COMPANY, **_APPLY}, required=("company", "machine", "plan_fingerprint"), invoke=_company(True),
         summary=lambda args, _t: f"move every project of company {json.dumps(args.get('company'))} to {json.dumps(args.get('machine'))}",
-        example={"company": "acme", "machine": "hosta", "plan_fingerprint": "0123456789abcdef"},
+        example={"company": "acme", "machine": "studio", "plan_fingerprint": "0123456789abcdef"},
     ),
     ra.RouteTool(
         name="project_migrate_back", route="src.api.pack_migrate_routes:migrate_back", gate=ra.ACT,

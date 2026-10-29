@@ -5,6 +5,7 @@ from typing import Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from src.core.toast_auto_ack import ACK_REASON_ANSWERED
 from src.models import Toast
+from src.models.utc_time import as_aware_utc
 
 DEFAULT_HISTORY_LIMIT = 100
 
@@ -30,7 +31,7 @@ def collect_toasts(
             if unacked_only and toast.acknowledged:
                 continue
             flat.append(toast)
-    flat.sort(key=lambda t: (t.created_at, t.id), reverse=True)
+    flat.sort(key=lambda t: (as_aware_utc(t.created_at), t.id), reverse=True)
     return flat
 
 

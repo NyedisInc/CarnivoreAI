@@ -47,11 +47,11 @@ def _settings_with_config(tmp_path: Path, data: dict) -> Settings:
 
 
 def test_wrapper_id_charset():
-    assert is_valid_wrapper_id("keyc")
+    assert is_valid_wrapper_id("cld")
     assert is_valid_wrapper_id("my-wrapper_2")
-    assert not is_valid_wrapper_id("Wrp")
+    assert not is_valid_wrapper_id("Cld")
     assert not is_valid_wrapper_id("-cld")
-    assert not is_valid_wrapper_id("keyc wrapper")
+    assert not is_valid_wrapper_id("cld wrapper")
     assert not is_valid_wrapper_id("")
 
 
@@ -68,9 +68,9 @@ def test_wrapper_rejects_bad_id():
 
 def test_find_and_default_wrapper():
     w1 = AgentWrapper(id="claude", label="claude", script="claude", default=False)
-    w2 = AgentWrapper(id="keyc", label="keyc", script='keyc "$@"', default=True)
+    w2 = AgentWrapper(id="cld", label="cld", script='cld "$@"', default=True)
     wrappers = [w1, w2]
-    assert find_wrapper(wrappers, "keyc") is w2
+    assert find_wrapper(wrappers, "cld") is w2
     assert find_wrapper(wrappers, "nope") is None
     assert default_wrapper(wrappers) is w2
     assert default_wrapper([w1]) is w1
@@ -96,23 +96,23 @@ def test_render_source_only_mode_no_model(tmp_path):
 
 
 def test_render_source_only_mode_with_model_forwards_as_positional(tmp_path):
-    w = AgentWrapper(id="clxor", label="clxor", script='clxor "$@"')
+    w = AgentWrapper(id="cldor", label="cldor", script='cldor "$@"')
     cmd = render_wrapper_invocation(w, tmp_path, model="openai/gpt-5.6-sol")
     assert cmd.endswith("_ openai/gpt-5.6-sol") or "openai/gpt-5.6-sol" in cmd
     assert " _ " in cmd
 
 
 def test_render_entry_mode_calls_named_function(tmp_path):
-    w = AgentWrapper(id="keyc", label="keyc", script="keyc() ( echo hi )", entry="keyc")
+    w = AgentWrapper(id="cld", label="cld", script="cld() ( echo hi )", entry="cld")
     cmd = render_wrapper_invocation(w, tmp_path)
     assert cmd.count('"$@"') == 2
-    assert "keyc" in cmd
+    assert "cld" in cmd
 
 
 def test_wrapper_script_file_permissions(tmp_path):
-    w = AgentWrapper(id="keyc", label="keyc", script="echo hi")
+    w = AgentWrapper(id="cld", label="cld", script="echo hi")
     render_wrapper_invocation(w, tmp_path)
-    mode = (tmp_path / "keyc.zsh").stat().st_mode & 0o777
+    mode = (tmp_path / "cld.zsh").stat().st_mode & 0o777
     assert mode == 0o600
 
 
@@ -139,10 +139,10 @@ def test_disable_alternate_screen_off_exports_nothing(tmp_path):
 
 def test_the_export_survives_into_a_function_style_wrapper(tmp_path):
     w = AgentWrapper(
-        id="keyc", label="keyc", script=EXAMPLE_WRAPPER_CLD, entry="keyc"
+        id="cld", label="cld", script=EXAMPLE_WRAPPER_CLD, entry="cld"
     )
     cmd = render_wrapper_invocation(w, tmp_path, disable_alternate_screen=True)
-    assert cmd.index(DISABLE_ALT) < cmd.rindex("keyc")
+    assert cmd.index(DISABLE_ALT) < cmd.rindex("cld")
 
 
 def test_settings_disables_the_alternate_screen_for_launches_by_default(tmp_path):
@@ -188,11 +188,11 @@ def test_real_cld_body_round_trips_byte_for_byte_and_resolves(tmp_path):
         "agents": {
             "wrappers": [
                 {
-                    "id": "keyc",
-                    "label": "keyc (subscription)",
+                    "id": "cld",
+                    "label": "cld (subscription)",
                     "script": EXAMPLE_WRAPPER_CLD,
-                    "entry": "keyc",
-                    "description": "real keyc body",
+                    "entry": "cld",
+                    "description": "real cld body",
                     "default": True,
                 }
             ]
@@ -206,15 +206,15 @@ def test_real_cld_body_round_trips_byte_for_byte_and_resolves(tmp_path):
     resolved = s.get_agent_command("claude")
     assert resolved.startswith("zsh -c ")
 
-    script_path = wrapper_scripts_dir(str(s.get_state_dir())) / "keyc.zsh"
+    script_path = wrapper_scripts_dir(str(s.get_state_dir())) / "cld.zsh"
     assert script_path.exists()
     on_disk = script_path.read_text()
     assert on_disk == EXAMPLE_WRAPPER_CLD, "script file must match the pasted body byte-for-byte"
 
-    assert "keyc() (" in on_disk
+    assert "cld() (" in on_disk
     assert "command claude --dangerously-skip-permissions" in on_disk
 
-    assert str(script_path) in resolved or "keyc.zsh" in resolved
+    assert str(script_path) in resolved or "cld.zsh" in resolved
     assert '"$@"' in resolved
 
 
@@ -223,10 +223,10 @@ def test_real_cld_body_with_model_produces_well_formed_invocation(tmp_path):
         "agents": {
             "wrappers": [
                 {
-                    "id": "keyc",
-                    "label": "keyc",
+                    "id": "cld",
+                    "label": "cld",
                     "script": EXAMPLE_WRAPPER_CLD,
-                    "entry": "keyc",
+                    "entry": "cld",
                     "default": True,
                     "accepts_model": True,
                 }
@@ -241,7 +241,7 @@ def test_real_cld_body_with_model_produces_well_formed_invocation(tmp_path):
     tokens = shlex.split(resolved)
     assert tokens[0] == "zsh"
     assert tokens[1] == "-c"
-    assert "keyc" in tokens[2]
+    assert "cld" in tokens[2]
 
 
 
@@ -274,15 +274,15 @@ def test_explicit_wrapper_id_as_agent_type_selects_that_wrapper(tmp_path):
         "agents": {
             "wrappers": [
                 {"id": "claude", "label": "claude", "script": "claude", "default": True},
-                {"id": "keyc", "label": "keyc", "script": 'keyc "$@"', "default": False},
+                {"id": "cld", "label": "cld", "script": 'cld "$@"', "default": False},
             ]
         }
     }
     s = _settings_with_config(tmp_path, config_data)
-    resolved = s.get_agent_command("keyc")
-    script_path = wrapper_scripts_dir(str(s.get_state_dir())) / "keyc.zsh"
-    assert script_path.read_text() == 'keyc "$@"'
-    assert "keyc.zsh" in resolved
+    resolved = s.get_agent_command("cld")
+    script_path = wrapper_scripts_dir(str(s.get_state_dir())) / "cld.zsh"
+    assert script_path.read_text() == 'cld "$@"'
+    assert "cld.zsh" in resolved
 
 
 def test_unknown_agent_type_falls_back_to_default_wrapper(tmp_path):
@@ -302,7 +302,7 @@ def test_no_wrappers_launches_the_standard_claude_wrapper(tmp_path):
     s = _settings_with_config(tmp_path, {"agents": {}})
     command = s.get_agent_command("claude")
     assert 'command claude --dangerously-skip-permissions "$@"' in command
-    assert "keyc" not in command.replace("claude", "")
+    assert "cld" not in command.replace("claude", "")
     with_model = s.get_agent_command("claude", model="my-model")
     assert '--model my-model "$@"' in with_model
 
@@ -330,9 +330,9 @@ def _claude_ids(result):
 
 def test_add_wrapper_persists_and_rejects_duplicate(tmp_path):
     s = _settings_with_config(tmp_path, {"agents": {}})
-    w = AgentWrapper(id="keyc", label="keyc", script='keyc "$@"')
+    w = AgentWrapper(id="cld", label="cld", script='cld "$@"')
     result = s.add_wrapper(w)
-    assert _claude_ids(result) == ["claude", "keyc"]
+    assert _claude_ids(result) == ["claude", "cld"]
 
     with pytest.raises(ValueError, match="already exists"):
         s.add_wrapper(w)
@@ -356,18 +356,18 @@ def test_add_wrapper_default_flag_exclusive(tmp_path):
 
 def test_update_wrapper_requires_matching_id(tmp_path):
     s = _settings_with_config(tmp_path, {"agents": {}})
-    s.add_wrapper(AgentWrapper(id="keyc", label="keyc", script="a"))
+    s.add_wrapper(AgentWrapper(id="cld", label="cld", script="a"))
     with pytest.raises(ValueError, match="cannot be changed"):
-        s.update_wrapper("keyc", AgentWrapper(id="other", label="x", script="b"))
+        s.update_wrapper("cld", AgentWrapper(id="other", label="x", script="b"))
 
 
 def test_update_wrapper_replaces_fields(tmp_path):
     s = _settings_with_config(tmp_path, {"agents": {}})
-    s.add_wrapper(AgentWrapper(id="keyc", label="keyc", script="old"))
-    result = s.update_wrapper("keyc", AgentWrapper(id="keyc", label="keyc v2", script="new"))
-    updated = next(w for w in result if w["id"] == "keyc")
+    s.add_wrapper(AgentWrapper(id="cld", label="cld", script="old"))
+    result = s.update_wrapper("cld", AgentWrapper(id="cld", label="cld v2", script="new"))
+    updated = next(w for w in result if w["id"] == "cld")
     assert updated["script"] == "new"
-    assert updated["label"] == "keyc v2"
+    assert updated["label"] == "cld v2"
 
 
 def test_delete_wrapper_promotes_new_default(tmp_path):
@@ -407,7 +407,7 @@ def test_set_default_wrapper(tmp_path):
 
 def test_wrapper_crud_writes_backup(tmp_path):
     s = _settings_with_config(tmp_path, {"agents": {}})
-    s.add_wrapper(AgentWrapper(id="keyc", label="keyc", script="a"))
+    s.add_wrapper(AgentWrapper(id="cld", label="cld", script="a"))
     backup = Path(s.auth_config_file).with_suffix(".json.bak")
     assert backup.exists()
     assert not Path(str(Path(s.auth_config_file)) + ".tmp").exists()
@@ -421,20 +421,20 @@ def _wrapper(wid, **kw):
 
 
 def test_model_is_dropped_for_a_wrapper_that_does_not_accept_one(tmp_path):
-    config_data = {"agents": {"wrappers": [_wrapper("keyc", default=True)]}}
+    config_data = {"agents": {"wrappers": [_wrapper("cld", default=True)]}}
     s = _settings_with_config(tmp_path, config_data)
-    with_model = s.get_agent_command("keyc", model="anthropic/claude-opus-4")
-    without = s.get_agent_command("keyc")
+    with_model = s.get_agent_command("cld", model="anthropic/claude-opus-4")
+    without = s.get_agent_command("cld")
     assert with_model == without
     assert "anthropic/claude-opus-4" not in with_model
 
 
 def test_model_is_forwarded_for_a_wrapper_that_accepts_one(tmp_path):
     config_data = {
-        "agents": {"wrappers": [_wrapper("clxor", default=True, accepts_model=True)]}
+        "agents": {"wrappers": [_wrapper("cldor", default=True, accepts_model=True)]}
     }
     s = _settings_with_config(tmp_path, config_data)
-    resolved = s.get_agent_command("clxor", model="anthropic/claude-opus-4")
+    resolved = s.get_agent_command("cldor", model="anthropic/claude-opus-4")
     assert resolved.rstrip().endswith("anthropic/claude-opus-4")
 
 
@@ -448,5 +448,5 @@ def test_accepts_model_defaults_false_so_existing_wrappers_are_unchanged(tmp_pat
 def test_no_wrappers_never_hands_the_model_to_the_standard_claude(tmp_path):
     s = _settings_with_config(tmp_path, {"agents": {"claude_command": ""}})
     resolved = s.get_agent_command("claude", model="some/model")
-    assert "clxor" not in resolved
+    assert "cldor" not in resolved
     assert '--model some/model "$@"' in resolved

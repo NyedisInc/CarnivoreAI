@@ -11,11 +11,11 @@ def _failed(plan) -> set:
 
 def test_a_missing_parent_is_named_and_the_rest_of_the_plan_still_shows(world):
     before = snapshot(world)
-    target = world.base / "org" / "initech" / "alpha"
+    target = world.base / "org" / "imc" / "alpha"
     plan = plan_for(world, move_folder=True, new_root=str(target))
     assert _failed(plan) == {"new_parent_exists"}
     message = next(c["message"] for c in plan.checks if c["id"] == "new_parent_exists")
-    assert str(world.base / "org" / "initech") in message and "does not exist yet" in message
+    assert str(world.base / "org" / "imc") in message and "does not exist yet" in message
     assert plan.new_root == str(target)
     assert {s["new_dir"] for s in plan.sessions} == {str(target), str(target / "sub" / "deep")}
     assert [c["new_root"] for c in plan.children] == [str(target / "sub")]

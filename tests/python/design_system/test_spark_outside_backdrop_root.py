@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("playwright.sync_api", reason="playwright is not installed: the local server was NOT measured")
+pytest.importorskip("playwright.sync_api", reason="playwright is not installed: the spark was NOT measured")
 from playwright.sync_api import sync_playwright  # noqa: E402
 
 CLIENT = Path(__file__).resolve().parents[3] / "client"
@@ -79,7 +79,7 @@ def page():
             browser = p.chromium.launch()
         except Exception as exc:  # noqa: BLE001
             server.shutdown()
-            pytest.skip(f"chromium is not available, so the local server was NOT measured: {exc}")
+            pytest.skip(f"chromium is not available, so the spark was NOT measured: {exc}")
         pg = browser.new_page()
         pg.goto(f"http://127.0.0.1:{server.server_address[1]}/harness.html")
         pg.wait_for_function("window.SessionModelIcon && window.EffortLevel")
@@ -92,10 +92,10 @@ def page():
 def test_spark_is_a_sibling_of_the_backdrop_root_mark(page, effort):
     r = page.evaluate(WALK, [effort, False])
     assert not r["markIsRoot"], "the mark is a backdrop root again (the max rainbow is an opacity cross-fade, issue #1821)"
-    assert not r["markContainsSpark"], "the local server is inside the mark again (2.5 to 8 times the GPU inside a backdrop root, issue #1821)"
-    assert r["roots"] == [], f"an ancestor of the local server creates an effect node: {r['roots']}"
-    assert r["animations"] == 2, "the local server must still run its two motes"
-    assert r["inset"] == [3, 3, 3, 3], f"the local server must sit 3px around the 16px mark, got {r['inset']}"
+    assert not r["markContainsSpark"], "the spark is inside the mark again (2.5 to 8 times the GPU inside a backdrop root, issue #1821)"
+    assert r["roots"] == [], f"an ancestor of the spark creates an effect node: {r['roots']}"
+    assert r["animations"] == 2, "the spark must still run its two motes"
+    assert r["inset"] == [3, 3, 3, 3], f"the spark must sit 3px around the 16px mark, got {r['inset']}"
 
 
 @pytest.mark.parametrize("effort", ["xhigh", "max"])

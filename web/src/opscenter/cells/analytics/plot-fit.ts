@@ -1,4 +1,3 @@
-/* height: 70px min-height: 7 */
 export const MIN_PLOT_HEIGHT_PX = 70;
 
 export function chartFits(plotHeight: number | null): boolean {

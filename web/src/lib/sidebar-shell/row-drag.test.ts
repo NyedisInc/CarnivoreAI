@@ -1,6 +1,11 @@
 /** @vitest-environment jsdom */
-import { beforeAll, describe, expect, it } from 'vitest';
-import { loadRowInteractions } from './row-interaction-fixture';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { loadRowInteractions, rec } from './row-interaction-fixture';
+
+const groupWrite = vi.hoisted(() => ({ commit: (..._a: unknown[]): unknown => undefined }));
+vi.mock('./group-assign', async (orig) => ({
+    ...(await orig<typeof import('./group-assign')>()), commitAssignment: (...a: unknown[]) => groupWrite.commit(...a),
+}));
 import { names, ROW, same, snap } from './row-interaction-play';
 import { sidebarShell } from './shell.svelte';
 
@@ -8,6 +13,7 @@ let w: Record<string, any>;
 
 beforeAll(() => {
     w = loadRowInteractions(sidebarShell);
+    groupWrite.commit = rec('groups.commitAssignment', true);
 });
 
 const CREW = [{ group_uuid: 'g1', name: 'crew', position: 0, members: ['cloude_b'] }];

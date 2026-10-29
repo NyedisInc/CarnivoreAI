@@ -19,7 +19,6 @@ HARNESS_CODEX = "codex"
 
 HARNESS_APP = "app"
 
-# removed with it
 HARNESS_CATALOG = "catalog"
 
 HARNESS_MOD = "mod"
@@ -55,22 +54,6 @@ CLAUDE_BUNDLED_NAMES: tuple[str, ...] = ()
 
 
 class LiveInstallRoots:
-    """The real harness directories, satisfying :class:`InstallRoots`.
-
-    Description: every path the installer writes to is produced here, and
-      nowhere else. Construction takes the settings reader because staging
-      and the journal hang off the state directory, which the suite already
-      redirects with ``CLOUDE_STATE_DIR``; the harness roots hang off the
-      user's home, which nothing redirects, which is precisely why they
-      come through a port a test can replace wholesale.
-    Inputs: settings_reader (SettingsReader) - keyword only.
-    Output: none.
-    Example: LiveInstallRoots(settings_reader=LiveSettings()).staging_dir()
-
-    **``Path.home()`` IS CALLED, NEVER CAPTURED.** A module-scope constant
-    would bind at import, before ``conftest.py`` has finished, and would
-    then look correct in every log line while ignoring every redirection.
-    """
 
     def __init__(self, *, settings_reader: SettingsReader) -> None:
         self._settings_reader = settings_reader
@@ -101,7 +84,6 @@ class LiveInstallRoots:
             )
 
         if kind == KIND_THEME:
-            # already exists
             if project_path is not None:
                 raise ValueError(
                     "a theme installs globally and takes no project_path"
@@ -248,24 +230,6 @@ class LiveInstallRoots:
     def _targets_at(
         self, scope: str, project_path: str | None
     ) -> Iterator[Target]:
-        """Every target EVERY kind writes at this scope, in kind order.
-
-          **IT YIELDS RATHER THAN BUILDING A LIST, AND THAT IS A
-          CORRECTNESS RULE RATHER THAN AN OPTIMISATION.** Both callers
-          stop at the first target whose harness matches, so a lazy walk
-          never resolves the kinds after it. Resolving every kind
-          eagerly means asking every kind where it would install, and
-          the loadout kind's answer hangs off ``state_dir()``, which
-          CREATES the state directory. That put a ``Path.mkdir`` inside
-          a window where ``tests/test_installer_refuses_real_home.py``
-          asserts no destructive call is reached at all, simply because
-          somebody asked where Claude's trash was. A lookup by harness
-          must not have a side effect belonging to a kind it did not ask
-          about.
-        Inputs: scope (str). project_path (str | None).
-        Output: Iterator[Target] - lazy, in kind order.
-        Example: next(iter(self._targets_at("global", None)))
-        """
         for kind in kinds.KINDS:
             if not kinds.scope_supported(kind, scope):
                 continue

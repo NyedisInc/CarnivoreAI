@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte';
   import { t } from '../sdk';
-  import { Check } from '../sdk/ui';
+  import { Button, Check } from '../sdk/ui';
   import { FlowFeed } from './flow-feed.svelte';
   import { seedFromSearch, type FlowSeed } from './flow-model';
   import FlowBubble from './FlowBubble.svelte';
@@ -70,13 +70,13 @@
 <div class="flw" data-flow-body>
   <form class="flw-bar" onsubmit={openSeed}>
     <span class="flw-label">{t('cplug.flow.chat.seed')}</span>
-    <select class="flw-field" bind:value={kind} aria-label={t('cplug.flow.chat.seed_kind')}>
+    <select data-field data-size="sm" bind:value={kind} aria-label={t('cplug.flow.chat.seed_kind')}>
       <option value="huddle_item">{t('cplug.flow.chat.seed.huddle_item')}</option>
       <option value="session">{t('cplug.flow.chat.seed.session')}</option>
     </select>
-    <input class="flw-field flw-field--id" bind:value={ref} aria-label={t('cplug.flow.chat.seed_id')}
+    <input data-field data-size="sm" class="flw-id" data-flow-seed-id bind:value={ref} aria-label={t('cplug.flow.chat.seed_id')}
            placeholder={t(kind === 'session' ? 'cplug.flow.chat.seed.session_hint' : 'cplug.flow.chat.seed.item_hint')} />
-    <button type="submit" class="oc-btn oc-btn--sm">{t('cplug.flow.chat.open')}</button>
+    <Button type="submit" size="sm">{t('cplug.flow.chat.open')}</Button>
     <span class="flw-follow"><Check label={t('cplug.flow.chat.follow')} checked={follow} role="switch" onToggle={(next) => (follow = next)} /></span>
   </form>
 

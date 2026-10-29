@@ -29,6 +29,7 @@ from src.models.catalog_names import (
 logger = structlog.get_logger()
 
 LEGACY_PUBLISHERS = {
+    "adoom666": (FIRST_PARTY_THEME_PUBLISHER, LEGACY_FIRST_PARTY_PUBLISHER),
     LEGACY_FIRST_PARTY_PUBLISHER: (FIRST_PARTY_THEME_PUBLISHER,),
 }
 

@@ -3,17 +3,19 @@
     "src/api/crosstalk_routes.py"
   ],
   "area": "sessions",
-  "description": "An MCP tool and a route that find other agents by the name you see in the sidebar. When two agents share a name the answer says so and lists both, so nothing is ever sent to a guess.",
+  "description": "An MCP tool and a route that find other agents by the name you see in the sidebar. Ask for @Cv-Misc UI, cv_misc-ui or just misc and get each matching agent's id, provider, model, computer, project, status and available transport, on this computer and on paired ones. When two agents share a name the answer says so and lists both, so nothing is ever sent to a guess.",
   "docs": [
     "docs/crosstalk.md"
   ],
   "examples": [
-    "A Claude agent asks agents_lookup for @bot-Misc UI and gets the id of the Codex session carrying that label.",
+    "A Claude agent asks agents_lookup for @Cv-Misc UI and gets the id of the Codex session carrying that label.",
     "Two sessions are both called Twin: the answer is flagged ambiguous with both ids and the agent picks by id.",
-    "A paired computer is offline: its agents still list, marked disconnected."
+    "A paired computer is offline: its agents still list, marked disconnected.",
+    "An agent asks agents_lookup for a sleeping teammate (status asleep) and crosstalk_send wakes it, once the owner approves, and delivers the question."
   ],
   "how_to": [
-    "From an agent with the carnivore MCP server, call agents_lookup with a query, optionally a provider such as codex."
+    "From an agent with the carnivore MCP server, call agents_lookup with a query, optionally a provider such as codex.",
+    "From a script, call GET /api/v1/crosstalk/agents?q=cv-misc%20ui while signed in as the owner."
   ],
   "id": "agents-lookup",
   "issues": [

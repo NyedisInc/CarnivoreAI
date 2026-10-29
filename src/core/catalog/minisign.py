@@ -1,49 +1,3 @@
-"""Verifying a minisign signature in process, over ``cryptography``'s Ed25519.
-
-WHY NOT SHELL OUT TO ``minisign``. The binary is not installed on a user's
-Mac, it is not something an Electron bundle may assume, and a verifier that
-silently does not run is the false-green shape this project has spent months
-removing. The format is 42 bytes of public key and 74 bytes of signature, so
-the whole of it is parsed here and the only cryptography is one Ed25519
-verify per signature.
-
-THE TWO ALGORITHMS, AND WHY THE CALLER MUST NAME THE ONE IT EXPECTS.
-
-- ``ED`` is PREHASHED: the Ed25519 signature covers BLAKE2b-512 of the
-  message, not the message. This is what ``minisign -S`` writes by default
-  (measured against minisign 0.12), and it is the one the catalog index is
-  signed with.
-- ``Ed`` is the LEGACY format (``minisign -S -l``): the signature covers the
-  raw message. It is accepted so that a legacy vector parses and verifies
-  rather than failing as "malformed", but the catalog never emits it.
-
-Anything else is :class:`MinisignFormatError`. An unknown algorithm is a
-refusal, never a fall-through to "assume raw".
-
-THE 2 BYTE ALGORITHM MARKER SITS OUTSIDE BOTH SIGNATURES, SO IT IS INPUT
-AND NEVER EVIDENCE. The mathematics covers the 64 signature bytes and the
-trusted comment; the marker in front of them is covered by nothing, so
-whoever hands this verifier a signature chooses it. Flipping a real
-``ED`` signature to ``Ed`` leaves every signature byte untouched and only
-changes which payload this module checks them against, so a verifier that
-read the marker as fact would answer True over the 64 digest bytes the
-publisher never signed. A valid signature over a DIFFERENT statement is
-exactly the shape an index body or a release statement could be swapped
-for.
-
-BOTH SIGNATURES ARE ALWAYS CHECKED. A minisign file carries two: the one
-over the message, and a GLOBAL signature over ``sig || trusted_comment``.
-The trusted comment is the only part of the file a verifier is entitled to
-believe, and it is only trustworthy because of that second signature, so
-:func:`verify` checks it every time rather than offering a mode that skips
-it. A vector whose ONLY mutation is the trusted comment must fail, and the
-test suite proves it does.
-
-NOTHING HERE LOGS KEY MATERIAL OR A SIGNATURE. Key IDs are logged, because
-a key id is a public identifier minisign itself prints and a mismatch is
-undebuggable without it. Raw keys, signatures and base64 payloads never
-reach a log line, an exception message or a repr.
-"""
 
 from __future__ import annotations
 
@@ -77,14 +31,7 @@ _TRUSTED_COMMENT_PREFIX: str = "trusted comment: "
 
 
 class MinisignFormatError(ValueError):
-    """A key or signature could not be parsed as minisign.
-
-    This is the MALFORMED outcome and it is deliberately distinct from a
-    cryptographic failure. :func:`verify` returns False when the bytes
-    parsed and the mathematics disagreed; it raises this when there were
-    never well-formed bytes to check. Collapsing the two would let "we
-    could not look" read as "we looked and it was wrong".
-    """
+    pass
 
 
 def format_key_id(raw: bytes) -> str:

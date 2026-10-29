@@ -68,7 +68,7 @@ def world(monkeypatch, tmp_path):
     current = [a]
     monkeypatch.setattr(type(settings), "get_state_dir", lambda self: current[0].state, raising=True)
     monkeypatch.setattr(env_mod, "_install_id", lambda: current[0].install_id)
-    monkeypatch.setattr(env_mod, "_labels", lambda: {"iid-a": "mac", "iid-b": "hosta"})
+    monkeypatch.setattr(env_mod, "_labels", lambda: {"iid-a": "mac", "iid-b": "studio"})
     monkeypatch.setattr(transcripts, "transcript_roots", lambda: (current[0].claude,))
     monkeypatch.setattr(config_state, "default", lambda: type("S", (), {"restrictions": lambda self: current[0].restrictions})())
     real_target = env_mod.target_env
@@ -101,14 +101,14 @@ def world(monkeypatch, tmp_path):
 
 
 def seed(a: Machine) -> str:
-    root = a.projects / "ledgerbot"
+    root = a.projects / "trader"
     root.mkdir()
     git(root, "init", "-q", "-b", "main")
     (root / "main.py").write_text("print('hi')\n")
     git(root, "add", "main.py")
     git(root, "commit", "-q", "-m", "first")
     with closing(a.conn()) as conn:
-        project = create_project(conn, name="ledgerbot", path=str(root))
+        project = create_project(conn, name="trader", path=str(root))
         company = companies.create_company(conn, "acme")
         companies.assign_project(conn, project["id"], company["id"])
         swarm_store.create_agent(conn, slug="alpha", rank="project", job="lead", display_name="Alpha", repo_dir=str(root), effort="high",
@@ -147,10 +147,10 @@ def test_migrate_to_b_verify_flip_and_move_back(world) -> None:
     assert made.rung == "carried" and made.case == "new" and not made.blocking, made.view()
     assert made.summary["agents"] == 1 and made.summary["cards"] == 2 and made.summary["transcript_files"] == 1
     flipped = asyncio.run(apply.apply_project(env, made, link(a, b)))
-    assert flipped["machine"] == "hosta"
+    assert flipped["machine"] == "studio"
 
     on_b = b.project(uid)
-    assert on_b["pack_state"] == "home" and on_b["root"] == str(b.projects / "ledgerbot")
+    assert on_b["pack_state"] == "home" and on_b["root"] == str(b.projects / "trader")
     assert git(Path(on_b["root"]), "rev-parse", "HEAD") == head
     with closing(b.conn()) as conn:
         assert [r["state"] for r in conn.execute("SELECT state FROM swarm_agents WHERE project_id = ?", (on_b["id"],))] == ["asleep"]
@@ -188,7 +188,7 @@ def test_a_project_move_stops_its_live_agents_itself_and_a_turn_that_never_ends_
     uid = seed(a)
     with closing(a.conn()) as conn:
         project = dict(conn.execute("SELECT * FROM projects WHERE uid = ?", (uid,)).fetchone())
-        for session_uuid, title, claude, lifecycle in (("sess-ada", "ada", "c-ada", "running"), ("sess-mario", "tetra", "c-mario", "running"), ("sess-peach", "peach", "c-peach", "stopped")):
+        for session_uuid, title, claude, lifecycle in (("sess-luigi", "luigi", "c-luigi", "running"), ("sess-mario", "kestrel", "c-mario", "running"), ("sess-peach", "peach", "c-peach", "stopped")):
             conn.execute(
                 "INSERT INTO sessions (session_uuid, project_id, working_dir, tmux_name, tmux_created_epoch, origin, agent_type, agent_family, "
                 "agent_family_source, claude_session_uuid, claude_session_uuid_source, title, lifecycle, created_at, updated_at) "
@@ -200,7 +200,7 @@ def test_a_project_move_stops_its_live_agents_itself_and_a_turn_that_never_ends_
     state = {"shells": True, "mario_finds": 0, "mario_ends": True}
 
     async def find(session_uuid: str) -> Any:
-        if session_uuid == "sess-ada":
+        if session_uuid == "sess-luigi":
             return SimpleNamespace(activity_status="idle", activity_hint="shell" if state["shells"] else None, startup_gate="ready",
                                    background_open=1 if state["shells"] else None)
         state["mario_finds"] += 1
@@ -237,15 +237,15 @@ def test_a_project_move_stops_its_live_agents_itself_and_a_turn_that_never_ends_
     env = dataclasses.replace(env_mod.source_env(), find_live=find)
     try:
         blocked = asyncio.run(plan.plan_project(env, project, "iid-b", apply.guarded(link(a, b))))
-        assert blocked.blocking == ["agents_ready"] and any("tetra is running; the move will not start until it stops or you tick stop running agents now" in c["detail"] for c in blocked.checks)
+        assert blocked.blocking == ["agents_ready"] and any("kestrel is running; the move will not start until it stops or you tick stop running agents now" in c["detail"] for c in blocked.checks)
         made = asyncio.run(plan.plan_project(env, project, "iid-b", apply.guarded(link(a, b)), stop_running=True))
         by_name = {c["name"]: c for c in made.checks}
-        assert not made.blocking and by_name["live_agents"]["detail"] == "2 agents will stop here and continue on hosta; 1 background shell will be stopped", made.view()
+        assert not made.blocking and by_name["live_agents"]["detail"] == "2 agents will stop here and continue on studio; 1 background shell will be stopped", made.view()
 
         state["mario_ends"] = False
         with pytest.raises(plan.MigrateError) as refused:
             asyncio.run(live.migrate(env, hooks, link(a, b), [made], kind="project", company_uid=None, op_id="live-op-fail", wait_seconds=0.4, settle=0.02, poll=0.005))
-        assert refused.value.code == "turn_not_ended" and "tetra" in refused.value.detail and "still working" in refused.value.detail, refused.value.detail
+        assert refused.value.code == "turn_not_ended" and "kestrel" in refused.value.detail and "still working" in refused.value.detail, refused.value.detail
         assert events == [] and tree.poll() is None and a.project(uid)["pack_state"] == "home" and b.project(uid) is None
         with closing(a.conn()) as conn:
             failed = conn.execute("SELECT state, error_code FROM pack_migrations WHERE id = 'live-op-fail'").fetchone()
@@ -262,17 +262,17 @@ def test_a_project_move_stops_its_live_agents_itself_and_a_turn_that_never_ends_
             return await peer(method, path, **kw)
 
         flipped = asyncio.run(live.migrate(env, hooks, spy, [made], kind="project", company_uid=None, op_id="live-op-ok", wait_seconds=10, settle=0.02, poll=0.005))
-        assert events[0] == "measure_shells" and events[-1] == "stop_shells" and sorted(events[1:-1]) == ["sleep:sess-ada", "sleep:sess-mario"], events
-        assert flipped["machine"] == "hosta" and a.project(uid)["pack_state"] == "moved_away" and b.project(uid)["pack_state"] == "home"
+        assert events[0] == "measure_shells" and events[-1] == "stop_shells" and sorted(events[1:-1]) == ["sleep:sess-luigi", "sleep:sess-mario"], events
+        assert flipped["machine"] == "studio" and a.project(uid)["pack_state"] == "moved_away" and b.project(uid)["pack_state"] == "home"
         assert tree.poll() is not None, "the throwaway shell tree is gone"
         with closing(b.conn()) as conn:
-            assert sorted(r["lifecycle"] for r in conn.execute("SELECT lifecycle FROM sessions WHERE session_uuid IN ('sess-ada', 'sess-mario')")) == ["stopped", "stopped"]
+            assert sorted(r["lifecycle"] for r in conn.execute("SELECT lifecycle FROM sessions WHERE session_uuid IN ('sess-luigi', 'sess-mario')")) == ["stopped", "stopped"]
         with closing(a.conn()) as conn:
             row = conn.execute("SELECT state, step, detail_json FROM pack_migrations WHERE id = 'live-op-ok'").fetchone()
         assert (row["state"], row["step"]) == ("flipped", "flip") and '"live": 2' in row["detail_json"]
-        assert sorted(wakes) == [("POST", "/sessions/sess-ada/wake"), ("POST", "/sessions/sess-mario/wake")], wakes
+        assert sorted(wakes) == [("POST", "/sessions/sess-luigi/wake"), ("POST", "/sessions/sess-mario/wake")], wakes
         detail = json.loads(row["detail_json"])
-        assert detail["woken"] == 1 and detail["wake_failed"] == [{"name": "tetra", "reason": "this session is not asleep, so there is nothing to wake"}], detail
+        assert detail["woken"] == 1 and detail["wake_failed"] == [{"name": "kestrel", "reason": "this session is not asleep, so there is nothing to wake"}], detail
     finally:
         if tree.poll() is None:
             os.killpg(tree.pid, signal.SIGKILL)

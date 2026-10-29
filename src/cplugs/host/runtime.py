@@ -1,20 +1,10 @@
-"""The plugin host: the ship list loaded and checked, each plugin's context, enablement and lifecycle.
-
-``docs/cplugs.md`` sections 1.6, 2.14, 3 and 5. One :class:`Host` per
-process, installed on the app at lifespan start (``install``) and found from
-anywhere by ``current()``; tests install one on a temp state directory.
-
-A broken ship list (a manifest that fails, a surface used but not declared or
-the reverse, two plugins with one id) refuses the WHOLE registry at load
-(:class:`RegistryError`): a build defect, never a half-registered plugin.
-"""
 
 from __future__ import annotations
 
 import asyncio
 from dataclasses import replace
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
 import structlog
 from fastapi import HTTPException, Request
@@ -40,8 +30,8 @@ CPLUGS_TOPIC = "cplugs"
 HOOK_TIMEOUT_S = 5.0
 _UNAUDITED = frozenset({"work"})
 _AUDIT_PERMISSION: Dict[str, Any] = {
-    "sessions": audit.sessions_permission, "projects": "sessions.read", "activity": "activity.read",
-    "swarm": "swarm", "work": "work", "toast": "notify", "toast_dismiss": "notify", "alert": "notify", "ai": "ai_features",
+    "projects": "sessions.read", "activity": "activity.read",
+    "swarm": "swarm", "work": "work", "toast": "notify", "toast_dismiss": "notify", "alert": "notify", "alert_resolve": "notify", "ai": "ai_features",
     "http": "network_hosts",
 }
 
@@ -143,10 +133,10 @@ def _publish(topic: str) -> None:
     resource_push.notify(topic)
 
 
-def _publish_coalesced(topic: str, key: str, min_interval: float) -> None:
+def _publish_coalesced(topic: str, key: str, min_interval: float, detail: Optional[str] = None) -> None:
     from src.core import resource_push  # noqa: PLC0415
 
-    resource_push.notify_coalesced(topic, key, min_interval)
+    resource_push.notify_coalesced(topic, key, min_interval, detail)
 
 
 def _push_frame(frame: Dict[str, Any]) -> bool:
@@ -167,15 +157,9 @@ def install_key_for(state_dir: Path, cplug_id: str) -> str:
 
 
 class Host:
-    """The plugin host for one state directory.
-
-    Inputs: state_dir (Path); app (FastAPI | None) - the app whose ``state`` holds the session manager;
-      publish (topic -> None) - the push, injectable for tests;
-      publish_coalesced ((topic, key, min_interval) -> None) - the rate-limited push, likewise.
-    """
 
     def __init__(self, state_dir: Path, app: Any = None, publish: Callable[[str], None] = _publish,
-                 publish_coalesced: Callable[[str, str, float], None] = _publish_coalesced) -> None:
+                 publish_coalesced: Callable[..., None] = _publish_coalesced) -> None:
         self.state_dir = Path(state_dir)
         self.app = app
         self.publish = publish
@@ -239,13 +223,16 @@ class Host:
     def follow(self, cplug_id: str, name: str, listener: Callable[[List[str]], None]) -> Callable[[], None]:
         return _follow_family(self.family(cplug_id, name), listener)
 
-    def _live_grants(self, manifest: Any) -> frozenset:
+    def _live_grants(self, manifest: Any) -> FrozenSet[str]:
         st = owner_state.get(self.state_dir, manifest)
         return self._effective_grants(manifest, st) if st.enabled else frozenset()
 
+    def _grants_now(self, manifest: Any) -> FrozenSet[str]:
+        return self._effective_grants(manifest, owner_state.get(self.state_dir, manifest))
+
     @staticmethod
-    def _effective_grants(manifest: Any, st: owner_state.CplugState) -> frozenset:
-        if risk.needs_consent(manifest.tier) and (not manifest.code_digest or st.digest != manifest.code_digest):
+    def _effective_grants(manifest: Any, st: owner_state.CplugState) -> FrozenSet[str]:
+        if risk.consent_owed(manifest.tier, manifest.code_digest, st.digest):
             return frozenset()
         return frozenset(st.grants)
 
@@ -256,7 +243,8 @@ class Host:
         if d is None:
             raise KeyError(cplug_id)
         st = owner_state.get(self.state_dir, d.manifest)
-        grants = self._effective_grants(d.manifest, st)
+        live = lambda: self._grants_now(d.manifest)  # noqa: E731
+        grants = live()
         outside = risk.needs_consent(d.manifest.tier)
         if request is not None:
             app_state = request.app.state
@@ -269,7 +257,7 @@ class Host:
         if "sessions.read" in grants:
             if outside:
                 caps["sessions"] = capabilities.RestrictedSessions(
-                    reader, request, "sessions.message" in grants, may_create=False, may_control="sessions.control" in grants)
+                    reader, request, "sessions.message" in grants, may_control="sessions.control" in grants)
             else:
                 caps["sessions"] = capabilities.Sessions(reader, request, "sessions.message" in grants,
                                                          may_resume="sessions.create" in grants, app_state=app_state)
@@ -285,6 +273,7 @@ class Host:
                              else capabilities.toaster(cplug_id, app_state))
             caps["toast_dismiss"] = capabilities.toast_dismisser(cplug_id, app_state)
             caps["alert"] = capabilities.alerter(cplug_id, outside)
+            caps["alert_resolve"] = capabilities.alert_resolver(cplug_id, outside)
         granted_ai = {feature_id(d.id, n): f for n, f in d.manifest.ai_features.items()
                       if permission_name(d.id, n) in grants}
         if granted_ai:
@@ -296,7 +285,8 @@ class Host:
                                                    lambda: self._live_grants(d.manifest), secret_store.SecretStore(self.state_dir),
                                                    egress_log.EgressLog(self.state_dir), _RATE)
         log = activity_log.ActivityLog(self.state_dir)
-        caps = {name: cap if name in _UNAUDITED else audit.audited(cap, log, key, name, _AUDIT_PERMISSION[name]) for name, cap in caps.items()}
+        permissions = {**_AUDIT_PERMISSION, "sessions": audit.sessions_permission_for(outside)}
+        caps = {name: cap if name in _UNAUDITED else audit.audited(cap, log, key, name, permissions[name], live) for name, cap in caps.items()}
         defaults = settings_defaults(d.manifest.settings_schema)
         aliases = d.manifest.settings_aliases
         settings_aliases.declare(aliases)
@@ -308,7 +298,8 @@ class Host:
                             notify=lambda name, key=None: self.notify(cplug_id, name, key),
                             push=lambda name, data: self.push_data(cplug_id, name, data),
                             follow=lambda name, listener: self.follow(cplug_id, name, listener),
-                            log=structlog.get_logger().bind(cplug=cplug_id), grants=grants, capabilities=caps, at_boot=at_boot)
+                            log=structlog.get_logger().bind(cplug=cplug_id), grants=grants, capabilities=caps, at_boot=at_boot,
+                            grants_source=live)
 
     def adopt_settings(self, d: CplugDefinition, source_id: str, keys: Tuple[str, ...]) -> Dict[str, Any]:
         source = find(source_id)
@@ -333,11 +324,12 @@ class Host:
         hook = {"start": d.on_start, "stop": d.on_stop, "settings": d.on_settings}[which]
         if hook is None and (system is None or which == "settings"):
             return
+        ctx = self.context(d.id, background=which != "stop", at_boot=at_boot) if hook is not None else None
         try:
-            call = hook(self.context(d.id, background=which != "stop", at_boot=at_boot)) if hook is not None else system[0 if which == "start" else 1](self.app)
+            call = hook(ctx) if hook is not None else system[0 if which == "start" else 1](self.app)
             await asyncio.wait_for(call, timeout=HOOK_TIMEOUT_S)
-        except (asyncio.TimeoutError, OSError, RuntimeError, ValueError, KeyError, AttributeError, CplugSchemaError) as exc:
-            logger.error("cplug_hook_failed", cplug=d.id, hook=which, error_type=type(exc).__name__, error=str(exc)[:300])
+        except Exception as exc:  # noqa: BLE001
+            logger.error("cplug_hook_failed", cplug=d.id, hook=which, error_type=type(exc).__name__, error=str(exc)[:300], exc_info=True)
             if which == "start":
                 reason = f": {str(exc)[:200]}" if isinstance(exc, CplugSchemaError) else ""
                 self.unavailable[d.id] = f"start hook failed: {type(exc).__name__}{reason}"
@@ -394,12 +386,16 @@ class Host:
         if live is None:
             return None
         await live.index.ensure()
-        return await live.supervisor.restart(self.sidecar_spec(d))
+        state = await live.supervisor.restart(self.sidecar_spec(d))
+        await live.mcp_health_switched(d.id, not any(live.safe_mode().values()))
+        return state
 
     def sidecar_spec(self, d: SidecarDefinition) -> Any:
         st = owner_state.get(self.state_dir, d.manifest)
         consented = bool(st.digest) and st.digest == d.manifest.code_digest
-        return sidecar_spec.build_spec(d, self._effective_grants(d.manifest, st), st.settings, consented, first_party_listing.pinned_key_id() or "")
+        owed = risk.consent_owed(d.manifest.tier, d.manifest.code_digest, st.digest)
+        return sidecar_spec.build_spec(d, self._effective_grants(d.manifest, st), st.settings, consented, first_party_listing.pinned_key_id() or "",
+                                       consent_owed=owed)
 
     async def settings_saved(self, cplug_id: str) -> None:
         d = find(cplug_id)

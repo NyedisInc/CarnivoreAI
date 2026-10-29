@@ -1,3 +1,4 @@
+/* the widget menu */
 import type { MenuNode } from '../drawer-tabs/add-component-menu';
 import { layoutNode, pinStripNode } from './bar-menu';
 import { closing, joinGroups } from './model';

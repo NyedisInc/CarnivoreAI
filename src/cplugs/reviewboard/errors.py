@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 class BoardError(Exception):
@@ -22,6 +22,18 @@ class NoRoot(BoardError):
     def __init__(self, reason: str, message: str) -> None:
         super().__init__(message, extra={"reason": reason})
         self.reason = reason
+
+
+class NotAttacher(BoardError):
+
+    status = 403
+    code = "reviewboard_not_attacher"
+
+
+class BytesNotRemoved(BoardError):
+
+    status = 503
+    code = "reviewboard_bytes_not_removed"
 
 
 class NoTaskManager(BoardError):
@@ -49,7 +61,6 @@ class BoardExists(BoardError):
 
 
 class ReadOnlyBoard(BoardError):
-    """The board is invalid or made by a newer Carnivore: it is shown, never written."""
 
     status = 409
     code = "reviewboard_read_only"
@@ -62,7 +73,6 @@ class BadRequest(BoardError):
 
 
 class StaleSidecar(BoardError):
-    """``base_etag`` is not the sidecar's current etag. ``extra`` carries the current ``etag`` and ``sidecar``; nothing was written."""
 
     status = 409
     code = "reviewboard_stale"
@@ -116,8 +126,40 @@ class TaskManagerRefused(BoardError):
     code = "reviewboard_task_manager_refused"
 
 
+class FileTypeRefused(BoardError):
+
+    status = 415
+    code = "reviewboard_file_type_refused"
+
+    def __init__(self, message: str, *, reason: str, file: str, extension: Optional[str] = None) -> None:
+        super().__init__(message, extra={"reason": reason, "file": file, **({"extension": extension} if extension else {})})
+
+
+class SecretInFile(BoardError):
+
+    status = 422
+    code = "reviewboard_file_has_secret"
+
+    def __init__(self, message: str, *, files: List[Dict[str, Any]]) -> None:
+        super().__init__(message, extra={"files": files})
+
+
+class UnscannableFile(BoardError):
+
+    status = 422
+    code = "reviewboard_file_unscannable"
+
+    def __init__(self, message: str, *, files: List[Dict[str, Any]]) -> None:
+        super().__init__(message, extra={"files": files})
+
+
+class AttachmentNotFound(BoardError):
+
+    status = 404
+    code = "reviewboard_no_attachment"
+
+
 class StoreFailed(BoardError):
-    """A file of an attach could not be written to the task's folder; nothing was attached (``attachments.py``)."""
 
     status = 500
     code = "reviewboard_store_failed"

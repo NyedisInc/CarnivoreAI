@@ -60,6 +60,11 @@ def _shape(change: dict[str, Any], catalog: dict[str, dict[str, Any]]) -> dict[s
 @router.get("/whats-new", dependencies=[Depends(require_auth)])
 async def get_whats_new(since: str = Query("", max_length=200)) -> dict[str, Any]:
     """Return the build mark and the user-visible changes newer than ``since``.
+
+    Inputs: since (str) - a mark from an earlier call; empty returns no entries.
+    Output: dict ``{available, mark, total, more, entries}``. ``entries`` is
+      newest first, ``internal`` skipped, capped at ``MAX_ENTRIES``.
+    Example: GET /api/v1/whats-new?since=2026-09-30T14:03:05Z
     """
     index = _load_index()
     if index is None:

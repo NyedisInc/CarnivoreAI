@@ -1,4 +1,3 @@
-/*  hidden  */
 
 console.log('[FolderPickerModal Module] Loading...');
 
@@ -145,7 +144,6 @@ console.log('[FolderPickerModal Module] Loading...');
                 }
             };
 
-            // not a directory
             const submitPath = async () => {
                 const value = pathInput.value.trim();
                 if (!value) return;

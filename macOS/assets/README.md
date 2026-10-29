@@ -29,23 +29,14 @@ A simple cloud with a terminal/command prompt symbol:
 
 ## Generating Icons
 
-### Option 1: Use the Generator Script (Recommended)
-
-```bash
-cd macOS/assets
-./generate-icons.sh
-```
-
-This will create placeholder icons using ImageMagick.
-
-### Option 2: Manual Design
+### Manual Design
 
 1. Create your icon in a vector graphics editor (Sketch, Figma, Illustrator)
 2. Export as PNG at required sizes
 3. Ensure black (#000000) on transparent background
 4. Save as `iconTemplate.png` and `iconTemplate@2x.png`
 
-### Option 3: Use Online Tools
+### Online Tools
 
 - [Cloudconvert](https://cloudconvert.com/) - Convert SVG to PNG
 - [Icon Slate](https://www.kodlian.com/apps/icon-slate) - Create .icns bundles

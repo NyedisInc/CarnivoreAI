@@ -25,7 +25,6 @@ export interface DrawerInputs {
   manifests?: Readonly<Record<string, WidgetManifest>>;
 }
 
-/* the widgets page */
 export function categoryKey(category: WidgetCategory): string {
   return `widgets.page.category.${category}`;
 }

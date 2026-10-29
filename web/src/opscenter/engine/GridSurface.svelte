@@ -30,7 +30,6 @@
   const sizeKey = $derived(sizeKeyOverride ?? surfaceKeyOf(store.page));
   const surface = $derived(sizeOf(sizeKey));
 
-  //  hidden 
   $effect(() => {
     if (store.page !== 'terminal') return;
     const zoomed = layoutZoom.zoomed;
@@ -56,6 +55,12 @@
   function handlesUnder(at: number): [number, number][] {
     return boundaryHandles(tracks, at, surface.width, gutter);
   }
+
+  const tailFit = $derived.by(() => {
+    const last = rows[rows.length - 1];
+    if (!measured || !viewport.wide || !last || last.kind !== 'px') return null;
+    return Math.max(0, surface.height - (tracks.contentHeight - Math.max(1, Math.round(last.size))));
+  });
 
   const rowIds = $derived(rows.map((row) => row.id));
 
@@ -109,7 +114,7 @@
 <div
   class="oc-surface"
   class:oc-surface-zoomable={store.page === 'terminal'}
-  style={measured ? `--rows: ${tracks.template}; --oc-surface-h: ${tracks.contentHeight}px` : '--rows: none'}
+  style={measured ? `--rows: ${tracks.template}${tailFit === null ? '' : ` ${gutter}px`}; --oc-surface-h: ${tracks.contentHeight}px` : '--rows: none'}
   {@attach observeCell(sizeKey)}
 >
   {#each measured ? rows : [] as row, index (row.id)}
@@ -164,6 +169,17 @@
       </div>
     {/if}
   {/each}
+  {#if tailFit !== null}
+    <div class="oc-gutter-band">
+      <Gutter
+        axis="y"
+        row={rows[rows.length - 1]!}
+        {gutter}
+        tail={tailFit}
+        {store}
+      />
+    </div>
+  {/if}
   {#if viewport.wide}
     {#each measured ? edges : [] as edge (`${edge.rowId}-${edge.seam.index}`)}
       {@const box = edgeBox(tracks, edge)}

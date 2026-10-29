@@ -55,7 +55,6 @@ IMAGE_PLACEHOLDER: str = "[image removed from this shared copy]"
 
 VOLUMES_ROOT: str = "/Volumes"
 
-# conversation id
 CRATE_NAME_RE = re.compile(r"^(crate|share)-[A-Za-z0-9._-]{3,90}\.crate(\.age)?$")
 UPLOAD_NAME_RE = re.compile(r"^crate-[A-Za-z0-9._-]{3,90}\.crate(\.age)?$")
 AGE_MAGIC: bytes = b"age-encryption.org/"

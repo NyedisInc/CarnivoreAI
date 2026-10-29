@@ -17,8 +17,8 @@ from src.core.byoai.wire import openai_chat
 THINKING_OFF = '{"chat_template_kwargs": {"enable_thinking": false}}'
 
 VLLM_MODELS = {"object": "list", "data": [{
-    "id": "model-a", "object": "model", "created": 1791152973, "owned_by": "vllm",
-    "root": "nvidia/NVIDIA-model-a-120B-A12B-NVFP4", "parent": None, "max_model_len": 98304,
+    "id": "nemotron-3-super", "object": "model", "created": 1791152973, "owned_by": "vllm",
+    "root": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4", "parent": None, "max_model_len": 98304,
     "permission": [{"id": "modelperm-1", "object": "model_permission", "allow_sampling": True}]}]}
 
 
@@ -46,8 +46,8 @@ class _Response:
         return self._data
 
 
-def _custom(options: Dict[str, Any]) -> Connection:
-    return Connection(id="custom-0001", preset="custom", label="llm", base_url="http://192.0.2.16:8080/v1",
+def _spark(options: Dict[str, Any]) -> Connection:
+    return Connection(id="custom-5a57", preset="custom", label="spark", base_url="http://10.0.0.8:8080/v1",
                       options={"protocol": "openai_chat", "capabilities": ["chat"], "auth": "none", **options})
 
 
@@ -66,20 +66,20 @@ def test_extra_fields_are_merged_into_every_chat_request(monkeypatch):
         return _Response({"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]})
 
     monkeypatch.setattr(openai_chat.transport, "request", fake_request)
-    target = Target(_custom({EXTRA_BODY_OPTION: THINKING_OFF}), "model-a")
+    target = Target(_spark({EXTRA_BODY_OPTION: THINKING_OFF}), "nemotron-3-super")
     request = ChatRequest(messages=(ChatMessage("user", "label this"),), max_tokens=20)
     result = asyncio.run(openai_chat.chat(target, None, request))
 
     assert result.text == "ok"
     assert sent[0]["chat_template_kwargs"] == {"enable_thinking": False}
-    assert sent[0]["model"] == "model-a" and sent[0]["max_tokens"] == 20
+    assert sent[0]["model"] == "nemotron-3-super" and sent[0]["max_tokens"] == 20
 
     body = openai_chat.build_body("m", ChatRequest(messages=(ChatMessage("user", "x"),),
                                                    extra={"chat_template_kwargs": {"enable_thinking": True}}),
                                   stream=True, connection_fields=openai_chat.connection_extra(target.connection))
     assert body["chat_template_kwargs"] == {"enable_thinking": True} and body["stream"] is True
 
-    plain = openai_chat.build_body("m", request, connection_fields=openai_chat.connection_extra(_custom({})))
+    plain = openai_chat.build_body("m", request, connection_fields=openai_chat.connection_extra(_spark({})))
     assert "chat_template_kwargs" not in plain
 
 
@@ -93,7 +93,7 @@ def test_secret_keys_and_values_are_refused(store, text):
     with pytest.raises(ExtraBodyError):
         parse_extra_body(text)
     with pytest.raises(ByoaiError):
-        s.add_connection(preset="custom", base_url="http://192.0.2.16:8080/v1",
+        s.add_connection(preset="custom", base_url="http://10.0.0.8:8080/v1",
                          options={"protocol": "openai_chat", "capabilities": ["chat"], "auth": "none",
                                   EXTRA_BODY_OPTION: text})
     assert "byoai" not in json.loads(config.read_text())
@@ -113,7 +113,7 @@ def test_ordinary_names_with_secret_lookalike_parts_pass():
 
 def test_storing_the_setting_bumps_no_config_version(store):
     config, s = store
-    conn = s.add_connection(preset="custom", base_url="http://192.0.2.16:8080/v1",
+    conn = s.add_connection(preset="custom", base_url="http://10.0.0.8:8080/v1",
                             options={"protocol": "openai_chat", "capabilities": ["chat"], "auth": "none"})
     s.update_connection(conn.id, options={"protocol": "openai_chat", "capabilities": ["chat"], "auth": "none",
                                           EXTRA_BODY_OPTION: THINKING_OFF})
@@ -135,8 +135,8 @@ def test_the_model_list_parses_the_vllm_response(monkeypatch):
     async def run(protocol, call):
         return await call(None)
 
-    found = asyncio.run(model_catalog.discover(_custom({}), run))
-    assert [m.id for m in found] == ["model-a"]
+    found = asyncio.run(model_catalog.discover(_spark({}), run))
+    assert [m.id for m in found] == ["nemotron-3-super"]
     assert found[0].capabilities == ("chat",) and found[0].context_length == 98304
 
 
@@ -144,4 +144,4 @@ def test_a_custom_server_without_a_model_list_fails_soft(monkeypatch):
     async def run(protocol, call):
         raise ProviderHTTPError(404, "not found")
 
-    assert asyncio.run(model_catalog.discover(_custom({}), run)) == []
+    assert asyncio.run(model_catalog.discover(_spark({}), run)) == []

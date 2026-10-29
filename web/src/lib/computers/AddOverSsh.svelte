@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../i18n/index.svelte';
+  import { Button, Field } from '../base';
   import { activity, addOverSsh, check, computers } from './computers-store.svelte';
   import { codeCopy } from './computers-format';
 
@@ -24,14 +25,12 @@
 <div class="cmp-region" data-cmp="ssh">
   <h3 class="pl-label">{t('computers.ssh.title')}</h3>
   <form class="cmp-form" onsubmit={(e) => { e.preventDefault(); void check(target.trim(), port); }}>
-    <label class="cmp-field"><span class="pl-label">{t('computers.ssh.target')}</span>
-      <input class="oc-field" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" bind:value={target}
-        placeholder={t('computers.ssh.target_placeholder')} oninput={onEdit} data-cmp="ssh-target" /></label>
-    <label class="cmp-field cmp-field--port"><span class="pl-label">{t('computers.ssh.port')}</span>
-      <input class="oc-field" type="text" inputmode="numeric" bind:value={portText} placeholder={t('computers.ssh.port_placeholder')}
-        oninput={onEdit} data-cmp="ssh-port" /></label>
-    <button type="submit" class="modal-btn modal-btn-secondary" data-cmp="ssh-check" disabled={target.trim() === '' || activity.busy !== null}>
-      {activity.busy === 'preview' ? t('computers.ssh.checking') : t('computers.ssh.check')}</button>
+    <div class="cmp-field"><Field label={t('computers.ssh.target')} autocomplete="off" autocapitalize="off" spellcheck={false} bind:value={target}
+      placeholder={t('computers.ssh.target_placeholder')} oninput={onEdit} data-cmp="ssh-target" /></div>
+    <div class="cmp-field cmp-field--port"><Field label={t('computers.ssh.port')} inputmode="numeric" bind:value={portText} placeholder={t('computers.ssh.port_placeholder')}
+      oninput={onEdit} data-cmp="ssh-port" /></div>
+    <Button type="submit" data-cmp="ssh-check" disabled={target.trim() === '' || activity.busy !== null}>
+      {activity.busy === 'preview' ? t('computers.ssh.checking') : t('computers.ssh.check')}</Button>
   </form>
   {#if preview !== null}
     <div data-cmp="preview">
@@ -42,8 +41,8 @@
         <p class="cmp-blocker" data-blocker={blocker}>{codeCopy('computers.ssh.blocker', blocker, 'computers.error.failed')}</p>
       {/each}
       <div class="cmp-actions">
-        <button type="button" class="modal-btn modal-btn-confirm" data-cmp="ssh-add" disabled={!canAdd}
-          onclick={() => void addOverSsh(target.trim(), port)}>{t('computers.ssh.add')}</button>
+        <Button variant="confirm" data-cmp="ssh-add" disabled={!canAdd}
+          onclick={() => void addOverSsh(target.trim(), port)}>{t('computers.ssh.add')}</Button>
       </div>
     </div>
   {/if}

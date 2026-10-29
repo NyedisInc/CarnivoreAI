@@ -10,6 +10,7 @@ from src.core import resource_push
 from src.core.resource_push.topics import TOASTS as TOASTS_TOPIC
 from src.models import Toast
 from src.models.notifications import ToastDetail
+from src.models.utc_time import as_aware_utc, utc_now
 
 logger = structlog.get_logger()
 
@@ -66,7 +67,7 @@ class ToastInbox:
     ) -> Tuple[Toast, bool]:
         import uuid as _uuid
 
-        stamp = now if now is not None else datetime.utcnow()
+        stamp = as_aware_utc(now) if now is not None else utc_now()
         bucket = self.pending.setdefault(session_id, [])
         superseded = self.find_supersedable(bucket, kind, title)
         if superseded is not None:

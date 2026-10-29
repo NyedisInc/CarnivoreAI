@@ -3,6 +3,9 @@
   import { t } from '../i18n/index.svelte';
   import { nonEmptyErrorMessageOr } from '../errors/failure-reason';
   import Check from '../../opscenter/ui/Check.svelte';
+  import Button from '../base/Button.svelte';
+  import Field from '../base/Field.svelte';
+  import Select from '../base/Select.svelte';
   import ProjectReplicas from './ProjectReplicas.svelte';
   import { transportApi, type PublishCard, type TransportApi, type TransportView } from './transport-api';
 
@@ -80,8 +83,8 @@
 
 <div class="pt" data-pt="root">
   {#if !startOpen}
-    <button type="button" class="oc-btn oc-btn--sm oc-btn--ghost" aria-expanded={open} data-pt="toggle" onclick={toggle}>
-      {open ? t('pack.transport.close') : t('pack.transport.open')}</button>
+    <Button variant="quiet" size="sm" aria-expanded={open} style="--_btn-ink: var(--oc-text-dim)" data-pt="toggle" onclick={toggle}>
+      {open ? t('pack.transport.close') : t('pack.transport.open')}</Button>
   {/if}
   {#if open}
     <div class="pt-body" data-pt="body">
@@ -99,16 +102,15 @@
             {#if view.logged_in.length === 0}
               <span class="pt-note">{t('pack.transport.accounts_none')}</span>
             {:else}
-              <label class="pt-pick"><span class="pt-note">{t('pack.transport.account_pick')}</span>
-                <select class="oc-field" disabled={busy} data-pt="account-pick" value={view.source === 'project' ? view.account ?? '' : ''}
-                  onchange={(e) => { const v = (e.currentTarget as HTMLSelectElement).value; if (v) void change(() => api.setAccount(name, v)); }}>
-                  <option value="">{t('pack.transport.account_choose')}</option>
-                  {#each view.logged_in as login (login)}<option value={login}>{login}</option>{/each}
-                </select></label>
+              <Select label={t('pack.transport.account_pick')} disabled={busy} data-pt="account-pick" value={view.source === 'project' ? view.account ?? '' : ''}
+                onchange={(e) => { const v = (e.currentTarget as HTMLSelectElement).value; if (v) void change(() => api.setAccount(name, v)); }}>
+                <option value="">{t('pack.transport.account_choose')}</option>
+                {#each view.logged_in as login (login)}<option value={login}>{login}</option>{/each}
+              </Select>
             {/if}
             {#if view.source === 'project'}
-              <button type="button" class="oc-btn oc-btn--sm oc-btn--ghost" disabled={busy} data-pt="account-clear"
-                onclick={() => void change(() => api.setAccount(name, null))}>{t('pack.transport.account_clear')}</button>
+              <Button variant="quiet" size="sm" disabled={busy} data-pt="account-clear"
+                onclick={() => void change(() => api.setAccount(name, null))}>{t('pack.transport.account_clear')}</Button>
             {/if}
           {/if}
         </div>
@@ -126,21 +128,19 @@
             {#if card.owner}
               <p class="pt-line" data-pt="publish-owner">{t('pack.transport.publish_owner')}: {card.owner}</p>
             {:else}
-              <label class="pt-pick"><span class="oc-sub">{t('pack.transport.publish_owner_ask')}</span>
-                <input class="oc-field" bind:value={owner} maxlength="64" data-pt="publish-owner-input" /></label>
+              <Field label={t('pack.transport.publish_owner_ask')} bind:value={owner} maxlength={64} data-pt="publish-owner-input" />
             {/if}
             {#if card.account}
               <p class="pt-line" data-pt="publish-account">{t('pack.transport.publish_account')}: {card.account}</p>
             {:else}
-              <label class="pt-pick"><span class="oc-sub">{t('pack.transport.publish_account')}</span>
-                <select class="oc-field" bind:value={account} data-pt="publish-account-pick">
-                  <option value="">{t('pack.transport.account_choose')}</option>
-                  {#each view.logged_in as login (login)}<option value={login}>{login}</option>{/each}
-                </select></label>
+              <Select label={t('pack.transport.publish_account')} bind:value={account} data-pt="publish-account-pick">
+                <option value="">{t('pack.transport.account_choose')}</option>
+                {#each view.logged_in as login (login)}<option value={login}>{login}</option>{/each}
+              </Select>
             {/if}
             <div class="pt-actions">
-              <button type="button" class="modal-btn modal-btn-confirm" disabled={busy || (card.asks.includes('owner') && !owner.trim()) || (card.asks.includes('account') && !account)}
-                data-pt="publish-go" onclick={() => void publish()}>{t('pack.transport.publish_go')}</button>
+              <Button variant="confirm" disabled={busy || (card.asks.includes('owner') && !owner.trim()) || (card.asks.includes('account') && !account)}
+                data-pt="publish-go" onclick={() => void publish()}>{t('pack.transport.publish_go')}</Button>
             </div>
           </div>
         {/if}

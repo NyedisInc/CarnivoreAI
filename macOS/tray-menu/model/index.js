@@ -35,6 +35,7 @@ function runningLayout(snap, env) {
 function downLayout(snap, env) {
   const { t } = env;
   const restart = snap.server.supervisor && snap.server.supervisor.gaveUp;
+  // Kill Port Holder
   const portBusy = Boolean(snap.server.portTrust && snap.server.portTrust.trusted === false);
   return [
     ...header.updateRow(snap, t),

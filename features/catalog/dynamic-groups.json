@@ -1,0 +1,43 @@
+{
+  "api_routes": [
+    "src/api/session_group_rule_routes.py"
+  ],
+  "area": "sessions",
+  "docs": [],
+  "examples": [
+    "A group named sleepy with the sleeping icon lit lists every agent that is asleep, with no dragging.",
+    "A group with the coffee icon lit and the prefix api- collects every kept-awake agent whose name starts with api-."
+  ],
+  "how_to": [
+    "Open a group's heading menu (the three dots) and choose rule.",
+    "Click an icon to require that attribute (lit means required): running, sleeping, coffee, sharing, pinned, another computer, swarm, unread, waiting on you.",
+    "Type a prefix and or a suffix to match the agent's name; the count shows how many agents match right now.",
+    "A session joins the group when it matches every lit criterion. Agents you added by hand stay in the group either way."
+  ],
+  "id": "dynamic-groups",
+  "issues": [
+    2690
+  ],
+  "keywords": [
+    "groups",
+    "rule",
+    "dynamic",
+    "filter",
+    "sidebar"
+  ],
+  "media_exempt": "new in this change; recapture runs before the next version bump (docs/DECISIONS.md, pre-bump pipeline)",
+  "name": "Dynamic groups",
+  "since": "2026-10-28",
+  "status": "stable",
+  "summary": "a group can carry a rule of attributes, and agents that match all of it fill the group by themselves.",
+  "surfaces": [
+    "web/src/lib/drawer/GroupRulePanel.svelte",
+    "web/src/lib/drawer/group-rule.ts",
+    "web/src/lib/drawer/group-rule-popup.ts",
+    "src/core/session_group_rule.py"
+  ],
+  "updated": "2026-10-28",
+  "where": [
+    "The agents drawer: a group's heading menu, rule."
+  ]
+}

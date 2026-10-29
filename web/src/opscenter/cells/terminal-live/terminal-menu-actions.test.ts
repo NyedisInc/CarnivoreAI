@@ -24,7 +24,7 @@ test('a plain shell widget menu leaves out the agent-only drawers and keeps the 
   for (const id of ['search', 'theme', 'sleep', 'files', 'notes']) expect(ids).toContain(id);
 });
 
-test('the terminal tab menu keeps search terminal alone', () => {
+test('the terminal tab menu keeps search terminal alone (Alex (Example-owner), 2026-10-22)', () => {
   const zoom = { label: 'zoom', run: () => {} };
   const sizeMaster = { on: false, run: () => {} };
   expect(tabMenuActions({ ...input, zoom, sizeMaster }).map((a) => a.id)).toEqual(['search']);

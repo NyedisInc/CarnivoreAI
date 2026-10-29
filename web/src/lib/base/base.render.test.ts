@@ -19,6 +19,7 @@ afterEach(() => {
     document.body.innerHTML = '';
 });
 
+/** A snippet that renders fixed markup. */
 const html = (markup: string) => createRawSnippet(() => ({ render: () => markup }));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,6 +100,31 @@ describe('Field', () => {
         expect(area).not.toBeNull();
         expect(area.hasAttribute('aria-invalid')).toBe(false);
         expect(area.hasAttribute('aria-describedby')).toBe(false);
+    });
+});
+
+describe('Field lead and element', () => {
+    test('a search field draws its lead snippet inside the frame between the icon and the input; without one nothing is added', () => {
+        const withLead = show(Field, { variant: 'search', label: 'find', lead: html('<b>in: here</b>') });
+        const frame = withLead.querySelector('.oc-search') as HTMLElement;
+        const kids = [...frame.children].map((c) => c.className || c.tagName.toLowerCase());
+        expect(kids.slice(0, 3)).toEqual(['oc-search__icon', 'oc-search__lead', 'input']);
+        expect(frame.querySelector('.oc-search__lead')?.textContent).toBe('in: here');
+        expect(show(Field, { variant: 'search', label: 'find' }).querySelector('.oc-search__lead')).toBeNull();
+    });
+
+    test('element is bindable and hands back the input, the textarea and the search input', () => {
+        const seen: Record<string, unknown> = {};
+        const bound = (key: string, props: Record<string, unknown>) =>
+            show(Field, { ...props, get element() { return seen[key] ?? null; }, set element(v: unknown) { seen[key] = v; } });
+        const a = bound('plain', { label: 'name' });
+        const b = bound('area', { label: 'note', multiline: true });
+        const c = bound('bare', { 'aria-label': 'bare' });
+        const d = bound('search', { variant: 'search', label: 'find' });
+        expect(seen.plain).toBe(a.querySelector('input'));
+        expect(seen.area).toBe(b.querySelector('textarea'));
+        expect(seen.bare).toBe(c.querySelector('input'));
+        expect(seen.search).toBe(d.querySelector('input'));
     });
 });
 

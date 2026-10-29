@@ -1,4 +1,4 @@
-
+<!-- frame, and the -->
 <script lang="ts">
     import { onMount, type Snippet } from 'svelte';
     import type { HTMLAttributes } from 'svelte/elements';
@@ -124,7 +124,6 @@
         return () => {
             observer?.disconnect();
             for (const [target, type, fn, capture] of listeners) target.removeEventListener(type, fn, capture);
-            // something else
             const active = document.activeElement;
             if (returnFocus && anchor && document.contains(anchor) && (!active || active === document.body || el.contains(active))) anchor.focus();
         };

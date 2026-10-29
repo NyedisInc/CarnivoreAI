@@ -16,6 +16,7 @@ setLocale('en');
 
 let app: ReturnType<typeof mount> | null = null;
 
+/** Let promises, channel microtasks and effects settle. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 6; i += 1) {
     await Promise.resolve();
@@ -59,7 +60,7 @@ describe('the viewer page', () => {
     expect(param(frames(root)[0]!, 'widget')).toBe('core.notes');
     expect(param(frames(root)[0]!, 'size')).toBe('m');
     expect(new URL(frames(root)[0]!.src, 'http://x.test').pathname).toBe('/static/dist/widget-lab/index.html');
-    expect(root.querySelector('.dwl-viewer')!.querySelectorAll('input, select, textarea').length).toBe(0);
+    expect(root.querySelector('.dwl-viewer')!.querySelectorAll('input, select:not([data-size-more]), textarea').length).toBe(0);
     expect(root.querySelector('.dwl-viewer')!.textContent).not.toMatch(/capture\b(?! \()/);
   });
 
@@ -98,7 +99,7 @@ describe('the viewer page', () => {
 
   it('focuses a frame when its caption is pressed, dims the others, and Escape unfocuses', async () => {
     const root = await open();
-    const caption = () => bands(root).find((band) => band.dataset['host'] === 'drawer')!.querySelector<HTMLButtonElement>('.dwl-cap-key')!;
+    const caption = () => bands(root).find((band) => band.dataset['host'] === 'drawer')!.querySelector<HTMLButtonElement>('[data-cap-key]')!;
     caption().click();
     await settle();
     const previews = [...root.querySelectorAll<HTMLElement>('.dwl-preview')];
@@ -158,8 +159,8 @@ describe('the viewer page', () => {
     it('offers the real sidebar\'s states (width, folded, widget area, density) and no size switch', async () => {
       const band = await bandOf();
       expect([...band.querySelectorAll('[data-group]')].map((one) => one.getAttribute('data-group'))).toEqual(['width', 'fold', 'area', 'density']);
-      expect(band.querySelector('.dwl-host-head .dwl-size-key')).toBeNull();
-      expect(band.querySelector('[data-group="area"] [data-on="yes"]')!.getAttribute('data-choice')).toBe('full');
+      expect(band.querySelector('.dwl-host-head [data-size-name]')).toBeNull();
+      expect(band.querySelector('[data-group="area"] [aria-checked="true"]')!.getAttribute('data-choice')).toBe('full');
     });
 
     it('steps a state in the same loaded frame: the address never changes, as the real drawer keeps its widget mounted', async () => {
@@ -167,7 +168,7 @@ describe('the viewer page', () => {
       const frame = frameOf(band);
       const address = frame.src;
       await choose(band, 'area', 'glance');
-      expect(band.querySelector('[data-group="area"] [data-on="yes"]')!.getAttribute('data-choice')).toBe('glance');
+      expect(band.querySelector('[data-group="area"] [aria-checked="true"]')!.getAttribute('data-choice')).toBe('glance');
       await choose(band, 'width', 'min');
       await choose(band, 'fold', 'on');
       await choose(band, 'density', 'detailed');
@@ -200,7 +201,7 @@ describe('the fit table view', () => {
   it('shows the counts, clip for clipping, and never a pass for a widget that could not be drawn; it has no run keys', async () => {
     const root = await openFit();
     expect(root.querySelector('[data-testid="fit-counts"]')!.textContent).toContain('1 pass, 2 fail, 1 not declared');
-    const states = (widget: string) => [...root.querySelectorAll<HTMLElement>('.dwl-fit-cell')].filter((c) => c.getAttribute('aria-label')!.startsWith(widget)).map((c) => c.dataset['state']);
+    const states = (widget: string) => [...root.querySelectorAll<HTMLElement>('[data-fit-cell]')].filter((c) => c.getAttribute('aria-label')!.startsWith(widget)).map((c) => c.dataset['state']);
     expect(states('core.notes')).toEqual(['pass', 'red']);
     expect(states('core.gone')).toEqual(['fail', 'fail']);
     expect([...root.querySelectorAll('button')].some((b) => /run matrix/.test(b.textContent ?? ''))).toBe(false);
@@ -208,7 +209,7 @@ describe('the fit table view', () => {
 
   it('a pressed cell picks widget, host and size, returns to the widget view and focuses that frame', async () => {
     const root = await openFit();
-    (root.querySelector('.dwl-fit-cell[data-state="red"]') as HTMLButtonElement).click();
+    (root.querySelector('[data-fit-cell][data-state="red"]') as HTMLButtonElement).click();
     await settle();
     expect(root.querySelector('.dwl-fit-table')).toBeNull();
     const focused = root.querySelector<HTMLElement>('.dwl-preview[data-focused="yes"]')!;
@@ -229,11 +230,11 @@ describe('the phone-wide page', () => {
     it(`shows one host at a time as tabs with the frames scaled down to fit, under ${theme}`, async () => {
       const root = await open({ theme }, 400);
       expect(root.querySelector('.dwl')!.getAttribute('data-phone')).toBe('yes');
-      expect([...root.querySelectorAll('.dwl-hosttabs [role="tab"]')].length).toBe(4);
+      expect([...root.querySelectorAll('.dwl-hosttabs [role="radio"]')].length).toBe(4);
       expect(bands(root).length).toBe(1);
       expect(frames(root).every((f) => param(f, 'theme') === theme)).toBe(true);
       expect(Number(root.querySelector<HTMLElement>('.dwl-zoom')!.dataset['scale'])).toBeLessThan(1);
-      (root.querySelectorAll('.dwl-hosttabs [role="tab"]')[1] as HTMLButtonElement).click();
+      (root.querySelectorAll('.dwl-hosttabs [role="radio"]')[1] as HTMLButtonElement).click();
       await settle();
       expect(bands(root).map((band) => band.dataset['host'])).toEqual(['terminal']);
     });
@@ -308,7 +309,7 @@ describe('free resize', () => {
     const m = labWidgets().find((w) => w.key === 'core.notes')!.hosts.find((h) => h.zone === 'home')!.sizes.find((s) => s.name === 'm')!;
     expect(dims(root)).toContain(`${m.w} x ${m.h}`);
     expect(dims(root)).toContain('nearest m');
-    expect(root.querySelector('.dwl-reset')).toBeNull();
+    expect(root.querySelector('[data-reset]')).toBeNull();
   });
 
   it('arrow keys on a handle change the frame size, the frame is redrawn at that box, and reset restores the published size', async () => {
@@ -318,18 +319,18 @@ describe('free resize', () => {
     key(handle(root, 's'), 'ArrowDown');
     await settle();
     expect(dims(root)).toContain(`${m.w + 32} x ${m.h! + 8}`);
-    expect(root.querySelector('.dwl-reset')!.textContent).toBe('reset to m');
+    expect(root.querySelector('[data-reset]')!.textContent).toBe('reset to m');
     await new Promise((resolve) => setTimeout(resolve, 500));
     await settle();
     const frame = frames(root)[0]!;
     expect(param(frame, 'w')).toBe(String(m.w + 32));
     expect(param(frame, 'h')).toBe(String(m.h! + 8));
     expect(root.querySelector('.dwl-resize')!.getAttribute('data-live')).toBe('no');
-    root.querySelector<HTMLButtonElement>('.dwl-reset')!.click();
+    root.querySelector<HTMLButtonElement>('[data-reset]')!.click();
     await settle();
     expect(dims(root)).toContain(`${m.w} x ${m.h}`);
     expect(param(frames(root)[0]!, 'w')).toBeNull();
-    expect(root.querySelector('.dwl-reset')).toBeNull();
+    expect(root.querySelector('[data-reset]')).toBeNull();
   });
 
   it('marks the fit verdict "for <size>" once the frame is no longer the published box', async () => {
@@ -390,8 +391,8 @@ describe('the right and bottom drawers fill the panel body', () => {
     expect(param(frames(root)[0]!, 'w')).toBe('410');
     expect(param(frames(root)[0]!, 'h')).toBe('800');
     expect(param(frames(root)[0]!, 'dock')).toBe('side');
-    expect(root.querySelector('.dwl-reset')!.textContent).toBe('reset to the default panel');
-    root.querySelector<HTMLButtonElement>('.dwl-reset')!.click();
+    expect(root.querySelector('[data-reset]')!.textContent).toBe('reset to the default panel');
+    root.querySelector<HTMLButtonElement>('[data-reset]')!.click();
     await settle();
     expect(param(frames(root)[0]!, 'w')).toBe('378');
   });
@@ -412,24 +413,24 @@ describe('the right and bottom drawers fill the panel body', () => {
 
 describe('per-band size switches', () => {
   const band = (root: HTMLElement, zone: string) => root.querySelector<HTMLElement>(`.dwl-host[data-host="${zone}"]`)!;
-  const keys = (root: HTMLElement, zone: string) => [...band(root, zone).querySelectorAll<HTMLButtonElement>('.dwl-band-sizes > .dwl-size-key')];
-  const lit = (root: HTMLElement, zone: string) => keys(root, zone).filter((key) => key.dataset['on'] === 'yes').map((key) => key.dataset['size']);
+  const keys = (root: HTMLElement, zone: string) => [...band(root, zone).querySelectorAll<HTMLButtonElement>('.dwl-band-sizes [role="radio"][data-size-name]')];
+  const lit = (root: HTMLElement, zone: string) => keys(root, zone).filter((key) => key.getAttribute('aria-checked') === 'true').map((key) => key.dataset['sizeName']);
   const sizeOf = (root: HTMLElement, zone: string) => param(band(root, zone).querySelector<HTMLIFrameElement>('iframe.dwl-frame')!, 'size');
 
   it('puts s, m and l in each band\'s header beside the host name, the current one lit, and the rest behind a small "more" menu', async () => {
     const root = await open({ hosts: ['home', 'terminal'], sizes: ['m'] });
     const head = band(root, 'home').querySelector('.dwl-host-head')!;
     expect([...head.children].slice(0, 2).map((node) => node.className)).toEqual(['dwl-host-name', 'dwl-band-sizes']);
-    expect(keys(root, 'home').map((key) => key.dataset['size'])).toEqual(['s', 'm', 'l']);
+    expect(keys(root, 'home').map((key) => key.dataset['sizeName'])).toEqual(['s', 'm', 'l']);
     expect(lit(root, 'home')).toEqual(['m']);
-    const rest = [...band(root, 'home').querySelectorAll<HTMLButtonElement>('.dwl-size-more-list .dwl-size-key')].map((key) => key.dataset['size']);
+    const rest = [...band(root, 'home').querySelectorAll<HTMLOptionElement>('[data-size-more] option[data-size-name]')].map((key) => key.dataset['sizeName']);
     expect(rest.length).toBeGreaterThan(0);
     expect(rest.some((name) => ['s', 'm', 'l'].includes(name!))).toBe(false);
   });
 
   it('switches only that band: its frame is redrawn at the new size, the other band stays, and the choice is remembered with the selection', async () => {
     const root = await open({ hosts: ['home', 'terminal'], sizes: ['m'] });
-    keys(root, 'home').find((key) => key.dataset['size'] === 'l')!.click();
+    keys(root, 'home').find((key) => key.dataset['sizeName'] === 'l')!.click();
     await settle();
     expect(sizeOf(root, 'home')).toBe('l');
     expect(sizeOf(root, 'terminal')).toBe('m');
@@ -446,11 +447,12 @@ describe('per-band size switches', () => {
 
   it('switches a size that lives behind "more", and shows no switches in the right and bottom drawers', async () => {
     const root = await open({ hosts: ['home', 'drawer'], sizes: ['m'], docks: ['left'] });
-    const phone = band(root, 'home').querySelector<HTMLButtonElement>('.dwl-size-more-list .dwl-size-key[data-size="phone"]')!;
-    phone.click();
+    const more = band(root, 'home').querySelector<HTMLSelectElement>('[data-size-more]')!;
+    more.value = 'phone';
+    more.dispatchEvent(new Event('change', { bubbles: true }));
     await settle();
     expect(sizeOf(root, 'home')).toBe('phone');
-    expect(band(root, 'home').querySelector('.dwl-size-more > summary')!.textContent).toBe('phone');
+    expect(band(root, 'home').querySelector<HTMLSelectElement>('[data-size-more]')!.value).toBe('phone');
     document.body.innerHTML = '';
     unmount(app!);
     const right = await open({ hosts: ['drawer'], sizes: ['m'], docks: ['right'] });

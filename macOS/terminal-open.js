@@ -24,7 +24,6 @@ const SCRIPT_DIR_PREFIX = 'carnivore-term-';
 
 const STALE_SCRIPT_AGE_MS = 60 * 60 * 1000;
 
-/* WELL_KNOWN_PATHS */
 const TMUX_WELL_KNOWN = Object.freeze([
   '/opt/homebrew/bin/tmux', '/usr/local/bin/tmux', '/opt/local/bin/tmux', '/usr/bin/tmux', '/bin/tmux',
 ]);
@@ -64,7 +63,6 @@ function parseProbeOutput(stdout) {
   return found;
 }
 
-/* could not */
 function resolveTools(deps, socketPath) {
   const probe = `printf '%s\\n' "${PROBE_TMUX}$(command -v tmux)" "${PROBE_CLAUDE}$(command -v claude)"`;
   return new Promise((resolve) => {
@@ -85,7 +83,6 @@ function resolveTools(deps, socketPath) {
   });
 }
 
-/* private directory */
 function writePrivateScript(contents, basename, deps) {
   const dir = deps.fs.mkdtempSync(path.join(deps.tmpdir, SCRIPT_DIR_PREFIX));
   deps.fs.chmodSync(dir, 0o700);
@@ -164,7 +161,6 @@ async function openScriptInApp(contents, basename, bundleId, deps) {
   });
 }
 
-/* nothing opened */
 async function openScriptInTerminal(contents, basename, deps) {
   let file;
   try {

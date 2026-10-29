@@ -45,11 +45,11 @@ def _seed_nine_and_nine(conn):
     projects = {
         f"{home}": "console-msw4z3m5",
         f"{home}/Development": "Development",
-        f"{home}/Development/app": "CloudeCode",
+        f"{home}/Development/CloudeCode": "CloudeCode",
         f"{home}/Development/ai-setup": "ai-setup",
-        f"{home}/Development/config-sync-tool": "config-sync-tool-2",
+        f"{home}/Development/claude-config-sync": "claude-config-sync-2",
         f"{home}/Development/scrolltest": "fs2",
-        f"{home}/Development/ses_2a5a4495": "test pause",
+        f"{home}/Development/ses_ec5bf2a3": "test pause",
         f"{home}/Development/ses_8704e610": "asd",
         f"{home}/Development/ses_c3737fbe": "Test",
     }
@@ -61,12 +61,12 @@ def _seed_nine_and_nine(conn):
     dirs = {
         "cloude_Test": f"{home}/Development/ses_c3737fbe",
         "cloude_asd": f"{home}/Development/ses_8704e610",
-        "cloude_config-sync-tool-2": f"{home}/Development/config-sync-tool",
+        "cloude_claude-config-sync-2": f"{home}/Development/claude-config-sync",
         "cloude_console-msw4z3m5": home,
         "cloude_fs2": f"{home}/Development/scrolltest",
-        "cloude_fstest": f"{home}/Development/app/src/core",
+        "cloude_fstest": f"{home}/Development/CloudeCode/src/core",
         "cloude_scrolltest": "~/Development/scrolltest",
-        "cloude_ses_2a5a4495": f"{home}/Development/ses_2a5a4495",
+        "cloude_ses_ec5bf2a3": f"{home}/Development/ses_ec5bf2a3",
         "cloude_test pause": "/opt/somewhere-else",
     }
     for index, (name, working_dir) in enumerate(dirs.items(), start=1):
@@ -94,7 +94,7 @@ def test_a_realistic_nine_and_nine_fixture_actually_resolves(conn):
     )
 
     assert session_row(conn, "cloude_fstest")["project_id"] == (
-        ids[f"{home}/Development/app"])
+        ids[f"{home}/Development/CloudeCode"])
     assert session_row(conn, "cloude_scrolltest")["project_id"] == (
         ids[f"{home}/Development/scrolltest"])
     assert session_row(conn, "cloude_console-msw4z3m5")["project_id"] == (
@@ -112,7 +112,7 @@ def test_a_realistic_nine_and_nine_fixture_actually_resolves(conn):
 
 def test_the_backfill_probes_when_the_row_has_no_stored_directory(conn):
     home = str(Path.home())
-    project_id = insert_project(conn, f"{home}/Development/app", "CC")
+    project_id = insert_project(conn, f"{home}/Development/CloudeCode", "CC")
     record_instance(
         conn, socket=TEST_SOCKET, name="cloude_needsprobe", epoch=99,
         origin=SESSION_ORIGIN_OBSERVED,
@@ -120,7 +120,7 @@ def test_the_backfill_probes_when_the_row_has_no_stored_directory(conn):
     )
     assert session_row(conn, "cloude_needsprobe")["working_dir"] is None
 
-    probed = {"cloude_needsprobe": f"{home}/Development/app/src"}
+    probed = {"cloude_needsprobe": f"{home}/Development/CloudeCode/src"}
     result = backfill_attribution(
         conn, working_dir_probe=lambda name: probed.get(name)
     )
@@ -282,7 +282,7 @@ def test_a_probe_that_times_out_answers_none_rather_than_guessing(
         "s7timeout", socket=TEST_SOCKET_NAME, timeout=0.000001
     )
     assert answer is None, (
-        f"a timed-belridge returned {answer!r} instead of admitting it "
+        f"a timed-out probe returned {answer!r} instead of admitting it "
         "could not determine the working directory"
     )
     assert answer != str(Path.home())
@@ -291,13 +291,13 @@ def test_a_probe_that_times_out_answers_none_rather_than_guessing(
 def test_the_import_call_site_actually_passes_a_working_dir_probe():
     import ast
 
-    tree = ast.parse((ROOT / "src" / "main.py").read_text())
+    tree = ast.parse((ROOT / "src" / "core" / "boot" / "first_run.py").read_text())
     calls = [
         node for node in ast.walk(tree)
         if isinstance(node, ast.Call)
         and getattr(node.func, "id", None) == "run_first_run_import"
     ]
-    assert calls, "run_first_run_import is not called from src/main.py at all"
+    assert calls, "run_first_run_import is not called from the first-run boot step at all"
     for call in calls:
         probe = [kw for kw in call.keywords if kw.arg == "working_dir_probe"]
         assert probe, (
@@ -319,7 +319,7 @@ def test_the_import_attributes_nothing_without_a_probe_and_resolves_with_one(
     from tests.s7_helpers import listing_of, listing_row
 
     home = str(Path.home())
-    insert_project(conn, f"{home}/Development/app", "CloudeCode")
+    insert_project(conn, f"{home}/Development/CloudeCode", "CloudeCode")
     listing = listing_of([listing_row("cloude_cc", 4242)])
 
     result = run_first_run_import(
@@ -334,7 +334,7 @@ def test_the_import_attributes_nothing_without_a_probe_and_resolves_with_one(
 
     repaired = backfill_attribution(
         conn,
-        working_dir_probe=lambda _n: f"{home}/Development/app/src",
+        working_dir_probe=lambda _n: f"{home}/Development/CloudeCode/src",
     )
     assert repaired.attributed_project == 1
     seeing = session_row(conn, "cloude_cc")

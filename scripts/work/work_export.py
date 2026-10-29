@@ -1,26 +1,3 @@
-"""Export ``carnivore.db``'s work tables back into a legacy ``huddle.db`` at rung 49: the rollback path of the P2 import (issue #1711).
-
-WHAT IT DOES. It builds a fresh file with the frozen legacy ladder (``src/core/work/ladder``, rung 49), attaches ``carnivore.db``
-(read only in practice: nothing here writes it), and in ONE transaction copies every work table into its legacy name with ids,
-rowids and ``sqlite_sequence`` kept, the legacy triggers dropped for the copy and recreated after it, exactly as the import does in
-the other direction. ``work_meta``'s ``work_ladder`` row (the work ladder's own version) is left out: the legacy ``meta`` never had
-it. ``work_imports`` is not copied: it is the switch, not Task Manager data. Every table is then compared, count and sha256 digest
-(``src/core/work/importer/copy.py``), source against copy, inside the same transaction; one difference rolls back and nothing is
-published. The file is written as ``.<name>.partial``, checked (``quick_check``, ``user_version`` 49), fsynced and renamed into place.
-An existing output file is refused, never overwritten.
-
-WHAT IT REFUSES. A ``carnivore.db`` with no import record (no work store to export), a work ladder other than the build's own (W2 only renamed
-``work_held_tells``, which ``tables.LEGACY_NAMES`` maps back; a later rung that adds a column rung 49 cannot hold needs this tool
-extended with its reverse first; W3's ``review_checks`` is the one column it drops, so a rollback loses the checks and their ticks), or any table whose columns differ.
-
-ROLLING BACK WITH IT (``docs/work-core.md``, "Rolling back P2"): stop the server; export to a path outside the state folder; install
-the older build; move the read-only leftover ``cplugs/huddle/huddle.db`` aside and put the export there; boot. Before a P2 build runs
-again, the work tables must come out of ``carnivore.db`` (a verified copy first), or that build finds its switch set and keeps serving
-the rows from before the rollback.
-
-Usage: python3 scripts/work/work_export.py --to-huddle <new huddle.db> --db <carnivore.db>
-Exit codes: 0 exported and verified; 1 refused or failed (nothing published); 2 usage.
-"""
 
 from __future__ import annotations
 

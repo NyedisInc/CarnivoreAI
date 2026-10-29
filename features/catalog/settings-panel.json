@@ -48,7 +48,14 @@
     "status bar items",
     "tabs"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The settings page: the section rail beside the account section, with the search above and the drawer beside it",
+      "caption": "The settings page",
+      "file": "workspace.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Settings panel",
   "since": "2026-09-10",
   "status": "stable",
@@ -69,6 +76,5 @@
   "updated": "2026-10-13",
   "where": [
     "Settings in the menu (the menu key in the rail, or the menu in the drawer; ` while the menu has focus), or the #settings link, with #settings/<section> or #settings/<section>/<tab> to land on one place. It replaces the screen behind it."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

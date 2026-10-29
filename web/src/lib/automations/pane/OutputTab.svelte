@@ -3,15 +3,14 @@
   import { t } from '../../i18n/index.svelte';
   import Button from '../../base/Button.svelte';
   import State from '../../base/State.svelte';
-  import { openSession, openSessions } from '../../../opscenter/api/host';
   import * as api from '../api';
   import Mark from '../Mark.svelte';
   import { ensureReport, lookup, reports } from '../feed-store.svelte';
   import { runNow } from '../list-state.svelte';
   import { previousIndex } from '../logic/diff';
   import { statusWord } from '../logic/words';
-  import { data, pageClock, refresh } from '../page-store.svelte';
-  import { refusalText } from '../format';
+  import { data, pageClock } from '../page-store.svelte';
+  import { cancelRun, carryOn, fixIt, openRunSessions } from '../run-actions';
   import RunSheet, { type SheetRun } from '../report/RunSheet.svelte';
   import { paneSlot, pane, refreshPaneRuns, type PaneRun } from './pane-data.svelte';
 
@@ -26,56 +25,6 @@
   const prevAt = $derived(shown && at >= 0 ? previousIndex(runs, at, lookup) : -1);
   const prev = $derived(prevAt >= 0 ? { run: runs[prevAt]!, slot: paneSlot(runs[prevAt]!) } : null);
   const clock = $derived(pageClock());
-
-  function refuse(error: unknown): void {
-    data.notice = refusalText(error);
-  }
-
-  function opened(session: api.CreatedSession, key: string): void {
-    openSession(session.id, session.tmux_session ?? null);
-    data.notice = t(key);
-  }
-
-  function sessionOf(entry: unknown): { id: string | null; tmux: string | null } {
-    if (typeof entry === 'string') return { id: entry, tmux: null };
-    const e = (entry ?? {}) as Record<string, unknown>;
-    const pick = (...keys: string[]): string | null => keys.map((k) => e[k]).find((v): v is string => typeof v === 'string' && v !== '') ?? null;
-    return { id: pick('session_id', 'id'), tmux: pick('tmux_session', 'tmux', 'tmux_name') };
-  }
-
-  function openSessionsOf(run: PaneRun): void {
-    const list = run.sessions ?? [];
-    if (list.length === 1) {
-      const s = sessionOf(list[0]);
-      if (openSession(s.id, s.tmux)) return;
-    }
-    openSessions();
-  }
-
-  async function cancel(run: PaneRun): Promise<void> {
-    try {
-      await api.cancelRun(run.run_id);
-    } catch (error) {
-      refuse(error);
-    }
-    await Promise.all([refresh(), refreshPaneRuns(automation.automation_id)]);
-  }
-
-  async function carryOn(run: PaneRun): Promise<void> {
-    try {
-      opened(await api.continueRun(run.run_id), 'automations.page.toast.continue_opened');
-    } catch (error) {
-      refuse(error);
-    }
-  }
-
-  async function fix(runId: string, findingId: string): Promise<void> {
-    try {
-      opened(await api.fixFinding(runId, findingId), 'automations.page.toast.fix_opened');
-    } catch (error) {
-      refuse(error);
-    }
-  }
 
   function retry(runId: string): void {
     delete reports[runId];
@@ -125,10 +74,10 @@
     {prev}
     retryMax={automation.retry_max}
     onRetry={() => retry(shown.run_id)}
-    onFix={(runId, findingId) => void fix(runId, findingId)}
+    onFix={(runId, findingId) => void fixIt(runId, findingId)}
     onRunNow={() => void runNow(automation)}
-    onContinue={() => void carryOn(shown)}
-    onCancel={() => void cancel(shown)}
-    onOpenSession={() => openSessionsOf(shown)}
+    onContinue={() => void carryOn(shown.run_id)}
+    onCancel={() => void cancelRun(shown.run_id, () => refreshPaneRuns(automation.automation_id))}
+    onOpenSession={() => openRunSessions(shown.sessions)}
   />
 {/if}

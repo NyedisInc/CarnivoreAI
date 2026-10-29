@@ -107,14 +107,6 @@ def import_from_config(
 def list_projects(
     conn: sqlite3.Connection, *, include_archived: bool = False
 ) -> List[Dict[str, Any]]:
-    """Return every ``projects`` row as a plain dict, newest first.
-
-    Inputs: conn (sqlite3.Connection). include_archived (bool) - when
-      False (default), rows with a non-null ``archived_at`` are omitted,
-      matching design section 4.3's PROJECTS group definition.
-    Output: list[dict] - empty list when the table does not exist yet
-      (a pre-S3 database), never raises for that case.
-    """
     if not table_exists(conn, PROJECTS_TABLE):
         return []
     query = "SELECT * FROM projects"
@@ -155,23 +147,6 @@ def _apply_presence(
 def refresh_and_list_presence(
     conn: sqlite3.Connection, *, stat_fn=None
 ) -> List[Dict[str, Any]]:
-    """Live-probe every project's root, persist it best-effort, and return it.
-
-    Description: the read path behind GET /projects/presence. The stored
-      ``presence`` column is a cache; this function never trusts it -
-      every call re-stats every row's root right now. A row is returned
-      with its FRESH presence even if the write-back fails (a locked
-      database, a read-only mount for cloude.db itself), because the
-      caller asked "what is true right now", not "what could be saved
-      right now" - a write failure must not turn into a stale or
-      fabricated read.
-    Inputs: conn (sqlite3.Connection). stat_fn - forwarded to
-      ``project_presence.check_presence`` for tests; None uses the real
-      timeout-wrapped ``os.stat``.
-    Output: list[dict] - includes archived rows (the caller decides what
-      to render; presence is a property of the filesystem, not of
-      archive state). Empty list when the table does not exist yet.
-    """
     rows = list_projects(conn, include_archived=True)
     updated: List[Dict[str, Any]] = []
     for row in rows:

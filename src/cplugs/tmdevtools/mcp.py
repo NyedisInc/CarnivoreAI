@@ -48,15 +48,15 @@ _TARGETS: Dict[str, Any] = {
 
 TOOLS: dict[str, Any] = {
     "task_manager_dev_scroll_set": ToolSpec(
-        description=("Scroll the owner's Task Manager tab to the top in every browser the owner has open. Optionally switch it to one project's list first. "
-                     "Changes only what is on their screen."),
+        description=("Scroll Joe's Task Manager tab to the top in every browser he has open. Optionally switch it to one project's list first. "
+                     "Changes only what is on his screen."),
         properties={"position": {"type": "string", "enum": [SCROLL_TOP_POSITION], "description": "Where to scroll to. Only top for now (the default)."},
                     "list": {"type": "string", "description": "A project name or key to show first; leave out to keep the list on screen."}},
         required=[], handler=task_manager_dev_scroll_set, gate="agent"),
     "task_manager_dev_fold_set": ToolSpec(
-        description=("Fold or unfold things in the owner's Task Manager, or close an opened task card. action fold/unfold takes a group, a project (its bar, "
+        description=("Fold or unfold things in Joe's Task Manager, or close an opened task card. action fold/unfold takes a group, a project (its bar, "
                      "status sections and groups) or items (a card closes or opens); action close collapses the opened task card back to its row, "
-                     "naming items or closing whichever is open. Uses the Task Manager's own fold state; no task changes state. Changes only what is on their screen."),
+                     "naming items or closing whichever is open. Uses the Task Manager's own fold state; no task changes state. Changes only what is on his screen."),
         properties={"action": {"type": "string", "enum": list(commands.FOLD_ACTIONS)}, **_TARGETS},
         required=["action"], handler=task_manager_dev_fold_set, gate="agent"),
     "task_manager_dev_tasks_list": ToolSpec(

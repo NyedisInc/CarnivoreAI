@@ -29,7 +29,7 @@ from src.core.catalog.token_store import CatalogSession
 NOW = 1_800_000_000
 
 
-def _session(*, access_in: int, refresh_in: int, login: str = "acme") -> CatalogSession:
+def _session(*, access_in: int, refresh_in: int, login: str = "example-owner") -> CatalogSession:
     return CatalogSession(
         login=login,
         access_token="ACCESS-TOKEN-SECRET",
@@ -78,9 +78,9 @@ class TestReadingWhatTheHostRotatedTo:
                 "expires_in": 28800,
                 "refresh_token": "NEW-REFRESH",
                 "refresh_expires_in": 2592000,
-                "login": "acme",
+                "login": "example-owner",
             },
-            fallback_login="acme",
+            fallback_login="example-owner",
             now=NOW,
         )
         assert replacement is not None
@@ -88,19 +88,19 @@ class TestReadingWhatTheHostRotatedTo:
         assert replacement.refresh_token == "NEW-REFRESH"
         assert replacement.access_expires_at == NOW + 28800
         assert replacement.refresh_expires_at == NOW + 2592000
-        assert replacement.login == "acme"
+        assert replacement.login == "example-owner"
 
     def test_an_answer_with_NO_access_token_is_refused_rather_than_stored(self):
         assert session_from_refresh(
             {"refresh_token": "NEW-REFRESH", "expires_in": 28800},
-            fallback_login="acme",
+            fallback_login="example-owner",
             now=NOW,
         ) is None
 
     def test_an_answer_with_NO_refresh_token_is_refused_too(self):
         assert session_from_refresh(
             {"access_token": "NEW-ACCESS", "expires_in": 28800},
-            fallback_login="acme",
+            fallback_login="example-owner",
             now=NOW,
         ) is None
 
@@ -112,8 +112,8 @@ class TestReadingWhatTheHostRotatedTo:
                 "refresh_token": "NEW-REFRESH",
                 "refresh_expires_in": 2592000,
             },
-            fallback_login="acme",
+            fallback_login="example-owner",
             now=NOW,
         )
         assert replacement is not None
-        assert replacement.login == "acme"
+        assert replacement.login == "example-owner"

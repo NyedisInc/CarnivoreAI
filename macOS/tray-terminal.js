@@ -1,4 +1,3 @@
-// Terminal (Offline)...
 
 'use strict';
 
@@ -94,7 +93,6 @@ async function openRow(row, serverDir) {
   return terminalOpen.openScriptInTerminal(contents, basename, deps);
 }
 
-/* nothing opened */
 function reportResult(dialog, row, result) {
   if (!result.opened) {
     dialog.showErrorBox('Carnivore: could not open a terminal', `${row.label}: ${result.error || 'unknown error'}`);

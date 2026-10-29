@@ -20,6 +20,12 @@ def repo_root() -> Optional[Path]:
     return candidate if (candidate / ".git").exists() else None
 
 
+def git_available() -> bool:
+    from src.core.dev_tools import git_guard  # noqa: PLC0415
+
+    return git_guard.git_available()
+
+
 def developer_mode_on() -> bool:
     from src.cplugs.host import developer_mode  # noqa: PLC0415
 

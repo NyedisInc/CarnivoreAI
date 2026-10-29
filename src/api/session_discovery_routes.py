@@ -1,10 +1,3 @@
-"""Live tmux sessions in one working directory, for the launcher.
-
-``GET /sessions/background`` answers "is something already running
-here" for a project card, so the launcher can offer ATTACH rather than
-silently creating a second session beside the one the user is already
-in. It reads the live listing and nothing stored.
-"""
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.concurrency import run_in_threadpool

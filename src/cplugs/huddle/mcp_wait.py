@@ -14,7 +14,8 @@ SCHEMA: Dict[str, Any] = {
     "wait_kind": {"type": "string", "enum": [*waits.KINDS, child_hold.KIND], "description": "REQUIRED with state waiting. children: wait on its open forks (no time; Carnivore clears it)."},
     "expect_by": {"type": "string", "description": "ISO 8601 WITH a UTC offset: when this should be over. Default by kind; required for other."},
     "wait_check": {"type": "object", "description": "A server-run check that clears the wait: {kind: version_live | git_contains | issue_closed | pr_merged | item_state | session_idle | file_exists | url_ok, ...that kind's fields}. Guide section 31."},
-    "extend_reason": {"type": "string", "maxLength": waits.MAX_REASON, "description": "Required to park again after a wait ran out (once): why it is still blocked."},
+    "wait_until": {"type": "string"},
+    "extend_reason": {"type": "string", "maxLength": waits.MAX_REASON, "description": "To park again after a lapse (once): why still blocked."},
 }
 RESOLVE_PROPERTIES: Dict[str, Any] = {
     "item": {"type": "integer"},

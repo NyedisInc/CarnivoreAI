@@ -1,18 +1,3 @@
-"""The adopt path refuses to mint a row for a pane MEASURED dead.
-
-THE RULE, and its two limits:
-
-  * Only a probe that RAN and read ``#{pane_dead}`` = ``1`` refuses. A
-    probe that could not run is ``None`` - CANNOT DETERMINE - and the
-    adoption proceeds exactly as before. Not having looked is not
-    evidence the pane died.
-  * Only a pane with NO row for its exact instance triple is refused. An
-    existing row keeps its current behaviour (a dead pane drops off the
-    live list and belongs in Recent), so this gate can never strand a
-    session the app already knows. A husk that shares its tmux NAME with
-    a row but carries a different epoch is a different instance and has
-    no row of its own, so it is refused like any other new husk.
-"""
 
 from __future__ import annotations
 
@@ -21,6 +6,8 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
 import structlog
+
+from src.core.tmux_transport.target import exact_pane_target
 
 logger = structlog.get_logger()
 
@@ -32,18 +19,6 @@ PANE_DEAD_FALSE = "0"
 
 
 def probe_session_pane_dead(name: str, *, socket: str) -> Optional[bool]:
-    """Measure whether one tmux session's pane 0 has exited.
-
-    Description: one ``display-message -p '#{pane_dead}'`` against the
-      named socket. NEVER RAISES. True only when tmux answered rc=0 with
-      ``1``; False only when it answered rc=0 with ``0``. An unsafe name,
-      a missing session, a timeout, a failed exec or any other output all
-      answer None - CANNOT DETERMINE, never "dead".
-    Inputs: name (str) - the tmux session name. socket (str) - the tmux
-      socket it lives on.
-    Output: bool | None.
-    Example: probe_session_pane_dead('cloude_a', socket='cloude') -> False
-    """
     if not name:
         return None
     from src.core.tmux_backend import LIST_TIMEOUT_SECONDS, TmuxBackend
@@ -62,7 +37,7 @@ def probe_session_pane_dead(name: str, *, socket: str) -> Optional[bool]:
         rc, out, _err = backend._run_tmux_sync(
             "display-message",
             "-t",
-            backend.tmux_session,
+            exact_pane_target(backend.tmux_session),
             "-p",
             "#{pane_dead}",
             check=False,
@@ -106,19 +81,6 @@ def check_dead_husk(
     stored_row: Optional[Mapping[str, Any]],
     pane_dead_probe: Optional[Callable[[str], Optional[bool]]],
 ) -> bool:
-    """Probe (only when it could matter) and apply the refusal rule.
-
-    Description: skips the subprocess entirely when a row already exists,
-      because the rule cannot refuse that case. Logs
-      ``adopt_persist_refused_pane_dead`` when it refuses.
-    Inputs: name (str), socket (str), epoch (int) - the instance.
-      stored_row (Mapping | None) - the row for that triple, if any.
-      pane_dead_probe (callable | None) - name -> bool | None; None means
-      no probe was wired and nothing is refused.
-    Output: bool - True when the caller must write nothing.
-    Example: check_dead_husk(name='a', socket='cloude', epoch=1,
-                             stored_row=None, pane_dead_probe=probe)
-    """
     if stored_row or pane_dead_probe is None:
         return False
     pane_dead = pane_dead_probe(name)

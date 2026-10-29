@@ -25,7 +25,7 @@ class FakeWatcher:
 
     def show(self, session_id: str, screen, *, stale: bool = False, dialog=None) -> None:
         evidence = SimpleNamespace(startup_screen=screen, now=NOW, dialog=dialog, agent_family="claude",
-                                   identity=("cloude", "carnivore_planner", 100, 200, None))
+                                   identity=("cloude", "carnivore_football", 100, 200, None))
         self.rows[session_id] = SimpleNamespace(stale=stale, evidence=evidence)
 
     def observed_session_ids(self):
@@ -37,8 +37,8 @@ class FakeWatcher:
 
 class FakeManager:
     async def get_session_info(self, session_id):
-        return SimpleNamespace(session=SimpleNamespace(id=session_id), label="planner",
-                               tmux_session="carnivore_planner", project_name="Garden Planner")
+        return SimpleNamespace(session=SimpleNamespace(id=session_id), label="football",
+                               tmux_session="carnivore_football", project_name="Fantasy Football")
 
 
 def test_a_startup_screen_is_pushed_then_cleared(monkeypatch, tmp_path) -> None:
@@ -58,10 +58,10 @@ def test_a_startup_screen_is_pushed_then_cleared(monkeypatch, tmp_path) -> None:
     assert len(items) == 1
     item = items[0]
     assert item["source"] == SOURCE_STARTUP_PROMPT and item["kind"] == "mcp_server"
-    assert item["session_name"] == "planner" and item["rows"] == [] and item["options"] == []
+    assert item["session_name"] == "football" and item["rows"] == [] and item["options"] == []
     assert "probe-echo" in item["body"]
     log = (tmp_path / "session-journal" / "journal.log").read_text(encoding="utf-8")
-    assert "startup_prompt_seen" in log and "carnivore_planner" in log and "probe-echo" in log
+    assert "startup_prompt_seen" in log and "carnivore_football" in log and "probe-echo" in log
     assert log.count("startup_prompt_seen") == 1
     assert inbox.refresh() is False
 

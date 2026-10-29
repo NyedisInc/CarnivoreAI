@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 import subprocess
-from typing import Dict, Iterable, List, NamedTuple, Optional, Set
+import threading
+import time
+from typing import Dict, Iterable, List, NamedTuple, Optional, Set, Tuple
+
+from src.core import libproc_snapshot
 
 
 class Proc(NamedTuple):
@@ -26,8 +30,38 @@ def parse(text: str) -> List[Proc]:
     return rows
 
 
+_BASELINE_MAX_AGE: float = 120.0
+_BASELINE_MIN_WINDOW: float = 2.0
+_baseline_lock = threading.Lock()
+_baseline: Optional[Tuple[float, Dict[int, int]]] = None
+_window_cpu: Dict[int, float] = {}
+
+
+def _read_libproc() -> Optional[List[Proc]]:
+    global _baseline, _window_cpu
+    now = time.monotonic()
+    table = libproc_snapshot.task_table()
+    if table is None:
+        return None
+    with _baseline_lock:
+        prev = _baseline
+        if prev is None or now - prev[0] >= _BASELINE_MAX_AGE:
+            _baseline, _window_cpu = (now, {r.pid: r.cpu_ns for r in table}), {}
+            return None
+        if now - prev[0] >= _BASELINE_MIN_WINDOW:
+            wall_ns = (now - prev[0]) * 1e9
+            _window_cpu = {r.pid: max(0.0, (r.cpu_ns - prev[1].get(r.pid, 0)) / wall_ns * 100.0) for r in table}
+            _baseline = (now, {r.pid: r.cpu_ns for r in table})
+        if not _window_cpu:
+            return None
+        cpu = _window_cpu
+    return [Proc(r.pid, r.ppid, cpu.get(r.pid, 0.0), r.rss_kb) for r in table]
+
+
 def read() -> Optional[List[Proc]]:
-    """Every process now, or None when ``ps`` could not run (never an empty list for a failure). Blocking."""
+    rows = _read_libproc()
+    if rows:
+        return rows
     try:
         done = subprocess.run(["ps", "-o", "pid=,ppid=,%cpu=,rss=", "-ax"], capture_output=True, text=True, timeout=5, check=False)
     except (OSError, subprocess.SubprocessError):

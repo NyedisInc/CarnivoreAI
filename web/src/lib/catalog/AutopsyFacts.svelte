@@ -38,7 +38,6 @@
 
     const measured = $derived(autopsy !== null && autopsy.state === 'measured' && typeof autopsy.spans_measured === 'number');
     const recent = $derived(autopsy?.recent ?? []);
-    // could not
     const judged = $derived(autopsy !== null && Array.isArray(autopsy.undisclosed));
     const undisclosed = $derived(autopsy?.undisclosed ?? []);
     const observed = $derived(Object.keys(autopsy?.categories ?? {}));

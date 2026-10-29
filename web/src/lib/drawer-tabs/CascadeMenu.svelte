@@ -186,10 +186,6 @@
 
   function place(): void {
     if (typeof window === 'undefined') return;
-    // position: fixed
-    // --color-
-    // display: none
-    // display:none
     for (const panel of panels) {
       if (panel && !panel.matches(':popover-open')) panel.showPopover();
     }
@@ -236,7 +232,7 @@
 
 <svelte:window onpointerdowncapture={onOutside} onfocusin={onFocusIn} onblur={onWindowBlur} onresize={place} onkeydown={onWindowKeydown} />
 
-<!-- hidden -->
+
 {#each remote ? [] : levels as nodes, level (level)}
   {@const at = places[level]}
   {@const keys = keysOf(nodes)}
@@ -265,7 +261,7 @@
           <ProjectColorRow value={swatches.value} id={`acm-color-${node.id}`} {t} allowNone={swatches.allowNone === true} onPick={(key) => swatches.onPick(key)} onPreview={swatches.onPreview} />
         </div>
       {:else}
-      <button
+      <button data-base-exempt="cascade-menu-item-base-has-no-menu-item"
         type="button"
         role={node.checked === undefined ? 'menuitem' : node.toggle ? 'menuitemcheckbox' : 'menuitemradio'}
         class="acm-item"
@@ -333,7 +329,6 @@
       display: flex;
       align-items: center;
       gap: var(--oc-space-2);
-      /* padding */
       box-sizing: border-box;
       min-height: 28px;
       padding: 0 var(--oc-space-2);

@@ -166,7 +166,7 @@ def test_claude_midturn_receipt_requires_linked_peer_queue_consumption(tmp_path)
     assert not check([enqueue, {**remove, "deliveryId": "other"}, attachment])
     assert not check([enqueue, remove, {**attachment, "attachment": {**attachment["attachment"],
                                                                     "origin": {"kind": "user"}}}])
-    assert not check([enqueue, remove, attachment], {**message, "id": "elmfield"})
+    assert not check([enqueue, remove, attachment], {**message, "id": "m-other"})
     assert check([enqueue, remove, attachment])
 
     peer_user = {"type": "user", "sessionId": conversation, "promptSource": "system", "turnOrigin": "peer",
@@ -175,7 +175,7 @@ def test_claude_midturn_receipt_requires_linked_peer_queue_consumption(tmp_path)
                              + "\nProvider peer notice"}}
     assert not check([peer_user])
     assert not check([enqueue, {**peer_user, "origin": {"kind": "user"}}])
-    assert not check([enqueue, peer_user], {**message, "id": "elmfield"})
+    assert not check([enqueue, peer_user], {**message, "id": "m-other"})
     assert check([enqueue, peer_user])
 
 
@@ -330,3 +330,51 @@ def test_paste_path_delivers_to_finished_unread_receiver(monkeypatch):
     app = SimpleNamespace(state=SimpleNamespace(session_manager=Manager()))
     asyncio.run(Dispatcher(app)._drain('u'))
     assert finished == [('delivered', None)] and pasted == ['ses_x']
+
+
+def test_an_unexpected_error_after_the_claim_does_not_strand_the_row(monkeypatch):
+    from src.api import one_shot_routes
+    from src.core.crosstalk import directory
+    from src.core.mcp import protocol
+    from src.core.mcp.federated import LOCAL_HOST_KEY
+    finished = []
+    info = SimpleNamespace(session=SimpleNamespace(id='ses_x', tmux_created_epoch=7), activity_status='idle',
+                           startup_gate='ready', agent_family=None, agent_type=None, host_key=LOCAL_HOST_KEY)
+    message = {'id': 'm1', 'source': 'swarm', 'receiver_id': 'ses_x', 'receiver_epoch': 7, 'receiver_uuid': 'u',
+               'text': 'go', 'sender_name': 's', 'sender_provider': 'p', 'sender_model': None, 'thread': 't', 'reason': None}
+
+    class Manager:
+        async def get_session_info(self, session_id):
+            return info
+
+    class View:
+        def __init__(self, *_):
+            pass
+
+        async def list_session_infos(self):
+            return [info]
+
+        async def list_peer_infos(self):
+            return []
+
+    async def cards(*_a, **_k):
+        return [{'id': 'ses_x', 'session_uuid': 'u'}]
+
+    async def paste(request, session_id, text, **kwargs):
+        raise sqlite3.OperationalError('database is locked')
+
+    async def no_swarm(*_a):
+        return None
+
+    monkeypatch.setattr(protocol, 'BatchView', View)
+    monkeypatch.setattr(directory, 'list_cards', cards)
+    monkeypatch.setattr(store, 'claim_for', lambda key: message)
+    monkeypatch.setattr(store, 'get', lambda mid: {'status': 'delivering'})
+    monkeypatch.setattr(store, 'finish', lambda mid, status, reason=None: finished.append((status, reason)))
+    monkeypatch.setattr(one_shot_routes, 'paste_through_gates', paste)
+    from src.core.crosstalk.delivery import dispatcher as module
+    monkeypatch.setattr(module, '_record_swarm', no_swarm)
+    app = SimpleNamespace(state=SimpleNamespace(session_manager=Manager()))
+    with pytest.raises(sqlite3.OperationalError):
+        asyncio.run(Dispatcher(app)._drain('u'))
+    assert finished == [('failed', 'delivery uncertain; manual review required')]

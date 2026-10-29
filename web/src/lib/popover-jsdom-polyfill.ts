@@ -1,4 +1,3 @@
-/* position: fixed */
 export function installPopoverPolyfill(): void {
     const proto = window.HTMLElement.prototype as unknown as {
         showPopover?: () => void;

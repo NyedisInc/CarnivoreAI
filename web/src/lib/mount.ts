@@ -1,5 +1,3 @@
-/*  hidden
- */
 import { mount, unmount, type Component } from 'svelte';
 
 function findContainer(id: string): Element | null {

@@ -6,6 +6,7 @@ import { ensurePanel, unmountPanel } from '../mount';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 import TerminalBackgroundButton from './TerminalBackgroundButton.svelte';
 
+// #860); jsdom has neither method.
 installPopoverPolyfill();
 
 const BACKGROUND_CONTAINER_ID = 'tbg-test-container';
@@ -188,7 +189,7 @@ describe('the panel inside it', () => {
         const s = setup({ stored: { image: 'cloude_demo.png', dim: null, disabled: false } });
         s.open();
         const buttons = Array.from(
-            s.popover()?.querySelectorAll('button.tbg__btn') || [],
+            s.popover()?.querySelectorAll('[data-tbg="use-theme"]') || [],
         ) as HTMLButtonElement[];
         expect(buttons).toHaveLength(1);
         const clear = buttons[0]!;
@@ -201,7 +202,7 @@ describe('the panel inside it', () => {
     test('the clear control is absent when this session uploaded nothing', () => {
         const s = setup();
         s.open();
-        expect(s.popover()?.querySelectorAll('button.tbg__btn')).toHaveLength(0);
+        expect(s.popover()?.querySelectorAll('[data-tbg="use-theme"]')).toHaveLength(0);
     });
 
     test('a refused type says so, and says which refusal it was', async () => {

@@ -13,10 +13,11 @@ vi.mock('../companies', () => ({
     companyById: (id: number) => (id === 7 ? { id: 7, name: 'acme', project_count: 2 } : undefined),
 }));
 vi.mock('../i18n/index.svelte', () => ({ t: (k: string) => k }));
-vi.mock('../../cplugs/huddle/chat/chat-api', () => ({ wakeAgent: vi.fn(), renameAgent: vi.fn(), turnOffAgent: vi.fn() }));
-vi.mock('../../cplugs/huddle/agents/agent-roster.svelte', () => ({ refreshRoster: async () => {} }));
+vi.mock('../../cplugs/sdk/swarm-agent-actions', () => ({
+    wakeSwarmAgent: vi.fn(), renameSwarmAgent: vi.fn(), turnOffSwarmAgent: vi.fn(), openSwarmAgentTerminal: vi.fn(),
+}));
+vi.mock('../../cplugs/sdk/swarm-roster.svelte', () => ({ refreshSwarmRoster: async () => {} }));
 vi.mock('../leader-confirm/confirm', () => ({ askLeaderConfirm: vi.fn() }));
-vi.mock('../../cplugs/huddle/agents/agent-terminal', () => ({ openAgentTerminal: vi.fn() }));
 vi.mock('./interaction-globals', () => ({
     announce: () => {},
     announceFailure: () => {},

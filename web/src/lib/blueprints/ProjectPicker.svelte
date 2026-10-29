@@ -3,14 +3,16 @@
     import { onMount } from 'svelte';
     import { t } from '../i18n/index.svelte';
     import { browserCatalogHost } from '../catalog/catalog';
+    import { Select } from '../base';
 
     interface Props {
         value: string | null;
         onChange: (path: string | null) => void;
         id: string;
+        label: string;
     }
 
-    let { value, onChange, id }: Props = $props();
+    let { value, onChange, id, label }: Props = $props();
 
     let projects = $state<Array<{ name: string; path: string }>>([]);
 
@@ -26,15 +28,11 @@
     });
 </script>
 
-<select
+
+<Select
     {id}
-    class="modal-input"
+    {label}
     value={value ?? ''}
-    onchange={(e) => onChange((e.currentTarget as HTMLSelectElement).value || null)}
->
-    
-    <option value="">{t('opscenter.nav.projects')}</option>
-    {#each projects as project (project.path)}
-        <option value={project.path}>{project.name}</option>
-    {/each}
-</select>
+    onchange={(e) => onChange(e.currentTarget.value || null)}
+    options={[{ value: '', label: t('opscenter.nav.projects') }, ...projects.map((project) => ({ value: project.path, label: project.name }))]}
+/>

@@ -1,31 +1,6 @@
-"""``Settings``: the loader, and the typed readers over it.
-
-**EVERY PUBLIC NAME AND EVERY SIGNATURE IS UNCHANGED, AND THAT IS A HARD
-CONSTRAINT RATHER THAN POLITENESS.** 111 modules import from this
-package, and the suite patches these members on the CLASS - 23 sites do
-``monkeypatch.setattr(settings, "state_dir_override", ...)``, eight do
-``monkeypatch.setattr(type(sm.settings), "get_state_dir", ...)``. A
-method that stopped resolving here would be invisible to every one of
-them.
-
-**THE TWO CACHES LIVE HERE BECAUSE THE CONFIGURATION THAT KEYS THEM DOES.**
-``_auth_config_cache`` is invalidated by every writer in this package,
-which is why the writers are called from here rather than reached
-directly: a caller that wrote config.json through
-:mod:`src.config.config_writes` without coming past this object would
-leave a stale parse in memory. ``_state_file_pins`` is keyed on the
-CONFIGURED directories, so repointing one re-asks the question while a
-file appearing or disappearing does not.
-
-**LAZINESS IS PRESERVED WHERE IT WAS LOAD-BEARING.**
-:func:`~src.config.agent_command.agent_command` takes CALLABLES for the
-state directory and the alternate-screen setting rather than values,
-because resolving the first can raise and reading the second must happen
-at launch time. See that module's docstring.
-"""
 
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -158,26 +133,9 @@ class Settings(BaseSettings):
         return _state_paths.working_dir(self.default_working_dir)
 
     def get_state_dir(self) -> Path:
-        """The durable state directory, resolved and ensured.
-
-        Inputs: none (reads ``state_dir_override``).
-        Output: Path - existing and writable.
-        Raises:
-            StateDirUnavailableError: it could not be created.
-        """
         return _state_paths.state_dir(self.state_dir_override)
 
     def state_dir_is_explicit(self) -> bool:
-        """Did the operator NAME a state directory (``CLOUDE_STATE_DIR``)?
-
-        Description: the rule lives in
-          :func:`src.config.state_paths.state_dir_is_explicit`; this is
-          the seam. An explicit state directory suppresses the legacy
-          ``log_directory`` pin, which is what makes that one variable
-          enough to isolate a dev or test instance (issue #113).
-        Inputs: none (reads ``state_dir_override``).
-        Output: bool.
-        """
         return _state_paths.state_dir_is_explicit(self.state_dir_override)
 
     def get_log_dir(self) -> Path:
@@ -202,16 +160,6 @@ class Settings(BaseSettings):
         return self._state_file_pin(filename)[0]
 
     def get_refresh_tokens_path(self) -> Path:
-        """The refresh-token revocation database, through the pin.
-
-        Description: the pin is what gives it the old ``log_directory``
-          fallback. Without one, an install predating the state directory
-          got a BRAND NEW EMPTY database on its next start and abandoned
-          every issued refresh token. A file one directory over is not a
-          file being gone.
-        Inputs: none.
-        Output: Path.
-        """
         return self._resolve_state_file("refresh_tokens.db")
 
     def get_session_metadata_path(self) -> Path:
@@ -251,14 +199,15 @@ class Settings(BaseSettings):
             session_cfg = auth.session
             mcp_on = auth.mcp.enabled
             channel_on = auth.mcp.channels
-        except Exception:  # noqa: BLE001
+        except (OSError, ValueError) as exc:
+            _logger.warning("agent_command_config_unavailable", error_type=type(exc).__name__, error=str(exc))
             agents = AgentsConfig()
             session_cfg = SessionConfig()
             mcp_on = False
             channel_on = False
-        block = getattr(auth, "launch_profiles", None)
+        block = auth.launch_profiles if auth is not None else None
         profiles = tuple(block.profiles) if block is not None else None
-        byoai = getattr(auth, "byoai", None)
+        byoai = auth.byoai if auth is not None else None
         connections = tuple(to_connection(c) for c in byoai.connections) if byoai is not None else ()
         return _agent_command.agent_command(
             agent_type,
@@ -286,34 +235,12 @@ class Settings(BaseSettings):
         model_is_explicit: bool = False,
         plan_sink: Optional[list] = None,
     ) -> str:
-        """THE ONE builder of a session pane's launch command, Carnivore MCP registration included (#1726).
-
-        Description: every path that starts an agent in a pane (create, wake and recreate, restart and respawn
-          with or without a picked wrapper, the bridge migration's restart) and every check or preview of what
-          such a path would run (``session_agent_choice``, the restart preview) renders through here, so the
-          inline ``--mcp-config`` stdio bridge entry and the channel flag (``mcp_launch.claude_args``) are on
-          every one of them or on none. Before #1726 the registration hung on a per-call ``pane_launch`` flag
-          that defaulted off, and the wrapper validator, whose command a picked-wrapper restart RUNS, never set
-          it: that restart came back with no carnivore server, and the wake and restart answers showed a
-          command without it. ``tests/python/launch_wrappers/test_bridge_on_every_launch.py`` refuses a second call site.
-        Inputs: agent_type (str | None); model (str | None); extra_args (list[str] | None) - the resume, name
-          and fork arguments, quoted by the builder, never concatenated; model_is_explicit (bool); plan_sink
-          (list | None) - as :meth:`get_agent_command`.
-        Output: str - one shell string for tmux.
-        Raises: ValueError - as :meth:`get_agent_command`.
-        Example: settings.pane_launch_command("claude", extra_args=["--resume", uuid])
-        """
         return self.get_agent_command(
             agent_type, model=model, extra_args=extra_args, model_is_explicit=model_is_explicit,
             pane_launch=True, plan_sink=plan_sink,
         )
 
     def get_launch_profiles(self) -> tuple:
-        """The configured launch profiles (the loaded config's ``launch_profiles`` block).
-
-        Output: tuple[LaunchProfile, ...] - ``()`` when config.json cannot be read or has no block.
-        Example: [p.id for p in settings.get_launch_profiles()]
-        """
         try:
             block = getattr(self.load_auth_config(), "launch_profiles", None)
         except (OSError, ValueError) as exc:
@@ -324,6 +251,10 @@ class Settings(BaseSettings):
 
     def drop_auth_config_cache(self) -> None:
         self._auth_config_cache = None
+
+    def on_config_commit(self, committed_path: Path, _document: Dict[str, Any]) -> None:
+        if Path(committed_path).resolve() == Path(self.auth_config_file).expanduser().resolve():
+            self.drop_auth_config_cache()
 
     def load_auth_config(self) -> AuthConfig:
         if self._auth_config_cache is not None:

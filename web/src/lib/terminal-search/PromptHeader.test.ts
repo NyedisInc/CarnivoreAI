@@ -154,7 +154,7 @@ describe('the copy comes from the catalog', () => {
 });
 
 describe('the rail it reads', () => {
-    test('the header keeps the model scanning, and fenmont when unmounted', () => {
+    test('the header keeps the model scanning, and lets go when unmounted', () => {
         const h = mounted();
         h.scrollTo(100);
         expect(h.rail.headerPrompt?.ordinal).toBe(2);

@@ -11,6 +11,7 @@ const repo = path.join(import.meta.dirname, '..', '..');
 const macDir = path.join(repo, 'macOS');
 const ORIGIN = 'http://127.0.0.1:8000';
 
+/** The text between the brace at `open` and its match (exclusive), or null when unbalanced. */
 function balanced(text, open) {
   let depth = 0;
   for (let i = open; i < text.length; i++) {
@@ -45,14 +46,16 @@ function rig(dir) {
       this.gone = false;
       this.handlers = {};
       this.fullScreen = false;
+      this.visible = true;
+      this.minimized = false;
       this.webContents = {
-        mainFrame: { url: `${ORIGIN}/` }, sent: [], on() {}, reload() {}, send(...a) { this.sent.push(a); },
+        mainFrame: { url: `${ORIGIN}/` }, sent: [], throttling: null, setBackgroundThrottling(on) { this.throttling = on; }, on() {}, reload() {}, send(...a) { this.sent.push(a); },
         isLoading() { return false; }, once() {}, setWindowOpenHandler: (fn) => { this.openHandler = fn; },
         session: { setPermissionRequestHandler() {}, setPermissionCheckHandler() {} },
       };
       log.wins.push(this);
     }
-    once() {} on(ev, fn) { this.handlers[ev] = fn; } isDestroyed() { return this.gone; } isMinimized() { return false; }
+    once() {} on(ev, fn) { this.handlers[ev] = fn; } isDestroyed() { return this.gone; } isMinimized() { return this.minimized; } isVisible() { return this.visible; }
     show() {} focus() {} restore() {} destroy() { this.gone = true; } getTitle() { return 'carnivore'; } loadURL() {} isFocused() { return false; }
     getNormalBounds() { return { x: 0, y: 0, width: 800, height: 600 }; } isMaximized() { return false; } isFullScreen() { return this.fullScreen; }
   }
@@ -102,8 +105,23 @@ test('every kind of window opens with its own tabbing id and the hidden-inset ti
     assert.notEqual(w.options.fullscreenable, false);
     assert.equal('visibleOnAllWorkspaces' in w.options, false);
     assert.equal(w.options.webPreferences.sandbox, true, 'the hardened web preferences are untouched');
-    assert.equal(w.options.webPreferences.backgroundThrottling, false, 'a hidden window keeps running (R1-10)');
+    assert.equal(w.options.webPreferences.backgroundThrottling, true, 'throttling is on for every window, always (Track A)');
   }
+});
+
+test('throttling is never toggled: hide/show/minimize/restore only push carnivore:window-hidden (Track A)', () => {
+  const r = rig(fs.mkdtempSync(path.join(os.tmpdir(), 'window-chrome-test-')));
+  r.ctl.open();
+  const [w] = r.log.wins;
+  const fire = (name) => w.handlers[name]();
+  assert.equal(w.options.webPreferences.backgroundThrottling, true);
+  w.visible = false; fire('hide');
+  w.visible = true; fire('show');
+  w.minimized = true; fire('minimize');
+  w.minimized = false; fire('restore');
+  assert.equal(w.webContents.throttling, null, 'setBackgroundThrottling is never called');
+  assert.deepEqual(w.webContents.sent.filter((m) => m[0] === 'carnivore:window-hidden'), [
+    ['carnivore:window-hidden', true], ['carnivore:window-hidden', false], ['carnivore:window-hidden', true], ['carnivore:window-hidden', false]]);
 });
 
 test('window-chrome.js: an unknown kind throws, the state zeroes the inset in full screen, the numbers are finite', () => {
@@ -189,4 +207,46 @@ test('desktop-chrome.js: no bridge, no stamp and no inset; with it the stamp is 
   send({ ...full, inset: { top: 28, left: 78 }, fullScreen: false });
   assert.equal(page.props['--desktop-inset-top'], '28px');
   assert.equal('fullscreen' in page.html.dataset, false);
+});
+
+test('end to end: hiding the window host-side holds the shipped terminal and sends pause, showing resumes, even if visibilityState stays visible', async () => {
+  const r = rig(fs.mkdtempSync(path.join(os.tmpdir(), 'window-chrome-test-')));
+  r.ctl.open();
+  const [w] = r.log.wins;
+  const listeners = {};
+  const doc = {
+    visibilityState: 'visible', documentElement: {},
+    addEventListener: (n, fn) => { (listeners[n] ||= []).push(fn); }, removeEventListener() {},
+    dispatchEvent: (ev) => (listeners[ev.type] || []).forEach((fn) => fn(ev)),
+  };
+  const winListeners = [];
+  const win = {
+    console, setTimeout, clearTimeout, document: doc, Event: class { constructor(type) { this.type = type; } },
+    carnivoreDesktop: {}, location: { origin: ORIGIN }, MutationObserver: class { observe() {} disconnect() {} },
+    addEventListener: (n, fn) => { if (n === 'message') winListeners.push(fn); },
+  };
+  win.window = win; win.self = win;
+  vm.createContext(win);
+  for (const f of ['client/js/desktop-window-hidden.js', 'client/js/terminal-addons.js', 'client/js/terminal-paint-gate.js']) {
+    vm.runInContext(fs.readFileSync(path.join(repo, f), 'utf8'), win);
+  }
+  const frames = [];
+  const ctl = { term: { element: { isConnected: true, checkVisibility: () => true }, refresh() {}, rows: 24 }, queue: [], flush() {},
+    ws: { readyState: 1, send: (m) => frames.push(JSON.parse(m).type) } };
+  win.TerminalPaintGate.register(ctl);
+  await new Promise((res) => setTimeout(res, 120));
+  assert.deepEqual(frames, [], 'a shown window is not held');
+  const relay = () => {
+    const [, hidden] = w.webContents.sent.at(-1);
+    winListeners.forEach((fn) => fn({ source: vm.runInContext('window', win), origin: ORIGIN, data: { type: 'carnivore.window-hidden', hidden } }));
+  };
+  w.visible = false; w.handlers.hide(); relay();
+  await new Promise((res) => setTimeout(res, 120));
+  assert.equal(w.webContents.throttling, null, 'throttling is never toggled');
+  assert.deepEqual(frames, ['pause'], 'the host hiding the window holds the terminal and pauses the stream');
+  w.visible = true; w.handlers.show(); relay();
+  await new Promise((res) => setTimeout(res, 120));
+  assert.equal(w.webContents.throttling, null);
+  assert.deepEqual(frames, ['pause', 'resume']);
+  win.TerminalPaintGate.unregister(ctl);
 });

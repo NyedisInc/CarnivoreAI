@@ -14,7 +14,7 @@ from src.core.notifications import http
 NO_ROUTE = OSError(errno.EHOSTUNREACH, "No route to host")
 
 
-def _client(monkeypatch, exc: Exception, url: str = "http://203.0.113.11:8787") -> client.HttpProviderClient:
+def _client(monkeypatch, exc: Exception, url: str = "http://192.168.1.5:8787") -> client.HttpProviderClient:
     async def fake(method, u, **kw):
         raise exc
 
@@ -28,7 +28,7 @@ def _network_error(cause: OSError) -> http.GuardNetworkError:
     return err
 
 
-@pytest.mark.parametrize("url", ["http://203.0.113.11:8787", "http://198.51.100.14:1", "http://169.254.1.2:1"])
+@pytest.mark.parametrize("url", ["http://192.168.1.5:8787", "http://10.0.0.9:1", "http://169.254.1.2:1"])
 def test_ehostunreach_to_a_lan_address_says_local_network_and_keeps_the_code(monkeypatch, url):
     cli = _client(monkeypatch, _network_error(NO_ROUTE), url)
     with pytest.raises(client.ProviderError) as exc:
@@ -49,7 +49,7 @@ def test_other_failures_and_public_hosts_get_no_hint(monkeypatch):
 
 
 def test_a_hostname_is_resolved_best_effort(monkeypatch):
-    monkeypatch.setattr(client.socket, "getaddrinfo", lambda host, port: [(2, 1, 6, "", ("203.0.113.18", 0))])
+    monkeypatch.setattr(client.socket, "getaddrinfo", lambda host, port: [(2, 1, 6, "", ("192.168.7.7", 0))])
     assert asyncio.run(client.local_network_hint(NO_ROUTE, "http://bridge.local:1")) == client.LOCAL_NETWORK_DETAIL
 
     def boom(host, port):

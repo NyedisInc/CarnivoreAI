@@ -124,7 +124,7 @@ class TestWhichProviderAStoredLoginCameFrom:
         assert provider_of_login("ada@example.test") == "email"
 
     def test_a_handle_is_the_github_provider(self):
-        assert provider_of_login("acme") == "github"
+        assert provider_of_login("example-owner") == "github"
 
     def test_nobody_named_is_no_provider_at_all(self):
         assert provider_of_login(None) is None

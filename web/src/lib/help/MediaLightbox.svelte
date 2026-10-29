@@ -1,7 +1,8 @@
-<!-- position: fixed -->
+
 <script lang="ts">
   import { onMount } from 'svelte';
   import { t } from '../i18n/index.svelte';
+  import { Button } from '../base';
   import { beginGesture } from '../../opscenter/engine/pointer';
   import {
     clampRect, defaultRect, loadRect, saveRect, stepRect,
@@ -17,7 +18,7 @@
 
   const { src, alt, caption, onClose }: Props = $props();
 
-  let closeButton: HTMLButtonElement | undefined = $state();
+  let closeButton: HTMLElement | null = $state(null);
   let returnFocus: Element | null = null;
   let justGestured = false;
 
@@ -107,16 +108,11 @@
     onkeydown={onWindowKey}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="sidebar-help__lightbox-bar" onpointerdown={onBarDown}>
+    <div class="modal-titlerow sidebar-help__lightbox-bar" onpointerdown={onBarDown}>
       <p class="sidebar-help__lightbox-caption">{caption ?? ''}</p>
-      <button
-        type="button"
-        class="sidebar-help__lightbox-close"
-        bind:this={closeButton}
-        onclick={onClose}
-      >
+      <Button size="sm" bind:element={closeButton} data-help-lightbox-close onclick={onClose}>
         {t('sidebar_help.features.lightbox_close')}
-      </button>
+      </Button>
     </div>
     <div class="sidebar-help__lightbox-stage">
       <img src={src} {alt} class="sidebar-help__lightbox-img" draggable="false" />

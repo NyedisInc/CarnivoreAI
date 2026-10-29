@@ -1,4 +1,4 @@
-<!-- <div class="oc-page title="plugins" -->
+
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import { isInset } from './page-inset';

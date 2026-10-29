@@ -10,10 +10,13 @@ export interface Verdict {
   detail?: string;
 }
 
+export const IGNORED_WHY = 'ignored content is never carried';
+
 export interface SendCarry {
   units?: { kind: string; path: string; state: string }[];
   left_behind?: { what: string; why: string; size?: number | null }[];
   outside?: { path: string; size: number | null; tick: boolean; carryable: boolean }[];
+  total_bytes?: number;
   other_projects?: { path: string; project: string }[];
   tools?: { name: string; status: 'missing' | 'unchecked' }[];
   servers?: { command: string; port?: number }[];
@@ -30,10 +33,10 @@ export interface SendCheck {
   running?: boolean;
 }
 
-export function reasonText(code: string | null | undefined): string {
+export function reasonText(code: string | null | undefined, params: Record<string, string> = {}): string {
   if (!code) return t('session.send.reason.unknown');
   const key = `session.send.reason.${code}`;
-  const text = t(key);
+  const text = t(key, params);
   return text === key ? code.replace(/_/g, ' ') : text;
 }
 

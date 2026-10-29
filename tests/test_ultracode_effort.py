@@ -9,7 +9,7 @@ from src.core.session_token_usage.cache import TranscriptTotals
 from src.core.session_token_usage.claude_reader import scan_lines
 from src.core.session_token_usage.claude_selection import read_ultra_marker
 
-_SESSION = "230b95e3-b238-400e-829c-f2814631a932"
+_SESSION = "00000000-0000-4000-8000-000000000852"
 
 
 def _local_effort(level: str, scope: str = "this session only") -> Dict[str, Any]:

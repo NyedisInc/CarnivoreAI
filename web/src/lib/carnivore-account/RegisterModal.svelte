@@ -5,6 +5,7 @@
     import { browserPublishHost, type PublishAccount } from '../catalog/publish';
     import { t } from '../i18n/index.svelte';
     import ModalShell from '../launchpad/ModalShell.svelte';
+    import { Button } from '../base';
 
     interface Props {
         close: (value: 'registered' | null) => void;
@@ -28,8 +29,8 @@
     <p>{t('account.refusal.register_lead')}</p>
     <RegisterDialog {account} {failure} {host} {t} onregistered={() => close('registered')} />
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={() => close(null)}>
+        <Button onclick={() => close(null)}>
             {t('community.close')}
-        </button>
+        </Button>
     {/snippet}
 </ModalShell>

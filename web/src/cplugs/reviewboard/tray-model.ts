@@ -96,14 +96,14 @@ function fits(prompt: BoardPrompt, a: AnswerRow): boolean {
   return true;
 }
 
-export function carryDraft(draft: Draft, from: BoardRevision, to: BoardRevision): Draft {
+export function carryDraft(draft: Draft, from: BoardRevision, to: BoardRevision, words: { yes: string; no: string }): Draft {
   const answers: AnswerRow[] = [];
   const spill: string[] = [];
   for (const a of draft.answers) {
     const old = from.prompts.find((p) => p.id === a.prompt);
     const now = to.prompts.find((p) => p.id === a.prompt);
     if (now && old && now.kind === old.kind && fits(now, a)) answers.push(a);
-    else if (old) spill.push(`${old.label}: ${a.text ?? (a.options ?? []).join(', ') ?? ''}`.trim());
+    else if (old) spill.push(`${old.label}: ${[answerWords(old, a, words.yes, words.no), a.note.trim()].filter(Boolean).join(' / ')}`.trim());
   }
   const anchors = new Set(to.anchors.map((x) => x.id));
   const kept: AnchorNoteRow[] = draft.anchor_notes.filter((n) => anchors.has(n.anchor));

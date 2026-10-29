@@ -6,7 +6,6 @@ console.log('[AnchorPopover Module] Loading...');
 
     var MARGIN = 8;
 
-    /* position: fixed */
     function place(el, anchor) {
         var rect = anchor.getBoundingClientRect();
         var vp = window.visualViewport || null;
@@ -30,7 +29,6 @@ console.log('[AnchorPopover Module] Loading...');
         return { left: left, top: top };
     }
 
-    /* position: fixed */
     function placeAt(el, x, y) {
         var vp = window.visualViewport || null;
         var vw = vp ? vp.width : window.innerWidth;
@@ -54,7 +52,6 @@ console.log('[AnchorPopover Module] Loading...');
         return { left: left, top: top };
     }
 
-    /* position: fixed */
     function placeBelowLeft(el, anchor) {
         var rect = anchor.getBoundingClientRect();
         var vp = window.visualViewport || null;

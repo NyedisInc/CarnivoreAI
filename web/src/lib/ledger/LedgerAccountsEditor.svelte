@@ -1,4 +1,4 @@
-<!-- hidden -->
+<!-- name must not be empty -->
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import Card from '../base/Card.svelte';
@@ -22,8 +22,8 @@
 
     interface Props {
         host: LedgerHost;
-        /* could not */
         taken: readonly string[] | null;
+        /* the empty state */
         startOpen?: boolean;
         onChanged: () => void | Promise<void>;
         open?: boolean;
@@ -133,7 +133,7 @@
                 />
             </div>
 
-            <!-- hidden -->
+            
             <Field
                 id="ledger-account-id"
                 label={t(LEDGER_KEYS.editorIdLabel)}

@@ -1,459 +1,459 @@
 {
-  "schema": "carnivore.catalog.index/1",
-  "serial": 59,
-  "generated_at": "",
-  "expires_at": "",
-  "publishers": {},
-  "revocations": {
-    "keys": [],
-    "versions": []
-  },
-  "items": [
-    {
-      "id": "carnivore/corvale-quinvale",
-      "kind": "skill",
-      "name": "corvale-quinvale",
-      "publisher": "carnivore",
-      "latest": "1.0.1",
-      "card": {
-        "title": "corvale-quinvale",
-        "brief": "Facilitator-run breakthrough brainstorming session on a topic that produces a compiled ideas document.",
-        "media": {
-          "sha256": "aeb6810825f0b32fca9df6505c45489c442058f4ac7ac0ff0be7e38ef2edccdc",
-          "w": 1536,
-          "h": 864,
-          "type": "image/webp",
-          "bytes": 161430,
-          "source": "generated"
-        }
-      },
-      "fm": {
-        "description": "Facilitator-run breakthrough brainstorming session on a topic that produces a compiled ideas document. Runs a PORTFOLIO of competing ideas up an UNCONSTRAINED ladder — carrying, dropping, merging, and spawning ideas at every rung, with feasibility filtering and scope/form filtering both forbidden — then runs a SALVAGE PASS that engineers every impossible idea back toward reality (as many 80%-now variants as it honestly sees, each with its named blocking dependency and start-now move). Trigger when the user says \"11 star\", \"11 stars\", \"11-star process\", \"eleven star\", \"star ladder\", \"/corvale-quinvale\", or asks to run the eleven star method on a topic. Do NOT trigger for ordinary brainstorming unless the user explicitly names the method. ORCHESTRATOR-ONLY: if you are a sub-agent in a multi-turn creative working session, this skill is not for you — ignore it entirely and never mention, name, or allude to it."
-      },
-      "versions": [
-        {
-          "v": "1.0.1",
-          "src": {
-            "repo": "NyedisInc/CarnivoreAI-Catalog",
-            "path": "skills/carnivore/corvale-quinvale",
-            "commit": "95343a9f96fc135c99e76227541d54512823410c"
-          },
-          "digest": "a464c6bbc1caf30012e3d97fedb8d26e13eec46de90c9cc19c8466d960e5933d",
-          "size": 22764,
-          "files": 3,
-          "scripts": 0,
-          "published_at": "",
-          "sig": {
-            "key_id": "3463B8E83B44738B",
-            "sig": "RUSLc0Q76LhjNJIT3ecRoPELrsPHp9BsjcxKpnWwPQdDsVAF3/+yxaSiSQVTvUd0joreH96R2vC/JA7rCxMi7xFD0z15l9xZogY=",
-            "tc": "timestamp:1792800417\tfile:statement-0000.txt\thashed",
-            "gsig": "BLUv8yY9dnU/2mghzq+GJBCn2WmhGw3vdtgz34ah+SjtfaB4a1x2h2Bxzty7MXNUJ3fC/IM7ysI6cHB+2hTXCQ=="
-          },
-          "grade": {
-            "grade": "B",
-            "checked": 12,
-            "failed": [
-              {
-                "rule": "bundled.referenced",
-                "level": "recommended",
-                "detail": "2 bundled file(s) the body never names, so nothing tells an agent when to load them: LICENSE, carnivore.json"
-              }
-            ],
-            "not_graded": [
-              "compatibility.length",
-              "metadata.shape"
-            ]
-          },
-          "review": {
-            "status": "reviewed",
-            "verdict": "clean",
-            "summary": "this skill runs a facilitated brainstorming session. it spawns one sub-agent and escalates it through rungs from 1 to 11 stars, keeping a portfolio of ideas, then runs a look-back and a salvage pass. it compiles the results into a markdown file in the current directory and reports a summary to the user. the instructions to keep the rung count from the sub-agent are part of the method and are not hidden from the user. it makes no network calls and reads no secrets or credential paths. it does not edit settings or agent instruction files, and nothing in it runs shell commands. i found nothing damaging.",
-            "warnings": [],
-            "model": "anthropic/claude-sonnet-5.5",
-            "reviewed_at": ""
-          }
-        }
-      ],
-      "cost": {
-        "desc_tokens": 228,
-        "body_tokens": 5038,
-        "estimator": "chars/4"
-      },
-      "fm_keys": [
-        "description",
-        "name"
-      ]
-    },
-    {
-      "id": "carnivore/calming",
-      "kind": "theme",
-      "name": "calming",
-      "publisher": "carnivore",
-      "latest": "1.0.1",
-      "card": {
-        "title": "Calming",
-        "brief": "Sage greens, oat creams, mist blues."
-      },
-      "fm": {
-        "description": "Sage greens, oat creams, mist blues. Calm-tech for long sessions."
-      },
-      "versions": [
-        {
-          "v": "1.0.1",
-          "src": {
-            "repo": "NyedisInc/CarnivoreAI-Catalog",
-            "path": "themes/carnivore/calming",
-            "commit": "95343a9f96fc135c99e76227541d54512823410c"
-          },
-          "digest": "0721f3a40b6b945c9fa00bf57d6f58df24c92f75bc1f5969d03e97f8610bf44b",
-          "size": 214304,
-          "files": 8,
-          "scripts": 0,
-          "published_at": "",
-          "sig": {
-            "key_id": "3463B8E83B44738B",
-            "sig": "RUSLc0Q76LhjNE8tsFzSwIHTwIzSD1PCaKV2R/atsD0FM/44j3YudKbzSeZXtLSjKi8Xs6VXpKuVhIFmYWHxFPnJAW9IKwyOpwg=",
-            "tc": "timestamp:1792800417\tfile:statement-0001.txt\thashed",
-            "gsig": "T7BySZRFRR7yu9+ze8IJk6c8/Xy06GTrLTJy0LrHc3YSR19ZYJdonUKM2cDCb6GpptFAh9ROJ25vvTzlxl2LCw=="
-          },
-          "review": {
-            "status": "reviewed",
-            "verdict": "clean",
-            "summary": "first party calming theme: theme.json css variables and xterm colours, a canvas mist effect built on a shared harness, and a pixel mascot svg. the scripts do no network access, storage or cookie reads, eval or Function, and the only import is the sibling effects-base.js in the same folder. the two webp images are raster assets that were not shown, which is expected for a theme. no instructions to an agent or text addressed to a reviewer were found, and nothing damaging was found.",
-            "warnings": [],
-            "model": "anthropic/claude-sonnet-5.5",
-            "reviewed_at": ""
-          }
-        }
-      ]
-    },
-    {
-      "id": "carnivore/claw",
-      "kind": "theme",
-      "name": "claw",
-      "publisher": "carnivore",
-      "latest": "1.0.1",
-      "card": {
-        "title": "Claw",
-        "brief": "OpenClaw cosmic dark - deep purple-black with a coral red accent and starfield wash."
-      },
-      "fm": {
-        "description": "OpenClaw cosmic dark - deep purple-black with a coral red accent and starfield wash."
-      },
-      "versions": [
-        {
-          "v": "1.0.1",
-          "src": {
-            "repo": "NyedisInc/CarnivoreAI-Catalog",
-            "path": "themes/carnivore/claw",
-            "commit": "95343a9f96fc135c99e76227541d54512823410c"
-          },
-          "digest": "4f48c9532c4c181d9ec2dad500d0daf9152f673bdd3ab0bcf1dd92eb6a1e4304",
-          "size": 151618,
-          "files": 8,
-          "scripts": 0,
-          "published_at": "",
-          "sig": {
-            "key_id": "3463B8E83B44738B",
-            "sig": "RUSLc0Q76LhjNLReT/7lfo5gqX1YnFvDwwjMmU0O/Tc2u5JhtGQTBA0ipY2lpXPqCcmeSfxxKOqU4nVp9myjXPtlJZpkRdkvTwU=",
-            "tc": "timestamp:1792800417\tfile:statement-0002.txt\thashed",
-            "gsig": "8f8GWJCKtXpMiBZMqfLsJ9MLN18PCBG7UPDD59azk+1pGEnXOUGGOaUaA4liiSqc91xnelpG/uqUe5YSc16xDQ=="
-          },
-          "review": {
-            "status": "reviewed",
-            "verdict": "clean",
-            "summary": "this is a first party theme (colour variables, terminal palette, a starfield canvas effect and a pixel mascot svg). the scripts only draw to a canvas, read css variables and respect reduced motion. no network access, storage or cookie reads, eval, or imports outside the folder were found, and there are no instructions addressed to an agent or reviewer. the two webp images were not shown, which is expected for a theme and not a finding by itself.",
-            "warnings": [],
-            "model": "anthropic/claude-sonnet-5.5",
-            "reviewed_at": ""
-          }
-        }
-      ]
-    },
-    {
-      "id": "carnivore/fenwick-lorstone",
-      "kind": "skill",
-      "name": "fenwick-lorstone",
-      "publisher": "carnivore",
-      "latest": "1.0.1",
-      "card": {
-        "title": "fenwick-lorstone",
-        "brief": "Expert front end design skills which should be used whenever you make any changes to a ashfield of a website or application that has a UI (even a console UI).",
-        "media": {
-          "sha256": "85376edc2caf460f56cdbeefbb12c1c85eb98d1b542ba96f532664339522c492",
-          "w": 1536,
-          "h": 864,
-          "type": "image/webp",
-          "bytes": 147932,
-          "source": "generated"
-        }
-      },
-      "fm": {
-        "description": "Expert front end design skills which should be used whenever you make any changes to a ashfield of a website or application that has a UI (even a console UI). No matter how small of a UI / UX change, this is the skill to always use for any level of ashfield development."
-      },
-      "versions": [
-        {
-          "v": "1.0.1",
-          "src": {
-            "repo": "NyedisInc/CarnivoreAI-Catalog",
-            "path": "skills/carnivore/fenwick-lorstone",
-            "commit": "95343a9f96fc135c99e76227541d54512823410c"
-          },
-          "digest": "55a06aacadb86c3a59facdd09f4ff60e4982bcd5ac0734754053daf5ef2b0367",
-          "size": 29701,
-          "files": 10,
-          "scripts": 0,
-          "published_at": "",
-          "sig": {
-            "key_id": "3463B8E83B44738B",
-            "sig": "RUSLc0Q76LhjNBZNqRI+dPf0buKNTYz3jg1cww59Qs6qe+DEwNHfsFy2tSePvSuuk06H4l2afpCLHxQ31l3NYGwXGD/fkg7RwAU=",
-            "tc": "timestamp:1792800417\tfile:statement-0005.txt\thashed",
-            "gsig": "THnMm28xjnGFTJJJ+R6xSu1Ip1ax6qZIBSqlMkyCoOAdvxA23pYzN1n+MUZvcpUIbMmqgFamRhlB5W+wGpNTBg=="
-          },
-          "grade": {
-            "grade": "B",
-            "checked": 12,
-            "failed": [
-              {
-                "rule": "bundled.referenced",
-                "level": "recommended",
-                "detail": "2 bundled file(s) the body never names, so nothing tells an agent when to load them: LICENSE, carnivore.json"
-              }
-            ],
-            "not_graded": [
-              "compatibility.length",
-              "metadata.shape"
-            ]
-          },
-          "review": {
-            "status": "reviewed",
-            "verdict": "flagged",
-            "summary": "this is a ashfield design guidance skill covering archetypes, typography, spacing, depth, mobile, motion and tailwind v4 patterns, plus a required playwright validation step after ui changes. nothing damaging was found. the only advisory points are that the body tells the agent to run npx playwright commands and write a test file, which the description does not mention.",
-            "warnings": [
-              {
-                "kind": "shell_exec",
-                "detail": "tells the agent to run `npx playwright test` (including `--headed` and `--ui`) after any ashfield change, which runs commands and may download the playwright package via npx.",
-                "file": "SKILL.md"
-              },
-              {
-                "kind": "description_mismatch",
-                "detail": "the description only mentions ashfield design expertise, but the body also requires running playwright tests and creating e2e/validate-ui-change.spec.ts and a validation.png screenshot.",
-                "file": "SKILL.md"
-              }
-            ],
-            "model": "anthropic/claude-sonnet-5.5",
-            "reviewed_at": ""
-          }
-        }
-      ],
-      "cost": {
-        "desc_tokens": 68,
-        "body_tokens": 1193,
-        "estimator": "chars/4"
-      },
-      "fm_keys": [
-        "description",
-        "name"
-      ]
-    },
-    {
-      "id": "carnivore/mcphealth",
-      "kind": "cplug",
-      "name": "mcphealth",
-      "publisher": "carnivore",
-      "latest": "1.0.0",
-      "card": {
-        "title": "mcp health",
-        "brief": "Shows which MCP servers each live session has and which are down, with an allow or block list for warnings and an optional notification when one drops.",
-        "icon": "plug",
-        "media": {
-          "sha256": "cb3ea37a8f80ab12a54e729abb2f15478b1ef626afd70e9d10c9d18166021850",
-          "w": 1536,
-          "h": 864,
-          "type": "image/webp",
-          "bytes": 185148,
-          "source": "generated"
-        }
-      },
-      "fm": {
-        "description": "Shows which MCP servers each live session has and which are down, with an allow or block list for warnings and an optional notification when one drops.",
-        "author": "carnivore"
-      },
-      "versions": [
-        {
-          "v": "1.0.0",
-          "src": {
-            "repo": "NyedisInc/CarnivoreAI-Catalog",
-            "path": "cplugs/carnivore/mcphealth",
-            "commit": "95343a9f96fc135c99e76227541d54512823410c"
-          },
-          "digest": "90387b5f2cb47e03c75c5bc9666c7171fe006703e87a7f982a836b22fc0ed1e4",
-          "size": 20774,
-          "files": 9,
-          "scripts": 0,
-          "published_at": "",
-          "sig": {
-            "key_id": "3463B8E83B44738B",
-            "sig": "RUSLc0Q76LhjNK8IwXmDEoHvk03+piuU3UHqGas43MZalnYKUCBlcT0/S+XuD3bXJQb0BMFww0y3vRZshoskm2JYqEFo4QTTIQM=",
-            "tc": "timestamp:1792800417\tfile:statement-0014.txt\thashed",
-            "gsig": "ehVKkpaLQ2FjUWclebWb5Qzg55nBhT21z6tCTbLSHT/p/F9GOoEz5TKVK9Iq0g+nVtCuLLhmvH6IC89riTXxDw=="
-          },
-          "review": {
-            "status": "reviewed",
-            "verdict": "clean",
-            "summary": "this cplug judges which mcp servers each live session has and which are down, using only the host's mcp.config and mcp.links answers. It applies an allow or block list and can send a one-time toast when a server drops or returns. The code makes no network calls, reads no files or environment values, and writes nothing. Its permissions (notify, mcp.health.read) match the description. No text is addressed to a reviewer or an agent. Nothing damaging was found.",
-            "warnings": [],
-            "model": "anthropic/claude-sonnet-5.5",
-            "reviewed_at": ""
-          }
-        }
-      ]
-    },
-    {
-      "id": "carnivore/working-on",
-      "kind": "mod",
-      "name": "working-on",
-      "publisher": "carnivore",
-      "latest": "0.1.1",
-      "card": {
-        "title": "working-on",
-        "brief": "Shows a one-line AI summary of what this session is working on, in the footer just under the prompt hint, not the status line.",
-        "media": {
-          "sha256": "2d58261132558841ae306163fef839d5e3acae655449487cecb3a513dbde3611",
-          "w": 1536,
-          "h": 864,
-          "type": "image/webp",
-          "bytes": 81642,
-          "source": "generated"
-        }
-      },
-      "fm": {
-        "description": "Shows a one-line AI summary of what this session is working on, in the footer just under the prompt hint, not the status line. After each turn, and on session start, resume, clear and fork, it sends your first message (cut to 200 characters) and the last four messages (each cut to 400 characters, command output left out) to a haiku model call that uses your own Claude usage. It does nothing in non-interactive runs."
-      },
-      "versions": [
-        {
-          "v": "0.1.1",
-          "src": {
-            "repo": "NyedisInc/CarnivoreAI-Catalog",
-            "path": "mods/carnivore/working-on",
-            "commit": "95343a9f96fc135c99e76227541d54512823410c"
-          },
-          "digest": "05e7fc5cd889c46e11816c09ffdcb9efbc1de80017821432ef48b0126c66b336",
-          "size": 13410,
-          "files": 7,
-          "scripts": 0,
-          "published_at": "",
-          "sig": {
-            "key_id": "3463B8E83B44738B",
-            "sig": "RUSLc0Q76LhjNJeEluuGdyCzKaAkoJApG5zyD+dIg6OzHqM1ULFvL04w20SKDcvKRhOJfvL2iAU4/bHhk6RKASqaeX9qzUJXgw0=",
-            "tc": "timestamp:1792800417\tfile:statement-0024.txt\thashed",
-            "gsig": "jIYAGKuQXYvvJGiVxS/FzxSCCNK8vuWEUAAWzX5gzdUCObIuEFSCskAjTFmztEI+jw276+hGjmicBkxLzL+sBQ=="
-          },
-          "review": {
-            "status": "reviewed",
-            "verdict": "flagged",
-            "summary": "this mod shows a one-line ai summary of the session's task in the prompt footer. after each turn and on session start, resume, clear and fork, it reads session messages and sends the first user message (cut to 200 characters) and the last four messages (each cut to 400 characters) to a haiku model call that is billed to the user's own usage. it does nothing in non-interactive runs. the behaviour matches the description. it makes no direct network calls, writes no files outside its own state, and has no auto-approval or prompt rewriting. the only finding is the disclosed model spend.",
-            "warnings": [
-              {
-                "kind": "other",
-                "detail": "calls $.model.complete with the haiku model after each main turn and on session start, resume, clear and fork, spending the user's own claude usage and sending session message text (first message cut to 200 characters, last four cut to 400 characters each, bash output excluded) to the model. this is disclosed in the description and skipped in non-interactive runs.",
-                "file": "hooks/register.ts"
-              }
-            ],
-            "model": "anthropic/claude-sonnet-5.5",
-            "reviewed_at": ""
-          }
-        }
-      ]
-    },
-    {
-      "id": "external/rea",
-      "kind": "plugin",
-      "name": "rea",
-      "publisher": "external",
-      "latest": "6.5.1",
-      "card": {
-        "title": "rea",
-        "brief": "reverse engineer anything from your terminal or agent with one cli and mcp server.",
-        "media": {
-          "sha256": "55220beb3b4a3fee5a56050606386a8dc80ffd5ad62851a848d7fc61ad3a4dff",
-          "w": 1536,
-          "h": 864,
-          "type": "image/webp",
-          "bytes": 196604,
-          "source": "generated"
-        }
-      },
-      "fm": {
-        "description": "reverse engineer anything from your terminal or agent with one cli and mcp server",
-        "author": "morluto",
-        "author_url": "https://github.com/morluto",
-        "homepage": "https://github.com/morluto/rea#readme",
-        "repository": "https://github.com/morluto/rea"
-      },
-      "versions": [
-        {
-          "v": "6.5.1",
-          "src": {
-            "repo": "NyedisInc/CarnivoreAI-Catalog",
-            "path": "plugins/external/rea",
-            "commit": "95343a9f96fc135c99e76227541d54512823410c"
-          },
-          "digest": "199b107f85cc830acf7e538906779060a7f30cc472c3e88dc89ebee36936d375",
-          "size": 2534,
-          "files": 5,
-          "scripts": 0,
-          "published_at": "",
-          "sig": {
-            "key_id": "3463B8E83B44738B",
-            "sig": "RUSLc0Q76LhjNNA571vzc8/u+HNIe0w5xxK0oQv+TcdWSNBDxLWNOfJtDz1okruT9JTE2Jl1LtsnAMw6ws0KHHLV0Zat2TJq6gg=",
-            "tc": "timestamp:1792800417\tfile:statement-0025.txt\thashed",
-            "gsig": "tsL0AJyJ/p9tAOrKCEtsZ+MA3Nte+kv6JSQ8xIIrjFfpHFNhss3iT5eLF7TnXy1LegRCA6SZMiluET5nl5iKDg=="
-          },
-          "review": {
-            "status": "reviewed",
-            "verdict": "blocked",
-            "summary": "this plugin registers an mcp server that runs `npx -y rea-agents@6.5.0 mcp`, which downloads a package from the npm registry and executes it on first use. that code is not included in the folder and was not reviewed. the markdown contains no instructions aimed at the agent or reviewer. the blocking issue is the unreviewed fetched code and the launch command declared in .mcp.json.",
-            "warnings": [
-              {
-                "kind": "opaque_payload",
-                "detail": "the plugin relies on npm package rea-agents@6.5.0, which is fetched from the network and executed via npx as an mcp server. its code is not shown and is not covered by this review.",
-                "file": ".mcp.json"
-              },
-              {
-                "kind": "settings_write",
-                "detail": "ships a .mcp.json that registers an mcp server named rea with command npx, which grants a runnable capability to the agent when the plugin is enabled.",
-                "file": ".mcp.json"
-              },
-              {
-                "kind": "shell_exec",
-                "detail": "launches `npx -y rea-agents@6.5.0 mcp` as a subprocess, with the -y flag skipping the install confirmation.",
-                "file": ".mcp.json"
-              },
-              {
-                "kind": "network",
-                "detail": "the first call fetches the rea-agents package from the npm registry (registry.npmjs.org) over the network.",
-                "file": "README.md"
-              },
-              {
-                "kind": "description_mismatch",
-                "detail": "",
-                "file": ".claude-plugin/plugin.json"
-              }
-            ],
-            "model": "anthropic/claude-sonnet-5.5",
-            "reviewed_at": "",
-            "override": {
-              "reason": "refresh the sample data for the demo",
-              "by": "summit (lantern666)",
-              "at": ""
-            }
-          }
-        }
-      ]
+ "schema": "carnivore.catalog.index/1",
+ "serial": 59,
+ "generated_at": "2026-10-26T04:17:49Z",
+ "expires_at": "2026-11-09T04:17:49Z",
+ "publishers": {},
+ "revocations": {
+  "keys": [],
+  "versions": []
+ },
+ "items": [
+  {
+   "id": "carnivore/11-stars",
+   "kind": "skill",
+   "name": "11-stars",
+   "publisher": "carnivore",
+   "latest": "1.0.1",
+   "card": {
+    "title": "11-stars",
+    "brief": "Facilitator-run breakthrough brainstorming session on a topic that produces a compiled ideas document.",
+    "media": {
+     "sha256": "aeb6810825f0b32fca9df6505c45489c442058f4ac7ac0ff0be7e38ef2edccdc",
+     "w": 1536,
+     "h": 864,
+     "type": "image/webp",
+     "bytes": 161430,
+     "source": "generated"
     }
-  ],
-  "featured": [
-    "carnivore/corvale-quinvale"
-  ]
+   },
+   "fm": {
+    "description": "Facilitator-run breakthrough brainstorming session on a topic that produces a compiled ideas document. Runs a PORTFOLIO of competing ideas up an UNCONSTRAINED ladder \u2014 carrying, dropping, merging, and spawning ideas at every rung, with feasibility filtering and scope/form filtering both forbidden \u2014 then runs a SALVAGE PASS that engineers every impossible idea back toward reality (as many 80%-now variants as it honestly sees, each with its named blocking dependency and start-now move). Trigger when the user says \"11 star\", \"11 stars\", \"11-star process\", \"eleven star\", \"star ladder\", \"/11-stars\", or asks to run the eleven star method on a topic. Do NOT trigger for ordinary brainstorming unless the user explicitly names the method. ORCHESTRATOR-ONLY: if you are a sub-agent in a multi-turn creative working session, this skill is not for you \u2014 ignore it entirely and never mention, name, or allude to it."
+   },
+   "versions": [
+    {
+     "v": "1.0.1",
+     "src": {
+      "repo": "NyedisInc/CarnivoreAI-Catalog",
+      "path": "skills/carnivore/11-stars",
+      "commit": "95343a9f96fc135c99e76227541d54512823410c"
+     },
+     "digest": "a464c6bbc1caf30012e3d97fedb8d26e13eec46de90c9cc19c8466d960e5933d",
+     "size": 22764,
+     "files": 3,
+     "scripts": 0,
+     "published_at": "2026-10-23T00:00:00Z",
+     "sig": {
+      "key_id": "3463B8E83B44738B",
+      "sig": "RUSLc0Q76LhjNJIT3ecRoPELrsPHp9BsjcxKpnWwPQdDsVAF3/+yxaSiSQVTvUd0joreH96R2vC/JA7rCxMi7xFD0z15l9xZogY=",
+      "tc": "timestamp:1792800417\tfile:statement-0000.txt\thashed",
+      "gsig": "BLUv8yY9dnU/2mghzq+GJBCn2WmhGw3vdtgz34ah+SjtfaB4a1x2h2Bxzty7MXNUJ3fC/IM7ysI6cHB+2hTXCQ=="
+     },
+     "grade": {
+      "grade": "B",
+      "checked": 12,
+      "failed": [
+       {
+        "rule": "bundled.referenced",
+        "level": "recommended",
+        "detail": "2 bundled file(s) the body never names, so nothing tells an agent when to load them: LICENSE, carnivore.json"
+       }
+      ],
+      "not_graded": [
+       "compatibility.length",
+       "metadata.shape"
+      ]
+     },
+     "review": {
+      "status": "reviewed",
+      "verdict": "clean",
+      "summary": "this skill runs a facilitated brainstorming session. it spawns one sub-agent and escalates it through rungs from 1 to 11 stars, keeping a portfolio of ideas, then runs a look-back and a salvage pass. it compiles the results into a markdown file in the current directory and reports a summary to the user. the instructions to keep the rung count from the sub-agent are part of the method and are not hidden from the user. it makes no network calls and reads no secrets or credential paths. it does not edit settings or agent instruction files, and nothing in it runs shell commands. i found nothing damaging.",
+      "warnings": [],
+      "model": "anthropic/claude-sonnet-5.5",
+      "reviewed_at": "2026-10-22T07:09:14Z"
+     }
+    }
+   ],
+   "cost": {
+    "desc_tokens": 228,
+    "body_tokens": 5038,
+    "estimator": "chars/4"
+   },
+   "fm_keys": [
+    "description",
+    "name"
+   ]
+  },
+  {
+   "id": "carnivore/calming",
+   "kind": "theme",
+   "name": "calming",
+   "publisher": "carnivore",
+   "latest": "1.0.1",
+   "card": {
+    "title": "Calming",
+    "brief": "Sage greens, oat creams, mist blues."
+   },
+   "fm": {
+    "description": "Sage greens, oat creams, mist blues. Calm-tech for long sessions."
+   },
+   "versions": [
+    {
+     "v": "1.0.1",
+     "src": {
+      "repo": "NyedisInc/CarnivoreAI-Catalog",
+      "path": "themes/carnivore/calming",
+      "commit": "95343a9f96fc135c99e76227541d54512823410c"
+     },
+     "digest": "0721f3a40b6b945c9fa00bf57d6f58df24c92f75bc1f5969d03e97f8610bf44b",
+     "size": 214304,
+     "files": 8,
+     "scripts": 0,
+     "published_at": "2026-10-23T00:00:00Z",
+     "sig": {
+      "key_id": "3463B8E83B44738B",
+      "sig": "RUSLc0Q76LhjNE8tsFzSwIHTwIzSD1PCaKV2R/atsD0FM/44j3YudKbzSeZXtLSjKi8Xs6VXpKuVhIFmYWHxFPnJAW9IKwyOpwg=",
+      "tc": "timestamp:1792800417\tfile:statement-0001.txt\thashed",
+      "gsig": "T7BySZRFRR7yu9+ze8IJk6c8/Xy06GTrLTJy0LrHc3YSR19ZYJdonUKM2cDCb6GpptFAh9ROJ25vvTzlxl2LCw=="
+     },
+     "review": {
+      "status": "reviewed",
+      "verdict": "clean",
+      "summary": "first party calming theme: theme.json css variables and xterm colours, a canvas mist effect built on a shared harness, and a pixel mascot svg. the scripts do no network access, storage or cookie reads, eval or Function, and the only import is the sibling effects-base.js in the same folder. the two webp images are raster assets that were not shown, which is expected for a theme. no instructions to an agent or text addressed to a reviewer were found, and nothing damaging was found.",
+      "warnings": [],
+      "model": "anthropic/claude-sonnet-5.5",
+      "reviewed_at": "2026-10-22T07:09:54Z"
+     }
+    }
+   ]
+  },
+  {
+   "id": "carnivore/claw",
+   "kind": "theme",
+   "name": "claw",
+   "publisher": "carnivore",
+   "latest": "1.0.1",
+   "card": {
+    "title": "Claw",
+    "brief": "OpenClaw cosmic dark - deep purple-black with a coral red accent and starfield wash."
+   },
+   "fm": {
+    "description": "OpenClaw cosmic dark - deep purple-black with a coral red accent and starfield wash."
+   },
+   "versions": [
+    {
+     "v": "1.0.1",
+     "src": {
+      "repo": "NyedisInc/CarnivoreAI-Catalog",
+      "path": "themes/carnivore/claw",
+      "commit": "95343a9f96fc135c99e76227541d54512823410c"
+     },
+     "digest": "4f48c9532c4c181d9ec2dad500d0daf9152f673bdd3ab0bcf1dd92eb6a1e4304",
+     "size": 151618,
+     "files": 8,
+     "scripts": 0,
+     "published_at": "2026-10-23T00:00:00Z",
+     "sig": {
+      "key_id": "3463B8E83B44738B",
+      "sig": "RUSLc0Q76LhjNLReT/7lfo5gqX1YnFvDwwjMmU0O/Tc2u5JhtGQTBA0ipY2lpXPqCcmeSfxxKOqU4nVp9myjXPtlJZpkRdkvTwU=",
+      "tc": "timestamp:1792800417\tfile:statement-0002.txt\thashed",
+      "gsig": "8f8GWJCKtXpMiBZMqfLsJ9MLN18PCBG7UPDD59azk+1pGEnXOUGGOaUaA4liiSqc91xnelpG/uqUe5YSc16xDQ=="
+     },
+     "review": {
+      "status": "reviewed",
+      "verdict": "clean",
+      "summary": "this is a first party theme (colour variables, terminal palette, a starfield canvas effect and a pixel mascot svg). the scripts only draw to a canvas, read css variables and respect reduced motion. no network access, storage or cookie reads, eval, or imports outside the folder were found, and there are no instructions addressed to an agent or reviewer. the two webp images were not shown, which is expected for a theme and not a finding by itself.",
+      "warnings": [],
+      "model": "anthropic/claude-sonnet-5.5",
+      "reviewed_at": "2026-10-22T07:09:58Z"
+     }
+    }
+   ]
+  },
+  {
+   "id": "carnivore/design-engineer",
+   "kind": "skill",
+   "name": "design-engineer",
+   "publisher": "carnivore",
+   "latest": "1.0.1",
+   "card": {
+    "title": "design-engineer",
+    "brief": "Expert front end design skills which should be used whenever you make any changes to a front-end of a website or application that has a UI (even a console UI).",
+    "media": {
+     "sha256": "85376edc2caf460f56cdbeefbb12c1c85eb98d1b542ba96f532664339522c492",
+     "w": 1536,
+     "h": 864,
+     "type": "image/webp",
+     "bytes": 147932,
+     "source": "generated"
+    }
+   },
+   "fm": {
+    "description": "Expert front end design skills which should be used whenever you make any changes to a front-end of a website or application that has a UI (even a console UI). No matter how small of a UI / UX change, this is the skill to always use for any level of front-end development."
+   },
+   "versions": [
+    {
+     "v": "1.0.1",
+     "src": {
+      "repo": "NyedisInc/CarnivoreAI-Catalog",
+      "path": "skills/carnivore/design-engineer",
+      "commit": "95343a9f96fc135c99e76227541d54512823410c"
+     },
+     "digest": "55a06aacadb86c3a59facdd09f4ff60e4982bcd5ac0734754053daf5ef2b0367",
+     "size": 29701,
+     "files": 10,
+     "scripts": 0,
+     "published_at": "2026-10-23T00:00:00Z",
+     "sig": {
+      "key_id": "3463B8E83B44738B",
+      "sig": "RUSLc0Q76LhjNBZNqRI+dPf0buKNTYz3jg1cww59Qs6qe+DEwNHfsFy2tSePvSuuk06H4l2afpCLHxQ31l3NYGwXGD/fkg7RwAU=",
+      "tc": "timestamp:1792800417\tfile:statement-0005.txt\thashed",
+      "gsig": "THnMm28xjnGFTJJJ+R6xSu1Ip1ax6qZIBSqlMkyCoOAdvxA23pYzN1n+MUZvcpUIbMmqgFamRhlB5W+wGpNTBg=="
+     },
+     "grade": {
+      "grade": "B",
+      "checked": 12,
+      "failed": [
+       {
+        "rule": "bundled.referenced",
+        "level": "recommended",
+        "detail": "2 bundled file(s) the body never names, so nothing tells an agent when to load them: LICENSE, carnivore.json"
+       }
+      ],
+      "not_graded": [
+       "compatibility.length",
+       "metadata.shape"
+      ]
+     },
+     "review": {
+      "status": "reviewed",
+      "verdict": "flagged",
+      "summary": "this is a front-end design guidance skill covering archetypes, typography, spacing, depth, mobile, motion and tailwind v4 patterns, plus a required playwright validation step after ui changes. nothing damaging was found. the only advisory points are that the body tells the agent to run npx playwright commands and write a test file, which the description does not mention.",
+      "warnings": [
+       {
+        "kind": "shell_exec",
+        "detail": "tells the agent to run `npx playwright test` (including `--headed` and `--ui`) after any frontend change, which runs commands and may download the playwright package via npx.",
+        "file": "SKILL.md"
+       },
+       {
+        "kind": "description_mismatch",
+        "detail": "the description only mentions front-end design expertise, but the body also requires running playwright tests and creating e2e/validate-ui-change.spec.ts and a validation.png screenshot.",
+        "file": "SKILL.md"
+       }
+      ],
+      "model": "anthropic/claude-sonnet-5.5",
+      "reviewed_at": "2026-10-22T07:09:22Z"
+     }
+    }
+   ],
+   "cost": {
+    "desc_tokens": 68,
+    "body_tokens": 1193,
+    "estimator": "chars/4"
+   },
+   "fm_keys": [
+    "description",
+    "name"
+   ]
+  },
+  {
+   "id": "carnivore/mcphealth",
+   "kind": "cplug",
+   "name": "mcphealth",
+   "publisher": "carnivore",
+   "latest": "1.0.0",
+   "card": {
+    "title": "mcp health",
+    "brief": "Shows which MCP servers each live session has and which are down, with an allow or block list for warnings and an optional notification when one drops.",
+    "icon": "plug",
+    "media": {
+     "sha256": "cb3ea37a8f80ab12a54e729abb2f15478b1ef626afd70e9d10c9d18166021850",
+     "w": 1536,
+     "h": 864,
+     "type": "image/webp",
+     "bytes": 185148,
+     "source": "generated"
+    }
+   },
+   "fm": {
+    "description": "Shows which MCP servers each live session has and which are down, with an allow or block list for warnings and an optional notification when one drops.",
+    "author": "carnivore"
+   },
+   "versions": [
+    {
+     "v": "1.0.0",
+     "src": {
+      "repo": "NyedisInc/CarnivoreAI-Catalog",
+      "path": "cplugs/carnivore/mcphealth",
+      "commit": "95343a9f96fc135c99e76227541d54512823410c"
+     },
+     "digest": "90387b5f2cb47e03c75c5bc9666c7171fe006703e87a7f982a836b22fc0ed1e4",
+     "size": 20774,
+     "files": 9,
+     "scripts": 0,
+     "published_at": "2026-10-23T00:00:00Z",
+     "sig": {
+      "key_id": "3463B8E83B44738B",
+      "sig": "RUSLc0Q76LhjNK8IwXmDEoHvk03+piuU3UHqGas43MZalnYKUCBlcT0/S+XuD3bXJQb0BMFww0y3vRZshoskm2JYqEFo4QTTIQM=",
+      "tc": "timestamp:1792800417\tfile:statement-0014.txt\thashed",
+      "gsig": "ehVKkpaLQ2FjUWclebWb5Qzg55nBhT21z6tCTbLSHT/p/F9GOoEz5TKVK9Iq0g+nVtCuLLhmvH6IC89riTXxDw=="
+     },
+     "review": {
+      "status": "reviewed",
+      "verdict": "clean",
+      "summary": "this cplug judges which mcp servers each live session has and which are down, using only the host's mcp.config and mcp.links answers. It applies an allow or block list and can send a one-time toast when a server drops or returns. The code makes no network calls, reads no files or environment values, and writes nothing. Its permissions (notify, mcp.health.read) match the description. No text is addressed to a reviewer or an agent. Nothing damaging was found.",
+      "warnings": [],
+      "model": "anthropic/claude-sonnet-5.5",
+      "reviewed_at": "2026-10-22T07:11:10Z"
+     }
+    }
+   ]
+  },
+  {
+   "id": "carnivore/working-on",
+   "kind": "mod",
+   "name": "working-on",
+   "publisher": "carnivore",
+   "latest": "0.1.1",
+   "card": {
+    "title": "working-on",
+    "brief": "Shows a one-line AI summary of what this session is working on, in the footer just under the prompt hint, not the status line.",
+    "media": {
+     "sha256": "2d58261132558841ae306163fef839d5e3acae655449487cecb3a513dbde3611",
+     "w": 1536,
+     "h": 864,
+     "type": "image/webp",
+     "bytes": 81642,
+     "source": "generated"
+    }
+   },
+   "fm": {
+    "description": "Shows a one-line AI summary of what this session is working on, in the footer just under the prompt hint, not the status line. After each turn, and on session start, resume, clear and fork, it sends your first message (cut to 200 characters) and the last four messages (each cut to 400 characters, command output left out) to a haiku model call that uses your own Claude usage. It does nothing in non-interactive runs."
+   },
+   "versions": [
+    {
+     "v": "0.1.1",
+     "src": {
+      "repo": "NyedisInc/CarnivoreAI-Catalog",
+      "path": "mods/carnivore/working-on",
+      "commit": "95343a9f96fc135c99e76227541d54512823410c"
+     },
+     "digest": "05e7fc5cd889c46e11816c09ffdcb9efbc1de80017821432ef48b0126c66b336",
+     "size": 13410,
+     "files": 7,
+     "scripts": 0,
+     "published_at": "2026-10-23T00:00:00Z",
+     "sig": {
+      "key_id": "3463B8E83B44738B",
+      "sig": "RUSLc0Q76LhjNJeEluuGdyCzKaAkoJApG5zyD+dIg6OzHqM1ULFvL04w20SKDcvKRhOJfvL2iAU4/bHhk6RKASqaeX9qzUJXgw0=",
+      "tc": "timestamp:1792800417\tfile:statement-0024.txt\thashed",
+      "gsig": "jIYAGKuQXYvvJGiVxS/FzxSCCNK8vuWEUAAWzX5gzdUCObIuEFSCskAjTFmztEI+jw276+hGjmicBkxLzL+sBQ=="
+     },
+     "review": {
+      "status": "reviewed",
+      "verdict": "flagged",
+      "summary": "this mod shows a one-line ai summary of the session's task in the prompt footer. after each turn and on session start, resume, clear and fork, it reads session messages and sends the first user message (cut to 200 characters) and the last four messages (each cut to 400 characters) to a haiku model call that is billed to the user's own usage. it does nothing in non-interactive runs. the behaviour matches the description. it makes no direct network calls, writes no files outside its own state, and has no auto-approval or prompt rewriting. the only finding is the disclosed model spend.",
+      "warnings": [
+       {
+        "kind": "other",
+        "detail": "calls $.model.complete with the haiku model after each main turn and on session start, resume, clear and fork, spending the user's own claude usage and sending session message text (first message cut to 200 characters, last four cut to 400 characters each, bash output excluded) to the model. this is disclosed in the description and skipped in non-interactive runs.",
+        "file": "hooks/register.ts"
+       }
+      ],
+      "model": "anthropic/claude-sonnet-5.5",
+      "reviewed_at": "2026-10-22T07:11:00Z"
+     }
+    }
+   ]
+  },
+  {
+   "id": "external/rea",
+   "kind": "plugin",
+   "name": "rea",
+   "publisher": "external",
+   "latest": "6.5.1",
+   "card": {
+    "title": "rea",
+    "brief": "reverse engineer anything from your terminal or agent with one cli and mcp server.",
+    "media": {
+     "sha256": "55220beb3b4a3fee5a56050606386a8dc80ffd5ad62851a848d7fc61ad3a4dff",
+     "w": 1536,
+     "h": 864,
+     "type": "image/webp",
+     "bytes": 196604,
+     "source": "generated"
+    }
+   },
+   "fm": {
+    "description": "reverse engineer anything from your terminal or agent with one cli and mcp server",
+    "author": "morluto",
+    "author_url": "https://github.com/morluto",
+    "homepage": "https://github.com/morluto/rea#readme",
+    "repository": "https://github.com/morluto/rea"
+   },
+   "versions": [
+    {
+     "v": "6.5.1",
+     "src": {
+      "repo": "NyedisInc/CarnivoreAI-Catalog",
+      "path": "plugins/external/rea",
+      "commit": "95343a9f96fc135c99e76227541d54512823410c"
+     },
+     "digest": "199b107f85cc830acf7e538906779060a7f30cc472c3e88dc89ebee36936d375",
+     "size": 2534,
+     "files": 5,
+     "scripts": 0,
+     "published_at": "2026-10-23T00:00:00Z",
+     "sig": {
+      "key_id": "3463B8E83B44738B",
+      "sig": "RUSLc0Q76LhjNNA571vzc8/u+HNIe0w5xxK0oQv+TcdWSNBDxLWNOfJtDz1okruT9JTE2Jl1LtsnAMw6ws0KHHLV0Zat2TJq6gg=",
+      "tc": "timestamp:1792800417\tfile:statement-0025.txt\thashed",
+      "gsig": "tsL0AJyJ/p9tAOrKCEtsZ+MA3Nte+kv6JSQ8xIIrjFfpHFNhss3iT5eLF7TnXy1LegRCA6SZMiluET5nl5iKDg=="
+     },
+     "review": {
+      "status": "reviewed",
+      "verdict": "blocked",
+      "summary": "this plugin registers an mcp server that runs `npx -y rea-agents@6.5.0 mcp`, which downloads a package from the npm registry and executes it on first use. that code is not included in the folder and was not reviewed. the markdown contains no instructions aimed at the agent or reviewer. the blocking issue is the unreviewed fetched code and the launch command declared in .mcp.json.",
+      "warnings": [
+       {
+        "kind": "opaque_payload",
+        "detail": "the plugin relies on npm package rea-agents@6.5.0, which is fetched from the network and executed via npx as an mcp server. its code is not shown and is not covered by this review.",
+        "file": ".mcp.json"
+       },
+       {
+        "kind": "settings_write",
+        "detail": "ships a .mcp.json that registers an mcp server named rea with command npx, which grants a runnable capability to the agent when the plugin is enabled.",
+        "file": ".mcp.json"
+       },
+       {
+        "kind": "shell_exec",
+        "detail": "launches `npx -y rea-agents@6.5.0 mcp` as a subprocess, with the -y flag skipping the install confirmation.",
+        "file": ".mcp.json"
+       },
+       {
+        "kind": "network",
+        "detail": "the first call fetches the rea-agents package from the npm registry (registry.npmjs.org) over the network.",
+        "file": "README.md"
+       },
+       {
+        "kind": "description_mismatch",
+        "detail": "the description says 'reverse engineer anything from your terminal or agent with one cli and mcp server' but does not disclose that enabling the plugin downloads and runs third-party npm code through npx.",
+        "file": ".claude-plugin/plugin.json"
+       }
+      ],
+      "model": "anthropic/claude-sonnet-5.5",
+      "reviewed_at": "2026-10-23T01:16:56Z",
+      "override": {
+       "reason": "known upstream tool morluto/rea (MIT), distributed under external/ not authored by us; rea launches rea-agents via npx by design and the install consent sheet shows the full npx -y rea-agents@6.5.0 mcp command before enabling; residual risk (payload fetched from npm at runtime, version-pinned not hash-pinned) accepted by the owner 2026-10-16; repeated by the owner at the sitting for catalog version 6.5.1, which still runs the same npx -y rea-agents@6.5.0 mcp command",
+       "by": "the other operator",
+       "at": "2026-10-23T01:17:00Z"
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "featured": [
+  "carnivore/11-stars"
+ ]
 }

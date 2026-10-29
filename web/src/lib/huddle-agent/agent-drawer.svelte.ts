@@ -85,22 +85,3 @@ export function dockBesideTerminal(open: boolean, width: number): boolean {
 export function widthFromPointer(clientX: number, left: number): number {
   return clientX - left;
 }
-
-export const DRAWER_KEEP_OPEN = [
-  '.had',
-  '[data-agent-drawer-menu-panel]',
-  '.had-scrim',
-  '[role="menu"]',
-  '[role="dialog"]',
-  '[role="alertdialog"]',
-  '[role="listbox"]',
-  '.popup-focus',
-  '.session-sidebar-panel [data-swarm-agent]',
-  '[data-agent-drawer-opener]',
-].join(', ');
-
-export function keepsDrawerOpen(target: EventTarget | null): boolean {
-  if (!(target instanceof Element) || !target.isConnected) return true;
-  if (target.closest(DRAWER_KEEP_OPEN) !== null) return true;
-  return document.body.classList.contains(AGENT_DRAWER_DOCKED_CLASS) && target.closest('#terminal-screen') !== null;
-}

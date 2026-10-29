@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 import structlog
 from pydantic import BaseModel, ConfigDict, StrictBool
 
+from src.api.error_response import api_error, refusal_error
 from src.api.auth import require_auth
 from src.api import automation_timers_listing
 from src.api.automation_list_view import list_view
@@ -45,7 +46,7 @@ def refuse(exc: Exception) -> HTTPException:
     if isinstance(exc, m.AutomationNotFound):
         return HTTPException(404, detail={"code": "not_found"})
     if isinstance(exc, m.AutomationInvalid):
-        return HTTPException(409 if exc.code in _CONFLICTS else 422, detail={"code": exc.code, "message": str(exc)[:300]})
+        return refusal_error(exc, status=409 if exc.code in _CONFLICTS else 422)
     raise exc
 
 
@@ -70,11 +71,6 @@ async def _with_last_run(store: Any, automation: Dict[str, Any]) -> Dict[str, An
 
 
 async def _with_table_fields(store: Any, view: Dict[str, Any]) -> Dict[str, Any]:
-    """Add ``tz`` and each automation's table fields (``run_feed.table_fields`` plus ``files_under``) to the plain list.
-
-    Inputs: store; view ({"automations": [...]}). Output: the view with the extras. An unreadable datastore leaves ``files_under``
-    resting on the automation's own project (logged), never fails the list.
-    """
     rows = view["automations"]
     extras = await asyncio.to_thread(run_feed.table_fields, store, rows)
     try:
@@ -197,7 +193,7 @@ async def put_scheduler_state(body: SchedulerPause) -> Dict[str, Any]:
     try:
         return {"paused": await asyncio.to_thread(pause.set_paused, body.paused)}
     except (FileNotFoundError, ValueError, OSError) as exc:
-        raise HTTPException(status_code=503, detail={"code": "config_unwritable", "error": type(exc).__name__}) from exc
+        raise api_error(503, "config_unwritable", exc) from exc
 
 
 @router.post("")
@@ -245,7 +241,8 @@ def _fires(compiled: Any, now: float, zone: Optional[ZoneInfo] = None) -> List[D
 
 @router.post("/schedule/parse")
 async def parse_schedule(body: ScheduleParse):
-    """
+    """A plain-English schedule as a cron string, through the owner's connected AI (BYOAI feature ``automations.schedule``).
+
     Sends the model only the sentence and the zone name. Answers ``{ok: true, cron, explain, fires}`` (the next five, each with
     ``in_zone`` in the caller's zone beside the machine-local time cron actually runs on) or ``{ok: false, reason, message}``:
     ``no_ai_connection``, ``ai_timeout``, ``ai_error``, ``ai_output_invalid``, ``ai_refused``, or the parser's own ``cron_invalid``,
@@ -265,6 +262,8 @@ async def parse_schedule(body: ScheduleParse):
 
 @router.get("/targets")
 async def list_targets():
+    """The target kinds that have a runner on this install, each recipe and system action with its params schema (drives the
+    picker), and the command allow-list's names (empty until the owner names commands)."""
     from src.core.automations import system_actions  # noqa: PLC0415
     from src.core.automations import command_allowlist  # noqa: PLC0415
 
@@ -337,7 +336,10 @@ def _pressed_by(request: Request) -> Dict[str, Any]:
 @router.post("/{automation_id}/run")
 async def run_automation_now(request: Request, automation_id: str):
     """Run now, outside the schedule. 409 ``already_running``; the gates still apply and a skip comes back as the run row.
-    """
+
+    Who pressed it (the owner in the app, with the owner's name, or the agent behind the MCP call, with its session's
+    name) is kept in the run's ``notes.by`` (``run_by.with_name``), which the developer widget's scheduled tab shows as
+    "run now by ..."."""
     by = await asyncio.to_thread(_pressed_by, request)
     try:
         return run_summary(await get_scheduler(request).run_now(automation_id, by=by))

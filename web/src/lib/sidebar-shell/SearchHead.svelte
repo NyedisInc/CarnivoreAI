@@ -1,4 +1,4 @@
-<!-- a fold chevron -->
+
 <script lang="ts">
     import { t } from '../i18n/index.svelte';
     import '../deepsearch/search-d.css';

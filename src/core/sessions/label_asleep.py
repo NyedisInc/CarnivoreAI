@@ -18,7 +18,7 @@ def set_asleep_label(ident: str, label: str, *, state_dir: Path) -> Optional[tup
     from src.core.crosstalk import directory
 
     validate_label(label)
-    rows = directory._asleep_rows()
+    rows = directory._asleep_rows(state_dir)
     hits = [r for r in rows if str(r["session_uuid"]) == ident] or [r for r in rows if r.get("tmux_name") == ident]
     if len(hits) != 1:
         logger.info("asleep_label_no_unique_row", ident=ident, matches=len(hits))

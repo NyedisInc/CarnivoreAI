@@ -1,4 +1,4 @@
-<!-- <button> -->
+<!-- its own sentence -->
 <script lang="ts">
     import { motionReduced } from '../motion/motion';
     import type { Snippet } from 'svelte';
@@ -22,7 +22,6 @@
         shown: readonly CardView[];
         shownUntrusted: readonly CardView[];
         narrowed: boolean;
-        /* the reading pane */
         selectedId: string | null;
         t: Translate;
         view: ManagerView;
@@ -181,7 +180,6 @@
         display: flex;
         flex-direction: column;
         container-type: inline-size;
-        /* padding */
         --rows-gutter: max(var(--oc-page-gutter, 16px), calc((100cqw - 1680px) / 2 + var(--oc-page-gutter, 16px)));
         overflow: auto;
         min-height: 0;
@@ -327,7 +325,6 @@
         margin: 0;
     }
 
-    /* width:767px */
     @media (max-width: 767px) {
         .rows {
             --rows-gutter: 12px;

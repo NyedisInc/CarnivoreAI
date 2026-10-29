@@ -107,7 +107,7 @@ class GroupWriter:
         rules.check_list_key(list_key)
         name = clean_name(name)
         s = self._store
-        with closing(s._connect(True)) as conn, conn:
+        with s._immediate() as conn:
             groups = live_groups(conn, list_key)
             same = next((g for g in groups if g["name"].casefold() == name.casefold()), None)
             if same is not None:
@@ -133,7 +133,7 @@ class GroupWriter:
         if position is not None and (isinstance(position, bool) or not isinstance(position, int)):
             raise TaskManagerInvalid("position must be an integer (0 is the first group)")
         s = self._store
-        with closing(s._connect(True)) as conn, conn:
+        with s._immediate() as conn:
             row = self._group(conn, group_id)
             key = row["list_key"]
             groups = live_groups(conn, key)
@@ -180,7 +180,7 @@ class GroupWriter:
         updated: List[int] = []
         missing: List[int] = []
         touched: List[str] = []
-        with closing(s._connect(True)) as conn, conn:
+        with s._immediate() as conn:
             for group_id in dict.fromkeys(group_ids):
                 row = conn.execute(f"SELECT {GROUP_COLS} FROM work_item_groups WHERE id = ? AND deleted = 0", (group_id,)).fetchone()
                 if row is None:
@@ -199,7 +199,7 @@ class GroupWriter:
     def remove(self, group_id: int, *, actor: str) -> dict:
         rules.check_actor(actor)
         s = self._store
-        with closing(s._connect(True)) as conn, conn:
+        with s._immediate() as conn:
             row = self._group(conn, group_id)
             key = row["list_key"]
             rows = _ordered(conn, key)
@@ -225,9 +225,9 @@ class GroupWriter:
         if index is not None and (isinstance(index, bool) or not isinstance(index, int)):
             raise TaskManagerInvalid("index must be an integer (0 is the top of the group)")
         if index is not None and actor == CLAUDE:
-            raise TaskManagerForbidden("only the owner orders a list; claude files an item at the bottom of a group")
+            raise TaskManagerForbidden("only joe orders a list; claude files an item at the bottom of a group")
         s = self._store
-        with closing(s._connect(True)) as conn, conn:
+        with s._immediate() as conn:
             row = s._row(conn, item_id)
             if expected_revision is not None and expected_revision != row["revision"]:
                 raise TaskManagerStale("the item changed since you read it", current=item_dict(row))

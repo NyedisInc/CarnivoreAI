@@ -3,6 +3,7 @@
     import { onMount } from 'svelte';
     import { t as reactiveT } from '../../i18n/index.svelte';
     import type { Translate } from '../../sessions/types';
+    import { Button } from '../../base';
     import Check from '../../../opscenter/ui/Check.svelte';
     import '../../settings-page/panel-kit/panel-kit.css';
     import './sync.css';
@@ -51,9 +52,9 @@
             </ul>
         {/if}
         <div class="sy-actions">
-            <button type="button" class="oc-btn" disabled={sync.syncing || sync.body.peers.length === 0} data-sy="now" onclick={() => void syncNow()}>
+            <Button disabled={sync.syncing || sync.body.peers.length === 0} data-sy="now" onclick={() => void syncNow()}>
                 {t(sync.syncing ? 'settings.notify.sync.now_busy' : 'settings.notify.sync.now')}
-            </button>
+            </Button>
         </div>
     {/if}
 </div>

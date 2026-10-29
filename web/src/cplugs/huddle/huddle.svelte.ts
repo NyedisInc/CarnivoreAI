@@ -69,6 +69,7 @@ export async function trackWrite<T>(run: () => Promise<T>, rereads = false): Pro
     writesOut -= 1;
     deltaLanes.settled();
     if (!rereads && readOrder.needsReread()) scheduleRefresh();
+    if (writesOut === 0) retryOwedThread();
   }
 }
 
@@ -123,11 +124,24 @@ function completeOpenItems(items: HuddleItem[]): HuddleItem[] {
   return items.map((i) => (i.id === id ? mergeThread(i, openThread.thread) : i));
 }
 
+let threadOwed: number | null = null;
+
+function retryOwedThread(): void {
+  const id = threadOwed;
+  threadOwed = null;
+  if (id !== null) void loadThread(id);
+}
+
 export async function loadThread(id: number): Promise<void> {
   const ticket = readOrder.begin();
   try {
     const full = await authFetch<HuddleItem>(`/cplugs/huddle/items/${id}`);
-    if (!Array.isArray(full?.thread) || !paints(ticket, 'thread')) return;
+    if (!Array.isArray(full?.thread)) return;
+    if (!paints(ticket, 'thread')) {
+      threadOwed = id;
+      if (writesOut === 0) retryOwedThread();
+      return;
+    }
     const item = findItem(id);
     if (!item) return;
     openThread.id = id;
@@ -469,6 +483,29 @@ export function setApproved(item: HuddleItem, approved: boolean): Promise<boolea
   }), undo);
 }
 
+function staleRevision(error: unknown): number | null {
+  if (!(error instanceof ApiError) || error.status !== 409) return null;
+  const revision = (error.payload as { detail?: { current?: { revision?: unknown } } } | null)?.detail?.current?.revision;
+  return typeof revision === 'number' ? revision : null;
+}
+
+export function approveWithNote(item: HuddleItem, note: string): Promise<boolean> {
+  const undo = applyTick(findItem(item.id) ?? item, true);
+  let revision = item.revision;
+  return write(async () => {
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        await authFetch(`/cplugs/huddle/items/${item.id}`, { method: 'PATCH', body: JSON.stringify({ note, approved: true, expected_revision: revision }) });
+        return;
+      } catch (error) {
+        const current = staleRevision(error);
+        if (current === null || attempt > 0) throw error;
+        revision = current;
+      }
+    }
+  }, undo);
+}
+
 export function setReviewCheck(item: HuddleItem, checkId: string, checked: boolean): Promise<boolean> {
   const undo = applyReviewCheck(findItem(item.id) ?? item, checkId, checked);
   return write(() => authFetch(`/cplugs/huddle/items/${item.id}/review-checks/${seg(checkId)}`, {
@@ -510,7 +547,7 @@ export function deleteItem(item: HuddleItem): Promise<boolean> {
   return write(() => authFetch(`/cplugs/huddle/items/${item.id}`, { method: 'DELETE' }));
 }
 
-/* did not answer */
+/* the server did not answer */
 export async function reply(item: HuddleItem, text: string, files: readonly string[] = [], tells = true, comment = false): Promise<boolean | 'kept'> {
   const ackThrough = boundaryOf(findItem(item.id) ?? item);
   const body = { text, ...(files.length ? { files } : {}), ...(comment ? { kind: 'comment' } : {}), ...(!comment && ackThrough !== undefined ? { ack_through: ackThrough } : {}) };

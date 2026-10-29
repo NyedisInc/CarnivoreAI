@@ -1,3 +1,4 @@
+// could not be read
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -42,6 +43,8 @@ function test(name, fn) {
     }
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('every one of the five tiers reaches the stylesheet as its own value', () => {
     for (let t = 1; t <= 5; t++) {
@@ -55,6 +58,8 @@ test('the owner\'s two named models land on the tiers he named', () => {
     assert.ok(Icon.html('claude-fable-5-1', 5, 'high', null).includes('data-model-tier="5"'));
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the priciest model at the highest effort is topped', () => {
     assert.equal(Icon.isTopped(5, 'xhigh'), true);
@@ -72,6 +77,7 @@ test('a cheaper model at the highest effort is not topped', () => {
 });
 
 test('NEITHER HALF MAY BE UNKNOWN: a null tier or effort is never topped', () => {
+    // could not be read
     assert.equal(Icon.isTopped(null, 'max'), false);
     assert.equal(Icon.isTopped(undefined, 'xhigh'), false);
     assert.equal(Icon.isTopped(5, null), false);
@@ -90,6 +96,8 @@ test('the sparkle element is drawn for the topped state and for nothing else', (
     assert.ok(!plain.includes('data-model-top'));
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('an UNKNOWN MODEL draws no robot rather than a meaningless one', () => {
     assert.equal(Icon.html(null, null, null, null), '');
@@ -116,6 +124,8 @@ test('effort matching is case and whitespace tolerant', () => {
     assert.equal(Icon.isTopped(5, 'MAX'), true);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('a hostile model name cannot escape the attribute it lands in', () => {
     const html = Icon.html('a" onmouseover=alert(1) x="b', 3, 'high', null);
@@ -130,6 +140,8 @@ test('a hostile effort string cannot escape either', () => {
     assert.ok(html.includes('&quot; onload'));
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the robot SVG renders at the provider mark\'s default size', () => {
     const providerSvg = FamilyIcon.svg('claude');

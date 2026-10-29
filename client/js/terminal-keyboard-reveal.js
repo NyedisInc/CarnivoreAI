@@ -1,4 +1,3 @@
-/*  hidden  */
 
 console.log('[TerminalKeyboardReveal Module] Loading...');
 

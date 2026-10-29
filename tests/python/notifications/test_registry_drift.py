@@ -76,6 +76,7 @@ def test_alert_producers_are_the_known_set() -> None:
         "src/core/account_notice/runner.py",
         "src/core/app_alerts/conditions.py",
         "src/core/app_alerts/service.py",
+        "src/core/automations/notify_policy.py",
         "src/core/automations/targets/recipe.py",
         "src/core/backup_health/runner.py",
         "src/core/messaging/runtime.py",
@@ -94,7 +95,7 @@ _NOTIFICATION_FRAMES = {"session.auto_slept", "provider_account.switched", "dev.
 _NON_NOTIFICATION_FRAMES = {
     "log", "local_server_detected", "local_server_lost", "session_status", "command", "error", "ping", "pong",
     "pty_data", "pty_resize", "request_dims", "toast.ack", "session.renamed", "terminal_size", "repaint",
-    "size_master", "events.hello", "session.status", "sessions.changed", "listing.delta", "resources.changed",
+    "size_master", "events.hello", "session.status", "sessions.changed", "listing.delta", "peer.listing", "resources.changed",
     "preferences.changed", "skills.changed", "session.note.changed", "provider_ledger.updated",
     "restore_offer.progress", "auto_sleep.changed", "app_alert.updated", "app_alert.resolved",
     "account.session", "perf.sample", "item_settings.changed",

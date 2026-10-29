@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,7 +12,7 @@ const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
 const BOOT_SRC = read('client/js/slash-commands-boot.js');
 const NAVGEN_SRC = read('client/js/navigation-generation.js');
-const APP_SRC = read('client/js/app.js');
+const APP_SRC = read('client/js/app.js') + read('client/js/app-screen-entry.js');
 const CREATE_FLOW_SRC = read('web/src/lib/launchpad/create-flow.ts');
 const NAVIGATION_SRC = read('web/src/lib/launchpad/navigation.ts');
 const INDEX_HTML = read('client/index.html');
@@ -76,6 +77,9 @@ test('the palette is recorded as loaded once its fetch lands', async () => {
 
 
 test('THE SHOW GATE IS GONE BECAUSE THE THING IT GATED IS GONE', () => {
+    // real.
+    // there is nothing
+    // guard.
     const code = BOOT_SRC.replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/^\s*\/\/.*$/gm, '');
     assert.ok(code.length > 1000, 'the strip must not have emptied the file');
@@ -148,8 +152,8 @@ test('app.js no longer AWAITS the palette above the connect', () => {
     assert.ok(!/await window\.SlashCommandsModal\.init/.test(APP_SRC),
         'the terminal connect must not wait for the command list');
     const starts = (APP_SRC.match(/SlashCommandsBoot\.start\(/g) || []).length;
-    assert.equal(starts, 2,
-        `both entry paths must start it; found ${starts}`);
+    assert.equal(starts, 1,
+        `the one shared entry body must start it; found ${starts}`);
     assert.ok(!/SlashCommandsBoot\.start\([^)]*,\s*nav\)/.test(APP_SRC),
         'neither may still hand it a navigation token: the gate it fed is gone');
 });

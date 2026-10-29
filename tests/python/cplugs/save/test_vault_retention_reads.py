@@ -14,8 +14,8 @@ from src.cplugs.save.vault import restore, retention
 from src.cplugs.save.vault.store import Vault
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 
-EXPORTED = "5440f51e-018d-47a4-8fdf-c52dbf80f162"
-SMALL = "4b45b4eb-e3dc-49bb-86fc-c0bccf6ad9aa"
+EXPORTED = "99999999-aaaa-bbbb-cccc-1234567890ab"
+SMALL = "77777777-aaaa-bbbb-cccc-1234567890ab"
 
 
 def _points(world: World, conv: str, reasons: list) -> None:

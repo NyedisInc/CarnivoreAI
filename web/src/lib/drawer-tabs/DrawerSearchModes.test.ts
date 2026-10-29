@@ -24,6 +24,7 @@ vi.mock('../../opscenter/api/auth.svelte', async (orig) => ({
 
 const REPO = path.resolve(process.cwd(), '..');
 
+/** The drawer's <aside>, exactly as shipped. */
 function drawerMarkup(): string {
     const source = fs.readFileSync(path.join(REPO, 'client', 'index.html'), 'utf8');
     const start = source.indexOf('<aside id="session-sidebar-panel"');
@@ -60,7 +61,7 @@ function render() {
     mounted.push(mount(DrawerSearch, { target }));
     flushSync();
     const input = target.querySelector<HTMLInputElement>('.oc-search > input')!;
-    const button = () => target.querySelector<HTMLButtonElement>('.ds-mode')!;
+    const button = () => target.querySelector<HTMLButtonElement>('[data-ds-mode]')!;
     const rows = () => Array.from(document.querySelectorAll<HTMLElement>('[role="menuitemradio"]'));
     const choose = (id: string) => {
         button().click();

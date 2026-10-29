@@ -32,6 +32,7 @@ const EXPECTED_IDS = [
 
 const CONTROL_IDS = EXPECTED_IDS.concat(['headerMasterAllBtn']);
 
+/* the drawer toggle */
 const TOOL_IDS = [
     'configEditorBtn', 'sessionNotesBtn',
 ];
@@ -64,6 +65,7 @@ function buildHeader(document) {
     return { controls, status };
 }
 
+/* and the real no string layer */
 function load(options = {}) {
     const mobile = options.mobile !== undefined ? !!options.mobile : true;
     const env = createEnvironment({ matches: mobile });
@@ -100,6 +102,8 @@ function buttonIds(node) {
         .map(c => c.getAttribute('id'));
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the module and index.html agree on which controls the menu owns', () => {
     const html = fs.readFileSync(
@@ -156,6 +160,8 @@ test('THE TITLE IS THE HOME CONTROL, and it calls goHome()', () => {
         'goHome must still pause the socket');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the kebab builds the screen rows, above logout and settings', () => {
     const { env } = load();
@@ -195,6 +201,8 @@ test('a missing TerminalController does not throw', () => {
     env.document.getElementById('headerDetachBtn').dispatchEvent('click');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the header builds no search button and its catalog keys are gone', () => {
     const { env } = load({ i18n: true });
@@ -206,6 +214,8 @@ test('the header builds no search button and its catalog keys are gone', () => {
     assert.doesNotMatch(css, /headerSearchBtn/);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the row reads "pause session", never "detach", while its id and wire stay put', () => {
     const { env } = load({ i18n: true });
@@ -231,7 +241,7 @@ test('the pause copy comes from the catalog, not from header-menu.js', () => {
     assert.ok(/^pause session\b/.test(CATALOG[HEADER_ACTION_KEYS.pauseHint]));
 });
 
-test('the phone panel drops the struck qualifiers: theme, pause, notes', () => {
+test('the phone panel drops the struck qualifiers: theme, pause, notes (owner, 2026-09-22)', () => {
     const { env } = load({ i18n: true });
     const expected = {
         headerSessionThemeBtn: 'theme',
@@ -327,6 +337,8 @@ test('the sidebar toggle is never touched', () => {
     assert.ok(!/CONTROL_IDS[\s\S]*session-sidebar-toggle/.test(src));
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('NARROW folds everything into the panel, WIDE unfolds it inline (#317)', () => {
     const narrow = load({ mobile: true });
@@ -418,6 +430,8 @@ test('a second init() is a no-op', () => {
     assert.equal(env.document.querySelectorAll('#header-menu-panel').length, 1);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the dropdown starts closed and hidden', () => {
     const { env, menu } = load({ mobile: true });
@@ -492,6 +506,8 @@ test('every control in the menu keeps an accessible name', () => {
     assert.match(src, /setAttribute\('aria-label', catalogText\('header\.menu\.more_actions'\)\)/);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the dropdown does not dismiss on focus loss', () => {
     const src = fs.readFileSync(

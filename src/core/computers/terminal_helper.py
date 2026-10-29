@@ -27,12 +27,6 @@ def _quote(text: str) -> str:
 
 
 def command_text(venv_python: str, server_dir: str, door_path: str, flags: Sequence[str] = ()) -> str:
-    """The fixed ``.command`` content: ``exec <venv python> -I -c <entry> <server dir> --attach --door <door path>``.
-
-    The door path is the server's own (a path, not a secret), so the helper never guesses it from a different environment. No secret anywhere.
-    ``flags`` are extra interpreter flags placed before ``-I`` (``-I`` ignores the bytecode variables, so the payload python's
-    ``-X pycache_prefix=...`` or ``-B`` rides here, #2490).
-    """
     extra = "".join(f" {_quote(flag)}" for flag in flags)
     return (f"#!/bin/sh\nexec {_quote(venv_python)}{extra} -I -c {_quote(_ENTRY)} {_quote(server_dir)} --attach --door {_quote(door_path)}\n")
 

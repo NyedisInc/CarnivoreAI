@@ -41,7 +41,8 @@ class ProjectView(BaseModel):
 
 
 class SkillView(BaseModel):
-    """
+    """One catalog skill a member asked for, and what the launch does with it.
+
     ``state`` in a preview: ``installed`` (already in that folder),
     ``to_install``, ``unknown`` (not in the catalog), ``untrusted``,
     ``catalog_unavailable``. In a launch: ``installed`` (now),

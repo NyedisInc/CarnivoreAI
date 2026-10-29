@@ -36,7 +36,7 @@ MAX_QUERY_CHARS = 200
 
 
 class HistoryQueryError(ValueError):
-    """A request parameter could not be understood. The message names it."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -183,6 +183,7 @@ def _project_payload(project: Mapping[str, Any], facts: RowFacts) -> Dict[str, A
         "storage": project.get("storage"),
         "pack_state": project.get("pack_state"),
         "moved_to_label": project.get("moved_to_label") or project.get("moved_to_install_id"),
+        "new_sessions_join_swarm": bool(project.get("new_sessions_join_swarm")),
     }
 
 

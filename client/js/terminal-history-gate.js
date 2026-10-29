@@ -1,4 +1,3 @@
-/* connection generation */
 
 console.log('[TerminalHistoryGate Module] Loading...');
 

@@ -6,7 +6,6 @@ console.log('[SessionRowActions Module] Loading...');
     const ACTION_REMOVE = 'remove';
     const ACTION_RESTART = 'restart';
 
-    /* could not */
     const STOPPED_STATUSES = ['dead'];
 
     const LIVE_STATUSES = [
@@ -67,7 +66,6 @@ console.log('[SessionRowActions Module] Loading...');
         return ACTION_LABELS[action] || ACTION_LABELS[ACTION_CLOSE];
     }
 
-    /* width="16" */
     function iconFor(action) {
         if (!window.SessionStatusUI) return '';
         if (action === ACTION_REMOVE) return window.SessionStatusUI.trashIconSvg();
@@ -77,7 +75,6 @@ console.log('[SessionRowActions Module] Loading...');
         return window.SessionStatusUI.closeIconSvg();
     }
 
-    /* <button> role="button" */
     function specs(status, tmuxName, surfaceClass) {
         const cls = surfaceClass ? `${BASE_CLASS} ${surfaceClass}` : BASE_CLASS;
         return actionsFor(status).map(function (action) {
@@ -96,7 +93,6 @@ console.log('[SessionRowActions Module] Loading...');
         });
     }
 
-    /* <button type="button" class="session-row-action ..." ...> */
     function html(status, tmuxName, surfaceClass) {
         return specs(status, tmuxName, surfaceClass)
             .map(function (spec) {
@@ -108,7 +104,6 @@ console.log('[SessionRowActions Module] Loading...');
             .join('');
     }
 
-    /* failed to load */
     function confirm(action, displayName, context) {
         var mod = window.SessionRowActionsConfirm;
         if (!mod) return Promise.resolve(false);

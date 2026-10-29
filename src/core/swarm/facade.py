@@ -10,7 +10,7 @@ from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Typ
 import structlog
 
 from src.core import db
-from src.core.db_reuse.thread_connections import ThreadConnections
+from src.core.db_reuse import datastore_pool
 from src.core.swarm import alerts, alpha, answers, body, company_promote, delivery, facts, learning, project_agent, project_promote, promotion, push, reports, routing, seat_views, sleep_commit, store, suggest, switch, thread_port, turn_off, watch
 from src.core.swarm.cards import dealer, port as card_port
 from src.core.swarm.names import shown_name
@@ -26,8 +26,6 @@ _ACK_ONLY_PREFIXES = (delivery.STUCK_PREFIX, *alerts.ACK_PREFIXES, reports.REPOR
 WAKE_REASONS = frozenset({"owner_message", "crosstalk", "question", "learning", "spawn", "manual", "trust"})
 
 
-_READ_CONNECTIONS = ThreadConnections(lambda path: db.connect(path, create=False))
-
 
 class SwarmFacade:
 
@@ -39,9 +37,10 @@ class SwarmFacade:
     def _read(self, work: Callable[[sqlite3.Connection], T], default: T) -> T:
         path = db.db_path_for(self._state_dir)
         try:
-            return work(_READ_CONNECTIONS.get(path))
+            with closing(datastore_pool.lend(path)) as conn:
+                return work(conn)
         except (db.DatastoreUnreadableError, sqlite3.Error, OSError) as exc:
-            _READ_CONNECTIONS.discard(path)
+            datastore_pool.forget_if_broken(path, exc)
             logger.warning("swarm_facade_unreadable", error_type=type(exc).__name__, error=str(exc)[:300])
             return default
 
@@ -161,10 +160,6 @@ class SwarmFacade:
         return True
 
     async def wake(self, agent_id: int, reason: str) -> WakeTicket:
-        """Wake an agent or join the wake already running (``body.wake``, authority ``data``: no owner words ride a wake).
-
-        Raises: SwarmError - no session manager here, an unknown reason, or the wake was refused or failed.
-        """
         if self._app_state is None:
             raise SwarmError("the Swarm body is not available in this context")
         if reason not in WAKE_REASONS:
@@ -192,15 +187,17 @@ class SwarmFacade:
         if delivery.nothing_landed(refusal):
             delivery.discard(delivery_id)
 
-    async def card_decided(self, swarm_ref: str, decision: str, note: str, owner_message_ref: str) -> None:
+    async def card_decided(self, swarm_ref: str, decision: str, note: str, owner_message_ref: str, *,
+                           structured: Optional[Dict[str, Any]] = None) -> None:
         if self._app_state is None:
             raise SwarmError("the Swarm body is not available in this context")
-        decided = await self._apply_decision(swarm_ref, decision, note, owner_message_ref)
+        decided = await self._apply_decision(swarm_ref, decision, note, owner_message_ref, structured)
         port = thread_port.get()
         if port is not None:
             await port.settle_cards(swarm_ref, resolve=decided)
 
-    async def _apply_decision(self, swarm_ref: str, decision: str, note: str, owner_message_ref: str) -> bool:
+    async def _apply_decision(self, swarm_ref: str, decision: str, note: str, owner_message_ref: str,
+                              structured: Optional[Dict[str, Any]] = None) -> bool:
         approve = decision == "approve"
         if not switch.is_on() and not swarm_ref.startswith(_ACK_ONLY_PREFIXES):
             raise SwarmError(switch.OFF_MESSAGE)
@@ -219,7 +216,7 @@ class SwarmFacade:
         elif swarm_ref.startswith(facts.CONFLICT_PREFIX):
             await self._decide_conflict(swarm_ref[len(facts.CONFLICT_PREFIX):], approve)
         elif swarm_ref.startswith(routing.QUESTION_PREFIX):
-            return await self._answer_question(swarm_ref[len(routing.QUESTION_PREFIX):], decision, note, owner_message_ref)
+            return await self._answer_question(swarm_ref[len(routing.QUESTION_PREFIX):], decision, note, owner_message_ref, structured)
         elif swarm_ref.startswith(routing.WITHDRAWN_PREFIX):
             return True
         elif swarm_ref.startswith(suggest.SUGGEST_PREFIX):
@@ -241,9 +238,10 @@ class SwarmFacade:
         except (sqlite3.Error, db.DatastoreUnreadableError, OSError) as exc:
             raise SwarmError("the decision could not be saved; try again") from exc
 
-    async def _answer_question(self, raw_id: str, decision: str, note: str, owner_message_ref: str) -> bool:
+    async def _answer_question(self, raw_id: str, decision: str, note: str, owner_message_ref: str,
+                               structured: Optional[Dict[str, Any]] = None) -> bool:
         try:
-            return await answers.owner_answer(self._app_state, int(raw_id), decision, note, owner_message_ref)
+            return await answers.owner_answer(self._app_state, int(raw_id), decision, note, owner_message_ref, structured=structured)
         except (ValueError, routing.QuestionRefused) as exc:
             raise SwarmError(str(exc) or "that question card is not valid") from None
         except (sqlite3.Error, db.DatastoreUnreadableError, OSError) as exc:

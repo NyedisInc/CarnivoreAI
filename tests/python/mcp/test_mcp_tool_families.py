@@ -60,7 +60,7 @@ def _pack_row(conn: sqlite3.Connection) -> None:
     store.put(conn, store.LinkRow("peer-install-1", "member", "tls", ""))
 
 
-def _project(conn: sqlite3.Connection, name: str = "ledgerbot") -> tuple[int, str]:
+def _project(conn: sqlite3.Connection, name: str = "trader") -> tuple[int, str]:
     from src.core.project_writes import create_project
 
     row = create_project(conn, name=name, path=f"/tmp/{name}-families-test")
@@ -78,9 +78,9 @@ def test_every_family_member_is_a_registered_tool_and_the_table_is_sane() -> Non
         assert sum(f.has(name) for f in tool_families.FAMILIES) <= 1, name
     assert len(tool_families.BY_KEY["pack"].names) == 33 and len(tool_families.BY_KEY["messaging"].names) == 6
     assert len(tool_families.BY_KEY["ai"].names) == 3 and len(tool_families.BY_KEY["app_settings"].names) == 21
-    dashboard_tools = {"dashboards_list", "widgets_list", "item_settings_get", "item_settings_update", "dashboard_create", "dashboard_rename",
+    joes = {"dashboards_list", "widgets_list", "item_settings_get", "item_settings_update", "dashboard_create", "dashboard_rename",
             "dashboard_layout_set", "dashboard_activate", "dashboard_delete", "widget_bars_reset", "board_export", "board_import"}
-    assert not [n for n in dashboard_tools if tool_families.family_of(n)]
+    assert not [n for n in joes if tool_families.family_of(n)]
     assert tool_families.family_of("themes_list") is None
     assert tool_families.family_of("task_manager_list").key == "huddle"
 
@@ -91,7 +91,7 @@ def test_an_ssh_paired_computer_shows_pack_and_unpairing_hides_it(world) -> None
 
     assert PACK_TOOL not in _names()
     with world.db() as conn:
-        peer_hosts.upsert(conn, install_id="peer-install-9", label="hosta", grant_id="g", fid="f", initiator=True)
+        peer_hosts.upsert(conn, install_id="peer-install-9", label="studio", grant_id="g", fid="f", initiator=True)
     assert PACK_TOOL in _names()
     with world.db() as conn:
         peer_hosts.delete(conn, "peer-install-9")
@@ -160,7 +160,7 @@ def test_messaging_tools_follow_a_stored_provider_and_a_cursor_update_never_flip
     assert MESSAGING_TOOL not in _names()
     how = tool_families.BY_KEY["messaging"].how
     assert "settings > notifications > messaging" in how and "messaging_providers_list" not in how
-    store.create_provider(provider_id="p_1", name="relay", owner_label="the owner", allow_private=False, allow_plain_http=False, capabilities={})
+    store.create_provider(provider_id="p_1", name="relay", owner_label="Joe", allow_private=False, allow_plain_http=False, capabilities={})
     assert MESSAGING_TOOL in _names()
     seen: list = []
     real = family_signals.invalidate
@@ -191,7 +191,7 @@ def test_a_missing_config_holds_no_ai_connection(world) -> None:
 
 
 
-def test_the_app_settings_box_hides_exactly_its_tools_and_owners_stay_visible(cfg) -> None:
+def test_the_app_settings_box_hides_exactly_its_tools_and_joes_stay_visible(cfg) -> None:
     members = tool_families.BY_KEY["app_settings"].names
     off = _names()
     assert not members & off
@@ -294,7 +294,7 @@ def test_add_and_invite_results_say_when_the_pack_tools_unlock(world) -> None:
     async def route(*_a):
         return {"job_id": "j1", "id": "i1", "expires_at": "x"}
 
-    call = SimpleNamespace(route=route, request=None, args={"ssh_target": "acme@hosta", "host_key_sha256": "SHA256:" + "A" * 43})
+    call = SimpleNamespace(route=route, request=None, args={"ssh_target": "alex@studio", "host_key_sha256": "SHA256:" + "A" * 43})
     invited = asyncio.run(ct._invite(call))
     assert invited["note"] == ct.UNLOCK_NOTE and "after the join completes" in ct.UNLOCK_NOTE.lower() and "/mcp reconnect" in ct.UNLOCK_NOTE
     added = asyncio.run(ct._add(call))

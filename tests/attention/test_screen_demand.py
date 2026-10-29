@@ -18,7 +18,8 @@ from src.core.attention.evidence import (
     AttentionVerdict,
     PaneVerdict,
 )
-from src.core.attention.registry_read import parse_registry_record, registry_for_session
+from src.core.attention.registry_record import parse_registry_record
+from src.core.attention.registry_index import registry_for_session
 
 NOW = datetime(2026, 10, 15, 12, 0, tzinfo=timezone.utc)
 PROC_START = "Thu Oct 15 15:52:02 2026"

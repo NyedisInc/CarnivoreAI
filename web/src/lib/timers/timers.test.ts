@@ -56,7 +56,7 @@ function payload(over: Partial<SessionTimers> = {}): SessionTimers {
       { id: 'toolu_w1', kind: 'wakeup', status: 'live', cron: null, human_schedule: null,
         delay_seconds: 1800, recurring: null, durable: null, created_at: '2026-09-27T09:50:00Z',
         fire_at: '2026-09-27T10:20:00Z', expires_at: null, prompt: 'check the deploy', reason: 'waiting' },
-      { id: '49759e95', kind: 'cron', status: 'live', cron: '*/5 * * * *', human_schedule: 'Every 5 minutes',
+      { id: 'ab12cd34', kind: 'cron', status: 'live', cron: '*/5 * * * *', human_schedule: 'Every 5 minutes',
         delay_seconds: null, recurring: true, durable: false, created_at: '2026-09-27T09:00:00Z',
         fire_at: '2026-09-27T10:10:00Z', expires_at: '2026-10-04T09:00:00Z', prompt: 'poll', reason: null },
     ],
@@ -90,6 +90,7 @@ test('no chip for a null, absent, zero or negative live count', () => {
     expect(timerChip({ timers_live: live as never, timers_next_fire_at: '2026-09-27T10:18:00Z' }, NOW)).toBeNull();
     expect(render({ live, sessionId: 's' }).querySelector('.timer-chip')).toBeNull();
   }
+  // Negative control: the same harness does draw a real count.
   expect(render({ live: 1, sessionId: 's' }).querySelector('.timer-chip')).not.toBeNull();
 });
 
@@ -111,6 +112,18 @@ test('the countdown moves on its own clock between polls', async () => {
   vi.advanceTimersByTime(30000);
   flushSync();
   expect(root.querySelector('button')!.textContent).toBe('13m');
+});
+
+test('an unrecognized timer shape counts as unknown, not ended', async () => {
+  reply = payload({ counts: { total: 3, live: 2, fired: 0, cancelled: 0, superseded: 0, expired: 0, lost: 0,
+    refused: 0, unknown: 0, shape_unrecognized: 1 } });
+  const target = document.createElement('div');
+  document.body.append(target);
+  mounted.push(mount(TimerBadge, { target, props: { live: 2, nextFireAt: null, sessionId: 's1', name: 'api work' } }));
+  flushSync();
+  target.querySelector('button')!.click();
+  await settle();
+  expect(document.getElementById(TIMER_LIST_ID)!.textContent).toContain('2 live · 0 ended · 1 unknown');
 });
 
 test('a click opens the list, reads the route once, and does not reach the row', async () => {
@@ -146,5 +159,5 @@ test('not applicable and not measured are said in words, never as an empty table
 });
 
 test('live timers sort first, soonest first', () => {
-  expect(orderRows(payload().timers).map((row) => row.id)).toEqual(['49759e95', 'toolu_w1', 'ef56ab78']);
+  expect(orderRows(payload().timers).map((row) => row.id)).toEqual(['ab12cd34', 'toolu_w1', 'ef56ab78']);
 });

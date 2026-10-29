@@ -39,12 +39,6 @@ def stored_preferences(state_dir: Path) -> Dict[str, bool]:
 
 
 def migrate(state_dir: Path, store: PreferenceStore) -> bool:
-    """Carry the plugin's stored on/off and settings into the preferences once. Output: True when it wrote.
-
-    Inputs: state_dir (the app state directory); store (the ``UiPreferencesStore``). Never raises for a missing or
-      unwritable config (logged; the next boot tries again).
-    Example: migrate(Path("/state"), store) -> True on the first boot after the move, False after
-    """
     try:
         if GATE_FIELD in (store.read().get("values") or {}):
             return False

@@ -60,14 +60,14 @@ async def test_main_dials_the_pinned_member_and_redials_after_a_drop(world):
     dialer = LinkDialer(identity=idents["main"], hub=hub, rows=cache.get, backoff=lambda _attempt: 0, stagger=0.05)
     transport = TlsInitiatorTransport(install_id=MEMBER_IID, host_key="peer-main", rendezvous=rendezvous, get_link=lambda: main_row,
                                       listener_path=str(root / "member.sock"), make_client=_Client,
-                                      addresses=lambda: ["member.local", "198.51.100.15"], listen_port=lambda: listener.port, control_dir=root)
+                                      addresses=lambda: ["member.local", "10.1.2.3"], listen_port=lambda: listener.port, control_dir=root)
     stubs = [await _stub_listener(str(root / "main.sock"), "main", []), await _stub_listener(str(root / "member.sock"), "member", [])]
     try:
         await hub.set_members([Member(MEMBER_IID, GRANT, idents["member"].cert)])
         await asyncio.wait_for(transport.settle(), 5)
         await transport.establish()
         assert linked == [MEMBER_IID] and hub.connected() == [MEMBER_IID]
-        assert hellos == [(MEMBER_IID, ["member.local", "198.51.100.15"], listener.port)]
+        assert hellos == [(MEMBER_IID, ["member.local", "10.1.2.3"], listener.port)]
         assert dialer.dial_state(MEMBER_IID) == {"state": "linked", "since": None}
 
         ctx = client_link_ctx(idents["stranger"], [idents["member"].cert])

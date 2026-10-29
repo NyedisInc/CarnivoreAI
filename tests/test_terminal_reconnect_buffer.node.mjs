@@ -66,6 +66,8 @@ function fakeTerm(opts = {}) {
     };
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 await test('positive control: the module loads and exposes its verdicts', () => {
     const mod = loadModule();
@@ -142,6 +144,8 @@ await test('two absent session ids are NOT the same session', () => {
     assert.equal(mod.isSameSession('a', 'b'), false);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 await test('a freshly reset terminal measures ZERO lines', () => {
     const mod = loadModule();
@@ -190,6 +194,8 @@ await test('an unreadable buffer measures 0, which routes to the OLD behaviour',
         'a failed read must degrade to replace, never to a kept dead screen');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 function el() {
     return {
@@ -206,6 +212,7 @@ function el() {
     };
 }
 
+/* and the real */
 function loadTerminal(term) {
     const sandbox = {
         console: { log() {}, warn() {}, error() {} },
@@ -273,6 +280,7 @@ await test('rejoining the SAME session does NOT reset the terminal', async () =>
 });
 
 await test('a keep NUDGES NOTHING into repainting', async () => {
+    // `ESC[?1000h ESC[?1002h ESC[?1003h ESC[?1006h ESC[?2026h ESC[2J ESC[H`
     const term = fakeTerm({ lines: ['the whole conversation'], cursorY: 40 });
     const { tc } = loadTerminal(term);
     tc._currentSession = { session: { id: 'sess-A' } };
@@ -329,6 +337,8 @@ await test('a first-ever attach (no previous session) resets, as it always did',
     assert.equal(term.calls.reset, 1);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 await test('index.html loads the module BEFORE terminal.js', () => {
     const html = fs.readFileSync(path.join(ROOT, 'client', 'index.html'), 'utf8');

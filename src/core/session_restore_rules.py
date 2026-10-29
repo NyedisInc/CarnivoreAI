@@ -63,15 +63,6 @@ def choose_wrapper(
 def missing_flags(
     observed: Optional[FrozenSet[str]], resolved: Optional[FrozenSet[str]]
 ) -> FrozenSet[str]:
-    """Observed wrapper flags the resolved launch would NOT carry.
-
-    Description: ``resolved`` None means the wrapper's script could not be
-      read; every observed flag then counts as missing, because an unread
-      file cannot be claimed to carry anything.
-    Inputs: observed (frozenset | None). resolved (frozenset | None).
-    Output: frozenset - empty when nothing is lost or nothing was observed.
-    Example: missing_flags(frozenset({'--chrome'}), frozenset())  # {'--chrome'}
-    """
     if not observed:
         return frozenset()
     return frozenset(observed - (resolved or frozenset()))

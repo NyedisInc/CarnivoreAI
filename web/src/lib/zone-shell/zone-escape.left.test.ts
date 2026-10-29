@@ -15,6 +15,10 @@ import { activeFlyout } from '../sidebar-widgets/flyout.svelte';
 import { RAIL_CONTAINER_ID } from '../sidebar-widgets/rail-dom';
 import { SWARM_FLYOUT } from '../sidebar-widgets/widget-ids';
 import { flyout, press, railBtn, railOn, setupRail, settle, teardownRail } from '../sidebar-widgets/fixtures/rail-harness';
+import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+
+// The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
+registerSwarmFlyout();
 
 setLocale('en');
 
@@ -37,6 +41,7 @@ afterEach(async () => {
   await teardownRail();
 });
 
+/** A real Escape keydown from a target; returns the event. */
 function escapeFrom(target: Element): KeyboardEvent {
   const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
   target.dispatchEvent(event);

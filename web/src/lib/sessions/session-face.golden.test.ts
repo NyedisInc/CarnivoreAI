@@ -2,13 +2,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
-import EndedSessionRow from '../launchpad/EndedSessionRow.svelte';
-import ProjectSessionRow from '../launchpad/ProjectSessionRow.svelte';
-import RunningSessionRow from '../launchpad/RunningSessionRow.svelte';
-import { recordingHost as running } from '../launchpad/running-harness';
-import { recordingHost as tree } from '../launchpad/tree-harness';
 import LedgerSessions from '../ledger/LedgerSessions.svelte';
-import PeerSessions from '../hosts-page/PeerSessions.svelte';
 import RowLed from '../sessions-page/RowLed.svelte';
 
 const SIGNALS = {
@@ -17,7 +11,7 @@ const SIGNALS = {
 };
 const VARIANTS: Record<string, Record<string, unknown>> = {
     full: {},
-    'host-down': { host_key: 'peer-1', host_label: 'hosta', host_state: 'disconnected' },
+    'host-down': { host_key: 'peer-1', host_label: 'studio', host_state: 'disconnected' },
     limit: { usage_limit: { resets_at: null } },
 };
 
@@ -56,15 +50,7 @@ describe('session face goldens', () => {
         for (const v of Object.keys(VARIANTS)) {
             const r = rowFor(v);
             const lp = (c: unknown, p: Record<string, unknown>, sel?: string) => paint(c, p).then((root) => face(root, sel));
-            out.push(`## ${v} / launchpad project row\n${await lp(ProjectSessionRow, { row: r, host: tree(), transport: 'connected', t: (k: string) => k }, '.project-session-row__name')}`);
-            unmount(mounted!); mounted = null;
-            out.push(`## ${v} / launchpad running row\n${await lp(RunningSessionRow, { row: r, host: running({ transport: 'connected' }), t: (k: string) => k }, '.running-session-name')}`);
-            unmount(mounted!); mounted = null;
-            out.push(`## ${v} / launchpad ended row\n${await lp(EndedSessionRow, { row: r, host: tree(), t: (k: string) => k }, '.project-session-row__name')}`);
-            unmount(mounted!); mounted = null;
             out.push(`## ${v} / ledger sessions\n${await lp(LedgerSessions, { rows: [r], t: (k: string) => k, onOpen: () => {} }, '.ledger-sessions__name')}`);
-            unmount(mounted!); mounted = null;
-            out.push(`## ${v} / peer sessions\n${await lp(PeerSessions, { peer: { key: 'peer-1', label: 'hosta', state: 'connected' }, t: (k: string) => k, load: async () => [{ ...r, host_key: 'peer-1' }], onOpen: () => {} }, '.host-sessions__name')}`);
             unmount(mounted!); mounted = null;
             out.push(`## ${v} / sessions page led\n${await lp(RowLed, { row: { provider: 'claude', s: { state: 'live' } }, live: r, asleepUnread: false })}`);
             unmount(mounted!); mounted = null;

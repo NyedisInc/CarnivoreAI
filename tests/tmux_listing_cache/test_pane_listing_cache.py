@@ -6,11 +6,12 @@ import time
 
 import pytest
 
-from src.core import tmux_backend
 from src.core.sessions.pane_listing_cache import PANE_LISTING_CACHE, args_mutate_sessions
 from src.core.tmux_backend import TmuxBackend
+from src.core.tmux_transport import local as tmux_transport_local
+from tests.python.tmux_exact_targets.pane_rows import pane_row
 
-ROW = b"cloude_a|0|claude|4821|1755000000|%1|1|80|24|/tmp\n"
+ROW = pane_row("cloude_a", pid=4821).encode()
 
 
 @pytest.fixture
@@ -24,7 +25,8 @@ def backend(monkeypatch, tmp_path):
         return 0, ROW, b""
 
     monkeypatch.setattr(TmuxBackend, "_run_tmux_sync", fake_run)
-    monkeypatch.setattr(tmux_backend, "resolve_tmux_path", lambda: "/usr/bin/tmux")
+    monkeypatch.setattr(tmux_transport_local, "resolve_tmux_path", lambda: "/usr/bin/tmux")
+    monkeypatch.setattr(tmux_transport_local, "tmux_argv_prefix", lambda socket: ["/usr/bin/tmux", "-L", socket])
     probe = TmuxBackend.for_external(
         session_name="__t__", working_dir=tmp_path, on_output=None, socket_name="test-cache-sock")
     yield probe, calls
@@ -68,7 +70,8 @@ def test_real_runner_invalidates_on_mutating_verbs(monkeypatch, tmp_path):
         returncode, stdout, stderr = 0, ROW, b""
 
     monkeypatch.setattr("subprocess.run", lambda argv, **kw: (spawned.append(argv), Done())[1])
-    monkeypatch.setattr(tmux_backend, "resolve_tmux_path", lambda: "/usr/bin/tmux")
+    monkeypatch.setattr(tmux_transport_local, "resolve_tmux_path", lambda: "/usr/bin/tmux")
+    monkeypatch.setattr(tmux_transport_local, "tmux_argv_prefix", lambda socket: ["/usr/bin/tmux", "-L", socket])
     probe = TmuxBackend.for_external(
         session_name="__t__", working_dir=tmp_path, on_output=None, socket_name="test-cache-sock2")
     probe.list_pane_status_all()

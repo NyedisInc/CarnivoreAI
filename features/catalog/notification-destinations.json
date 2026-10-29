@@ -73,20 +73,33 @@
     "Open settings, notifications, destinations, press add a destination, pick a kind from the grouped list (each service has its logo; click the field or use the arrow keys, type to filter), fill in its fields and press add. Secrets are write-only: once saved they show as set, and a blank field keeps the stored one. A webhook generates a signing secret for you and shows it once.",
     "Press test on a destination to send one fixed test message; one test every 10 seconds.",
     "Open settings, notifications, routing. Tick a notification under a destination to send it there. The screen column decides which cards pop up; needs-you rows start ticked and can be unticked like any other. A tick on the new destination column sets what a new destination starts with.",
-    "Press reset to global on a pinned cell to go back to the synced value.",
-    "Turn on details to add the tool and target or the question snippet; sms never gets details.",
-    "Under routing, read the link line: it says which link outside messages carry (mobile sync address, local name, network address or none) and why.",
-    "With a paired computer, settings and secrets sync over the paired link, and each computer keeps secrets in its own Keychain.",
+    "Turn on this computer only, then change a tick: it is pinned here with a local badge and does not sync. Press reset to global on a pinned cell to go back to the synced value.",
+    "On a destination, set away mode (hold a notification while you are active at this computer, and send it once you are away), quiet hours (needs-you notifications still go through), a reminder (minutes, or off) and a project filter (empty means all projects). Turn on details to add the tool and target or the question snippet; sms never gets details.",
+    "Under routing, read the link line: it says which link outside messages carry (mobile sync address, local name, network address or none) and why. Use the pause switch to hold all outside delivery on this computer.",
+    "With a paired computer, settings and secrets sync over the paired link, and each computer keeps secrets in its own Keychain. Pin an item to keep this computer's value.",
     "An agent in a session can call the notify tool to send you one notification of type agent.message, routed by the matrix. The switch is mcp.agent_notify (PUT /api/v1/mcp-admin/agent-notify); off hides the tool.",
     "Existing Slack, ntfy and Pushover settings move into Keychain-backed destinations on their own and the plaintext is removed from config.json and its backup.",
-    "A self-hosted webhook or ntfy server that only speaks http (nflow, Home Assistant) on your own network: on its form turn on allow private addresses, then allow plain http on this network, and use an http:// address. While plain http is on, the message and any auth header cross your network unencrypted; only private addresses are allowed, and a public address stays refused."
+    "A self-hosted webhook or ntfy server that only speaks http (n8n, Home Assistant) on your own network: on its form turn on allow private addresses, then allow plain http on this network, and use an http:// address. Both switches are for this computer only and never sync. While plain http is on, the message and any auth header cross your network unencrypted; only private addresses are allowed, and a public address stays refused."
   ],
   "examples": [
     "You walk away from your desk: the permission and question notifications go to your phone through ntfy or Pushover, and a quiet-hours window keeps the finished-turn pings off at night while a permission request still gets through.",
     "A shared channel gets a Slack message when a session dies, but with details off, so no command or file name leaves the computer.",
     "Your laptop and your desktop are paired: add a destination once and it appears on both, with its secret stored in each computer's Keychain.",
-    "A destination fails five times in a row with a permanent error: it is switched off and a notifications health alert tells you, without that alert being sent outside."
+    "A destination fails five times in a row with a permanent error: it is switched off and a notifications health alert tells you, without that alert being sent outside.",
+    "Home Assistant at http://homeassistant.local:8123 receives your session notifications through a webhook, with plain http turned on for this computer only; the same destination synced to your laptop sits quietly there with a note that plain http is off on that computer, and is never switched off for it."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "destinations.png",
+      "caption": "the destinations tab with no destination yet",
+      "alt": "the notifications destinations settings tab with an add a destination button"
+    },
+    {
+      "kind": "screenshot",
+      "file": "routing-matrix.png",
+      "caption": "the routing matrix",
+      "alt": "the notifications routing tab with the pause switch and a matrix of ticks per notification and destination"
+    }
+  ]
 }

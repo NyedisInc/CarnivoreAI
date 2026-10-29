@@ -85,9 +85,12 @@ mark is on screen at a time. Every identifier underneath stays Cloude.</p>
     <tbody>
         <tr><td>CARNIVORE</td><td>the wordmark art only. Never type the capitals; a title row that shows it in capitals does
             so by CSS.</td></tr>
-        <tr><td>carnivore</td></tr>
-        <tr><td>Carnivore</td></tr>
-        <tr><td>carnivore.ai</td><td>the public site (<code>hosted/site/</code>); <code>catalog.carnivore.ai</code> is the skills
+        <tr><td>carnivore</td><td>UI copy, lowercase like every other string, from the catalog: "carnivore skills catalog",
+            "carnivore moves new sessions".</td></tr>
+        <tr><td>Carnivore</td><td>proper-name places outside the copy: the document title ("music-service - Carnivore",
+            <code>setPageTitle</code> in <code>client/js/app.js</code>), the manifest name, the macOS app name, an aria-label
+            ("Carnivore, go to the home screen").</td></tr>
+        <tr><td>carnivore.ai</td><td>the public site (its own private repo, <code>carnivore-site</code>); <code>catalog.carnivore.ai</code> is the skills
             catalog and its admin. Lowercase, and only where the UI links out.</td></tr>
         <tr><td>Cloude</td><td>every identifier: the tmux socket <code>cloude</code>, the <code>cloude_*</code> session
             prefix, <code>cloude.db</code>, <code>CLOUDE_*</code> variables, the bundle id <code>com.cloudecode.menubar</code>.
@@ -113,23 +116,6 @@ mark is on screen at a time. Every identifier underneath stays Cloude.</p>
 </ul>
 
 <h3 class="sg-h3" id="brand-public-site">the public website</h3>
-<p class="sg-p">The public site is a separate static document, built from
-    <code>web/src/public-site/Page.svelte</code> and
-    <code>web/src/public-site/Continuity.svelte</code>. It uses the supplied claw and
-    wordmark, local JetBrains Mono, the Carnivore blue-green ground and red accent,
-    thin borders and border-only keyboard focus. Its isolated
-    <code>web/src/public-site/site.css</code> maps those brand values to the
-    Scrollcraft engine's tokens; it does not load the app runtime or theme switcher.</p>
-<p class="sg-p">The field-guide pattern has a layered promise, a quiet explanation,
-    one session-continuity illustration, real interface evidence and a steady
-    download plate. The illustration is explicitly conceptual and announces its
-    local state change. Essential copy and links are pre-rendered; small screens and
-    reduced motion use natural flow. Keep source, legal and verified public download
-    links available without scripts. Build, preview and asset contracts are in
-    <code>hosted/site/README.md</code>. Review this standalone page on its own origin
-    rather than mounting its global scroll engine inside an app panel.</p>
-<p class="sg-p">The install command block is <code>web/src/public-site/InstallCommand.svelte</code>
-    (<code>.install-cmd</code>): the one-line installer shown in mono beside a quiet outlined copy
-    button, under the download button in the hero and in the download section. A copy announces
-    "copied" through a polite live region; when the clipboard is refused the command text is
-    selected instead. It stacks to a full-width button under 750px.</p>
+<p class="sg-p">The public site lives in its own private repository, <code>carnivore-site</code>, and deploys from its
+    <code>main</code> branch. Its look, build and asset contracts are in that repository's README; nothing in this app
+    repository builds or serves it.</p>

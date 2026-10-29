@@ -3,6 +3,7 @@
     import { refusalMessage } from '../../../../client/js/labels/skill.js';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import Check from '../../opscenter/ui/Check.svelte';
+    import { Button, Field } from '../base';
     import Icon from '../../opscenter/ui/Icon.svelte';
     import { raiseToast } from '../launchpad/recent-open-feedback';
     import { t } from '../i18n/index.svelte';
@@ -11,6 +12,8 @@
     import { CATALOG_SESSION_EVENT } from '../drawer-hud/catalog-account.svelte';
     import type { CatalogAuthSession, EmailFlowStart } from '../catalog/types';
     import { ACCOUNT_FEATURES } from './features';
+
+    const NEW_TAB: Record<string, string> = { target: '_blank', rel: 'noopener noreferrer' };
     import {
         PRIVACY_URL,
         TERMS_URL,
@@ -234,11 +237,9 @@
                     minutes: minutesOf(typeof codeFlow.expires_in === 'number' ? codeFlow.expires_in : 0),
                 })}
             </p>
-            <label class="modal-label" for="signin-code">{t('skill.signin.email.code.label')}</label>
-            <input
+            <Field
                 id="signin-code"
-                class="modal-input signin__code"
-                type="text"
+                label={t('skill.signin.email.code.label')}
                 inputmode="numeric"
                 autocomplete="one-time-code"
                 bind:value={code}
@@ -246,27 +247,26 @@
                 data-signin-code
             />
             <div class="signin__row">
-                <button type="button" class="modal-btn modal-btn-secondary" disabled={working} onclick={startOver}>
+                <Button disabled={working} onclick={startOver}>
                     {t('skill.signin.email.restart')}
-                </button>
-                <button
-                    type="button"
-                    class="modal-btn modal-btn-confirm"
+                </Button>
+                <Button
+                    variant="confirm"
                     disabled={working || !looksLikeCode(code)}
                     onclick={() => void useCode()}
                     data-signin-use-code
                 >
                     {working ? t('skill.signin.email.checking') : t('skill.signin.email.submit')}
-                </button>
+                </Button>
             </div>
         {:else}
             <div class="signin__providers">
-                <button type="button" class="modal-btn modal-btn-secondary signin__prov" disabled={working || waiting} onclick={() => begin('google')} data-signin-provider="google">
+                <Button disabled={working || waiting} onclick={() => begin('google')} data-signin-provider="google">
                     <span class="signin__icon"><Icon name="google" fill="solid" size={16} /></span>{t('account.modal.google')}
-                </button>
-                <button type="button" class="modal-btn modal-btn-secondary signin__prov" disabled={working || waiting} onclick={() => begin('github')} data-signin-provider="github">
+                </Button>
+                <Button disabled={working || waiting} onclick={() => begin('github')} data-signin-provider="github">
                     <span class="signin__icon"><Icon name="github" fill="solid" size={16} /></span>{t('account.modal.github')}
-                </button>
+                </Button>
             </div>
 
             {#if waiting}
@@ -274,21 +274,20 @@
                 {#if fallbackUrl}
                     <p class="signin__note">{t('account.modal.link_blocked')}</p>
                     <div class="signin__row">
-                        <a class="modal-btn modal-btn-secondary signin__link" href={fallbackUrl} target="_blank" rel="noopener noreferrer" data-signin-link>{t('account.modal.open_link')}</a>
-                        <button type="button" class="modal-btn modal-btn-secondary" onclick={() => void copyLink()}>
+                        <Button href={fallbackUrl} {...NEW_TAB} data-signin-link>{t('account.modal.open_link')}</Button>
+                        <Button onclick={() => void copyLink()}>
                             {copied ? t('account.modal.copied') : t('account.modal.copy_link')}
-                        </button>
+                        </Button>
                     </div>
                 {/if}
-                <button type="button" class="modal-btn modal-btn-secondary" onclick={stopWaiting}>{t('account.modal.stop_waiting')}</button>
+                <Button onclick={stopWaiting}>{t('account.modal.stop_waiting')}</Button>
             {/if}
 
             <div class="signin__or" aria-hidden="true"><span>{t('account.modal.or')}</span></div>
 
-            <label class="modal-label" for="signin-email">{t('account.modal.email_label')}</label>
-            <input
+            <Field
                 id="signin-email"
-                class="modal-input"
+                label={t('account.modal.email_label')}
                 type="email"
                 inputmode="email"
                 autocomplete="email"
@@ -299,15 +298,14 @@
                 data-signin-email
             />
             <div class="signin__row signin__row--end">
-                <button
-                    type="button"
-                    class="modal-btn modal-btn-confirm"
+                <Button
+                    variant="confirm"
                     disabled={working || emailOff || !looksLikeAddress(address)}
                     onclick={() => void sendCode()}
                     data-signin-continue
                 >
                     {t('account.modal.continue')}
-                </button>
+                </Button>
             </div>
         {/if}
 
@@ -322,9 +320,9 @@
     </div>
 
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={() => close(null)} data-signin-cancel>
+        <Button onclick={() => close(null)} data-signin-cancel>
             {t('account.modal.cancel')}
-        </button>
+        </Button>
     {/snippet}
 </ModalShell>
 
@@ -361,10 +359,7 @@
         gap: 6px;
     }
 
-    .signin__prov {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+    .signin__providers :global([data-btn]) {
         gap: 8px;
     }
 
@@ -387,11 +382,7 @@
         justify-content: flex-end;
     }
 
-    .signin__link {
-        text-decoration: none;
-    }
-
-    .signin__code {
+    .signin :global([data-signin-code]) {
         font-family: var(--font-mono);
         font-size: 18px;
         letter-spacing: 0.18em;

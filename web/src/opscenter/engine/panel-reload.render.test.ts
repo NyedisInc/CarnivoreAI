@@ -4,11 +4,11 @@ import { createRawSnippet, flushSync, mount, tick, unmount } from 'svelte';
 import type { CplugRow } from '../../lib/plugins-page/cplugs-adapter';
 
 vi.mock('../../lib/cplug-ui/api', () => ({
-    fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/bubblepop/view/game/t/index.html' })),
+    fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/pillpanic/view/game/t/index.html' })),
     callViewRoute: vi.fn(),
 }));
 
-const SLOT = 'bubblepop.game:panel-abcd1234';
+const SLOT = 'pillpanic.game:panel-abcd1234';
 let mounted: ReturnType<typeof mount> | null = null;
 afterEach(() => { if (mounted) unmount(mounted); mounted = null; document.body.innerHTML = ''; localStorage.clear(); });
 
@@ -43,7 +43,7 @@ test('the grid mounted from a stored layout with an unregistered panel slot draw
     const cell = mount(CellHost, { target: host, props: { id: SLOT, store } });
     await tick();
     expect(host.textContent).toContain('remove this cell');
-    setPanels([{ id: 'bubblepop', runtime: 'sidecar', enabled: true, state: 'active', name: 'Bubble Pop', install_key: 'abcd1234xx',
+    setPanels([{ id: 'pillpanic', runtime: 'sidecar', enabled: true, state: 'active', name: 'Pill Panic', install_key: 'abcd1234xx',
         views: [{ name: 'game', surfaces: ['panel'] }] } as unknown as CplugRow]);
     flushSync(); await tick(); await tick();
     expect(host.textContent).not.toContain('remove this cell');

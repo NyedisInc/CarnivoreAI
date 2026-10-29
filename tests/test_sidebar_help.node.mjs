@@ -5,7 +5,7 @@ import { Doc, fakeStorage, loadModules, results, test } from './lib-sidebar-sess
 function load() {
     return loadModules([
         'status-led.js', 'session-model-icon.js', 'agent-family-icon.js',
-        'session-sidebar-row-controls.js', 'sidebar-help.js',
+        'sidebar-help.js',
     ], { storage: fakeStorage({}), document: new Doc() }).window;
 }
 
@@ -45,6 +45,18 @@ await test('the header now carries its own X, alongside the footer close', () =>
     assert.ok(html.includes('id="sidebar-help-header-close"'), 'the header X is drawn');
     assert.ok(/class="modal-close" id="sidebar-help-header-close"/.test(html), 'it wears the shared modal-close look');
     assert.ok(html.includes('id="sidebar-help-close"'), 'the pre-existing footer close is untouched');
+});
+
+await test('the legend carries the pinned and not pinned rows', () => {
+    const w = load();
+    w.SessionSidebarRowControls = {
+        escAttr: (v) => String(v), escHtml: (v) => String(v),
+        pinLegendHtml: (pinned) => `<button class="session-sidebar-row-pin" aria-pressed="${pinned}"></button>`,
+    };
+    const html = w.SidebarHelp.panelHtml();
+    assert.ok(html.includes('pinned: kept at the top of the list'), 'pinned row');
+    assert.ok(html.includes('not pinned (tilted). click it to pin'), 'not pinned row');
+    assert.ok(html.includes('aria-pressed="true"') && html.includes('aria-pressed="false"'), 'both swatches drawn');
 });
 
 

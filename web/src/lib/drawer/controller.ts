@@ -1,3 +1,4 @@
+import * as Clicks from './clicks';
 import { load } from './fetch';
 import * as Density from './density';
 import * as LeaderVisibility from './leader-visibility';
@@ -9,11 +10,15 @@ import * as ArchivedVisibility from './archived-visibility';
 import * as RowIconPrefs from './row-icon-prefs';
 import type { ListingVerdict } from './listing-state';
 import { repaint as paintList } from './paint';
+import { onGroupToggleClick } from './chrome-clicks';
 import * as Pin from './pin';
 import * as Resize from './resize';
 import type { ArrangedRow } from './arrangement';
 import * as Store from './store';
 import { drawerEnv } from './env';
+import { sidebarShell } from '../sidebar-shell/shell.svelte';
+import { refreshGroups } from '../sidebar-shell/interaction-globals';
+import { init as initGroupKeys } from './group-actions';
 import { rememberLastView, watchSessionDestroyed } from './last-view';
 import { noteDrawerClosed } from '../menu-page/menu-page-origin';
 import { sidebarTabs } from '../dynamic-tabs/tab-store.svelte';
@@ -33,14 +38,6 @@ interface ControllerGlobals {
     BrowserStorageMigrate?: { readMigrating(k: string): string | null; writeMigrating(k: string, v: string): void };
     SessionHeaderLed?: { beginRequest?(): unknown; update?(rows: unknown[], active: string | null): void };
     SessionEntryToasts?: { dismissFor?(id: string | null, name: string | null): void };
-    SessionSidebarReorder?: { init?(): void; isDragging?(): boolean };
-    SessionSidebarGroupActions?: { init?(): void; refresh?(): unknown };
-    SessionSidebarClicks?: {
-        onRowClick(ctrl: unknown, e: MouseEvent): Promise<void>;
-        activateRow(ctrl: unknown, rowEl: Element): Promise<void>;
-        onRowActionClick(ctrl: unknown, btnEl: Element): Promise<void>;
-    };
-    SessionSidebarChromeClicks?: { onGroupToggleClick(ctrl: unknown, btnEl: Element): void };
     App?: { showLaunchpad?(): void };
     CloudeWeb?: {
         layoutPage?: { isActive?(): boolean; holds?(sessionId: string, tmuxName: string): boolean };
@@ -159,12 +156,8 @@ export class SessionSidebarController {
         ClosedVisibility.init();
         ArchivedVisibility.init();
         RowIconPrefs.init();
-        const G = g();
-        G.SessionSidebarReorder?.init?.();
-        if (G.SessionSidebarGroupActions) {
-            G.SessionSidebarGroupActions.init?.();
-            G.SessionSidebarGroupActions.refresh?.();
-        }
+        initGroupKeys();
+        void refreshGroups();
         console.log('SessionSidebar: wired');
     }
 
@@ -271,6 +264,7 @@ export class SessionSidebarController {
             try {
                 SessionSidebarController._writePersisted('0');
             } catch {
+                // the drawer closed
             }
         }
         Pin.apply();
@@ -299,7 +293,6 @@ export class SessionSidebarController {
         Pin.closeAfterSwitch();
     }
 
-    /*  hidden  */
     _startPoll(): void {
         if (this._pollInterval || this._pushStop) return;
         const tick = (): void => {
@@ -328,8 +321,13 @@ export class SessionSidebarController {
         }
     }
 
+    async forceRefresh(): Promise<void> {
+        this._lastSig = null;
+        await this._fetchAndRender();
+    }
+
     async _fetchAndRender(): Promise<void> {
-        if (g().SessionSidebarReorder?.isDragging?.()) return;
+        if (sidebarShell.isDragging()) return;
         if (this._fetchPromise) {
             this._fetchAgain = true;
             return this._fetchPromise;
@@ -385,18 +383,18 @@ export class SessionSidebarController {
     }
 
     async _onRowClick(e: MouseEvent): Promise<void> {
-        await g().SessionSidebarClicks?.onRowClick(this, e);
+        await Clicks.onRowClick(this, e);
     }
 
     _onGroupToggleClick(btnEl: Element): void {
-        g().SessionSidebarChromeClicks?.onGroupToggleClick(this, btnEl);
+        onGroupToggleClick(this, btnEl);
     }
 
     async activateRow(rowEl: Element): Promise<void> {
-        await g().SessionSidebarClicks?.activateRow(this, rowEl);
+        await Clicks.activateRow(this, rowEl);
     }
 
     async _onRowActionClick(btnEl: Element): Promise<void> {
-        await g().SessionSidebarClicks?.onRowActionClick(this, btnEl);
+        await Clicks.onRowActionClick(this, btnEl);
     }
 }

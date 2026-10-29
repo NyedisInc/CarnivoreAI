@@ -34,7 +34,64 @@
     "pane size",
     "multiple windows"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "A terminal toolbar row of icons with a filled gold crown just left of the three-dot menu",
+      "caption": "The toolbar with this window holding the size",
+      "file": "toolbar.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The toolbar's crown going from a dim outline to a filled gold crown when clicked",
+      "caption": "Taking the size with one click",
+      "file": "claim.gif",
+      "kind": "gif"
+    },
+    {
+      "alt": "A small outlined crown in a muted grey",
+      "caption": "No window holds the size: the smallest window wins",
+      "file": "crown-none.png",
+      "kind": "icon",
+      "state": "none"
+    },
+    {
+      "alt": "A small filled gold crown",
+      "caption": "This window holds the size (lit for master)",
+      "file": "crown-master.png",
+      "kind": "icon",
+      "state": "master"
+    },
+    {
+      "alt": "A small outlined crown in a dim gold",
+      "caption": "Another window holds the size: this one is a watcher",
+      "file": "crown-watcher.png",
+      "kind": "icon",
+      "state": "watcher"
+    },
+    {
+      "alt": "A small filled crown in the matrix theme's warning colour",
+      "caption": "The lit crown under the matrix theme",
+      "file": "crown-master-matrix.png",
+      "kind": "icon",
+      "state": "master",
+      "theme": "matrix"
+    },
+    {
+      "alt": "A small filled crown in the dracula theme's warning colour",
+      "caption": "The lit crown under the dracula theme",
+      "file": "crown-master-dracula.png",
+      "kind": "icon",
+      "state": "master",
+      "theme": "dracula"
+    },
+    {
+      "alt": "A smaller window showing the whole terminal scaled down, with a dim gold crown in its toolbar",
+      "caption": "A watcher smaller than the pane shows the whole grid, scaled to fit",
+      "file": "watcher-scaled.png",
+      "kind": "screenshot",
+      "state": "watcher"
+    }
+  ],
   "name": "Size master crown",
   "since": "2026-09-27",
   "status": "stable",
@@ -52,6 +109,5 @@
     "1024px and up: the crown is the icon just left of the three-dot menu in the terminal's toolbar, top right.",
     "Below 1024px: the header's overflow (kebab) menu carries a 'master' row.",
     "The browser-wide switch: the app header's top-right corner (wide windows with the drawer closed) or the drawer's account menu, with the lit crown beside the version while it is on (once the terminal grid replaces the header - the common desktop state); also in the phone kebab menu as 'master all'."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

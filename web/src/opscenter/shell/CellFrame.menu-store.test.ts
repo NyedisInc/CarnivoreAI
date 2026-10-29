@@ -8,6 +8,8 @@ import { homeLayout, terminalLayout, type LayoutStore } from '../engine/layout.s
 import type { SlotId } from '../engine/types';
 import { installPopoverPolyfill } from '../../lib/popover-jsdom-polyfill';
 
+// The corner menu this frame opens is promoted into the top layer (issue
+// #860); jsdom has neither method.
 installPopoverPolyfill();
 
 const SESSION = 'ses_menu_probe';
@@ -47,6 +49,7 @@ function item(items: HTMLElement[], action: string): HTMLElement {
 }
 
 beforeEach(() => {
+  // jsdom carries no ResizeObserver and the frame attaches one as it mounts.
   (globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
     observe(): void {}
     unobserve(): void {}

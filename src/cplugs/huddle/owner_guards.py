@@ -78,8 +78,8 @@ def plan_reply(store: Any, item_id: int, kind: Optional[str], notify: bool, *, q
             f"stored as info because it attaches files, but the owner's message {message_id} is still unanswered: answer it with "
             f"task_manager_reply kind answer quote {message_id} before you set review")})
     words = str(owner["text"] or "").strip()
-    note = (f"stored as an answer to the owner's message {message_id}: an info posted while their newest message is unanswered is an answer "
-            ". next time send kind answer with quote yourself")
+    note = (f"stored as an answer to the owner's message {message_id}: an info posted while his newest message is unanswered is an answer "
+            "(Joe, 2026-10-15). next time send kind answer with quote yourself")
     if notify:
         note += "; notify was dropped, an answer never marks the item unread"
     return ReplyPlan(kinds.ANSWER, message_id if words else None, "" if words else FILES_ONLY_QUOTE, False,
@@ -126,7 +126,7 @@ def review_blockers(conn: sqlite3.Connection, row: Mapping[str, Any]) -> List[st
     asked = conn.execute(f"SELECT id FROM work_messages WHERE item_id = ? AND {_AGENT_OWN_SQL} AND kind = ? AND answered = 0 ORDER BY id",
                          (item_id, *_SYSTEM_KEYS, QUESTION)).fetchall()
     if asked:
-        reasons.append(f"your question {', '.join(str(r['id']) for r in asked)} is still open: wait for their answer")
+        reasons.append(f"your question {', '.join(str(r['id']) for r in asked)} is still open: wait for his answer")
     stuck = review_lock.review_subtasks(conn, item_id)
     if stuck:
         reasons.append(review_lock.subtasks_sentence(stuck, "in review or done") + " (finish each and set it to review)")
@@ -155,7 +155,7 @@ def check_review(conn: sqlite3.Connection, row: Mapping[str, Any], new_state: Op
     if new_state != rules.REVIEW or _exempt(row, actor, act, decided):
         return
     incoming = {k: v for k, v in (review_fields or {}).items() if k in review.FIELDS}
-    if row["state"] == rules.REVIEW:  # already in review
+    if row["state"] == rules.REVIEW:
         queued = pending_handoffs([str(v or "") for k, v in incoming.items() if v != row[k]])
         _refuse([_handoff_reason(queued)] if queued else [])
         return

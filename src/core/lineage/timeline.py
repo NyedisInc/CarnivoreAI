@@ -32,14 +32,6 @@ def _marks(conn: sqlite3.Connection, conversation_id: str) -> List[Dict[str, Any
 
 
 def session_timeline(conn: sqlite3.Connection, session_uuid: str) -> Optional[List[Dict[str, Any]]]:
-    """The ordered conversations of one session, or None when no such session row exists.
-
-    Description: previous conversations come first, ordered by when the session left them (the creation time of
-      their edge to the session); the current conversation is last.
-    Inputs: conn (a v49 datastore); session_uuid.
-    Output: list of ``{conversation_id, current, level, began, milestones}``; None for an unknown session.
-    Example: [c['conversation_id'] for c in session_timeline(conn, 's1')]  # ['old', 'new']
-    """
     row = conn.execute("SELECT claude_session_uuid FROM sessions WHERE session_uuid = ?", (session_uuid,)).fetchone()
     if row is None:
         return None

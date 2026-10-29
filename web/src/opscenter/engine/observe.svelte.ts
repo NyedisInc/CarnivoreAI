@@ -55,7 +55,6 @@ export function observeCell(key: CellId | string) {
   };
 }
 
-/*  hidden  */
 export function surfaceKeyOf(page: LayoutPage): string {
   return page === 'home' ? 'surface' : `surface:${page}`;
 }

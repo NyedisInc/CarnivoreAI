@@ -35,7 +35,7 @@ SPECS = (
                                  "description": "install ids or labels of the target computers"}},
         required=("account", "machines"), invoke=_set,
         summary=lambda args, _t: f"relay Claude account {str(args.get('account'))[:64]} to {len(args.get('machines') or [])} computer(s)",
-        example={"account": "acme", "machines": []},
+        example={"account": "larkspur", "machines": []},
     ),
 )
 

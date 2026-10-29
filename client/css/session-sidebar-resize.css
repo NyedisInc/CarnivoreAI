@@ -1,4 +1,3 @@
-/* position: fixed width: var(--sidebar-dock-w) */
 
 @layer components {
 .session-sidebar-resize-handle {
@@ -33,7 +32,6 @@
     outline: none;
 }
 
-/*  hidden  tabindex= */
 .session-sidebar-panel:not(.session-sidebar-panel--open) .session-sidebar-resize-handle,
 body:not(.session-sidebar-pinned) .session-sidebar-resize-handle {
     display: none;

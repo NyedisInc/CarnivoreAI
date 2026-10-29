@@ -1,4 +1,3 @@
-/* rogue agents */
 import { t } from '../i18n/index.svelte';
 import { announce } from './interaction-globals';
 import { activateRow, armAsleepRow } from './row-activate';
@@ -8,6 +7,7 @@ import {
 import { dataOf, drawer, rg } from './row-globals';
 import { beginRowRename } from './row-rename';
 import * as Arrangement from '../drawer/arrangement';
+import { onKeyClick as onBrowserKeyClick } from '../drawer/browser-rows';
 
 export function movedSentence(name: string, names: string[], crossed?: boolean): string {
     const params = { name, position: names.indexOf(name) + 1, total: names.length };
@@ -51,7 +51,7 @@ export function shiftCloseRow(e: KeyboardEvent, row: HTMLElement): boolean {
     const closeKey = row.querySelector('[data-browser-row-action="close"]');
     if (!closeKey) return false;
     e.preventDefault();
-    void rg().SessionSidebarBrowsers?.onKeyClick?.(closeKey);
+    void onBrowserKeyClick(closeKey);
     return true;
 }
 

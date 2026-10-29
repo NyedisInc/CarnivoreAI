@@ -4,6 +4,7 @@ from pathlib import Path
 from src.api.auth import require_auth
 from src.config import settings
 from src.models import BrowseResponse, DirectoryEntry, MkdirRequest
+from src.api.error_response import api_error
 from typing import List, Optional
 
 router = APIRouter()
@@ -21,9 +22,9 @@ def _build_browse_response(resolved: Path) -> BrowseResponse:
             except (PermissionError, OSError):
                 continue
     except PermissionError:
-        raise HTTPException(status_code=403, detail=f"Permission denied: {resolved}")
+        raise api_error(403, "directory_forbidden", None, path=str(resolved))
     except OSError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read directory: {e}")
+        raise api_error(500, "directory_unreadable", e, path=str(resolved)) from e
 
     parent = str(resolved.parent) if resolved.parent != resolved else None
 
@@ -64,8 +65,8 @@ async def browse_directory(path: Optional[str] = None):
 
     try:
         resolved = target.resolve(strict=False)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid path: {e}")
+    except Exception as e:  # noqa: BLE001
+        raise api_error(400, "path_invalid", e) from e
 
     if not resolved.exists():
         raise HTTPException(status_code=404, detail=f"Path not found: {resolved}")
@@ -97,12 +98,12 @@ async def make_directory(body: MkdirRequest):
 
     try:
         resolved = target.resolve(strict=False)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid path: {e}")
+    except Exception as e:  # noqa: BLE001
+        raise api_error(400, "path_invalid", e) from e
 
     try:
         resolved.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        raise HTTPException(status_code=400, detail=f"Failed to create directory: {e}")
+        raise api_error(400, "directory_create_failed", e, path=str(resolved)) from e
 
     return _build_browse_response(resolved)

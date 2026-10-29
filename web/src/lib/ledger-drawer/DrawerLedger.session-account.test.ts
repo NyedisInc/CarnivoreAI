@@ -48,7 +48,7 @@ afterEach(() => {
 
 function render(): HTMLElement {
   fakeLedger.data = {
-    accounts: [account('gmail', 'the owner Gmail'), account('initech', 'the owner INITECH')],
+    accounts: [account('gmail', 'Joe Gmail'), account('imc', 'Joe IMC')],
     total: { accounts: 2, windows: [] },
     loop: { alive: true, last_pass_at: null },
   };
@@ -77,25 +77,25 @@ describe('DrawerLedger: the selected session highlights its own account', () => 
   });
 
   test('the highlight follows the selection', () => {
-    usageBySession.a = { state: 'ok', account: { id: 'initech' } };
+    usageBySession.a = { state: 'ok', account: { id: 'imc' } };
     usageBySession.b = { state: 'ok', account: { id: 'gmail' } };
     const el = render();
     select('a');
-    expect(marked(el)).toEqual(['the owner INITECH']);
+    expect(marked(el)).toEqual(['Joe IMC']);
     select('b');
-    expect(marked(el)).toEqual(['the owner Gmail']);
+    expect(marked(el)).toEqual(['Joe Gmail']);
   });
 
   test('an unread transcript still highlights the resolved account', () => {
-    usageBySession.a = { state: 'unchecked', account: { id: 'initech' } };
+    usageBySession.a = { state: 'unchecked', account: { id: 'imc' } };
     const el = render();
     select('a');
-    expect(marked(el)).toEqual(['the owner INITECH']);
+    expect(marked(el)).toEqual(['Joe IMC']);
   });
 
   test('an unknown account marks nothing, and the marked row says why', () => {
     usageBySession.a = { state: 'ok', account: null };
-    usageBySession.b = { state: 'ok', account: { id: 'initech' } };
+    usageBySession.b = { state: 'ok', account: { id: 'imc' } };
     const el = render();
     select('a');
     expect(marked(el)).toEqual([]);

@@ -1,42 +1,39 @@
 :root,
 [data-session-theme] {
-    --bot-ground-chrome: var(--oc-ground-chrome);
-    --bot-ground-page: var(--oc-ground-page);
-    --bot-ground-panel: var(--oc-ground-panel);
-    --bot-ground-raised: var(--oc-ground-raised);
-    --bot-ground-card: var(--oc-ground-card);
-    --bot-ground-titlerow: var(--oc-ground-titlerow);
-    --bot-ground-hover: var(--oc-ground-hover);
-    --bot-ground-field: var(--oc-ground-field);
-    --bot-line-rule: var(--oc-line-rule);
-    --bot-strip-edge: var(--oc-strip-edge);
-    --bot-line-chrome: var(--oc-line-chrome);
-    --bot-line-faint: var(--oc-line-faint);
-    --bot-text-primary: var(--oc-text-primary);
-    --bot-text-secondary: var(--oc-text-secondary);
-    --bot-text-muted: var(--oc-text-muted);
-    --bot-orange: var(--oc-orange);
-    --bot-orange-bright: var(--oc-orange-bright);
+    --cv-ground-chrome: var(--oc-ground-chrome);
+    --cv-ground-page: var(--oc-ground-page);
+    --cv-ground-panel: var(--oc-ground-panel);
+    --cv-ground-raised: var(--oc-ground-raised);
+    --cv-ground-card: var(--oc-ground-card);
+    --cv-ground-titlerow: var(--oc-ground-titlerow);
+    --cv-ground-hover: var(--oc-ground-hover);
+    --cv-ground-field: var(--oc-ground-field);
+    --cv-line-rule: var(--oc-line-rule);
+    --cv-strip-edge: var(--oc-strip-edge);
+    --cv-line-chrome: var(--oc-line-chrome);
+    --cv-line-faint: var(--oc-line-faint);
+    --cv-text-primary: var(--oc-text-primary);
+    --cv-text-secondary: var(--oc-text-secondary);
+    --cv-text-muted: var(--oc-text-muted);
+    --cv-orange: var(--oc-orange);
+    --cv-orange-bright: var(--oc-orange-bright);
 }
 
-/* --color- */
 html {
-    background-color: var(--bot-ground-page);
+    background-color: var(--cv-ground-page);
 }
 
-/* border-bottom: var(--color-accent) */
 .header {
-    background: var(--bot-ground-chrome);
-    border-bottom: 1px solid var(--bot-line-rule);
+    background: var(--cv-ground-chrome);
+    border-bottom: 1px solid var(--cv-line-rule);
 }
 
 #header-session-led {
     display: none;
 }
 
-/* --color- */
 .session-sidebar-panel {
-    background: var(--bot-ground-chrome);
+    background: var(--cv-ground-chrome);
 }
 
 .session-sidebar-row {
@@ -47,29 +44,20 @@ html {
     background: var(--color-accent-bg);
 }
 
-/* The prompt strip follows the owning cell's scope, including its border.
-
- * IT HAPPENED AGAIN THE SAME DAY, ON THE OTHER PROPERTY. The strip's rule
- * was lit with the accent (`--oc-strip-edge`) and the terminal screen went
- * on drawing the neutral hairline, because `border-color` here outranks
- * the component's `border-bottom` shorthand just as `background` does.
- * Measured, not assumed: the border pixel read #1f2e30 before and after.
- * `box-shadow` is deliberately NOT listed below - this rule must stay
- * silent on it so the component keeps sole ownership of the glow. */
 #terminal-screen .prompt-header {
-    background: var(--bot-ground-card);
-    border-color: var(--bot-strip-edge);
+    background: var(--cv-ground-card);
+    border-color: var(--cv-strip-edge);
 }
 
 #terminal-screen .prompt-header-root--inline > .prompt-header {
-    background: var(--bot-ground-titlerow);
+    background: var(--cv-ground-titlerow);
 }
 
 :is(.header h1, .session-sidebar-title) {
     font-family: var(--font-mono);
     font-weight: 400;
     letter-spacing: 0;
-    color: var(--bot-orange);
+    color: var(--cv-orange);
 }
 
 .session-sidebar-title {
@@ -92,25 +80,25 @@ body:has(#terminal-screen.active) :is(#header-title-text, #header-rename-pencil)
 :is(.header .controls > button, .session-sidebar-toggle,
     .session-sidebar-pin) {
     background: transparent;
-    border: 1px solid var(--bot-line-rule);
+    border: 1px solid var(--cv-line-rule);
     border-radius: 4px;
-    color: var(--bot-orange);
+    color: var(--cv-orange);
 }
 
 .session-sidebar-pin[aria-pressed="true"] {
-    border-color: var(--bot-orange);
+    border-color: var(--cv-orange);
     background: var(--oc-orange-tint);
 }
 
 :is(.header .controls > button, .session-sidebar-toggle,
     .session-sidebar-pin):hover {
-    background: var(--bot-ground-hover);
+    background: var(--cv-ground-hover);
 }
 
 .header-menu-panel button {
     font-family: var(--font-mono);
     font-weight: 400;
-    color: var(--bot-orange);
+    color: var(--cv-orange);
 }
 
 .session-sidebar-row[aria-selected="true"] .session-sidebar-row-name {
@@ -119,10 +107,10 @@ body:has(#terminal-screen.active) :is(#header-title-text, #header-rename-pencil)
 
 .config-editor-toggle--root .config-editor-root-label {
     font-weight: 400;
-    color: var(--bot-orange);
+    color: var(--cv-orange);
 }
 
 .config-editor-toggle-glyph {
-    color: var(--bot-orange);
+    color: var(--cv-orange);
 }
 

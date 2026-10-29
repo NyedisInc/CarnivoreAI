@@ -16,7 +16,7 @@ from src.core.federation.peer_client import PeerUnreachable
 from src.core.pack.machines import config_state
 from src.core.pack.machines.restrictions import Restrictions
 
-HOSTA = "peer-86c51bb64fdd233bb5e1"
+STUDIO = "peer-4d3f86db2ae6cf5f23e5"
 STATUS = {"attached": True, "state": "available", "current_version": "1.17.0", "latest_version": "1.17.1", "percent": None,
           "detail": None, "checked_at": 1.0, "auto_update": False, "command_seq": 4, "command": "check"}
 
@@ -43,7 +43,7 @@ class FakeLinks:
 
 @pytest.fixture
 def world(monkeypatch, tmp_path):
-    peer = SimpleNamespace(key=HOSTA, peer_install_id="iid-hosta", label="hosta")
+    peer = SimpleNamespace(key=STUDIO, peer_install_id="iid-studio", label="studio")
     monkeypatch.setattr(peer_app_update.peer_hosts, "list_peers", lambda conn: [peer])
     monkeypatch.setattr(peer_auth, "open_db", lambda: SimpleNamespace(close=lambda: None))
     client = FakeClient({("GET", "/federation/app-update"): (200, STATUS),
@@ -61,12 +61,12 @@ def world(monkeypatch, tmp_path):
 
 
 def test_allowed_calls_reach_the_peer_and_show_only_the_status_fields(world):
-    body = world.get(f"/api/v1/app-update/computer/{HOSTA}").json()
+    body = world.get(f"/api/v1/app-update/computer/{STUDIO}").json()
     assert body["status"] == "ok" and body["update"]["latest_version"] == "1.17.1"
     assert "command_seq" not in body["update"]
-    assert world.post(f"/api/v1/app-update/computer/{HOSTA}/check").json()["status"] == "ok"
-    assert world.post(f"/api/v1/app-update/computer/{HOSTA}/install").json()["status"] == "ok"
-    assert world.put(f"/api/v1/app-update/computer/{HOSTA}/auto-update", json={"enabled": True}).json()["update"]["auto_update"] is True
+    assert world.post(f"/api/v1/app-update/computer/{STUDIO}/check").json()["status"] == "ok"
+    assert world.post(f"/api/v1/app-update/computer/{STUDIO}/install").json()["status"] == "ok"
+    assert world.put(f"/api/v1/app-update/computer/{STUDIO}/auto-update", json={"enabled": True}).json()["update"]["auto_update"] is True
     assert [c[:2] for c in world.peer.calls] == [("GET", "/federation/app-update"), ("POST", "/federation/app-update/check"),
                                                  ("POST", "/federation/app-update/install"), ("PUT", "/federation/app-update/auto-update")]
     assert world.peer.calls[-1][2] == {"enabled": True}
@@ -74,7 +74,7 @@ def test_allowed_calls_reach_the_peer_and_show_only_the_status_fields(world):
 
 def test_a_feed_url_or_any_other_field_is_refused_before_the_peer(world):
     for body in ({"enabled": True, "feed_url": "https://evil.example"}, {"feed_url": "https://evil.example"}, {"enabled": "yes"}):
-        assert world.put(f"/api/v1/app-update/computer/{HOSTA}/auto-update", json=body).status_code == 422
+        assert world.put(f"/api/v1/app-update/computer/{STUDIO}/auto-update", json=body).status_code == 422
     assert world.peer.calls == []
 
 
@@ -86,25 +86,25 @@ def test_a_request_that_arrived_from_a_peer_is_not_forwarded(world):
         request.state.peer_grant = object()
         return await call_next(request)
 
-    assert world.get(f"/api/v1/app-update/computer/{HOSTA}").json() == {"status": "unavailable", "reason": "not_local"}
-    assert world.post(f"/api/v1/app-update/computer/{HOSTA}/install").json()["reason"] == "not_local"
+    assert world.get(f"/api/v1/app-update/computer/{STUDIO}").json() == {"status": "unavailable", "reason": "not_local"}
+    assert world.post(f"/api/v1/app-update/computer/{STUDIO}/install").json()["reason"] == "not_local"
     assert world.peer.calls == []
 
 
 def test_an_old_computer_reads_as_unsupported_not_an_error(world):
     world.peer.answers[("GET", "/federation/app-update")] = (404, {"detail": "Not Found"})
     world.peer.answers[("POST", "/federation/app-update/install")] = (405, {"detail": "Method Not Allowed"})
-    assert world.get(f"/api/v1/app-update/computer/{HOSTA}").json() == {"status": "unsupported"}
-    assert world.post(f"/api/v1/app-update/computer/{HOSTA}/install").json() == {"status": "unsupported"}
+    assert world.get(f"/api/v1/app-update/computer/{STUDIO}").json() == {"status": "unsupported"}
+    assert world.post(f"/api/v1/app-update/computer/{STUDIO}/install").json() == {"status": "unsupported"}
 
 
 def test_refusals_and_a_dead_link_are_named_not_raised(world):
     world.peer.answers[("POST", "/federation/app-update/install")] = (403, {"detail": {"code": "pack_restricted"}})
-    assert world.post(f"/api/v1/app-update/computer/{HOSTA}/install").json() == {"status": "refused", "reason": "pack_restricted"}
+    assert world.post(f"/api/v1/app-update/computer/{STUDIO}/install").json() == {"status": "refused", "reason": "pack_restricted"}
     world.peer.answers[("POST", "/federation/app-update/check")] = (409, {"detail": "no desktop app is attached to this server"})
-    assert world.post(f"/api/v1/app-update/computer/{HOSTA}/check").json()["reason"] == "http_409"
+    assert world.post(f"/api/v1/app-update/computer/{STUDIO}/check").json()["reason"] == "http_409"
     world.peer.answers[("GET", "/federation/app-update")] = PeerUnreachable("down")
-    assert world.get(f"/api/v1/app-update/computer/{HOSTA}").json() == {"status": "unavailable", "reason": "unreachable"}
+    assert world.get(f"/api/v1/app-update/computer/{STUDIO}").json() == {"status": "unavailable", "reason": "unreachable"}
     assert world.get("/api/v1/app-update/computer/peer-nobody").json()["reason"] == "not_paired"
 
 

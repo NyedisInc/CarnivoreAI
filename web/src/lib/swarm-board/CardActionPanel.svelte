@@ -59,7 +59,6 @@
 
 <style>
   @layer components {
-    /* box-shadow */
     .sbp {
       display: flex;
       flex-direction: column;

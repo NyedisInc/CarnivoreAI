@@ -1,4 +1,4 @@
-<!-- <button> -->
+
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import type { RowChipSpec } from './row-plan';

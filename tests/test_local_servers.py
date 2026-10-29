@@ -40,7 +40,7 @@ def test_extract_port_flask_running_on_url():
 
 
 def test_extract_port_generic_https_url():
-    assert extract_port("Server reachable at https://example.net:8443/") == 8443
+    assert extract_port("Server reachable at https://example.dev:8443/") == 8443
 
 
 def test_extract_port_ipv4_loopback_in_url():

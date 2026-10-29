@@ -58,7 +58,6 @@ export function dayText(iso: string): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/* first published */
 export function newSince(items: readonly { id?: unknown; first_published_at?: unknown }[], since: string): Set<string> {
     const at = Date.parse(since);
     const out = new Set<string>();

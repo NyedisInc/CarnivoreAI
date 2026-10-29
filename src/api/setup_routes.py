@@ -1,29 +1,3 @@
-"""The setup / upgrade wizard: one code path, two modes.
-
-WHAT THIS REPLACES
-
-THE TWO MODES ARE ONE PAGE
-
-    First-run setup   - setup is not finished. There is no credential to
-                        authenticate with yet, so the wizard answers without
-                        one. The server is pinned to loopback for exactly this
-                        window; see src/core/setup_state.py.
-    Upgrade review    - setup is finished. The same page, the same endpoints,
-                        now behind the same TOTP session every other API route
-                        requires.
-
-HOW THE AUTH GATE WORKS, AND WHAT IT IS NOT
-
-``guard_wizard_access`` requires a valid access token when, and only when,
-setup is complete. It is not a second auth system: on the protected side it
-delegates to the very same ``require_auth`` the rest of the API uses, so a
-change to token handling cannot leave this route behind on an old rule.
-
-The HTML shell at ``/setup`` is served unconditionally and contains no state
-at all - every fact on the page arrives from the guarded JSON endpoints below,
-so an unauthenticated fetch of the shell after setup reveals nothing beyond
-the fact that this software is running, which the login page already reveals.
-"""
 
 from __future__ import annotations
 
@@ -56,6 +30,7 @@ from src.core.setup_state import (
     current_exposure,
     current_setup_state,
 )
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -158,11 +133,6 @@ def _config_path() -> Path:
 
 
 def _state_dir() -> Path:
-    """Resolve the durable state directory holding the recorded merge base.
-
-    Returns:
-        The state directory path.
-    """
     return Path(settings.get_state_dir())
 
 
@@ -281,10 +251,7 @@ async def setup_apply(
     try:
         mine = load_json(config_path) or {}
     except json.JSONDecodeError as exc:
-        raise HTTPException(
-            status_code=409,
-            detail=f"config.json is not valid JSON ({exc}); refusing to merge.",
-        )
+        raise api_error(409, "config_not_json", None, error_type=type(exc).__name__, position=exc.pos)
 
     take_new = {d.path for d in body.decisions if d.choice == "take_new"}
     if not take_new:
@@ -304,7 +271,6 @@ async def setup_apply(
                 break
             source = source[part]
         if source is None:
-            # could not
             continue
 
         cursor = updated
@@ -320,9 +286,8 @@ async def setup_apply(
         backup_target, outcome = back_up_config(config_path, state_dir)
         config_path.write_text(json.dumps(updated, indent=2) + "\n", encoding="utf-8")
     except (OSError, RuntimeError) as exc:
-        raise HTTPException(status_code=500, detail=f"apply failed: {exc}")
+        raise api_error(500, "setup_apply_failed", exc) from exc
 
-    # CANNOT DETERMINE
     try:
         (state_dir / "config-base.json").write_text(
             json.dumps(effective, indent=2) + "\n", encoding="utf-8"

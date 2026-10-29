@@ -31,6 +31,33 @@ describe('the block grammar', () => {
     expect(render('1. a\n2. b').textContent).toBe('ab');
   });
 
+  it("draws an agent's 14 numbered questions as one list with each item's options nested under it (#2586)", () => {
+    const question = (n: number): string => {
+      const pad = ' '.repeat(`${n}. `.length);
+      return `${n}. **Question ${n}.**\n${pad}- a) First.\n${pad}- b) Second.\n${pad}- **Pick: a.**`;
+    };
+    const source = `## Questions\n\nReply "all picks".\n\n${Array.from({ length: 14 }, (_, i) => question(i + 1)).join('\n')}`;
+    const host = render(source);
+    const lists = host.querySelectorAll(':scope > ol');
+    expect(lists).toHaveLength(1);
+    const items = host.querySelectorAll(':scope > ol > li');
+    expect(items).toHaveLength(14);
+    items.forEach((item, i) => {
+      expect(item.querySelector('strong')?.textContent).toBe(`Question ${i + 1}.`);
+      expect(Array.from(item.querySelectorAll(':scope > ul > li')).map((li) => li.textContent)).toEqual([
+        'a) First.',
+        'b) Second.',
+        'Pick: a.',
+      ]);
+    });
+    expect(host.querySelector(':scope > ul')).toBeNull();
+    expect(host.textContent).not.toContain('- a)');
+    const resumed = render('intro\n\n9. nine\n\n10. ten\n    - child').querySelector('ol');
+    expect(resumed?.getAttribute('start')).toBe('9');
+    expect(resumed?.querySelectorAll(':scope > li')).toHaveLength(2);
+    expect(resumed?.querySelector('li:nth-child(2) > ul > li')?.textContent).toBe('child');
+  });
+
   it('keeps a fenced block literal, markers and all', () => {
     const host = render('```\n**not bold**\n# not a heading\n```');
     expect(tags('```\nx\n```')).toEqual(['pre', 'code']);

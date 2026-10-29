@@ -151,7 +151,7 @@ def test_p5_locked_bind_does_not_warn(env):
 
 def test_r1_lan_client_on_an_unlocked_bind(env, monkeypatch):
     monkeypatch.setenv("CLOUDE_BOUND_HOST", "0.0.0.0")
-    refused(enroll(env, client=("198.51.100.18", 50000)))
+    refused(enroll(env, client=("192.168.1.50", 50000)))
 
 
 @pytest.mark.parametrize("header", [
@@ -162,8 +162,8 @@ def test_r2_to_r7_forwarding_headers(env, header):
 
 
 @pytest.mark.parametrize("host", [
-    f"198.51.100.18:{PORT}", f"127.0.0.1:{PORT + 1}", "127.0.0.1",
-    "example.net#@localhost", "example.net?.localhost",
+    f"192.168.1.50:{PORT}", f"127.0.0.1:{PORT + 1}", "127.0.0.1",
+    "evil.com#@localhost", "evil.com?.localhost",
 ])
 def test_r8_to_r12_bad_host(env, host):
     refused(enroll(env, {"host": host}))
@@ -302,7 +302,7 @@ def test_s11_tombstone(env, monkeypatch, hatch):
 
 def test_w1_wizard_state_is_local_only_while_incomplete(env):
     assert env.client().get("/api/v1/setup/state").status_code == 200
-    resp = env.client(client=("192.0.2.13", 50000)).get("/api/v1/setup/state")
+    resp = env.client(client=("10.0.0.5", 50000)).get("/api/v1/setup/state")
     assert resp.status_code == 403 and resp.json()["detail"]["reason"] == "setup_local_only"
 
 

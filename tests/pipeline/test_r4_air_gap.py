@@ -22,7 +22,7 @@ from src.core.stats.plugin.extract import project_key
 from src.core.stats.store import StatsStore
 
 WORD = "zebrafoo"
-MID, OPEN, GROW, NESTED, SUBOK, URI = (f"{n:08d}-810d-e10e-fb30-4f4c6232a9c6" for n in range(1, 7))
+MID, OPEN, GROW, NESTED, SUBOK, URI = (f"{n:08d}-aaaa-bbbb-cccc-1234567890ab" for n in range(1, 7))
 
 
 def _line(i: int, text: str, cwd: str) -> bytes:

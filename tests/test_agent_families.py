@@ -79,7 +79,7 @@ def test_is_valid_family_and_get_family_fallback():
 
 
 def test_bare_shell_resolves_to_the_shell_family_not_a_wrapper():
-    family, explicit = resolve_agent_type("shell", [_w("keyc"), _w("claude")])
+    family, explicit = resolve_agent_type("shell", [_w("cld"), _w("claude")])
     assert family.name == "shell"
     assert explicit is None
 
@@ -102,21 +102,21 @@ def test_a_wrapper_can_never_shadow_a_reserved_family_name():
 
 
 def test_wrapper_id_wins_for_a_non_reserved_name():
-    keyc = _w("keyc")
-    family, explicit = resolve_agent_type("keyc", [_w("claude"), keyc])
+    cld = _w("cld")
+    family, explicit = resolve_agent_type("cld", [_w("claude"), cld])
     assert family.name == "claude"
-    assert explicit is keyc
+    assert explicit is cld
 
 
 def test_agent_type_claude_prefers_a_wrapper_literally_named_claude():
     seeded = _w("claude", default=False)
-    other = _w("keyc", default=True)
+    other = _w("cld", default=True)
     family, explicit = resolve_agent_type("claude", [seeded, other])
     assert explicit is seeded
 
 
 def test_agent_type_claude_falls_through_when_no_such_wrapper_id():
-    family, explicit = resolve_agent_type("claude", [_w("keyc", default=True)])
+    family, explicit = resolve_agent_type("claude", [_w("cld", default=True)])
     assert family.name == "claude"
     assert explicit is None
 
@@ -135,7 +135,7 @@ def test_resolution_is_case_insensitive():
 
 def test_a_codex_wrapper_id_resolves_into_the_codex_family():
     cw = _w("my-codex", family="codex")
-    family, explicit = resolve_agent_type("my-codex", [_w("keyc"), cw])
+    family, explicit = resolve_agent_type("my-codex", [_w("cld"), cw])
     assert family.name == "codex"
     assert explicit is cw
 
@@ -149,19 +149,19 @@ def test_wrappers_for_family_preserves_order_and_isolates_families():
 
 
 def test_wrappers_for_family_treats_a_familyless_dict_as_claude():
-    legacy = {"id": "keyc", "label": "keyc", "script": "x"}
+    legacy = {"id": "cld", "label": "cld", "script": "x"}
     assert wrappers_for_family([legacy], "claude") == [legacy]
 
 
 
 def test_wrapper_family_defaults_to_claude_when_absent():
-    w = AgentWrapper(id="keyc", label="keyc", script="keyc")
+    w = AgentWrapper(id="cld", label="cld", script="cld")
     assert w.family == DEFAULT_FAMILY
 
 
 @pytest.mark.parametrize("blank", [None, "", "   "])
 def test_wrapper_blank_family_coerces_to_default(blank):
-    w = AgentWrapper(id="keyc", label="keyc", script="keyc", family=blank)
+    w = AgentWrapper(id="cld", label="cld", script="cld", family=blank)
     assert w.family == DEFAULT_FAMILY
 
 

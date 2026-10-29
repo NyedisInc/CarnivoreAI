@@ -1,4 +1,3 @@
-/* could not */
 
 export interface CollectionState {
     rows: Record<string, unknown>[];

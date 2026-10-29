@@ -1,4 +1,4 @@
-/* cannot fork the account chip */
+/* the account chip */
 import { flushSync } from 'svelte';
 import { drawerEnv } from './env';
 import { mountPanel, unmountPanel } from '../mount';

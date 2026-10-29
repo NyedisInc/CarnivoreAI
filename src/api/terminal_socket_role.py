@@ -65,26 +65,6 @@ def role_for_query(query_params: Optional[Mapping[str, Any]]) -> TerminalSocketR
 
 
 def refuse_frame(session_id: Optional[str], reason: str) -> None:
-    """Record one frame dropped because the socket may not write.
-
-    Description: the ONE refusal site, so every drop carries the same
-      event name and the same two keys and a grep finds all of them.
-      THE PAYLOAD IS NEVER LOGGED: a terminal input frame is literally
-      what the user typed, which is as likely to be a token as a command.
-      The socket stays open across a refusal - a viewer that sends one
-      stray frame is a viewer with a bug, not a viewer to disconnect.
-
-    Inputs:
-      session_id: the session the socket is bound to, or None when it
-        could not be resolved.
-      reason: one of the ``REASON_*`` constants in this module.
-
-    Output:
-      None. Side effect only: one structlog warning.
-
-    Example:
-        >>> refuse_frame("ses_1", REASON_BINARY_INPUT)
-    """
     logger.warning(
         OBSERVER_REFUSAL_EVENT,
         session_id=session_id,

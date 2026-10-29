@@ -5,7 +5,7 @@ from scripts.widgets.harness import junk_findings
 
 @pytest.mark.parametrize("text", [
     "cloude_billing-api asks to act", "state unknown", "value undefined", "ses_abc123 is open",
-    "/Users/someone/work", "host 192.0.2.21", "mac.local", "a" * 40, "[object Object]",
+    "/Users/someone/work", "host 10.0.0.5", "mini.local", "a" * 40, "[object Object]",
 ])
 def test_junk_is_flagged(text: str) -> None:
     assert junk_findings(text), text

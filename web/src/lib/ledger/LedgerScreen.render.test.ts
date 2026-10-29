@@ -22,7 +22,7 @@ const LEDGER: ProviderLedger = {
             name: 'work',
             provider: 'codex',
             plan: 'plus',
-            identity: 'acme',
+            identity: 'alex',
             credential_state: 'ok',
             fetched_at: at(-12),
             next_poll_at: at(48),
@@ -49,7 +49,7 @@ const LEDGER: ProviderLedger = {
             name: 'main',
             provider: 'claude',
             plan: 'max 20x',
-            identity: 'acme',
+            identity: 'alex',
             credential_state: 'rate_limited',
             fetched_at: at(-90),
             next_poll_at: at(300),
@@ -161,7 +161,7 @@ describe('two accounts and a total', () => {
         expect(claude).toContain('main');
         expect(document.querySelector('[data-ledger="row"] [data-ledger="provider-mark"]')?.getAttribute('aria-label')).toBeTruthy();
         expect(claude).toContain('max 20x');
-        expect(claude).toContain('acme');
+        expect(claude).toContain('alex');
     });
 
     test('A MEASURED NOUGHT PRINTS AS 0%, and is not swallowed as falsy', async () => {

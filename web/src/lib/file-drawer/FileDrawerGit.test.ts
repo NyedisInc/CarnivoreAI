@@ -119,7 +119,7 @@ test('the changed files tab lists the answer in order, a row opens its diff, ope
   flushSync();
   expect(tabs.at(-1)).toBe('changed');
   expect(localStorage.getItem('carnivore.fileDrawerTab')).toBe('changed');
-  const rows = [...target.querySelectorAll('.fdg-row')].map((r) => [r.querySelector('.fdg-path')!.textContent, r.querySelector('.fdg-letter')!.textContent]);
+  const rows = [...target.querySelectorAll('[data-git-row]')].map((r) => [r.querySelector('[data-git-path]')!.textContent, r.querySelector('[data-git-letter]')!.textContent]);
   expect(rows).toEqual([['src/deep/mod.ts', 'M'], ['gone.txt', 'D'], ['.env.example', 'U'], ['newdir/', 'U'], ['README.md', 'M']]);
 
   (target.querySelector('[data-git-diff="src/deep/mod.ts"]') as HTMLButtonElement).click();

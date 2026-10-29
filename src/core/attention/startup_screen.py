@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
-from src.core.attention.registry_read import REG_ABSENT, REG_STALE
+from src.core.attention.registry_record import REG_ABSENT, REG_STALE
 from src.core.session_startup_gate import (
     GATE_AWAITING,
     SCREEN_UNRECOGNIZED,
@@ -50,17 +50,6 @@ def screen_text_for_alert(text: str) -> str:
 def agent_alive_under(
     pane_pid: Optional[int], parents: Mapping[int, int], commands: Mapping[int, str], ok: bool,
 ) -> Optional[bool]:
-    """Is an agent executable running in this pane's process tree?
-
-    Description: walks one ``ps`` snapshot for a descendant of (or the pane
-      process itself) whose argv[0] basename is in
-      :data:`AGENT_EXECUTABLES`. A snapshot that could not be read, or no
-      pane pid, answers None: not having looked is never "gone".
-    Inputs: pane_pid (int | None); parents ({pid: ppid}); commands
-      ({pid: command line}); ok (bool) - False when the table was unreadable.
-    Output: bool | None.
-    Example: agent_alive_under(10, {11: 10}, {11: "/x/claude --resume"}, True) -> True
-    """
     if pane_pid is None or not ok:
         return None
     for pid, command in commands.items():
@@ -126,14 +115,6 @@ class StartupScreenMemory:
 
 
 def shown_screen(observation: object) -> Optional[StartupScreen]:
-    """The startup screen an observation surfaces, or None.
-
-    Description: None for a missing or stale observation (a stale reading
-      is not a screen; ``unknown`` is not a prompt), for a remote row, and
-      for a fallback screen still inside its hold.
-    Inputs: observation - an ``attention.watcher.Observation`` or None.
-    Output: StartupScreen | None.
-    """
     if observation is None or getattr(observation, "stale", True):
         return None
     evidence = getattr(observation, "evidence", None)

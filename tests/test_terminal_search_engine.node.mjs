@@ -11,6 +11,12 @@ const CLIENT = path.join(__dirname, '..', 'client');
 let passes = 0;
 let failures = 0;
 
+/**
+ * Run one named check.
+ * @param {string} name  What is being asserted.
+ * @param {Function} fn  The body; throws to fail.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();

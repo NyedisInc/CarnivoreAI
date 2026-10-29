@@ -1,7 +1,7 @@
 <script lang="ts">
-  /*  hidden  */
   import { onDestroy } from 'svelte';
   import { t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import type { LabSize } from '../sdk/widget-lab';
   import { frameHeight, frameUrl, frameWindowWidth, SIDEBAR_WINDOW, type FrameSpec } from './frame-url';
   import type { HarnessWindow } from './frame-reader';
@@ -26,13 +26,11 @@
   const clean = $derived(reading !== null && reading.hidden === 0);
   const tip = $derived(reading === null ? t('cplug.devwidgetlab.idle.title') : reading.routes.length ? reading.routes.join(', ') : t('cplug.devwidgetlab.idle.clean'));
 
-  /*  hidden  */
   function run(): void {
     reading = null;
     phase = 'running';
   }
 
-  /*  hidden  */
   async function loaded(): Promise<void> {
     const win = frame?.contentWindow as (Window & HarnessWindow) | null | undefined;
     if (!win) return;
@@ -46,9 +44,9 @@
   }
 </script>
 
-<button type="button" class="oc-btn oc-btn--sm" data-idle-run disabled={phase === 'running'} title={t('cplug.devwidgetlab.idle.title')} onclick={run}>
+<Button size="sm" data-idle-run disabled={phase === 'running'} title={t('cplug.devwidgetlab.idle.title')} onclick={run}>
   {phase === 'running' ? t('cplug.devwidgetlab.idle.running') : t('cplug.devwidgetlab.idle.run')}
-</button>
+</Button>
 {#if phase === 'done' && reading}
   <span class="dwl-verdict" data-idle-result data-verdict={clean ? 'pass' : 'fail'} title={tip}>{t('cplug.devwidgetlab.idle.result', { hidden: reading.hidden, shown: reading.shown })}</span>
 {:else if phase === 'failed'}

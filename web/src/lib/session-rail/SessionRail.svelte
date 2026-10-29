@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* the edit outline */
   import { isGlobalWidget } from '../../opscenter/widgets/global-scope';
   import { resolvePlacement } from '../../opscenter/widgets/placement-resolve';
   import { layoutEditor } from '../../opscenter/layout-editor/editor.svelte';
@@ -7,6 +6,7 @@
   import { terminalLayout } from '../../opscenter/engine/layout.svelte';
   import { placementHead } from '../../opscenter/widgets/placement-options';
   import { t } from '../i18n/index.svelte';
+  import { railIconHidden, setRailIconHidden, startRailIcons } from '../sidebar-widgets/rail-icons.svelte';
   import { zoneItemKey } from '../drawer-zone/zone-model';
   import { RAIL_SPECS, type RailEdge } from './rail-model';
   import { beginRailItemDrag, railAims, railCarry, railDrags, railStores } from './rail-store.svelte';
@@ -50,6 +50,7 @@
   $effect(() => {
     store.start();
     widgetBars.start();
+    startRailIcons();
   });
 
   const barDrag = new BarDrag(edge, () => widgetBars.view[edge], () => visibility.fold());
@@ -58,7 +59,7 @@
 
   const editing = $derived(layoutEditor.active);
   const bar = $derived(widgetBars.view[edge]);
-  const sections = $derived(
+  const allSections = $derived(
     store.sections.map((section) =>
       section.flatMap((item) => {
         const resolved = resolvePlacement({ widget: item.widget, view: item.view, target: item.target ?? null, instance: item.instance ?? null });
@@ -68,6 +69,7 @@
       }),
     ),
   );
+  const sections = $derived(allSections.map((section) => (editing ? section : section.filter((entry) => !railIconHidden(entry.key)))));
   const drawnCount = $derived(sections.reduce((sum, section) => sum + section.length, 0));
   const ratio = $derived(store.ratio);
   const shown = $derived(
@@ -100,13 +102,11 @@
   );
   const look = $derived(dragLook(visibility.state, barDrag.preview));
   const barPlace = $derived(bar.mode === 'pinned' ? ['compact', 'cozy', 'detailed'].indexOf(bar.size) + 1 : 0);
-  /*  hidden  */
   const present = $derived(look !== 'absent');
   const drop = $derived(!editing ? undefined : drag.state.index !== null || aim.band !== null ? 'aimed' : drag.state.carrying ? 'open' : undefined);
   const bands = $derived(editing && drag.state.carrying && canSplit(store.layout, railCarry.key));
 
 
-  /* the bottom rail */
   let winW = $state(typeof window === 'undefined' ? 1280 : window.innerWidth);
   let winH = $state(typeof window === 'undefined' ? 800 : window.innerHeight);
   const wantPush = $derived(look === 'held' ? railOutSizes.shown(edge, horizontal ? winH : winW) : 0);
@@ -227,7 +227,7 @@
         onpress={(pos, extent) => barDrag.begin(pos, extent)} onkey={(key) => barDrag.key(key)} />
     {/if}
     {#if showsPin(look)}<div class="rail__pin"><BarPin {edge} /></div>{/if}
-    <ZoneKeys zones={strip_zones} axis={spec.axis} {ratio} {labelAt} iconPx={BAR_SIZES[size][edge].icon} compact={size === 'compact'} {editing} {openKeys} {face} mark={keyMark}
+    <ZoneKeys zones={strip_zones} axis={spec.axis} {ratio} {labelAt} iconPx={BAR_SIZES[size][edge].icon} compact={size === 'compact'} {editing} {openKeys} {face} mark={keyMark} hiddenKey={railIconHidden} ontoggle={(key, hide) => void setRailIconHidden(key, hide)}
       empty={editing && drawnCount === 0 ? t(horizontal ? 'session_rail.empty_bottom' : 'session_rail.empty') : null}
       onpress={(_zone, key) => press(key)} {onedit} ondragstart={onpointerdown} />
     </div>

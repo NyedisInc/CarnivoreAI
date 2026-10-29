@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import functools
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -39,14 +38,9 @@ def _scanned(root: Path, task: Optional[int]) -> Tuple[List[scan.BoardRow], List
     return rows, findings
 
 
-@functools.lru_cache(maxsize=1)
-def _here() -> Optional[str]:
-    return local_computer()
-
-
 def _read(root: Path, task: Optional[int]) -> Tuple[List[scan.BoardRow], List[Dict[str, str]], Optional[str]]:
     rows, findings = _scanned(root, task)
-    return rows, findings, _here() if any(r.task_computer for r in rows) else None
+    return rows, findings, local_computer() if any(r.task_computer for r in rows) else None
 
 
 def _answer(rows: List[Dict[str, Any]], findings: List[Dict[str, str]]) -> Dict[str, Any]:
@@ -54,7 +48,6 @@ def _answer(rows: List[Dict[str, Any]], findings: List[Dict[str, str]]) -> Dict[
 
 
 MAX_PROJECT_KEY = 64
-# could not be read
 TASKS_UNREAD = {"board": "", "level": "warning", "code": "tasks_unread",
                 "message": "the linked tasks could not be read, so no board shows as closed"}
 

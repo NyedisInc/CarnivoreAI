@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import time
 from contextlib import closing
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readonly
 from src.core.pipeline import plugin_db, registry
 from src.core.pipeline.observe import TRIGGER_REBUILD
 
@@ -18,6 +20,10 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 REBUILD_SUFFIX: str = ".rebuilding"
+
+CHECKPOINT_TRIES: int = 5
+CHECKPOINT_RETRY_SECONDS: float = 0.2
+CHECKPOINT_BUSY_SECONDS: float = 5.0
 
 
 class UnknownPlugin(LookupError):
@@ -35,6 +41,17 @@ def _size(path: Path) -> int:
     return path.stat().st_size if path.exists() else 0
 
 
+def _checkpoint_fully(old: Path) -> None:
+    for attempt in range(CHECKPOINT_TRIES):
+        with closing(sqlite3.connect(str(old), isolation_level=None, timeout=CHECKPOINT_BUSY_SECONDS)) as conn:
+            busy = conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()[0]
+        if not busy:
+            return
+        if attempt + 1 < CHECKPOINT_TRIES:
+            time.sleep(CHECKPOINT_RETRY_SECONDS)
+    raise plugin_db.PluginUnavailable("rebuild refused: the database is in use by a reader (checkpoint busy); try again")
+
+
 def _swap(engine: "Engine", plugin: Any) -> int:
     from src.core.db import transaction
 
@@ -50,7 +67,7 @@ def _swap(engine: "Engine", plugin: Any) -> int:
                     if plugin.rebuild is not None:
                         plugin.rebuild(new_conn)
                     if plugin.carry_over is not None and old.exists():
-                        with closing(sqlite3.connect(f"file:{old}?mode=ro", uri=True, timeout=30.0)) as old_conn:
+                        with closing(connect_readonly(old, timeout=READONLY_TIMEOUT_LONG_S)) as old_conn:
                             plugin.carry_over(old_conn, new_conn)
             except Exception as exc:  # noqa: BLE001
                 raise plugin_db.PluginUnavailable(f"rebuild failed: {type(exc).__name__}: {exc}") from exc
@@ -59,8 +76,7 @@ def _swap(engine: "Engine", plugin: Any) -> int:
             new_conn.close()
         dropped = _size(old) + _size(Path(f"{old}-wal"))
         if old.exists():
-            with closing(sqlite3.connect(str(old), isolation_level=None, timeout=30.0)) as conn:
-                conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            _checkpoint_fully(old)
         os.replace(fresh, old)
         for leftover in (Path(f"{old}-wal"), Path(f"{old}-shm"), Path(f"{fresh}-wal"), Path(f"{fresh}-shm")):
             _remove(leftover)

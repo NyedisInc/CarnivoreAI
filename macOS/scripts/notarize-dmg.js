@@ -5,7 +5,6 @@ const { spawnSync } = require('child_process');
 
 const NOTARY_TIMEOUT = '30m';
 
-/* could not */
 function xcrun(args) {
   const result = spawnSync('xcrun', args, { encoding: 'utf8' });
   if (result.error) {

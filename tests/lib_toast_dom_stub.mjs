@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,6 +12,8 @@ const RENDER_BATCH_SRC = fs.readFileSync(
 const VERSION_ARBITRATION_SRC = fs.readFileSync(
     path.join(ROOT, 'client/js/toast-version-arbitration.js'), 'utf8');
 const SRC = fs.readFileSync(path.join(ROOT, 'client/js/toast.js'), 'utf8');
+// issue #55 split ToastManager's class body across three files that each
+// extend ToastManager.prototype (client/js/api-toasts.js's pattern for
 const GROUPING_SRC = fs.readFileSync(
     path.join(ROOT, 'client/js/toast-grouping.js'), 'utf8');
 const RENDER_SRC = fs.readFileSync(
@@ -112,6 +115,11 @@ export class El {
         this._listeners.get(t).push(fn);
     }
     click() { for (const fn of this._listeners.get('click') || []) fn({}); }
+    fire(type, evt = {}) {
+        evt.preventDefault = () => { evt.defaultPrevented = true; };
+        for (const fn of this._listeners.get(type) || []) fn(evt);
+        return evt;
+    }
 }
 
 function dashed(k) { return 'data-' + String(k).replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()); }
@@ -185,6 +193,13 @@ export function settle() {
 }
 
 const TERM_SRC = fs.readFileSync(path.join(ROOT, 'client/js/terminal.js'), 'utf8');
+// The boot line is one call into client/js/terminal-client-factory.js
+// now, and the register() that hands it the class is the first of the
+// two lines, so it is what a loader cuts at to get the class alone.
+// The boot below that line does more than construct: it refuses by
+// name when the client factory did not load. A loader that wants the
+// class alone has to cut above the whole boot, so terminal.js carries
+// this marker line and says in place that it does not move.
 const TERM_SINGLETON = '// THE CLASS ENDS ABOVE.';
 
 export function loadTerminalClass(sandbox) {

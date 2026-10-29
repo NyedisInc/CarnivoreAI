@@ -2,7 +2,7 @@
 import { CORE_MANIFESTS, manifestById } from '../../opscenter/widgets/core-manifests';
 import type { WidgetLook, WidgetManifest } from '../../opscenter/widgets/types';
 import { hasViews, mergedIds, mergePlacement, viewOfPlacement } from '../../opscenter/widgets/views';
-import { hasPlacementOptions, isRetiredPlacementKey, type PlacementOptions, type PlacementOptionValue } from '../../opscenter/widgets/placement-options';
+import { hasPlacementOptions, hasRepeatableOptions, isRetiredPlacementKey, type PlacementOptions, type PlacementOptionValue } from '../../opscenter/widgets/placement-options';
 import { OPTION_KEY_RE, normalizeOptionValues } from './option-values';
 import { HEADER_OPTION } from '../../opscenter/shell/widget-head';
 
@@ -37,7 +37,7 @@ export function zoneItemKey(item: Pick<ZoneItem, 'widget' | 'target'> & { instan
 }
 
 export function isRepeatable(widget: string): boolean {
-  return hasViews(manifestById(widget)) || hasPlacementOptions(widget);
+  return hasViews(manifestById(widget)) || hasRepeatableOptions(widget);
 }
 
 export function freshInstance(items: readonly Pick<ZoneItem, 'widget' | 'target' | 'instance'>[], widget: string, target?: string): string | undefined {

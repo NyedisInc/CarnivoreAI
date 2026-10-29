@@ -134,8 +134,7 @@ def on_state_write(conn: sqlite3.Connection, row: sqlite3.Row, new_state: str, a
     else:
         kind = "moved"
     detail = "reply" if kind == "sent_back" and act is None else ("note" if kind == "sent_back" else "")
-    if act is not None and act.op == "validation_fail":
-        detail = "validation_failed"
+    detail = "validation_failed" if act is not None and act.op == "validation_fail" else (str(act.fields.get("reason") or "")[:500] if act is not None and act.op == "done" else "") or detail
     _event(conn, row["id"], kind, list_key=row["list_key"], by=by, now=now, from_col=before_col, to_col=after_col, detail=detail)
     if projection.queued(after):
         policy.request_deal(conn, row["list_key"], "sent_back" if before_col == projection.REVIEW else "reopened", row["id"], now)
@@ -179,9 +178,10 @@ def _check_pass(row: sqlite3.Row, expect: Mapping[str, Any]) -> None:
 
 
 def _check_act(row: sqlite3.Row, new_state: str, act: CardAct) -> None:
-    if new_state in rules.APPROVED_STATES and act.by not in ("owner", "auto_done"):
-        raise CardRefused("refused", "only the owner moves a card to Done")
-    if new_state in rules.APPROVED_STATES and act.by == "auto_done" and lane.is_task_manager(row):
+    agent_close = act.op == "done" and bool(act.fields.get("agent_close")) and _agent_of(act.by) is not None
+    if new_state in rules.APPROVED_STATES and act.by not in ("owner", "auto_done") and not agent_close:
+        raise CardRefused("refused", "only the owner or a closing agent moves a card to Done")
+    if new_state in rules.APPROVED_STATES and (act.by == "auto_done" or agent_close) and lane.is_task_manager(row):
         raise CardRefused(lane.REFUSED_CODE, "the swarm never ticks a task manager task; only the owner does")
     if act.op == "validation_fail":
         _check_validating(row, act.fields.get("agent_id"))
@@ -256,14 +256,14 @@ def on_inserted(conn: sqlite3.Connection, item_id: int, now: float) -> None:
     policy.request_deal(conn, row["list_key"], "card_created", item_id, now)
 
 
-def on_tombstone(conn: sqlite3.Connection, rows: Sequence[sqlite3.Row], now: float, by: str = "owner") -> None:
+def on_tombstone(conn: sqlite3.Connection, rows: Sequence[sqlite3.Row], now: float, by: str = "owner", detail: str = "") -> None:
     for row in rows:
         if not projection.card_shaped(row):
             continue
         _refuse_claude_on_held(row, by)
         if row["card_holder"] is not None:
             _release_holder(conn, row["id"])
-        _event(conn, row["id"], "deleted", list_key=row["list_key"], by=by, now=now, from_col=projection.column(row))
+        _event(conn, row["id"], "deleted", list_key=row["list_key"], by=by, now=now, from_col=projection.column(row), detail=detail)
 
 
 def on_list_move(conn: sqlite3.Connection, row: sqlite3.Row, new_list_key: str, now: float, by: str = "owner") -> None:
@@ -728,7 +728,7 @@ def set_lane(conn: sqlite3.Connection, card_id: int, *, queued: bool, by: str, n
     return _done(conn, card_id, [])
 
 
-def archive(conn: sqlite3.Connection, card_id: int, *, on: bool, by: str, now: float) -> FlowResult:
+def archive(conn: sqlite3.Connection, card_id: int, *, on: bool, by: str, now: float, reason: str = "") -> FlowResult:
     row = _row(conn, card_id)
     if (row["card_archived_at"] is not None) == on:
         return _done(conn, card_id, [], {"changed": False})
@@ -737,7 +737,7 @@ def archive(conn: sqlite3.Connection, card_id: int, *, on: bool, by: str, now: f
         _unhold(conn, row)
     _set(conn, card_id, {"card_archived_at": now if on else None})
     _event(conn, card_id, "archived" if on else "unarchived", list_key=row["list_key"], by=by, now=now, from_col=before,
-           to_col=projection.column(_row(conn, card_id)))
+           to_col=projection.column(_row(conn, card_id)), detail=reason)
     _touch(conn, card_id, by, now)
     return _done(conn, card_id, [])
 

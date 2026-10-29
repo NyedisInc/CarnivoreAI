@@ -92,4 +92,20 @@ describe('DrawerZoneStore', () => {
     store.add('core.keep-awake');
     expect(ids(store)).toEqual(['core.ledger', 'core.keep-awake']);
   });
+
+  test('a refused save is logged with its field and the shared value is read back (no unhandled rejection)', async () => {
+    const bridge = installBridge(null);
+    bridge.write = async () => {
+      throw new Error('network down');
+    };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const store = new DrawerZoneStore();
+    store.start(null);
+    store.add('core.keep-awake');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]?.[0])).toContain(ZONE_FIELD);
+    expect(ids(store)).toEqual(['core.ledger']);
+    warn.mockRestore();
+  });
 });

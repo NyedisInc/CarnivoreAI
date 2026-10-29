@@ -52,4 +52,21 @@ describe('BookmarksPanelState rewind gate', () => {
     await panel.branch({ bookmarkId: 3 });
     expect(branchFrom).toHaveBeenCalledWith(7, { bookmarkId: 3 });
   });
+
+  test('an ok:false answer shows the server reason as an error, not the rewound wording (u131-02)', async () => {
+    rewindTo.mockResolvedValue({ ok: false, detail: 'the session is not live', killed_live_pane: false, resumed_copy: true });
+    const panel = new BookmarksPanelState(7);
+    panel.armed = true;
+    expect(await panel.rewind({ bookmarkId: 2 })).toBe(false);
+    expect(panel.notice).toEqual({ text: 'the session is not live', error: true });
+  });
+
+  test('an ok:false answer with no detail still says it failed', async () => {
+    rewindTo.mockResolvedValue({ ok: false, detail: null, killed_live_pane: false, resumed_copy: true });
+    const panel = new BookmarksPanelState(7);
+    panel.armed = true;
+    await panel.rewind({ bookmarkId: 2 });
+    expect(panel.notice?.error).toBe(true);
+    expect(panel.notice?.text).not.toMatch(/rewound/);
+  });
 });

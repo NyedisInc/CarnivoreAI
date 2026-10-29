@@ -1,7 +1,8 @@
-<!-- hidden -->
+
 <script lang="ts">
     import { t as reactiveT } from '../../i18n/index.svelte';
     import type { Translate } from '../../sessions/types';
+    import { Button, Field } from '../../base';
     import Check from '../../../opscenter/ui/Check.svelte';
     import '../../settings-page/panel-kit/panel-kit.css';
     import './destinations.css';
@@ -63,9 +64,9 @@
         {#if quietOn}
             <div class="nd-times">
                 <label class="tm__field"><span class="oc-key">{t('settings.notify.dest.extras.quiet_start')}</span>
-                    <input class="oc-field" type="time" bind:value={start} disabled={busy} data-notify="extra-quiet-start" /></label>
+                    <Field type="time" bind:value={start} disabled={busy} data-notify="extra-quiet-start" /></label>
                 <label class="tm__field"><span class="oc-key">{t('settings.notify.dest.extras.quiet_end')}</span>
-                    <input class="oc-field" type="time" bind:value={end} disabled={busy} data-notify="extra-quiet-end" /></label>
+                    <Field type="time" bind:value={end} disabled={busy} data-notify="extra-quiet-end" /></label>
             </div>
         {/if}
     </div>
@@ -74,12 +75,12 @@
             data-notify="extra-reminder" onToggle={(next) => (reminderOn = next)} />
         {#if reminderOn}
             <label class="tm__field"><span class="oc-key">{t('settings.notify.dest.extras.reminder_minutes')}</span>
-                <input class="oc-field" type="number" min="1" max="1440" bind:value={minutes} disabled={busy} data-notify="extra-reminder-minutes" /></label>
+                <Field type="number" min="1" max="1440" bind:value={minutes} disabled={busy} data-notify="extra-reminder-minutes" /></label>
         {/if}
     </div>
     <label class="tm__field">
         <span class="oc-key">{t('settings.notify.dest.extras.projects')}</span>
-        <input class="oc-field" type="text" bind:value={projects} disabled={busy} autocomplete="off" spellcheck="false" placeholder={t('settings.notify.dest.extras.projects_hint')}
+        <Field bind:value={projects} disabled={busy} autocomplete="off" spellcheck={false} placeholder={t('settings.notify.dest.extras.projects_hint')}
             data-notify="extra-projects" />
     </label>
     {#if detailsAllowed}
@@ -91,6 +92,6 @@
             onToggle={(next) => (localOnly = next)} />
     {/if}
     <div class="tm__actions">
-        <button type="button" class="modal-btn modal-btn-confirm" disabled={busy || !minutesOk} data-notify="extras-save" onclick={() => onSave(body())}>{t('settings.notify.dest.extras.save')}</button>
+        <Button variant="confirm" disabled={busy || !minutesOk} data-notify="extras-save" onclick={() => onSave(body())}>{t('settings.notify.dest.extras.save')}</Button>
     </div>
 </div>

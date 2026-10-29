@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 const ACCESS_KEY = 'claude_tunnel_token';
 const REFRESH_KEY = 'claude_refresh_token';
 
+/** A localStorage good enough for the reads these modules make. */
 function fakeStorage(seed: Record<string, string>) {
   const map = new Map(Object.entries(seed));
   return {

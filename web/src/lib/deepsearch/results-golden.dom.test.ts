@@ -8,7 +8,7 @@ import { canonicalDom } from '../sidebar-shell/legacy-fixture';
 
 vi.mock('../../cplugs/sdk/sessions.svelte', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../cplugs/sdk/sessions.svelte')>()),
-  sessionRowForConversation: (id: string) => (id === 'conv-live' ? { activity_status: 'working', label: 'nightly rsync fix' } : undefined),
+  sessionRowForConversation: (id: string) => (id === 'conv-live' ? { activity_status: 'working', label: 'nightly restic fix' } : undefined),
 }));
 vi.mock('../resource-push/boot', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../resource-push/boot')>()),
@@ -25,14 +25,14 @@ const settle = async (): Promise<void> => {
   flushSync();
 };
 const hit = (line: number) => ({
-  line, kind: line % 2 ? 'assistant' : 'user', snippet: `we \u0002rsync\u0003 ${line}`, file_kind: 'conversation', at: '2026-10-15T08:31:00', entry_uuid: `u-${line}`,
+  line, kind: line % 2 ? 'assistant' : 'user', snippet: `we \u0002restic\u0003 ${line}`, file_kind: 'conversation', at: '2026-10-15T08:31:00', entry_uuid: `u-${line}`,
 });
-const ANSWER = (groups: Array<Record<string, unknown>>) => ({ query: 'rsync', total_conversations: groups.length, total_matches: groups.length * 2, stale: [], groups, ingest: { state: 'running' } });
+const ANSWER = (groups: Array<Record<string, unknown>>) => ({ query: 'restic', total_conversations: groups.length, total_matches: groups.length * 2, stale: [], groups, ingest: { state: 'running' } });
 const GROUPS = [
-  { conversation_id: 'conv-live', matches: 3, session_uuid: 's-live', session: 'nightly rsync fix', project: 'backup-tools', last_active: '2026-10-15T10:00:00', hits: [hit(1), hit(2)] },
-  { conversation_id: 'conv-asleep', matches: 2, session_uuid: 's-asleep', session: null, first_prompt: 'move the rsync repo password', last_active: '2026-10-14T10:00:00', hits: [hit(3), hit(4)] },
+  { conversation_id: 'conv-live', matches: 3, session_uuid: 's-live', session: 'nightly restic fix', project: 'backup-tools', last_active: '2026-10-15T10:00:00', hits: [hit(1), hit(2)] },
+  { conversation_id: 'conv-asleep', matches: 2, session_uuid: 's-asleep', session: null, first_prompt: 'move the restic repo password', last_active: '2026-10-14T10:00:00', hits: [hit(3), hit(4)] },
 ];
-const TERMS = [{ term: 'rsync', docs: 41 }, { term: 'rsyncprofile', docs: 6 }];
+const TERMS = [{ term: 'restic', docs: 41 }, { term: 'resticprofile', docs: 6 }];
 
 let host: HTMLElement;
 let mounted: Record<string, unknown> | null = null;
@@ -58,15 +58,15 @@ async function paint(layout: 'ledger' | 'best', groups: Array<Record<string, unk
     suggest: async () => TERMS,
   };
   const controller = new DeepSearchController(api, async () => 'switched', undefined, () => {});
-  controller.showActions = true;
+  controller.showActions = true; // the context mode draws the buttons
   controller.query = 'resti';
   if (suggest) {
     controller.onType();
     vi.useRealTimers();
     await new Promise((r) => setTimeout(r, 300));
   }
-  await controller.run('rsync', 0);
-  controller.move(1);
+  await controller.run('restic', 0);
+  controller.move(1);  // nothing is picked until an arrow or a click; these tests read the first hit picked
   mounted = mount(DeepSearchResults, { target: host, props: { controller } });
   await settle();
   const dom = canonicalDom(host);

@@ -51,10 +51,6 @@ def _run(locations: List[Dict[str, Any]]) -> None:
 
 
 async def start(app: Any) -> Dict[str, Any]:
-    """Begin the job unless one is running. Output: status() after the start; ``state`` is "running" only when this call started it.
-
-    Raises: RuntimeError when a job is already running. Example: await start(request.app)
-    """
     with _lock:
         if _state["state"] == "running":
             raise RuntimeError("a bulk card art job is already running")

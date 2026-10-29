@@ -43,18 +43,41 @@ vi.mock('./events.svelte', () => ({
   },
 }));
 
+/** A server answer shaped like the endpoint's. */
 function answer(body: string, revision: number, status = 'committed') {
   return { status, body, revision, updated_at: '2026-09-20T12:00:00+00:00' };
 }
 
-type Notes = typeof import('./notes.svelte');
+interface Notes {
+  AUTOSAVE_MS: number;
+  note: import('./note-store.svelte').NoteState;
+  open(name: string): Promise<void>;
+  edit(text: string): void;
+  save(): Promise<void>;
+  flush(): Promise<void>;
+  keepTheirs(): void;
+  keepMine(): Promise<void>;
+  reset(): void;
+}
 
 async function load(): Promise<Notes> {
   vi.resetModules();
   calls.length = 0;
   answers = [];
   onFrame = null;
-  return import('./notes.svelte');
+  const { NoteStore, AUTOSAVE_MS } = await import('./note-store.svelte');
+  const store = new NoteStore();
+  return {
+    AUTOSAVE_MS,
+    note: store.note,
+    open: (name) => store.open(name),
+    edit: (text) => store.edit(text),
+    save: () => store.save(),
+    flush: () => store.flush(),
+    keepTheirs: () => store.keepTheirs(),
+    keepMine: () => store.keepMine(),
+    reset: () => store.reset(),
+  };
 }
 
 describe('reading one session note', () => {
@@ -82,8 +105,8 @@ describe('reading one session note', () => {
   it('escapes a session name that has a space in it', async () => {
     const notes = await load();
     answers = [answer('', 0, 'unchanged')];
-    await notes.open('cloude_Example App');
-    expect(calls[0]?.path).toBe('/sessions/cloude_Example%20App/note');
+    await notes.open('cloude_Lantern App');
+    expect(calls[0]?.path).toBe('/sessions/cloude_Lantern%20App/note');
   });
 
   it('tells a missing row apart from a failed read', async () => {
@@ -365,5 +388,77 @@ describe('what the note is never allowed to touch', () => {
     expect(notes.note.name).toBe('cloude_two');
     expect(notes.note.body).toBe('second');
     expect(notes.note.revision).toBe(5);
+  });
+});
+
+describe('switching sessions with a failed save (H26)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('keeps the edit whose save failed and gives it back when that session is opened again', async () => {
+    const notes = await load();
+    answers = [answer('start', 1, 'unchanged')];
+    await notes.open('cloude_one');
+    notes.edit('typed words');
+    answers = [new FakeApiError('server said no', 500), answer('other', 1, 'unchanged')];
+    await notes.open('cloude_two');
+    expect(notes.note.body).toBe('other');
+
+    answers = [answer('start', 1, 'unchanged')];
+    await notes.open('cloude_one');
+    expect(notes.note.body).toBe('typed words');
+    expect(notes.note.dirty).toBe(true);
+  });
+
+  it('offers the server note beside the kept edit when the server moved on', async () => {
+    const notes = await load();
+    answers = [answer('start', 1, 'unchanged')];
+    await notes.open('cloude_one');
+    notes.edit('typed words');
+    answers = [new FakeApiError('server said no', 500), answer('other', 1, 'unchanged')];
+    await notes.open('cloude_two');
+    answers = [answer('newer', 4, 'unchanged')];
+    await notes.open('cloude_one');
+    expect(notes.note.body).toBe('typed words');
+    expect(notes.note.conflict).toEqual({ revision: 4, body: 'newer' });
+  });
+});
+
+describe('the last widget letting go of a dirty store (H26 across the registry)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function registry() {
+    vi.resetModules();
+    calls.length = 0;
+    answers = [];
+    onFrame = null;
+    return import('./notes.svelte');
+  }
+
+  it('hands a failed edit to the unsaved map, and the next widget on that session is given it back', async () => {
+    const registryModule = await registry();
+    answers = [answer('start', 1, 'unchanged')];
+    const store = registryModule.acquire('cloude_one');
+    await vi.advanceTimersByTimeAsync(0);
+    store.edit('typed words');
+    answers = [new FakeApiError('server said no', 500)];
+    await registryModule.release('cloude_one');
+
+    answers = [answer('start', 1, 'unchanged')];
+    const again = registryModule.acquire('cloude_one');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(again).not.toBe(store);
+    expect(again.note.body).toBe('typed words');
+    expect(again.note.dirty).toBe(true);
+    registryModule.reset();
   });
 });

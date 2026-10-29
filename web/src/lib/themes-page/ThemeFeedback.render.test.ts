@@ -1,12 +1,17 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { mount, unmount } from 'svelte';
+import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
+
+installPopoverPolyfill();
 
 const { openCatalogScreen } = vi.hoisted(() => ({ openCatalogScreen: vi.fn(() => true) }));
 vi.mock('../catalog/screen-host', () => ({
     openCatalogScreen: (...args: unknown[]) => openCatalogScreen(...(args as [])),
 }));
 
+// EVERYTHING THE MOCK FACTORY TOUCHES MUST BE `vi.hoisted`, INCLUDING THE
+// runs.
 const { authFetchCalls, authFetchAnswers, FakeApiError } = vi.hoisted(() => {
     class FakeApiError extends Error {
         readonly status: number;
@@ -146,17 +151,17 @@ describe('the star glyph', () => {
 describe('the developer row', () => {
     test('a catalog publisher opens the in-app profile and never links github', () => {
         plantWindowApi();
-        paintInspector(manifest({ source: 'user', publisher: 'acme', author: null }));
-        expect(document.querySelector('.isum-facts .alink [data-btn]')?.textContent).toContain('acme');
+        paintInspector(manifest({ source: 'user', publisher: 'example-owner', author: null }));
+        expect(document.querySelector('.isum-facts .alink [data-btn]')?.textContent).toContain('example-owner');
         expect(document.querySelector('.isum-facts a')).toBeNull();
     });
 
     test('a hostile handle prints as plain text, no control, no link', () => {
         plantWindowApi();
-        paintInspector(manifest({ source: 'user', publisher: 'example.net/x', author: null }));
+        paintInspector(manifest({ source: 'user', publisher: 'evil.com/x', author: null }));
         expect(document.querySelector('.isum-facts a')).toBeNull();
         expect(document.querySelector('.isum-facts .alink [data-btn]')).toBeNull();
-        expect(document.body.textContent).toContain('example.net/x');
+        expect(document.body.textContent).toContain('evil.com/x');
     });
 
     test('no publisher falls back to the manifest author', () => {
@@ -198,11 +203,11 @@ describe('a catalog-installed theme reads its own item id', () => {
     test('the ratings read is asked for the ledger item id', async () => {
         plantWindowApi();
         paintFeedback(manifest({
-            id: 'matrix-x', source: 'user', feedbackItemId: 'acme/matrix-x', publisher: 'acme',
+            id: 'matrix-x', source: 'user', feedbackItemId: 'example-owner/matrix-x', publisher: 'example-owner',
         }));
         await settle();
         const asked = apiCalls.filter((c) => c.name === 'getCatalogItemRatings').map((c) => c.args[0]);
-        expect(asked).toEqual(['acme/matrix-x']);
+        expect(asked).toEqual(['example-owner/matrix-x']);
     });
 });
 
@@ -227,7 +232,7 @@ describe('signed out', () => {
 
 describe('sending a note', () => {
     test('posts the text and shows the sent sentence', async () => {
-        sessionAnswer = { signed_in: true, login: 'acme', provider: 'github' };
+        sessionAnswer = { signed_in: true, login: 'example-owner', provider: 'github' };
         plantWindowApi();
         authFetchAnswers.push({ item_id: 'bundled/matrix', created_at: '2026-09-22T00:00:00Z' });
         paintFeedback(manifest({ source: 'builtin', feedbackItemId: 'bundled/matrix' }));
@@ -255,7 +260,7 @@ describe('sending a note', () => {
     });
 
     test('a 429 from the host shows the shared refusal sentence', async () => {
-        sessionAnswer = { signed_in: true, login: 'acme', provider: 'github' };
+        sessionAnswer = { signed_in: true, login: 'example-owner', provider: 'github' };
         plantWindowApi();
         authFetchAnswers.push(
             new FakeApiError('the server answered 429', 429, null, { detail: { code: 'rate_limited' } }),

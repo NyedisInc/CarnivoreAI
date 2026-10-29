@@ -1,4 +1,9 @@
 <h2 class="sg-h2">swarm characters</h2>
+<p class="sg-lead">The Swarm's agents are nodes with a face. State is shown by the BODY: the node stays still at
+rest, morphs into a shape that names the state (a "?" for a question, a grey gravestone for dead, a spiky square, or a plain "!" or "!!" it loops into, for
+an alert), and nothing is pinned on it: no badge, count or ring. The one addition is the soft even glow behind a finished_unread square.
+One component draws all of them, <code>Character</code>; the Swarm panel and the Swarm page mount it.
+Record and the full state table: <code>docs/swarm.md</code>, section 13.</p>
 
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>web/src/cplugs/huddle/swarm/characters/Character.svelte</code><span>every state at 28, 40 and 64 px, then the reduced-motion pose; the swarm follows the theme switcher</span></div>
@@ -20,11 +25,28 @@ working, a question, the startup gate or an alert, never in reduced motion, and 
 </div>
 
 <h3 class="sg-h3" id="swarm-characters-ladder">the alert ladder is a body language</h3>
+<div class="sg-table-wrap">
+<table class="sg-table">
+    <thead><tr><th>rung</th><th>state</th><th>the body</th><th>motion</th></tr></thead>
+    <tbody>
+        <tr><td>routine</td><td><code>alert_routine</code></td><td>the node with a faint bristle</td><td>one breath, then the bristle stays</td></tr>
+        <tr><td>priority</td><td><code>alert_priority</code></td><td>the mockup's spiky square with eyes, no glyph</td><td>spikes snap in and pulse twice every 3.2 s until answered</td></tr>
+        <tr><td>immediate</td><td><code>alert_immediate</code></td><td>the mockup's spiky square with eyes, then a plain "!" with no spikes and no eyes</td><td>morphs to the "!" and back every 2.4 s, shaking nonstop, until answered</td></tr>
+        <tr><td>flash</td><td><code>alert_flash</code></td><td>the spiky square with eyes, then a plain "!!", 1.3x, above its neighbors</td><td>morphs to the "!!" and back every 2 s, breaks out of its tile, jitters nonstop and flares its spikes until opened; the owner also gets a text</td></tr>
+    </tbody>
+</table>
+</div>
 <p>The spikes are one static path per rung, drawn behind the body in the body's own color and standing on its outline, so the glyph itself looks spiky.
 A PRIORITY badge, when there is one, lives on the Swarm drawer tab and never on a node.</p>
 
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd><code>&lt;Character state={row.state} size={40} seed={agent.character_seed} label={agent.name} /&gt;</code>. Sizes:
+        agents 28, projects 40, companies 64, SysOp 96. <code>state</code> is one of twenty values (the eight status states,
+        <code>asleep</code>, <code>startup_gate</code>, the Swarm events and the four alert rungs); any other value draws the
+        hollow <code>unknown</code> outline, never <code>idle</code>. Optional: <code>colorIndex</code> (1 to 8, the owner's
+        pick over the seed), <code>subs</code> (one ribbon per subagent seed, at most three), <code>side</code> (the two
+        talking agents), <code>swarm</code>, <code>still</code>, <code>label</code>, <code>tell</code>.</dd>
     <dt>no badge, one glow</dt>
     <dd><code>tell</code> is still accepted (the panel passes it) and draws nothing; it only adds to the spoken label. The one
         backdrop is the finished_unread glow, <code>.pk-gw</code>: a static rounded rectangle the size of the resting square with its corner
@@ -46,6 +68,8 @@ A PRIORITY badge, when there is one, lives on the Swarm drawer tab and never on 
         (<code>clock.ts</code>) writes the gaze, the blinks and the rare idle quirk; a character at rest is still. A hidden tab
         pauses with <code>animation-play-state</code> (never <code>animation: none</code>), stops the clock and pauses SMIL.</dd>
     <dt>reduced motion</dt>
+    <dd><code>prefers-reduced-motion</code> sets <code>data-still</code>: no animation, no SMIL, the body drawn directly in its
+        still shape (the "?" for a question, the gravestone for dead, the plain "!" glyphs for the alert rungs) and a still pose.</dd>
     <dt>themes</dt>
     <dd>Body colors come from the agent's color family (below); the eyes
         are <code>--oc-on-accent</code>. Carnivore's nodes render under every theme through tokens. A theme may name an
@@ -53,6 +77,21 @@ A PRIORITY badge, when there is one, lives on the Swarm drawer tab and never on 
         read by <code>readCharacterPack</code> in <code>web/src/cplugs/huddle/swarm/characters/pack-reader.ts</code>, which falls
         back to the default swarm for a missing, malformed or unknown block.</dd>
     <dt>color families</dt>
+    <dd>Every project, every company and SysOp wears its own hue, and only a project's agents share its tone (Alex,
+        2026-10-07: "only project and their agents should be similar color tones  all projects companies and sysop should be
+        different colors"). <code>placeFamilies</code> anchors SysOp, then every company and every project with a project
+        agent (archived ones included) takes the free point of a 30 degree grid farthest from every taken hue, so up to 12
+        families sit 30 degrees apart, hue neighbours alternate lightness, a new project never moves an older one, and a
+        project with no agent wears the next free hue without reserving it; a company's chosen <code>hue</code> overrides its own. A project agent, its feature and task agents and its sessions take one of 20
+        shades within +-10 degrees of the project's hue, with lightness and chroma steps, every pair at least 0.04 apart in
+        OKLab, chosen by a hash of its id; the project agent wears the base hue itself. Every color is bright and vibrant
+        (Alex: "stay away from putrid colors"): it goes through <code>vibrantCss</code>, the one floor (chroma 0.16 or more,
+        lightness 0.58 or more on any ground); never emit a bare oklch for a square. A hand-set
+        color wins as the series token it names (<code>--oc-series-1</code> to <code>--oc-series-8</code>). Each color is
+        <code>oklch(from var(--oc-ground-panel) ...)</code> on a bright base read off the ground, so it reads on every theme. ONE helper:
+        <code>createSwarmLive().colors</code> or <code>createAgentColors()</code> (<code>web/src/cplugs/huddle/swarm/agent-colors.svelte.ts</code>),
+        passed to a character as <code>color={colors.of(agent)}</code>; the rule is <code>characters/family.ts</code>
+        (<code>docs/swarm.md</code> section 13.8).</dd>
     <dt>access</dt>
     <dd>Every character is <code>role="img"</code> with an accessible label from the catalog
         (<code>cplug.huddle.swarm.state.*</code>), the agent's name first. Color never carries the state alone: the body shape and
@@ -78,6 +117,13 @@ three densities with the inactive nodes hidden, then once more with them shown, 
     <dd>One state per square, first that applies: an open alert's rung, a fresh activity (8 seconds), question_waiting, asleep, the
         startup gate, the listing's activity status, else unknown. The rules are pure, in <code>swarm/panel-state.ts</code>.</dd>
     <dt>floor</dt>
+    <dd>A session that is a Swarm agent's body draws once, as that agent. A company or project with no agent is a VACANT SEAT
+        (<code>.pkp-seat</code> on a <code>.pkp-it--vacant</code> button: the ghost square's dashed hairline, its name under it, no character): one click turns its
+        agent on, no question first (Alex (example-owner), 2026-10-08, #1434: the server runs git init in a folder that is not a repo); a refusal shows
+        its reason on one line under the section (<code>.pkp-ask</code>, <code>.pkp-ask-text</code> in the warning token). A dashed "+" slot closes the COMPANIES and PROJECTS sections (<code>data-swarm-slot</code>): it turns the seat on at once when one seat is vacant, else opens a choice of the vacant seats (<code>.pkp-pick-list</code>), and a pick turns that one on. A name takes the cell's full width on one line and cuts with an ellipsis only when longer; a detailed row always draws its provider mark, a context bar (empty when unmeasured) and its working-on line (the job when nothing is being worked on, never the state word). The default view shows ACTIVE nodes only (a live pane that is not asleep; a Swarm agent with a live body or any open
+        tell or alert rung; a project or company holding any); the rest sit behind one quiet link at the foot (<code>.pkp-toggle</code>: lowercase mono,
+        the muted text colour, never the accent), "show inactive (N)" and "hide inactive", per device. Without the plugin's swarm permission one line
+        (<code>.pkp-need</code>) says so with a button to the plugins page, and the floor still draws.</dd>
     <dt>drag within a tier</dt>
     <dd>A node drags to a new place inside its own tier (COMPANIES, PROJECTS, AGENTS; <code>tier-drag.ts</code>, #1453): the mouse lifts it after a
         5 px move, a finger after a 500 ms hold. The tier grid takes <code>.pkp-drag-on</code> (no text selection, the neighbours slide to their
@@ -92,6 +138,11 @@ three densities with the inactive nodes hidden, then once more with them shown, 
 </dl>
 
 <h3 class="sg-h3" id="swarm-node-menu">a node's own look: the node menu</h3>
+<p class="sg-p">Alex (example-owner), 2026-10-08, #1452: a right-click on a Swarm agent's square (a long press on a phone) opens the node menu
+    (<code>NodeMenu.svelte</code> on the shared cascade menu, so the popup-focus look and the menu-keys hotkeys come with it): <b>r</b> rename
+    (the app's one text prompt, the naming rules checked by the server), <b>c</b> color (auto plus the eight series colors as
+    <code>.pk-swatch</code> squares), <b>b</b> background (none plus eight tiles) and <b>s</b> shape (the tier default plus the Swarm look's
+    ten shapes). The current pick is checked. Every pick is one <code>PATCH /swarm/agents/{id}</code>; auto, none and tier default send null.</p>
 <dl class="sg-facts">
     <dt>where</dt>
     <dd>The drawer's Swarm grid, the Swarm page and the org chart open it; an ordinary session's stand-in and a vacant seat have none.</dd>
@@ -107,6 +158,7 @@ three densities with the inactive nodes hidden, then once more with them shown, 
 
 <h3 class="sg-h3" id="swarm-characters-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">
+    <li><strong>Pinning anything on a node.</strong> The owner rejected notification icons everywhere: the nodes themselves become spiky. No badge, count or ring; only the finished_unread glow sits behind one.</li>
     <li><strong>A round glow behind a node.</strong> A circle is thick at the sides and thin at the corners. The halo is a rounded rectangle with the body's corner radius and equal spread.</li>
     <li><strong>A ribbon in the body's own color.</strong> Use <code>contrastIndex</code>, never the body's series.</li>
     <li><strong>A timer per square.</strong> The one shared clock writes the gaze and blinks; keyframes start because

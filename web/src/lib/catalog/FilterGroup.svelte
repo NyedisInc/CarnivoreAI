@@ -61,7 +61,6 @@
         font-size: 11px;
     }
 
-    /* padding */
     .filter-group :global(.oc-seg__item[data-kind]) {
         gap: 3px;
         padding: 0 5px 0 2px;

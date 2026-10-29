@@ -1,3 +1,4 @@
+/* the home screen */
 import type { Layout } from './types';
 
 export const HOME_BOARD_ID = 'home';

@@ -26,7 +26,6 @@ export function columnsFor(widthState: string): ColumnSpec[] {
     { key: 'id', headKey: 'opscenter.column.index', minPx: 53, weight: 0, insetPx: 12 },
     { key: 'task', headKey: 'opscenter.column.name_task', minPx: 110, weight: 1.4, insetPx: 11 },
   ];
-  // running sessions
   if (hasAgent) {
     columns.push({ key: 'agent', headKey: 'opscenter.column.agent', minPx: agentNamed ? 90 : 48, weight: agentNamed ? 0.8 : 0, ...(agentNamed ? { insetPx: 17 } : {}) });
   }
@@ -35,7 +34,6 @@ export function columnsFor(widthState: string): ColumnSpec[] {
   return columns;
 }
 
-/* could not */
 export function titleCount(): number | null {
   if (recent.status !== 'ok' || !recent.data) return null;
   return outcome(recent.data) === 'could-not-determine' ? null : recent.data.sessions.length;

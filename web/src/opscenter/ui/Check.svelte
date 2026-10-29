@@ -1,4 +1,4 @@
-<!-- padding -->
+
 <script lang="ts">
     import Switch from '../../lib/base/Switch.svelte';
 

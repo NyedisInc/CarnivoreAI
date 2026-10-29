@@ -1,4 +1,3 @@
-/* could not */
 import type { Translate } from '../sessions/types';
 import type { SubRow } from './types';
 import type { HeroOutcome } from './wizard-model';

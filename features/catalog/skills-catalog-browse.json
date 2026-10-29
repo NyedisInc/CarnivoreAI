@@ -15,6 +15,7 @@
   "examples": [
     "Find a skill that does code review before writing your own.",
     "Each card shows a chip for every place a skill is installed, and the add button installs it to global or to the folder of the session you are in in one click.",
+    "Open a card to see its estimated context cost, where it is installed, and how often it fired in the last 30 days on this computer.",
     "You tweaked an installed skill on purpose: mark it keep as fork so an update never overwrites your edit."
   ],
   "how_to": [
@@ -46,7 +47,14 @@
     "skills",
     "plugins"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The skills catalog: sign in, search, filters and skill cards",
+      "caption": "The skills catalog",
+      "file": "screen.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Browse the skills catalog",
   "since": "2026-09-15",
   "status": "stable",
@@ -70,6 +78,5 @@
   "where": [
     "Menu tab, Warez (hotkey r), then INSTALLED, skills: the tabs installed, stats and pack sit above the filter row. The signed catalog is the Warez store.",
     "Also at /#warez, or /#catalog (its older link), and /#catalog/<handle>/<name> to open one item. /#skills opens Warez on INSTALLED, skills."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

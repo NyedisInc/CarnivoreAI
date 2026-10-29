@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import Button from '../lib/base/Button.svelte';
+    import Field from '../lib/base/Field.svelte';
     import type { CommunityHost } from './community-host.svelte.js';
     import { refusalMessage } from './admin.js';
     import { auditActor, auditReason, auditTarget, auditTime } from './moderation.js';
@@ -37,7 +38,7 @@
     {/if}
 
     <label class="admin-field" for="audit-day">{t(ADMIN_KEYS.auditDayLabel)}</label>
-    <input id="audit-day" class="admin-input" type="date" value={host.day}
+    <Field id="audit-day" data-admin-grow type="date" value={host.day}
         oninput={(event) => host.setDay(event.currentTarget.value)} />
     <Button disabled={host.busy}
         onclick={() => void host.loadAudit()}>{t(ADMIN_KEYS.auditLoad)}</Button>

@@ -71,6 +71,7 @@ class UiPreferencesStore:
         self._guard = threading.Lock()
         self._cached: Optional[Dict[str, Any]] = None
         self._cached_for: Optional[str] = None
+        self._generation = 0
         config_writer.on_commit(self._observe_commit)
 
 
@@ -79,9 +80,14 @@ class UiPreferencesStore:
         with self._guard:
             if self._cached is not None and self._cached_for == str(path):
                 return _copy_block(self._cached)
+            generation = self._generation
 
         block = self._load_from_disk(path)
         with self._guard:
+            if generation != self._generation:
+                if self._cached is not None and self._cached_for == str(path):
+                    return _copy_block(self._cached)
+                return _copy_block(block)
             self._cached = block
             self._cached_for = str(path)
             return _copy_block(block)
@@ -170,15 +176,17 @@ class UiPreferencesStore:
 
 
     def _observe_commit(self, path: Path, data: Dict[str, Any]) -> None:
-        if str(path) != self._cached_for and self._cached is not None:
-            return
         block = ui_preferences.read_block(data)
         with self._guard:
+            self._generation += 1
+            if str(path) != self._cached_for and self._cached is not None:
+                return
             self._cached = block
             self._cached_for = str(path)
 
     def invalidate(self) -> None:
         with self._guard:
+            self._generation += 1
             self._cached = None
             self._cached_for = None
 

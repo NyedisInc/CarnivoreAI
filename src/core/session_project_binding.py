@@ -1,40 +1,3 @@
-"""Giving every live session a project, and never writing half an answer.
-
-The rule this module adds: THE PAIR MOVES TOGETHER OR NEITHER MOVES.
-A derivation that cannot beat what the row already holds writes nothing
-at all.
-
-So the ladder gets a SECOND rung: try the path as written, and only if
-that matches nothing, try it canonicalised. Canonicalising is a
-FALLBACK, never the primary comparison - the as-written match still wins
-- so a project declared at a symlink keeps collecting the sessions
-declared at that same symlink. ``transcript_import_paths.canonical`` is
-the spelling function, imported rather than re-implemented, because this
-codebase already decided realpath is "the one spelling this codebase
-stores for a directory".
-
-THREE OUTCOMES SURVIVE, AND THE FOURTH IS NEW.
-
-  ``matched``            the directory as written sits under a project.
-  ``matched_canonical``  it does once the symlinks are resolved. Same
-                         attribution value on the row; a separate rule
-                         name so a reader can tell which rung fired,
-                         because a rung nobody has ever observed to fire
-                         is unmeasured rather than proven.
-  ``created``            it sits under nothing, so a project was minted
-                         at it. Only ever with ``allow_create=True``.
-  ``none``               read, and deliberately not given a project: the
-                         one exclusion is a per-run scratch directory,
-                         which can never be a project root.
-  ``unknown``            could not be read or situated. NOT an answer,
-                         and it writes nothing, ever.
-
-WHY SCRATCH IS THE ONLY EXCLUSION. It is the same single exclusion the
-transcript importer names, and it is about the PATH, not about the work:
-``/private/tmp``, ``/tmp`` and ``/var/folders`` hold per-run directories
-that are gone by tomorrow, and minting a project at one would put a dead
-folder in the launcher forever.
-"""
 
 from __future__ import annotations
 
@@ -106,16 +69,6 @@ def _chosen_dir(working_dir: str) -> str:
 
 
 def fold_path(path: str) -> str:
-    """A path spelled for case-insensitive comparison (the safety guards only, never for storage or lookup).
-
-    Description: macOS volumes are case-insensitive by default (APFS) yet ``os.path.realpath`` keeps the spelling it
-      was given, and ``os.path.normcase`` is a no-op there. Resolving the on-disk spelling would need a directory walk
-      per component and fails for a folder that does not exist yet, so the guard compares ``casefold``-ed paths. On a
-      case-sensitive volume this over-refuses only a sibling that differs by case alone, the safe direction.
-    Inputs: path (str). Output: str - NFC-normalised (APFS treats NFC and NFD spellings as one folder), casefolded,
-      trailing slashes stripped.
-    Example: fold_path('/Users/example/Carnivore-Projects/')  # '/users/example/carnivore-projects'
-    """
     return unicodedata.normalize("NFC", path).rstrip("/").casefold()
 
 
@@ -234,30 +187,6 @@ def resolve_project_binding(
     roots: Optional[Dict[str, int]] = None,
     display_name: Optional[str] = None,
 ) -> ProjectBinding:
-    """Resolve one session's directory onto a project, spelling included.
-
-    Description: the whole ladder. As-written match, then canonical
-      match, then - only when asked - a minted project, then the two
-      honest refusals.
-
-      ``stored_project_id`` is what the row ALREADY holds, and it is not
-      a tie-breaker: it is the reason a refusal may be silent. When the
-      ladder ends in ``none`` or ``unknown`` and the row already carries
-      a project, this returns that project unchanged with no attribution
-      claim to write, so the caller cannot half-overwrite a good row
-      with a worse answer. That single rule is what fixes the rows this
-      module's docstring names.
-    Inputs: conn (sqlite3.Connection) - caller owns the transaction.
-      working_dir (str | None) - the probed cwd; None means the probe
-      did not answer. stored_project_id (int | None) - the project the
-      row already holds, if any. allow_create (bool) - whether the last
-      rung may mint a project. now (str | None) - clock for the mint.
-      roots (dict[str, int] | None) - project root -> id, read from the
-      connection when not supplied. display_name (str | None) - the name a minted project takes.
-    Output: ProjectBinding.
-    Example:
-        resolve_project_binding(conn, '/Users/example/Development/app').rule
-    """
     known = matchable_roots(conn) if roots is None else roots
     written, resolved = _spellings(working_dir)
 
@@ -346,7 +275,6 @@ def resolve_project_binding(
                 created_project=created,
                 root=root,
             )
-        # could not
         return ProjectBinding(
             project_id=stored_project_id,
             attribution=SESSION_ATTRIBUTION_UNKNOWN,
@@ -387,15 +315,60 @@ def _derived_onto_ancestor(
     return any(prefix.startswith(root + "/") for prefix in prefixes for root in held)
 
 
+def _memo_spellings(path: Optional[str], memo: Dict[str, frozenset]) -> frozenset:
+    if not path:
+        return frozenset()
+    if path not in memo:
+        memo[path] = frozenset(
+            spelling.rstrip("/")
+            for spelling in (normalize_path_for_match(path), canonical(path))
+            if spelling
+        )
+    return memo[path]
+
+
 def correct_shallow_derivations(
     conn: sqlite3.Connection, *, now: Optional[str] = None
 ) -> int:
-    return sum(
-        backfill_sessions_under_root(
-            conn, root=root, project_id=pid, now=now, adopt_unassigned=False
+    roots = matchable_roots(conn)
+    if not roots:
+        return 0
+    try:
+        rows = conn.execute(
+            "SELECT s.id, s.working_dir, s.project_id, p.root FROM sessions s "
+            "JOIN projects p ON p.id = s.project_id "
+            "WHERE s.archived_at IS NULL AND s.working_dir IS NOT NULL AND s.project_attribution = ?",
+            (SESSION_ATTRIBUTION_DERIVED_DEEPEST,),
+        ).fetchall()
+    except sqlite3.Error as exc:
+        logger.warning("project_backfill_unreadable", error=str(exc),
+                       note="no session was re-attributed; nothing was written")
+        return 0
+    memo: Dict[str, frozenset] = {}
+    root_prefixes = {pid: _memo_spellings(root, memo) for root, pid in roots.items()}
+    stamp = now or utc_now()
+    moved = 0
+    for row_id, working_dir, current_pid, current_root in rows:
+        held = _memo_spellings(current_root, memo)
+        paths = _memo_spellings(working_dir, memo)
+        best_pid, best_len = None, -1
+        for pid, prefixes in root_prefixes.items():
+            if pid == current_pid or not any(p.startswith(h + "/") for p in prefixes for h in held):
+                continue
+            under = [p for p in prefixes if any(c == p or c.startswith(p + "/") for c in paths)]
+            if under and max(map(len, under)) > best_len:
+                best_pid, best_len = pid, max(map(len, under))
+        if best_pid is None:
+            continue
+        conn.execute(
+            "UPDATE sessions SET project_id = ?, project_attribution = ?, updated_at = ? WHERE id = ?",
+            (best_pid, SESSION_ATTRIBUTION_DERIVED_DEEPEST, stamp, int(row_id)),
         )
-        for root, pid in matchable_roots(conn).items()
-    )
+        moved += 1
+    if moved:
+        logger.info("project_backfill_adopted_sessions", sessions=moved,
+                    note="sessions derived onto a shallower ancestor project were re-homed to the deepest match")
+    return moved
 
 
 def backfill_sessions_under_root(

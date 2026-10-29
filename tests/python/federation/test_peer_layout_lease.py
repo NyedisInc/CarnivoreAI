@@ -19,7 +19,7 @@ from src.core.federation import peer_hosts, peer_layout_lease, shadow_rows
 from src.core.federation.peer_client import PeerUnreachable
 from src.core.layouts.lease import SESSION_LEASES
 
-IID = "iid-hosta"
+IID = "iid-studio"
 OWNER_UUID = "11111111-2222-4333-8444-555555555555"
 
 
@@ -48,7 +48,7 @@ def world(tmp_path):
     path = db_path_for(tmp_path)
     (local_id, _), = add_sessions(path, 1)
     with closing(connect(path, create=False)) as conn:
-        peer_hosts.upsert(conn, install_id=IID, label="hosta", grant_id="g", fid="f", initiator=True)
+        peer_hosts.upsert(conn, install_id=IID, label="studio", grant_id="g", fid="f", initiator=True)
         key = peer_hosts.host_key_for(IID)
         shadow = shadow_rows.sync_peer(conn, host_key=key, peer_install_id=IID, complete=True, rows=[{
             "session_uuid": OWNER_UUID, "row_id": 7, "name": "carnivore_far", "working_dir": "/far/dir",

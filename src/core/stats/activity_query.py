@@ -1,22 +1,3 @@
-"""Activity metrics read as one SQL GROUP BY per (minute, group) instead of one Python pass per row (#1682, A1).
-
-WHY. ``activity_minutes`` is a view over the minute and hour tables; a 7 day window is about 235k rows, and the
-old reader fetched every one of them (each with a correlated lookup of the global observed seconds) and
-folded them into cells in Python. That alone spent about 1.65 s of the 2.0 s batch deadline. The metrics a
-card shows sum cleanly, so SQLite does the summing and Python folds one row per (minute, group).
-
-ONE SCAN PER BATCH. A Home card asks several activity metrics over the same range and filters (a series, a
-summary, then starts, completions, running and the average). :func:`fetch_aggregated` returns the sum of every
-plain metric the batch asks for (``store.scan_metrics``) from one scan, and a batch's store memoises it (``store.scan_memo``), so the card pays for the
-scan once. The average metrics also read the minute's global observed seconds: they scan grouped by each row's
-observed seconds and take the global figure from the coverage table in Python, one dict lookup per minute
-(a SQL join against the coverage view cost more than the scan itself).
-
-EXACT, NOT APPROXIMATE. For every metric the fold produces the same cells and coverage as the per-row path
-(``queries._fetch`` + ``queries._aggregate``) up to float addition order; ``tests/stats/test_read_path.py``
-holds that equality. The per-conversation transform still takes the per-row path because it needs each
-row's conversation id.
-"""
 from __future__ import annotations
 
 import sqlite3

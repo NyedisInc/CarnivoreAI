@@ -6,6 +6,7 @@ import { CLUSTER_V_PX, LABEL_PX, layoutColumn, placeLabels, stepColumn } from '.
 import { frameFor } from './plot-model';
 import { V_LINE_PX, V_LABEL_PAD_PX } from './scale';
 
+/** The busy fixture, fresh. Output: SessionTimeline. */
 const busy = (): SessionTimeline => structuredClone(Object.values(timelineWidgetFixtures.data).find((v) => (v as SessionTimeline).bars) as SessionTimeline);
 
 describe('the column', () => {

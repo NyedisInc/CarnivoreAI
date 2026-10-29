@@ -71,12 +71,12 @@ async def test_ntfy_severity_priority_and_non_ascii_title(fake) -> None:
 
 
 async def test_ntfy_allow_private_on_and_off(fake) -> None:
-    cfg = {"base_url": "http://203.0.113.11:8080"}
+    cfg = {"base_url": "http://192.168.1.5:8080"}
     await NtfySender().send(ev(), cfg, {"topic": "t"})
     assert fake.calls[0]["policy"].allow_private is False
-    await NtfySender().send(ev(), {**cfg, "allow_private": True, "allow_private_origin": "http://203.0.113.11:8080"},
+    await NtfySender().send(ev(), {**cfg, "allow_private": True, "allow_private_origin": "http://192.168.1.5:8080"},
                             {"topic": "t"})
-    assert fake.calls[1]["policy"].allow_private is True and fake.calls[1]["url"] == "http://203.0.113.11:8080/t"
+    assert fake.calls[1]["policy"].allow_private is True and fake.calls[1]["url"] == "http://192.168.1.5:8080/t"
     assert fake.calls[0]["policy"].any_host is True
 
 
@@ -172,7 +172,7 @@ async def test_sns_golden_sigv4_one_segment_never_details(fake, monkeypatch) -> 
 async def test_sns_bad_region_and_signature_changes_with_body(fake, monkeypatch) -> None:
     monkeypatch.setattr(sns, "clock", lambda: FIXED)
     s = {"key_id": "K", "secret_key": "S", "numbers": ["+15550002222", "+15550003333"]}
-    assert (await SnsSender().send(ev(), {"region": "example.net/x"}, s)).failure is FailureClass.INVALID
+    assert (await SnsSender().send(ev(), {"region": "evil.com/x"}, s)).failure is FailureClass.INVALID
     assert fake.calls == []
     await SnsSender().send(ev(), {"region": "eu-west-2"}, s)
     assert len(fake.calls) == 2
@@ -194,11 +194,11 @@ async def test_email_through_fake_smtp_golden() -> None:
     srv = FakeSMTP()
     try:
         r = await EmailSender().send(ev(details="tool Bash"), {**mail_cfg(srv), "details": True},
-                                     {"from_address": "a@example.net", "recipients": ["b@example.net", "c@example.net"],
+                                     {"from_address": "a@x.org", "recipients": ["b@y.org", "c@y.org"],
                                       "user": "u", "password": SENTINEL})
     finally:
         srv.close()
-    assert r.ok and srv.mail_from == "a@example.net" and srv.rcpts == ["b@example.net", "c@example.net"]
+    assert r.ok and srv.mail_from == "a@x.org" and srv.rcpts == ["b@y.org", "c@y.org"]
     assert "Subject: turn finished" in srv.data
     assert LINK in srv.data and "build (carnivore) on studio finished its turn." in srv.data and "tool Bash" in srv.data
     assert srv.login == b"\0u\0" + SENTINEL.encode()
@@ -213,7 +213,7 @@ async def test_email_error_mapping(monkeypatch, exc, failure) -> None:
     async def boom(**kw):
         raise exc
     monkeypatch.setattr(st, "send_mail", boom)
-    r = await EmailSender().send(ev(), {"smtp_host": "h"}, {"from_address": "a@example.net", "recipients": "b@example.net"})
+    r = await EmailSender().send(ev(), {"smtp_host": "h"}, {"from_address": "a@x.org", "recipients": "b@y.org"})
     assert r.failure is failure and r.detail == exc.reason
     assert failure in (FailureClass.SERVER, FailureClass.TIMEOUT, FailureClass.NETWORK) or not r.retryable
 
@@ -221,25 +221,25 @@ async def test_email_error_mapping(monkeypatch, exc, failure) -> None:
 async def test_email_real_errors_from_fake_server() -> None:
     srv = FakeSMTP(auth_ok=False)
     try:
-        r = await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@example.net", "recipients": ["b@example.net"],
+        r = await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@x.org", "recipients": ["b@y.org"],
                                                            "user": "u", "password": SENTINEL})
         assert r.failure is FailureClass.AUTH
     finally:
         srv.close()
     srv = FakeSMTP(rcpt_reply="450 try later")
     try:
-        r = await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@example.net", "recipients": ["b@example.net"]})
+        r = await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@x.org", "recipients": ["b@y.org"]})
         assert r.failure is FailureClass.SERVER
     finally:
         srv.close()
     srv = FakeSMTP(rcpt_reply="550 no such user")
     try:
-        r = await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@example.net", "recipients": ["b@example.net"]})
+        r = await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@x.org", "recipients": ["b@y.org"]})
         assert r.failure is FailureClass.INVALID
     finally:
         srv.close()
     blocked = await EmailSender().send(ev(), {"smtp_host": "127.0.0.1", "smtp_port": "25", "security": "plain"},
-                                       {"from_address": "a@example.net\r\nBcc: z@example.net", "recipients": ["b@example.net"]})
+                                       {"from_address": "a@x.org\r\nBcc: z@y.org", "recipients": ["b@y.org"]})
     assert blocked.failure is FailureClass.BLOCKED
     assert (await EmailSender().send(ev(), {}, {})).failure is FailureClass.INVALID
 
@@ -276,7 +276,7 @@ async def test_sentinel_never_in_logs_or_results(fake, monkeypatch, caplog) -> N
         await NtfySender().send(ev(), {"dest_id": "d_1"}, {"topic": SENTINEL, "token": SENTINEL})
         srv = FakeSMTP(auth_ok=False)
         try:
-            await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@example.net", "recipients": ["b@example.net"],
+            await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@x.org", "recipients": ["b@y.org"],
                                                            "user": "u", "password": SENTINEL})
         finally:
             srv.close()
@@ -299,7 +299,7 @@ async def test_newline_joined_list_secrets_fan_out_for_all_kinds(fake) -> None:
     assert [c["json"]["chat_id"] for c in fake.calls] == ["123", "-456"]
     srv = FakeSMTP()
     try:
-        await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@example.net", "recipients": LIST_SEPARATOR.join(["b@example.net", "c@example.net"])})
+        await EmailSender().send(ev(), mail_cfg(srv), {"from_address": "a@x.org", "recipients": LIST_SEPARATOR.join(["b@y.org", "c@y.org"])})
     finally:
         srv.close()
-    assert srv.rcpts == ["b@example.net", "c@example.net"]
+    assert srv.rcpts == ["b@y.org", "c@y.org"]

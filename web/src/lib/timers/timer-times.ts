@@ -31,6 +31,13 @@ function fireMs(row: TimerRow, nowMs: number): number | null {
   return pinnedCronAt(row.cron, nowMs);
 }
 
+export function fireCountdown(row: TimerRow, nowMs: number): string | null {
+  const at = fireMs(row, nowMs);
+  if (at === null) return null;
+  const seconds = (at - nowMs) / 1000;
+  return seconds <= 0 ? t('timers.due') : durationText(seconds);
+}
+
 export interface TimerLine {
   id: string;
   live: boolean;

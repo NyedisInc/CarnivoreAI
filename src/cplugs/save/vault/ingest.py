@@ -21,7 +21,7 @@ logger = structlog.get_logger()
 
 
 class SourceError(RuntimeError):
-    """A source file could not be copied faithfully. The unit is retried later; nothing is recorded for it."""
+    pass
 
 
 class DatalessSource(SourceError):
@@ -149,7 +149,7 @@ def ingest_file(blobs: BlobStore, path: Path, *, role: str, home: str, rel: str,
             raise
         if not stat_mod.S_ISREG(st.st_mode):
             raise SourceError(f"not a regular file: {path}")
-        if dataless.is_dataless_file(path):
+        if dataless.is_dataless_stat(st):
             raise DatalessSource(str(path))
         if unchanged(prior, st, blobs):
             if parked is not None:

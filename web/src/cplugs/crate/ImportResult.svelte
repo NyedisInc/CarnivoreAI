@@ -4,6 +4,7 @@
     import { errorSentence, type Fetcher } from './crate-api';
     import { keptSubject, skipSentence, warningSentence } from './import-api';
     import { wakeRestoredSession, type ImportReceiptView, type RestoredSession } from './import-receipt';
+    import { Button, Tag } from '../sdk/ui';
     import TtyBox from './TtyBox.svelte';
 
     interface Props {
@@ -56,7 +57,7 @@
             <div class="crt-tty__out">
                 {#each receipt.warnings as warning (`${warning.code}:${warning.detail}`)}
                     <div class="crt-tty__note">
-                        <span class="crt-tty__tag crt-tty__tag--warn">{t('cplug.crate.import.tag.warning')}</span>
+                        <Tag tone="warn">{t('cplug.crate.import.tag.warning')}</Tag>
                         <p class="crt-tty__text" data-crt-result-warning={warning.code}>{warningSentence(warning, t)}</p>
                     </div>
                 {/each}
@@ -68,10 +69,8 @@
                             <p class="crt-tty__row" data-crt-result-session={session.sessionUuid}>
                                 <span class="crt-tty__name" use:truncatedTip={name}>{name}</span>
                                 <span class="crt-tty__fig" data-crt-result-status>{words(session.sessionUuid)}</span>
-                                <button type="button" class="oc-btn oc-btn--sm crt-tty__act" data-crt-result-wake={session.sessionUuid}
-                                    disabled={status[session.sessionUuid] === 'waking' || status[session.sessionUuid] === 'awake'} onclick={() => void wake(session)}>
-                                    {t('cplug.crate.import.result.wake')}
-                                </button>
+                                <span class="crt-tty__act"><Button size="sm" data-crt-result-wake={session.sessionUuid}
+                                    disabled={status[session.sessionUuid] === 'waking' || status[session.sessionUuid] === 'awake'} onclick={() => void wake(session)}>{t('cplug.crate.import.result.wake')}</Button></span>
                             </p>
                         {/each}
                     </section>
@@ -102,5 +101,5 @@
             </div>
         </TtyBox>
     {/if}
-    <button type="button" class="oc-btn oc-btn--sm crt-plan__act" data-crt-result-open onclick={openProjects}>{t('cplug.crate.import.result.open_projects')}</button>
+    <span class="crt-plan__act"><Button size="sm" data-crt-result-open onclick={openProjects}>{t('cplug.crate.import.result.open_projects')}</Button></span>
 </div>

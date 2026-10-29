@@ -13,26 +13,6 @@ from src.core import static_asset_keys, static_cache
 
 
 async def maybe_gzip_file_response(response: Response, scope: dict) -> Response:
-    """Serve a FileResponse's precompressed bytes when the client accepts
-    gzip, never for a Range request or a conditional-match 304.
-
-    Description: the compression decision for one static-file response.
-      A ``FileResponse`` still carries the file's real stat (mtime, size)
-      and path, which is exactly what static_cache needs to decide
-      whether its cached compression is still fresh - so this reads those
-      off the response object rather than re-`stat`-ing the file itself.
-    Inputs: response (Response) - whatever NoCacheStaticFiles.get_response
-        already produced (a FileResponse on a fresh 200, or a
-        NotModifiedResponse on a 304 - only the former is eligible).
-      scope (dict) - the ASGI scope, read for the Range and
-        Accept-Encoding request headers.
-    Output: Response - either the original response (a Range header on
-      the request skips compression entirely; the file could not be
-      compressed; or the client did not send Accept-Encoding: gzip) or a
-      new Response carrying the precompressed bytes, Content-Encoding and
-      a corrected Content-Length.
-    Example: response = await maybe_gzip_file_response(response, scope)
-    """
     if not isinstance(response, FileResponse) or response.status_code != 200:
         return response
     request_headers = Headers(scope=scope)

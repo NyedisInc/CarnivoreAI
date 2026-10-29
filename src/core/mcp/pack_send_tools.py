@@ -33,14 +33,14 @@ SPECS = (
         required=("machine", "mode"), invoke=_send, reach=session_target.LIVE, needs_uuid=True,
         summary=lambda args, _t: f"send session {json.dumps(args.get('target'))} to {json.dumps(args.get('machine'))} as {args.get('mode')}"
                                  + (" (adding the project there first)" if args.get("with_project") else ""),
-        example={"machine": "hosta", "mode": "copy", "with_project": True},
+        example={"machine": "studio", "mode": "copy", "with_project": True},
     ),
     ra.RouteTool(
         name="session_send_check", route="src.api.pack_send_routes:send_check_route", gate=ra.READ,
         description="Ask whether a running session could be sent to a paired computer, per mode (move, copy, fresh), and whether the project is already "
                     "there or can be added. Changes nothing on either computer.",
         properties={"machine": _MACHINE}, required=("machine",), invoke=_check, reach=session_target.LIVE, needs_uuid=True,
-        example={"machine": "hosta"},
+        example={"machine": "studio"},
     ),
 )
 

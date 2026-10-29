@@ -1,5 +1,5 @@
 import { t } from '../i18n/index.svelte';
-import { openFiles, postOpenFile, type OpenFileInfo, type OpenFileRequest } from './api.svelte';
+import { openFiles, postOpenFile, postOpenFilePath, type OpenFileInfo, type OpenFileRequest } from './api.svelte';
 import { bufferIds, dropBuffer, isDirty, moveBuffer } from './buffers.svelte';
 import { appConfirm, type ConfirmFn } from './save-flow';
 
@@ -53,7 +53,8 @@ async function askAbout(id: string, deps: OrphanDeps): Promise<void> {
         return;
     }
     try {
-        const reopened = await deps.reopen({ root: row.root, path: row.path, session_uuid: row.session_uuid, kind: row.kind });
+        const reopened = row.root === 'absolute' ? await postOpenFilePath(row.path) :
+            await deps.reopen({ root: row.root, path: row.path, session_uuid: row.session_uuid, kind: row.kind });
         if (moveBuffer(id, reopened.id)) {
             lastSeen.delete(id);
             lastSeen.set(reopened.id, reopened);

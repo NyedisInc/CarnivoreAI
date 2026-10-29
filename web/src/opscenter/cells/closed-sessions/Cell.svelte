@@ -5,7 +5,6 @@
 </script>
 
 <script lang="ts">
-  /* recently closed sessions */
   import type { CellProps } from '../../lib/cell';
   import { atLeast } from '../../lib/states';
   import { parseServerTime, relative } from '../../lib/format';
@@ -143,7 +142,7 @@
 
 <WidgetShell {widget} controls={sortControl}>
 <ShellScroll>
-<!-- running sessions -->
+
 {#if status === 'loading'}
   <DataTable {columns} rows={[]} showHead rowHeight={26.8} headHeight={26} bodyType="oc-fs-label" headType="oc-fs-micro" rowKey={() => ''}>
     {#snippet cell()}{/snippet}

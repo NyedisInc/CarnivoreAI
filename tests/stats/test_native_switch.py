@@ -34,7 +34,7 @@ def _set(client: TestClient, enabled: bool) -> dict:
 
 
 def _deliver(tmp_path: Path, store, n: int) -> None:
-    conv = f"7934883d-0000-4000-8000-00000000010{n}"
+    conv = f"c0ffee00-0000-4000-8000-00000000010{n}"
     source = tmp_path / "claude" / "project" / f"{conv}.jsonl"
     source.parent.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + 120 * n))

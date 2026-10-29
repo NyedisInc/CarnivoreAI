@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """Does EVERY status light render at the SAME diameter, in every state?
 
+THE DEFECT. The owner reported one dot in the sidebar looking noticeably
+bigger than its neighbours: the single working session, painted bright
+green, beside a column of resting greys. Measured 2026-09-09, the LED's
+ELEMENT box was 9.0 x 9.0 in all forty (inner, outer) combinations, which
+is exactly why nothing had ever caught it. The LIT object was not:
+
     outer=active   an 11.69px halo disc in the dot's own hue at 0.55
                    opacity, PLUS a `box-shadow: 0 0 1.5px 1.5px` glow
                    that paints OUTSIDE the halo's box  -> ~14.7px
@@ -29,6 +35,27 @@ shadow are composed. Only a browser composes those. Every number below
 comes out of a real Chromium that loaded the real stylesheets in the
 shipped order, through scripts/lib_csp_static_server.py so the harness
 runs under the application's own CSP.
+
+WHAT IS CHECKED, and each one can fail on its own:
+  1. Every (inner, outer) pair reports the same element box.
+  2. Every pair reports the same halo box.
+  3. No halo paints outside that box - its box-shadow is `none` or
+     `inset`, never an outward spread.
+  4. The lights on the REAL surfaces agree with the matrix: the sidebar
+     rows, the two group headers and every swatch in the key.
+  5. The group header rolls up through the row component - a header over
+     an unread group reports the finished-turn ring, grey centre and all.
+  6. Nothing renders a `.status-summary-badge` (the yellow unread pill,
+     removed 2026-09-09) or a `.session-sidebar-note` (the remembered-
+     positions footer text, removed with it).
+  7. The key lists every inner state the component can paint.
+
+THREE THEMES, chosen for what each can falsify:
+  claude    the owner's own dark theme.
+  codex     a LIGHT page, where a light tuned against a dark backdrop is
+            free to be wrong.
+  terminal  sets --radius-full to 0, turning every dot into a square. A
+            geometry that leaned on the radius token would move there.
 
 THREE OUTCOMES, and they exit differently:
   0  PASS  - measured, and every state is one size
@@ -113,7 +140,7 @@ def check_surfaces(bundle: dict, theme: str, failures: list) -> None:
     if report["badges"]:
         failures.append(
             "%s: %d unread badge(s) still rendered - the yellow numeric "
-            "pill was removed" % (theme, report["badges"]))
+            "pill was removed on 2026-09-09" % (theme, report["badges"]))
     if report["footerNotes"]:
         failures.append(
             "%s: %d footer note(s) still rendered - the remembered-"

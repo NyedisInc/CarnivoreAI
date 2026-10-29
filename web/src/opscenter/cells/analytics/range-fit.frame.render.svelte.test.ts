@@ -65,7 +65,7 @@ describe('the real card in the real frame', () => {
     expect(target.querySelector<HTMLElement>('.analytics-range')?.dataset.fit).toBe('none');
     expect(name?.getAttribute('title')).toContain(TITLE);
   });
-  test('narrow, the title arriving after the header is up: the range still gives way to it (staging gb42a9fd)', async () => {
+  test('narrow, the title arriving after the header is up: the range still gives way to it (staging g927529e)', async () => {
     const target = await framed(TITLE.length, true);
     expect(target.querySelector('.oc-frame-title h2.oc-frame-name')?.textContent?.trim()).toBe(TITLE);
     expect(target.querySelector<HTMLElement>('.analytics-range')?.dataset.fit).toBe('none');

@@ -7,6 +7,7 @@ export const OUT_DEFAULT_PX: Readonly<Record<RailEdge, number>> = Object.freeze(
 
 export const OUT_STEP_PX = 16;
 
+/* must hold still */
 export const RAIL_PUSH_DEBOUNCE_MS = 120;
 
 export interface SizeStorage {

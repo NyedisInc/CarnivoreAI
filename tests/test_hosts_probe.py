@@ -25,7 +25,7 @@ from src.core.hosts.ssh_exec import SshArgumentError, SshDestination
 from src.core.tmux_discovery import resolve_tmux_path
 from tests.helpers.fake_ssh import FakeSshHost, fake_ssh_host_fixture
 
-DEST = SshDestination("acme@fakehost")
+DEST = SshDestination("alex@fakehost")
 SYSTEM_PATH = "/usr/bin:/bin:/usr/sbin:/sbin"
 
 

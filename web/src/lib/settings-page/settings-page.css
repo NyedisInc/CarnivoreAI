@@ -1,4 +1,3 @@
-/* .settings-page */
 
 .settings-page .st-body {
     grid-template-columns: 184px minmax(0, 1fr);
@@ -69,7 +68,6 @@
     margin: 0;
 }
 
-/* padding */
 .settings-page .st-body {
     --st-space-1: var(--oc-space-1);
     --st-space-2: var(--oc-space-2);
@@ -79,7 +77,6 @@
     --st-space-5: var(--oc-space-6);
 }
 
-/*  hidden  */
 .settings-page .st-tabhint {
     max-width: 140ch;
     margin: 0;
@@ -96,7 +93,6 @@
     max-width: 880px;
 }
 
-/* padding */
 .settings-page .st-rows {
     display: flex;
     flex-direction: column;
@@ -247,7 +243,6 @@
     pointer-events: none;
 }
 
-/* padding */
 .settings-page .st-footer {
     display: flex;
     flex: 1 1 auto;

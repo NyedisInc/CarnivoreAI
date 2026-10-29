@@ -1,3 +1,6 @@
+// ----------------------------------------------------------------------
+// nothing at all
+// NOT A PIXEL TEST. This reads the element tree the shipped module
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -23,6 +26,7 @@ function makeEnv() {
 }
 
 const tests = [];
+/** Description: register one named case. Inputs: name, fn. Output: None. */
 function test(name, fn) { tests.push([name, fn]); }
 
 
@@ -430,6 +434,37 @@ test('the onData and Shift+Enter call sites are still wired', () => {
         + 'input merely HELD until the pane is ready has answered nothing');
 });
 
+
+test('a middle click on a card dismisses it and acks, as the x does; autoscroll is cancelled', async () => {
+    const { container, mgr, acked } = makeEnv();
+    mgr.add(toast('Stop', 'Your turn', null, 'A'));
+    await settle();
+    const card = cards(container)[0];
+    assert.equal(card.fire('mousedown', { button: 1 }).defaultPrevented, true, 'mousedown 1 must not autoscroll');
+    assert.equal(card.fire('mousedown', { button: 0 }).defaultPrevented, undefined, 'left mousedown is untouched');
+    card.fire('auxclick', { button: 2 });
+    assert.equal(cards(container).length, 1, 'a right auxclick must not dismiss');
+    assert.equal(card.fire('auxclick', { button: 1 }).defaultPrevented, true, 'no new tab from a link');
+    await settle();
+    assert.equal(cards(container).length, 0, 'middle click dismisses');
+    assert.equal(acked.length, 1, 'same teardown as the x: the toast is acked');
+});
+
+test('a middle click on a local card action dismisses without running the action', async () => {
+    const { container, mgr } = makeEnv();
+    let ran = 0;
+    mgr.add({ ...toast('Info', 'Undo?', null, null), local: true, action_label: 'undo', on_action: () => { ran += 1; } });
+    await settle();
+    const card = cards(container)[0];
+    const action = card.querySelector('.toast__action');
+    action.fire('auxclick', { button: 1 });
+    card.fire('auxclick', { button: 1 });
+    await settle();
+    assert.equal(ran, 0, 'the action must not run');
+    assert.equal(cards(container).length, 0);
+});
+
+// ----------------------------------------------------------------- runner
 
 let failed = 0;
 for (const [name, fn] of tests) {

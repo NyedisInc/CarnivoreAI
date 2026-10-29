@@ -6,7 +6,6 @@ import type { FolderPickerSource, RemoteFolderAnswer, RemoteFolderListing } from
 
 const UNREACHABLE = new Set(['not_paired', 'disconnected', 'timeout', 'unreachable', 'busy']);
 
-/* older carnivore */
 export function remoteBrowseNote(answer: RemoteFolderAnswer, computer: string, t: Translate): string | null {
     if (answer.status === 'ok') return null;
     if (answer.status === 'refused' && answer.code === 'not_found') return null;

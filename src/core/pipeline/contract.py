@@ -75,10 +75,6 @@ class Appended:
 
 @dataclass(frozen=True)
 class FileReset:
-    """The file no longer holds what was consumed (``name``: ``file_rewritten`` or ``truncated``).
-
-    The plugin drops everything it derived from ``path``; the file is then delivered again from byte 0.
-    """
 
     name: str
     conversation_id: str
@@ -159,6 +155,15 @@ class Plugin:
     def reads(self, family: str, file_kind: Optional[str] = None) -> bool:
         kinds = self.file_kinds_fn() if self.file_kinds_fn is not None else self.file_kinds
         return family in self.families and (file_kind is None or file_kind in kinds)
+
+    def reads_snapshot(self) -> Callable[[str, Optional[str]], bool]:
+        kinds = self.file_kinds_fn() if self.file_kinds_fn is not None else self.file_kinds
+        families = self.families
+
+        def reads(family: str, file_kind: Optional[str] = None) -> bool:
+            return family in families and (file_kind is None or file_kind in kinds)
+
+        return reads
 
 
 def validate(plugin: Plugin) -> None:

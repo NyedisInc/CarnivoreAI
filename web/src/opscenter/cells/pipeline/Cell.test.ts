@@ -149,6 +149,7 @@ describe('the pipeline widget', () => {
     await settle();
     const names = [...target.querySelectorAll('[data-pipeline-chart] .oc-rc-name')];
     expect(names.map((el) => el.querySelector('[data-outcome-words]')?.textContent?.trim())).toEqual(['ok', 'failed: KeyError']);
+    // The tooltip names what the mark means, on the mark (a tooltip only says what an icon shows, #1209), never the name.
     expect(names[1]?.getAttribute('title')).toBeNull();
     expect(names[1]?.querySelector('.oc-rc-mark')?.getAttribute('title')).toBe('failed: KeyError');
   });

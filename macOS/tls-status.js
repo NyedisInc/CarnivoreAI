@@ -1,4 +1,5 @@
-// could not
+// WHY THIS FILE EXISTS
+// measured.
 
 'use strict';
 
@@ -6,7 +7,6 @@ const LEVEL_SECURE = 'secure';
 const LEVEL_INSECURE = 'insecure';
 const LEVEL_UNKNOWN = 'unknown';
 
-/* could not */
 function parseUrlParts(url) {
   try {
     const parsed = new URL(String(url));

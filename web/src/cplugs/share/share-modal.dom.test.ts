@@ -55,6 +55,7 @@ async function settle(): Promise<void> {
     for (let i = 0; i < 10; i += 1) await Promise.resolve();
 }
 
+/** The overlay currently in the document, or null. */
 function overlay(): HTMLElement | null {
     return document.querySelector('.modal-overlay');
 }
@@ -65,6 +66,7 @@ function el<T extends Element>(selector: string): T {
     return found;
 }
 
+/** Press a key on the overlay, the way a user in the dialog would. */
 function press(key: string): void {
     overlay()?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
 }
@@ -115,7 +117,7 @@ describe('the active row shows the live link and copies it', () => {
         const input = row.querySelector<HTMLInputElement>('[data-share-url]');
         expect(input?.value).toBe(MINTED_URL);
         expect(input?.readOnly).toBe(true);
-        const button = row.querySelector<HTMLButtonElement>('.share-copy')!;
+        const button = row.querySelector<HTMLButtonElement>('[data-share-copy]')!;
         expect(button.getAttribute('aria-label')).toBe('copy link');
         expect(button.getAttribute('title')).toBeNull();
         expect(button.querySelector('svg')).not.toBeNull();
@@ -130,12 +132,12 @@ describe('the active row shows the live link and copies it', () => {
         const closed = openPanel();
         await settle();
 
-        el<HTMLButtonElement>('.share-copy').click();
+        el<HTMLButtonElement>('[data-share-copy]').click();
         expect(stub.calls).toEqual([MINTED_URL]);
 
         await settle();
-        expect(el('.share-copy').textContent!.trim()).toBe('copied');
-        expect(el('.share-copy').getAttribute('aria-label')).toBe('copied');
+        expect(el('[data-share-copy]').textContent!.trim()).toBe('copied');
+        expect(el('[data-share-copy]').getAttribute('aria-label')).toBe('copied');
         press('Escape');
         await closed;
     });
@@ -146,13 +148,13 @@ describe('the active row shows the live link and copies it', () => {
         const closed = openPanel();
         await settle();
 
-        el<HTMLButtonElement>('.share-copy').click();
+        el<HTMLButtonElement>('[data-share-copy]').click();
         await settle();
 
         expect(el('.share-notice').textContent).toContain(
             'select the link and copy it by hand',
         );
-        expect(el('.share-copy').getAttribute('aria-label')).toBe('copy link');
+        expect(el('[data-share-copy]').getAttribute('aria-label')).toBe('copy link');
         const input = el<HTMLInputElement>('[data-share-url]');
         expect(input.value).toBe(MINTED_URL);
         expect(document.activeElement).toBe(input);
@@ -203,6 +205,7 @@ describe('one live link per session, and the commit button says so', () => {
     });
 });
 
+// ---- the stylesheet contract ----------------------------------------
 
 const repoRoot = path.resolve(process.cwd(), '..');
 
@@ -221,7 +224,9 @@ function definedClasses(source: string): Set<string> {
 
 describe('every button in the dialog wears a class the stylesheet defines', () => {
     const defined = definedClasses(
-        fs.readFileSync(path.join(repoRoot, 'client/css/styles.css'), 'utf8'),
+        ['client/css/styles.css', 'web/src/lib/base/elements.css']
+            .map((file) => fs.readFileSync(path.join(repoRoot, file), 'utf8'))
+            .join('\n'),
     );
 
     test('the extractor read a real stylesheet and tells classes apart', () => {
@@ -247,7 +252,7 @@ describe('every button in the dialog wears a class the stylesheet defines', () =
             expect(
                 button.hasAttribute('data-btn') || classes.some((name) => defined.has(name)),
                 `button "${button.textContent!.trim()}" carries no class any rule in ` +
-                    `client/css/styles.css defines: [${classes.join(' ') || 'no class at all'}]`,
+                    `styles.css or the base layer defines: [${classes.join(' ') || 'no class at all'}]`,
             ).toBe(true);
         }
         press('Escape');

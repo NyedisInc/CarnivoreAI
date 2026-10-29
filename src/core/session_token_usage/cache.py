@@ -1,31 +1,3 @@
-"""Remember where we stopped reading a transcript, and resume from there.
-
-THE CACHE IS AN OPTIMISATION AND MAY NEVER BECOME A DEPENDENCY. Every
-miss and every doubt rescans from byte zero. A rescan is slow, never
-wrong; a bad resume is fast and wrong, and wrong here means a cost
-figure a user acts on.
-
-TWO INDEPENDENT DOUBTS FORCE A RESCAN, AND EITHER ONE IS ENOUGH.
-
-  THE FILE SHRANK, or its size fell below the offset we stopped at. An
-    append-only file does not shrink, so this is a different file under
-    the same path - a session cleared, a transcript rewritten, a fork.
-  THE HEAD CHANGED. We keep the first 256 bytes and compare them. A file
-    truncated and rewritten to the SAME length would pass a size check
-    and fail this one. It is cheap (one read of 256 bytes) and it is the
-    only guard against a same-size replacement.
-
-An unchanged size AND an unchanged head with a matching mtime is a hit
-that reads nothing at all, which is the steady state while a session is
-idle.
-
-AN UNCHANGED STAT SIGNATURE IS A HIT THAT OPENS NOTHING. A caller that
-passes ``signature`` (inode, size, mtime_ns, ctime_ns, from
-:func:`stat_signature`) to ``remember`` may ask :meth:`unchanged` before
-opening the file. ``ctime`` cannot be set back by ``utime``, so a file
-rewritten to the same length still fails this check, and the head
-comparison above stays the guard for every read that does open the file.
-"""
 
 from __future__ import annotations
 

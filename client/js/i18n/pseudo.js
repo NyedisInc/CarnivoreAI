@@ -1,17 +1,14 @@
-/* padding */
 
 export const PSEUDO_OPEN = '⟦';
 
 export const PSEUDO_CLOSE = '⟧';
 
-/* padding */
 export const PSEUDO_PAD = '~';
 
 export const PSEUDO_EXPANSION = 0.4;
 
 export const PSEUDO_LOCALE = 'pseudo';
 
-/* padding */
 export function pseudoText(text) {
     if (typeof text !== 'string') return text;
     const pad = Math.max(1, Math.ceil(text.length * PSEUDO_EXPANSION));

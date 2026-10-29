@@ -89,7 +89,7 @@ async def post_warroom_screens(request: Request, body: ScreensRequest) -> Screen
             names[ask.id] = getattr(backend, "tmux_session", None) if backend is not None else None
     asked = {ask.id: ask.hash for ask in body.items}
     local, remote = await asyncio.gather(
-        capture_many(manager._tmux_socket_name(), names), _ask_remote(remote_ids, asked))
+        capture_many(manager.tmux_socket_name(), names), _ask_remote(remote_ids, asked))
     for sid, shot in local.items():
         if shot.status == "ok" and shot.hash == asked.get(sid):
             continue

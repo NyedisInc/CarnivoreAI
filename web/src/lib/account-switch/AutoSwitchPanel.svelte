@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* running sessions */
   import { onMount } from 'svelte';
   import { t } from '../i18n/index.svelte';
   import Button from '../base/Button.svelte';

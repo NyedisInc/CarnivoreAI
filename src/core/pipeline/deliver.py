@@ -58,10 +58,10 @@ class PluginRun:
     busy_seconds: float = 0.0
     read_conn: Optional[sqlite3.Connection] = field(default=None, repr=False)
 
-    def drop_read_conn(self) -> None:
+    def drop_read_conn(self, state_dir: Optional[Path] = None) -> None:
         conn, self.read_conn = self.read_conn, None
-        if conn is not None:
-            conn.close()
+        if conn is not None and state_dir is not None:
+            plugin_db.discard_pooled(state_dir, self.plugin)
 
 
 @dataclass
@@ -103,14 +103,19 @@ def _fail(run: PluginRun, exc: BaseException) -> None:
     log.log_error("pipeline_plugin_failed", plugin=run.plugin.id, error=exc)
 
 
+def _discard_if_sqlite(delivery: Delivery, run: PluginRun, exc: BaseException) -> None:
+    if isinstance(exc, (sqlite3.Error, plugin_db.PluginUnavailable)):
+        plugin_db.discard_pooled(delivery.state_dir, run.plugin)
+
+
 def _read_cursor(delivery: Delivery, run: PluginRun, path: str) -> Tuple[bool, Optional[plugin_db.Cursor]]:
     try:
         with plugin_db.lock_for(run.plugin.id):
             if run.read_conn is None:
-                run.read_conn = plugin_db.open_db(delivery.state_dir, run.plugin)
+                run.read_conn = plugin_db.pooled_db(delivery.state_dir, run.plugin)
             return True, plugin_db.get_cursor(run.read_conn, path)
     except (plugin_db.PluginUnavailable, sqlite3.Error) as exc:
-        run.drop_read_conn()
+        run.drop_read_conn(delivery.state_dir)
         _fail(run, exc)
         return False, None
 
@@ -122,20 +127,18 @@ def _apply(delivery: Delivery, run: PluginRun, expected: Optional[tuple], event:
     with _busy(delivery, run):
         try:
             with plugin_db.lock_for(run.plugin.id):
-                conn = plugin_db.open_db(delivery.state_dir, run.plugin)
-                try:
-                    with transaction(conn):
-                        held = plugin_db.get_cursor(conn, cursor.path)
-                        if (held.position() if held else None) != expected:
-                            run.raced += 1
-                            return False
-                        run.plugin.on_events(conn, (event,))
-                        cursor.updated_at = delivery.clock()
-                        plugin_db.save_cursor(conn, cursor)
-                        plugin_db.set_meta(conn, C.META_LAST_DELIVERY_AT, cursor.updated_at)
-                finally:
-                    conn.close()
+                conn = plugin_db.pooled_db(delivery.state_dir, run.plugin)
+                with transaction(conn):
+                    held = plugin_db.get_cursor(conn, cursor.path)
+                    if (held.position() if held else None) != expected:
+                        run.raced += 1
+                        return False
+                    run.plugin.on_events(conn, (event,))
+                    cursor.updated_at = delivery.clock()
+                    plugin_db.save_cursor(conn, cursor)
+                    plugin_db.set_meta(conn, C.META_LAST_DELIVERY_AT, cursor.updated_at)
         except Exception as exc:  # noqa: BLE001
+            _discard_if_sqlite(delivery, run, exc)
             _fail(run, exc)
             return False
         return True
@@ -149,13 +152,13 @@ def _catch_up(delivery: Delivery, run: PluginRun, event: Appended) -> bool:
         try:
             with plugin_db.lock_for(run.plugin.id):
                 if run.read_conn is None:
-                    run.read_conn = plugin_db.open_db(delivery.state_dir, run.plugin)
+                    run.read_conn = plugin_db.pooled_db(delivery.state_dir, run.plugin)
             result = hook(run.read_conn, event, max(1, delivery.budget.left))
         except reader.ReadTimeout:
-            run.drop_read_conn()
+            run.drop_read_conn(delivery.state_dir)
             raise
         except Exception as exc:  # noqa: BLE001
-            run.drop_read_conn()
+            run.drop_read_conn(delivery.state_dir)
             _fail(run, exc)
             return False
     delivery.budget.spend(result.bytes_read)
@@ -165,7 +168,6 @@ def _catch_up(delivery: Delivery, run: PluginRun, event: Appended) -> bool:
 
 def _reset(delivery: Delivery, group: List[PluginRun], expected: Optional[tuple], target: FileTarget,
            consumed: int, size: int, name: str) -> List[PluginRun]:
-    """Tell a group the file no longer holds what it consumed; their cursors go back to 0. Output: the runs reset."""
     event = FileReset(name, target.conversation_id, target.family, target.path, target.file_kind, consumed, size)
     done = []
     for run in group:
@@ -257,10 +259,6 @@ def deliver_file(delivery: Delivery, target: FileTarget) -> Optional[str]:
 
 
 def _unreadable(delivery: Delivery, target: FileTarget, exc: OSError, dataless) -> str:
-    """Count a file that could not be read: an iCloud placeholder (a download is requested) or anything else.
-
-    Output: the skip reason, ``icloud`` or ``unreadable``.
-    """
     if dataless.is_deadlock(exc):
         reader.request_download(target.path)
         return delivery.skip(SKIP_ICLOUD)
@@ -277,19 +275,17 @@ def deliver_removed(delivery: Delivery, conversation_id: str) -> None:
         with _busy(delivery, run):
             try:
                 with plugin_db.lock_for(run.plugin.id):
-                    conn = plugin_db.open_db(delivery.state_dir, run.plugin)
-                    try:
-                        with transaction(conn):
-                            paths = tuple(r[0] for r in conn.execute(
-                                f"SELECT path FROM {C.CURSORS_TABLE} WHERE conversation_id = ? ORDER BY path",
-                                (conversation_id,)))
-                            if paths:
-                                run.plugin.on_events(conn, (ConversationRemoved(conversation_id, paths),))
-                                plugin_db.delete_cursors(conn, conversation_id)
-                                run.removed += 1
-                    finally:
-                        conn.close()
+                    conn = plugin_db.pooled_db(delivery.state_dir, run.plugin)
+                    with transaction(conn):
+                        paths = tuple(r[0] for r in conn.execute(
+                            f"SELECT path FROM {C.CURSORS_TABLE} WHERE conversation_id = ? ORDER BY path",
+                            (conversation_id,)))
+                        if paths:
+                            run.plugin.on_events(conn, (ConversationRemoved(conversation_id, paths),))
+                            plugin_db.delete_cursors(conn, conversation_id)
+                            run.removed += 1
             except Exception as exc:  # noqa: BLE001
+                _discard_if_sqlite(delivery, run, exc)
                 _fail(run, exc)
 
 
@@ -309,15 +305,13 @@ def deliver_file_removed(delivery: Delivery, target: FileTarget) -> None:
         with _busy(delivery, run):
             try:
                 with plugin_db.lock_for(run.plugin.id):
-                    conn = plugin_db.open_db(delivery.state_dir, run.plugin)
-                    try:
-                        with transaction(conn):
-                            held = plugin_db.get_cursor(conn, target.path)
-                            if held is not None:
-                                run.plugin.on_events(conn, (FileRemoved(held.conversation_id, target.path, held.file_kind),))
-                                plugin_db.delete_cursor(conn, target.path)
-                                run.removed += 1
-                    finally:
-                        conn.close()
+                    conn = plugin_db.pooled_db(delivery.state_dir, run.plugin)
+                    with transaction(conn):
+                        held = plugin_db.get_cursor(conn, target.path)
+                        if held is not None:
+                            run.plugin.on_events(conn, (FileRemoved(held.conversation_id, target.path, held.file_kind),))
+                            plugin_db.delete_cursor(conn, target.path)
+                            run.removed += 1
             except Exception as exc:  # noqa: BLE001
+                _discard_if_sqlite(delivery, run, exc)
                 _fail(run, exc)

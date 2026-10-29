@@ -9,7 +9,6 @@ from src.config.provider_accounts import ProviderAccount, profile_dir_for
 from src.core.provider_ledger.codex_credentials import CODEX_AUTH_FILE
 from src.core.provider_ledger.credentials import claude_identity_path
 
-# could not
 PathStamp = Optional[Tuple[int, int]]
 
 

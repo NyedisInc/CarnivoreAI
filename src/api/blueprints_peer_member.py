@@ -58,7 +58,7 @@ async def create_peer_member(member: BlueprintSession, cols: Optional[int], rows
     peer = await asyncio.to_thread(_target, host_key)
     if peer is None:
         raise StepFailed("session", "peer_unknown", f"{host_key} is not a paired computer")
-    from src.core.session_label import sanitize_tmux_name
+    from src.core.session_name_claim import sanitize_tmux_name
 
     body: Dict[str, Any] = {
         "working_dir": member.folder.path, "project_name": sanitize_tmux_name(member.label), "label": member.label,

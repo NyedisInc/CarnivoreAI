@@ -1,3 +1,4 @@
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,10 +12,12 @@ let failures = 0;
 let passes = 0;
 const queue = [];
 
+/** Queue one named assertion block. Inputs: name, fn. Output: void. */
 function test(name, fn) {
     queue.push([name, fn]);
 }
 
+/** Run every queued test in order. Inputs: none. Output: Promise<void>. */
 async function runQueue() {
     for (const [name, fn] of queue) {
         try {
@@ -169,17 +172,17 @@ test('THE SIDEBAR VERSION LINKS TO THE RELEASE NOTES', () => {
 });
 
 test('THE VERSION LABEL CARRIES NO TOOLTIP (#1209: the bar shows the short form)', () => {
-    const long = '1.12.20-preview.130.gdd2c095';
+    const long = '1.12.20-preview.130.g8578f81';
     const { document } = fakeDocument(long);
     const VF = loadModule(document);
     assert.ok(!VF.sidebarFooterHtml().includes('title='), VF.sidebarFooterHtml());
 });
 
 test('THE BAR SHOWS THE SHORT VERSION AND NEVER TRUNCATES IT', () => {
-    const preview = loadModule(fakeDocument('1.12.20-preview.130.gdd2c095').document);
+    const preview = loadModule(fakeDocument('1.12.20-preview.130.g8578f81').document);
     const html = preview.sidebarFooterHtml();
     assert.ok(html.includes('>v1.12.20<span class="version-footer__preview">preview</span></span>'), html);
-    assert.ok(!html.includes('gdd2c095</span>'), html);
+    assert.ok(!html.includes('g8578f81</span>'), html);
     const shortRelease = preview.shortVersion('v1.12.21');
     assert.equal(shortRelease.text, 'v1.12.21');
     assert.equal(shortRelease.preview, false);

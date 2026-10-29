@@ -13,7 +13,7 @@ from src.core.attention.transcript_facts import FACTS_UNREADABLE
 from src.core.claude_config import profile_roots, transcript_roots
 from src.core import claude_transcript_correlate
 
-UUID = "2f1256d3-409e-4db2-8d18-81631617e63c"
+UUID = "44444444-1a7b-42f9-baba-abacc8720544"
 WORKDIR = "/Users/x/proj"
 SLUG = "-Users-x-proj"
 T0 = datetime(2026, 10, 4, 12, 0, tzinfo=timezone.utc)

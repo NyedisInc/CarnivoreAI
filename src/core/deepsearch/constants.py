@@ -71,5 +71,4 @@ VAULT_LIST_INTERVAL_SECONDS: float = 600.0
 VAULT_PASS_BYTES: int = 128 * 1024 * 1024
 VAULT_CONFIRM_PER_PASS: int = 200
 
-# state directory
 BACKUP_COPY_DIR: str = "deepsearch-backup-copies"

@@ -70,7 +70,7 @@ def test_migrating_twice_or_after_a_crash_adds_nothing(tmp_path):
 
 def test_an_xz_point_and_a_point_failing_its_recorded_hash(tmp_path):
     world = World(tmp_path)
-    other = "5440f51e-018d-47a4-8fdf-c52dbf80f162"
+    other = "99999999-aaaa-bbbb-cccc-1234567890ab"
     _old_point(world, jsonl(40, seed=1), codec="lzma")
     _old_point(world, jsonl(40, seed=2), conv=other, bad_sha=True)
     assert legacy.migrate(world.vault, world.state) == legacy.LegacyProgress(more=False, failed=1)

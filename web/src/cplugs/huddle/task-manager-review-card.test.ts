@@ -103,12 +103,12 @@ describe('the card', () => {
   });
 
   test('the link reads github issue #N when it is the item\'s own issue, else open link', async () => {
-    const url = 'https://github.com/NyedisInc/CarnivoreAI/issues/1746';
+    const url = 'https://github.com/Example-owner/CarnivoreAIDev/issues/1746';
     const withIssue = reviewOf(item({ review_description: 'x', review_link: url }))!;
     const same = await draw({ id: 9, block: withIssue, issue: url });
     expect(same.querySelector('[data-task-manager-review-link]')!.textContent).toBe('github issue #1746');
     unmount(app!); app = null; document.body.innerHTML = '';
-    const other = await draw({ id: 9, block: withIssue, issue: 'https://github.com/NyedisInc/CarnivoreAI/issues/5' });
+    const other = await draw({ id: 9, block: withIssue, issue: 'https://github.com/Example-owner/CarnivoreAIDev/issues/5' });
     expect(other.querySelector('[data-task-manager-review-link]')!.textContent).toBe('open link');
   });
 
@@ -130,13 +130,13 @@ describe('the card', () => {
 describe('the answer line', () => {
   const asked = [m(1, 'joe', 'reply'), m(2, 'claude', 'answer', { quote: { id: 1, text: 'q' }, text: 'Yes, it does. Because of x.\nSecond line.' })];
 
-  test('is the newest agent answer quoting a plain reply of the owner', () => {
+  test('is the newest agent answer quoting a plain reply of Joe', () => {
     const later = [...asked, m(3, 'joe', 'reply'), m(4, 'claude', 'answer', { quote: { id: 3, text: 'q' }, text: 'ok' })];
     expect(reviewAnswerOf(item({ thread: later }))?.id).toBe(4);
     expect(reviewAnswerOf(item({ thread: asked }))).toMatchObject({ id: 2, summary: 'Yes, it does.', hasMore: true });
   });
 
-  test('none when unanswered, when the answer quotes something that is not their plain reply, or on a form answer', () => {
+  test('none when unanswered, when the answer quotes something that is not his plain reply, or on a form answer', () => {
     expect(reviewAnswerOf(item({ thread: [m(1, 'joe', 'reply')] }))).toBeNull();
     expect(reviewAnswerOf(item({ thread: [m(1, 'joe', 'reply', { answers_to: 0, freeform: true }), m(2, 'claude', 'answer', { quote: { id: 1, text: 'q' } })] }))).toBeNull();
     expect(reviewAnswerOf(item({ thread: [m(2, 'claude', 'answer', { quote: { id: null, text: 'q' } })] }))).toBeNull();

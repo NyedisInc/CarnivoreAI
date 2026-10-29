@@ -2,6 +2,7 @@
   import './pack-machines.css';
   import './pack-work.css';
   import { t } from '../i18n/index.svelte';
+  import Button from '../base/Button.svelte';
   import MachineEditor from './MachineEditor.svelte';
   import PackMarks from './PackMarks.svelte';
   import type { PackMachine, Restrictions } from './pack-machines-store.svelte';
@@ -24,8 +25,8 @@
       <span class="pm-name">{machine.label || machine.install_id.slice(0, 8)}</span>
       <PackMarks alpha={machine.is_master} self={machine.is_self} />
       <span class="pm-state" data-state={machine.state}>{t(`pack.machines.state.${machine.state}`)}</span>
-      <button type="button" class="modal-btn modal-btn-secondary pk-act pw-edit" aria-expanded={open} onclick={() => (open = !open)}>
-        {open ? t('pack.machines.close') : t('pack.machines.edit')}</button>
+      <Button size="sm" data-pw-edit aria-expanded={open} onclick={() => (open = !open)}>
+        {open ? t('pack.machines.close') : t('pack.machines.edit')}</Button>
     </div>
     <div class="pw-chips" data-pw="reserve-chips">
       <span class="pw-chip pw-chip--now">{t('pack.work.chip.now', { level: t(`pack.machines.level.${snap.reserve.level}`), cpu: snap.reserve.cpu_pct, mem: snap.reserve.mem_pct })}</span>

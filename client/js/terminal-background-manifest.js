@@ -38,8 +38,8 @@
         return base + encodeURIComponent(manifest.id) + '/' + encodeURIComponent(file);
     }
 
+    // ---- the ladder ---------------------------------------------------
 
-    /* nothing at all */
     function manifestForSession(pinnedThemeId) {
         var themes = window.Themes;
         if (!themes) return null;

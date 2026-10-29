@@ -16,13 +16,14 @@ class CardRefused(TaskManagerError):
     status = 409
 
 
-async def decide_card(ctx: CplugContext, item: Dict[str, Any], decision: str, owner_message_ref: str = "", note: str = "") -> None:
+async def decide_card(ctx: CplugContext, item: Dict[str, Any], decision: str, owner_message_ref: str = "", note: str = "", *,
+                      structured: Optional[Dict[str, Any]] = None) -> None:
     ref = item.get("swarm_ref") or ""
     swarm = service.swarm_of(ctx)
     if not ref or ref == "chat" or swarm is None:
         return
     try:
-        await swarm.card_decided(ref, decision, note, owner_message_ref)
+        await swarm.card_decided(ref, decision, note, owner_message_ref, structured=structured)
     except SwarmError as exc:
         raise CardRefused(str(exc)) from exc
 

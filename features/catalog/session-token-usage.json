@@ -20,7 +20,14 @@
     "tokens",
     "usage"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The terminal bottom bar showing the model, context used and the five hour and weekly meters",
+      "caption": "A session's bottom bar with its context and usage meters",
+      "file": "foot.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Per-session token usage",
   "since": "2026-09-19",
   "status": "stable",
@@ -29,6 +36,5 @@
   "updated": "2026-09-27",
   "where": [
     "The bottom bar of a claude or codex session's terminal."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

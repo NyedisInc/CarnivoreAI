@@ -30,7 +30,14 @@
     "tabs",
     "components"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "A terminal's new tab menu open, offering agent, terminal, blueprint and browser",
+      "caption": "Adding a tab",
+      "file": "menu.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Terminal component tabs",
   "since": "2026-09-22",
   "status": "stable",
@@ -48,6 +55,5 @@
   "updated": "2026-10-19",
   "where": [
     "The + (new tab) at the end of a terminal's tab strip, on the terminal page."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { t } from '../../lib/i18n/index.svelte';
+  import Button from '../../lib/base/Button.svelte';
+  import Select from '../../lib/base/Select.svelte';
   import SearchField from '../ui/SearchField.svelte';
   import { toggleIn, removeField, type LogFilter } from './filter';
   import { LOG_LEVELS, type LevelState } from './types';
@@ -26,16 +28,16 @@
 <div class="oc-rc-bar oc-lv-bar" data-log-toolbar>
   <div class="oc-lv-group" role="group" aria-label={t('opscenter.log.levels')} data-log-levels>
     {#each LOG_LEVELS as name (name)}
-      <button type="button" class="oc-btn oc-btn--sm oc-lv-level" data-level={name} aria-pressed={filter.levels.includes(name)}
+      <Button size="sm" data-level={name} aria-pressed={filter.levels.includes(name)}
         onclick={() => onFilter({ ...filter, levels: toggleLevel(filter.levels, name) })}
-        >{t(`opscenter.log.level.${name}`)}</button>
+        >{t(`opscenter.log.level.${name}`)}</Button>
     {/each}
   </div>
   {#if sources.length > 1}
     <div class="oc-lv-group" role="group" aria-label={t('opscenter.log.sources')} data-log-sources>
       {#each sources as source (source)}
-        <button type="button" class="oc-chip" aria-pressed={!filter.hiddenSources.includes(source)} data-log-source={source}
-          onclick={() => onFilter({ ...filter, hiddenSources: toggleIn(filter.hiddenSources, source) })}>{source}</button>
+        <Button size="sm" aria-pressed={!filter.hiddenSources.includes(source)} data-log-source={source}
+          onclick={() => onFilter({ ...filter, hiddenSources: toggleIn(filter.hiddenSources, source) })}>{source}</Button>
       {/each}
     </div>
   {/if}
@@ -43,24 +45,23 @@
   {#if level}
     <label class="oc-lv-server-level">
       <span class="oc-label">{t('opscenter.log.server_level')}</span>
-      <select class="oc-field" disabled={levelBusy} data-log-server-level aria-label={t('opscenter.log.server_level.aria')}
+      <Select size="sm" disabled={levelBusy} data-log-server-level aria-label={t('opscenter.log.server_level.aria')}
         value={level.source === 'setting' || level.expires_at ? level.level : ENV_CHOICE}
         onchange={(event) => {
           const value = (event.currentTarget as HTMLSelectElement).value;
           onLevel(value === ENV_CHOICE ? null : value);
-        }}>
-        <option value={ENV_CHOICE}>{t('opscenter.log.server_level.env', { level: level.env_level })}</option>
-        {#each level.choices as choice (choice)}
-          <option value={choice}>{t(`opscenter.log.level.${choice}`)}</option>
-        {/each}
-      </select>
+        }}
+        options={[
+          { value: ENV_CHOICE, label: t('opscenter.log.server_level.env', { level: level.env_level }) },
+          ...level.choices.map((choice) => ({ value: choice, label: t(`opscenter.log.level.${choice}`) })),
+        ]} />
       {#if level.expires_at}
         <span class="oc-label" data-log-server-level-until>{t('opscenter.log.server_level.until', { time: formatUntil(level.expires_at) })}</span>
       {/if}
     </label>
   {/if}
-  <button type="button" class="oc-btn oc-btn--sm" onclick={onExport} data-log-export>{t('opscenter.log.export')}</button>
-  <button type="button" class="oc-btn oc-btn--sm" onclick={onClear} data-log-clear>{t('opscenter.log.clear')}</button>
+  <Button size="sm" onclick={onExport} data-log-export>{t('opscenter.log.export')}</Button>
+  <Button size="sm" variant="danger" onclick={onClear} data-log-clear>{t('opscenter.log.clear')}</Button>
 </div>
 <div class="oc-lv-filters" data-log-filters>
   <SearchField value={filter.text} onInput={(text) => onFilter({ ...filter, text })} placeholder={t('opscenter.log.search.placeholder')}
@@ -72,9 +73,9 @@
   {:else}
     <div class="oc-lv-group" role="group" aria-label={t('opscenter.log.fields')} data-log-chips>
       {#each filter.fields as chip, i (chip.key + '\u0000' + chip.value)}
-        <button type="button" class="oc-chip" aria-pressed="true" data-exclude={chip.exclude ? '' : undefined}
+        <Button size="sm" aria-pressed="true" data-exclude={chip.exclude ? '' : undefined}
           aria-label={t('opscenter.log.field.remove', { key: chip.key })} onclick={() => onFilter(removeField(filter, i))}
-          >{chip.key}{chip.exclude ? ' != ' : ' = '}{chip.value} x</button>
+          >{chip.key}{chip.exclude ? ' != ' : ' = '}{chip.value} x</Button>
       {/each}
     </div>
   {/if}

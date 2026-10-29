@@ -7,7 +7,7 @@ TABLE: Mapping[str, Tuple[str, str]] = {
     "browser_open": ("ui.browser.open",
                      "Open a page for the owner (a posted artifact, a pop-out or a website) as a sidebar row shown full size."),
     "files_open": ("ui.files.open",
-                   "Open a file (or a diff) in the owner's files list, optionally in front in the window the owner used last."),
+                   "Open a file (or a diff) in the owner's files list, optionally in front in the window he used last."),
     "sidebar_show": ("ui.sidebar.show",
                      "Show one left bar item (session, file, page, board, layout, Task Manager) in the owner's last window."),
     "sidebar_row_look_set": ("ui.sidebar.rows.look.set",
@@ -41,7 +41,7 @@ TABLE: Mapping[str, Tuple[str, str]] = {
     "preferences_update": ("ui.preferences.update",
                            "Update synced UI preferences, for example the global theme; every open browser follows live."),
     "notify": ("notifications.send",
-               "Notify the owner: send a short notification about this session, routed by their settings (280 characters, rate "
+               "Notify the owner: send a short notification about this session, routed by his settings (280 characters, rate "
                "limited)."),
     "notification_settings_get": ("notifications.settings.get",
                                   "Get notification settings: pause switch, per-type defaults and each destination's ticks."),

@@ -55,13 +55,6 @@ def archive_and_tombstone(agent: Dict[str, Any]) -> None:
 
 
 async def run(app_state: Any, agent: Dict[str, Any]) -> None:
-    """Tear a task agent down: sleep its body, erase its files, archive its row and thread, tombstone it.
-
-    Inputs: app_state (carries the session manager); agent (``swarm_agents`` row dict, rank ``task``).
-    Raises: body.BodyError (the body would not close or is still starting: nothing was erased), ValueError (not a task
-      agent), OSError (a file could not be deleted: the agent stays, a retry finishes the job).
-    Example: await teardown.run(app.state, agent)
-    """
     from src.config import settings as app_settings
 
     if agent["rank"] != "task":

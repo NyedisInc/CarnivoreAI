@@ -14,6 +14,12 @@ const SID = 'sid-attached';
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks it failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -76,6 +82,9 @@ function makeSandbox() {
         alert() {},
     };
     vm.createContext(context);
+    // terminal-header-rename.js is the page-chrome half of this
+    // control, lifted out of terminal.js when the terminal became
+    // instantiable: one header, however many terminals the page holds.
     for (const f of ['session-label.js', 'app.js', 'terminal-header-rename.js',
                      'terminal-client-factory.js', 'terminal.js']) {
         vm.runInContext(

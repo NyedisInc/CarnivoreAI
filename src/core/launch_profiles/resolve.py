@@ -90,7 +90,7 @@ def _model_for(profile: LaunchProfile, requested: Optional[str], transparent_cod
     if profile.model.mode == "ask":
         return (requested or "").strip() or None
     wanted = (requested or "").strip() or None
-    if wanted and explicit and profile.custom_command is not None and not transparent_codex:
+    if wanted and explicit and profile.custom_command is not None and not transparent_codex and profile.harness != "custom":
         raise ValueError(f"launch profile {profile.id!r} uses an opaque custom command and cannot apply a requested "
                          "model; choose a structured profile or a model-aware custom profile")
     if (profile.custom_command is None and profile.harness in ("claude", "codex")) or transparent_codex:
@@ -111,6 +111,25 @@ def _endpoint_for(profile: LaunchProfile, request: LaunchRequest, model: Optiona
     if clash:
         raise UnsupportedEndpoint(f"the profile sets {sorted(clash)[0]} by hand, and the connection owns it")
     return endpoint
+
+
+def _split_codex_server_args(app_args: list[str]) -> tuple[tuple[str, ...], list[str]]:
+    expected = len(mcp_launch.codex_args(""))
+    key_prefix = f"mcp_servers.{mcp_launch.SERVER_NAME}."
+    pairs = list(zip(app_args[0::2], app_args[1::2]))
+    carnivore_pairs = 0
+    for flag, value in pairs:
+        if flag != "-c" or not value.startswith(key_prefix):
+            break
+        carnivore_pairs += 1
+    if carnivore_pairs * 2 < expected:
+        return (), app_args
+    server_args = app_args[:carnivore_pairs * 2]
+    rest = app_args[carnivore_pairs * 2:]
+    while len(rest) >= 2 and rest[0] == "-c":
+        server_args.extend(rest[:2])
+        rest = rest[2:]
+    return tuple(server_args), rest
 
 
 def resolve_launch(request: LaunchRequest, purpose: Purpose = "pane") -> LaunchPlan:
@@ -137,15 +156,7 @@ def resolve_launch(request: LaunchRequest, purpose: Purpose = "pane") -> LaunchP
         fallback_args.append(_CODEX_NO_ALT_SCREEN)
     codex_server_args: tuple[str, ...] = ()
     if profile.harness == "codex" and launch_profile.custom_command is None:
-        mcp_args = mcp_launch.codex_args("")
-        prefix = len(mcp_args)
-        if len(app_args) >= prefix and all(app_args[i] == mcp_args[i] for i in (0, 2, 4, 6)):
-            server_args = app_args[:prefix]
-            app_args = app_args[prefix:]
-            while len(app_args) >= 2 and app_args[0] == "-c":
-                server_args.extend(app_args[:2])
-                app_args = app_args[2:]
-            codex_server_args = tuple(server_args)
+        codex_server_args, app_args = _split_codex_server_args(app_args)
     if profile.harness == "codex" and request.disable_alternate_screen:
         app_args.append(_CODEX_NO_ALT_SCREEN)
     secret_refs = (*((r.name, r.keychain_ref) for r in profile.secrets), *(endpoint.secret_refs if endpoint else ()))

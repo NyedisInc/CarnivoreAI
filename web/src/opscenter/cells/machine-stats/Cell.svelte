@@ -5,7 +5,7 @@
 </script>
 
 <script lang="ts">
-  /* could not */
+  /* could not measure */
   import type { CellProps } from '../../lib/cell';
   import { acquireMachineStats, machineStats } from './store.svelte';
   import { readings, toneOf } from './meta';

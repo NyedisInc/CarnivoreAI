@@ -21,7 +21,6 @@ export function spaced(groups: ItemMenuEntry[][]): ItemMenuEntry[] {
     return out;
 }
 
-/* label: ' */
 export function entryNodes(entries: readonly ItemMenuEntry[], glyph: (icon: string | undefined) => string, close: () => void): MenuNode[] {
     const seen = new Map<string, number>();
     return entries.map((entry): MenuNode => {

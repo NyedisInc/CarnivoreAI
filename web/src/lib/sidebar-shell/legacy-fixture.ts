@@ -1,4 +1,3 @@
-/* <script */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -43,22 +42,17 @@ export function paintDrawer(ctrl: Record<string, any>): boolean {
     return repaint(ctrl as Parameters<typeof repaint>[0]);
 }
 
+/** Repo root, four levels up from web/src/lib/sidebar-shell. */
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 export const LEGACY_SCRIPTS: readonly string[] = [
+    'i18n/tr.js',
     'kebab-icon.js', 'session-label.js', 'status-led.js', 'session-transport.js',
     'session-status-summary.js', 'ui-flags.js', 'session-status-ui.js',
     'session-row-actions-confirm.js', 'session-row-actions.js',
     'session-theme-tint.js',
     'effort-level.js', 'session-model-icon.js', 'agent-family-icon.js',
-    'session-sidebar-row-controls.js', 'session-sidebar-keep-awake.js',
-    'session-sidebar-subagents.js',
-    'session-sidebar-timers.js', 'session-sidebar-project-header.js',
-    'session-sidebar-groups.js',
-    'session-sidebar-browsers.js', 'session-sidebar-layouts.js',
-    'session-sidebar-wake-click.js', 'session-row-menu-icons.js',
-    'session-sidebar-group-colour.js', 'session-sidebar-group-icon.js',
-    'session-sidebar-heading-actions.js',
+    'session-row-menu-icons.js',
 ];
 
 export type LegacyWindow = Record<string, any>;

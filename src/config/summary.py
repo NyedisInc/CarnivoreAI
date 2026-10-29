@@ -22,22 +22,6 @@ def settings_summary(
     families: List[dict],
     bound_host: Optional[str],
 ) -> Dict[str, Any]:
-    """Build the payload for ``GET /api/v1/config/settings``.
-
-      ``effective_bind_host`` is the address in force, read from the
-      STARTUP RECORD and passed in as ``bound_host``. It used to be the
-      CONFIGURED host, which made the screen render "in force: the server
-      is on 0.0.0.0" for an install whose only socket was on loopback.
-      None is a third state the client renders as such, never substituted
-      with the preference.
-    Inputs: config (AuthConfig) - the loaded document; host (str | None)
-      and port (int) - the configured bind; families (list[dict]) - from :func:`family_summaries`;
-      bound_host (str | None) - what actually bound at startup.
-    Output: dict with ``agents``, ``server``,
-      ``workspace``, ``provider_accounts``, ``ui``
-      and ``server_prefs``.
-    Example: settings_summary(cfg, host="0.0.0.0", port=8000, ...)
-    """
     agents = config.agents
     wildcard_bind = host in ("0.0.0.0", "", None)
     return {

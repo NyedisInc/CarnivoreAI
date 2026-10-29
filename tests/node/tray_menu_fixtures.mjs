@@ -37,11 +37,11 @@ export function snap(over = {}) {
     update: { state: 'current', version: null, percent: 0, detail: null },
     listing: { reachable: true, live: true, rows: [], error: null },
     side: { beast: ok({ enabled: false, available: true }), swarm: ok({ enabled: false }), keepAwake: ok({ always: false }),
-      logLevel: ok({ level: 'info' }), automations: { reachable: true, paused: false, total: 0, upcoming: [], recent: [] }, account: 'sam@example.com' },
+      logLevel: ok({ level: 'info' }), automations: { reachable: true, paused: false, total: 0, upcoming: [], recent: [] }, account: 'joe@example.com' },
     routes: { standDown: 'unknown', logLevelExpiry: 'unknown', diagnostics: 'unknown', keepAwake: 'ok' },
     offline: { alive: null, tmuxRunning: null, error: null },
-    phone: { bindHost: '0.0.0.0', localIps: [{ iface: 'en0', ip: '203.0.113.12' }, { iface: 'utun4', ip: '100.64.0.2' }], effectiveHost: '0.0.0.0',
-      measuredUrl: 'http://203.0.113.12:8000', publishedUrl: 'http://203.0.113.12:8000', otp: '123456', otpRemaining: 20 },
+    phone: { bindHost: '0.0.0.0', localIps: [{ iface: 'en0', ip: '10.0.1.5' }, { iface: 'utun4', ip: '100.64.0.2' }], effectiveHost: '0.0.0.0',
+      measuredUrl: 'http://10.0.1.5:8000', publishedUrl: 'http://10.0.1.5:8000', otp: '123456', otpRemaining: 20 },
     launchAtLogin: true, offlineTuiAvailable: false, sysop: { tmuxName: 'carnivore_sysop', folder: '/p/Alpha', label: 'SysOp' },
   };
   const out = { ...base };

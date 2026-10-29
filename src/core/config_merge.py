@@ -27,6 +27,8 @@ APPLIED_CHANGES = frozenset({UPDATED_DEFAULT, ADDED})
 
 MISSING = object()
 
+_STAYS_ABSENT = object()
+
 
 @dataclass
 class Decision:
@@ -42,17 +44,6 @@ class Decision:
 
 @dataclass
 class MergeResult:
-    """The merged configuration plus a full account of how it was reached.
-
-    Attributes:
-        merged: The resulting configuration mapping.
-        decisions: One Decision per field examined.
-        had_base: Whether a recorded base was available. False means every
-            differing field is CANNOT_DETERMINE rather than classified.
-        importable: Mapping of dotted list path to the items present in the
-            new defaults but absent from the user's list. Never applied
-            automatically.
-    """
 
     merged: dict
     decisions: list[Decision] = field(default_factory=list)
@@ -78,23 +69,6 @@ def _classify(
     had_base: bool,
     removal_provable: bool = True,
 ) -> Decision:
-    """Classify one leaf field into exactly one outcome.
-
-    Args:
-        path: Dotted path, used only for reporting.
-        base: Old default, or MISSING.
-        mine: User value, or MISSING.
-        theirs: New default, or MISSING.
-        had_base: Whether a base document was supplied at all.
-        removal_provable: Whether "absent from the new defaults" is real
-            evidence that upstream removed this setting. False when the
-            defaults document is known to be an incomplete account of what
-            upstream ships, in which case absence proves nothing and the
-            honest answer is CANNOT_DETERMINE. See ``merge_config``.
-
-    Returns:
-        The Decision for this field, including the value to write.
-    """
     mine_present = mine is not MISSING
     theirs_present = theirs is not MISSING
 
@@ -125,6 +99,23 @@ def _classify(
             note=(
                 "This setting is no longer in the shipped defaults. Your value "
                 "was kept; nothing was deleted on your behalf."
+            ),
+        )
+
+    if not mine_present and had_base and base is not MISSING:
+        deleted_changed = theirs != base
+        return Decision(
+            path=path,
+            outcome=CONFLICT if deleted_changed else KEPT_CUSTOM,
+            mine=None,
+            theirs=theirs,
+            base=base,
+            chosen=None,
+            note=(
+                "You removed this setting and the shipped default changed since. "
+                "It stays removed; decide whether you want it back."
+                if deleted_changed else
+                "You removed this setting. It stays removed."
             ),
         )
 
@@ -207,34 +198,6 @@ def _removal_provable(
     supported_keys: Optional[frozenset],
     stale_roots: frozenset,
 ) -> bool:
-    """Whether absence from the new defaults is EVIDENCE of an upstream removal.
-
-    Absence is only evidence when the defaults document is a complete account
-    of what upstream ships. Two situations break that, and both must produce
-    CANNOT_DETERMINE rather than a confident removal:
-
-    * The caller told us which keys the running code actually supports
-      (``supported_keys``) and this one is not among the settings whose
-      subtree the defaults document is known to describe.
-    * The top-level key's value had to be supplied from the model because the
-      defaults document omitted it entirely (``stale_roots``). Nothing about
-      that subtree can be concluded from a document that never mentioned it.
-
-    Args:
-        path: Dotted path being classified.
-        supported_keys: Top-level keys the loader honours, or None when the
-            caller asserts the defaults document is complete.
-        stale_roots: Top-level keys the defaults document omitted.
-
-    Returns:
-        True when a REMOVED_UPSTREAM verdict is supported by evidence.
-
-    Example:
-        >>> _removal_provable("config_version", frozenset({"agents"}), frozenset())
-        True
-        >>> _removal_provable("agents.x", frozenset({"agents"}), frozenset({"agents"}))
-        False
-    """
     if supported_keys is None:
         return True
     root = path.split(".", 1)[0]
@@ -273,6 +236,8 @@ def _walk(
             if new_items:
                 importable[prefix] = new_items
 
+        if mine is MISSING and decision.outcome in (KEPT_CUSTOM, CONFLICT):
+            return _STAYS_ABSENT
         return decision.chosen
 
     merged: dict = {}
@@ -292,7 +257,7 @@ def _walk(
                 merged[key] = child_theirs
             continue
 
-        merged[key] = _walk(
+        value = _walk(
             child_base,
             child_mine,
             child_theirs,
@@ -303,6 +268,9 @@ def _walk(
             supported_keys,
             stale_roots,
         )
+        if value is _STAYS_ABSENT:
+            continue
+        merged[key] = value
 
     return merged
 
@@ -314,33 +282,6 @@ def merge_config(
     supported_keys: Optional[frozenset] = None,
     stale_roots: frozenset = frozenset(),
 ) -> MergeResult:
-    """Three-way merge the user's config against new shipped defaults.
-
-    Args:
-        mine: The user's live configuration.
-        theirs: The defaults shipping with the new version.
-        base: The defaults that shipped with the user's current version. None
-            means no base was recorded, which makes every differing field
-            CANNOT_DETERMINE rather than a guess.
-        supported_keys: Top-level keys the running code actually honours, when
-            the caller knows them. Passing None asserts that ``theirs`` is a
-            COMPLETE account of what upstream ships, which licenses a
-            REMOVED_UPSTREAM verdict for anything missing from it. Callers
-            merging against ``config.example.json`` must NOT assert that: the
-            example is a hand-maintained sample and has repeatedly gone stale,
-            which is how two live settings came to be reported as removed.
-        stale_roots: Top-level keys ``theirs`` omitted entirely, so nothing
-            about those subtrees can be concluded from it.
-
-    Returns:
-        A MergeResult holding the merged mapping, one Decision per field, and
-        any additive list imports that were NOT applied.
-
-    Example:
-        >>> result = merge_config({"a": 1}, {"a": 2}, base={"a": 1})
-        >>> result.merged["a"]
-        2
-    """
     decisions: list[Decision] = []
     importable: dict[str, list] = {}
     had_base = base is not None

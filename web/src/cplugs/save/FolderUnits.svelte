@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { t as reactiveT, type Translate } from '../sdk';
-    import { Check } from '../sdk/ui';
+    import { Button, Check } from '../sdk/ui';
     import { megabytes } from './bytes';
     import {
         agoText,
@@ -110,9 +110,9 @@
                                 <Check bare role="switch" label="" ariaLabel={t('cplug.save.folders.backup_switch', { name: nameOf(unit) })}
                                     checked={unit.backup_on} disabled={busy} onToggle={(next) => void flip(unit, next)} data-tm="folder-switch" />
                             {/if}
-                            <button type="button" class="oc-btn oc-btn--sm" data-tm="folder-restore" disabled={busy || unit.points === 0} onclick={() => void ask(unit)}>
+                            <Button size="sm" data-tm="folder-restore" disabled={busy || unit.points === 0} onclick={() => void ask(unit)}>
                                 {t('cplug.save.folders.restore')}
-                            </button>
+                            </Button>
                         </span>
                     </div>
                     {#if unit.marked && !unit.backup_on}
@@ -136,13 +136,13 @@
                                 </label>
                             {/if}
                             <div class="tm__actions">
-                                <button type="button" class="oc-btn" data-tm="folder-cancel" disabled={busy} onclick={() => (asking = null)}>
+                                <Button data-tm="folder-cancel" disabled={busy} onclick={() => (asking = null)}>
                                     {t('cplug.save.folders.cancel')}
-                                </button>
+                                </Button>
                                 {#if points.length > 0}
-                                    <button type="button" class="oc-btn oc-btn--confirm" data-tm="folder-confirm-go" disabled={busy || !chosen} onclick={() => void confirm(unit)}>
+                                    <Button variant="confirm" data-tm="folder-confirm-go" disabled={busy || !chosen} onclick={() => void confirm(unit)}>
                                         {t('cplug.save.folders.confirm')}
-                                    </button>
+                                    </Button>
                                 {/if}
                             </div>
                         </div>

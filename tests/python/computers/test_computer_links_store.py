@@ -30,9 +30,9 @@ def _row(iid, **kw):
 
 
 def test_put_get_cache_and_uniqueness(conn):
-    store.put(conn, _row("a", cert_sha256="s1", link_fid="f1", cert_der=b"\x01", addresses=("192.0.2.14",)))
+    store.put(conn, _row("a", cert_sha256="s1", link_fid="f1", cert_der=b"\x01", addresses=("10.0.0.2",)))
     got = store.get(conn, "a")
-    assert got.addresses == ("192.0.2.14",) and got.cert_der == b"\x01" and got.updated_at
+    assert got.addresses == ("10.0.0.2",) and got.cert_der == b"\x01" and got.updated_at
     assert store.CACHE.get("a") == got
     with pytest.raises(sqlite3.IntegrityError):
         store.put(conn, _row("b", cert_sha256="s1"))

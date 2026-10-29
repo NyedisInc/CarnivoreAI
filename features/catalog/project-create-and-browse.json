@@ -22,14 +22,19 @@
   "keywords": [
     "projects"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The home screen's projects card listing demo projects",
+      "caption": "The projects card on the home screen",
+      "file": "projects.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Create and browse projects",
   "since": "2026-09-10",
   "status": "stable",
   "summary": "create a new project folder and browse your projects from the home screen.",
   "surfaces": [
-    "web/src/lib/launchpad/ProjectTree.svelte",
-    "web/src/lib/launchpad/ProjectNode.svelte",
     "web/src/lib/launchpad/ProjectFolderModal.svelte",
     "web/src/lib/launchpad/ProjectNameModal.svelte",
     "client/js/providers.js",
@@ -40,6 +45,5 @@
   "where": [
     "Menu tab, New Project.",
     "Home screen, the PROJECTS card; View all for the full list."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

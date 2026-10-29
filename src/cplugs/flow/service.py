@@ -5,9 +5,11 @@ import asyncio
 import time
 from typing import Any, Dict, Optional
 
-from src.cplugs.flow import build, feed, live, store, tail
+from src.core.flow_data import feed, live, tail
+from src.cplugs.flow import store
+from src.core.flow_data.collect import build, participants
 from src.cplugs.flow.views.page import render_html
-from src.cplugs.flow.participants import SEED_KINDS, SeedNotFound
+from src.core.flow_data.collect.participants import SEED_KINDS, SeedNotFound
 from src.cplugs.sdk import ActivityUnavailable, CplugContext, scrub
 
 SETTLE_S = 300.0
@@ -21,7 +23,7 @@ async def get_run(ctx: CplugContext, seed_kind: str, seed_id: str, *, start: Opt
     key = store.snapshot_key(seed_kind, str(seed_id), start, end)
     if not refresh:
         held = await asyncio.to_thread(store.load, ctx.storage, key, build.SCHEMA_VERSION)
-        if held is not None and held["built_at"] >= held["window"]["end"] + SETTLE_S:
+        if held is not None and held["built_at"] >= held["window"]["end"] + SETTLE_S and await _window_unchanged(ctx, held, seed_kind, seed_id, start, end):
             held["snapshot"] = {"built_at": held.pop("built_at"), "cached": True}
             return held
     now = time.time()
@@ -29,6 +31,13 @@ async def get_run(ctx: CplugContext, seed_kind: str, seed_id: str, *, start: Opt
     await asyncio.to_thread(store.save, ctx.storage, key, run, now, build.SCHEMA_VERSION)
     run["snapshot"] = {"built_at": now, "cached": False}
     return run
+
+
+async def _window_unchanged(ctx: CplugContext, held: Dict[str, Any], seed_kind: str, seed_id: str, start: Optional[float], end: Optional[float]) -> bool:
+    current = await asyncio.to_thread(participants.current_window, ctx.activity, seed_kind, str(seed_id), start, end, time.time())
+    if current is None:
+        return True
+    return current[1] <= held["window"]["end"] and current[0] >= held["window"]["start"]
 
 
 def summarize(run: Dict[str, Any], full: bool = False) -> Dict[str, Any]:

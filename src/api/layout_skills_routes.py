@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.concurrency import run_in_threadpool
 
 from src.api.auth import require_auth
-from src.api.config_routes import _user_scope_roots
-from src.api.layouts_routes import _error, _live_listing, _run
+from src.api.config_routes import user_scope_roots
+from src.api.layouts_routes import layout_error, live_listing, run_on_store
 from src.core.layouts import skill_suggestions as suggestions
 from src.core.layouts import skill_translate as translate_mod
 from src.core.account_switch.pane_account import read_pane_profile
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/layouts", tags=["layouts"])
 async def _recorded_profile(manager, info, variable: str):
     if not info.tmux_session or is_remote_info(info):
         return None
-    pane = await read_pane_profile(manager._tmux_socket_name(), info.tmux_session, variable)
+    pane = await read_pane_profile(manager.tmux_socket_name(), info.tmux_session, variable)
     if not (pane.readable and pane.value):
         return None
     path = os.path.expanduser(pane.value)
@@ -31,15 +31,8 @@ async def _recorded_profile(manager, info, variable: str):
 
 
 async def skill_rewriter(request: Request, layout, infos):
-    """Build the per-target ``(info, text) -> text`` skill-sigil rewrite for a broadcast.
-
-    Inputs: request; layout (SavedLayout); infos - the live listing.
-    Output: callable for ``layout_broadcast.broadcast(rewrite=...)``. Each
-      claude or codex target's skill names are its own profile's global
-      skills plus its own project skills; other targets are untouched.
-    """
     manager = request.app.state.session_manager
-    claude_home, codex_root = _user_scope_roots(request)
+    claude_home, codex_root = user_scope_roots(request)
     names = {}
     for info in suggestions.target_infos(layout, infos):
         family = translate_mod.family_of(info)
@@ -66,19 +59,25 @@ async def skill_rewriter(request: Request, layout, infos):
 async def layout_skills(layout_uuid: str, request: Request,
                         sigil: Literal["/", "$"] = Query("/")) -> SkillSuggestionsResponse:
     """Skills to complete after ``sigil`` in the Layout's command bar.
+
+    Description: "/" lists Claude Code skills and commands, "$" Codex skills.
+      Global ones always; project ones only when every member a broadcast
+      would reach has them.
+    Raises: HTTPException 404 ``layout_not_found``, 503 ``layouts_unavailable``.
+    Example: GET /api/v1/layouts/<uuid>/skills?sigil=%24
     """
     try:
-        layout = await run_in_threadpool(_run, store.get_layout, layout_uuid)
+        layout = await run_in_threadpool(run_on_store, store.get_layout, layout_uuid)
     except store.LayoutNotFound as exc:
-        raise _error(404, "layout_not_found", str(exc))
+        raise layout_error(404, "layout_not_found", str(exc))
     except (DatastoreUnreadableError, store.LayoutsUnavailable, OSError) as exc:
-        raise _error(503, "layouts_unavailable", str(exc))
-    targets = suggestions.target_infos(layout, await _live_listing(request))
+        raise layout_error(503, "layouts_unavailable", str(exc))
+    targets = suggestions.target_infos(layout, await live_listing(request))
     dirs = [str(t.session.working_dir) for t in targets]
     variable = "CLAUDE_CONFIG_DIR" if sigil == "/" else "CODEX_HOME"
     manager = request.app.state.session_manager
     profiles = [await _recorded_profile(manager, t, variable) for t in targets]
-    claude_home, codex_root = _user_scope_roots(request)
+    claude_home, codex_root = user_scope_roots(request)
     found = await run_in_threadpool(
         lambda: suggestions.suggest(sigil, working_dirs=dirs, claude_home=claude_home,
                                     codex_skills_root=codex_root,

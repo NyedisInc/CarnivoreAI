@@ -20,6 +20,7 @@ from src.core.pack.machines.config_state import ConfigState
 from src.core.pack.machines.settings_custody import SettingsCustody
 from src.core.pack.machines.roster import Entry, PeerInfo, Roster
 from src.core.pack.relay import consent as consent_mod, offers as offers_mod
+from src.core.resource_push import bodies
 from src.core.pack.reserve import model as reserve_model
 
 logger = structlog.get_logger()
@@ -29,6 +30,7 @@ RESERVE_PATH = "/federation/pack/reserve"
 TIGHTEN_PATH = "/federation/pack/restrictions/tighten"
 KICK_DELAY_SECONDS = 2.0
 NOTIFY_EVERY_SECONDS = 5.0
+LOAD_NOTIFY_SECONDS = 30.0
 TOPIC = "pack_machines"
 SNAPSHOT_TTL_SECONDS = 4.0
 
@@ -78,6 +80,8 @@ class PackMachines:
                                        paired=paired)
         self._clock, self._local_now = clock, local_now
         self._signatures: Dict[str, Any] = {}
+        self._live_signatures: Dict[str, Any] = {}
+        self._live_noticed: Dict[str, float] = {}
         self._stale_timers: Dict[str, threading.Timer] = {}
         self._kick_task: Optional["asyncio.Task[None]"] = None
         self._lease_until = 0.0
@@ -140,12 +144,17 @@ class PackMachines:
         reserve = snapshot.get("reserve") or {}
         battery = snapshot.get("battery") or {}
         agents = snapshot.get("agents") or {}
-        key = (signature(load), reserve.get("level"), battery.get("on_battery"), state_word,
-               repr(snapshot.get("restrictions")), repr(reserve.get("config")), agents_signature(agents),
-               repr(snapshot.get("relay_accept")), repr(snapshot.get("credential_offers")), repr(snapshot.get("skills")))
-        if self._signatures.get(install_id) != key:
-            self._signatures[install_id] = key
-            self._notify(TOPIC, install_id, NOTIFY_EVERY_SECONDS)
+        stable = (reserve.get("level"), battery.get("on_battery"), state_word,
+                  repr(snapshot.get("restrictions")), repr(reserve.get("config")),
+                  repr(snapshot.get("relay_accept")), repr(snapshot.get("credential_offers")), repr(snapshot.get("skills")))
+        live = (signature(load), agents_signature(agents))
+        now = self._clock()
+        if self._signatures.get(install_id) != stable:
+            self._signatures[install_id] = stable
+        elif self._live_signatures.get(install_id) == live or now - self._live_noticed.get(install_id, 0.0) < LOAD_NOTIFY_SECONDS:
+            return
+        self._live_signatures[install_id], self._live_noticed[install_id] = live, now
+        self._notify(TOPIC, install_id, NOTIFY_EVERY_SECONDS)
 
     def _arm_stale_notice(self, install_id: str) -> None:
         old = self._stale_timers.pop(install_id, None)
@@ -271,6 +280,7 @@ class PackMachines:
                     self._announce(self.install_id, await asyncio.to_thread(self.own_snapshot), roster_mod.STATE_SELF)
                     if self._clock() - last_keepalive >= self.KEEPALIVE_SECONDS:
                         last_keepalive = self._clock()
+                        bodies.skip_next("pack_machines")
                         self._notify(TOPIC, self.install_id, NOTIFY_EVERY_SECONDS)
                 except Exception as exc:  # noqa: BLE001
                     logger.info("pack_tick_failed", error=type(exc).__name__)

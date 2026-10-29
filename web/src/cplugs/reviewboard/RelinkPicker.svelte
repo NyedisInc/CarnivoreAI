@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { t } from '../sdk';
-  import { Icon } from '../sdk/ui';
+  import { Button, Card, IconButton, List, ListRow } from '../sdk/ui';
   import { fetchTasks } from './board-api';
   import type { TaskChoice } from './board-model';
 
@@ -25,12 +25,10 @@
   });
 </script>
 
-<section class="rb-round-card" data-relink>
-  <header class="rb-card-head">
-    <span class="rb-label">{t('cplug.reviewboard.relink.title')}</span>
-    <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.action.close')} title={t('cplug.reviewboard.action.close')}
-            data-relink-close onclick={onclose}><Icon name="close" size={14} /></button>
-  </header>
+<Card title={t('cplug.reviewboard.relink.title')} compact data-relink>
+  {#snippet actions()}
+    <IconButton label={t('cplug.reviewboard.action.close')} icon="close" variant="close" iconSize={14} data-relink-close onclick={onclose} />
+  {/snippet}
   {#if loading}
     <p class="rb-note-text" role="status">{t('cplug.reviewboard.page.loading')}</p>
   {:else if failed}
@@ -38,15 +36,17 @@
   {:else if tasks.length === 0}
     <p class="rb-note-text">{t('cplug.reviewboard.relink.none')}</p>
   {:else}
-    <ul class="rb-list">
+    <List>
       {#each tasks as task (task.id)}
-        <li>
-          <button type="button" class="rb-row" data-relink-item={task.id} aria-current={task.id === current} onclick={() => onpick(task.id)}>
-            <span class="rb-row-title">{task.title}</span>
-            <span class="rb-row-meta">#{task.id}</span>
-          </button>
-        </li>
+        <ListRow selected={task.id === current}>
+          <Button variant="row" data-relink-item={task.id} aria-current={task.id === current} onclick={() => onpick(task.id)}>
+            <span class="rb-row-line">
+              <span class="rb-row-title">{task.title}</span>
+              <span class="rb-row-meta">#{task.id}</span>
+            </span>
+          </Button>
+        </ListRow>
       {/each}
-    </ul>
+    </List>
   {/if}
-</section>
+</Card>

@@ -4,7 +4,7 @@ import { META } from './meta';
 
 const ids = [1, 2, 3, 4, 5].map((n) => `analytics:00000000-0000-4000-8000-00000000000${n}` as const);
 
-describe('the default Home layout', () => {
+describe('the default Home layout (Alex (Example-owner), 2026-10-24)', () => {
   it('is the stat strip, the chart rows, running sessions with the ledger, then closed, skills and plugins, in that order', () => {
     const layout = insertDefaultAnalytics(resetLayout(META), ids);
     expect(layout.rows.map((row) => row.slots.map((slot) => slot.id.replace(/-0+(\d)$/, '#$1')))).toEqual([

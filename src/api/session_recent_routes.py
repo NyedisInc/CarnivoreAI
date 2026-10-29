@@ -2,7 +2,7 @@
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from src.api.auth import require_auth
 from src.config import settings
 from src.core.sessions.closed_time import closed_time, order_recent
@@ -11,9 +11,17 @@ from src.models import RecentSessionsResponse
 from src.api.session_record_payload import _session_record_payload
 
 from fastapi.concurrency import run_in_threadpool
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
+
+
+class _UnfilteredRows(Exception):
+
+    def __init__(self, rows: list) -> None:
+        super().__init__("replaced scan failed")
+        self.rows = rows
 
 
 @router.get(
@@ -88,7 +96,9 @@ async def recent_response(app_state: Any, *, include_archived: bool = False,
 
 
     from src.core import session_store
-    from src.core.db import DatastoreUnreadableError, connect, db_path_for
+    from src.core.db import DatastoreUnreadableError, db_path_for
+    from src.core.db_reuse.change_cache import HOT_READS
+    from src.core.db_reuse.core_read import lend_pooled_or_raise
     from src.core.session_sleep import is_asleep
     from src.core.db_models import (
         SESSION_LIFECYCLE_RUNNING,
@@ -113,8 +123,8 @@ async def recent_response(app_state: Any, *, include_archived: bool = False,
     if not db_path.exists():
         return RecentSessionsResponse(state="ok", sessions=[])
 
-    def _read() -> list:
-        with closing(connect(db_path, create=False)) as conn:
+    def _load() -> list:
+        with closing(lend_pooled_or_raise(db_path)) as conn:
             rows = session_store.list_sessions(
                 conn,
                 lifecycle=SESSION_LIFECYCLE_STOPPED,
@@ -142,7 +152,7 @@ async def recent_response(app_state: Any, *, include_archived: bool = False,
                         "show rather than a session going missing"
                     ),
                 )
-                return rows
+                raise _UnfilteredRows(rows)
             if not replaced:
                 return rows
             return [
@@ -150,19 +160,30 @@ async def recent_response(app_state: Any, *, include_archived: bool = False,
                 if row.get("id") not in replaced
             ]
 
+    def _read() -> list:
+        try:
+            kept = HOT_READS.fetch(db_path, ("recent_rows", include_archived, include_automated), _load)
+        except _UnfilteredRows as unfiltered:
+            kept = unfiltered.rows
+        return [dict(row) for row in kept]
+
     try:
         rows = await run_in_threadpool(_read)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc, step="_read") from exc
 
-    stopped_rows = [
-        row for row in rows
-        if row.get("lifecycle") == SESSION_LIFECYCLE_STOPPED and not is_asleep(row)
-        and row.get("origin") != "peer"
-    ]
-    payloads = []
-    for row in order_recent(stopped_rows):
-        closed_at, closed_basis = closed_time(row)
-        payloads.append(_session_record_payload(row).model_copy(
-            update={"closed_at": closed_at, "closed_basis": closed_basis}))
+    def _project() -> list:
+        stopped_rows = [
+            row for row in rows
+            if row.get("lifecycle") == SESSION_LIFECYCLE_STOPPED and not is_asleep(row)
+            and row.get("origin") != "peer"
+        ]
+        out = []
+        for row in order_recent(stopped_rows):
+            closed_at, closed_basis = closed_time(row)
+            out.append(_session_record_payload(row).model_copy(
+                update={"closed_at": closed_at, "closed_basis": closed_basis}))
+        return out
+
+    payloads = await run_in_threadpool(_project)
     return RecentSessionsResponse(state="ok", sessions=payloads)

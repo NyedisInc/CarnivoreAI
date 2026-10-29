@@ -4,6 +4,7 @@ import { holdAggregate, huddle, startTaskManager } from '../../cplugs/huddle/hud
 import { alertCenter, startAlertCenter } from '../app-alerts/alerts.svelte';
 import { t } from '../i18n/index.svelte';
 import { acquireScheduledRuns, releaseScheduledRuns } from '../../opscenter/api/scheduled-runs.svelte';
+import { badgeOf } from './bell-badge';
 import { alertRows, approvalRows, failedAutomationRows, taskManagerRows, type AttentionRow } from './rows';
 
 let runs = $state.raw<ReturnType<typeof acquireScheduledRuns> | null>(null);
@@ -36,6 +37,10 @@ export function bellRows(): AttentionRow[] {
   return rowsFor(approvals.items.filter((item) => !isQuestionItem(item)));
 }
 
+export function bellBadge(): ReturnType<typeof badgeOf> {
+  return badgeOf(bellRows());
+}
+
 function rowsFor(items: readonly ApprovalItem[]): AttentionRow[] {
   return [
     ...approvalRows(items),
@@ -49,7 +54,6 @@ export function attentionUnread(): boolean {
   return approvals.status === 'idle' && huddle.status === 'idle' && alertCenter.status === 'idle';
 }
 
-/* could not */
 export function attentionBroken(): boolean {
   return approvals.status === 'error' && huddle.status === 'error' && alertCenter.status !== 'ok';
 }

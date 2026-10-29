@@ -83,7 +83,7 @@ async def respawn_remote(manager: Any, remote_id: str, *, agent_type: Optional[s
     }
 
 
-def _bind_write(manager: Any, backend: Any, epoch: int, uuid: str, rebind: bool) -> int:
+def _bind_write(manager: Any, backend: Any, epoch: int, uuid: str, rebind: bool) -> Optional[int]:
     from src.core.hosts.ddl import host_scope
 
     guard = ("claude_session_uuid IS NOT NULL AND claude_session_uuid != ?" if rebind
@@ -91,7 +91,7 @@ def _bind_write(manager: Any, backend: Any, epoch: int, uuid: str, rebind: bool)
     try:
         conn = manager._writable_datastore_connection()
         if conn is None:
-            return 0
+            return None
         with closing(conn):
             scope_sql, scope_params = host_scope(conn, backend.host_key)
             cur = conn.execute(
@@ -103,12 +103,12 @@ def _bind_write(manager: Any, backend: Any, epoch: int, uuid: str, rebind: bool)
             return cur.rowcount
     except (sqlite3.Error, OSError) as exc:
         logger.warning("remote_conversation_bind_failed", host=backend.host_key, error=str(exc))
-        return 0
+        return None
 
 
 def bind_conversation(manager: Any, session_id: str, evidence: Any) -> Optional[str]:
     from src.core.attention.evidence import FAMILY_CODEX
-    from src.core.attention.registry_read import STALE_CAUSE_CONVERSATION
+    from src.core.attention.registry_record import STALE_CAUSE_CONVERSATION
     from src.core.hosts.remote_claude_files import files_for
 
     if getattr(evidence, "agent_family", None) == FAMILY_CODEX:
@@ -134,6 +134,8 @@ def bind_conversation(manager: Any, session_id: str, evidence: Any) -> Optional[
     if files.bound.get(key) == uuid:
         return None
     changed = _bind_write(manager, backend, epoch, uuid, rebind)
+    if changed is None:
+        return None
     files.bound[key] = uuid
     if changed:
         logger.info("remote_conversation_bound", host=backend.host_key, session_id=session_id,

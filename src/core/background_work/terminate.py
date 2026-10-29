@@ -1,27 +1,3 @@
-"""Stop a verified process and its subtree: SIGTERM, then SIGKILL (issue #1044).
-
-ONLY WHAT THE GUARD ALLOWED, ONLY WHILE IT IS STILL THE SAME PROCESS. The
-caller passes the ``(pid, start)`` pairs :func:`.guard.check` returned from
-a fresh snapshot. Immediately before each signal this module asks ``ps``
-again for exactly those pids and signals a pid only while it still reports
-the same start: a process that exited, and a reused pid, are never
-signalled. The window left between that ``ps`` and ``kill(2)`` is the
-lifetime of one syscall, and to be hit a process must exit AND the kernel
-hand its pid to a new one inside it; macOS offers no pidfd to close it.
-
-WHY THE SUBTREE. A background Bash call is a ``zsh -c`` whose commands are
-its children (``ssh`` and a ``head`` in the measured Daily Bulletin case).
-SIGTERM to the shell alone leaves those running, re-parented to launchd.
-Every member got its start token from the same snapshot, so re-parenting
-after the shell dies does not change which processes are signalled.
-
-A ZOMBIE IS GONE. An exited child its parent has not reaped still answers
-``kill(pid, 0)``; ``ps`` reports it with a ``Z`` state, read here as gone.
-
-BOUNDED: :data:`TERM_WAIT_SECONDS` for SIGTERM to work, then SIGKILL to the
-survivors and :data:`KILL_WAIT_SECONDS` more. A process in uninterruptible
-sleep can survive even SIGKILL for a while; that is reported, never hidden.
-"""
 
 from __future__ import annotations
 
@@ -52,7 +28,7 @@ Member = Tuple[int, str]
 
 
 class LivenessUnmeasured(Exception):
-    """``ps`` could not be run to check which members are alive."""
+    pass
 
 
 @dataclass
@@ -66,13 +42,6 @@ class TerminateResult:
 
 
 def live_members(members: Sequence[Member]) -> FrozenSet[Member]:
-    """Which of these (pid, start) pairs are still that process, alive.
-
-    Inputs: members (Sequence[tuple[int, str]]).
-    Output: frozenset of the members alive with the same start, not zombies.
-    Raises: LivenessUnmeasured - ps could not run.
-    Example: live_members([(os.getpid(), 'x')]) -> frozenset()  # start differs
-    """
     if not members:
         return frozenset()
     wanted = {pid: normalise_lstart(start) for pid, start in members}

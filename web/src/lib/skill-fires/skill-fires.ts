@@ -1,4 +1,3 @@
-/* session skills */
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { t } from '../i18n/index.svelte';
 import { durationText } from '../timers/timers';

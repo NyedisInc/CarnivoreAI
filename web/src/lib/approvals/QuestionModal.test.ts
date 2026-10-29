@@ -134,14 +134,14 @@ describe('a multi-question ask', () => {
       await tick();
     };
     await click('[data-ask-option="Blue"]');
-    expect(q('[data-ask-next]').classList.contains('modal-btn-confirm')).toBe(true);
-    expect(q('[data-ask-submit]').classList.contains('modal-btn-secondary')).toBe(true);
+    expect(q('[data-ask-next]').getAttribute('data-btn')).toBe('confirm');
+    expect(q('[data-ask-submit]').getAttribute('data-btn')).toBe('secondary');
     await enter('[data-ask-option="Blue"]');
     expect(q('[data-ask-question]').textContent).toBe('Which toppings?');
     await enter('[data-ask-option="Cheese"]');
     expect(q('[data-ask-panel]').dataset.askPanel).toBe('2');
     expect(posts()).toEqual([]);
-    expect(q('[data-ask-submit]').classList.contains('modal-btn-confirm')).toBe(true);
+    expect(q('[data-ask-submit]').getAttribute('data-btn')).toBe('confirm');
     await enter('[data-ask-other]');
     expect(posts().length).toBe(1);
   });

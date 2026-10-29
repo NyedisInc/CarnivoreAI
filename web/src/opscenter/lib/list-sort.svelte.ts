@@ -1,4 +1,3 @@
-/* running sessions */
 
 import { readChoice, writeChoice } from '../../lib/ui/prefs.svelte';
 

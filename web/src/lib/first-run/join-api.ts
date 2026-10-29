@@ -10,7 +10,6 @@ export interface Candidate {
     readonly label: string;
 }
 
-/* could not */
 export const HELPER_LINE = 'bash -c "$(curl -fsSL --proto \'=https\' --tlsv1.2 https://carnivore.ai/install.sh)" _ --join';
 
 export interface JoinStatus {

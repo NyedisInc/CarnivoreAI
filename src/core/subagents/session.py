@@ -1,18 +1,3 @@
-"""One session's subagents: the family dispatch and the transcript lookup.
-
-Takes the same three facts the token-usage panel takes
-(``session_token_usage.reader.SessionSubject``), so a session row is
-projected once, in the route, and gotcha 1 is handled there.
-
-FOUR OUTCOMES, NEVER FOLDED:
-
-  ``not_applicable``  a family with no subagent files (codex): NO COUNT,
-                      not a zero (issue #747).
-  ``absent``          no conversation id yet, or its transcript does not
-                      exist yet: nothing can have run, a measured zero.
-  ``unchecked``       the corpus could not be searched or read.
-  ``ok``              the directory was read; see ``reader``.
-"""
 
 from __future__ import annotations
 

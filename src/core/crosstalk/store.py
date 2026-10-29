@@ -14,6 +14,8 @@ from src.config import settings
 from src.core import resource_push
 from src.core.crosstalk import card_push
 from src.core.crosstalk import landing
+from src.core.crosstalk import receipt
+from src.core.crosstalk import waiting_reads
 from src.core.db import connect, db_path_for, transaction
 from src.core.resource_push.topics import CROSSTALK
 
@@ -178,6 +180,19 @@ def apply_peer_control(left: str, right: str, left_epoch: int | None, right_epoc
     return True
 
 
+def _settle_replied(conn: sqlite3.Connection, parent_id: str, replier_key: str, now: float) -> list[dict]:
+    return receipt.settle_held_native(conn, 'id=? AND receiver_key=?', (parent_id, replier_key), now)
+
+
+def _announce_settled(rows: list[dict]) -> None:
+    if not rows:
+        return
+    for row in rows:
+        card_push.announce(row)
+    _notify()
+    _notify_swarm(*{k for row in rows for k in (row['sender_key'], row['receiver_key'])})
+
+
 def reserve(*, sender: dict, receiver: dict, text: str, thread: str | None = None,
             in_reply_to: str | None = None, expect_reply: bool = False, source: str = 'crosstalk',
             spawn_task: bool = False, task_item: int | None = None) -> dict:
@@ -193,6 +208,7 @@ def reserve(*, sender: dict, receiver: dict, text: str, thread: str | None = Non
     now = time.time()
     msg_id = 'm-' + secrets.token_urlsafe(12)
     loop_paused = False
+    settled: list[dict] = []
     with closing(_conn()) as conn, transaction(conn):
         pair = pair_key(sender['key'], receiver['key'])
         row = conn.execute('SELECT * FROM crosstalk_contacts WHERE pair_key=?', (pair,)).fetchone()
@@ -231,6 +247,7 @@ def reserve(*, sender: dict, receiver: dict, text: str, thread: str | None = Non
             if thread and thread != parent['thread']:
                 raise BusRefused('thread does not match reply target')
             thread = parent['thread']
+            settled = _settle_replied(conn, in_reply_to, sender['key'], now)
         if not loop_paused and thread:
             member = conn.execute('SELECT sender_key,receiver_key FROM crosstalk_messages WHERE thread=? LIMIT 1',
                                   (thread,)).fetchone()
@@ -251,6 +268,7 @@ def reserve(*, sender: dict, receiver: dict, text: str, thread: str | None = Non
                  receiver['name'], receiver['provider'], receiver.get('model'),
                  int(expect_reply), 'queued', now, now + MESSAGE_LIFETIME, source, int(spawn_task), task_item))
         result = _row(conn.execute('SELECT * FROM crosstalk_messages WHERE id=?', (msg_id,)).fetchone()) if not loop_paused else None
+    _announce_settled(settled)
     _notify()
     _notify_swarm(sender['key'], receiver['key'])
     if loop_paused:
@@ -374,23 +392,15 @@ def _confirm_read(key: str, rows: list[dict]) -> None:
            and str(r['reason'] or '').startswith('native_receipt_pending:')]
     if not ids:
         return
-    settled = []
+    settled: list[dict] = []
     with closing(_conn()) as conn, transaction(conn):
         for message_id in ids:
-            if conn.execute("""UPDATE crosstalk_messages SET status='delivered', reason=NULL, delivered_at=?
-                WHERE id=? AND status='held' AND receiver_key=? AND reason LIKE 'native_receipt_pending:%'""",
-                            (time.time(), message_id, key)).rowcount:
-                settled.append(message_id)
-    if not settled:
-        return
-    keys = set()
+            settled += receipt.settle_held_native(conn, 'id=? AND receiver_key=?', (message_id, key), time.time())
+    done = {r['id'] for r in settled}
     for row in rows:
-        if row['id'] in settled:
+        if row['id'] in done:
             row.update(status='delivered', reason=None)
-            keys.update((row['sender_key'], row['receiver_key']))
-            card_push.announce(row)
-    _notify()
-    _notify_swarm(*keys)
+    _announce_settled(settled)
 
 
 def recent_for(key: str, limit: int = 200) -> list[dict]:
@@ -422,6 +432,8 @@ def deliver_external(message_id: str) -> None:
 
 
 def claim_for(receiver_key: str) -> dict | None:
+    if not waiting_reads.may_have_waiting(_conn, receiver_key):
+        return None
     with closing(_conn()) as conn, transaction(conn):
         row = conn.execute('''SELECT * FROM crosstalk_messages WHERE receiver_key=? AND status IN ('queued','held')
             AND expires_at>? ORDER BY CASE WHEN reason LIKE 'native_receipt_pending:%' THEN 1 ELSE 0 END,
@@ -486,7 +498,8 @@ def expire() -> list[str]:
     now = time.time()
     wake: list[str] = []
     with closing(_conn()) as conn, transaction(conn):
-        due = conn.execute("SELECT * FROM crosstalk_messages WHERE source IN ('crosstalk','peer') AND status IN ('queued','held') AND expires_at<=?", (now,)).fetchall()
+        settled = receipt.settle_held_native(conn, receipt.DUE_ANSWERED, (now,), now)
+        due = conn.execute(f"SELECT * FROM crosstalk_messages WHERE source IN ({waiting_reads.NOTICE_SOURCES}) AND status IN ('queued','held') AND expires_at<=?", (now,)).fetchall()
         for item in due:
             conn.execute("UPDATE crosstalk_messages SET status='expired',reason='receiver did not become ready within 24 hours' WHERE id=?", (item['id'],))
             if item['source'] == 'peer':
@@ -506,15 +519,14 @@ def expire() -> list[str]:
                 wake.append(item['sender_key'])
         system_expired = conn.execute("UPDATE crosstalk_messages SET status='expired',reason='status notice could not be delivered' WHERE source='system' AND status IN ('queued','held') AND expires_at<=?", (now,)).rowcount
         conn.execute("UPDATE crosstalk_watches SET status='expired' WHERE status='watching' AND expires_at<=?", (now,))
+    _announce_settled(settled)
     if due or system_expired:
         _notify()
     return wake
 
 
 def next_expiry() -> float | None:
-    with closing(_conn()) as conn:
-        row = conn.execute("SELECT MIN(expires_at) FROM crosstalk_messages WHERE status IN ('queued','held')").fetchone()
-    return row[0] if row else None
+    return waiting_reads.oldest_deadline(_conn)
 
 
 def watch(*, watcher_key: str, watcher_id: str, watcher_epoch: int | None,

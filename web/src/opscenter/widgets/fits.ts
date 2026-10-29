@@ -47,13 +47,11 @@ export function suggestedSizes(fits: Pick<WidgetFits, 'sizes'>): NamedFitSize[] 
   return GRID_SIZE_NAMES.filter((name) => fits.sizes.includes(name)).map(namedSize);
 }
 
-/* pop-out window */
 export function zoneOfPage(page: LayoutPage, popout: boolean): FitZone {
   if (page === 'warroom') return 'terminal';
   return page === 'home' && popout ? 'popout' : page;
 }
 
-/* pop-out window */
 export function isPopoutWindow(): boolean {
   return typeof document !== 'undefined' && document.getElementById('popout-screen') !== null;
 }

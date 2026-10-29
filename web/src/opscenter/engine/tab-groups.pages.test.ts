@@ -91,7 +91,7 @@ test('closing a page tab leaves the grid; the emptied page component goes with i
 test('a saved Layout takes a page tab like a session tab', () => {
   const grid = terminalLayout.snapshot();
   const was = terminalLayout.session;
-  terminalLayout.bindKey('layout:107618fd-531e-4bc9-8560-775fe7793588', grid);
+  terminalLayout.bindKey('layout:5f0c0000-0000-0000-0000-000000000000', grid);
   try {
     expect(placeTab(terminalLayout, PRIMARY_SLOT, PAGE, 0)).toBe('added');
     expect(tabsFor(terminalLayout, PRIMARY_SLOT)).toContain(PAGE);

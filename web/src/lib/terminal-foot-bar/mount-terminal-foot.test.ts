@@ -32,6 +32,7 @@ import {
   unmountTerminalFoot,
 } from './mount-terminal-foot';
 
+/** Say whether this browser reports itself wide enough for the grid. */
 function setWide(isWide: boolean): { addEventListener: ReturnType<typeof vi.fn>; removeEventListener: ReturnType<typeof vi.fn> } {
   const mq = { matches: isWide, addEventListener: vi.fn(), removeEventListener: vi.fn() };
   Object.defineProperty(window, 'matchMedia', {

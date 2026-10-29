@@ -38,7 +38,7 @@ from src.core.claude_title_sync_apply import (
     sync_claude_title,
 )
 
-UUID = "f226580c-c43b-4e40-8679-c6e70c6e8543"
+UUID = "916c846d-db44-472a-8e50-65999798ee3c"
 TMUX_NAME = "cloude_Punchlist"
 
 
@@ -63,8 +63,11 @@ class _FakeManager:
         self.hook_tokens = HookTokenAuthority(lambda: state_dir)
         self.connections_opened = 0
 
-    def _tmux_socket_name(self):
+    def tmux_socket_name(self):
         return "cloude"
+
+    def _name_read_connection(self) -> tuple:
+        return self._conn, False
 
     def _writable_datastore_connection(self):
         self.connections_opened += 1
@@ -74,12 +77,11 @@ class _FakeManager:
 
 @pytest.fixture(autouse=True)
 def _isolated_claude_registry(tmp_path, monkeypatch):
-    from src.core.attention import registry_read
+    from src.core.attention import registry_index
 
     directory = tmp_path / "claude-registry"
     directory.mkdir()
-    monkeypatch.setattr(
-        registry_read, "default_registry_directory", lambda: str(directory)
+    monkeypatch.setattr(registry_index, "default_registry_directory", lambda: str(directory)
     )
     return directory
 
@@ -362,32 +364,32 @@ def test_a_rename_right_after_launch_is_applied_on_first_sight(
     db, transcript, _isolated_claude_registry
 ):
     started = ROW_CREATED_MS + 1_800
-    _registry_record(_isolated_claude_registry, name="Fenford-FIRFORD",
+    _registry_record(_isolated_claude_registry, name="Atlas-UI",
                      started_ms=started, since_ms=started + 7_238)
-    row_id = _row(db, title="Harfield-Fenfield Kelfield Tammont", claude_title=None)
-    transcript("Fenford-FIRFORD")
+    row_id = _row(db, title="Atlas-Need Dev Key", claude_title=None)
+    transcript("Atlas-UI")
 
     result = sync_claude_title(_FakeManager(db), "ses_test")
 
     assert result.action == TITLE_APPLIED
-    assert result.broadcast_title == "Fenford-FIRFORD"
-    assert _read(db, row_id) == ("Fenford-FIRFORD", "Fenford-FIRFORD")
+    assert result.broadcast_title == "Atlas-UI"
+    assert _read(db, row_id) == ("Atlas-UI", "Atlas-UI")
 
 
 def test_a_row_stuck_on_its_baseline_heals_on_the_next_pass(
     db, transcript, _isolated_claude_registry
 ):
     started = ROW_CREATED_MS + 1_800
-    _registry_record(_isolated_claude_registry, name="Fenford-FIRFORD",
+    _registry_record(_isolated_claude_registry, name="Atlas-UI",
                      started_ms=started, since_ms=started + 7_238)
-    row_id = _row(db, title="Harfield-Fenfield Kelfield Tammont",
-                  claude_title="Fenford-FIRFORD")
-    transcript("Fenford-FIRFORD")
+    row_id = _row(db, title="Atlas-Need Dev Key",
+                  claude_title="Atlas-UI")
+    transcript("Atlas-UI")
 
     result = sync_claude_title(_FakeManager(db), "ses_test")
 
     assert result.action == TITLE_APPLIED
-    assert _read(db, row_id) == ("Fenford-FIRFORD", "Fenford-FIRFORD")
+    assert _read(db, row_id) == ("Atlas-UI", "Atlas-UI")
 
 
 def test_a_launch_name_still_baselines(db, transcript, _isolated_claude_registry):
@@ -419,13 +421,13 @@ def test_an_old_conversation_name_still_baselines(
 
 
 def test_an_empty_title_takes_the_claude_name(db, transcript):
-    row_id = _row(db, title=None, claude_title="TEAM-Docs")
-    transcript("TEAM-Docs")
+    row_id = _row(db, title=None, claude_title="ALEX-Docs")
+    transcript("ALEX-Docs")
 
     result = sync_claude_title(_FakeManager(db), "ses_test")
 
     assert result.action == TITLE_APPLIED
-    assert _read(db, row_id) == ("TEAM-Docs", "TEAM-Docs")
+    assert _read(db, row_id) == ("ALEX-Docs", "ALEX-Docs")
 
 
 def test_a_browser_rename_after_agreement_is_not_reverted(
@@ -435,16 +437,16 @@ def test_a_browser_rename_after_agreement_is_not_reverted(
     from src.core.claude_rename_retry import RenameMark
 
     started = ROW_CREATED_MS + 1_800
-    _registry_record(_isolated_claude_registry, name="Fenford-FIRFORD",
+    _registry_record(_isolated_claude_registry, name="Atlas-UI",
                      started_ms=started, since_ms=started + 7_238)
-    row_id = _row(db, title="Browser Name", claude_title="Fenford-FIRFORD")
+    row_id = _row(db, title="Browser Name", claude_title="Atlas-UI")
     state = tmp_path / "state"
     state.mkdir()
     retry_store.reset_cache()
     monkeypatch.setattr(retry_store, "resolve_state_dir", lambda: state)
     retry_store.save_mark(state, f"{UUID}:{row_id}",
-                          RenameMark(agreed_title="Fenford-FIRFORD"))
-    transcript("Fenford-FIRFORD")
+                          RenameMark(agreed_title="Atlas-UI"))
+    transcript("Atlas-UI")
 
     try:
         result = sync_claude_title(_FakeManager(db), "ses_test")
@@ -452,4 +454,4 @@ def test_a_browser_rename_after_agreement_is_not_reverted(
         retry_store.reset_cache()
 
     assert result.action == TITLE_UNCHANGED
-    assert _read(db, row_id) == ("Browser Name", "Fenford-FIRFORD")
+    assert _read(db, row_id) == ("Browser Name", "Atlas-UI")

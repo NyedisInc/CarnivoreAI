@@ -1,62 +1,3 @@
-"""Correlate an ADOPTED tmux session to the Claude conversation inside it.
-
-THE GAP THIS CLOSES. ``sessions.claude_session_uuid`` has exactly one
-writer today - ``session_lineage.record_claude_session`` - and it is
-reached only from Claude Code's SessionStart hook, which fires only when
-the app injected ``CLOUDECODE_SESSION_ID`` at spawn. A tmux session the
-app ADOPTS instead of creates never gets that env var, so its
-``claude_session_uuid`` stays NULL forever and every feature keyed on it
-(fork resolution, resume, the out-of-band rename push) is dead for that
-row. This module is the second writer, reached from the adopt path
-(``session_adopt_persist.persist_adoption``), and it works from evidence
-on disk instead of a live hook payload.
-
-NEVER GUESS. The candidate set is every top-level transcript in that
-project directory whose first real user message could plausibly have
-been typed into THIS tmux pane - which means its timestamp is not
-earlier than the pane's own creation time (an ``epoch_slack_seconds``
-tolerance absorbs the few seconds between a pane existing and Claude's
-first hook write actually landing). Exactly one such candidate is a
-DECISIVE match. Zero is `no candidate ever started here`. More than one
-is `more than one plausibly did`, and both of those are the SAME answer:
-CANNOT DETERMINE. A tie is never broken by recency, size, or any other
-heuristic - see :data:`CORRELATE_AMBIGUOUS`'s docstring for why breaking
-it would be exactly the wrong kind of confident.
-
-WHAT NEVER ENTERS THE CANDIDATE SET.
-
-  A subagent transcript        excluded by path (see above), never read.
-  An automated liveness probe  Claude Code's own healthcheck harness
-                                writes a real top-level transcript with
-                                ``entrypoint: "sdk-cli"`` on its first
-                                user record. Measured against the corpus:
-                                every "sdk-cli" transcript found was one
-                                of these probes, and no genuine
-                                interactive session anywhere in it
-                                carried that entrypoint. Excluded outright
-                                - a probe transcript is never a match
-                                regardless of timing.
-  An unclassifiable file       unreadable, not valid JSON on any of the
-                                first ``max_lines_scanned`` lines, or
-                                never reaching a top-level user record in
-                                that window. Requirement: `if you cannot
-                                classify a candidate, it is not a match`.
-                                Excluding an unknown is the safe
-                                direction here - the cost of a wrong
-                                attach is high, the cost of a miss is the
-                                NULL this module exists to sometimes fill.
-
-FAIL SOFT. Every filesystem operation in :func:`correlate_adopted_session`
-is wrapped so a permissions error, a missing directory, or a garbled file
-degrades to ``CORRELATE_ERROR`` / ``CORRELATE_NO_CANDIDATE`` and never
-raises into the adopt path. Reading the filesystem must never break an
-adopt.
-
-WHAT THIS MODULE DOES NOT DO. It does not write to the database - see
-:func:`bind_correlated_uuid` for that half, which owns the unique-index
-and archived-row safety properties separately so this module can stay a
-pure, easily-fixtured reader.
-"""
 
 from __future__ import annotations
 
@@ -77,14 +18,10 @@ DEFAULT_MAX_LINES_SCANNED = 50
 
 CORRELATE_MATCHED = "matched"
 
-# COULD NOT EVALUATE
 CORRELATE_NO_CANDIDATE = "no_candidate"
 
-# COULD NOT EVALUATE
 CORRELATE_AMBIGUOUS = "ambiguous"
 
-# COULD NOT EVALUATE
-# not usable
 CORRELATE_ERROR = "error"
 
 CORRELATE_NO_MATCH: Tuple[str, ...] = (
@@ -189,14 +126,13 @@ def correlate_adopted_session(
             detail="tmux instance has no creation epoch to anchor a match against",
         )
 
-    if projects_dir is not None:
-        bases: Tuple[Path, ...] = (projects_dir,)
-    else:
-        from src.core.claude_config.profile_roots import PROJECTS_DIRNAME, profile_subdir_roots
+    from src.core.claude_project_dirs import candidate_project_dirs
 
-        bases = profile_subdir_roots(default_projects_dir(), PROJECTS_DIRNAME)
-    slug = slugify_project_dir(working_dir)
-    project_dirs = [base / slug for base in bases]
+    project_dirs = candidate_project_dirs(
+        working_dir,
+        projects_dir=projects_dir,
+        default_dir=default_projects_dir() if projects_dir is None else None,
+    )
 
     entries: List[Path] = []
     listed: List[Path] = []
@@ -222,7 +158,7 @@ def correlate_adopted_session(
     if not listed:
         return CorrelationResult(
             outcome=CORRELATE_NO_CANDIDATE,
-            detail=f"no claude project directory at {project_dirs[0]}",
+            detail=f"no claude project directory for {working_dir}",
         )
     project_dir = listed[0]
 

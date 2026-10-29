@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.concurrency import run_in_threadpool
 
 from src.api.auth import require_auth
+from src.api.error_response import api_error
 from src.core.bookmarks import actions, preview, service, store
 from src.core.bookmarks.errors import BookmarkError
 from src.models.bookmarks import (AddBookmarkRequest, AllBookmarks, Bookmark, BookmarkList, BookmarkPreview, BranchResponse,
@@ -18,7 +19,7 @@ router = APIRouter(tags=["session-bookmarks"], dependencies=[Depends(require_aut
 
 
 def _http(exc: BookmarkError) -> HTTPException:
-    return HTTPException(status_code=exc.status, detail={"code": exc.code, "message": str(exc)})
+    return api_error(exc.status, exc.code, exc)
 
 
 def _preflight(row) -> None:
@@ -79,6 +80,10 @@ async def delete_bookmark(bookmark_id: int) -> Bookmark:
 async def preview_bookmark(bookmark_id: int,
                            turns: Optional[int] = Query(None, ge=1, le=preview.MAX_PREVIEW_TURNS)) -> BookmarkPreview:
     """The last ``turns`` chat messages up to a bookmark's point, oldest first, read from its transcript.
+
+    ``turns`` defaults to the bookmarks widget's ``previewTurns`` setting (4 until chosen otherwise). 409
+    ``transcript_unavailable`` when the conversation is not on this computer. No transcript is modified.
+    Example: GET /api/v1/bookmarks/7/preview?turns=4
     """
     try:
         return BookmarkPreview(**await run_in_threadpool(preview.bookmark_preview, bookmark_id, turns))
@@ -90,6 +95,11 @@ async def preview_bookmark(bookmark_id: int,
 async def preview_compaction(session_uuid: str, entry_uuid: str,
                              turns: Optional[int] = Query(None, ge=1, le=preview.MAX_PREVIEW_TURNS)) -> CompactionPreview:
     """The last ``turns`` chat messages BEFORE a compaction point (an automatic bookmark), oldest first.
+
+    ``entry_uuid`` is the ``compactions[].entry_uuid`` of ``GET /sessions/{id}/bookmarks``; 404 ``entry_not_found``
+    when it is not a compaction of the session. ``turns`` defaults to the bookmarks widget's ``previewTurns``
+    setting, as the bookmark preview. 409 ``transcript_unavailable`` when the conversation is not on this computer.
+    Example: GET /api/v1/sessions/<uuid>/compactions/<boundary>/preview?turns=4
     """
     try:
         return CompactionPreview(**await run_in_threadpool(preview.compaction_preview, session_uuid, entry_uuid, turns))
@@ -121,10 +131,7 @@ async def branch_point(request: Request, session_uuid: str, body: PointRequest) 
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
-        logger.warning("bookmark_branch_create_failed", session_uuid=session_uuid, error=str(exc),
-                       error_type=type(exc).__name__)
-        raise HTTPException(status_code=500, detail={"code": "create_failed",
-                                                     "message": f"could not create the branched session: {exc}"})
+        raise api_error(500, "session_fork_failed", exc, session_uuid=session_uuid, step="bookmark_branch") from exc
     return BranchResponse(**made)
 
 
@@ -142,7 +149,7 @@ async def rewind_point(request: Request, session_uuid: str, body: RewindPointReq
     except BookmarkError as exc:
         raise _http(exc)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail={"code": "restart_refused", "message": str(exc)})
+        raise api_error(400, "restart_refused", exc)
     return RewindResponse(**done)
 
 

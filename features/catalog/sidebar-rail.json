@@ -21,14 +21,16 @@
     "Right-click the icon at the top left of an open panel's title row (or press shift+f10 on it) for that widget's menu: edit layout and whatever the widget offers.",
     "Plugin page tabs such as flow get an icon too, once the tab is on; a closable one has a small x on its icon, or press delete on it.",
     "From the keyboard, tab to the rail once, then use the arrow keys, home and end to move between icons and enter or space to open one.",
-    "Right-click the rail or its handle (or press shift+f10 on the handle) for its menu: pin rail, edit layout or done editing."
+    "Right-click the rail or its handle (or press shift+f10 on the handle) for its menu: pin rail, edit layout or done editing.",
+    "Every icon shows in its default order until you choose otherwise. Turn on edit layout (the rail's menu or the layout bar): every icon of the rail and of the right and bottom bars gets a dashed border, so you know it can move, and a small eye badge that hides or shows it (a hidden icon is dimmed while editing and gone otherwise). Drag an icon, or press Alt with the arrow keys, to move it; on the left rail an icon can cross between the top zone (agents through pack) and the bottom zone (documentation, changelog, settings), so settings can go up and anything can go down. The choice is saved for every device."
   ],
   "id": "sidebar-rail",
   "issues": [
     1774,
     1785,
     1790,
-    2047
+    2047,
+    2689
   ],
   "keywords": [
     "icon rail",
@@ -49,9 +51,10 @@
     "web/src/lib/sidebar-widgets/sidebar-rail.css",
     "web/src/lib/sidebar-widgets/SidebarRailShell.svelte",
     "web/src/lib/sidebar-widgets/RailMenu.svelte",
-    "web/src/lib/widget-menu/rail-menu.ts"
+    "web/src/lib/widget-menu/rail-menu.ts",
+    "web/src/lib/sidebar-widgets/rail-icons.svelte.ts"
   ],
-  "updated": "2026-10-14",
+  "updated": "2026-10-28",
   "where": [
     "The left sidebar, down its left edge under the top bar."
   ]

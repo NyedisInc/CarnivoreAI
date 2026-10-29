@@ -2,7 +2,7 @@ import type { ApprovalItem } from '../approvals/approvals-model';
 
 const NUMBERED_ROW = /^\s*[❯›>]?\s*\d+\.\s+\S/;
 const ROW_PREFIX = /^\s*[❯›>]?\s*\d+\.\s+/;
-export const CLAUDE_HEADER = /^\s*[A-Z][A-Za-z]*(?: [A-Za-z]+)? (?:command|file|edit|request)\s*$/i;
+export const CLAUDE_HEADER = /^\s*[A-Z][A-Za-z]*(?: [A-Za-z]+)? (?:command|file|edit|request)\s*$/;
 const TIP_LINE = /^\s*Tip:/;
 const CODEX_META = /^\s*(?:Environment|Reason):/;
 const TIP_CONTINUATION_MAX_INDENT = 2;
@@ -36,6 +36,14 @@ function questionEnd(lines: readonly string[], question: string, limit: number):
   return null;
 }
 
+const CODEX_COMMAND_LINE = /^\s*\$ /;
+
+function dropCodexMeta(lines: string[]): string[] {
+  const command = lines.findIndex((l) => CODEX_COMMAND_LINE.test(l));
+  if (command < 0) return lines;
+  return lines.filter((l, i) => i >= command || !CODEX_META.test(l));
+}
+
 function tidy(lines: string[]): string[] {
   const kept = [...lines];
   while (kept.length && !(kept[0] ?? '').trim()) kept.shift();
@@ -67,6 +75,6 @@ export function dialogCode(item: Pick<ApprovalItem, 'body' | 'question' | 'rows'
     const after = lines.slice(q.end + 1);
     lines = after.some((l) => l.trim()) ? after : lines.slice(0, q.start);
   }
-  lines = dropClaudeChrome(lines).filter((l) => !CODEX_META.test(l));
+  lines = dropCodexMeta(dropClaudeChrome(lines));
   return tidy(lines).join('\n');
 }

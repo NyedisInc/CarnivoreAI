@@ -14,7 +14,6 @@ logger = structlog.get_logger()
 
 MEMBER_INSTALLED = "installed"
 
-# nothing was written
 MEMBER_ALREADY_PRESENT = "already_present"
 
 MEMBER_REFUSED = "refused"

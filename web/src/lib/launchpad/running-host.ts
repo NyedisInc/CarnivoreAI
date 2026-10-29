@@ -1,6 +1,5 @@
 import { contextFromRow, triggerHtml } from '../item-menu/row-context';
 import { hostWindow } from '../sessions/env';
-import type { ThemeColors } from './running-row';
 import { t } from '../i18n/index.svelte';
 import { attachRunningSession, returnToActiveSession } from './navigation';
 import { browserNavHost } from './nav-host';
@@ -48,6 +47,11 @@ export interface CardAction {
     order: number;
 }
 
+export interface ThemeColors {
+    accent: string;
+    label: string;
+}
+
 export interface RunningHost {
     actionsFor(status: string | null | undefined): RowActionDescriptor[];
     rowMenuTrigger(
@@ -72,7 +76,6 @@ export interface RunningHost {
         display: string,
         status: string | null,
     ): Promise<RestartChoice | null>;
-    /* could not */
     restartPickerError(): string | null;
     /* failed to load */
     hasRestartPicker(): boolean;
@@ -153,6 +156,7 @@ function legacy(): LegacyWindow {
     return (hostWindow() as unknown as LegacyWindow) || {};
 }
 
+/* that does nothing */
 function missing(what: string): void {
     console.error('CloudeWeb: the running-sessions list could not reach', what);
 }
@@ -249,7 +253,7 @@ export function browserRunningHost(): RunningHost {
         async confirmAction(action: string, displayName: string): Promise<boolean> {
             const mod = legacy().SessionRowActions;
             if (!mod || typeof mod.confirm !== 'function') {
-                // failed to load
+                // FAIL CLOSED. A destructive action must never proceed
                 missing('SessionRowActions.confirm');
                 return false;
             }
@@ -283,7 +287,7 @@ export function browserRunningHost(): RunningHost {
         async resolveSessionId(tmuxName: string): Promise<string | null> {
             const api = legacy().API;
             if (!api || typeof api.listSessions !== 'function') return null;
-            const live = await api.listSessions().catch(() => [] as unknown[]);
+            const live = await api.listSessions();
             if (!Array.isArray(live)) return null;
             const match = live.find((row) => {
                 const info = row as { tmux_session?: string };

@@ -109,7 +109,7 @@ def _route_fixture(monkeypatch, tmp_path, running):
         session_restart, "resolve_restart_source",
         lambda conn, session_uuid: session_restart.RestartSource(
             session_restart.RESTART_NO_CONVERSATION, parent_id=26,
-            working_dir="/tmp", agent_type="claude", title="Storefront",
+            working_dir="/tmp", agent_type="claude", title="Shopify",
         ),
     )
     monkeypatch.setattr(

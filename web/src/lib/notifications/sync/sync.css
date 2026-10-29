@@ -1,9 +1,3 @@
-/*
- * THE NOTIFICATION SYNC PANEL (#1278). Colour is --oc-* tokens only. COPIED, NOT INVENTED: the frame, the dim notes
- * and the coral problem line are the time machine panels' (.tm, .tm__sub, .tm__problem); the on/off switch is the
- * shared .oc-check and the button .oc-btn. Hairlines separate peers (a box-shadow, never a border), as the matrix
- * and the destinations list do. This file adds only the peer row and its state line.
- */
 .sy-list {
     display: flex;
     flex-direction: column;

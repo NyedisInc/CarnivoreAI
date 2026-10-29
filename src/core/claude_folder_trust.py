@@ -1,14 +1,3 @@
-"""Will claude stop at its folder-trust prompt in this folder? READ ONLY.
-
-  THREE ANSWERS, and the third is not the first:
-    trusted   a ``true`` was read for the folder or one of its parents.
-    will_ask  the file was read and no ``true`` covers the folder.
-    unknown   the file could not be read, or no folder was given. Not having
-              looked is never "will ask", and never "trusted".
-  Both spellings of a folder are checked, as written and with symlinks
-  resolved, because the file holds whichever spelling claude was started
-  under (gotcha 6).
-"""
 
 from __future__ import annotations
 

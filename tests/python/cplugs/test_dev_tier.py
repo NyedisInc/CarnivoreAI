@@ -57,7 +57,7 @@ def test_dev_plugin_is_off_hidden_and_not_started_until_developer_mode_is_on(cli
     assert definition is not None
 
 
-def test_a_hidden_dev_plugin_is_not_a_dependent_of_the_huddle(client: TestClient, dev_switch: dict) -> None:
+def test_a_hidden_dev_plugin_is_not_a_dependent_of_the_task_manager(client: TestClient, dev_switch: dict) -> None:
     host = runtime.host_for(client.app)
     turn_on(host, "huddle")
     turn_on(host, "tmdevtools")

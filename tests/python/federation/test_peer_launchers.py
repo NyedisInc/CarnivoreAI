@@ -11,7 +11,7 @@ from src.config.launch_profiles import LaunchProfile
 from src.core.federation import peer_fanout, peer_launchers
 from src.core.federation.peer_fanout import PeerAnswer
 
-HOSTA = "peer-hosta"
+STUDIO = "peer-studio"
 
 
 def _client() -> TestClient:
@@ -22,7 +22,7 @@ def _client() -> TestClient:
 
 
 def _profiles(monkeypatch) -> None:
-    rows = (LaunchProfile.model_validate({"id": "keyc", "label": "keyc", "harness": "claude", "flags": ["--verbose"],
+    rows = (LaunchProfile.model_validate({"id": "cld", "label": "cld", "harness": "claude", "flags": ["--verbose"],
                                           "env": [{"name": "MY_FLAG", "value": "x"}]}),)
     monkeypatch.setattr(type(settings), "get_launch_profiles", lambda self: rows)
 
@@ -30,7 +30,7 @@ def _profiles(monkeypatch) -> None:
 def test_the_served_summary_is_id_name_family_and_nothing_else(monkeypatch) -> None:
     _profiles(monkeypatch)
     body = _client().get("/api/v1/launchers/summary").json()
-    assert body == {"launchers": [{"id": "keyc", "name": "keyc", "family": "claude"}]}
+    assert body == {"launchers": [{"id": "cld", "name": "cld", "family": "claude"}]}
 
 
 def test_the_owner_route_asks_only_the_named_computer_and_returns_its_launchers(monkeypatch) -> None:
@@ -38,20 +38,20 @@ def test_the_owner_route_asks_only_the_named_computer_and_returns_its_launchers(
 
     async def fake(path, open_db, links=None, only=None):
         seen.update(path=path, only=only)
-        return [PeerAnswer(HOSTA, "hosta", {"launchers": [{"id": "claude", "name": "claude", "family": "claude"}]})]
+        return [PeerAnswer(STUDIO, "studio", {"launchers": [{"id": "claude", "name": "claude", "family": "claude"}]})]
 
     monkeypatch.setattr(peer_fanout, "ask_peers", fake)
-    body = _client().get(f"/api/v1/launchers/computer/{HOSTA}").json()
-    assert seen == {"path": "/launchers/summary", "only": HOSTA}
+    body = _client().get(f"/api/v1/launchers/computer/{STUDIO}").json()
+    assert seen == {"path": "/launchers/summary", "only": STUDIO}
     assert body == {"status": "ok", "launchers": [{"id": "claude", "name": "claude", "family": "claude"}]}
 
 
 def test_an_old_or_unreachable_computer_is_unavailable_not_an_error(monkeypatch) -> None:
     async def old(path, open_db, links=None, only=None):
-        return [PeerAnswer(HOSTA, "hosta", None, "http_404")]
+        return [PeerAnswer(STUDIO, "studio", None, "http_404")]
 
     monkeypatch.setattr(peer_fanout, "ask_peers", old)
-    assert _client().get(f"/api/v1/launchers/computer/{HOSTA}").json() == {"status": "unavailable", "reason": "http_404"}
+    assert _client().get(f"/api/v1/launchers/computer/{STUDIO}").json() == {"status": "unavailable", "reason": "http_404"}
 
     async def none(path, open_db, links=None, only=None):
         return []
@@ -61,7 +61,7 @@ def test_an_old_or_unreachable_computer_is_unavailable_not_an_error(monkeypatch)
 
 
 def test_a_peer_answer_with_a_stray_field_is_refused_not_shown() -> None:
-    bad = PeerAnswer(HOSTA, "hosta", {"launchers": [{"id": "a", "name": "a", "family": "claude", "env": [{"name": "K"}]}]})
+    bad = PeerAnswer(STUDIO, "studio", {"launchers": [{"id": "a", "name": "a", "family": "claude", "env": [{"name": "K"}]}]})
     assert peer_launchers.shown_for([bad]) == {"status": "unavailable", "reason": "bad_answer"}
 
 

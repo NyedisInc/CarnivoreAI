@@ -46,7 +46,7 @@
 
 <style>
   @layer components {
-    /* box-shadow */
+    /* the detail pane */
     .sbli {
       container: swarm-list / inline-size;
       min-width: 0;

@@ -176,7 +176,7 @@
 <div class="ai-pick" class:ai-pick--open={open} class:ai-pick--lead={!!selected?.preset} bind:this={root} data-ai={dataAi} data-open={open}
     onfocusout={onFocusOut}>
     {#if selected?.preset}<span class="ai-pick__lead"><ProviderMark preset={selected.preset} size={14} /></span>{/if}
-    <input bind:this={input} class="oc-field ai-pick__input" type="text" role="combobox" aria-label={label} aria-expanded={open} aria-haspopup="listbox"
+    <input bind:this={input} class="ai-pick__input" data-field type="text" role="combobox" aria-label={label} aria-expanded={open} aria-haspopup="listbox"
         aria-controls={`${uid}-list`} aria-autocomplete="list" aria-activedescendant={open && isOption(active) ? idOf(active) : undefined}
         value={shownText} placeholder={loading ? t('settings.ai.picker.loading') : placeholder} {disabled} spellcheck="false" autocomplete="off"
         data-ai={`${dataAi}-input`} onfocus={show} onclick={show} oninput={onInput} onkeydown={onKey} />

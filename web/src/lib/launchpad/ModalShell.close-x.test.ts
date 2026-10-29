@@ -10,10 +10,12 @@ afterEach(() => {
     document.body.innerHTML = '';
 });
 
+/** Let Svelte's effects and any queued microtasks run. */
 async function settle(): Promise<void> {
     for (let i = 0; i < 6; i += 1) await Promise.resolve();
 }
 
+/** The overlay currently in the document, or null. */
 function overlay(): HTMLElement | null {
     return document.querySelector('.modal-overlay');
 }

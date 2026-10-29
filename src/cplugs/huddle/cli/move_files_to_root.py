@@ -1,29 +1,3 @@
-"""Plan, and on request make, the move of the Task Manager's older files into the Task Manager folder (``docs/task-manager.md`` section 77, #1733).
-
-Usage (a DRY RUN unless ``--apply``; nothing is written without it):
-
-    venv/bin/python3 -m src.cplugs.huddle.cli.move_files_to_root \\
-        --work-db "<state>/carnivore.db" --root /path/to/task-manager-folder \\
-        [--projects-db "<state>/carnivore.db"] [--plugin-folder "<state>/cplugs/huddle"] [--apply]
-
-The Task Manager's rows live in ``carnivore.db``'s ``work_`` tables (issue #1711, P2); the legacy ``huddle.db`` is a read-only
-leftover this tool never reads. ``--plugin-folder`` (default: ``cplugs/huddle`` beside the database) is where the relative paths
-resolve, so a dry run can read a COPY of the database while it only looks at the real files.
-
-WHAT IT MOVES. Every file a reply or an artifact message names by a path RELATIVE to the plugin folder (section 42: ``files/<item
-id>/<uuid8>-<name>``) goes to its task's folder, ``<root>/<project>/<task>/pastes/`` (or ``artifacts/`` for an artifact page), using the
-same names and the same never-moved folders the app uses (``sdk/task_folders.py``). Each message's ``parts`` is rewritten to the ABSOLUTE
-new path. A path already absolute is left alone, so a second run plans nothing. Files no message names (an upload never sent) stay
-where they are: the orphan sweep owns them.
-
-APPLY. Quit Carnivore first (the server writes the same file). ``--apply`` copies the database beside itself
-(``carnivore.db.pre-move-files-<UTC>``) with sqlite's backup, then works item by item: its files move first, then its messages are
-rewritten in one transaction, each only if its ``parts`` is still the value planned (a compare-and-set). A failure stops the run and
-names the item; an item whose files moved but whose messages were not rewritten still serves them, because the app looks in the task
-folder too (``files.locate``). The root must be an absolute real folder holding the ``.boards-root`` marker.
-
-Exit codes: 0 done (or nothing to do), 1 a refusal or a failure, 2 could not read the inputs.
-"""
 
 from __future__ import annotations
 
@@ -38,8 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, TextIO
 
-from src.core.work import storage as work_storage
-from src.cplugs.huddle import files, title
+from src.cplugs.sdk.work import folder as work_folder
+from src.cplugs.huddle import files, store_identity, title
 from src.cplugs.sdk import task_folders
 
 
@@ -83,23 +57,31 @@ def read_projects(path: Optional[Path]) -> Dict[str, str]:
         return {str(row[0]): row[1] for row in conn.execute("SELECT id, display_name FROM projects")}
 
 
-def _planned_task(root: Path, item: sqlite3.Row, projects: Dict[str, str]) -> Path:
-    found = task_folders.find_task(root, item["id"])
+def read_store_id(conn: sqlite3.Connection) -> Optional[str]:
+    try:
+        return store_identity.read(conn)
+    except sqlite3.OperationalError:
+        return None
+
+
+def _planned_task(root: Path, item: sqlite3.Row, projects: Dict[str, str], store_id: Optional[str]) -> Path:
+    found = task_folders.find_task(root, item["id"], store_id)
     if found is not None:
         return found
     key = item["list_key"]
     project = task_folders.find_project(root, key) or root / task_folders.project_folder_name(key, projects.get(key))
-    return project / task_folders.task_folder_name(item["id"], title.display(dict(item)))
+    return task_folders.new_task_dir(project, item["id"], title.display(dict(item)), store_id)
 
 
 def build_plan(db: Path, root: Path, projects: Dict[str, str], plugin: Optional[Path] = None) -> Plan:
-    plugin = work_storage.folder(db.parent) if plugin is None else plugin
+    plugin = work_folder(db.parent) if plugin is None else plugin
     plan = Plan()
     planned: Dict[Path, Path] = {}
     with closing(sqlite3.connect(f"file:{db}?mode=ro", uri=True)) as conn:
         conn.row_factory = sqlite3.Row
         items = {r["id"]: r for r in conn.execute("SELECT id, list_key, title, text FROM work_items")}
         rows = conn.execute(f"SELECT id, item_id, parts FROM work_messages WHERE {files.PARTS_SQL} ORDER BY id").fetchall()
+        store_id = read_store_id(conn)
     for row in rows:
         try:
             parsed = json.loads(row["parts"])
@@ -116,7 +98,7 @@ def build_plan(db: Path, root: Path, projects: Dict[str, str], plugin: Optional[
             if source.is_symlink() or not source.is_file():
                 plan.missing.append(f"item {row['item_id']}: {rel} is not on disk; its message is left alone")
                 continue
-            task = plan.task.setdefault(row["item_id"], _planned_task(root, items[row["item_id"]], projects))
+            task = plan.task.setdefault(row["item_id"], _planned_task(root, items[row["item_id"]], projects, store_id))
             kind = task_folders.ARTIFACTS if entry.get("id") == artifact else task_folders.PASTES
             if source not in planned:
                 planned[source] = task / kind / source.name
@@ -157,9 +139,10 @@ def apply(plan: Plan, db: Path, root: Path, projects: Dict[str, str], out: TextI
         for message_id in plan.rewrites:
             message_items[message_id] = conn.execute("SELECT item_id FROM work_messages WHERE id = ?", (message_id,)).fetchone()[0]
         items = {r[0]: r for r in conn.execute("SELECT id, list_key, title, text FROM work_items")}
+        store_id = read_store_id(conn)
     for item_id in sorted(plan.task):
         row = items[item_id]
-        task = task_folders.ensure_task(root, item_id, row[1], projects.get(row[1]), title.display({"id": row[0], "title": row[2], "text": row[3]}))
+        task = task_folders.ensure_task(root, item_id, row[1], projects.get(row[1]), title.display({"id": row[0], "title": row[2], "text": row[3]}), store_id=store_id)
         if task != plan.task[item_id]:
             raise MoveError(f"item {item_id}: the folder is {task}, not the planned {plan.task[item_id]}; run the dry run again")
         try:
@@ -175,7 +158,6 @@ def apply(plan: Plan, db: Path, root: Path, projects: Dict[str, str], out: TextI
 
 
 def main(argv: Optional[Sequence[str]] = None, out: TextIO = sys.stdout) -> int:
-    """Run the command. Inputs: argv; out. Output: exit code (0 done, 1 refused or failed, 2 could not read the inputs)."""
     parser = argparse.ArgumentParser(description="move the huddle's older files into the Task Manager folder (dry run by default)")
     parser.add_argument("--work-db", type=Path, required=True, help="carnivore.db, which holds the Task Manager's work_ tables")
     parser.add_argument("--root", required=True)
@@ -186,7 +168,7 @@ def main(argv: Optional[Sequence[str]] = None, out: TextIO = sys.stdout) -> int:
     try:
         root = check_root(args.root)
         projects = read_projects(args.projects_db)
-        own_folder = work_storage.folder(args.work_db.parent)
+        own_folder = work_folder(args.work_db.parent)
         if args.apply and args.plugin_folder is not None and args.plugin_folder.resolve() != own_folder.resolve():
             raise MoveError("--apply works on the database's own Task Manager folder; --plugin-folder is for a dry run on a copy")
         plan = build_plan(args.work_db, root, projects, args.plugin_folder)

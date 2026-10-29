@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { publishRunTable } from '../item-menu/run';
 import { ROW_ITEMS } from '../item-menu/menus/row-items';
 import type { RowMenuCtx } from '../item-menu/row-context';
 
@@ -7,7 +8,6 @@ type Ctx = Record<string, unknown>;
 type Item = { id: string; label: (c: RowMenuCtx) => string; available: (c: RowMenuCtx) => boolean };
 const g = globalThis as unknown as Record<string, any>;
 
-const ROW_MENU_ACTIONS_SCRIPT = import.meta.glob('../../../../client/js/session-row-menu-actions.js');
 
 const ctx = (over: Ctx = {}): RowMenuCtx => ({ name: 'cloude_a', kind: 'session', hostKey: 'local', agentFamily: 'claude', ...over } as unknown as RowMenuCtx);
 
@@ -19,7 +19,7 @@ describe('row menu keep awake item', () => {
     beforeAll(async () => {
         g.window = globalThis;
         g.CloudeI18n = { t: (k: string) => k };
-        for (const load of Object.values(ROW_MENU_ACTIONS_SCRIPT)) await load();
+        publishRunTable(g);
         item = ROW_ITEMS.find((i) => i.id === 'keep-awake') as unknown as Item;
         run = g.SessionRowMenuActions.run;
     });

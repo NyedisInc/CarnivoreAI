@@ -1,37 +1,3 @@
-"""Preview and perform a RECREATE for a session whose tmux is gone.
-
-``GET /sessions/restart/preview`` and ``POST /sessions/respawn`` both
-read a PANE. A session whose tmux session was killed outright, or whose
-tmux server was restarted, has no pane to read, so the respawn ladder
-answers ``cannot_determine`` and the picker correctly offers nothing.
-That is honest and it is also a dead end: the only path left was to build
-a fresh session by hand, which loses the row, and with it the project
-binding, the title, the pinned theme, the unread key and the group
-filing.
-
-These two endpoints are the path that CAN reach it. They are their own
-routes rather than a mode on the existing pair because every gate
-differs: the pane path asks "what would respawning this pane do", gated
-on ``#{pane_dead}`` and ``#{pane_start_command}``; this asks "is this
-session's tmux still there at all, and if not, what would recreating it
-run", gated on a socket LISTING and on whether the transcript is still on
-disk. Folding them together would put four inapplicable gates in front of
-a path that has none of them and a caller could not tell which set it was
-subject to.
-
-THE RESPONSE SHAPE IS THE SAME ON PURPOSE. The preview returns
-``RestartPreviewResponse``, the model the picker already renders, so a
-client needs a second URL and not a second renderer.
-
-MOUNTED THROUGH ``src/api/restart_routes.py`` rather than from
-``src/main.py``: the two are one feature surface, and the router include
-list in main.py is already the longest thing in that file.
-
-NOTHING HERE DECIDES ANYTHING. Every rule lives in
-``src/core/session_recreate.py`` and ``src/core/session_recreate_presence.py``;
-this module reads the socket and the row, calls the validators, and
-translates outcomes into HTTP.
-"""
 
 from __future__ import annotations
 
@@ -67,6 +33,7 @@ from src.models import (
     RestartPreviewOption,
     RestartPreviewResponse,
 )
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -176,20 +143,6 @@ def _socket_name() -> str:
 
 
 def _measure_presence(name: str, socket_name: str) -> TmuxPresence:
-    """Is this tmux session still on our socket? One listing, three answers.
-
-    Description: builds a throwaway external handle purely to issue
-      ``discover_existing()`` - a READ - and classifies its answer
-      through the pure gate. Nothing is spawned, adopted or written.
-
-      NEVER RAISES. A handle that could not be built at all is
-      :data:`TMUX_UNKNOWN`, because this runs on a request path and an
-      exception here would take the picker down over a socket it could
-      not reach - and unknown already refuses.
-    Inputs: name (str) - literal tmux session name. socket_name (str).
-    Output: TmuxPresence.
-    Example: _measure_presence('cloude_api', 'cloude').outcome  # 'gone'
-    """
     from src.config import settings
     from src.core.tmux_backend import SESSION_PREFIX, TmuxBackend
 
@@ -220,20 +173,6 @@ def _measure_presence(name: str, socket_name: str) -> TmuxPresence:
 
 
 def _read_row(session_uuid: str) -> Dict[str, Any]:
-    """Read one ``sessions`` row by its durable key, on a worker thread.
-
-    Description: returns ``row`` and ``row_read_ok`` rather than a bare
-      row, because "the datastore answered and holds no such row" and
-      "the datastore could not be read" are different facts and every
-      consumer here has to tell them apart.
-
-      KEYED ON ``session_uuid``, NEVER ON THE TMUX NAME. A name is
-      reusable and this app re-mints them, so resolving by name plus
-      recency would let a recreate rebind the wrong session's row. The
-      name this path acts on is read OFF the row it resolves.
-    Inputs: session_uuid (str).
-    Output: dict - ``{'row': dict|None, 'row_read_ok': bool}``.
-    """
     try:
         with closing(connect(_db_path(), create=False)) as conn:
             found = conn.execute(
@@ -284,31 +223,6 @@ def _gather(
     session_uuid: str, row_overrides: Optional[Dict[str, Any]] = None, *, fresh: bool = False,
     corpus_root: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    """Every measurement both endpoints need, taken once. On worker threads.
-
-    Description: the row, then presence, then the ``--resume`` fragment
-      and the directory spelling. Taken in ONE place so the preview and
-      the action answer questions about the same observed state - a
-      preview measured differently from the action is how a badge and a
-      button drift apart.
-
-      THE TMUX NAME COMES OFF THE ROW. The caller supplies a durable
-      uuid and nothing else, so there is no way for a request to point
-      the socket measurement at a name the record does not carry.
-      ``row_overrides`` is how the reopen offer
-      (``src/api/restore_offer_routes.py``) hands in the conversation and
-      folder its journal MEASURED a live process writing, when those
-      disagree with the row. Only ``claude_session_uuid`` and
-      ``working_dir`` may be overridden, and never the tmux name or socket:
-      the presence gate always measures the name the record carries.
-    Inputs: session_uuid (str). row_overrides (dict | None). fresh (bool) - a Swarm
-      wake that starts a new conversation: the row copy loses its conversation id, so
-      no ``--resume`` is built (the stored row is untouched). corpus_root (Path | None) - the
-      ``projects`` folder the transcript is looked up in (a relay profile's, not ``~/.claude``).
-    Output: dict with ``row``, ``name``, ``presence``, ``extra_args``,
-      ``directory``, ``socket``.
-    Raises: HTTPException 400, 404, 409, 503.
-    """
     row = _resolved(_read_row(session_uuid), session_uuid)
     if row_overrides:
         row = dict(row)
@@ -334,12 +248,12 @@ def _gather(
 
 
 def _safe(name: str) -> str:
-    from src.core.tmux_backend import _safe_target
+    from src.core.tmux_transport.target import check_target_name
 
     try:
-        return _safe_target(name)
+        return check_target_name(name)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "session_name_invalid", exc, name=name) from exc
 
 
 @router.get(
@@ -487,6 +401,13 @@ async def recreate_session(
       title, the conversation link, the pinned theme, the unread key and
       the v24 group membership all ride along untouched.
 
+      THE SAME TMUX NAME IS ASKED FOR so name-scoped per-device browser
+      state survives, and it is free by construction: the gate only
+      passes when that name was measured ABSENT from the socket. The
+      create path's own uniquify-on-collision rule still applies against
+      records this app holds, so the name actually taken is REPORTED
+      rather than assumed.
+
       A REFUSAL IS A 200 WITH ``status='refused'``, matching both other
       restart paths: the SERVER worked and a GATE declined, and a 500
       would blame the server for a state it correctly detected.
@@ -506,6 +427,4 @@ async def recreate_session(
                 account_pinned=body.account_pinned,
             )
     except restart_inflight.RestartInFlightError as exc:
-        raise HTTPException(
-            status_code=409, detail=restart_inflight.http_detail(exc)
-        )
+        raise api_error(409, restart_inflight.IN_PROGRESS_CODE, exc) from exc

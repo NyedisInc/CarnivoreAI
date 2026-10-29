@@ -1,4 +1,4 @@
-/* plugin bar indicators the account chip the bottom bar */
+/* plugin bar indicators the bottom bar */
 import { untrack } from 'svelte';
 import { mountPanel } from '../mount';
 import AccountMenu from './AccountMenu.svelte';

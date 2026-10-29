@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
-#
-#
-#
-#
 set -euo pipefail
 set +x
-readonly KEYCHAIN_DEFAULT="${CARNIVORE_SIGNING_KEYCHAIN:?set CARNIVORE_SIGNING_KEYCHAIN to the signing keychain path}"
-readonly KEYCHAIN_SECRET="${CARNIVORE_SIGNING_KEYCHAIN_SECRET:?set CARNIVORE_SIGNING_KEYCHAIN_SECRET}"
-readonly REGION="${AWS_REGION:?set AWS_REGION}"
+readonly KEYCHAIN_DEFAULT="$HOME/Library/Keychains/carnivore-signing.keychain-db"
+readonly KEYCHAIN_SECRET="carnivore/macos-signing-keychain"
+readonly REGION="us-east-1"
 readonly TEAM_ID="ARD6KN4BX4"
 export AWS_PAGER=""
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -158,7 +154,8 @@ for t in "${trees[@]}"; do [[ -d "$t" ]] || die "no such payload directory: $t";
 if [[ -z "$identity" ]]; then
   keychain="$KEYCHAIN_DEFAULT"
   [[ -f "$keychain" ]] || die "signing keychain missing: $keychain"
-  source "${CARNIVORE_SIGNING_SESSION_SCRIPT:?set CARNIVORE_SIGNING_SESSION_SCRIPT to your keychain-session helper}"
+  # shellcheck source=../scripts/signing-keychain-session.sh
+  source "$mac_dir/scripts/signing-keychain-session.sh"
   trap cleanup EXIT
   trap 'exit 130' INT TERM HUP QUIT
   kcs_open "$keychain" "$KEYCHAIN_SECRET" "$REGION"; session_open=1

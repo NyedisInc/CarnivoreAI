@@ -44,6 +44,10 @@ class UpdateThemeRequest(BaseModel):
 class UpdateSessionBackgroundRequest(BaseModel):
     """Request body for ``PATCH /sessions/{session_name}/background``.
 
+    The per-session override of the terminal background image. All three
+    fields absent is the request "drop back to whatever my theme ships",
+    which removes the session's entry rather than storing an empty one.
+
     ``theme_id`` NAMES A THEME, NEVER A FILE. The override borrows the
     picture an INSTALLED theme ships, so there is no filename on this
     request at all and no way for a session to address a file in a folder
@@ -119,6 +123,13 @@ class SessionBackgroundsResponse(BaseModel):
 
 class ThemeBackgroundManifest(BaseModel):
     """The optional `background` block of a theme.json: one image, one scrim.
+
+    THE IMAGE IS A FILE INSIDE THE THEME'S OWN FOLDER (owner, 2026-09-20:
+    "image has to be in the theme catelog repo. simple"), so `image` is a
+    BARE FILENAME and never a path or a url. `src.core.terminal_background
+    .safe_image_filename` is the one place that decides what is acceptable,
+    and a theme can be installed from the skills catalog, so that value is
+    attacker-controlled text.
 
     A BAD NAME TAKES THE WHOLE THEME OUT, ON PURPOSE. The validator RAISES
     rather than dropping the field, so `_load_manifest` logs

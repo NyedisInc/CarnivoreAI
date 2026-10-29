@@ -79,7 +79,6 @@
     ? row?.project_name ?? ''
     : row?.label || row?.tmux_session || '');
 
-  //  hidden 
   $effect(() => {
     void filterKey;
     untrack(() => {
@@ -237,7 +236,6 @@
     .xr--side .xr-list-pane { flex: 0 0 42%; max-width: 420px;  box-shadow: 1px 0 0 var(--oc-line-panel); }
     .xr--stack .xr-list-pane:has(+ .xr-divider) { flex: 0 1 auto; }
 
-    /* box-shadow */
     .xr-cap { display: flex; align-items: baseline; gap: var(--oc-space-2); flex: none; height: 22px; margin: 0; padding: 0 var(--oc-space-2); line-height: 22px; background: var(--oc-ground-titlerow); box-shadow: inset 0 -1px 0 var(--oc-line-panel); white-space: nowrap; overflow: hidden; }
     .xr-cap__label { flex: none; color: var(--oc-orange); font-size: var(--oc-fs-label); letter-spacing: var(--oc-tracking-label, 0.08em); text-transform: uppercase; }
     .xr-cap__subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--oc-text-secondary); font-size: var(--oc-fs-label); }

@@ -20,10 +20,12 @@ import type { PackMachine } from '../pack-machines/pack-machines-store.svelte';
 import type {
     ArrangementState, LegacyDrawer, ListingVerdict, ProjectBucket, SidebarRow,
 } from './legacy';
+import { parseAttrs } from './attr-string';
+import { rollupHtml } from './subagent-rollup';
 import { rowHost, type RowHost } from './row-host';
 import { buildRowPlan, type GlyphChip, type RowPlan, type TextChip } from './row-plan';
 import { inactiveProjectIcon, movedAwayChip } from './row-chips';
-import { ghostLeaderRows, placeLeaders, projectLeaderFirst, type LeaderIndex } from './leaders';
+import { GHOST_PREFIX, ghostLeaderRows, placeLeaders, projectLeaderFirst, type LeaderIndex } from './leaders';
 import { GROUPS_FOLD_KEY, SPAWNED_FOLD_SUFFIX } from '../drawer/store-keys';
 import { foldPresent } from '../drawer/fold-view';
 import { PAGE_SECTION_SLOT, pageSectionMeta } from '../drawer/page-sections';
@@ -33,6 +35,7 @@ import { emptySectionsHidden } from '../drawer/empty-sections.svelte';
 import { companyTint, projectTint } from './tint';
 import { archivedLast } from '../drawer/archived-rows';
 import { leaderIndex, leaderRoster, projectNameOf, watchLeaders } from './leaders-source.svelte';
+import { memberOf } from '../swarm-membership/member-face';
 
 export interface PaintInput {
     rows: SidebarRow[];
@@ -177,16 +180,7 @@ function agentsPhrase(count: number): string {
     return `(${count} ${count === 1 ? 'agent' : 'agents'})`;
 }
 
-export function parseAttrs(attrs: string): Record<string, string> {
-    const out: Record<string, string> = {};
-    const decode = (v: string): string => v
-        .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-        .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-    for (const m of (attrs || '').matchAll(/([\w:-]+)="([^"]*)"/g)) {
-        out[m[1] as string] = decode(m[2] as string);
-    }
-    return out;
-}
+export { parseAttrs };
 
 interface Ctx {
     L: LegacyDrawer;
@@ -198,14 +192,18 @@ interface Ctx {
     hideEmptyKinds: boolean;
 }
 
+function isGhostRow(r: SidebarRow): boolean {
+    return typeof r.swarm_agent_id === 'number' && typeof r.name === 'string' && r.name.startsWith(GHOST_PREFIX);
+}
+
 function rowPlan(ctx: Ctx, r: SidebarRow, band: string, subtitle?: string | null): RowPlan {
     const plan = buildRowPlan(r, ctx.density, band, subtitle, ctx.host);
     const info = ctx.leaders.empty || plan.type !== 'session' ? null : ctx.leaders.of(r);
     if (info && plan.type === 'session') {
         plan.leader = { rank: info.rank, label: t(`leader.mark.${info.rank}`) };
         plan.attrs['data-leader'] = info.rank;
-        if (typeof r.swarm_agent_id === 'number') {
-            plan.ghost = { agentId: r.swarm_agent_id, name: info.name, rank: info.rank };
+        if (isGhostRow(r)) {
+            plan.ghost = { agentId: r.swarm_agent_id as number, name: info.name, rank: info.rank };
             plan.attrs['data-ghost'] = '1';
             plan.pin = null;
             plan.keepAwake = null;
@@ -213,6 +211,7 @@ function rowPlan(ctx: Ctx, r: SidebarRow, band: string, subtitle?: string | null
             plan.actions = [];
         }
     }
+    if (plan.type === 'session' && plan.led) plan.member = memberOf(r as unknown as Record<string, unknown>, leaderRoster());
     const worker = plan.type === 'session' && plan.body && ctx.leaders.workerRank ? ctx.leaders.workerRank(r) : null;
     if (worker && plan.type === 'session' && plan.body) plan.body.rankTag = t(`cplug.huddle.swarm.rank.${worker}`);
     return plan;
@@ -254,7 +253,7 @@ function sectionPlan(ctx: Ctx, key: string, rows: SidebarRow[], o: SectionOpts):
         iconHtml: PH.iconHtml(PH.iconForBand(key, o.isProject)),
         ledHtml: PH.ledHtml(rows, collapsed, showLight),
         pickedIconHtml: PH.pickedIconHtml ? PH.pickedIconHtml({ key, bandKind }) : '',
-        rollupHtml: L.subagents && !o.isProject ? L.subagents.rollupHtml(rows) : '',
+        rollupHtml: o.isProject ? '' : rollupHtml(rows),
         ...(menu ? { menu } : {}),
         ...(o.movedTo !== undefined ? { badge: movedAwayChip(o.movedTo) } : o.inactive ? { inactive: inactiveProjectIcon() } : {}),
     };
@@ -570,12 +569,11 @@ function bodyParts(ctx: Ctx, list: SidebarRow[], query: string, dragging: boolea
 }
 
 export function buildListPlan(L: LegacyDrawer, input: PaintInput): ListPlan | null {
-    if (!L.groups || !L.projectHeader) return null;
+    if (!L.projectHeader) return null;
     const attention = attentionHtml(input.listing);
     const notice = arrangementNoticeHtml(input.arrangement);
     const listed = Array.isArray(input.rows) ? input.rows : [];
     const leaders = leaderIndex();
-    //  hidden 
     const rows = !leadersShown() ? (leaders.empty ? listed : listed.filter((r) => !leaders.of(r)))
         : input.listing && !input.listing.ok ? listed
         : [...listed, ...ghostLeaderRows(leaderRoster(), listed, leaders, (id) => projectNameOf(id))];

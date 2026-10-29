@@ -128,7 +128,7 @@ async def test_a_deleted_profile_is_refused_by_name_on_every_path(env, starts, m
                 refuse_gone_profile(settings, agent_type, record)
             assert gone.value.status_code == 400
             assert gone.value.detail["codes"] == ["wrapper_needed", "launch_profile_needed"]
-            assert "claude-or" in gone.value.detail["detail"]
+            assert gone.value.detail["profile"] == "claude-or"
         refuse_gone_profile(settings, "claude-or", None)
         assert len(starts) == before, "nothing may be started"
     finally:

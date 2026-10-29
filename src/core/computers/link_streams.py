@@ -34,7 +34,6 @@ class LocalSocket:
         self._server: asyncio.AbstractServer | None = None
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        """One local connection: open a stream (refused when the session is gone or full) and bridge it."""
         try:
             stream = await self.session.open("peer-api")
         except MuxError as exc:

@@ -53,14 +53,7 @@ PAIRINGS: list[Pairing] = [
     Pairing("accent link on elevated", "color-accent", "color-bg-elevated", LARGE, "styles.css:53, many .row:hover states land on elevated surfaces"),
     Pairing("on-accent button text", "color-on-accent", "color-accent", NORMAL, "styles.css:65 text painted on a solid accent fill (primary buttons)"),
 
-    Pairing("ownership stripe: owned", "color-badge-tmux-fg", "color-accent-bg-soft", LARGE,
-            "styles.css .running-session-row.owned border-left; row bg composited over --color-bg",
-            bg_under_token="color-bg"),
-    Pairing("ownership stripe: external", "color-badge-external-fg", "color-accent-bg-soft", LARGE,
-            "styles.css .running-session-row.external border-left; row bg composited over --color-bg",
-            bg_under_token="color-bg"),
 
-    # .adopt-disclosure-body a
     Pairing("help link (visited/hover)", "color-accent-strong", "color-bg-elevated", NORMAL,
             "styles.css .adopt-disclosure-body a:visited / :hover on --color-bg-elevated"),
     Pairing("help link focus ring", "color-accent", "color-bg-elevated", LARGE,

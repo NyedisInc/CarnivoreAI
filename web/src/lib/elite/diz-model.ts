@@ -127,7 +127,7 @@ export function dizModel(input: DizInput, t: Translate): DizModel {
     if (ratings && ratings.shape === 'none') rating = { stars: '', text: t(K.dizRatingNone) };
     else if (ratings && ratings.shape === 'rated' && ratings.average !== null && ratings.count !== null) {
         const avg = ratings.average.toFixed(1);
-        rating = { stars: starsText(ratings.average), text: ratings.count === 1 ? t(K.dizRatingOne, { avg }) : t(K.dizRating, { avg, n: ratings.count }) };
+        rating = { stars: starsText(ratings.average), text: t(K.dizRating, { avg, n: ratings.count, count: ratings.count }) };
     }
     const head = t(K.dizVersionsHead).split(' ');
     return {

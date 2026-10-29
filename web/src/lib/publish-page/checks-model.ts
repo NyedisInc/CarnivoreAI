@@ -47,7 +47,6 @@ export function summaryOf(cells: readonly CheckCell[], phase: ChecksPhase): { ke
 
 export const defaultOpen = (result: CheckResult): boolean => result === 'did_not_pass';
 
-/*  hidden  */
 export function shownFindings(findings: readonly ReportFinding[], all: boolean): { shown: ReportFinding[]; hidden: number } {
     if (all || findings.length <= FINDINGS_SHOWN) return { shown: [...findings], hidden: 0 };
     return { shown: findings.slice(0, FINDINGS_SHOWN), hidden: findings.length - FINDINGS_SHOWN };

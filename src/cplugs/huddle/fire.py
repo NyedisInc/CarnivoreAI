@@ -8,8 +8,9 @@ import structlog
 from fastapi import HTTPException
 
 from src.cplugs.sdk import session_bring_up
-from src.cplugs.huddle import held, service, send_wake, sending
+from src.cplugs.huddle import held, item_owner, service, send_wake, sending
 from src.cplugs.huddle.roles import tag_send
+from src.cplugs.huddle.roles.store import RoleStore
 from src.cplugs.huddle.rules import ALL_LIST
 from src.cplugs.sdk import CplugContext
 
@@ -20,7 +21,7 @@ QUOTE_CHARS = 80
 
 
 class FireFailed(Exception):
-    """A due todo could not be delivered; the message is the sentence the row shows."""
+    pass
 
 
 async def _run(call: Callable[[], Any]) -> Any:
@@ -72,10 +73,19 @@ def hold_for_offer(ctx: CplugContext, item: Dict[str, Any]) -> str:
     return sending.HELD
 
 
+def say_where(ctx: CplugContext, item_id: int, list_key: str, rows: List[dict], target: str, tag: str = "") -> None:
+    row = next((r for r in rows if r["id"] == target), None)
+    if row is None:
+        return
+    lead_key = RoleStore(service.store(ctx)).seat(list_key).lead_key if list_key.isdigit() else ""
+    service.store(ctx).record_wake_target(item_id, row["label"], bool(lead_key) and row["key"] == lead_key, bool(tag) and row["key"] != tag)
+
+
 async def deliver(ctx: CplugContext, item: Dict[str, Any]) -> str:
     key = item["list"]
     name = (await _run(lambda: service.project_names(ctx))).get(key)
     rows = await service.candidate_rows(ctx, key)
+    tag = (await _run(lambda: service.store(ctx).item(item["id"])))[item_owner.TAG_COLUMN]
     target, extra = await tag_send.item_target(ctx, _run, key, item["id"], rows)
     if target is None:
         rows = await send_wake.rows_with_lead(ctx, _run, key, rows) if key.isdigit() else rows
@@ -96,5 +106,6 @@ async def deliver(ctx: CplugContext, item: Dict[str, Any]) -> str:
             raise FireFailed(f"not sent: {outcome['reason']}") from exc
         return sending.HELD
     held.clear(ctx, key)
+    await _run(lambda: say_where(ctx, item["id"], key, rows, target, tag))
     logger.info("task_manager_scheduled_told", item=item["id"], list=key, target=target)
     return sending.SENT

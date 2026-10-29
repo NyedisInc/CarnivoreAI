@@ -7,6 +7,8 @@ const REFRESH_KEY = 'claude_refresh_token';
 
 const BASE = '/api/v1';
 
+export const API_BASE = BASE;
+
 export type AuthState = 'unknown' | 'signed-in' | 'signed-out' | 'unreachable';
 
 function read(key: string): string | null {
@@ -99,6 +101,26 @@ function detailOf(body: unknown): string {
   return '';
 }
 
+export function errorCodeOf(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+  const record = body as Record<string, unknown>;
+  if (typeof record['code'] === 'string' && record['code']) return record['code'];
+  const detail = record['detail'];
+  if (detail && typeof detail === 'object') {
+    const inner = (detail as Record<string, unknown>)['code'];
+    if (typeof inner === 'string' && inner) return inner;
+  }
+  return null;
+}
+
+export function codedSentence(body: unknown, fallback: string): string {
+  const code = errorCodeOf(body);
+  if (!code) return fallback;
+  const key = `api.error.${code}`;
+  const sentence = t(key);
+  return sentence && sentence !== key ? sentence : fallback;
+}
+
 let refreshInFlight: Promise<boolean> | null = null;
 
 const REFRESH_LOCK = 'carnivore-auth-refresh';
@@ -156,6 +178,11 @@ async function rotate(stored: string): Promise<boolean> {
       body: JSON.stringify({ refresh_token: stored }),
     });
   } catch {
+    auth.state = 'unreachable';
+    auth.notice = t('opscenter.app.backend_unreachable');
+    return false;
+  }
+  if (response.status >= 500 || response.status === 408 || response.status === 429) {
     write(ACCESS_KEY, null);
     auth.state = 'unreachable';
     auth.notice = t('opscenter.app.backend_unreachable');
@@ -204,6 +231,7 @@ export function authFetchBlob(path: string, init: RequestInit = {}): Promise<Blo
 }
 
 async function readBody<T>(response: Response): Promise<T> {
+  // there is nothing
   if (response.status === 204) {
     await response.arrayBuffer().catch(() => undefined);
     return undefined as T;
@@ -254,11 +282,11 @@ async function request<T>(
 
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as unknown;
-    const message =
-      detailOf(body) || t('opscenter.auth.server_answered', { status: response.status });
-    const code = body && typeof body === 'object'
-      ? ((body as Record<string, unknown>)['code'] as string | undefined) ?? null
-      : null;
+    const message = codedSentence(
+      body,
+      detailOf(body) || t('opscenter.auth.server_answered', { status: response.status }),
+    );
+    const code = errorCodeOf(body);
     globalThis.dispatchEvent?.(new CustomEvent(API_REFUSAL_EVENT, { detail: { status: response.status, body } }));
     throw new ApiError(message, response.status, code, body);
   }

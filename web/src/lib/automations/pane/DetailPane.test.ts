@@ -26,7 +26,7 @@ const stub = vi.hoisted(() => ({
 vi.mock('../api', () => stub);
 vi.mock('../../resource-push/boot', () => ({ resourcePush: () => ({ pushOrPoll: () => () => {}, onChange: () => () => {} }) }));
 vi.mock('../../blueprints/api', () => ({ listBlueprints: vi.fn().mockResolvedValue({ status: 'ok', blueprints: [] }) }));
-vi.mock('../../../opscenter/api/host', () => ({ openSession: vi.fn(() => true), openSessions: vi.fn(() => true) }));
+vi.mock('../../../opscenter/api/host', () => ({ openSession: vi.fn(() => true), openSessions: vi.fn(() => true), primarySessionId: () => '' }));
 
 installPopoverPolyfill();
 

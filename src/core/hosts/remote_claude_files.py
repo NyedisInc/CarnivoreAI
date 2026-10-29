@@ -13,8 +13,8 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple
 
 import structlog
 
-from src.core.attention.registry_read import (
-    MAX_REGISTRY_FILE_BYTES, RegistryRecord, index_registry_records, load_registry_blob)
+from src.core.attention.registry_record import RegistryRecord, load_registry_blob
+from src.core.attention.registry_index import MAX_REGISTRY_FILE_BYTES, index_registry_records
 from src.core.attention.transcript_contract import against_contract
 from src.core.attention.transcript_facts import (
     FACTS_SHAPE_UNRECOGNIZED, FACTS_TAIL_BYTES, FACTS_UNREADABLE, TranscriptFacts,
@@ -24,7 +24,6 @@ from src.core.hosts.ssh_exec import posix_quote
 
 logger = structlog.get_logger()
 
-# conversation id
 UUID_RE = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 
 REGISTRY_SCAN_LIMIT = 128
@@ -144,11 +143,6 @@ class FarClaudeFiles:
             return {u: (self._windows[u].end if u in self._windows else -1) for u in sorted(uuids)}
 
     def refresh(self, host: Any, row_uuids: Iterable[Optional[str]]) -> bool:
-        """Read the registry, the far pids and every wanted transcript's size. THREAD BODY.
-
-        Output: bool - False when the host could not be asked or answered a
-          cut-short frame set (nothing is updated then).
-        """
         marker = "@@c" + secrets.token_hex(8)
         wanted = self.wanted(row_uuids)
         try:

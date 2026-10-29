@@ -1,3 +1,4 @@
+// ---------------------------------------------------------------------------
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,6 +10,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -41,7 +48,8 @@ function stripCssComments(text) {
 const styles = client('css', 'styles.css');
 const homeBar = client('css', 'home-bar.css');
 const html = client('index.html');
-const appJs = client('js', 'app.js');
+// The screen-entry steps moved out of app.js into app-screen-entry.js.
+const appJs = client('js', 'app.js') + client('js', 'app-screen-entry.js');
 
 
 test('h1 pins a unitless line-height so both children get the same line box', () => {

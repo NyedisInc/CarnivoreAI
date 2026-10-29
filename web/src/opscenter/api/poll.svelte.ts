@@ -1,11 +1,10 @@
-/*  hidden  */
 
 import { auth, initAuth, ApiError, authFetch } from './auth.svelte';
 import { isDemo } from './demo';
 import { t } from '../../lib/i18n/index.svelte';
 import { whenListingPushBooted } from '../../lib/listing-push/boot';
 import { resourcePush } from '../../lib/resource-push/boot';
-import { LIVENESS } from '../../lib/resource-push/store';
+import { LIVENESS, type FrameBodies } from '../../lib/resource-push/store';
 
 export type ResourceStatus = 'loading' | 'ok' | 'error' | 'unavailable' | 'signed-out';
 
@@ -25,6 +24,7 @@ export interface ResourceOptions<T> {
   demo?: () => T;
   pushed?: readonly string[];
   topics?: readonly string[];
+  body?: { key: string; read: (body: unknown) => T | null; renewMs?: number };
   afterPush?: () => void;
   pollWhile?: () => boolean;
 }
@@ -138,8 +138,8 @@ export function resource<T>(fetcher: () => Promise<T>, options: ResourceOptions<
   let stopped = false;
   let disposed = false;
   let missed = false;
-  /*  hidden  */
   let settled = false;
+  let lastRead = 0;
 
   function delay(): number {
     if (failures === 0) return options.intervalMs;
@@ -151,7 +151,11 @@ export function resource<T>(fetcher: () => Promise<T>, options: ResourceOptions<
     if (timer !== undefined) clearTimeout(timer);
     timer = undefined;
     if (options.pushed && failures === 0 && pushSource()?.isLive()) return;
-    if (topicsLive()) return;
+    if (topicsLive()) {
+      const renew = options.body?.renewMs;
+      if (renew !== undefined) timer = setTimeout(tick, lastRead ? Math.max(lastRead + 2 * renew - Date.now(), 0) : 2 * renew);
+      return;
+    }
     if (options.pollWhile && failures === 0 && pushSource()?.isLive() && !options.pollWhile()) return;
     timer = setTimeout(tick, delay());
   }
@@ -169,21 +173,27 @@ export function resource<T>(fetcher: () => Promise<T>, options: ResourceOptions<
 
   let rerun = false;
 
+  function dropRows(): void {
+    held.status = 'signed-out';
+    held.data = null;
+    held.fetchedAt = null;
+    held.error = null;
+  }
+
   async function readOnce(): Promise<void> {
     try {
       const value = await fetcher();
       held.data = value;
       held.status = 'ok';
       held.fetchedAt = Date.now();
+      lastRead = held.fetchedAt;
       held.error = null;
       failures = 0;
     } catch (error) {
       failures += 1;
       if (error instanceof ApiError && error.status === 401) {
-        held.status = 'signed-out';
-        held.error = null;
+        dropRows();
       } else if (error instanceof ApiError && (error.status === 404 || error.status === 501)) {
-        // could not
         held.status = 'unavailable';
         held.error = error.message;
       } else {
@@ -215,13 +225,13 @@ export function resource<T>(fetcher: () => Promise<T>, options: ResourceOptions<
   async function tick(): Promise<void> {
     if (stopped) return;
     if (signedOut()) {
-      held.status = 'signed-out';
+      dropRows();
       timer = undefined;
       return;
     }
     if (settled && typeof document !== 'undefined' && document.hidden) {
       missed = true;
-      schedule();
+      if (options.body?.renewMs === undefined || !topicsLive()) schedule();
       return;
     }
     missed = false;
@@ -257,13 +267,33 @@ export function resource<T>(fetcher: () => Promise<T>, options: ResourceOptions<
     if (!offPush) whenListingPushBooted(attachPush);
   }
 
+  function applyBody(bodies: FrameBodies | undefined): boolean {
+    const spec = options.body;
+    if (!spec || !bodies || !(spec.key in bodies) || inFlight) return false;
+    if (spec.renewMs !== undefined && Date.now() - lastRead >= spec.renewMs) return false;
+    const value = spec.read(bodies[spec.key]);
+    if (value === null) return false;
+    held.data = value;
+    held.status = 'ok';
+    held.fetchedAt = Date.now();
+    held.error = null;
+    failures = 0;
+    settled = true;
+    return true;
+  }
+
   let offTopics: (() => void) | null = null;
   if (options.topics && options.topics.length) {
-    offTopics = resourcePush().onChange((names) => {
+    offTopics = resourcePush().onChange((names, bodies) => {
       if (disposed || signedOut()) return;
       const named = names.some((n) => options.topics!.includes(n));
       if (!named && (stopped || !names.includes(LIVENESS))) return;
       if (topicsLive()) {
+        if (named && applyBody(bodies)) {
+          if (!stopped) schedule();
+          if (options.afterPush) options.afterPush();
+          return;
+        }
         void run().then(() => {
           if (!stopped) schedule();
           if (!disposed && options.afterPush) options.afterPush();
@@ -292,13 +322,13 @@ export function resource<T>(fetcher: () => Promise<T>, options: ResourceOptions<
       stopped = true;
       if (timer !== undefined) clearTimeout(timer);
       timer = undefined;
-      if (signedOut()) held.status = 'signed-out';
+      if (signedOut()) dropRows();
     },
   };
   registry.add(entry);
 
   if (auth.state === 'signed-out') {
-    held.status = 'signed-out';
+    dropRows();
   } else {
     void tick();
   }

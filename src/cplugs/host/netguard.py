@@ -130,8 +130,6 @@ def resolve(host: str, port: int) -> List[str]:
 
 @dataclass(frozen=True)
 class Peers:
-    """Paired peers' addresses. ``complete`` is False when the list may be missing some (unreadable datastore, a peer
-    whose real host name could not be found or resolved): a LAN route is then refused rather than guessed (``peers_unknown``)."""
 
     addresses: Set[str]
     complete: bool = True

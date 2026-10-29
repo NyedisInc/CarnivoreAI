@@ -201,7 +201,7 @@ def test_the_handoff_check_fails_open_without_a_handoff_folder(manager, tmp_path
 
 def test_handoff_names_resolve_through_one_helper(handoff_root):
     queue(handoff_root, "other-one")
-    texts = [f"ssh -t hostb '~/.handoff/handoff {HANDOFF}.sh'", "~/.handoff/handoff show other-one.", "plain handoff talk"]
+    texts = [f"ssh -t mac-mini-m4 '~/.handoff/handoff {HANDOFF}.sh'", "~/.handoff/handoff show other-one.", "plain handoff talk"]
     assert owner_guards.pending_handoffs(texts) == sorted([HANDOFF, "other-one"])
     assert owner_guards.handoff_result(f"{HANDOFF}.sh") == handoff_root / "log" / f"{HANDOFF}.result"
 

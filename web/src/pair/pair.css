@@ -3,6 +3,7 @@
 @import '../opscenter/controls.css';
 @import '../opscenter/fields.css';
 @import '../opscenter/type.css';
+@import '../lib/base/base.css';
 
 :root {
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -77,14 +78,15 @@ body {
   gap: 10px;
 }
 
-.pair__input {
+.pair [data-field] {
+  min-height: 40px;
   font-size: 22px;
   letter-spacing: 0.3em;
   text-align: center;
   text-transform: uppercase;
 }
 
-.pair__submit {
+.pair [data-btn="confirm"] {
   min-height: 44px;
 }
 

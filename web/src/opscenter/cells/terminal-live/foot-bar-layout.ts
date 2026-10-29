@@ -1,3 +1,4 @@
+import { preferenceField } from '../../../lib/preferences/field';
 import {
   resolveFootBarCollapsedOption, DEFAULT_FOOT_BAR_COLLAPSED_OPTION, type FootBarCollapsedOption,
 } from './foot-plan';
@@ -17,19 +18,6 @@ export const DEFAULT_FOOT_BAR_LAYOUT: FootBarLayout = {
   open: DEFAULT_SESSION_CONTROL_OPTION,
 };
 
-interface Bridge {
-  read(field: string, localReader: () => unknown): unknown;
-  write(field: string, value: unknown, localWriter: () => void): Promise<unknown>;
-  follow?(field: string, apply: (value: unknown) => void): () => void;
-}
-
-function bridge(): Bridge | null {
-  const found = (globalThis as { PreferenceBridge?: Bridge }).PreferenceBridge;
-  return found && typeof found.read === 'function' ? found : null;
-}
-
-const SAVED = new Set(['committed', 'unchanged']);
-
 export function asFootBarLayout(value: unknown): FootBarLayout {
   const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
   return {
@@ -38,22 +26,17 @@ export function asFootBarLayout(value: unknown): FootBarLayout {
   };
 }
 
+const field = preferenceField<FootBarLayout>(FOOT_BAR_LAYOUT_FIELD, asFootBarLayout, DEFAULT_FOOT_BAR_LAYOUT);
+
 export function readFootBarLayout(): FootBarLayout {
-  return asFootBarLayout(bridge()?.read(FOOT_BAR_LAYOUT_FIELD, () => DEFAULT_FOOT_BAR_LAYOUT));
+  return field.read();
 }
 
-export async function saveFootBarLayout(layout: FootBarLayout): Promise<string | null> {
-  const found = bridge();
-  if (!found) return 'unavailable';
-  const result = (await found.write(FOOT_BAR_LAYOUT_FIELD, layout, () => {})) as
-    { status?: string; detail?: string } | null;
-  const status = result && typeof result.status === 'string' ? result.status : '';
-  if (SAVED.has(status)) return null;
-  return (result && result.detail) || status || 'the server did not answer';
+export function saveFootBarLayout(layout: FootBarLayout): Promise<string | null> {
+  return field.save(layout);
 }
 
+/* there is nothing */
 export function followFootBarLayout(apply: (layout: FootBarLayout) => void): () => void {
-  const found = bridge();
-  if (!found || typeof found.follow !== 'function') return () => {};
-  return found.follow(FOOT_BAR_LAYOUT_FIELD, (value) => apply(asFootBarLayout(value)));
+  return field.follow(apply);
 }

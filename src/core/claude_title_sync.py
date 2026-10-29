@@ -26,13 +26,11 @@ CUSTOM_TITLE_FOUND: str = "found"
 
 CUSTOM_TITLE_NO_RECORD: str = "no_record"
 
-# could not be read
 CUSTOM_TITLE_UNREADABLE: str = "unreadable"
 
 
 TAIL_READ_OK: str = "ok"
 
-# could not be read
 TAIL_READ_UNREADABLE: str = "unreadable"
 
 
@@ -234,31 +232,6 @@ def decide_title_application(
     registry_user_title: Optional[str] = None,
     browser_rename_ordered: bool = False,
 ) -> TitleApplication:
-    """Whether a claude-side title should move the visible one.
-
-    Description: PURE. The whole rule lives here so the seam that calls
-      it holds no policy and can be read in one screen.
-
-      The ladder, in order:
-
-      1. Nothing was read -> :data:`TITLE_NOT_MEASURED`. Covers both
-         non-FOUND statuses; a read that did not answer decides nothing.
-      2. The title equals the one already recorded ->
-         :data:`TITLE_UNCHANGED`. THIS IS WHAT MAKES REPEATED EVENTS
-         FREE, and it is why the same hook arriving twice writes once.
-         UNLESS the visible title differs and is either empty or provably
-         older than a user-set registry name (``registry_user_title``
-         equals the observed name and no browser rename is ordered after
-         the last agreement): then :data:`TITLE_APPLIED`. This heals a
-         row whose ``/rename`` became its baseline (issue #518).
-      3. Nothing was recorded before -> :data:`TITLE_BASELINE_RECORDED`.
-         First sight is a baseline, never an instruction. See the module
-         docstring. UNLESS the visible title is empty, or the registry
-         orders the observed name after the row's creation
-         (``registry_user_title`` equals it): then :data:`TITLE_APPLIED`.
-      4. Otherwise the name CHANGED while we were watching ->
-         :data:`TITLE_APPLIED`.
-    """
     if not read.found or not read.title:
         return TitleApplication(
             TITLE_NOT_MEASURED,

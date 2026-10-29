@@ -12,11 +12,12 @@ import ChatAvatar from '../chat/ChatAvatar.svelte';
 import type { BurstParty } from '../chat/chat-model';
 
 const NOW = 1_000_000;
-const BASE = { id: 4, display_name: 'Mimir', rank: 'feature', state: 'awake', thread_key: 'agent:4', session_id: 'ses_4', session_uuid: 'u-4', tmux_session: 'carnivore_mimir', project_id: 12 };
+const BASE = { id: 4, display_name: 'Echo', rank: 'feature', state: 'awake', thread_key: 'agent:4', session_id: 'ses_4', session_uuid: 'u-4', tmux_session: 'carnivore_echo', project_id: 12 };
 const OWN = { ...BASE, shape: 'hexagon', tile_bg: 3, color_slot: 5, color_chosen: true } as PanelAgent;
-const PLACES = { companies: [{ id: 1, name: 'acme' }], projects: [{ id: 12, name: 'cloudecode', companyId: 1 }] };
+const PLACES = { companies: [{ id: 1, name: 'Larkspur' }], projects: [{ id: 12, name: 'cloudecode', companyId: 1 }] };
 
 const apps: object[] = [];
+// jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};
@@ -44,8 +45,8 @@ function draw(agent: PanelAgent): { panel: HTMLElement; tile: ReturnType<typeof 
     floor, agents: roster, density: 'expanded', now: NOW, colors: book, still: true, showInactive: true, onToggleInactive: vi.fn(), onOpen: vi.fn(),
   } }));
   const av = host('av');
-  const party = { key: 'Mimir', dir: 'from', path: [], agentId: 4, sessionUuid: null, owner: false } as unknown as BurstParty;
-  apps.push(mount(ChatAvatar, { target: av, props: { party, name: 'Mimir', looks } }));
+  const party = { key: 'Echo', dir: 'from', path: [], agentId: 4, sessionUuid: null, owner: false } as unknown as BurstParty;
+  apps.push(mount(ChatAvatar, { target: av, props: { party, name: 'Echo', looks } }));
   flushSync();
   return { panel, tile: face(panel.querySelector('[data-swarm-agent="4"]')), avatar: face(av) };
 }

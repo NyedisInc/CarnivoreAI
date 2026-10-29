@@ -31,7 +31,6 @@ async function timed(url: string, init: RequestInit, ms: number, fetcher: Fetch)
     }
 }
 
-/* already running */
 export async function decideEntry(fetcher: Fetch = fetch): Promise<Entry> {
     try {
         const reply = await timed('/api/v1/auth/enrollment/status', { credentials: 'same-origin', cache: 'no-store' }, PROBE_TIMEOUT_MS, fetcher);

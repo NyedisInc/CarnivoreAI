@@ -33,7 +33,7 @@ const CARDS: { id: string; title: string; series: ChartConfig['series'] }[] = [
 let withOffline = false;
 const answer = (metric: string, operation: string): QueryResult => ({ metric, operation: operation as QueryResult['operation'], unit: 'tokens', resolution: 'hour' as QueryResult['resolution'],
   series: [{ key: 'all', label: 'all', points: [{ time: '2026-10-01T00:00:00Z', value: 5 }] }], summary: { value: 5, samples: 3, contributing_conversations: 4 },
-  ranking: [{ key: 'a', label: 'Orchardco', value: 9 }], coverage: { minute_rows: 9, unpriced_usage_count: 75 }, ...(withOffline ? { pack: { offline: [{ id: 'install-hosta', label: 'hosta', through: '2026-10-12T14:05:00Z' }] } } : {}) } as unknown as QueryResult);
+  ranking: [{ key: 'a', label: 'Cobalt', value: 9 }], coverage: { minute_rows: 9, unpriced_usage_count: 75 }, ...(withOffline ? { pack: { offline: [{ id: 'install-studio', label: 'studio', through: '2026-10-12T14:05:00Z' }] } } : {}) } as unknown as QueryResult);
 
 let app: Record<string, unknown> | null = null;
 beforeEach(() => {
@@ -88,7 +88,7 @@ describe('an offline computer leaves no tag on the card', () => {
     expect(root.querySelector('.analytics-range')).not.toBeNull();
     expect(root.querySelector('.analytics-range')?.textContent).not.toContain('through');
     expect(root.querySelector('.analytics-identity')?.textContent ?? '').not.toContain('through');
-    expect(root.textContent).not.toContain('hosta');
+    expect(root.textContent).not.toContain('studio');
   });
 });
 

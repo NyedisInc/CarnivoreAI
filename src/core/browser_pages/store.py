@@ -1,13 +1,3 @@
-"""The open-page list's file: ``browser_pages.json`` in the state directory, so page rows survive a server restart.
-
-``open_pages.py`` is the one place the list changes and calls :func:`save` at that point; :func:`load` runs once at
-startup. This is NOT ``config.json`` (that boundary is ``src/core/config_writer.py``); it is a small separate state
-file, written the same careful way: temp file in the same directory, fsync, ``os.replace``.
-
-A bad file never stops boot: a file that is not valid JSON, or not the expected envelope, is moved aside to
-``browser_pages.json.corrupt-<unix ts>`` and the list starts empty; a single malformed row is dropped with a warning
-and the rest are kept.
-"""
 
 from __future__ import annotations
 
@@ -21,14 +11,12 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
-# state directory
 FILENAME = "browser_pages.json"
 VERSION = 1
 _REQUIRED = {"id": str, "key": str, "frame": str, "title": str, "seq": int}
 
 
 def path_in(directory: Path) -> Path:
-    """The list file inside a state directory. Inputs: directory. Output: Path."""
     return directory / FILENAME
 
 

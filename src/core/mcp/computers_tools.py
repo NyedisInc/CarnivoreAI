@@ -110,14 +110,14 @@ SPECS = (
     ra.RouteTool(
         name="computer_invite_delete", route="src.api.computers_routes:delete_invite", gate=ra.ARRANGE,
         description="Cancel an open invite by id (as computers_list lists it).",
-        properties={"invite": {"type": "string", "maxLength": 16}}, required=("invite",), invoke=_invite_delete, example={"invite": "49759e95"},
+        properties={"invite": {"type": "string", "maxLength": 16}}, required=("invite",), invoke=_invite_delete, example={"invite": "ab12cd34"},
     ),
     ra.RouteTool(
         name="computer_remove", route="src.api.computers_routes:delete_computer", gate=ra.ACT,
         description="Remove a linked computer: it is told, its access to this computer ends and its sessions leave the lists. "
                     "Always waits for the owner's approval.",
         properties=_COMPUTER, required=("computer",), invoke=_remove,
-        summary=lambda args, _t: f"remove the computer {args.get('computer', '')[:64]}", example={"computer": "hosta-install-id"},
+        summary=lambda args, _t: f"remove the computer {args.get('computer', '')[:64]}", example={"computer": "studio-install-id"},
     ),
     ra.RouteTool(
         name="computer_direction_set", route="src.api.computers_routes:put_direction", gate=ra.ACT,
@@ -125,13 +125,13 @@ SPECS = (
                     "open to an agent; letting a computer control this one is the owner's choice in the app.",
         properties={**_COMPUTER, "direction": {"type": "string", "enum": ["both", "one_way"]}}, required=("computer", "direction"),
         invoke=_direction, summary=lambda args, _t: f"make the computer {args.get('computer', '')[:64]} one way (it cannot control this one)",
-        example={"computer": "hosta-install-id", "direction": "one_way"},
+        example={"computer": "studio-install-id", "direction": "one_way"},
     ),
     ra.RouteTool(
         name="computer_add_preview", route="src.api.computers_routes:post_add_preview", gate=ra.READ,
         description="Check a computer before adding it over ssh: its ssh host key (and whether this computer already trusts it), whether keys log "
                     "in, and what is blocking (no console login, no homebrew, an installer that is too old, already set up or joined). Changes nothing.",
-        properties=_SSH, required=("ssh_target",), invoke=_add_preview, example={"ssh_target": "acme@hosta"},
+        properties=_SSH, required=("ssh_target",), invoke=_add_preview, example={"ssh_target": "alex@studio"},
     ),
     ra.RouteTool(
         name="computer_add", route="src.api.computers_routes:post_add", gate=ra.ACT,
@@ -139,7 +139,7 @@ SPECS = (
                     "returned. Always waits for the owner's approval; the result is a job_id, follow it in computers_list (add_jobs).",
         properties={**_SSH, "host_key_sha256": {"type": "string", "maxLength": 80, "description": "the SHA256:... fingerprint the preview returned"}},
         required=("ssh_target", "host_key_sha256"), invoke=_add, summary=_add_summary,
-        example={"ssh_target": "acme@hosta", "host_key_sha256": "SHA256:" + "A" * 43},
+        example={"ssh_target": "alex@studio", "host_key_sha256": "SHA256:" + "A" * 43},
     ),
     ra.RouteTool(
         name="computer_leave", route="src.api.computers_routes:post_leave", gate=ra.ACT,

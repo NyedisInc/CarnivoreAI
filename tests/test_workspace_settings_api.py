@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from structlog.testing import capture_logs
 
 os.environ.setdefault("DEFAULT_WORKING_DIR", tempfile.mkdtemp(prefix="cc_wsapi_wd_"))
 os.environ.setdefault("LOG_DIRECTORY", tempfile.mkdtemp(prefix="cc_wsapi_logs_"))
@@ -178,18 +179,25 @@ def test_developer_mode_is_off_by_default_and_persists_and_is_read_back(client, 
     assert developer_mode.is_on() is True
 
 
+def _patch_and_capture_reason(client, payload: dict):
+    with capture_logs() as logs:
+        resp = client.patch("/api/v1/config/settings", json=payload)
+    reasons = [entry["reason"] for entry in logs if entry.get("event") == "workspace_settings_rejected"]
+    assert len(reasons) == 1, f"expected one workspace_settings_rejected event, got {logs}"
+    return resp, reasons[0]
+
+
 
 
 def test_a_missing_development_root_is_refused_and_named(
     client, config_path, tmp_path
 ):
     missing = tmp_path / "not-there"
-    resp = client.patch(
-        "/api/v1/config/settings",
-        json={"workspace": {"development_root": str(missing)}},
-    )
+    resp, reason = _patch_and_capture_reason(client, {"workspace": {"development_root": str(missing)}})
     assert resp.status_code == 400
-    assert str(missing) in resp.json()["detail"]
+    assert "does not exist" in reason and str(missing) in reason
+    assert resp.json()["detail"]["code"] == "settings_invalid"
+    assert str(tmp_path) not in str(resp.json()["detail"])
     assert "workspace" not in _read(config_path)
 
 
@@ -197,28 +205,24 @@ def test_a_non_executable_shell_is_refused(client, config_path, tmp_path):
     fake = tmp_path / "sh"
     fake.write_text("")
     fake.chmod(0o644)
-    resp = client.patch(
-        "/api/v1/config/settings", json={"workspace": {"default_shell": str(fake)}}
-    )
+    resp, reason = _patch_and_capture_reason(client, {"workspace": {"default_shell": str(fake)}})
     assert resp.status_code == 400
-    assert "not executable" in resp.json()["detail"]
+    assert resp.json()["detail"]["code"] == "settings_invalid"
+    assert "not executable" in reason
 
 
 def test_a_bad_env_name_is_refused_and_named(client, config_path):
-    resp = client.patch(
-        "/api/v1/config/settings", json={"workspace": {"env": {"1BAD": "x"}}}
-    )
+    resp, reason = _patch_and_capture_reason(client, {"workspace": {"env": {"1BAD": "x"}}})
     assert resp.status_code == 400
-    assert "1BAD" in resp.json()["detail"]
+    assert resp.json()["detail"]["code"] == "settings_invalid"
+    assert "1BAD" in reason
 
 
 def test_the_reserved_prefix_is_refused(client, config_path):
-    resp = client.patch(
-        "/api/v1/config/settings",
-        json={"workspace": {"env": {"CLOUDECODE_HOOK_TOKEN": "x"}}},
-    )
+    resp, reason = _patch_and_capture_reason(client, {"workspace": {"env": {"CLOUDECODE_HOOK_TOKEN": "x"}}})
     assert resp.status_code == 400
-    assert "reserved" in resp.json()["detail"]
+    assert resp.json()["detail"]["code"] == "settings_invalid"
+    assert "reserved" in reason
 
 
 def test_a_refusal_writes_nothing_at_all(client, config_path, tmp_path):

@@ -13,6 +13,7 @@ function read(file) {
 
 const scanSrc = read('output-scan.js');
 const outputSrc = read('copy-output.js');
+const httpUrlSrc = read('http-url.js');
 
 let failures = 0;
 let passes = 0;
@@ -45,6 +46,7 @@ function loadOutput() {
     };
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
+    vm.runInContext(httpUrlSrc, sandbox);
     vm.runInContext(outputSrc, sandbox);
     return sandbox.window.CopyOutput;
 }
@@ -260,6 +262,7 @@ function loadOutputWithDom() {
     };
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
+    vm.runInContext(httpUrlSrc, sandbox);
     vm.runInContext(outputSrc, sandbox);
     return sandbox.window.CopyOutput;
 }

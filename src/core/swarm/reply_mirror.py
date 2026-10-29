@@ -53,7 +53,6 @@ def ledger_path(state_dir: Path, agent_id: int) -> Path:
 
 
 def _state_dir() -> Path:
-    """The app's state directory (late import: settings reads the environment)."""
     from src.config import settings
 
     return Path(settings.get_state_dir())

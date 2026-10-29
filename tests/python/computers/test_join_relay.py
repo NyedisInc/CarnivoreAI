@@ -51,7 +51,7 @@ async def test_a_join_through_the_helper_relay(env, tmp_path, monkeypatch):
         member = next(r for r in main.query(store.list_rows) if r.peer_install_id == JOIN)
         reserved = next(r for r in join.query(store.list_rows) if r.peer_install_id == MAIN).link_port
         assert member.link_port == reserved and reserved is not None
-        assert list(member.addresses) == ["hosta.local", "127.0.0.1"]
+        assert list(member.addresses) == ["studio.local", "127.0.0.1"]
         mains = [r for r in join.query(store.list_rows) if r.role == "main"]
         assert [(r.peer_install_id, r.link_port, tuple(r.addresses)) for r in mains] == [(MAIN, reserved, ())]
         assert glob.glob(os.path.join(os.path.dirname(door.path), "relay-*")) == []

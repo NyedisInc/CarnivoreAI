@@ -8,6 +8,9 @@ change. A new style that is not written here does not exist for the next person,
     <li><strong>Extend, do not invent.</strong> Change one property of the nearest existing pattern and keep the rest: same
         ground, hairline, corner, type, focus and accent rule. A variant (<code>--compact</code>, a new data state) beats a new
         component; a new component beats a new look.</li>
+    <li><strong>Check the rulings.</strong> If the extension changes or reverses anything recorded in
+        <code>docs/DECISIONS.md</code>, <code>CLAUDE.md</code> or an issue thread, STOP and ask your own operator by name
+        (Alex (example-owner) or Joe (ccsliinc)) before building ("RULINGS, BEFORE YOU REVERSE ONE").</li>
     <li><strong>Build it to this guide's standard</strong>: tokens only, every state, every width, words first, every theme
         (<a href="#new-component">making a component</a>).</li>
     <li><strong>Add it here, in the same change</strong>:
@@ -20,6 +23,8 @@ change. A new style that is not written here does not exist for the next person,
             <li>a new section only when it truly is a new family: add it to <code>registry.json</code>'s <code>sections</code>
                 list and create its fragment.</li>
         </ul></li>
+    <li><strong>Record the ruling</strong> if Alex approved a new look: an entry in <code>docs/DECISIONS.md</code> with his
+        words, the date and the issue.</li>
 </ol>
 <p>The drift test (<code>tests/test_style_guide_drift.py</code>) enforces the registry half of this automatically. The
 fragment half is on you, and the next agent will build from whatever you wrote.</p>

@@ -31,7 +31,7 @@ def _epilog() -> str:
 def _add_host(parser: argparse.ArgumentParser, prefix: str, label: str) -> None:
     dash = f"--{prefix}-" if prefix else "--"
     key = f"{prefix}_" if prefix else ""
-    parser.add_argument(f"{dash}url", dest=f"{key}url", required=True, help=f"base URL of {label}, e.g. http://198.51.100.12:5001")
+    parser.add_argument(f"{dash}url", dest=f"{key}url", required=True, help=f"base URL of {label}, e.g. http://203.0.113.80:5001")
     group = parser.add_mutually_exclusive_group()
     group.add_argument(f"{dash}token-env", dest=f"{key}token_env", default=None,
                        help=f"environment variable holding the bearer for {label} (default {DEFAULT_TOKEN_ENV})")

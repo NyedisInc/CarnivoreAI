@@ -47,7 +47,7 @@ def world(tmp_path, monkeypatch):
     path = db_path_for(tmp_path)
     monkeypatch.setattr(peer_auth, "open_db", lambda: connect(path, create=False))
     with closing(connect(path, create=False)) as conn:
-        up = peer_hosts.upsert(conn, install_id="iid-up", label="hosta", grant_id="g", fid="f", initiator=True)
+        up = peer_hosts.upsert(conn, install_id="iid-up", label="studio", grant_id="g", fid="f", initiator=True)
         down = peer_hosts.upsert(conn, install_id="iid-down", label="lab", grant_id="g2", fid="f2", initiator=True)
     local = ScheduledTasksList(state="ok", tasks=[ScheduledTask(id="mine", name="mine", file_state="ok")], total=1)
     return SimpleNamespace(up=up, down=down, local=local, mp=monkeypatch)
@@ -62,7 +62,7 @@ def test_a_peer_task_is_listed_under_its_host_and_a_down_peer_is_named(world):
     out = merged(world, {"iid-up": client})
     assert client.calls == [("GET", "/scheduled-tasks")]
     by_id = {(t.id, t.host_key): t for t in out.tasks}
-    assert ("mine", None) in by_id and by_id[("nightly", world.up.key)].host_label == "hosta"
+    assert ("mine", None) in by_id and by_id[("nightly", world.up.key)].host_label == "studio"
     assert {p.host_key: p.state for p in out.peers} == {world.up.key: "ok", world.down.key: "peer_unavailable"}
     out = merged(world, {"iid-up": Client(PeerUnreachable("peer offline")), "iid-down": None})
     assert [t.id for t in out.tasks] == ["mine"] and {p.state for p in out.peers} == {"peer_unavailable"}

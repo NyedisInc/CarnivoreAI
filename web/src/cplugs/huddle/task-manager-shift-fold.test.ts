@@ -79,7 +79,7 @@ beforeEach(() => {
     if (key === FOLDS_KEY) writes += 1;
     real.call(this, key, value);
   });
-  try { localStorage.removeItem(FOLDS_KEY); } catch {  }
+  try { localStorage.removeItem(FOLDS_KEY); } catch { /* storage may be unavailable */ }
   huddle.selected = AGGREGATE;
   huddle.groups = null;
   huddle.openId = null;

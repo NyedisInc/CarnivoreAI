@@ -55,14 +55,6 @@ def clear_tombstone(conn: sqlite3.Connection, root: str) -> None:
 
 
 def tombstoned_roots(conn: sqlite3.Connection) -> Set[str]:
-    """Every root recorded as deliberately deleted.
-
-    Inputs: conn (sqlite3.Connection).
-    Output: set[str] - empty when the table does not exist yet, which is
-      NOT the same claim as "nothing was deleted". The caller must read
-      ``legacy_gap`` to know which of those two it is looking at.
-    Example: "/Users/example/dev/app" in tombstoned_roots(conn)
-    """
     if not table_exists(conn, TOMBSTONES_TABLE):
         return set()
     return {

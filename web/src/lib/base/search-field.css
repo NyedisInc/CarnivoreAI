@@ -36,6 +36,15 @@
     line-height: 1;
   }
 
+  .oc-search__lead {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    color: var(--oc-text-dim);
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-body);
+  }
+
   .oc-search__clear {
     --oc-ibtn-size: var(--oc-control-h-xs);
     flex: none;

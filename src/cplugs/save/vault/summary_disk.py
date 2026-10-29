@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import json
-import os
 import zlib
 from pathlib import Path
 from typing import Any, Dict
+from src.cplugs.sdk.safe_io import atomic_write_bytes
 
 FORMAT = 1
 
@@ -32,12 +32,4 @@ def load(blob: bytes) -> Dict[str, Any]:
 
 
 def write_atomic(path: Path, blob: bytes) -> None:
-    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    try:
-        with open(tmp, "wb") as handle:
-            handle.write(blob)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(tmp, path)
-    finally:
-        tmp.unlink(missing_ok=True)
+    atomic_write_bytes(path, blob)

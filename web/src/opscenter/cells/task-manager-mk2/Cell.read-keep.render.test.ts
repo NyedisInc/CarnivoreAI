@@ -70,6 +70,7 @@ import { MARK_READ_HOLD_SECONDS } from './mk2-mark-read.svelte';
 cplugEnablement.enabled = { huddle: true };
 
 const apps: Array<ReturnType<typeof mount>> = [];
+/** The ResizeObserver callbacks a test can fire by hand (jsdom has none). */
 const resizeCallbacks: Array<() => void> = [];
 const realRect = Element.prototype.getBoundingClientRect;
 
@@ -84,6 +85,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** Lay the rows out by the model: the list box at y 0, each row ROW_PX tall in document order (plus its data-grow), minus the scroll. */
 function modelLayout(): void {
   Element.prototype.getBoundingClientRect = function rect(this: Element): DOMRect {
     const box = this.closest('[data-task-manager-scroll]') as HTMLElement | null;
@@ -101,6 +103,7 @@ function modelLayout(): void {
   };
 }
 
+/** Settle the store and the DOM. Output: Promise<void>. */
 async function settle(): Promise<void> { for (let i = 0; i < 8; i += 1) { await Promise.resolve(); await tick(); } flushSync(); }
 const scroller = (host: HTMLElement): HTMLElement => host.querySelector('[data-task-manager-scroll]') as HTMLElement;
 const rowOf = (host: HTMLElement, id: number): HTMLElement | null => host.querySelector(`[data-huddle-item="${id}"]`);
@@ -134,8 +137,8 @@ async function drawReading(open: 'read' | 'question'): Promise<HTMLElement> {
   return host;
 }
 
-describe('TM Mark II stays put when the owner reads or dismisses a task mid-list (round 9)', () => {
-  test('mark read: the task leaves "needs you" and the first row the owner sees stays where it was', async () => {
+describe('TM Mark II stays put when he reads or dismisses a task mid-list (round 9)', () => {
+  test('mark read: the task leaves "needs you" and the first row he sees stays where it was', async () => {
     const host = await drawReading('read');
     const before = firstVisible(host);
     expect(before).toEqual({ id: '5', offset: -20 });
@@ -152,7 +155,7 @@ describe('TM Mark II stays put when the owner reads or dismisses a task mid-list
     expect(Math.abs(after.offset - before.offset)).toBeLessThanOrEqual(SLACK_PX);
   });
 
-  test('dismiss: the dismissed question files the task out of "needs you" and the first row the owner sees stays where it was', async () => {
+  test('dismiss: the dismissed question files the task out of "needs you" and the first row he sees stays where it was', async () => {
     const host = await drawReading('question');
     const before = firstVisible(host);
     expect(before).toEqual({ id: '5', offset: -20 });

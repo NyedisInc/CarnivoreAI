@@ -1,5 +1,3 @@
-/* flex: 0 0 auto`
- * so `#terminal-grid`'s own `flex: 1` shrinks by exactly this bar's height; */
 import { ensurePanel, panelInstance, unmountPanel } from '../mount';
 import { hostDocument, hostWindow } from '../sessions/env';
 import { PRIMARY_BIND_EVENT } from '../../opscenter/engine/primary-bind';

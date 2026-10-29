@@ -5,6 +5,7 @@
 </script>
 
 <script lang="ts">
+  /* its own sentence */
   import type { CellProps } from '../../lib/cell';
   import { sessionTasks, releaseSessionTasks, type SessionTasks } from '../../api/session-tasks.svelte';
   import type { Resource } from '../../api/poll.svelte';

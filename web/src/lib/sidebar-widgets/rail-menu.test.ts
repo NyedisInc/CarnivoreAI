@@ -17,9 +17,14 @@ import { SESSION_LIST_WIDGET } from './widget-ids';
 import { railMenuNodes } from '../widget-menu/rail-menu';
 import { closeRailMenu } from './rail-menu.svelte';
 import { railBtn, railOn, setupRail, teardownRail } from './fixtures/rail-harness';
+import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+
+// The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
+registerSwarmFlyout();
 
 setLocale('en');
 
+// jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};
@@ -31,6 +36,7 @@ const shell = (): HTMLElement => document.querySelector<HTMLElement>('.sbr-shell
 const menuItems = (): HTMLElement[] => [...document.querySelectorAll<HTMLElement>('.acm-menu [role^="menuitem"]')];
 const labels = (): string[] => menuItems().map((el) => el.querySelector('.acm-label')?.textContent?.trim() ?? el.textContent?.trim() ?? '');
 
+/** Dispatch a contextmenu event on an element; returns whether the default (the browser's menu) was left alone. */
 function rightClick(el: Element): boolean {
   const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 12, clientY: 20 });
   el.dispatchEvent(event);
@@ -42,6 +48,7 @@ const realSeams = { ...editorSeams };
 
 beforeEach(async () => {
   shared = {};
+  // A page whose layout can be edited, so the menu has its edit layout item.
   editorSeams.wide = () => true;
   editorSeams.page = () => ({}) as never;
   editorSeams.store = () => ({}) as never;
@@ -93,7 +100,7 @@ test('a right-click on a rail key opens the same menu', async () => {
   expect(labels().join(' ')).not.toContain('pin');
 });
 
-test('a page that cannot edit its layout: the rail itself offers only its pin, and a plain key has nothing, so no empty menu opens (the browser menu is still swallowed)', async () => {
+test('a page that cannot edit its layout: the rail itself offers only its pin, a plain key nothing, and the browser menu is still swallowed', async () => {
   editorSeams.page = () => null;
   shared['widget_bars'] = { v: 1, rail: { mode: 'pinned' } };
   widgetBars.reload();

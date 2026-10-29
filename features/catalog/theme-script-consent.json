@@ -16,7 +16,20 @@
     "theme script",
     "consent"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The themes screen with an installed theme selected, its details marked runs effects.js and a note that you will be asked before it runs",
+      "caption": "A theme that ships a script is marked runs effects.js",
+      "file": "fx.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The theme effects script prompt asking to allow an installed theme's effects.js, with never, allow once and always allow buttons",
+      "caption": "The first apply asks before the script runs",
+      "file": "prompt.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Theme script consent",
   "since": "2026-09-10",
   "status": "stable",
@@ -27,6 +40,5 @@
   "updated": "2026-09-27",
   "where": [
     "Themes screen: a theme that ships a script is marked runs effects.js in its details, and applying it asks first. Built-in themes run their own scripts without asking; the prompt is for installed themes."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

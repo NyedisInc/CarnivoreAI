@@ -4,6 +4,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
+import threading
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -111,15 +113,46 @@ def default_config_path() -> Path:
     return Path(settings.auth_config_file).expanduser()
 
 
+_OVERRIDES_CACHE: Dict[str, Any] = {}
+_OVERRIDES_LOCK = threading.Lock()
+
+
+def _forget_overrides(path: Path, _data: Dict[str, Any]) -> None:
+    with _OVERRIDES_LOCK:
+        _OVERRIDES_CACHE.pop(str(path), None)
+
+
+config_writer.on_commit(_forget_overrides)
+
+
 def read_overrides(config_path: Optional[Path] = None) -> Dict[str, Any]:
-    path = config_path or default_config_path()
+    path = Path(config_path or default_config_path()).expanduser()
+    key = str(path)
+    try:
+        stat = os.stat(path)
+    except OSError:
+        stat = None
+    signature = (stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns) if stat else None
+    if signature is not None:
+        with _OVERRIDES_LOCK:
+            hit = _OVERRIDES_CACHE.get(key)
+        if hit is not None and hit[0] == signature:
+            return copy.deepcopy(hit[1])
+    overrides = _read_overrides_uncached(path)
+    if signature is not None and overrides is not None:
+        with _OVERRIDES_LOCK:
+            _OVERRIDES_CACHE[key] = (signature, overrides)
+    return copy.deepcopy(overrides or {})
+
+
+def _read_overrides_uncached(path: Path) -> Optional[Dict[str, Any]]:
     try:
         block = config_writer.read_config(path).get(K.CONFIG_BLOCK) or {}
     except FileNotFoundError:
-        return {}
+        return None
     except (OSError, ValueError) as exc:
         logger.warning("search_filter_config_unreadable", path=str(path), error=str(exc))
-        return {}
+        return None
     raw = block.get(K.CONFIG_FIELD) if isinstance(block, dict) else None
     if raw is None:
         return {}

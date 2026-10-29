@@ -42,7 +42,7 @@ async def start_board(ctx: CplugContext, body: LiveCreateBody, caller: Optional[
     port = ports.get()
     info = await port.item_info(body.task.item_id)
     if info is None:
-        raise TaskNotFound(f"there is no huddle item {body.task.item_id} on this computer")
+        raise TaskNotFound(f"there is no task manager item {body.task.item_id} on this computer")
     await port.check_caller(caller, body.task.item_id, cross_project)
     now = revisions.utcnow()
     slug = publish.today_slug(body.slug_name)

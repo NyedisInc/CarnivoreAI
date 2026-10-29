@@ -5,8 +5,9 @@ import asyncio
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
+from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.core.automations import scheduler_log
 
@@ -39,5 +40,5 @@ async def put_log_settings(body: scheduler_log.LogSettings) -> Dict[str, Any]:
     try:
         saved = await asyncio.to_thread(scheduler_log.save_settings, _config_path(), body)
     except (FileNotFoundError, ValueError, OSError) as exc:
-        raise HTTPException(status_code=503, detail={"code": "config_unwritable", "error": type(exc).__name__}) from exc
+        raise api_error(503, "config_unwritable", exc) from exc
     return saved.model_dump()

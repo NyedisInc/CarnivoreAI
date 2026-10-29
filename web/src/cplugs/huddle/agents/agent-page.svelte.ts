@@ -1,5 +1,4 @@
-import { openCplugPage, terminalAvailable } from '../../sdk';
-import { openAgentTerminal } from './agent-terminal';
+import { openCplugPage } from '../../sdk';
 
 export type AgentDrawerTab = 'chat' | 'tasks';
 
@@ -25,7 +24,5 @@ export function agentIdFromHash(hash: string | null | undefined): number | null 
 
 export function openAgentPage(id: number): boolean {
   agentPage.id = id;
-  const opened = openCplugPage(AGENT_PAGE);
-  if (terminalAvailable()) void openAgentTerminal(id, false);
-  return opened;
+  return openCplugPage(AGENT_PAGE);
 }

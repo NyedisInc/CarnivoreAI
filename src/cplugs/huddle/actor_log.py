@@ -37,11 +37,6 @@ def reset_acting_key(token: "contextvars.Token[str]") -> None:
 
 
 async def caller_key(ctx: CplugContext, caller: AgentCaller) -> Optional[str]:
-    """The calling pane's STABLE key (``ctx.sessions.durable_keys``), the one its Task Manager records are filed under.
-
-    Inputs: ctx; caller. Output: the key, or None for an external token or an unbound caller (nothing to record).
-    A recreate or a restart from Recent gives the pane a new ``ses_`` id; the key does not change (``callers.py``).
-    """
     if caller.external or not caller.current_session_id:
         return None
     keys = await ctx.sessions.durable_keys()
@@ -60,10 +55,6 @@ def log_writes(store: Any, op: str, item_ids: Sequence[int], *, actor_key: str, 
 
 
 def held_item(store: Any, actor_key: str, list_key: str) -> Optional[int]:
-    """The ONE live item this actor holds working on ``list_key``, else None (none, or more than one: unknown, never a guess).
-
-    Inputs: store; actor_key; list_key (the writer's own project list). Output: item id | None.
-    """
     if not actor_key:
         return None
     with closing(store._read_connection()) as conn:
@@ -89,12 +80,6 @@ def actors_of(store: Any, item_id: int) -> Dict[str, Any]:
 
 async def record(ctx: CplugContext, caller: AgentCaller, store: Any, op: str, item_ids: List[int], *, cross: bool,
                  own_list_key: Optional[str]) -> None:
-    """Log one guarded write and, for a cross-project create, link its source item. Never raises for a store failure.
-
-    Inputs: ctx; caller; store; op (the handler's name); item_ids (the items touched); cross (a crossing was allowed);
-      own_list_key (the writer's own project list key on a crossing, else None).
-    Output: None. The write has already succeeded; a sqlite failure here is logged with its context.
-    """
     if not item_ids:
         return
     key = await caller_key(ctx, caller) or ""

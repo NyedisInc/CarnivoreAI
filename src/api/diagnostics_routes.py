@@ -1,9 +1,3 @@
-"""``GET /diagnostics``: the redacted diagnostics bundle for the tray's Copy Diagnostics (issue #1897).
-
-Owner-authenticated. The same JSON `python3 -m src.core.diagnostics` prints with the server down; both call
-``src/core/diagnostics/builder.build_bundle``. It never reads a database, ``auth.json``, ``tui_auth.json``,
-``.env`` or the keychain, and every string is redacted (a section whose redaction fails is dropped).
-"""
 
 from __future__ import annotations
 

@@ -4,7 +4,7 @@
   import type { AutomationTarget, ProjectChoice, Targets } from './api';
   import { t } from '../i18n/index.svelte';
   import Select from '../base/Select.svelte';
-  import { codeLabel } from './format';
+  import { codeWords } from './logic/words';
   import { offeredKinds, TARGET_FORMS } from './target-forms';
 
   let {
@@ -36,12 +36,12 @@
           label={t('automations.field.target')}
           data-target-kind
           value={target?.kind ?? ''}
-          options={kinds.map((kind) => ({ value: kind, label: codeLabel('automations.target', kind) }))}
+          options={kinds.map((kind) => ({ value: kind, label: codeWords('automations.target', kind) }))}
           onchange={(e) => pick(e.currentTarget.value)}
         />
       {:else}
         <span class="oc-label">{t('automations.field.target')}</span>
-        <span class="auto-form__fixed" data-target-fixed>{target ? codeLabel('automations.target', target.kind) : ''}</span>
+        <span class="auto-form__fixed" data-target-fixed>{target ? codeWords('automations.target', target.kind) : ''}</span>
       {/if}
       {#if part === 'kind'}{@render hint?.()}{/if}
     </div>

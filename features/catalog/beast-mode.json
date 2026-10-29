@@ -52,6 +52,18 @@
     "Arm Beast Mode before several agents collaborate across computers; their eligible actions run without individual approval prompts.",
     "Leaving the desk for an afternoon: arm Beast Mode with prompts for 4 hours; each Bash or edit permission is answered yes and announced, while plan approvals and questions still wait for you."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "drawer-off.png",
+      "caption": "Beast Mode bolt in the agents drawer footer",
+      "alt": "Disarmed Beast Mode bolt beside the account chip"
+    },
+    {
+      "kind": "screenshot",
+      "file": "arm-confirmation.png",
+      "caption": "Review before arming Beast Mode",
+      "alt": "Beast Mode confirmation dialog with active safety limits and arm button"
+    }
+  ]
 }

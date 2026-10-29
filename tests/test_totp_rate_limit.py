@@ -177,14 +177,14 @@ def test_trust_proxy_headers_independent_counters(client_trust_proxy):
         r = client_trust_proxy.post(
             "/api/v1/auth/verify",
             json={"code": code},
-            headers={"X-Forwarded-For": "203.0.113.16"},
+            headers={"X-Forwarded-For": "10.0.0.1"},
         )
         assert r.status_code == 401, r.text
 
     r_a_blocked = client_trust_proxy.post(
         "/api/v1/auth/verify",
         json={"code": codes_a[5]},
-        headers={"X-Forwarded-For": "203.0.113.16"},
+        headers={"X-Forwarded-For": "10.0.0.1"},
     )
     assert r_a_blocked.status_code == 429, r_a_blocked.text
 
@@ -192,14 +192,14 @@ def test_trust_proxy_headers_independent_counters(client_trust_proxy):
         r = client_trust_proxy.post(
             "/api/v1/auth/verify",
             json={"code": code},
-            headers={"X-Forwarded-For": "192.0.2.14"},
+            headers={"X-Forwarded-For": "10.0.0.2"},
         )
         assert r.status_code == 401, f"client B should have fresh budget, got {r.status_code}: {r.text}"
 
     r_b_blocked = client_trust_proxy.post(
         "/api/v1/auth/verify",
         json={"code": codes_b[5]},
-        headers={"X-Forwarded-For": "192.0.2.14"},
+        headers={"X-Forwarded-For": "10.0.0.2"},
     )
     assert r_b_blocked.status_code == 429, r_b_blocked.text
 

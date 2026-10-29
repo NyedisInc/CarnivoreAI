@@ -42,10 +42,16 @@
     "web/src/lib/motion/animations-pref.ts",
     "web/src/lib/settings-page/controls/SwitchControl.svelte"
   ],
-  "updated": "2026-10-11",
+  "updated": "2026-10-28",
   "where": [
     "Settings, appearance, the motion tab: a switch labelled animations."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "animations-switch.png",
+      "caption": "The animations switch under settings, appearance, motion",
+      "alt": "The motion tab of the appearance settings with one switch, animations, set to on"
+    }
+  ]
 }

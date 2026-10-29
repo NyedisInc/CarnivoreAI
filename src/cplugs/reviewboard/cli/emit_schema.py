@@ -1,6 +1,11 @@
 """Write the published JSON Schema of the sidecar from the pydantic models (``docs/reviewboard.md``, "The board format").
 
 Usage: venv/bin/python3 -m src.cplugs.reviewboard.cli.emit_schema [--check]
+
+The models in ``schema.py`` are the truth; ``schemas/sidecar.v2.json`` is GENERATED from them for readers outside this
+code (Alex's tools, an outside developer). ``sidecar.v1.json`` is the frozen version 1 file and is never regenerated:
+a version 1 sidecar stays valid. ``--check`` writes nothing and exits 1 when the committed file differs (the
+repo test runs the same comparison). Exit 0 written or current, 1 stale (``--check``), 2 could not write.
 """
 
 from __future__ import annotations

@@ -6,6 +6,7 @@ import { editorSeams, layoutEditor, finishLayoutEditor } from './editor.svelte';
 import { emptyMenu, onContextMenu, onMenuKey, onRailContextMenu, onZoneContextMenu } from './empty-space-menu.svelte';
 import EmptySpaceMenu from './EmptySpaceMenu.svelte';
 
+// jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};

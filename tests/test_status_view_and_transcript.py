@@ -13,20 +13,12 @@ from src.core.session_manager import SessionManager
 from src.models import Session, SessionStatus
 from src.core.session_activity import (
     WORKING_HEARTBEAT_TIMEOUT_SECONDS,
-    SessionActivitySignal,
-    SessionActivityTracker,
 )
-from src.core.attention.registry_read import (
-    REG_BUSY,
-    REG_OK,
-    RegistryRecord,
-)
+from src.core.attention.registry_record import REG_BUSY, REG_OK, RegistryRecord
 from src.core.session_status import (
     STATUS_DEAD,
     STATUS_FINISHED_UNREAD,
     STATUS_IDLE,
-    STATUS_NOTICE,
-    STATUS_QUESTION,
     STATUS_RUNNING,
     STATUS_UNKNOWN,
     STATUS_WORKING,
@@ -75,6 +67,9 @@ class _StubSettings:
         self._pin_path = pin_path
         self._log_dir = log_dir
         self.port = port
+
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
 
     def get_pinned_themes_path(self) -> Path:
         return self._pin_path
@@ -129,101 +124,29 @@ def _register_session(
 NOW = datetime(2026, 9, 9, 14, 0, 0, tzinfo=timezone.utc)
 
 
-def _open_claims(
-    tracker: SessionActivityTracker,
-    session_id: str,
-    *,
-    notice: bool = False,
-    permission: bool = False,
-    at: datetime = NOW,
-) -> None:
-    tracker._signals[session_id] = SessionActivitySignal(
-        permission_open=permission,
-        permission_opened_at=at if permission else None,
-        notice_open=notice,
-    )
 
 
-
-
-def test_clear_notice_drops_an_open_notification():
-    tracker = SessionActivityTracker()
-    _open_claims(tracker, "s1", notice=True)
-
-    assert tracker.clear_notice("s1") is True
-    assert tracker._signals["s1"].notice_open is False
-
-
-def test_clear_notice_is_idempotent():
-    tracker = SessionActivityTracker()
-    _open_claims(tracker, "s1", notice=True)
-    assert tracker.clear_notice("s1") is True
-    assert tracker.clear_notice("s1") is False
-    assert tracker.clear_notice("never-seen") is False
-
-
-def test_clear_notice_never_clears_a_permission():
-    tracker = SessionActivityTracker()
-    _open_claims(tracker, "s1", notice=True, permission=True)
-
-    tracker.clear_notice("s1")
-
-    assert tracker._signals["s1"].notice_open is False
-    assert tracker._signals["s1"].permission_open is True
-    assert tracker.permission_open_since("s1") == NOW
-
-
-def test_a_websocket_bind_clears_the_notice_and_the_unread_flag(
-    monkeypatch, tmp_path
-):
+def test_a_websocket_bind_clears_the_unread_flag(monkeypatch, tmp_path):
     mgr = _bare_manager(monkeypatch, tmp_path)
     _register_session(mgr, "ses1", "cloude_proj", tmp_path)
-    _open_claims(mgr._activity_tracker, "ses1", notice=True)
     mgr.set_manual_unread("cloude_proj", True)
     assert mgr._is_unread("cloude_proj") is True
 
     mgr.mark_session_viewed("ses1")
 
     assert mgr._is_unread("cloude_proj") is False
-    assert mgr._activity_tracker._signals["ses1"].notice_open is False
 
 
-def test_a_websocket_bind_clears_a_permission_prompt(monkeypatch, tmp_path):
-    mgr = _bare_manager(monkeypatch, tmp_path)
-    _register_session(mgr, "ses1", "cloude_proj", tmp_path)
-    _open_claims(mgr._activity_tracker, "ses1", permission=True)
-    assert mgr._activity_tracker.permission_open_since("ses1") == NOW
-
-    mgr.mark_session_viewed("ses1")
-
-    assert mgr._activity_tracker._signals["ses1"].permission_open is False
-    assert mgr._activity_tracker.permission_open_since("ses1") is None
-
-
-def test_the_manual_mark_read_control_clears_the_notice_too(
+def test_the_manual_mark_read_control_clears_the_unread_flag(
     monkeypatch, tmp_path
 ):
     mgr = _bare_manager(monkeypatch, tmp_path)
     _register_session(mgr, "ses1", "cloude_proj", tmp_path)
-    _open_claims(mgr._activity_tracker, "ses1", notice=True)
     mgr.set_manual_unread("cloude_proj", True)
 
     mgr.set_manual_unread("cloude_proj", False)
 
     assert mgr._is_unread("cloude_proj") is False
-    assert mgr._activity_tracker._signals["ses1"].notice_open is False
-
-
-def test_marking_a_session_unread_does_not_clear_its_notice(
-    monkeypatch, tmp_path
-):
-    mgr = _bare_manager(monkeypatch, tmp_path)
-    _register_session(mgr, "ses1", "cloude_proj", tmp_path)
-    _open_claims(mgr._activity_tracker, "ses1", notice=True)
-
-    mgr.set_manual_unread("cloude_proj", True)
-
-    assert mgr._activity_tracker._signals["ses1"].notice_open is True
 
 
 
@@ -488,7 +411,7 @@ def corpus(tmp_path, monkeypatch):
 def test_the_reader_takes_both_measurements_off_one_real_file(
     corpus, tmp_path
 ):
-    uuid = "c50ad4f7-9571-4b78-81f4-ac0c83fe96b8"
+    uuid = "3f1c9a4e-1111-4111-8111-111111111111"
     wd = str(tmp_path / "proj")
     _write_transcript(
         corpus, wd, uuid,
@@ -523,7 +446,7 @@ REGISTRY_NOW = datetime(2026, 9, 13, 12, 0, 0, tzinfo=timezone.utc)
 
 def _registry_index(monkeypatch, records: dict) -> None:
     monkeypatch.setattr(
-        "src.core.attention.registry_read.read_registry_index",
+        "src.core.attention.registry_index.read_registry_index",
         lambda *a, **k: records,
     )
 

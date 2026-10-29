@@ -3,6 +3,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
+/** Repo root, two levels up from web/src/lib. */
 export const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 
 export interface LegacyApi {

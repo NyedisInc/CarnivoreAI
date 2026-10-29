@@ -10,18 +10,14 @@ const SRC = fileURLToPath(new URL('../..', import.meta.url));
 const KNOWN: readonly string[] = [
   'cplugs/crate/ExportDialog.svelte:interval-anywhere',
   'cplugs/crate/ImportDialog.svelte:interval-anywhere',
-  'cplugs/huddle/chat/ChatBar.svelte:menu-frame',
   'cplugs/huddle/chat/ChatWidget.svelte:interval-anywhere',
   'cplugs/huddle/style-guide/CharacterBoard.svelte:interval-anywhere',
   'cplugs/huddle/style-guide/ExpressionBoard.svelte:interval-anywhere',
-  'cplugs/huddle/swarm/characters/clock.ts:interval-anywhere',
   'cplugs/huddle/task-manager-progress.svelte.ts:interval-anywhere',
-  'cplugs/huddle/TaskManagerMove.svelte:menu-frame',
   'cplugs/sdk/tab-flyout.ts:flyout-press',
   'cplugs/share/ShareModal.svelte:interval-anywhere',
   'lib/automations/page-store.svelte.ts:interval-anywhere',
   'lib/background-work/FootWork.svelte:interval-anywhere',
-  'lib/computers/ComputersPanel.svelte:interval-anywhere',
   'lib/computers/InviteCard.svelte:interval-anywhere',
   'lib/drawer-tabs/DrawerQuestions.svelte:interval-anywhere',
   'lib/drawer-tabs/menu-rows.ts:flyout-press',
@@ -33,7 +29,6 @@ const KNOWN: readonly string[] = [
   'lib/ledger-drawer/DrawerLedger.svelte:interval-anywhere',
   'lib/listing-push/store.ts:interval-anywhere',
   'lib/live-status/OfflineMarker.svelte:interval-anywhere',
-  'lib/mini-rail/MiniRail.svelte:interval-anywhere',
   'lib/notifications/presence.ts:interval-anywhere',
   'lib/perf-overlay/PerfOverlay.svelte:interval-anywhere',
   'lib/pipeline-status/PipelineSquares.svelte:own-tooltip',
@@ -56,8 +51,10 @@ const KNOWN: readonly string[] = [
   'lib/widgets-page/PlaceMenu.svelte:menu-frame',
 ];
 
-const KNOWN_CEILING = 46;
+/** The most KNOWN may hold. Lower it with the list, never raise it. */
+const KNOWN_CEILING = 41;
 
+/** Every non-test source file under a folder, paths relative to `web/src/`. Inputs: dir, base. Output: HostSource[]. */
 function sourcesOf(dir: string, base = ''): HostSource[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(dir, entry.name);
@@ -68,6 +65,7 @@ function sourcesOf(dir: string, base = ''): HostSource[] {
   });
 }
 
+/** A finding as `path:rule`. Inputs: finding. Output: string. */
 const keyOf = (f: HostFinding): string => `${f.path}:${f.rule}`;
 
 describe('wrappers are used, never copied', () => {

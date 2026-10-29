@@ -43,7 +43,6 @@
 </div>
 
 <style>
-    /* padding */
     [data-plugin-entry] :global(.plp-region) {
         padding: 0;
     }

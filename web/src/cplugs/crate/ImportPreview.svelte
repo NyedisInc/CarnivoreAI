@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { t as reactiveT, truncatedTip, type Translate } from '../sdk';
+    import { Tag, type TagTone } from '../sdk/ui';
     import { bytesText } from './crate-api';
     import { unitLabel } from './store-label';
     import { blockerSentence, keptSubject, provenanceSentence, skipSentence, warningSentence, type ImportPlanView } from './import-api';
@@ -12,8 +13,8 @@
     const { plan, t = reactiveT }: Props = $props();
 
     const SHOWN = 200;
-    const CLASS_TONE: Readonly<Record<string, string>> = {
-        write: 'ok', grow: 'grow', present: 'quiet', excluded: 'quiet', not_restored: 'quiet', local_newer: 'warn', conflict: 'bad', live: 'bad',
+    const CLASS_TONE: Readonly<Record<string, TagTone>> = {
+        write: 'ok', grow: 'info', present: 'neutral', excluded: 'neutral', not_restored: 'neutral', local_newer: 'warn', conflict: 'danger', live: 'danger',
     };
 
     const shown = $derived(plan.conversations.slice(0, SHOWN));
@@ -29,20 +30,20 @@
 <div class="crt-tty__out" data-crt-import-plan={plan.ok ? 'ok' : 'blocked'}>
     {#if plan.provenance}
         <div class="crt-tty__note" data-crt-import-provenance={plan.provenance}>
-            <span class={`crt-tty__tag crt-tty__tag--${plan.provenance === 'own_verified' ? 'ok' : 'warn'}`}>{t(`cplug.crate.import.provenance_label.${plan.provenance}`)}</span>
+            <Tag tone={plan.provenance === 'own_verified' ? 'ok' : 'warn'}>{t(`cplug.crate.import.provenance_label.${plan.provenance}`)}</Tag>
             <span class="crt-tty__text">{provenanceSentence(plan.provenanceReason, t)}</span>
         </div>
     {/if}
     {#each plan.blockers as blocker (`${blocker.code}:${blocker.detail}`)}
         <div class="crt-tty__note">
-            <span class="crt-tty__tag crt-tty__tag--bad">{tagText('blocker')}</span>
+            <Tag tone="danger">{tagText('blocker')}</Tag>
             <p class="crt-tty__text crt-tty__text--bad" data-crt-import-blocker={blocker.code}>{blockerSentence(blocker, t)}</p>
             {#if blocker.detail}<p class="crt-tty__text crt-tty__text--dim">{blocker.detail}</p>{/if}
         </div>
     {/each}
     {#each plan.warnings as warning (`${warning.code}:${warning.detail}`)}
         <div class="crt-tty__note">
-            <span class="crt-tty__tag crt-tty__tag--warn">{tagText('warning')}</span>
+            <Tag tone="warn">{tagText('warning')}</Tag>
             <p class="crt-tty__text" data-crt-import-warning={warning.code}>{warningSentence(warning, t)}</p>
         </div>
     {/each}
@@ -57,7 +58,7 @@
                 {@const f = plan.projectFolder}
                 <p class="crt-tty__line" data-crt-import-project-files={f.files}>
                     {#if f.files === 'already_here'}
-                        <span class="crt-tty__tag crt-tty__tag--quiet">{tagText('present')}</span>
+                        <Tag>{tagText('present')}</Tag>
                         {t('cplug.crate.import.preview.files_here', { count: f.matching ?? 0 })}
                     {:else}
                         {#if (f.matching ?? 0) > 0}{t('cplug.crate.import.preview.files_mixed', { here: f.matching ?? 0, differ: f.differing ?? 0 })}{/if}
@@ -70,7 +71,7 @@
     {/if}
     {#if plan.cleanup?.needsGuard}
         <div class="crt-tty__note">
-            <span class="crt-tty__tag crt-tty__tag--warn">{tagText('warning')}</span>
+            <Tag tone="warn">{tagText('warning')}</Tag>
             <p class="crt-tty__text" data-crt-import-cleanup-warning>{t('cplug.crate.import.preview.cleanup_warning', { count: plan.cleanup.filesOlder, period: plan.cleanup.periodDays, oldest: plan.cleanup.oldestDays })}</p>
         </div>
     {/if}
@@ -128,7 +129,7 @@
                 <p class="crt-tty__row" data-crt-import-conversation={conversation.id} data-crt-import-class={conversation.cls}>
                     <span class="crt-tty__name" use:truncatedTip={name}>{name}</span>
                     <span class="crt-tty__fig">{t(`cplug.crate.import.preview.resume.${conversation.resume}`)}</span>
-                    <span class={`crt-tty__tag crt-tty__tag--${CLASS_TONE[conversation.cls] ?? 'quiet'}`} title={t(`cplug.crate.import.preview.class.${conversation.cls}`)}>{tagText(conversation.cls)}</span>
+                    <Tag tone={CLASS_TONE[conversation.cls] ?? 'neutral'} title={t(`cplug.crate.import.preview.class.${conversation.cls}`)}>{tagText(conversation.cls)}</Tag>
                 </p>
                 {#if conversation.cls === 'not_restored' && conversation.reason}
                     <p class="crt-tty__line" data-crt-import-conversation-reason={conversation.reason}>{skipSentence(conversation.reason, t, true)}</p>
@@ -146,14 +147,14 @@
                 <p class="crt-tty__row" data-crt-import-table={row.table}>
                     <span class="crt-tty__name" use:truncatedTip={row.table}>{row.table}</span>
                     <span class="crt-tty__fig">{t('cplug.crate.import.preview.row_counts', { insert: row.insert, present: row.present, kept: row.keptLocal })}</span>
-                    <span class={`crt-tty__tag crt-tty__tag--${row.insert > 0 ? 'ok' : 'quiet'}`}>{tagText(row.insert > 0 ? 'write' : 'present')}</span>
+                    <Tag tone={row.insert > 0 ? 'ok' : 'neutral'}>{tagText(row.insert > 0 ? 'write' : 'present')}</Tag>
                 </p>
             {/each}
         </section>
     {/if}
     {#if plan.heldBack}
         <div class="crt-tty__note">
-            <span class="crt-tty__tag crt-tty__tag--quiet">{tagText('held_back')}</span>
+            <Tag>{tagText('held_back')}</Tag>
             <p class="crt-tty__text" data-crt-import-held-back>{t('cplug.crate.import.preview.held_back', { memory: plan.memoryFiles ?? 0, plans: plan.plans ?? 0 })}</p>
         </div>
     {/if}

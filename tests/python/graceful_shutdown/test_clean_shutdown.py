@@ -42,6 +42,7 @@ def _app() -> FastAPI:
 
     @app.get("/mcp")
     async def stream() -> StreamingResponse:
+        """The channel stream body, as ``mcp_routes.mcp_stream`` serves it."""
         return StreamingResponse(channel.stream_events("tmux_t", "ses_t", keepalive_s=0.2),
                                  media_type="text/event-stream")
 

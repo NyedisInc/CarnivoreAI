@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { CATALOGS, registerFragment } from '../../../../client/js/i18n/catalogs.js';
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
 import { isPseudo } from '../../../../client/js/i18n/pseudo.js';
-import { pluginSlices, registerPluginSlices } from './plugin-fragments';
+import { pluginSlices, registerPluginSlices, registerSlices } from './plugin-fragments';
 
 function table(locale: string): Record<string, unknown> {
     return (CATALOGS as unknown as Record<string, { messages: Record<string, unknown> }>)[locale]!.messages;
@@ -33,7 +33,28 @@ describe('registerFragment', () => {
     });
 });
 
+describe('a bad slice (u140-06)', () => {
+    test('is reported and skipped, the good ones still merge, nothing throws', () => {
+        const seen: string[] = [];
+        const failures = registerSlices(
+            [
+                ['zzbad', { 'session.title': 'outside my namespace' }],
+                ['zzgood', { 'cplug.zzgood.a': 'fine' }],
+            ],
+            (id) => seen.push(id),
+        );
+        expect(failures.map((f) => f.pluginId)).toEqual(['zzbad']);
+        expect(failures[0]!.reason).toMatch(/outside cplug\.zzbad\./);
+        expect(table('en')['cplug.zzgood.a']).toBe('fine');
+        expect(seen).toEqual(['zzgood']);
+    });
+});
+
 describe('the shipped slices', () => {
+    test('no shipped slice is refused (this is the build-time guard the load-time catch relies on)', () => {
+        expect(registerPluginSlices()).toEqual([]);
+    });
+
     test('there is one per migrated plugin and each sits in its own namespace', () => {
         const slices = pluginSlices();
         const ids = slices.map(([id]) => id);

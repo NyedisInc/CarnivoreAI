@@ -33,7 +33,7 @@ class StaleRevision(Exception):
 
 
 class StateWriteFailed(OSError):
-    """The state file could not be written (the change was not applied)."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -73,12 +73,6 @@ _file_cache: Dict[str, Tuple[int, int, int, Dict[str, Any]]] = {}
 
 
 def _load(state_dir: Path) -> Optional[Dict[str, Any]]:
-    """The file's ``cplugs`` map; {} when the file is absent; None when it exists but could not be read (logged).
-
-    Description: one ``stat`` per call; the file is re-read and re-parsed only when its inode, mtime or size moved
-      (the writer replaces the file atomically, so an inode change is every write). Callers must not mutate the result.
-    Output: dict | None. None is "could not tell", which is not the same as "nothing stored".
-    """
     path = state_path(state_dir)
     key = str(path)
     try:

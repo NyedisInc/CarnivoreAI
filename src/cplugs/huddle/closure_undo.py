@@ -30,7 +30,7 @@ def _insert_correction(store: Any, conn: Any, item_id: int, seq: int, text: str,
 
 
 def undo_completion(store: Any, item_id: int, expected_revision: int) -> Dict[str, Any]:
-    with closing(store._connect(True)) as conn, conn:
+    with store._immediate() as conn:
         row = store._row(conn, item_id)
         if expected_revision != row["revision"]:
             raise TaskManagerStale("the task changed since you read it", current=item_dict(row))
@@ -69,7 +69,7 @@ def cancel_task(store: Any, item_id: int, expected_revision: int, note: Optional
         raise TaskManagerNotAllowed("already_closed", "the task is already closed")
     store.update(item_id, actor=JOE, state=rules.DONE, expected_revision=expected_revision,
                  decided=lineage.Decided(actor_log.by_for(JOE), closures.CANCELLED_DETAIL))
-    with closing(store._connect(True)) as conn, conn:
+    with store._immediate() as conn:
         closure = closures.closure_of(conn, item_id)
         message = _insert_correction(store, conn, item_id, store._next_seq(conn), text,
                                      corrections.build(closures.CANCELLED, closure["id"], closure["closed_at"], closure["closed_by"]))

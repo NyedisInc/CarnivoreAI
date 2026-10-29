@@ -1,0 +1,47 @@
+{
+  "api_routes": [
+    "GET /api/v1/swarm/agents/{id}/memory",
+    "GET /api/v1/swarm/agents/{id}/memory/file?path=",
+    "PUT /api/v1/swarm/agents/{id}/memory/file",
+    "POST /api/v1/swarm/agents/{id}/memory/restore"
+  ],
+  "area": "drawers",
+  "description": "Every Swarm agent's chat has a pink brain in its title strip, left of the menu. It opens the agent's memory in a panel pinned on the right: a file picker with MEMORY.md first and then each of the agent's facts by title, and the app's markdown editor (edit and preview, with the hint sheet). Save writes a backup of the file's previous text into the app's state folder first, then writes the edit and keeps the fact store in step (the fact's title and scope follow the edit, and the generated index block of MEMORY.md is rebuilt). Undo drops unsaved edits, or with none puts back the version before the last save; the earlier versions list restores any kept version, and a restore keeps the text it replaces too, so nothing is lost. The agent reads the edited text the next time it wakes.",
+  "docs": [
+    "docs/swarm.md"
+  ],
+  "examples": [
+    "fix a wrong fact an agent learned by editing its text and saving",
+    "undo a save that broke an agent's MEMORY.md"
+  ],
+  "how_to": [
+    "open an agent's chat",
+    "click the pink brain at the top right of the chat's title strip",
+    "pick MEMORY.md or a fact, edit it, and press save",
+    "press undo to put the previous version back, or pick an earlier version from the list"
+  ],
+  "id": "agent-memory-editor",
+  "issues": [
+    2615
+  ],
+  "keywords": [
+    "swarm",
+    "agent",
+    "memory",
+    "facts",
+    "edit",
+    "backup",
+    "undo",
+    "revert",
+    "brain"
+  ],
+  "media_exempt": "new panel; screenshots are captured at the next version bump recapture",
+  "name": "agent memory editor",
+  "since": "2026-10-28",
+  "status": "beta",
+  "summary": "a pink brain in an agent's chat opens its memory to read and edit, with a backup before every save, undo and earlier versions.",
+  "updated": "2026-10-28",
+  "where": [
+    "an agent's chat title strip: the pink brain left of the menu (the swarm page chat, the chat drawer and a chat widget)"
+  ]
+}

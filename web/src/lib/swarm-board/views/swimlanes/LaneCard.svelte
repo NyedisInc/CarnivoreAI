@@ -1,4 +1,4 @@
-<!-- the detail pane -->
+
 <script lang="ts">
   import { t } from '../../../i18n/index.svelte';
   import { relative } from '../../../../opscenter/lib/format';
@@ -120,7 +120,6 @@
     .sbc--queued {
       border-style: dashed;
     }
-    /* the detail pane */
     .sbc--open {
       border-color: var(--oc-text-muted);
     }

@@ -5,7 +5,7 @@ import asyncio
 import json
 from contextlib import closing
 from typing import Any, Dict, Optional, Tuple
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import structlog
 from fastapi import WebSocket
@@ -39,6 +39,8 @@ DOWN_TYPES = frozenset({
 UP_TYPES: Dict[str, Tuple[str, ...]] = {
     WSMessageType.PTY_RESIZE.value: ("cols", "rows", "hidden"),
     WSMessageType.REPAINT.value: (),
+    WSMessageType.PAUSE.value: (),
+    WSMessageType.RESUME.value: (),
     WSMessageType.PING.value: (),
 }
 
@@ -188,17 +190,24 @@ async def _close_browser(websocket: WebSocket, code: int, reason: str) -> None:
         pass
 
 
+def _json_or_empty(response: Any) -> Any:
+    try:
+        return response.json()
+    except ValueError:
+        return {}
+
+
 async def forward_crown(host_key: str, name: str, method: str, wire_id: str,
                         body: Optional[dict] = None, client_id: Optional[str] = None) -> Any:
     client = _peer_client(host_key)
     if client is None:
         raise PeerUnavailable()
-    path = f"/sessions/{name}/size-master" + (f"?client_id={client_id}" if client_id else "")
+    path = f"/sessions/{quote(name, safe='')}/size-master" + (f"?{urlencode({'client_id': client_id})}" if client_id else "")
     try:
         response = await client.request(method, path, json=body)
     except (PeerUnreachable, PeerRefused):
         raise PeerUnavailable() from None
-    data = response.json() if response.status_code < 500 else {}
+    data = _json_or_empty(response) if response.status_code < 500 else {}
     if isinstance(data, dict) and "session_id" in data:
         data["session_id"] = wire_id
     return response.status_code, data

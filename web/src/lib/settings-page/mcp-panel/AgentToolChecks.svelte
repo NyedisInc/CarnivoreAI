@@ -1,4 +1,4 @@
-<!-- app settings tools running sessions -->
+<!-- app settings tools -->
 <script lang="ts">
     import { t as reactiveT } from '../../i18n/index.svelte';
     import type { Translate } from '../../sessions/types';

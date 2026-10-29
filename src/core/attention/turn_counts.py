@@ -1,9 +1,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
 
-from src.core.attention.registry_read import MIN_PENDING_VERSION, parse_version
+from src.core.attention.registry_record import MIN_PENDING_VERSION, format_version, parse_version
 
 PENDING_AGENTS_FIELD: str = "pendingBackgroundAgentCount"
 
@@ -30,10 +30,6 @@ KIND_SHELL: str = "shell"
 KIND_MONITOR: str = "monitor"
 
 TURN_END_COUNTED_KINDS: frozenset = frozenset({KIND_AGENT, KIND_WORKFLOW})
-
-
-def version_text(version: Sequence[int]) -> str:
-    return ".".join(str(part) for part in version)
 
 
 def content_blocks(record: Dict[str, Any], kind: str) -> List[Dict[str, Any]]:
@@ -73,14 +69,14 @@ def decode_pending_count(
             False,
             "the turn-end record on claude %s omits the pending %s field, "
             "which that harness does only when the count is zero"
-            % (version_text(record_version), noun),
+            % (format_version(record_version), noun),
         )
     return (
         None,
         False,
         "the turn-end record carries no pending %s field and names no claude "
         "version at or above %s, so that count is unknown rather than zero"
-        % (noun, version_text(floor)),
+        % (noun, format_version(floor)),
     )
 
 
@@ -97,7 +93,15 @@ def decode_turn_end_counts(
     return agents, agents_present, workflows, notes
 
 
-def async_launch(record: Dict[str, Any]) -> Optional[Dict[str, Optional[str]]]:
+class Launch(NamedTuple):
+
+    key: str
+    kind: str
+    task_id: Optional[str]
+    tool_use_id: Optional[str]
+
+
+def async_launch(record: Dict[str, Any]) -> Optional[Launch]:
     result = record.get("toolUseResult")
     if not isinstance(result, dict):
         return None
@@ -123,7 +127,7 @@ def async_launch(record: Dict[str, Any]) -> Optional[Dict[str, Optional[str]]]:
     key = tool_use_id or task_id
     if key is None:
         return None
-    return {"key": key, "kind": kind, "task_id": task_id, "tool_use_id": tool_use_id}
+    return Launch(key, kind, task_id, tool_use_id)
 
 
 def stopped_task_id(record: Dict[str, Any]) -> Optional[str]:

@@ -1,10 +1,3 @@
-"""Remap existing project colors onto the calm palette: nearest hue-and-lightness neighbour, spread across projects.
-
-A project keeps a recognisable relationship to its old color (the nearest calm color by CIEDE2000), but no color is
-handed out more than ``ceil(projects / palette size)`` times and projects that share a name prefix (``Harbor``,
-``Harbor Docker``, ``Harbor Monitoring``) never share a color, so siblings stay apart in the sidebar.
-The result feeds the MCP tool ``project_color_set`` (bulk ``colors`` map); nothing here writes to the database.
-"""
 
 from __future__ import annotations
 

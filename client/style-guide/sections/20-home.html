@@ -16,20 +16,14 @@ history readable.</p>
 <dl class="sg-facts">
     <dt>running sessions</dt>
     <dd>The cell <code>opscenter/cells/running-sessions/Cell.svelte</code> is a <code>DataTable</code> with a sort control:
-        light, name, project, status word, age. The launchpad's <code>RunningSessions.svelte</code>,
-        <code>RunningSessionRow.svelte</code> and <code>RunningSessionName.svelte</code> draw the same facts as rows, with
-        inline rename (<code>.running-session-rename-input</code>) and kill. A row with attention pending is grouped at the top
-        (<code>AttentionGroup.svelte</code>, <code>.running-sessions-attention</code>).</dd>
+        light, name, project, status word, age.</dd>
     <dt>recent and closed</dt>
-    <dd><code>opscenter/cells/closed-sessions/Cell.svelte</code> and the launchpad's <code>RecentSessions.svelte</code> and
-        <code>EndedSessionRow.svelte</code>: what ended, when, and a restart. Recently deleted rows are the undo list in
+    <dd><code>opscenter/cells/closed-sessions/Cell.svelte</code>: what ended, when, and a restart. Recently deleted rows are the undo list in
         <code>client/css/recent-deleted.css</code>. A row being opened says so: <code>.oc-open-status</code> in the cell
-        (cyan opening, green opened, coral with the refusal) and <code>.recent-session-open-error</code> on the launchpad row,
-        both read from <code>recent-open-status.svelte.ts</code>, with a toast for each step.</dd>
+        (cyan opening, green opened, coral with the refusal), read from <code>recent-open-status.svelte.ts</code>, with a toast
+        for each step.</dd>
     <dt>projects</dt>
-    <dd><code>opscenter/cells/projects/Cell.svelte</code> and the launchpad tree (<code>ProjectTree.svelte</code>,
-        <code>ProjectNode.svelte</code>, <code>TreeSessionRows.svelte</code>, <code>ProjectSessionRow.svelte</code>,
-        <code>NoProjectGroup.svelte</code>): a chevron, the project name, a count, then the project's sessions indented under a
+    <dd><code>opscenter/cells/projects/Cell.svelte</code>: a chevron, the project name, a count, then the project's sessions indented under a
         gutter. A project's directory is permanent; archived projects hide behind a toggle
         (<code>.launchpad-archived-toggle</code>).</dd>
     <dt>new</dt>

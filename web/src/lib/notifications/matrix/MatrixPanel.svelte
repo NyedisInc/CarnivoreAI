@@ -3,6 +3,7 @@
     import { onMount } from 'svelte';
     import { t as reactiveT } from '../../i18n/index.svelte';
     import type { Translate } from '../../sessions/types';
+    import { Select } from '../../base';
     import Check from '../../../opscenter/ui/Check.svelte';
     import '../../settings-page/panel-kit/panel-kit.css';
     import './matrix.css';
@@ -62,11 +63,11 @@
     {:else if phone}
         <div class="mx-picker" data-mx="phone">
             <label class="tm__sub" for="mx-column">{t('settings.notify.matrix.pick')}</label>
-            <select id="mx-column" class="oc-field" bind:value={picked} data-mx="picker">
-                <option value={SCREEN}>{t('settings.notify.matrix.col.screen')}</option>
-                <option value={DEFAULTS_COLUMN}>{t('settings.notify.matrix.col.defaults')}</option>
-                {#each columns as c (c.id)}<option value={c.id}>{colName(c.id, c.name, c.kind)}</option>{/each}
-            </select>
+            <Select id="mx-column" bind:value={picked} data-mx="picker" options={[
+                { value: SCREEN, label: t('settings.notify.matrix.col.screen') },
+                { value: DEFAULTS_COLUMN, label: t('settings.notify.matrix.col.defaults') },
+                ...columns.map((c) => ({ value: c.id, label: colName(c.id, c.name, c.kind) })),
+            ]} />
             {#if activeColumn === DEFAULTS_COLUMN}<p class="tm__sub">{t('settings.notify.matrix.col.defaults.hint')}</p>{/if}
         </div>
         <div class="mx-list" data-mx="list">

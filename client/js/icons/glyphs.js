@@ -1,10 +1,12 @@
-/* <path> */
+
+import { LOGO_GLYPHS } from './logo-glyphs.js';
 
 export const GLYPH_VIEWBOX = '0 0 16 16';
 export const GLYPH_SIZE = 16;
 
 
 export const GLYPHS = {
+    ...LOGO_GLYPHS,
     gear: [
         { tag: 'circle', cx: '8', cy: '8', r: '4.2', stroke: 'currentColor', 'stroke-width': '1.5' },
         { tag: 'circle', cx: '8', cy: '8', r: '1.6', stroke: 'currentColor', 'stroke-width': '1.5' },
@@ -113,7 +115,6 @@ export const GLYPHS = {
             'stroke-linecap': 'round',
         },
     ],
-    /* already exists */
     restart: [
         {
             tag: 'path',
@@ -218,7 +219,6 @@ export const GLYPHS = {
             'stroke-linecap': 'round',
         },
     ],
-    /*  hidden  */
     coffee: [
         {
             tag: 'path',
@@ -735,7 +735,6 @@ export function wispSvgAttrs(element) {
     return 'class="' + element.class + '" style="position:absolute;left:0;top:0"';
 }
 
-/* width="16" */
 export function glyphSvg(name, size) {
     const elements = GLYPHS[name];
     if (!elements) return '';

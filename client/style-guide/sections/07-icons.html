@@ -21,9 +21,23 @@ surrounding text colour, and therefore the theme, colours it.</p>
     <dd><code>github</code> and <code>google</code> are the official one-colour marks, filled
         (<code>&lt;Icon name="github" fill="solid" size={16} /&gt;</code>) so they take <code>currentColor</code> and every
         theme; never a multicolour G. They sit left of the label in a fixed 16px box on the sign-in modal's provider
-        buttons (<code>.signin__prov</code>, <code>.signin__icon</code>).</dd>
+        buttons (base Buttons, <code>.signin__icon</code>).</dd>
     <dt>Task Manager keys</dt>
+    <dd><code>sweep</code> (remove completed), <code>eye</code> / <code>eye-off</code> (hide completed, a pressed
+        toggle that shows the eye while completed rows show and the struck eye while they hide) and <code>send</code>
+        (tell claude) are the Task Manager sidebar's control keys (<code>HuddleBody.svelte</code>, <code>.hd-key</code>,
+        Joe (ccsliinc), 2026-10-03: "iconify in sidebar"), each a 22px bare <code>.oc-ibtn</code> with a tooltip and an
+        <code>aria-label</code>. <code>folder-eye</code> / <code>folder-eye-off</code> (show empty groups, a pressed toggle in
+        the same row, Joe (ccsliinc), 2026-10-05) are the folder outline with a small eye: the open eye while empty
+        groups show, the slashed eye while they hide (the default); same 24px stroke style as <code>folder</code> and
+        <code>eye</code>, "show empty groups" / "hide empty groups" in the tooltip and label.
+        The session resources widget's title row reuses <code>folder-eye</code> / <code>folder-eye-off</code> for its empty sections toggle and adds
+        <code>path</code> (show path, Joe (ccsliinc), 2026-10-17: a route, two end points joined by a bending line, 24 box, 1.5 stroke); its item rows
+        wear <code>folder</code> (project), <code>globe</code> (global) and <code>plug</code> (plugin) for their scope.
+        <code>eye-check</code> / <code>eye-check-off</code> (hide completed, Joe (ccsliinc), 2026-10-05) are the eye with a check for its pupil
+        while completed rows show, and the slashed eye with the check while they hide; they replace the plain <code>eye</code> / <code>eye-off</code> on that key.</dd>
     <dt>approve</dt>
+    <dd><code>approve</code> is a shield with a check, the approve key of a review row in the Task Manager list widget (<code>ApproveKey.svelte</code>, #1797, Joe (ccsliinc), 2026-10-14: "make the approve an icon as well and not a tick"). It is deliberately not <code>check</code> or <code>check-bold</code>, which are the tick and take-all glyphs. A bare <code>.oc-ibtn</code> with an <code>aria-label</code> and a title.</dd>
     <dt>changelog</dt>
     <dd><code>changelog</code> is a version tag (a pentagon with a hole): the Home menu's changelog row, kept apart from <code>docs</code> and <code>files</code>, which are pages.</dd>
     <dt>view toggle</dt>
@@ -38,6 +52,12 @@ surrounding text colour, and therefore the theme, colours it.</p>
         of <code>ROBOT</code> in <code>client/js/session-model-icon.js</code>, guarded by
         <code>icons.robot-parity.test.ts</code>. There is exactly one robot in the app.</dd>
     <dt>sizes</dt>
+    <dd><strong>14px inside a tab</strong>: the component icon, the provider mark, the close "x" and the "+" all render
+        14x14 so nothing in the row reads bigger than its neighbour (Alex, #514 and #569; a 20x20 session-type icon tried
+        at <code>8c5cff33</code> was replaced by 14x14 in #569 the same day). <strong>The Shift-held skull is the one
+        ruled exception at 16x16</strong> (Alex, 2026-09-25, issue #606, PR #607); the 2px comes out of the tab's padding, never
+        its height. <strong>16px</strong> in chrome and
+        menus. <strong>20px</strong> for the header kebab and the few larger marks.</dd>
     <dt>lock</dt>
     <dd><code>lock</code> (#1200): a padlock, the account menu's "lock this device" row (the computer's TOTP lock, separate from the carnivore account's sign out, which keeps <code>log-out</code>).</dd>
     <dt>colour</dt>
@@ -55,6 +75,11 @@ surrounding text colour, and therefore the theme, colours it.</p>
 <h3 class="sg-h3" id="icons-global-mark">the global widget mark</h3>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>A widget that has a local variant (one session) and a global variant (every session) marks the GLOBAL one with a
+        small globe in the lower right corner of its icon (<code>web/src/opscenter/ui/WidgetIcon.svelte</code>,
+        <code>.oc-wicon</code> around the glyph, <code>.oc-wicon-globe</code> the mark; Joe (ccsliinc), 2026-10-10). Draw a
+        widget's icon with <code>&lt;WidgetIcon name={manifest.icon} widget={manifest.id} size={15} /&gt;</code> instead of
+        <code>Icon</code>; every surface that shows a widget icon already does.</dd>
     <dt>look</dt>
     <dd>The mark is the <code>globe</code> entry of the compiled set at 0.6 of the icon (never under 8px), in the icon's own
         colour on a <code>--oc-ground-panel</code> disc, so it follows every theme. The local variant is drawn bare.</dd>
@@ -100,6 +125,9 @@ pass <code>transform</code> through, so ONE outline draws the Pack everywhere). 
         none, inside the one JSON shape (#727). Ids are forever: never rename or remove one; retire it through
         <code>RETIRED_ICON_IDS</code>.</dd>
     <dt>colour</dt>
+    <dd>INHERITED FROM THE PARENT, never chosen (Joe, 2026-09-26). The picker has no colour control, its grid sets no
+        <code>color</code>, and the selected cell's ring is <code>currentColor</code>, so the choices preview in the
+        colour of whatever the picker sits in.</dd>
     <dt>keyboard</dt>
     <dd>The grid is one tab stop (<code>listbox</code>): arrows move a cell or a row of eight, Home and End jump,
         Enter or Space chooses, Escape calls <code>onCancel</code>. ArrowDown in the search field enters the grid.
@@ -139,21 +167,34 @@ pass <code>transform</code> through, so ONE outline draws the Pack everywhere). 
     <dd>The warez page's view pair (<code>ViewToggle</code> <code>shelf</code>): a four-square grid and three plain rules on their own 14
         box, 1.2 stroke, the faceted shelf's glyphs; every other page keeps <code>grid</code> and <code>list</code>.</dd>
     <dt>mod, skill</dt>
+    <dd>The drawer menu rows, the catalog kind tiles and the mod card's art for mods and skills (Alex (example-owner), 2026-10-13, "M02 + S01"): <code>mod</code> is a small block held inside curly braces, <code>skill</code> an academy cap (24 box, 1.5 stroke, outline only). Plugins keep <code>plug</code>, so a mod never wears the plug; <code>rail-items.ts</code> and <code>KIND_ICONS</code> in <code>card.ts</code> are the two mappings.</dd>
     <dt>swarm</dt>
     <dd>The Swarm's tab in the drawer strip (<code>swarm</code> in <code>icons.ts</code>: one node with two dot eyes over two smaller nodes, 24 box, 1.5
         stroke, drawn at 14px like the agents robot; also the Swarm row of the menu tab). Dim like every other tab until selected; the Swarm tab carries no
         count and no question tone.</dd>
     <dt>direction marks</dt>
+    <dd><code>arrow-in</code> (an arrow down to the bottom right: sent FROM the agent whose square follows) and <code>arrow-out</code>
+        (an arrow up to the top right: sent TO that agent), 24 box, 1.5 stroke, drawn at 12px before the square of a Swarm chat
+        burst header (<code>ChatAvatar.svelte</code>), in the cyan and the dim ink. AGENT-TO-AGENT TRAFFIC ONLY (Alex
+        (example-owner), 2026-10-08, #1435): the chat agent's own posts and the owner's carry no arrow.</dd>
     <dt>quote</dt>
     <dd><code>quote</code> (two open quote marks), 24 box, 1.5 stroke, drawn at 12px at the right of every Swarm chat message
         (<code>.hdc-quote</code>, <code>ChatWidget.svelte</code>), dim until the row is hovered. It puts the message's words in the
         composer; a quoted open question or review keeps its item, so the reply answers that card (#1435).</dd>
     <dt>author path icons</dt>
-    <dd>The crumbs of a Swarm chat message's header row (<code>AuthorPath.svelte</code>), reusing the drawer's own marks: the glyphs
+    <dd>The mark beside the name in a Swarm chat message's header row (<code>AuthorPath.svelte</code>), reusing the drawer's own marks: the glyphs
         <code>building</code> (a company, as on the company heading), <code>folder</code> (a project) and <code>crown</code>
         (SysOp) from <code>glyphs.js</code>, and the icons <code>bot</code> (an agent) and <code>person</code> (you). <code>CRUMB_ICON</code> in <code>author-path.ts</code> is the one mapping.</dd>
     <dt>the widget bar pin</dt>
+    <dd><code>bar-pin</code> (issue #1551): the drawer row pin's thumbtack, copied from the row pin (<code>PIN_SVG</code> in <code>row-chips.ts</code>, drawn by <code>RowPin.svelte</code>), drawn by the sessions page's pinned lens (the widget bars and the sidebar rail wear no pin icon: their pin is an item in the strip's own right-click menu, Joe (ccsliinc), 2026-10-20, item 1049). The older <code>pin</code> icon is a map-marker preview glyph and does not read as a pin.</dd>
     <dt>swarm status marks</dt>
+    <dd>Where an item's number used to be (Joe (ccsliinc), 2026-10-04): <code>status-question</code>,
+        <code>status-outbox</code> (waiting to send), <code>status-working</code> (a half-filled circle: STATIC, never a
+        spinner, since a looping animation costs CPU on every open list), <code>status-review</code> (a solid circle with a
+        tick: waiting on his tick), <code>status-install</code> (an arrow down into a tray: built and committed, waiting to install), <code>status-scheduled</code> (an alarm clock: a todo waiting for its set time), <code>status-back-burner</code> (a clock face: wanted but not today), <code>check</code> (ticked), <code>status-idle</code> (a quiet dot, open) and
+        <code>status-info</code> (an unseen Claude info or attention post), drawn at 12px with a 1.75 stroke in the status
+        token. <code>STATUS_ICON</code> in <code>web/src/cplugs/huddle/huddle-status.ts</code> is the one mapping; every mark
+        carries the status as its aria-label and tooltip (<code>.tkm-status</code>, the chrome section). The Task Manager's list density keys (section 24) draw <code>density-compact</code> (four tight lines), <code>density-normal</code> (a title over one indented sub-line, twice) and <code>density-full</code> (a title over an indented paragraph), at 12px on the list bar.</dd>
 </dl>
 
 <h3 class="sg-h3" id="icons-wrapper-mark">a wrapper's mark</h3>
@@ -186,6 +227,10 @@ pass <code>transform</code> through, so ONE outline draws the Pack everywhere). 
 </div>
 <dl class="sg-facts">
     <dt>provider mark</dt>
+    <dd>Comes ONLY from <code>window.AgentFamilyIcon.svg(family, 14)</code> (<code>client/js/agent-family-icon.js</code>),
+        or <code>providerMark(family)</code> in <code>web/src/lib/sessions/agent-marks.ts</code>, which calls it. Families:
+        claude, codex, hermes, openclaw, local, shell, and <code>unknown</code> for everything else. Claude's starburst keeps
+        its brand orange as a literal; the others are <code>currentColor</code>. Hermes is the one FILLED mark (the owner's hermes.svg, verbatim, on its own 24 box inside a nested svg), so it never takes a stroke.</dd>
     <dt>launch profiles</dt>
     <dd>The settings rail's launch profiles entry wears <code>rocket</code> (<code>icons.ts</code>: an outline rocket, 24 box, 1.5 stroke,
         like its neighbours), no longer the terminal chevron.</dd>
@@ -197,8 +242,56 @@ pass <code>transform</code> through, so ONE outline draws the Pack everywhere). 
     <dd>The vertical three-dot overflow mark is defined once in <code>client/js/kebab-icon.js</code> at 20px, a size
         chosen for its ink weight (the file header says why); reuse it, never redraw three dots.</dd>
     <dt>skull, moon, cup, sun</dt>
+    <dd><code>skull</code> kills (a session, a tab's session with Shift held); <code>moon</code> replaces the light on an
+        asleep session; the <code>coffee</code> glyph is keep-awake: dark when off, lit with rising steam when on
+        (<code>KeepAwakeIcon.svelte</code>). The auto switch toggle is ONE mark in one icon space, the robot centred inside a
+        ring of two chasing arrows (<code>BotCycleMark.svelte</code>, the <code>cycle</code> ring behind <code>bot</code>,
+        classes <code>.bcm</code>, <code>.bcm-ring</code>, <code>.bcm-bot</code>; Joe (ccsliinc), 2026-10-02: never two
+        icons side by side), grey when off and coloured with a small sparkle when on (<code>AutoSwitchIcon.svelte</code>).
+        Reuse <code>&lt;BotCycleMark size={n} /&gt;</code> wherever the auto switch is drawn. Menu labels read
+        "kill session" and "sleep session" beside those marks (PR #538). The same moon
+        (<code>SessionRowMenuIcons.svg('sleep', ...)</code>) also prefixes the auto-sleep toast's title (issue #690,
+        <a href="#feedback-toasts">toasts</a>) - one glyph, reused, never redrawn per surface.</dd>
+    <dt>brain</dt>
+    <dd>The agent memory editor's key (<code>icons.ts</code> <code>brain</code>, issue #2615, Alex (example-owner), 2026-10-27: "a little brain icon ... You can even make it a pink color"): drawn in <code>--oc-pink</code> by <code>.hdc-brain</code> in the agent chat's title strip, left of the kebab. Pink means memory and nothing else.</dd>
     <dt>task mark</dt>
+    <dd>A temporary task agent's name is preceded by a small <code>hourglass</code> (<code>icons.ts</code>), drawn by
+        <code>&lt;TaskMark rank={agent.rank} /&gt;</code> (<code>web/src/opscenter/ui/TaskMark.svelte</code>, class
+        <code>.oc-task-mark</code>, <code>--oc-text-secondary</code>, label and tooltip "temporary task agent"; issue #1444,
+        Alex (example-owner), 2026-10-08). It reads the RANK, never the name string, so a promotion to a feature agent drops it with
+        no rename; any other rank draws nothing. On the Swarm floor pass <code>markRankOf(item)</code>
+        (<code>node-look.ts</code>), which gives an ordinary session's task-shaped stand-in no mark.</dd>
     <dt>crown</dt>
+    <dd>The size master toggle (issue #998, Alex (example-owner), 2026-09-27: "a gold crown icon. lit for master"):
+        <code>SizeMasterCrown.svelte</code>, the <code>.size-crown</code> button in a terminal's toolbar, just left of
+        the kebab (folded into the kebab as a menu item below 340px of cell width). The <code>crown</code> glyph (<code>client/js/icons/glyphs.js</code>, also pickable in
+        the <code>IconPicker</code>) is drawn three ways from <code>data-size-master</code>: <code>master</code> is lit,
+        filled in <code>--oc-yellow-bright</code> (the theme's own warning gold); <code>watcher</code> is a dim
+        <code>--oc-yellow</code> outline (another window sets the size); <code>none</code> is a
+        <code>--oc-text-dim</code> outline (smallest window wins). Colour only from those tokens, never a literal gold;
+        the label says which state, from the catalog (<code>terminal.size_master.*</code>). Size only: it never
+        gates typing.
+        <br><br>
+        <strong>Two more doors onto the same claim (issue #1019, Alex (example-owner), 2026-09-27), no second mechanism:</strong>
+        below 1024, where the toolbar and its crown do not exist, <code>#headerSizeMasterBtn</code> (built by
+        <code>client/js/header-menu.js</code>'s <code>_buildSizeMasterRow()</code>) puts the same claim/release one tap away
+        in the phone kebab, labelled "master" - styled EXACTLY like every other row in that panel (the shared neutral-icon
+        rule, never gold), because it is one session's own control sitting among its session-scoped siblings, not the
+        app-wide state below. And <code>#headerMasterAllBtn</code> ("master all", <code>header-master-all.css</code>) is a
+        single per-browser switch in the app header's top-right corner (rightmost inline control, folding into the same
+        kebab below 768): ON claims size master on every session this browser has attached, and every one it attaches
+        afterward; OFF releases them. It stays lit <code>--oc-yellow-bright</code> while on and a dim
+        <code>--oc-text-dim</code> outline while off in BOTH presentations (the one row in this menu that keeps its own
+        colour when folded, because it names a browser-wide state rather than a per-item action). If a different browser
+        takes master of a session this one was auto-holding, this switch turns itself off rather than fighting back - see
+        <code>web/src/opscenter/api/master-all.svelte.ts</code>. IT HAS A SECOND DOOR TOO,
+        the "master all" item of the drawer footer's account menu (<code>AccountMenu.svelte</code>), with the lit crown
+        <code>#sidebarMasterAllBtn</code> beside the footer's light while it is on (<code>web/src/lib/drawer/bar.ts</code>'s
+        <code>DrawerBar.svelte</code>): issue #452 (2026-09-25) takes the WHOLE app header
+        off the terminal page at 1024px and up once the grid is mounted and the drawer is showing - the app's ordinary
+        desktop state - so the header crown alone is unreachable there. Both doors read and write the same
+        <code>CloudeWeb.masterAllEnabled()</code> / <code>setMasterAll()</code> bridge and repaint on the same
+        <code>cloude:master-all</code> event, so they can never disagree.</dd>
 </dl>
 
 <h3 class="sg-h3" id="icons-kinds">catalog kind glyphs</h3>
@@ -211,10 +304,13 @@ is the one mapping). A kind this build cannot name draws <code>grid</code>.</p>
 <ul class="sg-mistakes">
     <li><strong>A second robot, a second kebab, a hand-drawn provider mark.</strong> Each exists once; a copy drifts and the
         same thing is drawn two shapes on two screens.</li>
+    <li><strong>Text standing in for an icon.</strong> "Make 'pick' an SVG icon": action icons are SVG.</li>
     <li><strong>Misaligned tab icons.</strong> Mixing 14 and 16 and 20 in one row, or a mark with its own margin, puts the
         row out of line (#514, #569). Every icon in a tab passes <code>size={14}</code> and centres in a fixed box.</li>
     <li><strong>Icon-only meaning.</strong> A glyph with no label and no <code>aria-label</code> means nothing to a screen
         reader and little to a new user.</li>
+    <li><strong>A colour choice next to an icon choice, or a second picker.</strong> A picked icon wears its parent's
+        colour (Joe, 2026-09-26), and every named thing uses the one <code>IconPicker</code> (#764).</li>
     <li><strong>An <code>&lt;img src&gt;</code> icon.</strong> It is a network request, it cannot take
         <code>currentColor</code>, and it does not follow the theme.</li>
 </ul>

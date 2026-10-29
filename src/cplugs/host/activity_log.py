@@ -27,8 +27,12 @@ _KEYS = ("ts", "method", "permission", "target", "status", "bytes", "count")
 def _open(path: Path) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path, timeout=BUSY_S)
-    conn.execute(_SCHEMA)
-    conn.execute(_INDEX)
+    try:
+        conn.execute(_SCHEMA)
+        conn.execute(_INDEX)
+    except sqlite3.Error:
+        conn.close()
+        raise
     return conn
 
 

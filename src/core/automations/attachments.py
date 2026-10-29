@@ -93,10 +93,6 @@ def collect(folder: Path) -> Tuple[Optional[List[Dict[str, Any]]], List[Dict[str
 
 
 def resolve(root: Path, run_id: str, name: str) -> Optional[Path]:
-    """The real path of a stored attachment, only when it is a regular file inside the run's folder. Blocking.
-
-    Inputs: root; run_id; name (already looked up in the run's stored list). Output: Path | None.
-    """
     folder = os.path.realpath(folder_for(root, run_id))
     real = os.path.realpath(os.path.join(folder, name))
     if os.path.dirname(real) != folder or not os.path.isfile(real):

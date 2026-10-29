@@ -81,6 +81,7 @@ export interface ChangedNote {
     hours: number;
 }
 
+/* nothing was sent */
 export function changedNote(rec: ItemRecord, facts: Facts | undefined, now: number): ChangedNote | null {
     if (!rec.latest || !facts || facts.changed_files <= 0) return null;
     const at = Date.parse(facts.changed_at);

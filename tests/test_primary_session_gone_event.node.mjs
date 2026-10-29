@@ -33,10 +33,10 @@ test('terminal.js dispatches the same literal from the page-owner 4404 path', ()
         'terminal.js must dispatch the literal with the gone tmux name as detail');
 });
 
-test('session-row-menu-sleep.js dispatches the same literal from releaseThisTab', () => {
-    const src = fs.readFileSync(path.join(ROOT, 'client/js/session-row-menu-sleep.js'), 'utf8');
+test('row-menu-sleep.ts dispatches the same literal from releaseThisTab', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'web/src/lib/drawer/row-menu-sleep.ts'), 'utf8');
     assert.ok(src.includes(`new CustomEvent('${EVENT}', { detail: { tmuxName: ctx.name } })`),
-        'session-row-menu-sleep.js must dispatch the literal with the gone tmux name as detail');
+        'row-menu-sleep.ts must dispatch the literal with the gone tmux name as detail');
 });
 
 console.log(`${passes} passed, ${failures} failed`);

@@ -5,6 +5,11 @@
   import { t } from '../i18n/index.svelte';
   import ModalShell from '../launchpad/ModalShell.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
+  import Button from '../base/Button.svelte';
+  import Field from '../base/Field.svelte';
+  import Radio from '../base/Radio.svelte';
+  import RadioGroup from '../base/RadioGroup.svelte';
+  import Select from '../base/Select.svelte';
   import {
     applyMove, formatBytes, listMoveProjects, planMove, sameDestination,
     type MoveDestination, type MovePlan, type MoveProject,
@@ -100,31 +105,27 @@
     {#if done}
       <p class="stm-note" data-move="done">{t('session.move.done', { destination: done.destination ?? '', count: String(done.file_count) })}</p>
     {:else}
-      <div class="stm-options" role="radiogroup" aria-label={t('session.move.label')}>
-        <label class="stm-option" data-choice="project">
-          <input type="radio" name="move-mode" value="project" checked={mode === 'project'} disabled={busy} onchange={() => (mode = 'project')} />
-          <span class="stm-option-text">
-            <span class="stm-option-title">{t('session.move.dest.project')}</span>
-            <select class="modal-input" data-move="project" aria-label={t('session.move.dest.project')} bind:value={projectId} disabled={busy || mode !== 'project'}>
-              <option value="">{t('session.move.project.pick')}</option>
-              {#each projects as p (p.id)}<option value={String(p.id)}>{p.name}</option>{/each}
-            </select>
+      <div class="stm-options">
+      <RadioGroup label={t('session.move.label')} value={mode} disabled={busy} onchange={(next) => (mode = next === 'folder' ? 'folder' : 'project')}>
+        <div class="mvf-choice">
+          <Radio value="project" label={t('session.move.dest.project')} data-choice="project" />
+          <Select data-move="project" aria-label={t('session.move.dest.project')} bind:value={projectId} disabled={busy || mode !== 'project'}>
+            <option value="">{t('session.move.project.pick')}</option>
+            {#each projects as p (p.id)}<option value={String(p.id)}>{p.name}</option>{/each}
+          </Select>
+        </div>
+        <div class="mvf-choice">
+          <Radio value="folder" label={t('session.move.dest.folder')} data-choice="folder" />
+          <span class="mvf-row">
+            <Field data-move="folder" aria-label={t('session.move.dest.folder')} placeholder={t('session.move.folder.placeholder')}
+              autocomplete="off" spellcheck="false" bind:value={folder} disabled={busy || mode !== 'folder'} />
+            {#if picker}
+              <Button data-move="browse" disabled={busy || mode !== 'folder'} onclick={() => void browse()}>{t('session.move.folder.browse')}</Button>
+            {/if}
           </span>
-        </label>
-        <label class="stm-option" data-choice="folder">
-          <input type="radio" name="move-mode" value="folder" checked={mode === 'folder'} disabled={busy} onchange={() => (mode = 'folder')} />
-          <span class="stm-option-text">
-            <span class="stm-option-title">{t('session.move.dest.folder')}</span>
-            <span class="mvf-row">
-              <input type="text" class="modal-input" data-move="folder" aria-label={t('session.move.dest.folder')} placeholder={t('session.move.folder.placeholder')}
-                autocomplete="off" spellcheck="false" bind:value={folder} disabled={busy || mode !== 'folder'} />
-              {#if picker}
-                <button type="button" class="modal-btn modal-btn-secondary" data-move="browse" disabled={busy || mode !== 'folder'} onclick={() => void browse()}>{t('session.move.folder.browse')}</button>
-              {/if}
-            </span>
-            <span class="stm-option-help">{t('session.move.folder.help')}</span>
-          </span>
-        </label>
+          <span class="stm-option-help">{t('session.move.folder.help')}</span>
+        </div>
+      </RadioGroup>
       </div>
       {#if loadError}<p class="stm-error" role="alert" data-move="load-error">{loadError}</p>{/if}
       {#if planning}<p class="stm-note" data-move="checking">{t('session.move.checking')}</p>{/if}
@@ -156,14 +157,14 @@
   {#snippet footer()}
     <footer class="stm-foot">
       {#if done}
-        <button type="button" class="modal-btn modal-btn-confirm" data-move="close" onclick={onClose}>{t('session.move.close')}</button>
+        <Button variant="confirm" data-move="close" onclick={onClose}>{t('session.move.close')}</Button>
       {:else}
-        <button type="button" class="modal-btn modal-btn-secondary" data-move="cancel" disabled={busy} onclick={onClose}>{t('session.move.cancel')}</button>
-        <button type="button" class="modal-btn modal-btn-secondary" data-move="check" disabled={!destination || planning || busy} onclick={() => void check()}>{t('session.move.check')}</button>
+        <Button data-move="cancel" disabled={busy} onclick={onClose}>{t('session.move.cancel')}</Button>
+        <Button data-move="check" disabled={!destination || planning || busy} onclick={() => void check()}>{t('session.move.check')}</Button>
         {#if live}
-          <button type="button" class="modal-btn modal-btn-danger" data-move="go" disabled={!canMove} onclick={() => void go()}>{t('session.move.go.live')}</button>
+          <Button variant="danger" data-move="go" disabled={!canMove} onclick={() => void go()}>{t('session.move.go.live')}</Button>
         {:else}
-          <button type="button" class="modal-btn modal-btn-confirm" data-move="go" disabled={!canMove} onclick={() => void go()}>{t('session.move.go')}</button>
+          <Button variant="confirm" data-move="go" disabled={!canMove} onclick={() => void go()}>{t('session.move.go')}</Button>
         {/if}
       {/if}
     </footer>

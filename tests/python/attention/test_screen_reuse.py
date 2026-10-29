@@ -82,7 +82,8 @@ def test_the_reader_captures_once_while_the_stamp_holds(monkeypatch):
         _build_tmux_status_map=lambda: StatusMap(dict(rows), complete=True, socket="cloude"),
         _identity_for_instance=lambda name, epoch: {"agent_type": "claude"},
         _instance_index_for_listing=lambda *, socket, names: InstanceIndex(),
-        _tmux_socket_name=lambda: "cloude",
+        tmux_socket_name=lambda: "cloude",
+        _wrappers_reader=lambda: [],
         _registry=SimpleNamespace(
             sessions={"s": SimpleNamespace(agent_type="claude", working_dir=None)},
             backends={"s": SimpleNamespace(socket_name="cloude")},

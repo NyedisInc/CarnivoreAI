@@ -1,55 +1,3 @@
-"""Whether a theme's ``effects.js`` may run, as one ladder, with no I/O.
-
-A theme can ship a JavaScript module that runs in the page. #45 made the
-consent decision a SHARED setting so a ``never`` set on one device binds
-on another, which is the half of sharing that can only ever reduce what
-executes. The half that can only ever increase it - an ``always`` - is
-the half that needed an argument, and the argument is in
-``theme_script_digest``: a grant names the BYTES it was given for, so it
-cannot silently cover a file edited afterwards.
-
-SIX OUTCOMES, ONE OF WHICH RUNS. That asymmetry is the design. Every way
-of not knowing resolves to a refusal, so the failure mode of this module
-is a theme that looks plainer than it should, never a script that ran on
-evidence nobody checked. A test that only proves the consented path works
-would pass against a gate that never refuses, which is why the refusing
-rungs are the ones with the controls on them.
-
-THE ORDER OF THE RUNGS IS THE WHOLE CLAIM, and it is:
-
-  1. The manifest declares no script. Nothing to decide.
-  2. A ``never`` is on record. DENY WINS OVER EVERYTHING, including the
-     bundled-theme bypass below and including a newer ``always``. A
-     restriction is never overridden by a grant, in either direction,
-     whichever was written last: the whole reason sharing a restriction
-     is safe is that it cannot be talked out of.
-  3. The consent record could not be read. A grant that cannot be checked
-     against the current record cannot be shown not to be superseded, so
-     it does not run. See "why this fails closed" below.
-  4. The theme is BUNDLED. It shipped in this repo, so it is our code
-     rather than third-party content, and an attacker able to ship a
-     malicious bundled ``effects.js`` can equally ship a malicious
-     ``registry.js`` - a modal in front of our own code is friction with
-     no security gain. This is the rung that was already shipped and is
-     restated here rather than reversed. The same rung also covers an
-     INSTALLED theme the server stamped ``scriptTrust: "first_party"``
-     (the signed catalog's own code, verified at listing time, #1501);
-     rungs 2 and 3 still outrank it.
-  5. No digest could be taken for a user theme's declared script. The
-     bytes cannot be named, so no grant can be matched to them.
-  6. A grant exists and names DIFFERENT bytes. The script changed after
-     it was approved, which is a new script, so it is asked about again.
-  7. A grant exists and names THESE bytes. Run.
-  8. Nothing on record. Ask.
-
-WHY THIS FAILS CLOSED ON AN UNREADABLE RECORD. The plan #45 implements
-says "a cached approval, pending prompt, or in-flight load cannot outrank
-a newer global Never". A client that could not read the record cannot
-know whether a newer ``never`` exists, so honouring a cached grant there
-would be exactly that outranking. The cost of refusing is a theme that
-renders without its animation and says so in the log; the cost of
-allowing is running a script the user may have revoked on another device.
-"""
 
 from __future__ import annotations
 
@@ -191,37 +139,6 @@ def decide(
     record_readable: bool = True,
     script_trust: Optional[str] = None,
 ) -> ConsentDecision:
-    """Answer whether one theme's ``effects.js`` may run right now.
-
-    Description: PURE, and the only place the ordering in this module's
-      docstring exists. Both the server's own check and the client's gate
-      resolve through this shape, so the two cannot disagree about what a
-      record means.
-    Inputs:
-      declares_script (bool) - whether the manifest named an ``effects``
-        file at all.
-      source (str) - ``"builtin"`` or ``"user"``, as the server stamped
-        it. Anything else is treated as a user theme, because an
-        unrecognised provenance is not a reason to trust something more.
-      served_digest (str|None) - the digest of the bytes about to be
-        fetched, or None when it could not be taken.
-      record (Mapping|None) - this theme's stored consent entry, shaped
-        ``{"decision": "always", "digest": "<hex>"}``, or None when the
-        user has never answered for it.
-      record_readable (bool) - whether the consent store could be read at
-        all. False means "we do not know what is on record", which is a
-        refusal and not an absence.
-      script_trust (str|None) - the server-stamped ``scriptTrust`` of the
-        listing. ``"first_party"`` on a ``"user"`` theme means the signed
-        catalog's own code, verified at listing time; anything else is
-        ignored.
-    Output: ConsentDecision.
-
-    Example:
-        decide(declares_script=True, source="user", served_digest=d,
-               record={"decision": "always", "digest": d}).may_run
-        -> True
-    """
     if not declares_script:
         return ConsentDecision(SKIP_NO_SCRIPT, RUNG_NO_SCRIPT, None)
 
@@ -231,7 +148,6 @@ def decide(
     if decision == DECISION_NEVER:
         return ConsentDecision(SKIP_DENIED, RUNG_DENIED, served_digest)
 
-    # could not
     if not record_readable:
         return ConsentDecision(SKIP_UNVERIFIABLE, RUNG_RECORD_UNREADABLE, served_digest)
 
@@ -241,7 +157,6 @@ def decide(
     if source == SOURCE_USER and script_trust == SCRIPT_TRUST_FIRST_PARTY:
         return ConsentDecision(RUN, RUNG_FIRST_PARTY, served_digest)
 
-    # could not
     if not served_digest or not DIGEST_RE.match(served_digest):
         return ConsentDecision(SKIP_UNVERIFIABLE, RUNG_DIGEST_UNAVAILABLE, None)
 

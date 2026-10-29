@@ -216,7 +216,7 @@ describe('the detail pane', () => {
         expect(root.querySelector('[data-skill-remove]')).toBeNull();
         (root.querySelector('[data-skill-open-catalog]') as HTMLElement).click();
         expect(openCatalogPage).toHaveBeenCalledTimes(1);
-        expect(root.querySelector('[data-skill-origin]')?.textContent).toContain('acme/sme 1.2.0');
+        expect(root.querySelector('[data-skill-origin]')?.textContent).toContain('harbor/sme 1.2.0');
     });
 
     test('a refused remove shows the server sentence and keeps the skill', async () => {

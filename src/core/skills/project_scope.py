@@ -1,28 +1,3 @@
-"""What a project-scope install is allowed to name as its project.
-
-**THE RULE IS A COMPARISON, NOT A LIST OF SPELLINGS.** The invariant is
-that a PROJECT install may never compose a directory a GLOBAL install
-composes, so the check asks ``InstallRoots.targets_for`` for both sets and
-refuses on any collision. That is the whole rule, and it holds for a
-harness this file has never heard of, for ``$CODEX_HOME`` pointed
-anywhere, and for a home directory the suite has redirected. The explicit
-refusals above it are a CHEAP EARLY EXIT and never the guarantee: they
-answer without composing anything for the handful of paths nobody ever
-means (``/``, ``/etc``, ``/usr``, the harness directories themselves, this
-app's own state directory).
-
-**IT FAILS CLOSED.** An unreadable project list refuses every project
-install rather than accepting one, because the failure being prevented is
-writing into a directory nobody chose. The detail says which of the two
-happened, so an operator is never left reading "unknown project" when the
-truth is "the project list could not be read".
-
-**``realpath``, NEVER ``expanduser``** (gotcha 6). ``expanduser`` expands
-``~`` and stops, so a symlinked spelling of one directory is a second
-directory to every comparison here, and a comparison that can be dodged by
-spelling is not a check. ``projects.root`` is stored expanded but NOT
-resolved, so the stored side is resolved here too before it is compared.
-"""
 
 from __future__ import annotations
 
@@ -47,19 +22,6 @@ class ProjectPathRefused(ValueError):
 
 
 def known_project_roots(state_dir: Path) -> FrozenSet[str]:
-    """Every registered project directory, resolved, or refuse the read.
-
-    Description: reads the SAME ``projects`` table ``GET /projects``
-      serves, through the same resolver, so the route can never accept a
-      path the picker would not have offered. A degraded mode is a
-      REFUSAL rather than an empty set, because "no projects" and "the
-      project list could not be read" are different facts and only one of
-      them should read as "you have not made a project yet".
-    Inputs: state_dir (Path) - where ``cloude.db`` lives.
-    Output: frozenset[str] - realpath-resolved project roots.
-    Raises: ProjectPathRefused when the list could not be read.
-    Example: known_project_roots(reader.state_dir())
-    """
     view = resolve_projects(state_dir)
     if view.mode != MODE_DB:
         logger.warning(
@@ -134,12 +96,4 @@ def resolve_project_path(
 
 
 def _resolved_leaves(targets: Iterable[Any]) -> FrozenSet[str]:
-    """Every target's leaf directory, resolved, as a comparable set.
-
-    Description: ``realpath`` answers for a path that does not exist yet
-      too, resolving what it can, which is what a harness root that has
-      never been created needs.
-    Inputs: targets (Iterable[Target]).
-    Output: frozenset[str].
-    """
     return frozenset(os.path.realpath(target.leaf_dir) for target in targets)

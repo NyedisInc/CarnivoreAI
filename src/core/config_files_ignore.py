@@ -51,16 +51,6 @@ def _git_env() -> dict:
 
 
 def ignored_paths(root_dir: Path, paths: list[str]) -> set[str] | None:
-    """
-    Description: ask git which of ``paths`` (relative to ``root_dir``) it
-      ignores.
-    Inputs: root_dir (Path) - the resolved root directory; paths (list[str])
-      - relative paths, each starting with ``./``, directories with a
-      trailing slash.
-    Output: set[str] of the ignored inputs, exactly as given; or None when
-      git could not answer (not a repository, git missing, timeout, bound).
-    Example: ignored_paths(Path("/repo"), ["./dist/", "./src/"]) -> {"./dist/"}
-    """
     if len(paths) > MAX_PATHS:
         logger.info("config_files_ignore_bound", count=len(paths), bound=MAX_PATHS)
         return None
@@ -96,15 +86,6 @@ def ignored_paths(root_dir: Path, paths: list[str]) -> set[str] | None:
 
 
 def mark_ignored(root_dir: Path, nodes: list) -> IgnoreStatus:
-    """
-    Description: set ``is_ignored`` on every node of a listing, in place,
-      from one git query.
-    Inputs: root_dir (Path) - the resolved root the listing's rel_paths are
-      relative to; nodes (list[dict]) - ``list_subtree`` output.
-    Output: "ok" when git answered (every node now carries ``is_ignored``);
-      "unavailable" when it could not (no node is changed).
-    Example: mark_ignored(Path("/repo"), tree) -> "ok"
-    """
     flat = list(_walk(nodes))
     cache: dict[str, bool] = {}
     queries: list[tuple[dict, str | None]] = []

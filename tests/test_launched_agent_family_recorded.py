@@ -136,12 +136,12 @@ def test_the_manager_forwards_the_family_to_the_write_site(monkeypatch, tmp_path
     )
     monkeypatch.setattr(
         mgr,
-        "list_attachable_sessions_with_socket",
+        "_probe_instances",
         lambda: (SOCKET, listing_for("cloude_fam_fwd")),
         raising=False,
     )
     monkeypatch.setattr(
-        mgr, "_tmux_socket_name", lambda: SOCKET, raising=False
+        mgr, "tmux_socket_name", lambda: SOCKET, raising=False
     )
     monkeypatch.setattr("src.core.db.transaction", _null_transaction)
 
@@ -204,6 +204,9 @@ class _StubSettings:
     def __init__(self, log_dir):
         self._log_dir = log_dir
         self.port = 5001
+
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
 
     def get_pinned_themes_path(self):
         return self._log_dir / "pinned_themes.json"
@@ -506,7 +509,7 @@ async def test_create_session_records_the_family_it_launched(
         type(settings), "get_agent_command", lambda self, *a, **k: "sleep 45"
     )
     monkeypatch.setattr(
-        "src.core.session_manager._configured_wrappers", lambda: []
+        "src.core.sessions.wrapper_source.configured_wrappers", lambda **_kw: []
     )
     ensure_db_migrated(state_dir, 4, "0.8.2")
 

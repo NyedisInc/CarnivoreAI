@@ -48,7 +48,7 @@ def button(action: Dict[str, Any]) -> Dict[str, Any]:
     return doc(type="button", label="go", action=action)
 
 
-KEY = "ghp_" + "aB3dE5fG7hJ9kL1mN3pQ5rS7tU9vW1xY3zA5"  # synthetic test value, never issued
+KEY = "ghp_" + "aB3dE5fG7hJ9kL1mN3pQ5rS7tU9vW1xY3zA5"
 REFUSED = [
     ("action_not_declared", button({"call": "route", "route": "wipe"})),
     ("action_not_declared", button({"call": "tool", "name": "session_send_keys"})),

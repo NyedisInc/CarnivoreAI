@@ -10,14 +10,13 @@ from typing import Iterable, List, Optional, Sequence, Tuple
 import structlog
 
 from src.core.inventory.claude_folders import FORM_FOLDER, FORM_MAIN, conversation_entries, entries, project_folders
-from src.core.inventory.identity import SAFE_CONVERSATION
+from src.core.inventory.identity import SAFE_CONVERSATION, safe_conversation
 from src.core.inventory.locations import claude_homes, codex_home
 from src.core.inventory.model import (DELETE, KEEP, KIND_DIR, KIND_FILE, KIND_LINES, REPORT, ROLE_KEY, ROLE_PATH, Artifact,
                                       FieldRef, SessionIdentity)
 
 logger = structlog.get_logger()
 
-# conversation id
 REWRITE_PROJECTS = (FieldRef("projects/<ENC(cwd)>", ROLE_PATH), FieldRef("conversation id", ROLE_KEY))
 REWRITE_BY_CONVERSATION = (FieldRef("conversation id", ROLE_KEY),)
 REWRITE_CODEX = (FieldRef("cwd in the first record", ROLE_PATH), FieldRef("conversation id", ROLE_KEY))
@@ -47,12 +46,6 @@ def _measure(path: str) -> Tuple[str, int, int]:
 
 def measured_artifact(store: str, path: str, root: Path, action: str, reason: str, blockers: List[str],
                       rewrite: Sequence[FieldRef] = (), derived: bool = False) -> Optional[Artifact]:
-    """One file or folder as an artifact, or a blocker when it resolves outside ``root``.
-
-    Inputs: store (the label); path; root (the folder it must sit inside); action; reason; blockers (appended to);
-      rewrite (what an importer rewrites); derived (an export rebuilds it).
-    Output: Artifact | None. Example: measured_artifact("claude", "/h/projects/-a/x.jsonl", Path("/h/projects"), "delete", "", [])
-    """
     if not _inside(path, root):
         blockers.append(f"{path} resolves outside {root}; refusing to touch it")
         return None
@@ -184,15 +177,18 @@ def _index_lines(path: Path, conv: str) -> int:
 def trace(ident: SessionIdentity, shared_reason: str = "", homes: Optional[Iterable[Path]] = None,
           codex: Optional[Path] = None, related: Iterable[str] = (), *,
           related_blockers: Optional[List[str]] = None) -> Tuple[List[Artifact], List[str]]:
-    if not ident.conversation and not related:
+    conversation = safe_conversation(ident.conversation)
+    if ident.conversation and conversation is None:
+        logger.warning("inventory_unsafe_conversation_id", conversation=ident.conversation)
+    if not conversation and not related:
         return [], []
     resolved = [Path(h) for h in homes] if homes is not None else claude_homes()
     codex_root = codex if codex is not None else codex_home()
     arts: List[Artifact] = []
     blockers: List[str] = []
     seen: set = set()
-    if ident.conversation:
-        arts += _conversation_artifacts(ident.conversation, resolved, codex_root, KEEP if shared_reason else DELETE,
+    if conversation:
+        arts += _conversation_artifacts(conversation, resolved, codex_root, KEEP if shared_reason else DELETE,
                                         shared_reason, blockers, seen)
     for conv in related:
         if not SAFE_CONVERSATION.match(conv):

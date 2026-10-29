@@ -1,4 +1,4 @@
-/* this.state = 'stopped' */
+/* nothing at all */
 
 const STOP_ENGINE_ACTION = 'stop-engine';
 

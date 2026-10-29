@@ -113,12 +113,12 @@ TOOLS: Dict[str, ToolSpec] = {
         properties=_schema(), required=[], handler=save_import_preview, gate="read", pane_only_args=_PATH_ARGS),
     "save_import": ToolSpec(
         description="Ask the owner to file the previewed old archive conversations in the backup vault, quoting save_import_preview's fingerprint and "
-                    "the same sources. Add only: no old source is touched and nothing existing is changed. It waits for their approval every time.",
+                    "the same sources. Add only: no old source is touched and nothing existing is changed. It waits for his approval every time.",
         properties={**_schema(), "fingerprint": {"type": "string", "minLength": 64, "maxLength": 64}}, required=["fingerprint"],
         handler=save_import, gate="inbox", prepare=_apply_prepare, pane_only_args=_PATH_ARGS, dedupe_by=("fingerprint",)),
     "save_import_remove": ToolSpec(
         description="Ask the owner to take back a finished old archive import (run_id from save_imports_list): removes exactly the points it filed "
-                    "and the chunks only it wrote; a point pinned or changed since stays. It waits for their approval every time.",
+                    "and the chunks only it wrote; a point pinned or changed since stays. It waits for his approval every time.",
         properties=_RUN, required=["run_id"], handler=save_import_remove, gate="inbox", prepare=_undo_prepare, dedupe_by=("run_id",)),
     "save_import_check": ToolSpec(
         description="Read an import run's points back from the vault and compare every file to what the run filed (a damaged chunk is reported, "
@@ -129,7 +129,7 @@ TOOLS: Dict[str, ToolSpec] = {
         properties=_RUN, required=[], handler=save_imports_list, gate="read"),
     "save_import_decide": ToolSpec(
         description="Ask the owner to record the once-over verdict on imported conversations: keep or junk with a date (20261022). Only adds the "
-                    "label reviewed-<date>:<verdict>; keep lets a junk, trash or review labeled import into deep search. Waits for their approval.",
+                    "label reviewed-<date>:<verdict>; keep lets a junk, trash or review labeled import into deep search. Waits for his approval.",
         properties={"units": {"type": "array", "items": {"type": "string", "maxLength": 200}, "minItems": 1, "maxItems": 500},
                     "verdict": {"type": "string", "enum": ["keep", "junk"]}, "date": {"type": "string", "pattern": "^[0-9]{8}$"}},
         required=["units", "verdict", "date"], handler=save_import_decide, gate="inbox", prepare=_review_prepare),

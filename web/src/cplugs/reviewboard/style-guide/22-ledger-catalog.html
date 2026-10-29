@@ -1,1 +1,9 @@
 <h3 class="sg-h3" id="ledger-review-closed">review board plugin: closed reviews on the projects page</h3>
+<p>The review board's CLOSED REVIEWS group
+        (<code>web/src/cplugs/reviewboard/ClosedReviews.svelte</code>) is the first: boards whose task is done, newest closed first,
+        each a closed session row's twin on the same <code>.ph-scols</code> grid (<code>.rb-closed-row</code>: the closed square
+        mark as <code>StateMark.svelte</code> draws it, the board title, the task title in the wrapper column, the revision count as a
+        <code>.ph-tag</code>, the last revision's age,
+        and a confirming "open" that, like a tap on the row, opens the board as a page row), cut to the page's preview with
+        "show all" (<code>.rb-closed-more</code>), one quiet <code>.ph-empty</code> line when the project has none, and a failed read said on the same line in
+        <code>.ph-gone</code>.</p>

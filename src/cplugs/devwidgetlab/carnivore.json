@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "api_version": 1,
   "min_app_version": "1.16.1",
-  "author": "Carnivore contributors",
+  "author": "Carnivore",
   "license": "MIT",
   "tier": "dev",
   "scope": [
@@ -20,11 +20,11 @@
     },
     {
       "name": "sessions.message",
-      "reason": "needed for this plugin to work"
+      "reason": "a plugin may start a session only inside the owner's own request"
     },
     {
       "name": "sessions.create",
-      "reason": "needed for this plugin to work"
+      "reason": "start the Claude session that works inside a draft folder when the owner presses hand to claude"
     },
     {
       "name": "agent_writes",
@@ -61,7 +61,6 @@
       "web/src/cplugs/devwidgetlab/LabMenu.svelte",
       "web/src/cplugs/devwidgetlab/LabViewer.svelte",
       "web/src/cplugs/devwidgetlab/MenuSection.svelte",
-      "web/src/cplugs/devwidgetlab/OptionChip.svelte",
       "web/src/cplugs/devwidgetlab/PreviewFrame.svelte",
       "web/src/cplugs/devwidgetlab/ResizeBox.svelte",
       "web/src/cplugs/devwidgetlab/ScenarioBox.svelte",
@@ -105,7 +104,7 @@
       "policy": {
         "own": "excluded",
         "share": "excluded",
-        "reason": "needed for this plugin to work"
+        "reason": "widget drafts are work in progress on this machine; a shipped widget lives in the code, not here"
       }
     }
   ]

@@ -17,10 +17,10 @@ PANE = "pane"
 
 STANDING: Dict[str, str] = {
     **{name: SWARM_AGENT for name in (
-        "swarm_report", "swarm_accept_report", "swarm_propose_naming", "swarm_suggest", "swarm_remember", "swarm_ask",
+        "swarm_report", "swarm_accept_report", "swarm_propose_naming", "swarm_suggest", "swarm_remember", "swarm_forget", "swarm_ask",
         "swarm_answer", "swarm_pass", "swarm_promote", "swarm_say", "swarm_conflict",
-        "swarm_card_create", "swarm_card_start", "swarm_card_handoff", "swarm_card_finish", "swarm_card_release",
-        "swarm_card_reorder", "swarm_card_deal", "swarm_card_auto_promote", "swarm_card_queue", "swarm_card_verdict",
+        "swarm_card_create", "swarm_card_start", "swarm_card_handoff", "swarm_card_finish", "swarm_card_close", "swarm_card_release",
+        "swarm_card_reorder", "swarm_card_deal", "swarm_card_auto_promote", "swarm_card_queue", "swarm_card_verdict", "swarm_card_archive",
     )},
     "messaging_send": PANE,
 }

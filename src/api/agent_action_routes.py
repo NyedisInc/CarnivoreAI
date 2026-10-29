@@ -9,6 +9,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.config import settings
 from src.core import config_writer
@@ -21,6 +22,7 @@ router = APIRouter(prefix="/agent-actions", tags=["agent-actions"], dependencies
 
 
 class ApproveBody(BaseModel):
+    """The owner's answer on an approval that asks a hard question: the exact words he typed (``typed``)."""
 
     typed: Optional[str] = Field(default=None, max_length=1000)
 
@@ -77,11 +79,11 @@ async def _decide(action_id: str, approve: bool, typed: Optional[str] = None) ->
     try:
         item = await store.approve(action_id, typed=typed) if approve else store.deny(action_id)
     except typed_confirm.ConfirmationMismatch as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise api_error(422, "typed_confirmation_mismatch", exc, action=action_id) from exc
     except KeyError:
         raise HTTPException(status_code=404, detail="no such pending agent action")
     except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc))
+        raise api_error(409, "agent_action_not_pending", exc, action=action_id) from exc
     logger.info("agent_action_decided", id=action_id, action=item.action, status=item.status)
     return {**item.as_dict(), "result": item.result}
 
@@ -89,6 +91,9 @@ async def _decide(action_id: str, approve: bool, typed: Optional[str] = None) ->
 @router.post("/{action_id}/approve")
 async def approve_agent_action(action_id: str, body: Optional[ApproveBody] = None) -> dict:
     """Run the action with its original args. Output: the item plus the tool ``result``.
+
+    Inputs: action_id; body (optional) - ``typed``, the owner's answer when the card asks a hard question
+      (``confirm_text`` on the item, ``approvals/typed_confirm.py``).
     """
     return await _decide(action_id, True, body.typed if body is not None else None)
 

@@ -30,3 +30,17 @@ test('the study placeholder tiles are never filtered by a star', () => {
   const placeholder = [{ ...manifest('builtin'), id: 'terminal', cssVars: {} }];
   expect(visibleTiles(placeholder, null, 'favorites', []).length).toBe(buildTiles(placeholder, null).length);
 });
+
+test('u159-01: an unsafe manifest value never reaches a live tile', () => {
+  const hostile = { ...manifest('user'), cssVars: { '--color-bg-page': 'url(https://evil.example/x)', '--color-border': 'red; background:url(x)', '--color-accent': 'expression(1)' } };
+  const [tile] = buildTiles([hostile], null);
+  expect(tile?.interior).toBe('var(--oc-ground-panel)');
+  expect(tile?.border).toBeUndefined();
+  expect(tile?.rows[0].chip).toBe('var(--oc-text-dim)');
+});
+
+test('u159-02: the current tile is the page theme the click applies, not a session pin', () => {
+  const two = [manifest('builtin'), { ...manifest('builtin'), id: 'nord', name: 'nord' }];
+  expect(buildTiles(two, 'nord').map((tile) => [tile.id, tile.current])).toEqual([['nord', true], ['fixture-ascii', false]]);
+  expect(buildTiles(two, null).some((tile) => tile.current)).toBe(false);
+});

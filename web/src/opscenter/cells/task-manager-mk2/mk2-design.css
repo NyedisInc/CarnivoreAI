@@ -1,4 +1,3 @@
-/* padding */
 .tm-head-count { color: var(--oc-text-muted); font: var(--oc-fs-micro)/1 var(--font-mono); white-space: nowrap; }
 
 .mk2-design {
@@ -8,7 +7,6 @@
   display: block; min-width: 0; color: var(--oc-text-primary); font: var(--oc-fs-label)/1.5 var(--font-mono);
 }
 .mk2-design * { box-sizing: border-box; }
-/* padding */
 .mk2-design { margin-inline: calc(var(--oc-space-3) - var(--oc-task-indent, var(--oc-space-4)) - var(--oc-space-0-5)) calc(var(--oc-space-3) - var(--oc-task-pad-x, var(--oc-space-3))); }
 .mk2-design [hidden] { display: none !important; }
 .mk2-design button:not(.oc-ptab, [data-btn]), .mk2-design input, .mk2-design select, .mk2-design textarea { font: inherit; color: inherit; }

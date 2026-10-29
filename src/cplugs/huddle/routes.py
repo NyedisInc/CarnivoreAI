@@ -23,6 +23,7 @@ Ctx = Depends(cplug_context("huddle"))
 
 
 class AddItemRequest(BaseModel):
+    """A new item. ``note`` is Joe's."""
 
     model_config = ConfigDict(extra="forbid")
     text: str
@@ -41,6 +42,7 @@ class AddItemRequest(BaseModel):
 
 
 class UpdateItemRequest(BaseModel):
+    """An item change; every field optional. ``approved`` is Joe's checkbox."""
 
     model_config = ConfigDict(extra="forbid")
     expected_revision: Optional[StrictInt] = None
@@ -137,6 +139,7 @@ class ItemGroupRequest(BaseModel):
 
 
 class SendManyRequest(BaseModel):
+    """The lists one "tell claude" press covers, and the session Joe chose for any of them (list key: session id)."""
 
     model_config = ConfigDict(extra="forbid")
     lists: List[str]
@@ -203,6 +206,8 @@ async def known_list(ctx: CplugContext, key: str) -> tuple[str, Optional[str]]:
 
 @router.get("/lists")
 async def get_lists(include_swarm: bool = Query(False), ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Every list with its counts. Inputs: include_swarm - true counts Swarm-made items too; the default is the Task Manager
+    view, which leaves them out of every count and badge (R70, ``lane.py``). Output: {cursor, lists}."""
     marker = push_delta.marker()
     body = await run_store(lambda: lists_read.build_lists(ctx, hide_swarm=lane.hides_swarm(None, include_swarm)))
     return {**body, **marker}
@@ -212,6 +217,14 @@ async def get_lists(include_swarm: bool = Query(False), ctx: CplugContext = Ctx)
 async def get_aggregate(threads: bool = Query(False), hide_completed: bool = Query(False), include_swarm: bool = Query(False),
                         live_only: bool = Query(False), ctx: CplugContext = Ctx) -> JSONResponse:
     """Every list that holds items as a group, in each list's own priority order.
+
+    Inputs: threads - true keeps every item's whole thread; the default sends the SLIM thread a collapsed row draws (``slim.py``,
+      with ``thread_count``) and a row opening reads the rest from ``GET /items/{id}``; hide_completed - true sends each
+      completed item as a placeholder (``completed_view.py``: id, place and state, no text or thread); include_swarm - true keeps
+      Swarm-made items, the default (the Task Manager view) leaves them out (R70, ``lane.py``); live_only - true leaves out every
+      completed item and its thread and gives each list ``done_count`` (the Task Manager app's read: the done section is fetched on
+      demand from ``GET /lists/{key}/done``, ``routes_done.py``); the default is unchanged. Output: {cursor, groups}, rendered
+      straight to JSON (the body is plain data already, so FastAPI's ``jsonable_encoder`` pass over ~4 MB is skipped, ~55 ms).
     """
     marker = push_delta.marker()
     body = await run_store(lambda: service.store(ctx).aggregate(hide_swarm=lane.hides_swarm(None, include_swarm), live_only=live_only))
@@ -248,6 +261,9 @@ async def get_list(key: str, hide_completed: bool = Query(False), include_swarm:
     """One list's items in drag order, each with its thread; hide_completed sends completed items as placeholders (``completed_view.py``).
 
     live_only - true leaves out the completed items and their threads and adds ``done_count``; they come from ``GET /lists/{key}/done``.
+
+    include_swarm - true keeps Swarm-made items (an agent's Tasks Viewer); the default is the Task Manager view, which leaves
+    them out (R70); an ``agent:<id>`` list is always whole (``lane.hides_swarm``).
     """
     try:
         check_list_key(key)
@@ -260,6 +276,7 @@ async def get_list(key: str, hide_completed: bool = Query(False), include_swarm:
 
 @router.post("/lists/{key}/items")
 async def add_item(key: str, body: AddItemRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Add one item at the bottom of a list, as joe."""
     key, _name = await known_list(ctx, key)
     return await run_store(lambda: service.store(ctx).add(
         key, body.text, actor=JOE, note=body.note, kind=body.kind, group=body.group,
@@ -280,6 +297,7 @@ async def put_order(key: str, body: OrderRequest, ctx: CplugContext = Ctx) -> Di
 
 @router.post("/lists/{key}/remove-completed")
 async def remove_completed(key: str, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Remove every completed (checked) item of one list, as joe. Output: {list, removed: [ids]}."""
     try:
         check_list_key(key)
     except TaskManagerError as exc:
@@ -290,19 +308,21 @@ async def remove_completed(key: str, ctx: CplugContext = Ctx) -> Dict[str, Any]:
 @router.get("/changes")
 async def get_changes(ctx: CplugContext = Ctx, since: int = Query(0, ge=0),
                       list_key: Optional[str] = Query(None, alias="list"), include_swarm: bool = Query(False)) -> Dict[str, Any]:
+    """Every row changed after ``since``, optionally in one list; Swarm-made items only with include_swarm (R70, ``lane.py``)."""
     return await run_store(lambda: service.store(ctx).changes(since, list_key, hide_swarm=lane.hides_swarm(list_key, include_swarm)))
 
 
 async def decide_card(ctx: CplugContext, item: Dict[str, Any], decision: str, owner_message_ref: str = "",
-                      note: str = "") -> None:
+                      note: str = "", *, structured: Optional[Dict[str, Any]] = None) -> None:
     try:
-        await reply.decide_card(ctx, item, decision, owner_message_ref, note)
+        await reply.decide_card(ctx, item, decision, owner_message_ref, note, structured=structured)
     except TaskManagerError as exc:
         raise refusal(exc) from exc
 
 
 @router.patch("/items/{item_id}")
 async def patch_item(item_id: int, body: UpdateItemRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Change an item's text, note, approval or state, as joe. Approving a Swarm card tells the Swarm."""
     item = await run_store(lambda: service.store(ctx).update(
         item_id, actor=JOE, expected_revision=body.expected_revision, text=body.text, note=body.note,
         approve=body.approved, state=body.state, kind=body.kind,
@@ -328,7 +348,8 @@ class ReviewCheckRequest(BaseModel):
 
 @router.patch("/items/{item_id}/review-checks/{check_id}")
 async def patch_review_check(item_id: int, check_id: str, body: ReviewCheckRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """Tick or untick ONE review check of an item, as joe (the owner's JWT; the agent has no route for it, #1710).
+
     Output: the item, its ``review_checks`` list updated. 404 ``task_manager_not_found`` for an unknown item or check. The change
     rides the list topic's push; it tells no session and reads nothing.
     """
@@ -338,7 +359,8 @@ async def patch_review_check(item_id: int, check_id: str, body: ReviewCheckReque
 
 @router.post("/items/{item_id}/run-now")
 async def run_item_now(item_id: int, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """Fire an item immediately ("run now"), as joe: the same delivery as a due schedule, then a repeat re-arms.
+
     Output: the item; its ``start_trigger`` shows the outcome (``last_error`` when the session could not be told).
     409/400 ``task_manager_invalid`` for an approved or back-burner item.
     """
@@ -350,12 +372,14 @@ async def run_item_now(item_id: int, ctx: CplugContext = Ctx) -> Dict[str, Any]:
 
 @router.delete("/items/{item_id}")
 async def delete_item(item_id: int, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Delete one item (Joe only; a tombstone)."""
     return await run_store(lambda: service.store(ctx).delete(item_id, actor=JOE))
 
 
 @router.post("/items/{item_id}/move")
 async def move_item(item_id: int, body: MoveRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """Move one item to the bottom of another list, as joe; its thread, note, state and unread move with it.
+
     A ``group`` in the body (null included) files it in that group of the target list; the same list is then allowed.
     """
     key, _name = await known_list(ctx, body.list)
@@ -365,7 +389,8 @@ async def move_item(item_id: int, body: MoveRequest, ctx: CplugContext = Ctx) ->
 
 @router.post("/lists/{key}/groups")
 async def create_group(key: str, body: GroupCreateRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """Add a named group at the bottom of a list's groups, as joe (``docs/task-manager.md`` section 15).
+
     Output: the group with ``created`` (false: a live group of that name already existed and is answered).
     """
     key, _name = await known_list(ctx, key)
@@ -381,7 +406,8 @@ async def patch_group(group_id: int, body: GroupUpdateRequest, ctx: CplugContext
 
 @router.post("/groups/fold")
 async def fold_groups(body: GroupFoldManyRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """Fold or unfold many groups in one transaction, as joe (a Shift+click on a header folds everything under it).
+
     Output: ``{folded, updated: [ids], missing: [ids]}``; an id that names no live group is listed in ``missing``.
     """
     return await run_store(lambda: service.groups(ctx).fold_many(body.ids, body.folded, actor=JOE))
@@ -395,13 +421,16 @@ async def delete_group(group_id: int, ctx: CplugContext = Ctx) -> Dict[str, Any]
 
 @router.post("/items/{item_id}/group")
 async def put_item_group(item_id: int, body: ItemGroupRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Put an item into a group of its list (null ungroups) at ``index`` there, as joe: a drag into, out of or
+    between groups. Output: the item. A stale ``expected_revision`` is 409."""
     return await run_store(lambda: service.groups(ctx).set_group(
         item_id, body.group, actor=JOE, index=body.index, expected_revision=body.expected_revision))
 
 
 @router.post("/items/{item_id}/messages")
 async def post_message(item_id: int, body: MessageRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """Joe's reply on an item's thread; it answers every open Claude question there. A reply on a Swarm card tells the Swarm.
+
     The one function behind it is ``reply.post_reply``, which the review board's round also calls (``docs/reviewboard.md``, slice 5).
     """
     with mapped_errors():
@@ -415,7 +444,8 @@ async def post_message(item_id: int, body: MessageRequest, ctx: CplugContext = C
 
 @router.post("/items/{item_id}/answered")
 async def post_answered(item_id: int, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """Mark the item's open Claude question(s) answered with no reply (Joe answered outside the Task Manager).
+
     Output: the item (its status leaves ``question``). Idempotent; adds no message.
     """
     item = await run_store(lambda: service.store(ctx).mark_answered(item_id, actor=JOE))
@@ -425,7 +455,8 @@ async def post_answered(item_id: int, ctx: CplugContext = Ctx) -> Dict[str, Any]
 
 @router.post("/items/{item_id}/cancel-question")
 async def post_cancel_question(item_id: int, ctx: CplugContext = Ctx) -> Dict[str, Any]:
-    """
+    """Cancel the item's open question(s): the item goes to open and the agent decides what happens next (R10).
+
     Output: the item. 400 ``task_manager_invalid`` when no question is open. Leaves one note on the thread for the session.
     """
     item = await run_store(lambda: question_cancel.cancel(service.store(ctx), item_id))
@@ -435,6 +466,7 @@ async def post_cancel_question(item_id: int, ctx: CplugContext = Ctx) -> Dict[st
 
 
 class SeenRequest(BaseModel):
+    """Mark read: one info or look post (items 83 and 87), or the item's agent messages up to a boundary."""
 
     model_config = ConfigDict(extra="forbid")
     message: Optional[StrictInt] = None
@@ -443,6 +475,14 @@ class SeenRequest(BaseModel):
 
 @router.post("/items/{item_id}/seen")
 async def post_seen(item_id: int, body: Optional[SeenRequest] = None, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """MARK READ: Joe read the item's agent messages (up to ``through``), or one info or look post (``docs/task-manager.md`` sections 11, 26).
+
+    Description: opening or ticking an item never calls this (2026-10-19). No body (or no ``message``) reads every agent message up to ``through``
+      and clears the unread dot as far as the first later message allows; ``{message}`` reads that ONE
+      info or look post of the item (its icon in the row's post block), which every window drops on the list topic's push.
+    Output: the item. A content-free mark: no revision bump, so a drag stays valid. 400 ``task_manager_invalid`` when the
+      message is not an info or look post of this item.
+    """
     message = body.message if body is not None else None
     return await run_store(lambda: service.store(ctx).mark_seen(item_id, message, body.through if body is not None else None))
 
@@ -481,6 +521,13 @@ async def get_focus(ctx: CplugContext = Ctx) -> Dict[str, Any]:
 @router.post("/focus")
 async def post_focus(body: FocusRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
     """Point every open Task Manager view at rows of one list, or clear the focus.
+
+    Description: the one write behind the ``huddle_focus`` tool and Joe's
+      "touched the list" clear. ``clear`` drops it everywhere; otherwise
+      ``list`` must name ``all`` or a live project and every id a live item of
+      it (404 ``task_manager_not_found`` names the strays). Every change names the
+      ``cplug.huddle.focus`` topic, so each open view re-reads once.
+    Output: {focus: {...} | None}.
     """
     if body.clear:
         return focus.clear(ctx)
@@ -528,6 +575,20 @@ async def set_send_target(key: str, body: SendTargetRequest, ctx: CplugContext =
 @router.post("/lists/{key}/send")
 @router.post("/lists/{key}/tell", **old_routes.retired("POST", "/lists/{key}/tell"))
 async def send_claude(key: str, body: SendRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
+    """Deliver the one-line "the Task Manager changed" message to an agent session of this list.
+
+    Description: goes through the gate of ``paste_through_gates``, the one guarded
+      paste path ``session_send_message`` uses, reached as ``ctx.sessions.deliver``
+      (``sessions.message``): a dialog or a shell refuses, 409 with its code; a pane with a live
+      channel gets a Claude Code channel event, any other the paste (docs/task-manager.md section 37). The
+      target must be a candidate; absent, the default of ``GET .../sessions``. NEVER AN ARBITRARY PICK
+      (Joe (ccsliinc), 2026-10-03): with no default the answer is 409
+      ``task_manager_pick_session`` and nothing is pasted.
+    A session that is busy (a dialog, a question, an unconfirmed status) HOLDS the tell (``held.py``, item 82): the
+      answer is {list, status: held, target, label, code, reason} and the tell goes out once the guarded path takes it.
+    Output: {target, label, reason, pasted_bytes, submitted, delivered_via, text} - ``label`` is the
+      candidate's name, so the client can say who was told; ``delivered_via`` is ``channel`` or ``paste``.
+    """
     key, name = await known_list(ctx, key)
     rows = await service.candidate_rows(ctx, key)
     if not rows and await swarm_tell.wake_if_asleep(ctx, key):
@@ -559,7 +620,8 @@ async def send_claude(key: str, body: SendRequest, ctx: CplugContext = Ctx) -> D
 
 @router.get("/held")
 async def get_held() -> Dict[str, Any]:
-    """
+    """The tells waiting for a busy session, and the ones that could not be sent (``held.py``, Task Manager item 82).
+
     Output: {held: [{list, target, label, state: held | expired | gone | not_sent, code, reason, since, deadline}]}.
       Pushed on the ``held`` topic, so every window re-reads it.
     """
@@ -580,13 +642,24 @@ async def delete_held(key: str, ctx: CplugContext = Ctx) -> Dict[str, Any]:
 @router.post("/tell", **old_routes.retired("POST", "/tell"))
 async def send_lists(body: SendManyRequest, ctx: CplugContext = Ctx) -> Dict[str, Any]:
     """Tell claude about SEVERAL lists in one press, each list into its OWN target session (docs/task-manager.md section 20).
+
+    Description: Joe (ccsliinc), 2026-10-04: "if i tell claude, it knows the session it belongs to and only if the
+      session doesnt exist you popup a window". Each list takes ``targets[list]`` when that is one of its candidates,
+      else its default (``GET .../sessions``); with neither it is NOT pasted and answers ``no_session`` with its
+      candidates. A paste the guarded path refuses answers ``refused`` with its code; the other lists still go.
+    With ``queue: true`` (a plain change: a tick, a reply, an add) nothing is pasted: each list is only noted in the tell queue
+      (``send_queue.py``) and answers ``queued``; the tell goes out after the quiet window or the cap, or when the key is clicked.
+      ``targets`` ride along: the held tell goes to the picked session when its window closes (#2677).
+      A list with no unsent change (an owner reply on a Swarm thread item, #1718) is not queued and answers ``nothing``.
+      Without it the tell is immediate and first sends whatever is queued for the same session.
+    Output: {results: [{list, status: sent | queued | nothing | no_session | refused, ...}], queue?} in the order asked (``queue``: the snapshot, queue mode only).
     """
     keys = list(dict.fromkeys(body.lists))
     if not keys:
         raise HTTPException(status_code=400, detail={"code": "task_manager_invalid", "detail": "lists is required"})
     named = [await known_list(ctx, key) for key in keys]
     if body.queue:
-        results = await send_queue.queue_untold(ctx, [key for key, _name in named])
+        results = await send_queue.queue_untold(ctx, [key for key, _name in named], body.targets)
         return {"results": results, "queue": send_queue.state(ctx)}
     infos = await ctx.sessions.list()
     results = [await sending.send_one_of_many(ctx, run_store, key, name, infos, body.targets.get(key),

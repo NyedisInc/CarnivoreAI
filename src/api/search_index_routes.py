@@ -13,6 +13,7 @@ from src.api.auth import require_auth
 from src.core.deepsearch.query import SEARCH_QUERY_MAX_CHARS
 from src.core.deepsearch import constants as K
 from src.core.deepsearch import rules as rules_mod
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -20,7 +21,6 @@ router = APIRouter(tags=["pipeline"], dependencies=[Depends(require_auth)])
 
 
 def _state_dir():
-    """The state directory. Separate function so tests can point it at a temp dir."""
     from src.config import settings as app_settings
 
     return app_settings.get_state_dir()
@@ -56,7 +56,7 @@ async def search_body(q: str = Query(..., min_length=1, max_length=SEARCH_QUERY_
                                        project=project, limit=limit)
     except (DatastoreUnreadableError, sqlite3.Error, OSError) as exc:
         logger.error("search_index_unavailable", error=str(exc), error_type=type(exc).__name__)
-        raise HTTPException(status_code=503, detail={"code": "search_index_unavailable", "detail": str(exc)})
+        raise api_error(503, "search_index_unavailable", exc)
 
 
 def prompt_search(state_dir, q: str, *, project: Optional[str], limit: int, offset: int, per_group: int) -> Dict[str, Any]:
@@ -85,7 +85,7 @@ async def search_prompts_route(q: str = Query(..., min_length=1, max_length=SEAR
                                        offset=offset, per_group=per_group)
     except (DatastoreUnreadableError, sqlite3.Error, OSError) as exc:
         logger.error("prompt_search_unavailable", error=str(exc), error_type=type(exc).__name__)
-        raise HTTPException(status_code=503, detail={"code": "search_index_unavailable", "detail": str(exc)})
+        raise api_error(503, "search_index_unavailable", exc)
 
 
 @router.get("/pipeline/search-filter")
@@ -100,7 +100,7 @@ async def put_search_filter(body: FilterBody) -> Dict[str, Any]:
     try:
         stored = await asyncio.to_thread(rules_mod.write_overrides, body.overrides)
     except rules_mod.RulesError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_request", exc, step="put_search_filter") from exc
     except (FileNotFoundError, OSError) as exc:
         logger.error("search_filter_write_failed", error=str(exc))
         raise HTTPException(status_code=500, detail="config.json could not be written") from exc

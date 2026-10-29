@@ -17,7 +17,7 @@ from src.core.stats.store import StatsStore
 from src.core.stats_feed import StatsFeed
 from tests.stats import seed
 
-CONV = "f597fe41-5c73-4dc1-8bcc-9b463c797210"
+CONV = "c0ffee00-0000-4000-8000-0000000000aa"
 NOW = int(time.time()) // 60 * 60 + 30
 
 

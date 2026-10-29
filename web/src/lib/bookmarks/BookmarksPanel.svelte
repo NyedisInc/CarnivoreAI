@@ -7,7 +7,7 @@
   import { sessions } from '../../opscenter/api';
   import Glyph from '../Glyph.svelte';
   import IconButton from '../base/IconButton.svelte';
-  import { Checkbox, List } from '../base';
+  import { Button, Checkbox, Field, List } from '../base';
   import BookmarkRow from './BookmarkRow.svelte';
   import { BookmarksPanelState } from './panel-state.svelte';
   import { BookmarkPreviews, bookmarkPreviewSettings } from './preview-state.svelte';
@@ -59,8 +59,8 @@
     <div class="text-prompt-modal__head">
       <span class="text-prompt-modal__verb">&raquo; {t('bookmarks.title')}</span>
       <span class="bm-panel__session">{name}</span>
-      <button type="button" class="modal-close" aria-label={t('modal.close')}
-        onclick={() => close(null)}>&times;</button>
+      <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
+        onclick={() => close(null)} />
     </div>
   {/snippet}
 
@@ -71,7 +71,7 @@
       <p class="bm-panel__hint">{t('bookmarks.hint')}</p>
 
       <form class="bm-panel__add" data-bookmark-add onsubmit={(event) => { event.preventDefault(); void add(); }}>
-        <input class="bm-panel__name" type="text" bind:value={name_} maxlength="200" autocomplete="off"
+        <Field block bind:value={name_} maxlength={200} autocomplete="off"
           placeholder={t('bookmarks.name_placeholder')} aria-label={t('bookmarks.name_label')} data-bookmark-name />
         <IconButton type="submit" label={t('bookmarks.add')} variant="quiet" disabled={panel.busy !== null || panel.loading}
           data-bookmark-add-key><Glyph name="bookmark-plus" /></IconButton>
@@ -97,11 +97,11 @@
       {/if}
 
       <div class="bm-panel__bar">
-        <button type="button" class="bm-panel__fold" aria-expanded={panel.turnsOpen} data-turns-fold
+        <Button variant="quiet" size="sm" aria-expanded={panel.turnsOpen} data-turns-fold
           onclick={() => (panel.turnsOpen = !panel.turnsOpen)}>
           <span class="bm-panel__caret" aria-hidden="true">{panel.turnsOpen ? '\u25be' : '\u25b8'}</span>
           <span class="bm-panel__label">{t('bookmarks.section.turns')}</span>
-        </button>
+        </Button>
       </div>
       {#if !panel.turnsOpen}
         
@@ -117,8 +117,8 @@
           {/each}
         {/snippet}</List>
         {#if panel.moreTurns}
-          <button type="button" class="oc-btn oc-btn--sm bm-panel__more" disabled={panel.busy !== null}
-            onclick={() => void panel.loadMoreTurns()}>{t('bookmarks.turns.more')}</button>
+          <Button size="sm" data-bookmarks-more disabled={panel.busy !== null}
+            onclick={() => void panel.loadMoreTurns()}>{t('bookmarks.turns.more')}</Button>
         {/if}
       {:else}
         <p class="bm-panel__empty">{panel.loading ? t('bookmarks.loading') : t('bookmarks.turns.empty')}</p>
@@ -132,7 +132,7 @@
       <Checkbox tone="danger" label={live ? t('bookmarks.arm') : t('bookmarks.arm_not_live')} bind:checked={panel.armed}
                 disabled={!live || panel.busy !== null} data-arm />
     </span>
-    <button type="button" class="modal-btn modal-btn-secondary" onclick={() => close(null)}>{t('bookmarks.close')}</button>
+    <Button data-bookmarks-close onclick={() => close(null)}>{t('bookmarks.close')}</Button>
   {/snippet}
 </ModalShell>
 
@@ -178,18 +178,6 @@
       color: var(--oc-text-muted);
     }
 
-    .bm-panel__fold {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--oc-space-2);
-      padding: 0;
-      border: 0;
-      background: none;
-      color: inherit;
-      font: inherit;
-      cursor: pointer;
-    }
-
     .bm-panel__caret {
       color: var(--oc-text-muted);
       font-size: var(--oc-fs-micro);
@@ -221,17 +209,9 @@
       gap: var(--oc-space-2);
     }
 
-    .bm-panel__name {
+    .bm-panel__add :global([data-field]) {
       flex: 1 1 auto;
       min-width: 0;
-      min-height: 2rem;
-      padding: 0 var(--oc-space-2);
-      border: var(--oc-border) solid var(--oc-line-panel);
-      border-radius: var(--oc-radius-sm);
-      background: var(--oc-ground-field);
-      color: var(--oc-text-primary);
-      font: inherit;
-      font-size: var(--oc-fs-body);
     }
 
     .bm-panel__add :global([data-bookmark-add-key]) {
@@ -240,7 +220,7 @@
       color: var(--oc-green);
     }
 
-    .bm-panel__more {
+    [data-bookmarks-more] {
       align-self: flex-start;
     }
 

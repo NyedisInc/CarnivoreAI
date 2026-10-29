@@ -7,6 +7,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from src.api.error_response import api_error
 from src.api import account_gates
 from src.api.auth import require_auth
 from src.api.spectator_listing import iso_utc
@@ -29,12 +30,32 @@ router = APIRouter()
 
 
 class SpectatorLinkRequest(BaseModel):
+    """What the owner asks for when minting a share.
+
+    Attributes:
+      ttl_seconds: how long the share lives, bounded by the store's
+        MIN/MAX. Absent means the default, so a client that has no
+        opinion does not have to carry the number.
+      label: the owner's own note, shown back to the owner only.
+    """
 
     ttl_seconds: Optional[int] = Field(default=None)
     label: Optional[str] = Field(default=None, max_length=MAX_LABEL_LENGTH)
 
 
 class SpectatorLinkView(BaseModel):
+    """One share, as the owner's list shows it.
+
+    Attributes:
+      id: the row id, which is what a revoke names.
+      session_id: the one session this shares.
+      label: the owner's note, or null.
+      created_at: ISO 8601 UTC.
+      expires_at: ISO 8601 UTC, absolute and never extended.
+      url: the full relay link, token in the fragment, for a LIVE link
+        whose token the store kept; null otherwise (not live, no relay
+        publisher to name the base, or the sidecar lost it).
+    """
 
     id: str
     session_id: str
@@ -46,6 +67,12 @@ class SpectatorLinkView(BaseModel):
 
 class SpectatorLinkMinted(BaseModel):
     """The mint response.
+
+    Attributes:
+      id: the row id, so the client can revoke what it just made.
+      url: the complete link, token in the fragment. The owner's list
+        serves it again while the link lives.
+      expires_at: ISO 8601 UTC.
     """
 
     id: str
@@ -55,6 +82,14 @@ class SpectatorLinkMinted(BaseModel):
 
 class SpectatorLinkList(BaseModel):
     """Every live share on one session, and whether a new one can be minted.
+
+    Attributes:
+      links: the live shares, no tokens.
+      relay_available: a mint right now can expect to succeed: the relay
+        is switched on and its publisher is either connected or quiet (a
+        mint starts it). False while it reconnects or has stopped for
+        good, and when the relay is switched off. The share panel reads it
+        to disable its create button before the owner presses it.
     """
 
     links: List[SpectatorLinkView]
@@ -144,6 +179,18 @@ async def mint_spectator_link(
     request: Request, session_id: str, body: Optional[SpectatorLinkRequest] = None
 ) -> SpectatorLinkMinted:
     """Create one read-only share of one live session.
+
+    Description: returns the relay viewer url,
+      ``<relay>/s/<link_id>#<token>``. The owner's list serves it again
+      while the link lives, and never after. A quiet install starts the
+      publisher here and waits up to ``CONNECT_TIMEOUT_SECONDS`` for it
+      (plus up to ``DRAIN_SECONDS`` when a stop is closing the previous one).
+      Refused with 503 ``relay_unavailable`` BEFORE anything is written
+      when the relay is switched off or the publisher does not connect.
+    Inputs: request; session_id (str) - as /sessions/list spells it;
+      body (SpectatorLinkRequest | None) - ttl and label, both optional.
+    Output: SpectatorLinkMinted.
+    Example: POST /api/v1/sessions/ses_1/spectator-links {"ttl_seconds": 3600}
     """
     store = _store(request)
     _known_session(request, session_id)
@@ -165,14 +212,12 @@ async def _mint_on(
     try:
         identity = publisher.new_link_identity()
     except RelayAuthError as exc:
-        raise HTTPException(status_code=503, detail={
-            "code": "relay_unavailable", "reason": exc.kind}) from None
+        raise api_error(503, "relay_unavailable", exc, extra={"reason": exc.kind}) from None
     try:
         minted = await store.mint(session_id, ttl, label, identity=identity)
     except LinkKeysUnavailableError as exc:
         logger.error("spectator_link_key_not_kept", session_id=session_id)
-        raise HTTPException(status_code=503, detail={
-            "code": "relay_unavailable", "reason": str(exc)}) from None
+        raise api_error(503, "relay_unavailable", exc, extra={"reason": "link_keys_unavailable"}) from None
     publisher.poke()
     url = _share_url(publisher.viewer_base, minted.link, minted.token)
     logger.info(
@@ -240,6 +285,15 @@ async def revoke_spectator_link(
 ) -> SpectatorLinkRevoked:
     """End one share, and disconnect whoever is watching through it.
 
+    Description: the row is marked, so the relay publisher's next
+      ``links`` frame (within ``relay.refresh_seconds``) leaves it out
+      and the relay closes every watcher on it with 4410. A revoke works
+      whether or not the relay is connected right now: a relay that
+      reconnects is declared the live set, which no longer holds it.
+      When it was the LAST live link the publisher is then closed (p24 a):
+      connected, after one final empty ``links`` frame; disconnected, at
+      once, and the relay ends the link when its grace window runs out.
+
       THE SESSION IN THE PATH IS CHECKED AGAINST THE LINK, so a link id
       guessed or copied from another session cannot be revoked through
       this session's url. It is a 404 rather than a 403: the caller is
@@ -287,6 +341,13 @@ class SpectatorLinksRevokedAll(BaseModel):
     dependencies=[Depends(require_auth)],
 )
 async def list_all_spectator_links(request: Request) -> SpectatorLinksAll:
+    """Every live share on the install, for the owner's share control and the share plugin's pane.
+
+    Description: no url and no token, only what a revoke needs to name. It does not need the share plugin to be on: a
+      link minted before the plugin was switched off is exactly what the owner wants to see and end.
+    Inputs: request. Output: SpectatorLinksAll.
+    Example: GET /api/v1/spectator-links
+    """
     store = _store(request)
     return SpectatorLinksAll(links=[_view(link) for link in await store.list_live()])
 

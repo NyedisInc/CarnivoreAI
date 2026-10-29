@@ -20,7 +20,7 @@ vi.mock('./NotesDrawer.svelte', () => ({ default: () => ({}) }));
 const saves = vi.hoisted(() => ({ count: 0 }));
 
 vi.mock('../../opscenter/api/notes.svelte', () => ({
-  save: () => {
+  saveAll: () => {
     saves.count += 1;
     return Promise.resolve();
   },
@@ -38,6 +38,7 @@ import {
 } from './mount-notes';
 import { closeDrawer, openDrawer, registerOccupant, resetRightDrawerForTest } from '../right-drawer/dock.svelte';
 
+/** Say whether this browser reports itself wide enough for the grid. */
 function setWidth(isWide: boolean): void {
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,

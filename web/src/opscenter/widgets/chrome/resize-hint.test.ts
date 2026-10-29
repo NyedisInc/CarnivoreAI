@@ -92,7 +92,7 @@ describe.each(CASES)('every reachable size of $name', ({ sizes, floor, reach }) 
   });
 });
 
-describe('the cases the owner hit live ()', () => {
+describe('the cases Joe hit live (huddle 62, 2026-10-06)', () => {
   const chartFloor = guideFloor({ w: 2, h: 2 }, 256, { width: 260, height: 120 }, 33);
   const chartCandidates = guideCandidates(suggestedSizes({ sizes: ['tall', 'medium', 'large', 'full'] }), chartFloor, widthReach(1033, 12, [200, 200, 200]));
 

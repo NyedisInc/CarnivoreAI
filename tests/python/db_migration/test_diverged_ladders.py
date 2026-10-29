@@ -30,7 +30,7 @@ def _fresh_cloude(tmp_path: Path) -> frozenset:
     return _cloude_master(fresh)
 
 
-def _other_line_cloude(state_dir: Path) -> list:
+def _joe_cloude(state_dir: Path) -> list:
     with closing(connect(db_path_for(state_dir))) as conn:
         with conn:
             run_chain(conn, 0, 58)
@@ -47,7 +47,7 @@ def _other_line_cloude(state_dir: Path) -> list:
 def test_a_cloude_db_diverged_at_59_ends_equal_to_a_fresh_one_with_its_colors(tmp_path: Path) -> None:
     state_dir = tmp_path / "joe"
     state_dir.mkdir()
-    colors = _other_line_cloude(state_dir)
+    colors = _joe_cloude(state_dir)
     state = ensure_db_migrated(state_dir)
     assert state.status == "ok" and state.schema_version == CURRENT_SCHEMA_VERSION
     assert "repair:swarm_agents" in state.migrations_applied
@@ -70,7 +70,7 @@ def test_a_fresh_cloude_db_needs_no_repair(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("start", [60, CURRENT_SCHEMA_VERSION])
 def test_a_master_cloude_db_migrates_exactly_as_before(tmp_path: Path, start: int) -> None:
-    state_dir = tmp_path / "acme"
+    state_dir = tmp_path / "alex"
     state_dir.mkdir()
     with closing(connect(db_path_for(state_dir))) as conn:
         with conn:
@@ -95,7 +95,7 @@ def _fresh_huddle(tmp_path: Path) -> frozenset:
     return _huddle_master(folder)
 
 
-owners_TRIGGERS_RUNG = (
+JOES_TRIGGERS_RUNG = (
     "CREATE TABLE item_triggers ("
     "item_id INTEGER PRIMARY KEY REFERENCES items (id), "
     "kind TEXT NOT NULL DEFAULT 'at', "
@@ -128,7 +128,7 @@ def _seed(conn: sqlite3.Connection) -> None:
 
 
 def test_a_huddle_db_diverged_at_14_ends_equal_to_a_fresh_one_with_its_claims(tmp_path: Path) -> None:
-    folder = tmp_path / "sam-huddle-14"
+    folder = tmp_path / "joe-huddle-14"
     with closing(_ladder_file(folder, list(MIGRATIONS[:13]) + [feature_rungs.CLAIM_MIGRATION])) as conn:
         _seed(conn)
         conn.execute("UPDATE items SET claude_working = 1, claude_working_by = 'ses_a' WHERE id = 2")
@@ -146,8 +146,8 @@ def test_a_huddle_db_diverged_at_14_ends_equal_to_a_fresh_one_with_its_claims(tm
 
 @NEEDS_RUNG_16
 def test_a_huddle_db_diverged_at_15_ends_equal_to_a_fresh_one_with_claims_and_triggers(tmp_path: Path) -> None:
-    folder = tmp_path / "sam-huddle"
-    joe_ladder = list(MIGRATIONS[:13]) + [feature_rungs.CLAIM_MIGRATION, owners_TRIGGERS_RUNG]
+    folder = tmp_path / "joe-huddle"
+    joe_ladder = list(MIGRATIONS[:13]) + [feature_rungs.CLAIM_MIGRATION, JOES_TRIGGERS_RUNG]
     with closing(_ladder_file(folder, joe_ladder)) as conn:
         _seed(conn)
         conn.execute("UPDATE items SET claude_working = 1, claude_working_by = 'ses_a' WHERE id = 2")
@@ -171,7 +171,7 @@ def test_a_huddle_db_diverged_at_15_ends_equal_to_a_fresh_one_with_claims_and_tr
 
 
 def test_a_master_huddle_db_at_15_walks_the_ladder_as_before(tmp_path: Path) -> None:
-    folder = tmp_path / "acme-huddle"
+    folder = tmp_path / "alex-huddle"
     with closing(_ladder_file(folder, list(MIGRATIONS[:15]))) as conn:
         _seed(conn)
         conn.commit()

@@ -1,5 +1,7 @@
 
 <script lang="ts">
+    import Button from '../base/Button.svelte';
+    import Checkbox from '../base/Checkbox.svelte';
     import type { Translate } from '../sessions/types';
     import { needsTick, type PermissionRow } from './cplugs-adapter';
 
@@ -8,20 +10,23 @@
         missing: readonly string[];
         waiting: boolean;
         off?: boolean;
+        consent?: boolean;
         warnings: readonly string[];
         busy?: boolean;
         onGrant: (ticks: string[]) => void;
         t: Translate;
     }
 
-    const { rows, missing, waiting, off = false, warnings, busy = false, onGrant, t }: Props = $props();
+    const { rows, missing, waiting, off = false, consent = false, warnings, busy = false, onGrant, t }: Props = $props();
 
     let ticked = $state<Record<string, boolean>>({});
     const isMissing = (row: PermissionRow): boolean => missing.includes(row.name) || !row.granted;
     const pending = $derived(rows.filter(isMissing));
     const mustTick = $derived(pending.filter((r) => needsTick(r.risk)));
     const blocked = $derived(pending.some((r) => r.risk === 'never'));
-    const ready = $derived(!blocked && pending.length > 0 && mustTick.every((r) => ticked[r.name] === true));
+    const codeOnly = $derived(waiting && pending.length === 0);
+    const ready = $derived(!blocked && (codeOnly || mustTick.every((r) => ticked[r.name] === true)));
+    const granting = $derived(waiting || (off && consent && pending.length > 0));
     const grantedCount = $derived(rows.length - pending.length);
 
     function riskTone(row: PermissionRow): 'high' | undefined {
@@ -40,10 +45,9 @@
     <ul class="plp-rows">
         {#each rows as row (row.name)}
             {@const gap = isMissing(row)}
-            <li class="plp-row" class:plp-row--missing={waiting && gap} data-perm-row={row.name} data-risk={row.risk}>
-                {#if waiting && gap && needsTick(row.risk)}
-                    <input
-                        type="checkbox"
+            <li class="plp-row" class:plp-row--missing={granting && gap} data-perm-row={row.name} data-risk={row.risk}>
+                {#if granting && gap && needsTick(row.risk)}
+                    <Checkbox
                         data-perm-tick={row.name}
                         aria-label={t('plugins.page.sheet.tick', { name: row.label })}
                         checked={ticked[row.name] === true}
@@ -57,7 +61,7 @@
                     ></span
                 >
                 <span class="plp-tag" data-tone={riskTone(row)}>{t(`plugins.page.risk.${row.risk}`)}</span>
-                <span class="plp-tag" data-perm-granted={!gap} data-tone={gap ? (waiting ? 'warn' : 'off') : 'ok'}>
+                <span class="plp-tag" data-perm-granted={!gap} data-tone={gap ? (granting ? 'warn' : 'off') : 'ok'}>
                     {t(gap ? 'plugins.page.sheet.not_granted' : 'plugins.page.sheet.granted')}
                 </span>
             </li>
@@ -65,16 +69,17 @@
             <li class="plp-row plp-row--empty">{t('plugins.page.fact.asks_nothing')}</li>
         {/each}
     </ul>
-    {#if waiting && pending.length}
+    {#if granting}
         <div class="plp-actions">
-            <span class="plp-actions__note">{blocked ? t('plugins.page.sheet.never') : t('plugins.page.sheet.low_note')}</span>
-            <button
-                type="button"
-                class="modal-btn modal-btn-confirm"
+            <span class="plp-actions__note"
+                >{codeOnly ? t('plugins.page.sheet.changed_note') : blocked ? t('plugins.page.sheet.never') : t('plugins.page.sheet.low_note')}</span
+            >
+            <Button
+                variant="confirm"
                 data-cplug-grant
-                title={t('plugins.page.grant.title')}
+                title={t(codeOnly ? 'plugins.page.approve.title' : 'plugins.page.grant.title')}
                 disabled={busy || !ready}
-                onclick={() => onGrant(mustTick.map((r) => r.name))}>{t('plugins.page.grant', { count: pending.length })}</button
+                onclick={() => onGrant(mustTick.map((r) => r.name))}>{codeOnly ? t('plugins.page.approve') : t(waiting ? 'plugins.page.grant' : 'plugins.page.grant.on', { count: pending.length })}</Button
             >
         </div>
     {:else if off && rows.length}

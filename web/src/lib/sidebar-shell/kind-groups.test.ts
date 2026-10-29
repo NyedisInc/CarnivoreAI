@@ -52,7 +52,7 @@ function fixtureRows() {
         {
             name: 'cloude_myapp_shell', label: null, is_pinned: false,
             agent_family: 'shell', project_id: 10, project_name: 'MyApp',
-            working_dir: '/Users/example/dev/myapp', status: 'unknown',
+            working_dir: '/Users/alex/dev/myapp', status: 'unknown',
             created_by_cloude: true, session_id: null,
         },
         {
@@ -206,11 +206,11 @@ it('a shell row lands in TERMINALS and not in PROJECTS; an agent row in the same
 it('the folder subtitle draws for a terminal row and never for an agent row', async () => {
     const html = body(fixtureRows());
     assert.ok(html.includes('session-sidebar-row-subtitle'));
-    assert.match(html, /data-name="cloude_myapp_shell"[\s\S]*?session-sidebar-row-subtitle[^>]*>\/Users\/example\/dev\/myapp</);
+    assert.match(html, /data-name="cloude_myapp_shell"[\s\S]*?session-sidebar-row-subtitle[^>]*>\/Users\/alex\/dev\/myapp</);
     assert.match(html, /data-name="cloude_console_home"[\s\S]*?session-sidebar-row-subtitle[^>]*>~</);
 });
 
-it('with no terminal rows at all, TERMINALS still draws its heading and a quiet empty line', async () => {
+it('with no terminal rows at all, TERMINALS still draws its heading and a quiet empty line (Alex (Example-owner), 2026-10-14, #1804)', async () => {
     const html = body([fixtureRows()[0]!]);
     assert.ok(html.includes('data-group="terminals"'));
     assert.match(html, /session-sidebar-company__empty[^>]*>no terminals open</);

@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { t } from '../../../lib/i18n/index.svelte';
   import State from '../../../lib/base/State.svelte';
   import PlacementBody from '../../../lib/zone-shell/PlacementBody.svelte';

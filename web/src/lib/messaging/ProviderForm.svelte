@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { Button, Field } from '../base';
     import Check from '../../opscenter/ui/Check.svelte';
     import { secretField } from '../secret-field';
     import type { Translate } from '../sessions/types';
@@ -21,6 +22,8 @@
     let allowPrivate = $state(false);
     let allowPlainHttp = $state(false);
 
+    const secret = (node: Element): void => secretField(node as HTMLInputElement);
+
     const handles = $derived(senders.split(/[\n,]/).map((s) => s.trim()).filter(Boolean));
     const ready = $derived(name.trim() !== '' && baseUrl.trim() !== '' && token.trim() !== '' && handles.length > 0);
 
@@ -40,26 +43,26 @@
     <div class="tm__srv-grid">
         <label class="tm__field">
             <span class="oc-key">{t('messaging.ui.provider.name')}</span>
-            <input class="oc-field" type="text" bind:value={name} disabled={busy} maxlength="40" autocomplete="off" data-messaging="name" />
+            <Field bind:value={name} disabled={busy} maxlength={40} autocomplete="off" data-messaging="name" />
         </label>
         <label class="tm__field">
             <span class="oc-key">{t('messaging.ui.provider.owner_label')}</span>
-            <input class="oc-field" type="text" bind:value={ownerLabel} disabled={busy} maxlength="40" autocomplete="off"
+            <Field bind:value={ownerLabel} disabled={busy} maxlength={40} autocomplete="off"
                 placeholder={t('messaging.ui.provider.owner_label_hint')} data-messaging="owner-label" />
         </label>
         <label class="tm__field">
             <span class="oc-key">{t('messaging.ui.provider.base_url')}</span>
-            <input class="oc-field" use:secretField bind:value={baseUrl} disabled={busy} placeholder={t('messaging.ui.provider.secret_placeholder')}
+            <Field {@attach secret} bind:value={baseUrl} disabled={busy} placeholder={t('messaging.ui.provider.secret_placeholder')}
                 data-messaging="base-url" />
         </label>
         <label class="tm__field">
             <span class="oc-key">{t('messaging.ui.provider.token')}</span>
-            <input class="oc-field" use:secretField bind:value={token} disabled={busy} placeholder={t('messaging.ui.provider.token_hint')}
+            <Field {@attach secret} bind:value={token} disabled={busy} placeholder={t('messaging.ui.provider.token_hint')}
                 data-messaging="token" />
         </label>
         <label class="tm__field">
             <span class="oc-key">{t('messaging.ui.provider.owner_senders')}</span>
-            <input class="oc-field" use:secretField bind:value={senders} disabled={busy} placeholder={t('messaging.ui.provider.owner_senders_hint')}
+            <Field {@attach secret} bind:value={senders} disabled={busy} placeholder={t('messaging.ui.provider.owner_senders_hint')}
                 data-messaging="owner-senders" />
         </label>
     </div>
@@ -68,7 +71,7 @@
     <Check label={t('messaging.ui.provider.allow_plain_http')} hint={t('messaging.ui.provider.allow_plain_http_hint')} checked={allowPlainHttp}
         disabled={busy || !allowPrivate} data-messaging="allow-plain-http" onToggle={(next) => (allowPlainHttp = next)} />
     <div class="tm__actions">
-        <button type="button" class="modal-btn modal-btn-secondary" disabled={busy} data-messaging="provider-cancel" onclick={onCancel}>{t('messaging.ui.cancel')}</button>
-        <button type="submit" class="modal-btn modal-btn-confirm" disabled={busy || !ready} data-messaging="provider-save">{t('messaging.ui.provider.save')}</button>
+        <Button disabled={busy} data-messaging="provider-cancel" onclick={onCancel}>{t('messaging.ui.cancel')}</Button>
+        <Button type="submit" variant="confirm" disabled={busy || !ready} data-messaging="provider-save">{t('messaging.ui.provider.save')}</Button>
     </div>
 </form>

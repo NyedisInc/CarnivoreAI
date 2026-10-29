@@ -1,4 +1,3 @@
-/* could not */
 import {
     PROJECT_CREATE_KEYS,
     nameRefusal,
@@ -9,6 +8,7 @@ import type { CreateHost, CreatePayload, CreatedSession, HostChoice, ProviderCho
 import { LOCAL_HOST_KEY } from './create-host';
 import { remoteBrowseNote, remoteFolderSource } from './remote-folders';
 import type { ModalOpeners } from './modals';
+import { refusedWith } from './refusal-shape';
 import { validateName } from './project-folder';
 import { beginNav } from './nav-generation';
 
@@ -27,10 +27,8 @@ export interface CreateResult {
     payload: CreatePayload | null;
 }
 
-/* already running */
 function isAlreadyRunning(error: unknown): boolean {
-    const message = error instanceof Error ? error.message : String(error ?? '');
-    return message.includes('already running');
+    return refusedWith(error, { code: 'session_already_running', phrase: 'already running' });
 }
 
 export async function askForName(
@@ -100,7 +98,6 @@ export function agentTypeFor(
     return null;
 }
 
-/* active account */
 export function accountFields(choice: ProviderChoice | null, isLocal: boolean): { account_id?: string; account_pinned?: true } {
     if (!isLocal || !choice?.accountId) return {};
     return choice.pinAccount ? { account_id: choice.accountId, account_pinned: true } : { account_id: choice.accountId };
@@ -133,6 +130,45 @@ export function buildCreatePayload(
     const resolved = agentTypeFor(agentType, choice);
     if (resolved) payload.agent_type = resolved;
     if (!isLocal && resolved && choice?.farLauncher === true && !agentType) payload.agent_type_is_far = true;
+    if (isLocal && choice?.model) payload.model = choice.model;
+    Object.assign(payload, accountFields(choice, isLocal));
+    return payload;
+}
+
+const REMOTE_ROOT_SCHEMES: readonly string[] = ['ssh://', 'peer://'];
+
+export function isRemoteRoot(root: unknown): boolean {
+    return typeof root === 'string' && REMOTE_ROOT_SCHEMES.some((scheme) => root.startsWith(scheme));
+}
+
+export function splitRemoteRoot(root: string): { hostKey: string; farPath: string } | null {
+    const scheme = REMOTE_ROOT_SCHEMES.find((s) => root.startsWith(s));
+    if (!scheme) return null;
+    const rest = root.slice(scheme.length);
+    const slash = rest.indexOf('/');
+    if (slash <= 0) return null;
+    return { hostKey: rest.slice(0, slash), farPath: rest.slice(slash) };
+}
+
+export function buildOpenProjectPayload(
+    name: string,
+    root: string,
+    choice: ProviderChoice | null,
+    dims: Record<string, unknown>,
+): CreatePayload {
+    const isLocal = !isRemoteRoot(root);
+    const remote = splitRemoteRoot(root);
+    const payload: CreatePayload = {
+        working_dir: remote ? remote.farPath : root,
+        auto_start_claude: true,
+        copy_templates: false,
+        project_name: name,
+        label: typeof choice?.name === 'string' && choice.name.trim() ? choice.name.trim() : name,
+        ...dims,
+    };
+    if (remote) payload.host_key = remote.hostKey;
+    const resolved = agentTypeFor(null, choice);
+    if (resolved) payload.agent_type = resolved;
     if (isLocal && choice?.model) payload.model = choice.model;
     Object.assign(payload, accountFields(choice, isLocal));
     return payload;
@@ -224,7 +260,6 @@ export async function createProjectFlow(
                 description: details.description || null,
             }, t);
         }
-        // <path>
         host.announceSessionCreated(session, nav);
         await refreshProjects(host);
         return { outcome: 'created', session, payload };
@@ -290,7 +325,6 @@ async function folderAllowed(host: CreateHost, folder: string, t: Translate): Pr
     return true;
 }
 
-/* already exists the project row */
 async function persistProjectRow(
     host: CreateHost,
     row: { name: string; path: string; description?: string | null },
@@ -305,14 +339,12 @@ async function persistProjectRow(
             if (showRefusal) host.showError(t(PROJECT_CREATE_KEYS.rootRefused));
             return;
         }
-        const message = error instanceof Error ? error.message : String(error ?? '');
-        if (!message.includes('already exists')) {
+        if (!refusedWith(error, { code: 'project_name_taken', phrase: 'already exists' })) {
             console.error('CloudeWeb: failed to save project:', error);
         }
     }
 }
 
-/* something else */
 async function refreshProjects(host: CreateHost): Promise<void> {
     try {
         await host.reloadProjects();

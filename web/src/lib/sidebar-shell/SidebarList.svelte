@@ -1,4 +1,4 @@
-<!-- CANNOT DETERMINE -->
+
 <script lang="ts">
     import BandSection from './BandSection.svelte';
     import LeaderBand from './LeaderBand.svelte';

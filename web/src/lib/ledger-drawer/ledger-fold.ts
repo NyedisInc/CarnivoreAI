@@ -1,4 +1,3 @@
-/*  hidden  */
 import { readFlag, writeFlag } from '../ui/prefs.svelte';
 
 export type LedgerFold = 'compact' | 'expanded' | 'hidden' | 'glance';
@@ -11,7 +10,6 @@ const FOLD_KEYS: Readonly<Record<Exclude<LedgerFold, 'compact'>, string>> = {
   glance: 'ledger_glance',
 };
 
-/*  hidden  */
 const OPEN_KEY = 'carnivore.usagePanel.open';
 const LEGACY_HIDDEN_KEY = 'carnivore.usagePanel.hidden';
 const LEGACY_GLANCE_KEY = 'carnivore.usagePanel.glance';

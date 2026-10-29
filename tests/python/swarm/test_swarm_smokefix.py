@@ -122,7 +122,7 @@ def test_the_owner_chat_paste_names_the_message_ref_so_the_agent_can_cite_it(wor
 def test_a_question_card_closes_when_the_owner_answers_it_and_stays_open_on_a_bare_tick(world, monkeypatch):
     applied = {"answered": True}
 
-    async def owner_answer(app_state, question_id, decision, text, ref):
+    async def owner_answer(app_state, question_id, decision, text, ref, structured=None):
         return applied["answered"]
 
     monkeypatch.setattr(answers, "owner_answer", owner_answer)

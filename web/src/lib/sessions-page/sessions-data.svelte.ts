@@ -15,7 +15,6 @@ const POLL_MS = 15000;
 const GROUPS_PER_PAGE = 100;
 const SESSIONS_PER_GROUP = 500;
 
-/*  hidden  */
 export function agentQuery(offset = 0, showHidden = false): string {
     const q = new URLSearchParams({
         state: 'running,asleep',
@@ -89,7 +88,6 @@ export class SessionsData implements Signals {
     showArchived = false;
     status = $state<'loading' | 'ready' | 'error'>('loading');
     errorText = $state('');
-    /* did not answer */
     peerUnavailable = $state<readonly string[]>([]);
     asleepUnreadSet = $state<ReadonlySet<string>>(new Set());
     conversations = $state<Readonly<Record<string, number>>>({});
@@ -105,6 +103,7 @@ export class SessionsData implements Signals {
     readonly #noProject: string;
     readonly #noDatastore: string;
     #ticket = 0;
+    #run = 0;
     #stops: Array<() => void> = [];
 
     constructor(api: HistoryApi, readers: SessionsReaders, noProject: string, noDatastore: string) {
@@ -148,7 +147,9 @@ export class SessionsData implements Signals {
             subscribe('sessions.changed', () => void this.refresh()),
             subscribe('preferences.changed', () => void Promise.resolve().then(() => (this.pinTick += 1))),
         );
+        const run = this.#run;
         whenListingPushBooted(() => {
+            if (run !== this.#run) return;
             const push = (globalThis as { ListingPush?: { onChange?(fn: (names: string[]) => void): () => void } }).ListingPush;
             const off = push?.onChange?.((names) => {
                 if (names.includes('records')) void this.readUnread();
@@ -171,6 +172,7 @@ export class SessionsData implements Signals {
 
     stop(): void {
         this.#ticket += 1;
+        this.#run += 1;
         this.liveRows.stop();
         for (const off of this.#stops.splice(0)) off();
     }
@@ -197,7 +199,6 @@ export class SessionsData implements Signals {
         await Promise.all([this.readUnread(), this.readCounts(), this.readExtras(), this.readClosed()]);
     }
 
-    /* did not answer */
     async #walk(query: (offset: number) => string): Promise<{ groups: HistoryGroup[]; peers: HistoryGroup[]; unavailable: string[] }> {
         const groups: HistoryGroup[] = [];
         let peers: HistoryGroup[] = [];

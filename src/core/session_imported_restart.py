@@ -1,23 +1,3 @@
-"""Restarting a conversation that has NO tmux identity at all.
-
-NOTHING NEW IS INVENTED TO DO IT. The wrapper is validated by
-``session_agent_choice.validate_agent_choice``, the ``--resume`` fragment
-is built by ``session_resume_target.resume_extra_args``, the conversation
-outcome uses the same three words ``RespawnPlan.conversation`` uses, and
-the transcript guard is ``session_transcript_presence``. A second
-spelling of any of them would eventually disagree with the pane path.
-
-  ``measured``   a spelling was found holding the transcript. Use it.
-  ``not_found``  every spelling was checked and none holds it. REFUSE:
-                 ``--resume`` would exit instantly and leave a dead pane
-                 the row still calls running, which is the incident this
-                 project has already paid for once.
-  ``unchecked``  the corpus root could not be listed. NEVER refuses -
-                 not having been able to look is not evidence a file is
-                 gone, and refusing on it would break restart on every
-                 machine whose corpus lives somewhere we were not told
-                 about.
-"""
 
 from __future__ import annotations
 
@@ -54,8 +34,6 @@ DIRECTORY_MEASURED: str = "measured"
 
 DIRECTORY_NOT_FOUND: str = "not_found"
 
-# COULD NOT EVALUATE no working directory
-# could not
 DIRECTORY_UNCHECKED: str = "unchecked"
 
 
@@ -106,30 +84,6 @@ def resume_directory(
     corpus_root: Optional[Path] = None,
     family: Optional[str] = None,
 ) -> ResumeDirectory:
-    """Which spelling of ``working_dir`` a ``--resume`` will find the file in.
-
-    Description: slugifies every spelling
-      ``claude_project_dirs.path_spellings`` knows for the directory and
-      keeps the FIRST whose ``<slug>/<uuid>.jsonl`` exists. Order is that
-      function's stable order - the literal spelling, then the resolved
-      one, then home aliases - so two runs agree and a report can name
-      which spelling won.
-
-      NEVER RAISES. Every filesystem failure degrades to
-      :data:`DIRECTORY_UNCHECKED`, because this runs on a request path
-      and an exception would take the picker down over a directory it
-      could not stat.
-    Inputs: working_dir (str | None) - the row's stored directory.
-      claude_session_uuid (str | None) - the conversation. corpus_root
-      (Path | None) - override for tests; defaults to
-      ``~/.claude/projects`` plus each managed account's ``projects``. family (str | None) - the row's agent
-      family; ``codex`` is looked up in codex's rollout store instead
-      (see :func:`_codex_resume_directory`), every other value takes the
-      claude path unchanged.
-    Output: ResumeDirectory.
-    Example: resume_directory('/Users/x/Library/.../Media', 'abc').outcome
-      # 'measured'
-    """
     if not working_dir or not claude_session_uuid:
         return ResumeDirectory(
             outcome=DIRECTORY_UNCHECKED,

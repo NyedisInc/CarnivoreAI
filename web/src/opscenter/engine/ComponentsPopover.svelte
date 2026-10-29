@@ -1,5 +1,5 @@
 <script lang="ts">
-  /*  hidden  */
+  /* the empty state there is nothing */
   import AnchoredPopup from '../../lib/dialog-frame/AnchoredPopup.svelte';
   import WidgetIcon from '../ui/WidgetIcon.svelte';
   import type { LayoutStore } from './layout.svelte';
@@ -64,7 +64,6 @@
     void restoreWithFlight(store, id);
   }
 
-  /* height: 100% min-height: 1 padding */
   const room = $derived(sizeOf('content').height);
 
   const fittable = $derived(store.state.layout.rows.some((row) => row.kind === 'px'));

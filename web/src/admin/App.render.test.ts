@@ -11,19 +11,20 @@ const SESSION = 'COGNITO-SESSION-STRING';
 const ACCESS = 'CATALOG-ACCESS-TOKEN';
 const REFRESH = 'CATALOG-REFRESH-TOKEN';
 
+/** An administrator, as `/v1/me` answers. */
 const ADMIN: Me = {
     user_id: 'cognito:11111111-2222-3333-4444-555555555555',
-    login: 'acme@example.test',
+    login: 'alex@example.test',
     provider: 'email',
-    email: 'acme@example.test',
+    email: 'alex@example.test',
     is_admin: true,
 };
 
 const USERS = [
     {
-        user_id: '10000001',
+        user_id: '88456975',
         provider: 'github',
-        login: 'acme',
+        login: 'example-owner',
         email: '',
         seen_at: 1789000000,
         disabled: false,
@@ -49,17 +50,19 @@ const PENDING = [
         version: '1.0.0',
         item_id: 'carnivore/sme',
         created_at: '2026-09-15T10:00:00Z',
-        submitted_by_login: 'acme',
-        submitted_by_id: '10000001',
+        submitted_by_login: 'example-owner',
+        submitted_by_id: '88456975',
     },
 ];
 
+/** One recorded request. */
 interface Call {
     url: string;
     method: string;
     headers: Record<string, string>;
 }
 
+/** A fake fetch answering by path, recording every call. */
 function routed(answers: Record<string, { status: number; body: unknown }>): {
     fetcher: Fetcher;
     calls: Call[];
@@ -131,7 +134,7 @@ describe('signing in, then the members table', () => {
             'GET https://api.carnivore.ai/v1/users': { status: 200, body: { users: USERS, cursor: '' } },
         });
 
-        await host.start('acme@example.test');
+        await host.start('alex@example.test');
         flushSync();
         expect(target.textContent).toContain('a***@example.test');
 
@@ -141,7 +144,7 @@ describe('signing in, then the members table', () => {
         await host.loadUsers(false);
         flushSync();
 
-        expect(target.textContent).toContain('acme');
+        expect(target.textContent).toContain('example-owner');
         expect(target.textContent).toContain(ADMIN.login);
         expect(target.textContent).toContain('2026-09-10');
         expect(target.textContent).toContain('2026-09-08');
@@ -222,7 +225,7 @@ describe('the queue', () => {
         await host.loadQueue('in_review');
         flushSync();
         expect(target.textContent).toContain('sme');
-        expect(target.textContent).toContain('by acme');
+        expect(target.textContent).toContain('by example-owner');
         expect(target.textContent).not.toContain('by carnivore');
 
         await host.approve('ab12');

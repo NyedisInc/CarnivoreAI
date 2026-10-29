@@ -1,30 +1,3 @@
-"""The far box's Codex stores, read over ssh (issue #162, follow-up #1049).
-
-A local codex session is lit from four surfaces (``attention/codex_reader.py``):
-its own turn record in ``~/.codex/thread_history_*.sqlite``, the rollout tail
-under ``~/.codex/sessions``, the writer lock under
-``~/.codex/thread-writer-locks``, and the pane. This reads the first three ON
-THE HOST THE SESSION RUNS ON and hands them to the SAME pure mapping the local
-reader uses (``codex_stores.codex_record_facts`` and
-``codex_transcript_facts``), so a remote codex row gets the same tiers.
-
-ONE EXEC PER HOST PER WATCHER PASS prints, framed by a per-exec random marker:
-
-THE PICK IS THE LOCAL PANE-OWNED RULE: the one non-archived ``user`` thread
-whose writer lock a descendant of the far pane holds. One codex process holds
-its sub-agents' locks too, so the ``threads`` source is what tells them apart.
-
-READ ONLY, AND ONLY THESE FILES: the state db, the history db, ``sessions/``
-and the lock directory (:data:`CODEX_READ_SCOPE`). Nothing here names
-``auth.json`` or any other file under ``~/.codex``; a rollout is read only
-when it is a regular file, not a symlink, under ``~/.codex/sessions`` that
-names its own thread.
-
-DEGRADING HONESTLY. No ``sqlite3``, an unreadable db or a schema that does not
-answer the queries leaves the record tier absent; no ``lsof`` or no process
-table leaves no pick. Absent tiers resolve ``unknown`` and the pane tier still
-answers. A host that could not be asked reads nothing for that pass.
-"""
 
 from __future__ import annotations
 
@@ -181,11 +154,6 @@ class FarCodexFiles:
         self._windows: Dict[str, _Rollout] = {}
 
     def refresh(self, host: Any) -> bool:
-        """Read the far locks, the stores of every lock-held thread and their rollouts. THREAD BODY.
-
-        Output: bool - False when the host could not be asked or answered a
-          cut-short frame set (nothing is updated then).
-        """
         marker = "@@x" + secrets.token_hex(8)
         with self._lock:
             held = {u: w.end for u, w in self._windows.items()}

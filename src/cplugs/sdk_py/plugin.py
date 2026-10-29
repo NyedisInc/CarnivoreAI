@@ -44,6 +44,30 @@ class Host:
     async def mcp_links(self, session: Optional[str] = None) -> Dict[str, Any]:
         return await self.call("mcp.links", {} if session is None else {"session": session})
 
+    async def flow_run(self, id: str, seed: str = "huddle_item", start: Optional[float] = None, end: Optional[float] = None,
+                       refresh: bool = False) -> Dict[str, Any]:
+        params: Dict[str, Any] = {"seed": seed, "id": id, "refresh": refresh}
+        if start is not None:
+            params["start"] = start
+        if end is not None:
+            params["end"] = end
+        return await self.call("flow.run", params)
+
+    async def flow_run_part(self, token: str, index: int) -> Dict[str, Any]:
+        return await self.call("flow.run_part", {"token": token, "index": index})
+
+    async def flow_feed(self, id: str, topic: str, seed: str = "huddle_item", start: Optional[float] = None,
+                        cursor: Optional[float] = None) -> Dict[str, Any]:
+        params: Dict[str, Any] = {"seed": seed, "id": id, "topic": topic}
+        if start is not None:
+            params["start"] = start
+        if cursor is not None:
+            params["cursor"] = cursor
+        return await self.call("flow.feed", params)
+
+    async def flow_tasks(self, query: str = "", limit: int = 30) -> Dict[str, Any]:
+        return await self.call("flow.tasks", {"query": query, "limit": limit})
+
     async def log(self, level: str, event: str, **fields: Any) -> None:
         await self.call("log", {"level": level, "event": event, "fields": fields})
 

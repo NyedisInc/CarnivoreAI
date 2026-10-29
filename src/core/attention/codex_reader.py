@@ -1,23 +1,3 @@
-"""The Codex family's attention resolution, in the resolver's own vocabulary.
-
-THE FOUR TIERS AND WHAT EACH MAY SAY, restated so this file can check itself
-against ``docs/session-status-model.md``:
-
-- The RECORD tier (``thread_turns.status`` in ``~/.codex/thread_history_*
-  .sqlite``) is the ONLY tier that may ORIGINATE rest. ``completed`` /
-  ``interrupted`` / ``failed`` are rest; ``inProgress`` intersected with a LIVE
-  writer-lock holder is busy; ``inProgress`` with no live holder, or a stale
-  projection watermark, is ABSENT (never idle). See ``codex_stores.py``.
-- The TRANSCRIPT tier (the rollout jsonl tail) may say a question is open or
-  sub-agents are running; it may NEVER say rest.
-- The PANE tier may CONFIRM an approval dialog, or (through a held resting
-  prompt) VETO a busy record; it may NEVER originate rest.
-- The TMUX tier alone may say dead.
-
-THE ONE RULE THE WHOLE THING INHERITS: a guess never outranks a record, and an
-absence is never a value. A record that could not be believed is absent, and an
-absent record lands the session on ``unknown``, which raises nothing.
-"""
 
 from __future__ import annotations
 
@@ -49,13 +29,11 @@ from src.core.attention.evidence import (
 )
 from src.core.session_status import LIVENESS_GONE
 
-# could not
 
 CODEX_RECORD_BUSY: str = "busy"
 
 CODEX_RECORD_REST: str = "rest"
 
-# could not
 CODEX_RECORD_ABSENT: str = "absent"
 
 CODEX_TURN_COMPLETED: str = "completed"
@@ -175,7 +153,6 @@ def resolve_codex(
             pane_may_veto=True,
         )
 
-    # could not
     if transcript.subagents_waiting:
         if held:
             return _withdrawn(REASON_SUBAGENTS, TIER_TRANSCRIPT)

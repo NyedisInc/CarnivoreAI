@@ -7,6 +7,11 @@ refuses to write unless one is named and present.
 
 WHAT IT REPAIRS, and each case is a different defect.
 
+  FILL      ``project_id IS NULL`` on a row nobody archived. On the live
+            install this is the create race (punchlist 16): the session
+            row was written 15 ms before its own project row and
+            attributed against a table that did not yet contain it.
+
   RESOLVE   ``project_id`` is set AND ``project_attribution = 'none'``.
             A row that says two things. It happened because the adopt
             path handed ``(None, 'none')`` to a writer that skips a None

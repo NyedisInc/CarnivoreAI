@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
 from src.config.settings import Settings
-
-ERROR_LOG_PATH = Path("/tmp/cloude-code-startup-error.log")
+from src.config.startup_error_log import write_startup_error
+from src.core import config_writer
 
 
 def _error_message(error: Exception) -> str:
@@ -40,13 +39,13 @@ Required fields:
 
 def build_settings() -> Settings:
     try:
-        return Settings()
+        built = Settings()
     except Exception as error:  # noqa: BLE001
         message = _error_message(error)
         print(message, file=sys.stderr)
-        try:
-            ERROR_LOG_PATH.write_text(message)
-            print(f"\nError details written to: {ERROR_LOG_PATH}", file=sys.stderr)
-        except OSError:
-            pass
+        written = write_startup_error(message)
+        if written is not None:
+            print(f"\nError details written to: {written}", file=sys.stderr)
         sys.exit(1)
+    config_writer.on_commit(built.on_config_commit)
+    return built

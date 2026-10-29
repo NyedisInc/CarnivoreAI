@@ -12,16 +12,19 @@
   ],
   "examples": [
     "Try a pixel pet you are building without publishing it: sideload the folder, tick its permissions, watch it run.",
-    "Leave the switch on overnight: it turns itself off after twelve hours and the sideloaded plugins stop."
+    "Leave the switch on overnight: it turns itself off after twelve hours and the sideloaded plugins stop.",
+    "Build a run viewer: pick a run in the slide-out menu and read it full size on the page beside it."
   ],
   "how_to": [
     "Turn on developer sideload (it shows twelve hours).",
     "Sideload a folder that holds a plugin manifest (cplug.json); the plugin appears as local/<name> marked unverified, switched off with no permissions.",
-    "Turn the switch off to stop and hide every sideloaded plugin; your source folder is never touched."
+    "Turn the switch off to stop and hide every sideloaded plugin; your source folder is never touched.",
+    "A sideloaded plugin whose carnivore.json asks for a page gets its own rail key: the slide-out is its menu and the main area shows its page; on a phone a menu | view switch picks one."
   ],
   "id": "developer-sideload",
   "issues": [
-    2063
+    2063,
+    2562
   ],
   "keywords": [
     "plugins",
@@ -38,9 +41,13 @@
   "surfaces": [
     "web/src/lib/plugins-page/SideloadSwitch.svelte",
     "src/cplugs/host/sideload_routes.py",
-    "src/cplugs/host/sideload.py"
+    "src/cplugs/host/sideload.py",
+    "web/src/lib/cplug-ui/page-views.svelte.ts",
+    "web/src/lib/cplug-ui/PageMenu.svelte",
+    "web/src/lib/cplug-ui/PageMain.svelte",
+    "src/cplugs/host/sidecar_page.py"
   ],
-  "updated": "2026-10-25",
+  "updated": "2026-10-27",
   "where": [
     "The plugins page, the developer sideload row beside the third-party switch."
   ]

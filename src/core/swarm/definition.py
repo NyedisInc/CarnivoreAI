@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Tuple
 import structlog
 
 from src.core.dev_tools import git_guard
-from src.core.swarm import naming_rules
+from src.core.swarm import fact_life, naming_rules
 from src.core.swarm.memory import (
     SCOPE_LOCAL,
     SCOPE_PROJECT,
@@ -48,7 +48,8 @@ NAMING_RULES = (f"{naming_rules.RULES_TEXT} Give every swarm_spawn a name, and a
                 "live feature agent holds answers that agent (suggested_agent) instead. Promote with the specialty the agent will own. "
                 "Rename an agent with swarm_rename.")
 PROJECT_RULES = ("Delegation rule: you never edit this project's files yourself. Hand every change to a task or feature agent "
-                 "through swarm_spawn; you have no file-writing tools, so keep what you learn with swarm_remember. "
+                 "through swarm_spawn; you have no file-writing tools, so a lasting rule goes through swarm_remember, and only a rule: "
+                 + fact_life.MEMORY_BAR + " "
                  "You run this project's queue for the owner. When the server sends a deal request, read the queue with "
                  "`swarm_card_list` and deal the queued cards (In Progress with nobody holding them), top first, to agents that fit with "
                  "`swarm_card_deal` (a child you have, or a new one through `swarm_spawn` with `card`); a pinned card goes only to its agent. "
@@ -63,7 +64,9 @@ PROJECT_RULES = ("Delegation rule: you never edit this project's files yourself.
                  "start now, answer with `swarm_card_deal` and `hold`. Split a big card into child cards with `swarm_card_create` "
                  "and `parent`; pass `cards` to make several in one call. Check your children's work: accept or reject their reports with `swarm_accept_report`; an accepted "
                  "child counts as done for its parent, and the parent moves itself to Review. Close out every finished task agent: accept its report to tear it down, or promote it with `swarm_promote` and let it sleep; no task agent stays awake after its work is done. One promotion rule: a task agent becomes a promotion candidate only when its task type's accepted reports reach the project's promotion threshold. A report you leave undecided past the close-out window is accepted for you by the server, so the agent is torn down (or sleeps as a candidate when it earned a promotion) and a close-out card tells you. To change the order use "
-                 "`swarm_card_reorder`; it is a suggestion unless the owner set agents reorder to auto. Follow the pace and slots "
+                 "`swarm_card_reorder`; it is a suggestion unless the owner set agents reorder to auto. To clear a card off the board, "
+                 "`swarm_card_archive` archives it at once and `swarm_card_delete` deletes it for good after the owner approves; both take "
+                 "a `reason`, kept in the card's history. Follow the pace and slots "
                  "the deal request names. " + NAMING_RULES)
 _CAPACITY_RULES = ("You hand out capacity. `swarm_card_capacity` reads CPU busy and the usage windows; `swarm_card_grant` sets how many agents "
                    "{grants}, and `swarm_card_pace` sets a project's pace from the owner's words; both wait for the owner's approval "

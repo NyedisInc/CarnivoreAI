@@ -1,28 +1,3 @@
-"""Deciding whether to poke one account, and judging whether it worked.
-
-**EVERY POKE IS VERIFIED.** ``expiresAt`` moved: done. Unmoved: exactly
-ONE usage call with the token the store holds now. It answers 200 (the
-grant is alive, nothing happened): the token is eligible again and is
-looked at a minute later, still before expiry. It answers 401 (the grant
-was rotated away server side): the account is marked ``needs_login`` and
-NO claude runs under that profile again until a fresh login is seen (the
-expiry differs, :func:`forget_if_superseded`), because another claude
-would only make Claude Code wipe the item.
-
-**THE REFUSALS, IN ORDER**, each a different fact about the account:
-
-**ONE POKE AT A TIME PER PROFILE, AND THAT IS A CORRECTNESS GUARD.** The
-refresh token is SINGLE USE. Two pokes racing it blank the credential to
-``expiresAt: 0`` and take the login with it (upstream issues 88583 and
-93051), so the lock is not politeness.
-
-**SUCCESS IS ``expiresAt`` MOVING FORWARD AND IS MEASURED BY RE-READING
-THE STORE.** Never the exit code: a keepalive exits 0 whether it
-refreshed anything or not. A poke that timed out and did not move the
-expiry is ``unknown``, not ``failed``: the child may have spent the token
-and saved nothing, or done nothing at all, and the two cannot be told
-apart from here. Neither is retried; both put re-add on the row.
-"""
 
 from __future__ import annotations
 

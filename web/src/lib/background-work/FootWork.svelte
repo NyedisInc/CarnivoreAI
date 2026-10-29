@@ -1,5 +1,5 @@
 <script lang="ts">
-  /*  hidden  <button> */
+  /* there is nothing */
   import { sessions } from '../../opscenter/api';
   import { rowFor } from '../../opscenter/cells/terminal-viewer/meta';
   import { t } from '../i18n/index.svelte';
@@ -119,21 +119,21 @@
 {#if agentsCount !== null || shellsCount !== null || timers !== null}
   <span class="oc-tfw" data-form={form}>
     {#if agentsCount !== null}
-      <button type="button" class="oc-tfw-seg" data-seg="agents"
+      <button data-base-exempt="a segment of the terminal foot bar, drawn flush in the bar strip (foot-plan measures its exact width)" type="button" class="oc-tfw-seg" data-seg="agents"
         aria-expanded={active === 'agents' ? 'true' : 'false'} data-active={active === 'agents' ? 'true' : 'false'}
         aria-label={t('background_work.foot.agents_title', { count: agentsCount })}
         onmousedown={keepTerminalFocus} onclick={(e) => ask('agents', e)}
         >{@render agentsContent(form)}</button>
     {/if}
     {#if shellsCount !== null}
-      <button type="button" class="oc-tfw-seg" data-seg="shells"
+      <button data-base-exempt="a segment of the terminal foot bar, drawn flush in the bar strip (foot-plan measures its exact width)" type="button" class="oc-tfw-seg" data-seg="shells"
         aria-expanded={active === 'processes' ? 'true' : 'false'} data-active={active === 'processes' ? 'true' : 'false'}
         aria-label={t('background_work.foot.title', { count: shellsCount })}
         onmousedown={keepTerminalFocus} onclick={(e) => ask('processes', e)}
         >{@render shellsContent(form)}</button>
     {/if}
     {#if timers !== null}
-      <button type="button" class="oc-tfw-seg" data-seg="timers"
+      <button data-base-exempt="a segment of the terminal foot bar, drawn flush in the bar strip (foot-plan measures its exact width)" type="button" class="oc-tfw-seg" data-seg="timers"
         aria-expanded={active === 'timers' ? 'true' : 'false'} data-active={active === 'timers' ? 'true' : 'false'} aria-label={timers.title}
         onmousedown={keepTerminalFocus} onclick={(e) => ask('timers', e)}
         >{@render timersContent(form)}</button>

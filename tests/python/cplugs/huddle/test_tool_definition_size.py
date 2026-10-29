@@ -31,7 +31,7 @@ def test_the_batch_schema_keeps_its_common_fields_and_leaves_the_rare_ones_to_th
 def test_batch_ops_with_rare_fields_still_work_and_are_still_checked(manager):
     store = huddle_store(manager)
     ok, out = call(manager, "task_manager_batch_run", {"list_id": "all", "ops": [
-        {"op": "add", "text": "from a batch", "title": "Batch title", "list": "all", "perceived_ask": "file it", "github_issue": "https://github.com/NyedisInc/CarnivoreAI/issues/1757"},
+        {"op": "add", "text": "from a batch", "title": "Batch title", "list": "all", "perceived_ask": "file it", "github_issue": "https://github.com/Harbor666/CarnivoreAIDev/issues/1757"},
         {"op": "add", "text": "second", "list": "all", "fire_at": "2099-01-01T09:00:00-04:00"},
     ]}, raw=True)
     assert ok and out["applied"] == 2, out

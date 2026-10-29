@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import secrets
 import struct
+import threading
 import time
 from typing import Dict, Optional, Tuple
 
@@ -34,15 +35,17 @@ class NonceCache:
 
     def __init__(self) -> None:
         self._seen: Dict[Tuple[str, str], float] = {}
+        self._lock = threading.Lock()
 
     def accept(self, grant_id: str, nonce: str, now: float) -> bool:
         horizon = now - 2 * CHALLENGE_FRESHNESS_SECONDS
-        for key in [k for k, at in self._seen.items() if at < horizon]:
-            del self._seen[key]
-        if (grant_id, nonce) in self._seen:
-            return False
-        self._seen[(grant_id, nonce)] = now
-        return True
+        with self._lock:
+            for key in [k for k, at in self._seen.items() if at < horizon]:
+                del self._seen[key]
+            if (grant_id, nonce) in self._seen:
+                return False
+            self._seen[(grant_id, nonce)] = now
+            return True
 
 
 NONCES = NonceCache()

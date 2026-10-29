@@ -1,4 +1,4 @@
-/* CANNOT DETERMINE */
+/* the home screen */
 import { PROJECT_CREATE_KEYS } from '../../../../client/js/labels/project-create.js';
 import { presenceBadgeText } from '../../../../client/js/labels/project-tree.js';
 import type { ProjectRow, Translate } from '../sessions/types';
@@ -76,7 +76,6 @@ export function existingProjectItems(
 
 export type NewSessionOutcome = 'opened' | 'cancelled' | 'cannot_determine' | 'none';
 
-/* already exists */
 export async function startSessionInExistingProject(
     host: CreateHost,
     modals: ModalOpeners,
@@ -122,9 +121,11 @@ export async function cloneFromGithubFlow(
     const choice = await host.chooseProvider(null, t(PROJECT_CREATE_KEYS.wizardNext));
     if (!choice) return 'cancelled_provider';
 
+    const defaultParentDir = await host.defaultParentDir();
     const project = await modals.clone({
         confirmLabel: t(PROJECT_CREATE_KEYS.wizardCreate),
         clone: (payload) => host.cloneProject(payload),
+        ...(defaultParentDir ? { defaultParentDir } : {}),
     });
     if (!project) return 'cancelled';
 

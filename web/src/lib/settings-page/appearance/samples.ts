@@ -33,7 +33,7 @@ export const SAMPLE_SESSION = {
     effort: 'high',
     tokens: '940k / 41k',
     cost: '$4.82',
-    account: 'claude max, sam',
+    account: 'claude max, joe',
     agents: 2,
     shells: 3,
     timers: 2,

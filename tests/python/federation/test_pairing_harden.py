@@ -68,7 +68,7 @@ def test_the_token_limit_is_per_grant_and_per_client_for_strangers(macs):
     assert _token(acceptor, other, client, answer2["grant_id"]).status_code == 200
     stranger = [_token(acceptor, initiator, client, os.urandom(8).hex()).status_code for _ in range(21)]
     assert stranger[:20] == [401] * 20 and stranger[20] == 429
-    assert _token(acceptor, initiator, _client(("198.51.100.18", 1)), os.urandom(8).hex()).status_code == 401
+    assert _token(acceptor, initiator, _client(("192.168.1.50", 1)), os.urandom(8).hex()).status_code == 401
 
 
 
@@ -119,13 +119,45 @@ def test_staging_and_committing_a_rotation_touches_the_live_seed_only_at_commit(
     kc = FakeKeychain()
     svc = relay_keychain.FEDERATION_KEY_SERVICE
     kc.items[(svc, "iid")] = b64url(bytes([1]) * 32)
-    new = fed_key.begin_rotation("iid", write=kc.write)
+    new = fed_key.begin_rotation("iid", write=kc.write, read=kc.read)
     assert kc.items[(svc, "iid")] == b64url(bytes([1]) * 32) and (svc, "iid.next") in kc.items
     fed_key.commit_rotation("iid", read=kc.read, write=kc.write, delete=kc.delete)
     assert fed_key.load_key("iid", read=kc.read, write=kc.write).raw_pub == new.raw_pub
     assert (svc, "iid.next") not in kc.items
     with pytest.raises(fed_key.DeviceKeyUnavailable):
         fed_key.commit_rotation("iid", read=kc.read, write=kc.write, delete=kc.delete)
+
+
+def test_a_retry_resumes_the_staged_key_instead_of_minting_another():
+    kc = FakeKeychain()
+    svc = relay_keychain.FEDERATION_KEY_SERVICE
+    kc.items[(svc, "iid")] = b64url(bytes([1]) * 32)
+    first = fed_key.begin_rotation("iid", write=kc.write, read=kc.read)
+    again = fed_key.begin_rotation("iid", write=kc.write, read=kc.read)
+    assert again.raw_pub == first.raw_pub
+
+
+@pytest.mark.asyncio
+async def test_a_second_rotation_while_one_runs_is_refused():
+    import asyncio
+
+    release = asyncio.Event()
+
+    async def slow(**_kw):
+        await release.wait()
+        return {}
+
+    original = key_rotate._rotate_locked
+    key_rotate._rotate_locked = slow
+    try:
+        first = asyncio.create_task(key_rotate.rotate(install_id="iid", links=None, live_grants=0))
+        await asyncio.sleep(0)
+        with pytest.raises(key_rotate.RotationBusy):
+            await key_rotate.rotate(install_id="iid", links=None, live_grants=0)
+        release.set()
+        await first
+    finally:
+        key_rotate._rotate_locked = original
 
 
 class Links:
@@ -160,7 +192,7 @@ def _rotation_setup(macs, monkeypatch):
     monkeypatch.setattr(fed_key, "load_key", lambda iid: fed_key.load_or_create(
         iid, read=kc.read, write=kc.write, service=svc))
     real_begin, real_commit = fed_key.begin_rotation, fed_key.commit_rotation
-    monkeypatch.setattr(fed_key, "begin_rotation", lambda iid: real_begin(iid, write=kc.write))
+    monkeypatch.setattr(fed_key, "begin_rotation", lambda iid: real_begin(iid, write=kc.write, read=kc.read))
     monkeypatch.setattr(fed_key, "commit_rotation", lambda iid: real_commit(
         iid, read=kc.read, write=kc.write, delete=kc.delete))
     return acceptor, initiator, http, answer["grant_id"], kc

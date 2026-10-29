@@ -69,7 +69,7 @@ def test_the_batch_ask_op_takes_the_structured_fields(manager, monkeypatch):
     assert store.item(b)["thread"][0]["questions"] == [] and store.item(b)["thread"][0]["text"] == "plain?"
 
 
-def test_owners_numbered_answer_is_a_plain_reply_that_answers_the_question(manager, monkeypatch):
+def test_joes_numbered_answer_is_a_plain_reply_that_answers_the_question(manager, monkeypatch):
     _quiet(monkeypatch)
     store = huddle_store(manager)
     item = store.add("all", "x", actor="joe")["id"]

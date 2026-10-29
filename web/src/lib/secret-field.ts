@@ -14,7 +14,6 @@ export function maskingSupported(): boolean {
     return typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('-webkit-text-security', 'disc');
 }
 
-/* <input class="oc-field" use:secretField /> */
 export function secretField(node: HTMLInputElement, enabled: boolean = true): void {
     if (!enabled) return;
     for (const [name, value] of Object.entries(IGNORE_ATTRIBUTES)) node.setAttribute(name, value);

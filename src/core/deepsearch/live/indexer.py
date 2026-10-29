@@ -1,16 +1,3 @@
-"""Index the bytes appended to ONE live transcript file since its watermark (section 1.13).
-
-APPEND ONLY: the file's new complete lines become new rows and postings; no existing row is touched. The
-rows point at the LIVE FILE (``frame_offset`` = the line's byte offset, ``frame_len`` = its length), so a
-hit opens by reading that one line back; there is no second copy of the text anywhere.
-
-THE FALLBACK. A watermark that no longer holds (the offset is past the end, or the last indexed line is not
-where it was: a truncation or a rewrite), or a filter rule change, reads the file WHOLE from byte 0 under
-the same filter, after removing what was indexed from it (the file's rows in the cache).
-
-SUBAGENT FILES keep their sidechain records: the ``sidechain`` rule is about subagent chatter inside the MAIN
-transcript (``rules.py``), and every record of a subagent file is a sidechain record.
-"""
 
 from __future__ import annotations
 
@@ -19,16 +6,15 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 import structlog
 
 from src.core.deepsearch import constants as K
 from src.core.deepsearch import indexer as point_indexer
 from src.core.deepsearch import rules as rules_mod
-from src.core.deepsearch.extract import extract
 from src.core.deepsearch.live import store
-from src.core.deepsearch.live.reader import RangeReader
+from src.core.deepsearch.live.range_rows import read_rows
 from src.core.deepsearch.live.watermark import FULL_START, Start, verify
 from src.core.transcript_source import constants as TS
 from src.core.deepsearch.byte_source import ByteSource
@@ -124,17 +110,11 @@ def index_file(conn: sqlite3.Connection, spec: FileSpec, *, overrides: Optional[
         start = FULL_START
     rules = rules_for(overrides, spec.family, spec.file_kind)
     end = size if spec.planned_end is None else min(size, max(int(spec.planned_end), start.offset))
-    reader = RangeReader(path if source is None else source, start.offset, end)
-    pending: List[Tuple[tuple, str]] = []
-    last: Optional[Tuple[int, bytes]] = None
-    for number, (offset, line) in enumerate(reader, start=start.lines):
-        last = (offset, line)
-        found = extract(line, rules, spec.family)
-        if found is not None:
-            pending.append(((0, offset, len(line), number, number, found[0]), found[1]))
+    read = read_rows(path if source is None else source, start.offset, end, start.lines, rules, spec.family)
+    pending, last = read.rows, ((read.last_offset, read.last_raw) if read.lines else None)
     result.mode, result.reason = start.mode, start.reason
-    result.start, result.end, result.lines, result.rows = start.offset, reader.end_offset, reader.lines, len(pending)
-    result.bytes_read = reader.bytes_read
+    result.start, result.end, result.lines, result.rows = start.offset, read.end_offset, read.lines, len(pending)
+    result.bytes_read = read.bytes_read
     result.checked_bytes = start.checked_bytes
     with transaction(conn):
         if stale_id is not None:
@@ -147,7 +127,7 @@ def index_file(conn: sqlite3.Connection, spec: FileSpec, *, overrides: Optional[
             live = store.LiveFile(spec.conversation_id, spec.path, spec.file_kind, spec.family, start.offset,
                                   start.lines, None, start.offset, start.lines, None, None, 0, version, 1, scope,
                                   now, now)
-        live.indexed_offset, live.indexed_lines = reader.end_offset, start.lines + reader.lines
+        live.indexed_offset, live.indexed_lines = read.end_offset, start.lines + read.lines
         if last is not None:
             live.last_serial, live.last_serial_offset = line_serial(last[1][:-1]), last[0]
             live.indexed_at = now
@@ -157,6 +137,6 @@ def index_file(conn: sqlite3.Connection, spec: FileSpec, *, overrides: Optional[
         live_id = store.save(conn, live)
         point_indexer.write_rows(conn, K.LIVE_DOC_ID, pending, live_id)
     result.last_serial = live.last_serial
-    if not reader.lines and start.mode == K.MODE_APPEND:
+    if not read.lines and start.mode == K.MODE_APPEND:
         result.skipped = K.SKIP_LIVE_NOTHING_NEW
     return result

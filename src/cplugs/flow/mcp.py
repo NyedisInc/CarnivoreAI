@@ -22,7 +22,7 @@ async def flow_get(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
     if seed not in service.SEED_KINDS:
         raise ToolError(f"seed must be one of {', '.join(service.SEED_KINDS)}")
     if isinstance(seed_id, bool) or not isinstance(seed_id, (str, int)) or not str(seed_id).strip():
-        raise ToolError("id is required: a huddle item number, or a session reference")
+        raise ToolError("id is required: a task manager item number, or a session reference")
     try:
         run = await service.get_run(ctx, seed, str(seed_id).strip(), start=_epoch(args, "start"), end=_epoch(args, "end"),
                                     refresh=bool(args.get("refresh")))
@@ -40,8 +40,8 @@ async def flow_get(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:
 TOOLS: dict[str, Any] = {
     "flow_get": ToolSpec(
         description=("Rebuild a multi-agent run as a swimlane flow chart: lanes (sessions, subagents nested), work blocks, "
-                     "edges (crosstalk, spawn, subagent launch and return, huddle posts, owner replies) each with its source ids, "
-                     "inferred edges marked. Seed: a huddle item number, or a session reference plus an optional window. "
+                     "edges (crosstalk, spawn, subagent launch and return, task manager posts, owner replies) each with its source ids, "
+                     "inferred edges marked. Seed: a task manager item number, or a session reference plus an optional window. "
                      "Read-only and on demand. With html=true the answer is {html}: ONE self-contained page (inline CSS and JS, "
                      "no network, under 2 MB) to post with task_manager_artifact_add."),
         properties={"seed": {"type": "string", "enum": list(service.SEED_KINDS)},

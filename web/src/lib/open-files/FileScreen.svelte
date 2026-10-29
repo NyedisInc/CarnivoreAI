@@ -101,7 +101,7 @@
             failed = false;
             message = null;
             cant = null;
-            mode = 'edit';
+            mode = /\.(md|markdown)$/i.test(file.path) ? 'preview' : 'edit';
             if (file.kind === 'diff') void loadDiff(file);
             else void load(file.id, false);
         });

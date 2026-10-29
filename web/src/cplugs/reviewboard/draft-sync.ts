@@ -44,7 +44,6 @@ export class DraftSync {
     this.timer = setTimeout(() => void this.flush(), this.delay);
   }
 
-  /* already running */
   async flush(): Promise<void> {
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;

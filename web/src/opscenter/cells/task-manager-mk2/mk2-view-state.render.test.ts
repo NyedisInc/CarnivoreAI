@@ -9,8 +9,9 @@ const mk = (id: number, list: string, extra: Record<string, unknown> = {}) => ({
   revision: 1, created_seq: id, seq: id, deleted: false, thread: [], ...extra,
 });
 const msg = (id: number, author: 'joe' | 'claude', text: string) => ({ id, item_id: 5, author, kind: 'reply', text, answered: false, created_at: 1_700_000_000 + id, seq: id });
+/** Item 5 carries a thread (the last agent message is new), a note, a tag and a fork parent. */
 const OPEN = (list: string) => mk(5, list, {
-  title: 'ship the tabs', text: 'ship the tabs now', note: 'check phone width', unread: true, tagged_by: 'bot-ui', forked_from: 2,
+  title: 'ship the tabs', text: 'ship the tabs now', note: 'check phone width', unread: true, tagged_by: 'cv-ui', forked_from: 2,
   thread: [msg(1, 'claude', 'first reply, spec at https://example.com/spec'), msg(2, 'joe', 'my answer'), msg(3, 'claude', 'second reply')], thread_count: 3,
 });
 
@@ -49,6 +50,7 @@ import { huddle } from '../../../cplugs/huddle/huddle.svelte';
 import type { HuddleItem } from '../../../cplugs/huddle/huddle-model';
 
 cplugEnablement.enabled = { huddle: true };
+/** A file under `cells/`, from the web root vitest runs in. Inputs: relative path. Output: absolute path. */
 const CELLS = (rel: string): string => resolve(process.cwd(), 'src/opscenter/cells', rel);
 const apps: Array<ReturnType<typeof mount>> = [];
 
@@ -58,14 +60,16 @@ afterEach(() => {
   clearViewFilter();
   resetInspections();
   huddle.openId = null as never;
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom without storage: the widget keeps an in-memory value */ }
 });
 
+/** Settle the mocked reads. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 10; i += 1) { await Promise.resolve(); await tick(); }
   flushSync();
 }
 
+/** Mount a cell on project 7, inside a frame header when `hostId` is given. Output: the host element after it settled. */
 async function draw(cell: typeof Mark2, hostId?: string): Promise<HTMLElement> {
   const host = document.createElement('div');
   document.body.appendChild(host);
@@ -76,6 +80,7 @@ async function draw(cell: typeof Mark2, hostId?: string): Promise<HTMLElement> {
   return host;
 }
 
+/** Open task 5 by its row's toggle. Inputs: host. Output: the detail element. */
 async function open(host: HTMLElement): Promise<HTMLElement> {
   (host.querySelector('[data-task-manager-toggle="5"]') as HTMLButtonElement).click();
   await settle();
@@ -83,6 +88,7 @@ async function open(host: HTMLElement): Promise<HTMLElement> {
 }
 
 
+/** Forget the in-memory side of the view, as a page reload does. */
 function reload(): void {
   for (const app of apps.splice(0)) unmount(app);
   document.body.innerHTML = '';

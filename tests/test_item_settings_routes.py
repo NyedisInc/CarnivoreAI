@@ -208,3 +208,10 @@ def test_no_datastore_is_an_explicit_unavailable(tmp_path, monkeypatch):
     client = TestClient(_app(True))
     res = client.get(API)
     assert res.status_code == 503 and res.json()["detail"]["code"] == "item_settings_unavailable"
+
+
+def test_snake_case_field_keys_are_accepted_and_a_leading_underscore_is_not():
+    field = {"kind": "boolean", "labelKey": "widgets.acme.kind_all", "default": True}
+    item_settings_schema._check_field("kind_all", field)
+    with pytest.raises(item_settings_schema.SettingsSchemaError):
+        item_settings_schema._check_field("_bad", field)

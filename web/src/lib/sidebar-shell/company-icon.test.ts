@@ -10,7 +10,6 @@ vi.mock('./company-source.svelte', () => ({
 }));
 
 const legacy = {
-    groups: {},
     projectHeader: { ledHtml: () => '', iconHtml: (n: string | null) => (n ? `<i ${n}>` : ''), iconForBand: () => null },
 } as unknown as LegacyDrawer;
 

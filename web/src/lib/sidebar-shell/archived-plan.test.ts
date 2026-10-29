@@ -17,7 +17,6 @@ vi.mock('./leaders-source.svelte', async () => {
 
 function stubs(): LegacyDrawer {
     return {
-        groups: {},
         projectHeader: { ledHtml: () => '', iconHtml: () => '', iconForBand: () => null },
     };
 }

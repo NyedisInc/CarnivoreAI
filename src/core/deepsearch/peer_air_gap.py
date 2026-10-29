@@ -6,13 +6,13 @@ import sqlite3
 import time
 import unicodedata
 from contextlib import closing
-from urllib.parse import quote
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, FrozenSet, Iterable, List, NamedTuple, Optional, Set, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.deepsearch import constants as K
 from src.core.deepsearch.cache import db as cache_db
@@ -24,7 +24,7 @@ logger = structlog.get_logger()
 
 
 class AirGapUnreadable(RuntimeError):
-    """The project registry could not be read, so no group can be proven outside an air-gapped project."""
+    pass
 
 
 READ_BUDGET_SECONDS: float = 20.0
@@ -123,7 +123,7 @@ def ledger_folders(state_dir: Path) -> Set[str]:
     if not path.exists():
         return set()
     try:
-        with closing(sqlite3.connect(f"file:{quote(str(path))}?mode=ro", uri=True, timeout=5.0)) as conn:
+        with closing(connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)) as conn:
             return {row[0] for row in conn.execute(f"SELECT DISTINCT folder FROM {K.FOLDERS_TABLE}")}
     except sqlite3.Error as exc:
         logger.info("deepsearch_ledger_folders_unreadable", error_type=type(exc).__name__)

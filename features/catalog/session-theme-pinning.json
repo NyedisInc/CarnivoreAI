@@ -16,7 +16,14 @@
     "pin",
     "theme"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The session theme picker open over a terminal",
+      "caption": "Choosing a theme for one session",
+      "file": "picker.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Session theme pinning",
   "since": "2026-09-07",
   "status": "stable",
@@ -27,6 +34,5 @@
   "updated": "2026-10-21",
   "where": [
     "Open a session, then its session options menu (the three dots at the top right of its terminal widget) and choose session theme."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

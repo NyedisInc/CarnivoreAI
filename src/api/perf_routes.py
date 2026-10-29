@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 
 from src.api.auth import require_auth
@@ -12,6 +12,7 @@ from src.config import settings
 from src.core.event_hub import get_hub
 from src.core.perf_hooks import sampler
 from src.core.perf_hooks.monitor import PERF
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -76,4 +77,4 @@ async def post_profile(body: ProfileBody) -> Dict[str, Any]:
     try:
         return await sampler.profile(sampler.ProfileRequest(seconds=body.seconds, hz=body.hz, top=body.top))
     except sampler.ProfileBusyError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise api_error(409, "conflict", exc, step="post_profile") from exc

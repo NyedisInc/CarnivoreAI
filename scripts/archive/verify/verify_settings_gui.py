@@ -1,74 +1,4 @@
 #!/usr/bin/env python3
-"""Does the workspace settings tab actually render, and reach, on screen.
-
-WHY THIS IS A PIXEL TEST AND NOT A MARKUP TEST. A markup assertion proves
-an element is in the DOM. This codebase has shipped three features that
-were in the DOM and visibly broken: a badge that rendered the literal
-`~~claude` while its tests read `.textContent`, a help button that fell
-through to the bare user-agent stylesheet while "the button exists"
-passed, and a feature with 282 passing assertions that painted zero
-pixels. Every one of those would pass a markup check about this tab.
-
-So every verdict below comes from geometry and paint measured in a real
-Chromium that loaded the real stylesheets, on markup produced by the
-SHIPPED renderer.
-
-WHAT IS MEASURED, and why each one is the thing a human would notice.
-
-  RENDERS      every control has a non-zero box and is not display:none,
-               not visibility:hidden, not opacity:0. This is the "282
-               passing assertions, zero pixels" defect stated as a
-               measurement.
-  SHAPE        the environment row's remove button is not a circle. The
-               settings screen has already shipped six controls that were
-               ellipses because a bare `button {}` element rule handed out
-               `border-radius: var(--radius-full)` to anything that did
-               not declare its own. That rule is gone; this is the check
-               that notices if it, or anything like it, comes back.
-  REACHABLE    at 390px nothing in the pane extends past the pane's right
-               edge, and the document does not scroll horizontally. The
-               three-across environment grid put the remove button off the
-               right edge of a phone - not a layout preference, the
-               control was unreachable.
-  HONEST       the "not in force yet" bind warning and the "recorded, not
-               in force" TLS note are both ON SCREEN with real boxes when
-               the saved preference differs from the address in force.
-               These two sentences are the feature's only defence against
-               a user believing a setting applied when it did not, so an
-               invisible one is a silent false green.
-  THEMED       the remove button's border colour CHANGES between two
-               far-apart palettes. That is what turns "the rule names a
-               token" into "the paint follows the theme".
-  LIVE         clicking "add variable" adds a row that can be typed into
-               and collected, and removing the last row leaves one behind.
-               Measured through the shipped collector, not by counting
-               DOM nodes, so a row that exists and cannot be read fails.
-
-TWO PALETTES, `terminal` and `codex`, chosen far apart in both directions
-that matter: a black page against a light one, and --color-border at
-#2B2B2B against a near-white. `terminal` also zeroes every radius token,
-which is exactly the theme a hardcoded corner would be wrong on.
-gameboy and matrix are deliberately NOT used: they collapse several
-tokens onto one value, so a run there can pass because two things are
-identical rather than because either is right.
-
-ONE POSITIVE CONTROL. #control-circle is a deliberately circular button.
-A shape sampler that could only ever answer "not a circle" would pass
-every real control for the wrong reason; it must fail there.
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS              everything measured, everything right
-  1  FAIL              something was measured and was wrong
-  2  CANNOT DETERMINE  the measurement could not be taken at all
-                       (playwright missing, browser would not launch,
-                       harness never became ready, the tab reported
-                       itself hidden, a theme manifest would not load).
-                       Never a pass.
-
-playwright is not importable under this project's venv. Run it with an
-interpreter that has it, e.g.
-    /opt/homebrew/bin/python3 scripts/verify_settings_gui.py
-"""
 
 from __future__ import annotations
 
@@ -144,20 +74,6 @@ def channel_delta(a: tuple, b: tuple) -> int:
 
 
 def settle(page) -> None:
-    """Block until two consecutive frames report identical geometry.
-
-    ``getComputedStyle`` mid-transition returns the ANIMATED value, not
-    the end value, even on a visible tab, so a read landing inside a
-    running transition looks exactly like a rule that never applied.
-    Waiting for two frames to AGREE is the check for that; sleeping one
-    guessed interval is not.
-
-    Args:
-        page: A Playwright page already on the harness.
-
-    Raises:
-        RuntimeError: The pane never stopped changing.
-    """
     ok = page.evaluate(
         """async () => {
             const snap = () => JSON.stringify(window.__measure());
@@ -333,11 +249,6 @@ def check_live(page, failures: list) -> None:
 
 
 def main() -> int:
-    """Run every check and report one of three outcomes.
-
-    Returns:
-        0 pass, 1 fail, 2 could not determine.
-    """
     failures: list = []
     undetermined: list = []
 
@@ -388,15 +299,6 @@ def main() -> int:
 
 
 def _report(failures: list, undetermined: list) -> int:
-    """Print the verdict.
-
-    Args:
-        failures: Measured faults.
-        undetermined: Things that could not be measured.
-
-    Returns:
-        The exit code.
-    """
     if undetermined:
         print("CANNOT DETERMINE:")
         for line in undetermined:

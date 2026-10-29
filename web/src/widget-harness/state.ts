@@ -1,8 +1,6 @@
-/* did not answer */
 
 export const harnessState = {
   ready: false,
-  /* could not */
   error: '',
   requests: 0,
   counts: {} as Record<string, number>,

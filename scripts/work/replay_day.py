@@ -23,7 +23,6 @@ def busiest_day(path: Path) -> int:
 
 
 def _core_writer(path: Path, stop: threading.Event, interval: float, waits: List[float]) -> None:
-    """Commit one short core transaction every ``interval`` seconds and record how long BEGIN IMMEDIATE waited. Output: None."""
     conn = sqlite3.connect(path, isolation_level=None, timeout=30.0)
     conn.execute("CREATE TABLE IF NOT EXISTS replay_probe (k TEXT PRIMARY KEY, v INTEGER)")
     while not stop.is_set():

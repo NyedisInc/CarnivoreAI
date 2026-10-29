@@ -36,6 +36,7 @@ import { setLocale } from '../i18n/index.svelte';
 
 setLocale('en');
 
+// jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};

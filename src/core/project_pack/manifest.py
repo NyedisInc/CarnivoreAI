@@ -5,6 +5,7 @@ import json
 import os
 from typing import Any, Dict, List, Tuple
 
+from src.core.safe_io.atomic_write import atomic_write_bytes
 from src.core.project_pack import constants as K
 from src.core.project_pack.inventory import Entry
 from src.core.trail_entry import utc_now
@@ -15,12 +16,7 @@ class ManifestError(Exception):
 
 
 def write_atomic(path: str, data: bytes) -> None:
-    tmp = f"{path}.tmp"
-    with open(tmp, "wb") as handle:
-        handle.write(data)
-        handle.flush()
-        os.fsync(handle.fileno())
-    os.replace(tmp, path)
+    atomic_write_bytes(path, data)
 
 
 def write_sidecar(root: str, archive_name: str, archive_sha256: str, archive_bytes: int, entries: List[Entry],

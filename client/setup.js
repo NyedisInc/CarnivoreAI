@@ -34,7 +34,6 @@ function renderValue(value) {
   }
 }
 
-/* could not */
 function renderCheck(check) {
   let cls = 'unknown';
   let glyph = '?';
@@ -150,7 +149,6 @@ function isLocalOnly(status, data) {
   return status === 403 && !!data && !!data.detail && data.detail.reason === 'setup_local_only';
 }
 
-/* [object Object] */
 function failureText(status, data) {
   if (isLocalOnly(status, data)) {
     return 'setup can only be finished on the computer Carnivore runs on.';

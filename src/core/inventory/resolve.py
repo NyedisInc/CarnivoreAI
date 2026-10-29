@@ -47,7 +47,6 @@ def _home_project(conn: sqlite3.Connection, ident: SessionIdentity) -> Optional[
 
 
 def _outside_references(conn: sqlite3.Connection, project_id: int) -> List[str]:
-    """Sentences for sessions OUTSIDE the project that were forked or resumed from one of its sessions. Output: list[str]."""
     sql = ("SELECT c.session_uuid, c.project_id, p.session_uuid FROM sessions c JOIN sessions p ON c.parent_session_id = p.id "
            "WHERE p.project_id = ? AND COALESCE(c.project_id, -1) != ? ORDER BY c.id")
     return [f"session {child} (project {other if other is not None else 'none'}) was forked or resumed from session {parent} "
@@ -70,11 +69,6 @@ def resolve_project(conn: sqlite3.Connection, project_id: int, locations: Locati
 
 def resolve_session_target(conn: sqlite3.Connection, target: str, locations: Locations, *,
                            related_blockers: Optional[List[str]] = None) -> Inventory:
-    """:func:`resolve_session` for a session row id (``row:12``), app id (``ses_...``), uuid, conversation id or tmux name.
-
-    Raises: TargetNotFound; TargetAmbiguous (see ``target.py``).
-    Example: resolve_session_target(conn, "ses_49759e95", locations)
-    """
     return resolve_session(conn, resolve_session_uuid(conn, target), locations, related_blockers=related_blockers)
 
 

@@ -164,12 +164,12 @@ def test_no_datastore_is_a_named_state_not_an_empty_success(monkeypatch, tmp_pat
 def test_a_moved_away_project_names_its_new_computer_by_label_not_install_id(seeded):
     conn = connect(db_path_for(seeded), create=False)
     try:
-        conn.execute("UPDATE projects SET pack_state = 'moved_away', moved_to_install_id = 'iid-hosta-0001' WHERE id = 1")
+        conn.execute("UPDATE projects SET pack_state = 'moved_away', moved_to_install_id = 'iid-studio-0001' WHERE id = 1")
         conn.execute("INSERT INTO hosts (key, label, ssh_target, socket, enabled, created_at, updated_at, peer_install_id) "
-            "VALUES ('peer-hosta', 'hosta', 'x', 'cloude', 1, 't', 't', 'iid-hosta-0001')")
+            "VALUES ('peer-studio', 'studio', 'x', 'cloude', 1, 't', 't', 'iid-studio-0001')")
         conn.commit()
     finally:
         conn.close()
     body = _app().get("/api/v1/projects/history").json()
     alpha = next(g for g in body["groups"] if g["key"] == "1")
-    assert alpha["project"]["pack_state"] == "moved_away" and alpha["project"]["moved_to_label"] == "hosta"
+    assert alpha["project"]["pack_state"] == "moved_away" and alpha["project"]["moved_to_label"] == "studio"

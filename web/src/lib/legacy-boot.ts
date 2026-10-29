@@ -1,4 +1,6 @@
+/* event that starts */
 
+/* and the real */
 export const APP_BOOT_COMPLETE = 'app-boot-complete';
 
 interface BootLatch {

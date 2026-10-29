@@ -50,8 +50,8 @@ const rowTop = (box: HTMLElement, id: number): number => (box.querySelector(`[da
 const settle = async (): Promise<void> => { for (let i = 0; i < 4; i += 1) await Promise.resolve(); };
 function scrollTo(box: HTMLElement, to: number): void { box.scrollTop = to; box.dispatchEvent(new Event('scroll')); }
 
-describe('the keeper holds the screen when the row the owner reads itself moves (round 9)', () => {
-  test('the row the owner reads re-filed into another section: the list does not scroll and the row above it stays put', async () => {
+describe('the keeper holds the screen when the row he reads itself moves (round 9)', () => {
+  test('the row he reads re-filed into another section: the list does not scroll and the row above it stays put', async () => {
     modelLayout();
     const box = build([[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]]);
     stop = createScrollKeeper(box);
@@ -65,7 +65,7 @@ describe('the keeper holds the screen when the row the owner reads itself moves 
     expect(rowTop(box, reading - 1)).toBe(above);
   });
 
-  test('a row the owner reads that the list moved others round (its element kept) is not followed down', async () => {
+  test('a row he reads that the list moved others round (its element kept) is not followed down', async () => {
     modelLayout();
     const box = build([[1, 2, 3, 4, 5, 6, 7, 8]]);
     stop = createScrollKeeper(box);
@@ -77,8 +77,8 @@ describe('the keeper holds the screen when the row the owner reads itself moves 
   });
 });
 
-describe('the row the owner reads is the first one showing below the sticky headers', () => {
-  test('a row cut by a stuck header is the row the owner reads; a row hidden under it is not', () => {
+describe('the row he reads is the first one showing below the sticky headers', () => {
+  test('a row cut by a stuck header is the row he reads; a row hidden under it is not', () => {
     modelLayout();
     const box = build([[1, 2, 3, 4, 5, 6, 7, 8]], true);
     box.scrollTop = 100;
@@ -91,7 +91,7 @@ describe('the row the owner reads is the first one showing below the sticky head
   });
 });
 
-describe('scroll position holds while posts arrive', () => {
+describe('round 7 part 4 (live, 2026-10-22: "if i scroll all the way up, at a period it will scroll all the way down")', () => {
   test('a section re-sorted with the rows inside it (their neighbors unchanged) is not followed: the list does not travel with it', async () => {
     modelLayout();
     const box = build([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]]);

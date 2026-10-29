@@ -42,7 +42,7 @@ def test_the_protocol_minor_is_one_and_the_scope_is_known():
 
 
 def test_set_scopes_changes_a_live_grant_only(conn):
-    g = grants.create_grant(conn, peer_install_id="iid-hosta", public_key=_key(), label="hosta")
+    g = grants.create_grant(conn, peer_install_id="iid-studio", public_key=_key(), label="studio")
     assert g.scopes == ("sessions",)
     assert grants.set_scopes(conn, g.grant_id, ("sessions", "settings")) is True
     assert grants.get_live(conn, g.grant_id).allows("settings")
@@ -56,11 +56,11 @@ def test_set_scopes_changes_a_live_grant_only(conn):
 
 
 def test_the_link_gateway_toggles_the_settings_scope_and_keeps_the_rest(conn, tmp_path):
-    g = grants.create_grant(conn, peer_install_id="iid-hosta", public_key=_key(), label="hosta")
+    g = grants.create_grant(conn, peer_install_id="iid-studio", public_key=_key(), label="studio")
     gateway = LinkGateway(lambda: connect(db_path_for(tmp_path), create=False), lambda: None)
-    asyncio.run(gateway.set_scope("iid-hosta", True))
+    asyncio.run(gateway.set_scope("iid-studio", True))
     assert set(grants.get_live(conn, g.grant_id).scopes) == {"sessions", "settings"}
-    asyncio.run(gateway.set_scope("iid-hosta", False))
+    asyncio.run(gateway.set_scope("iid-studio", False))
     assert grants.get_live(conn, g.grant_id).scopes == ("sessions",)
     asyncio.run(gateway.set_scope("iid-nobody", True))
 
@@ -106,14 +106,14 @@ def _client(service, peers):
 
 def test_the_owner_routes_show_switch_and_wake_the_sync(cluster, make):
     a = make("A")
-    peers = [PeerInfo("peer-new", "hosta", "iid-new", True, 1), PeerInfo("peer-old", "attic", "iid-old", True, 0),
+    peers = [PeerInfo("peer-new", "studio", "iid-new", True, 1), PeerInfo("peer-old", "attic", "iid-old", True, 0),
              PeerInfo("peer-down", "away", "iid-down", False, 0)]
     client, manager = _client(a.service, peers)
     manager.status.record("iid-new", st.R_OK, 1234.0)
     body = client.get("/api/v1/notifications/sync").json()
     assert body["available"] is True
     by_key = {p["key"]: p for p in body["peers"]}
-    assert by_key["peer-new"] == {"key": "peer-new", "label": "hosta", "enabled": True, "protocol": "ok",
+    assert by_key["peer-new"] == {"key": "peer-new", "label": "studio", "enabled": True, "protocol": "ok",
                                   "connected": True, "last_exchange_at": 1234.0, "last_result": "ok"}
     assert by_key["peer-old"]["protocol"] == "older" and by_key["peer-down"]["protocol"] == "unknown"
     off = client.put("/api/v1/notifications/sync/peers/peer-new", json={"enabled": False})

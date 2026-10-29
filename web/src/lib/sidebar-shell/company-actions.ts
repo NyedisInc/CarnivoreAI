@@ -95,7 +95,6 @@ export async function renameCompanyPrompt(company: Company): Promise<boolean> {
     }
 }
 
-/* nothing else is touched */
 export async function deleteCompanyConfirm(company: Company): Promise<boolean> {
     const app = hg().App;
     if (!app) return false;

@@ -58,8 +58,8 @@ class SettingsDocStore:
     def load(self) -> Doc:
         try:
             doc = parse_block(config_writer.read_config(self._path).get(doc_model.BLOCK))
-        except (OSError, ValueError):
-            log.warning("notification_routing_unreadable")
+        except (OSError, ValueError) as exc:
+            log.warning("notification_routing_unreadable", error=str(exc), error_type=type(exc).__name__)
             doc = parse_block(None)
         with self._lock:
             self._doc = doc

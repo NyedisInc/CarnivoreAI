@@ -14,12 +14,8 @@ const LAST_SHEET = '/static/css/popup-focus.css';
 
 export const DRAWER_SCRIPTS: readonly string[] = [
   'preferences', 'preference-bridge', 'kebab-icon', 'session-key', 'session-label', 'session-model-icon', 'effort-level', 'wrapper-mark', 'agent-family-icon', 'session-status-summary',
-  'session-sidebar-row-controls', 'session-sidebar-keep-awake', 'session-sidebar-subagents',
-  'session-sidebar-timers', 'session-sidebar-project-header', 'session-sidebar-groups', 'session-sidebar-group-colour', 'session-sidebar-group-icon',
-  'session-sidebar-heading-actions', 'version-footer',
-  'session-transport', 'session-row-actions-confirm', 'session-row-actions', 'session-row-menu-icons', 'text-prompt-modal', 'session-row-menu-items',
-  'session-row-menu-plugins', 'session-row-menu', 'session-row-menu-actions', 'session-row-menu-sleep', 'session-row-menu-open', 'session-row-menu-gestures',
-  'session-row-menu-shift',
+  'version-footer',
+  'session-transport', 'session-row-actions-confirm', 'session-row-actions', 'session-row-menu-icons', 'text-prompt-modal',
 ];
 
 export const DRAWER_MODULES: readonly string[] = ['i18n/boot'];
@@ -127,7 +123,6 @@ export async function adoptModules(modules: readonly string[]): Promise<void> {
   }
 }
 
-/*  hidden  */
 export function adoptDrawer(doc: Document, markup: DrawerMarkup): void {
   if (doc.getElementById('session-sidebar-panel')) return;
   if (!doc.querySelector('meta[name="cloude-app-version"]')) {

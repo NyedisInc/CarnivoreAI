@@ -19,7 +19,6 @@ APPLY_ALREADY_TRIED: str = "already_tried"
 
 APPLY_ALREADY_RECORDED: str = "already_recorded"
 
-# could not
 APPLY_NO_INSTANCE: str = "no_instance"
 
 APPLY_RAN: str = "ran"
@@ -55,20 +54,6 @@ def _row_gate(
     conn: sqlite3.Connection, *, socket: str, name: str, epoch: int,
     host_key: str = LOCAL_HOST_KEY,
 ) -> Optional[str]:
-    """Is this instance's row still unresolved enough to infer for?
-
-    Description: the cheap gate, one indexed SELECT on the instance
-      triple. A row that already names an agent, or that records a launch
-      THIS APP performed with an agent, has nothing to infer. A
-      ``not_launched`` row does: the app really did start no agent, and
-      the human then typed one into the pane, which is punchlist 3 in one
-      sentence.
-    Inputs: conn (sqlite3.Connection). socket (str), name (str),
-      epoch (int) - the instance triple.
-    Output: str | None - the row's ``session_uuid`` when it may be
-      filled, None when it may not (already recorded, no row, or the
-      table could not be read).
-    """
     try:
         scope_sql, scope_params = host_scope(conn, host_key)
         row = conn.execute(
@@ -133,13 +118,9 @@ def persist_inferred_agent_type(
 
 
 def configured_wrappers() -> Sequence:
-    try:
-        from src.core.session_manager import _configured_wrappers
+    from src.config import wrapper_reader
 
-        return _configured_wrappers()
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("agent_infer_wrappers_unavailable", error=str(exc))
-        return ()
+    return wrapper_reader.configured_wrappers()
 
 
 def apply_agent_inference(
@@ -154,7 +135,7 @@ def apply_agent_inference(
         return InferApplyResult(APPLY_NO_INSTANCE)
 
     try:
-        socket = session_manager._tmux_socket_name()
+        socket = session_manager.tmux_socket_name()
         epoch = getattr(session_manager, "_instance_epochs", {}).get(session_id)
     except Exception as exc:  # noqa: BLE001
         logger.warning("agent_infer_identity_failed", error=str(exc))

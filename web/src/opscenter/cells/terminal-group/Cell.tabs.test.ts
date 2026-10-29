@@ -9,6 +9,8 @@ import { inputFocus } from '../../lib/input-focus.svelte';
 import type { SlotId } from '../../engine/types';
 import { installPopoverPolyfill } from '../../../lib/popover-jsdom-polyfill';
 
+// The corner menu this frame opens is promoted into the top layer (issue
+// #860); jsdom has neither method.
 installPopoverPolyfill();
 
 vi.mock('../terminal-live/client', () => ({ startLiveTerminal: () => null }));

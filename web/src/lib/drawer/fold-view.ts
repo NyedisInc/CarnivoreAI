@@ -1,4 +1,3 @@
-/* and writes nothing */
 import { LAYOUT_ITEM_FOLD_PREFIX, isSpawnedFoldKey } from './store-keys';
 
 export function isInvertedFoldKey(key: string): boolean {

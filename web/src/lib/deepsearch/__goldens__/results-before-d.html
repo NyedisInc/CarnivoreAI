@@ -5,13 +5,15 @@
 "4 hits in 2 conversations"
 </p>
 " "
-<div aria-label="result layout" class="oc-seg dps__seg" data-testid="deepsearch-layout" role="radiogroup">
-<button aria-checked="true" class="oc-seg__item" data-layout="ledger" role="radio" title="hits grouped under their conversation" type="button">
+<div class="dps__seg" data-testid="deepsearch-layout">
+<div aria-label="result layout" class="oc-segmented" role="radiogroup">
+<button aria-checked="true" data-btn="quiet" data-button-root="true" data-layout="ledger" data-size="sm" data-value="ledger" role="radio" tabindex="0" type="button">
 "ledger"
 </button>
-<button aria-checked="false" class="oc-seg__item" data-layout="best" role="radio" title="a flat list of hits, best first" type="button">
+<button aria-checked="false" data-btn="quiet" data-button-root="true" data-layout="best" data-size="sm" data-value="best" role="radio" tabindex="-1" type="button">
 "best hits"
 </button>
+</div>
 </div>
 </div>
 " "
@@ -31,7 +33,7 @@
 " "
 </span>
 <span class="sd-hit__name">
-"nightly rsync fix"
+"nightly restic fix"
 </span>
 " "
 " "
@@ -43,26 +45,26 @@
 <div class="sd-hit__snip">
 "we "
 <mark class="sd-mark">
-"rsync"
+"restic"
 </mark>
 " 1"
 </div>
 " "
 <div aria-label="what to do with this hit" class="sd-acts" data-testid="deepsearch-actions" role="group">
-<button aria-label="read around" data-action="read" data-btn="confirm" data-size="sm" title="read the conversation around this message (enter)" type="button">
+<button aria-label="read around" data-action="read" data-btn="confirm" data-button-root="true" data-size="sm" tabindex="0" title="read the conversation around this message (enter)" type="button">
 "read around"
 </button>
-<button aria-label="go to session" data-action="go" data-btn="secondary" data-size="sm" title="switch to the live session (cmd enter)" type="button">
+<button aria-label="go to session" data-action="go" data-btn="secondary" data-button-root="true" data-size="sm" tabindex="0" title="switch to the live session (cmd enter)" type="button">
 "go to session"
 </button>
-<button aria-label="copy link" class="sd-ib sd-ib--framed" data-action="link" title="copy a link to this message" type="button">
+<button aria-label="copy link" data-action="link" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="copy a link to this message" type="button">
 <svg aria-hidden="true" data-icon="link" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <path d="m8 14 6-6m-4 8-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m0-2 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0">
 </path>
 </svg>
 </button>
 " "
-<button aria-expanded="false" aria-haspopup="true" aria-label="more" class="sd-ib sd-ib--framed" data-action="more" title="more" type="button">
+<button aria-expanded="false" aria-haspopup="true" aria-label="more" data-action="more" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="more" type="button">
 <svg aria-hidden="true" data-icon="kebab" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <circle cx="12" cy="5" r="1.6">
 </circle>
@@ -83,7 +85,7 @@
 " "
 </span>
 <span class="sd-hit__name">
-"nightly rsync fix"
+"nightly restic fix"
 </span>
 <span class="sd-r__meta">
 "you oct 15"
@@ -93,26 +95,26 @@
 <div class="sd-hit__snip">
 "we "
 <mark class="sd-mark">
-"rsync"
+"restic"
 </mark>
 " 2"
 </div>
 " "
 <div aria-label="what to do with this hit" class="sd-acts" data-testid="deepsearch-actions" role="group">
-<button aria-label="read around" data-action="read" data-btn="confirm" data-size="sm" title="read the conversation around this message (enter)" type="button">
+<button aria-label="read around" data-action="read" data-btn="confirm" data-button-root="true" data-size="sm" tabindex="0" title="read the conversation around this message (enter)" type="button">
 "read around"
 </button>
-<button aria-label="go to session" data-action="go" data-btn="secondary" data-size="sm" title="switch to the live session (cmd enter)" type="button">
+<button aria-label="go to session" data-action="go" data-btn="secondary" data-button-root="true" data-size="sm" tabindex="0" title="switch to the live session (cmd enter)" type="button">
 "go to session"
 </button>
-<button aria-label="copy link" class="sd-ib sd-ib--framed" data-action="link" title="copy a link to this message" type="button">
+<button aria-label="copy link" data-action="link" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="copy a link to this message" type="button">
 <svg aria-hidden="true" data-icon="link" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <path d="m8 14 6-6m-4 8-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m0-2 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0">
 </path>
 </svg>
 </button>
 " "
-<button aria-expanded="false" aria-haspopup="true" aria-label="more" class="sd-ib sd-ib--framed" data-action="more" title="more" type="button">
+<button aria-expanded="false" aria-haspopup="true" aria-label="more" data-action="more" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="more" type="button">
 <svg aria-hidden="true" data-icon="kebab" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <circle cx="12" cy="5" r="1.6">
 </circle>
@@ -126,7 +128,7 @@
 " "
 </div>
 " "
-<button class="sd-more dps__more-in" data-testid="deepsearch-more-in" type="button">
+<button data-btn="quiet" data-button-root="true" data-size="sm" data-testid="deepsearch-more-in" tabindex="0" type="button">
 "1 more in this conversation"
 </button>
 " "
@@ -135,7 +137,7 @@
 <span aria-label="asleep" class="dps__led dps__led--ring" role="img" title="asleep">
 </span>
 <span class="sd-hit__name">
-"move the rsync repo password"
+"move the restic repo password"
 </span>
 " "
 " "
@@ -147,26 +149,26 @@
 <div class="sd-hit__snip">
 "we "
 <mark class="sd-mark">
-"rsync"
+"restic"
 </mark>
 " 3"
 </div>
 " "
 <div aria-label="what to do with this hit" class="sd-acts" data-testid="deepsearch-actions" role="group">
-<button aria-label="read around" data-action="read" data-btn="confirm" data-size="sm" title="read the conversation around this message (enter)" type="button">
+<button aria-label="read around" data-action="read" data-btn="confirm" data-button-root="true" data-size="sm" tabindex="0" title="read the conversation around this message (enter)" type="button">
 "read around"
 </button>
-<button aria-label="resume" data-action="resume" data-btn="secondary" data-size="sm" title="start this session again on this conversation (cmd enter)" type="button">
+<button aria-label="resume" data-action="resume" data-btn="secondary" data-button-root="true" data-size="sm" tabindex="0" title="start this session again on this conversation (cmd enter)" type="button">
 "resume"
 </button>
-<button aria-label="copy link" class="sd-ib sd-ib--framed" data-action="link" title="copy a link to this message" type="button">
+<button aria-label="copy link" data-action="link" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="copy a link to this message" type="button">
 <svg aria-hidden="true" data-icon="link" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <path d="m8 14 6-6m-4 8-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m0-2 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0">
 </path>
 </svg>
 </button>
 " "
-<button aria-expanded="false" aria-haspopup="true" aria-label="more" class="sd-ib sd-ib--framed" data-action="more" title="more" type="button">
+<button aria-expanded="false" aria-haspopup="true" aria-label="more" data-action="more" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="more" type="button">
 <svg aria-hidden="true" data-icon="kebab" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <circle cx="12" cy="5" r="1.6">
 </circle>
@@ -184,7 +186,7 @@
 <span aria-label="asleep" class="dps__led dps__led--ring" role="img" title="asleep">
 </span>
 <span class="sd-hit__name">
-"move the rsync repo password"
+"move the restic repo password"
 </span>
 <span class="sd-r__meta">
 "you oct 15"
@@ -194,26 +196,26 @@
 <div class="sd-hit__snip">
 "we "
 <mark class="sd-mark">
-"rsync"
+"restic"
 </mark>
 " 4"
 </div>
 " "
 <div aria-label="what to do with this hit" class="sd-acts" data-testid="deepsearch-actions" role="group">
-<button aria-label="read around" data-action="read" data-btn="confirm" data-size="sm" title="read the conversation around this message (enter)" type="button">
+<button aria-label="read around" data-action="read" data-btn="confirm" data-button-root="true" data-size="sm" tabindex="0" title="read the conversation around this message (enter)" type="button">
 "read around"
 </button>
-<button aria-label="resume" data-action="resume" data-btn="secondary" data-size="sm" title="start this session again on this conversation (cmd enter)" type="button">
+<button aria-label="resume" data-action="resume" data-btn="secondary" data-button-root="true" data-size="sm" tabindex="0" title="start this session again on this conversation (cmd enter)" type="button">
 "resume"
 </button>
-<button aria-label="copy link" class="sd-ib sd-ib--framed" data-action="link" title="copy a link to this message" type="button">
+<button aria-label="copy link" data-action="link" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="copy a link to this message" type="button">
 <svg aria-hidden="true" data-icon="link" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <path d="m8 14 6-6m-4 8-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m0-2 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0">
 </path>
 </svg>
 </button>
 " "
-<button aria-expanded="false" aria-haspopup="true" aria-label="more" class="sd-ib sd-ib--framed" data-action="more" title="more" type="button">
+<button aria-expanded="false" aria-haspopup="true" aria-label="more" data-action="more" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="more" type="button">
 <svg aria-hidden="true" data-icon="kebab" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <circle cx="12" cy="5" r="1.6">
 </circle>
@@ -241,13 +243,15 @@
 "4 hits in 2 conversations"
 </p>
 " "
-<div aria-label="result layout" class="oc-seg dps__seg" data-testid="deepsearch-layout" role="radiogroup">
-<button aria-checked="false" class="oc-seg__item" data-layout="ledger" role="radio" title="hits grouped under their conversation" type="button">
+<div class="dps__seg" data-testid="deepsearch-layout">
+<div aria-label="result layout" class="oc-segmented" role="radiogroup">
+<button aria-checked="false" data-btn="quiet" data-button-root="true" data-layout="ledger" data-size="sm" data-value="ledger" role="radio" tabindex="-1" type="button">
 "ledger"
 </button>
-<button aria-checked="true" class="oc-seg__item" data-layout="best" role="radio" title="a flat list of hits, best first" type="button">
+<button aria-checked="true" data-btn="quiet" data-button-root="true" data-layout="best" data-size="sm" data-value="best" role="radio" tabindex="0" type="button">
 "best hits"
 </button>
+</div>
 </div>
 </div>
 " "
@@ -256,16 +260,16 @@
 " "
 " "
 <div aria-label="show only one speaker" class="dps__chips" data-testid="deepsearch-chips" role="group">
-<button aria-pressed="true" class="dps__chip is-on" data-kind="all" type="button">
+<button aria-pressed="true" data-btn="secondary" data-button-root="true" data-kind="all" data-size="sm" tabindex="0" type="button">
 "all"
 </button>
-<button aria-pressed="false" class="dps__chip" data-kind="user" type="button">
+<button aria-pressed="false" data-btn="secondary" data-button-root="true" data-kind="user" data-size="sm" tabindex="0" type="button">
 "you"
 </button>
-<button aria-pressed="false" class="dps__chip" data-kind="assistant" type="button">
+<button aria-pressed="false" data-btn="secondary" data-button-root="true" data-kind="assistant" data-size="sm" tabindex="0" type="button">
 "agent"
 </button>
-<button aria-pressed="false" class="dps__chip" data-kind="tool" type="button">
+<button aria-pressed="false" data-btn="secondary" data-button-root="true" data-kind="tool" data-size="sm" tabindex="0" type="button">
 "tool"
 </button>
 </div>
@@ -281,7 +285,7 @@
 " "
 </span>
 <span class="sd-hit__name">
-"nightly rsync fix"
+"nightly restic fix"
 </span>
 " "
 " "
@@ -293,26 +297,26 @@
 <div class="sd-hit__snip">
 "we "
 <mark class="sd-mark">
-"rsync"
+"restic"
 </mark>
 " 1"
 </div>
 " "
 <div aria-label="what to do with this hit" class="sd-acts" data-testid="deepsearch-actions" role="group">
-<button aria-label="read around" data-action="read" data-btn="confirm" data-size="sm" title="read the conversation around this message (enter)" type="button">
+<button aria-label="read around" data-action="read" data-btn="confirm" data-button-root="true" data-size="sm" tabindex="0" title="read the conversation around this message (enter)" type="button">
 "read around"
 </button>
-<button aria-label="go to session" data-action="go" data-btn="secondary" data-size="sm" title="switch to the live session (cmd enter)" type="button">
+<button aria-label="go to session" data-action="go" data-btn="secondary" data-button-root="true" data-size="sm" tabindex="0" title="switch to the live session (cmd enter)" type="button">
 "go to session"
 </button>
-<button aria-label="copy link" class="sd-ib sd-ib--framed" data-action="link" title="copy a link to this message" type="button">
+<button aria-label="copy link" data-action="link" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="copy a link to this message" type="button">
 <svg aria-hidden="true" data-icon="link" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <path d="m8 14 6-6m-4 8-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m0-2 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0">
 </path>
 </svg>
 </button>
 " "
-<button aria-expanded="false" aria-haspopup="true" aria-label="more" class="sd-ib sd-ib--framed" data-action="more" title="more" type="button">
+<button aria-expanded="false" aria-haspopup="true" aria-label="more" data-action="more" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="more" type="button">
 <svg aria-hidden="true" data-icon="kebab" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <circle cx="12" cy="5" r="1.6">
 </circle>
@@ -333,7 +337,7 @@
 " "
 </span>
 <span class="sd-hit__name">
-"nightly rsync fix"
+"nightly restic fix"
 </span>
 <span class="sd-r__meta">
 "you, oct 15"
@@ -343,26 +347,26 @@
 <div class="sd-hit__snip">
 "we "
 <mark class="sd-mark">
-"rsync"
+"restic"
 </mark>
 " 2"
 </div>
 " "
 <div aria-label="what to do with this hit" class="sd-acts" data-testid="deepsearch-actions" role="group">
-<button aria-label="read around" data-action="read" data-btn="confirm" data-size="sm" title="read the conversation around this message (enter)" type="button">
+<button aria-label="read around" data-action="read" data-btn="confirm" data-button-root="true" data-size="sm" tabindex="0" title="read the conversation around this message (enter)" type="button">
 "read around"
 </button>
-<button aria-label="go to session" data-action="go" data-btn="secondary" data-size="sm" title="switch to the live session (cmd enter)" type="button">
+<button aria-label="go to session" data-action="go" data-btn="secondary" data-button-root="true" data-size="sm" tabindex="0" title="switch to the live session (cmd enter)" type="button">
 "go to session"
 </button>
-<button aria-label="copy link" class="sd-ib sd-ib--framed" data-action="link" title="copy a link to this message" type="button">
+<button aria-label="copy link" data-action="link" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="copy a link to this message" type="button">
 <svg aria-hidden="true" data-icon="link" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <path d="m8 14 6-6m-4 8-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m0-2 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0">
 </path>
 </svg>
 </button>
 " "
-<button aria-expanded="false" aria-haspopup="true" aria-label="more" class="sd-ib sd-ib--framed" data-action="more" title="more" type="button">
+<button aria-expanded="false" aria-haspopup="true" aria-label="more" data-action="more" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="more" type="button">
 <svg aria-hidden="true" data-icon="kebab" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <circle cx="12" cy="5" r="1.6">
 </circle>
@@ -376,7 +380,7 @@
 " "
 </div>
 " "
-<button class="sd-more dps__more-in" data-testid="deepsearch-more-in" type="button">
+<button data-btn="quiet" data-button-root="true" data-size="sm" data-testid="deepsearch-more-in" tabindex="0" type="button">
 "1 more in this conversation"
 </button>
 " "
@@ -385,7 +389,7 @@
 <span aria-label="asleep" class="dps__led dps__led--ring" role="img" title="asleep">
 </span>
 <span class="sd-hit__name">
-"move the rsync repo password"
+"move the restic repo password"
 </span>
 " "
 " "
@@ -397,26 +401,26 @@
 <div class="sd-hit__snip">
 "we "
 <mark class="sd-mark">
-"rsync"
+"restic"
 </mark>
 " 3"
 </div>
 " "
 <div aria-label="what to do with this hit" class="sd-acts" data-testid="deepsearch-actions" role="group">
-<button aria-label="read around" data-action="read" data-btn="confirm" data-size="sm" title="read the conversation around this message (enter)" type="button">
+<button aria-label="read around" data-action="read" data-btn="confirm" data-button-root="true" data-size="sm" tabindex="0" title="read the conversation around this message (enter)" type="button">
 "read around"
 </button>
-<button aria-label="resume" data-action="resume" data-btn="secondary" data-size="sm" title="start this session again on this conversation (cmd enter)" type="button">
+<button aria-label="resume" data-action="resume" data-btn="secondary" data-button-root="true" data-size="sm" tabindex="0" title="start this session again on this conversation (cmd enter)" type="button">
 "resume"
 </button>
-<button aria-label="copy link" class="sd-ib sd-ib--framed" data-action="link" title="copy a link to this message" type="button">
+<button aria-label="copy link" data-action="link" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="copy a link to this message" type="button">
 <svg aria-hidden="true" data-icon="link" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <path d="m8 14 6-6m-4 8-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m0-2 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0">
 </path>
 </svg>
 </button>
 " "
-<button aria-expanded="false" aria-haspopup="true" aria-label="more" class="sd-ib sd-ib--framed" data-action="more" title="more" type="button">
+<button aria-expanded="false" aria-haspopup="true" aria-label="more" data-action="more" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="more" type="button">
 <svg aria-hidden="true" data-icon="kebab" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <circle cx="12" cy="5" r="1.6">
 </circle>
@@ -434,7 +438,7 @@
 <span aria-label="asleep" class="dps__led dps__led--ring" role="img" title="asleep">
 </span>
 <span class="sd-hit__name">
-"move the rsync repo password"
+"move the restic repo password"
 </span>
 <span class="sd-r__meta">
 "you, oct 15"
@@ -444,26 +448,26 @@
 <div class="sd-hit__snip">
 "we "
 <mark class="sd-mark">
-"rsync"
+"restic"
 </mark>
 " 4"
 </div>
 " "
 <div aria-label="what to do with this hit" class="sd-acts" data-testid="deepsearch-actions" role="group">
-<button aria-label="read around" data-action="read" data-btn="confirm" data-size="sm" title="read the conversation around this message (enter)" type="button">
+<button aria-label="read around" data-action="read" data-btn="confirm" data-button-root="true" data-size="sm" tabindex="0" title="read the conversation around this message (enter)" type="button">
 "read around"
 </button>
-<button aria-label="resume" data-action="resume" data-btn="secondary" data-size="sm" title="start this session again on this conversation (cmd enter)" type="button">
+<button aria-label="resume" data-action="resume" data-btn="secondary" data-button-root="true" data-size="sm" tabindex="0" title="start this session again on this conversation (cmd enter)" type="button">
 "resume"
 </button>
-<button aria-label="copy link" class="sd-ib sd-ib--framed" data-action="link" title="copy a link to this message" type="button">
+<button aria-label="copy link" data-action="link" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="copy a link to this message" type="button">
 <svg aria-hidden="true" data-icon="link" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <path d="m8 14 6-6m-4 8-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m0-2 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0">
 </path>
 </svg>
 </button>
 " "
-<button aria-expanded="false" aria-haspopup="true" aria-label="more" class="sd-ib sd-ib--framed" data-action="more" title="more" type="button">
+<button aria-expanded="false" aria-haspopup="true" aria-label="more" data-action="more" data-btn="secondary" data-button-root="true" data-size="icon" tabindex="0" title="more" type="button">
 <svg aria-hidden="true" data-icon="kebab" fill="none" focusable="false" height="12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" width="12">
 <circle cx="12" cy="5" r="1.6">
 </circle>
@@ -491,13 +495,15 @@
 "no conversation mentions \"resti\""
 </p>
 " "
-<div aria-label="result layout" class="oc-seg dps__seg" data-testid="deepsearch-layout" role="radiogroup">
-<button aria-checked="true" class="oc-seg__item" data-layout="ledger" role="radio" title="hits grouped under their conversation" type="button">
+<div class="dps__seg" data-testid="deepsearch-layout">
+<div aria-label="result layout" class="oc-segmented" role="radiogroup">
+<button aria-checked="true" data-btn="quiet" data-button-root="true" data-layout="ledger" data-size="sm" data-value="ledger" role="radio" tabindex="0" type="button">
 "ledger"
 </button>
-<button aria-checked="false" class="oc-seg__item" data-layout="best" role="radio" title="a flat list of hits, best first" type="button">
+<button aria-checked="false" data-btn="quiet" data-button-root="true" data-layout="best" data-size="sm" data-value="best" role="radio" tabindex="-1" type="button">
 "best hits"
 </button>
+</div>
 </div>
 </div>
 " "

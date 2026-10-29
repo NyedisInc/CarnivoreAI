@@ -16,7 +16,7 @@ from src.cplugs.save.vault import retention
 from src.cplugs.save.vault.restore import verify_manifest
 from tests.python.cplugs.save.vault_helpers import CONV, World, jsonl
 
-OTHER = "5440f51e-018d-47a4-8fdf-c52dbf80f162"
+OTHER = "99999999-aaaa-bbbb-cccc-1234567890ab"
 MAX = 3
 
 

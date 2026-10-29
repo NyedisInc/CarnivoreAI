@@ -13,7 +13,7 @@ import SkillPage from './SkillPage.svelte';
 const en = createI18n({ locale: 'en' }) as { t: Translate };
 const t: Translate = (key, params) => en.t(key, params);
 
-const FILE = '---\nname: ravhaven-fenhaven\ndescription: research a company before a sale. say "research acme corp before my call" or "who funded this startup"\n---\n# ravhaven-fenhaven\n\nuse when the user asks.\n\n## steps\n\n1. restate the goal.\n';
+const FILE = '---\nname: company-research\ndescription: research a company before a sale. say "research acme corp before my call" or "who funded this startup"\n---\n# company-research\n\nuse when the user asks.\n\n## steps\n\n1. restate the goal.\n';
 const CONTEXT: ContextChoice = { id: GLOBAL_CONTEXT_ID, kind: 'global', label: 'global', projectPath: null, profile: null };
 
 let mounted: Record<string, unknown> | null = null;
@@ -37,14 +37,14 @@ function server(versions: unknown = [], file: string = FILE) {
         const method = init?.method ?? 'GET';
         if (path.startsWith('/skills/locations/') && path.includes('/skill-md/versions')) return Array.isArray(versions) ? { versions } : versions;
         if (path.startsWith('/skills/locations/') && path.includes('/skill-md') && method === 'GET') {
-            return { location_id: 'x', name: 'ravhaven-fenhaven', body: file, body_truncated: false, size: file.length, sha256: 'sha-disk-now' };
+            return { location_id: 'x', name: 'company-research', body: file, body_truncated: false, size: file.length, sha256: 'sha-disk-now' };
         }
         if (path.startsWith('/skills/locations/') && path.includes('/skill-md') && method === 'PUT') {
             writes.push(JSON.parse(init?.body ?? '{}'));
             throw new ApiError('stale', 409, null, { current_sha256: 'sha-disk-now' });
         }
-        if (path.startsWith('/skill-fires/usage')) return { skill: 'ravhaven-fenhaven', state: 'measured', fired_7d: 3, fired_30d: 9, fired_90d: 21 };
-        if (path.includes('/autopsy')) return { skill: 'ravhaven-fenhaven', days: 30, state: 'measured', fires: 9, spans_measured: 8, tool_calls: 40, tool_errors: 4, interrupts: 1, corrections: 2, corrections_measured: 8 };
+        if (path.startsWith('/skill-fires/usage')) return { skill: 'company-research', state: 'measured', fired_7d: 3, fired_30d: 9, fired_90d: 21 };
+        if (path.includes('/autopsy')) return { skill: 'company-research', days: 30, state: 'measured', fires: 9, spans_measured: 8, tool_calls: 40, tool_errors: 4, interrupts: 1, corrections: 2, corrections_measured: 8 };
         throw new Error(`unexpected ${method} ${path}`);
     }) as unknown as Fetcher;
     return { fetcher, writes };
@@ -54,7 +54,7 @@ async function show(versions: unknown = [], file: string = FILE) {
     const inventory: Inventory = {
         context: { profile: 'default', group_id: 'cg-1', project_path: null },
         profile_groups: [],
-        skills: [{ name: 'ravhaven-fenhaven', locations: [loc({ name: 'ravhaven-fenhaven', description: 'research a company before a sale', description_tokens_est: 41 })] }],
+        skills: [{ name: 'company-research', locations: [loc({ name: 'company-research', description: 'research a company before a sale', description_tokens_est: 41 })] }],
         settings_unparseable: [],
         tokens_label: 'est.',
     };
@@ -73,7 +73,7 @@ describe('the warez skill page', () => {
         const { root } = await show();
         const page = root.querySelector('.skp > .oc-page.skp-page.oc-page--embedded')!;
         expect(page).not.toBeNull();
-        expect(page.querySelector('.oc-titlebar .oc-titlebar__title')?.textContent).toContain('ravhaven-fenhaven');
+        expect(page.querySelector('.oc-titlebar .oc-titlebar__title')?.textContent).toContain('company-research');
         const star = page.querySelector<HTMLElement>('.oc-titlebar__actions [data-act="favorite"]')!;
         expect(star.getAttribute('data-btn')).toBe('quiet');
         expect(star.getAttribute('aria-pressed')).toBe('false');
@@ -97,8 +97,8 @@ describe('the warez skill page', () => {
         expect([...details.querySelectorAll('[data-group="fired"] .skp-stat__v')].map((n) => n.textContent)).toEqual(['3', '9', '21']);
         expect(details.querySelector('[data-stat="in-all"] .skp-stat__v')?.textContent).not.toBe('-');
         const md = root.querySelector('[data-skill-md-block]')!;
-        expect(md.querySelector('[data-skill-frontmatter]')?.textContent).toContain('ravhaven-fenhaven');
-        expect(md.querySelector('.skp-fmt__h1')?.textContent).toBe('ravhaven-fenhaven');
+        expect(md.querySelector('[data-skill-frontmatter]')?.textContent).toContain('company-research');
+        expect(md.querySelector('.skp-fmt__h1')?.textContent).toBe('company-research');
         expect(md.querySelector('.skp-note')?.textContent).toContain('showing all');
         expect(root.querySelector('[data-skill-inspector] [data-harness="claude"] [data-state-choice="on"]')?.getAttribute('aria-pressed')).toBe('true');
     });
@@ -121,7 +121,7 @@ describe('the warez skill page', () => {
     });
 
     test('a real-shaped version list (epoch seconds) renders, and a duplicate frontmatter key does not crash', async () => {
-        const dup = FILE.replace('---\n#', '---\n#').replace('name: ravhaven-fenhaven\n', 'name: ravhaven-fenhaven\ndescription: first\n');
+        const dup = FILE.replace('---\n#', '---\n#').replace('name: company-research\n', 'name: company-research\ndescription: first\n');
         const { root } = await show([{ id: 7, created_at: 1760745600.12, note: null, sha256: 'a', size: 120, action: 'edit', redacted: false }], dup);
         expect(root.querySelectorAll('[data-skill-frontmatter] dt').length).toBeGreaterThan(2);
         root.querySelector<HTMLButtonElement>('[data-act="versions"]')!.click();

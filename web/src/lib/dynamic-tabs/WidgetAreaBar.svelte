@@ -146,7 +146,6 @@
       line-height: 0;
     }
 
-    /*  hidden  */
     .wab-hint {
       display: none;
     }

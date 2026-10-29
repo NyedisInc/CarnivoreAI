@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { t as reactiveT, type Translate } from '../sdk';
-    import { ModalShell } from '../sdk/ui';
+    import { Button, IconButton, ModalShell } from '../sdk/ui';
     import { errorSentence, type Fetcher } from './crate-api';
     import TtyBox from './TtyBox.svelte';
     import {
@@ -56,7 +56,7 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">{t('cplug.crate.undo.title', { subject: name })}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')} onclick={() => close(outcome ? true : null)}>×</button>
+            <IconButton label={t('modal.close')} icon="close" variant="close" iconSize={14} onclick={() => close(outcome ? true : null)} />
         </div>
     {/snippet}
     {#if outcome}
@@ -87,12 +87,12 @@
     {#if problem}<p class="tm__problem" role="alert" data-crt-problem>{problem}</p>{/if}
     {#snippet footer()}
         {#if outcome}
-            <button type="button" class="modal-btn modal-btn-secondary" data-crt-undo-close onclick={() => close(true)}>{t('cplug.crate.undo.close')}</button>
+            <Button variant="secondary" data-crt-undo-close onclick={() => close(true)}>{t('cplug.crate.undo.close')}</Button>
         {:else}
-            <button type="button" class="modal-btn modal-btn-secondary" disabled={busy} onclick={() => close(null)}>{t('cplug.crate.undo.cancel')}</button>
-            <button type="button" class="modal-btn modal-btn-danger" data-crt-undo-go disabled={busy || !preview?.ok} onclick={() => void go()}>
+            <Button variant="secondary" disabled={busy} onclick={() => close(null)}>{t('cplug.crate.undo.cancel')}</Button>
+            <Button variant="danger" data-crt-undo-go disabled={busy || !preview?.ok} onclick={() => void go()}>
                 {t(busy ? 'cplug.crate.undo.going' : 'cplug.crate.undo.go')}
-            </button>
+            </Button>
         {/if}
     {/snippet}
 </ModalShell>

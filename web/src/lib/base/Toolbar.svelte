@@ -1,4 +1,4 @@
-<!-- <input data-field type="search" /> padding -->
+
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';

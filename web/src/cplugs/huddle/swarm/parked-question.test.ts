@@ -15,10 +15,10 @@ const ses = (key: string, rowId: number, projectId: number, listing: ListingRow,
 });
 const agent = (id: number, rank: string, over: Partial<PanelAgent> = {}): PanelAgent =>
   ({ id, display_name: `a${id}`, rank, state: 'asleep', thread_key: `${id}`, session_id: null, ...over });
-const companies = [{ id: 1, name: 'Nyedis' }, { id: 2, name: 'acme' }];
+const companies = [{ id: 1, name: 'Nyedis' }, { id: 2, name: 'Larkspur' }];
 const projects = [
-  { id: 17, name: 'Carnivore.ai', companyId: 1 }, { id: 73, name: 'Tamvale SOLFORD', companyId: 1 },
-  { id: 16, name: 'Example App', companyId: 2 }, { id: 72, name: 'acme HQ', companyId: 2 },
+  { id: 17, name: 'Carnivore.ai', companyId: 1 }, { id: 73, name: 'Acme HQ', companyId: 1 },
+  { id: 16, name: 'Lantern App', companyId: 2 }, { id: 72, name: 'Larkspur HQ', companyId: 2 },
 ];
 
 beforeAll(() => {

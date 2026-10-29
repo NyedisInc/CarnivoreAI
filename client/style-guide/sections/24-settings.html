@@ -1,4 +1,14 @@
 <h2 class="sg-h2">settings</h2>
+<p class="sg-lead">Settings is a full-page menu page (settings redesign, 2026-09-28, <code>docs/settings-and-pages-inventory.md</code>)
+on the manager frame's chrome (<code>web/src/lib/settings-page/SettingsScreen.svelte</code>: <code>.oc-page</code> root (<code>Page.svelte</code>),
+<code>.oc-titlebar</code> title strip, no close button, Escape clears a search; each section and tab is its own #settings link), inside the page shell (<a href="#chrome-menu-page">the menu page shell</a>), so it covers the screen
+behind it and the drawer's settings row is marked. It is compiled end to end: a section rail (with the search field on top) beside ONE tabbed page per section, a
+search over every setting, and a save footer inside the frame of every tab that holds a typed value. A section is a tab strip
+(<a href="#page-tabs">page tabs</a>, one tab per group, labels from the group labels) over the open group's rows; a section
+with one group draws no strip. Two sections, launch profiles and keyboard shortcuts, embed a whole screen
+(<code>SettingsScreenSection.svelte</code>, which calls <code>provideInset()</code> so that screen draws no second title
+bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every setting is ONE entry of
+<code>web/src/lib/settings-page/settings-registry.ts</code> and renders once.</p>
 
 <dl class="sg-facts">
     <dt>account: the carnivore account</dt>
@@ -34,6 +44,14 @@
         while signed out is LOCKED (<code>.st-row--locked</code>): a dim label and, in the mark slot, a star in
         <code>--oc-yellow-bright</code> with a small "sign in" (<code>.st-mark__lock</code>, <code>.st-mark__star</code>); it stays usable.</dd>
     <dt>base components</dt>
+    <dd>Joe (ccsliinc), 2026-10-25: "the whole site should follow the standard styles". Every control of the page is a base component:
+        buttons are <code>Button</code> (the danger variant for removing, the confirm variant for the one saving action), text
+        fields <code>Field</code>, numbers <code>NumberField</code>, selects <code>Select</code>, on/off settings <code>Switch</code>, a
+        member of a set <code>Checkbox</code>, a pick of a few <code>RadioGroup</code> / <code>Radio</code> (an option may hold a drawing of
+        its layout), joined picks <code>Segmented</code>, banners and notes <code>State</code> (a refusal, a warning with its confirm
+        buttons, a read failure), chips <code>Tag</code>, and every list of records <code>List</code> / <code>ListRow</code> (the section
+        rail, the token, key and device rows, the search hits, the config bundle's changes) with its actions always shown. A panel inside a
+        row draws no box of its own; the row's group is the one <code>Card</code>.</dd>
     <dt>an (i) note</dt>
     <dd><code>web/src/lib/info-tip/InfoTip.svelte</code>: a <code>.info-tip</code> holding a 16px <code>.info-tip__btn</code> (an
         italic <code>i</code> in a 1px hairline with a small square corner, muted, the accent on hover and while open) that
@@ -43,7 +61,31 @@
         adding the catalog key <code>settings.item.&lt;id&gt;.info</code> (worked example: auto-sleep, which says pinned
         sessions never sleep automatically).</dd>
     <dt>a group is a tab</dt>
+    <dd>Alex (example-owner), 2026-10-03: every section is a tabbed page, so a group is one tab of the strip and only the open
+        group's rows draw. The rows are ONE column in ONE base <code>Card</code> titled with the group's name (<code>[data-st-frame]</code>, 880px at most, the card's one edge, a faint
+        hairline between rows, the save footer in the card's foot), each a <code>minmax(0,1fr) 280px</code> grid: label and help left (<code>.st-row__text</code>), the
+        control right (<code>.st-row__control</code>), vertically centred, so every control's right edge is one line (Alex
+        (example-owner), 2026-10-03). Help is never under a control; a note such as a number's range is the muted
+        <code>.st-row__note</code> under the help, and the unit sits inside the field (<code>.st-unit</code>, <code>.st-unit__suffix</code>, over a base <code>NumberField</code>). A setting with a registry <code>parent</code> is a child row
+        (<code>.st-row--child</code>): 16px in behind a left hairline, and <code>.st-row--off</code> (dimmed, <code>inert</code>)
+        while its parent makes it meaningless. Under 768px a row stacks. The shared <code>.oc-group__main</code> is not used here. A row alone in its tab is named by the tab
+        and keeps its label for assistive tech only (<code>.st-row__label--solo</code>); in a section with no strip the row keeps its
+        label. A panel-sized row spans the width (<code>.oc-wide</code>). The tabs and the rail item carry a dot while they
+        hold a draft.</dd>
     <dt>tables, copy fields, lifecycle</dt>
+    <dd>Alex (example-owner), 2026-10-03, Supabase project settings (R5). A table inside a tab wears the column-head row
+        <code>.oc-colhead</code> (<code>web/src/opscenter/colhead.css</code>): each head cell is the ledger's
+        <code>.oc-label</code> (mono, uppercase, tracked, muted, micro), a hairline under the row, put on the same element as the
+        table's own row grid so the heads sit over their columns (<code>.oc-colhead__ghost</code> is an invisible copy of the
+        row's button), hidden under 768px. Inline state pills sit beside the name and reuse the existing neutral
+        <code>.mgr-mark</code> (the hosts row's "this computer", the theme and sign-in provider values, OpenRouter R4's "Tier
+        [Standard]"); never a new pill class, never the accent. A read-only value (an address, an endpoint, a token, a command)
+        is a copy field, <code>CopyField.svelte</code>: one line <code>.st-copy</code>, the mono value
+        <code>.st-copy__value</code> left, a small base <code>Button</code> "copy" right that says "copied" for a moment (no box of its own).
+        A setting with <code>lifecycle: true</code> in the registry (an action that removes, clears or ends something) is drawn
+        last in its tab in its own <code>Card</code> (<code>[data-st-lifecycle]</code>, titled with the lifecycle label): one row each (<code>.st-row--lifecycle</code>), a consequence sentence as help, the
+        button on the right the base danger <code>Button</code>. Per-item actions (revoke one token, delete one connection) stay on
+        their item.</dd>
     <dt>controls</dt>
     <dd><code>SettingControl.svelte</code> maps each registry control kind to one component under
         <code>web/src/lib/settings-page/controls/</code>: <code>TextControl.svelte</code> (text and secret, the settings
@@ -69,13 +111,42 @@
         screen matters more than the prompt there. Do not use it for the account's own login password: a password manager is
         right for that.</dd>
     <dt>appearance</dt>
+    <dd>Five groups (tabs), each looked at rather than described. <strong>Colors</strong>: <code>ThemePicker.svelte</code>, the compact
+        global-theme picker: the current theme, a row of favorite and recent themes to switch to, and a button to the themes page. <strong>Agent rows</strong>:
+        <code>RowIconsPanel.svelte</code>, per density the drawer's REAL agent row (<code>SessionRow.svelte</code>, planned by
+        <code>buildRowPlan</code>, inside <code>.rip__panel</code> at the drawer's default width) beside a grid of checks, one per icon the row
+        lets you toggle; a toggle redraws the row, so the preview cannot drift from the drawer.
+        <strong>Motion</strong>: <code>MotionPanel.svelte</code>, the one animations switch with what it stops, why to turn it off,
+        and a live example (<code>.mp__demo</code>: a ring, a bar and a dot that play while animations are on and hold still,
+        <code>.mp__demo--still</code>, when off). While animations are on it also lists one shared switch
+        (<code>Check</code>, role switch) per animation type in <code>.mp__types</code>; each is kept in this browser only
+        (<code>data-anim-off</code> on the root, <code>client/css/animation-types.css</code>), so a test in one window never
+        changes another device.
+        <strong>Status bar</strong>: <code>FootBarLayoutPanel.svelte</code> draws the three collapsed layouts as full-width
+        strips (<code>FootBarStrip.svelte</code>, <code>.fbs</code>) that ARE the radios, from sample data
+        (<code>appearance/samples.ts</code>), then <code>FootBarItemsPanel.svelte</code>: a "show on the bar" check grid and a
+        "limit order" list that re-draw all three strips live. <strong>Control center</strong>: three thumbnail choice cards
+        (<code>Scaled.svelte</code>, <code>.scaled</code> with its inert <code>.scaled__in</code>, around
+        <code>ControlCenterPreview.svelte</code>, <code>.ccp</code>) and a large preview; <code>live</code> keeps the scaled
+        content's buttons (<code>.scaled__in--live</code>)
+        with filled timer, agent and shell rows. A preview never reaches the session API.</dd>
     <dt>advanced: export and import config</dt>
     <dd><code>ConfigBundlePanel.svelte</code> (<code>.cb</code>), a thin client of <code>GET /config/export</code> and
         <code>POST /config/import</code>. Two base <code>Button</code> actions (<code>.cb__row</code>); a chosen file opens a preview
         (<code>.cb__preview</code>, a section of the card, no frame) with the merge / replace choice (a base <code>Segmented</code>), the server's dry-run change list
         (<code>.cb__changes</code>, a base <code>List</code> with one <code>ListRow</code> per setting: a <code>Tag</code> for the kind, the path, the before and after)
         and the cancel and confirm <code>Button</code> pair in <code>.cb__actions</code>. Nothing is written until apply. Notes use
-        <code>.cb__hint</code> and a <code>State</code> (done, a file from another machine, a refusal).</dd>
+        <code>.cb__hint</code> and a <code>State</code> (done, a file from another machine, a refusal).
+        A preview that says <code>contains_commands</code> adds <code>CommandConsent.svelte</code> (#2557): every agent wrapper,
+        launch profile, workspace env key, default shell, editor command, browser program, account config folder,
+        quick slash command and template folder the import would write, with its label escaped and bidi-isolated (<code>.cmds__name</code>) and its id in mono beside it (<code>.cmds__id</code>, so an
+        imported label cannot pose as another wrapper) and each
+        command field verbatim in mono (<code>.cmds__part</code>; control, format, separator and variation-selector characters written out as
+        <code>\u{hex}</code>, never drawn raw), drawn
+        with the permission sheet's rows copied as they are (<code>.plp-rows</code>, <code>.plp-row</code>, a yellow left rule
+        on a row still to tick via <code>.plp-row--missing</code>, the coral-ruled <code>.plp-warn</code>, the
+        <code>.plp-tag</code> word). Each row has its own base <code>Checkbox</code>, never pre-ticked, no tick-all;
+        apply stays off until every row is ticked, then echoes the preview's digests. A stale digest shows the refusal and previews again.</dd>
     <dt>notifications: alerts on this device</dt>
     <dd><code>WebPushPanel.svelte</code>, a client of <code>/api/v1/push/*</code> drawn with the panel kit's classes
         (<code>.tm</code>, <code>.tm__sub</code>, <code>.tm__figs</code>, <code>.tm__note</code>, <code>.tm__problem</code>): an
@@ -83,17 +154,142 @@
         one line per subscription (service host and last push result) with an <code>.oc-btn--sm</code> remove, and a
         "send test" <code>.oc-btn</code>. No endpoint or key is ever shown.</dd>
     <dt>notifications: alerts on this phone</dt>
+    <dd><code>NativeAlertsPanel.svelte</code>, shown instead of the web push panel inside the iPhone app's shell (never in a
+        plain browser), a client of <code>/api/v1/native-devices</code> drawn with the same <code>.tm</code> classes: an
+        <code>.oc-btn--confirm</code> "alerts on this phone" that asks the shell for APNs registration, and one line per native
+        device with an <code>.oc-btn--sm</code> remove. No token or key is ever shown.</dd>
     <dt>sessions &amp; agents: mcp gate</dt>
+    <dd><code>AgentGatePanel.svelte</code>, a client of <code>GET</code> and <code>PUT /agent-actions/settings</code>: one
+        <code>.oc-check</code> switch in the panel kit's <code>.tm</code> frame that holds an agent's cross-session
+        mcp action in the approval inbox until you approve it. It writes as it is flipped and shows what the server holds; a
+        failed read or write is said in <code>.tm__problem</code>.</dd>
     <dt>general: app updates</dt>
+    <dd><code>AppUpdatePanel.svelte</code> (#2217), a client of <code>GET /app-update</code> and its
+        <code>PUT /app-update/auto-update</code>, <code>POST /app-update/check</code> and <code>POST /app-update/install</code>:
+        two <code>.tm__sub</code> lines (the running version and what the desktop app's updater says), one
+        <code>.oc-check</code> switch (update automatically, off by default) and the shared <code>.oc-btn--confirm</code>
+        update now (only while an update waits) beside a quiet <code>.oc-btn--sm</code> check now, in the panel kit's
+        <code>.tm</code> frame. It re-reads when the <code>app_update</code> topic fires; with no desktop app attached it says so
+        and offers neither button. A failed read or write is said in <code>.tm__problem</code>.</dd>
     <dt>desktop app</dt>
+    <dd><code>DesktopPanel.svelte</code> (R1-02b, #2303), the settings only the Electron app has, drawn only when
+        <code>window.carnivoreDesktop</code> lists <code>desktopState</code> (in a browser tab the section is not in the rail). In the
+        panel kit's <code>.tm</code> frame: <code>.oc-check</code> switches (approval banners, hide command text, option key as meta,
+        menu bar icon, the two login toggles), a <code>.tm__sub</code> line for the macOS notification permission with a quiet
+        <code>.oc-btn--sm</code> that opens System Settings while it is denied or unknown, a read-only <code>.oc-field</code> that takes the
+        hotkey by key press with quiet <code>.oc-btn--sm</code> turn off and use default beside it, and the terminal app as
+        <code>.oc-choice</code> cards in an <code>.oc-grid-4</code> with a custom command <code>.oc-field</code> and an
+        <code>.oc-btn--confirm</code> save under it. The preference rows write through the preferences route and re-read what the server holds;
+        the login and permission rows go through the bridge. A refused write puts the old value back and is said in <code>.tm__problem</code>;
+        the hotkey's registration failure shows in <code>.tm__problem</code> only when main reports one.</dd>
     <dt>advanced: server log level</dt>
+    <dd><code>LogLevelPanel.svelte</code>, a client of <code>GET</code> and <code>PUT /log-level</code>: four shared
+        <code>.oc-choice</code> radio cards (error, warn, info, debug) in an even <code>.oc-grid-4</code> (one width each) in the panel kit's <code>.tm</code> frame that change how
+        much the server logs, live with no restart. The line under them says whether the level was chosen here or comes from
+        <code>LOG_LEVEL</code>, and a quiet <code>.oc-btn--sm</code> hands the choice back to the env file. It writes as a
+        card is clicked and shows what the server holds; a failed read or write is said in <code>.tm__problem</code>.</dd>
     <dt>pipeline: what deep search reads</dt>
+    <dd><code>DeepSearchScopePanel.svelte</code> (#1901), a client of <code>GET</code> and <code>PUT /deepsearch/settings</code>: three shared
+        <code>.oc-choice</code> radio cards (people only, people plus headless sessions, everything) in an even <code>.oc-grid-3</code> in the panel kit's
+        <code>.tm</code> frame. It writes as a card is clicked and shows what the server holds; a failed read or write is said in <code>.tm__problem</code>.</dd>
     <dt>general: time zone</dt>
+    <dd><code>TimeZonePanel.svelte</code> (#1984), a client of the <code>time_zone</code> preference (<code>PATCH /preferences</code>): an
+        <code>.oc-field</code> search box over the browser's IANA zone names and the list it narrows, in
+        <code>.restart-picker__options</code> radio rows, in the panel kit's <code>.tm</code> frame. A pick saves at once, a refusal puts the
+        stored zone back and is said in <code>.tm__problem</code>, and one <code>.tm__note</code> line says what a change moves.</dd>
     <dt>advanced: mcp tools</dt>
+    <dd><code>McpToolSwitchesPanel.svelte</code> (#1824), laid out like the sessions chart and with no class of its own: an
+        <code>.oc-rc-bar.oc-rc-bar--split</code> title-row strip (the counts line in <code>.oc-rc-line</code>, one
+        <code>.oc-btn--sm</code> reset counts key), then per tool group a drawer-style header row (<code>.session-sidebar-group__headerrow</code> with the plain
+        <code>.session-sidebar-group__header</code> toggle: shared fold chevron and the group name, the whole row folds), a
+        fixed-width <code>.oc-rq-count</code> column so every "n of m on" lines up, and quiet all on and all off keys, over the shared <code>DataTable</code>
+        (uppercase column heads, hairline rows): the tool in <code>.oc-rc-name</code> with its description in
+        <code>.oc-rc-muted</code>, calls since the last reset, a shared <code>Sparkline</code> with one bar per UTC day (the usage
+        store counts per day) and an <code>.oc-check</code> switch. Above the list sits a filter strip (<code>.oc-rc-bar</code>): an
+        <code>.oc-field</code> search box (the catalog toolbar's search field look, cyan focus from the one shared rule) that
+        narrows by tool, family or description, then quiet expand all and fold all <code>.oc-btn--sm</code> keys. Every family starts
+        expanded; a filter shows each matching family expanded and hides the rest, and clearing it restores the folds. A client of <code>GET</code> and <code>PUT /mcp-admin/tools</code>
+        and <code>POST /mcp-admin/tools/usage/reset</code>; a failed read or write is said in <code>.oc-rc-notice</code>.</dd>
     <dt>sessions &amp; agents: mcp server</dt>
+    <dd><code>McpPanel.svelte</code>, a client of <code>GET /mcp-admin</code>, <code>PUT /mcp-admin/settings</code> and
+        <code>GET</code> and <code>POST /mcp-admin/tokens</code>, <code>DELETE /mcp-admin/tokens/{id}</code>, drawn only with the time
+        machine panels' classes: an <code>.oc-check</code> switch, then <code>AgentToolChecks.svelte</code> (#1685,
+        <code>GET</code> and <code>PUT /mcp-admin/agent-tools</code>): two <code>.oc-check</code> checkboxes with a hint line,
+        Task Manager tools for agents and swarm tools for agents, each writing as it is clicked and showing what the server holds,
+        with no class of its own, <code>TrustedProxies.svelte</code> (#1938, <code>PUT /mcp-admin/trusted-proxies</code>): one
+        <code>.tm__srv</code> row per trusted proxy address with an <code>.oc-btn--sm</code> remove that opens a <code>.tm__warn</code> block
+        (<code>.modal-btn-secondary</code> keep, <code>.modal-btn-danger</code> confirm) and an <code>.oc-field</code> add form, a refusal said in
+        <code>.tm__problem</code>, with no class of its own, the endpoint in <code>.tm__code</code> with a quiet
+        <code>.oc-btn--sm</code> copy, the tool list in <code>.tm__sub</code> lines (read from the server's registry), one
+        <code>.tm__srv</code> row per token with an <code>.oc-btn--sm</code> revoke that opens a <code>.tm__warn</code> block
+        (<code>.modal-btn-secondary</code> cancel, <code>.modal-btn-danger</code> confirm), and a mint form of
+        <code>.oc-field</code> inputs with an <code>.oc-btn--confirm</code> action. A minted secret shows once in a
+        <code>.tm__warn</code> with a copy button and "you will not see this again". The connect snippets are
+        <code>.tm__code</code> blocks; the client guide sits in a <code>&lt;details&gt;</code>. Failures are said in
+        <code>.tm__problem</code>. It opens with a plain explainer and the list of carnivore features that ride on it (a
+        <code>.mcp-panel__list</code> of mono lines). Turning it OFF first opens a <code>.tm__warn.mcp-panel__off</code> block
+        (the danger token <code>--oc-coral</code>, like beast mode's risk line) that lists every feature that stops working, with
+        <code>.modal-btn-secondary</code> keep it on and <code>.modal-btn-danger</code> turn off; while it is off the same block stays
+        in place as the warning. Turning it on is immediate.</dd>
     <dt>plugin pane: usage stats (moved out of advanced)</dt>
+    <dd><code>StatsCollectionPanel.svelte</code>, a client of <code>PATCH /stats/settings</code>, <code>GET /stats/maintenance</code>,
+        <code>POST /stats/clear</code> and <code>POST /stats/backfill</code>, in the panel kit's <code>.tm</code> frame:
+        an <code>.oc-check</code> switch; while off, a quiet <code>.oc-btn</code> "clear stats and reclaim space" that opens a
+        <code>.tm__warn</code> block whose actions are <code>.modal-btn-secondary</code> cancel and <code>.modal-btn-danger</code>
+        confirm; while on, an <code>.oc-btn--confirm</code> "backfill and catch up". Progress and the bytes reclaimed are said in
+        <code>.tm__note</code>, a failure in <code>.tm__problem</code>.</dd>
     <dt>ai: connections, routing, recent calls</dt>
+    <dd>The <code>byoai</code> section (BYOAI, issue #1201), three panel rows, each a client of <code>/api/v1/ai/*</code> in the time
+        machine panels' frame (<code>.tm</code>, <code>.tm__sub</code>, <code>.tm__srv-grid</code>, <code>.tm__field</code>), every control
+        the base (<code>Button</code>, <code>Switch</code> (a checkbox role for the capability ticks), <code>Field</code>, <code>Select</code>,
+        <code>Segmented</code>, <code>State</code>, <code>Fold</code>, <code>List</code> and <code>ListRow</code>). <code>ConnectionsPanel.svelte</code>
+        is a base <code>List</code> of one <code>ConnectionCard.svelte</code> row per connection (the provider mark leads; label, then preset
+        and host; the on <code>Switch</code>, test and models, edit and a danger delete as the row's actions, shown at rest; "key set, ends
+        in abcd" or "key not set", the delete question as a warn <code>State</code> and the test panel in the row's below block). An off
+        connection is dimmed, and on a narrow pane the actions drop under the name. Edit opens <code>ConnectionForm.svelte</code> in that
+        row's below block; add opens it under the list, unframed: a preset picker grouped local, cloud and cli, the base url prefilled
+        from the preset, the preset's own fields, and a WRITE-ONLY key (a CSS-masked text <code>Field</code> that never shows a stored
+        key, <code>.oc-secret</code>; blank keeps it, "remove the stored key" clears it; a host change on a connection with a key shows a
+        warn <code>State</code> that saving clears the key unless a new one is typed). Save is the confirm <code>Button</code>, cancel the
+        secondary. A stale revision answers 409, the panel re-reads and says so. <code>ConnectionTest.svelte</code>: capability, model
+        (the picker), a test button and its result line (<code>.tm__srv-result--ok</code> or <code>--bad</code>: latency and sample or
+        the error), a play button for a speak test (Web Audio, never an element src: the CSP forbids <code>blob:</code> and
+        <code>data:</code> media), a try-it prompt for image, video and audio whose result is a link (<code>.ai-test__links</code>,
+        <code>rel="noopener"</code>) or the size of inline bytes, then the model list with refresh and a typed id. The <code>.ai-test</code>
+        block sits under a hairline, <code>.ai-ticks</code> lays the custom preset's capability checks. A preset that speaks the openai
+        chat wire adds <code>.ai-extra</code>, a full-row multiline <code>Field</code> "extra request fields (json)" whose object is merged
+        into every chat request for the connection; a parse problem is the field's error line and holds save.
+        <code>RoutingPanel.svelte</code> draws one <code>RouteRow.svelte</code> (<code>.ai-route</code>: name <code>.ai-route__name</code>,
+        connection, model, voice for speak, each labelled like a base field, then <code>.ai-route__tools</code> set and clear) per
+        capability, then the per-feature rows under a plain "no features registered yet" line. A feature an add-on owns is left out while
+        the add-on's override is off and, while it is on, listed in a base <code>Fold</code> "plugin overrides (n)" with "(overridden in
+        add-on settings)", closed by default, its name a link (<code>.ai-route__link</code>, the info cyan, hairline underline) to the
+        add-on's switch. <code>CallsPanel.svelte</code> is the recent calls tab: <code>CallsSummary.svelte</code> on top (the
+        <code>.ai-strip</code> of calls, spend, error rate, latency and tokens, then <code>.ai-spend</code>, hairline-bar row buttons that
+        filter the log), a filter bar (<code>.ai-bar</code>: <code>Segmented</code> for range and result, <code>Select</code> filters, a
+        secondary clear), the log (<code>.ai-log</code>: day headers <code>.ai-day</code>, one <code>.ai-entry</code> per call whose row
+        <code>Button</code> expands <code>.ai-detail</code> in place, the status dot <code>.ai-dot</code> and the failure in the coral token
+        on <code>.ai-err</code>, a model's provider in <code>.ai-sub</code>) and a pager (<code>.ai-pager</code>, "1 to 50 of 1,234", newer
+        and older). Paged on the server, 50 a page; under 640px of the log's own width (a container query) a row is a two-line card. A row
+        arriving live on page 1 wears <code>.ai-entry--fresh</code> (opacity and transform only, off under reduced motion); elsewhere a
+        small button counts new calls. Re-read on the pushed <code>ai_calls</code> topic, a poll only while the push is down. The other
+        panels re-read when the pushed <code>ai.config.changed</code> notice arrives. Styles: <code>web/src/lib/byoai/byoai.css</code>.</dd>
     <dt>notifications: destinations</dt>
+    <dd>The <code>notifications.channels</code> group (notification destinations, issue #1278) is one panel row, <code>DestinationsPanel.svelte</code>,
+        a client of <code>/api/v1/notifications/*</code> in the panel kit's frame (<code>.tm</code>, <code>.tm__srv</code>,
+        <code>.tm__srv-head</code>, <code>.tm__field</code>, <code>.tm__sub</code>, <code>.tm__warn</code>, <code>.tm__problem</code>,
+        <code>.oc-field</code>, <code>.oc-key</code>, <code>.oc-check</code>). <code>DestinationCard.svelte</code> is one destination: kind,
+        name, an on switch, a <code>.nd-badge</code> "local" when it exists only on this computer or a local override sits over it, "set" or
+        "not set" per secret field (<code>.nd-secret</code>), a status line in plain words (<code>.nd-status</code>: last sent in
+        <code>.tm__note</code>, the failure class and any disabled reason in <code>.tm__problem</code>), and the quiet <code>.oc-btn</code> row: test
+        (idle, sending, ok or failed; a 429 says wait), extras, edit, pin to this computer or reset to global, and a delete that asks once in
+        <code>.tm__warn</code> with <code>.modal-btn-secondary</code> and <code>.modal-btn-danger</code>. <code>DestinationForm.svelte</code> generates
+        its fields (<code>.nd-grid</code>) from the kind list the server serves, so a new kind needs no new form; a secret input is write-only
+        (masked text, always empty, blank means untouched) and the webhook signing secret is shown once after create in a <code>.tm__warn</code>
+        with a copy button. <code>DestinationExtras.svelte</code> (<code>.nd-extras</code>, quiet hours in <code>.nd-times</code>) edits away,
+        quiet hours, reminder, project filter and details, which is hidden for sms-like kinds. Save is <code>.modal-btn-confirm</code>, cancel
+        <code>.modal-btn-secondary</code>. The panel re-reads when the <code>notification_settings</code> resource topic moves and polls only while that
+        topic is not live. Styles: <code>web/src/lib/notifications/destinations/destinations.css</code>.</dd>
     <dt>notifications: messaging</dt>
     <dd>The <code>notifications.messaging</code> group (issue #1499) is one panel row, <code>MessagingScreen.svelte</code>, a
         client of <code>/api/v1/messaging/*</code> in the same <code>.tm</code> frame. <code>ProviderCard.svelte</code> is one provider:
@@ -107,7 +303,32 @@
         ends its status lines with the duplicate-send protection line: plain when a replayed key was ever answered with the original, in
         <code>.messaging-held</code> when never seen. Styles: <code>web/src/lib/messaging/messaging.css</code>.</dd>
     <dt>notifications: routing matrix, link and pause</dt>
+    <dd>The <code>notifications.routing</code> group (issue #1278) is two panel rows in the same <code>.tm</code> frame, both clients of
+        <code>/api/v1/notifications/*</code>. <code>MatrixPanel.svelte</code> is the routing matrix: <code>.mx-table</code> in an
+        <code>.mx-scroll</code> wrapper, one row per notification type (<code>.mx-type</code> label <code>.mx-label</code> and
+        <code>.mx-desc</code>) under a <code>.mx-family</code> heading in the accent, and one column for the screen, one for the global default
+        tick set ("what a new destination starts with") and one per destination, web push devices included (<code>.mx-colname</code>,
+        <code>.mx-colsub</code>). <code>MatrixCell.svelte</code> is one <code>.mx-cell</code>: a square <code>.oc-check</code>, then its source
+        in small type (<code>.mx-src</code>); a cell pinned to this computer shows the <code>.mx-badge</code> "local" with an
+        a base quiet "reset to global" button. A locked cell is disabled and says why in short words (<code>.mx-why</code>, "always on" for
+        needs-you, "stays here" for in-app only and the notifications-health type), with the full sentences in <code>.mx-legend</code> under the
+        matrix. Below 1024px the table is replaced by <code>.mx-picker</code> (a base select) over an <code>.mx-list</code> of
+        <code>.mx-item</code> rows, one column at a time, family headings in <code>.mx-family-label</code>. "This computer only" is an
+        <code>.oc-check</code> switch above the matrix that writes ticks as local pins. <code>LinkPanel.svelte</code> (<code>.mx-link</code>,
+        <code>.mx-link__row</code>, <code>.mx-link__kind</code>, <code>.mx-link__base</code>) shows which kind of link goes into an outside
+        notification and why, in plain words from the server's reason code, and the per-computer "pause all outside delivery" switch. Both
+        re-read when the <code>notification_settings</code> resource topic moves and poll only while it is not live. Styles:
+        <code>web/src/lib/notifications/matrix/matrix.css</code>.</dd>
     <dt>notifications: sync with paired computers</dt>
+    <dd><code>SyncPanel.svelte</code> (issue #1278), the last row of the <code>notifications.routing</code> group, in the same <code>.tm</code>
+        frame. A client of <code>/api/v1/notifications/sync</code>. One <code>.sy-peer</code> per paired computer, a hairline
+        between rows (no cards): an <code>.oc-check</code> switch named with the computer's label (<code>PUT .../sync/peers/{key}</code>, a setting
+        that stays on this computer), then a <code>.sy-state</code> line in dim text: "synced" with the last time, "waiting for the first sync",
+        "off", "runs an older carnivore", "not connected", or, in coral (<code>.sy-state--bad</code>), refused, slow down or failed. Under the
+        list an <code>.oc-btn</code> "sync now" (<code>POST .../sync/now</code>, runs in the background, one re-read after it). No paired computers
+        and a sync service that is not running each show one dim <code>.tm__sub</code> line; a failed read or write is a <code>.tm__problem</code>.
+        Re-reads when the <code>notification_settings</code> resource topic moves and polls only while it is not live. Styles:
+        <code>web/src/lib/notifications/sync/sync.css</code>.</dd>
     <dt>remote &amp; security: mobile sync, your own domain</dt>
     <dd><code>CustomDomain.svelte</code> under the mobile sync panel, a client of <code>/api/v1/phone-link/custom-domain</code>
         and read on the <code>custom_domain</code> push topic. <code>custom-domain.css</code>: a <code>.cd</code> block with a
@@ -116,6 +337,15 @@
         <code>--bad</code> dead) with the reason in plain words, and a <code>.cd-record</code> of three copyable
         <code>.cd-cell</code> values (name, type, target) for the one CNAME to add. Remove is a danger <code>Button</code>. Colour is <code>--oc-*</code> tokens only.</dd>
     <dt>remote &amp; security: mobile sync</dt>
+    <dd><code>PhoneLinkPanel.svelte</code>, a client of <code>/api/v1/phone-link</code> in the panel kit's frame
+        (<code>.tm</code>, <code>.tm__sub</code>, <code>.tm__note</code>, <code>.tm__problem</code>) plus
+        <code>phone-link.css</code>: a base <code>Switch</code>, a <code>.pl-facts</code> list (certificate issuer, expiry,
+        staging or production; tunnel state), a confirm <code>Button</code> "pair a mobile device" that opens
+        <code>PairWindow.svelte</code> (<code>.pl-window</code>: the QR drawn on this computer and swapped every minute, a 10 minute countdown, an
+        <code>Button</code> "no camera? show a code" that reveals the 8 character code in <code>.pl-window__code</code>, a
+        "phone scanned, waiting for its code" line, then "paired" with done, revoke and pair another in
+        <code>.pl-window__actions</code>), and a base <code>List</code> of devices (a <code>ListRow</code> each, with last seen
+        and the push result under it) with a danger <code>Button</code> revoke. Signed out with mobile sync off, the switch and pair button give way to one line and a confirm "sign in" button (<code>.pl-signin</code>); a link already on keeps its normal state. It re-reads every 3 seconds, so it follows a scan and a pairing.</dd>
     <dt>remote &amp; security: api keys</dt>
     <dd><code>api-keys/ApiKeysPanel.svelte</code>, a client of <code>/api/v1/api-keys</code> (docs/api-keys.md) drawn
         exactly like the mcp panel's token list, with no class of its own: the panel kit's frame (<code>.tm</code>,
@@ -126,7 +356,16 @@
         <code>.modal-btn-secondary</code>. Revoke is an <code>.oc-btn--sm</code> that opens an inline
         <code>.tm__warn</code> with <code>.modal-btn-secondary</code> cancel and <code>.modal-btn-danger</code> confirm.</dd>
     <dt>terminal: carnivore tui</dt>
+    <dd><code>TuiCliPanel.svelte</code>, a client of <code>/api/v1/cli-command</code> (GET the state, POST the install) in the panel kit's frame (<code>.tm</code>, <code>.tm__sub</code>, <code>.tm__note</code>, <code>.tm__problem</code>) with the custom domain
+        block's <code>.oc-label</code> titles and <code>.cd-state</code> line with a <code>.cd-led</code> light, plus
+        <code>tui-cli.css</code>: a <code>.tui-cli__steps</code> how-to list, a <code>.tui-cli__shot</code> hairline-framed screenshot
+        (<code>client/img/tui/tui-sessions.svg</code>, regenerated by <code>python3 -m src.tui.screenshot</code>) and
+        <code>.tui-cli__block</code> sections. Missing or stale shows an <code>.oc-btn--confirm</code> "install command" that says
+        "approve the admin prompt on the computer" while it waits; installed shows the command; a different carnivore command in the way
+        shows a coral note and no button. The manual install command and the run-from-a-checkout command are always shown in
+        <code>CopyField.svelte</code> boxes.</dd>
     <dt>plugins</dt>
+    <dd>A plugin's own panel draws inside its side pane as a plugin-specific block (a <code>settings-panel</code> contribution, shown only while the plugin is on; <code>plugin-extras.ts</code>), with the same routes and stored values; each plugin documents its own panel in its own fragment. Usage stats is not a plugin (2026-10-16): its one switch, with the backfill and the confirmed clear, is Settings &gt; advanced &gt; statistics. There is no Settings &gt; plugins index any more (removed 2026-10-13): the gear on a plugin card is the door to its pane. A plugin's own settings are never drawn in Settings.</dd>
     <dt>the save model</dt>
     <dd>A choice (a switch, a radio, a picker) applies the moment it is made and its row shows saving, then saved. A typed value
         waits: the frame footer (<code>SettingsFooter.svelte</code>, <code>.st-footer</code>, with <code>.st-footer__text</code> and
@@ -141,6 +380,16 @@
         to the row, marks it and focuses its control. The search field is the shared <code>SearchField</code>, its
         caption hidden on a phone where the placeholder says it.</dd>
     <dt>pipeline</dt>
+    <dd>The <code>log_processor</code> section (Joe (ccsliinc), 2026-10-01; one status line since Alex (example-owner), 2026-10-12, #1682), one
+        panel row in the panel kit's frame. <code>PipelineStatusPanel.svelte</code> draws one hairline-framed line
+        <code>.ps-line</code> over <code>.ps-rows</code>. The line holds the state word <code>.ps-state</code> (<code>--ok</code>
+        caught up, <code>--wait</code> behind or rebuilding, <code>--bad</code> stalled since a time, <code>--off</code> the engine is
+        not running) and the age of the last delivery. Under it one <code>.ps-row</code> per plugin: <code>.ps-row__head</code> holds the
+        name <code>.ps-row__name</code> and a rebuild base Button (<code>[data-ps=rebuild]</code>), <code>.ps-row__facts</code> how
+        much waits for it, and a failing plugin adds one <code>.tm__problem</code> line. Rebuild opens a <code>.tm__warn</code> with
+        the warning and a <code>.modal-btn-secondary</code> cancel beside a <code>.modal-btn-danger</code> confirm, because it
+        replaces the plugin's database. Nothing here switches, pauses or approves a plugin. Read on a slow poll while the panel is
+        open (the engine pushes no frame for it).</dd>
     <dt>a new setting</dt>
     <dd>One entry in <code>settings-registry.ts</code> (its section, its control, whether it saves instantly, in a batch or
         through its own panel) and three catalog strings, <code>settings.item.&lt;id&gt;.label</code>, <code>settings.item.&lt;id&gt;.help</code> and
@@ -148,16 +397,85 @@
         documented route, and by a <code>ui_preferences</code> field when it has no other server owner
         (<code>docs/ui-preferences-inventory.md</code>).</dd>
     <dt>pack page: the pack machines panel</dt>
+    <dd>Pack is its own page, not part of Settings, since 2026-10-13 (Alex (example-owner); <code>web/src/lib/pack-page/</code>); the pack entries below stay here until they move to a Pack section. <code>PackWorkTab.svelte</code> (the Pack page's work tab) is the reference for a roster of computers with
+        editable per-computer settings: the ledger chrome (<code>.pl-titlebar</code>, <code>.pl-title</code>), one row per
+        computer (<code>.pm-row</code>, <code>.pm-head</code>, <code>.pm-name</code>), the alpha as ONE outlined accent word
+        (<code>.pm-badge</code>, the only accent on the row), the link state in words (<code>.pm-state</code>, green when
+        connected, yellow when stale), live figures in mono (<code>.pm-stats</code>) that are dashes, never zeros, when the
+        link is down, the installed tools as small outlined tags (<code>.pm-tools</code>, <code>.pm-tool</code>; struck through and
+        muted when the tool is missing), and an inline editor (<code>.pm-edit</code>, <code>.pm-grid</code>, <code>.pm-field</code>,
+        <code>.pm-rules</code>) of <code>.oc-field</code> inputs and <code>Check</code> switches. A notice
+        (<code>.pm-warn</code>) says when two computers name different alphas; a refusal from another computer shows in
+        <code>.pm-error</code>.</dd>
     <dt>pack page: the computers panel</dt>
+    <dd>The Pack page's computers tab (<code>web/src/lib/pack-roster/</code>) is the one place to add, list, remove and join
+        computers. It wears the ledger chrome (<code>.pl-titlebar</code>, <code>.pl-title</code>) with the shared
+        <code>.modal-btn-confirm</code>, <code>.modal-btn-secondary</code> and <code>.modal-btn-danger</code> buttons, and
+        stacks hairline-separated regions (<code>.cmp-region</code>, <code>.cmp-body</code>). The six digit join code is
+        <code>.cmp-code</code> (mono, large, tracked, the one accent on the surface); a fingerprint is <code>.cmp-fp</code>.
+        Each computer is a <code>.cmp-row</code> (<code>.cmp-head</code>, <code>.cmp-name</code>, <code>.cmp-state</code>,
+        <code>.cmp-meta</code>) with a direction switch and a two step remove (<code>.cmp-confirm</code>). The app update of a computer
+        (<code>ComputerUpdate.svelte</code>, #2223, mounted in the Pack page's computer pane overview tab under an <code>app update</code> <code>.pp-k</code> heading) adds no class: its version and state are a <code>.cmp-meta</code> line in a <code>.cmp-head</code>, update now is a
+        <code>.modal-btn-secondary</code>, the auto update switch (off unless that computer turned it on) is the shared <code>Check</code>, and a computer
+        too old to update remotely is one plain <code>.cmp-note</code>, never a <code>.cmp-error</code>. The ssh add form
+        (<code>.cmp-form</code>, <code>.cmp-field</code>) shows each reason it cannot go on its own <code>.cmp-blocker</code>
+        line (coral) and the live job as <code>.cmp-steps</code> inside a <code>.cmp-job</code>. Notes are
+        <code>.cmp-note</code>, a refusal is <code>.cmp-error</code>. The
+        join form's quiet "look for a pack" button and its "join &lt;label&gt;?" yes/no rows are
+        <code>PackOffers.svelte</code> (<code>.pack-offers</code>, <code>.pack-offers__row</code>,
+        <code>.pack-offers__text</code>, <code>.pack-offers__actions</code>), shared with the first-run window and laid out in
+        settings by <code>.cmp-offers</code>; the label is untrusted network text and shows as text only.</dd>
     <dt>pack page: the computers roster</dt>
+    <dd>Since #2061 (Alex (example-owner), 2026-10-21, "Go ahead and build this out now") the Pack page's computers tab is ONE roster
+        (<code>web/src/lib/pack-roster/PackRoster.svelte</code>), and the ssh tab is a tab of each computer, not of the page. It
+        wears the Warez look: a filter rail (<code>.cat-rail</code>, the red needs a look group only while something is wrong), a census
+        band (<code>.m1-census</code>), computer cards (<code>RosterCard.svelte</code>: <code>.m1-card</code> with a top bar
+        <code>.m1-top</code>, the red wolf for the leader and the green computer for this one, the load plate <code>.m1-plate</code>) or
+        rows (<code>.m1-row</code>), ghost cards for computers nearby (<code>.m1-ghost</code>), and a reading pane
+        (<code>ComputerPane.svelte</code>: <code>.m1-pane__head</code>, tabs overview, projects, link and ssh). The wolf button
+        (<code>WolfButton.svelte</code>, the base <code>IconButton</code> <code>[data-roster-key="leader"]</code>) opens a <code>.modal-btn</code> confirm before it makes a leader. The pack
+        settings panel (<code>SettingsPanel.svelte</code>, <code>.m1-sets</code>) folds into a gear in the title strip
+        (<code>[data-roster-key="gear"]</code>, a base <code>IconButton</code>; the panel and pane close keys are its close variant); its section headings use <code>--oc-text-bright</code>, the danger heading keeps coral
+        (<code>.m1-danger__k</code>). Status is a shape plus a word (<code>.pp-st</code>), never colour alone.</dd>
     <dt>pack page: the settings blocks</dt>
+    <dd>Below the roster, <code>PackSettingsBlock.svelte</code> (auto-distribute, enhanced placement and its model, held by the
+        master) and <code>PackRelayBlock.svelte</code> (one switch per Claude account, off until the owner turns it on) are
+        sibling blocks under one hairline (<code>.pm-settings</code>, <code>.pm-relay</code>, <code>.pm-relay-row</code>,
+        <code>.pm-model</code>), each a small <code>.oc-label</code> heading over <code>Check</code> switches; the model is the
+        AI settings' own <code>RouteRow</code>, never a second picker. <code>ReserveForm.svelte</code> is the inline reserve form
+        (<code>.pm-reserve</code>, <code>.pm-days</code>, <code>.pm-actions</code>): a draft saved by one confirm button
+        (<code>.modal-btn-confirm</code>) with the level in force shown live above it. A new block for this tab (the air-gap
+        setting, the migrate wizard) is added as another sibling block in the panel and copies this one. All of it stacks
+        to one column at 700 px and below.</dd>
     <dt>pack page: follow the master, and a project's transport settings</dt>
+    <dd>Beside the master line the panel carries one <code>Check</code> switch (<code>follow the master</code>, this computer's own
+        setting). A project's page carries a folded block, <code>ProjectTransport.svelte</code> (<code>.pt</code>, <code>.pt-body</code>,
+        <code>.pt-row</code>, <code>.pt-line</code>, <code>.pt-note</code>, <code>.pt-error</code>,
+        <code>.pt-done</code>): an air-gap <code>Check</code> switch, the github account in force with its source and a picker of
+        the logged-in accounts, and the transport rung. The publish card (<code>.pt-publish</code>, <code>.pt-actions</code>) shows
+        the repo name, owner and account, always private, and its one <code>.modal-btn-confirm</code> button is the only thing that
+        creates a repo. Inside that block <code>ProjectReplicas.svelte</code> (<code>.pt-replicas</code>, <code>.pt-replica-list</code>,
+        <code>.pt-replica</code>) lists the computers running a copy of the project, each with a <code>.modal-btn-danger</code> remove that
+        takes two presses, and a picker of connected paired computers with <code>.modal-btn-confirm</code> add replica. A session or Swarm agent on another computer wears <code>MachineBadge.svelte</code>
+        (<code>.oc-machine-badge</code>): a 1px outlined, tracked, uppercase label of the computer's name, dimmed through
+        <code>data-host-state</code> when that computer is down, drawn on Swarm ledger rows, org nodes and the chat header
+        (the drawer's own chip is the same look).</dd>
     <dt>pack page: the migrate wizard</dt>
+    <dd><code>MigrateWizard.svelte</code> moves a project or a company to another paired computer, or brings a moved-away project
+        home. It sits in the pack panel's block (a pick of project or company) and opens from the Projects page's project and
+        company kebabs and the "moved to" tag's <em>move back</em> button. A <code>.pl-titlebar</code> strip over one
+        <code>.mw-body</code>: the computers (<code>.mw-machines</code>, a refusing computer disabled with its reason), the plan
+        (<code>.mw-card</code>: the rung in <code>.pm-badge</code>, the counts in <code>.pm-stats</code>, the checks in
+        <code>.mw-checks</code>, an optional <code>.mw-publish</code> private-repo offer), then the steps
+        (<code>.mw-steps</code>, <code>.mw-step</code> with <code>data-state</code> done (working green), current (primary text, a pulsing green marker, never the accent) or pending (muted), driven by the
+        <code>pack_ops</code> push, with a "step n of total" label above), and a footer (<code>.mw-foot</code>, a hairline above): the computer is chosen once in the pack row and shown as plain text, "checking studio..." is the loading word, a refusal is the server's sentence in <code>.pm-error</code> with move disabled, and the close in the title strip is the small base Button. Cancel is the base Button, confirm its confirm variant; a
+        one-way archive move swaps it for <code>.modal-btn-danger</code> behind its own ticked <code>Check</code>. Stacks to one
+        column at 700 px and below.</dd>
 </dl>
 
 <h3 class="sg-h3" id="settings-pack">pack page: computers, meters and marks</h3>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>live, inert</span><code>web/src/lib/computers/ComputerRow.svelte</code><span>this computer as alpha, hosta linked</span></div>
+    <div class="sg-specimen__label"><span>live, inert</span><code>web/src/lib/computers/ComputerRow.svelte</code><span>this computer as alpha, studio linked</span></div>
     <div class="sg-specimen__body" inert><div id="sg-live-pack-computers"></div></div>
 </div>
 <div class="sg-specimen">
@@ -165,26 +483,43 @@
     <div class="sg-specimen__body" inert><div id="sg-live-pack-meters"></div></div>
 </div>
 <div class="sg-specimen">
-    <div class="sg-specimen__label"><span>live, inert</span><code>web/src/lib/pack-machines/PackMarks.svelte</code></div>
+    <div class="sg-specimen__label"><span>live, inert</span><code>web/src/lib/pack-machines/PackMarks.svelte</code><span>alpha and this computer, linked, connecting, down, error, then the other-computer name badge</span></div>
     <div class="sg-specimen__body" inert><div id="sg-live-pack-marks"></div></div>
 </div>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd>The Pack page (a menu row, not a settings section) has four tabs: computers (every computer once, this computer first, then
+        add a computer and join a pack), work, logins and ssh. A computer's row carries its actions beside its name
+        (<code>.pk-act</code>, the <code>.modal-btn</code> family at small size), never pinned to the far edge, and the page
+        keeps a readable column (<code>.pk-col</code>, <code>.cmp-body</code>, 76ch). The work tab is the exception: a status strip (<code>.pw-strip</code>), then placement and per-computer reserve groups (<code>.pw-group</code>, side by side from 1440 px in <code>.pw-grid</code>), the placement model pickers inline under the enhanced switch (<code>.pw-model</code>, the shared RouteRow, defaults stated in the fields), a <code>.pw-tag</code> on the group header, each computer a <code>.pw-machine</code> row with its real values as <code>.pw-chip</code> chips (<code>.pw-chip--now</code> for the level in force), and the move row (<code>.pw-move</code>) picking project and computer before its button enables.</dd>
     <dt>marks</dt>
+    <dd><code>PackMarks.svelte</code>: the alpha badge (<code>.pm-badge</code>, the catalog word "alpha"), one green outline
+        computer icon for this computer, and the link icon, two computers joined, in the token of its state (green linked,
+        amber connecting, coral error, and a broken link in the muted token for down). Each carries aria-label and title
+        from <code>pack.link.*</code> or <code>pack.machines.this_machine</code>; no mark repeats a word.</dd>
     <dt>name badge</dt>
+    <dd><code>web/src/opscenter/ui/MachineBadge.svelte</code> (<code>.oc-machine-badge</code>): a small tracked label naming the other computer a session or agent runs on; draws nothing for this computer, dimmed (never colour alone) when the computer is degraded or offline. Shown last in the marks specimen.</dd>
     <dt>meters</dt>
+    <dd><code>PackMeter.svelte</code> (<code>.pk-meter</code>): a tracked uppercase label, a 1px outlined bar of 20 cells and the
+        mono figure. Filled cells are green under 75%, amber from 75, coral from 90. The compute reserve is a hatched zone at
+        the top end of the bar. cpu is the 1 minute load average over the cores ("5/10" is load 5 on 10 cores), not a
+        percent of time busy.</dd>
     <dt>tools</dt>
     <dd><code>.pm-tools</code> and <code>.pm-tool</code>: a row of small outlined chips, one per probed tool, struck through
         when the tool is missing; shown in the first specimen under each computer with a snapshot.</dd>
     <dt>fields</dt>
-    <dd><code>.pk-field</code> and <code>.pk-select</code>: the catalog toolbar's outlined field (transparent fill, 1px
-        hairline, 2px corners), not the filled <code>.oc-field</code> box.</dd>
+    <dd>Pack fields and pickers are the base <code>Field</code>, <code>NumberField</code> and <code>Select</code>.</dd>
 </dl>
 
 <h3 class="sg-h3" id="settings-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">
+    <li><strong>A setting drawn in two places.</strong> Joe (ccsliinc): "the settings are showing on multiple tabs." One
+        registry entry, one section; <code>settings-page.test.ts</code> fails when a setting renders twice.</li>
     <li><strong>A typed value written on every keystroke.</strong> A half-typed shell path would be written and refused. Typed
         values wait for the footer save; choices apply at once.</li>
+    <li><strong>A save button floating over the page or live with nothing to save.</strong> Save is the frame's footer and is dimmed
+        until a draft waits (Joe: "save is not in a good place"; Alex, 2026-10-03: "save moves into the frame footer and the
+        floating save bar goes").</li>
     <li><strong>Building a second place to edit something a feature's own page already edits.</strong> Wrappers are added and
         edited on the wrappers page; settings only keeps each family's legacy fallback command and links there.</li>
     <li><strong>A setting only this browser remembers.</strong> If other devices should follow it, it is a server preference;

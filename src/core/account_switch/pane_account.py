@@ -13,6 +13,7 @@ from src.core.account_switch.active import ActiveAccount
 from src.core.hosts.identity import is_remote_info
 from src.core.provider_ledger.login_command import PROFILE_ENV_VARS
 from src.core.session_token_usage.account_resolve import accounts_for_default_login
+from src.core.tmux_control.reader import control_read_async
 from src.core.tmux_discovery import tmux_argv_prefix
 
 logger = structlog.get_logger()
@@ -26,15 +27,6 @@ READ_TIMEOUT_SECONDS = 5.0
 
 @dataclass(frozen=True)
 class PaneProfile:
-    """What one pane's profile variable says.
-
-    Fields:
-        readable: False when tmux could not answer.
-        value: the directory the pane was given, or None when it runs on
-            the provider's default (the variable is removed or unset).
-        inherited: the SESSION never set the variable, so the pane has the
-            tmux server's global value for it (resolved by the reader).
-    """
 
     readable: bool
     value: Optional[str] = None
@@ -56,6 +48,10 @@ def parse_show_environment(stdout: bytes, returncode: int, variable: str) -> Pan
 
 
 async def read_pane_profile(socket: str, tmux_name: str, variable: str) -> PaneProfile:
+    answered = await control_read_async(socket, ["show-environment", "-t", f"={tmux_name}", variable])
+    if answered is not None:
+        profile = parse_show_environment(answered, 0, variable)
+        return profile if not profile.inherited else await _read_global(socket, variable)
     argv = tmux_argv_prefix(socket) + ["show-environment", "-t", f"={tmux_name}", variable]
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -83,6 +79,10 @@ async def read_pane_profile(socket: str, tmux_name: str, variable: str) -> PaneP
 
 
 async def _read_global(socket: str, variable: str) -> PaneProfile:
+    answered = await control_read_async(socket, ["show-environment", "-g", variable])
+    if answered is not None:
+        profile = parse_show_environment(answered, 0, variable)
+        return PaneProfile(readable=True, value=profile.value) if profile.readable else UNREADABLE
     argv = tmux_argv_prefix(socket) + ["show-environment", "-g", variable]
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -149,22 +149,6 @@ async def running_elsewhere(
     accounts: List[ProviderAccount],
     active: Dict[str, ActiveAccount],
 ) -> List[Dict[str, Any]]:
-    """Every running agent session whose account is not its provider's active one.
-
-    Description: reads the pane's own profile variable (bounded, off
-      nothing that blocks). A session is listed only when its account is
-      KNOWN and differs from a KNOWN active account: an unreadable pane,
-      an unmatched directory or a provider with no active account is not
-      offered a restart, because "elsewhere" would then be a guess.
-      GOTCHA 1: family, name, label and status are on the WRAPPER; the id
-      is on the nested ``.session``.
-    Inputs: infos (list[SessionInfo]); socket (str); accounts; active
-      (provider -> ActiveAccount).
-    Output: list[dict] - ``session_id``, ``tmux_session``, ``label``,
-      ``status``, ``provider``, ``account_id``, ``active_account_id``.
-    Example: await running_elsewhere(infos, socket='cloude', accounts=rows,
-      active={'claude': a})
-    """
     gate = asyncio.Semaphore(READ_CONCURRENCY)
 
     async def one(info: Any) -> Optional[Dict[str, Any]]:

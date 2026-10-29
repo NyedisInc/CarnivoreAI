@@ -1,23 +1,3 @@
-""":func:`open_crate`: open a crate from untrusted input and read it member by member, never through ``extractall``.
-
-A plain crate is read straight from the file. An encrypted one (``<id>.crate.age``, first bytes ``age-encryption.org/v1``)
-is read through ``src.core.crate_crypto.age.AgeReader``, which is seekable, so no plaintext ever touches disk; that
-package is imported here only when such a file is opened.
-
-The header walk refuses (``CrateMalformed``): a member that is not a regular file; a name outside the grammar (a name
-only the safe generic grammar allows is accepted when the manifest's minor is newer than this build's); a name twice;
-``CRATE`` missing, not first, or not the magic bytes; ``crate.json`` not last; more than ``MAX_MEMBERS`` members; a JSON
-member over ``MAX_JSON_MEMBER``; a blob over ``MAX_BLOB_MEMBER``; a rows part over ``MAX_ROWS_PART``; two blob members
-for one chunk (``<sha>.zst`` beside ``<sha>.xz``: each distinct chunk is stored once); a member whose data runs past the
-end of the file. A member a newer minor added has no size cap: it is only ever streamed in ``READ_BYTES`` blocks, never
-buffered. A streamed line longer than its bound (``MAX_ROWS_LINE`` for rows) is malformed.
-Every blob is decompressed with a bound equal to the length its chunk ref claims, then its sha256 and length are checked.
-
-Example:
-    with open_crate(Path("x.crate")) as reader:
-        for rec in reader.files():
-            data = b"".join(reader.file_chunks(rec))
-"""
 
 from __future__ import annotations
 

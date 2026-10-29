@@ -9,7 +9,7 @@ describe('chipMode', () => {
     expect(chipMode(MK2_CHIPS_ICON_BELOW_PX - 1)).toBe('icon');
   });
 
-  test('the row never wraps for a count: a width that shows words or counts is wide enough for the widest counts', () => {
+  test('the row never wraps for a count: a width that shows words or counts is wide enough for the widest counts (#1710 round 7 part 1)', () => {
     expect(chipMode(320)).toBe('count');
     expect(chipMode(340)).toBe('count');
     expect(MK2_CHIPS_FULL_FROM_PX).toBe(363);

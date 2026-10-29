@@ -5,7 +5,7 @@
     "PUT /api/v1/cplugs/safe-mode"
   ],
   "area": "settings",
-  "description": "Plugins installed from the catalog run as isolated processes in a macOS sandbox, never inside the app. Nothing third-party runs until you turn the master switch on, and turning it off stops every one of them. Safe mode stops them all at once without removing anything. A plugin you install starts off with no permissions and asks again when its code changes.",
+  "description": "Plugins installed from the catalog run as isolated processes in a macOS sandbox, never inside the app. Nothing third-party runs until you turn the master switch on, and turning it off stops every one of them. The switch shows whether the sandbox is ready on this computer; where it is not (a Python without the framework build), plugins refuse to start and the page says why. Safe mode stops them all at once without removing anything. A plugin you install starts off with no permissions and asks again when its code changes.",
   "docs": [
     "docs/cplug-runtime.md",
     "docs/cplug-platform.md"

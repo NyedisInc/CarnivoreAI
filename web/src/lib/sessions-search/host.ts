@@ -1,3 +1,5 @@
+import { drawerController } from '../drawer/click-env';
+import { activateRow } from '../drawer/row-switch';
 import { usageLimitLabel } from '../led';
 import { hostDocument, hostWindow } from '../sessions/env';
 import { openTerminalSearchAt } from '../terminal-search/mount-search';
@@ -39,6 +41,7 @@ export interface SessionsSearchHost {
     search(query: string, signal: AbortSignal): Promise<ScrollbackSearchResult>;
     sessionFacts(): Promise<Map<string, SessionFacts>>;
     navigate(sessionId: string, tmuxName: string): Promise<boolean>;
+    /* the current session */
     openFindAt(query: string, fromEnd: number): boolean;
 }
 
@@ -54,9 +57,6 @@ interface TerminalLike {
     term?: unknown;
     _sessionId?(): string | null;
 }
-interface SidebarClicksLike {
-    activateRow(ctrl: unknown, rowEl: Element): Promise<void>;
-}
 interface NavGenLike {
     begin(label: string): unknown;
     keep(token: unknown, label: string): boolean;
@@ -64,8 +64,6 @@ interface NavGenLike {
 interface Globals {
     API?: ApiLike;
     TerminalController?: TerminalLike;
-    SessionSidebar?: unknown;
-    SessionSidebarClicks?: SidebarClicksLike;
     NavigationGeneration?: NavGenLike;
     App?: { currentScreen?: string; returnToExistingTerminal?(info: unknown): Promise<void> };
 }
@@ -111,8 +109,9 @@ async function switchTo(sessionId: string, tmuxName: string, rejoin = false): Pr
     const doc = hostDocument();
     const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(tmuxName) : tmuxName;
     const row = doc?.querySelector?.(`.session-sidebar-row[data-name="${escaped}"]`) ?? null;
-    if (!rejoin && row && g.SessionSidebar && g.SessionSidebarClicks) {
-        await g.SessionSidebarClicks.activateRow(g.SessionSidebar, row);
+    const ctl = drawerController();
+    if (!rejoin && row && ctl) {
+        await activateRow(ctl, row);
         return;
     }
     if (!g.API?.getSession || !g.App?.returnToExistingTerminal) {

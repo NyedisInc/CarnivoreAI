@@ -8,6 +8,8 @@ from typing import Any, Dict, Mapping, Optional
 
 import structlog
 
+from src.core.attention.registry_file_cache import RegistryFileCache
+
 logger = structlog.get_logger()
 
 HEALTH_FILE: str = "vault-health.json"
@@ -51,15 +53,25 @@ def root_for(state_dir: Path, config: Dict[str, Any], save_settings: Optional[Ma
     return setting_root(state_dir, location_value(config, save_settings), DEFAULT_DIR_NAME) or Path(state_dir) / DEFAULT_DIR_NAME
 
 
-def read_config(config_path: Path) -> Dict[str, Any]:
+def _load_config(path: str, _name: str) -> Optional[Dict[str, Any]]:
     try:
-        data = json.loads(Path(config_path).read_text(encoding="utf-8"))
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
     except FileNotFoundError:
-        return {}
+        return None
     except (OSError, ValueError) as exc:
-        logger.warning("vault_location_config_unreadable", path=str(config_path), error_type=type(exc).__name__)
-        return {}
-    return data if isinstance(data, dict) else {}
+        logger.warning("vault_location_config_unreadable", path=path, error_type=type(exc).__name__)
+        return None
+    return data if isinstance(data, dict) else None
+
+
+_CONFIG_CACHE = RegistryFileCache()
+
+
+def read_config(config_path: Path) -> Dict[str, Any]:
+    path = str(Path(config_path))
+    config = _CONFIG_CACHE.load(path, path, _load_config, keep=lambda parsed: parsed is not None)
+    return config if config is not None else {}
 
 
 def configured_location(state_dir: Path, config_path: Path) -> str:

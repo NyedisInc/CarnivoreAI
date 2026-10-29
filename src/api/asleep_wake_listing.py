@@ -1,19 +1,3 @@
-"""Stamping each ASLEEP session record with the time something scheduled will wake it (``next_wake_at``, issue #1771).
-
-The asleep row in the sidebar draws a small clock with that time in its tooltip. The field sits on the ``SessionRecord`` (the row a
-sleeping session is, gotcha 1: a sleeping session has no live ``SessionInfo`` wrapper), on BOTH of the listing's collections that carry
-asleep rows (``/sessions/records`` and ``/sessions/asleep``), through :func:`stamp_next_wake`.
-
-THE ALARM ICON (issue #1903): the same two sources also paint the row's alarm icon (``automations_*``), counting only what WILL WAKE the
-session: a Claude timer dies with the pane and an ``if_asleep: skip`` automation never wakes it, so neither counts.
-
-TWO SOURCES, THE EARLIEST WINS: the Carnivore automations aimed at the session (``core/automations/wake_schedule.py``) and the Task Manager's
-scheduled items whose fire wakes it (the ``session.schedules`` port's ``wake_entries``, ``cplugs/huddle/schedule_wakes.py``; absent while
-the plugin is off). ONE store read and ONE port call per pass for every sleeping row, never a query per row.
-
-NULL IS NOT 0. A session nothing will wake, a paused scheduler, and a source that could not be read all leave ``next_wake_at`` None.
-A failed read is logged and costs only its own source.
-"""
 
 from __future__ import annotations
 
@@ -43,11 +27,6 @@ Stamp = Tuple[Optional[float], Optional[str], Optional[int], Optional[int], Opti
 
 
 async def _stamps(app_state: Any, asleep: List[SessionRecord], infos: Optional[List[Any]]) -> Dict[str, Stamp]:
-    """The wake clock and the alarm icon's words for each asleep record, by session uuid (the reads behind :func:`stamp_next_wake`).
-
-    Inputs: app_state; asleep (the asleep, unarchived records, newest first); infos (this pass's live rows, or None).
-    Output: {session_uuid: Stamp}. A source that could not be read leaves the icon's words None (not measured).
-    """
     wanted = [{"session_uuid": r.session_uuid, "project_id": r.project_id} for r in asleep]
     uuids = [w["session_uuid"] for w in wanted]
     automations: Optional[Dict[str, List[Any]]] = None
@@ -71,7 +50,7 @@ async def _stamps(app_state: Any, asleep: List[SessionRecord], infos: Optional[L
         due = [t for t in [wake_schedule.next_due(a) for a, _ in pairs] + [e.get("next_fire_at") for e in found] if t]
         next_wake = min(due) if due else None
         if automations is None or entries is None:
-            out[uuid] = (next_wake, None, None, None, None)  # could not be read
+            out[uuid] = (next_wake, None, None, None, None)
             continue
         status = timer_status.roll_up(pairs + [timer_status.pair_of_schedule(e) for e in found])
         out[uuid] = (next_wake, status.state, status.total, status.enabled, scheduled_marks(pairs, found))

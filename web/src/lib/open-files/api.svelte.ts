@@ -11,7 +11,7 @@ export const FILE_CHANGED_ON_DISK = 'file_changed_on_disk';
 export interface OpenFileInfo {
     id: string;
     kind: 'file' | 'diff';
-    root: 'user' | 'workdir';
+    root: 'user' | 'workdir' | 'absolute';
     path: string;
     session_uuid: string;
     title: string;
@@ -80,6 +80,15 @@ export async function postOpenFile(request: OpenFileRequest): Promise<OpenFileIn
     return answer.file;
 }
 
+export async function postOpenFilePath(path: string): Promise<OpenFileInfo> {
+    const answer = await authFetch<{ file: OpenFileInfo; reused: boolean }>('/files/open/path', {
+        method: 'POST', body: JSON.stringify({ path }),
+    });
+    await openFiles.refresh(true);
+    repaintDrawer();
+    return answer.file;
+}
+
 export async function deleteOpenFile(id: string): Promise<void> {
     await authFetch<void>(`/files/open/${encodeURIComponent(id)}`, { method: 'DELETE' });
     await openFiles.refresh(true);
@@ -104,6 +113,7 @@ export function refusalCode(err: unknown): string | null {
     return typeof code === 'string' ? code : null;
 }
 
+/* deleted on disk */
 export function staleSha256(err: unknown): string | null | undefined {
     if (!(err instanceof ApiError)) return undefined;
     const detail = (err.payload as { detail?: unknown } | null)?.detail;

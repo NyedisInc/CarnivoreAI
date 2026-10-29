@@ -85,7 +85,7 @@ describe('one placement, three hosts', () => {
   });
 });
 
-describe('a bar section or drawer card with its header off draws no header', () => {
+describe('a bar section or drawer card with its header off draws no header (Joe (ccsliinc), 2026-10-23)', () => {
   const store = { setOption: vi.fn(), setView: vi.fn(), resetOptions: vi.fn(), remove: vi.fn(() => true) };
 
   test.each(['rail', 'drawer'] as const)('%s: only the body is drawn, focusable, and Shift+F10 opens the widget menu', (host) => {

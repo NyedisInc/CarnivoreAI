@@ -66,7 +66,7 @@ export function harness(patch: Partial<World> = {}) {
     const host: SearchHost = {
         term: () => term,
         sessionId: () => world.sessionId,
-        onTerminal: () => () => {},
+        onTerminal: () => () => {}, // no notice: see rail-attach.test.ts
         agentFamily: () => world.agentFamily,
         engine: () => ({
             attach: (t) => calls.attach.push(t),

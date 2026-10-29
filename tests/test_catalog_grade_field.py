@@ -42,7 +42,7 @@ def _version(**overrides) -> dict:
         "v": "1.0.0",
         "src": {
             "repo": "carnivore-ai/catalog",
-            "path": "skills/acme/sme",
+            "path": "skills/alex/sme",
             "commit": COMMIT,
         },
         "digest": DIGEST,
@@ -63,10 +63,10 @@ def _version(**overrides) -> dict:
 
 def _item(**overrides) -> dict:
     item = {
-        "id": "acme/sme",
+        "id": "alex/sme",
         "kind": "skill",
         "name": "sme",
-        "publisher": "acme",
+        "publisher": "alex",
         "latest": "1.0.0",
         "card": {"title": "sme", "brief": "the sme skill"},
         "fm": {"description": "the sme skill"},

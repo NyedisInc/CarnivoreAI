@@ -1,5 +1,5 @@
 import type { Layout, RowModel, SlotId } from './types';
-import type { LayoutStore } from './layout.svelte';
+import type { DragState, LayoutStore } from './layout.svelte';
 import { GUTTER } from './tracks';
 
 const FALLBACK_ROW_PX = 280;
@@ -26,7 +26,6 @@ export function isWallboardSearch(search: string): boolean {
   return new URLSearchParams(search).get(WALLBOARD_PARAM) === WALLBOARD_VALUE;
 }
 
-/*  hidden  */
 export function wallboardLayout(layout: Layout, availablePx = 0): Layout {
   const kept = layout.rows
     .map((row): RowModel => ({
@@ -49,12 +48,20 @@ export function wallboardLayout(layout: Layout, availablePx = 0): Layout {
 }
 
 export function readOnlyStore(source: LayoutStore, surfaceHeight: () => number = () => 0): LayoutStore {
+  const drag: DragState = { id: null, dx: 0, dy: 0, target: null };
+  let held: { layout: Layout; height: number; announcement: string; view: LayoutStore['state'] } | null = null;
   return new Proxy(source, {
     get(target, prop, receiver): unknown {
       if (prop === 'state') {
         const live = target.state;
-        return { layout: wallboardLayout(live.layout, surfaceHeight()), warning: '', announcement: live.announcement };
+        const height = surfaceHeight();
+        if (!held || held.layout !== live.layout || held.height !== height || held.announcement !== live.announcement) {
+          const view = { layout: wallboardLayout(live.layout, height), warning: '', announcement: live.announcement };
+          held = { layout: live.layout, height, announcement: live.announcement, view };
+        }
+        return held.view;
       }
+      if (prop === 'drag') return drag;
       const value = Reflect.get(target, prop, receiver) as unknown;
       if (typeof prop === 'string' && READ_ONLY_MEMBERS.has(prop)) {
         return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(target) : value;

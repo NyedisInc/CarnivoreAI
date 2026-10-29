@@ -22,6 +22,8 @@ function test(name, fn) {
     }
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 function stylesheetsInLoadOrder() {
     const html = fs.readFileSync(path.join(repoRoot, 'client', 'index.html'), 'utf8');
@@ -157,6 +159,8 @@ function resolve(rules, selector, property, width) {
 
 const MODEL = buildModel();
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the pane is the containing block: .terminal-container is never static', () => {
     for (const width of [1357, 780, 390]) {
@@ -209,7 +213,11 @@ test('the search overlays still mount into .terminal-container', () => {
     );
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 const PRIMARY_CELL_BOXES = ['.oc-tl', '.cc-pane'];
 

@@ -13,9 +13,10 @@ from typing import AsyncIterator, Callable, List
 import pytest
 import pytest_asyncio
 
-from src.core.hosts import remote_backend
+from src.core.hosts import remote_transport
 from src.core.hosts.pipe_stream import STREAMING
-from src.core.hosts.remote_backend import RemoteTmuxBackend
+from src.core.hosts.remote_backend import make_remote_backend
+from src.core.tmux_backend import TmuxBackend
 from src.core.hosts.remote_host import RemoteHost, RemoteSyncOnLoopError
 from src.core.hosts.ssh_exec import SshDestination
 from src.core.hosts.ssh_pool import SshMasterPool
@@ -39,10 +40,10 @@ class Rig:
         self.mirror_dir = mirror_dir
         self.output = bytearray()
         self.viewed = True
-        self.backends: List[RemoteTmuxBackend] = []
+        self.backends: List[TmuxBackend] = []
 
-    def backend(self, name: str, working_dir: Path | None = None) -> RemoteTmuxBackend:
-        backend = RemoteTmuxBackend(self.host, "ses_" + name, working_dir or self.fake.root / "home",
+    def backend(self, name: str, working_dir: Path | None = None) -> TmuxBackend:
+        backend = make_remote_backend(self.host, "ses_" + name, working_dir or self.fake.root / "home",
                                     self.output.extend, session_name=name,
                                     viewer_probe=lambda: self.viewed, stream_options=FAST)
         self.backends.append(backend)
@@ -72,14 +73,14 @@ async def wait_until(check: Callable[[], bool], timeout: float = 15.0, what: str
 async def rig() -> AsyncIterator[Rig]:
     fake = FakeSshHost()
     mirror_dir = Path(tempfile.mkdtemp(prefix="s4mirror"))
-    pool = SshMasterPool("fakehost", SshDestination("acme@fakehost"), login_shell="/bin/sh",
-                         control_dir=fake.control_dir, instance_tag="5f4cec3f",
+    pool = SshMasterPool("fakehost", SshDestination("alex@fakehost"), login_shell="/bin/sh",
+                         control_dir=fake.control_dir, instance_tag="0123abcd",
                          ssh_binary=fake.ssh_binary, connect_timeout=5.0, check_interval=0.5,
                          delay=lambda attempt: 0.05)
     channel = TmuxControlChannel("fakehost", pool.spawn, str(TMUX), SOCKET, command_timeout=10.0,
                                  connect_timeout=10.0, delay=lambda attempt: 0.05)
     host = RemoteHost("fakehost", pool, channel, tmux_path=str(TMUX), socket=SOCKET,
-                      login_path="/usr/bin:/bin:/usr/sbin:/sbin", instance_tag="5f4cec3f",
+                      login_path="/usr/bin:/bin:/usr/sbin:/sbin", instance_tag="0123abcd",
                       mirror_dir=mirror_dir, command_timeout=5.0)
     rig = Rig(fake, pool, channel, host, mirror_dir)
     try:
@@ -90,8 +91,8 @@ async def rig() -> AsyncIterator[Rig]:
     finally:
         try:
             for backend in rig.backends:
-                if backend._stream is not None:
-                    await backend._stream.stop()
+                if backend._lifecycle._stream is not None:
+                    await backend._lifecycle._stream.stop()
                 if backend._reader_task is not None:
                     backend._reader_task.cancel()
             await host.close()
@@ -113,7 +114,7 @@ async def rig() -> AsyncIterator[Rig]:
             shutil.rmtree(mirror_dir, ignore_errors=True)
 
 
-def far_file(rig: Rig, backend: RemoteTmuxBackend) -> Path:
+def far_file(rig: Rig, backend: TmuxBackend) -> Path:
     path = Path(backend._pipe_write_path())
     assert path.is_relative_to(rig.fake.root / "home" / ".cache" / "carnivore" / "pipes")
     return path
@@ -137,7 +138,7 @@ async def test_the_backend_contract_over_the_control_channel(rig: Rig) -> None:
     await backend.paste_and_submit("echo pasted-$((2+3))")
     await rig.wait_for(b"pasted-5")
     backend.resize(101, 33)
-    await wait_until(lambda: backend._resize_task is not None and backend._resize_task.done(),
+    await wait_until(lambda: backend._lifecycle._resize_task is not None and backend._lifecycle._resize_task.done(),
                      what="the resize")
     size = await rig.host.command("display-message", "-p", "-t", "carnivore_s4contract",
                                   "#{window_width}x#{window_height}")
@@ -170,7 +171,7 @@ async def test_no_loss_across_a_dead_channel_and_a_dead_master(rig: Rig) -> None
     await backend.start(command="i=0; while [ $i -lt 300 ]; do echo L$i; i=$((i+1)); "
                                 "sleep 0.02; done; echo DONE-300; sleep 300")
     assert await backend.ensure_streaming()
-    stream = backend._stream
+    stream = backend._lifecycle._stream
     assert stream is not None
     start_offset = stream.position
     mirror, far = backend._resolve_pipe_path(), far_file(rig, backend)
@@ -213,8 +214,8 @@ async def test_the_stream_follows_a_far_rotation_and_closes_when_unwatched(rig: 
     await backend.write(b"echo after-$((40+2))\r")
     await rig.wait_for(b"after-42")
     rig.viewed = False
-    await wait_until(lambda: backend._stream.state == "idle", what="the stream to go idle")
-    assert backend._stream._channel is None
+    await wait_until(lambda: backend._lifecycle._stream.state == "idle", what="the stream to go idle")
+    assert backend._lifecycle._stream._channel is None
     await backend.stop()
 
 
@@ -239,7 +240,7 @@ async def test_a_hostile_name_directory_and_rename_never_run_on_the_far_box(rig:
 
 @pytest.mark.asyncio
 async def test_negative_control_without_the_escape_the_far_box_runs_it(rig: Rig, monkeypatch) -> None:
-    monkeypatch.setattr(remote_backend, "escape_expanded", lambda verb, args: list(args))
+    monkeypatch.setattr(remote_transport, "escape_expanded", lambda verb, args: list(args))
     marks = Path(tempfile.mkdtemp(dir="/tmp", prefix="s4pwn"))
     try:
         backend = rig.backend("carnivore_s4neg")

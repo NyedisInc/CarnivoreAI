@@ -21,7 +21,6 @@ LOCAL_NOT_CONFIGURED = "not-configured"
 
 LOCAL_REACHABLE = "reachable"
 
-# did not answer
 LOCAL_UNREACHABLE = "unreachable"
 
 

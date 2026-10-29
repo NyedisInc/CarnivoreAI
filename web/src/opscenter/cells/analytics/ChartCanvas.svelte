@@ -34,7 +34,6 @@
     if (axesKey(counts, legendTextWidth(node.clientWidth, drawnAxes.legend.left, drawnAxes.legend.right, drawnAxes.legend.icon)) !== drawnAxes.key) draw();
   }
   let legendSelected: Record<string, boolean> = {};
-  /*  hidden  */
   let legendItems = $state<LegendItem[]>([]);
 
   function showSelection(): void { legendItems = legendItems.map((item) => ({ ...item, on: legendSelected[item.name] !== false })); }
@@ -50,6 +49,15 @@
 
   function color(name: string, fallback: string): string {
     if (!getComputedStyle(node).getPropertyValue(name).trim()) return fallback;
+    return probed(name, fallback);
+  }
+
+  function chosenColor(name: string): string {
+    const known = getComputedStyle(node).getPropertyValue(name).trim() !== '';
+    return color(known ? name : '--oc-text-secondary', '#888');
+  }
+
+  function probed(name: string, fallback: string): string {
     probe.style.color = '';
     probe.style.color = `var(${name})`;
     return toSrgb(getComputedStyle(probe).color, flattener(), fallback);
@@ -67,6 +75,20 @@
       || result.metric.replace(/_nano_usd$/, '').replaceAll('_', ' ');
     if (!label || label.toLowerCase() === 'all') return metric;
     return results.length === 1 ? label : `${metric} · ${label}`;
+  }
+
+  function uniqueNames(raw: string[]): string[] {
+    const taken = new Set(raw);
+    const seenCount = new Map<string, number>();
+    return raw.map((name) => {
+      const n = (seenCount.get(name) ?? 0) + 1;
+      seenCount.set(name, n);
+      if (n === 1) return name;
+      let k = n;
+      while (taken.has(`${name} (${k})`)) k += 1;
+      taken.add(`${name} (${k})`);
+      return `${name} (${k})`;
+    });
   }
 
   function markLines(queryIndex: number, itemIndex: number) {
@@ -114,7 +136,7 @@
     const looks = assignSeriesLooks(results.flatMap((result, queryIndex) => result.series.map((item) => `${queryIndex}:${result.metric}:${item.key}`)), colors);
     results.forEach((result, queryIndex) => result.series.forEach((item) => {
       const own = lookFor?.(item.key);
-      if (own) looks.set(`${queryIndex}:${result.metric}:${item.key}`, { color: own.color.startsWith('--') ? color(own.color, '#888') : toSrgb(resolveCss(own.color), flattener(), '#888'), dashed: own.dashed === true });
+      if (own) looks.set(`${queryIndex}:${result.metric}:${item.key}`, { color: own.color.startsWith('--') ? chosenColor(own.color) : toSrgb(resolveCss(own.color), flattener(), '#888'), dashed: own.dashed === true });
     }));
     const fontFamily = getComputedStyle(node).getPropertyValue('--font-mono').trim() || 'monospace';
     const axisUnit = (unit: string): string => unit.startsWith('nano_usd') ? `est. USD${unit.slice('nano_usd'.length)}` : unit;
@@ -122,9 +144,12 @@
     if (units.length > 2) return;
     const now = Date.now();
     const seen = observationOf(analytics.coverage, now);
+    const flatKeys = results.flatMap((result, queryIndex) => result.series.map((item) => `${queryIndex}:${result.metric}:${item.key}`));
+    const flatNames = uniqueNames(results.flatMap((result, queryIndex) => result.series.map((item) => seriesName(result, queryIndex, item.label))));
+    const nameOf = new Map(flatKeys.map((key, index) => [key, flatNames[index] as string]));
     const series = results.flatMap((result, queryIndex) => result.series.map((item, itemIndex) => ({
       id: `${queryIndex}:${result.metric}:${item.key}:after`,
-      name: seriesName(result, queryIndex, item.label),
+      name: nameOf.get(`${queryIndex}:${result.metric}:${item.key}`) as string,
       type: config.display.type === 'bar' ? 'bar' : 'line',
       areaStyle: config.display.type === 'area' || (compact && config.display.type === 'line') ? { opacity: compact ? 0.13 : 0.12 } : undefined,
       stack: config.display.stacked ? 'total' : undefined,
@@ -150,7 +175,7 @@
         - new Date(result.comparison.range.from).getTime();
       return result.comparison.series.map((item) => ({
         id: `${queryIndex}:${result.metric}:${item.key}:before`,
-        name: `${seriesName(result, queryIndex, item.label)} · before`, type: 'line' as const,
+        name: `${nameOf.get(`${queryIndex}:${result.metric}:${item.key}`) ?? seriesName(result, queryIndex, item.label)} · before`, type: 'line' as const,
         showSymbol: false, lineStyle: { type: 'dashed' as const, width: 1.5, color: looks.get(`${queryIndex}:${result.metric}:${item.key}`)?.color },
         itemStyle: { color: looks.get(`${queryIndex}:${result.metric}:${item.key}`)?.color },
         yAxisIndex: config.display.indexed ? 0 : config.display.axes?.[result.metric] === 'right' && units.length > 1 ? 1 : Math.max(0, units.indexOf(axisUnit(result.unit))),
@@ -166,7 +191,7 @@
     const legendShown = !ownLegend && config.display.legend !== false && (!compact || names.length > 1);
     legendSelected = mergeLegendSelection(legendSelected, names);
     for (const name of names) if (hiddenSeries.includes(name)) legendSelected[name] = false;
-    legendItems = compact && legendShown ? [...series, ...beforeSeries].map((entry) => ({ name: entry.name, color: String(entry.itemStyle.color ?? ''), on: legendSelected[entry.name] !== false })) : [];
+    legendItems = compact && legendShown ? [...series, ...beforeSeries].map((entry) => ({ id: entry.id, name: entry.name, color: String(entry.itemStyle.color ?? ''), on: legendSelected[entry.name] !== false })) : [];
     const legendLeft = compact ? 0 : 84;
     const legendRight = 14;
     const legendIcon = compact ? 10 : 25;
@@ -228,7 +253,6 @@
     chart.on('legendselectchanged', (event: unknown) => {
       legendSelected = { ...(event as { selected: Record<string, boolean> }).selected };
       showSelection();
-      //  hidden 
       const absent = hiddenSeries.filter((name) => !(name in legendSelected));
       onHiddenChange?.([...absent, ...Object.keys(legendSelected).filter((name) => legendSelected[name] === false)].slice(0, 32));
     });
@@ -237,7 +261,6 @@
     return () => { if (zoomTimer) clearTimeout(zoomTimer); observer.disconnect(); theme.disconnect(); chart?.dispose(); chart = null; };
   });
 
-  /*  hidden  */
   let shownHidden = '';
   $effect(() => {
     const key = JSON.stringify(hiddenSeries);

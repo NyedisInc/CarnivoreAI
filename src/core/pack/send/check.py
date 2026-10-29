@@ -71,6 +71,7 @@ async def check(env: SourceEnv, request: Request, *, subject: Mapping[str, Any],
         out[mode] = {"ok": True} if reason is None else {"ok": False, "reason": reason}
     out["carry"] = carry.view(carries_wip=scan.CARRY_TREE in target_caps)
     out["carry"].update(await asyncio.to_thread(_transcript_part, env, subject, carry, target_install_id, scan.CARRY_TREE in target_caps))
+    out["carry"]["total_bytes"] = await asyncio.to_thread(carry.total_bytes, air_gap=bool(project.get("air_gap")))
     for item in out["carry"]["left_behind"]:
         if item["why"] == scan.IGNORED_WHY:
             item["size"] = await asyncio.to_thread(transcript_scan.folder_size, os.path.join(project["root"], item["what"]))

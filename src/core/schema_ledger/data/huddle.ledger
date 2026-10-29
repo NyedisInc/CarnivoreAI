@@ -5,7 +5,7 @@ H1 7151ca0878b1d352a1728d125ad3046db6183651657a6bb8d9907e47f93bfafe - initial-it
 H2 7bbdbaa11f6aa2da1cc660266035bffa4a40be3b640c04637cdc0d087774078f - items-kind
 H3 fe522df5dbca026e8322c8f79da09e17118fd419e8fe972a67af1339fdf35a7a - attention-and-seen-seq
 H4 1fb67b6c37dee6c5ac9cfe9d312e5c51b19d797ffb93f813ce135f423c9c0b40 - the-last-huddle-tool-caller-per-list-the-tell-cl
-H5 b9f90b6fb1ffad13dc43dcc7f87c4aad2a3db3d97426a8db0d6ac7467c4e67ce - sam-s-last-touch-per-item-and-the-cursor-each-li
+H5 b9f90b6fb1ffad13dc43dcc7f87c4aad2a3db3d97426a8db0d6ac7467c4e67ce - joe-s-last-touch-per-item-and-the-cursor-each-li
 H6 cd139cf47722be08df8d71f4327400c6f942c6bf8f7d615cc6a3f4a565c6b248 - how-far-claude-read-each-item-and-its-working-fl
 H7 fbdce05409043b9f59021dc51dae2b43fc29079b108517239b341ce2c8251fe9 - named-foldable-groups-inside-a-list-and-each-ite
 H8 006009337980271ef23677878cbdd72cd217f4b282b2a99c47d14a133573e4ba - claude-s-newest-info-and-attention-posts-per-ite
@@ -19,7 +19,7 @@ H15 21b4dc5b1da2070cc4a538430ede162f69eaf41b3c5000ff1acd8f7c3444a36c - who-holds
 H16 9de70a02ea382f7aa80093630c33ab60e47d473ddac9078c024bba29da22a681 - an-item-s-start-trigger-the-scheduled-todo
 H17 54bfa75e43f54e8030b725f9f74e2813ba3f68e649e698818824fc2c8320c752 - a-question-s-context-and-numbered-questions-kept
 H18 0c1ae429a792831dec9070d3ae55615a6c01c04433ad2c575e1024fbd81419dd - a-trigger-may-repeat
-H19 cabc5274a82fd90d099109ed0208298434fcb730b735ed94abd528468f94549e - the-session-picked-for-each-list-s-tell
+H19 cabc5274a82fd90d099109ed0208298434fcb730b735ed94abd528468f94549e - the-session-joe-picked-for-each-list-s-tell
 H20 9c2f055be67bb7c3e1a29970c554bbc6a38456a6f65d6e3f008676a2851ba7a9 - an-item-s-review-action
 H21 9647d55b60ae3a6010a080318c799ac73d9aeb3fb2c75a5cc7b22fb0df12feda - the-parent-an-item-was-forked-from
 H22 6c6900682e948ec96a423f19c5f0d1ea19581fdf64db147467154d2579d4834e - an-item-s-optional-flag-columns

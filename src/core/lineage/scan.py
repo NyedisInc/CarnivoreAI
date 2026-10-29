@@ -5,9 +5,10 @@ import json
 import os
 import sqlite3
 import stat
+import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Sequence, Tuple
+from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import structlog
 
@@ -56,17 +57,79 @@ def is_dataless(path: Path) -> bool:
         return False
 
 
-def _hits_in(block: bytes, first_line: int, first_offset: int) -> Iterator[Tuple[int, int, bytes]]:
+@dataclass(frozen=True)
+class ScanResume:
+
+    offset: int
+    lines: int
+    stored: int
+    anchor: int
+
+    def as_list(self) -> List[int]:
+        return [self.offset, self.lines, self.stored, self.anchor]
+
+    @classmethod
+    def from_list(cls, values: Sequence[Any]) -> Optional["ScanResume"]:
+        if len(values) != 4 or not all(isinstance(v, int) and not isinstance(v, bool) for v in values):
+            return None
+        return cls(values[0], values[1], values[2], values[3])
+
+
+@dataclass(frozen=True)
+class CompactScan:
+
+    hits: List[CompactHit]
+    resume: ScanResume
+
+
+def _anchor_of(handle: BinaryIO, offset: int, lines: int) -> int:
+    size = min(offset, K.RESUME_ANCHOR_BYTES)
+    handle.seek(0)
+    head = handle.read(size)
+    handle.seek(offset - size)
+    tail = zlib.crc32(handle.read(size), zlib.crc32(head))
+    return zlib.crc32(str(lines).encode(), tail)
+
+
+def _start_of(handle: BinaryIO, resume: Optional[ScanResume]) -> Tuple[int, int]:
+    if resume is not None and 0 < resume.offset <= os.fstat(handle.fileno()).st_size \
+            and _anchor_of(handle, resume.offset, resume.lines) == resume.anchor:
+        handle.seek(resume.offset)
+        return resume.lines, resume.offset
+    handle.seek(0)
+    return 0, 0
+
+
+def _hits_in(conversation_id: str, block: bytes, first_line: int, first_offset: int) -> Iterator[CompactHit]:
+    if _NEEDLE not in block:
+        return
     offset = first_offset
-    for index, line in enumerate(block.split(b"\n")):
-        if _NEEDLE in line:
-            yield first_line + index + 1, offset, line
-        offset += len(line) + 1
+    for index, raw in enumerate(block.split(b"\n")):
+        if _NEEDLE in raw:
+            hit = _parse_hit(conversation_id, first_line + index + 1, offset, raw)
+            if hit is not None:
+                yield hit
+        offset += len(raw) + 1
 
 
-def compact_lines(path: Path) -> Iterator[Tuple[int, int, bytes]]:
-    line_no, offset, carry = 0, 0, b""
+def _parse_hit(conversation_id: str, line: int, offset: int, raw: bytes) -> Optional[CompactHit]:
+    try:
+        record = json.loads(raw)
+    except ValueError:
+        return None
+    if not isinstance(record, dict) or record.get("subtype") != K.COMPACT_SUBTYPE or record.get("type") != "system":
+        return None
+    meta = record.get("compactMetadata") if isinstance(record.get("compactMetadata"), dict) else {}
+    detail = {k: v for k, v in (("trigger", meta.get("trigger")), ("pre_tokens", meta.get("preTokens")),
+                                ("record_uuid", record.get("uuid"))) if v is not None}
+    return CompactHit(conversation_id, line, offset, record.get("timestamp"), detail)
+
+
+def scan_compacts(path: Path, resume: Optional[ScanResume] = None) -> CompactScan:
+    found: List[CompactHit] = []
     with path.open("rb") as handle:
+        line_no, offset = _start_of(handle, resume)
+        carry = b""
         while True:
             chunk = handle.read(K.SCAN_CHUNK_BYTES)
             if not chunk:
@@ -76,35 +139,18 @@ def compact_lines(path: Path) -> Iterator[Tuple[int, int, bytes]]:
             if cut < 0:
                 continue
             block, carry = carry[:cut], carry[cut + 1:]
-            if _NEEDLE in block:
-                yield from _hits_in(block, line_no, offset)
+            found.extend(_hits_in(path.stem, block, line_no, offset))
             line_no += block.count(b"\n") + 1
             offset += len(block) + 1
-    if carry and _NEEDLE in carry:
-        yield from _hits_in(carry, line_no, offset)
+        found.extend(_hits_in(path.stem, carry, line_no, offset))
+        return CompactScan(found, ScanResume(offset, line_no, 0, _anchor_of(handle, offset, line_no)))
 
 
 def compacts_of(path: Path) -> List[CompactHit]:
-    found: List[CompactHit] = []
-    for line_no, offset, raw in compact_lines(path):
-        try:
-            record = json.loads(raw)
-        except ValueError:
-            continue
-        if not isinstance(record, dict) or record.get("subtype") != K.COMPACT_SUBTYPE or record.get("type") != "system":
-            continue
-        meta = record.get("compactMetadata") if isinstance(record.get("compactMetadata"), dict) else {}
-        detail = {k: v for k, v in (("trigger", meta.get("trigger")), ("pre_tokens", meta.get("preTokens")),
-                                    ("record_uuid", record.get("uuid"))) if v is not None}
-        found.append(CompactHit(path.stem, line_no, offset, record.get("timestamp"), detail))
-    return found
+    return scan_compacts(path).hits
 
 
 def transcripts(scan_roots: Sequence[Path]) -> Iterator[Path]:
-    """Every top-level conversation transcript under the roots, each conversation id once (first root wins).
-
-    Inputs: scan_roots (from :func:`roots`). Output: iterator of Path, sorted within a folder.
-    """
     seen: set = set()
     for root in scan_roots:
         for folder in _folders(root):
@@ -132,14 +178,6 @@ def _folders(root: Path) -> List[Path]:
 
 
 def scan(scan_roots: Sequence[Path], skip: frozenset = frozenset()) -> ScanReport:
-    """Walk every root once: each top-level transcript's head and compact boundaries, and every subagent transcript.
-
-    Description: the FALLBACK for what the archive does not hold (``lineage.archive_extract`` is the primary
-      source): a conversation id in ``skip`` (archived) is neither read nor are its subagent files listed.
-    Inputs: scan_roots (from :func:`roots`); skip (conversation ids already read from the archive).
-    Output: ScanReport.
-    Example: len(scan(roots()).compacts)
-    """
     report = ScanReport()
     seen: set = set()
     for root in scan_roots:

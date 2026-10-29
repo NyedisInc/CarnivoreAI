@@ -1,4 +1,5 @@
-/* <script */
+/* with a plain */
+import { bootStep } from './lib/boot-step';
 import './cplugs/host/early-kinds';
 import './app.css';
 import './opscenter/app.css';
@@ -94,10 +95,6 @@ import {
     unarchiveProjectFlow,
 } from './lib/launchpad/project-actions';
 import type { ProjectRow } from './lib/sessions/types';
-import AttributionPrompt from './lib/launchpad/AttributionPrompt.svelte';
-import RecentSessions from './lib/launchpad/RecentSessions.svelte';
-import ProjectTree from './lib/launchpad/ProjectTree.svelte';
-import RunningSessions from './lib/launchpad/RunningSessions.svelte';
 import {
     archiveSessionRecord,
     browserHost as recentBrowserHost,
@@ -124,7 +121,6 @@ import { openSubagentList } from './lib/subagents/popup';
 import { openAttachmentLightbox } from './lib/attachment-lightbox/open';
 import { openTimerList } from './lib/timers/popup';
 import { pauseAll as pauseHomePolls, restartAll as resumeHomePolls } from './opscenter/api';
-import { refreshLaunchpadPanels } from './lib/launchpad/panels';
 import { publishLaunchpadShim } from './lib/launchpad/shim';
 import { browserNavHost } from './lib/launchpad/nav-host';
 import {
@@ -215,14 +211,6 @@ import { startContextLinks } from './lib/deepsearch/context-link.svelte';
 
 installSharedTooltip();
 
-const ATTRIBUTION_PROMPT_CONTAINER = 'attribution-prompt';
-
-const RECENT_SESSIONS_CONTAINER = 'recent-sessions-list';
-
-const PROJECT_TREE_CONTAINER = 'project-list';
-
-const RUNNING_SESSIONS_CONTAINER = 'running-sessions-list';
-
 const VERSION_BANNER_CONTAINER = 'version-banner-container';
 
 const recentHost = recentBrowserHost(() =>
@@ -233,27 +221,14 @@ const recentHost = recentBrowserHost(() =>
     ),
 );
 
-function mountAttributionPrompt(): void {
-    mountPanel(ATTRIBUTION_PROMPT_CONTAINER, AttributionPrompt, {});
-}
 
-function mountRecentSessions(): void {
-    mountPanel(RECENT_SESSIONS_CONTAINER, RecentSessions, {});
-}
 
-/* version mismatch */
 function mountVersionBanner(): void {
     startVersionWatch();
     mountPanel(VERSION_BANNER_CONTAINER, VersionBanner, {});
 }
 
-function mountProjectTree(): void {
-    ensurePanel(PROJECT_TREE_CONTAINER, ProjectTree, {});
-}
 
-function mountRunningSessions(): void {
-    ensurePanel(RUNNING_SESSIONS_CONTAINER, RunningSessions, {});
-}
 
 function displayNameForLegacy(tmuxName: string | null): string {
     return derivedDisplayName(tmuxName);
@@ -336,7 +311,6 @@ async function startNewClaudeProjectForLegacy(): Promise<void> {
     await startNewClaudeProjectFlow(createHost(), browserModals(), t);
 }
 
-/* already exists */
 async function startSessionInExistingProjectForLegacy(): Promise<void> {
     await startSessionInExistingProjectFlow(createHost(), browserModals(), t);
 }
@@ -387,6 +361,7 @@ function navHost() {
     return browserNavHost();
 }
 
+/* the home screen */
 async function openRunningSession(sessionId: string, tmuxName: string): Promise<void> {
     const id = String(sessionId || '').trim();
     const name = String(tmuxName || '').trim();
@@ -410,9 +385,9 @@ function initHomeScreen(): void {
     mountHomeScreen();
 }
 
+/* the home screen */
 async function loadHomeScreen(): Promise<void> {
     const running = sessionStore.loadRunningSessions(t);
-    refreshLaunchpadPanels();
     const result = await sessionStore.loadProjects(uiPrefs.archivedProjectsVisible, t);
     if (!result.ok && result.error) showHomeError(result.error, t);
     void running;
@@ -469,7 +444,6 @@ const CloudeWeb = {
     closeSettingsScreen,
     openAccountScreen,
     closeAccountScreen,
-    /* running sessions */
     openSessionsScreen,
     closeSessionsScreen,
     openDocsScreen,
@@ -493,10 +467,6 @@ const CloudeWeb = {
     mountHelpFeatures,
     unmountHelpFeatures,
     launchpad: {
-        mountAttributionPrompt,
-        mountRecentSessions,
-        mountProjectTree,
-        mountRunningSessions,
         displayNameFor: displayNameForLegacy,
         sessionDisplayLabel: sessionDisplayLabelForLegacy,
         archivedProjectsVisible,
@@ -510,7 +480,6 @@ const CloudeWeb = {
         archiveSessionRecord: archiveSessionRecordForLegacy,
         forkSession: forkSessionForLegacy,
         restartRecentSession: restartRecentSessionForLegacy,
-        /* nothing at all */
         startNewClaudeProject: startNewClaudeProjectForLegacy,
         startSessionInExistingProject: startSessionInExistingProjectForLegacy,
         createNewSession: createNewSessionForLegacy,
@@ -524,7 +493,6 @@ const CloudeWeb = {
         mountHomeScreen: initHomeScreen,
         unmountHomeScreen,
         openRunningSession,
-        refreshLaunchpadPanels,
         loadHomeScreen,
         openProjectByName: (name: string) => openProjectByNameFlow(name, navHost(), t),
         selectProject: (project: ProjectRow, choice?: Record<string, unknown> | null) =>
@@ -540,6 +508,7 @@ const CloudeWeb = {
         showError: (message: string) => showHomeError(message, t),
         terminalDims: () => navHost().terminalDims(),
     },
+    /* the home screen */
     sessionCardMenuItems,
     runSessionCardAction,
     runCplugCardAction,
@@ -593,6 +562,7 @@ declare global {
     }
 }
 
+// silently.
 if (window.CloudeWeb) {
     throw new Error('window.CloudeWeb is already defined - two bundles are loaded');
 }
@@ -637,47 +607,48 @@ installWelcome();
 installRefusalHandler();
 
 mountDrawerTabs();
-initMenuPageShell();
-initHomeInMain();
+bootStep('initMenuPageShell', initMenuPageShell);
+bootStep('initHomeInMain', initHomeInMain);
 ensurePanel('menu-page-bar', MenuPageBar, {});
-mountLayoutEditor();
+bootStep('mountLayoutEditor', mountLayoutEditor);
 
-wireCatalogDeepLink();
-wireLedgerDeepLink();
-wireThemesDeepLink();
-wireBrowserDeepLink();
-guardUnload();
-watchOrphans();
-wireBlueprintsDeepLink();
-wirePluginsDeepLink();
-wireWidgetsDeepLink();
-wireSettingsDeepLink();
-installSettingsShortcut();
-wireAccountDeepLink();
-wireSessionsDeepLinks();
-wireInfoPageDeepLinks();
-wireLogsDeepLink();
-wireWarroomDeepLink();
-wireHuddleAgentDeepLink();
-wireHuddleSwarmDeepLink();
-wireDashboardsDeepLink();
-wireAutomationsDeepLink();
-wireModsDeepLink();
-wireEliteDeepLink();
-wireHostsDeepLink();
-themeFavorites.start();
-startArrangementSync();
-startHomeSync();
-startWarroomSync();
-void runLayoutMigration();
-startContextLinks();
-startAutoSleep();
-startSessionDiedFrames();
-startCrosstalkCards();
-followBrowserSelect();
-followUiShow();
-startActivityReport();
-startGoneReport();
+// event that starts
+bootStep('wireCatalogDeepLink', wireCatalogDeepLink);
+bootStep('wireLedgerDeepLink', wireLedgerDeepLink);
+bootStep('wireThemesDeepLink', wireThemesDeepLink);
+bootStep('wireBrowserDeepLink', wireBrowserDeepLink);
+bootStep('guardUnload', guardUnload);
+bootStep('watchOrphans', watchOrphans);
+bootStep('wireBlueprintsDeepLink', wireBlueprintsDeepLink);
+bootStep('wirePluginsDeepLink', wirePluginsDeepLink);
+bootStep('wireWidgetsDeepLink', wireWidgetsDeepLink);
+bootStep('wireSettingsDeepLink', wireSettingsDeepLink);
+bootStep('installSettingsShortcut', installSettingsShortcut);
+bootStep('wireAccountDeepLink', wireAccountDeepLink);
+bootStep('wireSessionsDeepLinks', wireSessionsDeepLinks);
+bootStep('wireInfoPageDeepLinks', wireInfoPageDeepLinks);
+bootStep('wireLogsDeepLink', wireLogsDeepLink);
+bootStep('wireWarroomDeepLink', wireWarroomDeepLink);
+bootStep('wireHuddleAgentDeepLink', wireHuddleAgentDeepLink);
+bootStep('wireHuddleSwarmDeepLink', wireHuddleSwarmDeepLink);
+bootStep('wireDashboardsDeepLink', wireDashboardsDeepLink);
+bootStep('wireAutomationsDeepLink', wireAutomationsDeepLink);
+bootStep('wireModsDeepLink', wireModsDeepLink);
+bootStep('wireEliteDeepLink', wireEliteDeepLink);
+bootStep('wireHostsDeepLink', wireHostsDeepLink);
+bootStep('themeFavorites.start', () => themeFavorites.start());
+bootStep('startArrangementSync', startArrangementSync);
+bootStep('startHomeSync', startHomeSync);
+bootStep('startWarroomSync', startWarroomSync);
+bootStep('runLayoutMigration', runLayoutMigration);
+bootStep('startContextLinks', startContextLinks);
+bootStep('startAutoSleep', startAutoSleep);
+bootStep('startSessionDiedFrames', startSessionDiedFrames);
+bootStep('startCrosstalkCards', startCrosstalkCards);
+bootStep('followBrowserSelect', followBrowserSelect);
+bootStep('followUiShow', followUiShow);
+bootStep('startActivityReport', startActivityReport);
+bootStep('startGoneReport', startGoneReport);
 
 mountSpectateIfNeeded();
 

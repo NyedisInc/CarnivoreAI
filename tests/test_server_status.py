@@ -107,12 +107,12 @@ def test_merge_ownership_takes_the_servers_verdict_verbatim():
 
 def test_merge_ownership_ignores_the_adopted_id_prefix_entirely():
     rows = server_status.merge_ownership(
-        _rows("cloude_ses_2a5a4495"),
-        {"cloude_ses_2a5a4495": True},
-        {"cloude_ses_2a5a4495": "adopted:cloude_ses_2a5a4495"},
+        _rows("cloude_ses_ec5bf2a3"),
+        {"cloude_ses_ec5bf2a3": True},
+        {"cloude_ses_ec5bf2a3": "adopted:cloude_ses_ec5bf2a3"},
     )
     assert rows[0]["created_by_cloude"] is True
-    assert rows[0]["session_id"] == "adopted:cloude_ses_2a5a4495"
+    assert rows[0]["session_id"] == "adopted:cloude_ses_ec5bf2a3"
     assert rows[0]["open_in_app"] is True
 
 
@@ -138,8 +138,8 @@ def test_collect_tmux_runs_the_binary_the_picker_chose(monkeypatch):
     monkeypatch.setattr(server_status, "tmux_argv_prefix", lambda socket: ["/picked/tmux", "-L", socket])
     monkeypatch.setattr(server_status.shutil, "which", lambda _n: "/picked/tmux")
     monkeypatch.setattr(server_status, "_run_full", lambda argv: seen.append(argv) or (1, "", "no server running"))
-    server_status.collect_tmux("cloude")
-    assert seen and seen[0][:3] == ["/picked/tmux", "-L", "cloude"]
+    server_status.collect_tmux("picked_sock")
+    assert seen and seen[0][:3] == ["/picked/tmux", "-L", "picked_sock"]
 
 
 def test_collect_tmux_no_server_is_available_and_not_running(monkeypatch):

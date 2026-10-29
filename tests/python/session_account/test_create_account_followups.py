@@ -46,7 +46,8 @@ def test_mcp_session_create_refuses_a_bad_account_before_the_owner_is_asked(conf
 def test_wake_route_forwards_the_account_and_refuses_a_box_alone_or_a_peer(config, monkeypatch):  # noqa: F811
     seen = {}
 
-    async def fake_wake(app_state, uuid, agent_type=None, *, account_id=None, account_pinned=False, extra_env=None):
+    async def fake_wake(app_state, uuid, agent_type=None, *, account_id=None, account_pinned=False, extra_env=None,
+                        start_fresh=False):
         seen.update(account_id=account_id, account_pinned=account_pinned)
         return JSONResponse({"status": "refused"})
 

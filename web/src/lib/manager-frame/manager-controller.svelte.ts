@@ -18,6 +18,7 @@ export interface ManagerController {
     readonly removed: string | null;
     load(): Promise<void>;
     toggle(id: string, enabled: boolean): Promise<void>;
+    guard(id: string, work: () => Promise<void>): Promise<void>;
     exportItem(id: string): Promise<void>;
     remove(id: string): Promise<boolean>;
 }
@@ -59,6 +60,17 @@ export function createManagerController(
         try {
             const next = await route.call(adapter, id, enabled);
             items = items.map((item) => (item.id === id ? next : item));
+            toggles = { ...toggles, [id]: { busy: false, error: null } };
+        } catch (error) {
+            toggles = { ...toggles, [id]: { busy: false, error: sentenceOf(error, fallbackError) } };
+        }
+    }
+
+    async function guard(id: string, work: () => Promise<void>): Promise<void> {
+        if (toggles[id]?.busy) return;
+        toggles = { ...toggles, [id]: { busy: true, error: null } };
+        try {
+            await work();
             toggles = { ...toggles, [id]: { busy: false, error: null } };
         } catch (error) {
             toggles = { ...toggles, [id]: { busy: false, error: sentenceOf(error, fallbackError) } };
@@ -109,6 +121,7 @@ export function createManagerController(
         get toggles() {
             return toggles;
         },
+        guard,
         get canToggle() {
             return typeof adapter.setEnabled === 'function';
         },

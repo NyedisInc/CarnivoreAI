@@ -26,11 +26,11 @@ from src.core.federation import peer_hosts, peer_links, peer_terminal_proxy as p
 from src.core.federation.peer_client import Route  # noqa: E402
 from tests.test_ws_subprotocol_auth import _mint_token, patched_auth_config  # noqa: E402,F401
 
-INSTALL_ID = "iid-hosta-0001"
+INSTALL_ID = "iid-studio-0001"
 HOST_KEY = "peer-legacy"
 STORED_KEY = HOST_KEY
 assert HOST_KEY != peer_hosts.host_key_for(INSTALL_ID)
-WIRE = f"remote:{HOST_KEY}:cloude_hosta_pane"
+WIRE = f"remote:{HOST_KEY}:cloude_studio_pane"
 PEER_TOKEN = "PEER.TOKEN-never-reaches-the-browser"
 
 
@@ -146,7 +146,7 @@ def test_keystrokes_reach_the_owner_and_output_returns_and_owner_only_frames_nev
     assert [m for m in seen_text if m["type"] == "size_master"][0]["session_id"] == WIRE
     assert owner.seen == [json.dumps({"type": "pty_resize", "cols": 91, "rows": 33, "hidden": True}),
                           b"echo acceptance-163\r"]
-    assert owner.request.path == "/ws/terminal?session_id=cloude_hosta_pane&client_id=tab-abcdef123"
+    assert owner.request.path == "/ws/terminal?session_id=cloude_studio_pane&client_id=tab-abcdef123"
     assert PEER_TOKEN in owner.request.headers["Sec-WebSocket-Protocol"]
     assert client.forced == [False]
 
@@ -211,17 +211,20 @@ def test_the_close_codes_and_the_frame_filters_are_pure() -> None:
 
 
 def test_a_paired_mac_reaches_only_local_sessions_by_name_or_id() -> None:
-    from src.core.hosts.remote_backend import RemoteTmuxBackend
+    from pathlib import Path
+    from types import SimpleNamespace
 
-    remote = RemoteTmuxBackend.__new__(RemoteTmuxBackend)
-    backends = {"ses_a": SimpleNamespace(tmux_session="cloude_a"), "remote:hosta:x": remote}
+    from src.core.hosts.remote_backend import make_remote_backend
+
+    remote = make_remote_backend(SimpleNamespace(host_key="studio", socket="far"), "s", Path("/far"))
+    backends = {"ses_a": SimpleNamespace(tmux_session="cloude_a"), "remote:studio:x": remote}
     registry = SimpleNamespace(
         sessions=dict.fromkeys(backends), get_backend=backends.get,
         registered_ids_for_tmux_name=lambda name: [s for s, b in backends.items()
                                                    if getattr(b, "tmux_session", None) == name])
     assert peer_ws_auth.local_session_id(registry, "cloude_a") == "ses_a"
     assert peer_ws_auth.local_session_id(registry, "ses_a") == "ses_a"
-    assert peer_ws_auth.local_session_id(registry, "remote:hosta:x") == peer_ws_auth.NOT_LOCAL
+    assert peer_ws_auth.local_session_id(registry, "remote:studio:x") == peer_ws_auth.NOT_LOCAL
     assert peer_ws_auth.local_session_id(registry, None) == peer_ws_auth.NOT_LOCAL
     assert peer_ws_auth.local_session_id(registry, "nope") == peer_ws_auth.NOT_LOCAL
 
@@ -271,8 +274,8 @@ def test_the_owner_takes_a_live_peer_token_and_refuses_a_revoked_or_forged_one(t
 def test_a_keypad_arrow_for_the_id_the_session_answer_gives_reaches_the_owners_pane(viewer) -> None:
     from src.core.federation import peer_forward
     tc, owner, _ = viewer()
-    answer = json.dumps({"session": {"id": "ses_owner_1"}, "tmux_session": "cloude_hosta_pane"}).encode()
-    sid = json.loads(peer_forward.wire_session_reply(answer, HOST_KEY, "hosta", "cloude_hosta_pane"))["session"]["id"]
+    answer = json.dumps({"session": {"id": "ses_owner_1"}, "tmux_session": "cloude_studio_pane"}).encode()
+    sid = json.loads(peer_forward.wire_session_reply(answer, HOST_KEY, "studio", "cloude_studio_pane"))["session"]["id"]
     assert sid == WIRE
     with _connect(tc, f"session_id={sid}") as ws:
         while json.loads(ws.receive_text()).get("type") != "terminal.ready":

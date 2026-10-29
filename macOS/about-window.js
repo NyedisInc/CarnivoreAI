@@ -13,7 +13,6 @@ function showAboutDialog({ app, BrowserWindow, shell }) {
     maximizable: false,
     fullscreenable: false,
     show: false,
-    // --color-
     backgroundColor: '#02161e',
     title: 'About Carnivore',
     webPreferences: {
@@ -122,7 +121,7 @@ function showAboutDialog({ app, BrowserWindow, shell }) {
       </p>
       <a class="github-btn" href="https://github.com/${RELEASE_REPO}" target="_blank" rel="noopener noreferrer">View on GitHub</a>
       <div class="copyright">
-        Copyright © ${currentYear} Nyedis Inc. All rights reserved.
+        Copyright © ${currentYear} Psyance, LLC. All rights reserved.
       </div>
     </body>
     </html>

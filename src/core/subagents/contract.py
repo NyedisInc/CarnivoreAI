@@ -8,7 +8,7 @@ SUBAGENT_META_CONTRACT_VERSION: int = 1
 SUBAGENT_LINE_CONTRACT_VERSION: int = 1
 
 MEASURED_AGAINST_CLAUDE_CODE: str = "2.1.283"
-MEASURED_ON: str = "not measured"
+MEASURED_ON: str = "2026-09-26"
 
 FILE_KIND_META: str = "subagent_meta"
 FILE_KIND_LINE: str = "subagent_jsonl"

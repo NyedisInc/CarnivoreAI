@@ -55,7 +55,10 @@ def live_state(tmp_path, monkeypatch):
     state.mkdir()
     monkeypatch.setattr(settings, "log_directory", str(log_dir))
     monkeypatch.setattr(settings, "state_dir_override", str(state))
-    (tmp_path / "config.json").write_text("{}")
+    own_config = tmp_path / "config.json"
+    own_config.write_text("{}")
+    monkeypatch.setattr(settings, "auth_config_file", str(own_config))
+    settings.drop_auth_config_cache()
     monkeypatch.chdir(tmp_path)
     with closing(migrated_connection(state)):
         pass

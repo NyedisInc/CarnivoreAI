@@ -1,11 +1,10 @@
 
-/*  hidden  display: none */
+/* there is nothing */
 body.home-opscenter > .header,
 body.home-opscenter #home-subheader {
     display: none;
 }
 
-/* display: none */
 body.home-opscenter {
     --overlay-top: var(--oc-topbar);
 }
@@ -18,7 +17,6 @@ html[data-desktop-chrome] body.home-opscenter {
     --overlay-top: calc(var(--oc-topbar) + var(--desktop-inset-top));
 }
 
-/*  hidden  overflow-y: auto overflow: hidden */
 @media (max-width: 1023px) {
     body.home-opscenter {
         height: auto;
@@ -28,9 +26,6 @@ html[data-desktop-chrome] body.home-opscenter {
         overflow-y: visible;
     }
 
-    /* flex: 0 0 auto` because a `flex: 1` item in an auto height column is
-       sized from a zero basis and then grown to a line whose height is the
-       content's; */
     body.home-opscenter #launchpad-screen.active {
         display: block;
         flex: 0 0 auto;

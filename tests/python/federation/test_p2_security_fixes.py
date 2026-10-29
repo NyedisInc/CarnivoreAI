@@ -154,14 +154,14 @@ def test_m1_the_caller_cannot_claim_a_fid_match_and_the_answer_must_carry_the_ob
 
     class Discovery:
         def discovered(self):
-            return [{"name": "hosta", "fid": "FID1", "state": "pinned"}, {"name": "evil", "fid": "FID2", "state": "new"}]
+            return [{"name": "studio", "fid": "FID1", "state": "pinned"}, {"name": "evil", "fid": "FID2", "state": "new"}]
 
     class Req:
         class app:  # noqa: N801
             class state:  # noqa: N801
                 federation_discovery = Discovery()
 
-    assert federation_peer_routes._pinned_fid(Req, "hosta") == "FID1"
+    assert federation_peer_routes._pinned_fid(Req, "studio") == "FID1"
     assert federation_peer_routes._pinned_fid(Req, "evil") == "" and federation_peer_routes._pinned_fid(Req, None) == ""
     acceptor, initiator = macs
     answer = {"install_id": acceptor.install_id, "public_key": pair_driver.fed_key.public_key_b64(acceptor.key),
@@ -180,15 +180,15 @@ async def test_l1_pinned_is_decided_from_what_ssh_resolves(monkeypatch):
     async def fake(*argv):
         calls.append(argv)
         if argv[1] == "-G":
-            return "hostname 198.51.100.14\nport 2201\nuserknownhostsfile ~/.ssh/kh_other\nglobalknownhostsfile /etc/ssh/ssh_known_hosts\n"
-        return "found" if argv[2] == "[198.51.100.14]:2201" and argv[4].endswith("kh_other") else None
+            return "hostname 10.0.0.9\nport 2222\nuserknownhostsfile ~/.ssh/kh_other\nglobalknownhostsfile /etc/ssh/ssh_known_hosts\n"
+        return "found" if argv[2] == "[10.0.0.9]:2222" and argv[4].endswith("kh_other") else None
 
     monkeypatch.setattr(pair_driver, "_run_out", fake)
-    assert await pair_driver.host_key_pinned(SshDestination("hosta")) is True
+    assert await pair_driver.host_key_pinned(SshDestination("studio")) is True
     asked = [c for c in calls if c[1] == "-F"]
-    assert asked[0][2] == "[198.51.100.14]:2201"
+    assert asked[0][2] == "[10.0.0.9]:2222"
     monkeypatch.setattr(pair_driver, "_run_out", lambda *a: asyncio.sleep(0, None))
-    assert await pair_driver.host_key_pinned(SshDestination("hosta")) is False
+    assert await pair_driver.host_key_pinned(SshDestination("studio")) is False
 
 
 def test_l2_a_prefix_collision_never_overwrites_another_peers_row(macs):
@@ -237,7 +237,7 @@ async def test_l3_an_initiator_with_no_live_grant_does_not_start(macs):
     acceptor, initiator = macs
     with closing(initiator.conn()) as c:
         row = peer_hosts.upsert(c, install_id="gone-peer", label="g", grant_id="g", fid="f", initiator=True,
-                                ssh_target="hosta")
+                                ssh_target="studio")
     links = peer_links.PeerLinks(open_db=initiator.conn, listener_path="/tmp/x.sock")
     links.use_key(initiator.key)
     await links.start_initiator(row)

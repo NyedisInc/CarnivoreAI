@@ -180,33 +180,52 @@ export class SettingsDoc {
         }
     }
 
+    #settle(ids: readonly string[], sent: Readonly<Record<string, string>>): void {
+        const rest = { ...this.drafts };
+        for (const id of ids) {
+            if (id in rest && JSON.stringify(rest[id]) === sent[id]) delete rest[id];
+        }
+        this.drafts = rest;
+    }
+
     async save(): Promise<boolean> {
         if (this.saving || !this.dirtyIds.length || this.invalidIds.length) return false;
         this.saving = true;
         this.saveError = null;
         const ids = this.dirtyIds;
+        const sent: Record<string, string> = Object.fromEntries(ids.map((id) => [id, JSON.stringify(this.drafts[id])]));
+        const body = this.patch();
+        const minuteIds: string[] = ids.filter((id) => id === 'auto_sleep_minutes' || id === 'auto_sleep_unread_minutes');
+        const patchIds = ids.filter((id) => !minuteIds.includes(id));
+        const pending = new Set(ids);
+        const done = (group: readonly string[]): void => {
+            this.#settle(group, sent);
+            for (const id of group) {
+                pending.delete(id);
+                this.#mark(id, { state: 'saved' });
+            }
+        };
         for (const id of ids) this.#mark(id, { state: 'saving' });
         try {
-            const body = this.patch();
             if (Object.keys(body).length) {
                 this.summary = await this.#api.patch(body);
                 this.warnings = this.summary?.workspace_warnings ?? [];
             }
-            if ('auto_sleep_minutes' in this.drafts) {
-                const ok = await this.#api.saveMinutes(Number(this.drafts['auto_sleep_minutes']));
-                if (!ok) throw new Error('auto-sleep');
+            done(patchIds);
+            const minuteWrites: ReadonlyArray<[string, SettingsDocApi['saveMinutes'] | undefined]> = [
+                ['auto_sleep_minutes', this.#api.saveMinutes],
+                ['auto_sleep_unread_minutes', this.#api.saveUnreadMinutes],
+            ];
+            for (const [id, write] of minuteWrites) {
+                if (!minuteIds.includes(id) || !write) continue;
+                if (!(await write.call(this.#api, Number(JSON.parse(sent[id] ?? 'null'))))) throw new Error('auto-sleep');
+                done([id]);
             }
-            if ('auto_sleep_unread_minutes' in this.drafts && this.#api.saveUnreadMinutes) {
-                const ok = await this.#api.saveUnreadMinutes(Number(this.drafts['auto_sleep_unread_minutes']));
-                if (!ok) throw new Error('auto-sleep');
-            }
-            this.drafts = {};
-            for (const id of ids) this.#mark(id, { state: 'saved' });
             return true;
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             this.saveError = message;
-            for (const id of ids) this.#mark(id, { state: 'error', message });
+            for (const id of pending) this.#mark(id, { state: 'error', message });
             return false;
         } finally {
             this.saving = false;

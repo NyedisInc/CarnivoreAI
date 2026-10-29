@@ -7,6 +7,7 @@ console.log('[SessionRestartReturn Module] Loading...');
     async function reopen(result) {
         var name = (result && result.name) || '';
         var sessionId = (result && result.session_id) || null;
+        // there is nothing
         var layoutPage = window.CloudeWeb && window.CloudeWeb.layoutPage;
         if (layoutPage && typeof layoutPage.holds === 'function'
             && layoutPage.holds(sessionId || '', name)) {

@@ -8,7 +8,6 @@ export interface ContextPlan {
     label: string;
 }
 
-/* label: ' */
 export function contextPlan(r: SidebarRow): ContextPlan | null {
     const raw = r.running_context_used_pct;
     if (typeof raw !== 'number' || !Number.isFinite(raw)) return null;

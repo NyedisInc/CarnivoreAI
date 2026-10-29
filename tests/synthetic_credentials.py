@@ -40,3 +40,21 @@ def github_token() -> str:
 
 def aws_key_id() -> str:
     return "AKI" + "A" + synthetic_body(16, "GHJKLQVWZ56789")
+
+
+def aws_secret_key() -> str:
+    return synthetic_body(40)
+
+
+def google_api_key() -> str:
+    return "AI" + "za" + synthetic_body(35)
+
+
+def slack_bot_token() -> str:
+    digits = "56789"
+    ids = ["".join(secrets.choice(digits) for _ in range(13)) for _ in range(2)]
+    return "xo" + "xb-" + "-".join(ids) + "-" + synthetic_body(24)
+
+
+def github_fine_grained_token() -> str:
+    return "github" + "_pat_" + synthetic_body(22) + "_" + synthetic_body(59)

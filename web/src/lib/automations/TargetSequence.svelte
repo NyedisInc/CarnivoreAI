@@ -5,7 +5,7 @@
   import { t } from '../i18n/index.svelte';
   import Button from '../base/Button.svelte';
   import Select from '../base/Select.svelte';
-  import { codeLabel } from './format';
+  import { codeWords } from './logic/words';
   import { SEQUENCE_MAX_STEPS, SEQUENCE_MIN_STEPS, sequenceKinds, TARGET_FORMS } from './target-forms';
 
   let { target = $bindable(), targets, projects }: { target: AutomationTarget; targets: Targets; projects: ProjectChoice[] } = $props();
@@ -40,7 +40,7 @@
             data-step-kind
             aria-label={t('automations.field.target')}
             value={step.kind}
-            options={kinds.map((kind) => ({ value: kind, label: codeLabel('automations.target', kind) }))}
+            options={kinds.map((kind) => ({ value: kind, label: codeWords('automations.target', kind) }))}
             onchange={(e) => pick(index, e.currentTarget.value)}
           />
           <Button

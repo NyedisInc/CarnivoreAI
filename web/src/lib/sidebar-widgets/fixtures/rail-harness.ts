@@ -13,7 +13,6 @@ import { agentsTab, menuTab, questionsTab } from '../../drawer-tabs/core-tabs';
 import { DRAWER_SEARCH_ID, DRAWER_STATS_ID } from '../../drawer-tabs/drawer-tabs';
 import { unmountPanel } from '../../mount';
 import { registerCoreSidebarWidgets } from '../core-widgets';
-import { registerSwarmFlyout } from '../../../cplugs/huddle/swarm-flyout';
 import { widgetBars } from '../../widget-bars/bar-settings.svelte';
 import { mountRail, unmountRail } from '../rail-layout.svelte';
 import { FLYOUT_CONTAINER_ID, RAIL_CONTAINER_ID } from '../rail-dom';
@@ -27,6 +26,7 @@ import { tabFlags } from './tab-flags.svelte';
 export const REPO = path.resolve(process.cwd(), '..');
 export const HUDDLE = 'huddle';
 
+/** The drawer's <aside>, exactly as shipped in client/index.html. */
 export function drawerMarkup(): string {
   const source = fs.readFileSync(path.join(REPO, 'client', 'index.html'), 'utf8');
   const start = source.indexOf('<aside id="session-sidebar-panel"');
@@ -42,6 +42,7 @@ export async function settle(): Promise<void> {
   }
 }
 
+/** A preference bridge over a plain object. */
 export function bridge(store: Record<string, unknown>) {
   return {
     PreferenceBridge: {
@@ -91,7 +92,6 @@ export async function setupRail(viewClass: 'desktop' | 'mobile' = 'desktop'): Pr
   for (const def of [menuTab, agentsTab, questionsTab]) if (!tabRegistry.get(def.id)) registerTab(def);
   registerTestTabs();
   registerCoreSidebarWidgets();
-  registerSwarmFlyout();
   (globalThis as Record<string, unknown>).PreferenceBridge = {
     read: (field: string, fallback: () => unknown) => (field === 'widget_bars' ? { v: 1, rail: { mode: 'pinned' } } : fallback()),
     write: async (_field: string, _value: unknown, local: () => void) => { local(); return { status: 'committed' }; },

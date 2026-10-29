@@ -2,9 +2,9 @@
 """Propose the Claude conversation behind every sessions row that lacks one.
 
 DRY RUN IS THE DEFAULT AND IS THE ONLY MODE THAT NEEDS NO ARGUMENT.
-``--apply`` exists so a human can act on a report he has read; it is not
-reachable by accident, it refuses anything the matcher did not mark
-writable, and it takes a backup first.
+THIS SCRIPT NEVER WRITES. There is no ``--apply``: a human reads the report
+and writes the rows it marks WRITABLE by hand, one statement each, after
+taking a backup (``scripts/upgrade-baseline.sh``).
 
 WHY THIS SCRIPT EXISTS. ``sessions.claude_session_uuid`` is the
 conversation a row was running, and a restart now RESUMES it. A row
@@ -48,11 +48,10 @@ from typing import Dict, List, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.db_rename.legacy import script_default_db  # noqa: E402
+from src.core.db_rename.legacy import connect_existing, resolve_script_db  # noqa: E402
 
 from src.core.session_uuid_backfill import parse_epoch  # noqa: E402
 
-# : conversation,
 PROBE_ENTRYPOINT = "sdk-cli"
 
 MAX_LINES_SCANNED = 60
@@ -72,7 +71,7 @@ SESSION_COLUMNS = (
 
 
 def read_rows(db_path: str) -> List[dict]:
-    conn = sqlite3.connect(db_path)
+    conn = connect_existing(db_path)
     try:
         conn.execute("PRAGMA query_only=ON")
         conn.row_factory = sqlite3.Row
@@ -83,19 +82,6 @@ def read_rows(db_path: str) -> List[dict]:
 
 
 def _scan_transcript(path: str) -> dict:
-    """Reduce one transcript file to the facts the matcher may use.
-
-    Description: reads the head for the first top-level user record (its
-      ``cwd``, its entrypoint) and the tail for the last timestamp, which
-      is the only timing fact that discriminates a RESUMED conversation -
-      its first message can predate its pane by months. The uuid comes
-      from the FILENAME, which is Claude Code's own name for the
-      conversation, never from a record's ``sessionId``.
-    Inputs: path (str) - a ``.jsonl`` transcript.
-    Output: dict - the transcript facts; ``readable`` is False when the
-      file could not be read at all.
-    Example: _scan_transcript('/x/u.jsonl')['uuid']  # 'u'
-    """
     out = {
         "uuid": os.path.basename(path)[:-6],
         "path": path,
@@ -251,13 +237,13 @@ def collect_facts(db_path: str, projects_dir: str) -> dict:
     }
 
 
-def _default_db() -> str:
-    return script_default_db()
-
-
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--db", default=_default_db(), help="path to cloude.db")
+    p.add_argument(
+        "--db",
+        default=None,
+        help="path to the database (default: the conventional state directory)",
+    )
     p.add_argument(
         "--projects-dir",
         default=os.path.expanduser("~/.claude/projects"),
@@ -265,26 +251,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--emit-facts", metavar="PATH", help="collect facts and exit")
     p.add_argument("--facts", metavar="PATH", help="judge a facts file")
-    p.add_argument(
-        "--apply",
-        action="store_true",
-        help="WRITE the confident proposals. Default is a dry run.",
-    )
     p.add_argument("--json", action="store_true", help="machine-readable report")
     return p
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """Entry point.
-
-    Inputs: argv (list[str] | None).
-    Output: int - process exit status. 0 report produced, 2 could not
-      evaluate. 2 is never a pass.
-    """
     args = build_parser().parse_args(argv)
 
+    try:
+        return _run(args)
+    except sqlite3.Error as exc:
+        print(f"COULD NOT READ the database: {exc}", file=sys.stderr)
+        return 2
+
+
+def _run(args: argparse.Namespace) -> int:
     if args.emit_facts:
-        facts = collect_facts(args.db, args.projects_dir)
+        facts = collect_facts(resolve_script_db(args.db), args.projects_dir)
         with open(args.emit_facts, "w", encoding="utf-8") as fh:
             json.dump(facts, fh)
         print(
@@ -298,23 +281,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         with open(args.facts, "r", encoding="utf-8") as fh:
             facts = json.load(fh)
     else:
-        facts = collect_facts(args.db, args.projects_dir)
+        facts = collect_facts(resolve_script_db(args.db), args.projects_dir)
 
     from src.core.session_uuid_backfill_report import render_report
 
     report, status = render_report(facts, as_json=args.json)
     print(report)
 
-    if args.apply:
-        print(
-            "\nREFUSING TO APPLY. Writing is a separate, deliberate act on a "
-            "large live database and this script will not do it as a side "
-            "effect of a flag. Take scripts/upgrade-baseline.sh first, then "
-            "write the rows the report marks WRITABLE, by hand, one "
-            "statement each.",
-            file=sys.stderr,
-        )
-        return 2
     return status
 
 

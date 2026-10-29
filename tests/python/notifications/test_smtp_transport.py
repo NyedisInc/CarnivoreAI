@@ -28,8 +28,8 @@ def resolver_to(*addrs):
 
 
 def kw(srv_port, **over):
-    base = dict(host="127.0.0.1", port=srv_port, security="plain", sender="a@example.net",
-                recipients=["b@example.net"], subject="approval needed", body="body text", dest_id="d1",
+    base = dict(host="127.0.0.1", port=srv_port, security="plain", sender="a@x.org",
+                recipients=["b@y.org"], subject="approval needed", body="body text", dest_id="d1",
                 timeout=5.0)
     base.update(over)
     return base
@@ -39,11 +39,11 @@ def kw(srv_port, **over):
 async def test_plain_to_loopback_delivers_envelope():
     srv = FakeSMTP()
     try:
-        await send_mail(**kw(srv.port, recipients=["b@example.net", "c@example.net"], username="u", password=SENTINEL))
+        await send_mail(**kw(srv.port, recipients=["b@y.org", "c@y.org"], username="u", password=SENTINEL))
     finally:
         srv.close()
-    assert srv.mail_from == "a@example.net"
-    assert srv.rcpts == ["b@example.net", "c@example.net"]
+    assert srv.mail_from == "a@x.org"
+    assert srv.rcpts == ["b@y.org", "c@y.org"]
     assert "Subject: approval needed" in srv.data and "body text" in srv.data
     assert srv.login == b"\0u\0" + SENTINEL.encode()
 
@@ -61,8 +61,8 @@ async def test_plain_to_non_loopback_refused_before_connect():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("addr", ["192.0.2.13", "192.0.2.15", "169.254.169.254", "0.0.0.0", "224.0.0.1",
-                                  "fe80::1", "::ffff:203.0.113.16"])
+@pytest.mark.parametrize("addr", ["10.0.0.5", "192.168.1.9", "169.254.169.254", "0.0.0.0", "224.0.0.1",
+                                  "fe80::1", "::ffff:10.0.0.1"])
 async def test_non_global_non_loopback_refused(addr):
     srv = FakeSMTP()
     try:
@@ -78,12 +78,12 @@ async def test_non_global_non_loopback_refused(addr):
 async def test_every_address_is_checked_not_just_the_first():
     with pytest.raises(MailBlocked):
         await send_mail(**kw(1, host="m.example.com", security="starttls",
-                             resolver=resolver_to("93.184.216.34", "203.0.113.16")))
+                             resolver=resolver_to("93.184.216.34", "10.0.0.1")))
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("field,value", [("subject", "a\r\nBcc: x@example.net"), ("subject", "a\nb"),
-                                         ("sender", "a@example.net\r\nBcc: z"), ("recipients", ["b@example.net\nX: 1"]),
+@pytest.mark.parametrize("field,value", [("subject", "a\r\nBcc: x@y.org"), ("subject", "a\nb"),
+                                         ("sender", "a@x.org\r\nBcc: z"), ("recipients", ["b@y.org\nX: 1"]),
                                          ("recipients", [])])
 async def test_header_injection_and_empty_refused(field, value):
     srv = FakeSMTP()
@@ -99,9 +99,9 @@ async def test_header_injection_and_empty_refused(field, value):
 async def test_recipient_cap():
     srv = FakeSMTP()
     try:
-        await send_mail(**kw(srv.port, recipients=[f"r{i}@example.net" for i in range(10)]))
+        await send_mail(**kw(srv.port, recipients=[f"r{i}@y.org" for i in range(10)]))
         with pytest.raises(MailBlocked) as e:
-            await send_mail(**kw(srv.port, recipients=[f"r{i}@example.net" for i in range(11)]))
+            await send_mail(**kw(srv.port, recipients=[f"r{i}@y.org" for i in range(11)]))
     finally:
         srv.close()
     assert e.value.reason == "recipients" and len(srv.rcpts) == 10
@@ -143,7 +143,7 @@ async def test_tls_pins_ip_and_verifies_hostname(tmp_path, mode):
     try:
         await send_mail(**kw(srv.port, host="mail.test.invalid", security=mode, resolver=r,
                              ssl_context=client_ctx(cert)))
-        assert srv.rcpts == ["b@example.net"] and r.calls == ["mail.test.invalid"]
+        assert srv.rcpts == ["b@y.org"] and r.calls == ["mail.test.invalid"]
         with pytest.raises(MailNetworkError):
             await send_mail(**kw(srv.port, host="other.test.invalid", security=mode, resolver=r,
                                  ssl_context=client_ctx(cert)))
@@ -169,7 +169,7 @@ async def test_untrusted_certificate_refused(tmp_path):
 async def test_password_never_in_logs_or_exceptions(capsys):
     structlog.configure(processors=[structlog.processors.KeyValueRenderer()],
                         logger_factory=structlog.PrintLoggerFactory())
-    extra = dict(username="secretuser", password=SENTINEL, recipients=["private@example.net"], subject="private subject")
+    extra = dict(username="secretuser", password=SENTINEL, recipients=["private@y.org"], subject="private subject")
     ok = FakeSMTP()
     bad = FakeSMTP(auth_ok=False)
     try:
@@ -182,5 +182,5 @@ async def test_password_never_in_logs_or_exceptions(capsys):
     out = capsys.readouterr()
     text = out.out + out.err + str(e.value) + repr(e.value) + str(e.value.__cause__)
     assert "smtp." in out.out + out.err
-    for secret in (SENTINEL, "secretuser", "private@example.net", "private subject"):
+    for secret in (SENTINEL, "secretuser", "private@y.org", "private subject"):
         assert secret not in text

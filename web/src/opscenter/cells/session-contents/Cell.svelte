@@ -5,6 +5,7 @@
 </script>
 
 <script lang="ts">
+  /* the scope option group */
   import type { CellProps } from '../../lib/cell';
   import { sessions } from '../../api';
   import { t } from '../../../lib/i18n/index.svelte';
@@ -23,7 +24,7 @@
   import { CONTROLS_HEAD_MIN_WIDTH } from './model';
   import { canOpen, openInFiles } from './opener';
   import { canPreview, loadHead } from './preview';
-  import { contents } from './state.svelte';
+  import { acquireContents, ContentsStore } from './state.svelte';
   import type { ContentsItem } from './types';
 
   let props: CellProps = $props();
@@ -37,8 +38,11 @@
   const row = $derived((sessions.data ?? []).find((info) => info.session.id === sessionId) ?? null);
   const rowId = $derived(scope?.rowId ?? (typeof row?.session_row_id === 'number' ? row.session_row_id : null));
 
+  let contents = $state.raw<ContentsStore>(new ContentsStore());
   $effect(() => {
-    contents.follow(rowId);
+    const lease = acquireContents(rowId);
+    contents = lease.store;
+    return () => lease.release();
   });
 
   let localScope = $state<ScopeFilter>(readChoice(scopeStoreKey(), SCOPES, DEFAULT_SCOPE));

@@ -11,7 +11,7 @@ def test_no_type_matches_pipeline_or_transcripts_keys() -> None:
     for key in ("pipeline.llm_all_down", "pipeline.stage_dead.index", "transcripts.manifest", "transcripts.removed"):
         assert T.match_alert_key(key) == (), key
         assert T.type_for_alert_key(key) == "alert.other", key
-    assert T.type_for_alert_key("backup_health.time_machine") == "alert.save_pipeline"
+    assert T.type_for_alert_key("backup_health.usb_backup") == "alert.save_pipeline"
 
 
 def test_stored_setting_naming_alert_transcripts_is_ignored(tmp_path) -> None:

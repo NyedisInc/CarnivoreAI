@@ -50,6 +50,7 @@ def _wired() -> runtime.Wiring:
 
 @router.post("/exchange")
 async def exchange_snapshots(body: ExchangeBody, principal: Principal = Depends(_require_machine)) -> Dict[str, Any]:
+    """Take the caller's snapshot and settings document, answer with this machine's own (the loop guard: own data only)."""
     grant = _peer(principal)
     try:
         return await _wired().runtime.serve_exchange(grant.peer_install_id, grant.label, body.model_dump())
@@ -59,6 +60,7 @@ async def exchange_snapshots(body: ExchangeBody, principal: Principal = Depends(
 
 @router.put("/reserve")
 async def put_reserve(body: PatchBody, principal: Principal = Depends(_require_machine)) -> Dict[str, Any]:
+    """Edit this machine's reserve on a peer's behalf: a comfort setting, so it may be loosened remotely (F22)."""
     _peer(principal)
     wired = _wired()
     try:
@@ -70,6 +72,8 @@ async def put_reserve(body: PatchBody, principal: Principal = Depends(_require_m
 
 @router.put("/restrictions/tighten")
 async def put_tighten(body: PatchBody, principal: Principal = Depends(_require_machine)) -> Dict[str, Any]:
+    """Narrow this machine's restrictions on a peer's behalf. A patch that loosens anything is refused 403
+    ``pack_restricted``: only the owner, on this machine, loosens (F22)."""
     _peer(principal)
     wired = _wired()
     try:

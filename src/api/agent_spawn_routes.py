@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.core.crosstalk import spawn
 from src.core.mcp.caller import AgentCaller
@@ -18,11 +19,12 @@ async def spawn_for_caller(request: Request, body: spawn.SpawnRequest,
     try:
         return await spawn.spawn(view, caller, body, owner_approved=owner_approved)
     except ToolError as exc:
-        raise HTTPException(status_code=409, detail={'code': 'spawn_refused', 'message': str(exc)}) from exc
+        raise api_error(409, 'spawn_refused', exc, session=caller.session_id) from exc
 
 
 @router.post('/agents/spawn')
 async def agent_spawn(request: Request, body: spawn.SpawnRequest) -> dict:
+    """Spawn for an explicit local parent pane at the owner's request."""
     if not body.parent:
         raise HTTPException(status_code=422, detail={'code': 'parent_required',
                                                       'message': 'parent is required for the owner route'})

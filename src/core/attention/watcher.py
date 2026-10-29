@@ -1,57 +1,3 @@
-"""The one task that raises toasts, and the only thing that ever does.
-
-ONE SERVER-OWNED ASYNCIO TASK. It lists the sessions worth watching,
-reads their evidence off the loop, resolves each one through the pure
-resolver, hands the answer to the ledger, and acts on whatever comes back
-as an edge. The listing pass consumes the immutable observation stored here and
-raises nothing, so display and notifications share the same evidence. A phone with no browser open still gets its
-push, because the watcher raises, not a poll.
-
-TESTABLE WITHOUT A SERVER, AND THAT IS A CONSTRAINT, NOT A CONVENIENCE.
-Everything this class touches arrives through the constructor: the
-target list, the evidence reader, the three actions, the ledger and the
-clock. Nothing in ``src/core/attention/`` may import ``session_manager``,
-so the watcher cannot reach for a session, a policy or a toast inbox
-directly, and the replay suite drives years of recorded history through
-it in milliseconds with no files and no sleeping.
-
-THE LOOP MAY NOT DIE. A watcher that raises out of its own tick takes
-every notification on the machine with it, silently, until the next
-restart. So a failure reading ONE session is caught around that session
-and the rest of the tick continues, and a failure anywhere else in the
-tick is caught around the tick and the loop continues. Both are logged
-with the event name first. ``asyncio.CancelledError`` is re-raised
-before either, because shutdown is not a failure.
-
-THE CADENCE IS A TICK WITH AN EARLY WAKE, NOT A POLL. The backstop tick
-is :data:`DEFAULT_TICK_SECONDS`, and on top of it the EXISTING
-``PipeWaiter`` (``src/core/pipe_wakeup.py``, kqueue on asyncio's own
-selector, no thread spent) watches ``~/.claude/sessions/`` so a session
-appearing or disappearing wakes the loop in microseconds rather than at
-the end of the interval.
-
-WHAT WAS VERIFIED ABOUT THAT DIRECTORY, because the plan asked, AND
-HOW. Read out of the Claude Code 2.1.266 bundle: the registry updater
-``Tn``, chained on ``pidFileWriteChain``, reads the existing
-``<pid>.json``, merges the changed keys and writes the SAME PATH back,
-and the storage-interface branch of that same function spells the
-discipline out as ``publishDiscipline: "inPlace"``. The inode check that
-would have confirmed it from the outside did NOT get a sample: across
-about two and a half minutes of watching every file in the directory at
-200 ms, no session changed status, so nothing was written at all. The
-claim therefore rests on the binary, and it is stated that way rather
-than as a measurement. A status change is an IN-PLACE REWRITE: the inode
-does not change and the containing directory is not modified, which
-means a directory watch does NOT see it. The directory watch therefore
-covers registration and exit (create, unlink, rename) and THE TICK IS
-WHAT COVERS A STATUS
-CHANGE. That is the right trade for this loop: the tick is two seconds,
-the toast it gates is a human-facing notification, and watching every
-registry file individually would cost a kqueue descriptor per session to
-buy less than two seconds on a notification a human reads at their own
-pace. The plan's note that the tick is the backstop "either way" is why
-this is a sizing decision and not a correctness one.
-"""
 
 from __future__ import annotations
 
@@ -65,7 +11,7 @@ import structlog
 
 from src.core.attention.evidence import (
     AttentionVerdict,
-    Evidence,
+    Evidence, EvidenceIdentity,
     REASON_INPUT,
     REASON_NO_EVIDENCE,
     REASON_EVIDENCE_DISAGREES,
@@ -76,8 +22,9 @@ from src.core.attention.evidence import (
     STATE_NEEDS_USER,
 )
 from src.core.attention.ledger import AttentionLedger, Transition
+from src.core.attention.diagnostics import ObservationDiagnostic, describe
 from src.core.attention.raise_gate import policy_for, resolve_raise
-from src.core.attention.registry_read import default_registry_directory
+from src.core.attention.registry_index import default_registry_directory
 from src.core.attention.resolve import DONE_QUIET_SECONDS, resolve_attention
 from src.core.attention.restart_floor import RestartFloors
 from src.core.attention.startup_quiet import StartupQuiet
@@ -387,23 +334,10 @@ class AttentionWatcher:
             stale=True, new_user_prompt_at=None, transcript_appended=False,
         )
 
-    def diagnostics(self, now: Optional[datetime] = None) -> List[dict]:
+    def diagnostics(self, now: Optional[datetime] = None) -> List[ObservationDiagnostic]:
         instant = now or self._now()
-        result = []
-        for session_id in self._observations:
-            observation = self.observation_for(session_id, instant)
-            if observation is None:
-                continue
-            verdict = observation.verdict
-            result.append({
-                "session_id": session_id,
-                "age_seconds": max(0, (instant - observation.observed_at).total_seconds()),
-                "state": verdict.state, "source": verdict.tier,
-                "matched_rule": verdict.reason,
-                "disagreement_reason": verdict.reason if verdict.state == STATE_UNKNOWN else None,
-                "stale": observation.stale, "revision": observation.revision,
-            })
-        return result
+        observed = ((sid, self.observation_for(sid, instant)) for sid in self._observations)
+        return [describe(sid, obs, instant, STATE_UNKNOWN) for sid, obs in observed if obs is not None]
 
     def _expire(self, target: WatchTarget, now: datetime) -> None:
         previous = self._observations.get(target.session_id)
@@ -422,27 +356,7 @@ class AttentionWatcher:
             del self._resting_since[key]
 
     def _resting_held(self, target: WatchTarget, evidence: Evidence) -> bool:
-        """Has this pane's resting prompt been on screen long enough to act?
-
-        Description: the only stateful thing in the tick besides the
-          ledger. Records the FIRST instant a resting prompt was seen and
-          answers True once :data:`RESTING_HOLD_SECONDS` have passed since
-          it, so the resolver can withdraw a latched busy verdict without
-          reading a clock itself.
-
-          ONLY A POSITIVE READING CARRIES THE CLAIM FORWARD. A pane
-          measured NOT resting clears the entry, and so does a pane we
-          could not read at all (``None``) - continuity is continuity of
-          OBSERVATION, and a hold reached by not looking is gotcha 11 in
-          one line. Nothing here sleeps or schedules: the instant comes off
-          ``evidence.now``, which the tick already stamped.
-        Inputs:
-          target (WatchTarget) - keyed on ``target.key``, the instance.
-          evidence (Evidence) - this tick's bundle.
-        Output: bool - False whenever the hold has not been reached.
-        Example: watcher._resting_held(target, evidence) -> False
-        """
-        pane = evidence.codex.pane if evidence.codex is not None else evidence.pane
+        pane = evidence.active_pane()
         if pane is None or pane.resting_prompt is not True:
             self._resting_since.pop(target.key, None)
             return False
@@ -487,31 +401,23 @@ class AttentionWatcher:
                     self._ledger.forget(target.key)
                     self._resting_since.pop(target.key, None)
                 else:
-                    identity = tuple(new if new is not None else old
-                                     for old, new in zip(previous, identity))
+                    merged = tuple(new if new is not None else old for old, new in zip(previous, identity))
+                    identity = EvidenceIdentity._make(merged) if len(merged) == 5 else merged
                     evidence = replace(evidence, identity=identity)
             self._identities[target.key] = identity
         evidence = replace(
             evidence, resting_prompt_held=self._resting_held(target, evidence)
         )
         verdict = resolve_attention(evidence)
-        pane = evidence.codex.pane if evidence.codex is not None else evidence.pane
-        clear = (
-            pane is not None and pane.approval_dialog is False
-            if evidence.codex is not None else pane is not None and pane.shows_no_dialog
-        )
+        clear = evidence.dialog_clear()
         if (self._ledger.confirmed_state(target.key) == STATE_NEEDS_USER
                 and verdict.state in (STATE_BUSY, STATE_DONE_IDLE) and not clear):
             verdict = AttentionVerdict(
                 STATE_UNKNOWN, REASON_EVIDENCE_DISAGREES, TIER_NONE,
                 detail="screen did not confirm that the outstanding dialog closed",
             )
-        facts = evidence.codex.transcript if evidence.codex is not None else evidence.transcript
-        prompt_at = getattr(facts, "newest_user_prompt_at", None)
-        append_at = (
-            facts.last_append_at if evidence.codex is not None
-            else facts.newest_append_at
-        )
+        prompt_at = getattr(evidence.active_transcript(), "newest_user_prompt_at", None)
+        append_at = evidence.append_at()
         new_prompt_at, appended = self._ledger.note_transcript(
             target.key, user_prompt_at=prompt_at, append_at=append_at,
         )
@@ -558,11 +464,8 @@ class AttentionWatcher:
         kind = _toast_kind_for(transition)
         if kind is None:
             return
-        gate = resolve_raise(
-            kind,
-            policy_store_attached=self._read_policy is not None,
-            policy=policy_for(self._read_policy, target),
-        )
+        attached, policy = policy_for(self._read_policy, target)
+        gate = resolve_raise(kind, policy_store_attached=attached, policy=policy)
         if not gate.raises_toast:
             logger.info(
                 gate.log_event or "attention_toast_suppressed",

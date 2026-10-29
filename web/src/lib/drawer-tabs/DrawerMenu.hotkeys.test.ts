@@ -50,7 +50,7 @@ function press(el: Element, key: string, init: KeyboardEventInit = {}): Keyboard
 
 const inMenu = (root: HTMLElement) => root.querySelector('[data-rail-item="dashboards"]')!;
 
-test('row order is the one the team set on 2026-10-13, dashboards first, with no quick links heading and help before documentation and changelog', () => {
+test('row order is the one Alex (Example-owner) set on 2026-10-13, dashboards first (Alex (Example-owner), 2026-10-14), with no quick links heading and help before documentation and changelog', () => {
   const root = render();
   const ids = [...root.querySelectorAll<HTMLElement>('[data-rail-item]')].map((b) => b.dataset.railItem);
   expect(ids).toEqual([

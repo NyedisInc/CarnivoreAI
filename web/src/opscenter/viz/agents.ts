@@ -14,6 +14,7 @@ export function agentWindow(config: Pick<ChartConfig, 'range'>): RangePreset {
   return saved && AGENT_WINDOWS.includes(saved) ? saved : AGENT_DEFAULT_WINDOW;
 }
 
+/* tokens per agent */
 export function agentsPlan(config: ChartConfig, ctx: PlanContext): QueryBody[] {
   const series = { metric: 'total_tokens', operation: 'timeline' as const, group_by: 'conversation_id' };
   const own: ChartConfig = { ...config, range: { mode: 'global', preset: agentWindow(config), zoom: null } };
@@ -31,7 +32,7 @@ const GOLDEN_ANGLE = 137.50776405003785;
 const AGENT_LIGHTNESS: readonly number[] = [0.84, 0.78, 0.72];
 const AGENT_CHROMA: readonly number[] = [0.16, 0.19, 0.22];
 
-/* conversation id */
+/* gives the same */
 export function agentColor(conversationId: string): string {
   const seed = seedOf(conversationId);
   const hue = (((seed * GOLDEN_ANGLE) % 360) + 360) % 360;

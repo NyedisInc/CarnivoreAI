@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { onMount } from 'svelte';
   import { visibilityObserver } from '../visibility-observer';
   import Icon from '../../opscenter/ui/Icon.svelte';
@@ -22,7 +21,6 @@
   const BAR_PX = 2;
   const BAR_GAP_PX = 1;
   const MAX_BARS = 16;
-  /* padding */
   const CHART_FIXED_PX = 30;
   const MIN_BARS = 4;
   const READ_WORDS: Readonly<Record<string, string>> = { 'signed-out': 'signed_out', unavailable: 'no_route', error: 'read_failed' };
@@ -39,6 +37,7 @@
 
   const counts = $derived(countAgents(floorFeedRows()));
   const filter = $derived(activeCountFilter());
+  // there is nothing
   const packSize = $derived(packMachines.data?.machines.length ?? 0);
   const res = $derived(feed ? null : statsFeed(win));
   const fresh = $derived(feed ?? res?.data ?? null);
@@ -173,7 +172,6 @@
 
 <style>
   @layer components {
-    /* padding */
     .dst-row {
       container-type: inline-size;
       display: flex;
@@ -352,7 +350,6 @@
         display: inline;
       }
     }
-    /* padding */
     @container (max-width: 250px) {
       .dst-rate {
         padding: 0;

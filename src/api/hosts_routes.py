@@ -1,23 +1,3 @@
-"""API routes for remote tmux hosts (issue #162, slice S1): add, list, edit, remove.
-
-Deliberately thin, in the ``layouts_routes.py`` pattern: request and
-response shape, auth, error translation and the connection dance. Every rule
-about what a host IS lives in ``src/core/hosts/store.py``; the design is
-``docs/remote-hosts.md``. EVERY USER ACTION IS ONE ROUTE (the API-first
-rule), so the MCP wrapper (#152) is one thin adapter per route:
-
-A probe's verdict is data, never an HTTP error: an unreachable host is a
-200 whose ``probe_state`` names why (``src/core/hosts/probe.py``). The
-connect and attachable routes arrive with later slices.
-
-ERRORS carry ``{"code", "detail"}`` so a client branches on the code, never
-on prose: 400 ``host_key_invalid`` / ``host_key_reserved`` /
-``host_label_invalid`` / ``host_target_invalid`` / ``host_port_invalid`` /
-``host_socket_invalid`` / ``host_socket_reserved`` / ``host_enabled_invalid``;
-404 ``host_not_found`` / ``computer_not_found``; 409 ``host_key_taken`` / ``host_local_fixed`` /
-``host_in_use``; 503 ``hosts_unavailable`` when the datastore could not
-answer.
-"""
 
 from __future__ import annotations
 
@@ -26,11 +6,13 @@ from contextlib import closing
 from typing import Any, Callable, Dict, Tuple
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Request
 from fastapi.concurrency import run_in_threadpool
 
+from src.api.error_response import api_error, soft_failure
 from src.api.auth import require_auth
-from src.core.db import DatastoreUnreadableError, connect, db_path_for
+from src.core.db import DatastoreUnreadableError, db_path_for
+from src.core.db_reuse.core_read import lend_pooled_or_raise
 from src.core.hosts import store
 from src.core.hosts.probe import probe_host
 from src.core.hosts.ssh_exec import SshArgumentError, SshDestination
@@ -50,7 +32,6 @@ router = APIRouter(prefix="/hosts", tags=["hosts"])
 STATUS_OK = "ok"
 STATUS_UNAVAILABLE = "unavailable"
 
-# could not
 _UNAVAILABLE = (DatastoreUnreadableError, store.HostsUnavailable, sqlite3.DatabaseError, OSError)
 
 
@@ -58,10 +39,6 @@ def _db_path():
     from src.config import settings
 
     return db_path_for(settings.get_state_dir())
-
-
-def _error(status: int, code: str, detail: str) -> HTTPException:
-    return HTTPException(status_code=status, detail={"code": code, "detail": detail})
 
 
 def to_model(host: store.Host, counts: Dict[str, int]) -> HostModel:
@@ -103,7 +80,7 @@ def overlay_peers(conn: sqlite3.Connection, hosts: list) -> list:
 
 
 def _run(operation: Callable, *args: Any, **kwargs: Any) -> Tuple[Any, Dict[str, int]]:
-    with closing(connect(_db_path(), create=False)) as conn:
+    with closing(lend_pooled_or_raise(_db_path())) as conn:
         result = operation(conn, *args, **kwargs)
         return result, store.session_counts(conn)
 
@@ -112,35 +89,52 @@ async def _call(operation: Callable, *args: Any, **kwargs: Any) -> Tuple[Any, Di
     try:
         return await run_in_threadpool(_run, operation, *args, **kwargs)
     except store.HostInvalid as exc:
-        raise _error(400, exc.code, str(exc))
+        raise api_error(400, exc.code, exc, extra={"reason": str(exc)}) from exc
     except store.HostNotFound as exc:
-        raise _error(404, "host_not_found", str(exc))
+        raise api_error(404, "host_not_found", exc) from exc
     except store.HostKeyTaken as exc:
-        raise _error(409, "host_key_taken", str(exc))
+        raise api_error(409, "host_key_taken", exc) from exc
     except store.HostLocalFixed as exc:
-        raise _error(409, "host_local_fixed", str(exc))
+        raise api_error(409, "host_local_fixed", exc) from exc
     except store.HostInUse as exc:
-        raise _error(409, "host_in_use", str(exc))
+        raise api_error(409, "host_in_use", exc) from exc
     except store.ComputerUnknown as exc:
-        raise _error(404, "computer_not_found", str(exc))
+        raise api_error(404, "computer_not_found", exc) from exc
     except _UNAVAILABLE as exc:
-        logger.warning("hosts_unavailable", error=str(exc), error_type=type(exc).__name__)
-        raise _error(503, "hosts_unavailable", str(exc))
+        raise api_error(503, "hosts_unavailable", exc) from exc
+
+
+async def _forget_connection(request: Request, key: str) -> None:
+    manager = getattr(request.app.state, "session_manager", None)
+    if manager is not None:
+        await manager.hosts.forget(key)
 
 
 @router.get("", response_model=HostsResponse, dependencies=[Depends(require_auth)])
 async def list_hosts() -> HostsResponse:
+    """Every host, this machine first, or an explicit CANNOT DETERMINE.
+
+    Description: 200 in both outcomes, like the Layouts read, so a client
+      can tell "no hosts" from "could not read the hosts".
+    Output: HostsResponse.
+    Example: GET /api/v1/hosts
+    """
     try:
         hosts, counts = await run_in_threadpool(_run, lambda conn: overlay_peers(conn, store.list_hosts(conn)))
     except _UNAVAILABLE as exc:
-        logger.info("hosts_unavailable", reason=str(exc))
-        return HostsResponse(status=STATUS_UNAVAILABLE, detail=str(exc))
+        return HostsResponse(status=STATUS_UNAVAILABLE, detail=soft_failure("datastore_unavailable", exc, step="list_hosts"))
     return HostsResponse(status=STATUS_OK, hosts=[to_model(h, counts) for h in hosts])
 
 
 @router.post("", response_model=HostModel, dependencies=[Depends(require_auth)])
 async def add_host(body: CreateHostRequest) -> HostModel:
     """Add a machine by its ssh target. Stored with ``probe_state`` 'never'.
+
+    Description: the key is generated server side (Alex (Adoom666),
+      2026-09-28), never supplied by the caller; the response carries it.
+    Raises: HTTPException 400 (a field is invalid), 409 (key generation
+      exhausted its retries), 503.
+    Example: POST /api/v1/hosts {"label": "Studio", "ssh_target": "studio"}
     """
     host, counts = await _call(store.create_host, label=body.label,
                                ssh_target=body.ssh_target, ssh_port=body.ssh_port,
@@ -156,46 +150,73 @@ async def get_host(key: str) -> HostModel:
 
 
 @router.patch("/{key}", response_model=HostModel, dependencies=[Depends(require_auth)])
-async def update_host(key: str, body: UpdateHostRequest) -> HostModel:
+async def update_host(key: str, body: UpdateHostRequest, request: Request) -> HostModel:
     """Change a remote host's label, enabled flag or socket.
+
+    Raises: HTTPException 400, 404, 409 (this machine, or a socket change
+      while sessions run there), 503.
+    Example: PATCH /api/v1/hosts/studio {"label": "Studio (studio)"}
     """
     host, counts = await _call(store.update_host, key, label=body.label,
                                enabled=body.enabled, socket=body.socket)
+    if body.enabled is not None or body.socket is not None:
+        await _forget_connection(request, key)
     return to_model(host, counts)
 
 
 @router.delete("/{key}", response_model=HostDeletedResponse,
                dependencies=[Depends(require_auth)])
-async def delete_host(key: str) -> HostDeletedResponse:
+async def delete_host(key: str, request: Request) -> HostDeletedResponse:
     """Remove a host no sessions row names. Nothing on that machine is touched.
+
+    Raises: HTTPException 404, 409 (this machine, or sessions still name it), 503.
+    Example: DELETE /api/v1/hosts/studio
     """
     await _call(store.delete_host, key)
+    await _forget_connection(request, key)
     return HostDeletedResponse(key=key)
 
 
 @router.post("/{key}/probe", response_model=HostModel, dependencies=[Depends(require_auth)])
-async def probe(key: str) -> HostModel:
+async def probe(key: str, request: Request) -> HostModel:
     """Probe a remote host over its own ssh connection and store what it found.
+
+    Description: one ``ssh -G`` on this machine, then one connection that
+      measures the login shell, tmux, the agents, the machine id and
+      whether the far box runs its own Carnivore. Every outcome, an
+      unreachable host or a changed host key included, is stored and
+      answered as ``probe_state``; the HTTP status only speaks for the
+      request itself.
+    Raises: HTTPException 404, 409 (this machine), 400 (a stored target or
+      socket the transport refuses), 503.
+    Example: POST /api/v1/hosts/studio/probe
     """
     host, _ = await _call(store.get_host, key)
     if host.is_local:
-        raise _error(409, "host_local_fixed", "'local' is this machine; it is never probed over ssh")
+        raise api_error(409, "host_local_fixed")
     try:
         dest = SshDestination(host.ssh_target or "", host.ssh_port)
     except SshArgumentError as exc:
-        raise _error(400, "host_target_invalid", str(exc))
+        raise api_error(400, "host_target_invalid", exc, extra={"reason": str(exc)}) from exc
     try:
         result = await probe_host(dest, socket=host.socket or store.DEFAULT_REMOTE_SOCKET)
     except store.HostInvalid as exc:
-        raise _error(400, exc.code, str(exc))
+        raise api_error(400, exc.code, exc, extra={"reason": str(exc)}) from exc
     logger.info("host_probed", host=key, verdict=result.verdict, elapsed_ms=result.elapsed_ms)
     written, counts = await _call(store.record_probe, key, result.host_columns())
+    await _forget_connection(request, key)
     return to_model(written, counts)
 
 
 @router.put("/{key}/computer", response_model=HostModel, dependencies=[Depends(require_auth)])
 async def link_computer(key: str, body: LinkComputerRequest) -> HostModel:
     """Say which Pack computer an ssh host belongs to; null clears the link (#2061).
+
+    Description: the link is the owner's word, stored on the host row, so the Pack page joins the host to the computer
+      by it first and by the ssh target text only as a fallback. The ``computers`` topic is told, since the page reads
+      the merged roster from that push.
+    Raises: HTTPException 404 (no such host, or no such computer), 409 (this machine or a peer row), 503.
+    Example: PUT /api/v1/hosts/studio/computer {"computer_install_id": "iid-studio"}
     """
     host, counts = await _call(store.link_computer, key, body.computer_install_id)
     from src.core import resource_push

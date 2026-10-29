@@ -23,6 +23,6 @@ async def pack_refresh(body: RefreshBody) -> Dict[str, Any]:
     """Carry a project's latest code to its replicas (``project``) and/or ask every tracking machine to refresh its install (``install``).
 
     Output: ``{code?: {project_uid, results}, install?: [{machine, status}]}``. Raises: 404/409 from the project sync.
-    Example: POST /api/v1/pack/refresh {"project": "ledgerbot", "install": true}
+    Example: POST /api/v1/pack/refresh {"project": "trader", "install": true}
     """
     return await refresh_fanout.fan_out(body.project, body.install)

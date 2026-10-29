@@ -56,7 +56,6 @@ function planSpanDown(
   });
   const next = repairSpans({ ...layout, rows });
 
-  // something else
   const after = computeTracks({ rows: next.rows, width: widthPx, height: 0, gutter, metas });
   for (let step = 1; step <= reach; step += 1) {
     for (const cell of after.rows[place.rowAt + step]?.cells ?? []) {

@@ -10,6 +10,8 @@ const repoRoot = path.join(__dirname, '..', '..');
 
 export const themesDir = path.join(repoRoot, 'client', 'css', 'themes');
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 export function installEnv(opts = {}) {
     const rafPending = new Map();
@@ -18,11 +20,13 @@ export function installEnv(opts = {}) {
     const docListeners = [];
     const mqlListeners = [];
     const body = { children: [] };
+    const attrs = { ...(opts.attrs || {}) };
+    const observers = [];
 
 
     const doc = {
         hidden: !!opts.hidden,
-        documentElement: { dataset: {}, getAttribute: () => null },
+        documentElement: { dataset: {}, getAttribute: (k) => (k in attrs ? attrs[k] : null) },
         body,
         createElement(tag) {
             const el = {
@@ -76,6 +80,12 @@ export function installEnv(opts = {}) {
         },
     };
 
+    globalThis.MutationObserver = class {
+        constructor(cb) { this.cb = cb; this.options = null; this.live = false; observers.push(this); }
+        observe(_target, options) { this.options = options; this.live = true; }
+        disconnect() { this.live = false; }
+    };
+
     globalThis.window = win;
     globalThis.document = doc;
     globalThis.getComputedStyle = () => ({ getPropertyValue: () => '' });
@@ -92,6 +102,9 @@ export function installEnv(opts = {}) {
     });
 
     return {
+        observers,
+        setAttr(k, v) { if (v === null) delete attrs[k]; else attrs[k] = v; },
+        fire() { for (const o of observers) if (o.live) o.cb([]); },
         rafPending, winListeners, docListeners, mqlListeners, body, doc, win, mql,
         flush(now) {
             const due = [...rafPending.entries()];

@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 import os
-import subprocess
 from contextlib import closing
-from datetime import datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -36,17 +34,8 @@ def world(tmp_path, monkeypatch):
     service.configure(None, None)
 
 
-def _tm(stdout="", returncode=0):
-    return lambda: subprocess.CompletedProcess(["tmutil"], returncode, stdout=stdout, stderr="")
-
-
-def _tm_at(age_hours):
-    taken = datetime.fromtimestamp(NOW) - timedelta(hours=age_hours)
-    return _tm(f"/Volumes/TM/Backups.backupdb/mac/{taken:%Y-%m-%d-%H%M%S}.backup\n")
-
-
-def _run(w, tmutil=None, now=NOW, volume=None):
-    return runner.run_checks(w.state, w.db, now=now, tmutil=tmutil or _tm_at(1), volume=volume or w.drive)
+def _run(w, now=NOW, volume=None):
+    return runner.run_checks(w.state, w.db, now=now, volume=volume or w.drive)
 
 
 def _active(w):
@@ -92,39 +81,10 @@ def test_usb_check_is_off_unless_a_drive_is_named(world, monkeypatch):
     assert checks.backup_volume() is None and checks.check_usb_backup(NOW) is None
     monkeypatch.setenv("CARNIVORE_BACKUP_VOLUME", "")
     assert checks.backup_volume() is None
-    outcome = runner.run_checks(world.state, world.db, now=NOW, tmutil=_tm_at(1))
+    outcome = runner.run_checks(world.state, world.db, now=NOW)
     assert K.KEY_USB not in outcome and K.KEY_USB not in _active(world)
     monkeypatch.setenv("CARNIVORE_BACKUP_VOLUME", str(world.drive / "gone"))
-    assert runner.run_checks(world.state, world.db, now=NOW, tmutil=_tm_at(1))[K.KEY_USB] == "raised"
-
-
-def test_time_machine_stale_and_resolve(world):
-    _backup_dir(world, age_days=1)
-    _run(world, _tm_at(2))
-    assert K.KEY_TIME_MACHINE not in _active(world)
-    _run(world, _tm_at(K.TIME_MACHINE_MAX_AGE_HOURS + 5))
-    row = _active(world)[K.KEY_TIME_MACHINE]
-    assert row["title_key"] == K.TITLE_TM_STALE and row["params"]["hours"] == 29
-    assert _run(world, _tm_at(1))[K.KEY_TIME_MACHINE] == "resolved"
-    assert K.KEY_TIME_MACHINE not in _active(world)
-
-
-@pytest.mark.parametrize("answer", [_tm("", returncode=1), _tm("not a path\n"), _tm("")])
-def test_time_machine_no_access_is_unknown_never_ok(world, answer):
-    _backup_dir(world, age_days=1)
-    assert _run(world, answer)[K.KEY_TIME_MACHINE] == "kept"
-    assert K.KEY_TIME_MACHINE not in _active(world)
-    assert _run(world, answer)[K.KEY_TIME_MACHINE] == "raised"
-    assert _active(world)[K.KEY_TIME_MACHINE]["title_key"] == K.TITLE_TM_UNKNOWN
-
-
-@pytest.mark.parametrize("error", [FileNotFoundError("tmutil"), subprocess.TimeoutExpired("tmutil", 15)])
-def test_time_machine_missing_tool_or_timeout_is_unknown(error):
-    def boom():
-        raise error
-
-    verdict = checks.check_time_machine(NOW, boom)
-    assert verdict.state == checks.UNKNOWN and verdict.title_key == K.TITLE_TM_UNKNOWN
+    assert runner.run_checks(world.state, world.db, now=NOW)[K.KEY_USB] == "raised"
 
 
 def test_boot_seeding_retires_the_catchup_row_and_the_restore_point_alerts(world, tmp_path, monkeypatch):
@@ -140,126 +100,27 @@ def test_boot_seeding_retires_the_catchup_row_and_the_restore_point_alerts(world
     with closing(store._storage.connect(True)) as conn:
         conn.execute("UPDATE automations SET target = REPLACE(target, 'backup_health_check', 'save_catchup')")
         conn.commit()
-    for key in K.RETIRED_ALERT_KEYS:
+    assert "backup_health.time_machine" in K.RETIRED_ALERT_KEYS
+    for key in K.RETIRED_ALERT_KEYS + ("backup_health.time_machine",):
         service.raise_alert(key, source=K.ALERT_SOURCE, severity=AK.SEV_WARN, title_key="app_alert.x.title", db_path=world.db)
-    assert set(K.RETIRED_ALERT_KEYS) <= set(_active(world))
+    assert set(K.RETIRED_ALERT_KEYS) | {"backup_health.time_machine"} <= set(_active(world))
     seed_backup.apply(store, world.db)
     seed_backup.apply(store, world.db)
     rows = store.list_all()
     assert [r["seed_key"] for r in rows] == [K.HEALTH_SEED_KEY]
     assert seeded["automation_id"] not in {r["automation_id"] for r in rows} and owned["automation_id"] not in {r["automation_id"] for r in rows}
-    assert not set(K.RETIRED_ALERT_KEYS) & set(_active(world))
+    assert not (set(K.RETIRED_ALERT_KEYS) | {"backup_health.time_machine"}) & set(_active(world))
     _backup_dir(world, age_days=1)
     outcome = _run(world)
-    assert outcome[K.KEY_USB] == outcome[K.KEY_TIME_MACHINE] == "resolved"
-    assert set(outcome) - {K.KEY_USB, K.KEY_TIME_MACHINE} == {
+    assert outcome[K.KEY_USB] == "resolved"
+    assert set(outcome) - {K.KEY_USB} == {
         K.KEY_VAULT_UNAVAILABLE, K.KEY_VAULT_STALE, K.KEY_VAULT_UNCOVERED, K.KEY_VAULT_OVER_CAP, K.KEY_VAULT_DAMAGED}
-
-
-@pytest.mark.parametrize("answer", [_tm("", returncode=1), _tm("not a path\n"), _tm("")])
-def test_time_machine_no_access_is_unknown_never_ok(world, answer):
-    _backup_dir(world, age_days=1)
-    assert _run(world, answer)[K.KEY_TIME_MACHINE] == "kept"
-    assert K.KEY_TIME_MACHINE not in _active(world)
-    assert _run(world, answer)[K.KEY_TIME_MACHINE] == "raised"
-    assert _active(world)[K.KEY_TIME_MACHINE]["title_key"] == K.TITLE_TM_UNKNOWN
-
-
-@pytest.mark.parametrize("error", [FileNotFoundError("tmutil"), subprocess.TimeoutExpired("tmutil", 15)])
-def test_time_machine_missing_tool_or_timeout_is_unknown(error):
-    def boom():
-        raise error
-
-    verdict = checks.check_time_machine(NOW, boom)
-    assert verdict.state == checks.UNKNOWN and verdict.title_key == K.TITLE_TM_UNKNOWN
-
-
-def test_boot_seeding_retires_the_catchup_row_and_the_restore_point_alerts(world, tmp_path, monkeypatch):
-    from src.core.automations import seed_backup, targets
-    from src.core.automations.store import AutomationStore
-    from src.core.automations.store_schema import storage_for
-
-    monkeypatch.setitem(targets.RUNNERS, "recipe", lambda *a, **k: None)
-    store = AutomationStore(storage_for(tmp_path / "auto"))
-    target = {"kind": "recipe", "recipe": "backup_health_check", "params": {}}
-    seeded = store.create(name="save catch-up", cron="0 * * * *", target=target, seed_key=K.RETIRED_CATCHUP_SEED_KEY)
-    owned = store.create(name="mine", cron="5 * * * *", target=target)
-    with closing(store._storage.connect(True)) as conn:
-        conn.execute("UPDATE automations SET target = REPLACE(target, 'backup_health_check', 'save_catchup')")
-        conn.commit()
-    for key in K.RETIRED_ALERT_KEYS:
-        service.raise_alert(key, source=K.ALERT_SOURCE, severity=AK.SEV_WARN, title_key="app_alert.x.title", db_path=world.db)
-    assert set(K.RETIRED_ALERT_KEYS) <= set(_active(world))
-    seed_backup.apply(store, world.db)
-    seed_backup.apply(store, world.db)
-    rows = store.list_all()
-    assert [r["seed_key"] for r in rows] == [K.HEALTH_SEED_KEY]
-    assert seeded["automation_id"] not in {r["automation_id"] for r in rows} and owned["automation_id"] not in {r["automation_id"] for r in rows}
-    assert not set(K.RETIRED_ALERT_KEYS) & set(_active(world))
-    _backup_dir(world, age_days=1)
-    outcome = _run(world)
-    assert outcome[K.KEY_USB] == outcome[K.KEY_TIME_MACHINE] == "resolved"
-    assert set(outcome) - {K.KEY_USB, K.KEY_TIME_MACHINE} == {
-        K.KEY_VAULT_UNAVAILABLE, K.KEY_VAULT_STALE, K.KEY_VAULT_UNCOVERED, K.KEY_VAULT_OVER_CAP, K.KEY_VAULT_DAMAGED}
-
-
-def _tm_said(stderr: str, stdout: str = "", returncode: int = 1):
-    return lambda: subprocess.CompletedProcess(["tmutil"], returncode, stdout=stdout, stderr=stderr)
-
-
-@pytest.mark.parametrize("said,destinations,reason", [
-    ("tmutil: latestbackup requires Full Disk Access privileges.", None, K.TM_REASON_ACCESS),
-    ("tmutil: No machine directory found for host.", None, K.TM_REASON_NO_DESTINATION),
-    ("something odd", _tm("No destinations configured.\n", returncode=0), K.TM_REASON_NO_DESTINATION),
-    ("something odd", _tm("Name : TimeMachine\n", returncode=0), K.TM_REASON_UNREADABLE),
-    ("something odd", None, K.TM_REASON_UNREADABLE),
-])
-def test_time_machine_unreadable_says_why(said, destinations, reason):
-    verdict = checks.check_time_machine(NOW, _tm_said(said), destinations=destinations)
-    assert verdict.state == checks.UNKNOWN and verdict.params == {"reason": reason}
-    assert verdict.detail_key == K.DETAIL_TM_UNKNOWN_BY_REASON[reason]
-
-
-def _timeout():
-    raise subprocess.TimeoutExpired("tmutil", 15)
-
-
-def test_time_machine_timeout_while_backup_running_never_alerts(world):
-    _backup_dir(world, age_days=1)
-    running = _tm("    Running = 1;\n")
-    for _ in range(K.TM_UNKNOWN_PASSES_TO_ALERT + 1):
-        runner.run_checks(world.state, world.db, now=NOW, tmutil=_timeout, volume=world.drive, tm_status=running)
-    assert K.KEY_TIME_MACHINE not in _active(world)
-    assert checks.check_time_machine(NOW, _timeout, status=running).state == checks.BUSY
-
-
-def test_time_machine_timeout_with_backup_idle_is_unknown():
-    idle = _tm("    Running = 0;\n")
-    assert checks.check_time_machine(NOW, _timeout, status=idle).state == checks.UNKNOWN
-
-
-def test_time_machine_unknown_debounce_then_clears(world):
-    _backup_dir(world, age_days=1)
-    kw = {"tmutil": _timeout, "volume": world.drive}
-    assert runner.run_checks(world.state, world.db, now=NOW, **kw)[K.KEY_TIME_MACHINE] == "kept"
-    assert K.KEY_TIME_MACHINE not in _active(world)
-    assert runner.run_checks(world.state, world.db, now=NOW, **kw)[K.KEY_TIME_MACHINE] == "raised"
-    assert K.KEY_TIME_MACHINE in _active(world)
-    assert _run(world, _tm_at(1))[K.KEY_TIME_MACHINE] == "resolved"
-    assert K.KEY_TIME_MACHINE not in _active(world)
-    assert runner.run_checks(world.state, world.db, now=NOW, **kw)[K.KEY_TIME_MACHINE] == "kept"
-    assert K.KEY_TIME_MACHINE not in _active(world)
-
-
-def test_time_machine_stale_still_fires_at_once(world):
-    _backup_dir(world, age_days=1)
-    assert _run(world, _tm_at(K.TIME_MACHINE_MAX_AGE_HOURS + 5))[K.KEY_TIME_MACHINE] == "raised"
 
 
 def test_usb_alert_from_a_named_drive_resolves_when_the_check_goes_off(world, monkeypatch):
     monkeypatch.setenv("CARNIVORE_BACKUP_VOLUME", str(world.drive / "gone"))
-    assert runner.run_checks(world.state, world.db, now=NOW, tmutil=_tm_at(1))[K.KEY_USB] == "raised"
+    assert runner.run_checks(world.state, world.db, now=NOW)[K.KEY_USB] == "raised"
     assert K.KEY_USB in _active(world)
     monkeypatch.delenv("CARNIVORE_BACKUP_VOLUME")
-    assert K.KEY_USB not in runner.run_checks(world.state, world.db, now=NOW, tmutil=_tm_at(1))
+    assert K.KEY_USB not in runner.run_checks(world.state, world.db, now=NOW)
     assert K.KEY_USB not in _active(world)

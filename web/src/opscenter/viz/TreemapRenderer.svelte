@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Select from '../../lib/base/Select.svelte';
+  import { measureOptions } from './settings-options';
   import EmptyState from './EmptyState.svelte';
   import { framedTitle } from '../shell/frame-header.svelte';
   import { emptyLine } from './empty';
@@ -16,6 +18,7 @@
   import { treemapDepth, treemapTree, type ProviderModels, type RankRow, type TreeNode } from './shape';
   import { VIZ_SPECS } from './specs';
   import { watchVisible } from './visible';
+  import { escapeHtml } from './tooltip-html';
 
   let { config, tier }: { config: ChartConfig; tier: Tier } = $props();
   const framing = framedTitle();
@@ -68,7 +71,7 @@
       backgroundColor: 'transparent',
       textStyle: { fontFamily },
       tooltip: { confine: true, backgroundColor: color('var(--oc-ground-raised)', '#10232b'), borderColor: color('var(--oc-line-rule)', '#42616a'), textStyle: { color: text, fontSize: 12 },
-        formatter: (info: { treePathInfo: { name: string }[]; value: number }) => `${info.treePathInfo.slice(1).map((step) => step.name).join(' / ')}: ${formatMetric(info.value, unit).text}` },
+        formatter: (info: { treePathInfo: { name: string }[]; value: number }) => `${info.treePathInfo.slice(1).map((step) => escapeHtml(step.name)).join(' / ')}: ${formatMetric(info.value, unit).text}` },
       series: [{
         type: 'treemap', animation: false, data: drawable(color), left: 0, right: 0, top: 0, bottom: 0, roam: false, nodeClick: false, breadcrumb: { show: false },
         squareRatio: 1, visibleMin: 1,
@@ -101,9 +104,7 @@
   <div bind:this={node} class="viz-tree__canvas" role="img" aria-label={t('viz.treemap_label', { title: config.title })}></div>
   <span bind:this={probe} hidden></span>
   <VizSettings {config} metric={false}>
-    <label>{t('viz.measure')} <select value={measure} onchange={(event) => { changeAnalyticsConfig({ ...config, options: { ...config.options, measure: event.currentTarget.value } }); }}>
-      <option value="tokens">{t('viz.measure_tokens')}</option><option value="cost">{t('viz.measure_cost')}</option>
-    </select></label>
+    <Select size="sm" label={t('viz.measure')} value={measure} options={measureOptions()} onchange={(event) => { changeAnalyticsConfig({ ...config, options: { ...config.options, measure: event.currentTarget.value } }); }} />
   </VizSettings>
 </section>
 

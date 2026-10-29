@@ -35,8 +35,8 @@ class ScreenReuse:
         self._lock = threading.Lock()
         self._kept: Dict[Hashable, _Kept] = {}
 
-    def reusable(self, pane: Hashable, row: Mapping[str, Any],
-                 now_wall: float, now_mono: float) -> Optional[str]:
+    def reusable(self, pane: Hashable, row: Mapping[str, Any], now_wall: float, now_mono: float,
+                 *, max_reuse_seconds: Optional[float] = None) -> Optional[str]:
         key = screen_key(row)
         if key is None:
             return None
@@ -44,7 +44,7 @@ class ScreenReuse:
             kept = self._kept.get(pane)
         if kept is None or kept.key != key:
             return None
-        if now_wall < kept.started_wall or now_mono - kept.started_mono >= self._max_reuse:
+        if now_wall < kept.started_wall or now_mono - kept.started_mono >= (self._max_reuse if max_reuse_seconds is None else max_reuse_seconds):
             return None
         if row["window_activity"] >= math.floor(kept.started_wall):
             return None

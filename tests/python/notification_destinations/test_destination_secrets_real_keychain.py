@@ -49,6 +49,7 @@ REAL_KEYCHAIN_ENV = "CLOUDE_REAL_KEYCHAIN_TEST"
 @pytest.mark.skipif(os.environ.get(REAL_KEYCHAIN_ENV) != "1",
                     reason=f"opt-in: set {REAL_KEYCHAIN_ENV}=1 (a locked login keychain would pop an unlock dialog)")
 def test_real_security_round_trip_of_a_base64url_bundle_under_a_throwaway_service():
+    """RED WHEN: the encoded bundle does not survive the real stdin write and `-w` read, or delete leaves it behind."""
     service = f"ai.carnivore.test.notif-secrets-{stdlib_secrets.token_hex(4)}"
     dest = f"d_{stdlib_secrets.token_hex(6)}"
     assert service not in relay_keychain._PRODUCTION_SERVICES and service != sec.SERVICE

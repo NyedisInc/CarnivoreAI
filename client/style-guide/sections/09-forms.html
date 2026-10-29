@@ -49,7 +49,7 @@ calls <code>window.TextPromptModal.open()</code>, the function the sidebar's "ne
     <dd>Say what to correct, inline, under the field, in <code>--oc-coral</code> text on a <code>--oc-ground-raised</code>
         line with a 2px coral left edge (the base <code>State</code> error recipe). Never a toast for a field error.</dd>
     <dt>search</dt>
-    <dd>Search lives in the agents drawer, not the header (#428); a small dropdown button (<code>.ds-mode</code>: the active mode's icon and a chevron) to the right of the box
+    <dd>Search lives in the agents drawer, not the header (#428); a small dropdown button (<code>[data-ds-mode]</code>, the base Button: the active mode's icon and a chevron) to the right of the box
         picks what the text searches: names (default), prompts, and context (the deepsearch plugin's). Its rows
         are the shared cascade menu's radio items, an icon and one word each, no description and no tooltip
         (<code>DrawerSearch.svelte</code>, <code>search-modes.ts</code>).</dd>
@@ -67,6 +67,10 @@ calls <code>window.TextPromptModal.open()</code>, the function the sidebar's "ne
 notes drawer is a markdown editor, not a textarea pattern to copy (<a href="#chrome">drawers</a>).</p>
 
 <h3 class="sg-h3" id="forms-select">select</h3>
+<p><strong>Not the default.</strong> The default dropdown is the <a href="#forms-picker">picker</a>; a native
+<code>&lt;select&gt;</code> with the field recipe is for when the owner explicitly asks for one, or in the classic
+<code>client/js</code> toolbars that have not been ported. In a compiled surface a sort or a pick from a menu is
+<code>SortControl</code> or a <code>CascadeMenu</code> with radio items (<a href="#tables">sorting</a>, <a href="#menus">menus</a>).</p>
 
 <h3 class="sg-h3" id="forms-check">checkbox</h3>
 <div class="sg-specimen">
@@ -79,8 +83,8 @@ notes drawer is a markdown editor, not a textarea pattern to copy (<a href="#chr
             </label>
         </div>
         <div class="settings-field settings-field-checkbox">
-            <label class="settings-field-label" for="sg-check-zarcrest">
-                <input type="checkbox" id="sg-check-zarcrest">
+            <label class="settings-field-label" for="sg-check-demo-2">
+                <input type="checkbox" id="sg-check-demo-2">
                 notify when a session finishes
             </label>
         </div>
@@ -102,7 +106,7 @@ on its edge and text ALWAYS, and ticking it changes only the tick: the row's siz
                 </label>
                 <label class="restart-picker__option" for="sg-radio-2">
                     <input type="radio" name="sg-radio" id="sg-radio-2">
-                    <span class="restart-picker__title">keyc</span>
+                    <span class="restart-picker__title">cld</span>
                 </label>
                 <label class="restart-picker__option is-unavailable" for="sg-radio-3" title="this wrapper is not installed on this machine">
                     <input type="radio" name="sg-radio" id="sg-radio-3" disabled>
@@ -133,6 +137,8 @@ stays visible and named, dimmed, with its reason in a <code>title</code>; never 
     <dd>Use a switch for something that needs a confirm step (use a button) or for one of several exclusive choices (use
         radios).</dd>
     <dt>access</dt>
+    <dd>A native checkbox inside its label, or a <code>button role="switch"</code> with <code>aria-checked</code>. The
+        state is also said in words (the label changes to the working verb while a request is in flight).</dd>
 </dl>
 
 <h3 class="sg-h3" id="forms-segmented">segmented control</h3>
@@ -180,6 +186,16 @@ row of buttons with <code>aria-selected</code>, the chosen one on the tint groun
 </div>
 <dl class="sg-facts">
     <dt>use</dt>
+    <dd><strong>THE DEFAULT DROPDOWN: use it for EVERY choice list, short or long, unless told otherwise.</strong> A native
+        <code>&lt;select&gt;</code> (the OS menu, no logo, no groups, off-theme) only when the owner asks for one by name
+        (Alex (example-owner), 2026-10-03: "this should be the default unless said to do otherwise"). It started on the ai settings
+        (BYOAI, #1201): a model, a connection, a voice, a provider preset, and now the destination kind of the notifications form.
+        <code>&lt;ModelPicker items={rows} value={id} onChange={(id) =&gt; ...} label="model" /&gt;</code>
+        (<code>web/src/lib/byoai/ModelPicker.svelte</code>, rules in <code>picker-logic.ts</code>, look in
+        <code>model-picker.css</code>, classes <code>.ai-pick*</code>). Never a <code>datalist</code> either: it filters by the
+        field's current text, so a field already holding a model offered only that model (the "only 1" bug). Rows are
+        <code>PickItem</code>s; <code>modelItems()</code> builds them from a connection's models and
+        <code>kindItems()</code> (<code>notifications/destinations/form-logic.ts</code>) from the destination kinds.</dd>
     <dt>logo slot</dt>
     <dd>Set <code>preset</code> on a row to a mark id and the one-colour service logo draws before the label and in the closed
         field (<code>ProviderMark</code>, <a href="#icons-ai">ai provider logos</a>). Add a new service's mark to

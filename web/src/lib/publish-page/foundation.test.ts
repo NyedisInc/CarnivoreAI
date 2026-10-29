@@ -53,7 +53,7 @@ describe('the address', () => {
         expect(parseNodeHash('#warez/publish/x')).toEqual({ scope: 'publish', page: 'tab', tab: 'submissions' });
         expect(catalogHashItem('#warez/publish/x')).toBeNull();
         expect(catalogHashItem('#warez/publish')).toBeNull();
-        expect(catalogHashItem('#warez/acme/sme')).toBe('acme/sme');
+        expect(catalogHashItem('#warez/alex/sme')).toBe('alex/sme');
     });
 
     it('openPublishPage writes the tab fragment', () => {
@@ -167,7 +167,7 @@ function fakeHost(over: Partial<PageHost> = {}): { host: PageHost; calls: Record
     const count = <T>(name: string, value: T) => (): Promise<T> => { calls[name] = (calls[name] ?? 0) + 1; return Promise.resolve(value); };
     const host = {
         catalogSession: count('session', { signed_in: true }),
-        account: count('account', { handle: 'acme', handle_status: 'confirmed', registered: true }),
+        account: count('account', { handle: 'alex', handle_status: 'confirmed', registered: true }),
         mine: count('mine', parseMine({ submissions: [{ submission_id: 'ab12', status: 'pending', gate_state: 'gating', kind: 'skill', name: 'x' }] })),
         listSkills: count('folders', { skills: [] }),
         limits: count('limits', parseLimits({ per_day: 5, used_today: 1 })),
@@ -179,7 +179,7 @@ function fakeHost(over: Partial<PageHost> = {}): { host: PageHost; calls: Record
         sendHero: count('media', { submission_id: 'cd34' }),
         appeal: count('appeal', undefined),
         withdraw: count('withdraw', undefined),
-        register: count('register', { handle: 'acme', handle_status: 'pending', registered: true }),
+        register: count('register', { handle: 'alex', handle_status: 'pending', registered: true }),
         ...over,
     } as unknown as PageHost;
     return { host, calls };
@@ -329,7 +329,7 @@ describe('the page store: each reload trigger reloads exactly its sources (D25)'
         await actions.withdraw('ab12');
         expect(calls).toEqual({ withdraw: 1, mine: 1, limits: 1, facts: 1 });
         reset();
-        await actions.register({ handle: 'acme' });
+        await actions.register({ handle: 'alex' });
         expect(calls).toEqual({ register: 1, account: 1, limits: 1 });
         reset();
         await actions.refresh();

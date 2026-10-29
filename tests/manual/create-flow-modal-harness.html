@@ -26,6 +26,10 @@
 <script>
 /**
  * The recorder every phase writes into.
+ *
+ * `posts` is the load-bearing field: it is every request the flow would
+ * have sent, in order, so "did anything get created before the folder
+ * step answered" is a question with an answer rather than an opinion.
  */
 window.__cf = {
     posts: [],
@@ -216,6 +220,11 @@ window.__cf.startClone = function () {
     return true;
 };
 
+// THE CSP CONTROL, PLANTED FROM THIS SCRIPT rather than from the markup,
+// so the listener installed above is already there to hear it. An image
+// from another origin is refused by `default-src 'self'`, and a page that
+// reported NO violation for it would be a page whose CSP is not on -
+// which would make every other reading here worthless.
 window.__cf.plantCspControl = function () {
     var img = document.createElement('img');
     img.src = 'https://cdn.jsdelivr.net/npm/nothing-here.png';

@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 
 from src.api import projects_service
 from src.api.auth import require_auth
-from src.api.session_background_image_routes import _read_capped
+from src.api.capped_reads import read_capped_upload
 from src.config import settings
 from src.core import resource_push, terminal_background
 from src.core.companies import hero_art_gen, hero_images, hero_thumbs, store
@@ -42,7 +42,7 @@ def _notify(kind: str) -> None:
 
 async def _put(kind: str, row_id: int, file: UploadFile) -> dict:
     max_bytes = settings.load_auth_config().uploads.max_size_mb * 1024 * 1024
-    data = await _read_capped(file, max_bytes)
+    data = await read_capped_upload(file, max_bytes)
     ext = terminal_background.sniff_image_extension(data[: terminal_background.SNIFF_LENGTH])
     logger.info("api_upload_hero_image", kind=kind, row_id=row_id, size=len(data), sniffed=ext)
     if ext is None:

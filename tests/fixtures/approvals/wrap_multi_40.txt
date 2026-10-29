@@ -1,0 +1,27 @@
+           Claude Code v2.1.285
+ ▐▛███▛█   rig-model[1m]
+▝▜██████▀  API Usage Billing
+ ▝▝   ▝▝   /…/T/tmprigwkkkk/cw
+
+
+❯ RIG:multi40 please
+────────────────────────────────────────
+←  ☐ Top  ✔ Submit  →
+
+Which toppings do you want on the large
+pizza tonight for the whole team?
+
+❯ 1. [ ] Extra mozzarella cheese
+         a long description that will
+         wrap in a narrow pane for sure
+  2. [ ] Smoked ham and pineapple
+         b
+  3. [ ] Black olives
+         c
+  4. [ ] Type something
+     Submit
+────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · ↑/↓ to navigate · Esc
+to cancel

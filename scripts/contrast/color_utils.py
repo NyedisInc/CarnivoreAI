@@ -1,17 +1,3 @@
-"""WCAG 2.1 contrast utilities shared by the theme audit script and the
-``tests/test_theme_contrast.py`` regression test.
-
-Resolves a theme's effective CSS custom properties (base ``:root`` defaults
-in ``client/css/styles.css`` overlaid by that theme's ``theme.json``
-``cssVars``), parses colors to sRGB, and computes the WCAG relative
-luminance / contrast ratio.
-
-THREE-OUTCOME RULE: every resolution either returns a concrete ``(r, g, b)``
-tuple or raises ``ColorResolutionError`` naming exactly what could not be
-resolved (an unresolved ``var()`` chain, a color function we don't parse, a
-gradient/image with no single color). Callers must treat that exception as
-"could not evaluate", never as a pass and never as a fail.
-"""
 from __future__ import annotations
 
 import json
@@ -33,11 +19,6 @@ _VAR_REF_RE = re.compile(r"var\(\s*--([a-zA-Z0-9_-]+)\s*(?:,\s*(.+))?\)$")
 
 
 class ColorResolutionError(Exception):
-    """Raised when a token cannot be resolved to a concrete sRGB color.
-
-    ``token`` and ``raw_value`` are carried so a caller can report exactly
-    what it could not measure, per the three-outcome rule.
-    """
 
     def __init__(self, token: str, raw_value: str, reason: str):
         self.token = token

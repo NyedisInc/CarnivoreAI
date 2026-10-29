@@ -1,15 +1,3 @@
-"""``/api/v1/browsers``: create, list, rename, navigate and close.
-
-Thin: shape, auth, status codes and the connection dance. Launching and
-stopping live in ``src/core/browsers/manager.py``, rows in ``store.py``,
-the URL rule in ``url_policy.py``. See ``docs/browser-sessions.md``.
-
-STATUS CODES. 400 a URL the policy refuses (the sentence says why). 404 an
-id with no row (a malformed id is a 404 too, never a path). 409 the live
-process cap (``browser.max_live``) is reached. 503 no usable Chromium, or
-the datastore could not be read or written; a write that did not happen
-never answers 2xx.
-"""
 
 from __future__ import annotations
 
@@ -35,6 +23,7 @@ from src.models.browsers import (
     NavigateBrowserRequest,
     RenameBrowserRequest,
 )
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -60,13 +49,6 @@ _ROW_WRITES = frozenset({store.insert, store.update, store.delete})
 
 
 async def db_call(manager: BrowserManager, fn: Callable[..., T], *args, **kwargs) -> T:
-    """Run one store function in ONE transaction on ONE worker thread.
-
-    Inputs: manager (BrowserManager) - for its state dir; fn - a store
-      function taking ``conn`` first; args / kwargs - the rest.
-    Output: whatever ``fn`` returns.
-    Raises: HTTPException 503 - the datastore could not be used.
-    """
     def _run() -> T:
         with closing(connect(db_path_for(manager.state_dir), create=False)) as conn:
             with conn:
@@ -93,7 +75,7 @@ def _normalized(url: Optional[str]) -> str:
     try:
         return normalize_url(url)
     except UrlRefused as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise api_error(400, "browser_url_refused", exc, step="_normalized") from exc
 
 
 @router.get("/browsers", response_model=BrowserList)
@@ -113,10 +95,10 @@ async def create_browser(body: CreateBrowserRequest, request: Request) -> Browse
     try:
         await manager.launch(browser_id, url)
     except CapReached as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise api_error(409, "browser_cap_reached", exc, step="create_browser") from exc
     except BrowserUnavailable as exc:
         await run_in_threadpool(store.delete_profile, manager.state_dir, browser_id)
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise api_error(503, "service_unavailable", exc, step="create_browser") from exc
     label = (body.label or "").strip() or urlsplit(url).hostname or "browser"
     try:
         row = await db_call(manager, store.insert, browser_id, label, storable_url(url))

@@ -33,7 +33,8 @@
     "pick a scope and all or mine to narrow the board, or type #number or words from a title in the search",
     "in timeline, pick day, 3 days or week in the scale keys; hover a bar span to see its times",
     "in swimlanes, press agent chat over the columns to put each lane's agent chat before todo; type to it there, or press open full chat for its drawer",
-    "in columns by project, drag a todo or queued card up or down its column to change the order it is dealt in; use its keys to pause, finish or reclassify it"
+    "in columns by project, drag a todo or queued card up or down its column to change the order it is dealt in; use its keys to pause, finish or reclassify it",
+    "in an agent chat, press the card icon at the left of a card line to open the board on that card"
   ],
   "id": "swarm-board",
   "issues": [
@@ -55,7 +56,14 @@
     "calendar",
     "timeline"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The Swarm task board in swimlanes: lanes per project with their company, counts, agent faces and a roll-up bar, two cards per cell with a more key",
+      "caption": "Swimlanes",
+      "file": "swarm-board-swimlanes.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Swarm task board",
   "since": "2026-10-07",
   "status": "beta",
@@ -68,6 +76,5 @@
   "where": [
     "open the swarm page (the swarm page link on the huddle panel's bar, or #swarm)",
     "pick the board tab"
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

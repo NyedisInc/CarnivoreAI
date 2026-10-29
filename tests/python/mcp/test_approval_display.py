@@ -16,22 +16,22 @@ HOME = os.path.expanduser("~")
 
 CASES = [
     ("session_purge", {"target": "u1", "plan_fingerprint": "fp9"}, "",
-     "PURGE asleep session ledgerbot for good: 4 rows. Plan fp9.", "ledgerbot", False,
-     ("purge", "session", "ledgerbot", "danger")),
+     "PURGE asleep session trader for good: 4 rows. Plan fp9.", "trader", False,
+     ("purge", "session", "trader", "danger")),
     ("session_delete", {}, "api", "DELETE session api (its tmux session is killed)", "", True,
      ("delete", "session", "api", "danger")),
     ("session_delete", {}, "api", "DELETE asleep session api", "", False, ("delete", "session", "api", "danger")),
     ("session_stop", {}, "api", "stop (sleep) the session", "", True, ("stop", "session", "api", "confirm")),
     ("session_wake", {"target": "u2"}, "api", "session_wake on asleep api", "", False,
      ("wake", "session", "api", "confirm")),
-    ("project_move", {"project": 3, "new_root": f"{HOME}/Development/Org/Personal/ledgerbot", "move_folder": True,
+    ("project_move", {"project": 3, "new_root": f"{HOME}/Development/Org/Personal/trader", "move_folder": True,
                       "create_parents": False, "plan_fingerprint": "abc"}, "",
-     'move project "ledgerbot" to "/x": rename the folder (2 sessions; plan abc)', "", False,
-     ("move", "project", "ledgerbot", "confirm")),
+     'move project "trader" to "/x": rename the folder (2 sessions; plan abc)', "", False,
+     ("move", "project", "trader", "confirm")),
     ("project_create", {"name": "demo", "path": f"{HOME}/carnivore-projects/demo"}, "",
      'create project "demo" in "/x"', "", False, ("create", "project", "demo", "confirm")),
-    ("project_delete", {"project": 3}, "", 'DELETE project "ledgerbot" for good', "", False,
-     ("delete", "project", "ledgerbot", "danger")),
+    ("project_delete", {"project": 3}, "", 'DELETE project "trader" for good', "", False,
+     ("delete", "project", "trader", "danger")),
     ("company_create", {"name": "Org", "parent_id": None}, "", 'create company "Org" at the top level', "", False,
      ("create", "company", "Org", "confirm")),
     ("company_rename", {"company_id": 7, "name": "New"}, "", 'rename "Org" to "New" (its projects stay)', "", False,
@@ -41,7 +41,7 @@ CASES = [
     ("company_parent_set", {"company_id": 7, "parent_id": 2}, "",
      'move "Org" and every company under it to under "Home"', "", False, ("move", "company", "Org", "confirm")),
     ("company_hq_set", {"company_id": 7, "project_id": 3}, "",
-     'make "ledgerbot" (project) the HQ project of "Org" (folders and sessions untouched)', "", False,
+     'make "trader" (project) the HQ project of "Org" (folders and sessions untouched)', "", False,
      ("set", "company_home_project", "Org", "confirm")),
     ("company_hq_set", {"company_id": 7, "project_id": None}, "",
      'clear the HQ project of "Org" (folders and sessions untouched)', "", False,
@@ -103,10 +103,10 @@ def test_the_style_guide_specimens_are_the_real_display_blocks(monkeypatch) -> N
 
 
 def test_move_shortens_the_visible_path_and_keeps_the_full_one_in_detail() -> None:
-    root = f"{HOME}/Development/Org/Personal/ledgerbot"
+    root = f"{HOME}/Development/Org/Personal/trader"
     block = display.build("project_move", {"new_root": root, "move_folder": False, "plan_fingerprint": "abc"},
-                          "", 'move project "ledgerbot" to "x"')
-    assert block["consequences"][0] == {"key": "moves_to", "params": {"to": "~/Development/Org/Personal/ledgerbot"}}
+                          "", 'move project "trader" to "x"')
+    assert block["consequences"][0] == {"key": "moves_to", "params": {"to": "~/Development/Org/Personal/trader"}}
     assert {"key": "new_root", "value": root} in block["detail"]
     assert {"key": "fingerprint", "value": "abc"} in block["detail"]
 
@@ -122,13 +122,13 @@ def test_a_tool_with_no_rule_keeps_its_own_sentence_and_reads_destructive_by_nam
 def test_the_pending_row_and_the_inbox_model_carry_display_and_confirm_text() -> None:
     item = pending.PendingAction(id="act_1", created_at=0.0, caller_session_id="", caller_tmux="c",
                                  target_session_id="u1", target_tmux="", action="session_purge",
-                                 args_summary="PURGE asleep session ledgerbot", args={"plan_fingerprint": "fp"},
-                                 confirm_text="ledgerbot", target_name="ledgerbot")
+                                 args_summary="PURGE asleep session trader", args={"plan_fingerprint": "fp"},
+                                 confirm_text="trader", target_name="trader")
     row = item.as_dict()
-    assert row["display"]["verb"] == "purge" and row["display"]["name"] == "ledgerbot"
+    assert row["display"]["verb"] == "purge" and row["display"]["name"] == "trader"
     shown = ApprovalItem(id="act_1", source="agent_action", session_id="u1", kind="session_purge",
                          confirm_text=row["confirm_text"], display=row["display"]).model_dump()
-    assert shown["confirm_text"] == "ledgerbot"
+    assert shown["confirm_text"] == "trader"
     assert shown["display"]["tone"] == "danger"
 
 
@@ -139,8 +139,8 @@ def test_the_approvals_list_returns_the_agent_action_fields_the_card_reads(monke
     from src.api import approvals_routes
 
     row = {"id": "act_x", "source": "agent_action", "session_id": "u1", "kind": "session_purge",
-           "external_client": "ci-bot", "confirm_text": "ledgerbot",
-           "display": display.build("session_purge", {}, "ledgerbot", "PURGE ledgerbot", confirm_text="ledgerbot")}
+           "external_client": "ci-bot", "confirm_text": "trader",
+           "display": display.build("session_purge", {}, "trader", "PURGE trader", confirm_text="trader")}
 
     class Inbox:
         version = 3
@@ -156,7 +156,7 @@ def test_the_approvals_list_returns_the_agent_action_fields_the_card_reads(monke
     answer = asyncio.run(approvals_routes.list_approvals(request, principal=SimpleNamespace(is_peer=False)))
     item = answer.model_dump()["items"][0]
     assert item["external_client"] == "ci-bot"
-    assert item["confirm_text"] == "ledgerbot"
+    assert item["confirm_text"] == "trader"
     assert item["display"]["verb"] == "purge"
 
 

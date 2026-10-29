@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   let { kind, off = false }: { kind: 'compact' | 'bookmark' | 'restart' | 'restore' | 'sleep'; off?: boolean } = $props();
 </script>
 

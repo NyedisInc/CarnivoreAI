@@ -53,7 +53,7 @@ describe('open this automation (the automations widgets)', () => {
   });
 });
 
-describe('the session focus fragment (a task item)', () => {
+describe('the session focus fragment (huddle item 454)', () => {
   test('names the session the automations page opens at', async () => {
     const { parseSessionFocus, openSessionAutomations } = await import('./schedule-prefill');
     expect(parseSessionFocus('#automations/session/8f1c-22ab')).toBe('8f1c-22ab');

@@ -34,6 +34,9 @@ class _StubSettings:
         self._root = root
         self.port = port
 
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
+
     def get_pinned_themes_path(self) -> Path:
         return self._root / "pinned_themes.json"
 
@@ -495,8 +498,8 @@ def test_recent_excludes_a_row_replaced_by_a_running_session(
                 " tmux_name, tmux_created_epoch, lifecycle, title,"
                 " created_at, updated_at)"
                 " VALUES (?,?,?,?,?,?,?,?,?)",
-                ("s-old", "created", "cloude", "Image_Tool", 1000,
-                 SESSION_LIFECYCLE_STOPPED, "Image Tool",
+                ("s-old", "created", "cloude", "Media_Compression", 1000,
+                 SESSION_LIFECYCLE_STOPPED, "Media Compression",
                  utc_now(), utc_now()),
             )
             abandoned_id = int(cur.lastrowid)
@@ -505,8 +508,8 @@ def test_recent_excludes_a_row_replaced_by_a_running_session(
                 " tmux_name, tmux_created_epoch, lifecycle, title,"
                 " parent_session_id, created_at, updated_at)"
                 " VALUES (?,?,?,?,?,?,?,?,?,?)",
-                ("s-live", "created", "cloude", "cloude_Image_Tool",
-                 2000, "running", "Image Tool", abandoned_id,
+                ("s-live", "created", "cloude", "cloude_Media_Compression",
+                 2000, "running", "Media Compression", abandoned_id,
                  utc_now(), utc_now()),
             )
             conn.execute(
@@ -525,7 +528,7 @@ def test_recent_excludes_a_row_replaced_by_a_running_session(
     body = client.get("/api/v1/sessions/recent").json()
     assert body["state"] == "ok"
     names = [s["tmux_name"] for s in body["sessions"]]
-    assert "Image_Tool" not in names, (
+    assert "Media_Compression" not in names, (
         "the abandoned row is already on screen as its running successor"
     )
     assert "cloude_Old_Thing" in names, (
@@ -553,8 +556,8 @@ def test_recent_keeps_a_row_whose_successor_is_no_longer_running(
                 " tmux_name, tmux_created_epoch, lifecycle, title,"
                 " created_at, updated_at)"
                 " VALUES (?,?,?,?,?,?,?,?,?)",
-                ("s-old", "created", "cloude", "Image_Tool", 1000,
-                 SESSION_LIFECYCLE_STOPPED, "Image Tool",
+                ("s-old", "created", "cloude", "Media_Compression", 1000,
+                 SESSION_LIFECYCLE_STOPPED, "Media Compression",
                  utc_now(), utc_now()),
             )
             abandoned_id = int(cur.lastrowid)
@@ -563,8 +566,8 @@ def test_recent_keeps_a_row_whose_successor_is_no_longer_running(
                 " tmux_name, tmux_created_epoch, lifecycle, title,"
                 " parent_session_id, created_at, updated_at)"
                 " VALUES (?,?,?,?,?,?,?,?,?,?)",
-                ("s-dead", "created", "cloude", "cloude_Image_Tool",
-                 2000, SESSION_LIFECYCLE_STOPPED, "Image Tool",
+                ("s-dead", "created", "cloude", "cloude_Media_Compression",
+                 2000, SESSION_LIFECYCLE_STOPPED, "Media Compression",
                  abandoned_id, utc_now(), utc_now()),
             )
     finally:
@@ -575,7 +578,7 @@ def test_recent_keeps_a_row_whose_successor_is_no_longer_running(
         s["tmux_name"]
         for s in client.get("/api/v1/sessions/recent").json()["sessions"]
     ]
-    assert "Image_Tool" in names, (
+    assert "Media_Compression" in names, (
         "a row was hidden even though nothing on screen represents it"
     )
     assert len(names) == 2

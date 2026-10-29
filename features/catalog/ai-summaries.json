@@ -34,9 +34,9 @@
   "name": "Ai working on line",
   "since": "2026-10-01",
   "status": "removed",
-  "summary": "",
+  "summary": "removed (the owner, #1898): the one line ai summary of what each terminal session is working on is gone, with its plugin, settings, routes and listing fields.",
   "surfaces": [],
-  "updated": "2026-10-17",
+  "updated": "2026-10-29",
   "where": [
     "In a terminal head, directly above the prompt bar.",
     "In the head of a home screen viewer cell.",

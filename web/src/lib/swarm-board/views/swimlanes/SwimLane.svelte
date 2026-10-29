@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
   import { t } from '../../../i18n/index.svelte';
   import { COLUMNS, type CardColumn, type CardView } from '../../board-types';
@@ -139,7 +139,6 @@
     .sbl {
       margin-top: 20px;
     }
-    /* box-shadow */
     .sbl-head {
       --_bd: var(--oc-line-rule);
       display: flex;
@@ -223,7 +222,6 @@
       color: var(--oc-text-muted);
       font-size: var(--oc-fs-label);
     }
-    /*  hidden  */
     .sbl-rollup {
       display: flex;
       flex: none;

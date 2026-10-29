@@ -90,3 +90,23 @@ test('held output respects the 4 MiB cap: oldest dropped whole, marker announced
     assert.equal(out[0][out[0].length - 1] === 6 || out[0].includes(6), true, 'newest chunk survives');
     assert.equal(out[0].includes(1), false, 'oldest chunk was shed');
 });
+
+test('a held terminal tells the server to pause, painted again it resumes, and a reconnect reasserts the pause', () => {
+    const world = makeWorld();
+    const ctl = makeController(world);
+    const sent = [];
+    ctl.ws = { readyState: 1, send: (m) => sent.push(JSON.parse(m).type) };
+    const gate = world.sandbox.TerminalPaintGate;
+    gate.register(ctl);
+    world.state.painted = false;
+    gate.check();
+    gate.check();
+    assert.deepEqual(sent, ['pause'], 'one pause however many checks');
+    gate.reassert(ctl);
+    assert.deepEqual(sent, ['pause', 'pause'], 'a reconnected socket is told again');
+    world.state.painted = true;
+    gate.check();
+    assert.deepEqual(sent, ['pause', 'pause', 'resume']);
+    gate.reassert(ctl);
+    assert.equal(sent.length, 3, 'a painted terminal is not reasserted');
+});

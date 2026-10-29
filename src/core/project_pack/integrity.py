@@ -1,13 +1,3 @@
-"""
-TWO COSTS, NEVER CONFUSED. :func:`cheap_check` is two ``lstat`` calls (the listing runs it for every packed
-project and never reads a byte). :func:`full_check` streams the whole file through sha256 and runs only on an
-unpack, or when a caller asks for it explicitly. A cheap ``modified`` is a WARNING, not a verdict: a copy or an
-iCloud sync can change the mtime and leave the bytes identical, which only the full check can tell.
-
-Statuses: ``ok``, ``missing`` (archive or sidecar gone), ``modified`` (size or mtime differs, or on a full
-check the sha256 differs; modified and replaced outside Carnivore are not told apart), ``unreadable``,
-``cloud_only`` (not downloaded; reading it would download it, so it is not read).
-"""
 
 from __future__ import annotations
 

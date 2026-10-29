@@ -62,7 +62,6 @@
     commit({ ...pick, dom: day, month: pick.rep === 'yeardate' ? viewMonth + 1 : pick.month });
   }
 
-  /* could not */
   function startPick(): void {
     commit(defaultPick());
     viewMonth = 0;

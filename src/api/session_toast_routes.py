@@ -1,6 +1,6 @@
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from src.api import peer_ws_auth
 from src.api.peer_auth import require_peer_sessions
 from src.api.websocket import connection_manager
@@ -12,6 +12,7 @@ from src.models import (
     ToastAckMessage,
     ToastNewMessage,
 )
+from src.api.error_response import api_error
 from typing import List
 
 logger = structlog.get_logger()
@@ -53,13 +54,10 @@ async def list_session_toasts(
 async def create_session_toast(
     request: Request, session_id: str, body: CreateToastRequest
 ):
-    """Synthetic toast creation - record + broadcast to the session.
+    """Record a toast on a session and broadcast it to the browsers bound to it.
 
-    INTENTIONALLY TEMPORARY for v0.7.0 Part 2: lets the client and storage
-    layer be exercised end-to-end without a real Claude Code hook. Part 3
-    will add a hook-driven endpoint with different auth semantics; THIS
-    surface remains useful for manual testing and is the canonical entry
-    point for synthetic-load tests.
+    A paired Mac may call this too (``peer_forward`` lists it); it names the session by tmux name and the
+    name is mapped through ``_owner_key`` to one of this Mac's own sessions, like the list and ack routes.
 
     NOT GATED BY THE PER-SESSION NOTIFICATION MUTE, and that is a decision
     rather than an oversight. The mute suppresses the alerts an AGENT
@@ -73,6 +71,7 @@ async def create_session_toast(
     Returns 404 when the session id is unknown.
     """
     session_manager = request.app.state.session_manager
+    session_id = _owner_key(request, session_id)
     try:
         toast = session_manager.record_toast(
             session_id=session_id,
@@ -82,7 +81,7 @@ async def create_session_toast(
             notify_type="session.posted",
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise api_error(404, "not_found", e, step="create_session_toast") from e
     if body.detail is not None:
         toast = request.app.state.services.toasts.describe(
             toast.session_id, toast.id, body.detail
@@ -113,6 +112,14 @@ async def ack_toast(request: Request, toast_id: str, session_id: str):
     localStorage cross-tab sync needed.
 
     Idempotent at the storage layer: a double-click won't re-broadcast.
+
+    ALWAYS 200, and the message is what carries the outcome. This
+    docstring used to claim a 404 for a toast id unknown to this session;
+    it never did that - the branch below returns ``success=true`` with
+    "No-op" for BOTH "not in this session's bucket" and "already acked",
+    because the storage layer treats them as the same non-change.
+    Corrected 2026-09-08 while writing tests/test_toast_cross_session.py,
+    which asserts the resulting STATE rather than the status code.
 
     THE SCOPING IS STILL REAL, and it is what keeps a dismissal per
     session now that raising is global (see src/api/toast_routes.py):

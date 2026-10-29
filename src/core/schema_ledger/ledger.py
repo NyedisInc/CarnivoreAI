@@ -1,5 +1,10 @@
 """The rung ledger: one text line per applied-or-applicable schema rung, pinned to the code by a test.
 
+WHY. On 2026-10-05 two branches claimed the same rung number and one silently skipped its tables
+(``docs/DECISIONS.md``). A ledger is a plain text file, one line per rung, in rung order. Two branches that add rung N
+both edit the line after the last one, so git reports a conflict at merge time instead of at first boot. A test
+(:func:`check_ledger`) fails when the code's rungs and the file differ in either direction.
+
 Format (``data/<ladder>.ledger``), lines starting ``#`` and blank lines ignored::
 
     <PREFIX><number> <sha256> <author> <slug>        e.g.   H48 3b1f...e9 - message-receipts
@@ -66,6 +71,8 @@ class LadderSpec:
 
 
 def slugify(text: str) -> str:
+    """A kebab-case slug of the first words of ``text``. Inputs: text (str). Output: str, never empty ('rung').
+    Example: slugify("Messaging: unconfirmed delivery (table rebuild)") -> 'messaging-unconfirmed-delivery-table-rebuild'"""
     slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:_SLUG_MAX].rstrip("-")
     return slug or "rung"
 

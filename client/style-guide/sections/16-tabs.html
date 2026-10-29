@@ -12,12 +12,36 @@ filters are <code>.oc-chip</code> with <code>aria-pressed</code>.</p>
         <code>active</code> and remembers the choice with <code>tab-memory.ts</code>.</li>
     <li><strong>Access.</strong> Roving tabindex, arrows wrap, Home and End jump, disabled tabs are skipped, and selection
         follows focus. Focus is the shared rule on the tab's reserved 1px border.</li>
+    <li><strong>Sizes.</strong> 31px at 1024 and up, 44px below. Tabs never wrap: the strip scrolls sideways with a faded
+        edge. The selected tab is the LIGHTER fill (<code>--oc-ground-tab-selected</code>) with the accent top edge, and the
+        other tabs the darker one (<code>--oc-ground-tab-inactive</code>, a step lighter under the pointer); the selected
+        tab does not change on hover (Joe (ccsliinc), 2026-10-12, #1689: "the current tab should be the lighter color and
+        the darker color should be the background tabs"). That is the FULL-PAGE rule ("A"). Held by <code>tests/python/design_system/test_page_band_layers.py</code>. The badge is a dim count, the dot the unsaved-draft mark. Any other sideways row (the skills
+        filter row) wears the same fade through <code>use:scrollFade</code> (<code>ui/scroll-fade.ts</code>), which sets
+        <code>.oc-fade-start</code> and <code>.oc-fade-end</code>.</li>
 </ul>
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>Tabs.svelte</code><span>a badge, a dot, one panel each</span></div>
     <div class="sg-specimen__body"><div id="sg-live-page-tabs"></div></div>
 </div>
 <h3 class="sg-h3" id="widget-tabs">widget tabs, joined to the body</h3>
+<p class="sg-lead">Tabs INSIDE A WIDGET (the developer widget's pipeline and scheduled tabs) are joined: the picked tab wears the
+widget body's ground, <code>--oc-ground-panel</code>, with no hairline between it and the body. The strip's empty space and
+the other tabs wear ONE ground, <code>--oc-ground-tabstrip-joined</code>, clearly DARKER than the body (a fixed 0.08 step of
+oklab lightness, so a light theme steps darker too; a ground already near black, such as matrix, steps lighter instead,
+because there is nothing darker), with a hairline under them; an unselected tab under the pointer steps back toward the body
+(<code>--oc-ground-tab-joined-hover</code>). Joe (ccsliinc), 2026-10-14, #1689: "B in widgets only, A on full pages", and on
+the real developer widget: "the first tab should match the color of the card". It is the
+same <code>Tabs.svelte</code>: a strip inside <code>CellFrame</code> (<code>.oc-frame</code>) gets it with no prop;
+a widget docked in the session rail under a terminal (<code>.rail-body</code>) gets it the same way; <code>joined</code> (class <code>oc-ptabs--joined</code>) asks for it elsewhere. A <code>.oc-page</code> inside a frame is a
+full page and keeps the lighter fill. A strip may carry ONE small control at its right end, outside the scrolling list
+(<code>trailing</code> snippet, <code>.oc-ptabs__trailing</code>): TM Mark II's mark read. Held by <code>tests/python/design_system/test_page_band_layers.py</code> and
+<code>Tabs.joined.test.ts</code>.</p>
+<p><b>compact and collapse</b> (Joe (ccsliinc), 2026-10-22, #1710 round 4: "tabs need to have smaller text, tab height is good ... make into icons as it gets smaller"):
+<code>compact</code> (class <code>oc-ptabs--compact</code>) draws the label at the micro size and keeps the strip's height; <code>collapse</code>
+(class <code>oc-ptabs--collapse</code>) makes the strip its own size container: a tab with an <code>icon</code> draws its label wide and its icon alone
+below 340px, with the label kept as the tab's <code>aria-label</code> and <code>title</code> (a tab with no icon keeps its label). A host
+that wants the picked tab to match its panel sets <code>--_tab-on</code> to the panel's ground. Held by <code>Tabs.render.test.ts</code>.</p>
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>Tabs.svelte</code><span><code>joined</code>: the picked tab runs into the body</span></div>
     <div class="sg-specimen__body"><div id="sg-live-page-tabs-joined"></div></div>
@@ -39,6 +63,9 @@ filters are <code>.oc-chip</code> with <code>aria-pressed</code>.</p>
 </div>
 
 <h3 class="sg-h3" id="terminal-tabs">terminal tab strip</h3>
+<p class="sg-lead">On the terminal page, a component's top row IS its tab strip: one tab per session (Alex, #452). The
+active tab wears the title row's ground and joins the band under it; the rest sit on a darker mix of the same ground. A tab
+has no height of its own: it stretches to its host's row. A right click on a tab opens that tab's own menu: the session menu, the asleep menu, the page, file or browser row menu, or a small close-tab menu for a closed page (<a href="#menus-row">menus, "a tab's menu"</a>).</p>
 
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>live</span><code>TabStrip.svelte</code><span>in the real</span><code>CellFrame.svelte</code><span>terminal row: click to select, "x" closes, Shift for the skull</span></div>
@@ -74,9 +101,34 @@ filters are <code>.oc-chip</code> with <code>aria-pressed</code>.</p>
         shrinks to a minimum with its title truncated, then the strip scrolls sideways with faded edges. Dragging lifts a tab
         past a threshold, so a click is still a click (<code>engine/tab-drag.ts</code>, #455).</dd>
     <dt>sizes</dt>
+    <dd>The strip row is as tall as the title row under it: 31px on a terminal component (<code>titleHeight</code> in
+        the terminal's meta, <code>--oc-titlerow-h-short</code>), 44px on the phone strip. 5px above it
+        (<code>.oc-frame-topgap</code>, #606); the band under it sits flush, 0px (Alex, #627, reversing #594's 5px). Every
+        icon is 14x14; the Shift skull is the one exception at 16x16 (Alex, #606) and never changes the tab's height.</dd>
     <dt>one band</dt>
+    <dd>In a tabbed component the active tab and the prompt band under the strip are ONE continuous surface: both compute to
+        <code>--oc-ground-titlerow</code>, with no divider under the band (Alex, #606 follow-up). An untabbed card's title
+        row keeps its divider. The gap ABOVE the strip is a DIFFERENT surface (Alex, #627: REVERSES the #606 ruling that gave
+        it the active tab's colour): it shares <code>--oc-ground-tabstrip</code> with the strip's own empty area instead.</dd>
     <dt>the tool icon group</dt>
+    <dd>The component's tool icons (skill cap, cube, folder, search, doc, palette, image, keep-awake cup, the kebab) render
+        INSIDE THIS STRIP now, right-aligned after the tabs and the "+", vertically centred with them (Alex, 2026-09-25,
+        #627, superseding "move all the icons down to the right of the arrows" from the #533 prompt-bar merge - see this
+        guide's "terminal chrome and the prompt bar" section, "tools" entry). They act on the active tab, fold into the
+        kebab at a narrow component width exactly as before, and the tabs' own shrink-then-scroll leaves them room: they
+        never overlap the icon group or the "+".</dd>
     <dt>zoom</dt>
+    <dd>Shift+Click the search icon (magnifying glass) and it zooms this component to fill the whole grid, temporarily,
+        for this device only - never written to <code>terminal_layouts</code> or any synced state, so a reload always
+        returns to the ordinary layout (Alex, 2026-09-26, #819). Holding Shift over it swaps the glass to the
+        <code>expand</code> icon in <code>--oc-cyan</code>, the same mechanism the tab strip's own skull uses
+        (<code>lib/shift-held.svelte.ts</code>), and only when the layout holds more than one component - on a layout
+        of one, Shift+Click is a plain click. While zoomed a leave-full-screen icon (<code>shrink</code>) appears right
+        of the magnifying glass; clicking it, or Shift+Esc (captured before xterm can see it, and only while
+        something is zoomed - a plain Esc always reaches the terminal), restores the exact prior tabs, sizes and
+        positions. The other components stay mounted and connected, just covered, and stop voting on their terminal's
+        pane size while covered (<code>terminal-group/tab-vote.ts</code>'s <code>followTab</code>, the same wire flag
+        issue #454 built for a hidden tab).</dd>
     <dt>themes</dt>
     <dd><code>--oc-ground-tabstrip</code> behind the strip, <code>--oc-ground-titlerow</code> on the active tab, an inactive
         tab's session accent (<code>tint</code>) mixed into the strip ground, weaker than the step to the active tab. Every
@@ -86,12 +138,26 @@ filters are <code>.oc-chip</code> with <code>aria-pressed</code>.</p>
         a roving tabindex so the strip is one Tab stop, arrows, Home and End move between tabs, selection follows focus. The
         "x" is outside the roving order. The "+" is a menu button with <code>aria-expanded</code>, outside the tablist.</dd>
     <dt>page tabs</dt>
+    <dd>A tab can hold an opened page (a review board is one), an open file or a proxy browser, not only a session
+        (Joe, #1787): the key is <code>page:&lt;id&gt;</code>, the pane is <code>PageTabBody.svelte</code> (<code>.oc-pg</code>,
+        the frame, the file editor or the browser view, embedded), and a closed item shows a quiet
+        base state line. The tab wears a glyph for its kind and no status light. A saved Layout stores its pages beside its sessions.</dd>
     <dt>widget tabs</dt>
+    <dd>Any widget can open as a tab beside the terminals (slice 8b, #2008; Joe, item 1049): the key is
+        <code>widget:&lt;widget id&gt;</code>, the pane is <code>WidgetTabBody.svelte</code> (<code>.oc-wt</code>, the widget drawn
+        through the one widget shell), and a widget this build does not carry shows a quiet base state sentence. The
+        tab wears the widget's icon, title and the one <code>ZoneBadge</code> on the icon (<code>.oc-tab-badgehost</code>, the globe
+        for an all sessions face), never a status light. The "+" menu's <em>widget</em> root lists the widget picker by category; a
+        right-click or the icon opens the widget's own menu (its cell's declared actions, the scope switch, close tab). A hidden
+        widget tab makes no requests. The phone strip does not show widget tabs.</dd>
     <dt>zone</dt>
     <dd>The component is a zone (slice 7, #2008): <code>ZoneShell</code> draws every tab in its own <code>.zone-pane</code>, stacked on one box
         (<code>.zone-pane--stacked</code>, an inactive one <code>.zone-pane--hidden</code>, which is also what the terminal paint gate reads), each pane its own theme
         scope; the strip row's tools are the ACTIVE tab's (<code>ZoneToolbar</code>) and a right-click on any tab opens that tab's menu.</dd>
     <dt>sync</dt>
+    <dd>A component's tabs are synced across devices; its active tab is not (Alex, #451 to #457): the
+        <code>terminal_layouts</code> preference, written only on a user operation. A tab is keyed on the session row, not
+        the app's session id (#612).</dd>
 </dl>
 
 <h3 class="sg-h3" id="tabs-others">the other tab rows</h3>

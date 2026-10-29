@@ -12,7 +12,7 @@
   ],
   "examples": [
     "You remember an agent printing a stack trace but never typed it: context finds it, prompts does not.",
-    "You want only the times you asked about rsync: prompts."
+    "You want only the times you asked about restic: prompts."
   ],
   "how_to": [
     "Press the search mode button (the icon with a small arrow) right of the search agents box.",

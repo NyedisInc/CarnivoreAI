@@ -1,4 +1,4 @@
-/* could not */
+/* and the three */
 
 import { authFetch } from './auth.svelte';
 import { pushedMeta, pushedRows, resource, type Resource } from './poll.svelte';
@@ -15,7 +15,6 @@ export const RECENT_NOTICE_KEYS: Readonly<Record<string, string>> = {
   never_probed: 'opscenter.recent.notice.never_probed',
 };
 
-/* could not */
 export function outcome(value: RecentSessionsResponse | null): RecentOutcome {
   if (!value) return 'could-not-determine';
   if (value.state !== 'ok') return 'could-not-determine';

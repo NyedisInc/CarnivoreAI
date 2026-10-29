@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { groupFeaturesByRelease, versionKey, type FeaturesIndexResponse } from './features-grouping';
+import { groupFeaturesByRelease, versionKey, type ReleaseSource } from './features-grouping';
 
-function payload(overrides: Partial<FeaturesIndexResponse> = {}): FeaturesIndexResponse {
+function payload(overrides: Partial<ReleaseSource> = {}): ReleaseSource {
   return {
-    available: true,
-    areas: [],
     catalog: [
       { id: 'help-panel', name: 'Help panel' },
       { id: 'ledger', name: 'Provider ledger' },

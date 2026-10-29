@@ -1,8 +1,9 @@
-<!-- already running the detail pane -->
+<!-- the detail pane -->
 <script lang="ts">
     import ModalShell from '../launchpad/ModalShell.svelte';
+    import CplugFacts from './CplugFacts.svelte';
     import UpdateDiffView from './UpdateDiffView.svelte';
-    import type { UpdateDiff } from './types';
+    import type { CplugFactsData, UpdateDiff } from './types';
     import { SKILL_KEYS } from '../../../../client/js/labels/skill.js';
     import type { Translate } from '../sessions/types';
 
@@ -18,6 +19,7 @@
         document?: string | null;
         tickLabel?: string | null;
         diff?: UpdateDiff | null;
+        cplugFacts?: CplugFactsData | null;
         /* could not be read */
         documentMissing?: string | null;
         t: Translate;
@@ -37,6 +39,7 @@
         tickLabel = null,
         documentMissing = null,
         diff = null,
+        cplugFacts = undefined,
         t,
         close,
     }: Props = $props();
@@ -44,7 +47,10 @@
     let accepted = $state(false);
 
     /* could not be read */
-    const canConfirm = $derived(!busy && (!tickLabel || (!!body && accepted)));
+    const canConfirm = $derived(
+        !busy &&
+            (cplugFacts !== undefined ? !!body && !!cplugFacts && accepted : !tickLabel || (!!body && accepted)),
+    );
 </script>
 
 <ModalShell {title} dismissable={!busy} onCancel={() => close(null)}>
@@ -72,6 +78,15 @@
                     <li class="confirm__line">{line}</li>
                 {/each}
             </ul>
+        {/if}
+        {#if cplugFacts !== undefined}
+            <CplugFacts
+                facts={cplugFacts}
+                {accepted}
+                {busy}
+                {t}
+                onAccept={(next) => { accepted = next; }}
+            />
         {/if}
         {#if tickLabel}
             <label class="confirm__accept">

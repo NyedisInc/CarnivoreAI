@@ -17,6 +17,8 @@ from src.config.provider_account_switch import ProviderAccountSwitchConfig
 from src.config.provider_accounts import ProviderAccount
 from src.core.account_switch import limit_detect, limit_rotate, pane_account, store
 from src.core.account_switch.rotate_state import RotationState
+from src.core.attention.screen_read import capture_screen, read_screen, shared_screens
+from src.core.attention.screen_reuse import ScreenReuse
 from src.core.attention.usage_limit import LimitStop
 from src.core.hosts.identity import is_remote_info
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
@@ -27,6 +29,7 @@ from src.core.session_delivery.bring_up import READY_STATUSES
 from src.core.session_respawn import LIVE_RESTART_REASON_USAGE_LIMIT_ROTATION
 from src.core.session_resume_target import CONVERSATION_RESUMED
 from src.core.swarm.switch import BodyHeld
+from src.core.tmux_control.reader import control_read_async
 from src.core.tmux_discovery import tmux_argv_prefix
 from src.models.provider_ledger import LedgerSnapshot
 
@@ -46,6 +49,8 @@ SKIP_LOG_REPEAT_SECONDS = 10 * 60
 
 TRANSCRIPT_TAIL_BYTES = 256 * 1024
 
+PANE_REUSE_SECONDS = 300.0
+
 _RUNNING = False
 
 _SKIP_LOGGED: Dict[str, Tuple[str, float]] = {}
@@ -64,14 +69,6 @@ class Restart:
 
 
 def at_rest(info: Any) -> bool:
-    """Is this row idle with nothing of its own still running?
-
-    Description: ``idle`` alone is not enough. Claude's registry ``shell`` status is a REST status ("idle AND a
-      shell command claude started is still open", issue #261) and survives only as ``activity_hint``; any hint
-      at all refuses. No longer the rotation's gate (a limit stop never reads idle); the auto-sleeper reuses it.
-    Inputs: info (SessionInfo) - wrapper fields ``activity_status`` and ``activity_hint`` (gotcha 1).
-    Output: bool.
-    """
     return info.activity_status in RESTARTABLE_STATUSES and info.activity_hint is None
 
 
@@ -106,7 +103,9 @@ def read_transcript_tail(path: Path) -> List[Dict[str, Any]]:
 
 
 async def _tmux_output(socket: str, *args: str) -> Optional[str]:
-    """One tmux command's stdout, or None when it could not answer."""
+    answered = await control_read_async(socket, args)
+    if answered is not None:
+        return answered.decode("utf-8", errors="replace")
     argv = tmux_argv_prefix(socket) + list(args)
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -128,30 +127,38 @@ async def _tmux_output(socket: str, *args: str) -> Optional[str]:
 
 class SessionEvidence:
 
-    def __init__(self, manager: Any) -> None:
+    def __init__(self, manager: Any, screens: Optional[ScreenReuse] = None) -> None:
         self._manager = manager
+        self._screens = screens if screens is not None else shared_screens()
         self._seen: Dict[str, Tuple[Path, Tuple[int, int], Optional[LimitStop]]] = {}
 
-    async def limit_stop(self, info: Any) -> Optional[LimitStop]:
+    async def limit_stop(self, info: Any, *, row: Optional[Dict[str, Any]] = None, force: bool = False) -> Optional[LimitStop]:
         stop = await self._transcript_stop(info)
         if stop is not None:
             return stop
-        out = await _tmux_output(self._manager._tmux_socket_name(), "capture-pane", "-p", "-t", f"={info.tmux_session}:")
+        out = await self._pane_screen(info.tmux_session, row or {}, force)
         label = limit_detect.pane_stop_label(out)
         if label is None:
             return None
         now = datetime.now(timezone.utc)
-        conversation = await asyncio.to_thread(self._manager._claude_uuid_for_tmux_name, info.tmux_session)
+        conversation = await asyncio.to_thread(self._manager.claude_uuid_for_tmux_name, info.tmux_session)
         return LimitStop(
             uuid=f"{limit_detect.PANE_STOP_PREFIX}{conversation or info.tmux_session}:{label}:{now.date().isoformat()}",
             timestamp=now, resets_at=None, rate_limit_type=None,
+        )
+
+    async def _pane_screen(self, name: str, row: Dict[str, Any], force: bool) -> Optional[str]:
+        socket = self._manager.tmux_socket_name()
+        return await asyncio.to_thread(
+            read_screen, self._screens, (socket, name), row, lambda: capture_screen(socket, name),
+            force=force, max_reuse_seconds=PANE_REUSE_SECONDS,
         )
 
     async def _transcript_stop(self, info: Any) -> Optional[LimitStop]:
         from src.core.session_token_usage.claude_reader import locate_transcript
 
         name = info.tmux_session
-        uuid = await asyncio.to_thread(self._manager._claude_uuid_for_tmux_name, name)
+        uuid = await asyncio.to_thread(self._manager.claude_uuid_for_tmux_name, name)
         if not uuid:
             return None
         working_dir = info.session.working_dir if info.session is not None else None
@@ -189,7 +196,7 @@ class SessionEvidence:
             return None
 
     async def resumable(self, name: str) -> bool:
-        socket = self._manager._tmux_socket_name()
+        socket = self._manager.tmux_socket_name()
         target = await asyncio.to_thread(
             self._manager._resume_target_for_tmux_name, name, socket
         )
@@ -197,7 +204,7 @@ class SessionEvidence:
 
     async def quiet_seconds(self, name: str) -> Optional[float]:
         out = await _tmux_output(
-            self._manager._tmux_socket_name(),
+            self._manager.tmux_socket_name(),
             "display-message", "-p", "-t", f"={name}:", "#{window_activity}",
         )
         try:
@@ -247,13 +254,6 @@ def _restartable(info: Any, stop: Optional[LimitStop]) -> bool:
 
 
 async def _quiet_for(evidence: Any, name: str, stop: LimitStop, now: datetime) -> Optional[float]:
-    """How long has this limit-stopped pane been quiet? Output: seconds, or None when the pane could not be measured.
-
-    Description: the longer of the tmux silence and the age of the stop record, because Claude's limit screen
-      repaints forever while the transcript says it stopped long ago. No record timestamp: tmux alone.
-    Inputs: evidence; name (tmux session); stop (LimitStop); now (aware datetime). Example: tmux 2 s, record
-      3 minutes old -> 180.0.
-    """
     tmux_quiet = await evidence.quiet_seconds(name)
     if tmux_quiet is None or stop.timestamp is None:
         return tmux_quiet
@@ -267,11 +267,12 @@ def _ready(info: Any) -> bool:
 async def _pass(manager, snapshot, accounts, switch, *, now, monotonic, evidence, read_profile,
                 current_switch, rotation, state) -> List[Restart]:
     rows = [row for row in snapshot.accounts if row.provider == PROVIDER]
-    socket = manager._tmux_socket_name()
+    socket = manager.tmux_socket_name()
     made: List[Restart] = []
     seen: Set[str] = set()
     names = {row.id: row.name for row in rows if row.name}
     infos = await manager.list_session_infos()
+    panes = await asyncio.to_thread(manager._build_tmux_status_map)
     if not state.baselined():
         await _take_baseline(infos, evidence, state, now)
     for info in infos:
@@ -285,7 +286,7 @@ async def _pass(manager, snapshot, accounts, switch, *, now, monotonic, evidence
         def skip(gate: str, _name: str = name, **extra: Any) -> None:
             log_skip(_name, gate, monotonic(), **extra)
 
-        stop = await evidence.limit_stop(info) if info.activity_status != "dead" else None
+        stop = await evidence.limit_stop(info, row=panes.get(name)) if info.activity_status != "dead" else None
         if not _restartable(info, stop):
             skip("dead_or_shell_open", status=info.activity_status, hint=info.activity_hint)
             continue
@@ -366,7 +367,9 @@ async def _pass(manager, snapshot, accounts, switch, *, now, monotonic, evidence
             skip("recheck_switch_changed")
             continue
         fresh = await manager.get_session_info(info.session.id)
-        fresh_stop = await evidence.limit_stop(fresh) if fresh is not None and fresh.activity_status != "dead" else None
+        fresh_stop = (
+            await evidence.limit_stop(fresh, force=True) if fresh is not None and fresh.activity_status != "dead" else None
+        )
         if fresh is None or not _restartable(fresh, fresh_stop):
             skip("recheck_not_restartable")
             continue
@@ -460,7 +463,7 @@ async def _continue(manager, evidence, rotation, state, info, stop, session_uuid
                     now: Optional[datetime] = None) -> bool:
     if quiet_floor:
         fresh = await manager.get_session_info(info.session.id)
-        fresh_stop = await evidence.limit_stop(fresh) if fresh is not None else None
+        fresh_stop = await evidence.limit_stop(fresh, force=True) if fresh is not None else None
         quiet = await _quiet_for(evidence, info.tmux_session, stop, now or datetime.now(timezone.utc))
         if fresh is None or not _ready(fresh) or fresh_stop is None or fresh_stop.uuid != stop.uuid \
                 or quiet is None or quiet < QUIET_SECONDS:

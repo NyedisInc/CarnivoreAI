@@ -26,9 +26,6 @@ _PLUGIN_STORE_PREFIX = "plugin_store_"
 
 @dataclass(frozen=True)
 class ImportOptions:
-    """The import route's opt-in ticks a script can give (all off, like the route): project files, memory and plan files, plugin data.
-
-    Example: ImportOptions(include_project_files=True).as_body() -> {"include_project_files": True}"""
 
     include_project_files: bool = False
     include_instructions: bool = False
@@ -108,10 +105,6 @@ def relocate_ignored_text(plan: Mapping[str, Any], relocate: str) -> Optional[st
 def restore_crate(dst: CrateClient, name: str, *, relocate: Optional[str] = None, target_project: Optional[int] = None,
                   skip_conflicts: bool = False, options: ImportOptions = ImportOptions(),
                   timeout: float = JOB_TIMEOUT_S) -> Dict[str, Any]:
-    """Plan, refuse on blockers (nothing written), restore, wait and read the receipt.
-
-    Output: ``{import_id, provenance, plan_fingerprint, plan_not_restored, receipt}``. Raises BlockedError (the readable list is the
-    message; also when ``relocate`` was given but the project already exists here), JobFailedError, JobTimeoutError, ApiError."""
     body = import_body(crate_file_name(name), relocate=relocate, target_project=target_project, skip_conflicts=skip_conflicts,
                        options=options)
     plan = dst.plan_import(body)

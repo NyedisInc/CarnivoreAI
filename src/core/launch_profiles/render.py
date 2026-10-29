@@ -45,6 +45,33 @@ def render_custom(entry: Optional[str], script_path: Path, model: Optional[str],
     )
 
 
+def _codex_supervisor_body(profile: LaunchProfile, model: Optional[str], app_args: Sequence[str],
+                           extra_flags: Sequence[str], codex_server_args: Sequence[str]) -> str:
+    from src.core.crosstalk import codex_supervisor
+
+    fresh = all(arg in ("--dangerously-bypass-approvals-and-sandbox", "--no-alt-screen")
+                for arg in app_args)
+    bypass = "--dangerously-bypass-approvals-and-sandbox"
+    server_args = [*codex_server_args, *extra_flags]
+    remote_policy = None
+    if profile.permissions == "skip_all" or bypass in app_args:
+        server_args += ["-c", 'approval_policy="never"',
+                        "-c", 'sandbox_mode="danger-full-access"']
+        remote_policy = {"approvalPolicy": "never", "sandbox": "danger-full-access"}
+    elif profile.permissions == "ask":
+        server_args += ["-c", 'approval_policy="on-request"']
+        remote_policy = {"approvalPolicy": "on-request"}
+    tui_args = [*(arg for arg in app_args if arg != bypass),
+                *profile.flags, *extra_flags]
+    if model:
+        tui_args += ["-m", model]
+    spec = json.dumps({"server": server_args, "tui": tui_args, "policy": remote_policy,
+                       "model": model,
+                       "bootstrap": {"model": model} if fresh else None}, separators=(",", ":"))
+    script = shlex.quote(str(Path(codex_supervisor.__file__).resolve()))
+    return " ".join((shlex.quote(sys.executable), *map(shlex.quote, bytecode_flags()), script, shlex.quote(spec)))
+
+
 def render_structured(profile: LaunchProfile, model: Optional[str], app_args: Sequence[str],
                       disable_alternate_screen: bool, extra_flags: Sequence[str] = (),
                       secret_names: Sequence[str] = (), env_set: Sequence[Tuple[str, str]] = (),
@@ -65,29 +92,7 @@ def render_structured(profile: LaunchProfile, model: Optional[str], app_args: Se
         if harness == "claude":
             body = " ".join(["command claude", words, '"$@"']) if words else 'command claude "$@"'
         elif codex_server_args:
-            from src.core.crosstalk import codex_supervisor
-
-            fresh = all(arg in ("--dangerously-bypass-approvals-and-sandbox", "--no-alt-screen")
-                        for arg in app_args)
-            bypass = "--dangerously-bypass-approvals-and-sandbox"
-            server_args = [*codex_server_args, *extra_flags]
-            remote_policy = None
-            if profile.permissions == "skip_all" or bypass in app_args:
-                server_args += ["-c", 'approval_policy="never"',
-                                "-c", 'sandbox_mode="danger-full-access"']
-                remote_policy = {"approvalPolicy": "never", "sandbox": "danger-full-access"}
-            elif profile.permissions == "ask":
-                server_args += ["-c", 'approval_policy="on-request"']
-                remote_policy = {"approvalPolicy": "on-request"}
-            tui_args = [*(arg for arg in app_args if arg != bypass),
-                        *profile.flags, *extra_flags]
-            if model:
-                tui_args += ["-m", model]
-            spec = json.dumps({"server": server_args, "tui": tui_args, "policy": remote_policy,
-                               "model": model,
-                               "bootstrap": {"model": model} if fresh else None}, separators=(",", ":"))
-            body = " ".join((shlex.quote(sys.executable), *map(shlex.quote, bytecode_flags()), shlex.quote(str(Path(codex_supervisor.__file__).resolve())),
-                             shlex.quote(spec)))
+            body = _codex_supervisor_body(profile, model, app_args, extra_flags, codex_server_args)
         else:
             body = " ".join(['codex "$@"', words]) if words else 'codex "$@"'
         if codex_fallback is not None:

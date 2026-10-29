@@ -1,14 +1,3 @@
-"""Never touch a live session (section 9): the measurements an import repeats at plan time and again inside the apply.
-
-READ ONLY. An unanswered measurement BLOCKS (not having looked is not a yes):
-
-- ``panes_unknown``: the pane listing did not answer;
-- ``session_live``: a crate session's uuid, or a local row holding the same conversation, has a live pane;
-- ``conversation_live`` / ``writers_unmeasured``: a live claude process has a crate conversation open (any process, in tmux or
-  not), or the process table could not be read;
-- ``offer_names_session``: the open reopen offer names a crate session;
-- the live row ids, so the new project row never adopts or re-parents a running session.
-"""
 
 from __future__ import annotations
 

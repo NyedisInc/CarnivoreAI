@@ -5,6 +5,7 @@
 
 <script lang="ts">
   import { untrack } from 'svelte';
+  import { Button } from '../../../lib/base';
   import { t } from '../../../lib/i18n/index.svelte';
   import Icon from '../../ui/Icon.svelte';
   import type { FitCheck } from '../fits';
@@ -88,13 +89,11 @@
     <div class="oc-refusal-actions">
       {#if onFix && check.suggest}
         {@const size = check.suggest}
-        <button type="button" class="oc-btn" data-refusal-fix onclick={() => onFix?.(size)}
-          >{t('widgets.refusal.make_it_fit')}</button
+        <Button data-refusal-fix onclick={() => onFix?.(size)}
+          >{t('widgets.refusal.make_it_fit')}</Button
         >
       {/if}
-      <button
-        type="button"
-        class="oc-btn"
+      <Button
         data-refusal-report
         disabled={sent === 'sending' || sent === 'sent'}
         onclick={() => void report()}
@@ -102,7 +101,7 @@
           ? t('widgets.refusal.reported')
           : sent === 'failed'
             ? t('widgets.refusal.report_failed')
-            : t('widgets.refusal.report')}</button
+            : t('widgets.refusal.report')}</Button
       >
     </div>
     {/if}
@@ -170,11 +169,10 @@
       gap: var(--oc-space-1);
     }
 
-    .oc-refusal-actions .oc-btn {
+    .oc-refusal-actions [data-btn] {
       font-size: var(--oc-fs-hint);
     }
 
-    /* padding */
     .oc-refusal--brief .oc-refusal-plate {
       gap: 2px;
     }

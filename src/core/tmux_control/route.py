@@ -22,19 +22,7 @@ logger = structlog.get_logger()
 
 
 async def write(backend: "TmuxBackend", data: bytes) -> bytes:
-    """Deliver ``data`` through the control client when the switch is on.
-
-    Description: returns the bytes still to send through today's subprocess path: all of them when
-      the switch is off or the control path cannot take the write (nothing was sent), only the
-      measured-unapplied tail after a mid-write failure, and ``b""`` when everything landed.
-    Inputs: backend (TmuxBackend) - the writer; data (bytes) - keystrokes, at most the paste threshold.
-    Output: bytes - what the caller must still write.
-    Raises: PaneDeadError - tmux says the session or pane is gone, twice (no further retry).
-      ControlWriteUnknown (a RuntimeError) - whether the keys landed could not be measured; the write is
-      NOT retried (that could type them twice) and nothing stays queued for a later replay.
-    Example: rest = await write(backend, b"ls\\r")  # b"" when the control client typed it
-    """
-    if not control_input_enabled():
+    if backend.is_remote or not control_input_enabled():
         return data
     from src.core.tmux_backend import PaneDeadError
 

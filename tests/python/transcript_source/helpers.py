@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 from typing import Optional
 
-CONV = "d6bf57c2-fdbb-45a8-89f0-0857e3422fe3"
-WORKDIR = "/Users/x/Library/Mobile Documents/com~apple~CloudDocs/work/proj"
-FOLDER = "-Users-x-Library-Mobile-Documents-com-apple-CloudDocs-work-proj"
+CONV = "12345678-aaaa-bbbb-cccc-1234567890ab"
+WORKDIR = "/Users/x/Library/Mobile Documents/com~apple~CloudDocs/Sync/proj"
+FOLDER = "-Users-x-Library-Mobile-Documents-com-apple-CloudDocs-Sync-proj"
 
 
 def transcript_lines(n_turns: int = 3) -> bytes:

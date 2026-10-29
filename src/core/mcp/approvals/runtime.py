@@ -20,11 +20,6 @@ def _view(app: Any) -> Any:
 
 
 async def install(app: Any) -> int:
-    """Give the process store its file and its approve-time hooks. Inputs: app (FastAPI). Output: items restored.
-
-    Description: called once at startup (``src/main.py``). The file is ``agent_actions.db`` in the state dir; one that
-      cannot be opened leaves the store in memory (logged), exactly as before this existed.
-    """
     from src.config import settings  # noqa: PLC0415
     from src.config.errors import StateDirUnavailableError  # noqa: PLC0415
 

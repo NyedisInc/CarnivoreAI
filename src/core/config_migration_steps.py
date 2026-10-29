@@ -17,8 +17,8 @@ logger = structlog.get_logger()
 
 COMMON_SLASH_COMMANDS_KEY = "common_slash_commands"
 
-_SEED_SCRIPT_CLD = 'keyc "$@"'
-_SEED_SCRIPT_CLDOR = 'clxor "$@"'
+_SEED_SCRIPT_CLD = 'cld "$@"'
+_SEED_SCRIPT_CLDOR = 'cldor "$@"'
 
 
 def probe_shell_function(
@@ -51,13 +51,13 @@ def build_seed_wrappers(has_cld: bool, has_cldor: bool) -> List[Dict]:
     if has_cld:
         wrappers.append(
             {
-                "id": "keyc",
+                "id": "cld",
                 "family": DEFAULT_FAMILY,
-                "label": "keyc (subscription)",
+                "label": "cld (subscription)",
                 "script": _SEED_SCRIPT_CLD,
                 "entry": None,
                 "description": (
-                    "forwards to the keyc shell function already defined in "
+                    "forwards to the cld shell function already defined in "
                     "~/.zshrc (subscription OAuth via macOS Keychain)"
                 ),
                 "default": True,
@@ -67,13 +67,13 @@ def build_seed_wrappers(has_cld: bool, has_cldor: bool) -> List[Dict]:
     if has_cldor:
         wrappers.append(
             {
-                "id": "clxor",
+                "id": "cldor",
                 "family": DEFAULT_FAMILY,
-                "label": "clxor (openrouter)",
+                "label": "cldor (openrouter)",
                 "script": _SEED_SCRIPT_CLDOR,
                 "entry": None,
                 "description": (
-                    "forwards to the clxor shell function already defined in "
+                    "forwards to the cldor shell function already defined in "
                     "~/.zshrc (OpenRouter-routed, model as first argument)"
                 ),
                 "default": False,

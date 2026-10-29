@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import { Button } from '../base';
   import ModalShell from '../launchpad/ModalShell.svelte';
   import { ApiError } from '../../opscenter/api/auth.svelte';
   import { openConversation } from '../conversation-open/open';
@@ -34,7 +35,7 @@
   let note = $state('');
   let restoring = $state(false);
   let bodyEl = $state<HTMLElement | null>(null);
-  let restoreEl = $state<HTMLButtonElement | null>(null);
+  let restoreEl = $state<HTMLElement | null>(null);
   const abort = new AbortController();
 
   const remote = $derived(request.hostKey !== null && request.hostKey !== 'local');
@@ -180,7 +181,7 @@
       <div class="dps-ctx__scroll" bind:this={bodyEl} onscroll={onScroll} role="region" tabindex="0"
         aria-label={t('deepsearch.context.label')} data-testid="context-scroll">
         {#if hasBefore}
-          <button type="button" class="dps-ctx__more" disabled={loadingBefore} onclick={() => void earlier()}>{t('deepsearch.context.earlier')}</button>
+          <Button variant="row" data-ctx-more disabled={loadingBefore} onclick={() => void earlier()}>{t('deepsearch.context.earlier')}</Button>
         {/if}
         {#each topMarks as m (`${m.id ?? 'r'}:${m.at}`)}
           <p class="dps-ctx__mark" data-mark-at={m.at}>{markText(m)}</p>
@@ -195,7 +196,7 @@
           {/each}
         {/each}
         {#if hasAfter}
-          <button type="button" class="dps-ctx__more" disabled={loadingAfter} onclick={() => void later()}>{t('deepsearch.context.later')}</button>
+          <Button variant="row" data-ctx-more disabled={loadingAfter} onclick={() => void later()}>{t('deepsearch.context.later')}</Button>
         {/if}
       </div>
     {/if}
@@ -203,12 +204,12 @@
   {#snippet footer()}
     {#if note}<p class="dps-ctx__note" role="alert" data-testid="context-note">{note}</p>{/if}
     {#if restorable}<p class="dps-ctx__restore-line" data-testid="context-restore-line">{restoreLine()}</p>{/if}
-    <button type="button" class="modal-btn modal-btn-secondary" onclick={() => close(null)}>{t('deepsearch.context.close')}</button>
+    <Button onclick={() => close(null)}>{t('deepsearch.context.close')}</Button>
     {#if restorable}
-      <button type="button" class="modal-btn modal-btn-confirm" bind:this={restoreEl} disabled={restoring} data-testid="context-restore"
-        onclick={() => void restore()}>{restoring ? t('deepsearch.context.restoring') : t('deepsearch.context.restore')}</button>
+      <Button variant="confirm" bind:element={restoreEl} disabled={restoring} data-testid="context-restore"
+        onclick={() => void restore()}>{restoring ? t('deepsearch.context.restoring') : t('deepsearch.context.restore')}</Button>
     {/if}
-    <button type="button" class="modal-btn modal-btn-confirm" data-testid="context-open-agent" onclick={() => void openAgent()}>{t('deepsearch.open_agent')}</button>
+    <Button variant="confirm" data-testid="context-open-agent" onclick={() => void openAgent()}>{t('deepsearch.open_agent')}</Button>
   {/snippet}
 </ModalShell>
 
@@ -298,18 +299,16 @@
       text-transform: uppercase;
     }
 
-    .dps-ctx__more {
-      display: block;
+    .dps-ctx__scroll :global([data-ctx-more]) {
       width: 100%;
-      padding: var(--oc-space-1) var(--oc-space-3);
-      border: 0;
-      border-bottom: var(--oc-border) solid var(--oc-line-faint);
-      background: transparent;
-      color: var(--oc-text-dim);
-      font: inherit;
-      font-size: var(--oc-fs-hint);
-      text-align: left;
-      cursor: pointer;
+      max-width: none;
+      --_btn-h: auto;
+      --_btn-pad: var(--oc-space-3);
+      --_btn-fs: var(--oc-fs-hint);
+      --_btn-ink: var(--oc-text-dim);
+      padding-block: var(--oc-space-1);
+      border-radius: 0;
+      box-shadow: inset 0 -1px 0 var(--oc-line-faint);
     }
 
     .dps-ctx__note {

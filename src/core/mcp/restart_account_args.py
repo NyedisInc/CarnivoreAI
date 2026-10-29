@@ -27,12 +27,6 @@ def read(args: dict) -> tuple[Optional[str], bool]:
 
 
 async def refuse_bad(account: Optional[str], pin: bool, agent_type: Optional[str], *, remote: bool = False) -> None:
-    """Refuse an account the launch could not use now, naming the launchable ids.
-
-    Inputs: account (str | None); pin (bool); agent_type (str | None) - the target's wrapper or family; remote (bool) -
-      the target lives on a paired computer, whose own active account decides. Output: None.
-    Raises: ToolError - unknown account, a non-claude agent, a paired computer, or an account that cannot resume.
-    """
     from src.core.account_switch import create_account, session_pin
     from src.core.account_switch.launch_env import _config_path
 

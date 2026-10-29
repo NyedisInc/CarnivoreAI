@@ -14,6 +14,7 @@ const i18n = createI18n({ locale: 'en' }) as {
 };
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
+/** A fixed instant, so nothing here depends on when it is run. */
 const NOW = Date.parse('2026-09-18T12:00:00Z');
 
 const DAY = 86400 * 1000;
@@ -43,6 +44,7 @@ describe('loginExpiryTone', () => {
     });
 
     test('the fortnight boundary itself is still quiet', () => {
+        // NEGATIVE CONTROL for
         expect(loginExpiryTone(inDays(14), NOW)).toBeNull();
     });
 

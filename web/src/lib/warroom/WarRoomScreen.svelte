@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import Page from '../../opscenter/ui/Page.svelte';
@@ -68,7 +68,6 @@
             overflow: hidden;
         }
 
-        /* height: 100% min-height: 1 */
         .wr-surface :global(.oc-surface) {
             height: 100%;
             min-height: 0;

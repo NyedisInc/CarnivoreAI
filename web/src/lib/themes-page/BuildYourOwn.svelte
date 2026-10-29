@@ -120,7 +120,7 @@
 
     .tbyo-step {
         display: grid;
-        grid-template-columns: 28px 1fr;
+        grid-template-columns: 28px minmax(0, 1fr);
         gap: 10px;
         padding: 12px 0;
         border-bottom: 1px solid var(--oc-line-faint);
@@ -166,10 +166,8 @@
     }
 
     .tbyo-code {
-        max-height: 260px;
-        overflow: auto;
-        white-space: pre;
-        overflow-wrap: normal;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
     }
 
     .tbyo-fine {

@@ -31,24 +31,24 @@ describe('a failed source is not a zero count (X5-5)', () => {
 });
 
 describe('the join of hosted rows to folders (D10)', () => {
-    const folders = [folder('skill:velridge-belford:claude', 'velridge-belford', 'claude'), folder('skill:velridge-belford:codex', 'velridge-belford', 'codex'), folder('skill:notes', 'notes', 'claude')];
+    const folders = [folder('skill:video-forge:claude', 'video-forge', 'claude'), folder('skill:video-forge:codex', 'video-forge', 'codex'), folder('skill:notes', 'notes', 'claude')];
 
     it('joins by the local send record first, then by the only folder of that kind and name', () => {
-        const rows = [sub('a', { name: 'velridge-belford', status: 'approved' }), sub('b', { name: 'notes' })];
-        const records = buildRecords(input(rows, folders, { sendsOf: (loc) => (loc === 'skill:velridge-belford:codex' ? ['a'] : []) }));
+        const rows = [sub('a', { name: 'video-forge', status: 'approved' }), sub('b', { name: 'notes' })];
+        const records = buildRecords(input(rows, folders, { sendsOf: (loc) => (loc === 'skill:video-forge:codex' ? ['a'] : []) }));
         const byLoc = Object.fromEntries(records.map((r) => [r.location, r.latest?.id ?? null]));
-        expect(byLoc['skill:velridge-belford:codex']).toBe('a');
-        expect(byLoc['skill:velridge-belford:claude']).toBeNull();
+        expect(byLoc['skill:video-forge:codex']).toBe('a');
+        expect(byLoc['skill:video-forge:claude']).toBeNull();
         expect(byLoc['skill:notes']).toBe('b');
     });
 
     it('a twin without a record joins neither folder and shows on its own, without a harness', () => {
-        const records = buildRecords(input([sub('a', { name: 'velridge-belford' })], folders));
+        const records = buildRecords(input([sub('a', { name: 'video-forge' })], folders));
         expect(records.filter((r) => r.folder && r.latest)).toHaveLength(0);
         const orphan = records.find((r) => r.latest?.id === 'a');
         expect(orphan?.folder).toBeNull();
         expect(orphan?.harness).toBe('');
-        expect(orphan?.location).toBe('item:bob/velridge-belford');
+        expect(orphan?.location).toBe('item:bob/video-forge');
     });
 
     it('does not join a plugin row to a compiled in plugin folder of the same name', () => {

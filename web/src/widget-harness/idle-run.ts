@@ -1,4 +1,3 @@
-/*  hidden  display: none */
 import { harnessState } from './state';
 import { isShellRoute } from '../opscenter/widgets/fixtures/app-world';
 import { IDLE_SPAN_MS, idleVerdict, installVirtualTimers, trackTimers, type IdleTotals, type TimerTracker } from './idle-traffic';
@@ -6,10 +5,8 @@ import { IDLE_SPAN_MS, idleVerdict, installVirtualTimers, trackTimers, type Idle
 export interface IdleCheck {
   shown: IdleTotals;
   hidden: IdleTotals;
-  /*  hidden  */
   shell: number;
   shownRoutes: Record<string, number>;
-  /*  hidden  */
   hiddenRoutes: Record<string, number>;
   failures: string[];
 }
@@ -34,7 +31,6 @@ export function startIdleTracking(wanted: boolean): void {
   if (wanted && !tracker) tracker = trackTimers(globalThis as unknown as Parameters<typeof trackTimers>[0]);
 }
 
-/*  hidden  */
 export async function runIdleCheck(): Promise<IdleCheck> {
   if (!tracker) throw new Error('the idle check needs the page opened with idle=1');
   const target = globalThis as unknown as Parameters<typeof installVirtualTimers>[0];

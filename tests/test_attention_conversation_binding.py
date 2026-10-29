@@ -146,7 +146,7 @@ def _write_transcript(home: Path, working_dir: str, uuid: str) -> Path:
                     "durationMs": 75930,
                     "messageCount": 3,
                     "timestamp": "2026-09-13T17:00:00.000Z",
-                    "uuid": "6b09440b-7e65-4fae-84b4-0dce91b930c0",
+                    "uuid": "2c6a3bac-0183-47b6-a32c-67712e89b6e9",
                     "cwd": working_dir,
                     "sessionId": uuid,
                     "version": "2.1.266",
@@ -166,7 +166,7 @@ def harness(monkeypatch, tmp_path):
     (home / ".claude" / "sessions").mkdir(parents=True)
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setattr(
-        "src.core.attention.registry_read.default_registry_directory",
+        "src.core.attention.registry_index.default_registry_directory",
         lambda: str(home / ".claude" / "sessions"),
     )
 
@@ -207,7 +207,7 @@ def harness(monkeypatch, tmp_path):
     manager._instance_epochs[APP_SESSION_ID] = EPOCH
     monkeypatch.setattr(
         manager,
-        "list_attachable_sessions_with_socket",
+        "_probe_instances",
         lambda: (
             SOCKET,
             _Listing(True, [{"name": TMUX_NAME, "created_at_epoch": EPOCH}]),
@@ -220,7 +220,7 @@ def harness(monkeypatch, tmp_path):
             complete=True, socket=SOCKET,
         ),
     )
-    monkeypatch.setattr("src.core.session_manager._configured_wrappers", lambda: [])
+    monkeypatch.setattr("src.core.sessions.wrapper_source.configured_wrappers", lambda **_kw: [])
     monkeypatch.setattr(AttentionEvidenceReader, "_capture", staticmethod(lambda *_args: None))
     return manager, state, home, working_dir
 

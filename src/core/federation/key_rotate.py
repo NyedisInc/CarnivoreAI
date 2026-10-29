@@ -13,6 +13,12 @@ from src.core.relay_identity.device_key import DeviceKey, b64url, unb64url
 
 logger = structlog.get_logger()
 
+class RotationBusy(RuntimeError):
+    pass
+
+
+_rotation_lock = asyncio.Lock()
+
 ANNOUNCE_PREFIX = b"carnivore federation v1 key-rotate\x00"
 ANNOUNCE_PATH = "/federation/key/announce"
 
@@ -38,6 +44,13 @@ def verify_announcement(grant: Grant, new_public_key: str, signature: object) ->
 
 
 async def rotate(*, install_id: str, links: Any, live_grants: int) -> Dict[str, Any]:
+    if _rotation_lock.locked():
+        raise RotationBusy("a key rotation is already running")
+    async with _rotation_lock:
+        return await _rotate_locked(install_id=install_id, links=links, live_grants=live_grants)
+
+
+async def _rotate_locked(*, install_id: str, links: Any, live_grants: int) -> Dict[str, Any]:
     old: DeviceKey = await asyncio.to_thread(fed_key.load_key, install_id)
     new: DeviceKey = await asyncio.to_thread(fed_key.begin_rotation, install_id)
     new_pub = fed_key.public_key_b64(new)

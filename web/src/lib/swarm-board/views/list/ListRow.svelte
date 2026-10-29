@@ -45,7 +45,6 @@
 
 <style>
   @layer components {
-    /* box-shadow */
     .sbr {
       display: flex;
       align-items: center;

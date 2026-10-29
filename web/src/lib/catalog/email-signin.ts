@@ -8,7 +8,6 @@ export const MAX_CODE_CHARS = 16;
 
 export type EmailStep = 'address' | 'code';
 
-/* cannot be opened */
 export function stepAfterRefusal(code: string | null | undefined): EmailStep {
     return code === 'code_mismatch' || code === 'bad_code' ? 'code' : 'address';
 }

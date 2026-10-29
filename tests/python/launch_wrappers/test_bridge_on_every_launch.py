@@ -37,7 +37,7 @@ async def test_create_carries_the_bridge(bridge_config, monkeypatch, tmux_test_s
     try:
         session = await mgr.create_session(
             session_id=f"ses_{token}", working_dir=str(work), auto_start_claude=True,
-            agent_type="keyc", project_name=f"br{token}", agent_extra_args=resume_arguments(UUID, family="claude"),
+            agent_type="cld", project_name=f"br{token}", agent_extra_args=resume_arguments(UUID, family="claude"),
         )
     finally:
         if session is not None:
@@ -47,7 +47,7 @@ async def test_create_carries_the_bridge(bridge_config, monkeypatch, tmux_test_s
 
 
 def test_wake_and_recreate_report_the_command_with_the_bridge(bridge_config):
-    choice = validate_agent_choice(settings, "keyc", extra_args=resume_arguments(UUID, family="claude"))
+    choice = validate_agent_choice(settings, "cld", extra_args=resume_arguments(UUID, family="claude"))
     assert choice.verdict == CHOICE_ACCEPTED, choice.detail
     assert_bridge(argv_of(choice.command, bridge_config))
 
@@ -66,12 +66,12 @@ async def test_restart_with_a_picked_wrapper_carries_the_bridge(bridge_config, m
     with patch.object(SessionManager, "_load_session_metadata", return_value=None):
         mgr = SessionManager()
     try:
-        result = await mgr.respawn_session(name, socket_name=tmux_test_socket, agent_type="keyc")
+        result = await mgr.respawn_session(name, socket_name=tmux_test_socket, agent_type="cld")
     finally:
         tmux(tmux_test_socket, "kill-session", "-t", f"={name}")
     assert result["ok"] is True and result["chosen"] is True, result["detail"]
     assert result["killed_live_pane"] is False
-    picked = [cmd for agent, cmd in seen if agent == "keyc"]
+    picked = [cmd for agent, cmd in seen if agent == "cld"]
     assert picked, seen
     for command in picked:
         assert_bridge(argv_of(command, bridge_config))

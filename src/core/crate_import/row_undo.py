@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Sequence, Set, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readonly
 from src.core.crate_import import row_journal as rj
 from src.core.crate_import.keyrules import REF, RULES
 from src.core.inventory.model import MAIN_STORE
@@ -109,7 +110,7 @@ def _pk_of(conn: sqlite3.Connection, name: str) -> List[str]:
 
 def plan_store(path: Path, store: str, tables: Dict[str, Any]) -> StorePlan:
     out = StorePlan(store)
-    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=30.0)
+    conn = connect_readonly(path, timeout=READONLY_TIMEOUT_LONG_S)
     try:
         cand: Dict[str, Set[Tuple[Any, ...]]] = {}
         for tbl, table in tables.items():
@@ -134,7 +135,7 @@ def plan_store(path: Path, store: str, tables: Dict[str, Any]) -> StorePlan:
                     out.kept.append({"what": _row_label(tbl, key), "why": WHY_CHANGED})
         edges = _edges(conn, store, tables)
         changed = True
-        while changed:  # something else
+        while changed:
             changed = False
             for tbl in list(cand):
                 for key in sorted(cand[tbl], key=repr):

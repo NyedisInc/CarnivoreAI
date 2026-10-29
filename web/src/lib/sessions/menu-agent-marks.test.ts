@@ -14,12 +14,14 @@ import { terminalLayout } from '../../opscenter/engine/layout.svelte';
 import type { SessionInfo } from '../../opscenter/api/types';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 
+// jsdom has neither method.
 installPopoverPolyfill();
 
 type Win = Record<string, unknown>;
 const win = globalThis as unknown as Win;
 const REPO = path.resolve(process.cwd(), '..');
 
+/** One listing row, every signal on the WRAPPER, where the server puts it. */
 function row(
   id: string,
   label: string,

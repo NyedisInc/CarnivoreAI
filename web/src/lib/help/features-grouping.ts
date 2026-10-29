@@ -1,4 +1,6 @@
 
+import type { FeatureCatalogItem } from './features-by-area';
+
 export interface FeatureChangeEntry {
   date: string;
   type: string;
@@ -11,16 +13,8 @@ export interface FeatureChangeEntry {
   release?: string;
 }
 
-export interface FeatureCatalogEntry {
-  id: string;
-  name: string;
-  [key: string]: unknown;
-}
-
-export interface FeaturesIndexResponse {
-  available: boolean;
-  areas: unknown[];
-  catalog: FeatureCatalogEntry[];
+export interface ReleaseSource {
+  catalog: ReadonlyArray<Pick<FeatureCatalogItem, 'id' | 'name'>>;
   changes: FeatureChangeEntry[];
 }
 
@@ -71,7 +65,7 @@ function compareVersionKeysDesc(a: number[], b: number[]): number {
   return 0;
 }
 
-export function groupFeaturesByRelease(payload: FeaturesIndexResponse): FeatureRelease[] {
+export function groupFeaturesByRelease(payload: ReleaseSource): FeatureRelease[] {
   const namesById = new Map(payload.catalog.map((entry) => [entry.id, entry.name]));
   const byRelease = new Map<string, FeatureChangeEntry[]>();
   for (const change of payload.changes) {

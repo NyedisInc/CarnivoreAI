@@ -44,7 +44,7 @@ describe('autogrow', () => {
   });
 });
 
-describe('an empty box', () => {
+describe('an empty box (issue #1710 round 6 point J)', () => {
   test('stays one line however far its placeholder wraps, and shows no scrollbar', () => {
     const el = document.createElement('textarea');
     el.style.cssText = 'box-sizing: border-box; padding: 2px 0; border: 0; min-height: 20px; max-height: 60px; height: 20px;';

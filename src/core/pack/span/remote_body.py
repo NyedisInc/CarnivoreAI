@@ -33,6 +33,20 @@ def peer_for(wanted: str) -> Any:
     raise body_create.CreateRefused(f"no paired computer matches {wanted[:64]!r}")
 
 
+def adopts(peer: Any) -> bool:
+    from src.core.pack.machines import capabilities
+
+    links = peer_links.LINKS
+    return links is not None and capabilities.has(links.capabilities(peer.peer_install_id), capabilities.CAP_SWARM_ADOPT)
+
+
+def _adopt_uuid(conn: sqlite3.Connection, agent: Dict[str, Any]) -> Optional[str]:
+    if agent.get("session_row_id") is None:
+        return None
+    row = conn.execute("SELECT peer_session_uuid FROM peer_sessions WHERE session_id = ?", (agent["session_row_id"],)).fetchone()
+    return str(row[0]) if row and row[0] else None
+
+
 def _client(peer: Any) -> Any:
     links = peer_links.LINKS
     client = links.client(peer.peer_install_id) if links is not None else None
@@ -64,13 +78,14 @@ def _relayed_account(conn: sqlite3.Connection, peer_install_id: str) -> Optional
     return on[0] if on else None
 
 
-def _packet(agent: Dict[str, Any], state_dir: Path, peer_install_id: str) -> Dict[str, Any]:
+def _packet(agent: Dict[str, Any], state_dir: Path, peer_install_id: str, adopt: bool = False) -> Dict[str, Any]:
     if agent["rank"] not in ("feature", "task"):
         raise body_create.CreateRefused("only a feature or task agent runs on another computer")
     with closing(db.connect(db.db_path_for(state_dir), create=False)) as conn:
         parent = store.get_agent(conn, agent["parent_id"]) if agent.get("parent_id") is not None else None
         uid = conn.execute("SELECT uid FROM projects WHERE id = ?", (agent.get("project_id"),)).fetchone()
         account = _relayed_account(conn, peer_install_id)
+        adopt_uuid = _adopt_uuid(conn, agent) if adopt else None
     if not uid or not uid[0]:
         raise body_create.CreateRefused("the agent's project has no uid yet")
     files: List[Dict[str, str]] = []
@@ -81,7 +96,7 @@ def _packet(agent: Dict[str, Any], state_dir: Path, peer_install_id: str) -> Dic
     packet: Dict[str, Any] = {k: agent.get(k) for k in keys if agent.get(k) not in (None, "")}
     packet.update(home_agent_id=agent["id"], project_uid=uid[0], character_seed=str(agent["character_seed"]),
                   parent_name=parent["display_name"] if parent else None, parent_slug=parent["slug"] if parent else None,
-                  memory_files=files, account_key=account)
+                  memory_files=files, account_key=account, adopt_session_uuid=adopt_uuid)
     return {k: v for k, v in packet.items() if v is not None}
 
 
@@ -123,7 +138,7 @@ async def start(app_state: Any, agent: Dict[str, Any], mode: str) -> body_create
     peer = await asyncio.to_thread(peer_for, agent["host_key"])
     await asyncio.to_thread(body_create._prepare, state_dir, agent)
     fresh = await _row(agent["id"]) or agent
-    packet = await asyncio.to_thread(_packet, fresh, state_dir, peer.peer_install_id)
+    packet = await asyncio.to_thread(_packet, fresh, state_dir, peer.peer_install_id, adopts(peer))
     await _carry_code(fresh, peer)
     created = await _post(peer, BODY_PATH, packet)
     child = await _confirm(peer, created)
@@ -161,6 +176,11 @@ async def sleep(app_state: Any, agent: Dict[str, Any]) -> None:
     answer = await federated.forward(info, "POST", "/sessions/{session_uuid}/sleep")
     if answer.get("status") not in (None, "asleep"):
         raise RuntimeError(str(answer.get("detail") or "the body would not close"))
+
+
+async def release(agent: Dict[str, Any]) -> None:
+    peer = await asyncio.to_thread(peer_for, agent["host_key"])
+    await _post(peer, SLEEP_PATH.format(agent=agent["id"]), {"teardown": True})
 
 
 async def paste(info: Any, text: str) -> None:

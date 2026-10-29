@@ -15,7 +15,6 @@ export const HEAVY_TOKENS = 100;
 const BRIEF_CHARS = 260;
 
 export interface ContextChoice {
-    /* <path> */
     readonly id: string;
     readonly kind: 'global' | 'profile' | 'project';
     readonly label: string;
@@ -117,7 +116,6 @@ export interface PlannedWrite {
     readonly state: string | null;
 }
 
-/* the detail pane */
 export function planWrites(
     group: SkillGroupRow,
     context: ContextChoice,

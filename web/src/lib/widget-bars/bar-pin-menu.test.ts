@@ -22,6 +22,7 @@ import { barLead } from './bar-lead.svelte';
 import { widgetBars } from './bar-settings.svelte';
 import { offerStripPins } from './bar-pin-action';
 
+// jsdom has no popover API; the cascade menu shows its levels through it.
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto.showPopover ??= function () {};
 proto.hidePopover ??= function () {};
@@ -33,6 +34,7 @@ const mouse = (type: string): Event => Object.assign(new MouseEvent(type), { poi
 const enter = (): void => { nav().dispatchEvent(mouse('pointerenter')); flushSync(); };
 const leave = (): void => { nav().dispatchEvent(mouse('pointerleave')); flushSync(); };
 const advance = (ms: number): void => { vi.advanceTimersByTime(ms); flushSync(); };
+/** A mouse click (detail 1: a click with no detail is the keyboard's). */
 const click = (el: HTMLElement): void => { el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 })); flushSync(); };
 const rightClick = (el: HTMLElement): void => { el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })); flushSync(); };
 const menuIds = (): (string | undefined)[] => [...document.querySelectorAll<HTMLElement>('.acm-item')].map((el) => el.dataset['node']);
@@ -120,7 +122,7 @@ test('no icon menu offers a pin: a bar key, a rail key; the sidebar rail itself 
 
 const navOf = (edge: 'side' | 'bottom'): HTMLElement => document.getElementById(RAIL_SPECS[edge].id)!;
 
-test('the pin icon is on the right and bottom bars while they are out, toggles the same pin, and follows it', async () => {
+test('the pin icon is on the right and bottom bars while they are out, toggles the same pin, and follows it (Joe, 2026-10-20, item 1041)', async () => {
   for (const edge of ['side', 'bottom'] as const) {
     expect(navOf(edge).querySelector('[data-bar-pin]'), `${edge} closed: no icon`).toBeNull();
     click(navOf(edge).querySelector<HTMLElement>('[data-bar-handle]')!);

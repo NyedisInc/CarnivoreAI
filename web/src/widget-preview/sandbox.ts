@@ -1,15 +1,11 @@
 
-import { freezeClock } from '../opscenter/widgets/fixtures/freeze-clock';
-import { OfflineSocket } from '../opscenter/widgets/fixtures/offline-socket';
+import { installApiInterceptor, isolateWorld } from '../opscenter/widgets/fixtures/frame-world';
 import { answerResponse, jsonResponse, lookup } from '../opscenter/widgets/fixtures/route-lookup';
 import type { RouteTable } from '../opscenter/widgets/fixtures/types';
-import { isolateStorage, silenceBroadcast } from '../opscenter/widgets/fixtures/isolated-world';
 import { PREVIEW_PORT_MESSAGE, readPreviewConfig, type PreviewAnswer, type PreviewConfig } from './protocol';
 
 const ORIGIN = globalThis.origin;
 const BASE = document.baseURI;
-
-const ACCESS_KEY = 'claude_tunnel_token';
 
 const PLACEHOLDER_TOKEN = 'widget-preview-sample';
 
@@ -57,26 +53,14 @@ async function askPage(path: string): Promise<Response> {
 }
 
 function installFetch(mode: PreviewConfig['mode']): void {
-  const realFetch = globalThis.fetch.bind(globalThis);
-  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const raw = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    const url = new URL(raw, BASE);
-    if (url.origin !== ORIGIN || !url.pathname.startsWith('/api/')) return realFetch(input instanceof Request ? input : url.href, init);
-    const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
+  installApiInterceptor(BASE, ORIGIN, async ({ method, path, url, init }) => {
     if (method !== 'GET') return jsonResponse(405, { detail: 'a preview reads only' });
-    const path = url.pathname.replace(/^\/api\/v1/, '');
     if (mode === 'real') return askPage(`${path}${url.search}`);
     const answer = lookup(await tableReady, method, path);
     return answer === undefined ? jsonResponse(404, { detail: 'not in this widget fixture' }) : answerResponse(answer, url, init, method);
-  };
+  });
 }
 
-isolateStorage(true);
-if (previewConfig?.mode !== 'real' && !globalThis.localStorage.getItem(ACCESS_KEY)) {
-  globalThis.localStorage.setItem(ACCESS_KEY, PLACEHOLDER_TOKEN);
-}
-(globalThis as { WebSocket: unknown }).WebSocket = OfflineSocket;
-silenceBroadcast();
-if (previewConfig?.mode !== 'real') freezeClock();
+isolateWorld({ seedStorage: true, placeholderToken: previewConfig?.mode !== 'real' ? PLACEHOLDER_TOKEN : null, freeze: previewConfig?.mode !== 'real' });
 listenForPort();
 installFetch(previewConfig?.mode ?? 'sample');

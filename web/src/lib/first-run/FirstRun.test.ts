@@ -14,6 +14,7 @@ const SECRET = 'JBSWY3DPEHPK3PXPJBSWY3DP';
 const json = (status: number, body: unknown = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const enrolled = () => json(200, { otpauth_uri: 'otpauth://totp/x', secret: SECRET, qr_image: QR, issuer: 'Carnivore', account: 'x' });
 const tokens = () => json(200, { access_token: 'a', refresh_token: 'r' });
+const profilesList = () => json(200, { revision: 1, profiles: [{ id: 'claude-default', harness: 'claude', installed: true }] });
 const health = (restart: boolean | null) => json(200, { status: 'healthy', bind: { restart_required: restart } });
 
 type Handler = () => Response | Error | Promise<Response>;
@@ -22,6 +23,7 @@ let routes: Record<string, Handler | Handler[]> = {};
 const auth = { showLoginForm: vi.fn(), acceptLogin: vi.fn(), finishFirstRun: vi.fn() };
 const mounted: ReturnType<typeof mount>[] = [];
 
+/** Install a fetch mock: a route holds one handler, or a queue whose last entry repeats. */
 function install(map: Record<string, Handler | Handler[]>): void {
     routes = map;
     vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
@@ -57,10 +59,12 @@ async function typeCode(value: string) {
     await settle();
 }
 async function reachDone(healthQueue: Handler[]) {
-    install({ '/api/v1/auth/enrollment': enrolled, '/api/v1/auth/verify': tokens, '/health': healthQueue });
+    install({ '/api/v1/auth/enrollment': enrolled, '/api/v1/auth/verify': tokens, '/health': healthQueue, '/api/v1/launch-profiles': profilesList });
     await render();
     await click('[data-first-run="next"]');
     await typeCode('123456');
+    await click('[data-first-run="agent-continue"]');
+    await click('[data-first-run="profiles-continue"]');
 }
 
 beforeEach(() => {
@@ -228,6 +232,30 @@ describe('readHealth', () => {
         expect(await readHealth()).toEqual({ ok: true, restartRequired: false });
         expect(calls.map((c) => c.url)).toEqual(['/health']);
         expect(JSON.stringify(calls[0]!.init?.headers ?? {}).toLowerCase()).not.toContain('authorization');
+    });
+});
+
+describe('the agent row between the code and done (#2576)', () => {
+    test('a good code shows the agent row, reads the self-check, and only continue starts the health read', async () => {
+        install({
+            '/api/v1/auth/enrollment': enrolled,
+            '/api/v1/auth/verify': tokens,
+            '/api/v1/self-check': () => json(200, { status: 'FAIL', checks: [{ name: 'claude_cli', status: 'FAIL', summary: 'claude not found', findings: [] }], agents: { codex: { found: false, path: null } } }),
+            '/api/v1/launch-profiles': profilesList,
+            '/health': () => health(false),
+        });
+        await render();
+        await click('[data-first-run="next"]');
+        await typeCode('123456');
+        expect(q('[data-first-run="claude"]')!.textContent).toContain(t('first_run.agent.claude_missing'));
+        expect(q('[data-first-run="paired"]')).toBeNull();
+        expect(count('/health')).toBe(0);
+        expect(auth.finishFirstRun).not.toHaveBeenCalled();
+        await click('[data-first-run="agent-continue"]');
+        expect(q('[data-first-run="profiles-continue"]')).not.toBeNull();
+        expect(count('/health')).toBe(0);
+        await click('[data-first-run="profiles-continue"]');
+        expect(auth.finishFirstRun).toHaveBeenCalledTimes(1);
     });
 });
 

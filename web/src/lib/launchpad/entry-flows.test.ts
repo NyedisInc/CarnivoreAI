@@ -160,6 +160,22 @@ describe('clone gates on the provider before the form', () => {
         expect(opened.choice).not.toBe(null);
     });
 
+    test('the form is handed the configured projects folder, never a hardcoded one (u141-02)', async () => {
+        const rec = recorder();
+        const m = modals({ clone: { name: 'repo', path: '/p/repo' } });
+        await cloneFromGithubFlow(rec.host, m.openers, enT());
+        const request = m.asked.find(([kind]) => kind === 'clone')?.[1] as { defaultParentDir?: string };
+        expect(request.defaultParentDir).toBe('/Users/me/Development');
+    });
+
+    test('a default folder that cannot be read leaves the form without one (u141-02)', async () => {
+        const rec = recorder({ defaultParentDir: async () => null });
+        const m = modals({ clone: { name: 'repo', path: '/p/repo' } });
+        await cloneFromGithubFlow(rec.host, m.openers, enT());
+        const request = m.asked.find(([kind]) => kind === 'clone')?.[1] as { defaultParentDir?: string };
+        expect(request.defaultParentDir).toBeUndefined();
+    });
+
     test('cancelling the form leaves the project list alone', async () => {
         const rec = recorder();
         const m = modals({ clone: null });

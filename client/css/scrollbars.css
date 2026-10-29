@@ -1,4 +1,4 @@
-/*  hidden  .settings-tabs pointer-events: none */
+/* the home screen */
 
 :root {
 
@@ -20,7 +20,6 @@
         background-color: transparent;
     }
 
-    /* padding */
     ::-webkit-scrollbar-thumb {
         background-color: var(--oc-scrollbar-thumb-rest);
         background-clip: padding-box;

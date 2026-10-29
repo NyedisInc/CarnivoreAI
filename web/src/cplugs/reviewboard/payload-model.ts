@@ -17,7 +17,6 @@ function depthOf(value: unknown): number {
   return deepest;
 }
 
-/* MAX_PAYLOAD_BYTES */
 export function validatePayload(value: unknown): Payload | null {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return null;
   let text: string | undefined;

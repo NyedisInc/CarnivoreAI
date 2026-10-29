@@ -24,6 +24,11 @@ export interface PageRowCtx {
     nodes: MenuNode[];
 }
 
+export interface GroupPickCtx {
+    name: string;
+    anchor: Element;
+}
+
 export interface ItemMenuContexts {
     project: HeadingMenuCtx;
     company: HeadingMenuCtx;
@@ -32,6 +37,7 @@ export interface ItemMenuContexts {
     leader: LeaderMenuCtx;
     widget: WidgetMenuCtx;
     pagerow: PageRowCtx;
+    grouppick: GroupPickCtx;
     session: RowMenuCtx;
     browser: RowMenuCtx;
     page: RowMenuCtx;

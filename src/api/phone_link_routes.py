@@ -109,6 +109,12 @@ def _qr_reply(manager: PhoneLinkManager, secret: str, expires: float) -> Dict[st
 @router.post("/pairing-window", dependencies=[Depends(account_gates.require_account("phone_pairing"))])
 async def open_pairing_window(request: Request) -> Dict[str, Any]:
     """Open a 10 minute pairing window (replacing any open one).
+
+    Output: {url, pair_url, code, expires_at, qr, qr_expires_at, qr_rotate_seconds} (shown once). The URL and
+    ``pair_url`` use the custom name while it is live with a valid certificate, else the link name; the QR secret
+    lives 120 s and the page swaps it every ``qr_rotate_seconds`` through ``/pairing-window/qr``.
+    Raises: 409 when the link is off, or ``pairing_locked`` (two pairings died from wrong codes within an hour: the
+    owner must ``POST /pairing-window/acknowledge`` first); 503 when the link could not start (its error is in the detail).
     """
     manager = _manager(request)
     if not manager.pairing.enabled:
@@ -135,6 +141,7 @@ async def rotate_pairing_qr(request: Request) -> Any:
 
 @router.post("/pairing-window/acknowledge")
 async def acknowledge_pairing_failures(request: Request) -> Dict[str, bool]:
+    """The owner saw the failed pairings: lift the lock so a new window may open. Output: {acknowledged: true}."""
     _manager(request).pairing.acknowledge_failures()
     return {"acknowledged": True}
 
@@ -180,7 +187,6 @@ def _refusal(status: int, code: str, **extra: Any) -> JSONResponse:
 
 
 def _control_refusal(exc: CustomDomainError) -> JSONResponse:
-    """Map a control plane refusal to this API's answer: its own status for a 4xx, 502 when it could not be asked."""
     if exc.code == "unreachable" or exc.status >= 500:
         return _refusal(502, "control_unreachable")
     return _refusal(exc.status if exc.status in (400, 403, 404, 409, 429) else 502, exc.code,

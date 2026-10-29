@@ -116,6 +116,8 @@ def _find(path: Path, ino: int) -> Optional[Tuple[int, Path, int]]:
 
 
 def _read(path: Path, start: int, end: int) -> bytes:
+    if end <= start:
+        return b""
     with path.open("rb") as handle:
         handle.seek(start)
         return handle.read(max(0, end - start))

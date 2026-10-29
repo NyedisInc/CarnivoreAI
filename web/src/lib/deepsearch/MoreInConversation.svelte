@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from '../base';
   import { t } from '../i18n/index.svelte';
   import './search-d.css';
   import type { DeepSearchController } from './deepsearch.svelte';
@@ -15,8 +16,8 @@
 </script>
 
 {#if hidden > 0 && !open}
-  <button type="button" class="sd-more dps__more-in" data-testid="deepsearch-more-in" onmousedown={(e) => e.preventDefault()}
-    onclick={() => void controller.expand(group)}>{t('deepsearch.more_in', { count: hidden })}</button>
+  <Button variant="quiet" size="sm" data-testid="deepsearch-more-in" onmousedown={(e) => e.preventDefault()}
+    onclick={() => void controller.expand(group)}>{t('deepsearch.more_in', { count: hidden })}</Button>
 {:else if open && group.matches > visibleHits(group, true).length}
   <span class="sd-more dps__capped" data-testid="deepsearch-capped">{t('deepsearch.capped', { shown: visibleHits(group, true).length, total: group.matches })}</span>
 {/if}

@@ -1,5 +1,4 @@
-/*  hidden
- */
+/* and the three the bottom bar */
 
 export const FOOT_BAR_COLLAPSED_OPTIONS = ['a', 'b', 'c'] as const;
 export type FootBarCollapsedOption = (typeof FOOT_BAR_COLLAPSED_OPTIONS)[number];
@@ -34,11 +33,9 @@ const FOOT_REQUIRES: Partial<Record<FootFeature, FootFeature>> = {
 export type WorkForm = 'full' | 'short';
 
 export interface FootMeasure {
-  /* padding */
   core: number;
   features: Partial<Record<FootFeature, number>>;
   work: Record<WorkForm, number>;
-  /*  hidden  */
   labels: Record<'full' | 'short', number>;
 }
 
@@ -104,7 +101,6 @@ export function admitted(
   };
 }
 
-/*  hidden  */
 export function readMeasure(
   copy: HTMLElement | null,
   work: Record<WorkForm, number>,
@@ -159,7 +155,6 @@ export function asFootBarItems(value: unknown): FootBarItems {
   return out;
 }
 
-/*  hidden  */
 export function maskAdmitByItems(admit: Record<FootFeature, boolean>, items: FootBarItems): Record<FootFeature, boolean> {
   const model = admit.model && items.model;
   return { ...admit, model, effort: admit.effort && items.effort && model };

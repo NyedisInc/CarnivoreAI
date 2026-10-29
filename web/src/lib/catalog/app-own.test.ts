@@ -8,6 +8,6 @@ describe('what the warez page treats as the app\'s own', () => {
     test('themes, plugins and skills', () => {
         expect([isBuiltinTheme('builtin'), isBuiltinTheme('user')]).toEqual([true, false]);
         expect([isBuiltinPlugin('builtin'), isBuiltinPlugin('core'), isBuiltinPlugin('dev'), isBuiltinPlugin('')]).toEqual([true, true, false, false]);
-        expect([isBundledSkill(['carnivore/huddle']), isBundledSkill(['acme/deploy', null]), isBundledSkill([])]).toEqual([true, false, false]);
+        expect([isBundledSkill(['carnivore/huddle']), isBundledSkill(['alex/deploy', null]), isBundledSkill([])]).toEqual([true, false, false]);
     });
 });

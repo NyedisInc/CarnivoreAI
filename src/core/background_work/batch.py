@@ -1,23 +1,3 @@
-"""Stop several background processes at once, each one guarded (issue #1053).
-
-The foot bar's control center has two "stop many" controls: "stop all"
-over the background processes section, and a sub-agent's "stop", which
-stops the processes that sub-agent launched (:mod:`.attribution`). Both
-send the ``(pid, start)`` pairs the listing handed out, and only those.
-
-EVERY TARGET GOES THROUGH THE SAME GUARD AS A SINGLE STOP. One fresh
-measurement of the pane, then :func:`.guard.check` for each target
-against it: a refused target is reported with its code and nothing of it
-is signalled, while the others proceed. The allowed targets' subtrees
-are merged (a pid under two targets is signalled once) and handed to ONE
-:func:`.terminate.terminate` call, so the batch costs one bounded
-SIGTERM wait, not one per target, and the terminator's identity re-check
-before every signal still applies to every member.
-
-THE CLIENT'S LIST IS A CEILING, NEVER A FLOOR. A process that started
-after the listing was read is not in the pairs and is never stopped by
-"stop all": the user confirmed a count, and that count is what is acted on.
-"""
 
 from __future__ import annotations
 

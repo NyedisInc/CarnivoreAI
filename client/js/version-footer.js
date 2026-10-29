@@ -1,4 +1,3 @@
-/* could not */
 
 console.log('[VersionFooter Module] Loading...');
 
@@ -8,7 +7,7 @@ console.log('[VersionFooter Module] Loading...');
 
     const RELEASE_NOTES_URL = 'https://github.com/NyedisInc/CarnivoreAI/releases';
 
-    /* could not */
+    /* could not determine */
     const UNKNOWN_TEXT = 'version unknown';
 
     /** @type {RegExp} The major.minor.patch at the head of a build string. */
@@ -31,7 +30,6 @@ console.log('[VersionFooter Module] Loading...');
             .replace(/'/g, '&#39;');
     }
 
-    /* cannot determine */
     function readVersionText() {
         if (cachedVersion !== null) return cachedVersion;
         let content = '';
@@ -49,7 +47,6 @@ console.log('[VersionFooter Module] Loading...');
         cachedVersion = null;
     }
 
-    /* <span class="version" user-select: none */
     function versionSpanHtml(extraClass) {
         const resolved = readVersionText();
         const text = resolved || UNKNOWN_TEXT;
@@ -63,7 +60,6 @@ console.log('[VersionFooter Module] Loading...');
         return { text: 'v' + match[1], preview: PREVIEW_RE.test(full) };
     }
 
-    /* <span class="version" */
     function sidebarFooterHtml() {
         const resolved = readVersionText();
         const short = resolved ? shortVersion(resolved) : null;

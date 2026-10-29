@@ -1,4 +1,4 @@
-<!-- <input type="number" data-field> -->
+
 <script lang="ts">
   import type { HTMLInputAttributes } from 'svelte/elements';
   import { t } from '../i18n/index.svelte';

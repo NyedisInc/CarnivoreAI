@@ -7,8 +7,9 @@ from src.api.peer_auth import require_peer_sessions
 from src.api.remote_route_guard import refuse_remote
 from src.config import settings
 from src.core import debug_trace
-from src.core.session_label import sanitize_tmux_name
+from src.core.session_name_claim import sanitize_tmux_name
 from src.models import ForkSessionResponse
+from src.api.error_response import api_error, soft_failure
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -71,7 +72,7 @@ async def fork_session(request: Request, session_name: str):
     try:
         source = await run_in_threadpool(_resolve)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc, session=session_name) from exc
 
     if source.outcome == session_fork.FORK_UNRESOLVED:
         raise HTTPException(status_code=404, detail=source.detail or "session not found")
@@ -87,8 +88,6 @@ async def fork_session(request: Request, session_name: str):
         label=label,
     )
 
-    import uuid as _uuid
-
     from src.api.launch_profile_errors import refuse_gone_profile
 
     refuse_gone_profile(settings, source.agent_type, source.launch_record)
@@ -102,14 +101,15 @@ async def fork_session(request: Request, session_name: str):
         model=source.model,
     )
     try:
-        child = await session_manager.create_session(
-            session_id=f"ses_{_uuid.uuid4().hex[:8]}",
-            working_dir=source.working_dir,
-            project_name=tmux_safe_name,
-            agent_type=source.agent_type,
-            model=source.model,
-            agent_extra_args=session_fork.fork_arguments(source.claude_session_uuid),
+        forked = await session_fork.spawn_fork_child(
+            session_manager,
+            source={"working_dir": source.working_dir, "agent_type": source.agent_type, "model": source.model,
+                    "id": source.parent_id},
             label=label,
+            project_name=tmux_safe_name,
+            agent_extra_args=session_fork.fork_arguments(source.claude_session_uuid),
+            db_path=db_path,
+            socket=socket,
         )
     except ProjectMovedAway:
         raise
@@ -128,25 +128,11 @@ async def fork_session(request: Request, session_name: str):
             error=str(exc),
             error_type=type(exc).__name__,
         )
-        raise HTTPException(
-            status_code=500,
-            detail=f"could not create the forked session: {exc}",
-        )
+        raise api_error(500, "session_fork_failed", exc, parent=session_name, label=label) from exc
 
-    child_tmux = getattr(child, "tmux_session", None)
-
-    def _stamp():
-        return session_fork.stamp_fork_child(
-            db_path, socket=socket, child_tmux=child_tmux or "", parent_id=source.parent_id, label=label
-        )
-
-    recorded = False
-    detail = None
-    try:
-        recorded = bool(await run_in_threadpool(_stamp))
-    except DatastoreUnreadableError as exc:
-        detail = f"fork created, but its parent link could not be recorded: {exc}"
-        logger.warning("fork_lineage_not_recorded", parent=session_name, error=str(exc))
+    child, recorded, detail = forked.session, forked.recorded, None
+    if forked.stamp_error is not None:
+        detail = soft_failure("fork_link_not_recorded", forked.stamp_error, status=500, parent=session_name)
     if not recorded and detail is None:
         detail = (
             "fork created, but its parent link could not be recorded; the "

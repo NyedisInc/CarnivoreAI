@@ -196,7 +196,6 @@ function startupDialogCard(item: ApprovalItem, who: string, folder: string): Pic
   };
 }
 
-/* permission prompt */
 function permissionCard(item: ApprovalItem, who: string, folder: string): Pick<CardContract, 'kind' | 'tone' | 'headline' | 'facts' | 'raw'> {
   const tool = toolHeader(item);
   const code = itemCode(item) ?? '';
@@ -262,7 +261,6 @@ function agentCard(item: ApprovalItem, rows: readonly ListingRowLike[]): Pick<Ca
   };
 }
 
-/* label: ' */
 export function cardContract(item: ApprovalItem, ctx: CardContext = {}): CardContract {
   const rows = Array.isArray(ctx.rows) ? ctx.rows : [];
   const base = { who: itemSessionName(item), where: item.project ?? '', host: isRemote(item) ? hostName(item) : null };

@@ -17,7 +17,7 @@
   import TaskManagerMarkdown from './TaskManagerMarkdown.svelte';
   import { shownAuthor } from './task-manager-author';
 
-  let { item, agentName = '', closed = false, noSend = false, firstBubble = false, conversation = true }: { item: HuddleItem; agentName?: string; closed?: boolean; noSend?: boolean; firstBubble?: boolean; conversation?: boolean } = $props();
+  let { item, agentName = '', closed = false, noSend = false, firstBubble = false, conversation = true, skip = null }: { item: HuddleItem; agentName?: string; closed?: boolean; noSend?: boolean; firstBubble?: boolean; conversation?: boolean; skip?: number | null } = $props();
   const firstBy = $derived(shownAuthor(item));
 
   let box = $state<HTMLElement | null>(null);
@@ -53,7 +53,7 @@
             {#snippet body()}<div class="hb-body hdt-text" data-task-manager-description={item.id}><TaskManagerMarkdown text={item.text} /></div>{/snippet}
           </TaskManagerBubble>
         {/if}
-        {#each item.thread as message (message.id)}
+        {#each skip === null ? item.thread : item.thread.filter((m) => m.id !== skip) as message (message.id)}
           {#if isSystemLine(message)}
             
             <li class="hdt-nudge" data-task-manager-nudge-line={message.id} data-task-manager-system-line={message.category}>{message.text}, {messageTime(message.created_at)}</li>

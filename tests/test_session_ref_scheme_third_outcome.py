@@ -29,7 +29,7 @@ from tests.archive_fixture import make_state_dir, writable
 
 SESSION_SCHEME_OWN: str = "uuid"
 
-LIVE_UUID: str = "d1b0f992-cd9d-4221-8044-46c08aa8790c"
+LIVE_UUID: str = "07e1cc0e-8a47-4029-8cfc-554f883ba28f"
 
 LIVE_OPAQUE_REFS = ("audit", "journal")
 
@@ -54,14 +54,14 @@ def test_a_filename_stem_is_neither_scheme(ref: str) -> None:
 @pytest.mark.parametrize(
     "ref",
     [
-        "361a0641bc5347c88931d3e75029ca22",
-        "{d1b0f992-cd9d-4221-8044-46c08aa8790c}",
-        "urn:uuid:d1b0f992-cd9d-4221-8044-46c08aa8790c",
-        "2463c265-2a86-ed4b-2fe4-44a6f2384b2",
-        "9ab7b75e-7591-f7e4-3e46-01837d245b5d6",
-        "2463c265-2a86-ed4b-2fe4-44a6f2384b2g",
-        "d1b0f992-cd9d-4221-8044-46c08aa8790c\n",
-        " d1b0f992-cd9d-4221-8044-46c08aa8790c",
+        "07e1cc0e8a4740298cfc554f883ba28f",
+        "{07e1cc0e-8a47-4029-8cfc-554f883ba28f}",
+        "urn:uuid:07e1cc0e-8a47-4029-8cfc-554f883ba28f",
+        "07e1cc0e-8a47-4029-8cfc-554f883ba28",
+        "07e1cc0e-8a47-4029-8cfc-554f883ba28ff",
+        "07e1cc0e-8a47-4029-8cfc-554f883ba28g",
+        "07e1cc0e-8a47-4029-8cfc-554f883ba28f\n",
+        " 07e1cc0e-8a47-4029-8cfc-554f883ba28f",
         "",
     ],
 )

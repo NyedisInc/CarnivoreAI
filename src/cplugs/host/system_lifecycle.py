@@ -16,14 +16,10 @@ HOOKS: Dict[str, Tuple[SystemHook, SystemHook]] = {
 
 
 class PurgeHookFailed(RuntimeError):
-    """A plugin's pre-purge step could not finish; the purge must not delete anything."""
+    pass
 
 
 async def revoke_share_links(app: Any) -> None:
-    """Share's pre-purge step: end every live read-only link, so none outlives the plugin that handed it out. Output: None.
-
-    Raises: PurgeHookFailed when the links could not all be ended.
-    """
     from src.core.spectator.revoke import revoke_all_live  # noqa: PLC0415
 
     try:

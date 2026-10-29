@@ -158,7 +158,6 @@ export const REGISTRY: Readonly<Record<CellId, RegisteredCell>> = {
   },
   notes: { meta: META.notes, component: Notes },
   files: { meta: META.files, component: Files },
-  // scheduled tasks
   'scheduled-tasks': {
     meta: META['scheduled-tasks'],
     component: ScheduledTasks,

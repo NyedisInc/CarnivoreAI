@@ -11,6 +11,7 @@ console.log('[SessionStatusUI Module] Loading...');
         working: 'working',
         finished_unread: 'done - unread',
         idle: 'idle - read, nothing running',
+        // there is nothing
         stopped: 'ended - the session is no longer running',
         asleep: 'asleep - stopped to free memory, wake it from the session menu',
         unknown: 'not measured',
@@ -19,13 +20,13 @@ console.log('[SessionStatusUI Module] Loading...');
 
     const ASLEEP_UNREAD_LABEL = 'asleep, flagged unread - wake it to follow up';
 
+    /* there is nothing */
     const SOURCE_SUFFIX = {
         registry: "via the agent's own session record",
         pane: 'via the pane',
         transcript: 'via transcript',
         seed_row: 'via the session record',
         tmux: 'via tmux',
-        // server stopped
         hook: 'via hooks',
     };
 
@@ -88,7 +89,6 @@ console.log('[SessionStatusUI Module] Loading...');
             : 'unknown';
     }
 
-    /* aria-label="dead - process exited" title="dead - process exited" */
     function dotHtml(status, signals) {
         const key = normalizeStatus(status);
         const hostOff = (signals || {}).host_offline;
@@ -134,7 +134,6 @@ console.log('[SessionStatusUI Module] Loading...');
         return STATUS_LABELS[normalizeStatus(status)];
     }
 
-    /* role="button" */
     function markUnreadHtml(tmuxName, unread) {
         if (globalThis.UIFlags && !globalThis.UIFlags.showMarkUnreadControl()) {
             return '';
@@ -153,37 +152,30 @@ console.log('[SessionStatusUI Module] Loading...');
         );
     }
 
-    /* <svg width="16" height="16" */
     function envelopeOutlineSvg() {
         return glyph('envelope-outline');
     }
 
-    /* <svg width="16" height="16" */
     function envelopeFilledSvg() {
         return glyph('envelope-filled');
     }
 
-    /* <svg width="16" height="16" */
     function trashIconSvg() {
         return glyph('trash');
     }
 
-    /* <svg width="16" height="16" */
     function closeIconSvg() {
         return glyph('close');
     }
 
-    /* <svg width="16" height="16" */
     function restartIconSvg() {
         return glyph('restart');
     }
 
-    /* <svg width="16" height="16" */
     function pencilIconSvg() {
         return glyph('pencil');
     }
 
-    /* <svg width="16" height="16" */
     function folderIconSvg() {
         return (
             '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
@@ -192,7 +184,6 @@ console.log('[SessionStatusUI Module] Loading...');
         );
     }
 
-    /* <svg width="16" height="16" */
     function homeIconSvg() {
         return (
             '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
@@ -201,7 +192,6 @@ console.log('[SessionStatusUI Module] Loading...');
         );
     }
 
-    /* <svg width="16" height="16" */
     function chevronUpIconSvg() {
         return (
             '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
@@ -210,7 +200,6 @@ console.log('[SessionStatusUI Module] Loading...');
         );
     }
 
-    /* <svg width="16" height="16" */
     function fileIconSvg() {
         return (
             '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
@@ -220,7 +209,6 @@ console.log('[SessionStatusUI Module] Loading...');
         );
     }
 
-    /* <svg width="16" height="16" */
     function lockIconSvg() {
         return (
             '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
@@ -230,7 +218,6 @@ console.log('[SessionStatusUI Module] Loading...');
         );
     }
 
-    /* <svg width="16" height="16" */
     function archiveIconSvg() {
         return glyph('archive');
     }

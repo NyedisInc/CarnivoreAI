@@ -13,6 +13,12 @@ const SRC = read('client/js/terminal-keyboard-reveal.js');
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion, recording the outcome rather than throwing.
+ * @param {string} name
+ * @param {Function} fn
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();

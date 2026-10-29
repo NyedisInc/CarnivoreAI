@@ -34,8 +34,8 @@ def _subscription_ids(app_state: Any) -> list[str]:
 
     try:
         return [str(r["id"]) for r in sender_for(app_state).store.list() if r.get("id")]
-    except (OSError, ValueError, KeyError):
-        log.warning("notification_install_subscriptions_unreadable")
+    except (OSError, ValueError, KeyError) as exc:
+        log.warning("notification_install_subscriptions_unreadable", error=str(exc), error_type=type(exc).__name__)
         return []
 
 

@@ -1,4 +1,3 @@
-/* <button role="menuitem"> role="button" */
 import { isLocked } from '../carnivore-account/account-store.svelte';
 import { surfacesOf } from './registry';
 import type { PluginContext, SessionCardRow } from './types';
@@ -12,11 +11,10 @@ export interface SessionCardMenuItem {
     readonly feature?: string;
 }
 
-/* failed to load */
-/*  hidden  */
-const LOCAL_ONLY_ACTIONS: ReadonlySet<string> = new Set(['share-read-only', 'huddle-session-nudge', 'huddle-project-lead', 'huddle-do-not-disturb']);
+/* a session on a paired Mac (issue #163, P8b) */
+const LOCAL_ONLY_ACTIONS: ReadonlySet<string> = new Set(['share-read-only', 'huddle-session-nudge', 'huddle-project-lead']);
 
-const SESSION_KEYED_ACTIONS: ReadonlySet<string> = new Set(['huddle-session-nudge', 'huddle-project-lead', 'huddle-do-not-disturb']);
+const SESSION_KEYED_ACTIONS: ReadonlySet<string> = new Set(['huddle-session-nudge', 'huddle-project-lead']);
 
 function refusedForPeer(id: string, row: SessionCardRow, hidden?: (row: SessionCardRow) => boolean): boolean {
     if (hidden?.(row)) return true;

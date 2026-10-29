@@ -29,12 +29,6 @@ FIRST_DRAW = {"zone": "home", "size": "m", "theme": "carnivore"}
 
 
 def idle_of(page: Any, base: str, key: str, fixture: str = "data", plant: bool = False) -> dict:
-    """Measure one widget.
-
-    Inputs: page, base - the harness page and server; key - the widget; fixture - data or empty; plant - add the hidden poll first.
-    Output: the page's answer (``shown``, ``hidden``, ``shell``, ``shownRoutes``, ``hiddenRoutes``, ``failures``) plus ``key``.
-    Raises: HarnessError when the widget did not draw or the page could not answer.
-    """
     drawn = open_widget(page, base, key, fixture, FIRST_DRAW, extra={"idle": "1"})
     if drawn.error:
         raise HarnessError(f"{key} did not draw: {drawn.error}")
@@ -58,7 +52,6 @@ def parse(argv: list[str]) -> argparse.Namespace:
 
 
 def main(argv: list[str]) -> int:
-    """Build, serve, measure every selected widget, report."""
     args = parse(argv)
     try:
         from playwright.sync_api import sync_playwright  # noqa: PLC0415

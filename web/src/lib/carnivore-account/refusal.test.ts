@@ -41,17 +41,17 @@ describe('account refusals through authFetch', () => {
     it('the code nested in detail is read too, and an unknown feature is generic', async () => {
         answer(403, { detail: { code: 'account_required', feature: 'nope' } });
         await call();
-        expect(opener).toHaveBeenCalledWith({ feature: 'generic', src: 'refusal' });
+        expect(opener).toHaveBeenCalledWith({ feature: null, src: 'refusal' });
     });
 
     it('the catalog signed-out 403 opens the generic modal; a revoked session says so', async () => {
         answer(403, { code: 'unauthorized' });
         await call();
-        expect(opener).toHaveBeenLastCalledWith({ feature: 'generic', src: 'refusal' });
+        expect(opener).toHaveBeenLastCalledWith({ feature: null, src: 'refusal' });
         cancelPendingAccount();
         answer(403, { code: 'session_revoked' });
         await call();
-        expect(opener).toHaveBeenLastCalledWith({ feature: 'generic', src: 'revoked' });
+        expect(opener).toHaveBeenLastCalledWith({ feature: null, src: 'revoked' });
     });
 
     it('a 401 from the app login never opens it, even with an account code in the body', async () => {

@@ -111,7 +111,6 @@ function pyDump(value: unknown): string {
     throw new Refuse('not_json', '');
 }
 
-/* MAX_PAYLOAD_BYTES */
 export function jsonSize(value: unknown): number {
     return pyDump(value).length;
 }

@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Sequence
 
 import structlog
 
-from src.core.db_reuse.change_cache import CACHE
+from src.cplugs.sdk.change_cache import CACHE
 from src.cplugs.huddle import groups, inbox, inbox_store, kinds, lane, lifecycle, rules, sends
 from src.cplugs.huddle.rules import QUESTION, TaskManagerInvalid
 from src.cplugs.sdk.storage import CplugSchemaError
@@ -204,6 +204,10 @@ class StoreReads:
             for key, seq in conn.execute("SELECT list_key, MAX(seq) FROM work_item_groups GROUP BY list_key"):
                 heads[key] = max(heads.get(key, 0), int(seq))
         return heads
+
+    def numbers(self, list_keys: Sequence[str]) -> Dict[int, int]:
+        with closing(self._read_connection()) as conn:
+            return self._numbers_cached(conn, list_keys)
 
     def item(self, item_id: int) -> dict:
         with closing(self._read_connection()) as conn:

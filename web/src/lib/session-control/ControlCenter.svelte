@@ -1,5 +1,6 @@
 <script lang="ts">
   import Button from '../base/Button.svelte';
+  import Segmented from '../base/Segmented.svelte';
   import './control-center.css';
   import { sessions } from '../../opscenter/api';
   import Tabs, { type TabDef } from '../../opscenter/ui/Tabs.svelte';
@@ -100,11 +101,10 @@
   });
   $effect(() => () => { generation += 1; });
 
-  /*  hidden  overflow: hidden */
   $effect(() => {
     const section = focus;
     if (!section) return;
-    if (layout === 'accordion') { openAccordion = section; return; }
+    if (layout === 'accordion' || layout === 'tabs') { openAccordion = section; return; }
     if (!root) return;
     const el = root.querySelector<HTMLElement>(`[data-scc-section="${section}"]`);
     if (el) revealInside(root, el);
@@ -168,6 +168,46 @@
   </div>
 {/snippet}
 
+
+{#snippet processCells(p: BackgroundProcess)}
+  <span class="scc-type">{p.task_id ?? t('background_work.process.shell')}</span>
+  <span class="scc-text">{p.summary ?? t('background_work.process.no_summary')}</span>
+  <span class="scc-num">{age(p.started_at)}</span>
+  {#if armed !== `proc:${p.pid}`}
+    <Button variant="danger" size="sm" data-scc-stop disabled={busy}
+      onclick={() => arm(`proc:${p.pid}`, 'processes')}>{t('background_work.stop.arm')}</Button>
+  {/if}
+{/snippet}
+
+
+{#snippet processConfirm(p: BackgroundProcess)}
+  {#if armed === `proc:${p.pid}`}
+    {@render confirm(t('background_work.stop.ask', { pid: String(p.pid), count: p.children }),
+      t('background_work.stop.yes'), () => void stopOne(p))}
+  {/if}
+{/snippet}
+
+
+{#snippet agentCells(row: SubagentRow, own: BackgroundProcess[], quietWhenNone: boolean)}
+  <span class="scc-type">{row.agent_type ?? t('subagents.list.type_unknown')}</span>
+  <span class="scc-text">{row.description ?? t('subagents.list.no_description')}</span>
+  <span class="scc-num">{row.status === 'running' ? age(row.started_at) : t('control_center.agents.finished')}</span>
+  {#if own.length > 0 && armed !== `agent:${row.id}`}
+    <Button variant="danger" size="sm" data-scc-stop disabled={busy}
+      onclick={() => arm(`agent:${row.id}`, 'agents')}>{t('background_work.stop.arm')}</Button>
+  {:else if own.length === 0 && quietWhenNone}
+    <span class="scc-quiet">{t('control_center.agents.no_shells')}</span>
+  {/if}
+{/snippet}
+
+
+{#snippet agentConfirm(row: SubagentRow, own: BackgroundProcess[])}
+  {#if armed === `agent:${row.id}`}
+    {@render confirm(t('control_center.agents.stop_ask', { count: own.length }), t('background_work.stop.yes'),
+      () => void stopMany('agents', own))}
+  {/if}
+{/snippet}
+
 {#snippet head(section: ControlSection, count: number | null, action: string | null, what: string)}
   
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -204,14 +244,11 @@
       : kind === 'shells' ? processes.length
       : liveTimers}
   <div class="scc-owner-toolbar">
-    <div class="scc-chips" role="group" aria-label={t('control_center.owner.filter_label')}>
-      {#each (['all', 'agents', 'shells', 'timers'] as const) as kind (kind)}
-        <button type="button" class="scc-chip" data-active={ownerFilter === kind ? 'true' : 'false'}
-          onclick={() => { ownerFilter = kind; }}>
-          {t(`control_center.owner.chip.${kind}`)} <span class="scc-chip-count">{chipCount(kind)}</span>
-        </button>
-      {/each}
-    </div>
+    <Segmented label={t('control_center.owner.filter_label')} value={ownerFilter} data-scc-owner-filter
+      options={(['all', 'agents', 'shells', 'timers'] as const).map((kind) => ({
+        value: kind, label: `${t(`control_center.owner.chip.${kind}`)} ${chipCount(kind)}`, attrs: { 'data-scc-owner-chip': kind },
+      }))}
+      onchange={(next) => { ownerFilter = next as typeof ownerFilter; }} />
     <div class="scc-owner-actions">
       {#if armed === 'all:agents'}
         {@render confirm(t('control_center.agents.all_ask'), t('control_center.agents.all_yes'), () => void interrupt())}
@@ -243,52 +280,25 @@
         {#if ownerFilter !== 'shells'}
           <li class="scc-row" data-scc-kind="agents">
             <span class="scc-owner-kind">{t('control_center.owner.kind.agents')}</span>
-            <span class="scc-type">{row.agent_type ?? t('subagents.list.type_unknown')}</span>
-            <span class="scc-text">{row.description ?? t('subagents.list.no_description')}</span>
-            <span class="scc-num">{row.status === 'running' ? age(row.started_at) : t('control_center.agents.finished')}</span>
-            {#if own.length > 0 && armed !== `agent:${row.id}`}
-              <Button variant="danger" size="sm" data-scc-stop disabled={busy}
-                onclick={() => arm(`agent:${row.id}`, 'agents')}>{t('background_work.stop.arm')}</Button>
-            {/if}
+            {@render agentCells(row, own, false)}
           </li>
-          {#if armed === `agent:${row.id}`}
-            {@render confirm(t('control_center.agents.stop_ask', { count: own.length }), t('background_work.stop.yes'),
-              () => void stopMany('agents', own))}
-          {/if}
+          {@render agentConfirm(row, own)}
         {/if}
         {#each own as p (p.pid)}
           <li class="scc-row scc-row--nested" data-scc-kind="shells">
             <span class="scc-owner-kind">{t('control_center.owner.kind.shells')}</span>
-            <span class="scc-type">{p.task_id ?? t('background_work.process.shell')}</span>
-            <span class="scc-text">{p.summary ?? t('background_work.process.no_summary')}</span>
-            <span class="scc-num">{age(p.started_at)}</span>
-            {#if armed !== `proc:${p.pid}`}
-              <Button variant="danger" size="sm" data-scc-stop disabled={busy}
-                onclick={() => arm(`proc:${p.pid}`, 'processes')}>{t('background_work.stop.arm')}</Button>
-            {/if}
+            {@render processCells(p)}
           </li>
-          {#if armed === `proc:${p.pid}`}
-            {@render confirm(t('background_work.stop.ask', { pid: String(p.pid), count: p.children }),
-              t('background_work.stop.yes'), () => void stopOne(p))}
-          {/if}
+          {@render processConfirm(p)}
         {/each}
       {/each}
       {#if ownerFilter !== 'agents'}
         {#each unownedProcesses as p (p.pid)}
           <li class="scc-row" data-scc-kind="shells">
             <span class="scc-owner-kind">{t('control_center.owner.kind.shells')}</span>
-            <span class="scc-type">{p.task_id ?? t('background_work.process.shell')}</span>
-            <span class="scc-text">{p.summary ?? t('background_work.process.no_summary')}</span>
-            <span class="scc-num">{age(p.started_at)}</span>
-            {#if armed !== `proc:${p.pid}`}
-              <Button variant="danger" size="sm" data-scc-stop disabled={busy}
-                onclick={() => arm(`proc:${p.pid}`, 'processes')}>{t('background_work.stop.arm')}</Button>
-            {/if}
+            {@render processCells(p)}
           </li>
-          {#if armed === `proc:${p.pid}`}
-            {@render confirm(t('background_work.stop.ask', { pid: String(p.pid), count: p.children }),
-              t('background_work.stop.yes'), () => void stopOne(p))}
-          {/if}
+          {@render processConfirm(p)}
         {/each}
       {/if}
     {/if}
@@ -326,9 +336,10 @@
         </ul>
       {/if}
       {#if timerLines.history.length > 0}
-        <button type="button" class="scc-fold" aria-expanded={historyOpen ? 'true' : 'false'}
+        <Button variant="quiet" size="sm" data-scc-fold aria-expanded={historyOpen ? 'true' : 'false'}
+          style="width: 100%; justify-content: flex-start; --_btn-ink: var(--oc-text-dim)"
           onclick={() => { historyOpen = !historyOpen; }}
-          >{t('control_center.timers.history', { count: timerLines.history.length })}</button>
+          >{t('control_center.timers.history', { count: timerLines.history.length })}</Button>
         {#if historyOpen}
           <ul class="scc-list" data-scc-history="true">
             {#each timerLines.history as line (line.id)}
@@ -361,20 +372,9 @@
         {#each agents as row (row.id)}
           {@const own = processesOf(work, row.id)}
           <li class="scc-row" data-scc-agent={row.id}>
-            <span class="scc-type">{row.agent_type ?? t('subagents.list.type_unknown')}</span>
-            <span class="scc-text">{row.description ?? t('subagents.list.no_description')}</span>
-            <span class="scc-num">{row.status === 'running' ? age(row.started_at) : t('control_center.agents.finished')}</span>
-            {#if own.length > 0 && armed !== `agent:${row.id}`}
-              <Button variant="danger" size="sm" data-scc-stop disabled={busy}
-                onclick={() => arm(`agent:${row.id}`, 'agents')}>{t('background_work.stop.arm')}</Button>
-            {:else if own.length === 0}
-              <span class="scc-quiet">{t('control_center.agents.no_shells')}</span>
-            {/if}
+            {@render agentCells(row, own, true)}
           </li>
-          {#if armed === `agent:${row.id}`}
-            {@render confirm(t('control_center.agents.stop_ask', { count: own.length }), t('background_work.stop.yes'),
-              () => void stopMany('agents', own))}
-          {/if}
+          {@render agentConfirm(row, own)}
         {/each}
       </ul>
     {/if}
@@ -401,19 +401,10 @@
       <ul class="scc-list">
         {#each processes as row (row.pid)}
           <li class="scc-row" data-scc-pid={row.pid}>
-            <span class="scc-type">{row.task_id ?? t('background_work.process.shell')}</span>
-            <span class="scc-text">{row.summary ?? t('background_work.process.no_summary')}</span>
-            <span class="scc-num">{age(row.started_at)}</span>
-            {#if armed !== `proc:${row.pid}`}
-              <Button variant="danger" size="sm" data-scc-stop disabled={busy}
-                onclick={() => arm(`proc:${row.pid}`, 'processes')}>{t('background_work.stop.arm')}</Button>
-            {/if}
+            {@render processCells(row)}
             <span class="scc-meta">{t('background_work.process.meta', { pid: String(row.pid), count: row.children })}</span>
           </li>
-          {#if armed === `proc:${row.pid}`}
-            {@render confirm(t('background_work.stop.ask', { pid: String(row.pid), count: row.children }),
-              t('background_work.stop.yes'), () => void stopOne(row))}
-          {/if}
+          {@render processConfirm(row)}
         {/each}
       </ul>
     {/if}

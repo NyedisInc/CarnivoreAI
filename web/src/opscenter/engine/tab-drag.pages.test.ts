@@ -60,7 +60,7 @@ test('a malformed browser row name starts no drag', () => {
 
 test('a saved Layout takes a page drag too', () => {
   const was = terminalLayout.session;
-  terminalLayout.bindKey('layout:107618fd-531e-4bc9-8560-775fe7793588', terminalLayout.snapshot());
+  terminalLayout.bindKey('layout:5f0c0000-0000-0000-0000-000000000000', terminalLayout.snapshot());
   try {
     expect(beginDrawerTabDrag(start(`browser:${PAGE_ID}`))).toBe(true);
   } finally {

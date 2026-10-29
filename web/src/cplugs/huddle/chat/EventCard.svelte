@@ -1,13 +1,18 @@
 <script lang="ts">
-  import { t } from '../../sdk';
+  import { openCardOnBoard, t } from '../../sdk';
   import { eventLabel } from './chat-model';
+  import { IconButton } from '../../sdk/ui';
 
-  let { event, text }: { event: string; text: string } = $props();
+  let { event, text, cardId = null }: { event: string; text: string; cardId?: number | null } = $props();
 
   const label = $derived(eventLabel(event, t));
 </script>
 
 <div class="hde" data-chat-event={event || undefined}>
+  {#if cardId !== null}
+    {@const id = cardId}
+    <IconButton label={t('cplug.huddle.chat.card_open', { id })} icon="card" data-chat-card-open={String(id)} onclick={() => void openCardOnBoard(id)} />
+  {/if}
   {#if label}<span class="hde-label">{label}</span>{/if}
   <p class="hde-text">{text}</p>
 </div>

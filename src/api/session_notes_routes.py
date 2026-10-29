@@ -1,42 +1,3 @@
-"""``GET`` and ``PUT /api/v1/sessions/{session_name}/note``.
-
-Deliberately thin: request and response shape, auth, the name to uuid
-resolution, error translation and the connection dance. Every rule about
-what a note IS lives in ``src/core/session_notes_store.py`` and is never
-re-decided here.
-
-A SESSION ID IS A 404 HERE, ON PURPOSE. ``carnivore_ses_7`` is a tmux
-name and ``ses_7`` is a session id, and gotcha 4b is that the two are
-different keyspaces and deriving one from the other loses sessions. The
-resolver is one query against ``sessions.tmux_name``; accepting both
-shapes would mean guessing which keyspace a string belongs to, and the
-guess is wrong exactly when they collide. A caller holding an id is
-holding the wrong handle for this route, and an immediate 404 is the one
-outcome that cannot write a note onto another session's row.
-
-THE THREE REFUSALS, AND WHY EACH IS THE CODE IT IS.
-
-  409 the caller's ``expected_revision`` is not the stored one, so
-      another computer saved first. The body carries the CURRENT revision
-      AND the CURRENT note, because a caller cannot reconcile against a
-      number it was not told, and this is the whole reason the feature is
-      safe on two machines. Same shape as
-      ``preferences_routes``' stale-revision 409.
-  413 the body is over ``session_notes_store.NOTE_MAX_BYTES``. Refused
-      with a sentence naming the limit, never truncated.
-  404 the tmux name names no stored session.
-
-A 503 is the datastore being unreadable. A write that could not happen
-must never answer 200: a note the user watched themselves type and that
-is gone after a reload is the defect this status code exists to prevent.
-
-THE CHANGE NOTICE IS FAIL SOFT AND CARRIES NO TEXT. On a committed write
-one compact frame goes out through ``session_change_notice.publish``, so a
-second computer with the cell open re-reads instead of waiting. It is an
-OPTIMISATION: the cell works with the socket muted, closed or never
-connected, because opening it fetches and a save gets the authoritative
-revision back in its own response. No poll is added for notes.
-"""
 
 from __future__ import annotations
 
@@ -48,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
+from src.api.error_response import api_error
 from src.api.peer_auth import require_peer_sessions
 from src.core import session_change_notice, session_notes_store as store
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
@@ -144,7 +106,7 @@ def _write(session_name: str, body: str, expected_revision: int):
 
 
 def _refuse_unreadable(exc: Exception) -> HTTPException:
-    return HTTPException(status_code=503, detail=str(exc))
+    return api_error(503, "datastore_unavailable", exc, step="session_notes")
 
 
 def _note_changed_frame(

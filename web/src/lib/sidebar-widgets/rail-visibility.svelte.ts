@@ -4,6 +4,7 @@ import { createPeekCore } from '../widget-bars/peek-core.svelte';
 import { barPinned } from '../widget-bars/bar-pin-action';
 import { useStripEscape } from '../widget-bars/strip-escape.svelte';
 import { activeFlyout, closeFlyout, openFlyout } from './flyout.svelte';
+import { modalShowing } from './escape-guards';
 import { FLYOUT_CONTAINER_ID, RAIL_LAYER_ID } from './rail-dom';
 import { MENU_FLYOUT } from './widget-ids';
 
@@ -19,10 +20,10 @@ export function createRailVisibility(nav: () => HTMLElement | null, clock: Clock
   };
   const flyoutHoldsRail = (): boolean => state === 'peek' || activeFlyout() === MENU_FLYOUT;
   const inside = (x: number, y: number): boolean =>
-    over(nav(), x, y) ||
+    !modalShowing(document) && (over(nav(), x, y) ||
     (state === 'peek' && over(document.getElementById(RAIL_LAYER_ID), x, y)) ||
     (flyoutHoldsRail() && document.querySelector('.sbr-flyout--open') !== null && over(document.getElementById(FLYOUT_CONTAINER_ID)?.querySelector('.sbr-flyout--open'), x, y)) ||
-    (flyoutHoldsRail() && over(document.getElementById(BAR_SLOT_ID), x, y));
+    (flyoutHoldsRail() && over(document.getElementById(BAR_SLOT_ID), x, y)));
   const core = createPeekCore({ nav, firstKey: FIRST_KEY, isPeeking: () => state === 'peek', holds: inMenu, inside, clock });
   const state = $derived<BarVisual>(barState({
     show: true,

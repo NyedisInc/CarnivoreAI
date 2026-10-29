@@ -1,6 +1,6 @@
 import * as api from '../api';
 import { refusalText } from '../format';
-import { reports } from '../feed-store.svelte';
+import { keepReport, reports } from '../feed-store.svelte';
 import { isLive } from '../logic/words';
 import { nextFires } from './drawer-model';
 
@@ -16,13 +16,6 @@ export const dr = $state({
 });
 
 let generation = 0;
-
-function keepReports(runs: readonly (api.RunSummary & { report?: unknown; report_omitted?: boolean })[]): void {
-  for (const run of runs) {
-    if (!run.has_report || isLive(run.status) || reports[run.run_id] || run.report_omitted || !('report' in run)) continue;
-    reports[run.run_id] = { state: 'ready', report: run.report ?? null };
-  }
-}
 
 function begin(key: string): number {
   generation += 1;
@@ -72,7 +65,7 @@ export async function loadRun(runId: string): Promise<void> {
     const page = await api.listRuns(run.automation_id, RUNS, { include_report: true }).catch(() => null);
     if (mine !== generation) return;
     if (page) {
-      keepReports(page.runs);
+      for (const run of page.runs) keepReport(run);
       dr.runs = page.runs;
     }
     dr.status = 'ready';

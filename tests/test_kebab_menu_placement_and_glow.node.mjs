@@ -21,6 +21,8 @@ async function runQueue() {
     }
 }
 
+// =====================================================================
+// =====================================================================
 
 function loadAnchorPopover() {
     const win = { visualViewport: null, innerWidth: 1000, innerHeight: 800 };
@@ -86,7 +88,11 @@ test('the shared place() (above, right-flush) is untouched by this addition', ()
     assert.equal(out.top, 332, 'above the anchor: anchor.top - height - MARGIN (400 - 60 - 8)');
 });
 
+// =====================================================================
+// =====================================================================
 
+// =====================================================================
+// =====================================================================
 
 function ruleBody(css, selector) {
     const re = new RegExp(`\\n\\s*${selector.replace(/[.[\]]/g, '\\$&')}\\s*\\{([^}]*)\\}`, 's');

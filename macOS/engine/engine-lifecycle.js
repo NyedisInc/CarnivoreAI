@@ -7,9 +7,9 @@ const { stopEngineViaRoute } = require('./engine-stop');
 const { normalizeVersion } = require('../adoption-decision');
 const setupVerdict = require('../setup-verdict');
 
-async function verifyEngineHolder(manager) {
+async function verifyEngineHolder(manager, port) {
   try {
-    return portTrust.holderRefusal(await portTrust.listeners(manager.getPort(), { execFile }), process.getuid());
+    return portTrust.holderRefusal(await portTrust.listeners(port || manager.getPort(), { execFile }), process.getuid());
   } catch (err) {
     return { reason: 'unknown', holder: null };
   }
@@ -24,9 +24,7 @@ async function signalEngineHolders(manager) {
   const rec = manager.engineRecord;
   const refuse = (why) => ({ ok: false, error: `${why}; nothing was signalled` });
   if (!rec || !Number.isInteger(rec.pid) || !rec.start) return refuse('no adopted engine is recorded');
-  let port;
-  try { port = manager.getPort(); } catch (err) { return refuse('the engine port cannot be read'); }
-  if (port !== rec.port) return refuse(`the engine port is now ${port}, not the adoption port ${rec.port}`);
+  const port = rec.port;
   const holders = await portTrust.listeners(port, { execFile });
   if (!Array.isArray(holders) || holders.length !== 1) return refuse('the port does not have exactly one listener');
   const [holder] = holders;
@@ -34,7 +32,7 @@ async function signalEngineHolders(manager) {
   if (portTrust.NEVER_KILL.includes(holder.command)) return refuse(`${holder.command} is never stopped from here`);
   const ident = await portTrust.processIdentity(rec.pid, { execFile });
   if (!ident || ident.start !== rec.start || ident.exe !== rec.exe) return refuse('the adopted pid is no longer the same process');
-  const health = await manager.getHealth();
+  const health = await manager.getHealth(port);
   if (!portTrust.isCarnivoreHealth(health) || normalizeVersion(health.version) !== rec.version) return refuse('the listener does not answer as the adopted engine');
   try {
     process.kill(rec.pid, 'SIGTERM');
@@ -50,6 +48,12 @@ function localSetupIncomplete(manager, getApi) {
   return setupVerdict.evaluateLocalSetup(manager.readSetupFacts()).status === 'incomplete';
 }
 
+async function engineListening(manager, recorded) {
+  if (await manager.engineIsUp(recorded)) return true;
+  const holders = await portTrust.listeners(recorded || manager.getPort(), { execFile });
+  return !Array.isArray(holders) || holders.length > 0;
+}
+
 async function stopEngine(manager, options = {}) {
   const verdict = decideLifecycleAction({ action: STOP_ENGINE_ACTION, owned: manager.ownedProcess });
   if (verdict.via === 'signal') return { ...(await manager.stop()), via: 'signal' };
@@ -57,9 +61,11 @@ async function stopEngine(manager, options = {}) {
   manager.stopRequested = true;
   manager.lastExitUnexpected = false;
   if (manager.slowRetry) manager.slowRetry.cancel();
+  const unpaired = localSetupIncomplete(manager, options.getApi);
+  const recorded = manager.engineRecord ? manager.engineRecord.port : undefined;
   const result = await stopEngineViaRoute({
-    getApi: options.getApi || (() => null), isUp: () => manager.engineIsUp(),
-    verifyHolder: () => verifyEngineHolder(manager),
+    getApi: options.getApi || (() => null), isUp: () => engineListening(manager, recorded),
+    verifyHolder: () => verifyEngineHolder(manager, unpaired ? recorded : undefined),
     setupIncomplete: () => localSetupIncomplete(manager, options.getApi),
     signalHolder: () => signalEngineHolders(manager),
     log: (message) => console.log(message),
@@ -87,4 +93,4 @@ async function restartAdoptedEngine(manager, options = {}) {
   return { ok: true };
 }
 
-module.exports = { recordEngine, verifyEngineHolder, stopEngine, restartAdoptedEngine };
+module.exports = { engineListening, recordEngine, verifyEngineHolder, stopEngine, restartAdoptedEngine };

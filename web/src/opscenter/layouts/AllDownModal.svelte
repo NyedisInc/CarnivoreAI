@@ -4,8 +4,11 @@
     import ModalShell from '../../lib/launchpad/ModalShell.svelte';
     import { t } from '../../lib/i18n/index.svelte';
     import { asleep, recent, sessions } from '../api';
+    import Button from '../../lib/base/Button.svelte';
+    import IconButton from '../../lib/base/IconButton.svelte';
     import MemberDownRow from './MemberDownRow.svelte';
     import type { SavedLayout } from './api';
+    import { isLiveRow } from './names';
 
     interface Props {
         layout: SavedLayout;
@@ -25,7 +28,7 @@
         const rows = sessions.data;
         if (!rows) return;
         const rowIds = new Set(members.map((member) => member.session_row_id));
-        if (rows.some((row) => typeof row.session_row_id === 'number' && rowIds.has(row.session_row_id))) {
+        if (rows.some((row) => typeof row.session_row_id === 'number' && rowIds.has(row.session_row_id) && isLiveRow(row))) {
             close(true);
         }
     });
@@ -35,8 +38,8 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">&raquo; {layout.name}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')}
-                onclick={() => close(false)}>&times;</button>
+            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
+                onclick={() => close(false)} />
         </div>
     {/snippet}
     <div class="lad-body" data-all-down-modal>
@@ -48,9 +51,7 @@
         {/each}
     </div>
     {#snippet footer()}
-        <button class="modal-btn modal-btn-secondary" onclick={() => close(false)}
-            >{t('layout.all_down.close')}</button
-        >
+        <Button onclick={() => close(false)}>{t('layout.all_down.close')}</Button>
     {/snippet}
 </ModalShell>
 

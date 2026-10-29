@@ -21,12 +21,10 @@ __all__ = [
     "log_out_profile",
 ]
 
-# could not
 LOGOUT_OK = "ok"
 LOGOUT_SKIPPED = "skipped"
 LOGOUT_FAILED = "failed"
 
-# authentication error
 LOGOUT_BINARY_MISSING = "logout_binary_missing"
 LOGOUT_SPAWN_FAILED = "logout_spawn_failed"
 LOGOUT_TIMED_OUT = "logout_timed_out"

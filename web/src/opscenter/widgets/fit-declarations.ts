@@ -9,9 +9,9 @@ const FITS_KEYS: readonly string[] = ['sizes', 'anySize', 'max_per_surface'];
 
 
 const RETIRED_KEYS: Readonly<Record<string, string>> = Object.freeze({
-  zones: 'every widget goes everywhere',
+  zones: 'every widget goes everywhere (Joe (ccsliinc), 2026-10-03)',
   suggested: 'renamed fits.sizes: the named sizes a widget supports',
-  tested: 'renamed fits.sizes: sizes are called out by name',
+  tested: 'renamed fits.sizes: sizes are called out by name (Joe (ccsliinc), 2026-10-04)',
   allowed: 'declare fits.sizes, by name',
   max: 'there is no ceiling, declare fits.sizes',
 });

@@ -56,7 +56,7 @@ class CommitOutcome:
 
 
 def _lock_for(path: Path) -> threading.RLock:
-    key = str(path)
+    key = os.path.realpath(path)
     with _locks_guard:
         lock = _locks.get(key)
         if lock is None:
@@ -156,21 +156,6 @@ def commit(
 def create_if_absent(
     path: Path, data: Dict[str, Any], *, file_mode: Optional[int] = None
 ) -> bool:
-    """Create a JSON file WHOLE, atomically, only when nothing is there.
-
-    Description: the temp file is written and fsynced exactly as
-      :func:`commit` writes one, then HARD LINKED to the target, which
-      fails rather than replaces when a file already exists, so an existing
-      document (someone else's, or a racing creator's) is never
-      overwritten and no reader ever sees a half-written file. Taken under
-      the path's lock, like every other write here. Exists for the files
-      :func:`commit` then maintains but cannot create (issue #704).
-    Inputs: path (Path); data (dict) - the whole first document; file_mode
-      (int|None) - the file's exact mode, umask-proof.
-    Output: bool - True when this call created the file.
-    Raises: OSError from the write (the temp file is removed first).
-    Example: create_if_absent(Path("/x/shared.json"), {"mcpServers": {}}, file_mode=0o600)
-    """
     resolved = Path(path).expanduser()
     with _lock_for(resolved):
         if resolved.exists():

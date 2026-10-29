@@ -232,7 +232,7 @@ def test_nothing_readable_is_honest_unknown():
 
 def _outer(codex_bundle, *, family="codex"):
     from src.core.attention.evidence import Evidence
-    from src.core.attention.registry_read import registry_for_session
+    from src.core.attention.registry_index import registry_for_session
     from src.core.attention.transcript_facts import FACTS_UNREADABLE, TranscriptFacts
 
     return Evidence(

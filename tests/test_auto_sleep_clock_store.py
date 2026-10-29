@@ -152,9 +152,9 @@ def test_prune_and_forget():
 def test_the_wiring_passes_the_registry_shell_hint():
     import inspect
 
-    from src.core import attention_wiring
+    from src.core.attention import wiring_builders
 
-    source = inspect.getsource(attention_wiring.build_attention_watcher)
+    source = inspect.getsource(wiring_builders.make_on_observation)
     assert "idle_clock.observe(" in source
     assert "activity_hint_for(observation.evidence.registry)" in source
 
@@ -243,8 +243,8 @@ def test_a_never_unread_run_is_measured_from_its_start():
 def test_the_watcher_feeds_the_clock_without_the_unread_overlay():
     import inspect
 
-    from src.core import attention_wiring
+    from src.core.attention import wiring_builders
 
-    source = inspect.getsource(attention_wiring.build_attention_watcher)
+    source = inspect.getsource(wiring_builders.make_on_observation)
     assert "unread=False, tmux_status=STATUS_UNKNOWN" in source
     assert "unread=unread," in source

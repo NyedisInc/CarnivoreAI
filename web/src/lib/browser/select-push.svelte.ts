@@ -3,6 +3,7 @@ import { resourcePush } from '../resource-push/boot';
 import { LIVENESS, familyOf } from '../resource-push/store';
 import { BROWSER_ID, browsers, type BrowserInfo } from './api.svelte';
 import { openBrowser } from './screen-host';
+import { activate as activateBrowserRow } from '../drawer/browser-rows';
 import type { PageInfo } from './page-frame';
 import { openPages } from './pages.svelte';
 
@@ -33,7 +34,6 @@ export interface OpenAnswer {
 
 interface DrawerGlobals {
     SessionSidebar?: unknown;
-    SessionSidebarBrowsers?: { activate?: (ctrl: unknown, name: string) => boolean };
 }
 
 let appliedSeq = 0;
@@ -42,8 +42,7 @@ let following = false;
 export function selectBrowserItem(id: string): boolean {
     if (!BROWSER_ID.test(id)) return false;
     const g = globalThis as unknown as DrawerGlobals;
-    const activate = g.SessionSidebarBrowsers?.activate;
-    if (typeof activate === 'function' && activate(g.SessionSidebar ?? null, `${BROWSER_ROW_PREFIX}${id}`)) return true;
+    if (activateBrowserRow(g.SessionSidebar as { _closeAfterSwitch?: () => void } | null ?? null, `${BROWSER_ROW_PREFIX}${id}`)) return true;
     return openBrowser(id);
 }
 

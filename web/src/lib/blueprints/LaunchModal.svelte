@@ -3,6 +3,7 @@
     import { onMount } from 'svelte';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import { t } from '../i18n/index.svelte';
+    import { Button, Checkbox, State, Tag } from '../base';
     import { openSession } from '../../opscenter/api/host';
     import { providerMark } from '../sessions/agent-marks';
     import { blueprintError, launchBlueprint, previewLaunch } from './api';
@@ -40,8 +41,8 @@
         }
     }
 
-    function consentKey(memberIndex: number, itemId: string): string {
-        return `${memberIndex}:${itemId}`;
+    function consentKey(itemId: string): string {
+        return itemId;
     }
 
     function membersNeedingConsent(members: MemberPreview[]): Array<{ member: MemberPreview; itemId: string }> {
@@ -62,7 +63,7 @@
         if (!preview) return {};
         const out: Record<string, SkillConsent> = {};
         for (const { member, itemId } of membersNeedingConsent(preview.members)) {
-            if (!consentTicks[consentKey(member.index, itemId)]) continue;
+            if (!consentTicks[consentKey(itemId)]) continue;
             const skill = member.skills.find((s) => s.item_id === itemId);
             const sheet = skill?.consent_sheet;
             const digest = typeof sheet?.['digest'] === 'string' ? (sheet['digest'] as string) : '';
@@ -125,9 +126,9 @@
     onCancel={() => close(stage === 'done')}
 >
     {#if stage === 'loading'}
-        <p>{t('blueprint.launch.preview')}...</p>
+        <State kind="loading" title={`${t('blueprint.launch.preview')}...`} />
     {:else if stage === 'error'}
-        <p class="bp-launch__error" role="alert">{t('blueprint.launch.failed', { reason: loadError })}</p>
+        <State kind="error" title={t('blueprint.launch.failed', { reason: loadError })} />
     {:else if stage === 'preview' && preview}
         <p class="oc-label">{t('blueprint.launch.preview')}</p>
         <ul class="bp-launch__list">
@@ -145,10 +146,10 @@
                     {#if member.folder.mode === 'worktree' || member.skills.length > 0}
                         <div class="bp-launch__chips">
                             {#if member.folder.mode === 'worktree'}
-                                <span class="bp-launch__chip">{t('blueprint.session.folder.worktree')}</span>
+                                <Tag>{t('blueprint.session.folder.worktree')}</Tag>
                             {/if}
                             {#each member.skills as skill (skill.item_id)}
-                                <span class="bp-launch__chip">{skill.item_id}</span>
+                                <Tag>{skill.item_id}</Tag>
                             {/each}
                         </div>
                     {/if}
@@ -163,18 +164,15 @@
                         {:else if skill.needs_consent}
                             
                             <div class="bp-launch__consent">
-                                <label class="bp-launch__consent-line">
-                                    <input
-                                        type="checkbox"
-                                        checked={!!consentTicks[consentKey(member.index, skill.item_id)]}
-                                        onchange={(e) =>
-                                            (consentTicks = {
-                                                ...consentTicks,
-                                                [consentKey(member.index, skill.item_id)]: (e.currentTarget as HTMLInputElement).checked,
-                                            })}
-                                    />
-                                    <span>{t('blueprint.launch.script_consent', { skill: skill.item_id })}</span>
-                                </label>
+                                <Checkbox
+                                    checked={!!consentTicks[consentKey(skill.item_id)]}
+                                    onchange={(e) =>
+                                        (consentTicks = {
+                                            ...consentTicks,
+                                            [consentKey(skill.item_id)]: (e.currentTarget as HTMLInputElement).checked,
+                                        })}
+                                    label={t('blueprint.launch.script_consent', { skill: skill.item_id })}
+                                />
                             </div>
                         {:else}
                             <span class="bp-launch__line">{t('blueprint.launch.skill_install', { skill: skill.item_id })}</span>
@@ -230,30 +228,30 @@
     {/if}
 
     {#snippet footer()}
-        <!-- padding -->
+        
         {#if stage === 'preview'}
-            <button class="modal-btn modal-btn-secondary" onclick={() => close(false)}>{t('blueprint.launch.cancel')}</button>
-            <button class="modal-btn modal-btn-primary" disabled={!canLaunch()} onclick={() => void doLaunch(false)}>
+            <Button onclick={() => close(false)}>{t('blueprint.launch.cancel')}</Button>
+            <Button variant="confirm" data-bp-confirm disabled={!canLaunch()} onclick={() => void doLaunch(false)}>
                 {t('blueprint.launch.confirm')}
-            </button>
+            </Button>
         {:else if stage === 'confirm_layout'}
-            <button class="modal-btn modal-btn-secondary" onclick={() => close(false)}>{t('blueprint.launch.cancel')}</button>
-            <button class="modal-btn modal-btn-confirm" onclick={() => void doLaunch(true)}>{t('blueprint.launch.layout_update')}</button>
+            <Button onclick={() => close(false)}>{t('blueprint.launch.cancel')}</Button>
+            <Button variant="confirm" data-bp-confirm onclick={() => void doLaunch(true)}>{t('blueprint.launch.layout_update')}</Button>
         {:else if stage === 'launching'}
-            <button class="modal-btn modal-btn-secondary" disabled>{t('blueprint.launch.cancel')}</button>
+            <Button disabled>{t('blueprint.launch.cancel')}</Button>
         {:else if stage === 'done'}
             {#if result?.layout}
-                <button class="modal-btn modal-btn-primary" onclick={openLayout}>{t('layout.row.open')}</button>
+                <Button variant="confirm" data-bp-confirm onclick={openLayout}>{t('layout.row.open')}</Button>
             {:else}
                 {#if soloSession}
-                    <button class="modal-btn modal-btn-secondary" onclick={() => close(true)}>{t('subagents.status.done')}</button>
-                    <button class="modal-btn modal-btn-primary" onclick={openSoloSession}>{t('opscenter.cell.terminal.viewer.open')}</button>
+                    <Button onclick={() => close(true)}>{t('subagents.status.done')}</Button>
+                    <Button variant="confirm" data-bp-confirm onclick={openSoloSession}>{t('opscenter.cell.terminal.viewer.open')}</Button>
                 {:else}
-                    <button class="modal-btn modal-btn-primary" onclick={() => close(true)}>{t('subagents.status.done')}</button>
+                    <Button variant="confirm" data-bp-confirm onclick={() => close(true)}>{t('subagents.status.done')}</Button>
                 {/if}
             {/if}
         {:else}
-            <button class="modal-btn modal-btn-secondary" onclick={() => close(false)}>{t('blueprint.launch.cancel')}</button>
+            <Button onclick={() => close(false)}>{t('blueprint.launch.cancel')}</Button>
         {/if}
     {/snippet}
 </ModalShell>
@@ -314,15 +312,7 @@
         gap: 4px;
     }
 
-    .bp-launch__chip {
-        padding: 1px 6px;
-        border: 1px solid var(--oc-line-faint);
-        border-radius: var(--oc-radius-sm, 3px);
-        color: var(--oc-text-secondary);
-        font-family: var(--font-mono);
-        font-size: 10px;
-    }
-
+    /* with a plain */
     .bp-launch__path {
         margin: 0;
         overflow: hidden;
@@ -366,23 +356,6 @@
         border-radius: 4px;
     }
 
-    .bp-launch__consent-line {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        color: var(--oc-text-primary);
-        font-size: 11px;
-        line-height: 1.4;
-        cursor: pointer;
-    }
-
-    .bp-launch__consent-line input {
-        margin-top: 2px;
-        flex-shrink: 0;
-        width: 14px;
-        height: 14px;
-    }
-
     .bp-launch__partial {
         margin-top: 8px;
         color: var(--oc-coral);
@@ -395,7 +368,4 @@
         font-size: 12px;
     }
 
-    .bp-launch__error {
-        color: var(--oc-coral);
-    }
 </style>

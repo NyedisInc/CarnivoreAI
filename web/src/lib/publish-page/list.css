@@ -125,7 +125,6 @@
     }
 }
 
-/* the shared one */
 @media (max-width: 719px), (pointer: coarse) {
     .d-filter input, .d-empty--fail button { min-height: var(--oc-tap); }
 }

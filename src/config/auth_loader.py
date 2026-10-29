@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
@@ -11,6 +10,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from src.config.agents import AgentsConfig
 from src.config.auth import AuthConfig
 from src.config.browser import BROWSER_KEY, BrowserConfig
+from src.config import config_file
 from src.config.byoai import BYOAI_KEY, ByoaiConfig
 from src.config.launch_profiles import LAUNCH_PROFILES_KEY, LaunchProfilesConfig
 from src.config.mcp import MCP_KEY, McpConfig
@@ -26,6 +26,7 @@ from src.config.session import SessionConfig
 from src.config.ui import UI_KEY, UIConfig
 from src.config.uploads import UploadsConfig
 from src.config.workspace import ServerPrefsConfig, WorkspaceConfig
+from src.core import auth_defaults
 from src.core.launch_profiles.seed_from_wrappers import seed_launch_profiles
 from src.core.launch_profiles.wrapper_view import wrappers_from_profiles
 from src.core.workspace_settings import SERVER_PREFS_KEY, WORKSPACE_KEY
@@ -33,11 +34,6 @@ from src.core.workspace_settings import SERVER_PREFS_KEY, WORKSPACE_KEY
 logger = structlog.get_logger()
 
 BlockT = TypeVar("BlockT", bound=BaseModel)
-
-DEFAULT_JWT_EXPIRY_MINUTES = 30
-DEFAULT_ACCESS_TOKEN_TTL_SECONDS = 14400
-DEFAULT_REFRESH_TOKEN_TTL_SECONDS = 604800
-DEFAULT_REFRESH_GRACE_SECONDS = 10
 
 
 def _raw_payload(raw: Any) -> Dict[str, Any]:
@@ -111,38 +107,11 @@ def _relay_block(raw: Any) -> RelayConfig:
 def load(
     config_path: Path, *, totp_secret: Optional[str], jwt_secret: Optional[str]
 ) -> AuthConfig:
-    """Load authentication configuration from JSON plus the .env secrets.
+    data = config_file.read_config(config_path)
 
-    Description: non-secrets come from the JSON file, the two secrets
-      come from the environment through ``Settings``. A legacy
-      ``projects`` key is deliberately NOT read - projects live in
-      ``cloude.db`` only.
-    Inputs: config_path (Path) - the expanded ``config.json`` path;
-      totp_secret (str | None) and jwt_secret (str | None) - from .env.
-    Output: AuthConfig.
-    Raises:
-        FileNotFoundError: the file does not exist.
-        ValueError: the file is not valid JSON, or a secret is missing.
-    Example: load(Path("~/config.json").expanduser(), totp_secret=t, jwt_secret=j)
-    """
-    if not config_path.exists():
-        raise FileNotFoundError(
-            f"Auth config file not found: {config_path}\n"
-            f"Run ./setup_auth.py to create it."
-        )
-
-    try:
-        with open(config_path) as f:
-            data = json.load(f)
-    except json.JSONDecodeError as e:
-        raise ValueError(
-            f"Invalid JSON in auth config file: {e}\n"
-            f"Check {config_path}"
-        )
-
-    config_version = data.get("config_version", 0)
+    config_version = data.get("config_version", auth_defaults.CONFIG_VERSION)
     if not isinstance(config_version, int):
-        config_version = 0
+        config_version = auth_defaults.CONFIG_VERSION
 
     launch_view = _launch_view(data)
     auth_config = AuthConfig(
@@ -150,16 +119,16 @@ def load(
         totp_secret=totp_secret,
         jwt_secret=jwt_secret,
         jwt_expiry_minutes=data.get(
-            "jwt_expiry_minutes", DEFAULT_JWT_EXPIRY_MINUTES
+            "jwt_expiry_minutes", auth_defaults.JWT_EXPIRY_MINUTES
         ),
         access_token_ttl_seconds=int(
-            data.get("access_token_ttl_seconds", DEFAULT_ACCESS_TOKEN_TTL_SECONDS)
+            data.get("access_token_ttl_seconds", auth_defaults.ACCESS_TOKEN_TTL_SECONDS)
         ),
         refresh_token_ttl_seconds=int(
-            data.get("refresh_token_ttl_seconds", DEFAULT_REFRESH_TOKEN_TTL_SECONDS)
+            data.get("refresh_token_ttl_seconds", auth_defaults.REFRESH_TOKEN_TTL_SECONDS)
         ),
         refresh_grace_seconds=int(
-            data.get("refresh_grace_seconds", DEFAULT_REFRESH_GRACE_SECONDS)
+            data.get("refresh_grace_seconds", auth_defaults.REFRESH_GRACE_SECONDS)
         ),
         template_path=data.get("template_path"),
         common_slash_commands=data.get("common_slash_commands", []),

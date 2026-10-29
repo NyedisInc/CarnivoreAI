@@ -31,6 +31,7 @@ export interface SkillMdWritten {
     readonly version_id: number;
 }
 
+/* the file changed on disk */
 export class StaleBaseError extends Error {
     constructor(readonly currentSha256: string | null) {
         super('the file changed on disk');

@@ -1,3 +1,4 @@
+// on the terminal screen
 
 import fs from 'node:fs';
 import path from 'node:path';

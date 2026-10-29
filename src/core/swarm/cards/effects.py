@@ -158,7 +158,7 @@ async def _learn(app_state: Any, card: Mapping[str, Any], effect: Mapping[str, A
     note, ref, title = effect["text"], effect["ref"], f"send-back on {card['title']}"
     done = await body.run_db(lambda c: facts.store_owner_fact(c, agent, title=title, text=note, owner_message_ref=ref))
     thread = thread_port.get()
-    line = texts.post_text("learned", card, {"fact_id": done["fact_id"]})
+    line = texts.post_text("learned", card, {"fact_id": done["fact_id"]}) if done.get("kind") == "rule" else None
     if thread is not None and line is not None:
         await thread.post_traffic(agent["thread_key"], line, f"card:learned:{card['id']}")
     await asyncio.to_thread(push.notify_agent, agent["id"])

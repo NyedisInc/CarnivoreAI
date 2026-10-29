@@ -23,18 +23,24 @@
     "reopen",
     "reboot"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The home screen's recently closed sessions card listing a session that ended",
+      "caption": "Recently closed sessions on the home screen",
+      "file": "recent.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Recent sessions and reopen",
   "since": "2026-09-10",
   "status": "stable",
   "summary": "see your recently used sessions, and reopen the ones a reboot left behind.",
   "surfaces": [
-    "web/src/lib/launchpad/RecentSessions.svelte"
+    "web/src/opscenter/cells/closed-sessions/Cell.svelte"
   ],
   "updated": "2026-09-27",
   "where": [
     "Home screen, the RECENTLY CLOSED SESSIONS card.",
     "After a restart of the computer, a reopen offer lists what was running."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

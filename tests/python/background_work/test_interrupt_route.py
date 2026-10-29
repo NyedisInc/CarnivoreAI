@@ -119,7 +119,7 @@ def test_refusals_type_nothing_then_escape_reaches_the_pane(panes):
 
     assert interrupt("ses_live", {}).status_code == 422
     assert interrupt("ses_live", {"confirm": False}).status_code == 422
-    remote = interrupt("remote:hosta:" + panes.agent)
+    remote = interrupt("remote:studio:" + panes.agent)
     assert remote.status_code == 409 and remote.json()["detail"]["code"] == "remote_host"
     assert interrupt("ses_nobody").status_code == 404
     for session_id, code in (("ses_shell", "not_an_agent"), ("ses_dead", "session_dead"),

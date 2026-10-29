@@ -8,6 +8,7 @@ function ses(i) { return `ses_${i}`; }
 
 
 const tests = [];
+/** Description: register one named case. Inputs: name, fn. Output: None. */
 function test(name, fn) { tests.push([name, fn]); }
 
 test('a burst of identical Stops renders ONE card carrying an x<n> badge', () => {
@@ -332,8 +333,8 @@ test('the session name is a real control, and does NOT navigate on its own', () 
     const { container, mgr, sandbox } = makeEnv();
     mgr.add(toast('Stop', 'Your turn', null, 'ses_1', 'cloude_myproject'));
     const calls = [];
-    sandbox.window.SessionSidebarClicks = {
-        activateRow: (ctrl, rowEl) => calls.push({ ctrl, rowEl }),
+    sandbox.window.SessionSidebar = {
+        activateRow: (rowEl) => calls.push({ rowEl }),
     };
     const nameBtn = cards(container)[0].querySelector('.toast__session');
     assert.equal(nameBtn.tagName, 'BUTTON',
@@ -349,7 +350,7 @@ test('clicking the session name also dismisses the card', async () => {
     const { container, mgr, sandbox, acked } = makeEnv();
     const t = toast('Stop', 'Your turn', null, 'ses_1', 'cloude_myproject');
     mgr.add(t);
-    sandbox.window.SessionSidebarClicks = { activateRow: () => {} };
+    sandbox.window.SessionSidebar = { activateRow: () => {} };
     const nameBtn = cards(container)[0].querySelector('.toast__session');
     nameBtn.click();
     await settle();
@@ -370,7 +371,7 @@ test('the dismiss button still works, and does not also trigger the name switch'
     const t = toast('Stop', 'Your turn', null, 'ses_1', 'cloude_myproject');
     mgr.add(t);
     const calls = [];
-    sandbox.window.SessionSidebarClicks = { activateRow: (...args) => calls.push(args) };
+    sandbox.window.SessionSidebar = { activateRow: (...args) => calls.push(args) };
     const card = cards(container)[0];
     card.querySelector('.toast__dismiss').click();
     assert.deepEqual(acked, [t.id], 'the dismiss must still ack the toast it belongs to');
@@ -397,6 +398,7 @@ test('a session with no baked colour leaves --toast-accent unset, which is the d
         'no inline override means the CSS fallback (today\'s look) applies, not an invented colour');
 });
 
+// ------------------------------------------------------------------- run
 
 let failed = 0;
 for (const [name, fn] of tests) {

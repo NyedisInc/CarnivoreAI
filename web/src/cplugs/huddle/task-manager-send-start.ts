@@ -21,7 +21,6 @@ export interface StartResult {
   failure: StartFailure | null;
 }
 
-/* label: ' */
 export function createPayload(project: ProjectRow): Record<string, unknown> {
   const body: Record<string, unknown> = {
     working_dir: project.path, auto_start_claude: true, copy_templates: false, project_name: project.name, label: project.name,
@@ -50,7 +49,6 @@ export async function startSessionFor(list: string): Promise<StartResult> {
   }
 }
 
-/*  hidden  */
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function waitUntilReady(list: string, session: string, timeoutMs = READY_TIMEOUT_MS, stepMs = READY_STEP_MS): Promise<boolean> {

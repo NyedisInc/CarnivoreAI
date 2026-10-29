@@ -1,23 +1,3 @@
-"""What the save plugin's restore point engine needs from the app: transcript files, where they live, and the tree's config.
-
-Issue #1675. The engine (``src/cplugs/save/engine/``) copies a conversation's transcript files into
-``<state>/time-machine/`` and puts them back on a restore. A plugin imports only the SDK
-(``tests/python/cplugs/test_cplug_boundaries.py``), so every core piece the engine reads arrives here, by name:
-
-- where things are: :func:`state_dir` (this install's state directory, the tree's parent) and :func:`projects_dir`
-  (Claude Code's ``~/.claude/projects``); tests replace both;
-- finding a conversation's files: :func:`locate` and :class:`SourceSet` (``transcript_source.locate``), the iCloud
-  placeholder checks (``dataless``), the capture scope rules (``source_scope``, ``SCOPE_*``), the first prompt
-  readers (:func:`claude_user_text`, :func:`codex_user_text`), the folder name a working dir maps to
-  (:func:`slugify_project_dir`) and whether a conversation is already on disk (:func:`family_conversation_presence`);
-- writing: :func:`assert_test_write_allowed` (the test write guard), the one config writer
-  (:func:`read_config`, :func:`commit_config`, :func:`config_file`) for the capture scope in ``config.json``, and
-  :func:`announce_timeline` (a point was written or removed: the session timeline repaints);
-- the storage cap: ``limits`` (``limits.json``, which core shares with the summary settings) and the four names core
-  owns (``TREE_DIR_NAME``, ``DEFAULT_CAP_BYTES``, ``CAP_ENV_VAR``, ``LIMITS_FILE_NAME``).
-
-Every name is the core object itself, not a copy, so there is one source of truth for each.
-"""
 
 from __future__ import annotations
 
@@ -38,7 +18,6 @@ from src.core.transcript_source.scope import SCOPE_ALL, SCOPE_HUMAN, SCOPE_SUBSE
 
 
 def state_dir() -> Path:
-    """This install's state directory (the restore point tree is ``<it>/time-machine``). Output: Path."""
     from src.config import settings  # noqa: PLC0415
 
     return Path(settings.get_state_dir())

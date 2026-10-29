@@ -1,9 +1,10 @@
 <script lang="ts">
   import { t } from '../i18n/index.svelte';
-  import { alertCenter } from './alerts.svelte';
-  import { badgeFor } from './alerts-model';
+  import { bellBadge, startAttentionSources } from '../attention-kinds/read.svelte';
 
-  const badge = $derived(badgeFor(alertCenter.counts));
+  $effect(() => startAttentionSources());
+
+  const badge = $derived(bellBadge());
 </script>
 
 {#if badge.severity}

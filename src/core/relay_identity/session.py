@@ -141,6 +141,7 @@ class DeviceSession:
         self._sleep = sleep
         self._key: Optional[dk.DeviceKey] = None
         self._token: Optional[RelayToken] = None
+        self._fetch_lock = asyncio.Lock()
 
     @property
     def device_id(self) -> Optional[str]:
@@ -219,9 +220,21 @@ class DeviceSession:
         logger.info("relay_device_claimed", device=key.device_id)
 
     async def token(self) -> RelayToken:
-        now = self._clock()
-        if self._token is not None and self._token.exp - REFRESH_MARGIN_SECONDS > now:
+        cached = self._fresh_token()
+        if cached is not None:
+            return cached
+        async with self._fetch_lock:
+            cached = self._fresh_token()
+            if cached is not None:
+                return cached
+            return await self._fetch_token()
+
+    def _fresh_token(self) -> Optional[RelayToken]:
+        if self._token is not None and self._token.exp - REFRESH_MARGIN_SECONDS > self._clock():
             return self._token
+        return None
+
+    async def _fetch_token(self) -> RelayToken:
         bearer = await self._bearer()
         await self._ensure(bearer)
         answer = await self._post("/token", await self._token_request(), bearer)

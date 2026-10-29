@@ -15,7 +15,7 @@ W = {legacy: new for new, legacy in tables.LEGACY_NAMES.items()}
 
 def seed_task_manager(w: SimpleNamespace) -> None:
     s = Seeder(w.ledger, MAIN_STORE, w.main)
-    w.huddle = s
+    w.task_manager = s
     list1, list2 = str(w.p1), str(w.p2)
     item = dict(text="t", position=1, created_by="joe", state="open", created_at=1.0, updated_at=1.0, created_seq=1, seq=1)
     w.item_a = s.put(W["items"], (A, P), list_key=list1, owner_session_key=UUID_A, **item)

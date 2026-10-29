@@ -1,11 +1,9 @@
-/* padding var(--color-bg) */
 [data-terminal-bg="on"] {
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
 }
 
-/* var(--color-bg) */
 [data-terminal-bg="on"] #terminal {
     background-color: transparent;
 }

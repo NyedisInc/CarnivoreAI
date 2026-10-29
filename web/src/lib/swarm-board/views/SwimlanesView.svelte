@@ -1,6 +1,7 @@
 
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
+  import { boardFocus, isFresh } from '../board-focus.svelte';
   import { t } from '../../i18n/index.svelte';
   import { COLUMNS, type CardView } from '../board-types';
   import CardPane from '../CardPane.svelte';
@@ -27,6 +28,26 @@
     openId = openId === card.id ? null : card.id;
     await tick();
     if (openId !== null && root && root.clientWidth <= 720) pane?.scrollIntoView({ block: 'start' });
+  }
+
+  $effect(() => {
+    const want = boardFocus.request;
+    if (!isFresh(want)) return;
+    const found = findCard(data.lanes, want.id);
+    if (!found) return;
+    untrack(() => {
+      boardFocus.request = null;
+      folds = { ...folds, [found.card.list_key]: false };
+      openId = want.id;
+      void reveal(want.id, found.card.list_key);
+    });
+  });
+
+  async function reveal(id: number, laneKey: string): Promise<void> {
+    await tick();
+    const card = root?.querySelector(`[data-swarm-board-card="${id}"]`);
+    const lane = root?.querySelector(`[data-swarm-lane="${CSS.escape(laneKey)}"]`);
+    (card ?? lane)?.scrollIntoView({ block: 'center' });
   }
 
   function flipChat(): void {

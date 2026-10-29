@@ -8,9 +8,6 @@ Native macOS menu bar application for managing Cloude Code server.
 # Install dependencies
 npm install
 
-# Optional: Generate placeholder icons
-cd assets && ./generate-icons.sh && cd ..
-
 # Run in development mode
 npm start
 
@@ -99,6 +96,13 @@ Quit and Stop Engine
    to the repo root one level up. Anything that assumes a sibling `../venv`
    is describing the dev tree, not the shipped app.
 
+   `<userData>` is `~/Library/Application Support/Carnivore Menubar/` as of
+   the Carnivore rename's Phase 9 bundle-id cutover (`userdata-migration.js`,
+   `main.js` at the top of `app.whenReady()`). The first launch after
+   upgrading a pre-Phase-9 install renames the old
+   `~/Library/Application Support/cloude-code-menubar/` directory into that
+   new location in place - same volume, one atomic move, nothing copied -
+   before anything else in the app reads `app.getPath('userData')`.
 2. **Monitor**: Polls `GET /api/v1/health` every 5 seconds
 3. **Restart**: Calls `POST /api/v1/shutdown`, waits 2s, then starts
 4. **Stop**: Sends shutdown API call + SIGTERM signal
@@ -145,6 +149,17 @@ working rather than leaving neither installed.
 ```bash
 npm run build
 ```
+
+`npm run build` and `npm run package` are development builds: signed ad hoc,
+not notarized, no keychain read. A release is `scripts/release-build.sh`: it
+signs with the Nyedis (ARD6KN4BX4) Developer ID identity from the
+dedicated signing keychain, notarizes and staples, and falls back to ad hoc
+when that identity is not present. See `docs/code-signing.md`, "Release signing
+and notarization". When the signing keychain is present and `package.json` has
+`"requireSpareIndexKey": true` (set by the 1.0 release checklist, #1947), it
+refuses to build while the catalog's spare index key is still the placeholder
+(`scripts/release/spare_key_gate.py`, `docs/catalog.md`, "What Alex needs to do");
+otherwise it warns loudly, and an ad hoc build only warns.
 
 Creates:
 - `dist/Carnivore.dmg` - macOS installer

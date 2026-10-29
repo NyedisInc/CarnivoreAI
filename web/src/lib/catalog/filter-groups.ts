@@ -34,7 +34,6 @@ const SORT_LABELS: Partial<Record<SortKey, string>> = {
     downloaded: BROWSE_KEYS.sortDownloaded,
 };
 
-/* label: ' */
 export function sortOptions(t: Translate): PickerOption[] {
     return VISIBLE_SORT_KEYS.map((key) => ({ value: key, label: t(SORT_LABELS[key] ?? '') }));
 }

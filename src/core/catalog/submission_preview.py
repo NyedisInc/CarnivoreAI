@@ -16,15 +16,7 @@ MAX_MANIFEST_BYTES = 64 * 1024
 
 
 class FolderUnreadable(Exception):
-    """The named folder could not be read at all.
-
-    Description: DISTINCT FROM A REFUSAL, and the distinction is the
-      whole reason this class exists. "This folder would be refused" is
-      an answer about a folder that was read; "this folder could not be
-      read" is not an answer about the folder at all. Collapsing them
-      would show somebody an empty file list and let them conclude their
-      skill has nothing in it.
-    """
+    pass
 
 
 @dataclass
@@ -38,18 +30,6 @@ class FolderPreview:
 
 
 def _resolve(folder_path: str) -> Path:
-    """Turn the requested path into a directory, or refuse to.
-
-    Description: ``expanduser`` then ``realpath``, and NOT ``expanduser``
-      alone. ``realpath`` resolves symlinks, so a folder reached by its
-      short spelling is recorded by its long one; that is gotcha 6 in
-      this repository, where one directory became two projects because a
-      path was expanded and not resolved.
-    Inputs: folder_path (str) - whatever the client sent.
-    Output: Path - an existing directory.
-    Raises: FolderUnreadable - blank, missing, or not a directory.
-    Example: _resolve("~/skills/mine")
-    """
     raw = (folder_path or "").strip()
     if not raw:
         raise FolderUnreadable("no folder was named")

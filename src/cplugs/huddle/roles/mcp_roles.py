@@ -19,14 +19,6 @@ CallerKey = Callable[[], Awaitable[Optional[str]]]
 
 
 async def role_set(ctx: CplugContext, caller: AgentCaller, args: dict, *, caller_key: CallerKey) -> Dict[str, Any]:
-    """Set or clear one role on the CALLING session: ``role`` ``lead`` or ``dnd``, ``on`` true or false.
-
-    Inputs: ctx; caller; args {role, on}; caller_key (reads this pane's stable key).
-    Output: {role, on, list?, lead?}: ``list`` and the seat as ``lead`` for the lead role.
-    Raises: ToolError (an unknown argument, a bad value, an external token, no project, a Swarm agent, a seat that is held, releasing a
-      seat you do not hold, a session list that cannot be read).
-    Example: await role_set(ctx, caller, {"role": "dnd", "on": True}, caller_key=key)  # {"role": "dnd", "on": True}
-    """
     unknown = sorted(set(args) - {"role", "on"})
     if unknown:
         raise ToolError(f"unknown argument(s): {', '.join(unknown)}")
@@ -80,11 +72,6 @@ async def _set_lead(ctx: CplugContext, caller: AgentCaller, store: RoleStore, ke
 
 
 async def header(ctx: CplugContext, caller: AgentCaller, list_key: str, caller_key: CallerKey) -> Optional[Dict[str, Any]]:
-    """The ``roles`` header of a project list's ``task_manager_tasks_list`` answer: who leads it and what this session is. None when it cannot be told.
-
-    Inputs: ctx; caller; list_key; caller_key. Output: {lead: {session, name} | None, you: {lead, dnd}} or None (not a project's list,
-      an external token, or the sessions could not be read: a header is never worth failing a read for).
-    """
     if not list_key.isdigit() or caller.external:
         return None
     try:

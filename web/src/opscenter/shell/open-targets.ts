@@ -14,6 +14,7 @@ export interface OpenTarget {
   open: () => void;
 }
 
+/* the home screen */
 export function popOutHome(win: Window = window): Window | null {
   return homeBoards.ready ? openDashboardPopout(homeBoards.active, win) : openHomePopout(win);
 }

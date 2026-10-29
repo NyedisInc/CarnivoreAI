@@ -1,5 +1,6 @@
 import { readKey, writeKey } from '../drawer/storage';
 import { drawerEnv } from '../drawer/env';
+import { RAIL_SPLIT, slotGroup } from '../sidebar-widgets/rail-zones';
 
 export const STORAGE_KEY = 'carnivore.menu.order';
 export const PREFERENCE_FIELD = 'menu_order';
@@ -37,7 +38,21 @@ export function orderedMenuItems<T extends { id: string }>(items: readonly T[]):
 }
 
 export function saveMenuOrder(ids: readonly string[]): void {
-  const next = clean(ids);
+  const drawn = new Set(ids);
+  const next = view.ids.includes(RAIL_SPLIT) ? slotGroup(view.ids, ids) : clean([...view.ids.filter((id) => !drawn.has(id)), ...ids]);
+  persist(next);
+}
+
+export function saveRailOrder(sequence: readonly string[]): void {
+  const drawn = new Set(sequence);
+  persist(clean([...view.ids.filter((id) => !drawn.has(id)), ...sequence]));
+}
+
+export function storedMenuOrder(): readonly string[] {
+  return view.ids;
+}
+
+function persist(next: string[]): void {
   view.ids = next;
   const writeLocal = (): void => {
     try {

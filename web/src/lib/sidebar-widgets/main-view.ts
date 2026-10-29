@@ -5,8 +5,8 @@ import MainViewHost from './MainViewHost.svelte';
 
 export const MAIN_VIEW_CONTAINER = 'plugin-main-view';
 
-export function showMainView(body: Component): void {
-  mountPanel(MAIN_VIEW_CONTAINER, MainViewHost as unknown as Component<Record<string, unknown>>, { body });
+export function showMainView(body: Component, tabId?: string): void {
+  mountPanel(MAIN_VIEW_CONTAINER, MainViewHost as unknown as Component<Record<string, unknown>>, { body, tabId });
   surfaceTrackerFor(document)?.start();
 }
 

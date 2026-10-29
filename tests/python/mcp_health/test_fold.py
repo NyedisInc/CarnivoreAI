@@ -101,7 +101,7 @@ def _t(text):
     return datetime.fromisoformat(text.replace("Z", "+00:00"))
 
 
-def test_daily_bulletin_stays_dropped_exact_after_the_process_start():
+def test_daily_briefing_stays_dropped_exact_after_the_process_start():
     recs = [
         _deferred("2026-10-10T20:38:50.482Z", removedNames=["mcp__carnivore__huddle_add"],
                   failedMcpServers=[{"name": "carnivore", "errorCode": "ECONNREFUSED"}]),
@@ -139,9 +139,9 @@ def test_old_process_drops_before_since_never_show():
 
 
 def test_never_connected_failed_server_is_a_drop_like_needs_auth():
-    recs = [_deferred("2026-10-10T15:00:30Z", failedMcpServers=[{"name": "imageserver"}], needsAuthMcpServers=["gh"])]
+    recs = [_deferred("2026-10-10T15:00:30Z", failedMcpServers=[{"name": "higgsfield"}], needsAuthMcpServers=["gh"])]
     health = fold_mcp_health(recs, since=_t("2026-10-10T12:00:00Z"))
-    assert {d.name: d.state for d in health.dropped} == {"imageserver": STATE_FAILED, "gh": STATE_NEEDS_AUTH}
+    assert {d.name: d.state for d in health.dropped} == {"higgsfield": STATE_FAILED, "gh": STATE_NEEDS_AUTH}
 
 
 def test_a_connected_server_that_fails_after_start_is_failed():

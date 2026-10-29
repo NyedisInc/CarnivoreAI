@@ -1,4 +1,4 @@
-<!-- pop-out window -->
+
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import { t as appT } from '../../sdk';

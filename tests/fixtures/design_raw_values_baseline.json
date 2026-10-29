@@ -2,20 +2,17 @@
  "about": "raw spacing/font-size/color declarations per web/src file; may only fall (scripts/design/raw_values.py, issue #2033 guard G1)",
  "files": {
   "web/src/admin/admin.css": {
-   "spacing": 24
-  },
-  "web/src/cplugs/crate/ProjectCrates.svelte": {
-   "spacing": 1
+   "spacing": 23
   },
   "web/src/cplugs/crate/crate-dialog.css": {
    "font": 2,
-   "spacing": 14
+   "spacing": 12
   },
   "web/src/cplugs/devwidgetlab/lab.css": {
    "spacing": 2
   },
   "web/src/cplugs/flow/flow.css": {
-   "spacing": 28
+   "spacing": 27
   },
   "web/src/cplugs/huddle/CrosstalkTrail.svelte": {
    "spacing": 4
@@ -63,9 +60,6 @@
   },
   "web/src/cplugs/huddle/TaskManagerMarkerFilter.svelte": {
    "spacing": 1
-  },
-  "web/src/cplugs/huddle/TaskManagerMove.svelte": {
-   "spacing": 2
   },
   "web/src/cplugs/huddle/TaskManagerNewGroup.svelte": {
    "spacing": 1
@@ -127,7 +121,7 @@
    "spacing": 1
   },
   "web/src/cplugs/huddle/chat/ChatBar.svelte": {
-   "spacing": 8
+   "spacing": 2
   },
   "web/src/cplugs/huddle/chat/ChatCard.svelte": {
    "spacing": 12
@@ -140,9 +134,6 @@
   },
   "web/src/cplugs/huddle/chat/EventCard.svelte": {
    "spacing": 2
-  },
-  "web/src/cplugs/huddle/chat/ReceiptRow.svelte": {
-   "spacing": 5
   },
   "web/src/cplugs/huddle/chat/RewindView.svelte": {
    "spacing": 8
@@ -185,13 +176,13 @@
    "spacing": 1
   },
   "web/src/cplugs/reviewboard/board.css": {
-   "spacing": 16
-  },
-  "web/src/cplugs/reviewboard/header.css": {
    "spacing": 15
   },
+  "web/src/cplugs/reviewboard/header.css": {
+   "spacing": 11
+  },
   "web/src/cplugs/reviewboard/tray.css": {
-   "spacing": 22
+   "spacing": 16
   },
   "web/src/cplugs/save/RestorePoints.svelte": {
    "spacing": 7
@@ -201,7 +192,7 @@
   },
   "web/src/cplugs/share/ShareModal.svelte": {
    "font": 4,
-   "spacing": 10
+   "spacing": 9
   },
   "web/src/lib/app-alerts/AlertBadge.svelte": {
    "font": 1,
@@ -209,11 +200,11 @@
   },
   "web/src/lib/app-alerts/AlertPanel.svelte": {
    "font": 4,
-   "spacing": 18
+   "spacing": 16
   },
   "web/src/lib/approvals/ApprovalCard.svelte": {
    "font": 1,
-   "spacing": 5
+   "spacing": 3
   },
   "web/src/lib/approvals/AskForm.svelte": {
    "spacing": 4
@@ -222,7 +213,7 @@
    "spacing": 4
   },
   "web/src/lib/approvals/QuestionModal.svelte": {
-   "spacing": 3
+   "spacing": 2
   },
   "web/src/lib/background-work/FootWork.svelte": {
    "spacing": 2
@@ -232,8 +223,8 @@
    "spacing": 4
   },
   "web/src/lib/blueprints/BlueprintsScreen.svelte": {
-   "font": 5,
-   "spacing": 13
+   "font": 2,
+   "spacing": 6
   },
   "web/src/lib/blueprints/ExportModal.svelte": {
    "font": 2,
@@ -244,15 +235,14 @@
    "spacing": 2
   },
   "web/src/lib/blueprints/LaunchModal.svelte": {
-   "font": 9,
-   "spacing": 11
-  },
-  "web/src/lib/blueprints/SessionRow.svelte": {
-   "font": 3,
+   "font": 7,
    "spacing": 8
   },
+  "web/src/lib/blueprints/SessionRow.svelte": {
+   "spacing": 6
+  },
   "web/src/lib/blueprints/SkillsPicker.svelte": {
-   "font": 3,
+   "font": 2,
    "spacing": 5
   },
   "web/src/lib/bookmarks/BookmarkPreviewList.svelte": {
@@ -263,15 +253,15 @@
    "spacing": 1
   },
   "web/src/lib/browser/BrowserView.svelte": {
-   "font": 6,
-   "spacing": 9
+   "font": 5,
+   "spacing": 7
   },
   "web/src/lib/byoai/model-picker.css": {
    "spacing": 4
   },
   "web/src/lib/carnivore-account/AccountBody.svelte": {
-   "font": 4,
-   "spacing": 6
+   "font": 3,
+   "spacing": 5
   },
   "web/src/lib/carnivore-account/SignInModal.svelte": {
    "font": 4,
@@ -500,34 +490,31 @@
   },
   "web/src/lib/code-review/CodeReviewModal.svelte": {
    "font": 2,
-   "spacing": 9
+   "spacing": 8
   },
   "web/src/lib/community/AuthorPage.svelte": {
    "font": 7,
    "spacing": 5
   },
   "web/src/lib/community/CommentThread.svelte": {
-   "font": 9,
-   "spacing": 15
+   "font": 7,
+   "spacing": 13
   },
   "web/src/lib/community/CommunitySettings.svelte": {
    "font": 2,
    "spacing": 2
   },
   "web/src/lib/community/Composer.svelte": {
-   "font": 4,
-   "spacing": 6
+   "font": 2,
+   "spacing": 4
   },
   "web/src/lib/community/ReportDialog.svelte": {
-   "font": 5,
-   "spacing": 7
+   "font": 2,
+   "spacing": 4
   },
   "web/src/lib/computers/computers.css": {
    "font": 5,
    "spacing": 24
-  },
-  "web/src/lib/crosstalk/cards.css": {
-   "spacing": 4
   },
   "web/src/lib/crosstalk/terminal-cards/terminal-cards.css": {
    "spacing": 5
@@ -537,14 +524,14 @@
    "spacing": 1
   },
   "web/src/lib/dashboards/DashboardCard.svelte": {
-   "spacing": 5
+   "spacing": 3
   },
   "web/src/lib/deepsearch/ContextModal.svelte": {
    "font": 1,
    "spacing": 5
   },
   "web/src/lib/deepsearch/results.css": {
-   "spacing": 8
+   "spacing": 7
   },
   "web/src/lib/drawer-tabs/DrawerMenu.svelte": {
    "spacing": 8
@@ -553,7 +540,7 @@
    "spacing": 3
   },
   "web/src/lib/drawer-zone/ZoneItem.svelte": {
-   "spacing": 3
+   "spacing": 2
   },
   "web/src/lib/dropdown/dropdown.css": {
    "spacing": 3
@@ -563,35 +550,20 @@
   },
   "web/src/lib/file-drawer/FileDrawerGit.svelte": {
    "font": 1,
-   "spacing": 5
+   "spacing": 3
   },
   "web/src/lib/file-drawer/FileDrawerGitLine.svelte": {
    "spacing": 3
   },
   "web/src/lib/file-drawer/FileDrawerHeader.svelte": {
-   "font": 4,
-   "spacing": 10
+   "font": 3,
+   "spacing": 8
   },
   "web/src/lib/first-run/first-run.css": {
    "font": 4,
    "spacing": 12
   },
-  "web/src/lib/hosts-page/HostsScreen.svelte": {
-   "font": 1,
-   "spacing": 2
-  },
   "web/src/lib/hosts-page/PairSas.svelte": {
-   "spacing": 1
-  },
-  "web/src/lib/hosts-page/PeerDetail.svelte": {
-   "font": 4,
-   "spacing": 8
-  },
-  "web/src/lib/hosts-page/PeerSessions.svelte": {
-   "font": 4,
-   "spacing": 4
-  },
-  "web/src/lib/hosts-page/PeerState.svelte": {
    "spacing": 1
   },
   "web/src/lib/hosts-page/ShowCodeModal.svelte": {
@@ -622,8 +594,8 @@
    "spacing": 18
   },
   "web/src/lib/launch-picker/LaunchAccountChoice.svelte": {
-   "font": 5,
-   "spacing": 6
+   "font": 4,
+   "spacing": 5
   },
   "web/src/lib/launch-picker/LaunchChoice.svelte": {
    "spacing": 1
@@ -637,22 +609,19 @@
    "spacing": 4
   },
   "web/src/lib/launch-profiles-page/ImportProfileModal.svelte": {
-   "font": 6,
-   "spacing": 5
+   "font": 3,
+   "spacing": 2
   },
   "web/src/lib/launch-profiles-page/LaunchProfileEditor.svelte": {
-   "font": 4,
-   "spacing": 16
+   "font": 1,
+   "spacing": 9
   },
   "web/src/lib/launch-profiles-page/LaunchProfilesScreen.svelte": {
-   "font": 9,
-   "spacing": 28
+   "font": 4,
+   "spacing": 12
   },
   "web/src/lib/launchpad/ModalShell.svelte": {
    "spacing": 1
-  },
-  "web/src/lib/launchpad/RecentSessions.svelte": {
-   "font": 1
   },
   "web/src/lib/ledger-drawer/DrawerLedger.svelte": {
    "spacing": 1
@@ -693,9 +662,6 @@
   "web/src/lib/menu-page/MenuPageBar.svelte": {
    "spacing": 1
   },
-  "web/src/lib/mini-rail/MiniRail.svelte": {
-   "spacing": 3
-  },
   "web/src/lib/mini-rail/MiniRailFooter.svelte": {
    "font": 1,
    "spacing": 3
@@ -727,8 +693,8 @@
    "spacing": 26
   },
   "web/src/lib/pack-machines/pack-settings.css": {
-   "font": 2,
-   "spacing": 6
+   "font": 1,
+   "spacing": 5
   },
   "web/src/lib/pack-machines/pack-work.css": {
    "font": 2,
@@ -738,21 +704,20 @@
    "spacing": 4
   },
   "web/src/lib/pack-migrate/migrate-wizard.css": {
-   "font": 2,
-   "spacing": 17
+   "font": 1,
+   "spacing": 16
   },
   "web/src/lib/pack-offers/pack-offers.css": {
    "spacing": 3
   },
   "web/src/lib/pack-transport/pack-transport.css": {
    "font": 1,
-   "spacing": 13
+   "spacing": 12
   },
   "web/src/lib/perf-overlay/PerfOverlay.svelte": {
    "spacing": 6
   },
   "web/src/lib/plugins-page/PluginsScreen.svelte": {
-   "font": 1,
    "spacing": 3
   },
   "web/src/lib/plugins-page/catalog-plugins.css": {
@@ -765,7 +730,7 @@
   },
   "web/src/lib/project-colors/ProjectColorPopover.svelte": {
    "color": 2,
-   "spacing": 2
+   "spacing": 1
   },
   "web/src/lib/project-colors/ProjectColorSwatches.svelte": {
    "spacing": 1
@@ -778,7 +743,7 @@
    "spacing": 4
   },
   "web/src/lib/session-control/control-center.css": {
-   "spacing": 13
+   "spacing": 11
   },
   "web/src/lib/session-move/move-folder.css": {
    "font": 1,
@@ -788,7 +753,7 @@
    "spacing": 2
   },
   "web/src/lib/session-skills/session-skills.css": {
-   "spacing": 8
+   "spacing": 7
   },
   "web/src/lib/sessions-page/pivot.css": {
    "spacing": 7
@@ -858,8 +823,8 @@
    "spacing": 7
   },
   "web/src/lib/subagents/popup-list.css": {
-   "font": 2,
-   "spacing": 6
+   "font": 1,
+   "spacing": 5
   },
   "web/src/lib/swarm-board/CardActionPanel.svelte": {
    "spacing": 6
@@ -925,7 +890,7 @@
    "spacing": 3
   },
   "web/src/lib/terminal-background/TerminalBackgroundPanel.svelte": {
-   "spacing": 5
+   "spacing": 4
   },
   "web/src/lib/terminal-empty/TerminalEmpty.svelte": {
    "font": 2,
@@ -954,8 +919,8 @@
    "spacing": 10
   },
   "web/src/lib/themes-page/ThemesScreen.svelte": {
-   "font": 2,
-   "spacing": 3
+   "font": 1,
+   "spacing": 1
   },
   "web/src/lib/toast-mode/ToastModePanel.svelte": {
    "spacing": 4
@@ -971,9 +936,8 @@
    "font": 1
   },
   "web/src/lib/version-watch/VersionBanner.svelte": {
-   "color": 2,
-   "font": 1,
-   "spacing": 9
+   "color": 1,
+   "spacing": 7
   },
   "web/src/lib/widget-bars/PinnedKeyBadge.svelte": {
    "spacing": 1
@@ -981,7 +945,7 @@
   "web/src/lib/widgets-page/widgets-page.css": {
    "color": 3,
    "font": 23,
-   "spacing": 53
+   "spacing": 49
   },
   "web/src/lib/zone-shell/PlacementBody.svelte": {
    "spacing": 1
@@ -1064,7 +1028,7 @@
    "spacing": 9
   },
   "web/src/opscenter/layout-editor/WidgetDrawer.svelte": {
-   "spacing": 9
+   "spacing": 7
   },
   "web/src/opscenter/layout-editor/WidgetRow.svelte": {
    "spacing": 4
@@ -1080,9 +1044,6 @@
   },
   "web/src/opscenter/layouts/LayoutCommandBar.svelte": {
    "spacing": 1
-  },
-  "web/src/opscenter/layouts/LayoutNameModal.svelte": {
-   "spacing": 2
   },
   "web/src/opscenter/layouts/LayoutSkillMenu.svelte": {
    "spacing": 1
@@ -1160,8 +1121,8 @@
   }
  },
  "totals": {
-  "color": 11,
-  "font": 507,
-  "spacing": 1773
+  "color": 10,
+  "font": 460,
+  "spacing": 1637
  }
 }

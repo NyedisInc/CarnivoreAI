@@ -22,7 +22,14 @@
     "new session",
     "launch"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The select provider dialog listing claude, codex and other harnesses",
+      "caption": "Choosing the agent for a new session",
+      "file": "picker.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Create a session",
   "since": "2026-09-10",
   "status": "stable",
@@ -35,6 +42,5 @@
   "where": [
     "The + button at the top of the agents drawer.",
     "Or the + beside RUNNING SESSIONS on the home screen, or the + in the menu tab's button row (new session)."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

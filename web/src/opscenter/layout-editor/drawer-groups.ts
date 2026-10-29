@@ -1,4 +1,3 @@
-/*  hidden  */
 
 import { CORE_MANIFESTS } from '../widgets/core-manifests';
 import { drawingIds, isViewCell } from '../widgets/views';

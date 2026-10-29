@@ -1,23 +1,22 @@
 {
   "id": "carnivore-public-site",
   "name": "Carnivore public website",
-  "summary": "a scroll-driven introduction to Carnivore, persistent sessions and access from your phone, with the verified public macOS download, and a one-line terminal installer with a pinned checksum.",
+  "summary": "the carnivore.ai website (source in the private carnivore-site repo): a scroll-driven introduction to Carnivore, persistent sessions and access from your phone, with the verified public macOS download, and a one-line terminal installer with a pinned checksum.",
   "area": "dev-tooling",
   "status": "stable",
   "since": "2026-10-03",
-  "updated": "2026-10-22",
+  "updated": "2026-10-27",
   "issues": [
     1259,
     1500,
     2225
   ],
   "surfaces": [
-    "web/src/public-site/Page.svelte",
-    "web/src/public-site/InstallCommand.svelte"
+    "uninstall.sh"
   ],
   "api_routes": [],
   "docs": [
-    "hosted/site/README.md"
+    "docs/carnivore-site.md"
   ],
   "keywords": [
     "website",

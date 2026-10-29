@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import pytest
 
+from src.cplugs.sdk import restore_points
 from src.core.bookmarks import locate, service
 from src.core.bookmarks.errors import TranscriptUnavailable
 from tests.python.bookmarks import fixtures
@@ -28,7 +29,7 @@ def test_resolution_falls_back_to_the_jsonl_in_another_profile_root(tmp_path):
 
 def test_restore_point_repair_runs_only_when_the_gate_is_on(tmp_path, monkeypatch):
     calls = []
-    monkeypatch.setattr(locate, "restore_enabled", lambda: False)
+    monkeypatch.setattr(restore_points, "get", lambda: None)
     monkeypatch.setattr(locate, "restore_from_points", lambda conv: calls.append(conv))
     with pytest.raises(TranscriptUnavailable):
         locate.resolve_transcript(fixtures.SOURCE, None, roots=(tmp_path,))
@@ -36,6 +37,6 @@ def test_restore_point_repair_runs_only_when_the_gate_is_on(tmp_path, monkeypatc
 
 
 def test_restore_from_points_refuses_when_the_gate_is_off(monkeypatch):
-    monkeypatch.setattr(locate, "restore_enabled", lambda: False)
+    monkeypatch.setattr(restore_points, "get", lambda: None)
     with pytest.raises(TranscriptUnavailable, match="plugin must be on"):
         locate.restore_from_points(fixtures.SOURCE)

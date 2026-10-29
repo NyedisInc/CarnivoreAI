@@ -32,6 +32,7 @@
     "web/src/browse/static-host.ts",
     "web/src/browse/main.ts",
     "web/vite.browse.config.ts",
+    "hosted/catalog_index/site/browse/index.html",
     "web/src/lib/catalog/readonly.ts",
     "web/src/lib/catalog/ReadonlyActions.svelte",
     "web/src/lib/catalog/TrustLine.svelte"

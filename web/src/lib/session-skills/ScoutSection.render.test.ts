@@ -109,3 +109,33 @@ test('a chip installs one-click into the project; a sheet answer opens the conse
     await settle();
     expect(modalCalls.length).toBe(1);
 });
+
+test('a scout already waiting on mount keeps polling and shows the answer when it lands (u147-01)', async () => {
+    vi.useFakeTimers();
+    try {
+        getReply = { state: 'waiting', suggestions: [] };
+        const root = await section();
+        expect((root.querySelector('[data-scout-button]') as HTMLButtonElement).disabled).toBe(true);
+        getReply = { state: 'ready', suggestions: [{ item_id: 'pub/a', name: 'a', reason: 'r' }] };
+        await vi.advanceTimersByTimeAsync(4100);
+        await settle();
+        expect(root.querySelector('[data-scout-chip="pub/a"]')).not.toBeNull();
+    } finally {
+        vi.useRealTimers();
+    }
+});
+
+test('when polling gives up the button comes back, so an ignored scout cannot lock the feature (u147-01)', async () => {
+    vi.useFakeTimers();
+    try {
+        getReply = { state: 'waiting', suggestions: [] };
+        const root = await section();
+        for (let i = 0; i < 32; i += 1) {
+            await vi.advanceTimersByTimeAsync(4100);
+            await settle();
+        }
+        expect((root.querySelector('[data-scout-button]') as HTMLButtonElement).disabled).toBe(false);
+    } finally {
+        vi.useRealTimers();
+    }
+});

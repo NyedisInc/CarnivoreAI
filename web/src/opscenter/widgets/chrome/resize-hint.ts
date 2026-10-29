@@ -15,6 +15,7 @@ export function axisMove(has: number, target: number): AxisMove {
   return target > has ? 'grow' : target < has ? 'shrink' : null;
 }
 
+/* there is nothing */
 export function resizeGuide(has: FitSize | null, target: FitSize | null): ResizeGuide | null {
   if (!has || !target) return null;
   const guide = { w: axisMove(has.w, target.w), h: axisMove(has.h, target.h) };

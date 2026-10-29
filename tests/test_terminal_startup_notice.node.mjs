@@ -1,3 +1,5 @@
+// ----------------------------------------------------------------------
+// switch.
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -13,6 +15,13 @@ const NOTICE_SRC = read('client/js/terminal-startup-notice.js');
 const BUFFER_SRC = read('client/js/terminal-input-buffer.js');
 const TERM_SRC = read('client/js/terminal.js');
 const INDEX_HTML = read('client/index.html');
+// The boot line is one call into client/js/terminal-client-factory.js
+// now, and the register() that hands it the class is the first of the
+// two lines, so it is what a loader cuts at to get the class alone.
+// The boot below that line does more than construct: it refuses by
+// name when the client factory did not load. A loader that wants the
+// class alone has to cut above the whole boot, so terminal.js carries
+// this marker line and says in place that it does not move.
 const TERM_SINGLETON = '// THE CLASS ENDS ABOVE.';
 
 function fakeCloudeWeb() {

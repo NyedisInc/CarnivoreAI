@@ -1,0 +1,40 @@
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  Resume session
+  ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
+  │ ⌕ Search…                                                                                    │
+  ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+    proj2
+
+  ❯ probe conversation two
+    now · 1.1KB
+
+    probe conversation one
+    now · 1.1KB
+
+    Ctrl+A to show all projects · Ctrl+B to only show current branch · Space to preview · Ctrl+R
+    to rename · Type to search · Esc to cancel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

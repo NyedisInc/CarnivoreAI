@@ -1,4 +1,4 @@
-<!-- the plugins page -->
+
 <script lang="ts">
     import { KIND_KEYS } from '../../../../client/js/labels/catalog-kind.js';
     import type { Translate } from '../sessions/types';

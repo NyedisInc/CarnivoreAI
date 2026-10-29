@@ -1,23 +1,13 @@
-"""Read Codex's on-disk stores into the reader's tier facts. IMPURE, fail-soft.
-
-This is the file-touching half of the Codex reader: the sqlite turn record, the
-rollout jsonl tail, the writer-lock liveness probe and the primary-conversation
-pick. Everything here is READ-ONLY, opens databases ``mode=ro`` and NEVER raises
-- a store it cannot read answers the tier's own "absent" sentinel, because a
-reader that raises stops a watcher, and a session whose store could not be read
-is a session whose status is unknown, never idle.
-
-TWO NAMED TRAPS THIS FILE IS BUILT AGAINST:
-"""
 
 from __future__ import annotations
 
 import glob
 import json
 import os
+import re
 import sqlite3
 from datetime import datetime, timezone
-from typing import Dict, List, Mapping, Optional, Set
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple
 
 import structlog
 
@@ -31,7 +21,8 @@ from src.core.attention.codex_reader import (
     CodexRecordFacts,
     CodexTranscriptFacts,
 )
-from src.core.attention.registry_pane import descends_from
+from src.core.attention.parent_map import descends_from
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.attention.usage_limit import KIND_OTHER, UsageLimit
 
 logger = structlog.get_logger()
@@ -59,11 +50,22 @@ _TURN_CLOSE_EVENTS = frozenset({"task_complete", "turn_aborted"})
 
 
 
-def latest_history_db(codex_home: str) -> Optional[str]:
-    matches = glob.glob(os.path.join(codex_home, "thread_history_*.sqlite"))
+_VERSION_SUFFIX = re.compile(r"_(\d+)\.sqlite$")
+
+
+def highest_versioned(matches: List[str]) -> Optional[str]:
     if not matches:
         return None
-    return sorted(matches)[-1]
+
+    def rank(path: str) -> Tuple[int, str]:
+        found = _VERSION_SUFFIX.search(path)
+        return (int(found.group(1)) if found else -1, path)
+
+    return max(matches, key=rank)
+
+
+def latest_history_db(codex_home: str) -> Optional[str]:
+    return highest_versioned(glob.glob(os.path.join(codex_home, "thread_history_*.sqlite")))
 
 
 def _connect_ro(path) -> Optional[sqlite3.Connection]:
@@ -72,9 +74,7 @@ def _connect_ro(path) -> Optional[sqlite3.Connection]:
         immutable = os.path.exists(db_path) and not os.path.exists(
             "%s-wal" % db_path
         )
-        mode = "immutable=1" if immutable else "mode=ro"
-        uri = "file:%s?%s" % (db_path, mode)
-        return sqlite3.connect(uri, uri=True, timeout=0.5)
+        return connect_readonly(db_path, timeout=0.5, immutable=immutable)
     except sqlite3.Error:
         return None
 
@@ -146,15 +146,6 @@ def codex_record_facts(
 
 
 def _read_tail_lines(path) -> Optional[List[str]]:
-    """Read a bounded window from a file's EOF and return its complete lines.
-
-    Description: seeks to at most :data:`ROLLOUT_TAIL_BYTES` before EOF,
-      discards the first partial line unless the window began at offset 0,
-      and returns the rest. None when the file cannot be opened.
-    Inputs: path (str | os.PathLike).
-    Output: list[str] | None.
-    Example: _read_tail_lines("/x/rollout.jsonl")
-    """
     try:
         size = os.path.getsize(path)
         with open(path, "rb") as fh:
@@ -308,6 +299,28 @@ def writer_lock_live(
     return any(_pid_is_alive(pid) for pid in pids)
 
 
+def live_writer_lock_uuids(codex_home: str, thread_uuids: Iterable[str]) -> Set[str]:
+    import subprocess
+
+    lock_dir = os.path.join(codex_home, "thread-writer-locks")
+    paths = {os.path.join(lock_dir, "%s.lock" % u): u for u in thread_uuids if u}
+    paths = {path: u for path, u in paths.items() if os.path.exists(path)}
+    if not paths:
+        return set()
+    try:
+        out = subprocess.run(["lsof", "-Fpn", "--", *paths], capture_output=True, text=True, timeout=2.0, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    live: Set[str] = set()
+    pid: Optional[int] = None
+    for line in out.stdout.splitlines():
+        if line.startswith("p") and line[1:].isdigit():
+            pid = int(line[1:])
+        elif line.startswith("n") and pid is not None and line[1:] in paths and _pid_is_alive(pid):
+            live.add(paths[line[1:]])
+    return live
+
+
 def _lsof_holders(lock_path: str) -> Set[int]:
     import subprocess
 
@@ -364,8 +377,7 @@ def pick_primary_conversation(
 
 
 def latest_state_db(codex_home: str) -> Optional[str]:
-    matches = glob.glob(os.path.join(codex_home, "state_*.sqlite"))
-    return sorted(matches)[-1] if matches else None
+    return highest_versioned(glob.glob(os.path.join(codex_home, "state_*.sqlite")))
 
 
 def _read_user_threads_at(codex_home: str, cwd: str) -> List[Dict]:
@@ -402,28 +414,6 @@ def resolve_primary_uuid(
     pane_pid: Optional[int] = None,
     process_parents: Optional[Mapping[int, int]] = None,
 ) -> Optional[str]:
-    """The pane's primary Codex conversation uuid, end to end. NEVER RAISES.
-
-    Description: the glue the listing calls to turn a pane into a
-      conversation id: it reads the user ``threads`` rows at the pane's cwd,
-      probes each one's writer lock for a LIVE holder (the pick leads with
-      the lock, kernel truth), and hands both to
-      :func:`pick_primary_conversation`. Returns None - which the caller
-      resolves to unknown, never idle - when no user thread matches this
-      pane or two remain ambiguous. It writes nothing; the bind is a
-      separate step through the one identity writer.
-    Inputs:
-      codex_home (str): Codex's store root, usually ``~/.codex``.
-      pane_current_path (str): the pane's cwd, matched against ``threads.cwd``.
-      pane_title (str): the tmux pane title, used only to corroborate a named
-        thread; the pick never relies on it.
-      pane_pid (int | None): when supplied, require the writer to descend
-        from this pane; cwd and title alone cannot authorize a rebind.
-      process_parents (mapping | None): measured pid to parent pid snapshot.
-    Output: str | None - the primary conversation uuid.
-    Example: resolve_primary_uuid("~/.codex", pane_current_path="/p",
-      pane_title="") -> "01a0..."
-    """
     if not pane_current_path:
         return None
     candidates = _read_user_threads_at(codex_home, pane_current_path)
@@ -437,11 +427,7 @@ def resolve_primary_uuid(
         owned = {str(candidate["id"]) for candidate in candidates
                  if candidate.get("id") in held and not candidate.get("archived")}
         return next(iter(owned)) if len(owned) == 1 else None
-    live_lock_uuids = {
-        str(t["id"])
-        for t in candidates
-        if t.get("id") and writer_lock_live(codex_home, str(t["id"]))
-    }
+    live_lock_uuids = live_writer_lock_uuids(codex_home, [str(t["id"]) for t in candidates if t.get("id")])
     return pick_primary_conversation(
         candidates,
         pane_current_path=pane_current_path,

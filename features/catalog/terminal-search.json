@@ -16,7 +16,14 @@
     "search",
     "scrollback"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The terminal search bar with a query and matches highlighted",
+      "caption": "Searching a session's scrollback",
+      "file": "bar.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Search in the terminal",
   "since": "2026-09-13",
   "status": "stable",
@@ -29,6 +36,5 @@
   "where": [
     "Open a session, then the magnifier in the header (on a phone, search in the terminal tools menu).",
     "Or press Ctrl+F (Cmd+F on a computer) in the terminal."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

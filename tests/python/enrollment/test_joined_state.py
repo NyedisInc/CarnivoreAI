@@ -140,10 +140,10 @@ def test_enrollment_status_and_409(env):
 
 
 def test_lockdown_only_while_joined(env):
-    lan = env.client(client=("198.51.100.18", 50000))
+    lan = env.client(client=("192.168.1.50", 50000))
     assert lan.get("/probe").status_code == 200
     env.marker.touch()
-    env2 = env.client(client=("198.51.100.18", 50000))
+    env2 = env.client(client=("192.168.1.50", 50000))
     resp = env2.get("/probe")
     assert resp.status_code == 403 and resp.json() == {"detail": {"reason": "joined_local_only"}}
 
@@ -151,8 +151,8 @@ def test_lockdown_only_while_joined(env):
 @pytest.mark.parametrize("client,updates,status", [
     (("127.0.0.1", 1), {}, 200),
     (("::1", 1), {}, 200),
-    (("198.51.100.18", 1), {}, 403),
-    (("198.51.100.18", 1), {"via_peer_link": True}, 200),
+    (("192.168.1.50", 1), {}, 403),
+    (("192.168.1.50", 1), {"via_peer_link": True}, 200),
     (("127.0.0.1", 1), {"via_link": True}, 403),
     (("127.0.0.1", 1), {"via_link": True, "via_peer_link": True}, 403),
     (None, {}, 403),
@@ -170,7 +170,7 @@ def test_lockdown_websocket_closed(env):
 
     env.marker.touch()
     with pytest.raises(WebSocketDisconnect):
-        with env.client(client=("198.51.100.18", 1)).websocket_connect("/ws"):
+        with env.client(client=("192.168.1.50", 1)).websocket_connect("/ws"):
             pass
 
 

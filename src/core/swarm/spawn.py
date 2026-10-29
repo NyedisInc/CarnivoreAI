@@ -137,7 +137,7 @@ async def _give_card(app_state: Any, plan: "SpawnPlan", child: Dict[str, Any]) -
     try:
         card_port.get()
         card = await ops.mint_for_spawn(app_state, plan.parent, child, title=request["job"], text=request.get("goal", ""), card_id=plan.card_id)
-        if card is None:  # could not
+        if card is None:
             return ""
     except card_port.CardsOff:
         return ""
@@ -309,12 +309,6 @@ async def _record_placement(decision: Any, child: Dict[str, Any]) -> None:
 
 
 async def _start_child(app_state: Any, plan: SpawnPlan, *, mint_card: bool, orders: str = "") -> Tuple[Dict[str, Any], str]:
-    """The part of a spawn both callers share: caps, the child row, its body and its card.
-
-    Inputs: app_state; plan; mint_card (give the child a card: the named one, else one minted from the goal); orders (text written to the
-      child's desk on its first wake). Output: ``(child row, the line the first message gains)``. Raises: SpawnRefused (a cap, a refused or
-      failed start, a card that could not be dealt, or the global Swarm switch is off). A cap refusal also posts a card in the parent's thread.
-    """
     if not switch.is_on():
         raise SpawnRefused(switch.OFF_MESSAGE)
     parent = plan.parent
@@ -361,14 +355,6 @@ def _answer(plan: SpawnPlan, child: Dict[str, Any], message_id: Optional[str]) -
 
 
 async def run(view: Any, caller: AgentCaller, plan: SpawnPlan) -> Dict[str, Any]:
-    """Create the child, start its body, grant the contact and deliver its first task.
-
-    Inputs: view (BatchView carrying ``app``); caller (the parent's pane); plan (from :func:`prepare`).
-    Output: ``{agent_id, slug, display_name, state, message_id, routed_to_promoted}``.
-    Raises: SpawnRefused (a cap, a refused or failed start, a first message that could not be queued). A cap
-      refusal also posts a card in the parent's thread. NO terminal tab is persisted beside the parent. With ``plan.target``
-      (a promoted feature agent) nothing is created: it is woken and gets the order, and a failed wake leaves it asleep.
-    """
     child, card_line = await _start_child(view.app.state, plan, mint_card=True)
     fresh = view.fresh()
     sender, receiver = await bus.identities(fresh, caller, f"agent:{child['id']}")

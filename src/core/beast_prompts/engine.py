@@ -1,7 +1,3 @@
-"""The prompt-press seam: answer a plain yes on an eligible permission prompt when beast mode's grid says to.
-
-HOW IT DECIDES, from the watcher observation it is handed (nothing is captured here):
-"""
 
 from __future__ import annotations
 

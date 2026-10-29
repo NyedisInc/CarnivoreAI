@@ -39,6 +39,7 @@ def _check(request: Request, *, allow_joined: bool = False) -> None:
 @router.get("/auth/join/candidates")
 @limiter.limit("30/minute")
 async def get_join_candidates(request: Request, response: Response) -> Dict[str, Any]:
+    """The packs this computer found on the network: ``{"candidates": [{name, fid, fid_short, pack_name, label}]}``."""
     _check(request)
     response.headers["Cache-Control"] = "no-store"
     return {"candidates": join_job.candidate_view()}

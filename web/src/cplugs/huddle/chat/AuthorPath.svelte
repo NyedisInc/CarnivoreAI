@@ -2,33 +2,32 @@
   import { Glyph, Icon } from '../../sdk/ui';
   import { t } from '../../sdk';
   import { elapsed } from '../huddle-progress';
-  import { openAgentPage } from '../agents/agent-page.svelte';
   import type { AuthorCrumb } from './chat-api';
   import { crumbIcon, crumbLabel, crumbLinks } from './author-path';
+  import { fullPathOf, lineageTip, openAuthorTerminal, pathTip } from './agent-open';
 
   let { path, at = null, more = 0, now = Date.now(), lead = false }: { path: AuthorCrumb[]; at?: number | null; more?: number; now?: number; lead?: boolean } = $props();
 
-  const mark = (crumb: AuthorCrumb) => crumbIcon(crumb);
+  const own = $derived(path[path.length - 1] ?? null);
+  const tip = $derived(own && own.kind !== 'owner' ? pathTip(fullPathOf(path, own.agent_id)) : '');
+  const mark = $derived(own ? crumbIcon(own) : null);
   const since = $derived(typeof at === 'number' && at > 0 ? elapsed(now / 1000 - at) : '');
 </script>
 
+{#snippet face(crumb: AuthorCrumb)}
+  {#if lead}{:else if mark?.set === 'glyph'}<Glyph name={mark.name} size={11} />{:else if mark}<Icon name={mark.name} size={11} />{/if}<span class="hdc-crumb-name">{crumbLabel(crumb, t('cplug.huddle.chat.you'))}</span>
+{/snippet}
+
 <div class="hdc-path" class:hdc-path--lead={lead} data-chat-author-path>
-  <nav class="hdc-path-crumbs" aria-label={t('cplug.huddle.chat.head.label')}>
-    {#each path as crumb, i (i)}
-      {#if i > 0}<span class="hdc-path-sep" aria-hidden="true"><Icon name="chevron-right" size={8} /></span>{/if}
-      {#if crumbLinks(crumb)}
-        <button type="button" class="hdc-crumb hdc-crumb--link" class:hdc-crumb--lead={lead && i === path.length - 1} data-crumb-kind={crumb.kind} data-crumb-agent={crumb.agent_id} data-agent-drawer-opener
-                onclick={() => openAgentPage(crumb.agent_id as number)}>
-          {#if lead && i === path.length - 1}{:else if mark(crumb).set === 'glyph'}<Glyph name={mark(crumb).name} size={11} />{:else}<Icon name={mark(crumb).name} size={11} />{/if}<span class="hdc-crumb-name">{crumbLabel(crumb, t('cplug.huddle.chat.you'))}</span>
-        </button>
-      {:else}
-        <span class="hdc-crumb" class:hdc-crumb--lead={lead && i === path.length - 1} data-crumb-kind={crumb.kind}>
-          {#if lead && i === path.length - 1}{:else if mark(crumb).set === 'glyph'}<Glyph name={mark(crumb).name} size={11} />{:else}<Icon name={mark(crumb).name} size={11} />{/if}<span class="hdc-crumb-name">{crumbLabel(crumb, t('cplug.huddle.chat.you'))}</span>
-        </span>
-      {/if}
-    {/each}
+  <span class="hdc-path-crumbs">
+    {#if own && crumbLinks(own)}
+      <button type="button" class="hdc-crumb hdc-crumb--link" class:hdc-crumb--lead={lead} data-crumb-kind={own.kind} data-crumb-agent={own.agent_id}
+              use:lineageTip={tip} onclick={() => openAuthorTerminal(own.agent_id, null)}>{@render face(own)}</button>
+    {:else if own}
+      <span class="hdc-crumb" class:hdc-crumb--lead={lead} data-crumb-kind={own.kind} use:lineageTip={tip}>{@render face(own)}</span>
+    {/if}
     {#if more > 0}<span class="hdc-path-more" data-chat-askers-more={more}>{t('cplug.huddle.chat.head.more', { count: more })}</span>{/if}
-  </nav>
+  </span>
   {#if since}<time class="hdc-path-time" data-chat-since datetime={new Date((at ?? 0) * 1000).toISOString()}>{since}</time>{/if}
 </div>
 
@@ -54,11 +53,6 @@
       overflow: hidden;
     }
 
-    .hdc-path-sep {
-      display: inline-flex;
-      flex: none;
-      color: var(--oc-text-muted);
-    }
 
     .hdc-crumb {
       display: inline-flex;

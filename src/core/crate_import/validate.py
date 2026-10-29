@@ -16,8 +16,6 @@ MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:\[\]-]{0,63}$")
 MAX_VALUE_BYTES = 4 * 1024 * 1024
 FAMILIES = ("claude", "codex")
 UUID_COLUMNS: Dict[str, Tuple[str, ...]] = {"sessions": ("claude_session_uuid",)}
-# conversation id
-# path separator
 CONVERSATION_COLUMNS: Dict[str, Tuple[str, ...]] = {
     "sessions": ("session_uuid",),
     "session_conversations": ("conversation_id", "parent_conversation_id"),

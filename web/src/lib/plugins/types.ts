@@ -10,7 +10,6 @@ export type PluginSurface =
     | 'settings-panel'
     | 'session-tab';
 
-/* could not */
 export interface PluginContext {
     readonly flags: Readonly<Record<string, boolean>>;
     refresh(): void | Promise<void>;
@@ -25,7 +24,6 @@ export interface SessionCardRow {
     readonly projectId?: number | string | null;
 }
 
-/* <button role="menuitem"> role="button" */
 export interface SessionCardAction {
     readonly shortcut: string;
     label(row: SessionCardRow): string;
@@ -56,7 +54,6 @@ export interface SessionTabSession {
     readonly session_uuid: string;
 }
 
-/* the contributions */
 export interface SessionTabPayload {
     readonly labelKey: string;
     readonly Tab: Component<{ session: SessionTabSession }>;
@@ -80,7 +77,6 @@ export interface Contribution<K extends PluginSurface = PluginSurface> {
     readonly payload: SurfacePayloads[K];
 }
 
-/* the contributions */
 export interface Plugin {
     readonly id: string;
     readonly contributions: readonly Contribution[];

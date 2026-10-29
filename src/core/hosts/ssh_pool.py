@@ -94,18 +94,6 @@ class SshMasterPool:
                  connect_timeout: float = 30.0, check_interval: float = 30.0,
                  stable_after: float = 30.0, delay: Callable[[int], float] = backoff_delay,
                  on_change: Optional[Callable[[MasterStatus], None]] = None) -> None:
-        """Hold one host's settings; nothing connects until :meth:`connect`.
-
-        Inputs: host_key (str) - the host's slug; dest (SshDestination);
-          login_shell (str | None) - the probe's measured ``$SHELL``;
-          control_dir (Path | None) - default ``~/.carnivore/cm``;
-          instance_tag (str | None) - default from the state directory;
-          ssh_binary (str); channel_budget (int) - channels per master;
-          max_slots (int); idle_slot_linger (float, seconds);
-          connect_timeout, check_interval, stable_after, delay - passed to
-          every :class:`SshMaster`; on_change - called with slot 0's status.
-        Raises: SshTransportError - a host key that cannot have a master.
-        """
         if channel_budget < 1 or max_slots < 1:
             raise SshTransportError("a pool needs a channel budget and a slot count of at least 1")
         self.host_key = host_key
@@ -155,19 +143,6 @@ class SshMasterPool:
     async def spawn(self, argv: Optional[Sequence[str]] = None, *, script: Optional[str] = None,
                     stdin: int = asyncio.subprocess.PIPE, stdout: int = asyncio.subprocess.PIPE,
                     stderr: int = asyncio.subprocess.PIPE) -> RemoteChannel:
-        """Start one long-lived remote process on a slot with room.
-
-        Description: pass exactly one of ``argv`` (exec'd as is) or
-          ``script`` (POSIX sh). The channel counts against its slot until
-          the local ssh client exits, however it exits.
-        Inputs: argv (sequence of str | None); script (str | None);
-          stdin, stdout, stderr - asyncio subprocess dispositions.
-        Output: RemoteChannel.
-        Raises: ShellNotVerified; HostNotConnected; ChannelBudgetExhausted;
-          SshArgumentError - bad argv or script; SshTransportError - ssh
-          could not be started.
-        Example: channel = await pool.spawn(["tail", "-c", "+0", "-F", path])
-        """
         command = self._command(argv, script)
         slot = await self._acquire()
         try:

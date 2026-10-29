@@ -13,7 +13,7 @@
     "Delete a company you no longer use: its projects become orphaned and keep all their agents.",
     "Open the projects page, press a company card, and see only that client's projects; an old #projects/<project> link opens at its company path.",
     "Open the projects page: companies show as hero cards (toggle to a ledger of thumbnails) above the orphaned projects, each section with its own toggle; the kebab's set image replaces a generated hero, remove image brings it back.",
-    "Mirror a folder tree: INITECH as a company, Brightfund as a company under it, and Org/INITECH/Brightfund/support as a project nested under the Brightfund project."
+    "Mirror a folder tree: IMC as a company, Amerifund as a company under it, and Org/IMC/Amerifund/support as a project nested under the Amerifund project."
   ],
   "how_to": [
     "In the agents tab, open a project heading's menu, pick add to, then company, then a company (or new company... to name one).",

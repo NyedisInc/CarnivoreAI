@@ -132,7 +132,7 @@ describe('the status filter', () => {
     expect(head('18')).not.toBeNull();
   });
 
-  test('a hidden section with something for the owner wears the needs marker; one with nothing does not', async () => {
+  test('a hidden section with something for Joe wears the needs marker; one with nothing does not', async () => {
     const host = await mountBody();
     await openCard(host);
     keyOf(host, 'review').click();

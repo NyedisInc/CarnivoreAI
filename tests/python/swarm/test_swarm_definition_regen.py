@@ -45,7 +45,7 @@ def test_a_definition_with_old_text_gets_the_current_template_on_the_next_wake(t
 
     async def recreate(uuid, agent_type, *, get_manager, fresh):
         seen.append((uuid, defn.read_text(), twin.read_text()))
-        return SimpleNamespace(status="started", session_id="ses_new", detail="")
+        return SimpleNamespace(status="started", session_id="ses_new", tmux_session=None, detail="")
 
     async def get_session_info(session_id):
         return SimpleNamespace(session_row_id=row_id, tmux_session="cloude_loki", session=SimpleNamespace(tmux_created_epoch=1))

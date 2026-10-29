@@ -51,7 +51,7 @@
     "api_version": {
       "type": "integer",
       "minimum": 1,
-      "description": ""
+      "description": "The host contract version this item was written against; separate from version."
     },
     "min_app_version": {
       "$ref": "#/$defs/semver"
@@ -300,7 +300,7 @@
             "derived",
             "excluded"
           ],
-          "description": ""
+          "description": "What an export of the owner's own scope does with the store."
         },
         "share": {
           "enum": [
@@ -403,7 +403,7 @@
             "store",
             "backup_destination"
           ],
-          "description": "store (the default) or backup_destination: a place the plugin writes copies meant to survive the loss of the original."
+          "description": "store (the default) or backup_destination: a place the plugin writes copies meant to survive the loss of the original. A destination gets the folder rules (no symlink, iCloud, CloudStorage or Dropbox) and a same-disk warning."
         },
         "provides": {
           "enum": [

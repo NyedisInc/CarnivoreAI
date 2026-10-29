@@ -1,22 +1,3 @@
-/*
- * THE TIMELINE VIEW (epic #1784 S7; mockup m1 r5, kit/timeline.css): one lane per agent session on a time axis, the
- * window selector, the readout, the ruler with the playhead. Copied from the mockup with its classes prefixed `sp-tl-`.
- * Every colour is an `--oc-*` token or the status light's own `--led-color-*`; hairlines are inset shadows, corners are
- * small, labels are small tracked uppercase.
- *
- * Classes:
- *   .sp-tl .sp-tl-stick .sp-tl-ctl                   the root, the sticky top stack, the window bar (a base Segmented in it)
- *   .sp-tl-readout .sp-tl-moment .sp-tl-rmain .sp-tl-counts .sp-tl-detail .sp-tl-ract   the moment, the counts, the detail line
- *   .sp-tl-rw .sp-tl-arm .sp-tl-note                  the rewind confirmation (arm box) and the status line
- *   .sp-tl-ruler .sp-tl-rlabel .sp-tl-rtrack .sp-tl-tk .sp-tl-tl .sp-tl-nowl .sp-tl-handle   the ruler
- *   .sp-tl-lanes .sp-tl-inner .sp-tl-over .sp-tl-gl .sp-tl-edge .sp-tl-ph   the lanes region and its overlay (grid lines, now edge, playhead)
- *   .sp-tl-key .sp-tl-keyh .sp-tl-ks .sp-tl-kline   the key: a sample of every mark and what it means
- *   .sp-tl-sec [data-tl-grp] [data-tl-fold] .sp-tl-car .sp-tl-empty   section heads, project heads and the fold (base row Buttons), the empty note
- *   .sp-tl-lane .sp-tl-name .sp-tl-led .sp-tl-nm .sp-tl-hostl .sp-tl-age   one lane and its name cell
- *   .sp-tl-track .sp-tl-base .sp-tl-cv .sp-tl-cap .sp-tl-bd .sp-tl-wt .sp-tl-moon .sp-tl-bk .sp-tl-fail .sp-tl-qt   a lane's drawing
- *   .sp-tl-stub .sp-tl-stubed .sp-tl-timer           the stub past the now edge: the light and the upcoming timer
- *   .sp-tl-slider .sp-tl-range                        the phone's playhead slider
- */
 @layer components {
 
     .sp-tl {

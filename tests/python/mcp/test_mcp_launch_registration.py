@@ -30,7 +30,8 @@ def cfg(monkeypatch, tmp_path):
 
     def set_enabled(enabled: bool) -> Settings:
         monkeypatch.setattr(Settings, "load_auth_config", lambda self: SimpleNamespace(
-            agents=AgentsConfig(), session=SessionConfig(), mcp=McpConfig(enabled=enabled)))
+            agents=AgentsConfig(), session=SessionConfig(), mcp=McpConfig(enabled=enabled),
+            launch_profiles=None, byoai=None))
         return s
 
     return set_enabled

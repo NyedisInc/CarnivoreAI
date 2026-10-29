@@ -93,7 +93,6 @@ export interface LedState {
     outer: OuterState;
 }
 
-/* aria-label="working" box-shadow title="working" */
 export function ledHtml(opts?: LedHtmlOptions | null): string {
     const o: LedHtmlOptions = opts || {};
     const inner = normalizeInner(o.inner);
@@ -125,7 +124,6 @@ export interface LedSignals {
     usage_limit?: string | null | undefined;
 }
 
-/* label: ' */
 export function hostOffline(row: object | null | undefined): string | null {
     const r = row as { host_key?: string | null; host_label?: string | null; host_state?: string | null } | null | undefined;
     if (!r || !r.host_key || r.host_key === 'local') return null;
@@ -179,6 +177,7 @@ export function ledStateFor(signals?: LedSignals | null): LedState {
         return { inner: 'notice', outer: 'active' };
     }
 
+    // A WORKING SESSION IS SOLID GREEN, unread flag or not
     if (status === 'working' || status === 'working_subagent' || status === 'running') {
         return { inner: 'working', outer: 'active' };
     }

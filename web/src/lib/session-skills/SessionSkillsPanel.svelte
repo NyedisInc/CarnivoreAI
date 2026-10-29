@@ -1,8 +1,9 @@
 <script lang="ts">
-  /* Escape closes it session skills */
+  /* Escape closes it */
   import { onMount } from 'svelte';
   import '../subagents/popup-list.css';
   import './session-skills.css';
+  import { Button } from '../base';
   import { t } from '../i18n/index.svelte';
   import { subscribe } from '../../opscenter/api/events.svelte';
   import { agoText, emptyMessage, fetchSkillFires, type SessionSkillFires } from '../skill-fires/skill-fires';
@@ -133,7 +134,7 @@
   <header class="sal-titlebar">
     <h2 class="sal-title">{t('skills.session.title')}</h2>
     <span class="sal-name">{workingDir ? t('skills.session.folder', { dir: workingDir }) : ''}</span>
-    <button type="button" class="sal-close" onclick={close}>{t('skills.session.close')}</button>
+    <Button size="sm" onclick={close}>{t('skills.session.close')}</Button>
   </header>
 
   {#if failure}
@@ -167,16 +168,15 @@
               <td class="sal-num">{skill.tokens_est}</td>
               <td>
                 {#if target}
-                  <button
-                    type="button"
-                    class="sal-close"
+                  <Button
+                    size="sm"
                     role="switch"
                     aria-checked={isOn(skill)}
                     aria-label={t('manager.toggle.label', { name: skill.name })}
                     data-session-skill-switch={skill.name}
                     disabled={busy !== null}
                     onclick={() => void toggle(skill, !isOn(skill))}
-                    >{busy === skill.name ? t('manager.toggle.working') : isOn(skill) ? t('manager.toggle.on') : t('manager.toggle.off')}</button
+                    >{busy === skill.name ? t('manager.toggle.working') : isOn(skill) ? t('manager.toggle.on') : t('manager.toggle.off')}</Button
                   >
                 {/if}
               </td>

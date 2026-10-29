@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* conversation id */
   import EmptyState from './EmptyState.svelte';
   import { framedTitle } from '../shell/frame-header.svelte';
   import { axisCounts } from './axis';
@@ -18,6 +17,7 @@
   import { VIZ_SPECS } from './specs';
   import { laneModel, type LaneSeries } from './swimlanes';
   import { watchVisible } from './visible';
+  import { escapeHtml } from './tooltip-html';
 
   const IDLE_SHARE = 45;
 
@@ -65,7 +65,7 @@
       backgroundColor: 'transparent',
       textStyle: { fontFamily: getComputedStyle(node).getPropertyValue('--font-mono').trim() || 'monospace' },
       tooltip: { confine: true, backgroundColor: color('var(--oc-ground-raised)', '#10232b'), borderColor: color('var(--oc-line-rule)', '#42616a'), textStyle: { color: color('var(--oc-text-primary)', '#fff'), fontSize: 12 },
-        formatter: (info: { value: [number, number, number, string, number] }) => `${lanes[info.value[0]]?.label ?? ''} · ${t(`swimlanes.state_${info.value[3]}`)}` },
+        formatter: (info: { value: [number, number, number, string, number] }) => `${escapeHtml(lanes[info.value[0]]?.label)} · ${t(`swimlanes.state_${info.value[3]}`)}` },
       grid: insets,
       xAxis: { type: 'time', splitNumber: axisCounts({ width: node.clientWidth, height: node.clientHeight }, insets).time, splitLine: { show: false }, axisTick: { show: false }, axisLine: { lineStyle: { color: color('var(--oc-line-rule)', '#42616a') } }, axisLabel: { show: labels, color: text, fontSize: 10, hideOverlap: true } },
       yAxis: { type: 'category', data: lanes.map((lane) => lane.label), inverse: true, axisTick: { show: false }, axisLine: { show: false }, axisLabel: { show: labels, color: text, fontSize: 10, width: 76, overflow: 'truncate' } },

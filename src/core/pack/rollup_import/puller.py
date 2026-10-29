@@ -143,7 +143,7 @@ class RollupImporter:
                 started_digest = digest
             applied = await asyncio.to_thread(self._apply, peer_id, groups)
             if applied is None:
-                return  # nothing was written
+                return
             if page.get("complete") is True:
                 await asyncio.to_thread(self._finish, peer_id, until, started_digest)
                 logger.debug("pack_rollup_pulled", peer=peer_id[:8], revision=until)

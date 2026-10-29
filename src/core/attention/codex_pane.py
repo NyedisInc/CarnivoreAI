@@ -46,22 +46,6 @@ def _has_elapsed_timer(text: str) -> bool:
 
 
 def classify_codex_pane(text: str, pane_title: str = "") -> CodexPaneFacts:
-    """Classify one Codex pane capture into the reader's tri-state facts.
-
-    Description: PURE. A blank capture (no non-space text and no title) is a
-      FAILED READ and answers all-None, never "the screen is clear", for the
-      same reason claude's classifier does: capture-pane on a full-screen TUI
-      can return only trailing blanks. Text we actually read answers True or
-      False per marker family, and ``resting_prompt`` is True only when the
-      dust-free core is present AND no working or dialog marker is.
-    Inputs:
-      text (str) - the captured pane body.
-      pane_title (str) - the tmux ``#{pane_title}``, which carries the
-        spinner and the Action Required marker.
-    Output: CodexPaneFacts.
-    Example: classify_codex_pane("› Ask Codex to do anything").resting_prompt
-      -> True
-    """
     body = text or ""
     title = pane_title or ""
     if not body.strip() and not title.strip():

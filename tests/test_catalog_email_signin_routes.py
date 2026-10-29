@@ -31,7 +31,7 @@ from tests.helpers.hosted_routes_app import hosted_proxy_app, route_responder
 
 START_URL = "/catalog/auth/email/start"
 VERIFY_URL = "/catalog/auth/email/verify"
-RATING_URL = "/catalog/items/acme/sme/rating"
+RATING_URL = "/catalog/items/example-owner/sme/rating"
 
 CHALLENGE = {
     "session": "SESSION-SECRET",
@@ -386,7 +386,7 @@ class TestWhatTheSignedInSessionReports:
             with open_token_store(app.state) as store:
                 store.save(
                     CatalogSession(
-                        login="acme",
+                        login="example-owner",
                         access_token="ACCESS-TOKEN-SECRET",
                         access_expires_at=now + 3600,
                         refresh_token="REFRESH-TOKEN-SECRET",
@@ -396,7 +396,7 @@ class TestWhatTheSignedInSessionReports:
             answer = app.client.get("/catalog/auth/session")
         assert answer.json() == {
             "signed_in": True,
-            "login": "acme",
+            "login": "example-owner",
             "provider": "github",
             "email": None,
         }
@@ -416,7 +416,7 @@ class TestNothingDownstreamHadToChange:
             "count": 1,
             "average": 5.0,
             "histogram": {"1": 0, "2": 0, "3": 0, "4": 0, "5": 1},
-            "item_id": "acme/sme",
+            "item_id": "example-owner/sme",
             "your_stars": 5,
         }
         responder = route_responder(

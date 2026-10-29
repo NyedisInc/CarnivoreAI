@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { untrack } from 'svelte';
   import Icon from '../../opscenter/ui/Icon.svelte';
   import IconButton from '../base/IconButton.svelte';
@@ -113,7 +112,6 @@
     return () => releaseSessionUsage(id);
   });
 
-  /* nothing spent yet */
   const activeAccountId = $derived(
     activeAccount !== undefined ? activeAccount : usage?.data?.account?.id ?? null,
   );
@@ -396,7 +394,6 @@
     .ldp-title {
       display: inline-flex;
       align-items: center;
-      /* padding */
       padding: var(--oc-space-0-5) var(--oc-space-1);
       margin: calc(var(--oc-space-0-5) * -1) calc(var(--oc-space-1) * -1);
       border-radius: var(--oc-radius-sm);
@@ -467,7 +464,6 @@
       transform: rotate(180deg);
     }
 
-    /* padding */
     .ldp-total {
       margin-top: var(--oc-space-1);
       padding-top: calc(var(--ldp-step) * 2);
@@ -517,12 +513,6 @@
       color: var(--oc-coral);
     }
 
-    /* `minmax(0, 1fr)`, not the default auto column: a grid item's
-       min-content width would otherwise widen the whole list past the panel.
-       `--ldp-row-gap` is the TOTAL space between two rows, divider line
-       included; the grid `gap` and the divider's own `padding-top` each take
-       half of what is left after the line's width, so the line sits centred
-       in the same space the rows always had between them. */
     .ldp-accounts {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -538,13 +528,11 @@
       --ldp-row-gap: calc(var(--ldp-step) * 4);
     }
 
-    /*  hidden  */
     .ldp-account + .ldp-account {
       border-top: var(--oc-border) solid var(--oc-line-faint);
       padding-top: calc((var(--ldp-row-gap) - var(--oc-border)) / 2);
     }
 
-    /* padding */
     .ldp-account {
       padding-left: calc(var(--ldp-step) * 1.5);
       padding-right: calc(var(--ldp-step) * 1.5);
@@ -579,12 +567,10 @@
     .ldp-name {
       min-width: 0;
       flex: 0 1 auto;
-      /*  hidden  */
       overflow: clip;
       text-overflow: ellipsis;
       white-space: nowrap;
       color: var(--oc-text-primary);
-      /* padding */
       text-box: trim-both cap alphabetic;
       padding-block: 0.3em;
       margin-block: -0.3em;
@@ -609,7 +595,6 @@
       gap: var(--oc-space-1);
     }
 
-    /* padding */
     .ldp-marker {
       display: inline-flex;
       align-items: center;

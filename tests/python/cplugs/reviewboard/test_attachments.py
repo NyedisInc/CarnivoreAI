@@ -13,9 +13,9 @@ from fastapi.testclient import TestClient
 from src.api.auth import require_auth
 from src.config.uploads import UploadsConfig
 from src.core.mcp.caller import AgentCaller
-from src.cplugs.huddle import board_port, routes as huddle_routes
+from src.cplugs.huddle import board_port, routes as task_manager_routes
 from src.cplugs.sdk import uploads as sdk_uploads
-from tests.python.cplugs.reviewboard.harness import BASE, PANE, Env, huddle_on, huddle_store, make_env
+from tests.python.cplugs.reviewboard.harness import BASE, PANE, Env, task_manager_on, task_manager_store, make_env
 
 TOKEN = AgentCaller("mcp-token:7", "mcp-token:7", "mcp-token:7", token_name="phone", scope="write")
 PDF = b"%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n"
@@ -31,8 +31,8 @@ def b64(data: bytes) -> str:
 def env(tmp_path: Path, monkeypatch) -> Env:
     monkeypatch.setattr(sdk_uploads, "settings", SimpleNamespace(load_auth_config=lambda: SimpleNamespace(uploads=UploadsConfig())))
     made = make_env(tmp_path)
-    made.app.include_router(huddle_routes.router, prefix="/api/v1")
-    huddle_on(made, monkeypatch)
+    made.app.include_router(task_manager_routes.router, prefix="/api/v1")
+    task_manager_on(made, monkeypatch)
     yield made
     board_port.unregister()
 
@@ -46,7 +46,7 @@ def client(env: Env):
 
 @pytest.fixture
 def board(env: Env, client) -> dict:
-    item = huddle_store(env).add("12", "redo the bottom bar", actor="claude", title="bottom bar task")["id"]
+    item = task_manager_store(env).add("12", "redo the bottom bar", actor="claude", title="bottom bar task")["id"]
     r = client.post(f"{BASE}/boards", json={"slug_name": "bottom-bar", "title": "bottom bar", "task": {"item_id": item}, "summary": "first",
                                             "html": HTML, "viewport": 320, "request_review": False})
     assert r.status_code == 200, r.text
@@ -64,13 +64,13 @@ def tree(root: Path) -> dict:
 def test_a_pane_attaches_a_pdf_and_an_md_file_and_each_opens_to_its_exact_bytes(env: Env, client, board, tmp_path: Path):
     (tmp_path / "spec.pdf").write_bytes(PDF)
     (tmp_path / "notes.md").write_bytes(MD)
-    notes = lambda: [m for m in huddle_store(env).item(board["item"])["thread"] if m.get("category") != "status"]
+    notes = lambda: [m for m in task_manager_store(env).item(board["item"])["thread"] if m.get("category") != "status"]
     thread_before = len(notes())
     published_before = len(env.published)
     ok, answer = env.call("task_manager_board_attachment_add", {"board": board["slug"], "note": "the spec and my notes",
                                                                  "file_paths": [str(tmp_path / "spec.pdf"), str(tmp_path / "notes.md")]})
     assert ok, answer
-    row = huddle_store(env).item(board["item"])
+    row = task_manager_store(env).item(board["item"])
     added = notes()[thread_before:]
     assert len(added) == 1, added
     info = added[0]
@@ -100,7 +100,7 @@ def test_the_route_attaches_inline_files_and_a_second_attach_appends(env: Env, c
     r = client.post(f"{BASE}/boards/{board['slug']}/attachments", json={"files": [{"name": "a.md", "content_base64": b64(MD)}],
                                                                        "request_review": False})
     assert r.status_code == 200, r.text
-    assert r.json()["review"]["requested"] is False and huddle_store(env).item(board["item"])["state"] != "review"
+    assert r.json()["review"]["requested"] is False and task_manager_store(env).item(board["item"])["state"] != "review"
     r = client.post(f"{BASE}/boards/{board['slug']}/attachments", json={"files": [{"name": "../b.pdf", "content_base64": b64(PDF)}]})
     assert r.status_code == 200, r.text
     assert [e["name"] for e in sidecar(env, board["slug"])["ext"]["attachments"]["files"]] == ["a.md", "b.pdf"]
@@ -109,19 +109,19 @@ def test_the_route_attaches_inline_files_and_a_second_attach_appends(env: Env, c
 
 def test_a_tokens_file_paths_are_refused_and_nothing_is_stored(env: Env, board, tmp_path: Path):
     (tmp_path / "spec.pdf").write_bytes(PDF)
-    thread_before = huddle_store(env).item(board["item"])["thread"]
+    thread_before = task_manager_store(env).item(board["item"])["thread"]
     before = sidecar(env, board["slug"])
     ok, text = env.call("task_manager_board_attachment_add", {"board": board["slug"], "file_paths": [str(tmp_path / "spec.pdf")]}, TOKEN)
     assert not ok and "only a session running here" in text, text
-    assert sidecar(env, board["slug"]) == before and huddle_store(env).item(board["item"])["thread"] == thread_before
+    assert sidecar(env, board["slug"]) == before and task_manager_store(env).item(board["item"])["thread"] == thread_before
 
 
 def test_a_refused_file_leaves_nothing_behind(env: Env, client, board):
-    before, thread_before = tree(env.root), huddle_store(env).item(board["item"])["thread"]
+    before, thread_before = tree(env.root), task_manager_store(env).item(board["item"])["thread"]
     r = client.post(f"{BASE}/boards/{board['slug']}/attachments",
                     json={"files": [{"name": "ok.md", "content_base64": b64(MD)}, {"name": "fake.png", "content_base64": b64(b"not a png")}]})
     assert r.status_code == 422 and r.json()["detail"]["code"] == "reviewboard_invalid", r.text
-    assert tree(env.root) == before and huddle_store(env).item(board["item"])["thread"] == thread_before
+    assert tree(env.root) == before and task_manager_store(env).item(board["item"])["thread"] == thread_before
 
 
 def test_a_scratch_board_refuses_an_attachment(env: Env, client):
@@ -141,25 +141,25 @@ def test_a_missing_board_is_404(env: Env, client):
     assert not ok and "reviewboard_not_found" in text
 
 
-def huddle_files(env: Env) -> dict:
+def task_manager_files(env: Env) -> dict:
     base = env.host.storage("huddle").path / "files"
     return tree(base) if base.is_dir() else {}
 
 
-def test_a_note_the_huddle_would_refuse_is_refused_first_and_a_crlf_note_is_mended(env: Env, client, board):
-    before, thread_before, files_before = sidecar(env, board["slug"]), huddle_store(env).item(board["item"])["thread"], huddle_files(env)
+def test_a_note_the_task_manager_would_refuse_is_refused_first_and_a_crlf_note_is_mended(env: Env, client, board):
+    before, thread_before, files_before = sidecar(env, board["slug"]), task_manager_store(env).item(board["item"])["thread"], task_manager_files(env)
     r = client.post(f"{BASE}/boards/{board['slug']}/attachments", json={"files": [{"name": "a.md", "content_base64": b64(MD)}],
                                                                        "note": "a bell \x07 here"})
     assert r.status_code == 422 and r.json()["detail"]["code"] == "reviewboard_invalid", r.text
-    assert sidecar(env, board["slug"]) == before and huddle_files(env) == files_before
-    assert huddle_store(env).item(board["item"])["thread"] == thread_before
+    assert sidecar(env, board["slug"]) == before and task_manager_files(env) == files_before
+    assert task_manager_store(env).item(board["item"])["thread"] == thread_before
     r = client.post(f"{BASE}/boards/{board['slug']}/attachments", json={"files": [{"name": "a.md", "content_base64": b64(MD)}],
                                                                        "note": "line one\r\nline two", "request_review": False})
     assert r.status_code == 200, r.text
-    assert huddle_store(env).item(board["item"])["thread"][-1]["text"].endswith("line one\nline two")
+    assert task_manager_store(env).item(board["item"])["thread"][-1]["text"].endswith("line one\nline two")
 
 
-def test_a_huddle_refusal_after_the_files_are_saved_removes_them_and_answers_a_board_refusal(env: Env, client, board, monkeypatch):
+def test_a_task_manager_refusal_after_the_files_are_saved_removes_them_and_answers_a_board_refusal(env: Env, client, board, monkeypatch):
     from src.cplugs.huddle.rules import TaskManagerForbidden
     from src.cplugs.huddle.store import TaskManagerStore
 
@@ -167,14 +167,14 @@ def test_a_huddle_refusal_after_the_files_are_saved_removes_them_and_answers_a_b
         raise TaskManagerForbidden("the item is settled")
 
     monkeypatch.setattr(TaskManagerStore, "post", refuse)
-    before, files_before = sidecar(env, board["slug"]), huddle_files(env)
+    before, files_before = sidecar(env, board["slug"]), task_manager_files(env)
     r = client.post(f"{BASE}/boards/{board['slug']}/attachments", json={"files": [{"name": "a.md", "content_base64": b64(MD)},
                                                                                  {"name": "b.pdf", "content_base64": b64(PDF)}]})
     assert r.status_code == 409 and r.json()["detail"]["code"] == "reviewboard_task_manager_refused", r.text
     assert r.json()["detail"]["task_code"] == "task_manager_forbidden"
-    assert sidecar(env, board["slug"]) == before and huddle_files(env) == files_before
+    assert sidecar(env, board["slug"]) == before and task_manager_files(env) == files_before
     ok, text = env.call("task_manager_board_attachment_add", {"board": board["slug"], "files": [{"name": "a.md", "content_base64": b64(MD)}]})
-    assert not ok and "reviewboard_task_manager_refused" in text and huddle_files(env) == files_before
+    assert not ok and "reviewboard_task_manager_refused" in text and task_manager_files(env) == files_before
 
 
 def test_a_non_string_file_body_is_a_422_not_a_crash(env: Env, client, board):
@@ -197,16 +197,16 @@ def test_an_index_write_that_fails_after_the_post_is_a_success_that_says_so(env:
     assert body["indexed"] is False and body["etag"] is None and str(body["message_id"]) in body["warning"]
     assert client.get(body["attachments"][0]["url"]).content == MD
     assert "cplug.reviewboard.boards" in env.published[published_before:]
-    assert MD in huddle_files(env).values()
+    assert MD in task_manager_files(env).values()
 
 
 def test_an_index_entry_whose_file_id_is_not_8_hex_is_left_out():
     from src.cplugs.reviewboard import attachments
 
-    good = {"file_id": "49759e95", "item_id": 7, "message_id": 41, "name": "a.md", "mime": "text/markdown", "bytes": 3,
+    good = {"file_id": "ab12cd34", "item_id": 7, "message_id": 41, "name": "a.md", "mime": "text/markdown", "bytes": 3,
             "sha256": "a" * 64, "added_at": "2026-10-14T09:05:00Z", "revision": "r1"}
     forged = {**good, "file_id": "%2e%2e/%2e%2e/sessions"}
     listed = attachments.entries_of({"ext": {"attachments": {"v": 1, "files": [good, forged]}}})
-    assert [e["file_id"] for e in listed] == ["49759e95"]
+    assert [e["file_id"] for e in listed] == ["ab12cd34"]
     with pytest.raises(ValueError):
         board_port.BoardPort(SimpleNamespace()).file_url(7, "../x")

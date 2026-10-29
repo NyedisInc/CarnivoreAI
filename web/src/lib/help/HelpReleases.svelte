@@ -1,8 +1,9 @@
-<!-- <button> role="button" -->
+
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { authFetch } from '../../opscenter/api/auth.svelte';
+  import { loadFeatureCatalog } from './feature-catalog';
   import { t } from '../i18n/index.svelte';
+  import { Button } from '../base';
   import { requestFocusFeature } from './feature-focus.svelte';
   import type { FeatureCatalogItem } from './features-by-area';
   import FeatureDetail from './FeatureDetail.svelte';
@@ -11,7 +12,6 @@
     groupFeaturesByRelease,
     type FeatureChangeLine,
     type FeatureRelease,
-    type FeaturesIndexResponse,
   } from './features-grouping';
 
   import { highlightSegments, parseQuery, type SearchMode } from './fuzzy-search';
@@ -45,15 +45,14 @@
   async function load(): Promise<void> {
     viewState = 'loading';
     try {
-      const payload = await authFetch<FeaturesIndexResponse>('/feature-catalog');
+      const payload = await loadFeatureCatalog();
       if (!payload.available) {
         viewState = 'unavailable';
         return;
       }
       releases = groupFeaturesByRelease(payload);
       openReleases = releases.length > 0 ? { [releases[0]!.name]: true } : {};
-      const catalog = payload.catalog as unknown as FeatureCatalogItem[];
-      catalogById = Object.fromEntries(catalog.map((item) => [item.id, item]));
+      catalogById = Object.fromEntries(payload.catalog.map((item) => [item.id, item]));
       viewState = 'ready';
     } catch {
       viewState = 'failed';
@@ -98,7 +97,6 @@
     expandedRows = { ...expandedRows, [key]: !expandedRows[key] };
   }
 
-  /* <button> role="button" */
   function onRowKeydown(e: KeyboardEvent, key: string): void {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
@@ -148,18 +146,18 @@
         ? t('info.page.changelog.search.none')
         : t('info.page.changelog.search.count', { count: matchCount })}
       {#if onClearQuery}
-        <button type="button" class="oc-btn oc-btn--ghost" data-changelog-clear onclick={onClearQuery}>
+        <Button variant="quiet" size="sm" data-changelog-clear onclick={onClearQuery}>
           {t('info.page.changelog.search.clear')}
-        </button>
+        </Button>
       {/if}
     </p>
   {/if}
   <div class="sidebar-help__releases">
     {#each shown as { release, rows }, index (release.name)}
       <section class="sidebar-help__release">
-        <button
-          type="button"
-          class="sidebar-help__release-head"
+        <Button
+          variant="row"
+          data-help-release-head
           aria-expanded={isReleaseOpen(release.name)}
           aria-controls={bodyIdFor(index)}
           onclick={() => toggleRelease(release.name)}
@@ -179,7 +177,7 @@
               </span>
             {/each}
           </span>
-        </button>
+        </Button>
         {#if isReleaseOpen(release.name)}
           <ul class="sidebar-help__change-list" id={bodyIdFor(index)}>
             {#each rows as { row, index: i, bodyOnly } (i)}
@@ -206,11 +204,12 @@
                   <span class="sidebar-help__change-features">
                     {#each row.featureLinks as link (link.id)}
                       {#if linksFeatures(row.type)}
-                        <button
-                          type="button"
-                          class="sidebar-help__feature-chip sidebar-help__feature-chip--link"
+                        <Button
+                          variant="quiet"
+                          size="sm"
+                          data-help-feature-chip
                           onclick={(e) => onChipClick(e, link.id)}
-                        >{@render marked(link.name)}</button>
+                        >{@render marked(link.name)}</Button>
                       {:else}
                         <span class="sidebar-help__feature-chip">{@render marked(link.name)}</span>
                       {/if}

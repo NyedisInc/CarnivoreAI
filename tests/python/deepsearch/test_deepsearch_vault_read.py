@@ -123,15 +123,15 @@ def test_a_vault_served_group_carries_the_name_project_and_folder_the_backup_rec
     _indexed(rig)
     with closing(connect(rig.world["db"], create=False)) as main_db:
         main_db.execute("DELETE FROM sessions WHERE claude_session_uuid = ?", (CONV,))
-    _capture(rig, identity=Identity(session_uuid="sess-1", project_name="Example Project",
-                                    working_dir="/Users/x/Org/example/app", title="Nightly report"))
+    _capture(rig, identity=Identity(session_uuid="sess-1", project_name="Personal Assistant Mac",
+                                    working_dir="/Users/x/Org/personal-assistant/mac", title="Switch Games (QNAP) - Download"))
     _register(rig)
     _delete_conversation(rig)
     _again(rig)
     (group,) = _groups(rig.world, "wombatmain")
     assert group["hits"][0]["from_backup"] is True
     assert (group["session"], group["project"], group["working_dir"], group["session_uuid"]) == (
-        "Nightly report", "Example Project", "/Users/x/Org/example/app", "sess-1")
+        "Switch Games (QNAP) - Download", "Personal Assistant Mac", "/Users/x/Org/personal-assistant/mac", "sess-1")
 
 
 def test_a_hit_opens_from_the_vault_bytes_not_a_leftover_file(rig):

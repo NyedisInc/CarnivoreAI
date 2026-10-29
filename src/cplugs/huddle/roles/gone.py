@@ -107,7 +107,7 @@ async def _check(ctx: CplugContext, roster: Optional[roles_service.Roster]) -> L
     if retired:
         roster = await roles_service.measure(ctx)
     store = RoleStore(service.store(ctx))
-    seats = await asyncio.to_thread(roles_service.evaluate, store, roster)
+    seats = await asyncio.to_thread(lambda: roles_service.evaluate(store, roster, write_pick=False))
     acted: List[Dict[str, Any]] = []
     for list_key, seat in seats.items():
         if list_key not in projects or not seat.ever_led or roles_service.holder_of(seat, roster)[1] != lead.VACANT_GONE:

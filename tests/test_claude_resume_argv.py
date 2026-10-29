@@ -26,28 +26,28 @@ RESUME_UUID = "82854c0e-a423-4591-a34f-a14cb92fbf41"
 def test_pane_pid_is_claude_directly_with_resume():
     processes = [
         ProcessRow(
-            pid=4239,
+            pid=99871,
             ppid=1,
             command=(
-                "/Users/example/.local/bin/claude "
+                "/Users/sam/.local/bin/claude "
                 f"--resume {RESUME_UUID} --dangerously-skip-permissions"
             ),
         ),
     ]
-    result = find_resume_uuid_in_tree(4239, processes)
+    result = find_resume_uuid_in_tree(99871, processes)
     assert result == RESUME_UUID
 
 
 def test_pane_pid_is_a_shell_claude_is_a_child():
     processes = [
-        ProcessRow(pid=4347, ppid=1, command="/bin/zsh -il"),
+        ProcessRow(pid=59113, ppid=1, command="/bin/zsh -il"),
         ProcessRow(
-            pid=4818,
-            ppid=4347,
+            pid=59314,
+            ppid=59113,
             command=f"claude --resume {RESUME_UUID} --dangerously-skip-permissions",
         ),
     ]
-    result = find_resume_uuid_in_tree(4347, processes)
+    result = find_resume_uuid_in_tree(59113, processes)
     assert result == RESUME_UUID
 
 
@@ -62,10 +62,10 @@ def test_grandchild_claude_is_still_found():
 
 def test_no_resume_falls_through_with_no_match():
     processes = [
-        ProcessRow(pid=4818, ppid=4347, command="claude --dangerously-skip-permissions"),
-        ProcessRow(pid=4347, ppid=1, command="/bin/zsh -il"),
+        ProcessRow(pid=59314, ppid=59113, command="claude --dangerously-skip-permissions"),
+        ProcessRow(pid=59113, ppid=1, command="/bin/zsh -il"),
     ]
-    assert find_resume_uuid_in_tree(4347, processes) is None
+    assert find_resume_uuid_in_tree(59113, processes) is None
 
 
 def test_no_claude_process_at_all_is_no_match():

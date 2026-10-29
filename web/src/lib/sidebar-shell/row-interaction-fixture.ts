@@ -4,17 +4,17 @@ import { fileURLToPath } from 'node:url';
 import { flushSync } from 'svelte';
 import { timerChip } from '../timers/timers';
 import { loadLegacyDrawer, paintDrawer, type LegacyWindow } from './legacy-fixture';
+import * as Clicks from '../drawer/clicks';
 import * as Density from '../drawer/density';
+import { watchKeepAwakeRepaint } from '../drawer/keep-awake-repaint';
+import { publishRunTable } from '../item-menu/run';
 import { rowMenuBridge } from '../item-menu/row-bridge';
 import { closeRowMenu, installRowMenuOpener } from '../item-menu/row-open';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 const ROW_INTERACTION_SCRIPTS: readonly string[] = [
-    'navigation-generation.js', 'session-sidebar-rename.js', 'session-sidebar-plugin-clicks.js',
-    'session-sidebar-restart-click.js', 'session-sidebar-chrome-clicks.js', 'session-sidebar-clicks.js',
-    'session-sidebar-drop-target.js', 'session-sidebar-reorder.js', 'session-sidebar-row-drag.js',
-    'session-row-menu-actions.js',
+    'navigation-generation.js',
 ];
 
 export type Event = [string, ...unknown[]];
@@ -25,8 +25,6 @@ let w: LegacyWindow;
 let list: HTMLElement;
 let events: Event[] = [];
 const kept: Record<string, boolean> = {};
-
-export const knobs = { wakeStarts: false };
 
 export function row(name: string, over: Record<string, unknown> = {}): Record<string, unknown> {
     return {
@@ -47,7 +45,7 @@ function startRows(): Record<string, unknown>[] {
     ];
 }
 
-function rec<T>(name: string, answer: T): (...a: unknown[]) => Promise<T> {
+export function rec<T>(name: string, answer: T): (...a: unknown[]) => Promise<T> {
     return async (...a: unknown[]) => {
         events.push([name, ...a.map((x) => (x instanceof Element ? `<${x.className}>` : x))]);
         return answer;
@@ -68,6 +66,7 @@ function stubLayout(): void {
 }
 
 export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
+    // jsdom has no popover API; the one item menu's driver (CascadeMenu) shows its levels through it.
     const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
     proto.showPopover ??= function () {};
     proto.hidePopover ??= function () {};
@@ -92,6 +91,7 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
     } finally {
         console.log = log;
     }
+    publishRunTable(globalThis as unknown as Record<string, unknown>);
     installRowMenuOpener();
     stubLayout();
     const g = globalThis as { CSS?: { escape?(v: string): string } };
@@ -109,15 +109,14 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
         },
         async _fetchAndRender() { events.push(['refetch']); ctrl._lastSig = null; ctrl.repaint(); },
         _closeAfterSwitch() { events.push(['close-after-switch']); },
-        activateRow(rowEl: Element) { return w.SessionSidebarClicks.activateRow(ctrl, rowEl); },
+        activateRow(rowEl: Element) { return Clicks.activateRow(ctrl as never, rowEl); },
         close() { events.push(['close']); },
     };
     w.SessionSidebar = ctrl;
-    list.addEventListener('click', (e) => { void w.SessionSidebarClicks.onRowClick(ctrl, e); });
-    w.SessionSidebarReorder.init();
+    watchKeepAwakeRepaint(() => ctrl.repaint());
+    list.addEventListener('click', (e) => { void Clicks.onRowClick(ctrl as never, e); });
     Density.setMode('cozy');
     w.PreferenceBridge = { read: () => undefined };
-    w.SessionSidebarGroupActions = { commitAssignment: rec('groups.commitAssignment', true) };
     w.SessionSidebarGroupOrder = { commitMemberOrder: rec('groups.commitMemberOrder', undefined) };
     w.API = {
         getSession: rec('api.getSession', { id: 'x' }),
@@ -131,22 +130,12 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
         showConfirmModal: rec('app.confirm', true),
     };
     w.SessionRestartPicker = { open: rec('restart-picker.open', null), lastError: () => null };
-    w.SessionRowMenuSleep = {
-        runWake: async (ctx: unknown) => {
-            events.push(['wake', ctx]);
-            if (!knobs.wakeStarts) return false;
-            ctrl._rows = ctrl._rows.map((r: Record<string, unknown>) => (r.name === 'cloude_z'
-                ? { ...r, name: 'cloude_z2', asleep: false, status: 'idle', session_id: 'ses_cloude_z2' } : r));
-            ctrl.repaint();
-            events.push(['wake-focus', (ctx as { sessionUuid?: string }).sessionUuid]);
-            return true;
-        },
-    };
     w.CloudeWeb = {
         ...(w.CloudeWeb || {}),
         rowMenu: { ...rowMenuBridge, runCplug: rec('plugin.runCplug', undefined) },
         layouts: { list: () => [], get: () => null, isUnavailable: () => false },
         sidebarShell,
+        // Published by main.ts on the page; the legacy timer chip reads it.
         timerChip,
         openSubagentList: (el: Element, id: string, name: string) => { events.push(['subagents.open', el.className, id, name]); return true; },
         openTimerList: (el: Element, id: string, name: string) => { events.push(['timers.open', el.className, id, name]); return true; },
@@ -163,7 +152,6 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
 export function startRowRun(groups: unknown[] = []) {
     w.SessionSidebarStore.save([], [], [], {}, {});
     w.SessionSidebarGroupStore.apply({ status: 'ok', groups });
-    knobs.wakeStarts = false;
     const live = document.getElementById('session-sidebar-live');
     if (live) live.textContent = '';
     closeRowMenu();

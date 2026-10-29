@@ -126,7 +126,6 @@ def plan_switches(
 def _pointer_of_decision(
     accounts: List[ProviderAccount], decision: SwitchDecision
 ) -> Optional[str]:
-    """The pointer value a decision writes: None when it targets the built-in login."""
     target = find_account(accounts, decision.to_account_id, decision.provider)
     return pointer_for(target) if target is not None else decision.to_account_id
 

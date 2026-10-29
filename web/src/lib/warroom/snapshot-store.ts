@@ -1,4 +1,4 @@
-/*  hidden  */
+/* nobody is looking at */
 import { authFetch } from '../../opscenter/api/auth.svelte';
 
 export const WALL_MS = 5000;

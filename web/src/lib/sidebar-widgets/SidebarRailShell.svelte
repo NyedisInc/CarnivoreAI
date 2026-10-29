@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import BarPin from '../widget-bars/BarPin.svelte';
   import ZoneHandle from '../zone-shell/ZoneHandle.svelte';
   import { questionPending } from '../approvals/approvals.svelte';

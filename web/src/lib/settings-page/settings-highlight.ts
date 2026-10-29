@@ -1,4 +1,3 @@
-/*  hidden  */
 
 export const HIGHLIGHT_CLASS = 'st-highlight-flash';
 export const HIGHLIGHT_MS = 1600;

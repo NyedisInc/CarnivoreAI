@@ -36,8 +36,8 @@ from src.core.session_resume_target import (
 
 NAME = "cloude_demo"
 UUID = "11111111-2222-3333-4444-555555555555"
-RESUME_CMD = f"zsh -c 'source ~/.zshrc; keyc --resume {UUID}'"
-PLAIN_CMD = "zsh -c 'source ~/.zshrc; keyc'"
+RESUME_CMD = f"zsh -c 'source ~/.zshrc; cld --resume {UUID}'"
+PLAIN_CMD = "zsh -c 'source ~/.zshrc; cld'"
 
 
 def _row(**over):

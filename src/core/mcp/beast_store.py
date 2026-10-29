@@ -29,13 +29,6 @@ def until_for(hours: Optional[int], now: Optional[datetime] = None) -> Optional[
 
 
 async def persist(*, enabled: bool, prompts: bool = False, hours: Optional[int] = None) -> None:
-    """Write the switch, then drop the config cache and announce ``beast_mode``.
-
-    Inputs: enabled (bool); prompts (bool) - the "also answer permission prompts" scope, kept only while
-      armed; hours (int | None) - auto-off, kept only while armed.
-    Output: None. Raises: FileNotFoundError, ValueError, OSError - config.json could not be written.
-    Example: await persist(enabled=True, prompts=True, hours=4)
-    """
     await asyncio.to_thread(write_switch, enabled=enabled, prompts=prompts, hours=hours)
 
 
@@ -57,13 +50,6 @@ def write_switch(*, enabled: bool, prompts: bool = False, hours: Optional[int] =
 
 
 def write_grid(*, cells: Optional[Mapping[str, bool]] = None, trust_scope: Optional[str] = None) -> None:
-    """
-    Inputs: cells ({cell key: bool}; a key outside ``beast_grid.cell_defaults`` or a non-bool value is refused); trust_scope (one of
-      ``auto_answer.catalog.SCOPES``). Absent arguments leave their part alone. The armed switch is never touched here.
-    Output: None. Raises: ValueError - an unknown key, a non-bool box or an unknown scope (nothing is written);
-      FileNotFoundError, OSError - config.json could not be written.
-    Example: write_grid(cells={"agentWritesOff": True}, trust_scope="every")
-    """
     known = cell_defaults()
     for key, value in (cells or {}).items():
         if key not in known or not isinstance(value, bool):

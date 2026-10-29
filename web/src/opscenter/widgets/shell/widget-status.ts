@@ -1,3 +1,4 @@
+/* its own sentence */
 
 export const WIDGET_STATUSES = ['ready', 'none', 'loading', 'empty', 'error'] as const;
 

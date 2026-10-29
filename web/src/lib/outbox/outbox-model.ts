@@ -17,7 +17,7 @@ export interface OutboxLabel {
   slug?: string;
 }
 
-/* did not answer */
+/* the server did not answer */
 export interface OutboxError {
   status: number | null;
   code: string | null;

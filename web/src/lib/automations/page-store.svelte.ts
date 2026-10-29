@@ -2,7 +2,7 @@ import { resourcePush } from '../resource-push/boot';
 import { whenListingPushBooted, type ListingPushGlobal } from '../listing-push/boot';
 import { readTab, writeTab } from '../../opscenter/ui/tab-memory';
 import * as api from './api';
-import { feed, loadFeed, refreshFeed } from './feed-store.svelte';
+import { feed, loadFeed, refreshFeed, releaseFeedCaches } from './feed-store.svelte';
 import { refusalText } from './format';
 import { COUNTER_IDS } from './logic/counters';
 import { headerSentence } from './logic/list';
@@ -467,5 +467,6 @@ export function follow(): () => void {
     document.removeEventListener('visibilitychange', visible);
     if (countsTimer) clearTimeout(countsTimer);
     countsTimer = null;
+    releaseFeedCaches();
   };
 }

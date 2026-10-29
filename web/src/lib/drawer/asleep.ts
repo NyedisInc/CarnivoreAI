@@ -20,6 +20,8 @@ interface AsleepRecord {
     automations_total?: number | null;
     automations_enabled?: number | null;
     automations_next?: unknown[] | null;
+    host_key?: string | null;
+    host_label?: string | null;
 }
 
 export function addRows(
@@ -62,6 +64,9 @@ export function addRows(
             automations_total: rec.automations_total ?? null,
             automations_enabled: rec.automations_enabled ?? null,
             automations_next: rec.automations_next ?? null,
+            host_key: rec.host_key ?? 'local',
+            host_label: rec.host_label ?? 'this machine',
+            host_state: 'up',
         });
         added += 1;
     }

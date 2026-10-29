@@ -23,6 +23,12 @@ Two subcommands:
       --require files were supplied, because an intersection over one
       platform's list would pass trivially and prove nothing.
 
+      --exempt names a file of patterns for the tests whose environment
+      CI genuinely cannot supply - a real claude CLI spending real API
+      turns, a 15 GB corpus database - plus the parametrised cases that
+      are structurally inapplicable rather than unmeasured. See
+      scripts/ci/skip-audit-exempt.txt for the format and the reasons.
+
       AN EXEMPTION IS NOT A SILENCER. Every exempted id is PRINTED with
       the reason it was let through, so it stays in front of whoever
       reads the job, and a pattern that matches NOTHING fails the build.

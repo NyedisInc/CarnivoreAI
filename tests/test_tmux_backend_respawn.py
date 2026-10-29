@@ -123,7 +123,7 @@ async def test_respawn_refuses_a_live_session_and_leaves_it_running(live):
 async def test_respawn_of_a_missing_session_cannot_determine(live):
     socket, work = live
     backend = _backend(socket, work, "be_absent")
-    result = await backend.respawn(agent_command="keyc")
+    result = await backend.respawn(agent_command="cld")
 
     assert result.kind == RESPAWN_CANNOT_DETERMINE
     assert result.ok is False
@@ -229,7 +229,7 @@ async def test_require_agent_resume_lets_a_resuming_agent_restart_through(live, 
     result = await _backend(socket, work, name).respawn(
         agent_command=(
             'sh -c "echo RESUMED; sleep 60" '
-            "--resume 41bbab82-a8c7-4ede-82c0-5cfde4217e41"
+            "--resume 0b7c9f1e-2d3a-4c5b-8e6f-1a2b3c4d5e6f"
         ),
         resume_outcome=CONVERSATION_RESUMED,
         require_agent_resume=True,

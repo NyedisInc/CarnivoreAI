@@ -51,7 +51,7 @@ def scratch() -> Iterator[Path]:
 def make_pool(dest: SshDestination, scratch: Path, ssh_binary: str = SSH_BINARY,
               **options) -> SshMasterPool:
     return SshMasterPool("rsshost", dest, login_shell="/bin/sh", control_dir=scratch / "cm",
-                         instance_tag="5f4cec3f", ssh_binary=ssh_binary, **options)
+                         instance_tag="0123abcd", ssh_binary=ssh_binary, **options)
 
 
 def no_master_left(scratch: Path) -> bool:
@@ -216,7 +216,7 @@ async def test_a_real_control_channel_round_trips(dest: SshDestination, scratch:
 @pytest.mark.asyncio
 async def test_a_real_remote_backend_streams_and_takes_input(dest: SshDestination,
                                                             scratch: Path) -> None:
-    from src.core.hosts.remote_backend import RemoteTmuxBackend
+    from src.core.hosts.remote_backend import make_remote_backend
     from src.core.hosts.remote_host import RemoteHost
     from src.core.hosts.tmux_control import ControlChannelError, TmuxControlChannel
     from src.core.tmux_listing import REASON_NO_SERVER, classify_listing_failure
@@ -227,11 +227,11 @@ async def test_a_real_remote_backend_streams_and_takes_input(dest: SshDestinatio
     pool = make_pool(dest, scratch)
     channel = TmuxControlChannel("rsshost", pool.spawn, tmux, socket)
     host = RemoteHost("rsshost", pool, channel, tmux_path=tmux, socket=socket,
-                      login_path=probe.login_path, instance_tag="5f4cec3f",
+                      login_path=probe.login_path, instance_tag="0123abcd",
                       mirror_dir=scratch / "mirror")
     (scratch / "mirror").mkdir()
     output = bytearray()
-    backend = RemoteTmuxBackend(host, "ses_s4real", Path("/tmp"), output.extend,
+    backend = make_remote_backend(host, "ses_s4real", Path("/tmp"), output.extend,
                                 session_name="carnivore_s4real", viewer_probe=lambda: True)
 
     async def gone() -> bool:
@@ -260,13 +260,13 @@ async def test_a_real_remote_backend_streams_and_takes_input(dest: SshDestinatio
         assert b"s4-real-42" in output, bytes(output[-300:])
         assert backend.pid is None
         print(f"\nremote backend on {TARGET}: {len(output)} bytes streamed, "
-              f"stream position {backend._stream.position}")
+              f"stream position {backend._lifecycle._stream.position}")
         await backend.stop()
         left = await pool.run(script=f"[ -e '{far}' ] && echo left || echo removed", timeout=15)
         assert left.stdout_text.strip() == "removed"
     finally:
-        if backend._stream is not None:
-            await backend._stream.stop()
+        if backend._lifecycle._stream is not None:
+            await backend._lifecycle._stream.stop()
         if backend._reader_task is not None:
             backend._reader_task.cancel()
         await host.close()
@@ -317,8 +317,8 @@ async def test_a_real_manager_creates_attaches_and_destroys_on_the_host(
         store.record_probe(conn, "rsshost", probe.host_columns())
     mgr = SessionManager()
     mgr.hosts = HostRegistry(mgr._datastore_connection,
-                             pool_options=dict(control_dir=scratch / "cm", instance_tag="5f4cec3f"),
-                             host_options=dict(mirror_dir=tmp_path, instance_tag="5f4cec3f"))
+                             pool_options=dict(control_dir=scratch / "cm", instance_tag="0123abcd"),
+                             host_options=dict(mirror_dir=tmp_path, instance_tag="0123abcd"))
     tmux, socket = probe.tmux_path, "carnivore-remote"
     pre = make_pool(dest, scratch)
     assert (await pre.connect()).state == UP
@@ -397,8 +397,8 @@ async def test_a_real_host_is_watched_listed_and_readopted(
         mgr = SessionManager()
         mgr.hosts = HostRegistry(
             mgr._datastore_connection,
-            pool_options=dict(control_dir=scratch / "cm", instance_tag="5f4cec3f"),
-            host_options=dict(mirror_dir=tmp_path, instance_tag="5f4cec3f"))
+            pool_options=dict(control_dir=scratch / "cm", instance_tag="0123abcd"),
+            host_options=dict(mirror_dir=tmp_path, instance_tag="0123abcd"))
         return mgr
 
     tmux, socket, name = probe.tmux_path, "carnivore-remote", "carnivore_s5b real"
@@ -427,8 +427,8 @@ async def test_a_real_host_is_watched_listed_and_readopted(
         assert seen == ("question", "pane", "up")
 
         for backend in list(mgr._registry.backends.values()):
-            if backend._stream is not None:
-                await backend._stream.stop()
+            if backend._lifecycle._stream is not None:
+                await backend._lifecycle._stream.stop()
             if backend._reader_task is not None:
                 backend._reader_task.cancel()
         await mgr.hosts.close_all()
@@ -499,8 +499,8 @@ async def test_a_real_host_registry_lights_the_row_and_restart_resumes(
         store.record_probe(conn, "rsshost", probe.host_columns())
     mgr = SessionManager()
     mgr.hosts = HostRegistry(mgr._datastore_connection,
-                             pool_options=dict(control_dir=scratch / "cm", instance_tag="5f4cec3f"),
-                             host_options=dict(mirror_dir=tmp_path, instance_tag="5f4cec3f"))
+                             pool_options=dict(control_dir=scratch / "cm", instance_tag="0123abcd"),
+                             host_options=dict(mirror_dir=tmp_path, instance_tag="0123abcd"))
     tmux, socket, name = probe.tmux_path, "carnivore-remote", "carnivore_s7 real"
     pre = make_pool(dest, scratch)
     assert (await pre.connect()).state == UP
@@ -606,8 +606,8 @@ async def test_a_real_host_renames_and_restarts_a_stopped_row_resuming(
         store.record_probe(conn, "rsshost", probe.host_columns())
     mgr = SessionManager()
     mgr.hosts = HostRegistry(mgr._datastore_connection,
-                             pool_options=dict(control_dir=scratch / "cm", instance_tag="5f4cec3f"),
-                             host_options=dict(mirror_dir=tmp_path, instance_tag="5f4cec3f"))
+                             pool_options=dict(control_dir=scratch / "cm", instance_tag="0123abcd"),
+                             host_options=dict(mirror_dir=tmp_path, instance_tag="0123abcd"))
     app = FastAPI()
     app.state.session_manager = mgr
     app.state.services = build_services(session_manager=mgr)

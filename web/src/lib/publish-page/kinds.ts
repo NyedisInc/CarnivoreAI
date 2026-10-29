@@ -1,4 +1,5 @@
 import type { ReportGate } from '../catalog/publish';
+import { displayKind, isCplugIndexKind } from '../catalog/kind-display';
 
 export type KindTab = 'skills' | 'themes' | 'mods' | 'plugins';
 
@@ -6,7 +7,6 @@ export interface KindedLocation {
     kind?: string | null;
 }
 
-const KIND_CPLUG = 'cplug';
 const KIND_PLUGIN = 'plugin';
 
 const TAB_OF_KIND: Record<string, KindTab> = {
@@ -14,7 +14,6 @@ const TAB_OF_KIND: Record<string, KindTab> = {
     theme: 'themes',
     mod: 'mods',
     [KIND_PLUGIN]: 'plugins',
-    [KIND_CPLUG]: 'plugins',
 };
 
 const WORD_OF_TAB: Record<KindTab, string> = {
@@ -25,7 +24,7 @@ const WORD_OF_TAB: Record<KindTab, string> = {
 };
 
 export function tabOf(kind: string | null | undefined): KindTab | null {
-    return TAB_OF_KIND[kind ?? 'skill'] ?? null;
+    return TAB_OF_KIND[displayKind(kind ?? 'skill') ?? 'skill'] ?? null;
 }
 
 export function realKind(location: KindedLocation): string {
@@ -46,7 +45,7 @@ export function foundByFact(location: KindedLocation): { label: string; value: s
 }
 
 export function cleanRoomSkipExpected(location: KindedLocation): boolean {
-    return location.kind === KIND_CPLUG;
+    return isCplugIndexKind(location.kind);
 }
 
 export function cleanRoomSkipped(report: { gates?: Pick<ReportGate, 'id' | 'verdict' | 'code'>[] } | null | undefined): boolean {

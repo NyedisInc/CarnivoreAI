@@ -20,7 +20,6 @@ _FAMILIES = (K.FAMILY_CLAUDE, K.FAMILY_CODEX)
 
 
 def _state_dir() -> Path:
-    """The install's state directory. Separate function so tests can point it elsewhere."""
     return app_settings.get_state_dir()
 
 

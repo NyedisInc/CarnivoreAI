@@ -1,10 +1,3 @@
-"""Which sub-agent launched each background shell (issue #1053).
-
-THREE ANSWERS, NEVER FOLDED: an owner map (``ok``), no conversation or
-transcript yet (``absent``: nothing can be attributed, and nothing was
-launched by a sub-agent of a conversation that does not exist), and a
-transcript that could not be found or read (``unchecked``).
-"""
 
 from __future__ import annotations
 

@@ -40,7 +40,7 @@ export function fixtureInventory(): Inventory {
         name: 'sme',
         description: 'expert on everything '.repeat(30),
         description_tokens_est: 150,
-        managed: { source: 'ledger', item_id: 'acme/sme', version: '1.2.0', update_available: false },
+        managed: { source: 'ledger', item_id: 'harbor/sme', version: '1.2.0', update_available: false },
         extends: 'huddle',
         guide_rev: 2,
         behind_rules: { written_for: 2, current: 3, changes: [{ rev: 3, summary: 'add-ons declare guide_rev' }] },
@@ -97,7 +97,7 @@ export function fakeServer(inventory: Inventory = fixtureInventory()) {
                 items: [
                     {
                         install_id: 'inst-sme',
-                        item_id: 'acme/sme',
+                        item_id: 'harbor/sme',
                         name: 'sme',
                         version: '1.2.0',
                         scope: 'global',
@@ -128,8 +128,8 @@ export function fakeServer(inventory: Inventory = fixtureInventory()) {
         if (path.startsWith('/catalog/items/')) {
             return {
                 item: {
-                    id: 'acme/sme', name: 'sme', latest: '1.2.0', cost: { desc_tokens: 150, body_tokens: 900 },
-                    versions: [{ v: '1.2.0', digest: 'abcdef0123456789', scripts: 0, sig: { key_id: 'acme' }, review: { status: 'reviewed', verdict: 'clean', warnings: [] } }],
+                    id: 'harbor/sme', name: 'sme', latest: '1.2.0', cost: { desc_tokens: 150, body_tokens: 900 },
+                    versions: [{ v: '1.2.0', digest: 'abcdef0123456789', scripts: 0, sig: { key_id: 'ADOOMKEY01' }, review: { status: 'reviewed', verdict: 'clean', warnings: [] } }],
                 },
             };
         }

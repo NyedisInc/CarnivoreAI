@@ -1,4 +1,3 @@
-/* file editor */
 
 export interface CodeEditor {
     getValue(): string;

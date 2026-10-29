@@ -314,7 +314,6 @@
 }
 
 @layer patterns {
-  /* padding */
   .oc-card-media {
     display: flex;
     align-items: center;
@@ -335,7 +334,6 @@
     overflow: hidden;
   }
 
-  /* padding */
   .oc-card-media__img {
     position: absolute;
     inset: 0;

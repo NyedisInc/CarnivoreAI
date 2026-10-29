@@ -23,7 +23,6 @@ class CompanionIndex:
         self._names: Dict[int, str] = {}
         self._name_set: Set[str] = set()
         self._reserved: Set[str] = set()
-        # could not
         self.loaded = False
 
     def load(self, conn: sqlite3.Connection) -> int:
@@ -87,15 +86,6 @@ class CompanionIndex:
 
 
 def install(registry: Any, state_dir: Path) -> CompanionIndex:
-    """Build the index from the datastore and wire it as the registry's hidden-session predicate. BLOCKING; boot only.
-
-    Description: runs BEFORE the boot re-adopt registers the surviving panes, so a companion pane is hidden from its
-      first registration. An unreadable datastore leaves the index empty (reserved ids still hide) and logs it; the
-      F2c reconcile reloads the index once the database opens.
-    Inputs: registry (SessionRegistry); state_dir (Path) - the state directory holding the datastore.
-    Output: CompanionIndex - also stored by the caller (``app.state.companion_index``).
-    Example: app.state.companion_index = install(manager._registry, settings.get_state_dir())
-    """
     index = CompanionIndex()
     try:
         with closing(connect(db_path_for(state_dir), create=False)) as conn:

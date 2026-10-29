@@ -1,3 +1,4 @@
+import type { LayoutRowParts } from '../drawer/layouts-row-html';
 import { contextFromRow, triggerSpec } from '../item-menu/row-context';
 import type { SidebarRow } from './legacy';
 import type { RowChipSpec } from './row-plan';
@@ -16,9 +17,8 @@ export interface RowHost {
         triggerSpec(ctx: RowMenuContext): RowChipSpec;
     };
     autoSleep?: { isKeptAwake(name: string): boolean | null };
-    groupActions?: unknown;
     layouts?: {
-        rowHtml(row: SidebarRow, density: string, band?: string): string;
+        rowParts(row: SidebarRow, band?: string): LayoutRowParts;
         memberBody?(row: SidebarRow, band?: string): {
             bodyId: string; uuid: string; band: string; members: SidebarRow[];
         } | null;
@@ -29,7 +29,6 @@ interface HostGlobals {
     SessionLabel?: RowHost['label'];
     SessionTransport?: RowHost['transport'];
     SessionRowActions?: RowHost['actions'];
-    SessionSidebarGroupActions?: unknown;
     SessionSidebarLayouts?: RowHost['layouts'];
     CloudeWeb?: { autoSleep?: RowHost['autoSleep'] };
 }
@@ -39,7 +38,6 @@ const ROW_TRIGGER: NonNullable<RowHost['menu']> = {
     triggerSpec: (ctx) => triggerSpec(ctx as Partial<import('../item-menu/row-context').RowMenuCtx>) as unknown as RowChipSpec,
 };
 
-/* label: ' */
 export function rowHost(host: unknown = globalThis): RowHost {
     const g = host as HostGlobals;
     return {
@@ -48,7 +46,6 @@ export function rowHost(host: unknown = globalThis): RowHost {
         actions: g.SessionRowActions,
         menu: ROW_TRIGGER,
         autoSleep: g.CloudeWeb?.autoSleep,
-        groupActions: g.SessionSidebarGroupActions,
         layouts: g.SessionSidebarLayouts,
     };
 }

@@ -38,8 +38,6 @@ LINEAGE_FORKED = "forked"
 
 LINEAGE_SIBLING = "sibling"
 
-# COULD NOT EVALUATE
-# could not
 LINEAGE_UNRESOLVED = "unresolved"
 
 LINEAGE_NO_WRITE: Tuple[str, ...] = (
@@ -51,23 +49,6 @@ LINEAGE_NO_WRITE: Tuple[str, ...] = (
 
 @dataclass(frozen=True)
 class LineageResult:
-    """What one :func:`record_claude_session` call did to the table.
-
-    Description: an explicit five-name, three-class outcome so a caller
-      can tell a bind from a fork from a no-op from a could-not-evaluate.
-      A bare bool here would make "we could not find the row" and "nothing
-      needed doing" the same answer, which is the exact collapse that
-      turns missing lineage into invisible missing lineage.
-    Inputs (constructor): outcome (str) - one of ``LINEAGE_BOUND``,
-      ``LINEAGE_CONTINUED``, ``LINEAGE_FORKED``, ``LINEAGE_SIBLING``,
-      ``LINEAGE_UNRESOLVED``.
-      row_id (int | None) - the sessions.id the uuid now lives on; None
-      only when unresolved. parent_row_id (int | None) - set only on a
-      fork. fork_kind (str | None) - set only on a fork. detail (str |
-      None) - human-readable reason, always set when unresolved.
-    Output: a LineageResult instance.
-    Example: record_claude_session(...).outcome  # 'forked'
-    """
 
     outcome: str
     row_id: Optional[int] = None
@@ -226,7 +207,7 @@ def record_claude_session(
             ),
         )
 
-    head = lineage_head(conn, int(anchor["id"]))
+    head = anchor if not anchor.get("claude_session_uuid") else lineage_head(conn, int(anchor["id"]))
     head_uuid = head.get("claude_session_uuid")
 
     if not head_uuid:

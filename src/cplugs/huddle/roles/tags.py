@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-from contextlib import closing
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import structlog
@@ -26,7 +25,7 @@ class TagRefused(Exception):
 
 
 def set_tag(store: "TaskManagerStore", item_id: int, key: str) -> Dict[str, Any]:
-    with closing(store._connect(True)) as conn, conn:
+    with store._immediate() as conn:
         row = store._row(conn, item_id)
         if row[item_owner.TAG_COLUMN] == key:
             return store.item(item_id)
@@ -39,7 +38,7 @@ def set_tag(store: "TaskManagerStore", item_id: int, key: str) -> Dict[str, Any]
 
 
 def take_over(store: "TaskManagerStore", item_id: int, lead_key: str, detail: str = DETAIL_TAG_GONE, *, lost: str = "") -> bool:
-    with closing(store._connect(True)) as conn, conn:
+    with store._immediate() as conn:
         row = store._row(conn, item_id)
         if lost:
             claimant = conn.execute("SELECT claude_working_by FROM work_items WHERE id = ?", (item_id,)).fetchone()[0]

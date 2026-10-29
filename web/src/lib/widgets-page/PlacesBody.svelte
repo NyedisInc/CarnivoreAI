@@ -1,5 +1,6 @@
 <!-- the reading pane -->
 <script lang="ts">
+    import { Button } from '../base';
     import { clearToasts } from '../../opscenter/ui/detail-clearance';
     import { onMount, type Snippet } from 'svelte';
     import type { Translate } from '../sessions/types';
@@ -174,7 +175,7 @@
         <div class="oc-page__error" role="alert">
             <p class="oc-page__error-title">{t(MANAGER_KEYS.errorTitle)}</p>
             <p class="oc-page__error-detail">{status.message}</p>
-            <button type="button" class="oc-btn" onclick={onRetry}>{t(MANAGER_KEYS.errorRetry)}</button>
+            <Button onclick={onRetry}>{t(MANAGER_KEYS.errorRetry)}</Button>
         </div>
     </div></div>
 {:else}
@@ -230,7 +231,7 @@
             {#if nothing}
                 <div class="oc-page__empty pl-panel">
                     <p class="oc-page__empty-text">{items.length > 0 ? t(MANAGER_KEYS.emptyFiltered) : t('widgets.page.empty')}</p>
-                    {#if items.length > 0}<button type="button" class="oc-btn" onclick={onClear}>{t(MANAGER_KEYS.clear)}</button>{/if}
+                    {#if items.length > 0}<Button onclick={onClear}>{t(MANAGER_KEYS.clear)}</Button>{/if}
                 </div>
             {/if}
             {#each sections as section (section.id)}

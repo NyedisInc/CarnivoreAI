@@ -1,6 +1,4 @@
-/* reads as broken */
 
-/* active account */
 export interface ActiveAccountState {
   provider: 'claude' | 'codex';
   account_id: string | null;
@@ -75,7 +73,6 @@ export function refusalCode(payload: unknown): string | null {
   return typeof code === 'string' ? code : null;
 }
 
-/* active account */
 export function switchRank(
   state: AccountSwitchState | null,
   account: { id: string; provider: string },

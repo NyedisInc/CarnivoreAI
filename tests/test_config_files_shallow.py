@@ -114,7 +114,7 @@ def test_expanding_a_symlinked_directory_keeps_the_navigated_spelling(tmp_path):
     shallow = cf.list_subtree("workdir", "self", str(wd), levels=1)
     assert [n["rel_path"] for n in shallow] == ["self/ok.txt"]
     full_self = _by_name(cf.list_tree("workdir", str(wd)), "self")
-    assert [n["rel_path"] for n in full_self["children"]] == ["self/ok.txt"]
+    assert full_self["children"] == [] and full_self["children_loaded"] is False
     assert cf.read_file("workdir", "self/ok.txt", str(wd))["content"] == "yes\n"
 
 
@@ -410,3 +410,25 @@ def test_the_loop_test_can_detect_a_walk_that_is_on_the_loop():
         "a synchronous 300ms call inside a coroutine let the loop run, so this "
         "harness cannot detect loop blocking and the test above is worthless"
     )
+
+
+
+
+def test_a_symlinked_directory_is_listed_but_not_descended(workdir, tmp_path):
+    outside = tmp_path / "elsewhere"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("s\n")
+    (workdir / "link").symlink_to(outside, target_is_directory=True)
+    nodes = cf.list_tree("workdir", str(workdir))
+    link = _by_name(nodes, "link")
+    assert link["is_dir"] and link["children"] == [] and link["children_loaded"] is False
+
+
+def test_the_walk_stops_at_the_node_budget_with_a_more_marker(workdir, monkeypatch):
+    monkeypatch.setattr(cf, "MAX_TREE_NODES", 2)
+    for i in range(5):
+        (workdir / "empty" / f"f{i}").write_text("x")
+    nodes = cf.list_tree("workdir", str(workdir))
+    flat = [n for n in nodes if n["name"] == "empty"]
+    assert flat and flat[0]["children"][-1]["kind"] == "more"
+    assert flat[0]["children"][-1]["more_not_shown"] > 0

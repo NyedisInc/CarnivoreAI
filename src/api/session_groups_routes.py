@@ -1,40 +1,3 @@
-"""API routes for user-defined session-sidebar groups.
-
-Deliberately thin: request/response shape, auth, error translation, and
-the datastore connection dance. Every rule about what a group IS lives
-in ``src/core/session_group_store.py``, and this module never re-decides
-one.
-
-Mounted under ``/api/v1`` from ``src/main.py`` alongside the other
-routers. Its own routes are a separate module rather than more lines in
-``src/api/routes.py`` because that file is already 2687 lines, well past
-the project's 500-line budget, and adding to it makes an existing
-problem worse.
-
-THREE OUTCOMES ON EVERY READ, and it is the whole reason ``status``
-exists on the response instead of the route just returning a list:
-
-  'ok'          the tables were read. ``groups`` reflects them, and an
-                empty list genuinely means this install has no groups.
-  'unavailable' the datastore is absent, predates v8, or would not open.
-                ``groups`` is ``[]`` AND ``status`` says why. A client
-                that renders this as "no groups" is drawing a conclusion
-                nobody measured, so the client is required to read the
-                field - see client/js/session-sidebar-group-store.js,
-                which refuses to draw group chrome at all in this state
-                rather than drawing an empty group list.
-
-A 200 with an empty list and a 200 with ``status='unavailable'`` are the
-same HTTP status on purpose: the sidebar must keep working - ungrouped -
-when groups cannot be read, and turning that into a 503 would make an
-unreadable group table break the session list itself. The distinction
-lives in the body, where the client can act on it, rather than in a
-status code that would take the panel down.
-
-WRITES ARE THE OPPOSITE. A write that could not happen returns 503, not
-a cheerful 200, because a silently-dropped assignment is a group the
-user watched themselves make that is not there after a reload.
-"""
 
 from __future__ import annotations
 
@@ -49,9 +12,11 @@ from pydantic import BaseModel, Field
 from src.api.auth import require_auth
 from src.core import icon_registry
 from src.core import session_change_notice
+from src.core import session_group_rule as rule_store
 from src.core import session_group_store as store
 from src.core import session_group_style as style_store
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
+from src.api.error_response import api_error, refusal_error, soft_failure
 
 logger = structlog.get_logger()
 
@@ -59,7 +24,6 @@ router = APIRouter(prefix="/session-groups", tags=["session-groups"])
 
 STATUS_OK = "ok"
 
-# CANNOT DETERMINE
 STATUS_UNAVAILABLE = "unavailable"
 
 
@@ -101,6 +65,13 @@ class SessionGroupModel(BaseModel):
         ),
     )
     icon: Optional[str] = Field(default=None, description="Icon registry id, or null")
+    rule: Optional[dict] = Field(
+        default=None,
+        description=(
+            "Dynamic group rule {flags, prefix, suffix}, or null for a hand-picked-only group: a session "
+            "belongs when it matches ALL criteria (session_group_rule.py)"
+        ),
+    )
 
 
 class SessionGroupsResponse(BaseModel):
@@ -216,6 +187,7 @@ def _to_models(groups: List[store.SessionGroup]) -> List[SessionGroupModel]:
                 animation=style.animation,
                 style_source=style.source,
                 icon=style.icon,
+                rule=g.rule,
             )
         )
     return out
@@ -243,39 +215,17 @@ async def list_session_groups() -> SessionGroupsResponse:
     try:
         groups = await run_in_threadpool(_read_groups)
     except (DatastoreUnreadableError, store.GroupsUnavailable) as exc:
-        logger.info("session_groups_unavailable", reason=str(exc))
         return SessionGroupsResponse(
-            status=STATUS_UNAVAILABLE, groups=[], detail=str(exc)
+            status=STATUS_UNAVAILABLE, groups=[], detail=soft_failure("datastore_unavailable", exc, step="read_groups")
         )
     except OSError as exc:
-        logger.warning("session_groups_read_failed", error=str(exc))
         return SessionGroupsResponse(
-            status=STATUS_UNAVAILABLE, groups=[], detail=str(exc)
+            status=STATUS_UNAVAILABLE, groups=[], detail=soft_failure("datastore_unavailable", exc, step="read_groups")
         )
     return SessionGroupsResponse(status=STATUS_OK, groups=_to_models(groups))
 
 
 async def _write(request: Request, operation, *args, **kwargs):
-    """Run one store write on a worker thread, translate its failures, announce it.
-
-    Description: THE ONE PLACE EVERY WRITE'S ERRORS ARE MAPPED, so a new
-      endpoint cannot invent a different status code for the same
-      condition. Unlike the read above, an unavailable datastore is a
-      503: a write that could not happen must never answer 200, because
-      a silently-dropped assignment is a group the user watched
-      themselves make that is gone after a reload.
-      A write that landed publishes ``sessions.changed`` with reason
-      ``groups`` on ``/ws/events``, so every other browser re-reads the
-      groups at once instead of at its next name change (issue #645).
-    Inputs: request (Request) - for the app's event hub.
-      operation (callable) - takes a live connection first.
-      args, kwargs - passed through after the connection.
-    Output: whatever ``operation`` returns.
-    Raises: HTTPException - 400 invalid name or unknown icon id
-      (``code: unknown_icon``), 404 no such group,
-      409 group limit reached OR a tmux name with no stored session,
-      503 datastore or icon registry unavailable.
-    """
 
     def _run():
         with closing(connect(_db_path(), create=False)) as conn:
@@ -283,26 +233,27 @@ async def _write(request: Request, operation, *args, **kwargs):
 
     try:
         result = await run_in_threadpool(_run)
+    except rule_store.GroupRuleInvalid as exc:
+        raise api_error(400, "group_rule_invalid", exc, step="_run") from exc
     except style_store.GroupIconUnknown as exc:
-        raise HTTPException(status_code=400, detail={"code": exc.code, "message": str(exc)})
+        raise refusal_error(exc, status=400) from exc
     except icon_registry.IconRegistryUnavailable as exc:
-        detail = {"code": icon_registry.UNAVAILABLE_CODE, "message": str(exc)}
-        raise HTTPException(status_code=503, detail=detail)
+        raise api_error(503, icon_registry.UNAVAILABLE_CODE, exc) from exc
     except store.GroupNotFound as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
+        raise api_error(404, "group_not_found", exc, step="_run") from exc
     except store.GroupNameInvalid as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "group_invalid", exc, step="_run") from exc
     except store.GroupLimitReached as exc:
-        raise HTTPException(status_code=409, detail=str(exc))
+        raise api_error(409, "group_limit_reached", exc, step="_run") from exc
     except store.SessionNotStored as exc:
-        raise HTTPException(status_code=409, detail=str(exc))
+        raise api_error(409, "session_not_stored", exc, step="_run") from exc
     except (DatastoreUnreadableError, store.GroupsUnavailable) as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc, step="_run") from exc
     except store.SessionGroupError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "group_invalid", exc, step="_run") from exc
     except OSError as exc:
         logger.warning("session_groups_write_failed", error=str(exc))
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "service_unavailable", exc, step="_run") from exc
     session_change_notice.publish(
         request.app.state, session_change_notice.build_structural_notice("groups")
     )

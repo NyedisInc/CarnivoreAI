@@ -2,6 +2,8 @@
 <script lang="ts">
     import type { Translate } from '../sessions/types';
     import { MAX_COMMENT_CHARS } from './community';
+    import Button from '../base/Button.svelte';
+    import Field from '../base/Field.svelte';
 
     interface Props {
         t: Translate;
@@ -36,27 +38,18 @@
 </script>
 
 <div class="cmp">
-    <textarea
-        class="cmp__box"
-        rows="3"
-        aria-label={t('community.composer.label')}
-        placeholder={t('community.composer.placeholder')}
-        disabled={signedOut || !!locked || working}
-        bind:value={body}
-    ></textarea>
+    <Field multiline block rows={3} data-composer-box aria-label={t('community.composer.label')} placeholder={t('community.composer.placeholder')} disabled={signedOut || !!locked || working} bind:value={body} />
     <div class="cmp__row">
         <span class="cmp__count" class:cmp__count--over={left < 0}>
             {t('community.composer.left', { count: left })}
         </span>
         <span class="cmp__acts">
             {#if oncancel}
-                <button type="button" class="modal-btn modal-btn-secondary" onclick={oncancel}>
-                    {t('community.cancel')}
-                </button>
+                <Button onclick={oncancel}>{t('community.cancel')}</Button>
             {/if}
-            <button type="button" class="modal-btn modal-btn-confirm" disabled={!ready} onclick={() => void send()}>
+            <Button variant="confirm" data-composer-send disabled={!ready} onclick={() => void send()}>
                 {working ? t('community.working') : t(actionKey)}
-            </button>
+            </Button>
         </span>
     </div>
     {#if signedOut}
@@ -72,20 +65,6 @@
 
 <style>
     .cmp { display: flex; flex-direction: column; gap: 6px; }
-    .cmp__box {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 5px 7px;
-        border: 1px solid var(--cat-line);
-        border-radius: 3px;
-        background: var(--cat-raised);
-        color: var(--cat-text);
-        font-family: inherit;
-        font-size: 12px;
-        line-height: 1.45;
-        resize: vertical;
-    }
-    .cmp__box:disabled { opacity: 0.55; }
     .cmp__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
     .cmp__acts { display: flex; gap: 6px; }
     .cmp__count { color: var(--cat-faint); font-family: var(--cat-mono); font-size: 10px; }
@@ -96,9 +75,5 @@
         border-left: 2px solid var(--cat-attention);
         background: var(--cat-raised);
         color: var(--cat-text);
-    }
-    .cmp :global(.modal-btn) {
-        padding: 7px 16px;
-        font-size: 13px;
     }
 </style>

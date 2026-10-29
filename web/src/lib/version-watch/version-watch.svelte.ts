@@ -1,4 +1,3 @@
-/* already exists */
 
 import { subscribe } from '../../opscenter/api/events.svelte';
 import { authFetch } from '../../opscenter/api/auth.svelte';
@@ -20,7 +19,6 @@ function readMeta(name: string): string {
   }
 }
 
-/* cannot determine */
 function readPageVersion(): string {
   return readMeta(META_NAME);
 }
@@ -120,7 +118,6 @@ export async function loadWhatsNew(): Promise<void> {
 let started = false;
 
 export interface VersionWatchOptions {
-  /* pop-out window */
   baselineFromServer?: boolean;
 }
 

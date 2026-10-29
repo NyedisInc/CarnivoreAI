@@ -23,7 +23,6 @@ const DEFAULT_XTERM_THEME = {
 };
 
 class Terminal {
-    /*  hidden  */
     constructor(options = {}) {
         /** @type {?(Element|function(): ?Element)} the xterm host. */
         this._host = options.container || null;
@@ -230,7 +229,7 @@ class Terminal {
         this._applyImageAttachButton();
 
         this._applyTouchSelection();
-        this._applySelectWhileScrolled();
+        this._applySelectWhileScrolled(); // see terminal-select-scrolled.js
 
         this._applyTerminalTools();
 
@@ -238,15 +237,8 @@ class Terminal {
             var isMouse = !!(window.TerminalInputKind
                 && window.TerminalInputKind.isMouseReport(data));
             if (this._m('AltScreenScroll') && !isMouse) this._m('AltScreenScroll').noteUserInput();
-            // scrollOnUserInput: false
             if (this._m('TerminalScroll') && !isMouse) this._m('TerminalScroll').pinToBottom(this.term);
-            if (data === '¥') {
-                data = '\n';
-            } else if (data === '€') {
-                data = '\t';
-            } else if (data === '￡' || data === '£') {
-                data = '\x1b[Z';
-            }
+            if (window.TerminalInputKind) data = window.TerminalInputKind.softKeyboardShortcut(data);
             if (this._sendUserBytes(new TextEncoder().encode(data))) {
                 if (!isMouse) this._noteUserInputToSession(data);
             }
@@ -268,11 +260,7 @@ class Terminal {
 
         this.term.writeln('\x1b[1;32mCarnivore Terminal\x1b[0m');
         this.term.writeln('');
-        this.term.writeln('\x1b[2;37mKeyboard shortcuts:\x1b[0m');
-        this.term.writeln('  ¥  = Newline (Enter)');
-        this.term.writeln('  €  = Tab');
-        this.term.writeln('  £  = Shift+Tab');
-        this.term.writeln('');
+        if (window.TerminalInputKind && window.TerminalInputKind.isCoarsePointer()) this.term.writeln('\x1b[2;37mKeyboard shortcuts:\x1b[0m\r\n  ¥  = Newline (Enter)\r\n  €  = Tab\r\n  £  = Shift+Tab\r\n');
         this.term.writeln('Waiting for session...\n');
         if (window.TerminalLifecycle) window.TerminalLifecycle.announceCreated(this.term);
     }
@@ -328,7 +316,6 @@ class Terminal {
         }, true);
     }
 
-    /*  hidden  */
     _applyImageAttachButton() {
         const input = this._chrome('fileInput');
         if (!input) return;
@@ -344,7 +331,7 @@ class Terminal {
         }
     }
 
-    _applySelectWhileScrolled() { if (window.TerminalSelectScrolled) window.TerminalSelectScrolled.init(this.term && this.term.element && this.term.element.parentElement, () => this.term); if (window.TerminalHistoryScroll) window.TerminalHistoryScroll.attach(this); }
+    _applySelectWhileScrolled() { const sel = this._m('TerminalSelectScrolled'); if (sel) sel.init(this.term && this.term.element && this.term.element.parentElement, () => this.term); if (window.TerminalHistoryScroll) window.TerminalHistoryScroll.attach(this); }
 
     _applyTerminalTools() {
         if (this._m('TerminalToolsMenu')) {
@@ -360,7 +347,6 @@ class Terminal {
         await window.ClipboardTools.uploadAndInject(this, blob, filename || '', ticket);
     }
 
-    /* z-index: 70 */
     _showStatusPill(message, kind) {
         if (window.FabMenu && typeof window.FabMenu.notify === 'function') {
             window.FabMenu.notify(message, kind);
@@ -387,6 +373,7 @@ class Terminal {
         this.queue.push(bytes);
         this._queuedBytes += bytes.length;
         if (this.flushing) return;
+        // there is nothing
         this.flushing = true;
         this.flush();
     }
@@ -394,6 +381,7 @@ class Terminal {
     _releaseQueueForSwitch() {
         this.queue.length = 0;
         this._queuedBytes = 0;
+        // teardown parked on a promise nobody can settle - a session
         if (this._writeDrained) {
             const orphan = this._writeDrained;
             this._writeDrained = null;
@@ -444,7 +432,9 @@ class Terminal {
 
             if (this.queue.length) {
                 this.flushing = true;
-                requestAnimationFrame(() => this.flush());
+                const wait = this._m('TerminalLayoutWait');
+                if (wait) wait.nextFrameOrTimeout(wait.FRAME_TIMEOUT_MS).then(() => this.flush());
+                else requestAnimationFrame(() => this.flush());
             }
         });
     }
@@ -511,7 +501,6 @@ class Terminal {
             return { delivered: false, reason: 'unchanged', cols, rows };
         }
 
-        //  hidden 
         const frame = { type: 'pty_resize', cols, rows };
         if (this._m('TerminalSizeVote') && this._m('TerminalSizeVote').isWithdrawn(this, document)) frame.hidden = true;
         this.ws.send(JSON.stringify(frame));
@@ -709,6 +698,7 @@ class Terminal {
         return this._unwrapSession(this._currentSession).id || null;
     }
 
+    /* no evidence at all */
     _noteUserInputToSession(data) {
         const sessionId = this._sessionId();
         if (!sessionId) return;
@@ -764,6 +754,7 @@ class Terminal {
             if (!live('open')) return;
             console.log('Terminal: WebSocket connected');
 
+            // client/js/terminal-reconnect-policy.js.
             this._socketEverOpened = true;
             this.isReconnecting = false;
             this._intentionalClose = false;
@@ -872,7 +863,6 @@ class Terminal {
                 return;
             }
 
-            // socket dropped
             if (globalThis.SessionTransport) {
                 globalThis.SessionTransport.mark(
                     this._currentTmuxName(),
@@ -976,6 +966,8 @@ class Terminal {
         } else if (type === 'terminal_size' || type === 'size_master') {
             if (this._m('TerminalSizeVote')) this._m('TerminalSizeVote').onTerminalSize(this, message);
         } else if (type === 'terminal.ready') {
+            if (this._paintHeld && window.TerminalPaintGate) window.TerminalPaintGate.reassert(this);
+            // there is nothing
             if (this._m('TerminalInputBuffer')) {
                 this._m('TerminalInputBuffer').flushOnReady(this, message);
             }
@@ -984,7 +976,7 @@ class Terminal {
         }
     }
 
-    /* did not answer gets a healthy session declared unreachable */
+    /* gets a healthy session declared unreachable the server did not answer */
     attemptReconnect() {
         const policy = window.TerminalReconnectPolicy;
         const outcome = this._measuredInitOutcome();
@@ -1021,7 +1013,7 @@ class Terminal {
 
         this.reconnectTimeout = setTimeout(() => {
             this.reconnectTimeout = null;
-            // nobody is looking at
+            // session nobody is looking at
             if (!this._navCurrent('scheduled reconnect attempt')) {
                 this.stopReconnecting();
                 return;
@@ -1038,16 +1030,6 @@ class Terminal {
         this.isReconnecting = false;
     }
 
-    /**
-     * Description: THE ONE WRITER of the retry budget. Two reasons reach
-     *   it and both are named in the log line: a connection that reached
-     *   initialization success, and a different session being bound to
-     *   this controller - which is not a reset of one session's counter
-     *   but the start of another's, and a fresh session must not inherit
-     *   an exhausted budget from the one before it.
-     * Inputs: reason (string) - for the log.
-     * Output: void.
-     */
     _resetRetryBudget(reason) {
         if (this.reconnectAttempts || this._attemptsSinceProgress) {
             console.log('Terminal: retry budget reset -', reason);
@@ -1230,7 +1212,6 @@ class Terminal {
         await this._attemptReconnectByName(boundTmuxName);
     }
 
-    /* could not */
     async _handleAuthFailedClose(closeCode) {
         if (this.isReconnecting) return;
         this.isReconnecting = true;
@@ -1309,6 +1290,7 @@ class Terminal {
         }
     }
 
+    /* the current session */
     async detachSession() {
         try {
             this.updateStatus('Detaching session...');

@@ -1,4 +1,3 @@
-/* running sessions */
 import type { RunningSessionRow } from '../sessions/types';
 
 export interface OneShotTarget {
@@ -14,7 +13,6 @@ function text(value: unknown): string | null {
     return trimmed ? trimmed : null;
 }
 
-/* running sessions */
 export function oneShotTargets(
     rows: readonly RunningSessionRow[] | null | undefined,
 ): OneShotTarget[] {

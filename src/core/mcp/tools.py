@@ -16,7 +16,7 @@ from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.cplugs.host import mcp as cplug_mcp
 from src.core.mcp import (session_target, companion_shell_tools, dashboard_tools, description_tools, project_color_tools, color_tools, dialog_tools, notification_tools, preference_tools,
                           project_lifecycle_tools, project_replica_tools, session_control_tools, automation_tools, beast_mode, bookmark_tools, lineage_tools, timeline_tools, board_tools, byoai_tools, crosstalk_tools, federated, launch_profile_tools, notify_tools,
-                          messaging_tools, card_capacity_tools, card_tools, card_validate_tools, company_tools, group_tools, swarm_tools, pin_tools, pipeline_tools, session_delete_tools, session_folder_move_tools, session_purge_tools, project_tools, project_pack_tools, catalog_tools, mod_tools, skill_tools, read_tools, swarm_order_tools, write_tools, computers_tools, pack_machines_tools, app_update_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, swarm_switch_tools, beast_tools, autonomy_tools, deepsearch_tools)
+                          messaging_tools, card_capacity_tools, card_tools, card_validate_tools, company_tools, group_tools, swarm_memory_tools, swarm_tools, pin_tools, pipeline_tools, session_delete_tools, session_folder_move_tools, session_purge_tools, project_tools, project_pack_tools, catalog_tools, mod_tools, skill_tools, read_tools, swarm_order_tools, write_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, swarm_switch_tools, swarm_member_tools, beast_tools, autonomy_tools, deepsearch_tools)
 from src.core.mcp import agent_tool_switches, aliases, merged_tools, pane_only, read_only_hint, tool_switches
 from src.core.mcp import lean_answers
 from src.core.mcp.approvals import call_context
@@ -256,8 +256,8 @@ _TOOLS.update(swarm_tools.TOOLS)
 _TOOLS.update(card_tools.TOOLS)
 _TOOLS.update(card_validate_tools.TOOLS)
 _TOOLS.update(card_capacity_tools.TOOLS)
-_ROUTE_MODULES = (session_control_tools, companion_shell_tools, dialog_tools, dashboard_tools, preference_tools, notification_tools,
-                  project_lifecycle_tools, project_replica_tools, messaging_tools, description_tools, project_color_tools, color_tools, computers_tools, pack_machines_tools, app_update_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, swarm_switch_tools, beast_tools, autonomy_tools)
+_ROUTE_MODULES = (swarm_memory_tools, session_control_tools, companion_shell_tools, dialog_tools, dashboard_tools, preference_tools, notification_tools,
+                  project_lifecycle_tools, project_replica_tools, messaging_tools, description_tools, project_color_tools, color_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, swarm_switch_tools, swarm_member_tools, beast_tools, autonomy_tools)
 for _module in _ROUTE_MODULES:
     _TOOLS.update(_module.READ_TOOLS)
     _TOOLS.update(_module.WRITE_TOOLS)
@@ -273,7 +273,6 @@ _UNGATED_WRITES = frozenset({
     "session_notes_put",
     "notify",
 }) | frozenset(pin_tools.WRITE_TOOLS) | frozenset(group_tools.WRITE_TOOLS) | frozenset(swarm_order_tools.WRITE_TOOLS) | cplug_mcp.UNGATED_WRITES | bookmark_tools.UNGATED_WRITES | frozenset().union(*(m.UNGATED_WRITES for m in _ROUTE_MODULES))
-# external token
 DIRECT_WRITES = frozenset({"swarm_switch_off", "autonomy_off", "beastmode_off"})
 
 

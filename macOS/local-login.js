@@ -11,13 +11,11 @@ const DOOR_TIMEOUT_MS = 5000;
 const MAX_REPLY_BYTES = 16384;
 const CHANNEL = 'carnivore:local-login';
 
-/* CARNIVORE_STATE_DIR CLOUDE_STATE_DIR state directory */
 function defaultStateDir(env, home) {
   const named = env.CARNIVORE_STATE_DIR || env.CLOUDE_STATE_DIR;
   return named || path.join(home, 'Library', 'Application Support', 'Carnivore');
 }
 
-/* state directory */
 function doorPath(stateDir, home, doorFile) {
   const h = home || os.homedir();
   if (typeof doorFile === 'string' && /^door-[0-9a-f]{8}\.sock$/.test(doorFile)) {

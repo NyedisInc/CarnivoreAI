@@ -288,3 +288,10 @@ def test_a_commit_listener_failure_does_not_fail_the_write(config_path: Path):
         assert _read(config_path)["one"] == 1
     finally:
         config_writer._listeners.remove(bad_listener)
+
+
+def test_a_symlink_and_the_real_path_share_one_lock(config_path: Path, tmp_path: Path):
+    link = tmp_path / "link.json"
+    link.symlink_to(config_path)
+    assert config_writer._lock_for(link) is config_writer._lock_for(config_path)
+    assert config_writer._lock_for(tmp_path / "x" / ".." / config_path.name) is config_writer._lock_for(config_path)

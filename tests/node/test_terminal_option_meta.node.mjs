@@ -30,6 +30,7 @@ function world(shared) {
 const term = () => ({ options: { macOptionIsMeta: false } });
 
 let n = 0;
+/** Run one named case. */
 function t(name, fn) { fn(); n++; console.log(`ok - ${name}`); }
 
 t('a terminal bound while the preference is off stays off; bound while on starts on', () => {

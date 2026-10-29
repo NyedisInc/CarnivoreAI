@@ -17,16 +17,13 @@
     position: relative;
     display: flex;
     width: 31%;
-    /* width: auto */
     min-width: 0;
 }
 
 .command-button {
-    /* align-items: center */
     flex-direction: column;
     gap: 2px;
     line-height: 1.25;
-    /* padding */
     min-height: 54px;
     height: auto;
     padding-top: 10px;
@@ -58,7 +55,6 @@
     text-align: center;
 }
 
-/*  background: ...; ; border: border-radius: var(--radius-full); padding: 0; */
 .command-star {
     position: absolute;
     top: 0;
@@ -94,13 +90,11 @@
     cursor: default;
 }
 
-/* position: relative */
 .command-item {
     position: relative;
     padding-right: 52px;
 }
 
-/* padding */
 @media (max-width: 600px) {
     .command-chip {
         width: 47%;

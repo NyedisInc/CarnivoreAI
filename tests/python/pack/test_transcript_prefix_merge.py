@@ -9,7 +9,7 @@ import pytest
 
 from src.core.pack.migrate import transcripts
 
-ROOT = "/Users/example/carnivore-projects/ledgerbot"
+ROOT = "/Users/alex/carnivore-projects/trader"
 OLD = b'{"n":1}\n{"n":2}\n'
 NEW = OLD + b'{"n":3}\n'
 

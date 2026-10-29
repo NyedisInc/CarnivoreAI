@@ -1,11 +1,34 @@
 #!/usr/bin/env python3
 """Terminal latency harness: the before/after yardstick for speed changes.
 
+Drives a REAL session over the REAL ``/ws/terminal`` socket (no browser, no
+Electron) and measures four things, on an ISOLATED server this script boots
+itself (``perf_env.PerfServer``: own state dir, own tmux socket, own port,
+shell sessions only, never the live install or the ``cloude`` socket):
+
+  keystroke  one printable byte into a pane running ``stty raw -echo; cat``,
+             timed until that byte arrives in the WS output stream.
+  burst      a 50 MB output burst: longest gap between WS frames (the stall),
+             total time, and whether the server closed the viewer for
+             overflow (close code 4429).
+  idle_cpu   the server process's CPU over a quiet window with one idle
+             session, from the ``ps`` cputime delta (not lifetime %cpu).
+  boot       cold start to ``/health`` 200, then to the first authenticated
+             call, for a fresh server on a throwaway state dir and socket.
+
 Output: one JSON document (``--json-out``) plus a short summary on stdout.
 EXIT CODE: 0 only when every selected metric produced samples; 1 when any
 selected metric measured nothing (a check that looked at nothing must not
 pass); 2 in --budget mode when the 1-minute loadavg is over 4 (or unreadable)
 before or after the run: "could not measure", never a pass.
+
+--budget runs all four metrics and prints one line per DECISIONS item 15
+number ("<item>: <measured> <= <budget> pass|fail", or "not measured" for the
+ones this harness cannot take yet). It exits 0 only when every targeted item
+passes, so a not-measured item keeps it at 1. It cannot be combined with --only.
+
+What it does NOT measure: browser paint, xterm.js write queue, Electron
+open-to-interactive. The 4 MiB client queue is invisible from here.
 
 Example:
     venv/bin/python3 scripts/perf/latency_harness.py --json-out run.json
@@ -366,7 +389,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--boots", type=int, default=3)
     ap.add_argument("--json-out", default=None)
     ap.add_argument("--budget", action="store_true",
-                    help="print the the budget lines; exit 2 when loadavg is over 4")
+                    help="print the item 15 budget lines; exit 2 when loadavg is over 4")
     args = ap.parse_args(argv)
     if args.budget:
         return main_budget(args)

@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from src.core.attention import registry_read
+from src.core.attention import registry_index
+from src.core.attention import registry_record
 from src.core.claude_config import profile_roots
 
 
@@ -25,7 +26,7 @@ def two_profiles(tmp_path, monkeypatch):
     config.write_text(json.dumps({"provider_accounts": {"accounts": [
         {"id": "work", "name": "work", "provider": "claude",
          "claude_config_dir": str(profile)}]}}))
-    monkeypatch.setattr(registry_read, "default_registry_directory", lambda: str(default))
+    monkeypatch.setattr(registry_index, "default_registry_directory", lambda: str(default))
     monkeypatch.setattr(profile_roots, "_default_config_path", lambda: config)
     profile_roots.reset_profile_roots_cache_for_tests()
     yield {"default": default, "profile": profile, "config": config, "pid": pid}
@@ -33,14 +34,14 @@ def two_profiles(tmp_path, monkeypatch):
 
 
 def test_registry_index_finds_a_record_only_under_the_managed_profile(two_profiles):
-    index = registry_read.read_registry_index()
+    index = registry_index.read_registry_index()
     record = index["cloude_managed"]
-    assert record.verdict == registry_read.REG_OK
+    assert record.verdict == registry_record.REG_OK
     assert record.session_uuid == "33333333-aaaa-bbbb-cccc-000000000003"
 
 
 def test_an_explicit_directory_reads_only_that_directory(two_profiles):
-    assert dict(registry_read.read_registry_index(str(two_profiles["default"]))) == {}
+    assert dict(registry_index.read_registry_index(str(two_profiles["default"]))) == {}
 
 
 def test_registry_file_path_names_the_profile_file(two_profiles):
@@ -58,7 +59,7 @@ def test_symlinked_profile_sessions_is_one_root(tmp_path, monkeypatch):
     config.write_text(json.dumps({"provider_accounts": {"accounts": [
         {"id": "linked", "name": "linked", "provider": "claude",
          "claude_config_dir": str(profile)}]}}))
-    monkeypatch.setattr(registry_read, "default_registry_directory", lambda: str(default))
+    monkeypatch.setattr(registry_index, "default_registry_directory", lambda: str(default))
     profile_roots.reset_profile_roots_cache_for_tests()
     assert profile_roots.claude_registry_roots(config) == (default,)
     profile_roots.reset_profile_roots_cache_for_tests()

@@ -20,11 +20,10 @@
   background: var(--oc-ground-raised);
   color: var(--oc-text-primary);
   border: 1px solid var(--oc-line-panel);
-  /* padding */
   border-left: 2px solid var(--toast-accent);
   border-radius: var(--oc-radius-sm);
   box-shadow: 0 4px 12px var(--oc-shadow-lift);
-  padding: 12px 36px 12px 17px; /* padding */
+  padding: 12px 36px 12px 17px;
   position: relative;
   font-family: var(--font-mono, 'SF Mono', monospace);
   font-size: 13px;
@@ -35,7 +34,6 @@
   transition: transform 200ms ease-out, opacity 200ms ease-out;
 }
 
-/* could not */
 .toast[data-themed="1"] {
   background: color-mix(in srgb, var(--toast-accent) 7%, var(--oc-ground-raised));
   border-color: color-mix(in srgb, var(--toast-accent) 30%, var(--oc-line-rule));
@@ -70,7 +68,6 @@
   font-style: italic;
 }
 
-/* <button> */
 button.toast__session {
   width: 100%;
   background: transparent;
@@ -110,7 +107,6 @@ button.toast__session:focus-visible {
   border: none;
   color: var(--oc-text-secondary);
   cursor: pointer;
-  /* padding */
   width: auto;
   height: auto;
   padding: 2px 6px;
@@ -188,7 +184,6 @@ button.toast__session:focus-visible {
   color: var(--oc-ground-chrome);
 }
 
-/* box-shadow */
 .toast[data-severity="3"] {
   border-color: var(--oc-yellow);
   box-shadow: 0 4px 12px var(--oc-shadow-lift);
@@ -200,7 +195,6 @@ button.toast__session:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  /* padding */
   width: 100%;
   height: auto;
   padding: 7px 12px;
@@ -226,7 +220,6 @@ button.toast__session:focus-visible {
   color: var(--oc-text-primary);
 }
 
-/*  hidden  */
 .toast-overflow__worst {
   color: var(--oc-yellow);
 }
@@ -262,7 +255,6 @@ button.toast__session:focus-visible {
   }
 }
 
-/*  hidden  */
 .toast-dismiss-all {
   pointer-events: auto;
   display: flex;
@@ -305,7 +297,6 @@ button.toast__session:focus-visible {
   text-align: left;
 }
 
-/* permission prompt */
 .toast-dismiss-all:not([data-blocking="0"]) {
   border-color: var(--oc-coral);
   color: var(--oc-text-primary);
@@ -358,7 +349,6 @@ button.toast__session:focus-visible {
   display: block;
 }
 
-/* failed to load */
 .toast__thumb-ext {
   font-size: 10px;
   font-weight: bold;
@@ -379,6 +369,7 @@ button.toast__session:focus-visible {
   overflow-wrap: anywhere;
 }
 
+/* and the three */
 .toast[data-kind="Attachment"] .toast__title::before {
   content: "▤ ";
   color: var(--oc-cyan);

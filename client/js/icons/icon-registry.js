@@ -28,6 +28,18 @@ export const ICON_REGISTRY = Object.freeze([
     { id: 'bolt', glyph: 'bolt', label: 'icon.bolt', keywords: ['lightning', 'fast', 'power'] },
     { id: 'spark', glyph: 'spark', label: 'icon.spark', keywords: ['sparkle', 'new', 'ai'] },
     { id: 'coffee', glyph: 'coffee', label: 'icon.coffee', keywords: ['cup', 'break'] },
+    { id: 'logo-pi', glyph: 'logo-pi', label: 'icon.logo_pi', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-copilot', glyph: 'logo-copilot', label: 'icon.logo_copilot', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-devin', glyph: 'logo-devin', label: 'icon.logo_devin', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-kimi', glyph: 'logo-kimi', label: 'icon.logo_kimi', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-opencode', glyph: 'logo-opencode', label: 'icon.logo_opencode', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-kilo', glyph: 'logo-kilo', label: 'icon.logo_kilo', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-qoder', glyph: 'logo-qoder', label: 'icon.logo_qoder', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-qwen', glyph: 'logo-qwen', label: 'icon.logo_qwen', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-cursor', glyph: 'logo-cursor', label: 'icon.logo_cursor', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-mastra', glyph: 'logo-mastra', label: 'icon.logo_mastra', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-antigravity', glyph: 'logo-antigravity', label: 'icon.logo_antigravity', keywords: ['logo', 'agent', 'cli'] },
+    { id: 'logo-grok', glyph: 'logo-grok', label: 'icon.logo_grok', keywords: ['logo', 'agent', 'cli'] },
 ]);
 
 export const RETIRED_ICON_IDS = Object.freeze({});
@@ -43,7 +55,6 @@ export function findIcon(id) {
     return null;
 }
 
-/* width="12" */
 export function iconSvg(id, size) {
     const entry = findIcon(id);
     if (!entry || !GLYPHS[entry.glyph]) return '';

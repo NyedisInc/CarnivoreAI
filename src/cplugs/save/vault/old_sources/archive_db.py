@@ -6,11 +6,11 @@ import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterator, Optional
-from urllib.parse import quote
 
 import structlog
 
 from src.cplugs.save.vault.old_sources import model, names
+from src.cplugs.sdk.safe_io import connect_readonly
 
 logger = structlog.get_logger()
 
@@ -27,7 +27,7 @@ def _epoch(stamp: Optional[str]) -> float:
 
 def _opener(db: Path, row_id: int) -> Callable[[], Iterator[bytes]]:
     def open_bytes() -> Iterator[bytes]:
-        con = sqlite3.connect(_uri(db), uri=True)
+        con = connect_readonly(db, immutable=True)
         try:
             row = con.execute("SELECT content_gzip FROM transcript_archives WHERE id=?", (row_id,)).fetchone()
         finally:
@@ -46,21 +46,10 @@ def _opener(db: Path, row_id: int) -> Callable[[], Iterator[bytes]]:
     return open_bytes
 
 
-def _uri(db: Path) -> str:
-    return f"file:{quote(str(db))}?mode=ro&immutable=1"
-
-
 def iter_copies(db: Path, intake: model.Intake, name: Optional[str] = None, *, newest_only: bool = True, trust: bool = False) -> Iterator[model.Copy]:
-    """Every transcript row of the archive database ``db`` as a verified :class:`model.Copy`, in row order. Blocking.
-
-    Inputs: db; intake (collects refused and skipped rows); name (the source name, default ``archive:<file stem>``); newest_only;
-    trust (a preview takes each row's recorded sha256 and length without inflating it, see ``model.checked``).
-    Raises: model.SourceError (the database cannot be opened or has no transcript table).
-    Example: [c.ident.conv for c in iter_copies(Path('final-cloude-archive.db'), model.Intake())][:1]
-    """
     source = name or SOURCE_PREFIX + Path(db).stem
     try:
-        con = sqlite3.connect(_uri(Path(db)), uri=True)
+        con = connect_readonly(db, immutable=True)
         rows = con.execute(f"SELECT {_COLUMNS} FROM transcript_archives" + (" WHERE superseded_by_archive_id IS NULL" if newest_only else "")
                            ).fetchall()
         rows.sort(key=lambda r: r[0])

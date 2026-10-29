@@ -7,6 +7,7 @@
   import TaskManagerMarkdown from '../../../cplugs/huddle/TaskManagerMarkdown.svelte';
   import type { Inspection, Task } from '../../../cplugs/huddle/task-manager-design/model';
   import { anchorOf, restoreAnchor } from '../../../cplugs/huddle/task-manager-design/scroll-anchor';
+  import { loadThread } from '../../../cplugs/huddle/huddle.svelte';
   import { unread } from '../../../cplugs/huddle/task-manager-design/unread';
 
   let { task, view, onResource, source = -1, detailed = false }: { task: Task; view: Inspection; onResource: (id: string) => void; source?: number; detailed?: boolean } = $props();
@@ -14,12 +15,14 @@
   let chat: HTMLDivElement | undefined = $state();
 
   async function toggleEarlier(): Promise<void> {
+    if (hidden > 0 && !view.earlier) await loadThread(task.id);
     const anchor = chat ? anchorOf(chat) : null;
     view.earlier = !view.earlier;
     await tick();
     if (chat && anchor) restoreAnchor(chat, anchor);
   }
 
+  const hidden = $derived(task.hiddenCount ?? 0);
   const boundary = $derived(view.boundary);
   const start = $derived(view.earlier || source >= 0 ? 0 : boundary >= 0 ? boundary : Math.max(0, task.messages.length - 3));
 
@@ -33,9 +36,9 @@
   });
 </script>
 
-{#if start > 0 || view.earlier}
+{#if start > 0 || hidden > 0 || view.earlier}
   <button type="button" class="tn-history-toggle" use:titleWhenTruncated {...buttonAttrs('secondary', 'sm')} data-task-manager-earlier onclick={() => void toggleEarlier()}>
-    {view.earlier ? t('opscenter.cell.task_manager_mk2.hide_read') : t('opscenter.cell.task_manager_mk2.show_read', { n: start })}
+    {view.earlier ? t('opscenter.cell.task_manager_mk2.hide_read') : t('opscenter.cell.task_manager_mk2.show_read', { n: start + hidden })}
   </button>
 {/if}
 <div class="tn-chat" class:tn-chat--tall={detailed} role="region" aria-label={t('cplug.huddle.tm.conversation_for', { title: task.title })} tabindex="0" bind:this={chat} onscroll={() => { if (chat) view.scroll = chat.scrollTop; }}>

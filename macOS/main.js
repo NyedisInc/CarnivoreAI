@@ -54,10 +54,13 @@ const loginItems = require('./login-items');
 const venvRetire = require('./engine/venv-retire');
 const { createLaunchApi } = require('./engine/launch-api');
 const { TrayApiClient } = require('./tray-api');
+const { runGuardedPoll } = require('./poll-guard');
 const trayStrings = require('./tray-menu/strings');
 const { createDockPresence } = require('./dock-presence');
 const { sessionLink } = require('./tray-menu/actions/sessions');
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 function useRegularActivation() {
   if (process.platform !== 'darwin') return false;
@@ -308,11 +311,13 @@ app.on('window-all-closed', () => {
 
 app.whenReady().then(async () => {
   console.log('Carnivore starting...');
-  trayTerminal.sweepAtStartup();
+  trayTerminal.sweepAtStartup(); // Open in Terminal
   void require('./app-menu').installApplicationMenu({ app, Menu, shell, appWindow, showAbout: showAboutDialog, quitAndStopEngine,
     waiting: () => (trayMenu ? trayMenu.longestWaiting() : null), loadTranslator: loadStrings,
     exportDiagnostics: () => { if (trayMenu) trayMenu.runAction({ kind: 'server.export_diagnostics' }); else console.warn('[app-menu] export diagnostics before the tray menu started'); } });
   require('electron').powerMonitor.on('shutdown', () => { systemQuit = true; });
+  require('./power-calm').registerPowerCalm({ powerMonitor: require('electron').powerMonitor, app, appWindow, execFile: require('node:child_process').execFile, log: console.warn });
+  require('./dev-perf').startDevPerf({ app });
   links.start();
 
   serverManager = new ServerManager();
@@ -491,7 +496,7 @@ function startStatsPolling() {
   let fastPollCount = 0;
   const maxFastPolls = 12;
 
-  const poll = async () => {
+  const pollOnce = async () => {
     const state = serverManager.getState();
 
     if (state === 'starting' && fastPollCount < maxFastPolls) {
@@ -548,11 +553,14 @@ function startStatsPolling() {
         .catch((error) => console.warn('[tray-menu] health hand-off failed:', error && error.message));
     }
 
+  };
+
+  const poll = () => runGuardedPoll(pollOnce, () => {
     if (statsUpdateInterval) {
       clearTimeout(statsUpdateInterval);
     }
     statsUpdateInterval = setTimeout(poll, pollInterval);
-  };
+  });
 
   poll();
 }
@@ -602,7 +610,6 @@ async function offerTakeOwnership(action, result) {
   refreshTray();
 }
 
-/* ADOPTION_REFUSED */
 async function reportStartFailure(err) {
   if (!err || err.code !== 'ADOPTION_REFUSED') {
     dialog.showErrorBox('Carnivore could not start the server', err.message);

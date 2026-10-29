@@ -13,7 +13,7 @@ _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 
 
 class SecretError(RuntimeError):
-    """A launch's secrets could not be materialized. The message never carries a value."""
+    pass
 
 
 class PreviewRefused(SecretError):

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+/** A localStorage that holds a token, so the auth gate reads signed in. */
 function signedInStorage() {
   const map = new Map<string, string>([['claude_tunnel_token', 'an-access-token']]);
   return {
@@ -58,6 +59,7 @@ describe('a resource built in a hidden tab', () => {
   it('takes its first read on a restart after a pause, still hidden', async () => {
     const { poll } = await load(true);
     const fetcher = vi.fn(async () => 'rows');
+    // the home screen
     const probe = poll.resource(fetcher, { intervalMs: 5000, name: 'test' });
     poll.pauseAll();
     fetcher.mockClear();

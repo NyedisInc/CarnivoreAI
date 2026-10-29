@@ -1,28 +1,3 @@
-"""Which parts of a Claude Code plugin run code on the user's machine.
-
-A plugin made only of ``commands/``, ``agents/`` and ``skills/`` markdown
-is prose the model reads. Everything below is different: the harness
-starts it, and it runs shell commands with the user's rights.
-
-* hooks: ``hooks/hooks.json`` or a ``hooks`` key in ``plugin.json``
-* MCP servers: ``.mcp.json`` or a ``mcpServers`` key
-* LSP servers: ``.lsp.json`` or an ``lspServers`` key
-* monitors: a ``monitors`` folder or file, or a ``monitors`` key
-* ``bin/``: executables put on the PATH
-* ``settings.json`` (or a ``settings`` manifest key): can carry a status
-  line command
-* ``workflows/`` scripts
-* a ``!`` shell line or ``hooks`` front matter in any markdown file
-
-A skill folder and a plugin folder install into the same directory, so
-:func:`folder_declares_code` applies to EVERY kind, not only plugins.
-
-None of these need the POSIX owner-execute bit, so the signed script
-count (owner-exec bit or ``scripts/``) reads zero for them. This module
-is the pure detection; :func:`src.core.skills.manifest_rules.declares_script`
-reads the manifest and calls it, so a plugin gets the same treatment a
-theme's ``effects`` script already gets.
-"""
 
 from __future__ import annotations
 
@@ -71,6 +46,31 @@ def _markdown_runs_code(path: Path) -> bool:
         block = text[: end.end()] if end else text
         return bool(_FRONT_CODE_RE.search(block) or _HIDING_FRONT_RE.search(block[3:]))
     return False
+
+
+SCRIPT_EXTENSIONS = frozenset({
+    ".py", ".sh", ".bash", ".zsh", ".fish", ".js", ".mjs", ".cjs", ".ts",
+    ".rb", ".pl", ".php", ".ps1", ".bat", ".cmd", ".lua", ".r", ".tcl",
+    ".awk", ".command",
+})
+
+
+def staged_has_script_members(root: Path) -> bool:
+    failed: List[OSError] = []
+    for dirpath, _dirs, files in os.walk(root, followlinks=False, onerror=failed.append):
+        for name in files:
+            if os.path.splitext(name)[1].lower() in SCRIPT_EXTENSIONS:
+                return True
+            full = os.path.join(dirpath, name)
+            if os.path.islink(full):
+                continue
+            try:
+                with open(full, "rb") as handle:
+                    if handle.read(2) == b"#!":
+                        return True
+            except OSError:
+                return True
+    return bool(failed)
 
 
 def folder_declares_code(folder: Path, *, plugin: bool = False, exclude: FrozenSet[str] = frozenset()) -> bool:

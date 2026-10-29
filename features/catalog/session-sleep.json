@@ -30,7 +30,41 @@
     "sleep",
     "wake"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "Three agent rows in the drawer: docs-site dimmed with a green moon, web-client dimmed with a grey moon, api-server with a round status light",
+      "caption": "A flagged asleep session, a plain asleep session and an awake one in the agents drawer",
+      "file": "drawer.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "A small moon-shaped status light on a drawer row",
+      "caption": "The asleep light",
+      "file": "moon.png",
+      "kind": "icon",
+      "state": "asleep"
+    },
+    {
+      "alt": "A small moon-shaped status light in green on a drawer row",
+      "caption": "An asleep session flagged for follow-up: the moon in the unread color",
+      "file": "moon-unread.png",
+      "kind": "icon",
+      "state": "asleep-unread"
+    },
+    {
+      "alt": "A small round status light on a drawer row",
+      "caption": "The awake light, for comparison",
+      "file": "awake.png",
+      "kind": "icon",
+      "state": "awake"
+    },
+    {
+      "alt": "The row menu opens, sleep session is chosen and the light turns into a moon, then wake session turns it back",
+      "caption": "Putting a session to sleep, then waking it, from its row menu",
+      "file": "sleep-wake.gif",
+      "kind": "gif"
+    }
+  ],
   "name": "Sleep a session",
   "since": "2026-09-25",
   "status": "stable",
@@ -42,6 +76,5 @@
     "Open a claude or codex session's menu with the three dots on its row.",
     "An asleep session keeps its row and shows a moon in place of its light.",
     "A moon in the unread green is an asleep session you flagged for follow-up."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

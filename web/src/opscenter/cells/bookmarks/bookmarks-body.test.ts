@@ -44,3 +44,17 @@ describe('bookmarks widget body', () => {
     expect(api.branchFrom).toHaveBeenCalledWith(7, { bookmarkId: 3 });
   });
 });
+
+describe('u157-08: delete needs a second press', () => {
+  test('one press arms and says so, the second press on the same bookmark deletes', async () => {
+    api.deleteBookmark.mockResolvedValue(undefined);
+    const del = document.querySelector<HTMLButtonElement>('[data-delete]')!;
+    del.click();
+    await settle();
+    expect(api.deleteBookmark).not.toHaveBeenCalled();
+    expect(document.querySelector('.oc-bkm-notice')?.textContent ?? '').not.toBe('');
+    del.click();
+    await settle();
+    expect(api.deleteBookmark).toHaveBeenCalledWith(3);
+  });
+});

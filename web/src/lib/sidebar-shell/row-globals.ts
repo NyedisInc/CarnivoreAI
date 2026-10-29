@@ -10,7 +10,6 @@ export interface PendingSelection {
 export interface RowController {
     listEl?: Element | null;
     _rows?: SidebarRow[];
-    _lastSig?: string | null;
     _dragging?: boolean;
     _activeTmuxName?: string | null;
     _pendingSelection?: PendingSelection | null;
@@ -52,14 +51,7 @@ export interface RowApi {
     renameSession(id: string, value: string): Promise<unknown>;
     destroySession(id: string): Promise<unknown>;
     destroyExternalSession(name: string): Promise<unknown>;
-}
-
-export interface WakeContext {
-    name: string;
-    label: string;
-    sessionUuid: string;
-    surface: string;
-    archived?: boolean;
+    setSessionUnread(name: string, unread: boolean): Promise<unknown>;
 }
 
 export interface RowGlobals {
@@ -76,14 +68,7 @@ export interface RowGlobals {
     SessionSidebarArrangement?: RowArrangement;
     SessionSidebarGroupStore?: RowGroupStore;
     SessionSidebarStore?: { isBandOrderKey?(key: string): boolean };
-    SessionSidebarGroupActions?: { commitAssignment?(name: string, group: string | null): Promise<boolean> };
     SessionSidebarGroupOrder?: { commitMemberOrder?(name: string): Promise<unknown> };
-    SessionSidebarBrowsers?: {
-        activate?(ctrl: RowController, name: string): boolean;
-        isBrowserName?(name: string): boolean;
-        rename?(id: string, value: string): Promise<unknown>;
-        onKeyClick?(keyEl: Element): Promise<void>;
-    };
     SessionSidebarLayouts?: {
         activate?(ctrl: RowController, name: string): boolean;
         isLayoutName?(name: string): boolean;
@@ -96,8 +81,6 @@ export interface RowGlobals {
         ACTION_RESTART: string;
         confirm(action: string, name: string): Promise<boolean>;
     };
-    SessionSidebarRestartClick?: { runRestart(ctrl: RowController, name: string, rowEl: Element | null): Promise<void> };
-    SessionRowMenuSleep?: { runWake?(ctx: WakeContext): Promise<boolean> };
     PreferenceBridge?: { read?(field: string, fallback: () => unknown): unknown };
     CloudeWeb?: {
         rowMenu?: { runCplug?(cplugId: string, ctx: Record<string, unknown>): Promise<unknown> };
@@ -137,9 +120,4 @@ export function closestTo(target: EventTarget | null, selector: string): Element
 
 export function dataOf(el: Element | null, key: string): string {
     return (el as HTMLElement | null)?.dataset?.[key] || '';
-}
-
-export async function refetch(ctrl: RowController): Promise<void> {
-    ctrl._lastSig = null;
-    if (typeof ctrl._fetchAndRender === 'function') await ctrl._fetchAndRender();
 }

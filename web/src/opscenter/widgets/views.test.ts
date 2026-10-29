@@ -83,7 +83,7 @@ describe('migration of stored placements', () => {
   });
 });
 
-describe('isScopeSwitch: the selected session | all sessions pair', () => {
+describe('isScopeSwitch: the selected session | all sessions pair (item 1048)', () => {
   test('is true for a session widget with an all sibling and false for one face or other looks', () => {
     expect(isScopeSwitch(CORE_MANIFESTS['core.tasks'])).toBe(true);
     expect(isScopeSwitch(CORE_MANIFESTS['core.notes'])).toBe(false);

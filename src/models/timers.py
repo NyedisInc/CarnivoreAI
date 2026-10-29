@@ -17,7 +17,7 @@ TimerStatus = Literal[
     "expired",
     "lost",
     "refused",
-    "unknown",  # could not
+    "unknown",
     "shape_unrecognized",
 ]
 

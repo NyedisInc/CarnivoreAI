@@ -5,12 +5,12 @@ import { statusOf } from '../huddle-status';
 import { openQuestions } from '../task-manager-posts';
 import { draftOf, toLocalInput } from '../task-manager-schedule';
 import type { StepsEntry } from '../task-manager-steps';
-import { t } from '../../sdk';
+import { t, type TaskClock } from '../../sdk';
 import type { Closure } from './closed-api';
 import type { Message, Resource, Review, ReviewCheck, Schedule, Task, TaskState } from './model';
 import { statusLineText } from './status-line';
 import { newMessageIds, sharedOf, titleOf, type Entry, type Shared } from './task-view';
-import { ageWords, closedWords, closerText, messageClock, runWords, type TaskClock } from './when';
+import { ageWords, closedWords, closerText, messageClock, runWords } from './when';
 
 const STATE_OF: Readonly<Record<string, TaskState>> = Object.freeze({
   question: 'question', review: 'review', working: 'working', waiting: 'waiting', scheduled: 'open', open: 'open', todo: 'later', done: 'closed',
@@ -77,6 +77,10 @@ function waitSource(messages: readonly Message[]): number {
   return messages.map((m) => m.kind).lastIndexOf('waiting');
 }
 
+function hiddenOf(item: HuddleItem): number {
+  return item.thread_slim ? Math.max(0, (item.thread_count ?? 0) - item.thread.length) : 0;
+}
+
 export function taskOf(entry: Entry, extra: { closure?: Closure | null; steps?: StepsEntry | null; clock?: TaskClock | null } = {}): Task {
   const { item } = entry;
   const clock = extra.clock ?? null;
@@ -102,7 +106,7 @@ export function taskOf(entry: Entry, extra: { closure?: Closure | null; steps?: 
   const last = latestMessage(item);
   const closedAt = closure?.closed_at ?? null;
   return {
-    id: item.id, title: titleOf(item), project: entry.project, state, agent: item.tagged_by || DEFAULT_AGENT,
+    id: item.id, title: titleOf(item), project: entry.project, state, hiddenCount: hiddenOf(item), agent: item.tagged_by || DEFAULT_AGENT,
     text: review ? (reviewOf(item)?.description || item.text) : item.text, original: item.text,
     age: last ? (clock ? ageWords(last.created_at, clock.nowSec, clock.zone) : messageTime(last.created_at)) : '',
     unread: item.unread === true, scheduled: item.status === 'scheduled' || undefined, messages, shared: resources, review, schedule: scheduleOf(item), note: item.note, parent: item.forked_from ?? undefined,

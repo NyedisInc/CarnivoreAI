@@ -7,6 +7,7 @@ from typing import Any, Optional, Tuple
 from fastapi import HTTPException
 
 from src.core.hosts.identity import is_remote_backend, parse_remote_session_id
+from src.api.error_response import api_error
 
 REMOTE_HOST_CODE = "remote_host"
 
@@ -28,7 +29,7 @@ def routed_remote(manager: Any, value: Optional[str]) -> Optional[Any]:
     try:
         return resolve_remote(manager, value)
     except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise api_error(404, "not_found", exc, step="routed_remote") from exc
 
 
 def remote_refusal(host_key: str, action: str) -> HTTPException:

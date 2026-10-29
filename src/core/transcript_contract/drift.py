@@ -23,10 +23,6 @@ class DriftTally:
             self.findings[f"{parsed.family}:{parsed.kind}:{finding}"] += 1
 
     def observe_status(self, family: str, status: str) -> None:
-        """Count a line the reader could not hand over (torn, undecodable). Output: None.
-
-        Inputs: family (str), status (str).
-        """
         self.lines[f"{family}:{status}"] += 1
 
     def merge(self, other: "DriftTally") -> None:

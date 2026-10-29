@@ -1,4 +1,3 @@
-/* could not */
 import { resource, type Resource } from '../../opscenter/api/poll.svelte';
 import { resourcePush } from '../resource-push/boot';
 import { authFetch } from '../../opscenter/api/auth.svelte';

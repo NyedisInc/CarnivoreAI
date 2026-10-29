@@ -41,27 +41,6 @@ class SessionStatusSeeds:
         interval_seconds: int = SEED_REFRESH_INTERVAL_SECONDS,
         epoch: Optional[int] = None,
     ) -> bool:
-        """Whether this session's seed should be re-derived now.
-
-        Description: True for a session never seeded, for one whose seed
-          is older than ``interval_seconds``, and - regardless of age -
-          for one whose instance epoch was unknown when it was cached and
-          is known now. That last rule is what stops a refusal cached as
-          "this session's exact tmux instance could not be identified"
-          from being permanent: an epoch that arrives late (a boot race
-          that resolved it after the first seed attempt) makes the cached
-          reading immediately due rather than making it wait out a full
-          refresh interval on stale grounds. A clock that appears to run
-          backwards (a system time change) also reads due, because
-          re-deriving costs one bounded file read and never re-deriving is
-          the failure that matters.
-        Inputs: session_id (str). now (datetime | None). interval_seconds
-          (int) - defaults to :data:`SEED_REFRESH_INTERVAL_SECONDS`.
-          epoch (int | None) - the caller's current best epoch for this
-          session, or None when it still has none to offer.
-        Output: bool.
-        Example: seeds.due('s1')
-        """
         held = self._seeds.get(session_id)
         if held is None:
             return True

@@ -30,7 +30,6 @@ DIVERGENCE_SIBLING_PROCESS = "sibling_process"
 
 DIVERGENCE_IN_PROCESS_FORK = "in_process_fork"
 
-# COULD NOT EVALUATE
 DIVERGENCE_SOURCE_UNRECOGNISED = "source_unrecognised"
 
 DIVERGENCE_MINTS_A_ROW: Tuple[str, ...] = (

@@ -60,19 +60,6 @@ def hash_file(path: Path) -> tuple[str, int]:
 
 
 def digest_directory(root: Path) -> tuple[str, tuple[DigestEntry, ...]]:
-    """Compute the digest of a skill folder ON DISK, regular files only.
-
-    :param root: the skill folder root; relpaths are taken from here.
-    :returns: ``(digest hex, the entries it was computed from)``.
-
-    Used to re-verify a copy AFTER it has been written, which is the only
-    check that covers the writer itself. Symlinks, fifos, sockets, device
-    nodes and anything else that is not a regular file are SKIPPED, never
-    hashed and never refused here: refusing is the validator's job and it
-    has already run by the time anything reaches disk. ``os.walk`` is
-    called with ``followlinks=False``, so a symlinked directory is neither
-    descended into nor counted.
-    """
     entries: list[DigestEntry] = []
     root_str = str(root)
     for dirpath, _dirnames, filenames in os.walk(root_str, followlinks=False):

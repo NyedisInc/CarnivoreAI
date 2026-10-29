@@ -127,7 +127,6 @@ export function stepInRail(layout: RailLayout, key: string, direction: -1 | 1): 
   return { ...layout, sections: layout.sections.map((section, i) => (i === at ? next : section)) };
 }
 
-/* bottom: 0 left: 0; the closed rail */
 export function sectionStyle(axis: 'x' | 'y', section: number, count: number, ratio: number): string {
   const [start, end, a, b] = axis === 'y' ? ['top', 'bottom', 'left', 'right'] : ['left', 'right', 'top', 'bottom'];
   const cut = splitAt(ratio);

@@ -1,3 +1,4 @@
+// terminal.
 
 import { createEffect, readVar, rgbTriple } from '../_shared/effects-base.js';
 

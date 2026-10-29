@@ -5,6 +5,7 @@ import asyncio
 import json
 import random
 import socket
+import sqlite3
 import ssl
 from typing import Any, AsyncIterator
 
@@ -133,6 +134,12 @@ async def run_stream(rt: Any, state: Any) -> None:
         except contract.ContractError as exc:
             log.warning("messaging_stream_contract_error", provider_id=state.id, reason=str(exc))
             await _set_state(state, "cpp_unsupported")
+        except sqlite3.Error as exc:
+            log.warning("messaging_stream_store_error", provider_id=state.id, error_type=type(exc).__name__)
+            try:
+                await _set_state(state, "store_error")
+            except sqlite3.Error:
+                pass
         except (WebSocketException, OSError, ValueError, RuntimeError) as exc:
             hint = await local_network_hint(exc, state.secrets.base_url)
             log.warning("messaging_stream_dropped", provider_id=state.id, error_type=type(exc).__name__)

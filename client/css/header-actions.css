@@ -1,14 +1,10 @@
-/*  hidden  */
 
 
-/* flex-shrink: 0 */
-/* display:none */
 body:has(.session-sidebar-panel--open) #header-icon {
     visibility: hidden;
     pointer-events: none;
 }
 
-/* display: none */
 @media (min-width: 701px) {
     body:has(.session-sidebar-panel--open) #session-sidebar-toggle {
         visibility: hidden;
@@ -37,6 +33,7 @@ body:has(.session-sidebar-panel--open) #header-icon {
 }
 
 @media (max-width: 640px) {
+    /* on the terminal screen the drawer toggle */
     .header-icon--wordmark,
     .header-icon--wordmark img {
         width: 26px;
@@ -44,14 +41,12 @@ body:has(.session-sidebar-panel--open) #header-icon {
     }
 }
 
-/* display: none */
 #settingsBtn,
 #logoutBtn,
 #headerComponentsBtn {
     display: none;
 }
 
-/* file editor */
 body:has(.bscreen) .header :is(#configEditorBtn, #headerSizeMasterBtn) {
     display: none;
 }

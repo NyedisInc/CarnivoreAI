@@ -8,7 +8,6 @@ export interface PickerRow {
     harness: string;
     icon: string | null;
     account: string;
-    /* active account */
     followsActive?: boolean;
     model: string;
     modelMode: 'default' | 'fixed' | 'ask';

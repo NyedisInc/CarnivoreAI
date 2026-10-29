@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* Escape cancels */
   import { t } from '../sdk';
   import { baseField } from './task-manager-base-field';
   import { saveTitle } from './huddle.svelte';

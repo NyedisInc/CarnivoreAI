@@ -22,7 +22,6 @@ const NOOP = Object.freeze({
 
 function createBanners(deps) {
   if (deps.platform !== 'darwin' || !deps.Notification) return NOOP;
-  // permission prompt
   let supportedMemo = null;
   const supported = () => (supportedMemo === null ? (supportedMemo = !!deps.Notification.isSupported()) : supportedMemo);
   const entries = new Map();
@@ -177,7 +176,6 @@ function createBanners(deps) {
     } catch (error) {
       prefs = null;
     }
-    // permission prompt
     if (!prefs || !prefs.banners || !supported()) return false;
     return shouldMirror({ asksOnly: prefs.asksOnly, askSessionId });
   }

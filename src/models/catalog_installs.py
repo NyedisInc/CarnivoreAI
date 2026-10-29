@@ -1,19 +1,3 @@
-"""What the install-count proxy answers: the hosted summary, relayed.
-
-EVERY FIELD IS OPTIONAL AND NOTHING HAS A FALSY DEFAULT, the same rule
-:mod:`src.models.catalog_ratings` opens with and for the same reason. The
-hosted api answers ``count: 0`` with an empty ``by_version`` for an item
-nobody has installed, and that is a MEASURED ZERO. An item whose counts
-could not be read has no count at all. If this model defaulted ``count``
-to 0, those two would arrive at the screen identical, and a reader would
-be told "nobody has installed this" about an outage.
-
-NOTHING HERE NAMES A PERSON, AND NOTHING UPSTREAM COULD. The row the
-hosted summary is built from holds totals only. The idempotency records
-that carry a GitHub account id live in a different table that no endpoint
-reads, so there is no field this model could have grown that would carry
-an identity.
-"""
 
 from __future__ import annotations
 
@@ -68,6 +52,11 @@ class InstallCountEntry(BaseModel):
 
 class InstallCountsResponse(BaseModel):
     """`POST /catalog/install-counts` answer: only the ids that were measured.
+
+    Fields:
+        items: id to :class:`InstallCountEntry`. A MISSING ID MEANS NOT
+            MEASURED (unknown to the catalog, or its chunk failed), never
+            "nobody has installed it".
     """
 
     items: Dict[str, InstallCountEntry]

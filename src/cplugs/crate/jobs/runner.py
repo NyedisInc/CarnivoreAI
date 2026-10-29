@@ -113,14 +113,6 @@ def _run(slot: _Slot, work: Work) -> None:
 
 def start(work_dir: Any, kind: str, request: Dict[str, Any], work: Work, *, notify: Notify,
           clock: Callable[[], float] = time.monotonic) -> str:
-    """Start one job on the slot. Blocking only for the first record write. Output: the job id.
-
-    Inputs: work_dir (the plugin folder; records go in its ``jobs``); kind (``constants.KIND_*``); request (what was asked,
-      shown in the job view; NEVER an identity); work (``work(handle) -> result``); notify (``ctx.notify``); clock (a
-      monotonic clock for push coalescing; a test patches it).
-    Raises: JobBusy; OSError (the record could not be written; nothing started).
-    Example: start(env.work, 'verify', {'bundle_id': b}, lambda h: {...}, notify=ctx.notify)
-    """
     global _SLOT
     root = state.jobs_dir(work_dir)
     with _LOCK:

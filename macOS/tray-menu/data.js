@@ -106,6 +106,7 @@ function createTrayData(deps) {
       if (verdict.trusted === false) console.warn('[tray-menu] refusing the server port:', verdict.reason, trust.holderText);
       disconnect();
     }
+    // Kill Port Holder
     portHolderText = verdict.trusted === false ? trust.holderText : null;
   }
 

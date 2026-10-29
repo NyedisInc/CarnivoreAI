@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
-  import { ConfirmPopup, Icon } from '../sdk/ui';
+  import { Button, ConfirmPopup, Field, IconButton } from '../sdk/ui';
   import { bookmarkDraft, endLive } from './board-api';
   import type { LiveSlot } from './board-model';
 
@@ -61,17 +61,17 @@
 <div class="rb-views" data-live-bar>
   <span class="rb-label" data-live-label>{t('cplug.reviewboard.live.draft_label')} {live.draft.seq}</span>
   <span class="rb-tools">
-    <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.live.bookmark_key')} title={t('cplug.reviewboard.live.bookmark_key')}
-            aria-pressed={mode === 'naming'} data-board-bookmark onclick={toggleBookmark}><Icon name="bookmark" size={16} /></button>
-    <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.live.end_key')} title={t('cplug.reviewboard.live.end_key')}
-            aria-pressed={mode === 'ending'} data-board-live-end bind:this={endKey} onclick={() => { mode = mode === 'ending' ? 'idle' : 'ending'; noteKey = null; }}><Icon name="close" size={16} /></button>
+    <IconButton label={t('cplug.reviewboard.live.bookmark_key')} icon="bookmark" variant="quiet" iconSize={16}
+                pressed={mode === 'naming'} data-board-bookmark onclick={toggleBookmark} />
+    <IconButton label={t('cplug.reviewboard.live.end_key')} icon="close" variant="danger" iconSize={16}
+                pressed={mode === 'ending'} data-board-live-end bind:element={endKey} onclick={() => { mode = mode === 'ending' ? 'idle' : 'ending'; noteKey = null; }} />
   </span>
   {#if mode === 'naming'}
     <form class="rb-live-form" data-board-bookmark-form onsubmit={(e) => { e.preventDefault(); void bookmark(); }}>
-      <input class="rb-field" type="text" maxlength="120" placeholder={t('cplug.reviewboard.live.bookmark_name')} aria-label={t('cplug.reviewboard.live.bookmark_name')}
+      <Field maxlength={120} placeholder={t('cplug.reviewboard.live.bookmark_name')} aria-label={t('cplug.reviewboard.live.bookmark_name')}
              bind:value={name} data-board-bookmark-name />
-      <button type="submit" class="modal-btn modal-btn-confirm" disabled={busy} data-board-bookmark-go>{t('cplug.reviewboard.live.bookmark_go')}</button>
-      <button type="button" class="modal-btn modal-btn-secondary" onclick={() => (mode = 'idle')}>{t('cplug.reviewboard.live.cancel')}</button>
+      <Button type="submit" variant="confirm" disabled={busy} data-board-bookmark-go>{t('cplug.reviewboard.live.bookmark_go')}</Button>
+      <Button onclick={() => (mode = 'idle')}>{t('cplug.reviewboard.live.cancel')}</Button>
     </form>
   {/if}
   {#if mode === 'ending'}

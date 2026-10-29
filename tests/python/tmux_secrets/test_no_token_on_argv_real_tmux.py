@@ -19,7 +19,7 @@ os.environ.setdefault("TOTP_SECRET", "testsecretnotreal")
 os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
 # ruff: noqa: E402
-from src.core import tmux_backend as tmux_backend_module
+from src.core.tmux_transport import local as local_transport
 from src.core.tmux_backend import TmuxBackend
 from src.core.tmux_discovery import tmux_argv_prefix
 from tests.socket_guard import derive_test_socket
@@ -60,7 +60,7 @@ def rig(tmp_path, monkeypatch):
         f"exec '{real}' \"$@\"\n"
     )
     shim.chmod(0o700)
-    monkeypatch.setattr(tmux_backend_module, "tmux_argv_prefix",
+    monkeypatch.setattr(local_transport, "tmux_argv_prefix",
                         lambda sock: [str(shim), "-L", sock])
     _tmux(socket, "kill-server")
     assert _tmux(socket, "list-sessions").returncode != 0, "socket is not cold"

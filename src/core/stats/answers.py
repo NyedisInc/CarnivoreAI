@@ -10,15 +10,18 @@ import zlib
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Optional, Set
+from typing import Any, Callable, Dict, Optional, Set, Tuple
 
 import structlog
 
+from src.core.db_reuse.thread_connections import ThreadConnections
 from src.core.stats.batch_store import BatchStore
+from src.core.stats.catalog import FAMILY_ACTIVITY, FAMILY_USAGE
 
 logger = structlog.get_logger()
 
 LEDGER_VERSION = 1
+_USAGE_KEY = "_usage_revision"
 FRESH_SECONDS = 60.0
 RETRY_SECONDS = 15.0
 MAX_ROWS = 512
@@ -75,6 +78,13 @@ class Row:
     payload: dict
     fail_reason: Optional[str]
     fail_at: Optional[float]
+    usage_revision: Optional[int] = None
+
+
+def _data_current(row: "Row", view: Any, families: Tuple[str, ...]) -> bool:
+    if FAMILY_USAGE in families and row.usage_revision != view.usage_revision():
+        return False
+    return FAMILY_ACTIVITY not in families or row.payload.get("revision") in (None, view.revision())
 
 
 def _served(payload: dict, as_of: float, stale: bool, reason: Optional[str]) -> dict:
@@ -90,6 +100,7 @@ class _Ledger:
         self._failed_at: Dict[str, float] = {}
         self._touched: Dict[str, float] = {}
         self._inode: Optional[int] = None
+        self._writer_conns = ThreadConnections(lambda _path: self._connect())
 
     def read(self, view: Any, key: str) -> Optional[Row]:
         try:
@@ -109,7 +120,8 @@ class _Ledger:
             return None
         with self._lock:
             self._touched[key] = _now()
-        return Row(got[0], int(got[1]), float(got[2]), payload, got[4], got[5])
+        marked = payload.pop(_USAGE_KEY, None)
+        return Row(got[0], int(got[1]), float(got[2]), payload, got[4], got[5], marked)
 
     def state(self) -> str:
         from src.core.stats.plugin import progress
@@ -128,8 +140,10 @@ class _Ledger:
             return STATE_UNKNOWN
         return STATE_BEHIND if found["pending_sources"] > BEHIND_CONVERSATIONS else STATE_OK
 
-    def store_later(self, key: str, fingerprint: str, window_end: int, payload: dict, computed_at: float) -> None:
-        blob = zlib.compress(json.dumps(payload, separators=(",", ":")).encode(), 1)
+    def store_later(self, key: str, fingerprint: str, window_end: int, payload: dict, computed_at: float,
+                    usage_revision: Optional[int] = None) -> None:
+        held = {**payload, _USAGE_KEY: usage_revision} if usage_revision is not None else payload
+        blob = zlib.compress(json.dumps(held, separators=(",", ":")).encode(), 1)
         _WRITER.submit(self._write, key, fingerprint, window_end, blob, computed_at)
 
     def _connect(self) -> sqlite3.Connection:
@@ -143,22 +157,23 @@ class _Ledger:
             pending = list(self._touched.items())
             touched, self._touched = dict(pending[:TOUCH_FLUSH]), dict(pending[TOUCH_FLUSH:])
         try:
-            with self._connect() as conn:
-                conn.execute("BEGIN IMMEDIATE")
-                try:
-                    for ddl in _SCHEMA:
-                        conn.execute(ddl)
-                    conn.execute(
-                        "INSERT OR REPLACE INTO stats_answers VALUES (?,?,?,?,?,?,?,NULL,NULL)",
-                        (key, fingerprint, window_end, computed_at, computed_at, len(blob), blob))
-                    conn.executemany("UPDATE stats_answers SET last_read=? WHERE key=?",
-                                     [(at, k) for k, at in touched.items()])
-                    self._evict(conn, key)
-                    conn.execute("COMMIT")
-                except BaseException:
-                    conn.execute("ROLLBACK")
-                    raise
+            conn = self._writer_conns.get(self.store.db_path)
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                for ddl in _SCHEMA:
+                    conn.execute(ddl)
+                conn.execute(
+                    "INSERT OR REPLACE INTO stats_answers VALUES (?,?,?,?,?,?,?,NULL,NULL)",
+                    (key, fingerprint, window_end, computed_at, computed_at, len(blob), blob))
+                conn.executemany("UPDATE stats_answers SET last_read=? WHERE key=?",
+                                 [(at, k) for k, at in touched.items()])
+                self._evict(conn, key)
+                conn.execute("COMMIT")
+            except BaseException:
+                conn.execute("ROLLBACK")
+                raise
         except (sqlite3.Error, OSError) as exc:
+            self._writer_conns.discard(self.store.db_path)
             logger.debug("stats_answers_write_skipped", error=str(exc)[:120])
             with self._lock:
                 for k, at in touched.items():
@@ -179,9 +194,10 @@ class _Ledger:
 
     def _mark_failed(self, key: str, reason: str, at: float) -> None:
         try:
-            with self._connect() as conn:
-                conn.execute("UPDATE stats_answers SET fail_reason=?,fail_at=? WHERE key=?", (reason, at, key))
-        except sqlite3.Error as exc:
+            self._writer_conns.get(self.store.db_path).execute(
+                "UPDATE stats_answers SET fail_reason=?,fail_at=? WHERE key=?", (reason, at, key))
+        except (sqlite3.Error, OSError) as exc:
+            self._writer_conns.discard(self.store.db_path)
             logger.debug("stats_answers_mark_skipped", error=str(exc)[:120])
 
     def purge(self) -> None:
@@ -192,16 +208,19 @@ class _Ledger:
             if "no such table" not in str(exc):
                 raise
 
-    def refresh_later(self, key: str, fingerprint: str, window_end: int, compute: Compute, budget: float) -> None:
+    def refresh_later(self, key: str, fingerprint: str, window_end: int, compute: Compute, budget: float,
+                      families: Tuple[str, ...] = (FAMILY_USAGE, FAMILY_ACTIVITY)) -> None:
         with self._lock:
             if key in self._inflight or _now() - self._failed_at.get(key, 0.0) < RETRY_SECONDS:
                 return
             self._inflight.add(key)
-        _RECOMPUTE.submit(self._recompute, key, fingerprint, window_end, compute, budget)
+        _RECOMPUTE.submit(self._recompute, key, fingerprint, window_end, compute, budget, families)
 
-    def _recompute(self, key: str, fingerprint: str, window_end: int, compute: Compute, budget: float) -> None:
+    def _recompute(self, key: str, fingerprint: str, window_end: int, compute: Compute, budget: float,
+                   families: Tuple[str, ...]) -> None:
         view = BatchStore(self.store)
         try:
+            usage_rev = view.usage_revision() if FAMILY_USAGE in families else None
             payload = compute(view, time.monotonic() + budget)
         except Exception as exc:  # noqa: BLE001
             now = _now()
@@ -211,7 +230,7 @@ class _Ledger:
             _WRITER.submit(self._mark_failed, key, type(exc).__name__, now)
         else:
             if self.state() == STATE_OK:
-                self.store_later(key, fingerprint, window_end, payload, _now())
+                self.store_later(key, fingerprint, window_end, payload, _now(), usage_rev)
         finally:
             view.release()
             with self._lock:
@@ -236,7 +255,7 @@ def plugin_state(store: Any) -> str:
 
 
 def serve(view: Any, *, key: str, window_end: int, fingerprint: str, state: str, compute: Compute,
-          deadline: float, budget: float) -> dict:
+          deadline: float, budget: float, families: Tuple[str, ...] = (FAMILY_USAGE, FAMILY_ACTIVITY)) -> dict:
     ledger = ledger_for(view)
     now = _now()
     row = ledger.read(view, key)
@@ -244,12 +263,13 @@ def serve(view: Any, *, key: str, window_end: int, fingerprint: str, state: str,
         return _served(row.payload, row.computed_at, True, "rebuilding")
     if row is not None and row.fingerprint == fingerprint:
         if (row.window_end == window_end and now - row.computed_at < FRESH_SECONDS
-                and row.payload.get("revision") in (None, view.revision())):
+                and _data_current(row, view, families)):
             return _served(row.payload, row.computed_at, False, None)
         if state == STATE_OK:
-            ledger.refresh_later(key, fingerprint, window_end, compute, budget)
+            ledger.refresh_later(key, fingerprint, window_end, compute, budget, families)
         failing = row.fail_at is not None and row.fail_at >= row.computed_at
         return _served(row.payload, row.computed_at, True, "compute_failed" if failing else "refreshing")
+    usage_rev = view.usage_revision() if FAMILY_USAGE in families else None
     try:
         payload = compute(view, deadline)
     except (ValueError, KeyError, sqlite3.Error) as exc:
@@ -258,7 +278,7 @@ def serve(view: Any, *, key: str, window_end: int, fingerprint: str, state: str,
         logger.warning("stats_answers_compute_failed", error=type(exc).__name__, detail=str(exc)[:120])
         return _served(row.payload, row.computed_at, True, "compute_failed")
     if state == STATE_OK:
-        ledger.store_later(key, fingerprint, window_end, payload, now)
+        ledger.store_later(key, fingerprint, window_end, payload, now, usage_rev)
     return _served(payload, now, False, "catching_up" if state == STATE_BEHIND else None)
 
 

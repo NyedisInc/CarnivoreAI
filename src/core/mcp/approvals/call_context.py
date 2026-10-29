@@ -25,6 +25,7 @@ GATED_TOOLS = frozenset({
     "session_description_set", "project_description_set", "project_color_set", "company_color_set",
     "computer_invite", "computer_remove", "computer_direction_set", "computer_leave", "computer_add",
     "session_send_message", "swarm_card_grant", "swarm_card_pace",
+    "swarm_card_delete",
 })
 ACTION_TOOLS = {"crosstalk_resume": "crosstalk_send"}
 

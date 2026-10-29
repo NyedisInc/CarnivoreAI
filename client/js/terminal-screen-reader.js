@@ -19,7 +19,6 @@
         return osSignal === true;
     }
 
-    /* xterm options */
     function optionsFor(setting, osSignal) {
         return { screenReaderMode: modeFor(setting, osSignal) };
     }
@@ -97,7 +96,6 @@
         Promise.resolve(desktop.screenReader()).then(function (on) {
             if (typeof on === 'boolean') setOsSignal(on);
         }).catch(function (err) {
-            // could not
             console.warn('[TerminalScreenReader] OS signal unavailable', err && err.message ? err.message : err);
         });
     }

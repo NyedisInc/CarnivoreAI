@@ -1,15 +1,3 @@
-"""The files half of a session move: inventory, collisions, backup first, the move, its check and its undo.
-
-FILES MERGE, NAMES NEVER CLOBBER. Folders merge into the destination; a FILE whose path
-already exists there (or a path whose parent is a file there) is a collision, and any
-collision refuses the whole move before anything changes. Two ``.git`` folders are refused
-too: merging two repositories' object stores is not a move. ``.cc.theme`` at the top is
-left behind: it is the destination PROJECT's theme default, keyed on the folder, and
-carrying the temp folder's copy would retheme a project the user did not touch.
-
-A rename never overwrites: each target is checked just before its rename, and a move that
-fails part way puts back every file it already moved.
-"""
 
 from __future__ import annotations
 
@@ -29,7 +17,6 @@ LEFT_BEHIND_NAMES: Tuple[str, ...] = (".cc.theme",)
 
 GIT_DIR = ".git"
 
-# state directory
 BACKUP_DIRNAME = "session-moves"
 
 MAX_CARRY_BYTES = 2 * 1024 ** 3
@@ -38,7 +25,6 @@ MAX_CARRY_FILES = 20_000
 
 
 class SessionMoveFilesError(Exception):
-    """A files step failed. ``undo_errors`` lists files that could not be put back (fix by hand from the backup)."""
 
     def __init__(self, message: str, undo_errors: Sequence[str] = ()) -> None:
         super().__init__(message)
@@ -138,7 +124,6 @@ def _move_one(src: Path, dst: Path) -> None:
 
 
 def undo_moves(source: Path, destination: Path, moved: Sequence[str]) -> List[str]:
-    """Put moved files back, newest first. Output: list[str] - the ones that could not be put back."""
     errors: List[str] = []
     for rel in reversed(list(moved)):
         try:
@@ -150,14 +135,6 @@ def undo_moves(source: Path, destination: Path, moved: Sequence[str]) -> List[st
 
 
 def move_files(source: Path, destination: Path, inv: Inventory) -> List[str]:
-    """Carry every inventoried file from ``source`` into ``destination``, all or none.
-
-    Description: folders are created first (an empty folder is carried too), then each file is
-      renamed. On any failure the files already moved are put back and the error is raised.
-      Emptied subfolders of the source are removed afterwards (``rmdir`` removes only empty ones).
-    Inputs: source, destination (Path); inv (Inventory). Output: list[str] - the moved files.
-    Raises: SessionMoveFilesError - a file could not be moved (earlier ones were put back).
-    """
     moved: List[str] = []
     try:
         for rel in sorted(inv.dirs):

@@ -48,6 +48,7 @@
   import KindKey from './KindKey.svelte';
   import Column from './Column.svelte';
   import { layoutColumn, stepColumn } from './column';
+  import { pickValueFor, pickedInfo } from './picker';
   import { frameFor, type Item, type Move, type PointAction } from './plot-model';
   import { tx } from './strings';
 
@@ -86,15 +87,19 @@
   const squeeze: boolean = $derived(widget.state.squeeze);
 
   let pick = $state(loadPick());
-  const sessionId = $derived(scope?.sessionId || pick || activeTerminalSessionId());
+  const sessionId = $derived(scope?.sessionId || pickedInfo(sessions.data ?? [], pick)?.session.id || pick || activeTerminalSessionId());
   const infos = $derived(sessions.data ?? []);
   const info = $derived(infos.find((s) => s.session.id === sessionId) ?? null);
   const rowId = $derived(typeof info?.session_row_id === 'number' ? info.session_row_id : null);
   const projectId = $derived(typeof info?.project_id === 'number' ? info.project_id : (props.scope?.projectId ?? null));
   const live = $derived(rowId !== null && liveRowIds(infos).has(rowId));
+  const pickShown = $derived.by((): string => {
+    const found = pickedInfo(infos, pick);
+    return found ? pickValueFor(found) : pick;
+  });
   const pickerOptions = $derived([
     { value: '', label: t('opscenter.cell.timeline.picker.focused') },
-    ...infos.filter((s) => typeof s.session_row_id === 'number').map((s) => ({ value: s.session.id, label: s.label || s.tmux_session || s.session.id })),
+    ...infos.filter((s) => typeof s.session_row_id === 'number').map((s) => ({ value: pickValueFor(s), label: s.label || s.tmux_session || s.session.id })),
   ]);
 
   let res = $state.raw<Resource<SessionTimeline> | null>(null);
@@ -209,7 +214,7 @@
 </script>
 
 {#snippet pickerGroup()}
-  <FacetSelect label={t('opscenter.cell.timeline.picker.label')} value={pick} options={pickerOptions} onChange={choose} id="timeline-session" />
+  <FacetSelect label={t('opscenter.cell.timeline.picker.label')} value={pickShown} options={pickerOptions} onChange={choose} id="timeline-session" />
 {/snippet}
 
 {#snippet controls(place: 'header' | 'body' | 'corner')}

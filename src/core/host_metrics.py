@@ -1,22 +1,3 @@
-"""Read-only host health probes for the server-status panel.
-
-NO NEW DEPENDENCY. psutil would answer all of this in one line, but it is
-a compiled wheel and this app already ships a subprocess convention that
-covers the same ground (list argv, never ``shell=True``). Everything here
-is stdlib plus two short reads of ``vm_stat`` / ``/proc/meminfo``.
-
-NO SUDO, EVER. Every probe below is readable by the uid the server already
-runs as. A probe that needed elevation would either hang on a password
-prompt or fail with a misleading error, and a status panel is not worth
-either.
-
-THREE OUTCOMES, NOT TWO. Every collector returns a dict carrying
-``available`` and ``error``. A probe that could not run reports
-``available: False`` with the reason, and the panel renders that as
-"cannot determine" rather than as a healthy zero. Reporting 0 bytes of
-used memory because ``vm_stat`` was missing is the false-green this
-codebase keeps paying for.
-"""
 
 from __future__ import annotations
 
@@ -203,13 +184,6 @@ def collect_load() -> Dict[str, Any]:
 
 
 def collect_host() -> Dict[str, Any]:
-    """Identity and uptime of the machine the server runs on.
-
-    Returns:
-        ``{available, error, hostname, os, uptime_seconds}``.
-        ``uptime_seconds`` is None when the boot time could not be read,
-        which is reported as unknown rather than as zero uptime.
-    """
     return {
         "available": True,
         "error": None,

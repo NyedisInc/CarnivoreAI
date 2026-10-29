@@ -16,7 +16,7 @@ from src.core.db import connect, db_path_for
 from src.core.layouts.lease import LeaseBook
 from src.core.ui_preferences import DrawerArrangement
 
-PIN = "layout:0aaf0045-2e49-4e20-8046-4ace5de4a887"
+PIN = "layout:0f6c1d2e-3a4b-4c5d-8e9f-001122334455"
 
 
 def test_pinned_accepts_layout_pins_beside_session_uuids():

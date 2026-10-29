@@ -68,8 +68,6 @@
         if (!rawTheme || typeof rawTheme !== 'object') return rawTheme;
         var alpha;
         if (normaliseImageAlpha(imageAlpha) !== null) {
-            // padding
-            // padding
             alpha = 0;
         } else {
             if (!isThemeEffectVisible()) return rawTheme;

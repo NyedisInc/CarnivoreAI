@@ -34,6 +34,7 @@
       <IconButton label="filters (open)" icon="settings" variant="quiet" aria-expanded="true" />
       <IconButton label="close" icon="close" variant="close" />
       <IconButton label="open in a window" icon="external" variant="float" />
+      <IconButton label="pin" tooltip="pin this to the top (p)" icon="pin" />
       <IconButton label="add" icon="plus" style="--oc-ibtn-size: var(--oc-control-h-sm)" />
       <IconButton label="add" icon="plus" style="--oc-ibtn-size: var(--oc-control-h)" />
     </div>
@@ -55,6 +56,7 @@
     <Checkbox label="select all" bind:indeterminate={mixed} checked={false} />
     <Checkbox label="send a summary" hint="one message when the run ends" />
     <Checkbox label="locked on" checked disabled />
+    <Checkbox label="a long label that wraps onto a second line on a phone: the mark stays beside the first line, never mid-block" checked />
     <RadioGroup label="destination" bind:value={dest}
       options={[{ value: 'project', label: 'in a project', hint: 'the folder moves with it' }, { value: 'folder', label: 'in a folder' }, { value: 'none', label: 'nowhere yet', disabled: true }]} />
     <RadioGroup label="size" orientation="horizontal" bind:value={size}>
@@ -94,6 +96,7 @@
       <Segmented label="view" value="list" options={[{ value: 'list', label: 'list', icon: 'menu' }, { value: 'grid', label: 'grid', icon: 'settings' }]} />
     </div>
     <div class="sg-row">
+      <Segmented label="per-option title" value="a" options={[{ value: 'a', label: 'all', title: 'every session' }, { value: 'b', label: 'mine', title: 'only sessions you started' }]} />
       <Segmented label="size, md" size="md" value="b" options={[{ value: 'a', label: 'small' }, { value: 'b', label: 'medium' }, { value: 'c', label: 'large' }]} />
     </div>
     <Segmented label="fill" fill value="b" options={[{ value: 'a', label: 'low' }, { value: 'b', label: 'medium' }, { value: 'c', label: 'high' }]} />

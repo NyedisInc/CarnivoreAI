@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 import structlog
 
 from src.core.pack.load import process_tree
+from src.core.tmux_control.reader import control_read
 from src.core.tmux_discovery import TmuxVersionSkewError, tmux_argv_prefix
 
 logger = structlog.get_logger()
@@ -63,6 +64,10 @@ def agent_pane_pids(open_db: Callable[[], sqlite3.Connection], *, run: Optional[
 
 
 def _run(argv: List[str]) -> Optional[str]:
+    if len(argv) > 3 and argv[1] == "-L":
+        answered = control_read(argv[2], argv[3:])
+        if answered is not None:
+            return answered.decode("utf-8", errors="replace")
     try:
         done = subprocess.run(argv, capture_output=True, text=True, timeout=3, check=False)
     except (OSError, subprocess.SubprocessError):
@@ -81,7 +86,6 @@ class Throttle:
         self._under_since: Optional[float] = None
 
     def _agent_pids(self) -> Optional[Set[int]]:
-        """Every pid in an agent tree now (never this server's own pid); None when ``ps`` could not run (unknown, not empty)."""
         procs = self._ps()
         if procs is None:
             return None

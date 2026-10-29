@@ -53,8 +53,7 @@
       
       <div class="oc-cellslot oc-cellslot-reserved" aria-hidden="true"></div>
     {:else}
-      <!-- position:
-           fixed -->
+      
       <div
         class="oc-cellslot"
         class:oc-slot-lifted={dragState.id === drawn.slotId}

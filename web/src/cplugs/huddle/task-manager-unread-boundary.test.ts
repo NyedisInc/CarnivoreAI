@@ -61,7 +61,7 @@ afterEach(() => {
 const seenCalls = (): { body: unknown }[] => server.calls.filter((c) => c.path.endsWith('/seen'));
 
 describe('the unread boundary', () => {
-  test('boundaryOf is the newest incoming message id, ignoring their own and optimistic ones', () => {
+  test('boundaryOf is the newest incoming message id, ignoring his own and optimistic ones', () => {
     expect(boundaryOf(mk(1))).toBe(31);
     expect(boundaryOf({ thread: [] })).toBeUndefined();
     expect(boundaryOf(null)).toBeUndefined();

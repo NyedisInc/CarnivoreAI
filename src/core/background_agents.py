@@ -67,21 +67,6 @@ def _parse_agent(raw: Dict[str, Any]) -> Optional[BackgroundAgent]:
 def list_background_agents(
     *, cwd: Optional[str] = None, claude_path: Optional[str] = None
 ) -> AgentsResult:
-    """List Claude background sessions. Never raises.
-
-    Description: runs ``claude agents --json`` and keeps only records
-      whose ``kind`` is ``background`` - interactive ones are the tmux
-      sessions CloudeCode already shows, and listing them twice would be
-      worse than not listing them at all.
-
-      Returns a NAMED failure rather than an empty list whenever the
-      question could not be answered. See ``AgentsResult.measured``.
-    Inputs: cwd (str | None) - restrict to sessions started under this
-      path. claude_path (str | None) - resolved binary; looked up when
-      omitted.
-    Output: AgentsResult.
-    Example: list_background_agents(cwd='/x').measured -> True
-    """
     if not claude_path:
         try:
             from src.core.server_status import collect_claude_cli

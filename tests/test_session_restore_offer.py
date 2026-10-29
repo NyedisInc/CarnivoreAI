@@ -153,7 +153,7 @@ def test_measured_conversation_outranks_the_record_and_says_so():
 
 SIGS = {
     "claude-skip-permissions": frozenset({"--dangerously-skip-permissions"}),
-    "keyc": frozenset({"--dangerously-skip-permissions"}),
+    "cld": frozenset({"--dangerously-skip-permissions"}),
     "claude-chrome": frozenset({"--dangerously-skip-permissions", "--chrome"}),
 }
 
@@ -167,7 +167,7 @@ def test_a_chrome_session_never_comes_back_without_chrome():
 
 def test_a_tie_is_broken_by_the_record_then_the_default():
     obs = frozenset({"--dangerously-skip-permissions"})
-    assert choose_wrapper("keyc", obs, SIGS, "claude-skip-permissions")[0] == "keyc"
+    assert choose_wrapper("cld", obs, SIGS, "claude-skip-permissions")[0] == "cld"
     assert choose_wrapper(None, obs, SIGS, "claude-skip-permissions")[0] == "claude-skip-permissions"
 
 
@@ -247,7 +247,7 @@ def test_the_mini_terminal_row_as_the_database_stores_it_reopens_as_a_shell(tmp_
             "last_seen_running_at, title, created_at, updated_at) "
             "VALUES (?, 'adopted', 'cloude', ?, ?, ?, 'shell-default', 'shell', "
             "'launched', NULL, 'stopped', 'tmux_missing', ?, 'Mini Terminal', ?, ?)",
-            ("MT", "carnivore_console-mungt8yj", 1790734040, "/Users/example", stamp, stamp, stamp),
+            ("MT", "carnivore_console-mungt8yj", 1790734040, "/Users/j", stamp, stamp, stamp),
         )
         conn.commit()
 
@@ -258,7 +258,7 @@ def test_the_mini_terminal_row_as_the_database_stores_it_reopens_as_a_shell(tmp_
     m = Measurement(listing_ok=True, listing_complete=True, listing_reason="no_server",
                     panes=[], writers=[], rows=rows, groups=groups, rows_ok=True, writers_ok=True)
     cand = {"session_uuid": "MT", "instance": "carnivore_console-mungt8yj@1790734040",
-            "tmux_name": "carnivore_console-mungt8yj", "folder": "/Users/example",
+            "tmux_name": "carnivore_console-mungt8yj", "folder": "/Users/j",
             "conversation_measured": None, "observed_flags": None}
     options = [{"id": i, "label": i} for i in SIGS]
     out = evaluate_candidate(cand, row, m, (SIGS, "claude-skip-permissions", options))

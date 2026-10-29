@@ -156,7 +156,7 @@ describe('a click on a row of a copy with its own checks still opens it', () => 
   test('approvals-only copy: the row opens the approval inbox; huddle-only copy: the focus route', async () => {
     everythingWaiting();
     const approvalsOnly = draw({ kind_all: false, kind_huddle: false, kind_automations: false }, 'drawer-zone:core.questions');
-    const huddleOnly = draw({ kind_all: false, kind_approvals: false, kind_automations: false }, 'drawer-zone:core.questions#i2');
+    const taskManagerOnly = draw({ kind_all: false, kind_approvals: false, kind_automations: false }, 'drawer-zone:core.questions#i2');
     await settle();
     openApprovalFor.mockClear();
     approvalsOnly.querySelector<HTMLElement>('[data-question-row="approval:a1"]')!.click();
@@ -164,14 +164,14 @@ describe('a click on a row of a copy with its own checks still opens it', () => 
     expect(openApprovalFor).toHaveBeenCalledWith('ses_1');
     const taskManager = document.body.appendChild(document.createElement('div'));
     taskManager.setAttribute('data-task-manager-all-cell', '');
-    huddleOnly.querySelector<HTMLElement>('[data-question-row="huddle:7:9"]')!.click();
+    taskManagerOnly.querySelector<HTMLElement>('[data-question-row="huddle:7:9"]')!.click();
     await settle();
     expect(calls).toContain('POST /cplugs/huddle/focus');
     taskManager.remove();
   });
 });
 
-describe('copies of the widget are independent', () => {
+describe('copies of the widget are independent (Joe (ccsliinc), 2026-10-11: "multiple instances")', () => {
   test('two copies draw different rows from the same pushed data', async () => {
     everythingWaiting();
     const approvalsOnly = draw({ kind_all: false, kind_huddle: false, kind_automations: false }, 'drawer-zone:core.questions');

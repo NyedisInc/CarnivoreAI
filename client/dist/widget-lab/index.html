@@ -4,22 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>widget harness</title>
+    <!-- ONE WIDGET IN A BOX, FROM A FIXTURE (web/src/widget-harness/main.ts).
+         Built two ways from this one page: on demand by scripts/widgets/capture.py into
+         client/widget-harness-build/ (gitignored, the capture pipeline), and by
+         web/vite.widget-lab.config.ts into client/dist/widget-lab/ (the Widget Lab plugin's frame,
+         docs/widget-lab.md). It loads the app's own stylesheets so the widget is drawn exactly as in the app. -->
     <link rel="stylesheet" href="/static/css/layers.css" />
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="stylesheet" href="/static/css/scrollbars.css" />
+    <link rel="stylesheet" href="/static/css/modal-titlerow.css" />
     <link rel="stylesheet" href="/static/css/text-prompt-modal.css" />
     <link rel="stylesheet" href="/static/css/modal-glow.css" />
     <link rel="stylesheet" href="/static/css/config-editor.css" />
     <link rel="stylesheet" href="/static/css/config-editor-modal.css" />
-    <!-- running sessions -->
+    <!-- The running-subagent chip the running sessions widget draws (SubagentBadge.svelte). -->
     <link rel="stylesheet" href="/static/css/subagent-count.css" />
+    <!-- The shared fold chevron (FoldChevron.svelte) turns on aria-expanded through this sheet, as in client/index.html. -->
     <link rel="stylesheet" href="/static/css/session-sidebar-groups.css" />
+    <!-- THE ONE POPUP LOOK, LAST OF EVERY SHEET, exactly as client/index.html loads it. Every widget menu (the shared
+         cascade menu) carries the `popup-focus` class and declares no border, ground or shadow of its own, so without
+         this sheet the menu draws unthemed here while it is themed in the app. scripts/widgets/capture_one.py and
+         web/src/widget-harness/popup-sheet.test.ts hold this line. -->
   <script type="module" crossorigin src="/static/dist/widget-lab/widget-lab.js"></script>
   <link rel="stylesheet" crossorigin href="/static/dist/widget-lab/widget-lab.css">
     <link rel="stylesheet" href="/static/css/popup-focus.css" />
 </head>
 <body>
     <div id="widget-harness"></div>
+    <!-- WHAT THE REAL PAGE LOADS FOR THE FILES WIDGET (client/index.html): the
+         file browser's own box (hidden until the legacy panel moves it into
+         the cell), its classic scripts in the page's order, and the string
+         layer. The browser lists folders through /api/v1 routes the fixture
+         answers (fixtures/core.files.ts); nothing in the widget knows. -->
     <div class="modal-overlay config-editor-picker-overlay" id="config-editor-overlay" hidden data-modal="config-picker">
         <div class="config-editor-picker-content" role="dialog" aria-modal="true" aria-label="files">
             <div class="config-editor-header" id="config-editor-header"></div>
@@ -34,10 +50,14 @@
     <script src="/static/js/module-families.js"></script>
     <script src="/static/js/markdown-lite.js"></script>
     <script src="/static/js/modal-stack.js"></script>
+    <script src="/static/js/modal-ring.js"></script>
     <script src="/static/js/status-led.js"></script>
+    <!-- The provider mark the ledger rows and the provider glance tile draw (agent-marks.ts reads it). -->
     <script src="/static/js/agent-family-icon.js"></script>
     <script src="/static/js/ui-flags.js"></script>
     <script src="/static/js/session-status-ui.js"></script>
     <script src="/static/js/config-editor-loader.js"></script>
+    <!-- The two module scripts the real page also loads (browser-storage-migrate.js, i18n/boot.js)
+         are imported by main.ts at run time: vite would try to bundle a module tag here. -->
 </body>
 </html>

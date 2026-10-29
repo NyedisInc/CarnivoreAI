@@ -9,7 +9,6 @@ from typing import Callable, Optional
 
 import structlog
 
-from src.core.hook_token_recovery import SupersededHookTokens
 
 logger = structlog.get_logger()
 
@@ -17,7 +16,6 @@ TOKEN_BYTES = 32
 
 _DUMMY_TOKEN = secrets.token_urlsafe(TOKEN_BYTES)
 
-# state directory
 METADATA_FILENAME = "session_metadata.json"
 
 OWNED_KEY = "owned_tmux_sessions"
@@ -36,7 +34,6 @@ class HookTokenAuthority:
         self.tokens: dict[str, str] = {}
         self.tmux_names: dict[str, str] = {}
         self.durable: bool = True
-        self.superseded = SupersededHookTokens()
         self.load()
 
 
@@ -106,7 +103,6 @@ class HookTokenAuthority:
     def _drop(self, session_id: str) -> None:
         self.tokens.pop(session_id, None)
         self.tmux_names.pop(session_id, None)
-        self.superseded.forget(session_id)
         if self._on_drop is not None:
             self._on_drop(session_id)
 
@@ -124,13 +120,6 @@ class HookTokenAuthority:
 
 
     def mint(self, session_id: str, tmux_name: Optional[str] = None) -> str:
-        previous = self.tokens.get(session_id)
-        if previous:
-            self.superseded.record(
-                session_id,
-                previous,
-                tmux_name=(self.tmux_names.get(session_id) or tmux_name),
-            )
         token = secrets.token_urlsafe(TOKEN_BYTES)
         self.tokens[session_id] = token
         if tmux_name:
@@ -139,21 +128,6 @@ class HookTokenAuthority:
         return token
 
     def keep(self, session_id: str, tmux_name: Optional[str] = None) -> Optional[str]:
-        """Re-bind an EXISTING token's tmux name without rotating the token.
-
-        Description: the counterpart to :meth:`mint` for a session whose id
-          was RECOVERED rather than invented. IT CANNOT REACH THE SECRET
-          and that is the point: the agent running inside an adopted pane
-          is holding the old token in its environment with no way to be
-          handed a new one, so minting there revokes a working credential
-          and every subsequent hook POST answers 403. Idempotent.
-        Inputs: session_id (str) - an id that already holds a token.
-          tmux_name (str | None) - the live tmux session name to bind.
-        Output: str | None - the UNCHANGED stored token, or None when the
-          id holds none, in which case nothing was written and the caller
-          should mint instead.
-        Example: ``authority.keep('ses_ab12', tmux_name='cloude_x')``
-        """
         existing = self.tokens.get(session_id)
         if existing is None:
             return None

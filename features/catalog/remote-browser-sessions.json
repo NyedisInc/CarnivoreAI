@@ -17,16 +17,18 @@
   "how_to": [
     "Add a browser component to a session and enter a URL.",
     "Drive it from the page; the agent can use the same browser.",
-    "Let an agent call browser_open, or press open in tab on a huddle page card: a huddle page or a Carnivore pop-out page becomes a page row in the left sidebar's browser list, shown in the center screen on every window and still there after a reload; an http(s) url becomes a browser row there.",
+    "Let an agent call browser_open, or press open in tab on a task manager page card: a task manager page or a Carnivore pop-out page becomes a page row in the left sidebar's browser list, shown in the center screen on every window and still there after a reload; an http(s) url becomes a browser row there.",
     "Press pop out on a browser or page row's key or menu: a page opens in its own tab, and a proxy browser asks every time whether to pop out the proxy or open the real page in your own browser.",
     "Hold shift in the left sidebar: every browser and page row's kebab turns into a red x that closes that row (a page at once, a proxy browser after its confirm); let go of shift and the kebabs come back.",
+    "Press the trash key at the end of a proxy browser's address bar to close it: it asks first, since its cookies and logins go with it.",
     "Type an address into a proxy browser: it loads on the computer carnivore runs on, so localhost is that computer's; the note under the address bar says so."
   ],
   "id": "remote-browser-sessions",
   "issues": [
     448,
     1694,
-    1697
+    1697,
+    2607
   ],
   "keywords": [
     "browser",

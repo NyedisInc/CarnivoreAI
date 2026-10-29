@@ -27,6 +27,7 @@ _SHA = re.compile(r"^[0-9a-fA-F]{7,64}$")
 _REF = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/@{}^~-]{0,199}$")
 _SLUG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}/[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
 MAX_TEXT = 200
+NO_GIT = "git is not installed on this computer (no developer tools), so this check cannot run"
 NO_REPO = "this install has no git repository to check; set CARNIVORE_REPO_ROOT to the app's repo"
 
 
@@ -191,6 +192,8 @@ def app_repo_roots(root: Optional[Path] = None) -> List[Path]:
         return []
     base = found.resolve()
     roots = [base]
+    if not app_info.git_available():
+        return roots
     try:
         done = subprocess.run(["git", "-C", str(base), "worktree", "list", "--porcelain"], capture_output=True, text=True,
                               timeout=RUN_TIMEOUT_S, env=_child_env(), check=False)
@@ -216,6 +219,8 @@ def check_git(check: GitContains, roots: Optional[Sequence[Path]] = None) -> Ver
     repo = Path(check.repo).resolve()
     if repo not in allowed:
         return Verdict(UNKNOWN, f"{check.repo} is not one of the app's repos")
+    if not app_info.git_available():
+        return Verdict(UNKNOWN, NO_GIT)
     try:
         done = _run(["git", "-C", str(repo), "merge-base", "--is-ancestor", check.sha, check.ref])
     except (OSError, subprocess.SubprocessError) as exc:
@@ -275,7 +280,7 @@ def host_allowed(url: str, extra_hosts: Sequence[str] = ()) -> bool:
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
-    def redirect_request(self, *args: Any, **kwargs: Any) -> None:  # noqa: D102
+    def redirect_request(self, *args: Any, **kwargs: Any) -> None:
         return None
 
 

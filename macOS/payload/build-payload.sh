@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-#
-#
-#
-#
 set -euo pipefail
 
 readonly PBS_TAG="20261009"

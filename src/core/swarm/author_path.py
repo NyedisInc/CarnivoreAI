@@ -182,6 +182,8 @@ def annotate(conn: sqlite3.Connection, agent: Dict[str, Any], entries: List[Dict
             if block is not None:
                 entry["question"] = block
             entry["author_path"] = block["askers"][0]["author_path"] if block and block["askers"] else [dict(c) for c in own]
+        elif kind == "agent" and "author_agent_id" in entry:
+            entry["author_path"] = path_of(entry.pop("author_agent_id"))
         else:
             entry["author_path"] = [dict(c) for c in own]
         key = entry.pop("peer_key", None)

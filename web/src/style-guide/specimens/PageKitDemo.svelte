@@ -15,18 +15,18 @@
   const all = [{ value: 'all', label: 'all' }];
   const tiles: HighlightTile[] = [
     { id: 'a', name: 'cloudecode', figure: '7', unit: 'running', line: '3 asleep · 12 closed', activity: [1, 2, 2, 4, 3, 5, 6, 4, 7, 8, 6, 9, 7, 10] },
-    { id: 'b', name: 'lantern pebble', figure: '4', unit: 'running', line: 'tidy the shared notes folder', activity: [0, 1, 1, 0, 2, 3, 2, 4, 3, 2, 5, 4, 3, 4] },
+    { id: 'b', name: 'argent', figure: '4', unit: 'running', line: '1 asleep · 9 closed', activity: [0, 1, 1, 0, 2, 3, 2, 4, 3, 2, 5, 4, 3, 4] },
     { id: 'c', name: 'a-project-with-a-very-long-name', figure: '3', unit: 'running', line: '6 asleep · 22 closed · 4 more', activity: [2, 2, 3, 1, 1, 2, 0, 2, 3, 3, 2, 1, 2, 3] },
     { id: 'd', name: 'docs', figure: '2', unit: 'running', line: '0 asleep · 3 closed', activity: [] },
     { id: 'e', name: 'hosted', figure: '1', unit: 'running', line: '2 asleep · 5 closed', activity: [0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 0, 1, 1] },
   ];
   const needs: RankRow[] = [
     { id: 'n1', name: 'migrate the ledger', line: 'cloudecode · question', icon: 'chat', tags: ['claude'], metric: { value: '14', unit: 'm waiting' } },
-    { id: 'n2', name: 'pebble summit', line: 'clean up stale branches and temp folders', icon: 'check', tags: ['codex'], metric: { value: '9', unit: 'm waiting' } },
+    { id: 'n2', name: 'review the diff', line: 'argent · finished', icon: 'check', tags: ['codex'], metric: { value: '9', unit: 'm waiting' } },
   ];
   const working: RankRow[] = [
     { id: 'w1', name: 'build the page kit', line: 'cloudecode · working', icon: 'activity', tags: ['claude'], metric: { value: '3', unit: 'm turn' } },
-    { id: 'w2', name: 'willow summit', line: 'draft the quarterly summary for the review', icon: 'activity', tags: ['claude'], metric: null },
+    { id: 'w2', name: 'port the drawer', line: 'argent · working', icon: 'activity', tags: ['claude'], metric: null },
   ];
   const notMeasured = t('opscenter.session.mark.not_measured');
 </script>

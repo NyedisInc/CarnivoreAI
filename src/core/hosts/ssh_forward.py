@@ -1,22 +1,3 @@
-"""Forwards added to a running ControlMaster (issue #163, P2). Measured facts: ``p0-measurements.md``.
-
-  * A forward is added over the mux with ``ssh -O forward``. The master keeps
-    ``ClearAllForwardings=yes``, but the ``-O forward`` CLIENT must carry
-    ``ClearAllForwardings=no``: with ``yes`` it clears its own request and exits 0
-    having done nothing. So success is PROVEN, never read from the exit code: a
-    ``-L`` socket must accept a connect, a ``-R`` socket must exist on the far side.
-  * A master DEDUPLICATES ``-O forward -L``: asking again for a spec it already holds exits 0 and
-    does nothing, and it never rebinds a socket file that was unlinked under it. So a redial over a
-    surviving master must ``-O cancel`` the old spec BEFORE it unlinks the stale file and adds it
-    again (measured, ``linkfix-evidence.md``); cancel leaves the file, and its exit code is
-    meaningless (0 whether or not the forward existed), so it is best effort.
-  * sshd refuses a ``-R`` unix path that already exists, dead or not (its
-    ``StreamLocalBindUnlink`` is ``no``), so the far path is ``rm -f``'d over exec
-    on the same master first.
-  * Sockets are 0600 (default masks). A ``-L`` path is at most 103 bytes.
-  * ``-R 127.0.0.1:0:<local socket>`` (the F17 fallback) answers the allocated port
-    on stdout as a bare number.
-"""
 
 from __future__ import annotations
 
@@ -36,7 +17,7 @@ _REMOTE_REFUSED = "remote port forwarding failed"
 
 
 class ForwardError(Exception):
-    """A forward was not established, or could not be proven. The message says why."""
+    pass
 
 
 def _path(path: str) -> str:

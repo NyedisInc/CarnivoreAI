@@ -1,5 +1,6 @@
-<!-- project colors -->
+
 <script lang="ts">
+  import Button from '../base/Button.svelte';
   import { t } from '../i18n/index.svelte';
   import { sessions } from '../../opscenter/api/sessions.svelte';
   import { projects } from '../../opscenter/api/projects.svelte';
@@ -39,18 +40,18 @@
         {@const folded = !!rosterUi.fold[foldKey(g.name)]}
         {@const live = g.rows.filter((s) => isLive(s.activity_status)).length}
         <section class="m1-proj" data-project={g.name} data-folded={folded ? '' : null} data-block={g.color ? '' : null} style={g.color ? `--sp-block: ${projectColorVar(g.color)}` : undefined}>
-          <button type="button" class="m1-proj__head" aria-expanded={!folded} onclick={() => fold(g.name)}>
+          <Button variant="row" data-proj-head aria-expanded={!folded} onclick={() => fold(g.name)}>
             <span class="m1-proj__chev" aria-hidden="true"><Icon name="chevron-down" size={12} /></span>
             <span class="m1-proj__name">{g.name}</span>
             <span class="m1-proj__n">{live ? t('roster.proj.live', { base: countWords(g.rows.length), count: live }) : countWords(g.rows.length)}</span>
-          </button>
+          </Button>
           <ul class="m1-proj__rows" hidden={folded}>
             {#each g.rows as s (s.session.id)}
               {@const name = s.label ?? s.tmux_session ?? s.session.id}
               <li class="m1-ses">
                 <i class="rs-led" data-s={s.activity_status === 'working' ? 'g' : s.activity_status === 'question' ? 'y' : 'n'}></i>
                 <span class="m1-ses__name">{name}</span>
-                <button type="button" class="oc-btn oc-btn--sm" aria-label={t('roster.proj.open_aria', { name })} onclick={() => openSession(s.session.id, s.tmux_session)}>{t('roster.proj.open')}</button>
+                <Button size="sm" aria-label={t('roster.proj.open_aria', { name })} onclick={() => openSession(s.session.id, s.tmux_session)}>{t('roster.proj.open')}</Button>
               </li>
             {/each}
           </ul>

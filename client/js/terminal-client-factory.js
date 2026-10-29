@@ -1,4 +1,3 @@
-/*  hidden  getElementById('terminal') */
 
 console.log('[CloudeTerminal Module] Loading...');
 
@@ -57,7 +56,6 @@ console.log('[CloudeTerminal Module] Loading...');
         return record;
     }
 
-    /* getElementById('terminal') */
     function createTerminalClient(container, options) {
         var opts = options || {};
         if (typeof TerminalClientClass !== 'function') {

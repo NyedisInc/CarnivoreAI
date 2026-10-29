@@ -23,7 +23,7 @@ from src.core.session_status_map import StatusMap
 from src.core.session_instance_index import InstanceIndex
 
 NOW = datetime(2026, 9, 18, 12, 0, 0, tzinfo=timezone.utc)
-THREAD = "3fce7313-a048-4034-8b0d-72deecec7e53"
+THREAD = "ad166ca4-f8b4-989f-dee8-b5b4f34999e3"
 CWD = "/Users/x/proj"
 SESSION_ID = "ses_1"
 TMUX = "cloude_proj"
@@ -146,7 +146,8 @@ def _pipeline(tmp_path, monkeypatch, home, *, pane=RESTING_PANE):
         _identity_for_instance=lambda *args: {"agent_type": "codex"},
         _instance_index_for_listing=lambda *, socket, names: InstanceIndex(),
         _writable_datastore_connection=lambda: connect(db_path_for(state)),
-        _tmux_socket_name=lambda: "cloude",
+        tmux_socket_name=lambda: "cloude",
+        _wrappers_reader=lambda: [],
     )
     monkeypatch.setattr(reader_module, "DEFAULT_CODEX_HOME", str(home))
     monkeypatch.setattr(reader_module, "read_instance_row", row)

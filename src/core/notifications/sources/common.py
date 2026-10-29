@@ -13,7 +13,6 @@ from src.core.notifications import catalog_lines, contracts, types
 
 logger = structlog.get_logger(__name__)
 
-# state directory
 STATE_FILENAME = "notification_source_state.json"
 
 
@@ -55,7 +54,6 @@ def now() -> float:
 
 
 def _state_path(state_dir: Optional[Path] = None) -> Path:
-    """The state file, under ``state_dir`` or the app's state directory. Output: Path."""
     if state_dir is None:
         from src.config import settings
 

@@ -5,10 +5,6 @@ export interface CssRule {
     within: string[];
 }
 
-/* @media) unwrapped.
- *
- * Inputs: css (string), the sheet's text. Output: CssRule[] in source order.
- * Example: cssRules('@media (hover: none) { */
 export function cssRules(css: string): CssRule[] {
     const src = css.replace(/\/\*[\s\S]*?\*\//g, '');
     const rules: CssRule[] = [];

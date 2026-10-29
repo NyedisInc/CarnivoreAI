@@ -51,10 +51,10 @@ def test_command_file_without_subdirectory_has_no_namespace(fake_claude_home):
 def test_matches_real_seven_file_my_namespace_layout(fake_claude_home):
     my_dir = fake_claude_home / "commands" / "my"
     my_dir.mkdir(parents=True)
-    names = ["cmd-a", "cmd-b", "cmd-c", "cmd-d", "cmd-e", "cmd-f", "cmd-g"]
+    names = ["cb", "email-assistant", "gogs-add", "powershell-standards", "project-init", "qnap", "reevaluate"]
     for name in names:
         (my_dir / f"{name}.md").write_text(f"# {name}\n\n**Description**: does {name}\n")
-    (my_dir / "cmd-c.md.backup-20260101-000000").write_text("stale backup, not a command")
+    (my_dir / "gogs-add.md.backup-20260516-113837").write_text("stale backup, not a command")
 
     found = scd.discover_user_scope()
     commands = sorted(c.command for c in found)
@@ -82,10 +82,10 @@ def test_command_and_skill_both_create_same_slash_name(fake_claude_home):
 
 
 def test_skill_frontmatter_description_used_when_present(fake_claude_home):
-    skill_dir = fake_claude_home / "skills" / "fleet-tools"
+    skill_dir = fake_claude_home / "skills" / "docker-management"
     skill_dir.mkdir(parents=True)
     (skill_dir / "SKILL.md").write_text(
-        '---\nname: fleet-tools\ndescription: "Manages the docker fleet."\n---\n\n# Docker\n'
+        '---\nname: docker-management\ndescription: "Manages the docker fleet."\n---\n\n# Docker\n'
     )
     found = scd.discover_user_scope()
     assert found[0].description == "Manages the docker fleet."
@@ -274,7 +274,7 @@ def test_a_dot_directory_is_skipped_by_the_skill_scan(tmp_path):
 
 def test_build_command_groups_passes_both_roots_through(tmp_path, monkeypatch):
     monkeypatch.setattr(scd, "_load_scraped_commands", lambda: [])
-    monkeypatch.setattr(scd, "discover_plugin_scope", lambda: {})
+    monkeypatch.setattr(scd, "discover_plugin_scope", lambda root=None: {})
 
     claude_home = tmp_path / "claude-home"
     (claude_home / "skills" / "claude-side").mkdir(parents=True)
@@ -295,7 +295,7 @@ def test_build_command_groups_passes_both_roots_through(tmp_path, monkeypatch):
 
 def test_an_empty_codex_root_produces_no_group(tmp_path, monkeypatch):
     monkeypatch.setattr(scd, "_load_scraped_commands", lambda: [])
-    monkeypatch.setattr(scd, "discover_plugin_scope", lambda: {})
+    monkeypatch.setattr(scd, "discover_plugin_scope", lambda root=None: {})
 
     claude_home = tmp_path / "claude-home"
     (claude_home / "skills" / "only-claude").mkdir(parents=True)

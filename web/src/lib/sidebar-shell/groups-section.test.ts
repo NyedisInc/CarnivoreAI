@@ -14,7 +14,6 @@ vi.mock('./pack-source.svelte', () => ({ packSource: () => [], watchPack: () => 
 
 function stubs(): LegacyDrawer {
     return {
-        groups: {},
         projectHeader: {
             ledHtml: () => '',
             iconHtml: (n) => (n ? `<i ${n}>` : ''),

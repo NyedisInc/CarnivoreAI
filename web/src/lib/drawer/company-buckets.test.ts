@@ -38,7 +38,7 @@ describe('companyBuckets', () => {
     });
 });
 
-describe('project order', () => {
+describe('project order (Alex (Example-owner), 2026-10-18)', () => {
     it('sorts case-insensitively with natural numbers', () => {
         const out = sortProjectsAlpha(['zeta', 'Alpha', 'beta', 'p10', 'p2'].map((l, i) => proj(i, l)));
         expect(out.map((b) => b.label)).toEqual(['Alpha', 'beta', 'p2', 'p10', 'zeta']);

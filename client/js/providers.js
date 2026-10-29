@@ -49,6 +49,7 @@
             accounts: !(opts && opts.accounts === false),
             remote: (opts && opts.remote) || null,
             goLabel: (opts && opts.goLabel) || null,
+            prefill: (opts && opts.prefill) || null,
         }).then(function (pick) {
             if (!pick) return null;
             if (pick.model) rememberChoice(pick.model);
@@ -58,6 +59,8 @@
                 accountId: pick.account ? pick.account.accountId : null,
                 pinAccount: !!(pick.account && pick.account.pinned),
                 farLauncher: !!pick.farLauncher,
+                name: typeof pick.name === 'string' ? pick.name : null,
+                pinned: pick.pinned === true,
             };
         });
     }

@@ -55,14 +55,14 @@ SPECS = (
                     "moves by the transport). Waits for the owner's approval unless Beast Mode is armed.",
         properties={**_NAME, "machine": {"type": "string"}, "root": {"type": "string"}, "transport": {"type": "string"}},
         required=("project", "machine"), invoke=_add, summary=_add_summary,
-        example={"project": "demo", "machine": "hosta"},
+        example={"project": "demo", "machine": "studio"},
     ),
     ra.RouteTool(
         name="project_replica_remove", route="src.api.project_replica_routes:remove_project_replica", gate=ra.ACT,
         description="Stop a paired computer being a replica of a project: it keeps its folder and project as an ordinary "
                     "one. Waits for the owner's approval unless Beast Mode is armed.",
         properties={**_NAME, "machine": {"type": "string"}}, required=("project", "machine"), invoke=_remove,
-        summary=_remove_summary, example={"project": "demo", "machine": "hosta"},
+        summary=_remove_summary, example={"project": "demo", "machine": "studio"},
     ),
     ra.RouteTool(
         name="project_air_gap_set", route="src.api.project_replica_routes:set_project_air_gap", gate=ra.ACT,

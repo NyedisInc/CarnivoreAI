@@ -1,31 +1,4 @@
 #!/usr/bin/env python3
-"""Measure what the TAB TITLE and a TOAST CARD call a session.
-
-Every string this checks is read back from a real Chromium: the tab title
-off ``document.title`` after the real ``client/js/app.js`` setPageTitle()
-has run, and the toast's session line off the element that PAINTS it,
-after the real ``client/js/toast.js`` has built the card.
-
-WHY THIS FILE RATHER THAN ANOTHER DOM TEST. A test asserting that a
-resolver returns the right string proves nothing about what the tab says.
-This codebase has shipped three visibly broken features through fully
-green suites that read markup: a badge rendering the literal ``~~claude``
-because one tilde came from JS and one from a CSS ``::before`` while every
-test read ``.textContent``; a help button that fell through to the bare
-user-agent stylesheet as an unstyled grey square while "the button
-exists" passed; and a feature carrying 282 passing state assertions that
-drew zero pixels. So the session line here is asserted as a MEASURED BOX
-with a computed style, not merely as text that exists.
-
-MEASUREMENT GUARDS, each from a defect that has cost this project time:
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS              every assertion measured and held
-  1  FAIL              something was measured and was wrong
-  2  CANNOT DETERMINE  the measurement could not be taken at all
-
-Run: python3 scripts/verify_session_name_surfaces.py
-"""
 
 from __future__ import annotations
 

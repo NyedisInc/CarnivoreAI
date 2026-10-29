@@ -1,11 +1,3 @@
-"""Signed, short-lived link tickets for a plugin route that cannot carry the app's bearer token (an ``<iframe src>``, a pop-out window).
-
-A plugin's authenticated route mints a ticket naming a few fields (an item id, a file id); a second route accepts only that ticket. It is an
-HMAC-SHA256 over ``label|fields|expiry``, keyed from the server's JWT secret under the plugin's own ``label`` (so a ticket can never be
-replayed as an access token, or for another purpose). Nothing is stored: a ticket is valid until its expiry and grants only what its fields name.
-
-Example: mint("huddle-artifact", ["7", "49759e95"], 3600) -> "7.49759e95.1760000000.<sig>"; verify("huddle-artifact", that, 2) -> ("7", "49759e95")
-"""
 
 from __future__ import annotations
 

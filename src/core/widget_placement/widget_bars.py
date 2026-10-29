@@ -19,7 +19,6 @@ class WidgetBar(BaseModel):
 
     @model_serializer(mode="wrap")
     def _omit_absent(self, handler: Any) -> Dict[str, Any]:
-        """Store only the keys that were set: ABSENT stays absent, so a default is never written."""
         return {key: value for key, value in handler(self).items() if value is not None}
 
 
@@ -35,12 +34,14 @@ class SidebarRail(BaseModel):
 
     @model_serializer(mode="wrap")
     def _omit_absent(self, handler: Any) -> Dict[str, Any]:
-        """Store only the keys that were set: ABSENT stays absent, so a default is never written."""
         return {key: value for key, value in handler(self).items() if value is not None}
 
 
 class WidgetBars(BaseModel):
     """Both bars' chrome plus the sidebar rail's, one value for every device. ``side`` is the right bar.
+
+    Absent reads as every default. ``rail`` (#1790) rides here so the rail uses the bars' auto-hide setting, its write
+    route and its reset ("reset bars to defaults" puts the rail back to auto-hide too).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -53,5 +54,4 @@ class WidgetBars(BaseModel):
 
     @model_serializer(mode="wrap")
     def _omit_absent(self, handler: Any) -> Dict[str, Any]:
-        """Store only the keys that were set: ABSENT stays absent, so a default is never written."""
         return {key: value for key, value in handler(self).items() if value is not None}

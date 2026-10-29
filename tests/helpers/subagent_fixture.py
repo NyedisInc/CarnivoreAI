@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-CONV = "a3b9a1d2-3c34-4fb6-87ae-bb94505d5db2"
+CONV = "5ab0c0de-0000-4000-8000-00000000c0de"
 PROJECT_DIR = "-tmp-fixture-project"
 WORKDIR = "/tmp/fixture-project"
 VERSION = "2.1.283"
@@ -145,7 +145,7 @@ def build_corpus(root: Path) -> Path:
     agent(I, {"agentType": "worker", "description": "fixture torn", "toolUseId": "toolu_I"},
           [user(I, ts(11, 50)), assistant(I, ts(11, 52))],
           torn='{"parentUuid":null,"isSidechain":tr')
-    _write_lines(sub / "agent-acompact-e991da92.jsonl", [user("acompact-e991da92", ts(9, 0))])
+    _write_lines(sub / "agent-acompact-0123abcd.jsonl", [user("acompact-0123abcd", ts(9, 0))])
 
     parent = [
         _parent("user", ts(9, 59), promptId="p", message={"role": "user", "content": "placeholder"}),

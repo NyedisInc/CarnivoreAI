@@ -1,5 +1,4 @@
 
-/*  hidden  */
 export function fadeEdges(el: HTMLElement): { start: boolean; end: boolean } {
     return {
         start: el.scrollLeft > 1,

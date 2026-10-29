@@ -1,6 +1,6 @@
 import type { Translate } from '../sessions/types';
+import { reasonOf as sharedReasonOf } from '../../../../client/js/labels/error-reason.js';
 
 export function reasonOf(error: unknown, t: Translate): string {
-    const message = error instanceof Error ? error.message : String(error ?? '');
-    return message || t('error.server_unreachable');
+    return sharedReasonOf(error, t);
 }

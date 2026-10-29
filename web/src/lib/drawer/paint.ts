@@ -1,4 +1,6 @@
+import { afterRender as renameAfterRender } from './rename';
 import { sidebarShell } from '../sidebar-shell/shell.svelte';
+import { afterRender } from '../sidebar-shell/row-focus';
 import { arrange, type ArrangedRow } from './arrangement';
 import * as bar from './bar';
 import { currentMode } from './density';
@@ -7,7 +9,6 @@ import * as G from './group-store';
 import type { ListingVerdict } from './listing-state';
 import { FILTER_ONLY_QUERY, effectiveQuery } from './search';
 import * as S from './store';
-import { drawerEnv } from './env';
 
 export interface PaintTarget {
     listEl: HTMLElement | null;
@@ -15,11 +16,6 @@ export interface PaintTarget {
     _listing: ListingVerdict;
     _missing: string[];
     _dragging: boolean;
-}
-
-interface AfterRenderGlobals {
-    SessionSidebarReorder?: { afterRender?(): void };
-    SessionSidebarRename?: { afterRender?(): void };
 }
 
 export function repaint(ctrl: PaintTarget): boolean {
@@ -53,9 +49,8 @@ export function repaint(ctrl: PaintTarget): boolean {
         console.error('SessionSidebar: the drawer list could not be drawn (a module it needs is missing)');
         return false;
     }
-    const g = drawerEnv() as AfterRenderGlobals;
-    g.SessionSidebarReorder?.afterRender?.();
-    g.SessionSidebarRename?.afterRender?.();
+    afterRender();
+    renameAfterRender();
     sidebarShell.paintSelection(ctrl as unknown as Parameters<typeof sidebarShell.paintSelection>[0]);
     return true;
 }

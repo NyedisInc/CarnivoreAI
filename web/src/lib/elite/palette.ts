@@ -32,7 +32,6 @@ export function paletteForAccent(accent: string | null | undefined): Palette {
     return hue != null && hue >= 80 && hue <= 165 ? 'oblivion' : 'carnivore';
 }
 
-/* --color- */
 export function activePalette(): Palette {
     if (typeof document === 'undefined') return 'carnivore';
     return paletteForAccent(getComputedStyle(document.documentElement).getPropertyValue('--color-accent'));

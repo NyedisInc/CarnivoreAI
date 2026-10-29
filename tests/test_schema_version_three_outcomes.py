@@ -1,3 +1,27 @@
+"""Regressions for the schema-version read and the trail's interrupt
+labelling (findings V5 and V7 of the second adversarial round).
+
+Both are the same defect shape: a THIRD outcome collapsed onto one of the
+other two, inside the machinery whose entire job is to be trustworthy
+about what happened.
+
+  V5  ``get_schema_version`` reported an unparseable value as ``0``, and
+      the backup gate is ``if current > 0``. So a populated 9-project
+      database whose ``meta.schema_version`` said ``''``, ``'v1'``,
+      ``'1.0'`` or ``'3-dirty'`` migrated with ZERO backups taken, and
+      the trail recorded it as a ``bootstrap`` from 0 - a false claim
+      about a live database, written into the file that exists to be the
+      honest history.
+  V7  ``_prior_interrupt_uuid`` matched any earlier line with
+      ``status=='started'``, which includes the opening line of an
+      attempt that later closed cleanly as ``failed``. A retry after a
+      clean failure then recorded ``completed_after_interrupt`` and
+      asserted an interrupt that never happened.
+
+The V5 tests run against a database shaped like the user's REAL one -
+schema v1, populated projects table - because that is the actual
+production upgrade path, not an edge case.
+"""
 
 from __future__ import annotations
 
@@ -42,6 +66,15 @@ PARSEABLE = ((" 1 ", 1), ("01", 1), ("+1", 1), ("1\n", 1), ("2", 2))
 
 
 def _make_v1_populated(state_dir: Path, version_value: str = "1") -> Path:
+    """Build a v1-shaped, populated database like the live install's.
+
+    Description: meta + projects with rows, no sessions table, which is
+      exactly the shape measured on the user's machine (schema_version
+      1, 9 project rows).
+    Inputs: state_dir (Path) - directory to create cloude.db in.
+      version_value (str) - what to store in meta.schema_version.
+    Output: Path - the database path.
+    """
     db = db_path_for(state_dir)
     conn = sqlite3.connect(str(db))
     conn.execute("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)")
@@ -69,6 +102,7 @@ def _make_v1_populated(state_dir: Path, version_value: str = "1") -> Path:
 
 @pytest.mark.parametrize("raw", UNPARSEABLE)
 def test_unparseable_version_is_its_own_outcome(tmp_path: Path, raw: str) -> None:
+    """An unparseable version must be UNREADABLE, never the number zero."""
     _make_v1_populated(tmp_path, raw)
     conn = connect(db_path_for(tmp_path))
     try:
@@ -85,6 +119,7 @@ def test_unparseable_version_is_its_own_outcome(tmp_path: Path, raw: str) -> Non
 def test_parseable_versions_still_parse(
     tmp_path: Path, raw: str, expected: int
 ) -> None:
+    """The fix must not reject a version that is merely untidy."""
     _make_v1_populated(tmp_path, raw)
     conn = connect(db_path_for(tmp_path))
     try:
@@ -96,6 +131,7 @@ def test_parseable_versions_still_parse(
 
 
 def test_absent_version_is_distinct_from_unreadable(tmp_path: Path) -> None:
+    """Absent and unreadable are different facts and must not merge."""
     db = _make_v1_populated(tmp_path)
     conn = sqlite3.connect(str(db))
     conn.execute("DELETE FROM meta WHERE key='schema_version'")
@@ -116,6 +152,11 @@ def test_absent_version_is_distinct_from_unreadable(tmp_path: Path) -> None:
 def test_unparseable_version_never_migrates_without_a_backup(
     tmp_path: Path, raw: str
 ) -> None:
+    """THE DEFECT, asserted on the outcome the user would have suffered.
+
+    Before the fix each of these migrated a populated database to v3 with
+    zero backups on disk. Now nothing is written at all.
+    """
     _make_v1_populated(tmp_path, raw)
 
     state = ensure_db_migrated(tmp_path, config_version=4, app_version="0.0.0")
@@ -149,6 +190,13 @@ def test_unparseable_version_never_migrates_without_a_backup(
 def test_absent_version_on_a_populated_database_does_not_bootstrap(
     tmp_path: Path,
 ) -> None:
+    """The populated-table discriminator, which was not consulted at all.
+
+    A file with no recorded version is normally brand new, and the
+    bootstrap path is correct FOR a brand new one because there is
+    nothing yet to back up. That reasoning fails the moment the file
+    already holds data, so the claim is now checked.
+    """
     db = _make_v1_populated(tmp_path)
     conn = sqlite3.connect(str(db))
     conn.execute("DELETE FROM meta WHERE key='schema_version'")
@@ -166,6 +214,7 @@ def test_absent_version_on_a_populated_database_does_not_bootstrap(
 
 
 def test_populated_probe_reports_three_outcomes(tmp_path: Path) -> None:
+    """Populated, empty, and could-not-tell are three different answers."""
     _make_v1_populated(tmp_path)
     conn = connect(db_path_for(tmp_path))
     try:
@@ -209,6 +258,15 @@ def test_populated_probe_reports_three_outcomes(tmp_path: Path) -> None:
 def test_unparseable_version_pauses_even_on_an_empty_database(
     tmp_path: Path, raw: str
 ) -> None:
+    """The readable check must stand on its own, not lean on the populated one.
+
+    Written because a surviving mutant proved the two guards overlap: on
+    a POPULATED database, deleting the readable check still paused, via
+    the ``current == 0`` populated guard underneath it. They only come
+    apart when the database is EMPTY - and there the honest answer is
+    still to pause, because an empty table does not make a garbage
+    version string readable. We still do not know what this file is.
+    """
     db = db_path_for(tmp_path)
     conn = sqlite3.connect(str(db))
     conn.execute("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)")
@@ -246,6 +304,14 @@ def test_unparseable_version_pauses_even_on_an_empty_database(
 def test_unanswerable_populated_probe_is_treated_like_populated(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """The could-not-evaluate branch of the discriminator itself.
+
+    ``database_is_populated`` has three outcomes, and the third one -
+    the probe failed - must be handled like True, never like False. A
+    None that fell through to the fresh-install path would skip the
+    backup on an unverified guess, which is the whole defect one level
+    down.
+    """
     db = _make_v1_populated(tmp_path)
     conn = sqlite3.connect(str(db))
     conn.execute("DELETE FROM meta WHERE key='schema_version'")
@@ -268,12 +334,14 @@ def test_unanswerable_populated_probe_is_treated_like_populated(
 
 
 def test_get_schema_version_is_documented_as_report_only() -> None:
+    """The lossy helper must warn against exactly the misuse that bit us."""
     doc = get_schema_version.__doc__ or ""
     assert "DO NOT USE THIS AS A GATE" in doc
     assert "read_schema_version" in doc
 
 
 def test_real_v1_database_still_migrates_cleanly(tmp_path: Path) -> None:
+    """The production path must not regress. v1 populated -> current, with backup."""
     _make_v1_populated(tmp_path, "1")
 
     state = ensure_db_migrated(tmp_path, config_version=4, app_version="0.0.0")
@@ -298,6 +366,11 @@ def test_real_v1_database_still_migrates_cleanly(tmp_path: Path) -> None:
 
 
 def _trail_lines(state_dir: Path) -> List[dict]:
+    """Read the migration trail as parsed JSON objects.
+
+    Inputs: state_dir (Path).
+    Output: list[dict] - one per line, in file order.
+    """
     path = state_dir / "migration_trail.jsonl"
     if not path.exists():
         return []
@@ -311,6 +384,13 @@ def _trail_lines(state_dir: Path) -> List[dict]:
 def test_retry_after_a_clean_failure_claims_no_interrupt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """THE DEFECT. A closed 'failed' attempt is not an interrupt.
+
+    The first attempt is forced to fail cleanly, so its ``started`` line
+    IS closed - by a ``failed`` line. The retry must therefore close as
+    plain ``completed``. Before the fix it matched the closed started
+    line and claimed ``completed_after_interrupt``.
+    """
     _make_v1_populated(tmp_path, "1")
 
     import src.core.db_migration as dbmig
@@ -338,6 +418,11 @@ def test_retry_after_a_clean_failure_claims_no_interrupt(
 
 
 def test_retry_after_a_real_interrupt_still_reports_it(tmp_path: Path) -> None:
+    """The fix must not silence the case the field exists for.
+
+    An UNCLOSED started line is a genuine interrupt, and the retry must
+    still say so - otherwise V7's cure would erase real history.
+    """
     _make_v1_populated(tmp_path, "1")
 
     trail = tmp_path / "migration_trail.jsonl"

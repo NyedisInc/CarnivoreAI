@@ -5,7 +5,6 @@
 </script>
 
 <script lang="ts">
-  /* scheduled tasks */
   import { untrack } from 'svelte';
   import type { CellProps } from '../../lib/cell';
   import DataTable from '../../ui/DataTable.svelte';

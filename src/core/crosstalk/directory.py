@@ -7,6 +7,7 @@ import re
 import sqlite3
 from contextlib import closing
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Optional
 
 import structlog
@@ -17,6 +18,7 @@ logger = structlog.get_logger()
 
 FUZZY_MIN_RATIO = 0.75
 TIERS = ("session_uuid", "id", "label", "normalized", "prefix", "substring", "fuzzy")
+EXACT_TIERS = TIERS[:4]
 _IGNORED = re.compile(r"[\s\-_.]+")
 
 
@@ -42,17 +44,25 @@ def _session_details(row_ids: list[int]) -> dict[int, tuple[str, Optional[str], 
     if not row_ids:
         return {}
     from src.config import settings
-    from src.core.db import DatastoreUnreadableError, connect, db_path_for
+    from src.core.db import DatastoreUnreadableError, db_path_for
+    from src.core.db_reuse.change_cache import HOT_READS
 
-    marks = ",".join("?" * len(row_ids))
+    db_file = db_path_for(settings.get_state_dir())
     try:
-        with closing(connect(db_path_for(settings.get_state_dir()), create=False)) as conn:
-            rows = conn.execute(f"SELECT s.id, s.session_uuid, s.claude_title, a.former_names FROM sessions s LEFT JOIN swarm_agents a "
-                                f"ON a.session_row_id = s.id AND a.torn_down_at IS NULL WHERE s.id IN ({marks})", row_ids).fetchall()
+        every = HOT_READS.fetch(db_file, ("crosstalk_session_details",), lambda: _read_all_details(db_file))
     except (DatastoreUnreadableError, sqlite3.Error) as exc:
         logger.warning("crosstalk.directory.details_lookup_failed", error=type(exc).__name__)
         return {}
-    return {int(r[0]): (str(r[1]), r[2], _aliases(r[3])) for r in rows}
+    return {rid: (found[0], found[1], _aliases(found[2])) for rid in row_ids if (found := every.get(rid)) is not None}
+
+
+def _read_all_details(db_file: Any) -> dict[int, tuple[str, Optional[str], Any]]:
+    from src.core.db import connect
+
+    with closing(connect(db_file, create=False)) as conn:
+        rows = conn.execute("SELECT s.id, s.session_uuid, s.claude_title, a.former_names FROM sessions s LEFT JOIN swarm_agents a "
+                            "ON a.session_row_id = s.id AND a.torn_down_at IS NULL").fetchall()
+    return {int(r[0]): (str(r[1]), r[2], r[3]) for r in rows}
 
 
 def agent_session_uuid(agent_id: int) -> Optional[str]:
@@ -96,22 +106,21 @@ def _card(info: Any, details: dict[int, tuple[str, Optional[str], list[str]]], s
     }
 
 
-def _asleep_rows() -> list[dict]:
-    return _stored_rows("asleep_rows")
+def _asleep_rows(state_dir: Path | None = None) -> list[dict]:
+    return _stored_rows("asleep_rows", state_dir)
 
 
 def _closed_rows() -> list[dict]:
-    """Every CLOSED local row with a known conversation id (#1980), shaped like :func:`_asleep_rows`. On a worker thread."""
     return _stored_rows("closed_rows")
 
 
-def _stored_rows(reader: str) -> list[dict]:
+def _stored_rows(reader: str, state_dir: Path | None = None) -> list[dict]:
     from src.config import settings
     from src.core import session_sleep
     from src.core.db import DatastoreUnreadableError, connect, db_path_for
 
     try:
-        with closing(connect(db_path_for(settings.get_state_dir()), create=False)) as conn:
+        with closing(connect(db_path_for(state_dir or settings.get_state_dir()), create=False)) as conn:
             rows = [r for r in getattr(session_sleep, reader)(conn) if (r.get("host_key") or LOCAL_HOST_KEY) == LOCAL_HOST_KEY]
             agents = {int(a[0]): (int(a[1]), a[2], a[3]) for a in conn.execute(
                 "SELECT session_row_id, id, torn_down_at, former_names FROM swarm_agents WHERE session_row_id IS NOT NULL")}
@@ -157,11 +166,6 @@ async def list_cards(manager: Any, *, self_tmux: Optional[str] = None, include_r
 
 
 async def local_identity(manager: Any, session_id: str) -> Optional[dict]:
-    """The minimal card (``id``, ``session_uuid``) of ONE local session, without building every card.
-
-    Inputs: manager (``SessionManager``-like with ``get_session_info``); session_id (str).
-    Output: dict | None. None when the session is gone or has no stored row; ``session_uuid`` is the row's stored uuid.
-    """
     info = await manager.get_session_info(session_id=session_id)
     if info is None or info.session_row_id is None:
         return None

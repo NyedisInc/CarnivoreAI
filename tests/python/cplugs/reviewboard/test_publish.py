@@ -11,13 +11,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.cplugs.huddle import board_port, wire as huddle_wire
+from src.cplugs.huddle import board_port, wire as task_manager_wire
 from src.cplugs.reviewboard import document, publish, revisions, scan, store
 from src.cplugs.reviewboard.errors import BadRequest
 from src.cplugs.reviewboard.requests import ReviseBody
 from src.core.mcp.caller import AgentCaller
 from tests.python.cplugs.reviewboard.boards import PAGE, SIDECAR, make_board
-from tests.python.cplugs.reviewboard.harness import BASE, OWN_PROJECT, Env, huddle_on, huddle_store, make_env
+from tests.python.cplugs.reviewboard.harness import BASE, OWN_PROJECT, Env, task_manager_on, task_manager_store, make_env
 
 HTML = "<!doctype html><title>bar</title><div data-rb-anchor='send'>send</div><script>1</script>"
 PROMPTS = [{"id": "layout", "kind": "choice", "label": "which button row", "options": [{"id": "a", "label": "one row"}, {"id": "b", "label": "two rows"}], "anchor": "buttons"},
@@ -28,7 +28,7 @@ ANCHORS = [{"id": "send", "label": "send button"}, {"id": "buttons", "label": "b
 @pytest.fixture
 def env(tmp_path: Path, monkeypatch) -> Env:
     made = make_env(tmp_path)
-    huddle_on(made, monkeypatch)
+    task_manager_on(made, monkeypatch)
     yield made
     board_port.unregister()
 
@@ -42,7 +42,7 @@ def client(env: Env):
 
 @pytest.fixture
 def item(env: Env) -> int:
-    return huddle_store(env).add("all", "redo the bottom bar", actor="claude", title="Part 3 bottom bar")["id"]
+    return task_manager_store(env).add("all", "redo the bottom bar", actor="claude", title="Part 3 bottom bar")["id"]
 
 
 def create_body(item_id: int, **over):
@@ -55,7 +55,7 @@ def tree(root: Path) -> dict:
 
 
 def thread(env: Env, item_id: int) -> list:
-    return [m for m in huddle_store(env).item(item_id)["thread"] if m.get("category") != "status"]
+    return [m for m in task_manager_store(env).item(item_id)["thread"] if m.get("category") != "status"]
 
 
 def made(client, item_id: int, **over):
@@ -81,7 +81,7 @@ def test_create_writes_the_board_and_posts_the_card_and_asks_for_review(env: Env
     assert card["author"] == "claude" and card["kind"] == "info" and card["text"] == "bottom bar r1: first pass: icons only"
     assert card["board"] == {"slug": slug, "revision": "r1", "title": "bottom bar", "summary": "first pass: icons only"}
     assert answer["card"]["posted"] is True and answer["card"]["review"] == {"requested": True, "moved": True, "reason": None}
-    row = huddle_store(env).item(item)
+    row = task_manager_store(env).item(item)
     assert row["state"] == "review" and row["status"] == "review"
     assert row["review_summary"] == "bottom bar r1: first pass: icons only" and "which button row" in row["review_description"]
     assert env.published.count("cplug.reviewboard.boards") == 1
@@ -90,15 +90,15 @@ def test_create_writes_the_board_and_posts_the_card_and_asks_for_review(env: Env
 def test_request_review_false_posts_the_card_and_leaves_the_task_alone(env: Env, client, item):
     answer = made(client, item, request_review=False)
     assert answer["card"]["posted"] is True and answer["card"]["review"] == {"requested": False, "moved": False, "reason": None}
-    assert huddle_store(env).item(item)["state"] == "open" and thread(env, item)[-1]["board"]["revision"] == "r1"
+    assert task_manager_store(env).item(item)["state"] == "open" and thread(env, item)[-1]["board"]["revision"] == "r1"
 
 
 def test_a_task_that_cannot_move_keeps_its_state_and_says_why(env: Env, client, item):
-    huddle_store(env).update(item, actor="joe", state="todo")
+    task_manager_store(env).update(item, actor="joe", state="todo")
     answer = made(client, item)
     review = answer["card"]["review"]
     assert answer["card"]["posted"] is True and review["moved"] is False and "stays where it is" in review["reason"]
-    assert huddle_store(env).item(item)["state"] == "todo"
+    assert task_manager_store(env).item(item)["state"] == "todo"
 
 
 def test_create_refuses_before_writing_when_the_task_is_missing_or_the_name_is_taken(env: Env, client, item):
@@ -203,19 +203,19 @@ def test_a_card_that_cannot_be_posted_never_undoes_the_revision(env: Env, client
     monkeypatch.setattr(publish, "local_computer", lambda: "some-other-mac")
     sidecar_path = env.board(slug) / "sidecar.json"
     raw = json.loads(sidecar_path.read_text())
-    raw["task"]["computer"] = "hostb"
+    raw["task"]["computer"] = "mac-mini-m4"
     sidecar_path.write_text(document.canonical_text(document.parse_sidecar(raw)))
     r = client.post(f"{BASE}/boards/{slug}/revisions", json={"summary": "r2", "html": HTML + "2"})
     assert r.status_code == 200 and r.json()["revision"] == "r2"
-    assert r.json()["card"] == {"posted": False, "reason": "the task is on hostb"}
+    assert r.json()["card"] == {"posted": False, "reason": "the task is on mac-mini-m4"}
     assert [m["board"]["revision"] for m in thread(env, item) if "board" in m] == ["r1"]
-    huddle_store(env).delete(item, actor="joe")
-    monkeypatch.setattr(publish, "local_computer", lambda: "hostb")
+    task_manager_store(env).delete(item, actor="joe")
+    monkeypatch.setattr(publish, "local_computer", lambda: "mac-mini-m4")
     gone = client.post(f"{BASE}/boards/{slug}/revisions", json={"summary": "r3", "html": HTML + "3"})
     assert gone.status_code == 200 and gone.json()["card"]["posted"] is False and "no longer exists" in gone.json()["card"]["reason"]
 
 
-def test_the_board_cannot_be_written_while_the_huddle_is_off(env: Env, client, item):
+def test_the_board_cannot_be_written_while_the_task_manager_is_off(env: Env, client, item):
     board_port.unregister()
     before = tree(env.root)
     r = client.post(f"{BASE}/boards", json=create_body(item))
@@ -310,9 +310,9 @@ def test_the_page_name_follows_the_revision_number():
 
 
 def test_the_agent_tools_publish_from_a_file_and_apply_the_own_list_guard(env: Env, tmp_path: Path):
-    huddle = huddle_store(env)
-    mine = huddle.add("12", "my task", actor="claude")["id"]
-    theirs = huddle.add("13", "another project's task", actor="claude")["id"]
+    task_manager = task_manager_store(env)
+    mine = task_manager.add("12", "my task", actor="claude")["id"]
+    theirs = task_manager.add("13", "another project's task", actor="claude")["id"]
     page = tmp_path / "page.html"
     page.write_text(HTML)
     args = {"name": "bottom-bar", "title": "bottom bar", "task": mine, "summary": "first pass", "file_path": str(page), "viewport": 320, "prompts": PROMPTS, "anchors": ANCHORS}
@@ -333,8 +333,8 @@ def test_the_agent_tools_publish_from_a_file_and_apply_the_own_list_guard(env: E
 
 
 def test_the_tools_refuse_a_bad_page_argument(env: Env, tmp_path: Path):
-    huddle = huddle_store(env)
-    mine = huddle.add("12", "my task", actor="joe")["id"]
+    task_manager = task_manager_store(env)
+    mine = task_manager.add("12", "my task", actor="joe")["id"]
     page = tmp_path / "page.html"
     page.write_text(HTML)
     link = tmp_path / "link.html"
@@ -361,10 +361,10 @@ def test_a_read_token_does_not_see_the_write_tools(env: Env):
 
 def test_the_board_card_is_a_plain_message_to_every_other_reader(env: Env, client, item):
     made(client, item)
-    row = huddle_store(env).item(item)
+    row = task_manager_store(env).item(item)
     card = thread(env, item)[-1]
     assert card["board"]["revision"] == "r1" and "artifact" not in card and "files" not in card and "form" not in card
-    assert huddle_wire.board.wire('{"files": [], "artifact": {}}') is None and huddle_wire.board.wire("") is None
-    assert huddle_wire.board.wire('{"board": "damaged"') is None
+    assert task_manager_wire.board.wire('{"files": [], "artifact": {}}') is None and task_manager_wire.board.wire("") is None
+    assert task_manager_wire.board.wire('{"board": "damaged"') is None
     assert board_port.NAME == "huddle.board"
     assert OWN_PROJECT == 12

@@ -29,6 +29,7 @@ export const PREVIEW_CLASSIC_SCRIPTS: readonly string[] = [
   '/static/js/module-families.js',
   '/static/js/markdown-lite.js',
   '/static/js/modal-stack.js',
+  '/static/js/modal-ring.js',
   '/static/js/status-led.js',
   '/static/js/agent-family-icon.js',
   '/static/js/ui-flags.js',
@@ -64,7 +65,6 @@ export function escapeAttribute(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/*  hidden  */
 export function previewDocument(config: PreviewConfig): string {
   const links = PREVIEW_STYLESHEETS.map((href) => `<link rel="stylesheet" href="${escapeAttribute(href)}">`).join('');
   return (

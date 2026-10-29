@@ -1,4 +1,4 @@
-/* display: none */
+/* there is nothing */
 
 console.log('[TerminalGridHost Module] Loading...');
 

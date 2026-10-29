@@ -18,7 +18,7 @@ from src.core.automations.targets import session_message
 from src.core.session_delivery import bring_up
 from src.cplugs.sdk import turn_events
 
-UUID = "7a0d97e0-19b8-43ae-8ede-3eb5e1a21c49"
+UUID = "0f6c2d6e-1111-4c4c-9e9e-000000000001"
 TARGET = {"kind": "session_message", "session_uuid": UUID, "text": "run the weekly checks", "project_id": 3}
 
 
@@ -55,7 +55,7 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setitem(targets.VALIDATORS, "session_message", lambda t: None)
     monkeypatch.setattr(bring_up, "READY_STEP_S", 0.01)
     monkeypatch.setattr(session_message, "QUEUE_STEP_S", 5.0)
-    monkeypatch.setattr("src.core.automations.targets.session_message._tell", lambda *a, **k: None)
+    monkeypatch.setattr("src.core.automations.notify_policy.tell", lambda *a, **k: None)
     pasted, w = [], SimpleNamespace(busy=0, ops=None)
 
     async def paste(request, session_id, text, *, idle_only=False, **_):

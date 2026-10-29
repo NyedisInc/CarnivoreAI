@@ -46,7 +46,6 @@ export interface DeepGroup {
   hits: DeepHit[];
 }
 
-/* did not answer */
 export interface PeerDown {
   hostKey: string;
   label: string;

@@ -23,6 +23,7 @@ _STATUS = {"secret_unknown": 404, "secret_unbound": 422, "secret_invalid": 422, 
 
 
 class SecretBody(BaseModel):
+    """The value the owner typed. Never echoed."""
 
     model_config = ConfigDict(extra="forbid")
     value: StrictStr
@@ -92,12 +93,6 @@ async def get_egress(cplug_id: str, request: Request, limit: int = Query(100, ge
 
 
 def purge_network_data(state_dir: Any, cplug_id: str) -> List[str]:
-    """
-    Inputs: state_dir (Path); cplug_id (str). Output: the stores whose delete failed, in order, from
-    ``install_key`` (the ledger could not name the key, so nothing was tried), ``keychain``, ``egress``, ``activity``;
-    empty on full success. Each store is tried even when an earlier one failed. A failure is logged, never raised: the
-    caller decides whether the install's name may be released, and a second purge retries.
-    """
     try:
         key = runtime.install_key_for(state_dir, cplug_id)
     except identity.LedgerUnreadable as exc:

@@ -95,11 +95,6 @@ def _move_grant(state_dir: Path) -> bool:
 
 
 def migrate(config_path: Path, state_dir: Path) -> Dict[str, bool]:
-    """Run every part, each fail-soft. Output: which parts changed something.
-
-    Inputs: config_path (Path) config.json; state_dir (Path) the durable state directory.
-    Example: migrate(cfg, state) -> {"config": True, "folder": True, "grant": False}; a second call -> all False
-    """
     done = {"config": False, "folder": False, "grant": False}
     try:
         if config_path.exists():

@@ -1,6 +1,9 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
+    import Button from '../../lib/base/Button.svelte';
+    import Field from '../../lib/base/Field.svelte';
+    import IconButton from '../../lib/base/IconButton.svelte';
     import ModalShell from '../../lib/launchpad/ModalShell.svelte';
     import { t } from '../../lib/i18n/index.svelte';
     import { NAME_MAX, nameProblem } from './shape';
@@ -18,14 +21,15 @@
     let name = $state(suggested);
     let error = $state('');
     let busy = $state(false);
-    let field: HTMLInputElement | null = $state(null);
+    const FIELD_ID = 'layout-name-input';
+    const field = (): HTMLInputElement | null => document.getElementById(FIELD_ID) as HTMLInputElement | null;
 
     onMount(() => watchAbort(() => close(false)));
 
     $effect(() => {
         const timer = setTimeout(() => {
-            field?.focus();
-            field?.select();
+            field()?.focus();
+            field()?.select();
         }, 100);
         return () => clearTimeout(timer);
     });
@@ -43,7 +47,7 @@
         const refused = localProblem(name);
         if (refused) {
             error = refused;
-            field?.focus();
+            field()?.focus();
             return;
         }
         busy = true;
@@ -55,7 +59,7 @@
             return;
         }
         error = answer;
-        field?.focus();
+        field()?.focus();
     }
 
     function onKey(event: KeyboardEvent): void {
@@ -74,58 +78,27 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">&raquo; {t('layout.name.title')}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')}
-                disabled={busy} onclick={() => close(false)}>&times;</button>
+            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
+                disabled={busy} onclick={() => close(false)} />
         </div>
     {/snippet}
     <div class="modal-input-group" data-layout-name-modal>
-        <label class="modal-label" for="layout-name-input">{t('layout.name.label')}</label>
-        <input
-            type="text"
-            class="modal-input"
-            id="layout-name-input"
+        <Field
+            id={FIELD_ID}
+            label={t('layout.name.label')}
+            bind:value={name}
             autocomplete="off"
             spellcheck="false"
             maxlength={NAME_MAX * 2}
             placeholder={t('layout.name.placeholder')}
-            aria-invalid={error ? 'true' : undefined}
-            aria-describedby={error ? 'layout-name-error' : 'layout-name-hint'}
-            bind:this={field}
-            bind:value={name}
+            help={t('layout.name.hint')}
+            {error}
             onkeydown={onKey}
         />
-        <p class="lnm-hint" id="layout-name-hint">{t('layout.name.hint')}</p>
-        {#if error}
-            <p class="lnm-error" id="layout-name-error" role="alert">{error}</p>
-        {/if}
     </div>
     {#snippet footer()}
-        <button class="modal-btn modal-btn-secondary" id="layout-name-cancel" disabled={busy} onclick={() => close(false)}
-            >{t('layout.name.cancel')}</button
-        >
-        <button class="modal-btn modal-btn-confirm" id="layout-name-save" disabled={busy} onclick={() => void submit()}
-            >{busy ? t('layout.name.saving') : t('layout.name.save')}</button
-        >
+        <Button id="layout-name-cancel" disabled={busy} onclick={() => close(false)}>{t('layout.name.cancel')}</Button>
+        <Button variant="confirm" id="layout-name-save" disabled={busy} onclick={() => void submit()}
+            >{busy ? t('layout.name.saving') : t('layout.name.save')}</Button>
     {/snippet}
 </ModalShell>
-
-<style>
-  @layer components {
-      .lnm-hint {
-          margin: 6px 0 0;
-          font-size: var(--oc-fs-micro, var(--oc-fs-micro));
-          color: var(--oc-text-muted);
-          line-height: 1.45;
-      }
-
-      .lnm-error {
-          margin: var(--oc-space-2) 0 0;
-          padding: 6px var(--oc-space-2);
-          border-left: 2px solid var(--oc-coral);
-          background: color-mix(in srgb, var(--oc-coral) 12%, var(--oc-ground-raised));
-          color: var(--oc-text-primary);
-          font-size: var(--oc-fs-body);
-          line-height: 1.45;
-      }
-  }
-</style>

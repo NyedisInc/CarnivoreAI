@@ -35,12 +35,6 @@ def last_activity(sidecar: Sidecar) -> Optional[str]:
 
 
 def closed_over(derived: Optional[str], task_state: Optional[str]) -> Optional[str]:
-    """The state a list shows once the linked task's state is known: ``CLOSED`` when the task is done, else the sidecar's own state.
-
-    Inputs: derived (str | None) - :func:`board_state`'s answer, None for a board that could not be read; task_state (str | None) - the
-      linked task's Task Manager state, None when the board is unlinked, the task is gone or could not be read.
-    Output: str | None. Example: closed_over("with_claude", "done") -> "closed"; closed_over("with_claude", "open") -> "with_claude"
-    """
     if derived is None or task_state != TASK_DONE:
         return derived
     return CLOSED

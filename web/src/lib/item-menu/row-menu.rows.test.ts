@@ -2,10 +2,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import '../plugins/builtin';
 import { sessionCardMenuItems } from '../plugins/session-card-actions';
+const assigned = vi.hoisted(() => [] as Array<[string, string | null]>);
+vi.mock('../sidebar-shell/group-assign', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    commitAssignment: (name: string, uuid: string | null) => { assigned.push([name, uuid]); return Promise.resolve(true); },
+}));
+
 import { contextFromRow, contextFromTrigger, triggerHtml, type RowContextOptions } from './row-context';
+import { runRestart } from '../drawer/restart-click';
 import { bench, ctxOf, idsOf, itemsOf, loadRunTable, triggerFrom, win } from './row-test-env';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -36,13 +43,13 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+    assigned.length = 0;
     markUnread = true;
     bench({
         SessionLabel: { LABEL_MAX_CHARS: 200 },
         SessionRowActions: rowActions,
         UIFlags: { showMarkUnreadControl: () => markUnread },
-        SessionSidebarGroupActions: { openPickerFor() {} },
-        SessionSidebarGroupStore: groupStore([{ group_uuid: 'u-orchard', name: 'Orchard' }]),
+        SessionSidebarGroupStore: groupStore([{ group_uuid: 'u-argent', name: 'Argent' }]),
         CloudeWeb: { sessionCardMenuItems },
     });
     win.CloudeI18n = { t: (key: string) => ({ 'sidebar.group.remove_from.label': 'remove from group' } as Record<string, string>)[key] ?? key };
@@ -126,12 +133,9 @@ describe('a live row (test_session_row_menu_superset)', () => {
         expect(idsOfUnread(true)).not.toContain('mark-unread');
     });
 
-    test('add to only on the sidebar with the group module; a browser or Layout files itself, a Layout also adds members', () => {
+    test('add to only on the sidebar (the group picker is part of the bundle); a browser or Layout files itself, a Layout also adds members', () => {
         expect(idsFor(liveRow())).toContain('add-to');
         expect(idsFor(liveRow(), { surface: 'launchpad' })).not.toContain('add-to');
-        delete win.SessionSidebarGroupActions;
-        expect(idsFor(liveRow())).not.toContain('add-to');
-        win.SessionSidebarGroupActions = { openPickerFor() {} };
         const base = ctxFor(liveRow());
         expect(idsOf(base)).not.toContain('move-to-group');
         const browser = idsOf({ ...base, kind: 'browser' });
@@ -171,14 +175,14 @@ describe('a live row (test_session_row_menu_superset)', () => {
     });
 
     test('every drawn letter is distinct', () => {
-        const drawn = itemsOf(ctxFor(liveRow(), { band: 'g:u-orchard' })).map((i) => i.shortcut).filter(Boolean);
+        const drawn = itemsOf(ctxFor(liveRow(), { band: 'g:u-argent' })).map((i) => i.shortcut).filter(Boolean);
         expect(new Set(drawn).size).toBe(drawn.length);
     });
 });
 
 describe('a remote row (test_session_row_menu_host_gate)', () => {
     const LOCAL = { name: 'cloude_api', status: 'working', created_by_cloude: true };
-    const REMOTE = { ...LOCAL, host_key: 'hosta' };
+    const REMOTE = { ...LOCAL, host_key: 'studio' };
 
     test('both are restartable; the host rides the context and the trigger; fork and sleep are local only', () => {
         expect(ctxFor(LOCAL).restartable).toBe(true);
@@ -186,9 +190,9 @@ describe('a remote row (test_session_row_menu_host_gate)', () => {
         expect(ctxFor({ ...LOCAL, host_key: 'local' }).restartable).toBe(true);
         const remote = ctxFor(REMOTE);
         expect(remote.restartable).toBe(true);
-        expect(remote.hostKey).toBe('hosta');
+        expect(remote.hostKey).toBe('studio');
         expect(triggerHtml(remote)).toMatch(/data-row-menu-restartable="1"/);
-        expect(triggerHtml(remote)).toMatch(/data-row-menu-host-key="hosta"/);
+        expect(triggerHtml(remote)).toMatch(/data-row-menu-host-key="studio"/);
         expect(triggerHtml(ctxFor(LOCAL))).toMatch(/data-row-menu-host-key="local"/);
         const withUuid = { session_uuid: 'u-1' };
         for (const id of ['fork', 'sleep']) {
@@ -206,72 +210,62 @@ describe('a remote row (test_session_row_menu_host_gate)', () => {
             lastError: () => '',
         };
         win.SessionRestartOptions = { recreateTarget: () => 'local-uuid' };
-        win.Launchpad = { sessionRecords: [] };
         win.API = { respawnSession: async (target: string) => { calls.respawned.push(target); return { ok: false, detail: 'x' }; } };
-        win.alert = (m: unknown) => calls.alerts.push(m);
+        win.Router = { showError: (m: unknown) => calls.alerts.push(m) };
         if (!win.CSS || typeof win.CSS.escape !== 'function') win.CSS = { ...(win.CSS || {}), escape: (v: string) => String(v) };
         const key = win.SessionKey;
         if (!withKey) delete win.SessionKey;
         try {
-            run('session-sidebar-restart-click.js');
-            await win.SessionSidebarRestartClick.runRestart({ _fetchAndRender: async () => {} }, 'cloude_api', null, hostKey);
+            await runRestart({ _fetchAndRender: async () => {} }, 'cloude_api', null, hostKey);
         } finally {
             win.SessionKey = key;
-            delete win.Launchpad;
+            delete win.Router;
         }
         return calls;
     }
 
     test('the restart flow previews and restarts the remote KEY with no recreate offer; a local row its bare name', async () => {
-        const remote = await restartWith('hosta');
-        expect(remote.opened).toEqual([{ target: 'remote:hosta:cloude_api', uuid: null }]);
-        expect(remote.respawned).toEqual(['remote:hosta:cloude_api']);
+        const remote = await restartWith('studio');
+        expect(remote.opened).toEqual([{ target: 'remote:studio:cloude_api', uuid: null }]);
+        expect(remote.respawned).toEqual(['remote:studio:cloude_api']);
         const local = await restartWith('local');
         expect(local.opened).toEqual([{ target: 'cloude_api', uuid: 'local-uuid' }]);
         expect(local.respawned).toEqual(['cloude_api']);
     });
 
     test('FAIL CLOSED: a remote row without the key module restarts nothing', async () => {
-        const calls = await restartWith('hosta', false);
+        const calls = await restartWith('studio', false);
         expect(calls.opened).toEqual([]);
         expect(calls.respawned).toEqual([]);
         expect(calls.alerts).toHaveLength(1);
+        expect(String(calls.alerts[0])).toContain('cloude_api');
     });
 });
 
 describe('remove from group (test_session_row_menu_remove_from_group)', () => {
     test('only the copy under its hand-made group\'s own band offers it', () => {
-        expect(idsFor(liveRow(), { band: 'g:u-orchard' })).toContain('remove-from-group');
+        expect(idsFor(liveRow(), { band: 'g:u-argent' })).toContain('remove-from-group');
         for (const band of ['pinned', 'p:7', 'rogue', 'other', undefined]) expect(idsFor(liveRow(), { band }), String(band)).not.toContain('remove-from-group');
         win.SessionSidebarGroupStore = groupStore([]);
-        expect(idsFor(liveRow(), { band: 'g:u-orchard' }), 'a group the store no longer has').not.toContain('remove-from-group');
-        win.SessionSidebarGroupStore = groupStore([{ group_uuid: 'u-orchard', name: 'Orchard' }]);
-        delete win.SessionSidebarGroupActions;
-        expect(idsFor(liveRow(), { surface: 'launchpad', band: 'g:u-orchard' }), 'NEGATIVE CONTROL: no group model').not.toContain('remove-from-group');
+        expect(idsFor(liveRow(), { band: 'g:u-argent' }), 'a group the store no longer has').not.toContain('remove-from-group');
+        win.SessionSidebarGroupStore = groupStore([{ group_uuid: 'u-argent', name: 'Argent' }]);
+        expect(idsFor(liveRow(), { surface: 'launchpad', band: 'g:u-argent' }), 'NEGATIVE CONTROL: not the sidebar').not.toContain('remove-from-group');
     });
 
     test('the label is flat, never named, and the group survives the trigger', () => {
-        const ctx = ctxFor(liveRow(), { band: 'g:u-orchard' });
+        const ctx = ctxFor(liveRow(), { band: 'g:u-argent' });
         expect(itemsOf(ctx).find((i) => i.id === 'remove-from-group')!.label).toBe('remove from group');
         const back = contextFromTrigger(triggerFrom(triggerHtml(ctx)))!;
-        expect(back.groupUuid).toBe('u-orchard');
-        expect(back.groupName).toBe('Orchard');
+        expect(back.groupUuid).toBe('u-argent');
+        expect(back.groupName).toBe('Argent');
         expect(itemsOf(back).find((i) => i.id === 'remove-from-group')!.label).toBe('remove from group');
     });
 
-    test('it is the one write "other" already uses, never the picker; absent module, nothing', async () => {
-        const calls: unknown[] = [];
-        win.SessionSidebarGroupActions = {
-            commitAssignment: (name: string, uuid: string | null) => { calls.push(['commitAssignment', name, uuid]); return Promise.resolve(true); },
-            openPickerFor: () => calls.push(['openPickerFor']),
-        };
+    test('it is the one write "other" already uses, never the picker', async () => {
         loadRunTable();
-        const ctx = { name: 'cloude_api', label: 'api', surface: 'sidebar', groupUuid: 'u-orchard', groupName: 'Orchard' };
+        const ctx = { name: 'cloude_api', label: 'api', surface: 'sidebar', groupUuid: 'u-argent', groupName: 'Argent' };
         await win.SessionRowMenuActions.run('remove-from-group', ctx);
-        expect(calls).toEqual([['commitAssignment', 'cloude_api', null]]);
-        delete win.SessionSidebarGroupActions;
-        await win.SessionRowMenuActions.run('remove-from-group', ctx);
-        expect(calls).toHaveLength(1);
+        expect(assigned).toEqual([['cloude_api', null]]);
     });
 });
 

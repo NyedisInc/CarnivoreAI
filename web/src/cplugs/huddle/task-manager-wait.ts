@@ -5,6 +5,7 @@ export interface WaitLine {
   on: string;
   check: string;
   extended: string;
+  /* owner has been asked */
   asked: boolean;
   hold: boolean;
 }
@@ -36,7 +37,6 @@ export interface WaitChip {
   hold: boolean;
 }
 
-/* label: ' */
 export function waitChip(item: HuddleItem, now: Date, words: WaitWords, locale?: string): WaitChip | null {
   if (item.state !== 'waiting') return null;
   const wait = item.wait;

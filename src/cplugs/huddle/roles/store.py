@@ -55,7 +55,7 @@ class RoleStore:
             return frozenset(r[0] for r in conn.execute("SELECT session_uuid FROM work_session_prefs WHERE dnd = 1"))
 
     def set_dnd(self, session_key: str, on: bool, also_leads: Collection[str] = ()) -> bool:
-        with closing(self._store._connect(True)) as conn, conn:
+        with self._store._immediate() as conn:
             if on and (session_key in also_leads or conn.execute("SELECT 1 FROM work_project_roles WHERE lead_key = ?", (session_key,)).fetchone()):
                 raise LeadCannotDnd(session_key)
             conn.execute("INSERT INTO work_session_prefs (session_uuid, nudge, dnd, updated_at) VALUES (?, NULL, ?, ?) "

@@ -1,46 +1,3 @@
-"""The agent-family registry: one table, no if/elif chains.
-
-feat/universal-wrappers - wrappers used to be a claude-only concept. A
-wrapper now declares which COMMAND FAMILY it wraps (``AgentWrapper.family``),
-and one settings screen administers every family. Adding a sixth family must
-be a DATA addition to ``AGENT_FAMILIES`` below and nothing else: no new
-branch anywhere, no new key in a dict literal that someone forgets to
-update. Everything downstream (resolution, the settings summary, the UI
-grouping, wrapper-id validation) iterates this tuple.
-
-The old shape this replaces was a dict literal inside
-``Settings.get_agent_command``::
-
-    {"codex": agents.codex_command, "hermes": agents.hermes_command, ...}[normalized]
-
-which had to be edited in lockstep with ``RESERVED_AGENT_TYPES``, with
-``AgentsConfig``'s fields, and with the settings summary. Three places, no
-compiler to catch a miss.
-
-``sources_zshrc`` is still a column, and it now governs how a WRAPPER is
-rendered (``render_wrapper_invocation(source_rc=...)``):
-
-* every agent CLI family sources ``~/.zshrc`` before the wrapper runs,
-  because tmux's pane shell reads no rc and a version-managed binary or
-  an rc-defined function (``keyc``) is not on PATH without it;
-* ``shell`` does NOT: its wrapper execs an INTERACTIVE ``$SHELL``, which
-  reads the rc itself. Sourcing it first as well would run the rc twice.
-
-RESERVED NAMES, and the agent_type disambiguation this module encodes
---------------------------------------------------------------------
-``Session.agent_type`` stores EITHER a wrapper id (``"keyc"``) OR a bare
-family name (``"shell"``). ``resolve_agent_type`` is the single place that
-disambiguates the two, and the ORDER is load-bearing for backward
-compatibility. See its docstring.
-
-``RESERVED_FAMILY_NAMES`` is deliberately NOT every family name: it excludes
-``claude``. A config seeded by the v0->v1 migration can contain a wrapper
-whose id is literally ``"claude"`` (``build_seed_wrappers`` authors one), and
-that wrapper must stay reachable by id. Reserving the name would have made
-``agent_type="claude"`` resolve to the family default instead of to that
-specific wrapper, silently changing which script runs on a machine whose
-default wrapper is something else. See ``resolve_agent_type``.
-"""
 
 from __future__ import annotations
 
@@ -66,6 +23,7 @@ class AgentFamily:
     default_script: str
     needs_model: bool = False
     default_accepts_model: bool = False
+    seeded: bool = True
 
 
 AGENT_FAMILIES: Tuple[AgentFamily, ...] = (
@@ -125,6 +83,18 @@ AGENT_FAMILIES: Tuple[AgentFamily, ...] = (
         default_label="local (lm studio)",
         default_script='cldl "$@"',
         default_accepts_model=True,
+    ),
+    AgentFamily(
+        name="custom",
+        label="custom agent",
+        sources_zshrc=True,
+        reserved=False,
+        pickable=False,
+        seeded=False,
+        description="any command-line agent the user names, with its own command and icon.",
+        default_wrapper_id="custom-default",
+        default_label="custom agent",
+        default_script=f'exec {INTERACTIVE_SHELL} "$@"',
     ),
     AgentFamily(
         name="shell",

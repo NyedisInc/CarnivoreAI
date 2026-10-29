@@ -164,12 +164,12 @@ test('a reused tmux name never lends another sleeping session its title', () => 
 
 test("the page's own tab shows its session's name when the page holds an app id the listing does not carry", () => {
   (globalThis as { TerminalController?: unknown }).TerminalController = {
-    _sessionId: () => 'ses_3c0ed73d',
+    _sessionId: () => 'ses_2ab4647d',
     _currentTmuxName: () => 'cloude_misc',
   };
-  listing.sessions = [live('ses_other', 9, 'cloude_misc', 'bot-Misc UI', 'working')];
+  listing.sessions = [live('ses_other', 9, 'cloude_misc', 'Cv-Misc UI', 'working')];
   const strip = mountStrip();
-  expect(drawn(strip, PRIMARY_SLOT)).toEqual({ name: 'bot-Misc UI', status: 'working', session: 'ses_other' });
+  expect(drawn(strip, PRIMARY_SLOT)).toEqual({ name: 'Cv-Misc UI', status: 'working', session: 'ses_other' });
 
   (globalThis as { SessionLabel?: unknown }).SessionLabel = {
     resolve: (row: { label: string | null; name: string | null }) => row.label || (row.name ?? '').replace(/^cloude_/, '') || null,

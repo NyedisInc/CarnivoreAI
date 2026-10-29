@@ -5,7 +5,7 @@ import sqlite3
 import threading
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Set
+from typing import Iterator, Optional, Set
 
 import structlog
 
@@ -29,7 +29,7 @@ def remove_files(path: Path) -> None:
         Path(str(path) + suffix).unlink(missing_ok=True)
 
 
-def _healthy(path: Path) -> bool:
+def _healthy(path: Path) -> Optional[bool]:
     try:
         conn = sqlite3.connect(path, timeout=30.0)
         try:
@@ -37,6 +37,9 @@ def _healthy(path: Path) -> bool:
             return version in (0, K.CACHE_VERSION) and conn.execute("PRAGMA quick_check").fetchone()[0] == "ok"
         finally:
             conn.close()
+    except sqlite3.OperationalError as exc:
+        logger.warning("deepsearch_cache_check_deferred", path=str(path), error=str(exc)[:200])
+        return None
     except sqlite3.DatabaseError:
         return False
 
@@ -48,9 +51,13 @@ def ensure_checked(path: Path) -> None:
     with _check_lock:
         if key in _checked:
             return
-        if path.exists() and not _healthy(path):
-            logger.warning("deepsearch_cache_reset", path=key)
-            remove_files(path)
+        if path.exists():
+            verdict = _healthy(path)
+            if verdict is None:
+                return
+            if not verdict:
+                logger.warning("deepsearch_cache_reset", path=key)
+                remove_files(path)
         _checked.add(key)
 
 

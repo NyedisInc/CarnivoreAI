@@ -36,10 +36,6 @@ def declared() -> Dict[str, list]:
 
 @contextlib.contextmanager
 def using(via: str, caller: str = "") -> Iterator[None]:
-    """Mark everything read inside the block as coming ``via`` a pane, an external token, a peer or an import.
-
-    Inputs: via (one of the module's vias); caller (the calling session's tmux name, for the log line only, never counted). Output: a context manager.
-    """
     token = _context.set((via, caller))
     try:
         yield

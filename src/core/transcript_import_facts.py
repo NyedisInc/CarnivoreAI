@@ -11,7 +11,6 @@ from src.core.claude_title_sync import read_newest_custom_title
 
 TRANSCRIPT_READ = "read"
 
-# no working directory
 TRANSCRIPT_NO_CONVERSATION = "no_conversation"
 
 TRANSCRIPT_UNREADABLE = "unreadable"

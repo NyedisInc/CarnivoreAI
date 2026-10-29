@@ -10,6 +10,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readonly
 from src.core.pipeline import contract as C
 from src.core.pipeline.deliver import FileTarget
 from src.core.pipeline.log import log_error
@@ -45,7 +46,6 @@ class ManifestFile:
 
 
 def load_rows(db: Path) -> List[ManifestFile]:
-    """Every manifest row that names a conversation; [] when the table does not exist yet. Raises sqlite3.Error."""
     from src.core.db import connect
     from src.core.transcript_manifest import store
 
@@ -61,7 +61,7 @@ def read_cursors(state_dir: Path, plugin: C.Plugin) -> Dict[str, Tuple[int, str]
     path = db_path(state_dir, plugin)
     if not path.exists():
         return {}
-    with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=30.0)) as conn:
+    with closing(connect_readonly(path, timeout=READONLY_TIMEOUT_LONG_S)) as conn:
         present = conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
                                (C.CURSORS_TABLE,)).fetchone()
         if not present:
@@ -73,8 +73,9 @@ def read_cursors(state_dir: Path, plugin: C.Plugin) -> Dict[str, Tuple[int, str]
 def behind(plugin: C.Plugin, rows: Iterable[ManifestFile], cursors: Dict[str, Tuple[int, str]],
            rewritten: Set[str]) -> List[ManifestFile]:
     out = []
+    reads = plugin.reads_snapshot()
     for row in rows:
-        if not row.deliverable or not plugin.reads(row.family, row.kind):
+        if not row.deliverable or not reads(row.family, row.kind):
             continue
         held = cursors.get(row.path)
         if row.complete_bytes - (held[0] if held else 0) > 0 or row.path in rewritten:
@@ -195,4 +196,5 @@ class Scanner:
     def targets_for(self, plugin: C.Plugin) -> List[FileTarget]:
         if self._db is None:
             return []
-        return [r.target() for r in load_rows(self._db) if r.deliverable and plugin.reads(r.family, r.kind)]
+        reads = plugin.reads_snapshot()
+        return [r.target() for r in load_rows(self._db) if r.deliverable and reads(r.family, r.kind)]

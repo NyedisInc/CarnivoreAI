@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
 import structlog
 
 from src.core.hosts.identity import instance_name, is_remote_backend
+from src.models.utc_time import seconds_since
 from src.core.session_status_map import StatusMap, listing_proves_alive, status_map_from_listing
 
 logger = structlog.get_logger()
@@ -101,14 +102,6 @@ def gather_for(manager: Any) -> Callable[[Sequence[RemoteTarget]], RemoteGather]
 
 
 def pane_liveness(status_map: Optional[StatusMap], backend: Any) -> Tuple[str, Optional[dict]]:
-    """This remote session's liveness from its host's map, and its pane row. PURE.
-
-    Description: a COMPLETE map from the backend's own socket decides both
-      ways: named is alive (or a dead husk), absent is gone. Anything else
-      (the host could not be asked) is ``unknown`` and never gone.
-    Output: tuple[str, dict | None] - a ``LIVENESS_*`` value and the row.
-    Example: pane_liveness(StatusMap({}, complete=True, socket='carnivore-remote'), b)[0]  # 'gone'
-    """
     from src.core.session_status import resolve_listing_liveness
 
     name = backend.tmux_session
@@ -124,13 +117,13 @@ def _family(sess: Any, identity: Optional[Mapping[str, Any]]) -> Tuple[Any, Opti
     from src.core.agent_family_display import resolve_family_for_display
     from src.core.agent_wrapper_display import resolve_wrapper_for_display
     from src.core.session_agent_evidence import choose_agent_evidence, recorded_launch_family
-    from src.core.session_manager import _configured_wrappers
+    from src.config import wrapper_reader
 
     row = identity or {}
     evidence = choose_agent_evidence(
         memory_agent_type=sess.agent_type, memory_from_fingerprint=sess.agent_type_via_fingerprint,
         row_agent_type=row.get("agent_type"), row_family_source=row.get("agent_family_source"))
-    wrappers = _configured_wrappers()
+    wrappers = wrapper_reader.configured_wrappers()
     family, source = resolve_family_for_display(
         evidence.agent_type, wrappers, from_fingerprint=evidence.from_fingerprint,
         from_process=evidence.from_process)
@@ -198,7 +191,7 @@ def remote_session_info(manager: Any, session_id: str,
         manager._unread_rows, key, epoch, identity["id"] if identity else None))
     status, source, hint = _status(manager, session_id, name, family=family_name,
                                    liveness=liveness, unread=unread, tmux_status=tmux_status)
-    uptime = int((datetime.utcnow() - sess.created_at).total_seconds())
+    uptime = seconds_since(sess.created_at)
     return SessionInfo(
         **host_fields(manager, backend),
         session=sess.model_copy(update={"pty_pid": None, "tmux_created_epoch": epoch}),
@@ -219,6 +212,7 @@ def remote_session_info(manager: Any, session_id: str,
         agent_family=family_name,
         agent_family_source=family_source,
         agent_wrapper_label=wrapper.label,
+        agent_wrapper_icon=wrapper.icon,
         pinned_theme=manager._theme_store.get_pin(key),
         activity_status=derive_read_state(status, unread=unread),
         status_source=source,
@@ -232,18 +226,6 @@ def remote_session_info(manager: Any, session_id: str,
 
 async def reap_remote(manager: Any, targets: Sequence[RemoteTarget],
                       gathered: Optional[RemoteGather]) -> list:
-    """Drop every remote registration its host's COMPLETE map does not name.
-
-    Description: the per-host form of ``session_ghost_reap.reap_after_listing``
-      and the same gate (complete map, same socket, and the same backend
-      object holding the same name before and after the gather). A host
-      that could not be asked has an incomplete map and reaps nothing.
-      The row is not written.
-    Inputs: manager; targets - the listing snapshot's, taken BEFORE the
-      gather; gathered - that gather's result, or None (nothing remote).
-    Output: list[str] - the session ids reaped.
-    Example: await reap_remote(mgr, snapshot.remote_targets, gathered.remote)
-    """
     from src.core.session_ghost_reap import RegistrationSnapshot, reap_after_listing
 
     reaped: list = []

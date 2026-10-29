@@ -1,25 +1,3 @@
-"""The door (#1530 J5c, design 4.3): the same-uid unix socket the installer and the Electron shell talk to.
-
-Socket ``fed_dir()/door-<instance tag>.sock`` (the runtime picks the path), directory 0700, socket 0600, peer uid checked with
-``LOCAL_PEERCRED`` (``pair_socket.peer_uid``). Never TCP. One JSON line in; JSON lines out (a ``relay`` streams each status change until the job ends), then close:
-
-* ``{"op":"status"}`` -> ``{"state","error","main_label","main_iid","tries_left","candidates","setup_status","joined","join_relay":1}``
-  (a ``finding`` state with ``candidates`` filled means several packs answered: the caller picks one and joins again with ``candidate_fid``;
-  ``tries_left`` is set on ``wrong_code``). ``join_relay`` marks a build that joins through the helper (flip design 1.1). While a job
-  waits for its relay it also carries ``job`` (its id), ``mode`` (``code`` or ``link``), ``targets`` (``[[host, port], ...]``, link mode) and ``candidate_fid``.
-  ``"hold":true`` keeps the connection open after the answer: when it closes while that job still waits (the helper exited, or its
-  Terminal window was closed) the job ends ``no_relay`` at once instead of after 120 s.
-* ``{"op":"join","code"|"link":...,"candidate_fid"?,"totp"?}`` -> ONE status line (state ``waiting_relay``), or ``{"error": <code>}``.
-  State ``unpaired``: allowed. ``paired`` (set up): allowed with a valid ``totp``; without one only the re-join of a main this host
-  already holds a live grant for, else the job ends ``needs_owner``. ``joined``: ``already_joined``. Nothing runs until a ``relay``.
-* ``{"op":"relay","job":id,"relay":path,"address":str,"expect_fid":str|null}`` -> status lines until the job ends; only while a job waits
-  (else ``{"error":"no_join_waiting"}``, which is also the answer when ``job`` is not the waiting job's id). ``path`` must be ``<door dir>/relay-<16 hex>.sock``, a socket this uid owns.
-* ``{"op":"relay_fail","job":id,"code":c,"candidates"?:[...]}`` -> one status line; ``c`` in ``no_pack``, ``unreachable``, ``local_network_blocked``, ``several``
-  (a "look" job, #1622, takes ``no_pack``, ``local_network_blocked`` and ``found`` instead; ``found`` ends it ``finding`` with the packs).
-* ``{"op":"login"}`` -> ``{"access_token","refresh_token","expires_in"}`` only when joined; else ``{"error":"not_joined"}``.
-
-No ``leave`` op. No log line carries a code, link, token or ``totp``.
-"""
 
 from __future__ import annotations
 
@@ -189,7 +167,6 @@ class Door:
             yield job.status()
 
     def _relay_fail(self, req: Dict[str, Any]) -> Dict[str, Any]:
-        """The ``relay_fail`` op: the helper could not reach main. Answers the job's status or an error document."""
         cands = req.get("candidates")
         code = req.get("code")
         if not isinstance(code, str) or not (cands is None or isinstance(cands, list)) or not isinstance(req.get("job"), str):

@@ -9,7 +9,7 @@ const leaf = (id: string, extra: Partial<MenuNode> = {}): MenuNode => ({ id, lab
 
 describe('the item menu registry', () => {
     test('every item type the drawer and the widgets carry is defined', () => {
-        expect(definedItemMenuTypes().sort()).toEqual(['browser', 'color', 'company', 'file', 'group', 'layout', 'leader', 'page', 'pagerow', 'project', 'session', 'widget']);
+        expect(definedItemMenuTypes().sort()).toEqual(['browser', 'color', 'company', 'file', 'group', 'grouppick', 'layout', 'leader', 'page', 'pagerow', 'project', 'session', 'widget']);
     });
 
     test('a type cannot be defined twice', () => {

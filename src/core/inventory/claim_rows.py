@@ -8,6 +8,7 @@ from typing import Iterator, List, Optional
 
 import structlog
 
+from src.core.safe_io.readonly_db import connect_readonly
 from src.core.db import table_exists
 from src.core.inventory.claims import GENERIC, Claim, ClaimBook
 from src.core.inventory.model import KIND_ROWS, REPORT, ROLE_KEY, ROLE_PATH, ROLE_SECRET, Artifact, FieldRef
@@ -25,16 +26,10 @@ def rewrite_fields(claim: Claim) -> List[FieldRef]:
 
 @contextmanager
 def open_side(path: Path) -> Iterator[Optional[sqlite3.Connection]]:
-    """A read-only connection on a side database, or None when the file is absent. Never creates the file.
-
-    Inputs: path (Path). Output: context manager yielding sqlite3.Connection | None. Raises: sqlite3.Error - the
-      file exists and cannot be opened (the caller reports it).
-    Example: with open_side(state / "bookmarks.db") as conn: ...
-    """
     if not Path(path).exists():
         yield None
         return
-    with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=SIDE_DB_TIMEOUT_S)) as conn:
+    with closing(connect_readonly(path, timeout=SIDE_DB_TIMEOUT_S)) as conn:
         conn.row_factory = sqlite3.Row
         yield conn
 

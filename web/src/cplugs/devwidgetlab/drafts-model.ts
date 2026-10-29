@@ -114,6 +114,17 @@ export interface CompareDelta {
   draft: number;
 }
 
+export const TICKET_RENEW_LEAD_MS = 60_000;
+export const TICKET_RENEW_FLOOR_MS = 5_000;
+
+export function renewDelayMs(expiresIn: number): number {
+  return Math.max(TICKET_RENEW_FLOOR_MS, expiresIn * 1000 - TICKET_RENEW_LEAD_MS);
+}
+
+export function reportKey(host: string, dock: string, size: string, side: 'current' | 'draft'): string {
+  return `${host}/${dock}/${size}/${side}`;
+}
+
 export function compareDelta(counts: Readonly<Record<string, number>>, frames: number, hasCurrent: boolean): CompareDelta {
   const keys = Object.keys(counts);
   const draftKeys = keys.filter((key) => key.endsWith('/draft'));

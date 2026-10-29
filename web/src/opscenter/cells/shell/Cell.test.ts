@@ -29,11 +29,14 @@ vi.mock('../../api/auth.svelte', async (importOriginal) => {
 });
 
 const built: { id: string; slot: string }[] = [];
+const clients: object[] = [];
 let disposed = 0;
 vi.mock('../terminal-live/client', () => ({
   startLiveTerminal: (_host: HTMLElement, slot: string, session: unknown) => {
     built.push({ id: (session as { session_id: string }).session_id, slot });
-    return { client: { fake: true }, dispose(): void { disposed += 1; } };
+    const client = { fake: true };
+    clients.push(client);
+    return { client, dispose(): void { disposed += 1; } };
   },
 }));
 vi.mock('../terminal-live/theme', () => ({ bindTerminalTheme: () => () => {} }));
@@ -54,6 +57,7 @@ afterEach(async () => {
   for (const component of mounted.splice(0)) await unmount(component);
   document.body.replaceChildren();
   built.length = 0;
+  clients.length = 0;
   calls.length = 0;
   disposed = 0;
   inputFocus.forget('terminal:row:96');
@@ -223,4 +227,30 @@ test('no agent selected says so, and the bottom bar defaults to the terminal wid
   expect(el.querySelector('[data-plate="no_agent"]')?.textContent).toContain('select an agent');
   expect(DEFAULT_BOTTOM_ITEMS).toEqual([{ widget: 'core.shell', look: null }, { widget: 'core.scheduled-tasks', look: null }]);
   expect(CORE_MANIFESTS['core.shell']?.capabilities).toContain('terminal-input');
+});
+
+test('u158-07: only THIS shell\'s own non-connected report re-checks the pane; a connected one or another client\'s does not', async () => {
+  vi.useFakeTimers();
+  try {
+    answer = (agent) => ({ ...(shellFor(agent, 196) as object), pane: 'live' });
+    listing.set('rows', [row('ses_a')]);
+    pointAt('ses_a');
+    render();
+    await settle();
+    const gets = (): number => calls.filter((c) => c.method === 'GET').length;
+    const report = (controller: object, className: string, text: string): void => {
+      window.dispatchEvent(new CustomEvent('cloude:terminal-connection', { detail: { controller, className, text } }));
+    };
+    report({ other: true }, 'disconnected', 'Disconnected');
+    await vi.advanceTimersByTimeAsync(800);
+    expect(gets()).toBe(0);
+    report(clients[0]!, 'connected', 'Connected (tmux)');
+    await vi.advanceTimersByTimeAsync(800);
+    expect(gets()).toBe(0);
+    report(clients[0]!, 'disconnected', 'Disconnected');
+    await vi.advanceTimersByTimeAsync(800);
+    expect(gets()).toBe(1);
+  } finally {
+    vi.useRealTimers();
+  }
 });

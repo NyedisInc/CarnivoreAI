@@ -5,7 +5,7 @@ import os
 import sqlite3
 import uuid as _uuid
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 import structlog
 
@@ -97,15 +97,21 @@ def kind_for_plan(plan: ProposedSession) -> Optional[str]:
     return classify_transcript(plan.transcript_path).kind
 
 
+MEASURE_KIND: Any = object()
+
+
 def insert_imported_session(
     conn: sqlite3.Connection,
     plan: ProposedSession,
     *,
     project_id: int,
     now: str,
+    kind: Optional[str] = MEASURE_KIND,
 ) -> str:
     session_uuid = str(_uuid.uuid4())
     stamp = plan.created_at or now
+    if kind is MEASURE_KIND:
+        kind = kind_for_plan(plan)
     conn.execute(
         "INSERT INTO sessions "
         "(session_uuid, project_id, project_attribution, working_dir, "
@@ -129,7 +135,7 @@ def insert_imported_session(
             stamp,
             now,
             plan.last_work_at,
-            kind_for_plan(plan),
+            kind,
         ),
     )
     return session_uuid
@@ -147,6 +153,7 @@ def apply_plans(
     if not writable:
         return report
 
+    measured = [(plan, kind_for_plan(plan)) for plan in writable]
     with conn:
         conn.execute("BEGIN IMMEDIATE")
         held = _held_uuids(conn)
@@ -156,7 +163,7 @@ def apply_plans(
         reused = 0
         written = 0
         skipped = 0
-        for plan in writable:
+        for plan, kind in measured:
             if plan.claude_session_uuid in held:
                 skipped += 1
                 continue
@@ -172,7 +179,9 @@ def apply_plans(
                 created += 1
             else:
                 reused += 1
-            insert_imported_session(conn, plan, project_id=project_id, now=stamp)
+            insert_imported_session(
+                conn, plan, project_id=project_id, now=stamp, kind=kind
+            )
             held.add(plan.claude_session_uuid)
             written += 1
         report = ImportReport(

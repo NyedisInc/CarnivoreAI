@@ -1,19 +1,3 @@
-"""The adapter between the verified catalog index and the sidecar supervisor (slice A10b, epic #2063).
-
-``Supervisor.set_index`` takes a small mapping: ``revoked`` (entries ``{id, version}`` for one release or ``{id}`` for every
-release) and ``expires_at``. The catalog side holds something else: ``IndexCache.revoked_sets`` (revoked publisher key ids and
-revoked ``<item_id>@<version>`` subjects, sticky ones included) and each installed row's ``publisher_key_id``. This module
-maps the one onto the other, so a revoked release or a revoked publisher key stops a RUNNING plugin within one index
-refresh (``docs/cplug-platform.md`` 10.7), and an index past its deadline plus grace pauses it.
-
-THE DEADLINE. The signed index does not carry an ``expires_at`` yet; until it does the deadline is DERIVED as ``generated_at``
-plus 14 days and the mapping says so (``expires_at_derived``). With no verified index at all the mapping is ``None`` and the
-supervisor fails closed (``index_state`` is ``missing``).
-
-WHEN IT RUNS. :meth:`IndexAdapter.sync` runs from the refresher after every pass (``IndexRefresher.after_pass``), which is
-also what re-judges a running plugin as time passes; :meth:`IndexAdapter.ensure` runs before every enable, so the first spawn
-after boot never sees a missing index; :meth:`IndexAdapter.third_party_enabled` is what asks the refresher for an hourly pass.
-"""
 
 from __future__ import annotations
 

@@ -2,7 +2,11 @@
 <script lang="ts">
     import { t as reactiveT } from '../i18n/index.svelte';
     import type { Translate } from '../sessions/types';
-    import Check from '../../opscenter/ui/Check.svelte';
+    import Button from '../base/Button.svelte';
+    import Field from '../base/Field.svelte';
+    import Select from '../base/Select.svelte';
+    import State from '../base/State.svelte';
+    import Switch from '../base/Switch.svelte';
     import '../settings-page/panel-kit/panel-kit.css';
     import './byoai.css';
     import type { Connection, LedgerAccount, Preset } from './api';
@@ -69,10 +73,10 @@
     const choiceLabel = (name: string, choice: string): string => (name === 'protocol' ? t(`settings.ai.protocol.${choice}`) : t(`settings.ai.auth.${choice}`));
 </script>
 
-<form class="tm__srv" data-ai="form" onsubmit={(e) => { e.preventDefault(); if (!missing && !busy) onSave(draft); }}>
+<form class="tm__field" data-ai="form" onsubmit={(e) => { e.preventDefault(); if (!missing && !busy) onSave(draft); }}>
     <div class="tm__srv-grid">
-        <div class="tm__field">
-            <span class="oc-key">{t('settings.ai.form.preset')}</span>
+        <div class="oc-form-field">
+            <span class="oc-label">{t('settings.ai.form.preset')}</span>
             {#if editing}
                 <span class="tm__figs" data-ai="preset-fixed">{preset.label}</span>
             {:else}
@@ -80,80 +84,55 @@
                     disabled={busy} dataAi="preset" />
             {/if}
         </div>
-        <label class="tm__field">
-            <span class="oc-key">{t('settings.ai.form.label')}</span>
-            <input class="oc-field" type="text" bind:value={draft.label} disabled={busy} spellcheck="false" autocomplete="off" data-ai="label" />
-        </label>
+        <Field label={t('settings.ai.form.label')} bind:value={draft.label} disabled={busy} spellcheck="false" autocomplete="off" data-ai="label" />
         {#if showUrl}
-            <label class="tm__field">
-                <span class="oc-key">{t('settings.ai.form.base_url')}</span>
-                <input class="oc-field" type="text" bind:value={draft.baseUrl} disabled={busy} spellcheck="false" autocomplete="off"
-                    placeholder={t('settings.ai.form.base_url_placeholder')} data-ai="base-url" oninput={() => (urlTouched = true)} />
-            </label>
+            <Field label={t('settings.ai.form.base_url')} bind:value={draft.baseUrl} disabled={busy} spellcheck="false" autocomplete="off"
+                placeholder={t('settings.ai.form.base_url_placeholder')} data-ai="base-url" oninput={() => (urlTouched = true)} />
         {/if}
         {#each preset.fields as field (field.name)}
             {#if field.name === 'capabilities'}
                 <div class="tm__field" data-ai="capabilities">
-                    <span class="oc-key">{t('settings.ai.form.capabilities')}</span>
+                    <span class="oc-label">{t('settings.ai.form.capabilities')}</span>
                     <div class="ai-ticks">
                         {#each Object.keys(preset.capabilities) as capability (capability)}
-                            <Check label={t(`settings.ai.capability.${capability}`)} checked={Array.isArray(draft.options['capabilities']) && (draft.options['capabilities'] as string[]).includes(capability)}
-                                disabled={busy} data-ai="capability" onToggle={(next) => tick(capability, next)} />
+                            <Switch role="checkbox" label={t(`settings.ai.capability.${capability}`)}
+                                bind:checked={() => Array.isArray(draft.options['capabilities']) && (draft.options['capabilities'] as string[]).includes(capability), (next) => tick(capability, next)}
+                                disabled={busy} data-ai="capability" />
                         {/each}
                     </div>
                 </div>
             {:else if field.name === 'auth_header' && !customHeader}
                 
             {:else if field.name === 'account'}
-                <label class="tm__field">
-                    <span class="oc-key">{t('settings.ai.form.account')}</span>
-                    <select class="oc-field" value={String(draft.options['account'] ?? '')} disabled={busy} data-ai="account"
-                        onchange={(e) => setOption('account', e.currentTarget.value)}>
-                        <option value="">{t('settings.ai.form.account_default')}</option>
-                        {#each accountsHere as account (account.id)}<option value={account.id}>{account.name}</option>{/each}
-                    </select>
-                </label>
+                <Select label={t('settings.ai.form.account')} value={String(draft.options['account'] ?? '')} disabled={busy} data-ai="account"
+                    options={[{ value: '', label: t('settings.ai.form.account_default') }, ...accountsHere.map((a) => ({ value: a.id, label: a.name }))]}
+                    onchange={(e) => setOption('account', e.currentTarget.value)} />
             {:else if field.kind === 'bool'}
                 <div class="tm__field">
-                    <Check role="switch" label={t(`settings.ai.field.${field.name}`)} checked={draft.options[field.name] === true} disabled={busy}
-                        data-ai={`field-${field.name}`} onToggle={(next) => setOption(field.name, next)} />
+                    <Switch label={t(`settings.ai.field.${field.name}`)} bind:checked={() => draft.options[field.name] === true, (next) => setOption(field.name, next)} disabled={busy}
+                        data-ai={`field-${field.name}`} />
                 </div>
             {:else if field.kind === 'choice'}
-                <label class="tm__field">
-                    <span class="oc-key">{t(`settings.ai.field.${field.name}`)}</span>
-                    <select class="oc-field" value={String(draft.options[field.name] ?? '')} disabled={busy} data-ai={`field-${field.name}`}
-                        onchange={(e) => setOption(field.name, e.currentTarget.value)}>
-                        <option value="">{t('settings.ai.form.default_choice')}</option>
-                        {#each field.choices as choice (choice)}<option value={choice}>{choiceLabel(field.name, choice)}</option>{/each}
-                    </select>
-                </label>
+                <Select label={t(`settings.ai.field.${field.name}`)} value={String(draft.options[field.name] ?? '')} disabled={busy} data-ai={`field-${field.name}`}
+                    options={[{ value: '', label: t('settings.ai.form.default_choice') }, ...field.choices.map((choice) => ({ value: choice, label: choiceLabel(field.name, choice) }))]}
+                    onchange={(e) => setOption(field.name, e.currentTarget.value)} />
             {:else}
-                <label class="tm__field">
-                    <span class="oc-key">{t(`settings.ai.field.${field.name}`)}</span>
-                    <input class="oc-field" type="text" value={String(draft.options[field.name] ?? '')} disabled={busy} spellcheck="false" autocomplete="off"
-                        data-ai={`field-${field.name}`} oninput={(e) => setOption(field.name, e.currentTarget.value)} />
-                </label>
+                <Field label={t(`settings.ai.field.${field.name}`)} value={String(draft.options[field.name] ?? '')} disabled={busy} spellcheck="false" autocomplete="off"
+                    data-ai={`field-${field.name}`} oninput={(e) => setOption(field.name, e.currentTarget.value)} />
             {/if}
         {/each}
         {#if showExtra}
-            <label class="tm__field ai-extra">
-                <span class="oc-key">{t('settings.ai.form.extra_body')}</span>
-                <textarea class="oc-field" rows="3" value={extraText} disabled={busy} spellcheck="false" autocomplete="off"
-                    placeholder={t('settings.ai.form.extra_body_placeholder')} aria-invalid={extraProblem !== null} data-ai="extra-body"
-                    oninput={(e) => setOption(EXTRA_BODY_OPTION, e.currentTarget.value)}></textarea>
-                {#if extraProblem}
-                    <span class="tm__sub tm__problem" role="alert" data-ai="extra-body-problem">{t(extraProblem)}</span>
-                {:else}
-                    <span class="tm__sub">{t('settings.ai.form.extra_body_hint')}</span>
-                {/if}
-            </label>
+            <div class="ai-extra">
+                <Field multiline rows={3} label={t('settings.ai.form.extra_body')} value={extraText} disabled={busy} spellcheck="false" autocomplete="off"
+                    placeholder={t('settings.ai.form.extra_body_placeholder')} data-ai="extra-body"
+                    error={extraProblem ? t(extraProblem) : undefined} help={extraProblem ? undefined : t('settings.ai.form.extra_body_hint')}
+                    oninput={(e) => setOption(EXTRA_BODY_OPTION, e.currentTarget.value)} />
+            </div>
         {/if}
         {#if showKey}
-            <label class="tm__field">
-                <span class="oc-key">{t(editing && connection?.has_key ? 'settings.ai.form.key_replace' : 'settings.ai.form.key')}{preset.key_required ? '' : ` (${t('settings.ai.form.optional')})`}</span>
-                <input class="oc-field" use:secretField bind:value={draft.key} disabled={busy}
-                    placeholder={t(editing && connection?.has_key ? 'settings.ai.form.key_keep' : 'settings.ai.form.key_placeholder')} data-ai="key" />
-            </label>
+            <Field label={`${t(editing && connection?.has_key ? 'settings.ai.form.key_replace' : 'settings.ai.form.key')}${preset.key_required ? '' : ` (${t('settings.ai.form.optional')})`}`}
+                bind:value={draft.key} disabled={busy} {@attach (node) => secretField(node as HTMLInputElement)}
+                placeholder={t(editing && connection?.has_key ? 'settings.ai.form.key_keep' : 'settings.ai.form.key_placeholder')} data-ai="key" />
         {/if}
     </div>
     {#if showKey && editing}
@@ -161,18 +140,15 @@
             {connection?.has_key ? t('settings.ai.key_set', { hint: connection.key_hint }) : t('settings.ai.key_none')}
         </p>
         {#if connection?.has_key}
-            <Check label={t('settings.ai.form.key_clear')} checked={draft.clearKey} disabled={busy} data-ai="clear-key"
-                onToggle={(next) => (draft.clearKey = next)} />
+            <Switch role="checkbox" label={t('settings.ai.form.key_clear')} bind:checked={() => draft.clearKey, (next) => (draft.clearKey = next)} disabled={busy} data-ai="clear-key" />
         {/if}
     {/if}
-    <Check role="switch" label={t('settings.ai.form.enabled')} checked={draft.enabled} disabled={busy} data-ai="enabled" onToggle={(next) => (draft.enabled = next)} />
+    <Switch label={t('settings.ai.form.enabled')} bind:checked={() => draft.enabled, (next) => (draft.enabled = next)} disabled={busy} data-ai="enabled" />
     {#if warnDrop}
-        <div class="tm__warn" role="alert" data-ai="host-warning">
-            <p>{t('settings.ai.form.host_warning', { host: connection?.key_host ?? '' })}</p>
-        </div>
+        <State kind="warn" role="alert" title={t('settings.ai.form.host_warning', { host: connection?.key_host ?? '' })} data-ai="host-warning" />
     {/if}
     <div class="tm__actions">
-        <button type="button" class="modal-btn modal-btn-secondary" disabled={busy} data-ai="cancel" onclick={onCancel}>{t('settings.ai.form.cancel')}</button>
-        <button type="submit" class="modal-btn modal-btn-confirm" disabled={busy || missing} data-ai="save">{t(editing ? 'settings.ai.form.save' : 'settings.ai.form.add')}</button>
+        <Button disabled={busy} data-ai="cancel" onclick={onCancel}>{t('settings.ai.form.cancel')}</Button>
+        <Button type="submit" variant="confirm" disabled={busy || missing} data-ai="save">{t(editing ? 'settings.ai.form.save' : 'settings.ai.form.add')}</Button>
     </div>
 </form>

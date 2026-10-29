@@ -3,7 +3,7 @@ import { sessionList, TERMINAL_ROW_ID } from './made-up';
 import type { WidgetFixtures } from './types';
 
 const SESSION_ROUTE = `GET /sessions/${TERMINAL_ROW_ID}/bookmarks`;
-const CONVERSATION = 'c51d7ccc-df2b-4ba0-898a-0a7a1b906585';
+const CONVERSATION = '4a7c1e90-52d3-4f08-9b61-0c3d8e2a7f11';
 
 function mark(id: number, rowId: number, uuid: string, label: string, by: 'owner' | 'claude', agoS: number, snippet: string): unknown {
   return {
@@ -12,8 +12,8 @@ function mark(id: number, rowId: number, uuid: string, label: string, by: 'owner
   };
 }
 
-const BILLING_UUID = '0edffbc5-38a8-4edc-8c9a-e9bab14a8b5d';
-const DOCS_UUID = '295ed3d7-3bc0-4501-8a4c-bd028eedf045';
+const BILLING_UUID = '8f1c2d3e-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
+const DOCS_UUID = '2b3c4d5e-6f70-4812-93a4-b5c6d7e8f901';
 
 const BILLING_MARKS = [
   mark(1, TERMINAL_ROW_ID, BILLING_UUID, 'before the backoff change', 'owner', 40 * MIN, 'lets add exponential backoff to the retry'),

@@ -126,6 +126,7 @@ function createOpenInTerminal(deps) {
     const route = `/api/v1/sessions/${encodeURIComponent(sessionId)}/attach-command${readOnly ? '?read_only=true' : ''}`;
     const answer = await api.getAuthed(route);
     if (answer.reachable && answer.data && Array.isArray(answer.data.argv)) return { argv: answer.data.argv, reason: REASONS.ok, error: null };
+    // there is nothing
     if (answer.status === 404 || answer.status === 409) return { argv: null, reason: REASONS.notRunning, error: null };
     return { argv: null, reason: REASONS.failed, error: answer.error || 'the server did not answer' };
   }

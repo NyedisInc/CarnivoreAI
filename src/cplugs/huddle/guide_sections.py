@@ -1,10 +1,3 @@
-"""The Task Manager guide in pieces: the core sections, one section by number or name, and the one-line index of the rest (#1757).
-
-**ONE FILE, NO SECOND COPY.** The rules live in the bundled skill (``guide_rev.GUIDE_PATH``). A section whose heading is
-followed by the line :data:`CORE_MARKER` (an HTML comment, invisible to a skill reader) is CORE: what every writer needs.
-``task_manager_guide`` answers the core plus an index of the rest by default, ONE section for ``topic``, and the whole file for
-``detail: true``. Moving a section in or out of the core is moving one marker line in that file.
-"""
 
 from __future__ import annotations
 

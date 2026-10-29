@@ -17,7 +17,14 @@
     "clone",
     "projects"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The new project dialog listing start empty, clone from github and open an existing folder",
+      "caption": "The new project dialog, with clone from github",
+      "file": "new-project.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Clone a project",
   "since": "2026-09-10",
   "status": "stable",
@@ -26,6 +33,5 @@
   "updated": "2026-09-27",
   "where": [
     "The + at the top of the agents drawer, then New Project, then clone from github."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

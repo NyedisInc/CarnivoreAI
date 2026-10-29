@@ -133,11 +133,11 @@ describe('the registration prompt', () => {
         document.body.appendChild(target);
         panel = mount(CommentThread, { target, props: { itemId: 'a/b', t, signedIn: true, host, publishHost } as never }) as never;
         await settle();
-        const box = document.querySelector<HTMLTextAreaElement>('.cmp__box')!;
+        const box = document.querySelector<HTMLTextAreaElement>('[data-composer-box]')!;
         box.value = 'hello there';
         box.dispatchEvent(new Event('input', { bubbles: true }));
         await settle();
-        document.querySelector<HTMLButtonElement>('.cmp__acts .modal-btn-confirm')!.click();
+        document.querySelector<HTMLButtonElement>('[data-composer-send]')!.click();
         await settle();
         expect(document.querySelector('#catalog-register-terms')).not.toBeNull();
         expect(posted).toEqual([]);
@@ -168,8 +168,8 @@ describe('the parser', () => {
         expect(linked('go http://carnivore.ai')).toHaveLength(1);
         expect(linked('javascript:alert(1)')).toHaveLength(0);
         expect(linked('data:text/html,<b>x</b>')).toHaveLength(0);
-        expect(linked('click https://example.net/a javascript:alert(1)')).toHaveLength(1);
-        expect(pieces('a https://example.net. b').map((p) => p.text).join('')).toBe('a https://example.net. b');
+        expect(linked('click https://x.io/a javascript:alert(1)')).toHaveLength(1);
+        expect(pieces('a https://x.io. b').map((p) => p.text).join('')).toBe('a https://x.io. b');
     });
 
     test('the component paints anchors only for web links, with the ugc rel, and no markup', () => {
@@ -177,11 +177,11 @@ describe('the parser', () => {
         document.body.appendChild(target);
         const handle = mount(LinkedText, {
             target,
-            props: { text: 'a https://example.net/p javascript:alert(1) <img src=x onerror=alert(1)>' } as never,
+            props: { text: 'a https://x.io/p javascript:alert(1) <img src=x onerror=alert(1)>' } as never,
         });
         const anchors = [...document.querySelectorAll('a')];
         expect(anchors).toHaveLength(1);
-        expect(anchors[0]!.getAttribute('href')).toBe('https://example.net/p');
+        expect(anchors[0]!.getAttribute('href')).toBe('https://x.io/p');
         expect(anchors[0]!.getAttribute('rel')).toBe('nofollow ugc noopener noreferrer');
         expect(document.querySelector('img')).toBeNull();
         expect(target.textContent).toContain('javascript:alert(1)');
@@ -191,9 +191,9 @@ describe('the parser', () => {
 
 describe('the identicon', () => {
     test('is deterministic, case-insensitive, and differs between handles', () => {
-        expect(identicon('acme')).toEqual(identicon('acme'));
-        expect(identicon('acme')).toEqual(identicon('acme'));
-        expect(identicon('acme')).not.toEqual(identicon('ann'));
+        expect(identicon('example-owner')).toEqual(identicon('example-owner'));
+        expect(identicon('Example-owner')).toEqual(identicon('example-owner'));
+        expect(identicon('example-owner')).not.toEqual(identicon('ann'));
         expect(identicon('x').cells.length).toBeGreaterThan(0);
     });
 });

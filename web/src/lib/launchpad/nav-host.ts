@@ -1,5 +1,7 @@
 import { hostWindow, hostDocument } from '../sessions/env';
 import type { ProjectRow, RunningSessionRow } from '../sessions/types';
+import type { LaunchPrefill } from '../launch-picker/prefill';
+import { pinSession } from '../drawer/arrangement';
 
 export interface SessionLike {
     label?: string | null;
@@ -24,7 +26,8 @@ export interface NavHost {
     detachSession(): Promise<unknown>;
     createSession(payload: Record<string, unknown>): Promise<SessionLike>;
     createProject(row: Record<string, unknown>): Promise<unknown>;
-    chooseProvider(projectDefault?: string | null, accounts?: boolean): Promise<Record<string, unknown> | null>;
+    chooseProvider(projectDefault?: string | null, accounts?: boolean, prefill?: LaunchPrefill | null): Promise<Record<string, unknown> | null>;
+    pinSession?(tmuxName: string): void;
     terminalDims(): Record<string, unknown>;
     reloadProjects(): Promise<unknown>;
     reloadRunningSessions(): Promise<unknown>;
@@ -62,7 +65,6 @@ function twoFrames(): Promise<void> {
     });
 }
 
-/* could not */
 async function browserPrepareTerminal(): Promise<{ cols: number; rows: number }> {
     const win = hostWindow() as unknown as Record<string, unknown> | undefined;
     const doc = hostDocument();
@@ -121,12 +123,13 @@ export function browserNavHost(): NavHost {
         detachSession: () => api().detachSession(),
         createSession: (payload) => api().createSession(payload),
         createProject: (row) => api().createProject(row),
-        chooseProvider: (projectDefault, accounts) => {
+        pinSession: (tmuxName) => { pinSession(tmuxName); },
+        chooseProvider: (projectDefault, accounts, prefill) => {
             const lp = win()?.Launchpad as
-                | { showProviderModal?: (opts?: { projectDefault?: string | null; accounts?: boolean }) => Promise<Record<string, unknown> | null> }
+                | { showProviderModal?: (opts?: { projectDefault?: string | null; accounts?: boolean; prefill?: LaunchPrefill | null }) => Promise<Record<string, unknown> | null> }
                 | undefined;
             return lp?.showProviderModal
-                ? lp.showProviderModal({ projectDefault: projectDefault ?? null, accounts: accounts !== false })
+                ? lp.showProviderModal({ projectDefault: projectDefault ?? null, accounts: accounts !== false, prefill: prefill ?? null })
                 : Promise.resolve<Record<string, unknown> | null>(null);
         },
         terminalDims: () => {

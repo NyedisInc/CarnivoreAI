@@ -21,7 +21,6 @@ const STATED_VERDICTS = new Set(['clean', 'flagged', 'blocked']);
 
 const CLIP_MARK = '...';
 
-/* could not */
 export type ReviewShape = 'absent' | 'unavailable' | 'reviewed';
 
 export type ReviewVerdict = 'clean' | 'flagged' | 'blocked' | 'unreadable';
@@ -38,7 +37,6 @@ export interface ReviewView {
     summary: string | null;
     warnings: WarningView[];
     malformed: boolean;
-    /* could not */
     verdict: ReviewVerdict | null;
     writesInstructions: boolean;
     instructionsDetails: string[];

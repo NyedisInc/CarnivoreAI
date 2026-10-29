@@ -1,4 +1,3 @@
-/*  hidden  height:1px width:1px */
 
 console.log('[WriteFailureNotice Module] Loading...');
 

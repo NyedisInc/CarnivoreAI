@@ -1,4 +1,4 @@
-/* padding */
+/* The file drawer's */
 
 console.log('[ConfigEditorRows Module] Loading...');
 

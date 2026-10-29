@@ -30,7 +30,6 @@ class SettingsReader(Protocol):
         ...
 
     def state_dir(self) -> Path:
-        """The application state directory that holds ``cloude.db``."""
         ...
 
     def session_metadata_path(self) -> Path:
@@ -57,9 +56,19 @@ class TmuxReader(Protocol):
 
 
 @runtime_checkable
+class ReadConnection(Protocol):
+
+    def execute(self, sql: str, parameters: Any = ..., /) -> sqlite3.Cursor:
+        ...
+
+    def close(self) -> None:
+        ...
+
+
+@runtime_checkable
 class SessionRecordStore(Protocol):
 
-    def read_connection(self) -> Optional[sqlite3.Connection]:
+    def read_connection(self) -> Optional[ReadConnection]:
         ...
 
     def write_connection(self) -> Optional[sqlite3.Connection]:
@@ -113,3 +122,24 @@ class InstallRoots(Protocol):
         self, kind: str, scope: str, project_path: str | None
     ) -> tuple[Target, ...]:
         ...
+
+
+@runtime_checkable
+class SessionManagerSurface(Protocol):
+
+    _registry: Any
+    _borrowed: Any
+    _instance_epochs: dict[str, int]
+    _unread_store: Any
+    _wrappers_reader: Any
+    _attention_watcher: Any
+
+    def _name_read_connection(self) -> Any: ...
+
+    def _writable_datastore_connection(self) -> Any: ...
+
+    def _make_output_handler(self, session_id: str) -> Any: ...
+
+    def _make_viewer_probe(self, session_id: str) -> Any: ...
+
+    async def _cleanup_failed_create(self, session_id: str, backend: Any) -> None: ...

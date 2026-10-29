@@ -58,11 +58,6 @@ def _adapter(d: CplugDefinition, name: str, spec: ToolSpec) -> Any:
 
 
 def _installed_catalog_plugins(state_dir: Any) -> list:
-    """Rows for the Claude Code plugins installed from the catalog (``installed_items``, kind plugin). Blocking.
-
-    Inputs: state_dir (the host's state directory). Output: list of dicts; empty when there is no database yet.
-    Example: _installed_catalog_plugins(host.state_dir) -> [{"id": "rea/rea", "kind": "plugin", ...}]
-    """
     path = db_path_for(state_dir)
     if not path.exists():
         return []
@@ -85,11 +80,6 @@ async def plugins_list(manager: Any, caller: AgentCaller, args: dict) -> dict:
 
 
 def narrowing_refusal(host: runtime.Host, d: CplugDefinition, fields: dict) -> Optional[str]:
-    """Why a ``cplug_update`` is not allowed, or None when it only disables or revokes (H8).
-
-    Inputs: host; d (the plugin); fields (the call's arguments except ``cplug_id``). Output: str | None.
-    Example: narrowing_refusal(host, d, {"revision": 1, "enabled": True}) -> "cplug_update can only disable ..."
-    """
     allowed = {"revision", "enabled", "grants", "confirm_dependents"}
     if set(fields) - allowed or fields.get("enabled", False) is not False:
         return "cplug_update can only disable a plugin or revoke grants; the owner turns a plugin on and grants in the app"

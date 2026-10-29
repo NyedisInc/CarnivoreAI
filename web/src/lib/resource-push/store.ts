@@ -3,7 +3,9 @@ export const LIVENESS = '$live';
 
 export const FRAME_TYPE = 'resources.changed';
 
-export type TopicListener = (topics: string[]) => void;
+export type FrameBodies = Record<string, unknown>;
+
+export type TopicListener = (topics: string[], bodies?: FrameBodies) => void;
 
 export function familyOf(topic: string): string {
     const at = topic.indexOf(':');
@@ -32,10 +34,11 @@ export class ResourceTopicStore {
         if (was) this.emit([LIVENESS]);
     }
 
-    frame(frame: { topics?: unknown }): void {
+    frame(frame: { topics?: unknown; bodies?: unknown }): void {
         if (!this.connected) return;
         const topics = stringsOf(frame.topics);
-        if (topics.length) this.emit(topics);
+        const bodies = frame.bodies && typeof frame.bodies === 'object' && !Array.isArray(frame.bodies) ? (frame.bodies as FrameBodies) : undefined;
+        if (topics.length) this.emit(topics, bodies);
     }
 
     isLive(topic: string): boolean {
@@ -49,10 +52,10 @@ export class ResourceTopicStore {
         };
     }
 
-    private emit(topics: string[]): void {
+    private emit(topics: string[], bodies?: FrameBodies): void {
         for (const fn of [...this.listeners]) {
             try {
-                fn(topics);
+                fn(topics, bodies);
             } catch {
             }
         }

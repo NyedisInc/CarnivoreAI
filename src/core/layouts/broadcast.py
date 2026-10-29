@@ -1,20 +1,3 @@
-"""Broadcast one command line to a Layout's members (issue #837).
-
-THE SEND IS THE ONE-SHOT'S, NOT A SECOND ONE. Each pane receives the text
-through ``SessionBackend.paste_and_submit`` (``src/core/tmux_one_shot.py``):
-argv to tmux (never a shell string), the paste route forced, the Enter sent
-only after the pane is MEASURED to have changed, and the whole sequence
-serialised per pane. A pane that never showed the paste gets no Enter and
-reports ``failed`` / ``paste_not_settled``.
-
-A PANE STOPPED ON A DIALOG IS REFUSED, NOT TYPED INTO. An agent showing a
-permission prompt or its folder trust question is waiting on a KEY, and a
-pasted line would answer it. Read off the same live listing the status
-lights paint from (``activity_status == 'question'``, ``startup_gate ==
-'awaiting_startup_prompt'``, on the WRAPPER per gotcha 1), the one-shot
-gate's rungs 3 and 4 for the same reason. A plain shell has neither, so a
-shell prompt receives the line like a typed command, which is the point.
-"""
 
 from __future__ import annotations
 
@@ -135,7 +118,7 @@ async def _send_one(member: store.LayoutMember, info: Any, backend: Any, text: s
         return done(FAILED, "paste_not_settled")
     except NotImplementedError:
         return done(FAILED, "paste_unsupported")
-    except RuntimeError as exc:
+    except (RuntimeError, OSError, asyncio.TimeoutError) as exc:
         logger.warning("layout_broadcast_send_failed", session_id=info.session.id,
                        error_type=type(exc).__name__)
         return done(FAILED, "send_failed")
@@ -147,6 +130,7 @@ async def broadcast(layout: store.SavedLayout, text: str, *, infos: Iterable[Any
                     rewrite: Optional[Callable[[Any, str], str]] = None) -> List[MemberOutcome]:
     live = _live_by_row(infos)
     pending: Dict[int, "asyncio.Future[MemberOutcome]"] = {}
+    members_by_index: Dict[int, store.LayoutMember] = {}
     outcomes: List[Optional[MemberOutcome]] = []
     for index, member in enumerate(sorted(layout.members, key=lambda m: m.position)):
         if not member.broadcast:
@@ -160,8 +144,14 @@ async def broadcast(layout: store.SavedLayout, text: str, *, infos: Iterable[Any
             continue
         outcomes.append(None)
         pending[index] = asyncio.ensure_future(_send_one(member, info, backend, text, rewrite))
-    for index, future in pending.items():
-        outcomes[index] = await future
+        members_by_index[index] = member
+    results = await asyncio.gather(*pending.values(), return_exceptions=True)
+    for (index, member), result in zip(members_by_index.items(), results):
+        if isinstance(result, BaseException):
+            logger.error("layout_broadcast_send_crashed", layout_uuid=layout.layout_uuid,
+                         session_uuid=member.session_uuid, error_type=type(result).__name__)
+            result = MemberOutcome(member.session_row_id, member.session_uuid, FAILED, "send_failed")
+        outcomes[index] = result
     final = [o for o in outcomes if o is not None]
     counts: Dict[str, int] = {}
     for outcome in final:

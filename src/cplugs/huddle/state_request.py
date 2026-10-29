@@ -42,7 +42,7 @@ def _target_of(action: str, args: dict, item: Dict[str, Any]) -> str:
         return PRIOR
     if action == CLOSE:
         if args.get("to_state") not in (None, "", rules.DONE):
-            raise ToolError("close always ends done (the owner's approve of this request is their tick); do not send to_state")
+            raise ToolError("close always ends done (the owner's approve of this request is his tick); do not send to_state")
         return rules.DONE
     target = args.get("to_state") or rules.OPEN
     if target not in REOPEN_TARGETS:

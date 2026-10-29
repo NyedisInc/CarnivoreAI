@@ -1,31 +1,13 @@
-"""The vault: capture a unit into a new point, and read points back.
-
-CAPTURE (:meth:`Vault.capture`) is write-before-anything: every changed file is chunked into the blob store first, the new
-manifest is published second, and only then may an older manifest of the same unit be dropped (and only when the vault is
-over its history cap and the older one is a plain ``follow``-style point that is neither pinned nor kept). A capture that
-cannot read the unit's main file writes nothing and leaves the older point exactly as it was. Files the unit had before and
-that are no longer on disk are CARRIED FORWARD into the new point: the vault keeps what the original lost. A point is
-complete on its own.
-
-A PLUGIN FOLDER UNIT (:meth:`Vault.capture_folder`, ``folders.py``) is the other way round: a point is the folder AS IT IS, so a file
-deleted from the folder is not carried forward (a restore gives the folder as it was). Before such a point is published, the point that
-still held the deleted file gets a keep marker, so the only copy of it is never thinned away. A file that could not be read, or that sits
-in a sub-folder that could not be listed, is NOT read as deleted: its older entry is carried forward.
-
-A CONVERSATION FILE THAT SHRANK OR WAS REWRITTEN is not an append of what the vault holds. The point before it may then be
-the only copy of the older content, so it gets a keep marker (``K.KEPT_SUFFIX``) before the new point is published, and
-neither the history cap's replacement nor retention's thinning ever drops it.
-"""
 
 from __future__ import annotations
 
 import os
 import threading
 import time
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import structlog
 
@@ -66,6 +48,7 @@ class CaptureOutcome:
     failures: Tuple[str, ...] = ()
     damaged: int = 0
     detail: str = ""
+    read_signatures: Mapping[str, Tuple[int, int]] = field(default_factory=dict)
 
 
 def signature(files: Sequence[FileEntry]) -> Tuple[Tuple[str, str, str], ...]:
@@ -165,14 +148,19 @@ class Vault:
         except (BlobMissing, BlobCorrupt):
             return False
 
+    def _chunk_missing(self, entries: Sequence[FileEntry], seed_files: Dict[Tuple[str, str], FileEntry]) -> bool:
+        return any(not self.blobs.on_disk(c.sha256) for f in entries if seed_files.get((f.home, f.rel)) is not f for c in f.chunks)
+
     def capture(self, plan: units.UnitPlan, identity: Identity, reason: str, *, pace: Optional[Pacer] = None,
                 now: Optional[datetime] = None, legacy_key: Optional[str] = None) -> CaptureOutcome:
         unit = plan.unit
         with self.guard.capturing():
+            self.blobs.revalidate()
             seed = self.manifests.newest(unit)
+            seed_files = {(f.home, f.rel): f for f in (seed.files if seed else [])}
             before = self.blobs.new_blobs
             try:
-                entries, failures, main_failed = self._ingest_plan(plan, {(f.home, f.rel): f for f in (seed.files if seed else [])}, pace)
+                entries, failures, main_failed = self._ingest_plan(plan, seed_files, pace)
             except SliceExpired as exc:
                 return CaptureOutcome(STATUS_PARTIAL, unit, detail=str(exc))
             except BaseException:
@@ -191,8 +179,10 @@ class Vault:
                     return CaptureOutcome(STATUS_FAILED, unit, failures=tuple(failures), detail="the main file could not be read")
                 damaged = sum(1 for f in carried for c in f.chunks if not self.blobs.has(c.sha256))
                 if prior is not None and signature(files) == signature(prior.files):
-                    return CaptureOutcome(STATUS_UNCHANGED, unit, prior.point_id, prior.raw_bytes(), 0, tuple(failures), damaged)
-                if any(not self.blobs.has(c.sha256) for f in entries for c in f.chunks):
+                    seen = {f.source_path: (f.size_seen, f.mtime_ns) for f in entries}
+                    return CaptureOutcome(STATUS_UNCHANGED, unit, prior.point_id, prior.raw_bytes(), 0, tuple(failures), damaged,
+                                          read_signatures=seen)
+                if self._chunk_missing(entries, seed_files):
                     return CaptureOutcome(STATUS_FAILED, unit, failures=tuple(failures), detail="a chunk is missing after it was written")
                 if prior is not None and self._rewritten(prior_files, entries):
                     self.manifests.set_kept(unit, prior.point_id)
@@ -211,6 +201,7 @@ class Vault:
                                now: Optional[datetime] = None) -> CaptureOutcome:
         unit = K.SIDE_DB_UNIT
         with self.guard.capturing(), unit_lock(unit):
+            self.blobs.revalidate()
             prior = self.manifests.newest(unit)
             before = self.blobs.new_blobs
             entries = sidedb.ingest_databases(self.blobs, self.root / ".staging" / "side", Path(state_dir), databases, pace)
@@ -238,6 +229,7 @@ class Vault:
         if plan is None:
             return CaptureOutcome(STATUS_NO_FILES, unit, detail=f"{root} is not there")
         with self.guard.capturing():
+            self.blobs.revalidate()
             seed = self.manifests.newest(unit)
             seed_files = {(f.home, f.rel): f for f in (seed.files if seed else [])}
             before = self.blobs.new_blobs
@@ -273,7 +265,7 @@ class Vault:
                     return CaptureOutcome(STATUS_FAILED if failures else STATUS_NO_FILES, unit, failures=tuple(failures))
                 if prior is not None and signature(files) == signature(prior.files):
                     return CaptureOutcome(STATUS_UNCHANGED, unit, prior.point_id, prior.raw_bytes(), 0, tuple(failures))
-                if any(not self.blobs.has(c.sha256) for f in entries for c in f.chunks):
+                if self._chunk_missing(entries, seed_files):
                     return CaptureOutcome(STATUS_FAILED, unit, failures=tuple(failures), detail="a chunk is missing after it was written")
                 kept = {(f.home, f.rel) for f in files}
                 gone = [key[1] for key in prior_files if key not in kept]

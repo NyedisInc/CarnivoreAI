@@ -1,5 +1,6 @@
 
 <script lang="ts">
+  import Button from '../base/Button.svelte';
   import { openModal } from '../modal';
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
@@ -61,14 +62,14 @@
       <ul class="pp-grants">
         {#each grants as g (g.grant_id)}
           <li class="pp-swrow"><span>{g.label} <span class="pp-dim">{g.revoked_at ? t('roster.link.revoked') : g.scopes.join(', ')}</span></span>
-            {#if !g.revoked_at}<button type="button" class="oc-btn oc-btn--sm" data-grant={g.grant_id}
-              onclick={() => void act(t('roster.link.revoke_body', { name: c.name }), t('roster.link.revoke'), () => fed.revoke(g.grant_id))}>{t('roster.link.revoke')}</button>{/if}</li>
+            {#if !g.revoked_at}<Button variant="danger" size="sm" data-grant={g.grant_id}
+              onclick={() => void act(t('roster.link.revoke_body', { name: c.name }), t('roster.link.revoke'), () => fed.revoke(g.grant_id))}>{t('roster.link.revoke')}</Button>{/if}</li>
         {/each}
       </ul>
     {/if}
   </section>
   {#if problem}<p class="pp-err" role="alert">{problem}</p>{/if}
   <div class="m1-danger"><h3 class="pp-k m1-danger__k">{t('roster.link.danger')}</h3>
-    <button type="button" class="oc-btn pp-destroy" data-act="unpair"
-      onclick={() => void act(t('roster.link.unpair_body', { name: c.name }), t('roster.link.unpair'), () => fed.unpair(peer.key))}>{t('roster.link.unpair')}</button></div>
+    <Button variant="danger" data-act="unpair"
+      onclick={() => void act(t('roster.link.unpair_body', { name: c.name }), t('roster.link.unpair'), () => fed.unpair(peer.key))}>{t('roster.link.unpair')}</Button></div>
 {/if}

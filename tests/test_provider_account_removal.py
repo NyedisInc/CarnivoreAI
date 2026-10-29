@@ -50,7 +50,7 @@ class FakeSidecars:
         self.pending: dict = {}
         self.login_sessions: dict = {}
 
-    def set_pending_login(self, session_id: str, account_id: str) -> None:
+    def set_pending_login(self, session_id: str, account_id: str, device_auth: bool = False) -> None:
         self.pending[session_id] = account_id
         self.login_sessions[account_id] = session_id
 
@@ -68,7 +68,7 @@ class FakeManager:
     async def list_session_infos(self) -> list:
         return list(self.infos)
 
-    def _tmux_socket_name(self) -> str:
+    def tmux_socket_name(self) -> str:
         from tests.socket_guard import TEST_SOCKET_NAME
 
         return TEST_SOCKET_NAME

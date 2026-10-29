@@ -1,4 +1,3 @@
-/* waiting on you */
 
 export interface AccountColor {
     hex: string;
@@ -80,14 +79,12 @@ export function isStorableColor(hex: string | null | undefined): boolean {
     return HEX_SHAPE.test(hex);
 }
 
-/* <input type="color"> */
 export function normaliseColorInput(value: string | null | undefined): string | null {
     if (typeof value !== 'string') return null;
     const lowered = value.trim().toLowerCase();
     return isStorableColor(lowered) ? lowered : null;
 }
 
-/* nothing at all */
 export function swatchLabelKey(hex: string | null | undefined): string {
     const swatch =
         typeof hex === 'string' ? ACCOUNT_COLORS.find((entry) => entry.hex === hex) : undefined;

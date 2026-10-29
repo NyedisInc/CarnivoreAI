@@ -1,85 +1,3 @@
-"""Re-bind a row whose conversation died while its pane kept running.
-
-  - ``registry_read.registry_for_session``'s conversation gate refuses the
-    live record as :data:`~src.core.attention.registry_read.REG_STALE`, so
-    the registry tier is discarded;
-  - the transcript tier reads the file conversation A names, which stopped
-    days ago or, for a phantom, never existed;
-  - ``attention/side_effects._bind_conversation`` returned early on
-    ``not record.known``, so the gate that broke the row was also what
-    prevented the repair.
-
-Four of fourteen live sessions were in exactly that state when it was
-measured: row uuids 5.95, 7.44 and 16.4 days stale plus one with no
-transcript at all, against registry conversations whose transcripts had
-all been written that morning. Both readable tiers were blind, only
-``unknown`` was reachable, and it could not self-heal.
-
-THE RULE, AND WHY EVERY CLAUSE OF IT IS THERE. A rebind needs a POSITIVE,
-MEASURED reading of the replacement, never an absence on the incumbent:
-
-  1. The row's uuid and the registry's disagree. An agreement is the
-     steady state and there is nothing to repair.
-  2. The registry's conversation HAS A TRANSCRIPT ON DISK. This is the
-     gotcha 5 guard and it is not optional: ``--fork-session`` mints a
-     uuid whose transcript may never materialise, so a registry record
-     naming a file that does not exist is a phantom and must never
-     displace anything.
-  3. AND EITHER the row's conversation has no transcript at all - a
-     measured absence, which is the strongest form of this evidence
-     because there is nothing to lose - OR the registry's transcript was
-     appended to more recently than the row's by a CLEAR margin,
-     :data:`REBIND_MARGIN_SECONDS`.
-
-The margin exists because two files a single tick could have touched in
-either order are not a dead conversation and a live one. Sixty seconds is
-far longer than any interleaving of appends this app can cause and far
-shorter than the multi-day gaps the live defect showed, so it separates the
-case it is for without adjudicating the case it is not.
-
-WHAT IT NEVER DOES. It never mints a hook token (``_mint_hook_token``
-REPLACES what a running agent holds), never touches ``tmux_names``, never
-changes the tmux name or the row id, and never deletes a row.
-
-A conversation may now be taken from that row, and ONLY when
-``session_conversation_takeover`` measures the row RETIRED: its stored
-lifecycle is not ``running``, and its own tmux session is absent from a
-COMPLETE listing of the socket. That gate speaks
-``session_recreate_presence``'s three words and keeps its discipline -
-only ``gone`` acts, ``present`` never does, ``unknown`` never does - and it
-exists as its own module because the incumbent usually carries the LIVE
-PANE'S OWN tmux name, where a name-scoped presence reading answers
-``present`` for a row that has no pane. The release and the bind are TWO
-STATEMENTS IN ONE TRANSACTION inside ``bind_correlated_uuid``, so no reader
-ever sees two rows naming one conversation.
-
-WHERE THE WRITE GOES. Through ``session_claude_correlate_bind``, the one
-writer of this column outside the hook/lineage path, with ``replaces_uuid``
-naming the exact incumbent this module measured. That writer owns the
-unique-index check, the never-resurrect property and the anchor-only rule;
-re-spelling any of them here would give the project two of each.
-
-TRANSCRIPT PATHS ARE RESOLVED THE WAY THE RESOLVER RESOLVES THEM, through
-``session_transcript_presence.conversation_presence``, which is the single
-source of truth for how a uuid maps to a file: the working directory's own
-LITERAL spelling for the fast path (gotcha 6) and a corpus scan as the
-authority. No slug is re-derived here.
-
-WHAT IT COSTS ON A TICK, STATED BECAUSE IT WAS WEIGHED. A mismatched row
-pays one row read and up to two transcript lookups per pass. Both lookups
-hit ``conversation_presence``'s single-stat fast path whenever the file is
-in the row's own project directory, which is the case for every conversation
-that exists; a uuid with NO file anywhere costs one scan of the corpus
-root's immediate subdirectories, about 200 stats. That is bounded, and it
-only persists while the row is in the broken state a rebind exists to end:
-a successful rebind removes the mismatch on the next pass, and the one
-lasting decline is a phantom registry uuid, which is rare. No throttle was
-added, because a throttle would need a clock and would delay the repair for
-the case the whole module is for.
-
-NOTHING HERE RAISES. It runs on the attention tick, so every failure is a
-named outcome the caller may log and ignore.
-"""
 
 from __future__ import annotations
 
@@ -112,8 +30,6 @@ REASON_REGISTRY_TRANSCRIPT_NEWER: str = "registry_transcript_newer"
 
 REASON_WITHIN_MARGIN: str = "within_margin"
 
-# could not be read
-# could not
 REASON_UNMEASURED: str = "unmeasured"
 
 
@@ -121,7 +37,6 @@ REBIND_WROTE: str = "wrote"
 
 REBIND_DECLINED: str = "declined"
 
-# COULD NOT EVALUATE could not
 REBIND_UNRESOLVED: str = "unresolved"
 
 
@@ -132,7 +47,6 @@ class RebindDecision:
 
     reason: str
 
-    # could not be read
     row_transcript_mtime: Optional[float] = None
 
     registry_transcript_mtime: Optional[float] = None
@@ -151,24 +65,6 @@ def _transcript_mtime(
     working_dir: Optional[str],
     corpus_root: Optional[Path],
 ) -> tuple[bool, Optional[float]]:
-    """Locate one conversation's transcript and read its mtime.
-
-    Description: the location is
-      ``session_transcript_presence.conversation_presence``, the single
-      source of truth for how a uuid maps to a file, so no slug is
-      re-derived here (gotcha 6). THREE ANSWERS, NOT TWO: a measured
-      absence and a file whose mtime could not be read are different
-      facts, and only the first may be acted on.
-    Inputs:
-      claude_uuid (str | None) - the conversation to look for.
-      working_dir (str | None) - the row's directory, for the fast path.
-      corpus_root (Path | None) - the transcript corpus; None uses the
-        production default.
-    Output: tuple[bool, float | None] - (measured, mtime). ``measured`` is
-      False only when the corpus could not be searched or a located file
-      could not be stat-ed; a measured absence is ``(True, None)``.
-    Example: _transcript_mtime('abc', '/x', None) -> (True, 1789000000.0)
-    """
     from src.core.session_transcript_presence import (
         CONVERSATION_PRESENT,
         CONVERSATION_UNCHECKED,
@@ -243,23 +139,6 @@ def decide_conversation_rebind(
 
 
 def _socket_listing(socket_name: str, name: str) -> Any:
-    """List this socket's ``cloude_*`` sessions. NEVER RAISES.
-
-    Description: the production reader behind ``listing_reader``, and the
-      same throwaway-probe read ``recreate_routes._measure_presence``
-      takes - ``discover_existing()``, which reports both ``ok`` (the
-      probe RAN) and ``complete`` (its rows are the WHOLE answer). Nothing
-      is spawned, adopted, attached or written.
-
-      A handle that could not be built at all answers an UNAVAILABLE
-      listing rather than raising, because this runs on the attention tick
-      and ``unknown`` already refuses.
-    Inputs: socket_name (str) - the tmux socket to list. name (str) - any
-      session name; ``for_external`` needs one to build a handle and this
-      call reads the whole socket regardless of it.
-    Output: TmuxListing.
-    Example: _socket_listing('cloude', 'cloude_a').ok  # True
-    """
     from src.config import settings
     from src.core.tmux_backend import TmuxBackend
     from src.core.tmux_listing import TmuxListing
@@ -451,7 +330,7 @@ def rebind_conversation_uuid(
             outcome=REBIND_UNRESOLVED,
             detail="the datastore could not be opened to rebind the conversation",
         )
-    socket = manager._tmux_socket_name()
+    socket = manager.tmux_socket_name()
     pending = conversation_flip.begin_flip(
         conn, socket=socket, tmux_name=tmux_name, epoch=epoch, previous_id=row_uuid,
         new_id=registry_uuid, working_dir=row.get("working_dir"), corpus_root=corpus_root,

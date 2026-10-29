@@ -26,8 +26,8 @@ const machine = (id: string, over: Record<string, unknown> = {}) => ({ install_i
 
 const mounted: ReturnType<typeof mount>[] = [];
 async function render(mode: string): Promise<HTMLElement> {
-  roster = { master_install_id: 'hostb', self_install_id: 'hostb', settings: { placement_mode: mode, auto_distribute: false }, disagreement: null,
-    machines: [machine('hostb', { is_self: true, is_master: true, state: 'self' }), machine('hosta')] };
+  roster = { master_install_id: 'nostromo', self_install_id: 'nostromo', settings: { placement_mode: mode, auto_distribute: false }, disagreement: null,
+    machines: [machine('nostromo', { is_self: true, is_master: true, state: 'self' }), machine('studio')] };
   const target = document.createElement('div');
   document.body.append(target);
   mounted.push(mount(PackWorkTab, { target, props: {} }));
@@ -45,7 +45,7 @@ afterEach(async () => {
 describe('pack > work', () => {
   test('the status strip names the alpha, counts computers online and says whether this one follows', async () => {
     const root = await render('stats');
-    expect(root.querySelector('[data-pm="master-line"]')!.textContent).toContain('hostb');
+    expect(root.querySelector('[data-pm="master-line"]')!.textContent).toContain('nostromo');
     expect(root.querySelector('[data-pw="count"]')!.textContent).toBe('2 computers, 2 online');
     expect(root.querySelector('[data-pw="follows"]')!.textContent).toBe('follows the alpha');
   });
@@ -61,7 +61,7 @@ describe('pack > work', () => {
 
   test('each computer row shows its real reserve and restriction values', async () => {
     const root = await render('stats');
-    const row = root.querySelector('[data-machine="hosta"]')!;
+    const row = root.querySelector('[data-machine="studio"]')!;
     const text = row.textContent!;
     expect(text).toContain('now away: keeps 5% cpu 6% mem free');
     expect(text).toContain('in use: 20% cpu 25% mem');
@@ -80,7 +80,7 @@ describe('pack > work', () => {
     pick.dispatchEvent(new Event('change', { bubbles: true }));
     flushSync();
     expect(go.disabled).toBe(true);
-    target.value = 'hosta';
+    target.value = 'studio';
     target.dispatchEvent(new Event('change', { bubbles: true }));
     flushSync();
     expect(go.disabled).toBe(false);

@@ -1,4 +1,3 @@
-/* padding */
 
 
 @layer components {
@@ -15,25 +14,8 @@
     min-width: 0;
 }
 
-.session-sidebar-list .family-pill {
-    white-space: nowrap;
-    flex-shrink: 0;
-    max-width: 45%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
 
-.session-sidebar-row:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--oc-orange);
-}
 
-/* box-shadow: inset 2px 0 0 var(--color-accent)`, defended as
- * the answer to "why is this one at the top". That question has three
- * answers already, all in the markup and none colour-only: the `pinned`
- * group HEADER the row sits under with its own count; */
-
-/* padding: 0 */
 
 .session-sidebar-panel[data-density="compact"] .session-sidebar-row {
     margin-bottom: 1px;
@@ -47,18 +29,12 @@
     font-size: 0.78em;
 }
 
-.session-sidebar-panel[data-density="compact"] .family-pill {
-    font-size: 0.6em;
-    padding: 0 3px;
-}
-
 .session-sidebar-panel[data-density="compact"] .mark-unread-toggle {
     width: 16px;
     height: 16px;
 }
 
 
-/* padding */
 
 .session-sidebar-panel[data-density="cozy"] .session-sidebar-row {
     min-height: 46px;
@@ -108,14 +84,12 @@
     white-space: nowrap;
 }
 
-/* margin-left: auto */
 .session-sidebar-panel[data-density="cozy"] .session-sidebar-row-main
     .session-sidebar-row-when {
     margin-left: 2px;
 }
 
 
-/* could not */
 
 .session-sidebar-attention,
 .session-sidebar-notice {
@@ -169,7 +143,6 @@
     border: 0;
 }
 
-/*  hidden  height: 18px min-height: 1 overflow: hidden padding */
 
 .session-sidebar-row[data-context-gauge] {
     position: relative;

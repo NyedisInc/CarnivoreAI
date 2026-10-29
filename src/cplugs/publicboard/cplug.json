@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "id": "publicboard",
+  "name_key": "cplug.publicboard.name",
+  "description_key": "cplug.publicboard.description",
+  "version": "0.1.0",
+  "icon": "plug",
+  "author": "Joe (ccsliinc)",
+  "min_app_version": "1.16.1",
+  "tier": "builtin",
+  "default_enabled": false,
+  "requires": ["reviewboard"],
+  "surfaces": {},
+  "owns": {
+    "strings": ["cplug.publicboard."],
+    "tests": ["tests/python/cplugs/publicboard/", "web/src/cplugs/publicboard/"]
+  },
+  "settings_schema": {
+    "version": 1,
+    "fields": {
+      "port": { "kind": "number", "labelKey": "cplug.publicboard.settings.port", "hintKey": "cplug.publicboard.settings.port_help", "min": 1024, "max": 65535, "default": 8190 },
+      "bindAddress": { "kind": "string", "labelKey": "cplug.publicboard.settings.bind_address", "hintKey": "cplug.publicboard.settings.bind_address_help", "maxLength": 64, "default": "127.0.0.1" },
+      "hostnames": { "kind": "string", "labelKey": "cplug.publicboard.settings.hostnames", "hintKey": "cplug.publicboard.settings.hostnames_help", "maxLength": 1000, "default": "" },
+      "trustedProxies": { "kind": "string", "labelKey": "cplug.publicboard.settings.trusted_proxies", "hintKey": "cplug.publicboard.settings.trusted_proxies_help", "maxLength": 1000, "default": "" }
+    }
+  }
+}

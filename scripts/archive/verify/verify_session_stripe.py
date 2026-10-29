@@ -1,44 +1,4 @@
 #!/usr/bin/env python3
-"""Is the session-TYPE colour actually gone from a session row's left edge.
-
-The report was "the left side of every session has the color of the
-session type. the badges are already colored. no need for the left side
-color. just the border and background based upon the theme."
-
-`.running-session-row.owned` / `.external` drew a 3px `border-left` in
-`--color-badge-tmux-fg` / `--color-badge-external-fg` while the other
-three sides had no border at all. That is a second source of truth for a
-fact the TMUX / EXTERNAL badge in the same row already carries, and it is
-how a row ended up with a left bar whose colour disagreed with its badge.
-
-WHY THIS IS A PIXEL TEST AND NOT A RULE-TEXT TEST. A grep over
-styles.css can prove the declaration is gone; it cannot prove nothing
-else paints that edge, and three separate features in this repo shipped
-visibly broken through fully green suites whose assertions read markup.
-So every verdict below comes from screenshotting ONE real pixel of the
-left edge in a real Chromium that loaded the real stylesheets in the
-shipped order, and comparing it to the theme's own `--color-border` and
-to the session-type badge token.
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS  - every edge measured and every one came back theme-derived
-  1  FAIL  - something was measured and was wrong
-  2  CANNOT DETERMINE - the measurement could not be taken at all
-             (playwright missing, browser would not launch, harness never
-             became ready, tab reported itself hidden, a theme manifest
-             would not load). Never a pass.
-
-The hidden-tab guard is not paranoia: a backgrounded tab freezes CSS
-transitions at frame zero and never fires rAF, so computed styles read
-back pre-transition values forever and any number measured there means
-nothing. `.running-session-row` carries `transition: background 120ms`,
-so the settle loop below waits for two consecutive animation frames to
-AGREE rather than sleeping one guessed interval.
-
-playwright is not importable under this project's venv. Run it with an
-interpreter that has it, e.g.
-    /opt/homebrew/bin/python3 scripts/verify_session_stripe.py
-"""
 
 from __future__ import annotations
 
@@ -104,17 +64,6 @@ def settle(page, ids: list) -> None:
 
 
 def opaque(css_color: str) -> tuple:
-    """Parse a CSS colour and require it be fully opaque.
-
-    A translucent token cannot be compared against a screenshot pixel
-    without modelling what is behind it, and modelling is exactly what
-    this file refuses to do. The two themes under test both declare an
-    opaque --color-border; a theme that did not would raise here and be
-    reported as CANNOT DETERMINE rather than quietly compared wrong.
-
-    Inputs: css_color (str) - hex or rgb()/rgba().
-    Output: tuple - (r, g, b) rounded to ints.
-    """
     r, g, b, a = parse_color(css_color)
     if a < 0.999:
         raise RuntimeError(
@@ -125,14 +74,6 @@ def opaque(css_color: str) -> tuple:
 
 
 def measure_theme(page, theme: str, undetermined: list) -> dict:
-    """Apply one theme and measure every row's left edge, in pixels.
-
-    Inputs: page - a Playwright page already on the harness; theme (str) -
-      a shipped theme directory name; undetermined (list) - appended to
-      when something could not be measured at all.
-    Output: dict - {'tokens': ..., 'rows': {id: {...}}, 'control': (r,g,b)}
-      or {} when the theme could not be applied.
-    """
     try:
         page.evaluate("(id) => window.__applyTheme(id)", theme)
     except Exception as exc:  # noqa: BLE001

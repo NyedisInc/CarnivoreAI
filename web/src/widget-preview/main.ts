@@ -1,4 +1,4 @@
-/* the widget harness page the widgets page */
+/* the widget harness page */
 import { previewConfig, serveFixture } from './sandbox';
 import '../app.css';
 import '../opscenter/app.css';

@@ -154,6 +154,10 @@ class AccountUsage(BaseModel):
 class LedgerTotalWindow(BaseModel):
     """One window kind, averaged across the accounts that reported it.
 
+    Description: the total line answers "how much of this window have I
+      burned across everything", which is why ``used_pct`` is a mean and
+      not a sum: a sum of percentages is not a percentage.
+
     Fields:
         kind: the window kind being summarised.
         label: the human window, taken from the reporting accounts.
@@ -230,6 +234,17 @@ class FetchOutcome(BaseModel):
     Description: the fetchers answer with this instead of raising, so a
       failed poll updates one account's state and never takes the loop
       down with it.
+
+    Fields:
+        state: the credential state this poll measured.
+        windows: what it read. Empty on every state but ``ok``.
+        plan: the plan the payload named, when it named one.
+        retry_after_seconds: how long the provider asked to be left
+            alone. ``None`` when it asked for nothing readable, INCLUDING
+            when it answered ``Retry-After: 0``, which is a saturated
+            window rather than permission to retry immediately.
+        error: a short, credential-free reason. ``None`` when ``state``
+            is ``ok``.
     """
 
     state: CredentialState
@@ -318,6 +333,14 @@ class ProviderLoginStarted(BaseModel):
       directory, sets one environment variable and starts a shell. No
       credential, no token and no login URL crosses this boundary,
       because none of them is ever handled by this app.
+
+    Fields:
+        session_id: the app's own id for the session that was created.
+        tmux_session: the name of the pane on the ``cloude`` socket.
+            ``None`` only on a backend that does not name one.
+        device_auth: True when the pane runs the device-code login
+            (codex, requested from a browser not on this computer), so
+            the client can say where device-code login is switched on.
     """
 
     session_id: str

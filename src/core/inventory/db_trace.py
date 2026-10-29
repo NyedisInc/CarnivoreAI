@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from src.core.db import table_exists as _table_exists
 from src.core.inventory import registry
+from src.core.inventory.identity import safe_conversation
 from src.core.inventory.claim_rows import annotate, trace_claims
 from src.core.inventory.model import DELETE, KEEP, KIND_ROWS, MAIN_STORE, Artifact, SessionIdentity
 from src.core.inventory.scope import Scope, session_scope
@@ -33,10 +34,11 @@ def _archive_ids(conn: sqlite3.Connection, ident: SessionIdentity) -> List[int]:
     if not _table_exists(conn, "transcript_archives"):
         return []
     where, params = ["root_session_id = ?"], [ident.row_id]
-    if ident.conversation:
-        match, more = _path_match("source_path", ident.conversation)
+    conversation = safe_conversation(ident.conversation)
+    if conversation:
+        match, more = _path_match("source_path", conversation)
         where += ["claude_session_uuid = ?", match]
-        params += [ident.conversation, *more]
+        params += [conversation, *more]
     sql = f"SELECT id FROM transcript_archives WHERE {' OR '.join(where)} ORDER BY id"
     return [int(r[0]) for r in conn.execute(sql, params)]
 
@@ -78,7 +80,7 @@ def trace(conn: sqlite3.Connection, ident: SessionIdentity, shared: List[Dict[st
           other_named: int, scope: Optional[Scope] = None) -> Tuple[List[Artifact], List[str]]:
     arts: List[Optional[Artifact]] = []
     blockers: List[str] = []
-    conv = ident.conversation
+    conv = safe_conversation(ident.conversation)
     conv_action, conv_reason = DELETE, ""
     if shared:
         conv_action = KEEP

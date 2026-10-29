@@ -54,13 +54,13 @@ class RoutingProvider:
             return self._cached
         try:
             rows = list(self._subscriptions())
-        except (OSError, ValueError):
-            log.warning("notification_subscriptions_unreadable")
+        except (OSError, ValueError) as exc:
+            log.warning("notification_subscriptions_unreadable", error=str(exc), error_type=type(exc).__name__)
             rows = []
         try:
             devices = list(self._native_devices())
-        except (OSError, ValueError):
-            log.warning("notification_native_devices_unreadable")
+        except (OSError, ValueError) as exc:
+            log.warning("notification_native_devices_unreadable", error=str(exc), error_type=type(exc).__name__)
             devices = []
         pushes = [view.webpush_view(doc, str(r["id"]), subscription_label(r)) for r in rows if r.get("id")]
         pushes += [view.apns_view(doc, str(r["id"]), native_device_label(r)) for r in devices if r.get("id")]

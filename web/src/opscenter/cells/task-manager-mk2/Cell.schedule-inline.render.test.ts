@@ -9,6 +9,7 @@ const mk = (id: number, extra: Record<string, unknown>) => ({
   id, list: '7', text: `task ${id}`, title: `task ${id}`, note: '', position: id, created_by: 'joe', state: 'open', kind: 'task',
   revision: 1, created_seq: id, seq: id, deleted: false, thread: [], status: 'working', section: 'working', ...extra,
 });
+/** 21: working, newest message an unread info (the server files it in "needs you" with a read action). 22: a long conversation. */
 const flags = vi.hoisted(() => ({ scheduled: true }));
 const ITEMS = () => [
   mk(21, { needs_you: true, needs_action: 'read', unread: true, info_unread: 1, info_unseen: true, thread: [msg(5, 21, 'claude', 'info', 'the build is green and ready', { unread: true })] }),
@@ -22,6 +23,7 @@ vi.mock('../../api/auth.svelte', async (importOriginal) => {
   return {
     ...real,
     authFetch: (path: string, init: RequestInit = {}) => {
+      // A write that stays unanswered until the test ends: only the optimistic draw can move a task meanwhile.
       if (init.method && init.method !== 'GET') { wire.writes.push(path); return new Promise((resolve) => { wire.open.push(() => resolve({})); }); }
       if (path === '/swarm/roster') return Promise.resolve({ agents: [] });
       if (path === '/cplugs/huddle') return Promise.resolve({ revision: 1, settings: { view: 'status', hideCompleted: false } });
@@ -62,14 +64,16 @@ afterEach(() => {
   flags.scheduled = true;
   wire.writes.length = 0;
   for (const release of wire.open.splice(0)) release();
-  try { localStorage.clear(); } catch {  }
+  try { localStorage.clear(); } catch { /* jsdom without storage */ }
 });
 
+/** Settle the mocked reads. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 10; i += 1) { await Promise.resolve(); await tick(); }
   flushSync();
 }
 
+/** Mount Mark II on project 7. Output: the host. */
 async function draw(state: 'compact' | 'opened' | 'detailed' = 'opened', all = false): Promise<HTMLElement> {
   localStorage.setItem('carnivore.core.task-manager-mk2.tm.task-state', JSON.stringify(state));
   const host = document.createElement('div');
@@ -82,11 +86,12 @@ async function draw(state: 'compact' | 'opened' | 'detailed' = 'opened', all = f
   return host;
 }
 
+/** The status section a task is drawn in. Inputs: host, id. Output: the section key, or null. */
 const sectionOfRow = (host: HTMLElement, id: number): string | null =>
   host.querySelector(`[data-huddle-item="${id}"]`)?.closest('[data-task-manager-status-section]')?.getAttribute('data-task-manager-status-section') ?? null;
 
 
-describe('the schedule lives inline in the row', () => {
+describe('the schedule lives inline in the row (round 9 points 4 and 5)', () => {
   test('an opened scheduled task draws no schedule block under the row; the time and edit are in the row line, pause and stop in its action tab', async () => {
     const host = await draw('opened');
     const row = host.querySelector('[data-huddle-item="23"]') as HTMLElement;

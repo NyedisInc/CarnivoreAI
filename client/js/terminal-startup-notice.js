@@ -1,3 +1,4 @@
+/* there is nothing */
 
 console.log('[TerminalStartupNotice Module] Loading...');
 

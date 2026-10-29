@@ -35,7 +35,23 @@ sheen. Everything else moves only enough to explain a change, and every motion s
     <dd>Colour, background and border colour on hover over <code>--oc-motion-fast</code>, <code>ease</code>. No transform on
         hover, no lift, no scale (the old <code>.modal-close:hover</code> scale is legacy). An entering dialog fades 0.2s.</dd>
     <dt>on-state marks</dt>
+    <dd>A toggle icon that is ON may carry a subtle living detail: the keep-awake cup's rising steam, the auto switch's
+        sparkle. Grey and still when off; coloured with the small animation when on (Alex, #151 and #559). Each respects
+        reduced motion.</dd>
     <dt>focus</dt>
+    <dd>Focus is the element's OWN border, a little brighter, same width, no shadow (Alex (example-owner), 2026-09-27,
+        reversing the 2px cyan outline, then softening an intervening "+1px bolder" pass the same day: "this is way
+        too bold, scrap the bolding part and just make the color of the outline get a little brighter of the same
+        color"). One shared rule in <code>web/src/opscenter/focus.css</code> does it for every
+        <code>:focus-visible</code> element in both trees (a clicked text field matches too): no outline; the edge colour is
+        the element's border colour (<code>--_bd</code>, else <code>currentColor</code>) mixed toward
+        <code>--oc-focus-lift</code> (white on a dark ground, black on a light one) by a small amount, so the box never
+        changes size and the shift reads as subtle. A control with a reserved but invisible 1px border shows the same
+        brightened hairline; a control with no border reserved at all has nothing to colour. A
+        component whose border hue differs from its text sets <code>--_bd</code> to its border token; a field inside a
+        frame puts <code>oc-focus-host</code> on the frame so the frame lights instead. Never write a per-component focus
+        outline or ring, and never add a shadow or extra width to make it more visible. A manager card (<code>.mgr-card</code>,
+        the widgets page) lights as a whole when its name control <code>.mgr-card__open</code> takes focus.</dd>
 </dl>
 
 <h3 class="sg-h3" id="motion-pause">animation pause</h3>
@@ -48,10 +64,8 @@ sheen. Everything else moves only enough to explain a change, and every motion s
         everything under a <code>visibility: hidden</code> cover: <code>body.menu-page-open</code> over
         <code>.screen</code>, <code>.header</code> and <code>.config-editor-picker-overlay</code>, an inactive tab body
         (<code>.oc-tabpane-hidden</code>) and the terminal parking shelf. A new cover that hides a subtree with
-        <code>visibility: hidden</code> is added to that list. A sidebar row (<code>.session-sidebar-row</code>) that is not
-        selected, hovered or focused keeps (<code>client/css/resting-row-effort.css</code>) its effort mark (<code>.session-sidebar-row-model</code>, its
-        <code>.effort-fx</code> sheen and <code>__spark</code>) still, with <code>animation: none</code> and the sheen hidden;
-        only the selected, hovered or focused row moves.</dd>
+        <code>visibility: hidden</code> is added to that list.
+        Sidebar rows are not special-cased: every row's status light, effort mark and keep-awake steam animate while the window is focused, and calm (below) holds them when it is not.</dd>
 </dl>
 <h3 class="sg-h3" id="motion-types">animation types</h3>
 <dl class="sg-facts">
@@ -99,6 +113,11 @@ sheen. Everything else moves only enough to explain a change, and every motion s
 
 <h3 class="sg-h3" id="motion-mistakes">common mistakes</h3>
 <ul class="sg-mistakes">
+    <li><strong>A focus ring of any colour, or any added thickness.</strong> An accent ring made PR #598's dialog read
+        as a red-outlined box, and the cyan ring that replaced it was "annoying" (Alex (example-owner), 2026-09-27); the
+        "+1px bolder" edge that replaced THAT was itself "way too bold" the same day. Focus is the element's own edge,
+        a little brighter, same width, from <code>focus.css</code>; never add an <code>outline</code>, a ring, or a
+        shadow per component.</li>
     <li><strong>Waiting on <code>requestAnimationFrame</code> for work a hidden tab must still do.</strong> A bare rAF never
         resolves in a background tab (gotcha 9); race a timer (<code>client/js/terminal-layout-wait.js</code>).</li>
     <li><strong>A new perpetual animation.</strong> One breathing thing per list is the budget. A second one competes with

@@ -1,6 +1,6 @@
 <script lang="ts">
-  /* session skills */
   import { onMount } from 'svelte';
+  import { Button } from '../base';
   import { t } from '../i18n/index.svelte';
   import { openModal, openModalCount } from '../modal';
   import { browserCatalogHost } from '../catalog/catalog';
@@ -23,6 +23,8 @@
   let done = $state<string[]>([]);
   let timer: ReturnType<typeof setTimeout> | null = null;
   let live = true;
+  let gaveUp = $state(false);
+  const stillWaiting = $derived(reply?.state === 'waiting' && !gaveUp);
 
   async function read(tries: number): Promise<void> {
     try {
@@ -30,13 +32,14 @@
     } catch {
       return;
     }
-    if (live && reply.state === 'waiting' && tries < POLL_MAX) {
-      timer = setTimeout(() => void read(tries + 1), POLL_MS);
-    }
+    if (reply.state !== 'waiting') return;
+    if (!live) return;
+    if (tries < POLL_MAX) timer = setTimeout(() => void read(tries + 1), POLL_MS);
+    else gaveUp = true;
   }
 
   onMount(() => {
-    void read(POLL_MAX);
+    void read(0);
     return () => {
       live = false;
       if (timer) clearTimeout(timer);
@@ -50,6 +53,7 @@
     try {
       await requestScout(sessionId);
       reply = { state: 'waiting', suggestions: [] };
+      gaveUp = false;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => void read(0), POLL_MS);
     } catch (err: unknown) {
@@ -91,9 +95,9 @@
 
 <h3 class="sal-section">{t('skills.scout.title')}</h3>
 <div class="sal-scout" data-skill-scout>
-  <button type="button" class="sal-close" data-scout-button disabled={asking || reply?.state === 'waiting'} onclick={() => void scout()}>
-    {asking || reply?.state === 'waiting' ? t('skills.scout.asking') : t('skills.scout.button')}
-  </button>
+  <Button size="sm" data-scout-button disabled={asking || stillWaiting} onclick={() => void scout()}>
+    {asking || stillWaiting ? t('skills.scout.asking') : t('skills.scout.button')}
+  </Button>
   <span class="sal-note sal-scout-hint">{t('skills.scout.hint')}</span>
 </div>
 {#if error}<p class="sal-error" role="alert" data-scout-error>{error}</p>{/if}
@@ -104,12 +108,12 @@
     <ul class="sal-chips" data-scout-chips>
       {#each reply.suggestions as s (s.item_id)}
         <li class="sal-chip-row" data-scout-chip={s.item_id}>
-          <button
-            type="button"
-            class="sal-chip"
+          <Button
+            size="sm"
+            data-scout-install={s.item_id}
             disabled={installing !== null || done.includes(s.item_id)}
             onclick={() => void install(s.item_id, s.name)}
-          >{done.includes(s.item_id) ? t('skills.scout.installed', { name: s.name }) : installing === s.item_id ? t('skills.scout.installing') : t('skills.scout.install', { name: s.name })}</button>
+          >{done.includes(s.item_id) ? t('skills.scout.installed', { name: s.name }) : installing === s.item_id ? t('skills.scout.installing') : t('skills.scout.install', { name: s.name })}</Button>
           <span class="sal-chip-why">{s.reason}</span>
         </li>
       {/each}

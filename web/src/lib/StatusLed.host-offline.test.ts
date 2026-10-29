@@ -4,15 +4,15 @@ import { hostOffline, ledStateFor } from './led';
 import { ledHtmlForStatus } from './status-dot';
 import { legacy } from './led-legacy-fixture';
 
-const DOWN = { host_key: 'peer-ab12', host_label: 'hosta', host_state: 'disconnected' };
+const DOWN = { host_key: 'peer-ab12', host_label: 'studio', host_state: 'disconnected' };
 const UP = { ...DOWN, host_state: 'up' };
 
 describe('a row of an unreachable paired Mac', () => {
     test('hostOffline names the Mac only for a remote row whose link is not up, in both trees', () => {
         const api = legacy();
         for (const [row, want] of [
-            [DOWN, 'hosta'],
-            [{ ...DOWN, host_state: 'connecting' }, 'hosta'],
+            [DOWN, 'studio'],
+            [{ ...DOWN, host_state: 'connecting' }, 'studio'],
             [{ ...DOWN, host_label: undefined }, 'peer-ab12'],
             [UP, null],
             [{ host_key: 'local', host_label: 'this machine', host_state: 'disconnected' }, null],
@@ -39,9 +39,9 @@ describe('a row of an unreachable paired Mac', () => {
 
     test('the tooltip names the Mac, identically in both trees, and an asleep row keeps its moon', () => {
         const api = legacy();
-        const signals = { host_offline: 'hosta' };
+        const signals = { host_offline: 'studio' };
         const mine = ledHtmlForStatus('working', signals);
-        expect(mine).toContain('title="hosta offline"');
+        expect(mine).toContain('title="studio offline"');
         expect(mine).toContain('data-inner="disconnected"');
         expect(api.dotHtml('working', signals)).toBe(mine);
         const asleep = ledHtmlForStatus('asleep', signals);

@@ -14,7 +14,7 @@ import structlog
 
 from src.core.mcp_health.fold import server_key
 from src.core.mcp_health.servers import (
-    REASON_CLOSED, REASON_CONNECT_FAILED, REASON_CONNECTED, REASON_GAVE_UP, REASON_NEEDS_AUTH, REASON_RECONNECTING,
+    REASON_CLOSED, REASON_CONNECT_FAILED, REASON_CONNECTED, REASON_GAVE_UP, REASON_NEEDS_AUTH, REASON_NOT_IMPLEMENTED, REASON_RECONNECTING,
     STATE_CONNECTED, STATE_DOWN, STATE_NEEDS_AUTH, STATE_UNKNOWN, TRANSPORT_HTTP, TRANSPORT_PROXY, TRANSPORT_SSE,
     TRANSPORT_STDIO, TRANSPORT_UNKNOWN,
 )
@@ -34,6 +34,7 @@ MAX_FILES: int = 2048
 KIND_CONNECTED = "connected"
 KIND_FAILED = "failed"
 KIND_GAVE_UP = "gave_up"
+KIND_NOT_IMPLEMENTED = "not_implemented"
 KIND_CLOSED = "closed"
 KIND_NEEDS_AUTH = "needs_auth"
 KIND_RECONNECTING = "reconnecting"
@@ -41,6 +42,7 @@ KIND_RECONNECTING = "reconnecting"
 _NON_ALNUM = re.compile(r"[^A-Za-z0-9]")
 _NAME_UNSAFE = re.compile(r"[^A-Za-z0-9_-]")
 _FAILED_CODE = re.compile(r"Connection failed(?: after \d+ms)? \(([A-Z][A-Z0-9_]{1,40})\)")
+_NOT_IMPLEMENTED = re.compile(r"Connection failed(?: after [^()]*)? \((?:404|501)\)")
 _TRANSPORT = re.compile(r"\(transport: ([a-z-]+)\)")
 _STAMP = "%Y-%m-%dT%H-%M-%S-%fZ"
 
@@ -109,6 +111,8 @@ def classify_line(line: bytes) -> Optional[Tuple[str, Optional[datetime], Option
                 detail = code.group(1) if code else None
                 if detail and "AUTH" in detail:
                     kind = KIND_NEEDS_AUTH
+                elif _NOT_IMPLEMENTED.search(text):
+                    kind = KIND_NOT_IMPLEMENTED
             found = _TRANSPORT.search(text)
             if found:
                 hint = found.group(1)
@@ -160,6 +164,8 @@ def link_from_state(dir_name: str, state: _FileState, now: datetime) -> Optional
         return LinkState(dir_name, transport, STATE_DOWN, REASON_GAVE_UP, state.last_failure, state.at)
     if state.kind == KIND_FAILED:
         return LinkState(dir_name, transport, STATE_DOWN, REASON_CONNECT_FAILED, state.detail, state.at)
+    if state.kind == KIND_NOT_IMPLEMENTED:
+        return LinkState(dir_name, transport, STATE_DOWN, REASON_NOT_IMPLEMENTED, None, state.at)
     if state.kind == KIND_CLOSED:
         return LinkState(dir_name, transport, STATE_DOWN, REASON_CLOSED, None, state.at)
     if state.kind == KIND_NEEDS_AUTH:

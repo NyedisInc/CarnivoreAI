@@ -1,6 +1,7 @@
 <script lang="ts">
   import { sectionStyle, splitAt } from '../session-rail/rail-sections';
   import TabKey from './TabKey.svelte';
+  import EditCell from './EditCell.svelte';
   import { nextKey } from './key-nav';
   import type { Zone } from './zone.svelte';
   import type { KeyFace, TabRef } from './zone-types';
@@ -23,6 +24,8 @@
     onpress,
     onedit,
     ondragstart,
+    hiddenKey,
+    ontoggle,
   }: {
     zones: readonly Zone[];
     axis: 'x' | 'y';
@@ -41,6 +44,8 @@
     onpress: (zone: Zone, key: string) => void;
     onedit: (event: KeyboardEvent, key: string, title: string) => void;
     ondragstart: (event: PointerEvent, key: string, title: string) => void;
+    hiddenKey?: (key: string) => boolean;
+    ontoggle?: (key: string, hide: boolean) => void;
   } = $props();
 
   let root = $state<HTMLElement | null>(null);
@@ -67,13 +72,7 @@
   }
 </script>
 
-<div class="rail__sections" data-rail-sections data-axis={axis} data-editing={editing} data-flow={flow ? '' : undefined} bind:this={root}>
-  {#each zones as zone, s (s)}
-    {@const tabs = zone.tabs}
-    <div class="rail__keys" data-rail-keys data-rail-section={s} data-rail-pin-end={s === zones.length - 1 ? 'true' : undefined} style={flow ? undefined : sectionStyle(axis, s, zones.length, ratio)}>
-      {#each tabs as tab, i (tab.key)}
-        {@const look = face(tab)}
-        {#if editing && mark?.index === i && mark.section === s}<div class="rail__mark" data-zone-mark></div>{/if}
+{#snippet keyOf(tab: TabRef, look: KeyFace, zone: Zone)}
         <TabKey
           id={tab.key}
           variant="bar"
@@ -91,6 +90,22 @@
           onmenu={zone.spec.openMenu ? (key, anchor) => zone.openMenu(key, anchor) : undefined}
           ondragstart={(event, key) => ondragstart(event, key, look.title)}
         />
+{/snippet}
+
+<div class="rail__sections" data-rail-sections data-axis={axis} data-editing={editing} data-flow={flow ? '' : undefined} bind:this={root}>
+  {#each zones as zone, s (s)}
+    {@const tabs = zone.tabs}
+    <div class="rail__keys" data-rail-keys data-rail-section={s} data-rail-pin-end={s === zones.length - 1 ? 'true' : undefined} style={flow ? undefined : sectionStyle(axis, s, zones.length, ratio)}>
+      {#each tabs as tab, i (tab.key)}
+        {@const look = face(tab)}
+        {#if editing && mark?.index === i && mark.section === s}<div class="rail__mark" data-zone-mark></div>{/if}
+        {#if editing && ontoggle}
+          <EditCell hidden={hiddenKey?.(tab.key) ?? false} name={look.title} ontoggle={() => ontoggle(tab.key, !(hiddenKey?.(tab.key) ?? false))}>
+            {@render keyOf(tab, look, zone)}
+          </EditCell>
+        {:else}
+          {@render keyOf(tab, look, zone)}
+        {/if}
       {/each}
       {#if editing && mark?.index === tabs.length && mark.section === s && tabs.length > 0}<div class="rail__mark" data-zone-mark></div>{/if}
       {#if empty}

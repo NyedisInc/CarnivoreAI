@@ -2,30 +2,20 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Callable, List, Mapping, Optional, Set
+from typing import Callable, List, Mapping, Optional
 
-from src.core.attention.registry_read import (
+from src.core.attention.parent_map import descends_from
+from src.core.attention.registry_record import (
     REG_ABSENT,
     REG_OK,
     REG_STALE,
     REG_UNREADABLE,
     RegistryRecord,
     _empty_record,
-    registry_for_session,
 )
+from src.core.attention.registry_index import registry_for_session
 
-# could not be read
 ProcessParents = Callable[[], Optional[Mapping[int, int]]]
-
-
-def descends_from(pid: int, root_pid: int, parents: Mapping[int, int]) -> bool:
-    visited: Set[int] = set()
-    while pid > 0 and pid not in visited:
-        if pid == root_pid:
-            return True
-        visited.add(pid)
-        pid = parents.get(pid, 0)
-    return False
 
 
 def falls_back_to_pane(registry: RegistryRecord) -> bool:
@@ -67,6 +57,7 @@ def registry_for_pane(
             REG_UNREADABLE,
             "two or more live registry records name tmux pane %s: pids %s"
             % (pane_id, ", ".join(str(record.pid) for _key, record in proven)),
+            ambiguous_pane=True,
         )
     key, _record = proven[0]
     return registry_for_session(

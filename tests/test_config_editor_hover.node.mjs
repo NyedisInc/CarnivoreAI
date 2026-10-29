@@ -9,6 +9,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let failures = 0;
 let passes = 0;
 
+/**
+ * Run one named assertion block, recording pass/fail rather than throwing.
+ * @param {string} name  Test description.
+ * @param {() => void} fn  Body; throwing marks the test failed.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -54,6 +60,12 @@ function specificity(selector) {
     return [ids, b, els];
 }
 
+/**
+ * Compare two specificity triples.
+ * @param {[number, number, number]} a  Left triple.
+ * @param {[number, number, number]} b  Right triple.
+ * @returns {number} Negative if a < b, 0 if equal, positive if a > b.
+ */
 function cmp(a, b) {
     for (let i = 0; i < 3; i++) {
         if (a[i] !== b[i]) return a[i] - b[i];
@@ -89,6 +101,8 @@ function rowHoverRules(ruleList, bareButton) {
     return out;
 }
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the tree-row hover rule cancels the reset transform and outset glow', () => {
     const hits = rowHoverRules(editorRules, false)
@@ -103,6 +117,9 @@ test('the tree-row hover rule cancels the reset transform and outset glow', () =
 });
 
 test('the bare button hover reset is gone, and the row classes never opt into its replacement', () => {
+    // SCOPING FIX. `button:hover:not(:disabled)` no longer exists - it is
+    // `.btn-icon:hover:not(:disabled)` now, applied only to
+    // `#configEditorBtn` and `.header-menu-toggle` (see
     const reset = styleRules
         .flatMap((r) => r.selector.split(',').map((s) => ({ selector: s.trim(), body: r.body })))
         .filter((r) => /^button:hover/.test(r.selector) && /transform:/.test(r.body));
@@ -122,6 +139,7 @@ test('the bare button hover reset is gone, and the row classes never opt into it
             + 'reaches tree rows again and the overflow bug returns');
     }
 
+    // Keep the pre-existing specificity guard too, pinned against the
     const historicalResetSpec = [0, 2, 1];
     for (const cls of ROW_CLASSES) {
         const guard = rowHoverRules(editorRules, false)
@@ -179,6 +197,8 @@ test('the focus ring survives the box-shadow: none neutralizer', () => {
         `focus-ring specificity ${ring} loses to the box-shadow: none rule ${zeroing}`);
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('the tree scrolls, so any row overhang is a real horizontal scrollbar', () => {
     const tree = editorRules.find((r) => r.selector === '.config-editor-tree');

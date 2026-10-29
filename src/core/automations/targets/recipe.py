@@ -6,28 +6,13 @@ from typing import Any, Dict
 import structlog
 from pydantic import ValidationError
 
-from src.core.automations import delivered
 from src.core.automations import models as m
+from src.core.automations import notify_policy
 from src.core.automations import recipes
 from src.core.app_alerts import constants as alert_const
 from src.core.app_alerts import service as alert_service
 
 logger = structlog.get_logger()
-REPORT_TYPE, FAILED_TYPE = "automation_report", "automation_failed"
-
-
-def _tell(type_id: str, automation: Dict[str, Any], run_id: str, severity: str, store: Any = None) -> None:
-    kind = "failed" if type_id == FAILED_TYPE else "report"
-    key = f"automation.{kind}.{run_id}"
-    row = alert_service.raise_alert(
-        key, source="automations", severity=severity, title_key=f"app_alert.automation.{kind}.title",
-        params={"automation": str(automation.get("name") or "")}, auto_resolve=False,
-        actions=[{"id": "open", "label_key": "app_alert.automation.open", "href": f"#automations/run/{run_id}"}])
-    if row is not None and store is not None:
-        try:
-            store.update_run(run_id, delivered=delivered.record(kind, key))
-        except m.AutomationNotFound:
-            pass
 
 
 def tell_notice(text: str) -> bool:
@@ -39,20 +24,10 @@ def tell_notice(text: str) -> bool:
 
 
 def tell_failure(automation: Dict[str, Any], run_id: str, store: Any = None) -> bool:
-    delivery = automation.get("delivery") or {}
-    if not delivery.get("notify", True) or (delivery.get("notify_on") or "failure") not in ("failure", "always"):
+    if not notify_policy.decide({**automation, "delivery": automation.get("delivery") or {}}, True):
         return False
-    _tell(FAILED_TYPE, automation, run_id, alert_const.SEV_WARN, store)
+    notify_policy.tell(notify_policy.FAILED_TYPE, automation, run_id, store)
     return True
-
-
-def _wants(automation: Dict[str, Any], failure: bool) -> bool:
-    delivery = automation["delivery"]
-    if not delivery.get("notify", True):
-        return False
-    default = "failure" if automation["target"].get("recipe") in m.SYSTEM_ACTIONS else "report"
-    when = delivery.get("notify_on") or default
-    return when == "always" or (when == "failure" if failure else when in ("report", "always"))
 
 
 async def run(ctx: Any, automation: Dict[str, Any], run_row: Dict[str, Any]) -> m.RunOutcome:
@@ -74,7 +49,7 @@ async def run(ctx: Any, automation: Dict[str, Any], run_row: Dict[str, Any]) -> 
         except recipes.RecipeSkipped as exc:
             return m.RunOutcome(status=m.SKIPPED, reason=exc.reason)
     failed = outcome.status != m.SUCCEEDED
-    if _wants(automation, failed):
-        _tell(FAILED_TYPE if failed else REPORT_TYPE, automation, run_row["run_id"], alert_const.SEV_WARN if failed else alert_const.SEV_INFO,
-              getattr(ctx, "store", None))
+    notice = notify_policy.decide(automation, failed, notify_policy.default_for_recipe(automation))
+    if notice:
+        notify_policy.tell(notice, automation, run_row["run_id"], getattr(ctx, "store", None))
     return outcome

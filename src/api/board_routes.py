@@ -1,28 +1,3 @@
-"""``/api/v1/boards``: export a Home board to a file and import one back (issue #1157 part 2).
-
-  GET  /boards/{board_id}/export   the ``.carnivore-board.json`` document for
-                                   one stored board (a read; attachment)
-  POST /boards/import              ``{document, dry_run?, apply_drawer_zone?,
-                                   expected_revision?, client_id?}``
-
-The import is a validated write through the one preference write
-(``UiPreferencesStore.update``), so the server's own placement refusal runs
-too. It ADDS the board under a fresh id and never replaces one. With
-``dry_run`` it answers the preview and writes nothing. ``apply_drawer_zone``
-(default false) also replaces the drawer widget area with the file's.
-
-Answers: 200 ``{status, board_id?, preview, settings_applied?, settings_refused?}``
-(the file's widget settings are written after the board, each through the one
-settings write; a refused entry is listed, never fatal); 400 ``board_file_invalid``
-(not a board file, too large, wrong version) or ``board_refused`` (carrying
-``refusals``, every problem found, one plain sentence each); 409
-``preferences_stale`` (carrying ``revision``) or ``home_not_synced`` (no
-browser has written the Home boards yet, so an import would replace the
-person's Home); 503 before the preference store is mounted. A committed import
-broadcasts ``preferences.changed`` exactly as ``PATCH /preferences`` does.
-The document rules: ``src/core/board_transfer/document.py``;
-``docs/widget-spec.md`` section 7.
-"""
 
 from __future__ import annotations
 

@@ -1,4 +1,3 @@
-/* failed to load */
 import { ledHtml, ledStateFor, normalizeInner, normalizeOuter } from './led';
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -19,13 +18,13 @@ export const HOST_OFFLINE_SUFFIX = ' offline';
 
 export const ASLEEP_UNREAD_LABEL = 'asleep, flagged unread - wake it to follow up';
 
+/* there is nothing */
 export const SOURCE_SUFFIX: Record<string, string> = {
     registry: "via the agent's own session record",
     pane: 'via the pane',
     transcript: 'via transcript',
     seed_row: 'via the session record',
     tmux: 'via tmux',
-    // server stopped
     hook: 'via hooks',
 };
 
@@ -114,6 +113,7 @@ export interface StatusSignals {
     unread?: boolean | null | undefined;
     startup_gate?: string | null | undefined;
     status_source?: string | null | undefined;
+    /* there is nothing */
     activity_hint?: string | null | undefined;
     parked_summary?: string | null | undefined;
     transport?: string | null | undefined;
@@ -147,7 +147,6 @@ export function ledHtmlForStatus(
     });
 }
 
-/* could not */
 export function ledAttrsForStatus(
     status?: unknown,
     signals?: StatusSignals | null,

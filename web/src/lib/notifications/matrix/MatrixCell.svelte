@@ -2,6 +2,7 @@
 <script lang="ts">
     import { t as reactiveT } from '../../i18n/index.svelte';
     import type { Translate } from '../../sessions/types';
+    import { Button } from '../../base';
     import Check from '../../../opscenter/ui/Check.svelte';
     import type { Cell } from './api';
     import './matrix.css';
@@ -32,7 +33,7 @@
             <span class="mx-why" data-mx="why">{reason}</span>
         {:else if pinned}
             <span class="mx-badge" data-mx="local-badge">{t('settings.notify.matrix.local')}</span>
-            {#if onReset}<button type="button" class="mx-reset" data-mx="reset" onclick={onReset}>{t('settings.notify.matrix.reset')}</button>{/if}
+            {#if onReset}<Button variant="quiet" size="sm" data-mx="reset" onclick={onReset}>{t('settings.notify.matrix.reset')}</Button>{/if}
         {:else if showSource && cell}
             <span class="mx-src" data-mx="source">{t(`settings.notify.matrix.source.${cell.source}`)}</span>
         {/if}

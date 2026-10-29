@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* margin-left: auto */
   import Button from '../base/Button.svelte';
   import Tag from '../base/Tag.svelte';
   import { t } from '../i18n/index.svelte';

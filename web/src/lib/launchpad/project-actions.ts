@@ -84,11 +84,12 @@ export async function editProjectFlow(
         if (defaultChanged) fields.defaultLaunchProfile = result.defaultLaunchProfile;
         if (colorChanged) fields.color = result.color;
         if (Object.keys(fields).length > 0) await host.updateProject(currentName, fields);
+        // the rest stays
         if (nudgeChanged && projectId !== null) {
             try {
                 await setListNudge(projectId, result.nudge === true);
             } catch (error) {
-                console.error('CloudeWeb: failed to set the huddle nudge:', error);
+                console.error('CloudeWeb: failed to set the task manager nudge:', error);
                 host.showError(t('project.edit.task_manager.failed', { reason: reasonOf(error, t) }));
             }
         }
@@ -96,7 +97,7 @@ export async function editProjectFlow(
             try {
                 await setListInbox(projectId, result.inbox === true);
             } catch (error) {
-                console.error('CloudeWeb: failed to set the huddle add box switch:', error);
+                console.error('CloudeWeb: failed to set the task manager add box switch:', error);
                 host.showError(t('project.edit.task_manager.failed_inbox', { reason: reasonOf(error, t) }));
             }
         }

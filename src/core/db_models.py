@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Tuple
 
-CURRENT_SCHEMA_VERSION: int = 98
+CURRENT_SCHEMA_VERSION: int = 102
 
 META_SCHEMA_VERSION = "schema_version"
 META_CREATED_AT = "created_at"
@@ -25,7 +25,6 @@ PROJECT_SOURCES: Tuple[str, ...] = (
     PROJECT_SOURCE_TRANSCRIPT_IMPORT,
 )
 
-# could not
 PROJECT_PRESENCE_PRESENT = "present"
 PROJECT_PRESENCE_MISSING = "missing"
 PROJECT_PRESENCE_UNREACHABLE = "unreachable"
@@ -76,8 +75,6 @@ SESSION_OWNED_ORIGINS: Tuple[str, ...] = (
     SESSION_ORIGIN_ADOPTED,
 )
 
-# did not answer
-# could not
 SESSION_LIFECYCLE_RUNNING = "running"
 SESSION_LIFECYCLE_STOPPED = "stopped"
 SESSION_LIFECYCLE_UNKNOWN = "unknown"
@@ -92,7 +89,6 @@ SESSION_LIFECYCLE_SOURCE_PROBE_FAILED = "probe_failed"
 SESSION_LIFECYCLE_SOURCE_TMUX_MISSING = "tmux_missing"
 SESSION_LIFECYCLE_SOURCE_IMPORT = "import"
 
-# could not
 SESSION_ATTRIBUTION_EXPLICIT = "explicit"
 SESSION_ATTRIBUTION_DERIVED_DEEPEST = "derived_deepest"
 SESSION_ATTRIBUTION_NONE = "none"
@@ -111,7 +107,6 @@ SESSION_FAMILY_SOURCE_LAUNCHED = "launched"
 
 SESSION_FAMILY_SOURCE_NOT_LAUNCHED = "not_launched"
 
-# claude command
 SESSION_FAMILY_SOURCE_INFERRED_PROCESS = "inferred_process"
 
 SESSION_FAMILY_SOURCE_UNKNOWN = "unknown"
@@ -136,7 +131,6 @@ SESSION_CLAUDE_UUID_SOURCES: Tuple[str, ...] = (
 
 DEFAULT_TMUX_SOCKET = "cloude"
 
-# META_IMPORTED_FROM_JSON_AT could not
 META_SESSION_IMPORT_PENDING_REASON = "session_import_pending_reason"
 
 
@@ -367,7 +361,6 @@ META_PROJECT_TOMBSTONES_SINCE = "project_tombstones_since"
 
 META_PROJECT_TOMBSTONES_LEGACY_GAP = "project_tombstones_legacy_gap"
 
-# could not
 META_PROJECT_RECONCILE_UNDETERMINED = "project_reconcile_undetermined_roots"
 
 META_PROJECT_RECONCILE_LAST = "project_reconcile_last"
@@ -385,7 +378,6 @@ REVERSAL_SQL_V2: Tuple[str, ...] = (
     "DROP TABLE IF EXISTS sessions",
 )
 
-# could not
 DDL_SESSIONS_ADD_USER_DECLINED_AT = (
     "ALTER TABLE sessions ADD COLUMN user_declined_at TEXT"
 )
@@ -394,7 +386,6 @@ DDL_V6: Tuple[str, ...] = (DDL_SESSIONS_ADD_USER_DECLINED_AT,)
 
 REVERSAL_SQL_V6: Tuple[str, ...] = ()
 
-# could not
 META_SESSION_IMPORT_UNATTRIBUTED = "session_import_unattributed"
 
 DDL_SESSIONS_CLAUDE_UUID_INDEX = (
@@ -411,7 +402,6 @@ SESSION_FORK_KIND_FORK = "fork"
 SESSION_FORK_KIND_CLEAR = "clear"
 SESSION_FORK_KIND_COMPACT = "compact"
 
-# COULD NOT EVALUATE
 SESSION_FORK_KIND_BACKGROUND = "background"
 
 SESSION_FORK_KIND_UNKNOWN = "unknown"
@@ -426,7 +416,6 @@ SESSION_FORK_KINDS: Tuple[str, ...] = (
     SESSION_FORK_KIND_UNKNOWN,
 )
 
-# CANNOT DETERMINE
 META_STAGE_A_BOUNDARY_EPOCH = "stage_a_origin_marker_boundary_epoch"
 
 
@@ -506,8 +495,6 @@ REVERSAL_DESTROYS: dict = {
 }
 
 
-# CURRENT_SCHEMA_VERSION
-# COULD NOT EVALUATE
 DDL_SESSIONS_CLAUDE_UUID_UNIQUE_INDEX = (
     "CREATE UNIQUE INDEX IF NOT EXISTS ux_sessions_claude_uuid "
     "ON sessions (claude_session_uuid) "
@@ -555,7 +542,6 @@ CREATE TABLE IF NOT EXISTS transcript_archives (
 )
 """
 
-# the whole file
 DDL_TRANSCRIPT_RECORDS = """
 CREATE TABLE IF NOT EXISTS transcript_records (
   id               INTEGER PRIMARY KEY,
@@ -694,7 +680,6 @@ DDL_V22: Tuple[str, ...] = (
 )
 
 
-# something else
 DDL_V23_SESSIONS_LAST_WORK_AT = (
     "ALTER TABLE sessions ADD COLUMN last_work_at TEXT"
 )
@@ -745,8 +730,6 @@ DDL_V25: Tuple[str, ...] = (
 REVERSAL_SQL_V25: Tuple[str, ...] = ()
 
 
-# could not
-# could not
 DDL_V26_SESSIONS_NOTIFICATIONS_MUTED = (
     "ALTER TABLE sessions ADD COLUMN notifications_muted INTEGER"
 )

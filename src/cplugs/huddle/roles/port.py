@@ -30,7 +30,7 @@ class RolesPort:
         if await self.check_gone(roster=roster):
             roster = await roles_service.measure(self._ctx, infos, asleep)
         store = RoleStore(service.store(self._ctx))
-        seats, dnd = await asyncio.to_thread(_seats_and_dnd, store, roster)
+        seats, dnd = await asyncio.to_thread(_seats_and_dnd, store, roster, False)
         keys = roster.keys
         holders = {list_key: roles_service.holder_of(seat, roster)[0] for list_key, seat in seats.items()}
         out: Dict[str, Dict[str, bool]] = {}
@@ -39,6 +39,9 @@ class RolesPort:
             project = getattr(info, "project_id", None)
             out[info.session.id] = {"lead": project is not None and holders.get(str(project)) == key, "dnd": key in dnd}
         return out
+
+    async def settle(self) -> None:
+        await settle(self._ctx)
 
     async def check_gone(self, app_state: Any = None, roster: Optional[roles_service.Roster] = None) -> bool:
         if app_state is not None:
@@ -54,9 +57,9 @@ class RolesPort:
             listing_wake(self._app_state)()
 
 
-def _seats_and_dnd(store: RoleStore, roster: roles_service.Roster) -> Tuple[Dict[str, Any], FrozenSet[str]]:
+def _seats_and_dnd(store: RoleStore, roster: roles_service.Roster, write_pick: bool) -> Tuple[Dict[str, Any], FrozenSet[str]]:
     with store.read_scope():
-        return roles_service.evaluate(store, roster), store.dnd_keys()
+        return roles_service.evaluate(store, roster, write_pick=write_pick), store.dnd_keys()
 
 
 _port: Optional[RolesPort] = None
@@ -74,6 +77,15 @@ def unregister() -> None:
     global _port
     _port = None
     ports.unregister(NAME)
+
+
+async def settle(ctx: CplugContext) -> None:
+    try:
+        roster = await roles_service.measure(session_ctx(ctx))
+        store = RoleStore(service.store(ctx))
+        await asyncio.to_thread(roles_service.evaluate, store, roster)
+    except (roles_service.RolesUnmeasured, OSError, RuntimeError, ValueError, LookupError, sqlite3.Error, TaskManagerError) as exc:
+        logger.warning("task_manager_lead_settle_failed", error_type=type(exc).__name__, error=str(exc)[:200])
 
 
 def wake() -> None:

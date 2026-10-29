@@ -25,7 +25,6 @@ export const DRAWER_DEEP_SEARCH_KEY = 'carnivore.session.sidebar.deepSearch';
 
 export const DRAWER_SEARCH_MODE_KEY = 'carnivore.session.sidebar.searchMode';
 
-/*  hidden  */
 export const DRAWER_DEEP_ACTIVE_CLASS = 'drawer-deep-search';
 
 export const QUESTIONS_TAB = 'questions';
@@ -40,7 +39,6 @@ export function newSessionKinds(): readonly NewSessionKind[] {
     return NEW_SESSION_BROWSER_ENABLED ? ['agent', 'terminal', 'browser'] : ['agent', 'terminal'];
 }
 
-/*  hidden  */
 export function applyDrawerTab(tab: string, defs: readonly DynamicTabDef[], doc: Document = document): void {
     let componentBody = false;
     for (const def of defs) {

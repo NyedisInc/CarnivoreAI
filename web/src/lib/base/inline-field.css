@@ -1,6 +1,7 @@
 @layer patterns {
   .oc-inline-field {
     --_inner: calc(var(--oc-control-h-sm) - 2 * var(--oc-border));
+    --oc-inline-field-rows: 3;
     display: flex;
     align-items: flex-end;
     min-width: 0;
@@ -15,7 +16,7 @@
     flex: 1 1 0;
     min-width: 0;
     min-height: var(--_inner);
-    max-height: calc(var(--oc-inline-field-rows, 3) * 1lh + 2 * var(--oc-space-1));
+    max-height: calc(var(--oc-inline-field-rows) * 1lh + 2 * var(--oc-space-1));
     box-sizing: border-box;
     margin: 0;
     padding: var(--oc-space-1) var(--oc-space-2);

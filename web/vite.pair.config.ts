@@ -1,3 +1,4 @@
+/* and the three */
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';

@@ -38,6 +38,17 @@ def process_started_at_for(
 )
 async def get_session_subagents(request: Request, session_id: str) -> SessionSubagents:
     """List the subagents of a session's current conversation, with counts.
+
+    Description: resolves the session through
+      ``session_manager.get_session_info`` (a created id or an
+      ``adopted:<tmux-name>`` id), reads the conversation uuid off the
+      stored row, and hands the three facts to the reader on a worker
+      thread. Earlier conversations this session resumed from are not
+      read (Alex's 2026-09-25 ruling, issue #601).
+    Inputs: request (Request). session_id (str).
+    Output: SessionSubagents.
+    Raises: HTTPException 404 - no session carries this id.
+    Example: GET /api/v1/sessions/ses_abc/subagents
     """
     session_manager = request.app.state.session_manager
     refuse_remote(session_manager, session_id, "the subagents read")
@@ -47,7 +58,7 @@ async def get_session_subagents(request: Request, session_id: str) -> SessionSub
     tmux_name = info.tmux_session
     working_dir = info.session.working_dir if info.session is not None else None
     conversation_uuid = (
-        session_manager._claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
+        session_manager.claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
     )
     subject = SessionSubject(
         agent_family=info.agent_family,

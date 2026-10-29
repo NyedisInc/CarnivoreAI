@@ -1,4 +1,3 @@
-/* and writes nothing */
 import { leftRailZone } from '../zone-shell/left-rail-zone.svelte';
 import type { Zone } from '../zone-shell/zone.svelte';
 import { drawerCardZones } from '../drawer-zone/area-zones';

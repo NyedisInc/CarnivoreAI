@@ -30,10 +30,12 @@
     "Stop a paired computer from hosting more than two agents, from that computer or from this one."
   ],
   "how_to": [
-    "Open the pack row in the menu (press h with the menu focused).",
-    "A meter is 20 cells outlined in a hairline: green under 75 percent, amber from 75, coral from 90.",
+    "Open the pack row in the menu (press h with the menu focused). The computers tab lists every computer once, this computer first: its name, the alpha badge, a green computer icon for this computer, a two-computers icon for the link (green while the computer answers, grey within about half a minute of it going quiet), model and cores, cpu, memory and disk as segmented meters, and the installed tools row.",
+    "A meter is 20 cells outlined in a hairline: green under 75 percent, amber from 75, coral from 90. The compute reserve shows as a hatched zone at the top end of the bar. cpu is the 1 minute load average over the cores, so 5/10 is load 5 on 10 cores.",
     "Press make alpha next to a computer's name, on the computer that is alpha now, to hand alpha to another computer; every paired computer follows within seconds, because each one accepts only a change signed by the alpha it follows. Pressed on any other computer it changes only that computer, and the others raise a refused pack change alert offering to follow it there.",
+    "On the work tab: a status strip (the alpha, computers online, whether this computer follows it) and the follow the alpha switch with a more disclosure; placement with spread work across the pack and enhanced placement (changed on alpha; elsewhere the change is refused as not alpha), whose connection and model pickers appear inline while it is on and state the default in the field; per computer, its real compute reserve and restrictions as chips with edit opening the editor in place; and move a project or company, which needs both the project and the target computer before the move button enables.",
     "Restrictions on another computer can only be tightened from here; that computer's own owner loosens them.",
+    "On the logins tab: switch the credential relay on per Claude account, and this computer's own may receive credentials switch.",
     "On a project's page, open transport... to set air-gap, see which github account the project uses and where that came from, pick one of the logged-in accounts, see how a replica would get the code, and publish a private repo for a folder with no remote.",
     "A session or Swarm agent running on another computer wears that computer's name as a small badge on the Swarm page and in its chat header.",
     "The ssh tab holds ssh-only machines and the pairing tools."
@@ -57,7 +59,7 @@
   "name": "Pack machines",
   "since": "2026-10-10",
   "status": "beta",
-  "summary": "",
+  "summary": "every paired computer in the Pack with live load, the one alpha marked, the compute reserve kept for the owner, and restrictions each computer enforces on its own peers.",
   "surfaces": [
     "web/src/lib/pack-machines/pack-machines-store.svelte.ts",
     "web/src/lib/pack-machines/ReserveForm.svelte",
@@ -66,7 +68,6 @@
     "web/src/lib/pack-machines/pack-relay-store.svelte.ts",
     "web/src/lib/pack-transport/ProjectTransport.svelte",
     "web/src/opscenter/ui/MachineBadge.svelte",
-    "web/src/lib/computers/ComputersPanel.svelte",
     "web/src/lib/computers/ComputerRow.svelte",
     "web/src/lib/pack-machines/PackWorkTab.svelte",
     "web/src/lib/pack-machines/PackLoginsTab.svelte",
@@ -78,6 +79,12 @@
   "where": [
     "Pack: the computers, work, logins and ssh tabs."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "alt": "The Pack machines panel: the alpha computer, the follow the alpha switch, this computer's load and reserve, the two placement settings and the move a project or company control",
+      "caption": "The Pack machines panel",
+      "file": "panel.png",
+      "kind": "screenshot"
+    }
+  ]
 }

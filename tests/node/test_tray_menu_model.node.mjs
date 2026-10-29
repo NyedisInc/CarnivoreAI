@@ -46,14 +46,14 @@ test('Sessions: need-you first, then the 8 most recent local, then one row per o
   const rows = [];
   for (let n = 1; n <= 10; n += 1) rows.push(row(String(n), { at: `2026-10-17T${String(n).padStart(2, '0')}:00:00Z` }));
   rows.push(row('11', { activity_status: 'question', at: '2026-10-01T00:00:00Z' }));
-  rows.push(row('12', { host_key: 'peer-a', host_label: 'hosta' }), row('13', { host_key: 'peer-a', host_label: 'hosta' }));
+  rows.push(row('12', { host_key: 'peer-a', host_label: 'studio' }), row('13', { host_key: 'peer-a', host_label: 'studio' }));
   const sessions = build({ listing: { rows } }).find((i) => i.id === 'sessions');
   assert.equal(sessions.label, 'Sessions (13)');
   const names = labels(sessions.submenu);
   assert.deepEqual(names.slice(0, 9), ['label 11', 'label 10', 'label 9', 'label 8', 'label 7', 'label 6', 'label 5', 'label 4', 'label 3']);
   assert.ok(!names.includes('label 2') && !names.includes('label 1'), 'only eight recent local rows');
   const peer = sessions.submenu.find((i) => i.id === 'peer.peer-a');
-  assert.equal(peer.label, 'hosta');
+  assert.equal(peer.label, 'studio');
   assert.equal(peer.sublabel, '2 sessions on that computer');
   assert.deepEqual(peer.action, { kind: 'app.open', hash: '#pack/computers' });
   assert.deepEqual(names.slice(-3), ['SysOp in Terminal', 'Open Terminal', 'All Sessions...']);

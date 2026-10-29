@@ -6,13 +6,11 @@ from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Tuple
 
 OWNS_KEYS = frozenset({"routes", "strings", "styles", "assets", "tests", "migrations", "style_guide", "contributions", "files"})
-# state directory
 FILES_FORBIDDEN_TOP = frozenset({"cplugs", "config.json", "carnivore.db", "cloude.db", "hook_tokens.json", "mcp_tokens.json"})
 CONTRIBUTION_SEAMS = frozenset({
     "drawer.search_mode", "chat.widget_kind", "style_guide.specimen", "menu.row_action", "settings.panel", "opscenter.cell",
     "automations.tab", "sidebar.leader", "session.card_action", "session.schedules", "session.roles", "projects.session_tab",
-    "projects.panel",
-    # the bottom bar
+    "projects.panel", "session.member_face",
     "drawer.account_menu", "drawer.bar_indicator",
 })
 
@@ -44,18 +42,6 @@ def _clean_path(value: str) -> bool:
 
 
 def parse_ownership(cplug_id: str, raw: Any) -> Ownership:
-    """Validate ``owns``. Inputs: cplug_id; raw - the block (or None). Output: Ownership. Raises OwnershipError.
-
-    Rules: ``routes`` are paths under the plugin's own router (start with ``/``, no ``..``; the host prefixes
-    ``/cplugs/<id>``); ``strings`` are catalog key namespaces starting ``cplug.<id>.``; ``styles`` and ``assets`` are
-    paths relative to ``web/src/cplugs/<id>/``; ``tests`` are paths under ``tests/python/cplugs/<id>/`` or
-    ``web/src/cplugs/<id>/``; ``style_guide`` are paths under ``web/src/cplugs/<id>/``; ``migrations`` are names;
-    ``contributions`` are seam names from ``CONTRIBUTION_SEAMS``; ``files`` are the plugin's runtime data OUTSIDE its own
-    folder, as clean paths relative to the app state directory (a file or a whole folder, e.g. ``time-machine``), which a purge
-    deletes; the plugin's own folder ``<state_dir>/cplugs/<id>/`` and its ``state.json`` entry need no entry (a purge always
-    removes them) and a core store (``FILES_FORBIDDEN_TOP``) can never be named.
-    Example: parse_ownership('share', {'strings': ['cplug.share.']}).strings == ('cplug.share.',)
-    """
     if raw is None:
         return Ownership()
     where = f"{cplug_id}: owns"

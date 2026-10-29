@@ -1,9 +1,6 @@
-/* <script */
 import { derivedDisplayName } from '../sessions/session-label';
 import type { ProjectRow } from '../sessions/types';
-import { sessionStore } from '../sessions/store.svelte';
 import { hostWindow } from '../sessions/env';
-import type { SessionRecord } from '../sessions/types';
 
 export interface LaunchpadShim {
     readonly launchpadScreen: HTMLElement | null;
@@ -12,7 +9,6 @@ export interface LaunchpadShim {
     loadRunningSessions(): Promise<void>;
     openProjectByName(name: string): Promise<void>;
     _deriveRunningSessionDisplayName(tmuxName: string | null): string;
-    readonly sessionRecords: SessionRecord[];
     showError(message: string): void;
     /* nothing at all */
     selectProject(project: ProjectRow, choice?: Record<string, unknown> | null): Promise<void>;
@@ -39,11 +35,6 @@ export function publishLaunchpadShim(backends: ShimBackends): LaunchpadShim {
         enumerable: true,
         get: () => backends.launchpadScreen(),
     });
-    Object.defineProperty(shim, 'sessionRecords', {
-        configurable: true,
-        enumerable: true,
-        get: () => sessionStore.sessionRecords,
-    });
     Object.assign(shim, {
         init: () => backends.init(),
         loadProjects: () => backends.loadProjects(),
@@ -69,6 +60,5 @@ export const SHIM_MEMBERS: readonly string[] = [
     'showError',
     'selectProject',
     '_deriveRunningSessionDisplayName',
-    'sessionRecords',
     'showProviderModal',
 ];

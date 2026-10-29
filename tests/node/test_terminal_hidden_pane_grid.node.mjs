@@ -1,3 +1,5 @@
+// ----------------------------------------------------------------------
+// NO requestAnimationFrame (gotcha 9): the sandbox's rAF throws.
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -66,6 +68,7 @@ function client(sandbox, term, box = BOX) {
     return ctl;
 }
 
+/** A plain emulator stand-in with a styleable element. */
 function stubTerm() {
     const attrs = new Map();
     return {

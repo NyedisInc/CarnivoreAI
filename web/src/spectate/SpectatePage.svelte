@@ -43,7 +43,6 @@
 
   let stalled = $state(false);
 
-  /*  hidden  */
   const TERM_OPTIONS = {
     theme: CARNIVORE.xterm,
     fontSize: 14,
@@ -56,7 +55,6 @@
     allowTransparency: false,
   };
 
-  /* --color- */
   const THEME_STYLE = Object.entries(CARNIVORE.cssVars)
     .map(([name, value]) => `${name}: ${value}`)
     .join('; ');
@@ -188,7 +186,6 @@
           else if (next === 'connecting') settle('connecting');
           else if (next === 'gone') finish('ended');
           else if (next === 'reconnecting') settle('reconnecting');
-          // failed to load
         },
         deps: {
           openSocket: spectatorOpener(credential, host, {
@@ -468,7 +465,6 @@
     color: var(--oc-text-secondary);
   }
 
-  /* padding */
   .spectate-stage {
     flex: 1;
     min-height: 0;

@@ -19,10 +19,6 @@ def index_ready(conn: sqlite3.Connection) -> bool:
 
 
 def conversation_ids(conn: sqlite3.Connection, session_uuid: str) -> set:
-    """Every conversation id a session holds: the index rows it captured plus its lineage parents.
-
-    Inputs: conn; session_uuid. Output: set of str (the current one may be absent from it).
-    """
     found: set = set()
     if index_ready(conn):
         rows = conn.execute("SELECT conversation_id FROM conversation_index WHERE session_uuid = ?",
@@ -81,15 +77,6 @@ def _entry(conn: sqlite3.Connection, item: Dict[str, Any], *, current: bool,
 
 def build(conn: sqlite3.Connection, session_uuid: str, *,
           corpus_root: Optional[Path] = None) -> Optional[Dict[str, Any]]:
-    """The conversations of one session, or None when no such session row exists.
-
-    Description: ``current`` is what the row points at now (built from its index row when there is one, a
-      bare entry when it was never captured); ``previous`` is every conversation the session continued from
-      (its lineage parents), newest first, each with the edge's kind as ``ended_reason`` and its ``link_basis``.
-    Inputs: conn; session_uuid; corpus_root (transcript presence override).
-    Output: dict {session_uuid, current, previous, previous_count} or None.
-    Example: build(conn, 's')['previous'][0]['ended_reason']  # 'clear'
-    """
     row = conn.execute("SELECT session_uuid, claude_session_uuid, working_dir FROM sessions WHERE session_uuid = ?",
                        (session_uuid,)).fetchone()
     if row is None:

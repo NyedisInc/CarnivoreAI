@@ -1,4 +1,3 @@
-/*  hidden  */
 import type { Floor, FloorItem } from './floor';
 
 export interface TreeNode {

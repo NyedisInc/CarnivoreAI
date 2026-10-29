@@ -35,7 +35,7 @@ describe('what ran it', () => {
 
   test('run now names who pressed it from the run notes: you, an agent by its session name, or an unnamed agent', () => {
     expect(byWords(run({ trigger: 'run_now', notes: { by: { kind: 'app' } } })).key).toBe('opscenter.chart.by.run_now_owner');
-    expect(byWords(run({ trigger: 'run_now', notes: { by: { kind: 'app', name: 'sam' } } }))).toEqual({ key: 'opscenter.chart.by.run_now_named', params: { name: 'sam' } });
+    expect(byWords(run({ trigger: 'run_now', notes: { by: { kind: 'app', name: 'joe' } } }))).toEqual({ key: 'opscenter.chart.by.run_now_named', params: { name: 'joe' } });
     expect(byWords(run({ trigger: 'run_now', notes: { by: { kind: 'mcp', tmux: 'carnivore_x', name: 'fix login' } } }))).toEqual({ key: 'opscenter.chart.by.run_now_named', params: { name: 'fix login' } });
     expect(byWords(run({ trigger: 'run_now', notes: { by: { kind: 'mcp' } } })).key).toBe('opscenter.chart.by.run_now_agent');
     expect(byWords(run({ trigger: 'run_now', notes: null })).key).toBe('opscenter.chart.by.run_now');

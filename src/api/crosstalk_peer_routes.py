@@ -9,6 +9,7 @@ from contextlib import closing
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.api.error_response import api_error
 from src.api import peer_auth
 from src.core.crosstalk import directory, peer_create, store
 from src.core.crosstalk.delivery import dispatcher
@@ -16,7 +17,8 @@ from src.core.federation import peer_hosts, shadow_rows
 from src.core.hosts.identity import remote_session_id
 from src.core.mcp.protocol import BatchView
 from src.core.mcp.common import ToolError
-from src.core.crosstalk.spawn import SpawnRequest, _flags, _folder, _worktree
+from src.core.crosstalk.spawn import SpawnRequest, _folder, _worktree
+from src.core.crosstalk.spawn_rules import agent_cli_flags
 
 router = APIRouter(prefix="/crosstalk", tags=["crosstalk"])
 
@@ -119,7 +121,7 @@ async def peer_deliver(body: PeerDelivery, request: Request,
         received = await asyncio.to_thread(store.accept_peer, peer_install_id=grant.peer_install_id,
                                            message=body.model_dump(), sender=sender, receiver=receiver)
     except store.BusRefused as exc:
-        raise HTTPException(status_code=409, detail={'code': 'crosstalk_refused', 'message': str(exc)}) from exc
+        raise api_error(409, 'crosstalk_refused', exc) from exc
     if received['status'] in ('queued', 'held'):
         dispatcher.wake(request.app, receiver['key'])
         active = getattr(request.app.state.crosstalk_dispatcher, '_tasks', {}).get(receiver['key']) if getattr(
@@ -136,6 +138,7 @@ async def peer_deliver(body: PeerDelivery, request: Request,
 @router.post('/peer-control')
 async def peer_control(body: PeerControl, request: Request,
                        principal: peer_auth.Principal = Depends(peer_auth.require_peer_sessions)) -> dict:
+    """Propagate an owner's pair-window change without inserting or forwarding a message."""
     if not principal.is_peer or principal.grant is None:
         raise _refuse('peer_token_required', 403)
     if not body.resume_generation and not body.window_generation:
@@ -185,7 +188,7 @@ async def peer_spawn(body: PeerSpawn, request: Request,
         raise _refuse(str(exc)) from exc
     try:
         made = await peer_create.create_pane(request, target_dir=target_dir, agent_type=body.provider,
-                                             label=body.name, model=body.model, extra_args=_flags(body, body.beast))
+                                             label=body.name, model=body.model, extra_args=agent_cli_flags(body.provider, body.effort, body.beast))
     except peer_create.PeerCreateRefused as exc:
         raise _refuse(exc.code, exc.status) from exc
     made.pop('row_id', None)

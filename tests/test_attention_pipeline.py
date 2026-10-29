@@ -15,7 +15,7 @@ from tests.test_attention_wiring import RecordingManager, no_real_pulls
 from tests.test_codex_gather import THREAD, _make_codex_home
 from src.core import attention_reader, session_change_notice, session_manager
 from src.core.attention.display import to_display
-from src.core.attention.registry_read import read_registry_index
+from src.core.attention.registry_index import read_registry_index
 from src.core.attention_wiring import build_attention_watcher
 from src.core.session_status_map import StatusMap
 from src.core.session_instance_index import InstanceIndex
@@ -58,7 +58,7 @@ class Pipeline:
         monkeypatch.setattr(attention_reader, "read_registry_index", lambda: read_registry_index(
             directory=str(self.registry_dir),
         ))
-        monkeypatch.setattr(session_manager, "_configured_wrappers", lambda: [])
+        self.manager._wrappers_reader = lambda: []
         from src.core.session_token_usage import claude_reader
         monkeypatch.setattr(claude_reader, "locate_transcript", lambda *a, **k:
                             SimpleNamespace(path=self.transcript, detail="fixture",

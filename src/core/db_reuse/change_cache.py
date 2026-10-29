@@ -17,7 +17,7 @@ class ChangeCache:
         self._guard = threading.Lock()
         self._locks: Dict[Path, threading.RLock] = {}
         self._watchers: Dict[Path, Tuple[Tuple[int, int], sqlite3.Connection]] = {}
-        self._entries: Dict[Tuple[Path, Hashable], Tuple[int, Any]] = {}
+        self._entries: Dict[Path, Dict[Hashable, Tuple[int, Any]]] = {}
         self._opened: Dict[Hashable, Path] = {}
 
     def fetch(self, db_path: Path, key: Hashable, load: Callable[[], Any]) -> Any:
@@ -27,11 +27,11 @@ class ChangeCache:
             version = self._version(db_path)
             if version is None:
                 return load()
-            hit = self._entries.get((db_path, key))
+            hit = self._entries.get(db_path, {}).get(key)
             if hit is not None and hit[0] == version:
                 return hit[1]
             value = load()
-            self._entries[(db_path, key)] = (version, value)
+            self._entries.setdefault(db_path, {})[key] = (version, value)
             return value
 
     def fetch_opened(self, opener: Hashable, key: Hashable, load: Callable[[], Tuple[Any, Optional[Path]]]) -> Any:
@@ -45,12 +45,12 @@ class ChangeCache:
             lock = self._locks.setdefault(path, threading.RLock())
         with lock:
             version = self._version(path)
-            hit = self._entries.get((path, (opener, key)))
+            hit = self._entries.get(path, {}).get((opener, key))
             if version is not None and hit is not None and hit[0] == version:
                 return hit[1]
             value, real = load()
             if version is not None and real == path:
-                self._entries[(path, (opener, key))] = (version, value)
+                self._entries.setdefault(path, {})[(opener, key)] = (version, value)
             else:
                 self._learn(opener, real)
             return value
@@ -63,7 +63,6 @@ class ChangeCache:
                 self._opened[opener] = real
 
     def _version(self, db_path: Path) -> int | None:
-        """The watcher connection's ``data_version`` (None when the file is absent or cannot be opened). Called under the path's lock."""
         try:
             stat = db_path.stat()
         except OSError:
@@ -78,11 +77,12 @@ class ChangeCache:
                 self._watchers[db_path] = held
             return int(held[1].execute("PRAGMA data_version").fetchone()[0])
         except sqlite3.Error as exc:
-            logger.warning("task_manager_change_cache_unwatched", path=str(db_path), error=str(exc))
+            logger.warning("change_cache_unwatched", path=str(db_path), error=str(exc))
             self._drop(db_path)
             return None
 
     def _drop(self, db_path: Path) -> None:
+        self._entries.pop(db_path, None)
         held = self._watchers.pop(db_path, None)
         if held is not None:
             held[1].close()
@@ -104,3 +104,6 @@ def main_file(conn: sqlite3.Connection) -> Optional[Path]:
 
 
 CACHE = ChangeCache()
+
+
+HOT_READS = ChangeCache()

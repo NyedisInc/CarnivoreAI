@@ -8,12 +8,12 @@ const { chromeOptions, chromeState } = require('./window-chrome');
 
 const DEFAULT_SIZE = Object.freeze({ width: 1280, height: 860 });
 const MAX_WINDOWS = 24;
+const BLUR_DELAY_MS = 1000;
 const SAVED_KEY = /^popout:[\x20-\x7e]{1,160}$/;
 const ROW_ID = /^\d{1,15}$/;
 const WIDGET_ID = /^(?:core\.[a-z0-9][a-z0-9-]*|[a-z][a-z0-9]{1,23}\.[a-z][a-z0-9-]{0,31}:[a-z0-9][a-z0-9:_-]{0,63})$/;
 const TEAR_SIZE = Object.freeze({ terminal: { width: 960, height: 640 }, widget: { width: 800, height: 600 } });
 
-/*  hidden  */
 function createWindow(kind, origin, bounds) {
   const options = {
     ...bounds,
@@ -25,8 +25,7 @@ function createWindow(kind, origin, bounds) {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
-      //  hidden 
-      backgroundThrottling: false,
+      backgroundThrottling: true,
       partition: policy.partitionForOrigin(origin),
       preload: path.join(__dirname, 'app-window-preload.js'),
     },
@@ -97,14 +96,30 @@ function createWindowHost({ getUrl, windowState, guard }) {
     const sendChrome = () => { if (!win.isDestroyed()) wc.send('carnivore:window-chrome', chromeState(win)); };
     win.on('enter-full-screen', sendChrome);
     win.on('leave-full-screen', sendChrome);
-    const sendHidden = () => { if (!win.isDestroyed()) wc.send('carnivore:window-hidden', win.isMinimized() || !win.isVisible()); };
+    const sendHidden = () => {
+      if (win.isDestroyed()) return;
+      const hidden = win.isMinimized() || !win.isVisible();
+      wc.send('carnivore:window-hidden', hidden);
+    };
     for (const name of ['minimize', 'restore', 'hide', 'show']) win.on(name, sendHidden);
+    let blurTimer = null;
+    let blurSent = false;
+    const sendBlurred = (blurred) => {
+      if (win.isDestroyed() || blurSent === blurred) return;
+      blurSent = blurred;
+      wc.send('carnivore:window-blurred', blurred);
+    };
+    const clearBlurTimer = () => { if (blurTimer) { clearTimeout(blurTimer); blurTimer = null; } };
+    win.on('blur', () => { clearBlurTimer(); blurTimer = setTimeout(() => { blurTimer = null; sendBlurred(true); }, BLUR_DELAY_MS); });
+    win.on('focus', () => { clearBlurTimer(); sendBlurred(false); });
+    wc.on('did-finish-load', () => { clearBlurTimer(); blurSent = null; sendBlurred(!win.isFocused()); });
     win.once('ready-to-show', () => {
       if (saved && saved.fullScreen) win.setFullScreen(true);
       else if (saved && saved.maximized) win.maximize();
       win.show();
     });
     win.on('closed', () => {
+      clearBlurTimer();
       if (entries.get(key) !== entry) return;
       entries.delete(key);
       if (!quitting && kind !== 'main') persist();
@@ -188,7 +203,6 @@ function createWindowHost({ getUrl, windowState, guard }) {
     return true;
   }
 
-  /* once per launch */
   function restore() {
     const origin = policy.originOf(getUrl());
     if (restored || !windowState || origin === null) return 0;
@@ -260,4 +274,4 @@ function createWindowHost({ getUrl, windowState, guard }) {
   };
 }
 
-module.exports = { createWindowHost, MAX_WINDOWS };
+module.exports = { createWindowHost, MAX_WINDOWS, BLUR_DELAY_MS };

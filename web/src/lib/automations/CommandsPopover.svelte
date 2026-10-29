@@ -11,6 +11,7 @@
   let pop = $state<HTMLElement | undefined>();
   let shift = $state(0);
 
+  /* the page frame */
   function keepInside(): void {
     if (!pop) return;
     const frame = wrap?.closest('.ap-page')?.getBoundingClientRect();

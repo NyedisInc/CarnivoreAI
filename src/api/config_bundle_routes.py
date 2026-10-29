@@ -1,21 +1,3 @@
-"""``/api/v1/config/export`` and ``/api/v1/config/import`` (issue #658).
-
-Move the whole app configuration to a new Mac, or restore it after a
-reinstall. The UI (settings, advanced) is a thin client of these two routes.
-
-``GET /config/export`` answers one versioned JSON file (also sent as an
-attachment). It holds config.json's allowlisted sections, the
-``ui_preferences`` block and the pinned themes, and NEVER a credential:
-see :mod:`src.core.config_bundle.redact`.
-
-``POST /config/import`` takes that file. ``dry_run`` (default ``true``)
-returns the preview of what would change and writes nothing; ``false``
-applies it through ``config_writer`` (a ``.bak`` is taken first). ``mode``
-is ``merge`` (default: sections merge key by key, lists are replaced) or
-``replace`` (each section the file carries replaces the local one, and
-preferences and pins the file lacks are cleared). Local credentials are
-kept in both modes.
-"""
 
 from __future__ import annotations
 
@@ -51,6 +33,13 @@ class ConfigImportRequest(BaseModel):
       dry_run (bool): true (default) previews and writes nothing.
       confirm_launch_profiles_sha256 (str | None): the digest the preview's ``launch_profiles.sha256`` showed;
         required to apply a bundle that carries launch profiles (they can run shell).
+      confirm_agents_sha256 (str | None): the digest the preview's ``agents.sha256`` showed; required to
+        apply a bundle that writes agent wrapper commands (``script``, ``entry``, ``args``, ``env``; #2557).
+      confirm_workspace_sha256 (str | None): the digest the preview's ``workspace.sha256`` showed; required to
+        apply a bundle that writes new or changed ``workspace.env`` keys, ``default_shell`` or ``default_editor``.
+      confirm_browser_sha256, confirm_provider_accounts_sha256, confirm_common_slash_commands_sha256,
+        confirm_template_path_sha256 (str | None): the same for ``browser.executable``, an account's agent config
+        folders, quick slash commands and ``template_path``; each preview block names its own ``sha256``.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -59,6 +48,12 @@ class ConfigImportRequest(BaseModel):
     mode: Mode = "merge"
     dry_run: bool = True
     confirm_launch_profiles_sha256: Optional[str] = None
+    confirm_agents_sha256: Optional[str] = None
+    confirm_workspace_sha256: Optional[str] = None
+    confirm_browser_sha256: Optional[str] = None
+    confirm_provider_accounts_sha256: Optional[str] = None
+    confirm_common_slash_commands_sha256: Optional[str] = None
+    confirm_template_path_sha256: Optional[str] = None
 
 
 def _config_path() -> Path:
@@ -110,9 +105,13 @@ async def import_config(request: Request, body: ConfigImportRequest) -> Dict[str
 
     Inputs: request (Request); body (ConfigImportRequest).
     Output: ``{"status": "preview"|"applied"|"unchanged", "changes": [...],
-      "counts", "truncated", "source", "stripped", "ignored", "backup"}``.
+      "counts", "truncated", "source", "stripped", "ignored", "backup"}``; a preview adds
+      ``contains_commands`` and, when commands would be written, ``agents``, ``workspace``, ``browser``, ``provider_accounts``,
+      ``common_slash_commands``, ``template_path`` and ``launch_profiles``
+      blocks with the digest a real import must echo.
     Raises: HTTPException 413 (too large), 422 (not a valid bundle, or a
-      section fails validation; the detail names fields, never values), 500.
+      section fails validation; the detail names fields, never values), 409
+      (commands written without their confirmed digest), 500.
     Example: POST {"bundle": {...}, "mode": "merge", "dry_run": true}
     """
     declared = request.headers.get("content-length")
@@ -135,6 +134,12 @@ async def import_config(request: Request, body: ConfigImportRequest) -> Dict[str
             themes=themes,
             host=socket.gethostname(),
             confirm_launch_profiles_sha256=body.confirm_launch_profiles_sha256,
+            confirm_agents_sha256=body.confirm_agents_sha256,
+            confirm_workspace_sha256=body.confirm_workspace_sha256,
+            confirm_browser_sha256=body.confirm_browser_sha256,
+            confirm_provider_accounts_sha256=body.confirm_provider_accounts_sha256,
+            confirm_common_slash_commands_sha256=body.confirm_common_slash_commands_sha256,
+            confirm_template_path_sha256=body.confirm_template_path_sha256,
         )
     except ImportRefused as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.detail)

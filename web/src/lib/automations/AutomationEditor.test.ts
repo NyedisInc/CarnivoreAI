@@ -30,6 +30,7 @@ const settle = async () => {
 };
 const q = <T extends Element = HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 
+/* a new automation */
 async function mountEditor(targets: unknown = recipeTargets): Promise<void> {
   app = mount(AutomationEditor, { target: document.body, props: { automation: null, targets: targets as never, projects, onDone: vi.fn(), onCancel: vi.fn() } });
   await settle();
@@ -270,4 +271,22 @@ test('a yearly schedule lists its next runs with the year; a short one does not'
   await new Promise((r) => setTimeout(r, 700));
   await settle();
   expect(document.querySelector('[data-cron-preview] li')!.textContent).not.toContain('2026');
+});
+
+test('editing only the name keeps retry_backoff_s and max_runtime_s as stored (u129-04)', async () => {
+  const stored = {
+    automation_id: 'aut_9', name: 'old', enabled: true, revision: 4,
+    trigger: { cron: '0 3 * * *', timezone: 'UTC' },
+    target: { kind: 'recipe', recipe: 'scrooge', params: { active_days: 30 } },
+    delivery: { notify: true, notify_on: 'failure' },
+    description: '', project_id: null, misfire: 'run_once', retry_max: 1, retry_backoff_s: 30, max_runtime_s: 90,
+  };
+  stub.updateAutomation.mockResolvedValue(saved);
+  app = mount(AutomationEditor, { target: document.body, props: { automation: stored as never, targets: recipeTargets as never, projects, onDone: vi.fn(), onCancel: vi.fn() } });
+  await settle();
+  await type('[data-auto-field="name"]', 'renamed');
+  q('[data-editor-save]').click();
+  await settle();
+  expect(stub.updateAutomation).toHaveBeenCalledTimes(1);
+  expect(stub.updateAutomation.mock.calls[0]![2]).toMatchObject({ name: 'renamed', retry_backoff_s: 30, max_runtime_s: 90 });
 });

@@ -1,5 +1,6 @@
 import type { Translate } from '../sessions/types';
 import type { PageRow, Signals } from './filters';
+import { readChoice, writeChoice } from './stored-choice';
 
 export const LENSES = [
     { key: 'project', icon: 'folder', glyph: true },
@@ -187,11 +188,17 @@ export function lensGroups(key: LensKey, rows: readonly PageRow[], ctx: LensCont
     return out;
 }
 
+export function workedWord(seconds: number, t: Translate): string {
+    return seconds >= 3600
+        ? t('sessions.page.group.worked', { h: Math.round(seconds / 3600) })
+        : t('sessions.page.measure.worked_min', { m: Math.max(1, Math.round(seconds / 60)) });
+}
+
 export function lensMeasure(r: PageRow, key: LensKey, ctx: LensContext): string {
     if (key === 'used') {
         const s = ctx.usage?.[r.s.session_uuid];
         if (!s) return '';
-        return s >= 3600 ? ctx.t('sessions.page.group.worked', { h: Math.round(s / 3600) }) : ctx.t('sessions.page.measure.worked_min', { m: Math.max(1, Math.round(s / 60)) });
+        return workedWord(s, ctx.t);
     }
     if (key === 'dormant') return ctx.t('sessions.page.group.untouched', { days: daysSince(activityMs(r), ctx.now) });
     if (key === 'convs') return ctx.t('sessions.page.measure.convs', { n: (ctx.conversations[r.s.session_uuid] ?? 0) + 1 });
@@ -205,17 +212,9 @@ export function measureHeadingKey(key: LensKey): string {
 const LENS_KEY = 'carnivore.sessions-page.lens';
 
 export function readLens(): LensKey {
-    try {
-        const v = globalThis.localStorage?.getItem(LENS_KEY) ?? '';
-        return LENSES.some((l) => l.key === v) ? (v as LensKey) : 'project';
-    } catch {
-        return 'project';
-    }
+    return readChoice(LENS_KEY, LENSES.map((l) => l.key), 'project');
 }
 
 export function writeLens(key: LensKey): void {
-    try {
-        globalThis.localStorage?.setItem(LENS_KEY, key);
-    } catch {
-    }
+    writeChoice(LENS_KEY, key);
 }

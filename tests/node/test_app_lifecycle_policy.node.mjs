@@ -16,6 +16,7 @@ const { fitToDisplays, createWindowState, FILE: STATE_FILE } = require(path.join
 const { createQuitNotice, FLAG: NOTICE_FLAG } = require(path.join(macDir, 'quit-notice.js'));
 
 const queue = [];
+/** Queue one named case (sync or async); they run in order at the end. */
 function t(name, fn) { queue.push([name, fn]); }
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'lifecycle-'));
 

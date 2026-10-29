@@ -53,6 +53,21 @@ test('a burst of frames inside the 15 s floor costs one deferred read, never one
   release();
 });
 
+test('a frame that lands during a read is read once when that read finishes (u165-02)', async () => {
+  const { watchTicker, FEED_MIN_MS } = await import('./noc-feed.svelte');
+  let finish: (value: unknown) => void = () => undefined;
+  authFetch.mockImplementation((path: string) => (path.startsWith('/stats/event-log') ? new Promise((resolve) => (finish = resolve)) : Promise.resolve({ items: [] })));
+  const release = watchTicker();
+  await vi.advanceTimersByTimeAsync(0);
+  const reads = (): number => authFetch.mock.calls.filter((call) => String(call[0]).startsWith('/stats/event-log')).length;
+  expect(reads()).toBe(1);
+  for (const handler of handlers.get('stats.tripwire') ?? []) handler({ type: 'stats.tripwire' });
+  finish({ items: [] });
+  await vi.advanceTimersByTimeAsync(FEED_MIN_MS + 1000);
+  expect(reads()).toBe(2);
+  release();
+});
+
 test('a hidden tab reads nothing; the missed frame is read once when it returns', async () => {
   const { watchLive, FEED_MIN_MS } = await import('./noc-feed.svelte');
   const release = watchLive();

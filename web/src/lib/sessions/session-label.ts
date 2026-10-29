@@ -23,7 +23,6 @@ export function derivedDisplayName(tmuxName: string | null | undefined): string 
     return name.startsWith('cloude_') ? name.slice('cloude_'.length) : name;
 }
 
-/* label: ' */
 export function sessionDisplayLabel(row: NameableRow | null | undefined): string {
     const safe = row || {};
     const shared = legacySessionLabel();

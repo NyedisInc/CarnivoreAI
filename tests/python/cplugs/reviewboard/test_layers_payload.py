@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from src.api.auth import require_auth
 from src.cplugs.huddle import board_port
 from src.cplugs.reviewboard.layers import payload as layer_payload
-from tests.python.cplugs.reviewboard.harness import BASE, huddle_on, huddle_store, make_env
+from tests.python.cplugs.reviewboard.harness import BASE, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.layer_fixtures import QUESTIONS, ROWS
 from tests.python.cplugs.reviewboard.test_layers_format import layer_body
 from tests.python.cplugs.reviewboard.test_publish import create_body
@@ -22,13 +22,13 @@ GOOD_Q: Dict[str, Any] = {"layer": "questions", "v": 1,
                           "values": {"keep-rail": True, "dense": False, "density": "a", "panels": ["a", "c"], "order": ["b", "c", "a"], "name": "n", "why": "w",
                                      "size": 3, "due": "2026-11-02"},
                           "notes": {"keep-rail": "only on desktop"}}
-GOOD_R: Dict[str, Any] = {"layer": "rows", "v": 1, "values": {"aw-001": "later", "aw-002": "drop"}, "notes": {"aw-002": "ask the team first"}}
+GOOD_R: Dict[str, Any] = {"layer": "rows", "v": 1, "values": {"aw-001": "later", "aw-002": "drop"}, "notes": {"aw-002": "ask Alex first"}}
 
 
 @pytest.fixture
 def world(tmp_path: Path, monkeypatch):
     env = make_env(tmp_path)
-    huddle_on(env, monkeypatch)
+    task_manager_on(env, monkeypatch)
     env.app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
     with TestClient(env.app) as client:
         yield env, client
@@ -37,7 +37,7 @@ def world(tmp_path: Path, monkeypatch):
 
 def make_board(world, layer: Dict[str, Any] | None) -> str:
     env, client = world
-    item = huddle_store(env).add("all", "layer board", actor="claude", title="Layer board")["id"]
+    item = task_manager_store(env).add("all", "layer board", actor="claude", title="Layer board")["id"]
     body = layer_body(item, layer, anchors=[{"id": "send", "label": "send"}]) if layer else create_body(item, prompts=[], anchors=[], payload_mode=True)
     made = client.post(f"{BASE}/boards", json=body)
     assert made.status_code == 200, made.text
@@ -146,7 +146,7 @@ def test_a_canvas_payload_is_taken_as_it_is(world, canvas: str) -> None:
     if canvas == "payload_mode":
         slug = make_board(world, None)
     else:
-        item = huddle_store(env).add("all", "canvas", actor="claude", title="Canvas")["id"]
+        item = task_manager_store(env).add("all", "canvas", actor="claude", title="Canvas")["id"]
         slug = client.post(f"{BASE}/boards", json=create_body(item, prompts=[], anchors=[], layer={"kind": "canvas"})).json()["slug"]
     free = {"picks": {"aw-1": "ok"}, "layer": "whatever", "v": 9, "notes": [1, 2]}
     for door, response in doors(client, slug, free).items():
@@ -158,3 +158,13 @@ def test_the_checker_is_pure_and_names_every_misfit_at_once() -> None:
     found = layer_payload.problems(layer, {"layer": "questions", "v": 1, "values": {"keep-rail": 3, "dense": 3, "ghost": 1}, "notes": 5})
     assert len(found) == 4 and any("notes is an object" in f for f in found)
     assert layer_payload.problems(layer, GOOD_Q) == []
+
+
+def test_a_rows_payload_over_the_board_cap_is_refused_in_the_layers_words() -> None:
+    layer = layer_payload.LAYER_ADAPTER.validate_python(ROWS)
+    rows = [r["id"] for r in ROWS["rows"]]
+    fits = {**GOOD_R, "notes": {rows[0]: "n" * 1000}}
+    assert layer_payload.problems(layer, fits) == []
+    big = {**GOOD_R, "notes": {rows[0]: "n" * 4000, rows[1]: "m" * 4000, **{f"x{i}": "z" * 4000 for i in range(20)}}}
+    found = [p for p in layer_payload.problems(layer, big) if "a board holds at most" in p]
+    assert found and "rows layer" in found[0] and str(65536) in found[0] and rows[0] in found[0]

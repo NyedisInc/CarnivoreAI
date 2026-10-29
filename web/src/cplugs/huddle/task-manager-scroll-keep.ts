@@ -20,6 +20,7 @@ export const TOP_SLACK_PX = 4;
 
 const ownScrolls = new WeakMap<HTMLElement, number>();
 
+/* the event fired */
 export function isKeeperScroll(box: HTMLElement): boolean {
   const mark = ownScrolls.get(box);
   if (mark === undefined) return false;

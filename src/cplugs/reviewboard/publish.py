@@ -80,7 +80,8 @@ def answer(root: Path, text: str, tag: str, sidecar: Sidecar, card: Dict[str, An
 
 def boards_folder(root: Path, info: Dict[str, Any]) -> Optional[Path]:
     try:
-        task_dir = task_folders.ensure_task(root, int(info["item_id"]), str(info.get("list") or ""), info.get("project"), info.get("title"))
+        task_dir = task_folders.ensure_task(root, int(info["item_id"]), str(info.get("list") or ""), info.get("project"), info.get("title"),
+                                            store_id=info.get("store_id"))
         return task_folders.kind_dir(task_dir, task_folders.BOARDS)
     except OSError as exc:
         logger.warning("reviewboard_task_boards_folder_failed", item=info.get("item_id"), error=type(exc).__name__, detail=str(exc)[:200])
@@ -104,7 +105,7 @@ async def create_board(ctx: CplugContext, body: CreateBody, caller: Optional[Age
     port = ports.get()
     info = await port.item_info(body.task.item_id)
     if info is None:
-        raise TaskNotFound(f"there is no huddle item {body.task.item_id} on this computer")
+        raise TaskNotFound(f"there is no task manager item {body.task.item_id} on this computer")
     await port.check_caller(caller, body.task.item_id, cross_project)
     now = at or revisions.utcnow()
     slug = today_slug(body.slug_name)

@@ -10,7 +10,6 @@ export interface RestartAccounts {
     options: AccountChoice[];
     selected_id?: string | null;
     current_id?: string | null;
-    /* active account */
     active_id?: string | null;
     pinned?: boolean;
 }

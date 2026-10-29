@@ -161,6 +161,44 @@ class SwarmPromoteRequest(BaseModel):
     session_uuid: str = Field(..., min_length=1, max_length=120)
 
 
+class SwarmJoinRequest(BaseModel):
+    """``POST /swarm/members``: a session joins the Swarm as a member under its project agent (issue #2589).
+
+    ``confirm_restart`` is the owner's yes to the restart warning; ``create_project_agent`` turns the project's agent on first.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    session_uuid: str = Field(..., min_length=1, max_length=120)
+    specialty: Optional[str] = Field(None, min_length=1, max_length=60)
+    confirm_restart: bool = False
+    create_project_agent: bool = False
+
+
+class SwarmLeaveRequest(BaseModel):
+    """``DELETE /swarm/members/{session_uuid}``: the member leaves the Swarm; ``confirm_restart`` is the owner's yes to the restart."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    confirm_restart: bool = False
+
+
+class SwarmLeaveResponse(BaseModel):
+    """What a leave did: the session, the parked agent and how many cards went back to the queue."""
+
+    session_uuid: str
+    agent_id: int
+    released_cards: int
+
+
+class SwarmMembershipSetting(BaseModel):
+    """``GET`` and ``PUT /swarm/projects/{id}/membership``: whether a new session of the project launches as a Swarm member."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    new_sessions_join_swarm: bool = False
+
+
 class SwarmTurnOffRequest(BaseModel):
     """``POST /swarm/agents/{id}/turn-off``: ``confirm_name`` is the agent's exact display name, required for a company or project leader."""
 
@@ -284,6 +322,8 @@ class SwarmQuestionAsker(BaseModel):
 
 
 class SwarmQuestionCard(BaseModel):
+    """What a question card shows the owner: ``summary`` (fallback applied), ``task``, ``details`` (the raw question verbatim),
+    ``askers`` and ``asked_at`` (epoch seconds)."""
 
     summary: str
     task: str
@@ -317,6 +357,7 @@ class SwarmAgentEntry(BaseModel):
 
 
 class SwarmCardEntry(BaseModel):
+    """A huddle item the owner acts on: ``card`` is done, question, review or info, ``item`` the huddle item as the huddle answers it."""
 
     kind: Literal["card"] = "card"
     id: str
@@ -326,6 +367,7 @@ class SwarmCardEntry(BaseModel):
     item: Dict[str, Any]
     author_path: List[SwarmCrumb] = []
     question: Optional[SwarmQuestionCard] = None
+    waits_on_owner: bool = False
 
 
 class SwarmReceipt(BaseModel):
@@ -392,6 +434,8 @@ class SwarmSettings(BaseModel):
     agent type: ``sysop``, ``company``, ``project``, ``agent``) and ``animations`` (a state's picked animation, or
     ``none``); a PUT of either map merges key by key. ``naming_family`` (off by default, #1444): on lets a project agent propose
     a naming family for its agents' persona names; off posts no naming-family review card and keeps plain names.
+    ``chat_card_bodies`` (off by default, #2590): on shows each board card's body in the chat of the thread that holds its list,
+    and the server's info notices (#1553).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -416,6 +460,7 @@ class SwarmSettings(BaseModel):
     shapes: Optional[Dict[LookRank, LookShape]] = None
     animations: Optional[Dict[LookState, LookAnimation]] = None
     naming_family: Optional[bool] = None
+    chat_card_bodies: Optional[bool] = None
 
 
 class SwarmProjectSettings(BaseModel):
@@ -438,6 +483,8 @@ class SwarmFact(BaseModel):
     taught_at: str
     taught_by_agent_id: Optional[int] = None
     state: Literal["live", "held", "killed"]
+    kind: Literal["rule", "note"] = "rule"
+    last_used_at: Optional[str] = None
 
 
 class SwarmFactScope(BaseModel):
@@ -446,6 +493,13 @@ class SwarmFactScope(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     scope: Literal["craft", "project"]
+
+
+class SwarmMemoryCleanupResponse(BaseModel):
+    """``POST /swarm/memory/cleanup``: the project agents handed the prune order, and those that could not take it."""
+
+    agents: List[int]
+    refused: List[int]
 
 
 class SwarmKillResponse(BaseModel):

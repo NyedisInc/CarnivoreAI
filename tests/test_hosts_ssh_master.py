@@ -28,8 +28,8 @@ from src.core.hosts.ssh_master import (
 )
 from tests.helpers.fake_ssh import FakeSshHost, fake_ssh_host_fixture
 
-DEST = SshDestination("acme@fakehost")
-TAG = "5f4cec3f"
+DEST = SshDestination("alex@fakehost")
+TAG = "0123abcd"
 
 
 @pytest.fixture
@@ -220,13 +220,13 @@ def test_backoff_is_1_2_4_to_60_and_only_shortened_by_jitter() -> None:
 
 def test_control_paths_are_ours_alone() -> None:
     cm = Path("/c")
-    assert control_path_for(cm, "hosta", TAG, 3) == f"{cm}/hosta-{TAG}-3"
-    for key in ("local", "Hosta", "-x", "", "a" * 33, "a/b"):
+    assert control_path_for(cm, "studio", TAG, 3) == f"{cm}/studio-{TAG}-3"
+    for key in ("local", "Studio", "-x", "", "a" * 33, "a/b"):
         with pytest.raises(SshTransportError):
             control_path_for(cm, key, TAG, 0)
     for tag, slot in (("xyz", 0), (TAG, 100), (TAG, -1)):
         with pytest.raises(SshTransportError):
-            control_path_for(cm, "hosta", tag, slot)
+            control_path_for(cm, "studio", tag, slot)
     assert instance_tag_for("/a") != instance_tag_for("/b")
     assert len(instance_tag_for("/a")) == 8
 

@@ -9,7 +9,7 @@ from src.core.core_owned_files.registry import CORE_OWNED, is_core_owned
 from src.cplugs.host import purge_guard
 
 
-def _huddle(tmp_path: Path) -> Path:
+def _task_manager(tmp_path: Path) -> Path:
     folder = tmp_path / "cplugs" / "huddle"
     (folder / "files" / "7").mkdir(parents=True)
     for name in ("huddle.db", "huddle.db-wal", "huddle.db.pre-cards-20261007T231623Z", "huddle.db.imported-20261020T000000Z", "IMPORTED.json"):
@@ -27,7 +27,7 @@ def test_registry_names_the_shared_store_and_nothing_else_of_the_plugin() -> Non
 
 
 def test_purge_deletes_the_plugin_files_and_keeps_every_core_file(tmp_path: Path) -> None:
-    folder = _huddle(tmp_path)
+    folder = _task_manager(tmp_path)
     carried = purge_guard.purge(folder, "huddle", tmp_path / "cplugs")
     assert {p.name for p in carried.kept} == {"huddle.db", "huddle.db-wal", "huddle.db.pre-cards-20261007T231623Z",
                                               "huddle.db.imported-20261020T000000Z", "IMPORTED.json"}
@@ -44,7 +44,7 @@ def test_purge_of_a_plugin_with_nothing_core_owned_removes_the_folder(tmp_path: 
 
 
 def test_purge_refuses_a_folder_that_is_not_a_plugin_folder(tmp_path: Path) -> None:
-    folder = _huddle(tmp_path)
+    folder = _task_manager(tmp_path)
     for bad in (tmp_path, tmp_path / "cplugs", folder / "files"):
         with pytest.raises(purge_guard.PurgeRefused):
             purge_guard.purge(bad, "huddle", tmp_path / "cplugs")
@@ -52,7 +52,7 @@ def test_purge_refuses_a_folder_that_is_not_a_plugin_folder(tmp_path: Path) -> N
 
 
 def test_plan_prices_without_touching_anything(tmp_path: Path) -> None:
-    folder = _huddle(tmp_path)
+    folder = _task_manager(tmp_path)
     carried = purge_guard.plan(folder, "huddle")
     assert len(carried.kept) == 5 and {p.name for p in carried.delete} == {"shot.png", "notes.txt"}
     assert purge_guard.plan(tmp_path / "nope", "huddle") == purge_guard.PurgePlan()

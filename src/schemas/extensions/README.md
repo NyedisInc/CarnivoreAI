@@ -14,6 +14,8 @@ They live under `src/` because the packaged app ships `src/` and not a top-level
 
 ## `warez/policy.json`
 
+The one policy file for the public front door; plain JSON with stable keys, read by the hosted catalog API (`hosted/catalog/api/submit_policy.py`, staged by its `deploy.sh`, sha256 pinned in `tests/hosted_catalog/test_submit_limits.py`) and by the gate runner (`scripts/warez_gates/policy.py`). It is inside the schema set digest, so changing it moves `SCHEMA_SET_DIGEST`.
+
 - `version`: integer, 1.
 - `kinds`: object, kind name (`skill`, `theme`, `claude-code-plugin`, `mod`, `loadout`, `cplug`, `widget`) to `"open"` (any signed-in account may submit), `"first_party"` (only the first-party handles) or `"closed"` (nobody). An unlisted kind is closed.
 - `first_party_handles`: list of handles that publish first-party items (`carnivore`, `external`); also reserved against submission in `src/models/catalog_names.py` (`RESERVED_PUBLISHER_HANDLES`).

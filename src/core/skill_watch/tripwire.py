@@ -14,9 +14,7 @@ import structlog
 
 from src.core.skill_fires.parse import HARNESS_CLAUDE
 from src.core.skill_fires.store import SkillFireStore
-from src.core.skill_watch.classify import (
-    CREDENTIAL_ACCESS, FILE_DELETE, NETWORK, SETTINGS_WRITE,
-)
+from src.core.skill_watch.classify import FILE_DELETE, NETWORK, classify_call
 from src.core.skill_watch.spans import SpanState, advance, new_state
 from src.core.skill_watch.store import SkillWatchStore
 
@@ -28,9 +26,21 @@ Dynamic = Callable[[str, Optional[str]], FrozenSet[str]]
 MAX_FIRES_PER_PASS = 25
 MAX_OPEN_SPANS = 64
 
-_NET_TOOL = re.compile(r"^(?:WebFetch|WebSearch)\b", re.I)
-_NET_BASH = re.compile(r"\b(?:curl|wget|nc|ncat|ssh|scp|sftp|rsync)\b|https?:", re.I)
-_DEL_BASH = re.compile(r"\b(?:rm|rmdir|unlink|shred|trash)\b|git\s+clean", re.I)
+_ENTRY = re.compile(r"^\s*([A-Za-z0-9_]+)\s*(?:\((.*)\))?\s*$", re.S)
+_BARE_BASH_ARGS = ("", "*")
+
+
+def _entry_categories(entry: str) -> FrozenSet[str]:
+    match = _ENTRY.match(str(entry))
+    if match is None:
+        return classify_call("", {"command": str(entry)})
+    name, inner = match.group(1), (match.group(2) or "").strip()
+    inner = inner[:-2] if inner.endswith(":*") else inner
+    if name == "Bash" and inner in _BARE_BASH_ARGS:
+        return frozenset({NETWORK, FILE_DELETE})
+    if name == "Bash":
+        return classify_call(name, {"command": inner})
+    return classify_call(name, {"file_path": inner, "path": inner})
 
 
 @dataclass(frozen=True)
@@ -48,16 +58,7 @@ def disclosed_categories(review: Any, allowed_tools: Optional[Sequence[str]]) ->
     if reviewed:
         found.update(str(w.kind) for w in (review.warnings or []))
     for entry in allowed_tools or []:
-        text = str(entry)
-        bare = text.strip() in ("Bash", "Bash(*)")
-        if _NET_TOOL.match(text) or (text.startswith("Bash") and (bare or _NET_BASH.search(text))):
-            found.add(NETWORK)
-        if text.startswith("Bash") and (bare or _DEL_BASH.search(text)):
-            found.add(FILE_DELETE)
-        if "settings" in text and text.split("(")[0] in ("Write", "Edit", "MultiEdit"):
-            found.add(SETTINGS_WRITE)
-        if re.search(r"credentials|auth\.json|\.ssh", text):
-            found.add(CREDENTIAL_ACCESS)
+        found.update(_entry_categories(entry))
     return frozenset(found)
 
 

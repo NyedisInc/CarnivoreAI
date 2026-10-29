@@ -1,28 +1,10 @@
-"""The deep search index as a plugin of the core pipeline (slice E4a of the overhaul, #1682).
-
-It is the same index the live lane (``live/``) has always built: the cache file ``deepsearch.db`` with its three
-live-lane tables (``session_search_live``, ``session_search_rows``, the contentless ``session_search_fts``) and the
-``cache_meta`` build marker, read by the unchanged search, suggest, status and Pack code. What changes is who writes
-it. The engine (``src.core.pipeline``) hands this plugin each transcript file's new complete lines, once, from the
-cursor kept in the SAME file (``plugin_cursors``), inside the transaction that moves the cursor; there are no jobs,
-no per-file watermark verification and no planner.
-
-THE ONE REBUILD AT THE FLIP (decision 11). The first time the engine opens an existing ``deepsearch.db`` (no
-``plugin_meta`` schema version) the index the old engine built has no cursors here, so ``migrate`` drops it and the
-file starts ``building``; the engine then replays the transcripts on disk once. Under the old engine nothing opens
-the file this way, so nothing is rebuilt before the flip. A file that does not exist yet is simply created.
-
-THE FOLDER LEDGER (R4-fixA). Each delivery also records the distinct ``cwd`` folders of the lines it indexes in
-``session_search_folders`` (per live file, same transaction), the witness the Pack air-gap gate reads. An index built before it
-existed (plugin version 1), or whose ledger kept nested ``cwd`` values (2), is started over once, the same way.
-"""
 
 from __future__ import annotations
 
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, NamedTuple, Optional, Sequence, Set
 
 import structlog
 
@@ -39,7 +21,7 @@ from src.core.deepsearch.cache import ddl as cache_ddl
 from src.core.deepsearch.extract import extract
 from src.core.deepsearch.live import store
 from src.core.deepsearch.live.indexer import FileSpec, in_scope, rules_for
-from src.core.deepsearch.live.reader import RangeReader
+from src.core.deepsearch.live.range_rows import Pending, RangeRows, read_rows
 from src.core.deepsearch.transcript_folders import folders_in_lines
 from src.core.transcript_manifest.tail import line_serial
 from src.core.transcript_source import scope as scope_mod
@@ -50,11 +32,9 @@ PLUGIN_ID = "deepsearch"
 DB_NAME = K.CACHE_FILENAME
 SCHEMA_VERSION = 3
 
-Pending = List[Tuple[tuple, str]]
-
 
 class IndexGap(RuntimeError):
-    """The file no longer holds the bytes the index is behind on (changed under us); the key is retried."""
+    pass
 
 
 def _utc_now() -> str:
@@ -99,32 +79,13 @@ def _read_backups(conn: sqlite3.Connection) -> None:
         logger.warning("deepsearch_vault_sweep_failed", error=str(exc)[:300])
 
 
-class _Read(NamedTuple):
-
-    rows: Pending
-    lines: int
-    end_offset: int
-    last_offset: int
-    last_raw: bytes
-    folders: Set[str]
-
-
 def _read_lines(path: str, start: int, end: int, first_number: int, rules: Dict[str, Any], family: str,
-                *, whole: bool = True) -> _Read:
-    def scan() -> _Read:
-        lines = RangeReader(Path(path), start, end)
-        found_rows: Pending = []
-        last_offset, last_raw = start, b""
-        folders: Set[str] = set()
-        for number, (offset, line) in enumerate(lines, start=first_number):
-            last_offset, last_raw = offset, line
-            folders |= folders_in_lines((line,))
-            found = extract(line, rules, family)
-            if found is not None:
-                found_rows.append(((0, offset, len(line), number, number, found[0]), found[1]))
-        if whole and lines.end_offset != end:
+                *, whole: bool = True) -> RangeRows:
+    def scan() -> RangeRows:
+        read = read_rows(Path(path), start, end, first_number, rules, family, with_folders=True)
+        if whole and read.end_offset != end:
             raise IndexGap(f"{path}: bytes {start} to {end} are not whole lines any more")
-        return _Read(found_rows, lines.lines, lines.end_offset, last_offset, last_raw, folders)
+        return read
 
     return reader.timed(scan, key=path)
 

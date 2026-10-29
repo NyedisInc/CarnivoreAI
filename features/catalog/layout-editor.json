@@ -6,7 +6,7 @@
     "PATCH /api/v1/preferences"
   ],
   "area": "home",
-  "description": "Edit layout arranges the screen you are on, the home screen or a session's terminal page, on a desktop window. Its one entry is the edit layout item of the account menu, which the account chip at the bottom left of the agents drawer opens. While it is on, every widget is outlined with a remove control and an arrow beside its top left icon that opens the widget's actions (hide or remove, extend down or pull back a row, and settings for a widget whose copies keep their own), the splitters between widgets are drawn so they can be dragged, and a widget drawer lists every widget as a tree by type (or one list by name, kept per device) with each widget's icon, a fuzzy find box and a kind select beside it, and the analytics charts as a family that folds open. Any widget drops anywhere: onto the screen exactly where you let go, into the sidebar's widget area or its glance area; press a row to add it where it is designed to go. A widget switched off on the widgets page is never added: pressing or dropping it, or dragging a splitter past a widget's smallest size, shows one short line saying why. Every change is final the moment it is made: there is no undo, reset or cancel, and the one button, done, or Escape just leaves the mode. A removed widget stays in the drawer and drags back with its settings. Every change is saved the way that screen already saves: the home screen on this browser, a session's terminal page synced to every device. Below 1024 wide there is no edit layout; the widgets menu stays the phone's show and hide.",
+  "description": "Edit layout arranges the screen you are on, the home screen or a session's terminal page, on a desktop window. Its one entry is the edit layout item of the account menu, which the account chip at the bottom left of the agents drawer opens. While it is on, every widget is outlined with a remove control and an arrow beside its top left icon that opens the widget's actions (hide or remove, extend down or pull back a row, and settings for a widget whose copies keep their own), the splitters between widgets are drawn so they can be dragged, and a widget drawer lists every widget as a tree by type (or one list by name, kept per device) with each widget's icon, a fuzzy find box and a kind select beside it, and the analytics charts as a family that folds open. Any widget drops anywhere: onto the screen exactly where you let go, into the sidebar's widget area or its glance area; press a row to add it where it is designed to go. A box a widget was not tested for draws a generic icon and \"not available at this size\" instead of the widget. A widget switched off on the widgets page is never added: pressing or dropping it, or dragging a splitter past a widget's smallest size, shows one short line saying why. Every change is final the moment it is made: there is no undo, reset or cancel, and the one button, done, or Escape just leaves the mode. A removed widget stays in the drawer and drags back with its settings. Every change is saved the way that screen already saves: the home screen on this browser, a session's terminal page synced to every device. Below 1024 wide there is no edit layout; the widgets menu stays the phone's show and hide.",
   "docs": [
     "docs/widget-system.md",
     "docs/widget-spec.md",
@@ -32,6 +32,7 @@
     "Press done or Escape to leave; every change was saved when you made it. Drag a removed widget from the drawer to put it back.",
     "Press done, or the layout button again, to keep it.",
     "Drag a widget's side edge to resize it: a widget covering several rows has the full height edge to grab, and its four corners move the side and the row boundary together.",
+    "Turn on \"show what can't go here\" to see why a widget is missing from this screen; press one of its dimmed rows to read the full reason.",
     "A plugin's panel view (a developer-sideloaded plugin that declares the panel surface) is listed in the drawer while the plugin is on; press it to add it. It lands at large, or at its smallest size when it does not offer large, and the cell menu size gear lists only the sizes the view declares."
   ],
   "id": "layout-editor",
@@ -50,7 +51,21 @@
     "widget drawer view",
     "fuzzy search"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The home screen in edit layout: every widget outlined with a remove control, the widget drawer open on the right with cards, a search box and category chips",
+      "caption": "Edit layout on the home screen, with the widget drawer",
+      "file": "editor.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The account menu open over the drawer's bottom bar, with edit layout among settings and help",
+      "caption": "The one entry: edit layout in the account menu at the bottom left of the drawer",
+      "file": "button.png",
+      "kind": "icon",
+      "state": "on"
+    }
+  ],
   "name": "Edit layout",
   "since": "2026-09-28",
   "status": "beta",
@@ -68,6 +83,5 @@
   "where": [
     "The edit layout item of the account menu (the chip at the bottom left of the agents drawer), on a window 1024 or wider.",
     "The edit layout tab of the left sidebar, which holds the widget drawer while edit layout is on."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

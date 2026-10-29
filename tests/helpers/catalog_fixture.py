@@ -17,7 +17,7 @@ from tests.helpers.minisign_keys import Keypair, require_minisign, sign_file
 SCHEMA = "carnivore.catalog.index/1"
 
 DEFAULT_REPO = "carnivore-ai/catalog"
-DEFAULT_COMMIT = "b5a9f4e3" * 5
+DEFAULT_COMMIT = "a1b2c3d4" * 5
 
 DEFAULT_GENERATED_AT = datetime(2026, 9, 1, 12, 0, 0, tzinfo=timezone.utc)
 
@@ -192,7 +192,7 @@ def build_signed_index(
     serial: int = 1,
     generated_at: datetime = DEFAULT_GENERATED_AT,
     revocations: Optional[Dict[str, Any]] = None,
-    publisher_handle: str = "acme",
+    publisher_handle: str = "alex",
 ) -> SignedIndex:
     document: Dict[str, Any] = {
         "schema": SCHEMA,

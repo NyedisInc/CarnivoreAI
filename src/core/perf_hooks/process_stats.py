@@ -15,10 +15,14 @@ logger = structlog.get_logger()
 PS_TIMEOUT_SECONDS = 5.0
 
 _SOCKET_FLAG = re.compile(r"\s-L\s+(\S+)")
+_TYPE_FLAG = re.compile(r"\s--type=(\S+)")
+
+_SHELL_MARKERS = ("/Carnivore.app/Contents/", "Carnivore Helper",
+                  "/node_modules/electron/dist/Electron.app/")
 
 
 class ProcessStatsError(Exception):
-    """`ps` could not be run or its output could not be read."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -78,6 +82,21 @@ def tmux_servers(rows: List[ProcRow]) -> Dict[str, ProcRow]:
     return found
 
 
+def shell_role(row: ProcRow) -> Optional[str]:
+    argv0 = row.command.split(" --", 1)[0]
+    if not any(marker in argv0 for marker in _SHELL_MARKERS):
+        return None
+    match = _TYPE_FLAG.search(row.command)
+    if match is None:
+        return "main" if "/Contents/MacOS/" in argv0 else None
+    kind = match.group(1)
+    return {"renderer": "renderer", "gpu-process": "gpu", "utility": "utility"}.get(kind)
+
+
+def window_server(rows: List[ProcRow]) -> Optional[ProcRow]:
+    return next((r for r in rows if os.path.basename(r.command.split(None, 1)[0] if r.command else "") == "WindowServer"), None)
+
+
 @dataclass
 class ProcessSampler:
 
@@ -106,7 +125,24 @@ class ProcessSampler:
             "server": describe(own) if own else None,
             "tmux": {name: describe(row) for name, row in sorted(servers.items())},
         }
+        shell: Dict[str, object] = {"main": None, "renderer": [], "gpu": None, "utility": []}
+        shell_rows: List[ProcRow] = []
+        for row in rows:
+            role = shell_role(row)
+            if role is None:
+                continue
+            shell_rows.append(row)
+            if role in ("renderer", "utility"):
+                shell[role].append(describe(row))  # type: ignore[union-attr]
+            elif shell[role] is None:
+                shell[role] = describe(row)
+        report["shell"] = shell
+        wserver = window_server(rows)
+        report["window_server"] = describe(wserver) if wserver else None
         tracked: List[Tuple[int, float]] = [(r.pid, r.cpu_seconds) for r in servers.values()]
+        tracked += [(r.pid, r.cpu_seconds) for r in shell_rows]
+        if wserver:
+            tracked.append((wserver.pid, wserver.cpu_seconds))
         if own:
             tracked.append((own.pid, own.cpu_seconds))
         self._last_cpu = dict(tracked)

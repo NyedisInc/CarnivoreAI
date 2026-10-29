@@ -61,11 +61,11 @@ describe('the mini row', () => {
   });
 
   test('a tile names the account it speaks for, clipped, with the whole name in its title', () => {
-    fakeLedger.data = snapshot([{ ...acct('a', 'claude', 30), name: 'second account', short_name: 'second' }]);
+    fakeLedger.data = snapshot([{ ...acct('a', 'claude', 30), name: 'joe sugamele max', short_name: 'joe' }]);
     draw('core.ledger');
     const tile = host.querySelector<HTMLElement>('.pgl')!;
-    expect(tile.querySelector('[data-account-label]')!.textContent).toBe('second');
-    expect(tile.getAttribute('title')).toContain('second account');
+    expect(tile.querySelector('[data-account-label]')!.textContent).toBe('joe');
+    expect(tile.getAttribute('title')).toContain('joe sugamele max');
     expect(tile.getAttribute('title')).toContain('claude max');
   });
 

@@ -6,7 +6,6 @@ export interface Closable<Result> {
 
 let openCount = 0;
 
-/* could not */
 export function openModal<Result, Props extends Record<string, unknown>>(
     component: Component<Props & Closable<Result>, Record<string, unknown>>,
     props?: Props,

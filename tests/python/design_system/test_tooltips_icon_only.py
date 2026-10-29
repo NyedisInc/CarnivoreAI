@@ -7,7 +7,7 @@ from tests.python.design_system._sources import REPO
 WEB = REPO / "web" / "src"
 CLIENT = REPO / "client"
 
-OWNER_PREFIXES = (
+JOE_PREFIXES = (
     "opscenter/viz/", "opscenter/widgets/", "lib/widgets-page/",
     "opscenter/cells/analytics/", "opscenter/layout-editor/",
     "lib/byoai/",
@@ -52,7 +52,7 @@ def test_scan_can_go_red() -> None:
     assert offenders('<h2 class="x" title="open it">a</h2>') == [(1, "h2")]
     assert offenders('<button class="g__header" data-tooltip={t("k")}>a</button>') == [(1, "button")]
     assert offenders('<span class="ldp-title" title="t">a</span>') == [(1, "span")]
-    assert offenders('<span class="row-name" title="Orchardco">Orchardco</span>') == [(1, "span")]
+    assert offenders('<span class="row-name" title="Cobalt">Cobalt</span>') == [(1, "span")]
     assert offenders('<span data-row-name="a" class="session-sidebar-row-name" title="a">a</span>') == [(1, "span")]
     assert offenders("{ attrs: { class: 'row-subtitle', title: subtitle }, text: subtitle }") == [(1, "attrs")]
     assert offenders('<button class="pin" title="pin to top"><svg/></button>') == []
@@ -63,7 +63,7 @@ def test_no_heading_carries_a_tooltip() -> None:
     bad = []
     for path in sorted(WEB.rglob("*.svelte")):
         rel = path.relative_to(WEB).as_posix()
-        if rel.startswith(OWNER_PREFIXES):
+        if rel.startswith(JOE_PREFIXES):
             continue
         for line, tag in offenders(path.read_text()):
             bad.append(f"web/src/{rel}:{line} <{tag}>")

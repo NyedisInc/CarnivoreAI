@@ -59,7 +59,7 @@ test('a frame draws FROM on the receiver and TO on the sender, and reads no term
   expect(receiver.querySelector('[data-side="received"]')?.textContent).toContain('ping the build');
   expect(receiver.querySelector('.xtalk-card__name')?.textContent).toBe('@Alpha');
   expect(sender.querySelector('[data-side="sent"] .xtalk-card__name')?.textContent).toBe('@Beta');
-  expect(bystander.querySelector('.xtalk-card')).toBeNull();
+  expect(bystander.querySelector('[data-xtalk-card]')).toBeNull();
   expect(termReads).toBe(0);
   expect(listen.mock.calls.some(([type]) => type === 'terminal-created')).toBe(false);
   listen.mockRestore();
@@ -69,25 +69,50 @@ test('one card per message even when the frame repeats', () => {
   const receiver = cell('ses_b');
   push(frame());
   push(frame());
-  expect(receiver.querySelectorAll('.xtalk-card')).toHaveLength(1);
+  expect(receiver.querySelectorAll('[data-xtalk-card]')).toHaveLength(1);
 });
 
 test('a click dismisses the card', () => {
   const receiver = cell('ses_b');
   push(frame());
-  receiver.querySelector<HTMLButtonElement>('.xtalk-card')?.click();
+  receiver.querySelector<HTMLButtonElement>('[data-xtalk-card]')?.click();
   flushSync();
-  expect(receiver.querySelector('.xtalk-card')).toBeNull();
+  expect(receiver.querySelector('[data-xtalk-card]')).toBeNull();
+});
+
+function mouse(card: Element | null | undefined, type: 'auxclick' | 'mousedown', button: number): MouseEvent {
+  const event = new MouseEvent(type, { button, bubbles: true, cancelable: true });
+  card?.dispatchEvent(event);
+  flushSync();
+  return event;
+}
+
+test('a middle click (auxclick button 1) dismisses the card, and its mousedown is cancelled so autoscroll cannot start', () => {
+  const receiver = cell('ses_b');
+  push(frame());
+  const card = receiver.querySelector('[data-xtalk-card]');
+  expect(mouse(card, 'mousedown', 1).defaultPrevented).toBe(true);
+  mouse(card, 'auxclick', 1);
+  expect(receiver.querySelector('[data-xtalk-card]')).toBeNull();
+});
+
+test('a left mousedown is left alone and a right-button auxclick does not dismiss', () => {
+  const receiver = cell('ses_b');
+  push(frame());
+  const card = receiver.querySelector('[data-xtalk-card]');
+  expect(mouse(card, 'mousedown', 0).defaultPrevented).toBe(false);
+  mouse(card, 'auxclick', 2);
+  expect(receiver.querySelector('[data-xtalk-card]')).not.toBeNull();
 });
 
 test('a card expires on its own and leaves no timer behind', () => {
   vi.useFakeTimers();
   const receiver = cell('ses_b');
   push(frame());
-  expect(receiver.querySelector('.xtalk-card')).not.toBeNull();
+  expect(receiver.querySelector('[data-xtalk-card]')).not.toBeNull();
   vi.advanceTimersByTime(CARD_TTL_MS + 1);
   flushSync();
-  expect(receiver.querySelector('.xtalk-card')).toBeNull();
+  expect(receiver.querySelector('[data-xtalk-card]')).toBeNull();
   expect(vi.getTimerCount()).toBe(0);
 });
 
@@ -96,8 +121,8 @@ test('each side has its own switch', () => {
   const receiver = cell('ses_b');
   const sender = cell('ses_a');
   push(frame());
-  expect(receiver.querySelector('.xtalk-card')).not.toBeNull();
-  expect(sender.querySelector('.xtalk-card')).toBeNull();
+  expect(receiver.querySelector('[data-xtalk-card]')).not.toBeNull();
+  expect(sender.querySelector('[data-xtalk-card]')).toBeNull();
 });
 
 test('disposing the layer drops its subscription', () => {
@@ -119,7 +144,7 @@ test('keepCards on: a card survives the timer and a tab switch, in order, and a 
   expect(vi.getTimerCount()).toBe(0);
   vi.advanceTimersByTime(CARD_TTL_MS * 5);
   flushSync();
-  expect(receiver.querySelectorAll('.xtalk-card')).toHaveLength(2);
+  expect(receiver.querySelectorAll('[data-xtalk-card]')).toHaveLength(2);
   leave();
   push(frame({ id: 'm-3', preview: 'third' }));
   receiver = cell('ses_b');
@@ -128,7 +153,7 @@ test('keepCards on: a card survives the timer and a tab switch, in order, and a 
   receiver.querySelector<HTMLButtonElement>('[data-message-id="m-2"]')?.click();
   flushSync();
   expect([...receiver.querySelectorAll('.xtalk-card__quote')].map((el) => el.textContent)).toEqual(['first', 'third']);
-  expect(cell('ses_c').querySelector('.xtalk-card')).toBeNull();
+  expect(cell('ses_c').querySelector('[data-xtalk-card]')).toBeNull();
 });
 
 test('keepCards on: the kept stack per session is capped and the oldest drops', () => {
@@ -148,18 +173,18 @@ test('keepCards off: the card times out as before', () => {
   push(frame());
   vi.advanceTimersByTime(CARD_TTL_MS + 1);
   flushSync();
-  expect(receiver.querySelector('.xtalk-card')).toBeNull();
+  expect(receiver.querySelector('[data-xtalk-card]')).toBeNull();
 });
 
 test('with the master preference off no card is drawn and none is kept', () => {
   cardSettings.enabled = false;
   const receiver = cell('ses_b');
   push(frame());
-  expect(receiver.querySelector('.xtalk-card')).toBeNull();
+  expect(receiver.querySelector('[data-xtalk-card]')).toBeNull();
   cardSettings.keepCards = true;
   followKept();
   push(frame({ id: 'm-2' }));
   cardSettings.enabled = true;
   flushSync();
-  expect(receiver.querySelector('.xtalk-card')).toBeNull();
+  expect(receiver.querySelector('[data-xtalk-card]')).toBeNull();
 });

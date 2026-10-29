@@ -73,6 +73,24 @@
     "The address /session.",
     "The old address #projects opens it too."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "alt": "The Sessions page in list view: projects with their sessions as rows, status counts in the title strip and a find box",
+      "caption": "The Sessions page, list view",
+      "file": "list.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The Sessions page in pivot view: projects as rows and recency buckets as columns, a session card in each cell",
+      "caption": "The pivot view, sessions placed by recency",
+      "file": "pivot.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The Sessions page in timeline view: a 24 hour axis with one lane per session, grouped running and asleep, and a key of the status colors",
+      "caption": "The timeline view",
+      "file": "timeline.png",
+      "kind": "screenshot"
+    }
+  ]
 }

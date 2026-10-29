@@ -1,4 +1,3 @@
-/* active account */
 
 export interface FootAccount {
   name: string;
@@ -13,7 +12,6 @@ export interface FootAccountRow {
 
 const FAMILY_PROVIDER: Record<string, string> = { claude: 'claude', codex: 'codex' };
 
-/* active account */
 export function footAccount(
   family: string | null | undefined,
   accountId: string | null | undefined,

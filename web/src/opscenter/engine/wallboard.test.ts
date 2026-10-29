@@ -64,3 +64,13 @@ test('an analytics widget is allowed on the terminal canvas and round-trips vali
   expect(JSON.stringify(parsed)).toContain(A);
   expect(terminalLayout.add('analytics', '33333333-3333-4333-8333-333333333333')).toBeNull();
 });
+
+test('the read-only store hands the view its own drag record and one state per input (u162-02)', () => {
+  homeLayout.adopt(withCharts());
+  const store = readOnlyStore(homeLayout);
+  store.drag.id = A;
+  store.drag.dx = 40;
+  expect(homeLayout.drag.id).toBeNull();
+  expect(homeLayout.drag.dx).toBe(0);
+  expect(store.state).toBe(store.state);
+});

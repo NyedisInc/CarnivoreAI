@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "id": "timemachine",
+  "name_key": "cplug.timemachine.name",
+  "description_key": "cplug.timemachine.description",
+  "version": "1.0.0",
+  "icon": "database",
+  "author": "Alex (example-owner)",
+  "min_app_version": "1.16.4",
+  "tier": "builtin",
+  "default_enabled": false,
+  "permissions": {
+    "app": ["notify"]
+  },
+  "permission_reasons": {
+    "notify": "raises one alert when time machine has not backed up in 24 hours or cannot be read"
+  },
+  "surfaces": { "routes": true },
+  "owns": {
+    "routes": ["/check"],
+    "strings": ["cplug.timemachine."],
+    "tests": ["tests/python/cplugs/timemachine/", "web/src/cplugs/timemachine/"]
+  }
+}

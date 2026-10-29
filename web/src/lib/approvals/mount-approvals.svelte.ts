@@ -35,7 +35,7 @@ function openPanel(): void {
   panelOpen = mountPanel(APPROVALS_PANEL_ID, QuestionModal as never, { onClose: () => closePanel(), onJump: jumpToApproval } as never) !== null;
 }
 
-/* could not be read nothing waiting */
+/* could not be read */
 export type OpenApprovalOutcome = 'opened' | 'gone' | 'unknown';
 
 const GONE_CARD_KIND = 'ApprovalGone';
@@ -56,7 +56,6 @@ function sayAlreadyAnswered(): void {
 
 type ListingSurface = { listSessions?(): Promise<unknown> };
 
-/* could not */
 async function sessionStillWaits(sessionId: string): Promise<boolean> {
   try {
     const rows = await (hostWindow() as { API?: ListingSurface } | null)?.API?.listSessions?.();
@@ -69,7 +68,6 @@ async function sessionStillWaits(sessionId: string): Promise<boolean> {
   }
 }
 
-/* could not */
 export async function openApprovalFor(sessionId: string): Promise<OpenApprovalOutcome> {
   startApprovals();
   await refreshApprovals();

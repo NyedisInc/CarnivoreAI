@@ -3,45 +3,14 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import closing
-from typing import Any, Callable
+from typing import Any
 
-from fastapi import HTTPException
-
-from src.core.mcp import federated
+from src.core.mcp import drawer_pins, federated
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import _TARGET_SCHEMA, ToolError, _all_infos, _ok
-from src.core.mcp.write_tools import _detail, _request
-
-FIELD = "drawer_arrangement"
+from src.core.mcp.write_tools import _request
 
 LAYOUT_PREFIX = "layout:"
-
-
-async def _read(request: Any) -> tuple[int, dict]:
-    from src.api import preferences_routes
-
-    try:
-        block = await preferences_routes.get_preferences(request)
-    except HTTPException as exc:
-        raise ToolError(_detail(exc)) from exc
-    return int(block["revision"]), dict(block["values"].get(FIELD) or {})
-
-
-async def _write_pinned(request: Any, change: Callable[[list], list]) -> list:
-    from src.api import preferences_routes
-
-    for attempt in (1, 2):
-        revision, arrangement = await _read(request)
-        pinned = change(list(arrangement.get("pinned") or []))
-        body = preferences_routes.PreferencesUpdateRequest(
-            changes={FIELD: {**arrangement, "pinned": pinned}}, expected_revision=revision)
-        try:
-            await preferences_routes.update_preferences(request, body)
-            return pinned
-        except HTTPException as exc:
-            if exc.status_code != 409 or attempt == 2:
-                raise ToolError(_detail(exc)) from exc
-    raise ToolError("the drawer arrangement kept changing; try again")
 
 
 async def _uuid_of(manager: Any, args: dict, tool: str, reach: str) -> tuple[Any, str]:
@@ -57,7 +26,7 @@ async def _uuid_of(manager: Any, args: dict, tool: str, reach: str) -> tuple[Any
 
 
 async def pinned_session_uuids(request: Any) -> list:
-    _, arrangement = await _read(request)
+    _, arrangement = await drawer_pins.read_arrangement(request)
     return [u for u in arrangement.get("pinned") or [] if isinstance(u, str) and not u.startswith(LAYOUT_PREFIX)]
 
 
@@ -77,7 +46,7 @@ async def _set_pin(manager: Any, args: dict, tool: str, pin: bool) -> dict:
     from src.core.mcp import session_target
 
     target, uuid = await _uuid_of(manager, args, tool, session_target.STORED if pin else session_target.PINNED)
-    pinned = await _write_pinned(_request(manager), lambda cur: (cur if uuid in cur else cur + [uuid]) if pin
+    pinned = await drawer_pins.write_pinned(_request(manager), lambda cur: (cur if uuid in cur else cur + [uuid]) if pin
                                  else [u for u in cur if u != uuid])
     return _ok({"session": target.shown, "session_uuid": uuid, "state": _STATE[target.kind], "pinned": uuid in pinned,
                 "pinned_count": len([u for u in pinned if not u.startswith(LAYOUT_PREFIX)])})

@@ -46,15 +46,6 @@ def refuse_control_line(line: object) -> str:
 
 def refuse_bypass_session(launched_with: Optional[Mapping[str, Any]], agent_label: Optional[str] = None,
                           live_mode: Optional[str] = None) -> None:
-    """Refuse a target launched with permissions skipped, or now in a bypass mode. Raises Refused. FAILS CLOSED (C2).
-
-    Inputs: launched_with (the listing's ``launched_with``); agent_label (the wrapper label); live_mode (the pane's
-    CURRENT permission mode text, e.g. claude's registry mode or the footer, or None when it could not be measured).
-    Description: refused when there is no launch record or it carries no ``permissions`` value (an adopted pane or a
-      legacy row says nothing about how it was started), when the launch text, the label or the live mode matches
-      ``bypass``, ``skip`` or ``dangerous``, or when the live mode is unknown (shift+tab and ``/permissions`` can switch
-      a pane into bypass after launch).
-    """
     permissions = launched_with.get("permissions") if isinstance(launched_with, Mapping) else None
     if permissions in (None, "") or not isinstance(live_mode, str) or not live_mode.strip():
         raise Refused("permission_denied", "permissions_unknown", {"reason": "permissions_unknown"})

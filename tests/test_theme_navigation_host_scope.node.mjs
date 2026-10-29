@@ -1,3 +1,4 @@
+// Exits 0 and prints ALL PASS on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -64,13 +65,13 @@ test('a wrapper with no host_key at all (a pre-#162 server) still enters scope',
 
 test('a remote session enters scope under its own remote:<host>:<name> key', () => {
     const { nav, calls } = load();
-    nav.applyForSession({ host_key: 'hosta', pinned_theme: 'matrix' }, 'cloude_a');
-    assert.deepEqual(calls.scopes, ['remote:hosta:cloude_a']);
+    nav.applyForSession({ host_key: 'studio', pinned_theme: 'matrix' }, 'cloude_a');
+    assert.deepEqual(calls.scopes, ['remote:studio:cloude_a']);
 });
 
 test('a remote session still paints the global page theme, and its own pin on its terminal', () => {
     const { nav, calls } = load();
-    nav.applyForSession({ host_key: 'hosta', pinned_theme: 'matrix' }, 'cloude_a');
+    nav.applyForSession({ host_key: 'studio', pinned_theme: 'matrix' }, 'cloude_a');
     assert.equal(calls.applied.length, 1);
     assert.equal(calls.applied[0].id, 'claude');
     assert.equal(calls.terminalScopes[0].pinnedTheme, 'matrix');
@@ -79,14 +80,14 @@ test('a remote session still paints the global page theme, and its own pin on it
 test('a same-named local and remote session never share a scope key', () => {
     const { nav, calls } = load();
     nav.applyForSession({ host_key: 'local' }, 'cloude_a');
-    nav.applyForSession({ host_key: 'hosta' }, 'cloude_a');
+    nav.applyForSession({ host_key: 'studio' }, 'cloude_a');
     nav.applyForSession({ host_key: 'nas' }, 'cloude_a');
-    assert.deepEqual(calls.scopes, ['cloude_a', 'remote:hosta:cloude_a', 'remote:nas:cloude_a']);
+    assert.deepEqual(calls.scopes, ['cloude_a', 'remote:studio:cloude_a', 'remote:nas:cloude_a']);
 });
 
 test('FAIL CLOSED: without the key module a remote session never enters scope', () => {
     const { nav, calls } = load(false);
-    nav.applyForSession({ host_key: 'hosta', pinned_theme: 'matrix' }, 'cloude_a');
+    nav.applyForSession({ host_key: 'studio', pinned_theme: 'matrix' }, 'cloude_a');
     nav.applyForSession({ host_key: 'local' }, 'cloude_a');
     assert.deepEqual(calls.scopes, [null, 'cloude_a']);
 });

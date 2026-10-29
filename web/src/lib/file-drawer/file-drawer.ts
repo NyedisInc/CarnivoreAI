@@ -1,3 +1,4 @@
+/* The file drawer's */
 import { mountPanel } from '../mount';
 import { terminalLayout } from '../../opscenter/engine/layout.svelte';
 import FileDrawerHeader from './FileDrawerHeader.svelte';

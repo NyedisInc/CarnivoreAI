@@ -1,4 +1,3 @@
-/* default-src 'self' */
 
 'use strict';
 
@@ -53,7 +52,7 @@ function createUpdateWindow(deps) {
       fullscreenable: false, title: deps.getFacts().title, backgroundColor: TOKEN_HEX['--oc-ground-chrome'],
       webPreferences: {
         contextIsolation: true, sandbox: true, nodeIntegration: false,
-        partition: PARTITION, // the shared one
+        partition: PARTITION,
         preload: path.join(__dirname, 'update-window-preload.js'),
       },
     });

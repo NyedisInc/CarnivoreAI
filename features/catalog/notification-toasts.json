@@ -12,6 +12,7 @@
   ],
   "examples": [
     "Get told the moment an agent asks for permission, even while you are in another session.",
+    "Several sessions are waiting while you are away: the detailed style says how many, and each card tells you what it wants (\"wants permission: Bash git push\") without opening it.",
     "Finished-turn cards are noisy while you work: untick the screen column for that notification and the bell and history still record it.",
     "A finished-turn card keeps popping on your phone while you work at the computer: tap its mute button, pick mute here, and that phone stops showing and pushing it while the computer still does."
   ],
@@ -39,7 +40,20 @@
     "routing",
     "mute"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "two toast cards under a line reading 2 sessions waiting: wants permission: Bash npm run build for web-client, and finished and is waiting on you for api-server, each with a snippet",
+      "caption": "the detailed toast style: the latest event per session with a descriptive title and a snippet, and a count of sessions waiting",
+      "file": "detailed-stack.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "two toast cards: needs your permission for web-client and Your turn for api-server",
+      "caption": "the compact toast style, the default: one card per session showing its most urgent event",
+      "file": "compact-stack.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Notification toasts",
   "since": "2026-09-10",
   "status": "stable",
@@ -57,6 +71,5 @@
     "Top right of the screen, when a session needs you.",
     "Settings, notifications tab, toast style.",
     "Bottom right of every notification card: the mute button. Settings, notifications tab, muted notifications."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

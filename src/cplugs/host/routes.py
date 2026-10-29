@@ -14,10 +14,11 @@ from fastapi.concurrency import run_in_threadpool
 from starlette.routing import Match
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt
 
-from src.cplugs.host import (activity_log, consent as consent_mod, dependencies, destination_check, gate, identity, net_routes, owner_switch, sideload, sideload_routes, purge_guard, purge_kept, purge_owned, purge_removed,
+from src.cplugs.host import (activity_log, consent as consent_mod, dependencies, destination_check, gate, identity, net_routes, owner_switch, sideload, sideload_git_routes, sideload_routes, purge_guard, purge_kept, purge_owned, purge_removed,
                              risk, runtime, state as owner_state, system_lifecycle)
 from src.cplugs.host import sidecar_routes, sidecar_ui, sidecar_view
 from src.cplugs.host.sidecar_registry import SidecarDefinition
+from src.cplugs.runtime.supervisor import NEEDS_APPROVAL
 from src.cplugs.sdk import permission_registry as registry, settings_aliases
 from src.cplugs.sdk.definition import CplugDefinition, SettingsVerdict, as_warning
 from src.cplugs.sdk.manifest import ID_PATTERN
@@ -37,6 +38,7 @@ class GrantsBody(BaseModel):
 
 
 class ConsentBody(BaseModel):
+    """The sheet the owner read, echoed back (``consent.py``) with the permissions ticked one by one."""
 
     model_config = ConfigDict(extra="forbid")
     digest: str
@@ -88,7 +90,8 @@ def cplug_row(host: runtime.Host, d: CplugDefinition) -> Dict[str, Any]:
     st = owner_state.get(host.state_dir, m)
     needs = [p for p in m.permissions if p not in st.grants]
     consent_required = risk.needs_consent(m.tier)
-    if consent_required and st.grants and st.digest != m.code_digest:
+    owed = risk.consent_owed(m.tier, m.code_digest, st.digest)
+    if owed and st.grants:
         needs = list(m.permissions)
     blocked = list(gate.blocked_by(m.id, host.state_dir))
     sidecar = isinstance(d, SidecarDefinition)
@@ -99,9 +102,9 @@ def cplug_row(host: runtime.Host, d: CplugDefinition) -> Dict[str, Any]:
         status = "disabled"
     elif d.id in host.unavailable:
         status = "unavailable"
-    elif sidecar and live is not None and process not in ("running", "idle") and not (needs and process == "disabled"):
+    elif sidecar and live is not None and process not in ("running", "idle") and not ((needs or owed) and process in ("disabled", NEEDS_APPROVAL)):
         status, detail = "unavailable", process
-    elif needs:
+    elif needs or owed:
         status = "needs_approval"
     elif blocked:
         status = "inert"
@@ -125,6 +128,8 @@ def cplug_row(host: runtime.Host, d: CplugDefinition) -> Dict[str, Any]:
         "declared_tools": [t["name"] for t in m.tools if isinstance(t, dict)] if sidecar else None,
         "install_key": _install_key(host, d.id) if sidecar else None,
         "views": [{"name": v["name"], "surfaces": v["surfaces"], "fits": v["fits"]} for v in m.views] if sidecar else None,
+        "page": dict(m.page) if sidecar and m.page else None, "page_problem": m.page_problem if sidecar else None,
+        "topics": list(m.topics) if sidecar else None,
         "preview": f"/cplugs/{d.id}/preview?rev={m.code_digest[:12]}" if sidecar and m.preview else None,
         "settings": settings_aliases.merged(runtime.settings_defaults(m.settings_schema), st.settings, m.settings_aliases),
         "settings_schema": dict(m.settings_schema),
@@ -257,7 +262,8 @@ async def put_cplug(cplug_id: str, body: UpdateBody, request: Request) -> Dict[s
         if body.grants is not None:
             changes["grants"] = tuple(p for p in d.manifest.permissions if p in body.grants.app)
         wanted = changes.get("grants", st.grants)
-        if risk.needs_consent(d.manifest.tier) and (body.enabled is True or not set(wanted) <= set(st.grants)):
+        moved = body.consent is not None and st.digest != d.manifest.code_digest
+        if risk.needs_consent(d.manifest.tier) and (body.enabled is True or not set(wanted) <= set(st.grants) or moved):
             consent_mod.check(d.manifest, wanted, st.grants, body.consent.model_dump() if body.consent else None)
             changes["digest"] = d.manifest.code_digest
         if body.settings is not None:
@@ -265,7 +271,7 @@ async def put_cplug(cplug_id: str, body: UpdateBody, request: Request) -> Dict[s
         return replace(st, **changes)
 
     before = await run_in_threadpool(host.enabled, cplug_id)
-    grants_before = await run_in_threadpool(lambda: owner_state.get(host.state_dir, d.manifest).grants)
+    held = await run_in_threadpool(owner_state.get, host.state_dir, d.manifest)
     if body.enabled is True and not before:
         blockers = await run_in_threadpool(dependencies.enable_blockers, d.manifest)
         if blockers:
@@ -285,7 +291,7 @@ async def put_cplug(cplug_id: str, body: UpdateBody, request: Request) -> Dict[s
         raise _error(503, "cplug_state_unwritable", "the plugin state file could not be written") from exc
     if after.enabled != before:
         await host.switched(cplug_id, after.enabled)
-    elif after.enabled and isinstance(d, SidecarDefinition) and tuple(after.grants) != tuple(grants_before):
+    elif after.enabled and isinstance(d, SidecarDefinition) and (tuple(after.grants) != tuple(held.grants) or after.digest != held.digest):
         await host.restart_sidecar(d)
     if body.settings is not None:
         await host.settings_saved(cplug_id)
@@ -352,6 +358,9 @@ async def restart_cplug(cplug_id: str, request: Request) -> Dict[str, Any]:
     host, d, _live = _sidecar(cplug_id, request)
     if not await run_in_threadpool(host.enabled, cplug_id):
         raise _error(409, "cplug_disabled", f"turn {cplug_id} on before restarting it")
+    st = await run_in_threadpool(owner_state.get, host.state_dir, d.manifest)
+    if risk.consent_owed(d.manifest.tier, d.manifest.code_digest, st.digest):
+        raise _error(409, "needs_approval", f"{cplug_id} changed since it was approved; approve it before restarting it")
     after = await host.restart_sidecar(d)
     logger.info("cplug_restarted", cplug=cplug_id, state=after)
     host.publish(runtime.CPLUGS_TOPIC)
@@ -450,6 +459,7 @@ def build_router() -> APIRouter:
     router.include_router(host_router)
     router.include_router(owner_switch.owner_router)
     router.include_router(sideload_routes.router)
+    router.include_router(sideload_git_routes.router)
     router.include_router(sidecar_routes.router)
     router.include_router(sidecar_ui.router)
     router.include_router(sidecar_view.router)

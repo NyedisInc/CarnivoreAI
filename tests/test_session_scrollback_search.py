@@ -188,7 +188,7 @@ class _Manager:
     def __init__(self, backends):
         self._registry = SimpleNamespace(backends=backends)
 
-    def _tmux_socket_name(self):
+    def tmux_socket_name(self):
         return "mine"
 
 

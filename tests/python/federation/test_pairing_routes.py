@@ -118,7 +118,7 @@ def test_the_code_is_single_use_and_five_wrong_tries_burn_the_offer(macs):
 
 def test_begin_without_login_is_refused_on_http_even_from_loopback(macs):
     acceptor, _ = macs
-    for client, headers in ((_client(("192.0.2.15", 4000)), {}), (_client(), {}),
+    for client, headers in ((_client(("192.168.1.9", 4000)), {}), (_client(), {}),
                             (_client(), {"X-Forwarded-For": "8.8.8.8"})):
         refused = client.post("/api/v1/federation/pair/begin", headers=headers)
         assert refused.status_code == 401 and refused.json()["detail"]["code"] == "owner_login_required"
@@ -129,7 +129,7 @@ def test_begin_without_login_is_refused_on_http_even_from_loopback(macs):
 
 def test_an_owner_gets_the_typed_code_on_screen_and_begin_is_rate_limited(macs):
     app.dependency_overrides[require_auth] = lambda: True
-    client = _client(("192.0.2.15", 4000))
+    client = _client(("192.168.1.9", 4000))
     first = client.post("/api/v1/federation/pair/begin")
     assert first.json()["proof"] == "typed" and len(first.json()["code"]) == 8
     codes = [client.post("/api/v1/federation/pair/begin").status_code for _ in range(5)]

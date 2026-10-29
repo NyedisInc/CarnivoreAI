@@ -17,7 +17,6 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
-# state directory
 TOKEN_FILENAME = "tui_auth.json"
 LOCK_FILENAME = "tui_auth.lock"
 LOCK_TIMEOUT_SECONDS = 15.0
@@ -46,11 +45,6 @@ class TokenStore:
         self.lock_path = directory / LOCK_FILENAME
 
     def _read_checked(self) -> Optional[bytes]:
-        """The token file's bytes, or None (with a logged reason, never contents) when it is unsafe.
-
-        Opens with O_NOFOLLOW and O_NONBLOCK (a symlink or a FIFO cannot hang or redirect us), then
-        requires a regular file owned by this user with no group or world access.
-        """
         try:
             fd = os.open(self.path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         except FileNotFoundError:

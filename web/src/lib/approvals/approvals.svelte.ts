@@ -98,7 +98,6 @@ export function answerDialog(item: ApprovalItem, choice: DialogChoice): Promise<
   }));
 }
 
-/* in order and */
 export function answerAll(item: ApprovalItem, answers: AskAnswerBody[]): Promise<boolean> {
   const id = encodeURIComponent(item.session_id ?? '');
   return decide(item, () => authFetch(`/sessions/${id}/dialog/answer-all`, {

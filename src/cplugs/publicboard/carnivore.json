@@ -1,0 +1,33 @@
+{
+  "kind": "cplug",
+  "id": "publicboard",
+  "name": "public review links",
+  "version": "0.1.0",
+  "api_version": 1,
+  "min_app_version": "1.16.1",
+  "author": "Joe (ccsliinc)",
+  "license": "MIT",
+  "tier": "builtin",
+  "scope": [
+    "global"
+  ],
+  "icon": "plug",
+  "default_enabled": false,
+  "requires": [
+    {
+      "id": "reviewboard",
+      "kind": "cplug"
+    }
+  ],
+  "permissions": [],
+  "owns": {
+    "strings": [
+      "cplug.publicboard."
+    ],
+    "tests": [
+      "tests/python/cplugs/publicboard/",
+      "web/src/cplugs/publicboard/"
+    ]
+  },
+  "data": []
+}

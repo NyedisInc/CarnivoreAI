@@ -1,4 +1,3 @@
-/* anything at all */
 
 import { kindOf } from './meta';
 import { sessionForSlot } from './slot-identity';

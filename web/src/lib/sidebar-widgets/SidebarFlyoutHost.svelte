@@ -1,22 +1,5 @@
 <script lang="ts">
-  /**
-   * THE SLIDE-OUT HOST of the rail layout (issue #1774), mounted into
-   * `#session-sidebar-flyout`, which covers the session list region (search and list) and nothing else: the stats strip
-   * above it and the widget area and bar below it stay in view.
-   *
-   * Description: draws the open slide-out (`flyout.svelte.ts`) as ONE element, its title row and its body together, so
-   *   both slide at the same speed (about 180ms in, 140ms out, none under reduced motion or with the app's motion off).
-   *   The width is ONE variable, `--sidebar-flyout-w` (`sidebar-rail.css`). The title row is the title-row ground
-   *   washed with the widget's MANDATORY tint at 16% (color-mix), a large title, the icon in the solid tint and the X;
-   *   no borders anywhere. A widget's own toolbar (a dynamic tab's title actions) gets a row of its own under the title
-   *   row, never a place in it. The body is the widget's existing component, or a dynamic tab's own body (swarm is the
-   *   Task Manager tab's), drawn in the left rail ZONE's pane (`zone-shell/left-rail-zone.svelte.ts`), so it has its own frame
-   *   header and the tab-pane context with the visibility rune. A swap between slide-outs replaces the contents in place with no slide; a close
-   *   keeps the contents until the slide has finished, then unmounts them.
-   *   Escape closes it while focus is inside it or on the rail (inner popups first); from anywhere else but a terminal, an Escape
-   *   closes it only while the rail is UNPINNED, through the shared strip layer (`widget-bars/strip-escape.svelte.ts`, the team,
-   *   an earlier date). A transient slide-out (the menu) closes on a press outside the slide-out and the rail.
-   */
+  /* Escape closes it */
   import type { Component } from 'svelte';
   import IconButton from '../base/IconButton.svelte';
   import CornerMenu from '../../opscenter/shell/CornerMenu.svelte';
@@ -43,6 +26,7 @@
   import type { TabRef } from '../zone-shell/zone-types';
   import { widgetBars } from '../widget-bars/bar-settings.svelte';
   import { RAIL_CONTAINER_ID } from './rail-dom';
+  import { phoneFlag } from '../drawer/phone-flag.svelte';
   import { hideMainView, showMainView } from './main-view';
   import { MENU_FLYOUT } from './widget-ids';
   import { isMountedPart, isTabBodyPart, type SidebarWidget } from './types';
@@ -107,21 +91,22 @@
   });
   $effect(() => {
     const part = active === null ? undefined : flyoutWidget(active)?.parts.body;
-    const view = part && isTabBodyPart(part) ? tabRegistry.get(part.tab)?.mainView : undefined;
-    if (!view) return;
-    showMainView(view);
+    const def = part && isTabBodyPart(part) ? tabRegistry.get(part.tab) : undefined;
+    const view = def?.mainView;
+    if (!view || (def?.mainViewOnPhone === false && phoneFlag.value)) return;
+    showMainView(view, def?.id);
     return () => hideMainView();
   });
   const titleRow = $derived(!(widget?.id === MENU_FLYOUT && widgetBars.rail.mode === 'autohide'));
 
-  const body = $derived.by<{ component: Component | null; actions: Component<{ popout?: boolean }> | null }>(() => {
+  const body = $derived.by<{ component: Component<{ tabId?: string }> | null; actions: Component<{ popout?: boolean; tabId?: string }> | null; tabId?: string }>(() => {
     const part = widget?.parts.body;
     if (!part) return { component: null, actions: null };
-    if (isMountedPart(part)) return { component: part.component as Component, actions: null };
+    if (isMountedPart(part)) return { component: part.component as Component<{ tabId?: string }>, actions: null };
     if (!isTabBodyPart(part)) return { component: null, actions: null };
     const def = tabRegistry.get(part.tab);
     if (!def || !('component' in def.body)) return { component: null, actions: null };
-    return { component: def.body.component, actions: def.body.titleActions ?? null };
+    return { component: def.body.component as Component<{ tabId?: string }>, actions: (def.body.titleActions ?? null) as Component<{ popout?: boolean; tabId?: string }> | null, tabId: def.id };
   });
 
   $effect(() => {
@@ -156,7 +141,7 @@
 {/snippet}
 
 {#snippet pane()}
-  {#if body.component}<body.component />{/if}
+  {#if body.component}<body.component tabId={body.tabId} />{/if}
 {/snippet}
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -184,7 +169,7 @@
     </header>
     {/if}
     {#if body.actions}
-      <div class="sbr-flyout__actions"><body.actions /></div>
+      <div class="sbr-flyout__actions"><body.actions tabId={body.tabId} /></div>
     {/if}
     <div class="sbr-flyout__body">
       {#if body.component && drawnTab}{#key drawnTab.key}<ZonePane {zone} tab={drawnTab} body={pane} />{/key}{/if}
@@ -224,6 +209,10 @@
 
     :global([data-motion='off']) .sbr-flyout {
       transition: none;
+    }
+
+    .sbr-flyout__actions:empty {
+      display: none;
     }
 
     .sbr-flyout__actions {

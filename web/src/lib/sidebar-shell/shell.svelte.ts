@@ -7,9 +7,9 @@ import { legacyDrawer } from './legacy';
 import { buildListPlan, type ListPlan, type PaintInput } from './plan';
 import { paintSelection } from './row-activate';
 import { isDragging as rowDragging } from './row-drag';
+import { togglePinRow } from './row-reorder';
 import { isDragging as sectionDragging } from './section-drag';
 import { shellOwnsRow } from './row-events';
-import { afterRender as focusAfterRender, setFocusRow } from './row-focus';
 import { beginRowRename } from './row-rename';
 
 export const SHELL_ATTR = 'data-list-shell';
@@ -78,9 +78,9 @@ export const sidebarShell = {
     repaint: repaintDrawer,
     owns,
     drew,
-    focus: { setFocusRow, afterRender: focusAfterRender },
     paintSelection,
     isDragging: (): boolean => rowDragging() || sectionDragging(),
     isEditing: isHeadingEditing,
     beginRowRename,
+    togglePinRow,
 };

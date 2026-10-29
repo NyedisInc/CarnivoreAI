@@ -84,12 +84,12 @@ test('it lists what is recorded and nothing it would have to guess', async () =>
 });
 
 test('a task of a paired Mac shows its host and the same id on two Macs is two rows', async () => {
-  const task = (host: string | null) => ({ ...TASKS.tasks[0], host_key: host, host_label: host ? 'hosta' : null });
+  const task = (host: string | null) => ({ ...TASKS.tasks[0], host_key: host, host_label: host ? 'studio' : null });
   reply = { ...TASKS, total: 2, tasks: [task(null), task('peer-ab')] };
   const root = render();
   await settle();
   const names = [...root.querySelectorAll('.oc-st-name-text')].map((n) => n.textContent);
-  expect(names).toEqual(['nightly', 'nightly @ hosta']);
+  expect(names).toEqual(['nightly', 'nightly @ studio']);
 });
 
 test('a missing folder and an unreadable one are sentences, not an empty table', async () => {
@@ -115,7 +115,7 @@ test('it polls only while mounted', async () => {
   expect(scheduledTasks()).toBeNull();
 });
 
-test('the name outranks the last run: it gets the larger floor and the larger share (a task item sizing)', () => {
+test('the name outranks the last run: it gets the larger floor and the larger share (huddle item 51 sizing)', () => {
   const name = columns.find((column) => column.key === 'name')!;
   const lastRun = columns.find((column) => column.key === 'lastRun')!;
   expect(name.minPx).toBeGreaterThan(lastRun.minPx);

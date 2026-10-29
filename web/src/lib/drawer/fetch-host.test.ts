@@ -7,12 +7,12 @@ describe('the merged row carries its host', () => {
         const rows: DrawerRow[] = [{ name: 'cloude_a' }];
         mergeLiveRow(rows, {
             tmux_session: 'cloude_a',
-            host_key: 'hosta',
-            host_label: 'Hosta',
+            host_key: 'studio',
+            host_label: 'Studio',
             host_state: 'up',
         });
-        expect(rows[0]!.host_key).toBe('hosta');
-        expect(rows[0]!.host_label).toBe('Hosta');
+        expect(rows[0]!.host_key).toBe('studio');
+        expect(rows[0]!.host_label).toBe('Studio');
         expect(rows[0]!.host_state).toBe('up');
     });
 
@@ -20,11 +20,11 @@ describe('the merged row carries its host', () => {
         const rows: DrawerRow[] = [];
         mergeLiveRow(rows, {
             tmux_session: 'cloude_b',
-            host_key: 'hosta',
-            host_label: 'Hosta',
+            host_key: 'studio',
+            host_label: 'Studio',
             host_state: 'degraded',
         });
-        expect(rows[0]!.host_key).toBe('hosta');
+        expect(rows[0]!.host_key).toBe('studio');
         expect(rows[0]!.host_state).toBe('degraded');
     });
 

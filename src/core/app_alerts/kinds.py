@@ -79,16 +79,7 @@ def source_catalog() -> List[Dict[str, str]]:
         seen.setdefault(src.label_key, {"id": src.label_key.rsplit(".", 1)[-1], "label_key": src.label_key, "icon": src.icon})
     return list(seen.values())
 
-_TM_UNKNOWN = f"{_P}backup_health.tm_unknown.title"
-
-
-def _explain_access() -> Dict[str, Any]:
-    return {"id": "check_access", "label_key": _a("check_access"), "explain_key": "", "actions": [_privacy(), _recheck()]}
-
-
 BY_TITLE: Dict[str, Declared] = {
-    _TM_UNKNOWN: Declared(NEEDS_YOU, (_explain_access(), _recheck())),
-    f"{_P}backup_health.tm_stale.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
     f"{_P}backup_health.usb_stale.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
     f"{_P}backup_health.usb_missing.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
     f"{_P}backup_health.vault_unavailable.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
@@ -106,12 +97,12 @@ BY_TITLE: Dict[str, Declared] = {
     f"{_P}automation.report.title": Declared(FYI),
     f"{_P}automation.failed.title": Declared(NEEDS_YOU),
     f"{_P}automation.notice.title": Declared(FYI),
+    f"{_P}cplug_moved.title": Declared(NEEDS_YOU, (_link("open_warez", "#warez"),)),
     f"{_P}pack_skills.alpha_changed.title": Declared(NEEDS_YOU),
     f"{_P}pack_skills.placer_gone.title": Declared(NEEDS_YOU),
     f"{_P}pack_skills.edit_replaced.title": Declared(FYI),
     f"{_P}pack_skills.edits_replaced.title": Declared(FYI),
     f"{_P}pack_skills.settings_refused.title": Declared(NEEDS_YOU),
-    # the plugins page
     **{f"{_P}cplug_runtime.{name}.title": Declared(NEEDS_YOU, (_link("open_plugins", "#plugins"),))
        for name in ("crash_loop", "revoked", "integrity", "index_expired", "safe_mode", "plugin_alert", "sandbox")},
 }
@@ -129,14 +120,12 @@ def declared_for(key: str, title_key: str) -> Optional[Declared]:
     return next((d for prefix, d in BY_KEY_PREFIX if key.startswith(prefix)), None)
 
 
-def _fill(action: Mapping[str, Any], alert_id: int, params: Mapping[str, Any]) -> Dict[str, Any]:
+def _fill(action: Mapping[str, Any], alert_id: int) -> Dict[str, Any]:
     out = dict(action)
     if "route" in out:
         out["route"] = str(out["route"]).replace("{id}", str(alert_id))
     if "actions" in out:
-        out["actions"] = [_fill(a, alert_id, params) for a in out["actions"]]
-    if out.get("id") == "check_access":
-        out["explain_key"] = f"{_P}backup_health.tm_unknown.explain.{params.get('reason') or 'unreadable'}"
+        out["actions"] = [_fill(a, alert_id) for a in out["actions"]]
     return out
 
 
@@ -152,7 +141,7 @@ def describe(alert_id: int, key: str, source: str, severity: str, title_key: str
     actions: List[Dict[str, Any]] = [dict(a) for a in stored_actions]
     have = {a.get("id") for a in actions}
     if declared is not None:
-        actions += [_fill(a, alert_id, params) for a in declared.actions if a.get("id") not in have]
+        actions += [_fill(a, alert_id) for a in declared.actions if a.get("id") not in have]
     name = next((str(params[p]) for p in SOURCE_NAME_PARAMS if params.get(p)), None)
     kind = declared.kind if declared is not None else _kind_by_severity(severity)
     detail = stored_detail_key

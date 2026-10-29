@@ -14,12 +14,6 @@ from src.core.session_resume_target import (
 
 
 def _absent_from_every_root(uuid: str, working_dir: Optional[str]) -> bool:
-    """True only when EVERY claude transcript root measured the conversation absent.
-
-    Inputs: uuid (str), working_dir (str | None). Output: bool - a present hit, or a root that could not be
-      read (unchecked), answers False: not having looked is not an absence.
-    Example: _absent_from_every_root("c1f766ce-...", "/x") -> False when a relay profile holds the .jsonl
-    """
     from src.core.claude_config.transcript_roots import claude_transcript_roots
     from src.core.session_transcript_presence import conversation_presence
 
@@ -43,7 +37,8 @@ def _record_is_this_live_process(record: object) -> bool:
 def never_had_a_turn(
     tmux_name: str, uuid: str, working_dir: Optional[str], *, recorded_work: bool = True
 ) -> bool:
-    from src.core.attention.registry_read import REG_OK, registry_for_session
+    from src.core.attention.registry_record import REG_OK
+    from src.core.attention.registry_index import registry_for_session
 
     if recorded_work or not tmux_name or not uuid:
         return False

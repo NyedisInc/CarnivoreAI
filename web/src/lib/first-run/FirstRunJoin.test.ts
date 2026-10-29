@@ -22,6 +22,7 @@ let routes: Record<string, Handler | Handler[]> = {};
 const auth = { showLoginForm: vi.fn(), acceptLogin: vi.fn(), finishFirstRun: vi.fn() };
 const mounted: ReturnType<typeof mount>[] = [];
 
+/** Install a fetch mock: a route holds one handler, or a queue whose last entry repeats. */
 function install(map: Record<string, Handler | Handler[]>): void {
     routes = map;
     vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
@@ -300,6 +301,8 @@ describe('joined', () => {
         await elapse(1000);
         expect(localLogin).toHaveBeenCalledTimes(3);
         expect(auth.acceptLogin).toHaveBeenCalledWith({ access_token: 'a', refresh_token: 'r' });
+        expect(auth.finishFirstRun).not.toHaveBeenCalled();
+        await click('[data-first-run="agent-continue"]');
         expect(auth.finishFirstRun).toHaveBeenCalledTimes(1);
     });
 

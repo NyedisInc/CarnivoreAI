@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* could not */
+  /* the widget menu there is nothing */
   import { META, isInstanceId, metaFor } from './meta';
   import { GUTTER } from './tracks';
   import { spanOf } from './spans';
@@ -117,7 +117,6 @@
     }
   }
 
-  /*  hidden  */
   function onCloseWidget(): void {
     const from = anchor ? anchor.getBoundingClientRect() : null;
     closeWidget(store, id, { editing, from });

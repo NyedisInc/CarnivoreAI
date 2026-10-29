@@ -53,13 +53,13 @@ from src.core.session_lifecycle import (
 )
 from src.core.session_store import list_sessions
 from src.core.tmux_listing import (
-    REASON_CONNECT_FAILED,
     REASON_NO_SERVER,
     REASON_PROBE_ERROR,
     REASON_TIMEOUT,
     REASON_TMUX_MISSING,
     TmuxListing,
 )
+from src.core.tmux_stderr import REASON_CONNECT_FAILED
 
 
 

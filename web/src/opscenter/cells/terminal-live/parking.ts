@@ -87,7 +87,6 @@ export function park(owner: string, key: string, host: HTMLElement, handle: Live
   enforce();
 }
 
-/* the live client */
 export function unpark(owner: string, key: string): { host: HTMLElement; handle: LiveTerminal } | null {
   const entry = shelf.find((one) => one.owner === owner && one.key === key);
   if (!entry) return null;

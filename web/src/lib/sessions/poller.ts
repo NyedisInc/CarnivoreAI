@@ -1,4 +1,3 @@
-/*  hidden  */
 
 import { hostDocument, hostWindow } from './env';
 
@@ -36,7 +35,6 @@ export const VISIBLE = 'visible';
 export const HIDDEN = 'hidden';
 export const CANNOT_DETERMINE = 'cannot_determine';
 
-/* CANNOT_DETERMINE */
 export function launchpadVisibility(): string {
     const doc = hostDocument();
     const el = doc && typeof doc.getElementById === 'function'

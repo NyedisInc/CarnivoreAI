@@ -16,8 +16,6 @@ OWNER_AGENT = "agent"
 
 @dataclass(frozen=True)
 class ListOwner:
-    """Who a list belongs to. ``kind`` is :data:`OWNER_ALL`, :data:`OWNER_PROJECT` or :data:`OWNER_AGENT`; ``id`` is the project row id
-    or the agent id, 0 for ``all``."""
 
     kind: str
     id: int

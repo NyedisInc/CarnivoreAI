@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from src.core import libproc_snapshot
 from src.core.claude_resume_argv import read_ps_text
 
 
@@ -33,7 +34,7 @@ CONFLICT_SAME_DIR_UNIDENTIFIED: str = "unidentified_claude_in_same_directory"
 
 
 class MeasureError(Exception):
-    """A probe could not run at all. Distinct from "ran and found nothing"."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -111,14 +112,9 @@ def parse_ps_line(line: str) -> Optional[Proc]:
 
 
 def read_process_table(max_age: float = 0.0) -> ProcessTable:
-    """Take the process table in one ``ps`` call (or the shared one no older than ``max_age``).
-
-    Inputs: max_age (float) - seconds; 0 (the default, every guard) always runs ``ps``,
-      a periodic observer passes ``SHARED_TABLE_MAX_AGE_SECONDS`` to share the watcher's run.
-    Output: ProcessTable.
-    Raises: MeasureError when ps cannot run - an empty table would read as
-      "no writers anywhere", which is the one wrong answer a guard cannot give.
-    """
+    snap = libproc_snapshot.snapshot(max_age)
+    if snap:
+        return ProcessTable.from_rows([Proc(pid=r.pid, ppid=r.ppid, lstart=r.lstart, command=r.command) for r in snap])
     text = read_ps_text(max_age, PROBE_TIMEOUT_SECONDS)
     if text is None:
         raise MeasureError("ps could not run or exited non-zero")

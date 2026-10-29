@@ -10,6 +10,7 @@ import { Doc, results, test } from './lib-sidebar-sessions.mjs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLIENT_JS = path.join(__dirname, '..', 'client', 'js');
 
+/** A label that exercises the point: a space, a colon, a dot, a quote, a dollar. */
 const RICH_LABEL = 'client: acme v2.1 "prod" $rate';
 
 const HANDLE = 'cloude_client_acme_v2_1_prod_rate';
@@ -57,6 +58,9 @@ function harness({ label = RICH_LABEL, name = HANDLE, rendered = null } = {}) {
         alert() {},
     };
     vm.createContext(ctx);
+    // terminal-header-rename.js is the page-chrome half of this
+    // control, lifted out of terminal.js when the terminal became
+    // instantiable: one header, however many terminals the page holds.
     for (const f of ['session-label.js', 'app.js', 'terminal-header-rename.js',
                      'terminal-client-factory.js', 'terminal.js']) {
         vm.runInContext(
@@ -93,6 +97,8 @@ async function edit(h, { type = null, key = 'Enter' } = {}) {
     return input;
 }
 
+// =====================================================================
+// =====================================================================
 
 await test('the editor SEEDS itself with the label the user is looking at', () => {
     const h = harness();
@@ -123,6 +129,8 @@ await test('the editor accepts the LABEL length, not the tmux name length', () =
     assert.equal(String(input.getAttribute('maxlength') ?? input.maxLength), '200');
 });
 
+// =====================================================================
+// =====================================================================
 
 await test('DECISIVE: renaming a session that HAS a label stores the new label', async () => {
     const h = harness();
@@ -187,6 +195,8 @@ await test('an empty box is a cancel, and a control character is refused locally
     assert.equal(input.value, 'two\nlines');
 });
 
+// =====================================================================
+// =====================================================================
 
 await test('terminal.js carries NO second copy of the label rule', () => {
     const src = fs.readFileSync(path.join(CLIENT_JS, 'terminal.js'), 'utf8')

@@ -13,7 +13,6 @@ export type SurfaceState =
 
 export interface SurfaceSpec {
     readonly cplugId: string;
-    /* could not */
     readonly installKey: string | null;
     readonly surface: Surface;
 }

@@ -1,4 +1,3 @@
-/*  hidden  */
 
 export const IDLE_SPAN_MS = 60_000;
 
@@ -141,7 +140,6 @@ export interface IdleReport {
   hidden: IdleTotals;
 }
 
-/*  hidden  */
 export function idleVerdict(report: IdleReport): string[] {
   if (report.hidden.requests === 0 && report.hidden.bytes === 0) return [];
   return [`hidden widget sent ${report.hidden.requests} request(s), ${report.hidden.bytes} byte(s) in a simulated minute (must be 0)`];

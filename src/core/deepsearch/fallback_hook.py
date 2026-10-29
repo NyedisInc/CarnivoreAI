@@ -98,9 +98,6 @@ class FallbackPoint:
 
 @dataclass(frozen=True)
 class AdoptedPoint:
-    """What adopting one incoming point did: ``status`` is ``adopted``, ``present`` (the vault already holds this point) or ``refused``
-    (``reason`` says why; nothing was written for it). ``point_id`` is the id it has in this vault; ``manifest_sha256`` the hash of the
-    manifest written; ``new_chunks`` the chunk hashes this call newly wrote (never one the vault already held)."""
 
     conversation_id: str
     source_point_id: str

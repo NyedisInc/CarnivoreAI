@@ -26,7 +26,7 @@ RETIRED_LOOK_ACTIONS = {
 }
 
 QUESTION_REASON = "a question reaches the owner"
-ANSWER_REASON = "an answer to the owner's own message reaches the owner in any state until the owner reads it"
+ANSWER_REASON = "an answer to the owner's own message reaches him in any state until he reads it"
 REVIEW_REASON = "setting review reaches the owner"
 NOTIFY_REASON = "an info with notify marks the item unread and badges the tab, but asks nothing; to ask use task_manager_ask, to hand over work set state review"
 _NOT_REACHING = "post a question (task_manager_ask), set review (task_manager_update state review), or add notify true to an info"

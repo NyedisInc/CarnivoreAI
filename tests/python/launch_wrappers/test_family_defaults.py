@@ -28,8 +28,8 @@ def _by_family(wrappers):
 def test_an_empty_list_gets_one_valid_default_per_family():
     seeded = ensure_family_defaults([])
     groups = _by_family(seeded)
-    assert set(groups) == {f.name for f in AGENT_FAMILIES}
-    for family in AGENT_FAMILIES:
+    assert set(groups) == {f.name for f in AGENT_FAMILIES if f.seeded}
+    for family in (f for f in AGENT_FAMILIES if f.seeded):
         [only] = groups[family.name]
         assert only["default"] is True
         assert only["id"] == family.default_wrapper_id
@@ -87,7 +87,7 @@ def test_a_non_dict_entry_is_kept_in_place():
     ("codex", "codex", 'codex "$@"'),
     ("claude", "claude --x", 'claude --x "$@"'),
     ("shell", "/bin/bash -l", '/bin/bash -l "$@"'),
-    ("claude", 'keyc "$@"', 'keyc "$@"'),
+    ("claude", 'cld "$@"', 'cld "$@"'),
 ])
 def test_script_from_command_forwards_where_the_static_path_did(family, command, script):
     assert script_from_command(family, command) == script
@@ -108,7 +108,7 @@ def _write(path: Path, data: dict) -> None:
 def test_ensure_defaults_writes_once_with_a_backup_then_never_again(tmp_path):
     path = tmp_path / "config.json"
     original = {"config_version": 6, "agents": {"wrappers": [
-        {"id": "keyc", "family": "claude", "label": "keyc", "script": "keyc \"$@\"", "default": True},
+        {"id": "cld", "family": "claude", "label": "cld", "script": "cld \"$@\"", "default": True},
     ]}, "projects": []}
     _write(path, original)
 
@@ -118,7 +118,7 @@ def test_ensure_defaults_writes_once_with_a_backup_then_never_again(tmp_path):
     first = path.read_bytes()
     written = json.loads(first)
     assert stored_wrappers(written)[0] == stored_wrappers(original)[0]
-    assert {w["family"] for w in stored_wrappers(written)} == set(AGENT_FAMILY_BY_NAME)
+    assert {w["family"] for w in stored_wrappers(written)} == {n for n, f in AGENT_FAMILY_BY_NAME.items() if f.seeded}
 
     backup_before = backup.read_bytes()
     assert ensure_defaults(path) is False

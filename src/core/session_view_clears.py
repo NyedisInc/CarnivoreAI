@@ -2,16 +2,17 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Optional
 
 import structlog
 
 from src.core.attention.evidence import STATE_DONE_IDLE
+from src.core.sessions.ports import SessionManagerSurface
 
 logger = structlog.get_logger(__name__)
 
 
-def session_ids_for_tmux_name(manager: Any, tmux_name: str) -> list[str]:
+def session_ids_for_tmux_name(manager: SessionManagerSurface, tmux_name: str) -> list[str]:
     if not tmux_name:
         return []
     from src.core.hosts.identity import instance_name
@@ -25,7 +26,7 @@ def session_ids_for_tmux_name(manager: Any, tmux_name: str) -> list[str]:
 
 
 def clear_view_state(
-    manager: Any,
+    manager: SessionManagerSurface,
     *,
     session_id: Optional[str] = None,
     tmux_name: Optional[str] = None,
@@ -44,16 +45,10 @@ def clear_view_state(
             if sid not in ids:
                 ids.append(sid)
 
-    tracker = getattr(manager, "_activity_tracker", None)
-    if tracker is not None:
-        for sid in ids:
-            tracker.clear_notice(sid)
-            tracker.clear_permission(sid)
-
     if not tmux_name:
         return False
 
-    store = getattr(manager, "_unread_store", None)
+    store = manager._unread_store
     if store is None:
         return False
     from src.core import unread_follow_up
@@ -63,8 +58,8 @@ def clear_view_state(
     return True
 
 
-def view_marks_read(manager: Any, session_id: str) -> bool:
-    watcher = getattr(manager, "_attention_watcher", None)
+def view_marks_read(manager: SessionManagerSurface, session_id: str) -> bool:
+    watcher = manager._attention_watcher
     if watcher is None or not session_id:
         return True
     observation = watcher.observation_for(
@@ -75,7 +70,7 @@ def view_marks_read(manager: Any, session_id: str) -> bool:
     return observation.verdict.state == STATE_DONE_IDLE
 
 
-def clear_on_view(manager: Any, session_id: str) -> bool:
+def clear_on_view(manager: SessionManagerSurface, session_id: str) -> bool:
     if not view_marks_read(manager, session_id):
         logger.debug("session_view_clear_deferred_not_at_rest",
                      session_id=session_id)

@@ -11,8 +11,8 @@ from src.core.attention.transcript_facts import classify_transcript_records
 RESETS = 1792544400
 NOW = datetime(2026, 10, 17, 12, 0, tzinfo=timezone.utc)
 NOTICE = (
-    "<task-notification>\n<task-id>ad51d4ae45b323146</task-id>\n"
-    "<tool-use-id>toolu_018XiUL1aVb4XpgeRiqUR08a</tool-use-id>\n<status>failed</status>\n"
+    "<task-notification>\n<task-id>40df117fe6b10a1cf</task-id>\n"
+    "<tool-use-id>toolu_012XrUU6cId5GkwhGduXW33j</tool-use-id>\n<status>failed</status>\n"
     "<summary>Agent \"H35\" failed: Agent terminated early due to an API error: "
     "You've hit your weekly limit (error type rate_limit, HTTP 429)</summary>\n</task-notification>"
 )

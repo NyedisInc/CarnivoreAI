@@ -1,12 +1,12 @@
 
 <script lang="ts">
+    import RowActionButton from './RowActionButton.svelte';
+    import ProjectChip from './ProjectChip.svelte';
     import Icon from '../../opscenter/ui/Icon.svelte';
     import Button from '../base/Button.svelte';
     import ListRow from '../base/ListRow.svelte';
     import { providerMark } from '../sessions/agent-marks';
     import type { SessionListItem, Translate } from '../sessions/types';
-    import { projectColorOf } from '../project-colors/store.svelte';
-    import { projectColorVar } from '../project-colors/palette';
     import type { PageRow } from './filters';
     import { pageRowMenu } from '../item-menu/page-row';
     import { sessionMenuContext } from '../projects-shared/session-menu-context';
@@ -65,7 +65,7 @@
         <span class="sp-c-name">{name}</span>
         <span class="sp-c-state">{t(`sessions.page.state.${stateKey}`)}</span>
         <span class="sp-c-proj">
-            <span class="sp-pchip" style:--pc={projectColorVar(projectColorOf(row.projectRef?.id ?? null))}>{(row.project.charAt(0) || '?').toUpperCase()}</span>
+            <ProjectChip name={row.project} projectId={row.projectRef?.id ?? null} />
             <span>{row.project}</span>
         </span>
         <span class="sp-c-prov"><span class="sp-mark" role="img" aria-label={mark.label} title={mark.label}>{@html mark.svg}</span><span>{row.provider}</span></span>
@@ -79,18 +79,15 @@
     </div>
     <div class="sp-tail oc-list__actions">
     {#if action}
-        <Button
-            size="sm"
-            data-go={action}
-            aria-label={t(`sessions.page.act.${action}.label`, { name })}
-            onclick={(e) => {
+        <RowActionButton
+            {action}
+            {name}
+            {t}
+            onclick={(e: MouseEvent) => {
                 e.stopPropagation();
                 onAct(action, row);
             }}
-        >
-            {#if action === 'open'}<Icon name="prompt-open" size={14} />{:else if action === 'wake'}<Icon name="bolt" size={14} />{/if}
-            <span>{t(`sessions.page.act.${action}`)}</span>
-        </Button>
+        />
     {/if}
     </div>
 </ListRow>

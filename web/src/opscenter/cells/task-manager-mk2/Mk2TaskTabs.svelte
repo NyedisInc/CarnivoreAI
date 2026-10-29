@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* padding */
   import { getContext, untrack } from 'svelte';
   import { buttonAttrs } from '../../../lib/base/classes';
   import { titleWhenTruncated } from '../../../lib/base/truncate';
@@ -63,7 +62,6 @@
     id,
     label: id === 'discussion' && newCount(task) ? t('cplug.huddle.tm.tab_unread', { n: newCount(task) }) : t(`cplug.huddle.tm.tab_${id}`),
     icon: TAB_ICON[id],
-    //  hidden 
     dot: id === 'discussion' && newCount(task) > 0,
   })));
   const idBase = $derived(`tm-task-${task.id}`);
@@ -141,7 +139,6 @@
       color: var(--oc-text-primary);
     }
 
-    /* padding */
     .mk2-worker {
       display: block;
       overflow-wrap: anywhere;

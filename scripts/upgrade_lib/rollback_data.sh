@@ -1,9 +1,4 @@
 #!/bin/bash
-#
-#
-#
-#
-#
 
 TRAIL_SELECT_OK=0
 TRAIL_SELECT_REFUSED=2
@@ -87,8 +82,6 @@ warn_code_only() {
     echo "" >&2
 }
 
-#
-#
 restore_one_artifact() {
     local install_dir="$1" artifact="$2" backup="$3"
     local dest snapshot stamp
@@ -119,8 +112,6 @@ restore_one_artifact() {
     log_ok "restored ${artifact} from $(basename "${backup}")"
 }
 
-#
-#
 locate_backup() {
     local install_dir="$1" state_dir="$2" name="$3" legacy
     case "${name}" in

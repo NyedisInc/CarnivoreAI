@@ -217,7 +217,7 @@ async def crate_import_preview(ctx: CplugContext, caller: AgentCaller, args: dic
 def _import_body(args: dict) -> dict:
     _no_identity(args)
     if "made_here" in args:
-        raise ToolError("made_here is refused: only the owner's own click in the app can say the owner made a crate on this computer")
+        raise ToolError("made_here is refused: only the owner's own click in the app can say he made a crate on this computer")
     source = {k: args[k] for k in ("bundle_id", "folder", "name") if k in args}
     if not source:
         raise ToolError("name a crate: bundle_id, or folder (primary or second) and name")
@@ -329,7 +329,7 @@ TOOLS: Dict[str, ToolSpec] = {
         properties=_PLAN_PROPS, required=["scope", "target"], handler=crate_export_preview, gate="read"),
     "crate_export": ToolSpec(
         description="Ask the owner to export a session or project to one crate file, quoting crate_export_preview's "
-                    "fingerprint. It waits for their approval every time, then runs as a job (crate_jobs_list). Encrypting "
+                    "fingerprint. It waits for his approval every time, then runs as a job (crate_jobs_list). Encrypting "
                     "to age recipients is allowed; they are public keys.",
         properties={**_PLAN_PROPS, "fingerprint": {"type": "string", "minLength": 64, "maxLength": 64}},
         required=["scope", "target", "fingerprint"], handler=crate_export, gate="inbox", prepare=_export_prepare,
@@ -377,7 +377,7 @@ TOOLS: Dict[str, ToolSpec] = {
         description="Ask the owner to remove a crate: the file and its checksum files move to the Trash (recoverable there), "
                     "never deleted. Name bundle_id (its copy in folder, default primary) or folder and name. A recorded "
                     "crate keeps its record and shows as removed once no copy is left. also_second true also removes the "
-                    "same-named copy in the second folder; default false. It waits for their approval every time; a crate "
+                    "same-named copy in the second folder; default false. It waits for his approval every time; a crate "
                     "a job is working on is refused.",
         properties={"bundle_id": _BUNDLE, "folder": _FOLDER, "name": _NAME, "also_second": {"type": "boolean"}},
         required=[], handler=crate_remove, gate="inbox", prepare=_remove_prepare,
@@ -391,7 +391,7 @@ TOOLS: Dict[str, ToolSpec] = {
         required=[], handler=crate_import_preview, gate="read"),
     "crate_import": ToolSpec(
         description="Ask the owner to restore a plain crate into this install, quoting crate_import_preview's fingerprint and the "
-                    "same options. It waits for their approval every time, then runs as a job (crate_jobs_list; the receipt is the "
+                    "same options. It waits for his approval every time, then runs as a job (crate_jobs_list; the receipt is the "
                     "result and crate_imports_list). Every restored session comes back asleep. Encrypted crates and the 'I made "
                     "this crate here' tick are the app's only.",
         properties=_IMPORT_PROPS, required=["fingerprint"], handler=crate_import, gate="inbox", prepare=_import_prepare,
@@ -399,7 +399,7 @@ TOOLS: Dict[str, ToolSpec] = {
     "crate_import_undo": ToolSpec(
         description="Ask the owner to undo a FINISHED crate restore (import_id from crate_imports_list): it removes exactly what that import "
                     "wrote (database rows, files, backup points, the sessions and project it made) and puts back what it changed. Anything that "
-                    "was already here, or changed since, stays and is listed. It waits for their approval every time and is refused (nothing "
+                    "was already here, or changed since, stays and is listed. It waits for his approval every time and is refused (nothing "
                     "written) while a crate job runs, a later restore from the same source stands, or a step cannot be undone cleanly.",
         properties={"import_id": {"type": "string", "maxLength": 64}}, required=["import_id"], handler=crate_import_undo, gate="inbox",
         prepare=_undo_prepare, dedupe_by=("import_id",)),

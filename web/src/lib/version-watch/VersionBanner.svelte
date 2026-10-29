@@ -7,6 +7,7 @@
     versionWatch,
     whatsNew,
   } from './version-watch.svelte';
+  import { Button, IconButton } from '../base';
   import { t } from '../i18n/index.svelte';
 
   const kind = $derived(bannerKind(versionWatch));
@@ -39,17 +40,10 @@
   <div class="vb-banner" role="status" aria-live="polite">
     <div class="vb-head">
     <span class="vb-text">{t(kind === 'client' ? 'app_update.client_ready' : 'app_update.available')}</span>
-    <button type="button" class="vb-reload" onclick={reloadForNewVersion}>
+    <Button variant="confirm" size="sm" data-vb="reload" onclick={reloadForNewVersion}>
       {t('app_update.reload')}
-    </button>
-    <button
-      type="button"
-      class="vb-dismiss"
-      aria-label={t('app_update.dismiss')}
-      onclick={dismissVersionBanner}
-    >
-      &times;
-    </button>
+    </Button>
+    <IconButton label={t('app_update.dismiss')} variant="close" icon="close" data-vb="dismiss" onclick={dismissVersionBanner} />
     </div>
     {#if rows.length > 0}
       <div class="vb-news">
@@ -74,9 +68,9 @@
           {/if}
         </ul>
         {#if overflows || expanded}
-          <button type="button" class="vb-toggle" onclick={() => (expanded = !expanded)}>
+          <Button variant="quiet" size="sm" data-vb="toggle" aria-expanded={expanded} style="align-self: flex-start" onclick={() => (expanded = !expanded)}>
             {t(expanded ? 'app_update.collapse' : 'app_update.expand')}
-          </button>
+          </Button>
         {/if}
       </div>
     {/if}
@@ -103,6 +97,18 @@
     font-size: var(--oc-fs-micro, 11px);
     line-height: 1.4;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  }
+
+  .vb-head :global([data-vb='reload']) {
+    --_bd: var(--oc-cyan);
+    border-color: var(--oc-cyan);
+    color: var(--oc-cyan);
+    font-weight: 600;
+  }
+
+  .vb-head :global([data-vb='reload']:hover),
+  .vb-head :global([data-vb='reload']:focus-visible) {
+    background: var(--oc-ground-hover);
   }
 
   .vb-head {
@@ -161,54 +167,7 @@
     color: var(--oc-text-secondary, #9fb3af);
   }
 
-  .vb-toggle {
-    align-self: flex-start;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--oc-text-secondary, #9fb3af);
-    font: inherit;
-    cursor: pointer;
-  }
-
-  .vb-toggle:hover,
-  .vb-toggle:focus-visible {
-    color: var(--oc-text-primary, #e6f1ee);
-  }
-
   .vb-text {
     white-space: nowrap;
-  }
-
-  .vb-reload {
-    padding: 1px 8px;
-    border-radius: var(--oc-radius-sm, 4px);
-    border: var(--oc-border, 1px) solid var(--oc-cyan, #2dd4bf);
-    background: transparent;
-    color: var(--oc-cyan, #2dd4bf);
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .vb-reload:hover,
-  .vb-reload:focus-visible {
-    background: var(--oc-ground-hover, rgba(45, 212, 191, 0.12));
-  }
-
-  .vb-dismiss {
-    padding: 0 4px;
-    border: none;
-    background: transparent;
-    color: var(--oc-text-secondary, #9fb3af);
-    font: inherit;
-    font-size: 14px;
-    line-height: 1;
-    cursor: pointer;
-  }
-
-  .vb-dismiss:hover,
-  .vb-dismiss:focus-visible {
-    color: var(--oc-text-primary, #e6f1ee);
   }
 </style>

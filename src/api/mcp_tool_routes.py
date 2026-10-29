@@ -19,6 +19,7 @@ from src.core import config_writer
 from src.core.db import DatastoreError
 from src.core.mcp import agent_tool_switches, aliases, tool_families, tool_groups, tool_switches, tools
 from src.core.mcp_usage import rollup, view
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -101,7 +102,8 @@ async def reset_tool_usage() -> dict:
 
 @router.put("/tools")
 async def put_tools(body: ToolSwitchesBody) -> dict:
-    """
+    """Switch tools on or off for every MCP caller on this computer; owner only, live, no restart.
+
     Description: written to ``mcp.tool_overrides`` through ``config_writer``; a change equal to the tool's default removes
       its entry. The tool list and the MCP fingerprint read it on every request, so connected sessions refresh.
     Inputs: body (ToolSwitchesBody). Output: the same document as ``GET`` after the change.
@@ -112,7 +114,7 @@ async def put_tools(body: ToolSwitchesBody) -> dict:
     try:
         tool_switches.merged(body.set, registered, {})
     except tool_switches.ToolSwitchError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_request", exc, step="put_tools") from exc
 
     def mutate(doc: dict) -> dict:
         block = doc.get(MCP_KEY)

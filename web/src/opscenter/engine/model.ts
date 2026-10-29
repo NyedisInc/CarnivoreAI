@@ -9,7 +9,6 @@ import { COL_MIN, ROW_MIN } from './floors';
 
 export const ROW_MAX = 1600;
 
-/* already exists */
 export const MAX_VIEWERS = 6;
 
 export const PRIMARY_SLOT = 'terminal:@primary';
@@ -315,7 +314,6 @@ export function moveCellToNewRow(layout: Layout, id: SlotId, after: RowId | null
   return repairSpans({ ...base, rows: shared });
 }
 
-/*  hidden  */
 export function hideCell(layout: Layout, id: SlotId): Layout {
   if (isInstanceId(id) && !id.startsWith('analytics:')) return layout;
   if (layout.hidden.includes(id)) return layout;
@@ -328,7 +326,6 @@ export function hideCell(layout: Layout, id: SlotId): Layout {
   return repairSpans({ ...base, rows, hidden: [...base.hidden, id] });
 }
 
-/*  hidden  */
 export function showCell(layout: Layout, id: SlotId, metas: MetaMap = META): Layout {
   const placed = layout.rows.some((row) => row.slots.some((slot) => slot.id === id));
   if (placed || (!layout.hidden.includes(id) && !(id in metas))) return layout;
@@ -390,6 +387,7 @@ export function setRowHeight(layout: Layout, rowId: RowId, px: number, metas: Me
   return withRow(layout, rowId, { ...row, size });
 }
 
+/* there is nothing */
 export function fitRows(layout: Layout, availablePx: number, gutter: number, metas: MetaMap = META): Layout {
   const pxRows = layout.rows.filter((row) => row.kind === 'px');
   if (!pxRows.length || availablePx <= 0) return layout;
@@ -407,10 +405,9 @@ export function fitRows(layout: Layout, availablePx: number, gutter: number, met
   };
 }
 
-/*  hidden  */
+/* the home screen */
 export const HIDDEN_BY_DEFAULT: readonly CellId[] = ['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects'];
 
-/*  hidden  */
 export function offSurfaceIds(layout: Layout): SlotId[] {
   const missing = HIDDEN_BY_DEFAULT.filter(
     (id) => !layout.hidden.includes(id) && rowOfCell(layout, id) === undefined,
@@ -437,6 +434,7 @@ export function resetLayout(metas: MetaMap = META, page: LayoutPage = 'home'): L
       collapsed: [],
     };
   }
+  // there is nothing
   const placed = (Object.keys(metas) as CellId[]).filter((id) => !HIDDEN_BY_DEFAULT.includes(id));
   const ids = [...new Set(placed.map((id) => metas[id].defaultRow))].sort(
     (a, b) => Number(a.slice(1)) - Number(b.slice(1)),
@@ -459,6 +457,7 @@ export function resetLayout(metas: MetaMap = META, page: LayoutPage = 'home'): L
 
 export const DEFAULT_LAYOUT: Layout = resetLayout();
 
+/* and the three */
 
 export type AddRefusal = null | 'duplicate' | 'cap' | 'limit' | 'no-row';
 
@@ -467,6 +466,7 @@ export interface AddResult {
   refusal: AddRefusal;
 }
 
+/* is gone with */
 function slotsInReadingOrder(layout: Layout): SlotId[] {
   const out: SlotId[] = [];
   for (const row of layout.rows) {
@@ -475,14 +475,21 @@ function slotsInReadingOrder(layout: Layout): SlotId[] {
   return out;
 }
 
-/*  hidden  */
 export function instancesOf(layout: Layout): SlotId[] {
   const placed = slotsInReadingOrder(layout).filter(isInstanceId);
   return [...placed, ...layout.hidden.filter(isInstanceId)];
 }
 
 export function viewersOf(layout: Layout): SlotId[] {
-  return instancesOf(layout).filter((id) => id !== PRIMARY_SLOT && !id.startsWith('analytics:') && !isPluginSlot(id));
+  return instancesOf(layout).filter(isViewerSlot);
+}
+
+export function isViewerSlot(id: string): boolean {
+  return id !== PRIMARY_SLOT && !id.startsWith('analytics:') && !isPluginSlot(id);
+}
+
+export function countsAsViewer(kind: string): boolean {
+  return kind !== 'analytics' && !isPluginSlot(kind);
 }
 
 export type LimitMap = Readonly<Partial<Record<InstanceKind, number>>>;
@@ -530,13 +537,13 @@ export function addInstance(
   const primary = (currentPrimarySessionId ?? '').trim();
   if (primary !== '' && primary === wanted) return { layout, refusal: 'duplicate' };
   if (limitVerdict(layout, kind, 1, limits).refused) return { layout, refusal: 'limit' };
-  if (kind !== 'analytics' && !isPluginSlot(kind) && viewersOf(layout).length >= MAX_VIEWERS) return { layout, refusal: 'cap' };
+  if (countsAsViewer(kind) && viewersOf(layout).length >= MAX_VIEWERS) return { layout, refusal: 'cap' };
   const last = layout.rows[layout.rows.length - 1];
   if (!last) return { layout, refusal: 'no-row' };
   return { layout: repairSpans(moveIntoRow(layout, id, last.id)), refusal: null };
 }
 
-/*  hidden  */
+/* there is nothing */
 export function removeCell(layout: Layout, id: SlotId): Layout {
   if (id === PRIMARY_SLOT) return layout;
   const base = clearSpan(layout, id);
@@ -564,6 +571,7 @@ function withRows(layout: Layout, groups: SlotId[][], metas: MetaMap): Layout {
   return { ...layout, rows };
 }
 
+/* there is nothing */
 export function arrangeColumns(layout: Layout, metas: MetaMap = META): Layout {
   const slots = slotsInReadingOrder(layout);
   if (!slots.length) return layout;

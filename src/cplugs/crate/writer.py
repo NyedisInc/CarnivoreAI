@@ -144,9 +144,6 @@ class _Run:
         return {"backup_families": {"conversations": bool(plan.request.include_backups), "folders": [dict(f) for f in plan.backup_families]}}
 
     def project_extra(self, sink: cf.CrateSink, files: FileWriter) -> Dict[str, Any]:
-        """The v1.1 additions of a crate that carries the project's files: the ``project_git`` block of ``crate.json`` and,
-        when there are tracked changes, the ``project/uncommitted.patch`` member (scanned for credentials like a file).
-        Output: crate.json's extra keys (empty when the crate carries no project files)."""
         if not self.plan.request.include_project_files:
             return {}
         root = str(self.plan.project_root)
@@ -157,7 +154,7 @@ class _Run:
             return {"project_git": None}
         if snap.patch is not None:
             sink.add_member(cf.constants.M_PROJECT_PATCH, snap.patch)
-            where = cf.constants.M_PROJECT_PATCH  # project files
+            where = cf.constants.M_PROJECT_PATCH
             for start in range(0, len(snap.patch), K.MiB):
                 for detector, n in cs.scan_counts(snap.patch[start:start + K.MiB].decode("utf-8", "replace")).items():
                     found = files.out.findings.setdefault(where, {})

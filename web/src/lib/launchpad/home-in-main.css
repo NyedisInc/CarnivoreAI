@@ -1,3 +1,4 @@
+/* the home screen */
 body.home-in-main #launchpad-screen.active {
     position: fixed;
     top: var(--menu-surface-top);

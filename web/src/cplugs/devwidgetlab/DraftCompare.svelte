@@ -4,7 +4,7 @@
   import type { FrameReport, LabWidget } from '../sdk/widget-lab';
   import { draftApi } from './lab-api';
   import { DraftStore } from './drafts-store.svelte';
-  import { buildFailure, codeGap, compareDelta, draftWidget, findingCount } from './drafts-model';
+  import { buildFailure, codeGap, compareDelta, draftWidget, findingCount, renewDelayMs, reportKey } from './drafts-model';
   import { drawnWidth, sizesOnShow } from './dock-box';
   import { bandSize, type LabSelection } from './lab-selection';
   import ComparePair from './ComparePair.svelte';
@@ -48,23 +48,35 @@
   });
   onDestroy(() => store.destroy());
 
+  let renewTimer: ReturnType<typeof setTimeout> | null = null;
+  onDestroy(() => {
+    if (renewTimer !== null) clearTimeout(renewTimer);
+  });
+
+  function requestLink(slug: string): void {
+    if (renewTimer !== null) clearTimeout(renewTimer);
+    renewTimer = null;
+    draftApi.ticket(slug).then(
+      (link) => {
+        page = link.path;
+        renewTimer = setTimeout(() => requestLink(slug), renewDelayMs(link.expires_in));
+        if (link.rebuild) void store.refresh();
+      },
+      (error: unknown) => console.warn('[widget lab] draft link', error),
+    );
+  }
+
   $effect(() => {
     const slug = draft?.slug;
     const stamp = draft?.build.state === 'built' ? `${slug}|${draft.build.built_at}` : '';
     if (!slug || !stamp || ticketFor === stamp) return;
     ticketFor = stamp;
     counts = {};
-    draftApi.ticket(slug).then(
-      (link) => {
-        page = link.path;
-        if (link.rebuild) void store.refresh();
-      },
-      (error: unknown) => console.warn('[widget lab] draft link', error),
-    );
+    requestLink(slug);
   });
 
-  function reported(host: string, size: string, side: 'current' | 'draft', report: FrameReport | null): void {
-    counts = { ...counts, [`${host}/${size}/${side}`]: findingCount(report) };
+  function reported(host: string, dock: string, size: string, side: 'current' | 'draft', report: FrameReport | null): void {
+    counts = { ...counts, [reportKey(host, dock, size, side)]: findingCount(report) };
   }
 </script>
 

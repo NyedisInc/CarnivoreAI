@@ -164,7 +164,7 @@ class FakeManager:
         self.backends = {}
         self.reads = 0
 
-    def _tmux_socket_name(self):
+    def tmux_socket_name(self):
         return "cloude"
 
     def _writable_datastore_connection(self):
@@ -318,7 +318,7 @@ def test_the_sweep_writes_the_bare_family_when_two_wrappers_tie(tmp_path, monkey
     mgr = SweepManager(db, [PANE])
     sweep = _patch_listing(monkeypatch, mgr)
     twins = [
-        {"id": "keyc", "family": "claude", "label": "keyc",
+        {"id": "cld", "family": "claude", "label": "cld",
          "script": 'command claude --dangerously-skip-permissions "$@"'},
         {"id": "cldl", "family": "claude", "label": "cldl",
          "script": 'command claude --dangerously-skip-permissions "$@"'},

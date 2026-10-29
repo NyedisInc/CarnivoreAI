@@ -1,31 +1,3 @@
-"""The composition root: one function that says what this application is.
-
-Description at the top because it is the point of the module. Nothing in
-this codebase assembles itself and nothing reaches through a manager to
-get at something else. :func:`build_services` constructs every
-collaborator in dependency order and hands back a frozen
-:class:`AppServices`; ``lifespan`` calls it, puts the result on
-``app.state.services``, and that is the whole boot wiring.
-
-That single function is the test fixture, the boot path and the
-documentation of what this application is made of, and there is exactly
-one of it. See ``.claude/notes/backend-decomposition-plan.md`` section 3.
-
-**THE MEASUREMENT THAT MAKES THIS AFFORDABLE.** ``src/`` has exactly ONE
-construction site for the manager (``src/main.py``) against 37
-``app.state.session_manager`` lookups. The manager is already reached
-through ``app.state``, which is a service locator with 15 untyped
-entries on it. That is not a god object problem, it is a container
-waiting to be named.
-
-**WHAT S0 DOES AND DOES NOT DO.** No behaviour moves here. The five
-collaborators the shipped slices created are constructed HERE instead of
-inside ``SessionManager.__init__``, with byte-identical arguments, and
-handed in through the keyword-only seam those slices already added. The
-facade keeps every name it had. What changes is who calls the
-constructor, which is what later slices need in order to hand a
-collaborator to a caller that has stopped going through the manager.
-"""
 
 from __future__ import annotations
 
@@ -35,8 +7,8 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from src.core.catalog.services import CatalogServices, build_catalog_services
+from src.core.live_install_roots import LiveInstallRoots
 from src.core.live_ports import (
-    LiveInstallRoots,
     LiveSessionRecordStore,
     LiveSettings,
     SystemClock,
@@ -95,18 +67,6 @@ def _live_api_base_url() -> str:
 def _live_db_factory(
     settings_reader: SettingsReader,
 ) -> Callable[[], sqlite3.Connection]:
-    """Build the factory that opens ``cloude.db`` where settings say it is.
-
-    Description: the state directory is resolved AT CALL TIME, through
-      the settings port, for the reason every other path in this file is:
-      a directory captured at construction is captured before
-      ``CLOUDE_STATE_DIR`` can be pointed anywhere else, and the value
-      still looks right while being wrong.
-    Inputs: settings_reader (SettingsReader).
-    Output: Callable[[], sqlite3.Connection] - a FRESH connection each
-      call, closed by whoever opened it.
-    Example: factory = _live_db_factory(resolved_settings); factory()
-    """
     from src.core.db import connect, db_path_for
 
     def open_db() -> sqlite3.Connection:
@@ -207,7 +167,6 @@ def build_services(
         resolved_sidecars = (
             sidecars if sidecars is not None else AttachmentSidecars()
         )
-        # does not exist yet
         resolved_owned = (
             owned_tmux
             if owned_tmux is not None

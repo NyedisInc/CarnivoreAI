@@ -1,4 +1,4 @@
-/* could not */
+/* could not measure */
 
 import { metaFor } from '../../engine/meta';
 import { t } from '../../../lib/i18n/index.svelte';

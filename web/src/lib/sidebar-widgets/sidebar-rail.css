@@ -54,7 +54,6 @@ body.sidebar-layout-rail .session-sidebar-brand img {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
-  /*  hidden  overflow: hidden */
   clip-path: inset(calc(-1 * var(--sbr-lift, 0px)) 0 calc(-1 * var(--sbr-drop, 0px)) 0);
 }
 

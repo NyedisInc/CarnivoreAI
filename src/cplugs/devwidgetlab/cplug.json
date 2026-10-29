@@ -5,7 +5,7 @@
   "description_key": "cplug.devwidgetlab.description",
   "version": "0.1.0",
   "icon": "grid",
-  "author": "Carnivore contributors",
+  "author": "Carnivore",
   "min_app_version": "1.16.1",
   "tier": "dev",
   "tool_family": "widget_lab",
@@ -20,8 +20,8 @@
   },
   "permission_reasons": {
     "sessions.read": "list the sessions so a draft handed to Claude can name its session",
-    "sessions.message": "needed for this plugin to work",
-    "sessions.create": "needed for this plugin to work",
+    "sessions.message": "a plugin may start a session only inside the owner's own request",
+    "sessions.create": "start the Claude session that works inside a draft folder when the owner presses hand to claude",
     "agent_writes": "let agents create and edit widget lab drafts through the widget lab tools"
   },
   "surfaces": {
@@ -93,7 +93,6 @@
       "web/src/cplugs/devwidgetlab/LabMenu.svelte",
       "web/src/cplugs/devwidgetlab/LabViewer.svelte",
       "web/src/cplugs/devwidgetlab/MenuSection.svelte",
-      "web/src/cplugs/devwidgetlab/OptionChip.svelte",
       "web/src/cplugs/devwidgetlab/PreviewFrame.svelte",
       "web/src/cplugs/devwidgetlab/ResizeBox.svelte",
       "web/src/cplugs/devwidgetlab/ScenarioBox.svelte",

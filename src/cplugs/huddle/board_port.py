@@ -11,9 +11,11 @@ import structlog
 from fastapi import HTTPException
 
 from src.cplugs.huddle import actor_log, board, files, held, kinds, lifecycle, own_list, reply, service, task_files, send_queue, title
+from src.cplugs.huddle.store_files import BYTES_DELETED, BYTES_FAILED, Located
 from src.cplugs.huddle.sending import CHANNEL_META_KIND
 from src.cplugs.huddle.rules import ALL_LIST, CLAUDE, JOE, OPEN, REVIEW, TODO, WAITING, TaskManagerError, TaskManagerNotFound
 from src.cplugs.sdk import AgentCaller, CapabilityMissing, CplugContext, CplugSchemaError, ports, task_folders
+from src.cplugs.sdk.file_deletion import FileDeletion
 from src.cplugs.sdk.routing import router_prefix
 
 logger = structlog.get_logger()
@@ -23,6 +25,15 @@ MAX_TASK_TITLE = title.MAX_TITLE
 MOVABLE_STATES = frozenset({OPEN, WAITING})
 _ISSUE = re.compile(r"^https://github\.com/([^/]+/[^/]+)/issues/([0-9]+)$")
 FILE_URL = "/api/v1" + router_prefix("huddle") + "/items/{item_id}/files/{file_id}"
+FILE_BAD_ID = "not a stored file id"
+FILE_MISSING = "the file's bytes are already gone"
+FILE_MISMATCH = "the stored file is not the one the board recorded, so it is kept"
+FILE_UNREADABLE = "the stored file could not be checked, so it is kept"
+FILE_SHARED = "another message on the task still carries this file"
+TASK_DELETED = "the task was deleted"
+TASK_MISSING = "the task does not exist"
+STORE_UNWRITABLE = "the huddle could not be written"
+UNLINK_FAILED = "the file could not be removed from disk"
 _Write = Callable[[CplugContext, Optional[AgentCaller], dict], Awaitable[Dict[str, Any]]]
 
 
@@ -51,7 +62,7 @@ class BoardPort:
     async def item_info(self, item_id: int) -> Optional[Dict[str, Any]]:
         def read() -> Dict[str, Any]:
             item = service.store(self._ctx).item(item_id)
-            return _info(item, task_files.project_name(self._ctx, item["list"]))
+            return {**_info(item, task_files.project_name(self._ctx, item["list"])), "store_id": task_files.own_store_id(self._ctx)}
 
         try:
             return await asyncio.to_thread(read)
@@ -59,12 +70,6 @@ class BoardPort:
             return None
 
     async def items_info(self, item_ids: Sequence[int]) -> Optional[Dict[int, Dict[str, Any]]]:
-        """Many tasks as boards link them, in one hop off the loop (the board list, #1793).
-
-        Inputs: item_ids (item ids; repeats are read once). Output: {item id: :meth:`item_info`'s dict} for each live item (a deleted or
-          unknown id is left out), or None when the store could not be read (logged; the board list then shows no board as closed).
-        Example: await port.items_info([7, 9]) -> {7: {"item_id": 7, "list": "12", "state": "done", ...}}  # 9 was deleted
-        """
         wanted = sorted({int(i) for i in item_ids})
 
         def read() -> Dict[int, Dict[str, Any]]:
@@ -77,7 +82,6 @@ class BoardPort:
         try:
             return await asyncio.to_thread(read)
         except (sqlite3.Error, OSError, CplugSchemaError) as exc:
-            # could not be read
             logger.warning("reviewboard_items_unread", items=len(wanted), error=type(exc).__name__)
             return None
 
@@ -141,6 +145,53 @@ class BoardPort:
             return {"message_id": posted["message"]["id"], "files": stored, "review": outcome}
 
         return await self._guarded(board_attach, caller, item_id, cross_project)
+
+    async def caller_key(self, caller: Optional[AgentCaller]) -> Optional[str]:
+        return await actor_log.caller_key(self._ctx, caller) if caller is not None else None
+
+    async def delete_file(self, item_id: int, message_id: int, file_id: str, *, name: str, size: int, sha256: str) -> FileDeletion:
+        return await asyncio.to_thread(self._delete_file, item_id, message_id, file_id, name, size, sha256)
+
+    def _located(self, item_id: int, file_id: str, name: str, size: int, sha256: str) -> Located:
+        try:
+            path = files.locate(self._ctx.storage, item_id, file_id, task_files.search_dirs(item_id))
+        except TaskManagerNotFound:
+            return Located(leftovers=tuple(files.leftovers(self._ctx.storage, item_id, file_id, task_files.search_dirs(item_id))))
+        try:
+            wrong = files.mismatch(path, file_id, name, size, sha256)
+        except OSError as exc:
+            logger.warning("reviewboard_file_check_failed", item=item_id, file=file_id, error=type(exc).__name__)
+            return Located(path, FILE_UNREADABLE)
+        return Located(path, FILE_MISMATCH if wrong else None)
+
+    def _delete_file(self, item_id: int, message_id: int, file_id: str, name: str, size: int, sha256: str) -> FileDeletion:
+        refused: FileDeletion = {"deleted": False, "shared": False, "redacted": False, "failed": False, "reason": None}
+        if not files.ID_PATTERN.match(file_id or ""):
+            return {**refused, "reason": FILE_BAD_ID}
+        try:
+            outcome = service.store(self._ctx).forget_file(item_id, message_id, file_id, lambda: self._located(item_id, file_id, name, size, sha256))
+        except TaskManagerNotFound:
+            return {**refused, "reason": TASK_DELETED if self._is_deleted(item_id) else TASK_MISSING}
+        except (sqlite3.Error, OSError) as exc:
+            logger.warning("reviewboard_file_forget_failed", item=item_id, file=file_id, error=type(exc).__name__)
+            return {**refused, "failed": True, "reason": STORE_UNWRITABLE}
+        state: FileDeletion = {**refused, "shared": outcome["shared"], "redacted": outcome["redacted"]}
+        if outcome["shared"]:
+            return {**state, "reason": FILE_SHARED}
+        if outcome["located"].kept is not None:
+            return {**state, "reason": outcome["located"].kept}
+        if outcome["bytes"] == BYTES_FAILED:
+            return {**state, "failed": True, "reason": UNLINK_FAILED}
+        if outcome["bytes"] != BYTES_DELETED:
+            return {**state, "reason": FILE_MISSING}
+        return state | {"deleted": True}
+
+    def _is_deleted(self, item_id: int) -> bool:
+        try:
+            service.store(self._ctx).deleted_item(item_id)
+        except TaskManagerNotFound:
+            return False
+        return True
 
     def file_url(self, item_id: int, file_id: str) -> str:
         if not files.ID_PATTERN.match(file_id or ""):

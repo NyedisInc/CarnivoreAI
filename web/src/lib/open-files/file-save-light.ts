@@ -1,4 +1,4 @@
-/*  hidden  */
+/* there is nothing */
 import { SAVE_LIGHT_KEYS, type SaveLight } from '../../opscenter/cells/notes/save-light';
 
 export const FILE_CONFLICT_KEY = 'files.editor.disk_conflict';

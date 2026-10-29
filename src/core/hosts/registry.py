@@ -122,6 +122,15 @@ class HostRegistry:
             self._records[host_key] = record
             return host
 
+    async def forget(self, host_key: str) -> None:
+        lock = self._locks.setdefault(host_key, asyncio.Lock())
+        async with lock:
+            host = self._hosts.pop(host_key, None)
+            self._records.pop(host_key, None)
+            if host is not None:
+                await self._teardown(host)
+                logger.info("remote_host_forgotten", host=host_key)
+
     async def _connect(self, record: store.Host) -> RemoteHost:
         try:
             dest = SshDestination(record.ssh_target or "", record.ssh_port)

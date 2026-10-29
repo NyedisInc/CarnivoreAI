@@ -9,7 +9,7 @@
   import { browsers } from '../../lib/browser/api.svelte';
   import type { SessionInfo } from '../api/types';
   import { t } from '../../lib/i18n/index.svelte';
-  import { categoryKey, offered, passesFilter } from './drawer-model';
+  import { categoryKey, passesFilter } from './drawer-model';
   import { drawerList, isPanelRow, listKinds, type GroupRow } from './drawer-groups';
   import { buildView } from './drawer-view';
   import { widgetDrawerView } from './drawer-view-pref.svelte';
@@ -33,6 +33,7 @@
   import { manifestById } from '../widgets/core-manifests';
   import { drawerZone } from '../../lib/drawer-zone/zone-store.svelte';
   import { railStores } from '../../lib/session-rail/rail-store.svelte';
+  import Button from '../../lib/base/Button.svelte';
   import DuplicatePrompt from './DuplicatePrompt.svelte';
   import { askDuplicate, closeDuplicate } from './duplicate-prompt.svelte';
   import DrawerHead from './DrawerHead.svelte';
@@ -67,6 +68,7 @@
   let pickerRefusal = $state('');
 
   const instanceKinds = $derived(registeredInstanceKinds());
+  /* the home screen */
   const showSessionEntries = $derived(instanceKinds.includes('terminal'));
   const showBrowserEntry = $derived(instanceKinds.includes('browser'));
   const windowKinds = $derived<WindowKind[]>([
@@ -194,8 +196,6 @@
     category: null,
     t: (key: string) => t(key),
   });
-  const all = $derived(offered(inputs));
-  const addableCount = $derived(all.filter((item) => item.state === 'addable').length);
   const PAGE_KEYS = { home: 'layout_editor.page.home', terminal: 'layout_editor.page.terminal', warroom: 'layout_editor.page.warroom' } as const;
   const pageName = $derived(t(PAGE_KEYS[page]));
 
@@ -220,6 +220,7 @@
     t: (key: string, params?: Record<string, string | number>) => t(key, params),
   });
   const grouped = $derived(drawerList(listInputs));
+  const addableCount = $derived(grouped.rows.filter((row) => row.state === 'addable').length);
   function searchWords(row: GroupRow): string[] {
     return [t(categoryKey(row.manifest.category)), t(`widgets.type.${row.type}`), row.widgetId, ...((listInputs.extraWords as Record<string, readonly string[]>)[row.widgetId] ?? [])];
   }
@@ -368,9 +369,7 @@
 
   <footer class="le-foot">
     <div class="le-foot__row">
-      <button type="button" class="modal-btn modal-btn-confirm" data-layout-editor-done onclick={finishLayoutEditor}
-        >{t('layout_editor.done')}</button
-      >
+      <Button variant="confirm" data-layout-editor-done onclick={finishLayoutEditor}>{t('layout_editor.done')}</Button>
     </div>
   </footer>
   <DuplicatePrompt />
@@ -418,23 +417,6 @@
     border-radius: 0;
   }
 
-  .le-drawer :global(.le-chip) {
-    padding: 2px var(--oc-space-2);
-    border: var(--oc-border, 1px) solid var(--oc-line-faint);
-    border-radius: var(--oc-radius-sm, 2px);
-    background: transparent;
-    color: var(--oc-text-muted);
-    font-family: inherit;
-    font-size: var(--oc-fs-micro);
-    cursor: pointer;
-  }
-
-  .le-drawer :global(.le-chip--on) {
-    border-color: var(--oc-orange-dim);
-    background: var(--oc-orange-tint);
-    color: var(--oc-orange);
-  }
-
   .le-drawer :global(.le-hint),
   .le-empty {
     margin: 0;
@@ -455,38 +437,19 @@
     list-style: none;
   }
 
-  .le-drawer :global(.le-card) {
-    display: flex;
+  .le-drawer :global([data-le-card]) {
     align-items: center;
     gap: 10px;
     width: 100%;
     padding: 6px;
-    border: var(--oc-border, 1px) solid transparent;
-    border-radius: var(--oc-radius-sm, 2px);
-    background: transparent;
     color: inherit;
-    font-family: inherit;
-    text-align: left;
     cursor: grab;
     touch-action: none;
   }
 
-  .le-drawer :global(.le-card:hover:not(.le-card--placed)) {
-    background: var(--oc-ground-hover);
-    border-color: var(--oc-line-rule);
-  }
-
-  .le-drawer :global(.le-card--placed) {
+  .le-drawer :global([data-le-card][data-placed]) {
     cursor: default;
     opacity: 0.6;
-  }
-
-  .le-drawer :global(.le-card:focus-visible),
-  .le-drawer :global(.le-chip:focus-visible),
-  .le-drawer :global(.le-input:focus-visible),
-  .le-drawer :global(.le-fold:focus-visible) {
-    outline: 2px solid var(--oc-cyan);
-    outline-offset: 1px;
   }
 
   .le-drawer :global(.le-card__text) {
@@ -525,7 +488,7 @@
     gap: var(--oc-space-2);
   }
 
-  .le-foot :global(.modal-btn) {
+  .le-foot :global([data-btn]) {
     flex: 1 1 0;
     min-height: 30px;
     padding: 0 var(--oc-space-3);
@@ -566,15 +529,5 @@
     gap: var(--oc-space-2);
     padding: 10px var(--oc-space-3);
     box-shadow: inset 0 -1px 0 0 var(--oc-line-faint);
-  }
-
-  .le-drawer :global(.le-input) {
-    padding: 7px 10px;
-    border: var(--oc-border, 1px) solid var(--oc-line-rule);
-    border-radius: var(--oc-radius-sm, 2px);
-    background: var(--oc-ground-raised);
-    color: var(--oc-text-primary);
-    font-family: inherit;
-    font-size: var(--oc-fs-status);
   }
 </style>

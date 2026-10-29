@@ -8,7 +8,7 @@
         unread?: boolean;
         startupGate?: string | null;
         statusSource?: string | null;
-        /* server stopped */
+        /* there is nothing */
         activityHint?: string | null;
         parkedSummary?: string | null;
         transport?: string | null;

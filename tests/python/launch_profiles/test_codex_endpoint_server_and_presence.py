@@ -10,7 +10,7 @@ from src.config.launch_profiles import LaunchProfile
 from src.core.launch_profiles.render import render_structured
 from src.core.tmux_backend import TmuxBackend
 
-THREAD = "8adba168-9134-4f95-8d1c-d51252fb79ff"
+THREAD = "01a1011a-f8b7-70e3-919c-1ad472af186b"
 
 
 def test_codex_endpoint_settings_reach_the_app_server_and_the_tui() -> None:

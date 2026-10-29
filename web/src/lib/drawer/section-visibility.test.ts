@@ -5,6 +5,7 @@ import { setViewClassSource } from './view-class';
 import { setDrawerController } from './controller-ref';
 import { init, preferenceField, sectionShown, setSectionShown } from './section-visibility.svelte';
 
+/** A preference bridge over a plain object; records every write. */
 function bridge(store: Record<string, unknown>, writes: Array<[string, unknown]>) {
   return {
     PreferenceBridge: {

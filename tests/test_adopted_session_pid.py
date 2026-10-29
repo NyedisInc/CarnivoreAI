@@ -29,6 +29,9 @@ class _StubSettings:
         self._log_dir = log_dir
         self.port = port
 
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
+
     def get_pinned_themes_path(self) -> Path:
         return self._pin_path
 
@@ -89,12 +92,12 @@ async def test_adopted_session_reports_real_pid_from_bulk_status_map(
     monkeypatch.setattr(
         mgr,
         "_build_tmux_status_map",
-        lambda: {"cloude_proj": {"status": "idle", "pid": 4573}},
+        lambda: {"cloude_proj": {"status": "idle", "pid": 50694}},
     )
 
     info = await mgr.get_session_info(session_id="adopted:proj")
     assert info is not None
-    assert info.session.pty_pid == 4573
+    assert info.session.pty_pid == 50694
 
 
 @pytest.mark.asyncio

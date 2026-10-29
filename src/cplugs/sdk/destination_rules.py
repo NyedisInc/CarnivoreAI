@@ -20,8 +20,6 @@ def refusals(value: str) -> List[str]:
         return [f"{value} is not an absolute folder path"]
     out: List[str] = []
     real = os.path.realpath(text)
-    # does not exist yet
-    # does not exist yet
     probe = os.path.normpath(text)
     while not os.path.lexists(probe) and os.path.dirname(probe) != probe:
         probe = os.path.dirname(probe)

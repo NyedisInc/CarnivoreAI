@@ -15,10 +15,6 @@ def _is_own(info: Any, caller: AgentCaller) -> bool:
 
 
 async def _do_delete(app: Any, target_id: str, epoch: Any) -> dict:
-    """
-    Inputs: app; target_id (session id); epoch (tmux instance epoch when asked). Output: {deleted, session}.
-    Raises: ToolError - the session is gone or changed, or the route refused.
-    """
     from src.api import session_attach_routes, session_crud_routes
 
     info = await _resolved_again(app, target_id, epoch)

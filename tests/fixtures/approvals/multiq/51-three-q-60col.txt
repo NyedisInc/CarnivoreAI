@@ -1,0 +1,110 @@
+  ⎿  · Which layout? → List
+     · Which mode? → Safe
+
+⏺ Which layout? List
+  Preview:
+  - one
+  - two
+  - tri
+  - for
+    Notes: dense only
+    Which mode? Safe
+
+✻ Cogitated for 7s · done 1:30 AM
+
+❯ Call the AskUserQuestion tool exactly once with this exact
+ input and no other tools:
+  {"questions":[{"question":"Which deployment environments s
+hould receive the new release
+  candidate build this
+
+  week?","header":"Envs","multiSelect":true,"options":[{"lab
+el":"Staging cluster in the
+  us-east region","description":"Receives every build automa
+tically and is where the
+  integration tests run before anything else"},{"label":"Can
+ary","description":"Five
+  percent of production traffic"},{"label":"Production","des
+cription":"All users"}]}]}
+  After I answer, reply with only the answers you received.
+
+
+⏺ User declined to answer questions
+
+  ⎿  · Which deployment environments should receive the new
+release candidate build this
+     week? (Staging cluster in the us-east region / Canary /
+  for"},{"label":"Table","description":"a plain
+  table","preview":"id | name\n1  | one\n2  |
+  two"}]},{"question":"Which mode?","header":"Mode","multiS
+  elect":false,"options":[{"label":"Fast","description":"qu
+  ick"},{"label":"Safe","description":"careful"}]}]} After
+  I answer, reply with only the answers you received, and
+  any notes verbatim.
+
+⏺ User answered Claude's questions:
+  ⎿  · Which layout? → List
+     · Which mode? → Safe
+
+⏺ Which layout? List
+  Preview:
+  - one
+  - two
+  - tri
+  - for
+    Notes: dense only
+    Which mode? Safe
+
+✻ Cogitated for 7s · done 1:30 AM
+
+❯ Call the AskUserQuestion tool exactly once with this
+  exact input and no other tools:
+  {"questions":[{"question":"Which deployment environments
+  should receive the new release candidate build this
+  week?","header":"Envs","multiSelect":true,"options":[{"la
+  bel":"Staging cluster in the us-east
+  region","description":"Receives every build automatically
+  and is where the integration tests run before anything
+  else"},{"label":"Canary","description":"Five percent of
+  production
+  traffic"},{"label":"Production","description":"All
+  users"}]}]} After I answer, reply with only the answers
+  you received.
+
+⏺ User declined to answer questions
+  ⎿  · Which deployment environments should receive the new
+     release candidate build this week? (Staging cluster in
+     the us-east region / Canary / Production)
+
+✻ Sautéed for 3s · done 1:31 AM
+
+❯ Call the AskUserQuestion tool exactly once with this
+  exact input and no other tools:
+  {"questions":[{"question":"Which authentication method
+  should the service use?","header":"Authentication
+  method","multiSelect":false,"options":[{"label":"OAuth","
+  description":"delegated"},{"label":"API
+  key","description":"static"}]},{"question":"Which
+  database engine do you want?","header":"Database
+  engine","multiSelect":false,"options":[{"label":"Postgres
+  ","description":"relational"},{"label":"SQLite","descript
+  ion":"embedded"}]},{"question":"Which deployment
+  target?","header":"Deployment target","multiSelect":true,
+  "options":[{"label":"Edge","description":"cdn"},{"label":
+  "Region","description":"single"}]}]} After I answer,
+  reply with only the answers you received.
+────────────────────────────────────────────────────────────
+←  ☐ Authentication met…  ☐ Databa…  ☐ Deploy…  ✔ Submit  →
+
+Which authentication method should the service use?
+
+❯ 1. OAuth
+     delegated
+  2. API key
+     static
+  3. Type something.
+────────────────────────────────────────────────────────────
+  4. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+

@@ -1,6 +1,5 @@
 'use strict';
 
-/* "Carnivore Menubar" */
 
 const fs = require('fs');
 const os = require('os');
@@ -12,7 +11,6 @@ const {
 
 const OPT_OUT_ENV_VAR = 'CARNIVORE_KEEP_LEGACY_USERDATA';
 
-/* already exists */
 function relocateUserData(appModule) {
   const supportDir = path.join(os.homedir(), 'Library', 'Application Support');
   const newDir = path.join(supportDir, MENUBAR_STATE_DIR_NAME);

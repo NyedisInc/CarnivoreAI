@@ -1,3 +1,4 @@
+/* frame, and the */
 
 export interface ManagerItem {
     readonly id: string;

@@ -54,7 +54,7 @@ def world(_world, monkeypatch):
         backends=backends, sessions=dict.fromkeys(backends), get_backend=backends.get,
         is_hidden=lambda sid: sid == "ses_hidden",
         registered_ids_for_tmux_name=lambda name: [s for s, b in backends.items() if b.tmux_session == name])
-    manager = SimpleNamespace(_registry=registry, _tmux_socket_name=lambda: "test")
+    manager = SimpleNamespace(_registry=registry, tmux_socket_name=lambda: "test")
     monkeypatch.setattr(_world.http.app.state, "session_manager",
                         manager, raising=False)
 

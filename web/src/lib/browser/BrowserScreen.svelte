@@ -1,6 +1,6 @@
 <script lang="ts">
     import { t } from '../i18n/index.svelte';
-    import { browserById } from './api.svelte';
+    import { browserById, closeBrowser } from './api.svelte';
     import BrowserView from './BrowserView.svelte';
     import PageFrame from './PageFrame.svelte';
     import type { PageInfo } from './page-frame';
@@ -85,6 +85,24 @@
         return view?.currentUrl?.() || null;
     }
 
+    async function closeShown(): Promise<void> {
+        const id = current;
+        if (!id) return;
+        const app = (window as unknown as { App?: { showConfirmModal?: (...a: unknown[]) => Promise<boolean> } }).App;
+        const ok = app?.showConfirmModal
+            ? await app.showConfirmModal(t('browser.close.confirm'), title || id, t('browser.close.detail'), t('browser.menu.close'), undefined, 'danger')
+            : window.confirm(t('browser.close.confirm'));
+        if (!ok || current !== id) return;
+        try {
+            await closeBrowser(id);
+        } catch (err) {
+            console.error('browser screen: close failed', err);
+            alert(t('browser.close_failed', { detail: (err as Error)?.message || String(err) }));
+            return;
+        }
+        onDismiss?.();
+    }
+
     $effect(() => {
         if (current) onTitle?.(title || fallbackName);
     });
@@ -107,7 +125,7 @@
                 {:else if resolved?.kind === 'page'}
                     <PageFrame page={resolved.page} />
                 {:else if resolved?.kind === 'browser'}
-                    <BrowserView bind:this={view} browserId={current} focusAddress />
+                    <BrowserView bind:this={view} browserId={current} focusAddress onClose={closeShown} />
                 {:else}
                     <p class="bs-note" role="status">{t('browser.page.loading')}</p>
                 {/if}

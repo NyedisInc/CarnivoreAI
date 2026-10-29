@@ -1,4 +1,3 @@
-/*  hidden  visibility: hidden */
 import { wholeRowCount } from './rank-rows';
 
 export interface WholeItemsParams { enabled?: boolean }

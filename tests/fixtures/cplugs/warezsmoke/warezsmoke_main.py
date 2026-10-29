@@ -10,4 +10,5 @@ plugin = Plugin()
 
 @plugin.tool("warezsmoke_ping", "Answers pong. Reads nothing and changes nothing.", {"type": "object", "properties": {}, "additionalProperties": False}, gate="read")
 async def ping(args: Dict[str, Any], caller: Any) -> str:
+    """The ping tool. Inputs: args; caller. Output: the text pong."""
     return "pong"

@@ -13,11 +13,10 @@ export interface ProjectRow {
 const DEMO = ['sessions', 'path'] as const;
 
 export const projects: ProjectRow[] = [
-  { id: 'orchard-api', name: 'orchard-api', type: 'Project', updatedMinutes: 15, sessions: 3, path: '~/Dev/orchard-api', demoColumns: DEMO },
-  { id: 'kite-web', name: 'Kite Web', type: 'Project', updatedMinutes: 45, sessions: 2, path: '~/Dev/kite-web', demoColumns: DEMO },
-  { id: 'ledger-tools', name: 'ledger-tools', underline: true, type: 'Project', updatedMinutes: 130, sessions: 1, path: '~/Dev/ledger-tools', demoColumns: DEMO },
-  { id: 'meadow', name: 'Meadow', type: 'Project', updatedMinutes: 600, sessions: 0, path: '~/Dev/meadow', demoColumns: DEMO },
-  { id: 'quartz-cli', name: 'quartz-cli', type: 'Project', updatedMinutes: 1200, sessions: 2, path: '~/Dev/quartz-cli', demoColumns: DEMO },
-  { id: 'sample-docs', name: 'sample-docs', type: 'Project', updatedMinutes: 4320, sessions: 0, path: '~/Dev/sample-docs', demoColumns: DEMO },
-  { id: 'tide-mobile', name: 'Tide Mobile', type: 'Project', updatedMinutes: 10080, sessions: 1, path: '~/Dev/tide-mobile', demoColumns: DEMO },
+  { id: 'cloudecode', name: 'cloudecode', type: 'Project', updatedMinutes: 2, sessions: 4, path: '~/Dev/cloudecode', demoColumns: DEMO },
+  { id: 'insiders', name: 'Lantern App', type: 'Project', updatedMinutes: 60, sessions: 2, path: '~/Dev/lantern-app', demoColumns: DEMO },
+  { id: 'newui', name: 'cloudecode-newui', type: 'Project', updatedMinutes: 180, sessions: 3, path: '~/Dev/cloudecode-newui', demoColumns: DEMO },
+  { id: 'riverbed', name: 'Riverbed', type: 'Project', updatedMinutes: 300, sessions: 1, path: '~/Dev/riverbed', demoColumns: DEMO },
+  { id: 'codex', name: 'cloudecode-codex', type: 'Project', updatedMinutes: 1440, sessions: 1, path: '~/Dev/cloudecode-codex', demoColumns: DEMO },
+  { id: 'mailsorter', name: 'mailSorter', underline: true, type: 'Project', updatedMinutes: 2880, sessions: 0, path: '~/Dev/mail-sorter', demoColumns: DEMO },
 ];

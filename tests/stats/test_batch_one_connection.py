@@ -17,12 +17,16 @@ def test_batch_shares_one_connection_and_matches_separate_queries(tmp_path, monk
     want = [queries.execute(store, QueryRequest.model_validate(i)) for i in items]
 
     opened = []
-    real = StatsStore.connect
-    monkeypatch.setattr(StatsStore, "connect", lambda self, **kw: (opened.append(kw), real(self, **kw))[1])
+    raw_reads = []
+    real_connect = StatsStore.connect
+    monkeypatch.setattr(StatsStore, "connect",
+                        lambda self, **kw: (raw_reads.append(kw) if kw.get("readonly") else None, real_connect(self, **kw))[1])
+    real = StatsStore.connect_read
+    monkeypatch.setattr(StatsStore, "connect_read", lambda self: (opened.append({"readonly": True}), real(self))[1])
     got = queries.execute_batch(store, items)
 
     assert [r["result"] for r in got["results"]] == want
     answers.wait_idle()
-    reads = [kw for kw in opened if kw.get("readonly")]
-    assert reads == [{"readonly": True}]
+    assert [kw for kw in raw_reads if kw.get("readonly")] == []
+    assert opened == [{"readonly": True}]
     assert got["revision"] == store.revision()

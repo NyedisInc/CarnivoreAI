@@ -10,6 +10,7 @@ import {
 } from '../../../../client/js/labels/catalog-kind.js';
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
 
+/** The catalog as a plain lookup, however the module exports it. */
 const catalog = enCatalog as unknown as Record<string, unknown>;
 
 const i18n = createI18n({ locale: 'en' }) as {

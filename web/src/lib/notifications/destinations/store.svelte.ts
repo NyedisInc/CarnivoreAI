@@ -1,5 +1,5 @@
 import { errorText } from '../../settings-page/panel-kit/error-text';
-import { resourcePush } from '../../resource-push/boot';
+import { createPushedStore } from '../../resource-push/pushed-store';
 import { fetchKinds, fetchSettings, type Destination, type Fetcher, type Kind } from './api';
 
 export const notify = $state<{ kinds: Kind[]; destinations: Destination[]; paused: boolean; loaded: boolean; problem: string }>({
@@ -7,11 +7,6 @@ export const notify = $state<{ kinds: Kind[]; destinations: Destination[]; pause
 });
 
 export const FALLBACK_MS = 15000;
-
-let fetcherInUse: Fetcher | undefined;
-let inflight: Promise<void> | null = null;
-let attached = 0;
-let stop: (() => void) | null = null;
 
 export function clean(dest: Destination, kind: Kind | undefined): Destination {
     const secrets: Record<string, { set: boolean }> = {};
@@ -23,15 +18,10 @@ export function clean(dest: Destination, kind: Kind | undefined): Destination {
     return { ...dest, config, secrets };
 }
 
-export function refresh(): Promise<void> {
-    inflight ??= read().finally(() => { inflight = null; });
-    return inflight;
-}
-
-async function read(): Promise<void> {
+async function read(fetcher: Fetcher | undefined): Promise<void> {
     try {
-        if (notify.kinds.length === 0) notify.kinds = await fetchKinds(fetcherInUse);
-        const settings = await fetchSettings(fetcherInUse);
+        if (notify.kinds.length === 0) notify.kinds = await fetchKinds(fetcher);
+        const settings = await fetchSettings(fetcher);
         notify.destinations = settings.destinations.map((d) => clean(d, notify.kinds.find((k) => k.id === d.kind)));
         notify.paused = settings.paused;
         notify.problem = '';
@@ -48,17 +38,4 @@ export function upsert(dest: Destination): void {
     else notify.destinations = notify.destinations.map((d, i) => (i === at ? next : d));
 }
 
-export function attach(fetcher?: Fetcher): () => void {
-    if (fetcher) fetcherInUse = fetcher;
-    attached += 1;
-    if (attached === 1) stop = resourcePush().pushOrPoll(() => void refresh(), FALLBACK_MS, ['notification_settings']);
-    void refresh();
-    return () => {
-        attached -= 1;
-        if (attached === 0) {
-            stop?.();
-            stop = null;
-            fetcherInUse = undefined;
-        }
-    };
-}
+export const { refresh, attach } = createPushedStore<Fetcher>({ topics: ['notification_settings'], pollMs: FALLBACK_MS, read });

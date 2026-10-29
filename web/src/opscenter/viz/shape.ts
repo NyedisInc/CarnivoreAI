@@ -13,7 +13,6 @@ export function rowHint(label: string, detail?: GroupDetail): string {
   return t('viz.folders_hint', { label, list });
 }
 
-/* label:' */
 export function leaderboardRows(ranking: RankRow[] | null | undefined, timeline: QueryResult | null, topN: number,
   plot: (point: { time: string; value: number | null }, points: readonly { time: string }[]) => number | null = (point) => point.value): BoardRow[] {
   const rows = (ranking ?? []).slice(0, Math.max(0, topN));

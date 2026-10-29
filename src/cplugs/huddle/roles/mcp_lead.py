@@ -46,8 +46,13 @@ async def _retrofit_prepare(ctx: CplugContext, caller: AgentCaller, args: dict) 
         rows = await retrofit.plan(roles_port.session_ctx(ctx), skip, picks)
     except roles_service.RolesUnmeasured as exc:
         raise ToolError(f"could not read the sessions: {exc}") from exc
-    todo = [f"{r['project']}: {r['session_name']}" for r in rows if r["action"] == retrofit.PROMOTE]
-    return {"skip": skip, "picks": picks}, (f"promote {len(todo)} lead session(s) to project agents (a running one is stopped and resumed): " + "; ".join(todo)) if todo else "promote nothing (no project has a lead to promote)"
+    promoted = [r for r in rows if r["action"] in (retrofit.PROMOTE, retrofit.PROMOTE_COMPANY)]
+    todo = [f"{r['project']}: {r['session_name']}" for r in promoted]
+    running = [f"{r['project']}: {r['session_name']}" for r in promoted if r.get("state") == "live"]
+    if not todo:
+        return {"skip": skip, "picks": picks}, "promote nothing (no project has a lead to promote)"
+    stopped = ("; STOPPED AND RESUMED (running now): " + "; ".join(running)) if running else "; none is running, so none is stopped"
+    return {"skip": skip, "picks": picks}, f"promote {len(todo)} lead session(s) to project agents: " + "; ".join(todo) + stopped
 
 
 async def huddle_leads_update(ctx: CplugContext, caller: AgentCaller, args: dict) -> dict:

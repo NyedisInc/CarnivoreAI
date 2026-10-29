@@ -1,5 +1,7 @@
 <script lang="ts">
+  /* the home screen */
   import Icon from '../../opscenter/ui/Icon.svelte';
+  import { Button, Field } from '../base';
   import { MAX_BOARD_NAME } from '../../opscenter/engine/home-boards';
   import type { Layout } from '../../opscenter/engine/types';
   import { t } from '../i18n/index.svelte';
@@ -18,6 +20,7 @@
     name: string;
     home: boolean;
     layout: Layout | undefined;
+    /* the home screen */
     onEditHome: () => void;
   } = $props();
 
@@ -70,25 +73,22 @@
   <BoardPreview {layout} {home} />
   <div class="dash-card__head">
     {#if renaming}
-      <input
-        class="dash-card__input"
-        type="text"
+      <Field
         maxlength={MAX_BOARD_NAME}
         aria-label={t('dashboards.name_label')}
         bind:value={draft}
         onkeydown={onNameKey}
         onblur={commitRename}
-        use:focusSelect
+        {@attach focusSelect}
         data-dashboard-name-input
       />
     {:else}
-      <button
-        type="button"
-        class="dash-card__name"
+      <Button
+        variant="row"
         disabled={dashboardsUi.busy}
         aria-label={t('dashboards.rename_aria', { name })}
         data-dashboard-rename
-        onclick={startRename}>{name}</button
+        onclick={startRename}>{name}</Button
       >
     {/if}
     {#if home}
@@ -98,41 +98,40 @@
   <div class="dash-card__meta-row">
     <p class="dash-card__meta">{meta}</p>
     <span class="dash-card__end">
-      <button type="button" class="oc-btn oc-btn--sm oc-btn--ghost" aria-label={t('opscenter.boards.export_aria', { name })} data-dashboard-export onclick={() => void downloadDashboard(id)}
-        >{t('opscenter.boards.export')}</button
+      <Button variant="quiet" size="sm" aria-label={t('opscenter.boards.export_aria', { name })} data-dashboard-export onclick={() => void downloadDashboard(id)}
+        >{t('opscenter.boards.export')}</Button
       >
       {#if !home}
-        <button
-          type="button"
-          class="oc-btn oc-btn--sm oc-btn--ghost dash-card__delete"
+        <Button
+          variant="danger"
+          size="sm"
           disabled={dashboardsUi.busy}
           aria-label={t('dashboards.delete_aria', { name })}
           aria-expanded={confirming}
           data-dashboard-delete
-          onclick={() => (confirming = !confirming)}>{t('dashboards.delete')}</button
+          onclick={() => (confirming = !confirming)}>{t('dashboards.delete')}</Button
         >
       {/if}
     </span>
   </div>
   <div class="dash-card__actions">
     {#if home}
-      <button type="button" class="oc-btn oc-btn--sm" data-dashboard-edit aria-label={t('dashboards.edit_home_aria', { name })} onclick={onEditHome}
-        ><Icon name="layout" size={11} />{t('dashboards.edit_home')}</button
+      <Button size="sm" data-dashboard-edit aria-label={t('dashboards.edit_home_aria', { name })} onclick={onEditHome}
+        ><Icon name="layout" size={11} />{t('dashboards.edit_home')}</Button
       >
     {:else}
-      <button
-        type="button"
-        class="oc-btn oc-btn--sm"
+      <Button
+        size="sm"
         disabled={dashboardsUi.busy}
         aria-label={t('dashboards.activate_aria', { name })}
         data-dashboard-activate
-        onclick={() => void makeHome(id)}><Icon name="home" size={11} />{t('dashboards.activate')}</button
+        onclick={() => void makeHome(id)}><Icon name="home" size={11} />{t('dashboards.activate')}</Button
       >
-      <button type="button" class="oc-btn oc-btn--sm" aria-label={t('dashboards.open_aria', { name })} data-dashboard-open onclick={() => showDashboard(id)}
-        ><Icon name="layout" size={11} />{t('dashboards.open')}</button
+      <Button size="sm" aria-label={t('dashboards.open_aria', { name })} data-dashboard-open onclick={() => showDashboard(id)}
+        ><Icon name="layout" size={11} />{t('dashboards.open')}</Button
       >
-      <button type="button" class="oc-btn oc-btn--sm" aria-label={t('dashboards.edit_aria', { name })} data-dashboard-edit onclick={() => openDashboard(id, true)}
-        ><Icon name="layout" size={11} />{t('dashboards.edit')}</button
+      <Button size="sm" aria-label={t('dashboards.edit_aria', { name })} data-dashboard-edit onclick={() => openDashboard(id, true)}
+        ><Icon name="layout" size={11} />{t('dashboards.edit')}</Button
       >
     {/if}
   </div>
@@ -140,8 +139,8 @@
     <div class="dash-card__confirm" role="alert">
       <p class="dash-card__confirm-text">{t('dashboards.delete_confirm', { name })}</p>
       <div class="dash-card__confirm-row">
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={() => (confirming = false)}>{t('dashboards.delete_keep')}</button>
-        <button type="button" class="modal-btn modal-btn-danger" data-dashboard-delete-confirm onclick={remove}>{t('dashboards.delete_go')}</button>
+        <Button onclick={() => (confirming = false)}>{t('dashboards.delete_keep')}</Button>
+        <Button variant="danger" data-dashboard-delete-confirm onclick={remove}>{t('dashboards.delete_go')}</Button>
       </div>
     </div>
   {/if}
@@ -174,38 +173,20 @@
       min-height: 24px;
     }
 
-    .dash-card__name {
+    .dash-card__head :global([data-dashboard-rename]) {
       flex: 1 1 auto;
       min-width: 0;
-      padding: 2px 4px;
+      --_btn-h: 24px;
+      --_btn-pad: 4px;
+      --_btn-fs: var(--oc-fs-status);
+      --_btn-ink: var(--oc-text-primary);
       margin-left: -4px;
-      overflow: hidden;
-      border: var(--oc-border, 1px) solid transparent;
-      border-radius: var(--oc-radius-sm, 2px);
-      background: transparent;
-      color: var(--oc-text-primary);
-      font-family: inherit;
-      font-size: var(--oc-fs-status);
-      text-align: left;
-      text-overflow: ellipsis;
-      white-space: nowrap;
       cursor: text;
     }
 
-    .dash-card__name:hover:not(:disabled) {
-      border-color: var(--oc-line-rule);
-    }
-
-    .dash-card__input {
+    .dash-card__head :global([data-field]) {
       flex: 1 1 auto;
       min-width: 0;
-      padding: 2px 6px;
-      border: var(--oc-border, 1px) solid var(--oc-line-rule);
-      border-radius: var(--oc-radius-sm, 2px);
-      background: var(--oc-ground-field, var(--oc-ground-page));
-      color: var(--oc-text-primary);
-      font-family: inherit;
-      font-size: var(--oc-fs-status);
     }
 
     .dash-card__home {
@@ -251,16 +232,6 @@
       gap: 2px;
     }
 
-    .dash-card__actions :global(.oc-btn) {
-      --_bd: var(--oc-control-line-hi);
-      border-color: var(--oc-control-line-hi);
-    }
-
-    .dash-card__delete:hover:not(:disabled),
-    .dash-card__delete[aria-expanded='true'] {
-      color: var(--oc-coral);
-    }
-
     .dash-card__confirm {
       display: flex;
       flex-direction: column;
@@ -278,7 +249,7 @@
       gap: var(--oc-space-2);
     }
 
-    .dash-card__confirm-row :global(.modal-btn) {
+    .dash-card__confirm-row :global([data-btn]) {
       flex: 1 1 0;
       min-height: var(--oc-space-6);
     }

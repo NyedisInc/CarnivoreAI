@@ -254,7 +254,7 @@ describe('a pinned panel never shows another agent while its own is unresolved',
 
 describe('the pinned key badge', () => {
   test('nameLetters', () => {
-    const cases: [string, string][] = [['bot-Misc UI', 'M'], ['bot-Fixes', 'F'], ['carnivore console', 'C'], ['api', 'A'], ['build agent', 'B'], ['Cv-', 'C'], ['', ''], ['--', '']];
+    const cases: [string, string][] = [['Cv-Misc UI', 'M'], ['Ui-Fixes', 'F'], ['carnivore console', 'C'], ['api', 'A'], ['build agent', 'B'], ['Cv-', 'C'], ['', ''], ['--', '']];
     for (const [name, letter] of cases) expect(nameLetters(name)[0] ?? '', name).toBe(letter);
   });
 

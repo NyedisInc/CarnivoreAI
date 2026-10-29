@@ -15,7 +15,7 @@ export const keepAwakeFixtures: WidgetFixtures = {
     'GET /auto-sleep': {
       ...SETTINGS,
       keep_awake: ['cloude_billing-api', 'cloude_docs-site', 'cloude_billing-webhooks'],
-      keep_awake_session_uuids: ['c30d7962-00bb-4e04-85fe-fe778155ef92', '804dd8df-1a26-4136-8df8-fd4dce5a91b3', '983a4348-f3e6-49a6-8eda-b37bf4570e3d'],
+      keep_awake_session_uuids: ['6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d301', '6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d302', '6d1f0c52-8a3e-4b1d-9c47-2e5a7b90d303'],
       mac_awake: true,
     },
     'GET /sessions/list': sessionList(),

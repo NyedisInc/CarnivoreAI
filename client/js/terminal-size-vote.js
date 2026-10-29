@@ -1,11 +1,9 @@
-/*  hidden  */
+/* nobody is looking at */
 
 console.log('[TerminalSizeVote Module] Loading...');
 
 (function (global) {
 
-    /*  hidden
- */
     function isHidden(doc) {
         return !!doc && (doc.visibilityState === 'hidden' || global.CarnivoreWindowHidden === true);
     }
@@ -74,7 +72,6 @@ console.log('[TerminalSizeVote Module] Loading...');
         return !!master && master.isFollower(ctl);
     }
 
-    /*  hidden  */
     function showsPane(ctl) {
         return isFollowing(ctl) || isHidden(global.document) || isFrozen(ctl);
     }
@@ -101,7 +98,6 @@ console.log('[TerminalSizeVote Module] Loading...');
         if (isFrozen(ctl) && !(ctl && ctl._paneLimit)) return false;
         var lim = ctl && ctl._paneLimit;
         if (lim && lim.lone && !showsPane(ctl)) {
-            //  hidden 
             var own = voteGrid(ctl);
             if (own) ctl._paneLimit = { cols: own.cols, rows: own.rows, lone: true };
         }
@@ -121,7 +117,6 @@ console.log('[TerminalSizeVote Module] Loading...');
         return true;
     }
 
-    /*  hidden  */
     function setPaneLimit(ctl, message) {
         if (!ctl || !message || !(message.cols > 0) || !(message.rows > 0)) return false;
         ctl._paneLimit = { cols: message.cols, rows: message.rows, lone: message.clients === 1 };
@@ -149,12 +144,11 @@ console.log('[TerminalSizeVote Module] Loading...');
         }, REPAINT_DELAY_MS);
     }
 
-    /*  hidden  */
+    /* nobody is looking at */
     function isWithdrawn(ctl, doc) {
         return isHidden(doc) || !!(ctl && ctl._tabHidden);
     }
 
-    /*  hidden  */
     function isFrozen(ctl) {
         return !!(ctl && ctl._tabHidden);
     }
@@ -179,7 +173,6 @@ console.log('[TerminalSizeVote Module] Loading...');
         }
     }
 
-    /*  hidden  */
     function adoptGrid(ctl, doc) {
         if (isHidden(doc) || isFrozen(ctl)) return {};
         if (ctl) {
@@ -204,7 +197,6 @@ console.log('[TerminalSizeVote Module] Loading...');
         rejoin(ctl, 'visibility.visible');
     }
 
-    /*  hidden  */
     function setTabHidden(ctl, hidden, doc) {
         if (!ctl) return;
         var next = !!hidden;

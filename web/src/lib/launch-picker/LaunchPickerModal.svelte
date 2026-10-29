@@ -1,12 +1,16 @@
-<!-- active account -->
+
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { Button, Field } from '../base';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
+    import { visibleProfiles } from '../launch-profiles-page/visibility';
     import { createLaunchProfilesApi, errorText, type AccountOption, type LaunchProfilesApi, type ModelOption, type ProfileRow } from '../launch-profiles-page/api';
     import type { RestartAccounts } from './account-types';
     import type { AccountAnswer } from './account-model';
     import LaunchChoice from './LaunchChoice.svelte';
+    import LaunchNamePin from './LaunchNamePin.svelte';
+    import type { LaunchPrefill } from './prefill';
     import { answerFor, farRows, initialSelection, isValidModelId, rowsFromProfiles, type PickerRow } from './picker-model';
 
     interface Props {
@@ -22,9 +26,10 @@
         accounts?: boolean;
         remote?: { key: string; label: string } | null;
         goLabel?: string | null;
-        close: (value: { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean } | null) => void;
+        prefill?: LaunchPrefill | null;
+        close: (value: { profileId: string; profileLabel: string; model: string | null; account: AccountAnswer | null; farLauncher?: boolean; name?: string; pinned?: boolean } | null) => void;
     }
-    const { title, t, preselect = null, projectDefault = null, harness = null, onlyHarnesses = null, onlyIds = null, api: injected, lastModel = '', accounts: withAccounts = true, remote = null, goLabel = null, close }: Props = $props();
+    const { title, t, preselect = null, projectDefault = null, harness = null, onlyHarnesses = null, onlyIds = null, api: injected, lastModel = '', accounts: withAccounts = true, remote = null, goLabel = null, prefill = null, close }: Props = $props();
     // svelte-ignore state_referenced_locally
     const api: LaunchProfilesApi = injected ?? createLaunchProfilesApi();
 
@@ -37,6 +42,10 @@
     let suggestions = $state<ModelOption[]>([]);
     let launchAccounts = $state<RestartAccounts | null>(null);
     let account = $state<AccountAnswer | null>(null);
+    // svelte-ignore state_referenced_locally
+    let name = $state(prefill?.name ?? '');
+    // svelte-ignore state_referenced_locally
+    let pinned = $state(prefill?.pinned ?? false);
     let accountName = $state<string | null>(null);
     let farListed = $state(false);
 
@@ -61,7 +70,7 @@
                     withAccounts ? api.launchAccounts().catch((err: unknown): null => { console.warn('LaunchPicker: the account list could not be read:', errorText(err)); return null; }) : Promise.resolve(null),
                 ]);
                 launchAccounts = launchable;
-                const all = rowsFromProfiles(list.profiles as ProfileRow[], accounts, {
+                const all = rowsFromProfiles(visibleProfiles(list.profiles as ProfileRow[], { keep: [preselect, projectDefault] }), accounts, {
                     followActive: t('launch_profiles.list.follow'), modelDefault: t('launch_picker.model_default'), modelAsk: t('launch_picker.model_ask'),
                 });
                 rows = all.filter((r) => (!onlyHarnesses || onlyHarnesses.includes(r.harness)) && (!onlyIds || onlyIds.includes(r.value)));
@@ -83,7 +92,7 @@
     });
 
     function go(): void {
-        if (canGo && answer && picked) close({ ...answer, profileLabel: picked.label, account, ...(remote ? { farLauncher: farListed } : {}) });
+        if (canGo && answer && picked) close({ ...answer, profileLabel: picked.label, account, ...(remote ? { farLauncher: farListed } : {}), ...(prefill ? { name: name.trim(), pinned } : {}) });
     }
 </script>
 
@@ -107,15 +116,16 @@
                 </p>
                 {#if picked.modelMode === 'ask'}
                     <label class="lpm-field" for="lpm-model">{t('launch_picker.model_label')}</label>
-                    <input id="lpm-model" class="modal-input oc-focus-host" type="text" list="lpm-models" spellcheck="false" autocomplete="off" bind:value={model} placeholder={t('launch_picker.model_placeholder')} />
+                    <Field id="lpm-model" block type="text" list="lpm-models" spellcheck="false" autocomplete="off" bind:value={model} placeholder={t('launch_picker.model_placeholder')} />
                     <datalist id="lpm-models">{#each suggestions as m (m.id)}<option value={m.id}>{m.label}</option>{/each}</datalist>
                 {/if}
             {/if}
+            {#if prefill}<LaunchNamePin {t} bind:name bind:pinned />{/if}
         {/if}
     </div>
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={() => close(null)}>{t('launch_picker.cancel')}</button>
-        <button type="button" class="modal-btn modal-btn-confirm" disabled={!canGo} data-lpm-go onclick={go}>{goLabel ?? t('launch_picker.go')}</button>
+        <Button onclick={() => close(null)}>{t('launch_picker.cancel')}</Button>
+        <Button variant="confirm" disabled={!canGo} data-lpm-go onclick={go}>{goLabel ?? t('launch_picker.go')}</Button>
     {/snippet}
 </ModalShell>
 

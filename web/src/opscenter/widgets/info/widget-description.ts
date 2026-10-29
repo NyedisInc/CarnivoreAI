@@ -14,6 +14,7 @@ export interface WidgetMaker {
 export interface WidgetDescription {
   info: WidgetInfo;
   places: WidgetPlace[];
+  /* there is nothing */
   options: string[];
   maker: WidgetMaker;
 }

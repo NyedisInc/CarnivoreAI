@@ -11,6 +11,8 @@ const read = (...p) => fs.readFileSync(path.join(root, ...p), 'utf8');
 
 const attachSrc = read('client', 'js', 'attachment-toast.js');
 const toastSrc = read('client', 'js', 'toast.js');
+// issue #55 split ToastManager's class body across three files that each
+// extend ToastManager.prototype (client/js/api-toasts.js's pattern for
 const toastGroupingSrc = read('client', 'js', 'toast-grouping.js');
 const toastRenderSrc = read('client', 'js', 'toast-render.js');
 const toastLifecycleSrc = read('client', 'js', 'toast-lifecycle.js');
@@ -429,7 +431,7 @@ test('clipboard.js raises the toast instead of the overlay', () => {
     const src = read('client', 'js', 'clipboard.js');
     assert.ok(src.includes('window.AttachmentToast.show('));
     const i = src.indexOf('AttachmentToast.show(');
-    const j = src.indexOf("report(term, window.CloudeI18n.t('terminal.upload.attached'");
+    const j = src.indexOf("report(term, globalThis.CloudeTr('terminal.upload.attached'");
     assert.ok(i > 0 && j > i, 'the text overlay must be the else branch');
 });
 

@@ -1,11 +1,3 @@
-/*
- * THE LOG VIEWER (web/src/opscenter/log/, #1827 then #1861; the developer widget's log tab and the #logs page): a strip of level
- * toggles, source chips, the live server level, export and clear; a filter row; a status line; then a VIRTUAL list of records,
- * newest at the bottom. COPIED, NOT INVENTED: the strip is `.oc-rc-bar` (title-row hairline via box-shadow, never a border) holding the shared
- * `.oc-btn .oc-btn--sm` (quiet outline); a level that is on turns its own border and text to the level's token, one that is off stays
- * the quiet outline in dim text. The rows are the run queue's flat rows: mono type, a hairline between rows, no cards. Level shows by
- * color token AND by its word. Color is --oc-* tokens only.
- */
 @layer patterns {
   .oc-lv {
     overflow: hidden;
@@ -16,11 +8,11 @@
     justify-content: flex-start;
   }
 
-  .oc-lv-level {
+  .oc-lv-bar [data-level] {
     color: var(--oc-text-dim);
   }
 
-  .oc-lv-level[aria-pressed='true'] {
+  .oc-lv-bar [data-level][aria-pressed='true'] {
     color: var(--_lv, var(--oc-text-secondary));
     border-color: var(--_lv, var(--oc-line-rule));
   }
@@ -48,7 +40,7 @@
     gap: var(--oc-space-1);
   }
 
-  .oc-lv-server-level .oc-field {
+  .oc-lv-server-level [data-field] {
     min-width: 0;
     padding-block: 2px;
     font-size: var(--oc-fs-label);
@@ -73,7 +65,7 @@
     padding-block: 3px;
   }
 
-  .oc-lv-filters .oc-chip[data-exclude] {
+  .oc-lv-filters [data-btn][data-exclude] {
     border-color: var(--oc-coral);
     background: transparent;
     color: var(--oc-coral);
@@ -153,6 +145,12 @@
     padding: 0 var(--oc-space-2);
   }
 
+  .oc-lv-row [data-btn]:not([data-size='icon']) {
+    --_btn-h: var(--oc-space-4);
+    --_btn-pad: var(--oc-space-1-5);
+    --_btn-fs: var(--oc-fs-micro);
+  }
+
   [data-log-expand] {
     --oc-ibtn-size: 16px;
     color: var(--oc-text-dim);
@@ -205,21 +203,12 @@
     color: var(--oc-coral);
   }
 
-  .oc-lv-field {
+  .oc-lv-text [data-log-field] {
     flex: none;
     max-width: 28ch;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .oc-lv-copy {
-    visibility: hidden;
-  }
-
-  .oc-lv-rec:hover .oc-lv-copy,
-  .oc-lv-rec:focus-within .oc-lv-copy {
-    visibility: visible;
   }
 
   .oc-lv-rec[data-traceback] .oc-lv-event {
@@ -249,5 +238,16 @@
 
   .oc-lv-page {
     grid-template-rows: minmax(0, 1fr);
+  }
+
+  @media (max-width: 1023px) {
+    .oc-lv-bar [data-btn],
+    .oc-lv-filters [data-btn] {
+      --_btn-h: var(--oc-tap);
+    }
+
+    .oc-lv-bar [data-field] {
+      min-height: var(--oc-tap);
+    }
   }
 }

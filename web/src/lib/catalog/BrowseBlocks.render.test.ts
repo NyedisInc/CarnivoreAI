@@ -27,7 +27,7 @@ const VERSION = {
     scripts: 2,
     published_at: '2026-09-01T00:00:00Z',
     sig: { key_id: 'KEY123' },
-    src: { repo: 'acme/skills', path: 'sme', commit: 'b'.repeat(40) },
+    src: { repo: 'alex/skills', path: 'sme', commit: 'b'.repeat(40) },
     review: { status: 'reviewed', verdict: 'clean', warnings: [] },
 } as unknown as CatalogVersion;
 
@@ -54,7 +54,7 @@ describe('trust block', () => {
         expect(text).toContain('signed by');
         expect(text).toContain('pinned key');
         expect(text).toContain('aaaaaaaaaaaa');
-        expect(text).toContain('acme/skills at bbbbbbbbbbbb');
+        expect(text).toContain('alex/skills at bbbbbbbbbbbb');
         expect(text).toContain('2 scripts');
         unmount(mounted as never);
         document.body.innerHTML = '';
@@ -180,10 +180,10 @@ describe('keyboard and deep links', () => {
 
     test('a warez or catalog hash names an item, and only those do', () => {
         expect(isWarezHash('#catalog')).toBe(true);
-        expect(isWarezHash('#catalog/acme/sme')).toBe(true);
+        expect(isWarezHash('#catalog/alex/sme')).toBe(true);
         expect(isWarezHash('#catalogue')).toBe(false);
-        expect(catalogHashItem('#catalog/acme/sme')).toBe('acme/sme');
-        expect(catalogHashItem('#warez/acme/sme')).toBe('acme/sme');
+        expect(catalogHashItem('#catalog/alex/sme')).toBe('alex/sme');
+        expect(catalogHashItem('#warez/alex/sme')).toBe('alex/sme');
         expect(catalogHashItem('#catalog')).toBeNull();
         expect(catalogHashItem('#catalog/%E0%A4%A')).toBeNull();
     });

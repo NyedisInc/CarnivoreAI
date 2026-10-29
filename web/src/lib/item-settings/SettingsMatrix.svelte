@@ -2,6 +2,7 @@
 <script lang="ts">
     import type { Translate } from '../sessions/types';
     import Check from '../../opscenter/ui/Check.svelte';
+    import Button from '../base/Button.svelte';
     import type { SettingsMatrix, SettingsMatrixRow, WidgetSettingField } from '../../opscenter/widgets/types';
     import { resolveValue, type SettingValue } from './api';
 
@@ -85,10 +86,10 @@
                         <td colspan={matrix.columns.length + 1}>
                             <p class="sf-matrix__ask-text" role="alert">{t(asking.textKey)}</p>
                             <div class="sf-matrix__ask-actions">
-                                <button type="button" class="modal-btn modal-btn-secondary" data-matrix-ask-cancel disabled={busy}
-                                    onclick={() => (asking = null)}>{t('item_settings.matrix.confirm_cancel')}</button>
-                                <button type="button" class="modal-btn modal-btn-danger" data-matrix-ask-confirm disabled={busy}
-                                    onclick={confirmAsked}>{t('item_settings.matrix.confirm_go')}</button>
+                                <Button data-matrix-ask-cancel disabled={busy}
+                                    onclick={() => (asking = null)}>{t('item_settings.matrix.confirm_cancel')}</Button>
+                                <Button variant="danger" data-matrix-ask-confirm disabled={busy}
+                                    onclick={confirmAsked}>{t('item_settings.matrix.confirm_go')}</Button>
                             </div>
                         </td>
                     </tr>

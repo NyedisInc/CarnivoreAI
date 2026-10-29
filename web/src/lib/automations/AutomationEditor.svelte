@@ -12,7 +12,7 @@
   import TargetPicker from './TargetPicker.svelte';
   import { offeredKinds, TARGET_FORMS } from './target-forms';
   import type { EditorStart } from './schedule-prefill';
-  import { refusalCode, refusalText, toMinutes } from './format';
+  import { fieldSeconds, refusalCode, refusalText, toMinutes } from './format';
   import FieldHint from './schedule/FieldHint.svelte';
   import IdeasList from './schedule/IdeasList.svelte';
   import WhenField from './schedule/WhenField.svelte';
@@ -33,9 +33,7 @@
   }
   let { automation, targets, projects, onDone, onCancel, seed = null, onConflict, header, onIdea }: Props = $props();
 
-  /*  svelte-ignore */
   const start = automation;
-  /*  svelte-ignore */
   const prefill = start ? null : seed;
   const NEW_CRON = '0 9 * * 1-5';
   let name = $state(start?.name ?? prefill?.name ?? '');
@@ -121,8 +119,8 @@
         project_id: projectId,
         misfire,
         retry_max: retryMax,
-        retry_backoff_s: Math.round(backoffMin ?? 5) * 60,
-        max_runtime_s: runtimeMin === null ? null : Math.round(runtimeMin) * 60,
+        retry_backoff_s: fieldSeconds(backoffMin ?? 5, start?.retry_backoff_s),
+        max_runtime_s: runtimeMin === null ? null : fieldSeconds(runtimeMin, start?.max_runtime_s),
       };
       const saved = automation
         ? await api.updateAutomation(automation.automation_id, automation.revision, hasForm ? { ...body, target } : body)

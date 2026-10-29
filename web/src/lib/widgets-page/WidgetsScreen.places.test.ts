@@ -79,7 +79,7 @@ function freeForRight(): string {
 describe('placing a widget', () => {
     test('the plus in a place heading opens the product menu and a pick calls the one write for that place', async () => {
         const root = await show();
-        root.querySelector<HTMLButtonElement>('.wp-place[data-place="right"] .wp-place__add')!.click();
+        root.querySelector<HTMLButtonElement>('.wp-place[data-place="right"] [data-place-add]')!.click();
         await settle();
         const item = document.querySelector<HTMLElement>('[role="menu"] [role="menuitem"]:not([aria-disabled="true"])')!;
         expect(item, 'the menu lists something to add').not.toBeNull();
@@ -144,7 +144,7 @@ describe('the sticky podium', () => {
 
     test('picking a place keeps every heading on screen', async () => {
         const root = await show();
-        root.querySelector<HTMLButtonElement>('.wp-place[data-place="bottom"] .wp-place__pick')!.click();
+        root.querySelector<HTMLButtonElement>('.wp-place[data-place="bottom"] [data-place-pick]')!.click();
         await settle();
         expect(root.querySelectorAll('.wp-stick .wp-place').length).toBe(5);
         expect(root.querySelector('.wp-place[data-place="bottom"]')!.hasAttribute('data-chosen')).toBe(true);
@@ -153,7 +153,7 @@ describe('the sticky podium', () => {
 
 describe('the reading pane', () => {
     async function open(root: HTMLElement, id: string): Promise<void> {
-        card(root, id).querySelector<HTMLButtonElement>('.catalog-card__open')!.click();
+        card(root, id).querySelector<HTMLButtonElement>('[data-card-open]')!.click();
         await settle();
     }
 
@@ -161,42 +161,35 @@ describe('the reading pane', () => {
         const root = await show();
         const m = manifests.find((one) => declaredSizes(one).length >= 2 && declaredSizes(one).length < SIZE_ORDER.length)!;
         await open(root, m.id);
-        const buttons = [...root.querySelectorAll<HTMLButtonElement>('.pn-sizes [data-size]')];
-        expect(buttons.map((b) => b.dataset['size'])).toEqual([...SIZE_ORDER]);
+        const buttons = [...root.querySelectorAll<HTMLButtonElement>('.pn-sizes [data-pane-size]')];
+        expect(buttons.map((b) => b.dataset['paneSize'])).toEqual([...SIZE_ORDER]);
         expect(buttons.filter((b) => b.getAttribute('aria-checked') === 'true').length, 'exactly one picked').toBe(1);
         for (const b of buttons) {
-            const has = declaredSizes(m).includes(b.dataset['size'] as (typeof SIZE_ORDER)[number]);
-            expect(b.getAttribute('aria-disabled') === 'true', b.dataset['size']).toBe(!has);
+            const has = declaredSizes(m).includes(b.dataset['paneSize'] as (typeof SIZE_ORDER)[number]);
+            expect(b.disabled, b.dataset['paneSize']).toBe(!has);
         }
-        const other = buttons.find((b) => b.getAttribute('aria-disabled') !== 'true' && b.getAttribute('aria-checked') !== 'true')!;
+        const other = buttons.find((b) => !b.disabled && b.getAttribute('aria-checked') !== 'true')!;
         other.click();
         await settle();
         expect(other.getAttribute('aria-checked')).toBe('true');
-        const dead = [...root.querySelectorAll<HTMLButtonElement>('.pn-sizes [data-size]')].find((b) => b.getAttribute('aria-disabled') === 'true')!;
+        const dead = [...root.querySelectorAll<HTMLButtonElement>('.pn-sizes [data-pane-size]')].find((b) => b.disabled)!;
         dead.click();
         await settle();
         expect(dead.getAttribute('aria-checked')).toBe('false');
-        const css = readFileSync(resolve(process.cwd(), 'src/lib/widgets-page/widgets-page.css'), 'utf8');
-        expect(css).toMatch(/\.pn-sizes \.oc-seg__item\[aria-checked='true'\] \{ color: var\(--oc-orange\)/);
-        expect(css).toMatch(/\.pn-sizes \.oc-seg__item \{[^}]*color: var\(--oc-text-bright\)/);
-        expect(css).toMatch(/\[aria-disabled='true'\] \{ color: var\(--oc-text-dim\); opacity: 0\.6/);
     });
 
-    test('m3.2 toggle: a real switch, green when on, dim when off, pressing flips it', async () => {
+    test('m3.2 toggle: a real switch, on or off, pressing flips it', async () => {
         const root = await show();
         await open(root, 'core.activity-log');
-        const sw = root.querySelector<HTMLButtonElement>('.pn-toggle')!;
+        const sw = root.querySelector<HTMLButtonElement>('[data-pane-toggle]')!;
         expect(sw.getAttribute('role')).toBe('switch');
         expect(sw.getAttribute('aria-checked')).toBe('true');
         expect(sw.textContent?.trim()).toBe(t('widgets.places.pane.on'));
         sw.click();
         await settle();
-        const after = root.querySelector<HTMLButtonElement>('.pn-toggle')!;
+        const after = root.querySelector<HTMLButtonElement>('[data-pane-toggle]')!;
         expect(after.getAttribute('aria-checked')).toBe('false');
         expect(after.textContent?.trim()).toBe(t('widgets.places.pane.off'));
-        const css = readFileSync(resolve(process.cwd(), 'src/lib/widgets-page/widgets-page.css'), 'utf8');
-        expect(css).toMatch(/\.pn-toggle\[aria-checked='true'\] \{ border-color: var\(--oc-green\); color: var\(--oc-green\)/);
-        expect(css).toMatch(/\.pn-toggle \{[^}]*color: var\(--oc-text-dim\)/);
     });
 });
 

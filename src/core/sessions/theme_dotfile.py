@@ -1,24 +1,3 @@
-"""The ``.cc.theme`` file format: where it lives, how it is read and written.
-
-Slice S2 of the ``session_manager`` decomposition. Split out of
-``theme_store`` because it holds NO STATE: three functions over one
-single-line file. Keeping it stateless is what lets ``ThemeStore`` stay a
-class about the mutable pin map, and it keeps both modules under the
-package's 500-line rule.
-
-``<working_dir>/.cc.theme`` is the v0.7.0+ source of truth for a
-project's theme, superseding the per-tmux-name ``pinned_themes.json``
-map. It is keyed by DIRECTORY, which is the whole point: two browsers on
-two machines pointed at the same checkout converge on the same theme
-without round-tripping a per-machine cache. The file is one line, the
-theme id plus a trailing newline.
-
-**THE WRITE RAISES AND THE PIN-MAP WRITE DOES NOT, DELIBERATELY.** This
-one is reached from a user action that has a response to fail, so a write
-that did not happen must not report success. ``ThemeStore.save`` is
-reached from destroy and rename cleanup, where raising would break a path
-the user is waiting on to do something else.
-"""
 
 from __future__ import annotations
 
@@ -107,20 +86,6 @@ def _forget(path: Path) -> None:
 
 
 def write_project_theme(working_dir, theme_id: Optional[str]) -> None:
-    """Atomically write or clear ``<working_dir>/.cc.theme``.
-
-    Description: an empty or None ``theme_id`` deletes the dotfile.
-      Otherwise writes ``<theme_id>\\n`` at mode 0o644 through
-      temp-then-``os.replace``, so a crash mid-write can never leave a
-      half-written file at the canonical path.
-    Inputs: working_dir (str | Path) - must exist and be a directory.
-      theme_id (str | None) - the theme, None or empty to clear.
-    Output: None.
-    Raises: ValueError when ``working_dir`` is unresolvable,
-      FileNotFoundError when it does not exist, NotADirectoryError when
-      it is not a directory, OSError when the write or the unlink fails.
-    Example: write_project_theme(project, "metal")
-    """
     path = project_theme_path(working_dir)
     if path is None:
         raise ValueError(f"Invalid working_dir: {working_dir!r}")

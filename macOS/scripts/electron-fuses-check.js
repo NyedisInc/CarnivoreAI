@@ -1,5 +1,5 @@
 'use strict';
-// Electron Framework
+// not a universal
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -35,7 +35,6 @@ const CPU_X86_64 = 0x01000007;
 const CPU_NAMES = { [CPU_ARM64]: 'arm64', [CPU_X86_64]: 'x86_64' };
 const FAT_MAGIC = 0xcafebabe;
 const FAT_MAGIC_64 = 0xcafebabf;
-/* Electron Framework */
 const FRAMEWORK_REL = path.join('mac-universal', 'Carnivore.app', 'Contents', 'Frameworks', 'Electron Framework.framework', 'Versions', 'A', 'Electron Framework');
 
 class FuseError extends Error {}
@@ -59,7 +58,7 @@ function checkPackage(pkg) {
     }
 }
 
-/* the whole file */
+/* not a universal the whole file */
 function fatSlices(buf) {
     if (buf.length < 8) throw new FuseError('the Electron Framework file is too small to be a Mach-O binary');
     const magic = buf.readUInt32BE(0);
@@ -80,7 +79,6 @@ function fatSlices(buf) {
     return slices;
 }
 
-/* Electron Framework */
 function readSliceWires(buf) {
     const slices = fatSlices(buf);
     const out = [];

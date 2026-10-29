@@ -75,11 +75,11 @@ def world(tmp_path, monkeypatch):
 def test_the_owner_pressing_run_now_is_kept_in_the_notes_with_the_owners_name(world, monkeypatch):
     from src.core.owner_identity import identity
 
-    monkeypatch.setattr(identity, "os_account_full_name", lambda uid=None: "the owner contributor")
+    monkeypatch.setattr(identity, "os_account_full_name", lambda uid=None: "Joe Sugamele")
     resp = TestClient(world.app).post(f"/automations/{world.auto['automation_id']}/run")
     assert resp.status_code == 200, resp.text
     run = world.store.run(resp.json()["run_id"])
-    assert run["trigger"] == "run_now" and run["notes"][NOTE_BY] == {"kind": "app", "name": "the owner contributor"}
+    assert run["trigger"] == "run_now" and run["notes"][NOTE_BY] == {"kind": "app", "name": "Joe Sugamele"}
 
 
 def test_the_owner_name_prefers_the_chosen_display_name_and_invents_none(monkeypatch):

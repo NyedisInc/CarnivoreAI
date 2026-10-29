@@ -3,6 +3,9 @@
     import type { Translate } from '../sessions/types';
     import { refusalCodeOf } from '../catalog/install-actions';
     import { GATE_CANCELLED, type RegisterGate } from '../catalog/register-gate.svelte';
+    import Button from '../base/Button.svelte';
+    import Field from '../base/Field.svelte';
+    import Select from '../base/Select.svelte';
     import { REPORT_REASONS, type CommunityHost, type ReportReason, type ReportTarget } from './community';
 
     interface Props {
@@ -46,25 +49,16 @@
     <p class="rep__heading">{t('community.report.heading')}</p>
     {#if done}
         <p class="rep__note" role="status">{t('community.report.sent')}</p>
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={onclose}>{t('community.close')}</button>
+        <Button onclick={onclose}>{t('community.close')}</Button>
     {:else}
-        <label class="rep__field">
-            <span class="rep__label">{t('community.report.reason')}</span>
-            <select class="rep__box" bind:value={reason} disabled={working}>
-                {#each REPORT_REASONS as value}
-                    <option {value}>{t(`community.report.reason.${value}`)}</option>
-                {/each}
-            </select>
-        </label>
-        <label class="rep__field">
-            <span class="rep__label">{t('community.report.note')}</span>
-            <textarea class="rep__box" rows="2" maxlength="500" disabled={working} bind:value={note}></textarea>
-        </label>
+        <Select label={t('community.report.reason')} bind:value={reason} disabled={working}
+            options={REPORT_REASONS.map((value) => ({ value, label: t(`community.report.reason.${value}`) }))} />
+        <Field multiline label={t('community.report.note')} rows={2} maxlength={500} disabled={working} bind:value={note} />
         <div class="rep__acts">
-            <button type="button" class="modal-btn modal-btn-secondary" onclick={onclose}>{t('community.cancel')}</button>
-            <button type="button" class="modal-btn modal-btn-danger" disabled={working} onclick={() => void send()}>
+            <Button onclick={onclose}>{t('community.cancel')}</Button>
+            <Button variant="danger" disabled={working} onclick={() => void send()}>
                 {working ? t('community.working') : t('community.report.send')}
-            </button>
+            </Button>
         </div>
         {#if failure}
             <p class="rep__note rep__note--out" role="status">{failure}</p>
@@ -90,19 +84,6 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
     }
-    .rep__field { display: flex; flex-direction: column; gap: 3px; }
-    .rep__label { color: var(--cat-muted); font-size: 11px; }
-    .rep__box {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 4px 6px;
-        border: 1px solid var(--cat-line);
-        border-radius: 3px;
-        background: var(--cat-panel);
-        color: var(--cat-text);
-        font-family: inherit;
-        font-size: 12px;
-    }
     .rep__acts { display: flex; gap: 6px; }
     .rep__note { margin: 0; color: var(--cat-muted); font-size: 11px; line-height: 1.45; }
     .rep__note--out {
@@ -110,9 +91,5 @@
         border-left: 2px solid var(--cat-attention);
         background: var(--cat-panel);
         color: var(--cat-text);
-    }
-    .rep :global(.modal-btn) {
-        padding: 7px 16px;
-        font-size: 13px;
     }
 </style>

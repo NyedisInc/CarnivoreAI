@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 import structlog
 
@@ -36,9 +36,9 @@ def run_unpack(open_conn: Callable[[], sqlite3.Connection], plan: PackPlan, env:
         progress.set_phase("extracting")
         os.mkdir(staging)
         archive_io.extract_archive(os.path.join(root, row["archive_name"]), staging)
-        store.put(conn, pid, state=K.STATE_RESTORING)
         progress.set_phase("verifying", sum(e.size for e in entries if e.kind == inventory.KIND_FILE))
         verify.verify_tree(staging, entries, progress.add)
+        store.put(conn, pid, state=K.STATE_RESTORING)
         progress.set_phase("moving files into place")
         moved = move_entries(staging, root, inventory.top_level_names(entries))
         restored = True
@@ -59,18 +59,22 @@ def _finish(conn: sqlite3.Connection, plan: PackPlan, env: PackEnv, row: dict, m
         env.trash([os.path.join(root, n) for n in (row["archive_name"], K.MANIFEST_NAME, K.README_NAME)])
     except EXPECTED as exc:
         logger.error("project_unpack_trash_failed", project_id=pid, error=str(exc))
-        store.mark_unpacked(conn, pid, last_error=f"unpacked, but the pack files could not be moved to the Trash: {exc}")
+        _mark_unpacked_with_children(conn, pid, f"unpacked, but the pack files could not be moved to the Trash: {exc}")
         return
+    _mark_unpacked_with_children(conn, pid)
+    logger.info("project_unpacked", project_id=pid, entries=len(moved))
+
+
+def _mark_unpacked_with_children(conn: sqlite3.Connection, pid: int, last_error: Optional[str] = None) -> None:
     for child in store.children_of(conn, pid):
         store.mark_unpacked(conn, child)
-    store.mark_unpacked(conn, pid)
-    logger.info("project_unpacked", project_id=pid, entries=len(moved))
+    store.mark_unpacked(conn, pid, last_error=last_error)
 
 
 def _fail(conn: sqlite3.Connection, pid: int, env: PackEnv, staging: str, restored: bool, reason: str) -> None:
     if restored:
         logger.error("project_unpack_failed_after_restore", project_id=pid, reason=reason)
-        store.mark_unpacked(conn, pid, last_error=reason)
+        _mark_unpacked_with_children(conn, pid, reason)
         return
     if os.path.isdir(staging):
         try:

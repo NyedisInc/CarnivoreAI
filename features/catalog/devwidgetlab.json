@@ -53,6 +53,7 @@
   ],
   "examples": [
     "A scenario of one route, GET /sessions/cloude_billing-api/note with a body of your own text, makes the notes widget show that text in every host.",
+    "A scenario route with a typo is reported as never asked for, and a capture of it fails with that reason.",
     "A widget with a hidden 5 second polling timer reads 12 hidden requests a minute and fails; the same check runs over every widget with python3 -m scripts.widgets.idle."
   ],
   "media_exempt": "a developer page whose own pictures are the captures it writes; no catalog image is taken of it for this slice"

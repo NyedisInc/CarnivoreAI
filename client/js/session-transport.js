@@ -1,4 +1,3 @@
-/* before terminal.js socket dropped something else */
 
 console.log('[SessionTransport Module] Loading...');
 

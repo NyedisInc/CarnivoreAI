@@ -8,6 +8,6 @@
 @import '../lib/tooltip/tooltip.css';
 
 :root { --overlay-top: 0px; }
-html { background: var(--oc-ground, #000); }
-body { margin: 0; min-height: 100dvh; background: var(--oc-ground, #000); }
+html { background: var(--oc-ground-page, #000); }
+body { margin: 0; min-height: 100dvh; background: var(--oc-ground-page, #000); }
 #browse-root { min-height: 100dvh; }

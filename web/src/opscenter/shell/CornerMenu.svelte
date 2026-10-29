@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* pop-out window */
   import type { Snippet } from 'svelte';
   import Icon from '../ui/Icon.svelte';
   import WidgetIcon from '../ui/WidgetIcon.svelte';
@@ -102,7 +101,6 @@
       cursor: pointer;
     }
 
-    /* pop-out window */
     .oc-frame-corner--still {
       flex: 0 0 auto;
       cursor: default;

@@ -24,7 +24,7 @@ SPECS = (
     ra.RouteTool(
         name="files_open", route="src.api.open_files_routes:open_file", gate=ra.ARRANGE,
         description="Open a file in the owner's files list (left sidebar); the same file again reuses its row. front true also "
-                    "shows it in the window the owner used last. target is the session the file belongs to; path is relative to root: "
+                    "shows it in the window he used last. target is the session the file belongs to; path is relative to root: "
                     "workdir (default) or user (~/.claude); kind file (default) or diff (read-only, workdir only). Optional "
                     "color and icon style the row; restyle with sidebar_row_look_set.",
         properties={"path": {"type": "string", "minLength": 1, "maxLength": MAX_PATH_LENGTH,

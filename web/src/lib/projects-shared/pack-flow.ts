@@ -1,3 +1,4 @@
+/* quotes the fingerprint */
 import type { Translate } from '../sessions/types';
 import type { HistoryApi } from './history-api';
 import { confirmText, failedChecks, onlyNeedsLocalOnly, type PackAnswer } from './pack-model';

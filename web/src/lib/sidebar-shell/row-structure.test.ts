@@ -41,7 +41,7 @@ function full(over: Record<string, unknown> = {}): Record<string, unknown> {
         timers_live: 2, timers_next_fire_at: isoIn(90_000),
         automations_state: 'warning', automations_total: 2, automations_enabled: 1,
         automations_next: [{ name: 'nightly', next_fire_at: epochAgo(-3600) }],
-        spectator_expires_at: isoIn(86_400_000), host_key: 'hosta', host_label: 'Hosta', host_state: 'degraded',
+        spectator_expires_at: isoIn(86_400_000), host_key: 'studio', host_label: 'Studio', host_state: 'degraded',
         automation: { automation_id: 'a1', run_id: 'r1', name: 'nightly' }, task_lead: true,
         running_model: 'claude-opus-5', running_model_tier: 5, running_model_effort: 'xhigh',
         created_at_epoch: epochAgo(7200), last_work_at: new Date(NOW - 600_000).toISOString(),

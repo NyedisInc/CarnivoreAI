@@ -167,20 +167,20 @@ FIX_NOW = datetime.fromisoformat(FIXTURE["now"].replace("Z", "+00:00"))
 
 def test_the_screenshot_case_switches_to_the_starred_account():
     rows = [
-        AccountUsage(id="claude-code-alpha", name="Alpha", provider="claude",
+        AccountUsage(id="claude-code-larkspur", name="Larkspur", provider="claude",
                      credential_state="ok",
                      windows=_windows([["five_hour", 10, 18000, 2], ["seven_day", 99, 604800, 30]])),
-        AccountUsage(id="claude-code-beta", name="Beta", provider="claude", credential_state="ok",
+        AccountUsage(id="claude-code-acme", name="Acme", provider="claude", credential_state="ok",
                      windows=_windows([["five_hour", 0, 18000, 4], ["seven_day", 0, 604800, 150]])),
-        AccountUsage(id="claude-code-gamma", name="Gamma", provider="claude", credential_state="ok",
+        AccountUsage(id="claude-code-dgai", name="DGAI", provider="claude", credential_state="ok",
                      windows=_windows([["five_hour", 0, 18000, 4], ["seven_day", 0, 604800, 140]])),
-        AccountUsage(id="claude-code-delta", name="Delta", provider="claude", credential_state="ok",
+        AccountUsage(id="claude-code-beta", name="Beta", provider="claude", credential_state="ok",
                      windows=_windows([["five_hour", 0, 18000, 3], ["seven_day", 8, 604800, 20]])),
     ]
-    decision = decide_switch(rows, provider="claude", active_account_id="claude-code-alpha",
+    decision = decide_switch(rows, provider="claude", active_account_id="claude-code-larkspur",
                              threshold_percent=99, now=FIX_NOW)
     assert decision is not None
-    assert decision.to_account_id == "claude-code-delta"
+    assert decision.to_account_id == "claude-code-beta"
 
 
 def test_the_switch_ranks_every_parity_case_as_the_star_does():

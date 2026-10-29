@@ -7,7 +7,6 @@ export type LaneState = 'working' | 'waiting' | 'idle';
 export interface LaneBlock { start: number; end: number; state: LaneState; subagents: number }
 export interface Lane {
   key: string;
-  /* conversation id */
   conversationId: string;
   label: string;
   blocks: LaneBlock[];
@@ -15,7 +14,6 @@ export interface Lane {
 
 const FALLBACK_BUCKET_MS = 60_000;
 
-/* conversation id */
 export function laneModel(
   working: readonly LaneSeries[], waiting: readonly LaneSeries[], subagent: readonly LaneSeries[],
   nameOf: (conversationId: string) => string | null,

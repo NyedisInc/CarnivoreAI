@@ -15,6 +15,10 @@ import { offerStripPins } from '../lib/widget-bars/bar-pin-action';
 import { railMenu, railMenuItems } from '../lib/sidebar-widgets/rail-menu.svelte';
 import { RAIL_CONTAINER_ID } from '../lib/sidebar-widgets/rail-dom';
 import { railOn, setupRail, teardownRail } from '../lib/sidebar-widgets/fixtures/rail-harness';
+import { registerSwarmFlyout } from '../cplugs/huddle/swarm-flyout';
+
+// The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
+registerSwarmFlyout();
 import { emptyMenu, emptyMenuNodes } from '../opscenter/layout-editor/empty-space-menu.svelte';
 import { applyHarnessHostOptions } from './host-options';
 import mainSource from './main.ts?raw';

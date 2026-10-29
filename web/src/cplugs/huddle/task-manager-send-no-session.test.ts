@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
-const ELSEWHERE = [{ id: 'ses_c', label: 'Agent - Carnivore (Carnivore)', elsewhere: true }, { id: 'ses_h', label: 'Kitchen (Garden Kitchen 2026)', elsewhere: true }];
+const ELSEWHERE = [{ id: 'ses_c', label: 'Agent - Carnivore (Carnivore)', elsewhere: true }, { id: 'ses_h', label: 'Hockey (Fantasy Hockey 2026)', elsewhere: true }];
 const server = vi.hoisted(() => ({ calls: [] as { path: string; body: string }[], waiting: 1, started: false }));
 
 const item = (id: number, list: string, status: string, extra: Record<string, unknown> = {}) => ({
@@ -21,14 +21,14 @@ vi.mock('../../opscenter/api/auth.svelte', async (importOriginal) => {
       if (path === '/cplugs/huddle/lists') {
         return { cursor: 0, lists: [
           { key: 'all', name: null, project_id: null, items: 0, open: 0, review: 0, questions: 0, claude_seq: 0, unread: 0 },
-          { key: '81', name: 'Ledgerbot', project_id: 81, items: 1, open: 1, review: 0, questions: 0, claude_seq: 0, unread: 0,
+          { key: '81', name: 'Trader', project_id: 81, items: 1, open: 1, review: 0, questions: 0, claude_seq: 0, unread: 0,
             untold: server.waiting > 0, waiting_to_send: server.waiting }] };
       }
       if (path === '/cplugs/huddle/lists/81/sessions') {
-        if (server.started) return { list: '81', sessions: [{ id: 'ses_new', label: 'Ledgerbot', activity_status: 'idle' }], default: 'ses_new', reason: 'only_session' };
+        if (server.started) return { list: '81', sessions: [{ id: 'ses_new', label: 'Trader', activity_status: 'idle' }], default: 'ses_new', reason: 'only_session' };
         return { list: '81', sessions: ELSEWHERE, default: null, reason: 'pick' };
       }
-      if (path === '/projects') return [{ id: 81, name: 'Ledgerbot', path: '/p/ledgerbot', default_launch_profile: 'claude' }];
+      if (path === '/projects') return [{ id: 81, name: 'Trader', path: '/p/trader', default_launch_profile: 'claude' }];
       if (path === '/sessions' && init.method === 'POST') {
         server.started = true;
         return { id: 'ses_new' };
@@ -40,7 +40,7 @@ vi.mock('../../opscenter/api/auth.svelte', async (importOriginal) => {
         return { results: [{ list: '81', status: 'sent', target: body.targets['81'], label: 'Agent - Carnivore (Carnivore)' }] };
       }
       if (path === '/cplugs/huddle/aggregate?live_only=1') {
-        return { cursor: 3, groups: [{ list: '81', name: 'Ledgerbot', project_id: 81, revision: 2, groups: [], items: [
+        return { cursor: 3, groups: [{ list: '81', name: 'Trader', project_id: 81, revision: 2, groups: [], items: [
           item(1, '81', 'waiting_to_send'),
           item(2, '81', 'question', { created_by: 'claude', thread: [{ id: 9, item_id: 2, author: 'claude', kind: 'question', text: 'which feed?', answered: false, created_at: 0, seq: 2 }] }),
         ] }] };
@@ -94,7 +94,7 @@ describe.each([['the sidebar', false], ['the pop-out', true]])('%s', (_name, pop
     await settle();
     const ask = host.querySelector<HTMLElement>('[data-task-manager-send-ask-list="81"]');
     expect(ask).not.toBeNull();
-    expect(ask!.querySelector('.hdtl-ask-name')!.textContent).toBe('Ledgerbot');
+    expect(ask!.querySelector('.hdtl-ask-name')!.textContent).toBe('Trader');
     expect([...ask!.querySelectorAll('.hdtl-ask-item')].map((li) => li.textContent)).toEqual(['81 item 1']);
     const pick = host.querySelector<HTMLSelectElement>('[data-task-manager-send-ask-pick="81"]')!;
     expect(pick).not.toBeNull();
@@ -122,7 +122,7 @@ describe.each([['the sidebar', false], ['the pop-out', true]])('%s', (_name, pop
     await settle();
   }
 
-  test('nothing is delivered until the owner picks: the first press pastes nowhere, and stop sends nothing', async () => {
+  test('nothing is delivered until Joe picks: the first press pastes nowhere, and stop sends nothing', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     app = mount(HuddleBody, { target: host, props: { popout } });
@@ -144,7 +144,7 @@ describe.each([['the sidebar', false], ['the pop-out', true]])('%s', (_name, pop
     await askAndPick(host, 'start:new');
     for (let i = 0; i < 5; i += 1) await settle();
     const create = server.calls.find((c) => c.path === '/sessions');
-    expect(JSON.parse(create!.body)).toMatchObject({ working_dir: '/p/ledgerbot', project_name: 'Ledgerbot', agent_type: 'claude', auto_start_claude: true });
+    expect(JSON.parse(create!.body)).toMatchObject({ working_dir: '/p/trader', project_name: 'Trader', agent_type: 'claude', auto_start_claude: true });
     const tells = server.calls.filter((c) => c.path === '/cplugs/huddle/send').map((c) => JSON.parse(c.body));
     expect(tells.at(-1)).toEqual({ lists: ['81'], targets: { '81': 'ses_new' } });
     expect(tells.every((b) => !Object.values(b.targets).some((t) => t === 'ses_c' || t === 'ses_h'))).toBe(true);

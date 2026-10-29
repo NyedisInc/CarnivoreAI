@@ -35,7 +35,7 @@ function face(props: Record<string, unknown>): HTMLElement {
 const ROW = {
     agent_family: 'claude', activity_status: 'question', unread: true, startup_gate: 'awaiting_startup_prompt', status_source: 'registry',
     activity_hint: 'shell', parked_summary: 'waiting on the build', usage_limit: { resets_at: null },
-    host_key: 'peer-1', host_label: 'hosta', host_state: 'disconnected', tmux_session: 'cc_a',
+    host_key: 'peer-1', host_label: 'studio', host_state: 'disconnected', tmux_session: 'cc_a',
 };
 
 describe('SessionFace hands the light every signal', () => {
@@ -43,7 +43,7 @@ describe('SessionFace hands the light every signal', () => {
         face({ row: ROW, transport: 'disconnected', size: '9px', bare: true });
         expect(seen).toEqual([{
             status: 'question', unread: true, startupGate: 'awaiting_startup_prompt', statusSource: 'registry', activityHint: 'shell',
-            parkedSummary: 'waiting on the build', transport: 'disconnected', hostOffline: 'hosta', usageLimit: 'over limit', size: '9px', bare: true,
+            parkedSummary: 'waiting on the build', transport: 'disconnected', hostOffline: 'studio', usageLimit: 'over limit', size: '9px', bare: true,
         }]);
     });
 

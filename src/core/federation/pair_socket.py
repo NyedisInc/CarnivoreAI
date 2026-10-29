@@ -1,12 +1,3 @@
-"""
-TCP loopback is NOT a trust signal (an ssh forward, another local user or a web page all arrive
-from 127.0.0.1), so ``pair/begin`` without a login is refused on HTTP. The ssh step instead
-``-L``-forwards THIS socket, in the 0700 fed directory (mode 0600), and the server reads the
-connecting process's uid with ``LOCAL_PEERCRED`` (``SO_PEERCRED`` off macOS) and serves only our own
-uid. An ssh login as another user (F17) is therefore refused here, exactly as it cannot read the
-0600 code file. Protocol: the client sends ``BEGIN\\n``, the server answers one JSON line
-``{"nonce": ..., "file": <the 0600 code file>}`` or ``{"error": ...}`` and closes. The code itself goes only to the 0600 file.
-"""
 
 from __future__ import annotations
 
@@ -78,7 +69,6 @@ class PairSocket:
                 return
             try:
                 nonce = await asyncio.to_thread(self._begin, self._state_dir)
-                # state directory
                 answer = {"nonce": nonce, "file": str(self._code_dir / f"{pairing.FILE_PREFIX}{nonce}")}
             except pairing.RateLimited:
                 answer = {"error": "pair_rate_limited"}

@@ -16,6 +16,9 @@ _PASS_THROUGH = _OWN_KEYS | _META_KEYS
 UVICORN_LOGGER_PREFIX = "uvicorn"
 LIBRARY_MIN_LEVEL = logging.WARNING
 
+UVICORN_ACCESS_LOGGER = "uvicorn.access"
+SERVER_LOG_READ_PATH_PREFIX = "/api/v1/server-log"
+
 EventDict = Dict[str, Any]
 
 
@@ -61,8 +64,17 @@ def shared_processors() -> List[Callable[[Any, str, EventDict], EventDict]]:
     ]
 
 
+def _is_server_log_read(record: logging.LogRecord) -> bool:
+    args = record.args
+    if not isinstance(args, tuple) or len(args) < 3 or not isinstance(args[2], str):
+        return False
+    return args[2].startswith(SERVER_LOG_READ_PATH_PREFIX)
+
+
 def _keep_record(record: logging.LogRecord) -> bool:
     name = record.name
+    if name == UVICORN_ACCESS_LOGGER and _is_server_log_read(record):
+        return False
     if name == UVICORN_LOGGER_PREFIX or name.startswith(UVICORN_LOGGER_PREFIX + "."):
         return True
     return record.levelno >= LIBRARY_MIN_LEVEL

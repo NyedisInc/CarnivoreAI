@@ -8,6 +8,7 @@ const mk = (id: number, group: number | null) => ({
   id, list: '12', text: `item ${id}`, note: '', position: id, created_by: 'joe', state: 'open', kind: '', status: 'open', section: 'open',
   number: null, revision: 1, created_seq: id, seq: id, deleted: false, thread: [], unread: false, group,
 });
+// Area 7 holds rows; areas 8 (before it in nothing, after it by place) and 5 (placed FIRST) are empty.
 const GROUPS = [
   { id: 5, list: '12', name: 'early-empty', position: 0, folded: false },
   { id: 7, list: '12', name: 'auth', position: 1, folded: false },
@@ -63,6 +64,7 @@ async function mountBody(popout: boolean): Promise<HTMLElement> {
   return host;
 }
 
+/** Lay every section, status section and area target out top to bottom, 20px a line (jsdom has no layout). */
 function layOut(host: HTMLElement): void {
   const boxes = new Map<Element, { top: number; bottom: number }>();
   let y = 0;
@@ -105,7 +107,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('by area, empty groups are always drawn and are drop targets while a row is dragged', () => {
+describe('by area, empty groups are always drawn (Joe, 2026-10-05) and are drop targets while a row is dragged', () => {
   for (const popout of [false, true]) {
     const where = popout ? 'pop-out' : 'sidebar';
 

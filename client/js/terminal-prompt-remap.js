@@ -3,14 +3,6 @@
 
     var CLAUDE_DARK_PROMPT_SLOTS = Object.freeze({ background: 237, foreground: 231 });
 
-    /**
-     * How far the prompt band moves from the terminal ground toward the
-     * ink: 0.11 lands Carnivore Light (#f1f2f3 ground, #1d2226 ink) at
-     * #dadbdc, the depth of its own card surface (--color-bg-card
-     * #dadee1). Still sticks out, not a slab; ink on it measures about
-     * 12:1.
-     * @type {number}
-     */
     var PROMPT_BAND_MIX = 0.11;
 
     function toHex(c) {

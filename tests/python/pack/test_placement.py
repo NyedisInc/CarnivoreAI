@@ -58,7 +58,7 @@ class FakeWired:
 
     def set(self, *, a, b, c=None):
         self.runtime.own = {**a, "install_id": A}
-        self.runtime.roster.record(B, label="hosta", snapshot={**b, "install_id": B}, holds_master=A)
+        self.runtime.roster.record(B, label="studio", snapshot={**b, "install_id": B}, holds_master=A)
         if c is not None:
             self.runtime.roster.record(C, label="third", snapshot={**c, "install_id": C}, holds_master=A)
 
@@ -66,7 +66,7 @@ class FakeWired:
         return sqlite3.connect(self.db)
 
     def peers(self):
-        return [PeerInfo(i, l, "host", "connected", ["pack.machine"]) for i, l in ((B, "hosta"), (C, "third")) if i in self.runtime.roster.entries]
+        return [PeerInfo(i, l, "host", "connected", ["pack.machine"]) for i, l in ((B, "studio"), (C, "third")) if i in self.runtime.roster.entries]
 
 
 def run(wired, kind=None, *, task_type=None, needs=(), machine=None, record=False, **kw):
@@ -79,7 +79,7 @@ def test_browser_job_goes_to_the_machine_with_headroom_after_its_reserve(tmp_pat
     wired = FakeWired(tmp_path, a=snap("a", load1=9.0, reserve=("in_use", 30, 20)), b=snap("b", load1=1.0))
     got = run(wired, "browser")
     assert got.chosen == B and got.mode == "stats"
-    assert "hosta: 8.0 cores" in got.reason and "10% away reserve" in got.reason
+    assert "studio: 8.0 cores" in got.reason and "10% away reserve" in got.reason
     assert "mac (this computer): 0.0 cores" in got.reason and "30% in use reserve" in got.reason
     mac = next(r for r in got.candidates if r["install_id"] == A)
     assert mac["candidate"] is False and "cores free after its reserve" in mac["filter"]
@@ -92,9 +92,9 @@ def test_light_job_stays_home_and_auto_distribute_is_the_control(tmp_path):
     with closing(wired.open_db()) as conn:
         conn.execute("ALTER TABLE projects ADD COLUMN uid TEXT")
         conn.execute("ALTER TABLE projects ADD COLUMN home_install_id TEXT")
-        conn.execute("INSERT INTO projects (display_name, root, uid, home_install_id) VALUES ('ledgerbot', '/p/t', 'u1', ?)", (B,))
+        conn.execute("INSERT INTO projects (display_name, root, uid, home_install_id) VALUES ('trader', '/p/t', 'u1', ?)", (B,))
         conn.commit()
-    away = asyncio.run(explain.place(explain.Request(resolve(None, None), project="ledgerbot"), wired=wired, remote=True, record_it=False))
+    away = asyncio.run(explain.place(explain.Request(resolve(None, None), project="trader"), wired=wired, remote=True, record_it=False))
     assert away.chosen == B
     wired.runtime._settings = settings_doc.PackSettings(master_install_id=A, rev=(1, A), auto_distribute=True)
     assert run(wired, "light").chosen == B
@@ -139,7 +139,7 @@ def test_model_path_picks_among_candidates_and_falls_back_at_3_s(tmp_path):
     async def picks_b(ref, *, state, questions):
         asked["options"] = questions["machine"]["options"]
         asked["state"] = state
-        return DecideResult({"machine": {"value": "hosta"}})
+        return DecideResult({"machine": {"value": "studio"}})
 
     async def slow(ref, *, state, questions):
         await asyncio.sleep(30)
@@ -155,7 +155,7 @@ def test_model_path_picks_among_candidates_and_falls_back_at_3_s(tmp_path):
     assert run(wired, "suite").chosen == A
     got = run(wired, "suite", decide=picks_b, ref="pack.placement")
     assert got.mode == "enhanced" and got.chosen == B
-    assert sorted(asked["options"]) == ["hosta", "mac"] and "third" not in str(asked["state"])
+    assert sorted(asked["options"]) == ["mac", "studio"] and "third" not in str(asked["state"])
     assert enhanced.TIMEOUT_SECONDS == 3.0
     started = time.monotonic()
     got = run(wired, "suite", decide=slow, ref="pack.placement")
@@ -173,7 +173,7 @@ def test_every_placement_records_machine_and_reason_and_the_queue_keeps_what_no_
     got = run(wired, "browser", record=True)
     with closing(wired.open_db()) as conn:
         row = conn.execute("SELECT chosen_install_id, mode, reason FROM pack_placements").fetchone()
-        assert row[0] == B and row[1] == "stats" and "hosta: 8.5 cores" in row[2]
+        assert row[0] == B and row[1] == "stats" and "studio: 8.5 cores" in row[2]
         qid = spawn_queue.enqueue(conn, {"parent_id": 1, "args": {"job": "j"}}, "no machine")
         assert [r["id"] for r in spawn_queue.list_queue(conn)] == [qid]
         assert spawn_queue.expire_old(conn) == [] and len(spawn_queue.expire_old(conn, now=time.time() + 4000)) == 1

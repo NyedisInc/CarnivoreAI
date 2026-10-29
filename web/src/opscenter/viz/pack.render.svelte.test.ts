@@ -48,7 +48,7 @@ describe('the pack view', () => {
     roster = { master_install_id: 'mac', self_install_id: 'mac', settings: { placement_mode: 'stats', auto_distribute: false }, disagreement: null,
       machines: [
         machine('mac', { is_self: true, is_master: true, state: 'self', snapshot: snap(10, 8, 'in_use', 30, [agent(1, 'alpha', 150, 2048), agent(2, 'beta', 50, 1024)]) }),
-        machine('hosta', { snapshot: snap(8, 2, 'away', 10, [agent(3, 'gamma', 100, 512)]) }),
+        machine('studio', { snapshot: snap(8, 2, 'away', 10, [agent(3, 'gamma', 100, 512)]) }),
       ] };
     const target = document.createElement('div');
     document.body.append(target);
@@ -60,28 +60,28 @@ describe('the pack view', () => {
     expect(target.querySelectorAll('[data-pack-master]').length).toBe(1);
     expect(target.querySelector('[data-pack-box="mac"] [data-pack-master]')).not.toBeNull();
     expect(target.querySelector('[data-pack-box="mac"] [data-pack-line]')!.getAttribute('data-pack-line')).toBe('70');
-    expect(target.querySelector('[data-pack-box="hosta"] [data-pack-line]')!.getAttribute('data-pack-line')).toBe('90');
+    expect(target.querySelector('[data-pack-box="studio"] [data-pack-line]')!.getAttribute('data-pack-line')).toBe('90');
     expect(target.querySelector('[data-pack-box="mac"] [data-pack-level]')!.textContent).toBe('in use');
-    expect(target.querySelector('[data-pack-box="hosta"] [data-pack-level]')!.textContent).toBe('away');
+    expect(target.querySelector('[data-pack-box="studio"] [data-pack-level]')!.textContent).toBe('away');
     expect(target.querySelector('[data-pack-box="mac"] [data-pack-reserve]')!.textContent).toBe('reserve 30% cpu, 20% mem');
     expect(target.querySelector('[data-pack-box="mac"] [data-pack-sum] dd')!.textContent).toBe('2, 2 cores, 3072 mb');
     expect(target.querySelector('[data-pack-box="mac"]')!.className).toContain('--over');
-    expect(target.querySelector('[data-pack-box="hosta"]')!.className).not.toContain('--over');
+    expect(target.querySelector('[data-pack-box="studio"]')!.className).not.toContain('--over');
     const sums = [...target.querySelectorAll('[data-pack-sum] dd')].map((e) => e.textContent ?? '');
     expect(sums[0]).toContain('2 ');
     expect(sums[1]).toContain('1 ');
     expect(target.querySelector('[data-pack-total="agents"]')!.textContent).toContain('3 agents');
     expect(target.querySelector('[data-pack-total="cores"]')!.textContent).toContain('3 / 18');
     expect(target.querySelector('[data-pack-total="mem"]')!.textContent).toContain('3584');
-    expect(target.querySelector('[data-pack-agent="3"]')!.textContent).toContain('hosta');
+    expect(target.querySelector('[data-pack-agent="3"]')!.textContent).toContain('studio');
   });
 
   test('a machine with no snapshot says its state and stays out of the totals; nothing is zero', () => {
     const model = packModel({ master_install_id: 'mac', self_install_id: 'mac', settings: { placement_mode: 'stats', auto_distribute: false }, disagreement: null,
       machines: [machine('mac', { is_self: true, is_master: true, state: 'self', snapshot: snap(4, 1, 'away', 10, [agent(1, 'a', 100, 100)]) }),
-        machine('hosta', { snapshot: null, state: 'disconnected' })] } as never);
-    const hosta = model.boxes.find((b) => b.installId === 'hosta')!;
-    expect([hosta.live, hosta.cores, hosta.loadPct, hosta.agentCount]).toEqual([false, null, null, null]);
+        machine('studio', { snapshot: null, state: 'disconnected' })] } as never);
+    const studio = model.boxes.find((b) => b.installId === 'studio')!;
+    expect([studio.live, studio.cores, studio.loadPct, studio.agentCount]).toEqual([false, null, null, null]);
     expect(model.totals).toMatchObject({ machines: 2, reporting: 1, silent: 1, agents: 1, agentCores: 1 });
   });
 });

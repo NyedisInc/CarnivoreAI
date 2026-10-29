@@ -12,6 +12,7 @@ const C = 'terminal:ses_c' as SlotId;
 const D = 'terminal:ses_d' as SlotId;
 const P = 'terminal:@primary' as SlotId;
 
+/** A page of flex rows holding the given cells, evenly shared. */
 function page(...rows: SlotId[][]): Layout {
   return {
     v: 6,

@@ -232,3 +232,23 @@ def test_bare_traceback_without_the_header_folds_too(tmp_path: Path) -> None:
 def test_structured_json_records_keep_their_own_time(tmp_path: Path) -> None:
     got = read_page(_write(tmp_path / "server.log", [_timed("a", "2026-10-16T10:00:00Z"), _line("b")]))["records"]
     assert [(r["timestamp"], r["approx_time"]) for r in got] == [("2026-10-16T10:00:00Z", False), ("2026-10-16T10:00:00Z", False)]
+
+
+def test_since_with_nothing_new_opens_no_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    log = _write(tmp_path / "server.log", [_line("a"), _line("b")])
+    head = parse_cursor(read_page(log)["head"])
+    opened: list[Path] = []
+    real = Path.open
+
+    def counting(self: Path, *args, **kwargs):
+        opened.append(self)
+        return real(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", counting)
+    assert read_page(log, since=head)["records"] == []
+    assert opened == []
+    with log.open("a") as handle:
+        handle.write(_line("c") + "\n")
+    opened.clear()
+    assert [r["event"] for r in read_page(log, since=head)["records"]] == ["c"]
+    assert len(opened) == 1

@@ -147,7 +147,7 @@ def test_wire_round_trip_never_leaks_the_key(env, protocol, base, auth):
     refused = client.post("/api/v1/ai/chat", json={"connection": cid, "model": "bad", "prompt": "ping"})
     seen.append(refused.text)
     assert refused.status_code == 502 and refused.json()["detail"]["provider_status"] == 401
-    assert "***" in refused.json()["detail"]["detail"]
+    assert refused.json()["detail"]["code"] == "byoai_provider_error"
 
     calls = client.get("/api/v1/ai/calls").json()["calls"]
     seen.append(json.dumps(calls))
@@ -183,5 +183,5 @@ def test_refused_connection_is_503_unreachable(env):
         "options": {"protocol": "openai_chat", "auth": "bearer", "capabilities": ["chat"]}})
     cid = made.json()["connection"]["id"]
     res = client.post("/api/v1/ai/chat", json={"connection": cid, "model": "m-1", "prompt": "ping"})
-    assert res.status_code == 503 and res.json()["detail"]["error"] == "unreachable"
+    assert res.status_code == 503 and res.json()["detail"]["code"] == "byoai_unreachable"
     assert SECRET not in res.text

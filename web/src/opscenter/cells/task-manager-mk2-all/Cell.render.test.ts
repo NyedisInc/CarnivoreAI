@@ -19,6 +19,7 @@ vi.mock('../../api/auth.svelte', async (importOriginal) => {
       if (path === '/cplugs/huddle') return { revision: 1, settings: { view: 'area', hideCompleted: false } };
       if (path === '/cplugs/huddle/focus') return { focus: null };
       if (path === '/cplugs/huddle/lists') return { cursor: 0, lists: [row('7', 'Carnivore', 7, 2), row('9', 'Billing', 9, 1)] };
+      // the live read adds a query string (live_only, hide_completed), so the path is matched without it
       const one = /^\/cplugs\/huddle\/lists\/(\d+)(?:\?.*)?$/.exec(path);
       if (one) return { list: one[1], revision: 1, cursor: 0, groups: [], items: [one[1] === '7' ? mk(1, '7', { needs_you: true, section: 'needs_you' }) : mk(2, '9', { unread: true })] };
       if (path.split('?')[0] === '/cplugs/huddle/aggregate') {
@@ -98,8 +99,10 @@ describe('TM Mark II all beside the original all task managers cell', () => {
   });
 });
 
+/** The item ids a host draws, sorted. Inputs: host. Output: string[]. */
 const itemIds = (host: HTMLElement): string[] => [...host.querySelectorAll('[data-huddle-item]')].map((el) => el.getAttribute('data-huddle-item') ?? '').sort();
 
+/** Press one Mark II chip and let the list redraw. Inputs: host; chip id. Output: Promise<void>. */
 async function press(host: HTMLElement, chip: string): Promise<void> {
   (host.querySelector(`[data-task-manager-mk2-chip="${chip}"]`) as HTMLButtonElement).click();
   await tick();

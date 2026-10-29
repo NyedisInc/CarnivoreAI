@@ -223,7 +223,7 @@ async def test_private_destination_reaches_the_real_guard_only_when_allowed(monk
     from src.core.notifications import http
 
     async def resolver(host, port):
-        return ["192.0.2.13"]
+        return ["10.0.0.5"]
 
     seen = {}
 
@@ -241,7 +241,7 @@ async def test_a_kind_without_the_switch_resolving_private_is_a_counted_refusal(
     from src.core.notifications.contracts import NOT_COUNTED
 
     async def resolver(host, port):
-        return ["192.0.2.19"]
+        return ["10.1.1.1"]
 
     async def via_guard(method, url, **kw):
         return await http.guarded_request(method, url, resolver=resolver, **kw)
@@ -255,7 +255,7 @@ async def test_a_moved_url_reaches_the_guard_as_origin_changed(monkeypatch) -> N
     from src.core.notifications import http
 
     async def resolver(host, port):
-        return ["192.0.2.13"]
+        return ["10.0.0.5"]
 
     async def via_guard(method, url, **kw):
         return await http.guarded_request(method, url, resolver=resolver, **kw)

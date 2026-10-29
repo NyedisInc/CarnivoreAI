@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 
 CWD = os.environ.get(
-    "ALTSB_LAB_DIR", os.path.expanduser("~/project")
+    "ALTSB_LAB_DIR", os.path.expanduser("~/Scratch/scratch-lab/altscreen-lab")
 )
 PROJ = os.path.expanduser(
     "~/.claude/projects/" + CWD.replace("/", "-").replace(".", "-")

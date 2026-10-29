@@ -2,7 +2,7 @@
   import type { Snippet } from 'svelte';
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
-  import Icon from '../../opscenter/ui/Icon.svelte';
+  import { Button, Field, IconButton } from '../base';
   import ApprovalDiff from './ApprovalDiff.svelte';
   import ApprovalReview from './ApprovalReview.svelte';
   import QuestionCardFrame from './QuestionCardFrame.svelte';
@@ -18,7 +18,6 @@
   let { item, onJump, strip = true, large = false, registerFoot, foldable = false, age = '' }: {
     item: ApprovalItem; onJump: (item: ApprovalItem) => void;
     registerFoot?: (foot: Snippet | null) => void;
-    /* permission prompt */
     strip?: boolean;
     large?: boolean;
     foldable?: boolean;
@@ -41,7 +40,6 @@
   const notice = $derived(approvals.notices[noticeKey(item)] ?? '');
   const danger = $derived(item.display?.tone === 'danger');
 
-  /* the bottom bar */
   const inBar = $derived(registerFoot === undefined);
   /* the bottom bar */
   const choices = $derived(inBar && item.source === 'dialog' && !multi && options.length > 0);
@@ -84,14 +82,14 @@
 
 {#snippet choiceButtons()}
   {#if multi && options.length}
-    <button type="button" class="modal-btn modal-btn-confirm" data-ap-submit disabled={busy}
-      onclick={() => act(() => answerDialog(item, { options: ticked }))}>{t('approvals.submit')}</button>
+    <Button size="sm" variant="confirm" data-ap-submit disabled={busy}
+      onclick={() => act(() => answerDialog(item, { options: ticked }))}>{t('approvals.submit')}</Button>
   {:else}
     {#each options as row (row.label)}
-      <button type="button" class="modal-btn modal-btn-{cardOptionTone(item, row.label)}" data-ap-option disabled={busy}
+      <Button size="sm" variant={cardOptionTone(item, row.label)} data-ap-option disabled={busy}
         title={row.description ? `${row.label}: ${row.description}` : row.label} onclick={() => act(() => answerDialog(item, { option: row.label }))}>
         <span class="ap-opt-label">{say(optionWords(row.label))}</span>
-      </button>
+      </Button>
     {/each}
   {/if}
 {/snippet}
@@ -104,29 +102,28 @@
       {#if item.source === 'dialog'}
         {#if inBar}{@render choiceButtons()}{/if}
         {#if strip && canApprove(item)}
-          <button type="button" class="modal-btn modal-btn-secondary" data-approval-deny disabled={busy}
-            onclick={() => act(() => answerDialog(item, { plain: 'no' }))}>{t('approvals.deny')}</button>
-          <button type="button" class="modal-btn modal-btn-confirm" data-approval-approve-go disabled={busy}
-            onclick={() => act(() => answerDialog(item, { plain: 'yes' }))}>{t('approvals.approve')}</button>
+          <Button size="sm" data-approval-deny disabled={busy}
+            onclick={() => act(() => answerDialog(item, { plain: 'no' }))}>{t('approvals.deny')}</Button>
+          <Button size="sm" variant="confirm" data-approval-approve-go disabled={busy}
+            onclick={() => act(() => answerDialog(item, { plain: 'yes' }))}>{t('approvals.approve')}</Button>
         {/if}
         {#if hasCode}{@render review()}{/if}
         {#if offersDismiss(item)}
-          <button type="button" class="modal-btn modal-btn-secondary" disabled={busy}
-            onclick={() => act(() => answerDialog(item, { dismiss: true }))}>{t('approvals.dismiss')}</button>
+          <Button size="sm" disabled={busy}
+            onclick={() => act(() => answerDialog(item, { dismiss: true }))}>{t('approvals.dismiss')}</Button>
         {/if}
       {:else if item.source === 'agent_action'}
         {#if hasCode}{@render review()}{/if}
-        <button type="button" class="modal-btn modal-btn-secondary" data-approval-deny-action disabled={busy}
-          onclick={() => act(() => decideAgentAction(item, false))}>{t('approvals.deny')}</button>
-        <button type="button" class="modal-btn {danger ? 'modal-btn-danger' : 'modal-btn-confirm'}" data-approval-approve-action
+        <Button size="sm" data-approval-deny-action disabled={busy}
+          onclick={() => act(() => decideAgentAction(item, false))}>{t('approvals.deny')}</Button>
+        <Button size="sm" variant={danger ? 'danger' : 'confirm'} data-approval-approve-action
           disabled={busy || !confirmed}
-          onclick={() => act(() => decideAgentAction(item, true, item.confirm_text ? typed : undefined))}>{t('approvals.approve')}</button>
+          onclick={() => act(() => decideAgentAction(item, true, item.confirm_text ? typed : undefined))}>{t('approvals.approve')}</Button>
       {:else if hasCode}
         {@render review()}
       {/if}
       {#if item.source !== 'agent_action' || item.session_id}
-        <button type="button" class="modal-btn modal-btn-secondary ap-jump" data-ap-jump aria-label={t('approvals.open_session')}
-          title={t('approvals.open_session')} onclick={() => onJump(item)}><Icon name="external" size={14} /></button>
+        <IconButton style="margin-left: auto" data-ap-jump label={t('approvals.open_session')} icon="external" iconSize={14} onclick={() => onJump(item)} />
       {/if}
     </div>
   </div>
@@ -178,9 +175,9 @@
       {/if}
       {#if canOther}
         <form class="ap-other" onsubmit={(event) => { event.preventDefault(); sendOther(); }}>
-          <input class="oc-field ap-input" type="text" maxlength="2000" bind:value={other} disabled={busy}
-            placeholder={t('approvals.other_placeholder')} aria-label={t('approvals.other_label')} />
-          <button type="submit" class="modal-btn modal-btn-secondary" disabled={busy || !other.trim()}>{t('approvals.send')}</button>
+          <span class="ap-input"><Field block maxlength={2000} bind:value={other} disabled={busy}
+            placeholder={t('approvals.other_placeholder')} aria-label={t('approvals.other_label')} /></span>
+          <Button size="sm" type="submit" disabled={busy || !other.trim()}>{t('approvals.send')}</Button>
         </form>
       {/if}
     {:else if item.source === 'agent_action'}
@@ -195,9 +192,8 @@
   .ap-card { display: flex; flex-direction: column; box-shadow: inset 0 -1px 0 0 var(--pl-line-quiet); }
   .ap-card--lg :global(.qc-hl), .ap-card--lg .ap-question { font-size: var(--oc-fs-heading); line-height: 1.45; }
   .ap-card--lg :global(.qc-raw) { font-size: var(--oc-fs-status); }
-    .ap-card--lg .ap-other .modal-btn, .ap-card--lg .ap-bar :global(.modal-btn), .ap-card--lg .ap-picks :global(.modal-btn) { font-size: var(--oc-fs-run-title); }
-  .ap-card--lg .ap-bar :global(.modal-btn), .ap-card--lg .ap-picks :global(.modal-btn) { height: 32px; }
-  .ap-card--lg .ap-bar .ap-jump { width: 32px; }
+  .ap-card--lg .ap-other :global([data-btn]), .ap-card--lg .ap-bar :global([data-btn]), .ap-card--lg .ap-picks :global([data-btn]) { --_btn-fs: var(--oc-fs-run-title); --_btn-h: 32px; }
+  .ap-card--lg .ap-bar { --oc-ibtn-size: 32px; }
   .ap-question { margin: 0; font-size: var(--oc-fs-body); color: var(--pl-text); white-space: pre-wrap; overflow-wrap: anywhere; }
   .ap-tabs { display: flex; flex-direction: column; gap: var(--oc-space-1); }
   .ap-tabrow { display: flex; flex-wrap: wrap; gap: var(--oc-space-1) 10px; margin: 0; padding: 0; list-style: none; font-size: var(--oc-fs-hint); }
@@ -219,8 +215,7 @@
   .ap-other { display: flex; gap: var(--oc-space-1-5); }
   .ap-input { flex: 1; min-width: 0; }
   .ap-foot { display: flex; flex-direction: column; gap: var(--oc-space-1-5); min-width: 0; }
-  .ap-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--oc-space-1-5); min-width: 0; }
-  .ap-bar .ap-jump { margin-left: auto; }
+  .ap-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--oc-space-1-5); min-width: 0; --oc-ibtn-size: var(--oc-control-h-sm); }
   .ap-foot--pinned { flex: 1; gap: var(--oc-space-2); }
   .qc-chip {
     align-self: flex-start;
@@ -234,28 +229,11 @@
     line-height: 16px;
   }
   .qc-chip--beast { color: var(--oc-yellow); border-color: var(--oc-yellow); }
-  .ap-other .modal-btn { padding: var(--oc-space-1) 10px; font-size: var(--oc-fs-label); }
-  .ap-bar :global(.modal-btn), .ap-picks :global(.modal-btn) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    height: 26px;
-    max-width: 100%;
-    padding: 0 10px;
-    overflow: hidden;
-    font-size: var(--oc-fs-label);
-    line-height: 1;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
   .ap-bar .ap-opt-label, .ap-picks .ap-opt-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .ap-bar .ap-jump { width: 26px; padding: 0; flex: none; }
-  .ap-bar :global(.modal-btn:disabled), .ap-picks :global(.modal-btn:disabled), .ap-other .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
   @container oc-ap (max-width: 260px) {
     .ap-actions:not(.ap-bar) { flex-direction: column; align-items: stretch; }
     .ap-other { flex-direction: column; align-items: stretch; }
-    .ap-other .modal-btn { align-self: flex-end; }
+    .ap-other :global([data-btn]) { align-self: flex-end; }
   }
   .ap-card__notice { margin: 0 10px var(--oc-space-2); font-size: var(--oc-fs-micro); color: var(--oc-coral); overflow-wrap: anywhere; }
 </style>

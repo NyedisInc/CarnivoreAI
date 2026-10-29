@@ -1,4 +1,3 @@
-/* conversation id could not */
 import type { KeyArea, KeyQueue, RunningKey } from '../../../lib/pipeline-status/api';
 import { pluginNameKey } from '../../../lib/pipeline-status/model';
 import { nextWords, runTimeWords } from '../../lib/run-chart';

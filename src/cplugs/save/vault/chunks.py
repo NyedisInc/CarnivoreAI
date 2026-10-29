@@ -6,7 +6,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Iterator, Optional, Tuple
+from typing import Callable, Iterator, Optional, Set, Tuple
 
 from src.cplugs.save.engine import layout
 from src.cplugs.save.vault import constants as K
@@ -24,7 +24,7 @@ from src.cplugs.sdk.blob_codec import (
 
 class BlobStore:
 
-    def __init__(self, root: Path, codec: Optional[str] = None) -> None:
+    def __init__(self, root: Path, codec: Optional[str] = None, clock: Callable[[], float] = time.monotonic) -> None:
         self._root = Path(root)
         self._dir = self._root / K.BLOBS_DIR
         self._codec = codec or default_codec()
@@ -33,6 +33,24 @@ class BlobStore:
         self._lock = threading.Lock()
         self._sync_lock = threading.Lock()
         self._dirty: set = set()
+        self._clock = clock
+        self._known: Set[str] = set()
+        self._known_until = clock() + K.CHUNK_KNOWN_SECONDS
+        self._folder_id = self._identity()
+
+    def _identity(self) -> Optional[Tuple[int, int]]:
+        try:
+            st = os.stat(self._dir)
+        except OSError:
+            return None
+        return st.st_dev, st.st_ino
+
+    def revalidate(self) -> None:
+        now = self._identity()
+        with self._lock:
+            if now != self._folder_id:
+                self._folder_id = now
+                self._known = set()
 
     def _path(self, sha: str, codec: str) -> Path:
         return self._root / blob_relpath(sha, codec)
@@ -45,12 +63,69 @@ class BlobStore:
         return None
 
     def has(self, sha: str) -> bool:
-        return self.find(sha) is not None
+        with self._lock:
+            self._roll_window()
+            if sha in self._known:
+                return True
+        found = self.find(sha) is not None
+        if found:
+            self._remember(sha)
+        return found
+
+    def _roll_window(self) -> None:
+        now = self._clock()
+        if now >= self._known_until:
+            self._known = set()
+            self._known_until = now + K.CHUNK_KNOWN_SECONDS
+
+    def _remember(self, sha: str) -> None:
+        with self._lock:
+            self._roll_window()
+            if self._folder_id is None:
+                self._folder_id = self._identity()
+            if len(self._known) >= K.CHUNK_KNOWN_MAX:
+                self._known = set()
+            self._known.add(sha)
+
+    def forget(self, sha: str) -> None:
+        with self._lock:
+            self._known.discard(sha)
+
+    def on_disk(self, sha: str) -> bool:
+        found = self.find(sha) is not None
+        if found:
+            self._remember(sha)
+        else:
+            self.forget(sha)
+        return found
+
+    def remove(self, sha: str, *, path: Optional[Path] = None, prune: bool = False) -> int:
+        paths = [path] if path is not None else [p for codec in BLOB_EXTENSIONS if (p := self._path(sha, codec)).is_file()]
+        freed = 0
+        try:
+            for victim in paths:
+                try:
+                    freed += victim.stat().st_size
+                except OSError:
+                    pass
+                victim.unlink(missing_ok=True)
+        finally:
+            self.forget(sha)
+        if prune and paths:
+            folder = paths[0].parent
+            try:
+                folder.rmdir()
+                with self._lock:
+                    self._dirty.discard(folder)
+            except OSError:
+                pass
+        return freed
 
     def put(self, raw: bytes) -> Tuple[ChunkRef, int, bool]:
         ref = ChunkRef(hashlib.sha256(raw).hexdigest(), len(raw))
         found = self.find(ref.sha256)
         if found is not None:
+            self._remember(ref.sha256)
             return ref, self._touch(found[0]), False
         packed = compress(raw, self._codec)
         dest = self._path(ref.sha256, self._codec)
@@ -68,6 +143,7 @@ class BlobStore:
             self.new_blobs += 1
             self.new_bytes += len(packed)
             self._dirty.add(dest.parent)
+        self._remember(ref.sha256)
         return ref, len(packed), True
 
     def _touch(self, path: Path) -> int:

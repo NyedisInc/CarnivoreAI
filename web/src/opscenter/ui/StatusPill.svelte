@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   let {
     tone = 'var(--oc-green)',
     label,

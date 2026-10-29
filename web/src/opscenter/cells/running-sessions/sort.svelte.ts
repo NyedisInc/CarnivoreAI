@@ -1,8 +1,7 @@
-/* running sessions */
 
 import { elapsedSeconds, normalizeStatus, type ProjectResponse, type SessionInfo } from '../../api';
 import { createSortPref } from '../../lib/list-sort.svelte';
-import { projectFor } from './project';
+import { projectOfRow } from './project';
 import { taskFor } from './meta';
 
 export type SortKey = 'activity' | 'name' | 'last_used' | 'project';
@@ -58,8 +57,8 @@ export function sortRows(
       break;
     case 'project':
       copy.sort((a, b) => {
-        const byProject = projectFor(a.session.working_dir, projectRows).localeCompare(
-          projectFor(b.session.working_dir, projectRows),
+        const byProject = projectOfRow(a, projectRows).localeCompare(
+          projectOfRow(b, projectRows),
         );
         return byProject !== 0 ? byProject : taskFor(a).localeCompare(taskFor(b));
       });

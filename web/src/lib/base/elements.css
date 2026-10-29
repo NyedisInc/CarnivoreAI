@@ -1,4 +1,4 @@
-/* :where() */
+/* reserved 1px border */
 @layer base {
   :where(:is([data-oc-base] :is(button, input:is([type='button'], [type='submit'], [type='reset'])):not([class]), [data-btn]):not(.xterm *, .cm-editor *)) {
     --_btn-h: var(--oc-control-h);

@@ -48,11 +48,6 @@ async def owner_input(app: Any, session_id: str) -> None:
 
 
 def schedule_owner_input(app: Any, session_id: str) -> bool:
-    """Fire ``owner_input`` in the background so a keystroke never waits on it; one run per pane at a time.
-
-    Inputs: app (FastAPI app); session_id (str). Output: bool - True when a task was started, False when one is
-    already running for this pane (the keystroke is coalesced into it). Any failure is logged, never swallowed.
-    """
     if session_id in _in_flight:
         return False
     _in_flight.add(session_id)

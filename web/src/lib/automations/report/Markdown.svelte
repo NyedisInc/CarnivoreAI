@@ -1,4 +1,4 @@
-<!-- <script -->
+
 <script lang="ts">
   import { parseMarkdown, type Inline } from '../logic/markdown';
 

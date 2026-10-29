@@ -42,8 +42,8 @@ def test_appends_to_the_last_line_only():
 
 
 def test_leaves_a_wrapper_with_an_entry_alone():
-    script = "keyc() (\n  command claude\n)"
-    out = _step_v4_to_v5(_cfg([{"id": "keyc", "script": script, "entry": "keyc"}]))
+    script = "cld() (\n  command claude\n)"
+    out = _step_v4_to_v5(_cfg([{"id": "cld", "script": script, "entry": "cld"}]))
     assert _scripts(out) == [script]
 
 

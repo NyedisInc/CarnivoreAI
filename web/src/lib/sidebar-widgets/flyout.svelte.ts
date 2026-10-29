@@ -18,7 +18,6 @@ export function flyoutWidget(id: string | null, registry: SidebarWidgetRegistry 
 
 export function openFlyout(id: string, registry: SidebarWidgetRegistry = sidebarWidgets): boolean {
   const widget = flyoutWidget(id, registry);
-  // cannot be opened
   if (!widget || !widgetPresent(widget)) return false;
   if (widget.action) {
     widget.action();

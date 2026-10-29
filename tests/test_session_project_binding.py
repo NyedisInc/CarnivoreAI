@@ -243,17 +243,17 @@ class TestTheNoProjectFallback:
         (tmp_path / "other").mkdir()
         with closing(_conn(state_dir)) as conn:
             with conn:
-                ensure_project_row(conn, str(tmp_path / "audio"), display_name="TamcrestJunhaven")
-                ensure_project_row(conn, str(tmp_path / "other"), display_name="TamcrestJunhaven")
+                ensure_project_row(conn, str(tmp_path / "audio"), display_name="SoundDesk")
+                ensure_project_row(conn, str(tmp_path / "other"), display_name="SoundDesk")
                 names = sorted(r[0] for r in conn.execute("SELECT display_name FROM projects"))
-        assert names == ["TamcrestJunhaven", "TamcrestJunhaven (2)"]
+        assert names == ["SoundDesk", "SoundDesk (2)"]
 
     def test_a_scratch_directory_is_the_one_exclusion(self,
                                                       state_dir: Path):
         with closing(_conn(state_dir)) as conn:
             with conn:
                 binding = resolve_project_binding(
-                    conn, "/private/tmp/claude-1000/x", allow_create=True
+                    conn, "/private/tmp/claude-501/x", allow_create=True
                 )
                 rows = conn.execute(
                     "SELECT COUNT(*) FROM projects"
@@ -267,7 +267,7 @@ class TestTheCreateRace:
     def test_creating_a_project_adopts_the_sessions_already_under_it(
         self, state_dir: Path, tmp_path: Path
     ):
-        folder = tmp_path / "ses_f5e1237f"
+        folder = tmp_path / "ses_5a756046"
         folder.mkdir()
         with closing(_conn(state_dir)) as conn:
             with conn:
@@ -290,7 +290,7 @@ class TestTheCreateRace:
         self, state_dir: Path, tmp_path: Path
     ):
         home = tmp_path / "home"
-        folder = home / "Exampleapp"
+        folder = home / "Sparrow"
         folder.mkdir(parents=True)
         derived = SESSION_ATTRIBUTION_DERIVED_DEEPEST
         with closing(_conn(state_dir)) as conn:
@@ -300,7 +300,7 @@ class TestTheCreateRace:
                                      project_id=top, attribution=derived)
                 stays = _add_session(conn, name="b", epoch=2, working_dir=str(folder),
                                      project_id=top, attribution="explicit")
-            created = create_project(conn, name="Exampleapp", path=str(folder))
+            created = create_project(conn, name="Sparrow", path=str(folder))
             late = _add_session(conn, name="c", epoch=3, working_dir=str(folder),
                                 project_id=top, attribution=derived)
             with conn:

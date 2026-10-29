@@ -92,7 +92,7 @@ def _sequence(monkeypatch, usages: List[Optional[Dict[str, int]]]) -> m.RunOutco
         return m.RunOutcome(status=m.SUCCEEDED, usage=queue.pop(0))
 
     monkeypatch.setitem(targets.RUNNERS, "agent", runner)
-    monkeypatch.setattr(sequence, "_tell", lambda *a, **k: None)
+    monkeypatch.setattr(sequence.notify_policy, "tell", lambda *a, **k: None)
     steps = [{"kind": "agent"} for _ in usages]
     automation = {"target": {"kind": "sequence", "steps": steps}, "delivery": {"notify": False}}
     return asyncio.run(sequence.run(SimpleNamespace(), automation, {"run_id": "r1"}))

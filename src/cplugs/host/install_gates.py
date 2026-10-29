@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import stat
+import zipfile
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple, Optional
@@ -12,17 +13,17 @@ from typing import Any, Dict, List, NamedTuple, Optional
 from src.cplugs.host import identity
 from src.cplugs.host.preview_check import PreviewError, read_preview
 from src.cplugs.host.sidecar_manifest import (
-    MANIFEST_FILE, TRUST_UNRESTRICTED, SidecarManifest, SidecarManifestError, clean_text, load_sidecar_manifest, sidecar_reasons)
-from src.cplugs.host.sidecar_spec import pinned_key_matches
+    MANIFEST_FILE, SidecarManifest, SidecarManifestError, _views, clean_text, load_sidecar_manifest, sidecar_reasons)
 from src.cplugs.sdk import sidecar
 from src.cplugs.sdk.manifest import RESERVED_IDS
 from src.cplugs.sdk.permission_registry import TIER_CATALOG, risk_of
 
 ALLOWED_SUFFIXES = frozenset({".py", ".json", ".md", ".txt"})
 VIEW_SUFFIXES = frozenset({".html", ".css", ".js", ".svg", ".png", ".woff2"})
+_NATIVE_MAGIC = (b"\x7fELF", b"MZ", b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe", b"\xca\xfe\xba\xbe")
 MAX_MEMBERS = 500
-MAX_FILE_BYTES = 256 * 1024
-MAX_TOTAL_BYTES = 2 * 1024 * 1024
+MAX_FILE_BYTES = 2 * 1024 * 1024
+MAX_TOTAL_BYTES = 3 * 1024 * 1024
 _RISK_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 NOT_SAFE = "cplug_not_safe"
@@ -71,12 +72,22 @@ def _declared_preview(root: Path) -> str:
     return value if isinstance(value, str) else ""
 
 
-def check_files(root: Path, extra_suffixes: frozenset = frozenset()) -> List[Path]:
+def _declared_view_files(root: Path) -> frozenset[str]:
+    try:
+        raw = json.loads((root / MANIFEST_FILE).read_text(encoding="utf-8"))
+        views = _views(raw.get("views"), MANIFEST_FILE)
+    except (OSError, ValueError, AttributeError, SidecarManifestError):
+        return frozenset()
+    return frozenset(f"views/{view['name']}/{path}" for view in views for path in view["files"])
+
+
+def check_files(root: Path) -> List[Path]:
     members = _walk(root)
     if len(members) > MAX_MEMBERS:
         raise CplugGateRefusal(TOO_LARGE, f"a plugin may carry at most {MAX_MEMBERS} files")
     total = 0
     preview = _declared_preview(root)
+    view_files = _declared_view_files(root)
     for path in members:
         rel = path.relative_to(root).as_posix()
         is_preview = rel == preview
@@ -85,13 +96,21 @@ def check_files(root: Path, extra_suffixes: frozenset = frozenset()) -> List[Pat
                 read_preview(root, rel)
             except PreviewError as exc:
                 raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]}: {exc}") from exc
-        elif path.suffix.lower() not in ALLOWED_SUFFIXES | extra_suffixes:
+        elif path.suffix.lower() not in ALLOWED_SUFFIXES and not (rel in view_files and path.suffix.lower() in VIEW_SUFFIXES):
             raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]} is not a file type a plugin may carry")
         info = os.lstat(path)
         if info.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
             raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]} is executable; a plugin ships plain files")
         if info.st_size > MAX_FILE_BYTES and not is_preview:
             raise CplugGateRefusal(TOO_LARGE, f"{rel[:120]} is over {MAX_FILE_BYTES // 1024} KiB")
+        with path.open("rb") as fh:
+            header = fh.read(8)
+        if header.startswith(_NATIVE_MAGIC) or zipfile.is_zipfile(path):
+            raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]} is an executable or archive")
+        if rel in view_files and path.suffix.lower() in {".png", ".woff2"}:
+            magic = b"\x89PNG\r\n\x1a\n" if path.suffix.lower() == ".png" else b"wOF2"
+            if not header.startswith(magic):
+                raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]} does not match its declared file type")
         total += info.st_size
     if total > MAX_TOTAL_BYTES:
         raise CplugGateRefusal(TOO_LARGE, f"a plugin may total at most {MAX_TOTAL_BYTES // (1024 * 1024)} MiB")
@@ -116,19 +135,10 @@ def _facts(manifest: SidecarManifest, members: List[Path], root: Path, reasons: 
     }
 
 
-def _view_suffixes(root: Path, publisher_key_id: str, pinned_key_id: str) -> frozenset:
-    try:
-        raw = json.loads((root / MANIFEST_FILE).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return frozenset()
-    approved = isinstance(raw, dict) and raw.get("trust") == TRUST_UNRESTRICTED and pinned_key_matches(publisher_key_id, pinned_key_id)
-    return VIEW_SUFFIXES if approved else frozenset()
-
-
 def evaluate(item_id: str, staged_path: Path, publisher_key_id: str = "", pinned_key_id: str = "") -> CplugFacts:
     root = Path(staged_path)
     name = item_id.partition("/")[2]
-    members = check_files(root, _view_suffixes(root, publisher_key_id, pinned_key_id))
+    members = check_files(root)
     try:
         raw = json.loads((root / MANIFEST_FILE).read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:

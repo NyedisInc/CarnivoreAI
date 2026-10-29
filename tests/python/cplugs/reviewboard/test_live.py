@@ -17,7 +17,7 @@ from src.cplugs.reviewboard import document, scan, viewer
 from src.cplugs.sdk import signed_links
 from src.cplugs.reviewboard.errors import BoardNotFound
 from tests.python.cplugs.reviewboard.boards import SIDECAR, make_board, make_root, sidecar as v1_sidecar
-from tests.python.cplugs.reviewboard.harness import BASE, Env, huddle_on, huddle_store, make_env
+from tests.python.cplugs.reviewboard.harness import BASE, Env, task_manager_on, task_manager_store, make_env
 from tests.python.cplugs.reviewboard.test_publish import ANCHORS, HTML, PROMPTS, create_body, tree
 
 PAGE_A = "<!doctype html><title>demo</title><div data-rb-anchor='send'>send A</div>"
@@ -27,7 +27,7 @@ PAGE_B = "<!doctype html><title>demo</title><div data-rb-anchor='send'>send B</d
 @pytest.fixture
 def env(tmp_path: Path, monkeypatch) -> Env:
     made = make_env(tmp_path)
-    huddle_on(made, monkeypatch)
+    task_manager_on(made, monkeypatch)
     yield made
     board_port.unregister()
 
@@ -46,7 +46,7 @@ def signing(monkeypatch) -> None:
 
 @pytest.fixture
 def item(env: Env) -> int:
-    return huddle_store(env).add("all", "demo the bottom bar", actor="claude", title="demo")["id"]
+    return task_manager_store(env).add("all", "demo the bottom bar", actor="claude", title="demo")["id"]
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ def side(env: Env, slug: str) -> Dict[str, Any]:
 
 
 def thread(env: Env, item: int) -> list:
-    return [m for m in huddle_store(env).item(item)["thread"] if m.get("category") != "status"]
+    return [m for m in task_manager_store(env).item(item)["thread"] if m.get("category") != "status"]
 
 
 def live_send(client, slug: str, **over: Any) -> Dict[str, Any]:
@@ -131,14 +131,14 @@ def test_the_drafts_files_and_prompts_are_judged_like_a_revisions() -> None:
 
 
 def test_a_board_can_start_live_with_no_revision_and_the_task_is_left_alone(env: Env, client, item):
-    before_state = huddle_store(env).item(item)["state"]
+    before_state = task_manager_store(env).item(item)["state"]
     answer = start(client, item)
     slug = answer["slug"]
     assert answer["live"] is True and answer["seq"] == 1 and answer["started"] is True and answer["state"] == "live"
     data = side(env, slug)
     assert data["schema_version"] == 2 and data["revisions"] == [] and data["live"]["draft"]["views"][0]["file"] == "draft.html"
     assert (env.board(slug) / "draft.html").read_text() == PAGE_A
-    assert huddle_store(env).item(item)["state"] == before_state and thread(env, item) == []
+    assert task_manager_store(env).item(item)["state"] == before_state and thread(env, item) == []
     assert scan.scan(env.root).exit_code == 0 and scan.scan(env.root).findings == ()
     assert env.published.count("cplug.reviewboard.boards") == 1
 
@@ -163,13 +163,13 @@ def test_going_live_on_a_version_1_board_bumps_it_and_keeps_its_revisions(env: E
     made = client.post(f"{BASE}/boards", json=create_body(item)).json()
     slug = made["slug"]
     assert side(env, slug)["schema_version"] == 1
-    state_before = huddle_store(env).item(item)["state"]
+    state_before = task_manager_store(env).item(item)["state"]
     count = len(thread(env, item))
     out = client.put(f"{BASE}/boards/{slug}/live", json={"summary": "demo", "html": PAGE_A}).json()
     assert out["started"] is True and out["seq"] == 1
     data = side(env, slug)
     assert data["schema_version"] == 2 and [r["id"] for r in data["revisions"]] == ["r1"] and data["live"]["draft"]["viewport"] == 320
-    assert huddle_store(env).item(item)["state"] == state_before and len(thread(env, item)) == count
+    assert task_manager_store(env).item(item)["state"] == state_before and len(thread(env, item)) == count
 
 
 def test_a_view_the_overwrite_drops_loses_its_file_and_a_layer_board_is_refused(env: Env, client, item):
@@ -220,7 +220,7 @@ def test_a_milestone_freezes_the_draft_as_a_named_revision_and_hands_the_task_to
     assert row["milestone"] == "icons only" and row["views"][0]["file"] == "r001.html" and data["live"]["draft"]["seq"] == 1
     assert (env.board(slug) / "r001.html").read_bytes() == (env.board(slug) / "draft.html").read_bytes()
     assert row["views"][0]["sha256"] == data["live"]["draft"]["views"][0]["sha256"]
-    assert huddle_store(env).item(item)["state"] == "review" and thread(env, item)[-1]["board"]["revision"] == "r1"
+    assert task_manager_store(env).item(item)["state"] == "review" and thread(env, item)[-1]["board"]["revision"] == "r1"
     assert scan.scan(env.root).findings == ()
     posted = len(thread(env, item))
     again = client.post(f"{BASE}/boards/{slug}/live/milestone", json={}).json()
@@ -245,7 +245,7 @@ def test_ending_drops_the_draft_and_its_files_and_posts_one_card(env: Env, clien
     data = side(env, slug)
     assert "live" not in data and data["revisions"][0]["milestone"] == "final" and data["schema_version"] == 2
     assert not (env.board(slug) / "draft.html").exists() and scan.scan(env.root).findings == ()
-    assert len([m for m in thread(env, item) if m.get("board")]) == 1 and huddle_store(env).item(item)["state"] == "review"
+    assert len([m for m in thread(env, item) if m.get("board")]) == 1 and task_manager_store(env).item(item)["state"] == "review"
     assert out["state"] == "your_turn"
 
 
@@ -260,13 +260,13 @@ def test_ending_a_board_that_never_had_a_milestone_posts_no_card(env: Env, clien
 def test_a_live_send_wakes_the_owning_session_and_leaves_the_task_alone(env: Env, client, item, told):
     slug = start_as_agent(env, item)
     client.post(f"{BASE}/boards/{slug}/live/milestone", json={})
-    count, state_before = len(thread(env, item)), huddle_store(env).item(item)["state"]
+    count, state_before = len(thread(env, item)), task_manager_store(env).item(item)["state"]
     out = live_send(client, slug)
     assert out["delivery"] == {"state": "told", "via": "channel"} and out["duplicate"] is False and out["send"]["n"] == 1
     assert told[0]["session"] == "ses_1"
     assert told[0]["text"].startswith("live send 1 on the draft (demo)") and "which button row: two rows" in told[0]["text"]
     assert "task_manager_board_get" in told[0]["text"]
-    assert len(thread(env, item)) == count and huddle_store(env).item(item)["state"] == state_before
+    assert len(thread(env, item)) == count and task_manager_store(env).item(item)["state"] == state_before
     assert side(env, slug)["live"]["sends_total"] == 1 and side(env, slug)["rounds"] == []
 
 
@@ -355,7 +355,7 @@ def test_the_live_tools_refuse_a_bad_call_and_the_own_list_guard_applies(env: En
     assert not ok and "exactly one of html" in text
     ok, text = env.call("task_manager_board_milestone_add", {"board": "20261016-nothing"})
     assert not ok and "reviewboard_not_found" in text
-    other = huddle_store(env).add("13", "theirs", actor="claude", title="theirs")["id"]
+    other = task_manager_store(env).add("13", "theirs", actor="claude", title="theirs")["id"]
     ok, text = env.call("task_manager_board_live_set", {"name": "other", "title": "other", "task": other, "summary": "x", "html": PAGE_A, "viewport": 320})
     assert not ok and "cross_project" in text
 

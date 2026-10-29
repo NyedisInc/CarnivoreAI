@@ -215,7 +215,6 @@
       text-align: left;
     }
 
-    /* border: */
     .pko-node[aria-current='true'] {
       border-color: color-mix(in oklab, currentColor var(--oc-focus-keep, 75%), var(--oc-focus-lift, currentColor));
     }

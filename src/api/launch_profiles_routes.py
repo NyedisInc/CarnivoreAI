@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.auth import require_auth
+from src.api.launch_profile_pin import is_pinned, refuse_pinned_account
 from src.config import settings
 from src.config.launch_profiles import LaunchProfile
 from src.core import icon_registry
@@ -22,6 +23,7 @@ from src.core.agent_wrappers import wrapper_scripts_dir
 from src.core.byoai.contracts import to_connection
 from src.core.db import DatastoreError, connect, db_path_for
 from src.core.launch_profiles import check, share, usage
+from src.core.launch_profiles.installed import harness_installed
 from src.core.launch_profiles.resolve import LaunchProfileNotFound, LaunchRequest, resolve_launch
 from src.core.launch_profiles.store import LaunchProfileError, LaunchProfileStore, NotFound, StaleRevision
 from src.core.launch_profiles.summary import summary_row
@@ -40,7 +42,8 @@ def _store() -> LaunchProfileStore:
 
 
 def _row(profile: LaunchProfile) -> Dict[str, Any]:
-    return {**profile.model_dump(mode="json"), "summary": summary_row(profile)}
+    return {**profile.model_dump(mode="json"), "summary": summary_row(profile), "account_pin_unsupported": is_pinned(profile),
+            "installed": harness_installed(profile.harness)}
 
 
 def _error(status: int, code: str, message: str, **extra: Any) -> HTTPException:
@@ -122,6 +125,7 @@ class ProfileWrite(BaseModel):
 async def create_profile(body: ProfileWrite) -> Dict[str, Any]:
     """Add a launch profile. 409 when the id exists, is a harness name, or the revision is stale."""
     profile = body.profile
+    refuse_pinned_account(profile)
     if profile.id in RESERVED_FAMILY_NAMES:
         raise _error(409, "reserved_id", f"{profile.id} is a harness name, not usable as a launch profile id")
     if any(p.id == profile.id for p in (await _store_call_read(_store().list))):
@@ -142,6 +146,7 @@ async def replace_profile(profile_id: str, body: ProfileWrite) -> Dict[str, Any]
     """Replace one profile's fields in place; ``profile.id`` must match. A default stays the default."""
     if body.profile.id != profile_id:
         raise _error(400, "id_mismatch", "the profile id cannot change; create a new profile instead")
+    refuse_pinned_account(body.profile)
     current = _find(profile_id)
     profile = body.profile.model_copy(update={"default": current.default or body.profile.default})
     block = await _store_call(_store().put, profile, expected_revision=body.expected_revision)
@@ -390,6 +395,7 @@ async def import_profile(request: Request) -> Dict[str, Any]:
     """
     body = await _read_body(request)
     profile = _document(body)
+    refuse_pinned_account(profile)
     replace_flag = body.get("replace", False)
     if not isinstance(replace_flag, bool):
         raise _error(422, "invalid", "replace must be true or false")

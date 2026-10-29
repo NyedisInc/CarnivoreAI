@@ -13,15 +13,16 @@ const i18n = createI18n({ locale: 'en' }) as {
 };
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
+/** Let every microtask and every timer shorter than `ms` settle. */
 function settle(ms = 0): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const ITEMS: CatalogItem[] = [
     {
-        id: 'acme/deploy',
+        id: 'alex/deploy',
         name: 'deploy',
-        publisher: 'acme',
+        publisher: 'alex',
         latest: '1.0',
         card: { title: 'Deploy Runner' },
         versions: [{ v: '1.0', digest: 'aa' }],
@@ -40,7 +41,7 @@ function bothInstalled(): InstalledItem[] {
     return [
         {
             install_id: 'iA',
-            item_id: 'acme/deploy',
+            item_id: 'alex/deploy',
             scope: 'global',
             revision: 1,
             version: '1.0',
@@ -89,6 +90,15 @@ beforeEach(() => {
     document.body.appendChild(container);
 });
 
+/**
+ * Close anything still open, then take the screen down.
+ *
+ * TEARING THE DOM OUT DOES NOT RESOLVE A MODAL. `openModal` holds a
+ * promise and a count that only its own `close` settles, so a case that
+ * ends with a sheet up leaks that count into the next case, where the
+ * in-flight guard then refuses to open anything. Escape is how a person
+ * closes it, so it is how this closes it too.
+ */
 async function dismissEverything(): Promise<void> {
     for (let guard = 0; guard < 8; guard += 1) {
         const open = document.querySelector('.modal-overlay');
@@ -117,6 +127,7 @@ async function paint(host: CatalogHost): Promise<void> {
     await settle();
 }
 
+/* the reading pane */
 async function select(title: string): Promise<void> {
     const card = [...document.querySelectorAll('.catalog-card')].find((node) =>
         (node.textContent ?? '').includes(title),

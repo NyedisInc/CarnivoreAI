@@ -363,7 +363,7 @@
       "request": null,
       "status": 200,
       "response": {
-        "worktree_root": "worktrees"
+        "worktree_root": "~/dev-worktrees"
       }
     },
     {
@@ -999,7 +999,7 @@
             "skills": [],
             "session": {
               "id": "<session_id>",
-              "tmux_session": "cloude_ok_one_5",
+              "tmux_session": "cloude_ok one_5",
               "session_row_id": 5,
               "session_uuid": "bp-5"
             },
@@ -1041,7 +1041,7 @@
             "problem": {
               "step": "session",
               "code": "create_502",
-              "detail": "agent failed to launch: test double"
+              "detail": "the agent did not start. check that it is installed and try again."
             }
           },
           {
@@ -1060,7 +1060,7 @@
             "skills": [],
             "session": {
               "id": "<session_id>",
-              "tmux_session": "cloude_ok_two_7",
+              "tmux_session": "cloude_ok two_7",
               "session_row_id": 6,
               "session_uuid": "bp-7"
             },
@@ -1249,7 +1249,7 @@
       "response": {
         "status": "unavailable",
         "blueprints": [],
-        "detail": "the blueprints table is not present (schema before v35)"
+        "detail": "the datastore could not be read. try again in a moment."
       }
     },
     {

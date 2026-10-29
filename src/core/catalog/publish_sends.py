@@ -1,11 +1,3 @@
-"""The app's own record of what it sent and what it checked, per computer (D10, #2469).
-
-Two small tables in ``publish_sends.db`` under ``state_dir()`` (never ``config.json``): ONE ROW PER SEND
-(submission id, the folder it came from, its hosted-compatible digest and per-file sha256 map, the hero source and
-media submission id) and the newest :data:`MAX_CHECKS` LOCAL CHECKS per location (a refused check never makes a
-send, so the send row alone could not hold it). Every call opens its own connection, so any thread may call.
-A record that cannot be written is the caller's to log: it must never fail a check or a send that already happened.
-"""
 
 from __future__ import annotations
 
@@ -74,7 +66,6 @@ def _decode_findings(raw: Optional[str]) -> List[Dict[str, str]]:
 
 
 class PublishSends:
-    """The send and check records under one state directory."""
 
     def __init__(self, state_dir: Path) -> None:
         self._path = Path(state_dir) / DB_NAME

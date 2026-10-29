@@ -1,18 +1,3 @@
-"""
-1. a local claude row with a tmux name (``not_claude``, ``remote``, ``no_tmux_name``);
-2. its status is ``idle`` or ``finished_unread`` (``status_<state>`` for working, working_subagent, question,
-   notice, unknown, dead: a permission dialog is ``question``);
-3. its startup gate reads ``ready`` (``startup_gate``): a trust or startup screen is never answered by a kill;
-4. no shell command claude started is still open (``shell_running``, the ``activity_hint``);
-5. the watcher holds a FRESH observation (``no_observation``), and nothing runs or is scheduled inside the claude,
-   judged fail safe (``live_work``): subagents, background shells, Monitors, timers, a parked process, or work that
-   could not be measured (``auto_sleep.live_work.hold_for`` with ``require_measured=True``), plus the listing's
-   own ``subagents_running`` and ``background_open`` counts;
-6. the pane has been silent :data:`IDLE_SECONDS` by tmux's ``#{window_activity}``, which moves on every echoed
-   keystroke, so a person typing a prompt keeps it (``quiet_unmeasured``, ``not_quiet``).
-
-A conversation that can be resumed is checked by the migrator (it needs the manager), not here.
-"""
 
 from __future__ import annotations
 
@@ -39,7 +24,6 @@ STATUS_PREFIX = "status_"
 
 
 def _live_work(info: Any, observation: Any) -> bool:
-    """True when anything runs or is scheduled inside the claude, or could not be measured. Output: bool."""
     if getattr(info, "subagents_running", None) or getattr(info, "background_open", None):
         return True
     return live_work.hold_for(getattr(observation, "evidence", None), require_measured=True) is not None

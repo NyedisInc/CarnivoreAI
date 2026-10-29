@@ -1,21 +1,3 @@
-"""Schema v73: the messaging tables (issue #1499, ``docs/messaging.md`` section 2); schema v92: ``unconfirmed`` (#1770).
-
-Additive, five tables. Nothing here holds a secret: a provider's URL, token and owner handles, and every provider
-conversation id, live in the Keychain (``src/core/messaging/secrets.py``). A conversation row keeps only an HMAC of its
-provider id (``match_key``), so an inbound event can be matched without a Keychain read and without the database
-holding a phone number in any recoverable form.
-
-- ``messaging_messages.status`` gains ``unconfirmed``: an outbound text whose outcome is unknown (the bridge restarted
-  mid-send, or answered "in doubt") used to be logged ``failed`` with the reason "may have been sent; do not resend: ...".
-  SQLite cannot alter a CHECK, so :func:`apply_v92` REBUILDS the table (rows copied with their ids, indexes recreated) and
-  turns every row carrying that reason into ``unconfirmed``. :data:`DDL_V73` is left as it was: history is not edited, and a
-  fresh database runs v73 then v92 and ends with the same table.
-- ``messaging_providers.replay_proven_at``: when a retry last got the provider's ``Idempotent-Replayed`` answer for a
-  repeated ``Idempotency-Key`` (null: never seen). The provider card shows it.
-
-PURE STDLIB: ``db_steps`` runs :func:`apply_v73` and :func:`apply_v92`; ``db_schema_audit`` reads :data:`DDL_V73` and
-:data:`V92_COLUMNS`.
-"""
 
 from __future__ import annotations
 

@@ -2,6 +2,10 @@
 """
 Release-time scraper for Claude Code's official slash command list.
 
+Run by a MAINTAINER when cutting a release, NOT at runtime and NOT per-user
+(see client/js/discovery.js / src/api/auth.py for the per-user runtime
+discovery of a USER's own commands/skills, which is a separate concern).
+
 Fetches https://code.claude.com/docs/en/commands (via its markdown mirror,
 `<url>.md`, which is the server-rendered doc source with none of the SPA
 chrome to strip) and parses the single authoritative table under the

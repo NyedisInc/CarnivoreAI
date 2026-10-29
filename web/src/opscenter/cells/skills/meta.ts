@@ -28,6 +28,7 @@ export function titleCount(): number | null {
   return byKind(catalog.data, 'skill').length + untrusted;
 }
 
+/* there is nothing */
 export function titleSuffix(): string | null {
   if (catalog.status !== 'ok') return null;
   return indexNotice(catalog.data) || null;

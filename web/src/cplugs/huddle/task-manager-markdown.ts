@@ -1,4 +1,3 @@
-/* no inline script */
 
 export const MD_MAX_CHARS = 20000;
 

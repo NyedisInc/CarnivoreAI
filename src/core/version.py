@@ -1,39 +1,3 @@
-"""Single source of version truth for Cloude Code.
-
-THE RULE: a release is a GIT TAG. Everything that displays or compares a
-version derives from that tag - the release workflow, the header chip in the
-web client, and the release self check in ``update_check.py``. Two version
-strings that can disagree is a stale-doc bug waiting to happen, so there is
-exactly one resolver and it lives here.
-
-Resolution order, first hit wins:
-
-1. ``CLOUDE_APP_VERSION`` environment variable. The Electron shell injects
-   the installed version this way at spawn (``macOS/server-manager.js``).
-2. A ``VERSION`` file at the source root. GENERATED, not hand-written:
-   ``macOS/bootstrap.js`` stamps it into the Application Support copy on
-   every packaged launch. It carries a header saying so. This is the only
-   source that survives on disk in production, where there is no ``.git``
-   and no ``macOS/package.json``.
-3. An EXACT git tag on HEAD (``git describe --tags --exact-match``). Covers
-   an install whose VERSION file went missing but whose checkout is still
-   parked on the release tag.
-4. ``macOS/package.json``. Legacy fallback so the chip is not blank on an old
-   layout, and so a dev tree sitting between releases shows a clean number.
-5. A LOOSE ``git describe --tags``, for example "0.8.1-3-gabc1234". Last,
-   deliberately: it is the most honest answer but the ugliest, and it is not
-   a release tag, so the self check will correctly report "this install is
-   not at a release tag" when it is what resolved.
-
-Every step can fail. When all five fail the resolver returns "" and callers
-render nothing rather than a wrong literal.
-
-THE TWO GIT STEPS ARE PINNED TO THE ROOT. ``git -C <dir>`` searches upwards
-for a repository, so a directory that merely sits inside some unrelated
-checkout will happily answer with that checkout's tags. See
-:func:`is_git_root`. Blank is a correct answer; another project's version is
-not.
-"""
 
 from __future__ import annotations
 
@@ -82,25 +46,6 @@ def write_version_file(version: str, root: Path | None = None) -> Path:
 
 
 def is_git_root(root: Path) -> bool:
-    """Is ``root`` itself the top of a git work tree?
-
-    THIS GUARD IS LOAD-BEARING, NOT A NICETY. ``git -C <dir>`` walks UPWARDS
-    until it finds a repository, so an unversioned directory that merely SITS
-    somewhere inside a checkout answers with that checkout's tags. In
-    production the source root is a plain copy under Application Support with
-    no ``.git`` of its own; if that copy is ever placed inside any repository
-    the resolver would report a completely unrelated project's version, with
-    no error, and a wrong literal is exactly what the "" fallback exists to
-    prevent. So git is only consulted when the root IS the work tree.
-
-    Args:
-        root: the directory to test.
-
-    Returns:
-        True when ``git rev-parse --show-toplevel`` from ``root`` resolves to
-        ``root`` itself. False when git is absent, the path is not a work
-        tree, or the work tree is some ancestor.
-    """
     if not git_guard.git_available():
         return False
     try:
@@ -170,7 +115,6 @@ def resolve_version(root: Path | None = None) -> str:
     )
 
 
-# CLOUDE_APP_VERSION
 
 _startup_version: str | None = None
 

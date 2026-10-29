@@ -1,51 +1,3 @@
-"""The database integrity verdict: run it rarely, cache it, publish its age.
-
-The fix is not a thread. Moving it to a thread frees the loop and still
-burns the same seconds of disk and CPU three times a minute forever. The
-fix is that a full integrity check IS A MAINTENANCE OPERATION, NOT A
-LIVENESS PROBE. The request path keeps a cheap probe (open the database
-and read ``meta.schema_version`` - see ``src/core/db_health.py``); the
-full check moves here, onto a daily schedule, off the loop, with its
-result cached on disk and its AGE published.
-
-THIS MODULE RUNS THE CHECK AND OWNS THE ARTIFACT. It does not decide
-what the API may say about it: that reduction, and the block it feeds,
-live in ``src/core/db_integrity_status.py``, which cannot open a
-database at all. The split is what lets the request path read a verdict
-without importing anything that could walk a file.
-
-EVERY TERMINATING PATH PUBLISHES. A checker that dies looks exactly like
-one that keeps finding nothing wrong: both produce no output and no
-alert. So a run that failed, a run that could not open the database and a
-run cancelled at shutdown all stamp the artifact with a named ``status``
-and a ``finished_at``, and the status surface reports the AGE of that
-stamp. A missing artifact is never "fine, nothing to report"; it is
-``never_ran``, a named third outcome. That is the same discipline
-``src/core/corpus_ingest_state.py`` applies to the ingester's liveness,
-and this module reuses that module's :func:`classify_freshness` and its
-four freshness words rather than inventing a second vocabulary for the
-same idea.
-
-THE PROBE NEVER CREATES THE FILE. The check opens with
-``create=False``. Opening with ``create=True`` against a state directory
-whose database is missing would manufacture an empty one, which then
-reports schema version 0 and no rows and renders to the user as a
-healthy install containing none of his work.
-
-ENV SWITCHES, named to match the corpus ingester's pair:
-
-  ``CLOUDE_DB_INTEGRITY_CHECK``           ``0``/``false``/``off``/``no``
-                                          switches the loop off entirely.
-  ``CLOUDE_DB_INTEGRITY_CHECK_INTERVAL``  seconds between checks;
-                                          defaults to daily.
-
-Under ``CLOUDE_TEST_MODE`` the default flips to OFF, and that is a
-correctness requirement rather than tidiness: the default state
-directory is the DEVELOPER'S REAL cloude.db, and a pytest run that
-happens to exercise the app's lifespan must never start a full page walk
-over a multi-gigabyte production database. A test that wants the checker
-says so with ``CLOUDE_DB_INTEGRITY_CHECK=1`` against its own tmp_path.
-"""
 
 from __future__ import annotations
 
@@ -59,7 +11,7 @@ from typing import Any, Dict, Optional
 
 import structlog
 
-from src.core.corpus_ingest_state import (
+from src.core.artifact_freshness.verdict import (
     FRESHNESS_CURRENT,
     classify_freshness,
     utc_now_iso,
@@ -112,24 +64,6 @@ def latest_path(state_dir: Path) -> Path:
 
 
 def integrity_check_enabled() -> bool:
-    """Report whether the background integrity checker is switched on.
-
-    Description: default ON in a real install. Anything in ``_FALSEY``
-      (case-insensitive) turns it off; every other value, including an
-      empty string, leaves it on, because a malformed kill switch must
-      fail towards the documented default rather than towards silence.
-
-      UNDER ``CLOUDE_TEST_MODE`` THE DEFAULT FLIPS TO OFF. The default
-      state directory is the developer's real cloude.db, which is
-      gigabytes; a pytest run that exercises the app's lifespan must not
-      start a full-file page walk over it. An explicit
-      ``CLOUDE_DB_INTEGRITY_CHECK=1`` still wins, so a test can opt in
-      against its own tmp_path.
-    Inputs: none (reads ``CLOUDE_DB_INTEGRITY_CHECK`` and
-      ``CLOUDE_TEST_MODE``).
-    Output: bool.
-    Example: integrity_check_enabled()  # True unless the env says no
-    """
     raw = os.environ.get(ENABLE_ENV)
     if raw is not None:
         value = raw.strip().lower()
@@ -163,21 +97,6 @@ def resolve_stale_after_seconds(interval_seconds: Optional[int] = None) -> int:
 
 
 def db_size_bytes(db_path: Path) -> Optional[int]:
-    """Return the database file's size in bytes, or None if it cannot be read.
-
-    Description: recorded on every verdict so a later reader can tell
-      whether the file it is about to trust the verdict for is the same
-      file, or a smaller one that replaced it. A SQLite database does not
-      shrink in normal operation - it grows, or it reuses free pages at
-      the same size - so a file SMALLER than it was when it was verified
-      has been replaced, restored from an older backup, truncated or
-      VACUUMed, and the verdict no longer describes it. None means the
-      stat failed, which every reader must treat as "cannot tell", never
-      as "unchanged".
-    Inputs: db_path (Path).
-    Output: int | None - bytes.
-    Example: db_size_bytes(Path("/nonexistent")) -> None
-    """
     try:
         return Path(db_path).stat().st_size
     except OSError:
@@ -200,24 +119,6 @@ def write_verdict(state_dir: Path, record: Dict[str, Any]) -> bool:
 def run_integrity_check_once(
     state_dir: Path, *, cancel: Optional[Event] = None,
 ) -> Dict[str, Any]:
-    """Run one full PRAGMA integrity_check and publish the result.
-
-    Description: SYNCHRONOUS AND BLOCKING BY DESIGN - it is meant to be
-      handed to ``asyncio.to_thread`` and must never be awaited on the
-      event loop. Opens its own connection inside the calling thread,
-      never shares one, and closes it before returning; WAL mode means
-      the app's own writers are not blocked while it reads. Never
-      raises: every failure becomes a named ``status`` on the returned
-      record, which is published either way.
-    Inputs: state_dir (Path) - as resolved by Settings.get_state_dir().
-      cancel (threading.Event | None) - checked before the pragma starts,
-      so a shutdown that arrives first is recorded as ``cancelled``
-      rather than as a gap in the liveness record. The pragma itself
-      cannot be interrupted once running.
-    Output: dict - the record that was written, carrying ``status``,
-      ``finished_at``, ``duration_seconds``, ``detail`` and ``db_path``.
-    Example: run_integrity_check_once(Path("/s"))["status"]  # 'ok'
-    """
     db_path = db_path_for(state_dir)
     started = time.monotonic()
     install_id: Optional[str] = None
@@ -283,19 +184,6 @@ def seconds_until_due(
     state_dir: Path, interval_seconds: int, *,
     now: Optional[datetime] = None,
 ) -> float:
-    """Return how long to wait before the next check is due.
-
-    Description: the reason a restart does not re-walk the whole file.
-      This app is a menubar app that restarts often; a loop that always
-      checked on start would grind a multi-gigabyte database every time
-      the user quit and reopened it. A verdict that is still CURRENT is
-      allowed to stand for its remaining life.
-    Inputs: state_dir (Path), interval_seconds (int), now (datetime |
-      None - injected by tests).
-    Output: float - seconds to sleep; 0.0 means "run now", which is what
-      a missing, stale or unevaluable record produces.
-    Example: seconds_until_due(Path("/nonexistent"), 86400) -> 0.0
-    """
     record = read_verdict(state_dir)
     freshness, age, _why = classify_freshness(
         record, now=now,

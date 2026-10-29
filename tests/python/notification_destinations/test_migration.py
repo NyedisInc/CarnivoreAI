@@ -126,11 +126,11 @@ def bak_text(path: Path) -> str:
 
 
 def test_private_ntfy_base_comes_over_with_allow_private_local_only(service, config_path, keychain):
-    write_cfg(config_path, ntfy_base_url="https://ntfy.example.lan:8443", slack_webhook_url="", pushover_token="", pushover_user_key="")
+    write_cfg(config_path, ntfy_base_url="https://ntfy.home.lan:8443", slack_webhook_url="", pushover_token="", pushover_user_key="")
     res = run(service, config_path)
     assert res.migrated == ["ntfy"] and res.complete
     (dest,) = asyncio.run(service.destinations.list())
-    assert dest["enabled"] and dest["allow_private"] and dest["config"]["base_url"] == "https://ntfy.example.lan:8443"
+    assert dest["enabled"] and dest["allow_private"] and dest["config"]["base_url"] == "https://ntfy.home.lan:8443"
     doc = service.docs.snapshot()
     assert any(k.startswith("local/allow_private") for k in doc["local"])
     assert not any("allow_private" in k for k in doc["global"])
@@ -157,7 +157,7 @@ def test_http_ntfy_base_on_a_public_host_comes_over_disabled_with_a_reason_and_s
     assert not any(d.enabled for d in service.routing.view().destinations())
 
 
-@pytest.mark.parametrize("base", ["http://203.0.113.13:8080", "http://homeassistant.local:8123"])
+@pytest.mark.parametrize("base", ["http://192.168.1.20:8080", "http://homeassistant.local:8123"])
 def test_http_ntfy_base_on_a_private_host_keeps_http_enabled_with_both_switches(service, config_path, keychain, base):
     write_cfg(config_path, ntfy_base_url=base, slack_webhook_url="", pushover_token="", pushover_user_key="")
     res = run(service, config_path)
@@ -201,3 +201,26 @@ def test_partial_migration_scrubs_bak_too_then_caps_retries_and_alerts_once(serv
     service.docs.update(lambda d, me: {**doc, "local": {k: v for k, v in doc["local"].items() if k != migration.MIGRATED_KEY}})
     again = run(service, config_path)
     assert again.abandoned == ["slack"] and again.skipped == [] and len(alerts) == 1
+
+
+def test_a_refused_scrub_leaves_the_marker_unset_so_the_next_boot_retries(service, config_path, keychain, monkeypatch):
+    from src.core import config_writer
+
+    write_cfg(config_path)
+    real = config_writer.commit
+    refuse = {"on": True}
+
+    def commit(path, mutate):
+        if refuse["on"]:
+            return config_writer.CommitOutcome(status=config_writer.STALE_REVISION, data={}, wrote=False)
+        return real(path, mutate)
+
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(migration, "config_writer", SimpleNamespace(commit=commit, read_config=config_writer.read_config,
+                                                                       UNCHANGED=config_writer.UNCHANGED, CommitOutcome=config_writer.CommitOutcome))
+    first = run(service, config_path)
+    assert not first.complete and SENTINEL in config_path.read_text()
+    refuse["on"] = False
+    second = run(service, config_path)
+    assert second.complete and SENTINEL not in files_text(config_path)

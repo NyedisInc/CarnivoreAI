@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 import structlog
 
+from src.core.resource_push import bodies as bodies_module
 from src.core.resource_push import topics as topics_module
 from src.core.resource_push.topics import all_topics, family_of
 from src.models.websocket import WSMessageType
@@ -13,6 +14,7 @@ from src.models.websocket import WSMessageType
 logger = structlog.get_logger()
 
 DEFAULT_WINDOW_SECONDS = 0.25
+PRUNE_ABOVE = 64
 
 
 class ResourceNotifier:
@@ -23,15 +25,23 @@ class ResourceNotifier:
         loop: asyncio.AbstractEventLoop,
         *,
         window_seconds: float = DEFAULT_WINDOW_SECONDS,
+        with_bodies: bool = False,
+        wants_bodies: Optional[Callable[[], bool]] = None,
     ) -> None:
         self._publish = publish
         self._loop = loop
         self.window_seconds = window_seconds
+        self._with_bodies = with_bodies
+        self._wants_bodies = wants_bodies
+        self._body_tickets = 0
+        self._body_published = 0
+        self._body_tasks: Set["asyncio.Task[None]"] = set()
         self._pending: Set[str] = set()
         self._handle: Optional[asyncio.TimerHandle] = None
         self.seq = 0
-        self._last_sent: Dict[Tuple[str, str], float] = {}
+        self._last_sent: Dict[Tuple[str, str], Tuple[float, float]] = {}
         self._trailing: Dict[Tuple[str, str], asyncio.TimerHandle] = {}
+        self._detail: Dict[Tuple[str, str], str] = {}
 
     def notify(self, topic: str) -> None:
         if family_of(topic) not in all_topics():
@@ -49,28 +59,42 @@ class ResourceNotifier:
         except RuntimeError as exc:
             logger.debug("resource_push_loop_closed", topic=topic, error=str(exc))
 
-    def notify_coalesced(self, topic: str, key: str, min_interval: float) -> None:
+    def notify_coalesced(self, topic: str, key: str, min_interval: float, detail: Optional[str] = None) -> None:
         try:
-            self._loop.call_soon_threadsafe(self._coalesce, topic, key, min_interval)
+            self._loop.call_soon_threadsafe(self._coalesce, topic, key, min_interval, detail)
         except RuntimeError as exc:
             logger.debug("resource_push_loop_closed", topic=topic, error=str(exc))
 
-    def _coalesce(self, topic: str, key: str, min_interval: float) -> None:
+    def _coalesce(self, topic: str, key: str, min_interval: float, detail: Optional[str] = None) -> None:
         slot = (topic, key)
+        named = detail or topic
         if slot in self._trailing:
+            if self._detail.get(slot, named) != named:
+                self._detail[slot] = topic
             return
         now = self._loop.time()
-        wait = self._last_sent.get(slot, float("-inf")) + min_interval - now
+        sent = self._last_sent.get(slot, (float("-inf"), 0.0))[0]
+        wait = sent + min_interval - now
         if wait <= 0:
-            self._last_sent[slot] = now
-            self.notify(topic)
+            self._sweep(now)
+            self._last_sent[slot] = (now, min_interval)
+            self.notify(named)
             return
-        self._trailing[slot] = self._loop.call_later(wait, self._send_trailing, slot)
+        self._detail[slot] = named
+        self._trailing[slot] = self._loop.call_later(wait, self._send_trailing, slot, min_interval)
 
-    def _send_trailing(self, slot: Tuple[str, str]) -> None:
+    def _sweep(self, now: float) -> None:
+        if len(self._last_sent) <= PRUNE_ABOVE:
+            return
+        for slot in [s for s, (sent, interval) in self._last_sent.items() if sent + interval <= now and s not in self._trailing]:
+            del self._last_sent[slot]
+
+    def _send_trailing(self, slot: Tuple[str, str], min_interval: float) -> None:
         self._trailing.pop(slot, None)
-        self._last_sent[slot] = self._loop.time()
-        self.notify(slot[0])
+        now = self._loop.time()
+        self._sweep(now)
+        self._last_sent[slot] = (now, min_interval)
+        self.notify(self._detail.pop(slot, slot[0]))
 
     def _add(self, topic: str) -> None:
         self._pending.add(topic)
@@ -85,6 +109,16 @@ class ResourceNotifier:
             return None
         topics = sorted(self._pending)
         self._pending.clear()
+        providers = bodies_module.matching(topics) if self._with_bodies and (self._wants_bodies is None or self._wants_bodies()) else []
+        if providers:
+            held = [t for t in topics if family_of(t) in bodies_module.trigger_topics()]
+            topics = [t for t in topics if t not in held]
+            self._body_tickets += 1
+            task = self._loop.create_task(self._flush_with_bodies(held, providers, self._body_tickets))
+            self._body_tasks.add(task)
+            task.add_done_callback(self._body_tasks.discard)
+            if not topics:
+                return None
         self.seq += 1
         frame = {"type": WSMessageType.RESOURCES_CHANGED.value, "topics": topics, "seq": self.seq}
         try:
@@ -94,6 +128,23 @@ class ResourceNotifier:
         _run_topic_listeners(topics)
         return frame
 
+    async def _flush_with_bodies(self, held: List[str], providers: List[bodies_module.BodyProvider], ticket: int) -> None:
+        built = await bodies_module.collect(providers)
+        if ticket < self._body_published:
+            built = {}
+        else:
+            self._body_published = ticket
+        self.seq += 1
+        frame: Dict[str, Any] = {"type": WSMessageType.RESOURCES_CHANGED.value, "topics": held, "seq": self.seq}
+        try:
+            if built:
+                self._publish({**frame, "bodies": built}, reduced=frame)
+            else:
+                self._publish(frame)
+        except (RuntimeError, ValueError, TypeError) as exc:
+            logger.warning("resource_push_publish_failed", topics=held, error=str(exc))
+        _run_topic_listeners(held)
+
     def publish(self, frame: Dict[str, Any]) -> int:
         return self._publish(frame)
 
@@ -102,9 +153,12 @@ class ResourceNotifier:
             self._handle.cancel()
         self._handle = None
         self._pending.clear()
+        for task in list(self._body_tasks):
+            task.cancel()
         for handle in self._trailing.values():
             handle.cancel()
         self._trailing.clear()
+        self._detail.clear()
 
 
 SESSION_SET_FRAME_TYPES = frozenset({"sessions.changed", "session.renamed"})
@@ -170,12 +224,15 @@ def install(
     *,
     loop: Optional[asyncio.AbstractEventLoop] = None,
     window_seconds: float = DEFAULT_WINDOW_SECONDS,
+    with_bodies: bool = False,
+    wants_bodies: Optional[Callable[[], bool]] = None,
 ) -> ResourceNotifier:
     global _active
     if _active is not None:
         _active.close()
     _active = ResourceNotifier(
-        publish, loop or asyncio.get_running_loop(), window_seconds=window_seconds
+        publish, loop or asyncio.get_running_loop(), window_seconds=window_seconds, with_bodies=with_bodies,
+        wants_bodies=wants_bodies,
     )
     return _active
 
@@ -193,7 +250,7 @@ def notify(topic: str) -> None:
         notifier.notify(topic)
 
 
-def notify_coalesced(topic: str, key: str, min_interval: float) -> None:
+def notify_coalesced(topic: str, key: str, min_interval: float, detail: Optional[str] = None) -> None:
     notifier = _active
     if notifier is not None:
-        notifier.notify_coalesced(topic, key, min_interval)
+        notifier.notify_coalesced(topic, key, min_interval, detail)

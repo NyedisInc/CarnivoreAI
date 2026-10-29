@@ -21,7 +21,9 @@ function loadApi() {
     };
     context.globalThis = context;
     vm.createContext(context);
-    vm.runInContext(fs.readFileSync(path.join(ROOT, 'client', 'js', 'api.js'), 'utf8'), context, { filename: 'api.js' });
+    for (const f of ['api.js', 'api-session-lifecycle.js']) {
+        vm.runInContext(fs.readFileSync(path.join(ROOT, 'client', 'js', f), 'utf8'), context, { filename: f });
+    }
     return { api: context.window.API, calls };
 }
 
@@ -33,9 +35,9 @@ function bodyOf(calls) {
 
 const CHOICE = { accountId: 'play', pinned: true };
 const cases = [
-    ['wake', (a, acct) => a.wakeSession('u1', 'keyc', acct)],
-    ['recreate', (a, acct) => a.recreateSession('u1', 'keyc', acct)],
-    ['respawn', (a, acct) => a.respawnSession('carnivore_x', 'keyc', false, acct)],
+    ['wake', (a, acct) => a.wakeSession('u1', 'cld', acct)],
+    ['recreate', (a, acct) => a.recreateSession('u1', 'cld', acct)],
+    ['respawn', (a, acct) => a.respawnSession('carnivore_x', 'cld', false, acct)],
 ];
 for (const [name, call] of cases) {
     let { api, calls } = loadApi();

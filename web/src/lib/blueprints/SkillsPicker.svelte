@@ -3,6 +3,7 @@
     import { onMount } from 'svelte';
     import { t } from '../i18n/index.svelte';
     import { browserCatalogHost } from '../catalog/catalog';
+    import { Button, Field, IconButton } from '../base';
 
     interface Props {
         skills: string[];
@@ -56,12 +57,13 @@
         {#each skills as id (id)}
             <span class="bp-skills__chip">
                 {id}
-                <button
-                    type="button"
-                    class="bp-skills__remove"
-                    aria-label={t('blueprint.session.skills.remove', { skill: id })}
-                    onclick={() => remove(id)}>&times;</button
-                >
+                <IconButton
+                    variant="danger"
+                    icon="close"
+                    iconSize={10}
+                    label={t('blueprint.session.skills.remove', { skill: id })}
+                    onclick={() => remove(id)}
+                />
             </span>
         {/each}
         {#if skills.length === 0}
@@ -69,10 +71,9 @@
         {/if}
     </div>
     <div class="bp-skills__add">
-        <input
-            type="text"
-            class="modal-input"
+        <Field
             id={`${idPrefix}-skill-input`}
+            aria-label={t('blueprint.session.skills')}
             list={catalogFailed ? undefined : `${idPrefix}-skill-list`}
             placeholder={t('skills.picker.ref.placeholder')}
             spellcheck="false"
@@ -87,7 +88,7 @@
                 {/each}
             </datalist>
         {/if}
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={add}>{t('blueprint.session.skills.add')}</button>
+        <Button onclick={add}>{t('blueprint.session.skills.add')}</Button>
     </div>
 </div>
 
@@ -113,20 +114,6 @@
         font-family: var(--font-mono);
     }
 
-    .bp-skills__remove {
-        border: none;
-        background: none;
-        color: var(--oc-text-muted);
-        cursor: pointer;
-        font-size: 13px;
-        line-height: 1;
-        padding: 0;
-    }
-
-    .bp-skills__remove:hover {
-        color: var(--oc-coral);
-    }
-
     .bp-skills__none {
         color: var(--oc-text-muted);
         font-size: 11px;
@@ -138,7 +125,8 @@
         align-items: center;
     }
 
-    .bp-skills__add input {
+    .bp-skills__add :global([data-field]) {
         flex: 1;
+        min-width: 0;
     }
 </style>

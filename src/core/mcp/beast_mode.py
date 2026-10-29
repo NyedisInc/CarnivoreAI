@@ -23,8 +23,10 @@ AGENT_ACTIONS = frozenset({
 ALWAYS_WAITS = frozenset({
     "session_delete", "session_purge", "bookmark_rewind", "swarm_rewind", "project_pack", "project_unpack", "project_delete",
     "dashboard_delete", "pipeline_plugin_rebuild", "company_delete", "mod_remove", "automation_delete", "messaging_binding_delete",
+    "swarm_card_delete",
     "pack_gh_login_add",
     "project_publish_repo", "cplug_update",
+    "plugin_sideload_add", "plugin_sideload_remove",
     "computer_invite", "computer_remove", "computer_leave", "computer_add",
     "api_key_delete",
 })

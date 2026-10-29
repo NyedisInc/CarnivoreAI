@@ -1,18 +1,5 @@
 <script lang="ts">
   import { truncatedTip } from '../tooltip/truncated-tip';
-  /**
-   * One tile of the war room wall (issue #135, v2): a SNAPSHOT of the session's visible screen, not a terminal stream.
-   *
-   * Description: the title strip carries the status light and the name; the body is ONE 2D canvas (`tile-canvas.ts`). The tile
-   *   subscribes to the wall's snapshot store (`snapshot-store.ts`) while it is on screen (`visibilityObserver`, never a real
-   *   IntersectionObserver); each changed screen (`POST /warroom/screens`, one batched request for every tile, 5 s, 1 s while
-   *   hovered) is written into an xterm that is never `open()`ed (scrollback 0, `reset` then `write`) and the canvas is painted from
-   *   its buffer, so a refresh makes no DOM mutation (the page's global `:has()` rules make every mutation a whole-document style
-   *   recalculation). The canvas covers the body edge to edge and shows a crop of the pane (`peekCrop`): at rest the pane's full width fills the tile, the bottom rows showing; hovered, the zoomed peek crop. NO WEBSOCKET: a real terminal stream opens
-   *   only in the click modal. THE LIGHT COMES FROM THE LISTING ROW. A session whose computer is offline, one the paired computer cannot read (`unsupported`) or one on a paired computer that needs an update (`older`) draws a
-   *   card instead. Hover is reported to the store (`setHot`) and scales the tile with CSS only, so the grid never reflows.
-   * Inputs (props): tile - the live tile; onopen - called with the listing wrapper row on a click.
-   */
   import { untrack } from 'svelte';
   import { bindTerminalTheme } from '../../opscenter/cells/terminal-live/theme';
   import { visibilityObserver } from '../visibility-observer';
@@ -68,7 +55,6 @@
     return () => watcher.disconnect();
   });
 
-  /*  hidden  */
   $effect(() => {
     const node = bodyEl;
     if (!node) return;

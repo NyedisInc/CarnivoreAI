@@ -13,11 +13,19 @@ REMOVABLE_PARENT: str = "/Volumes"
 BLOBS_DIR: str = BLOBS_PREFIX
 STATE_FILE: str = "vault-state.json"
 SUMMARIES_FILE: str = "vault-summaries.z"
+VERIFIED_FILE: str = "vault-verified.json"
 LEGACY_DONE_FILE: str = "legacy-migrated.json"
 LEGACY_PINNED_MARKER: str = "pinned"
 LEGACY_RETRY_SECONDS: int = 3600
 
 BLOB_TOUCH_SECONDS: int = 3600
+
+CHUNK_KNOWN_SECONDS: float = 600.0
+CHUNK_KNOWN_MAX: int = 100_000
+
+FOLDER_MEMO_MAX_ENTRIES: int = 60_000
+MANIFEST_MEMO_MAX_ENTRIES: int = 20_000
+WORKDIR_MEMO_MAX: int = 4096
 
 SHA_CONTENT: str = "content"
 SHA_CHAIN: str = "chain"

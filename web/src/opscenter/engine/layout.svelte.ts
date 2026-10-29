@@ -379,7 +379,6 @@ export function createLayoutStore(page: LayoutPage): LayoutStore {
       commit(removeCell(state.layout, id));
     },
 
-    /*  hidden  */
     show(id): void {
       commit(showCell(state.layout, id, META));
     },
@@ -430,6 +429,7 @@ export function createLayoutStore(page: LayoutPage): LayoutStore {
       } else clear(page);
       const fitted = availablePx > 0 ? fitRows(base, availablePx, gutter, META) : base;
       state.layout = fitted;
+      // there is nothing
       if (fitted !== base) persist(fitted);
       else if (page === 'home') homeChanged();
       else if (page === 'warroom') warroomChanged();

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Icon } from '../sdk/ui';
   import { t } from '../sdk';
+  import Thumb from './TaskManagerThumb.svelte';
   import { sizeLabel } from './task-manager-files';
   import type { Chip } from './task-manager-attachments.svelte';
 
@@ -10,7 +11,7 @@
 <ul class="hdc" aria-label={t('cplug.huddle.files.pending')} data-task-manager-pending-files>
   {#each chips as chip (chip.key)}
     <li class="hdc-chip" data-state={chip.status} data-task-manager-pending-file={chip.key}>
-      <Icon name="files" size={12} strokeWidth={1.75} />
+      {#if chip.file && chip.file.type.startsWith('image/')}<Thumb file={chip.file} name={chip.name} />{:else}<Icon name="files" size={12} strokeWidth={1.75} />{/if}
       <span class="hdc-name">{chip.name}</span>
       <span class="hdc-state">{chip.status === 'uploading' ? t('cplug.huddle.files.uploading') : chip.status === 'failed' ? (chip.error ?? t('cplug.huddle.files.failed')) : sizeLabel(chip.size)}</span>
       <button type="button" class="oc-ibtn oc-ibtn--bare hdc-remove" data-task-manager-pending-remove={chip.key}

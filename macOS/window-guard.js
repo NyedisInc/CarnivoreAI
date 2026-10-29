@@ -44,7 +44,7 @@ function createWindowGuard({ getPort, verifyHolder, onRefused, onCleared, reload
   async function onHealth(healthy, body) {
     if (!healthy) { noteDown(); return; }
     const uptime = body && typeof body.uptime === 'number' ? body.uptime : null;
-    if (!blocked && uptime !== null && lastUptime !== null && uptime < lastUptime) noteDown();
+    if (!blocked && uptime !== null && lastUptime !== null && uptime < lastUptime) noteDown(); // restarted between two polls
     if (uptime !== null) lastUptime = uptime;
     if (checking) return;
     const wasBlocked = blocked;

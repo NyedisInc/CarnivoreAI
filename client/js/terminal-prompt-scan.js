@@ -1,4 +1,4 @@
-/* scrollback: the */
+/* not a prompt */
 (function (global) {
     'use strict';
 
@@ -84,7 +84,6 @@
         }
     }
 
-    /* padding */
     function caretWidth(raw, caret) {
         var text = String(raw || '');
         var at = text.indexOf(caret || CARET);

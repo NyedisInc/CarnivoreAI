@@ -1,29 +1,3 @@
-"""App-level scheduled tasks under ``~/.claude/scheduled-tasks`` (issue #893).
-
-WHAT IS RECORDED, AND WHAT IS NOT. The SCHEDULE of a task is not in
-``SKILL.md``: the desktop app keeps it in its own store, and that store is
-not on the machine this was measured on (no Claude.app, no
-``~/Library/Application Support/Claude``; the task folders arrive through
-the synced ``~/.claude``). So ``schedule`` is reported ``not_recorded``
-and ``next_run_at`` is null, NEVER GUESSED from prose in the body. A
-``schedule`` or ``cron`` key in the frontmatter, if one ever appears, is
-recorded and is shown as such (``schedule_source: frontmatter``).
-
-THE ONE RECORDED RUN FACT. Every scheduled run opens its transcript with
-the scheduler's own enqueue record, ``<scheduled-task name="X"
-file=".../SKILL.md">`` (``src/core/session_kind.py``,
-``transcript_import_facts.SCHEDULED_TASK``; measured 259 of 259 as a
-``queue-operation`` ``enqueue`` with a timestamp). So ``last_run_at`` and
-``runs_recorded`` are read from the HEADS of the main transcripts under
-``<config dir>/projects`` (``~/.claude`` and managed account profiles): bounded (:data:`MAX_TRANSCRIPTS` files,
-:data:`HEAD_BYTES` each), cached per file by (size, mtime), and the whole
-answer for :data:`TTL_SECONDS`.
-
-PATH SAFE AND READ ONLY. Only immediate child directories whose names
-match :data:`TASK_NAME_RE` are read, a symlinked directory or ``SKILL.md``
-is skipped (``O_NOFOLLOW``), at most :data:`MAX_TASKS` tasks and
-:data:`MAX_SKILL_BYTES` per file. Nothing is written anywhere.
-"""
 
 from __future__ import annotations
 

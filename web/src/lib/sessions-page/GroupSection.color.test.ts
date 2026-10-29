@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 function mountGroup(project: boolean): HTMLElement {
-    const group = { key: 'p:1', label: 'Storefront', bits: [], measure: '', rows: [], count: 0, live: 0, project: project ? { id: 1, name: 'Storefront' } : null, provider: null } as unknown as LensGroup;
+    const group = { key: 'p:1', label: 'Shopify', bits: [], measure: '', rows: [], count: 0, live: 0, project: project ? { id: 1, name: 'Shopify' } : null, provider: null } as unknown as LensGroup;
     handle = mount(GroupSection, { target: document.body, props: { group, folded: false, t, onFold: vi.fn(), children: createRawSnippet(() => ({ render: () => '<i></i>' })) } });
     flushSync();
     return document.querySelector<HTMLElement>('section.sp-sec')!;
@@ -45,7 +45,7 @@ test('a group that is not a project stamps nothing', () => {
 });
 
 function mountMenu(rows: unknown[]): HTMLElement {
-    const group = { key: 'p:1', label: 'Storefront', bits: [], measure: '', rows, count: rows.length, live: 0, project: { id: 1, name: 'Storefront' }, provider: null } as unknown as LensGroup;
+    const group = { key: 'p:1', label: 'Shopify', bits: [], measure: '', rows, count: rows.length, live: 0, project: { id: 1, name: 'Shopify' }, provider: null } as unknown as LensGroup;
     handle = mount(GroupSection, { target: document.body, props: { group, folded: false, t, onFold: vi.fn(), onProjectAction: vi.fn(), children: createRawSnippet(() => ({ render: () => '<i></i>' })) } });
     flushSync();
     return document.querySelector<HTMLElement>('section.sp-sec')!;

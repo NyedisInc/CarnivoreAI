@@ -28,7 +28,7 @@ from src.core.claude_transcript_correlate import (
     CORRELATE_NO_CANDIDATE,
 )
 
-WORKING_DIR = "/Users/example/Development/team/app"
+WORKING_DIR = "/Users/sam/Development/Assistants/Media"
 PANE_EPOCH = 1_788_016_091
 RESUME_UUID = "82854c0e-a423-4591-a34f-a14cb92fbf41"
 
@@ -59,16 +59,16 @@ def test_the_measured_field_case_resumed_conversation_predates_its_pane(tmp_path
     _write_transcript(tmp_path, RESUME_UUID, timestamp="2026-06-17T22:51:21Z")
     processes = [
         ProcessRow(
-            pid=4239,
+            pid=99871,
             ppid=1,
             command=(
-                "/Users/example/.local/bin/claude "
+                "/Users/sam/.local/bin/claude "
                 f"--resume {RESUME_UUID} --dangerously-skip-permissions"
             ),
         )
     ]
     result = correlate_adopted_session_ladder(
-        pane_pid=4239,
+        pane_pid=99871,
         working_dir=WORKING_DIR,
         tmux_created_epoch=PANE_EPOCH,
         projects_dir=tmp_path,
@@ -96,11 +96,11 @@ def test_no_resume_falls_through_to_rule_2(tmp_path):
     session_id = "aaaaaaaa-0000-0000-0000-000000000000"
     _write_transcript(tmp_path, session_id, timestamp="2027-01-15T10:00:05Z")
     processes = [
-        ProcessRow(pid=4818, ppid=4347, command="claude --dangerously-skip-permissions"),
-        ProcessRow(pid=4347, ppid=1, command="/bin/zsh -il"),
+        ProcessRow(pid=59314, ppid=59113, command="claude --dangerously-skip-permissions"),
+        ProcessRow(pid=59113, ppid=1, command="/bin/zsh -il"),
     ]
     result = correlate_adopted_session_ladder(
-        pane_pid=4347,
+        pane_pid=59113,
         working_dir=WORKING_DIR,
         tmux_created_epoch=1_800_000_000,
         projects_dir=tmp_path,

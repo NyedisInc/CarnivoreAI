@@ -1,5 +1,8 @@
 
 <script lang="ts">
+    import Button from '../base/Button.svelte';
+    import Field from '../base/Field.svelte';
+    import IconButton from '../base/IconButton.svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
@@ -85,7 +88,7 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">&raquo; {held ? t('hosts.sas.title') : needsCode === null ? t('hosts.pair.title') : t('hosts.pair.code_title')}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')} disabled={busy} onclick={dismiss}>&times;</button>
+            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close disabled={busy} onclick={dismiss} />
         </div>
     {/snippet}
     {#if held}
@@ -94,34 +97,26 @@
             <p class="modal-description" data-fed-sas-peer-confirms>{t('hosts.sas.peer_confirms')}</p>
         {/if}
     {:else if needsCode === null}
-        <div class="modal-input-group">
-            <label class="modal-label" for="modal-pair-target">{t('hosts.pair.target_label')}</label>
-            <input
-                type="text"
-                class="modal-input"
-                id="modal-pair-target"
-                placeholder={t('hosts.pair.target_placeholder')}
-                autocomplete="off"
-                disabled={busy}
-                bind:value={target}
-                onkeydown={onKey}
-            />
-            <div class="modal-description">{t('hosts.pair.target_hint')}</div>
-        </div>
-        <div class="modal-input-group">
-            <label class="modal-label" for="modal-pair-port">{t('hosts.pair.port_label')}</label>
-            <input
-                type="text"
-                inputmode="numeric"
-                class="modal-input"
-                id="modal-pair-port"
-                placeholder={t('hosts.pair.port_placeholder')}
-                autocomplete="off"
-                disabled={busy}
-                bind:value={port}
-                onkeydown={onKey}
-            />
-        </div>
+        <Field
+            label={t('hosts.pair.target_label')}
+            id="modal-pair-target"
+            placeholder={t('hosts.pair.target_placeholder')}
+            help={t('hosts.pair.target_hint')}
+            autocomplete="off"
+            disabled={busy}
+            bind:value={target}
+            onkeydown={onKey}
+        />
+        <Field
+            label={t('hosts.pair.port_label')}
+            id="modal-pair-port"
+            inputmode="numeric"
+            placeholder={t('hosts.pair.port_placeholder')}
+            autocomplete="off"
+            disabled={busy}
+            bind:value={port}
+            onkeydown={onKey}
+        />
         {#if found}
             <p class="modal-description" data-fed-pair-hint={found.state}>
                 {found.state === 'pinned' ? t('hosts.found.state.pinned') : found.state === 'identity_changed' ? t('hosts.pair.identity_changed') : t('hosts.found.state.new')}
@@ -129,28 +124,19 @@
         {/if}
     {:else}
         <p class="modal-description" data-fed-pair-reason>{needsCode || t('hosts.pair.code_reason')}</p>
-        <div class="modal-input-group">
-            <label class="modal-label" for="modal-pair-nonce">{t('hosts.code.nonce_label')}</label>
-            <input type="text" class="modal-input" id="modal-pair-nonce" autocomplete="off" disabled={busy} bind:value={nonce} onkeydown={onKey} />
-        </div>
-        <div class="modal-input-group">
-            <label class="modal-label" for="modal-pair-code">{t('hosts.code.code_label')}</label>
-            <input type="text" class="modal-input" id="modal-pair-code" autocomplete="off" disabled={busy} bind:value={code} onkeydown={onKey} />
-            <div class="modal-description">{t('hosts.pair.code_hint')}</div>
-        </div>
+        <Field label={t('hosts.code.nonce_label')} id="modal-pair-nonce" autocomplete="off" disabled={busy} bind:value={nonce} onkeydown={onKey} />
+        <Field label={t('hosts.code.code_label')} id="modal-pair-code" help={t('hosts.pair.code_hint')} autocomplete="off" disabled={busy} bind:value={code} onkeydown={onKey} />
     {/if}
     {#if error}
         <p class="modal-description" role="alert" data-fed-pair-error style="color: var(--oc-coral);">{error}</p>
     {/if}
     {#snippet footer()}
         {#if held}
-            <button class="modal-btn modal-btn-danger" disabled={busy} data-fed-sas-differ onclick={() => void answer(false)}>{t('hosts.sas.differ')}</button>
-            <button class="modal-btn modal-btn-confirm" disabled={busy} data-fed-sas-match onclick={() => void answer(true)}>{t('hosts.sas.match')}</button>
+            <Button variant="danger" disabled={busy} data-fed-sas-differ onclick={() => void answer(false)}>{t('hosts.sas.differ')}</Button>
+            <Button variant="confirm" disabled={busy} data-fed-sas-match onclick={() => void answer(true)}>{t('hosts.sas.match')}</Button>
         {:else}
-            <button class="modal-btn modal-btn-secondary" disabled={busy} onclick={() => close(null)}>{t('hosts.fed.cancel')}</button>
-            <button class="modal-btn modal-btn-confirm" disabled={!canSubmit} data-fed-pair-confirm onclick={() => void submit()}
-                >{busy ? t('hosts.pair.busy') : t('hosts.pair.confirm')}</button
-            >
+            <Button disabled={busy} onclick={() => close(null)}>{t('hosts.fed.cancel')}</Button>
+            <Button variant="confirm" disabled={!canSubmit} data-fed-pair-confirm onclick={() => void submit()}>{busy ? t('hosts.pair.busy') : t('hosts.pair.confirm')}</Button>
         {/if}
     {/snippet}
 </ModalShell>

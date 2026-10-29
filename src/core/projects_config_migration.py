@@ -48,24 +48,6 @@ PROJECTS_RETIRED_NOTE = (
 
 @dataclass(frozen=True)
 class MigrationResult:
-    """What one migration pass did, and what it refused to do.
-
-    Description: ``ok`` is True only when config.json ended the pass
-      without a ``projects`` key. A pass that could not prove the
-      database covers the file reports ok False with a named reason and
-      leaves the file untouched, so a caller cannot read "we tried" as
-      "it is done".
-    Inputs (constructor): ok (bool), reason (str - one of the
-      MIGRATION_* constants), imported (list[dict] - ``{"root", "name"}``
-      newly inserted because the table had never seen them),
-      imported_undetermined (list[dict] - same shape, for roots whose
-      absence could not be explained; imported deliberately, see the
-      module docstring), already_present (int - config roots the table
-      already held), skipped_deleted (list[dict] - ``{"root", "name"}``
-      left out because a tombstone proves the user removed them),
-      detail (str | None - the underlying error when there is one).
-    Output: a MigrationResult instance.
-    """
 
     ok: bool
     reason: str

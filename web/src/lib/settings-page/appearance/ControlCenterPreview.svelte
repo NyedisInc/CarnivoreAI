@@ -1,4 +1,4 @@
-<!-- hidden -->
+
 <script lang="ts">
     import Icon from '../../../opscenter/ui/Icon.svelte';
     import Tabs, { type TabDef } from '../../../opscenter/ui/Tabs.svelte';

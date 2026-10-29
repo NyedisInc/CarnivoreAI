@@ -32,7 +32,31 @@ def load_manifest(set_dir: Path) -> Dict[str, Any]:
         raise SetUnreadable(f"{set_dir}: no readable {MANIFEST_NAME} ({exc})") from exc
     if not isinstance(manifest, dict) or manifest.get("format") != MANIFEST_FORMAT or not {"databases", "files", "trees"} <= set(manifest):
         raise SetUnreadable(f"{set_dir}: {MANIFEST_NAME} is not format {MANIFEST_FORMAT}")
+    _check_entries(set_dir, manifest)
     return manifest
+
+
+_ENTRY_KEYS = {
+    "databases": ("copy", "tables", "file_sha256"),
+    "files": ("copy", "sha256", "source", "base"),
+    "trees": ("files",),
+}
+_TOP_KEYS = ("phase", "created_utc")
+
+
+def _check_entries(set_dir: Path, manifest: Dict[str, Any]) -> None:
+    missing = [k for k in _TOP_KEYS if k not in manifest]
+    if missing:
+        raise SetUnreadable(f"{set_dir}: {MANIFEST_NAME} lacks {', '.join(missing)}")
+    for section, keys in _ENTRY_KEYS.items():
+        entries = manifest[section]
+        if not isinstance(entries, dict):
+            raise SetUnreadable(f"{set_dir}: {MANIFEST_NAME} section {section} is not an object")
+        for name, entry in entries.items():
+            if not isinstance(entry, dict) or any(k not in entry for k in keys):
+                raise SetUnreadable(f"{set_dir}: {MANIFEST_NAME} {section} entry {name!r} lacks one of {', '.join(keys)}")
+            if section == "databases" and not (isinstance(entry["tables"], dict) and all(isinstance(t, dict) for t in entry["tables"].values())):
+                raise SetUnreadable(f"{set_dir}: {MANIFEST_NAME} database {name!r} has a malformed tables map")
 
 
 def _record(report: Report, key: str, message: str, allow: Sequence[str]) -> None:
@@ -53,7 +77,7 @@ def check_set(set_dir: Path, manifest: Dict[str, Any], report: Report) -> None:
             continue
         if now["integrity"] != "ok":
             report.failures.append(f"set {name}: integrity check says {now['integrity'][:80]}")
-        report.failures.extend(f"set {name}:{p}" for p in diff_tables(entry["tables"], now["tables"]))
+        report.failures.extend(f"set {name}:{d.table}: {d.message}" for d in diff_tables(entry["tables"], now["tables"]))
         if file_sha256(path) != entry["file_sha256"]:
             report.failures.append(f"set {name}: the file's sha256 differs from the manifest")
     for key, entry in manifest["files"].items():
@@ -73,9 +97,8 @@ def check_live(manifest: Dict[str, Any], state_dir: Path, report: Report, allow:
             _record(report, f"{name}", "the live database is gone", allow)
             continue
         now = describe_database(live, check_integrity=False)
-        for sentence in diff_tables(entry["tables"], now["tables"]):
-            table = sentence.split(":", 1)[0]
-            _record(report, f"{name}:{table}", sentence.split(": ", 1)[1], allow)
+        for diff in diff_tables(entry["tables"], now["tables"]):
+            _record(report, f"{name}:{diff.table}", diff.message, allow)
     for key, entry in manifest["files"].items():
         live = Path(entry["source"]) if entry["base"] == "abs" else state_dir / key
         if not live.is_file():
@@ -91,11 +114,6 @@ def check_live(manifest: Dict[str, Any], state_dir: Path, report: Report, allow:
 
 
 def verify_set(set_dir: Path, state_dir: Optional[Path], allow: Sequence[str], resolver: Any) -> Report:
-    """Verify a set, and the live data against it when ``state_dir`` is given.
-
-    Inputs: set_dir (Path); state_dir (Path | None - None checks the set alone); allow (patterns); resolver (see check_live).
-    Output: Report. Raises: SetUnreadable (no manifest), PhaseBackupError (a live database could not be read).
-    """
     manifest = load_manifest(set_dir)
     report = Report()
     check_set(set_dir, manifest, report)

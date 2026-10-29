@@ -1,5 +1,5 @@
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { META } from './meta';
 import { ROW_MAX, resetLayout, rowFloor } from './model';
 import { MAX_VIEWERS } from './model';
@@ -402,7 +402,7 @@ describe('validate: instance ids', () => {
   });
 
   it('accepts an ADOPTED session id, colon and all', () => {
-    for (const id of ['terminal:adopted:cloude_Orchard', 'terminal:adopted:cloude_Example App']) {
+    for (const id of ['terminal:adopted:cloude_Argent', 'terminal:adopted:cloude_Lantern App']) {
       expect([id, validate(withInstance(good(), id), META).refusal]).toEqual([id, null]);
     }
   });
@@ -718,5 +718,38 @@ describe('load: a refusal clears what it refused', () => {
     load(META, 'home');
     expect(held.has(storageKey('home'))).toBe(false);
     expect(held.get(terminalKey)).toBe(terminalBlob);
+  });
+});
+
+describe('flushSave refuses an oversize layout (u161-05)', () => {
+  it('keeps the last good entry instead of writing text load() would delete', () => {
+    const held = installStorage();
+    const good = resetLayout(META);
+    save(good, 'home');
+    flushSave();
+    const key = storageKey('home');
+    const before = held.get(key);
+    expect(before).toBeDefined();
+    const fat = { ...good, hidden: Array.from({ length: 1200 }, (_, at) => `analytics:fat${at}` as SlotId) };
+    save(fat, 'home');
+    flushSave();
+    expect(held.get(key)).toBe(before);
+  });
+
+  it('raises one visible toast, once, when the save is refused', () => {
+    installStorage();
+    const add = vi.fn();
+    (globalThis as { ToastManager?: unknown }).ToastManager = { add };
+    try {
+      const fat = { ...resetLayout(META), hidden: Array.from({ length: 1200 }, (_, at) => `analytics:toast${at}` as SlotId) };
+      save(fat, 'terminal', 'ses_toast');
+      flushSave();
+      save(fat, 'terminal', 'ses_toast');
+      flushSave();
+      expect(add).toHaveBeenCalledTimes(1);
+      expect(add.mock.calls[0]?.[0]).toMatchObject({ local: true, kind: 'LayoutOversize' });
+    } finally {
+      delete (globalThis as { ToastManager?: unknown }).ToastManager;
+    }
   });
 });

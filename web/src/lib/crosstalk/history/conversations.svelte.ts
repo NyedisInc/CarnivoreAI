@@ -1,4 +1,3 @@
-/*  hidden  */
 import { authFetch } from '../../../opscenter/api/auth.svelte';
 import { resourcePush } from '../../resource-push/boot';
 import {

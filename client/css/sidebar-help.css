@@ -1,45 +1,3 @@
-/*
- * The sidebar's "?" panel (client/js/sidebar-help.js). Reuses
- * `.modal-overlay` / `.modal-content` / `.modal-btn` so it is the same
- * object on screen as every other dialog.
- *
- * IT FITS THE WINDOW, the reopen offer's rule (session-restore-offer.css):
- * a flex column capped at the viewport less a margin, header and footer at
- * their natural height, ONE scroll body between them with `min-height: 0`
- * so it can shrink below its content.
- *
- * MILITARY TERMINAL RESKIN (issue #844), copying the canonical references
- * CLAUDE.md names rather than inventing the look from tokens alone: the
- * header is a title-row strip (`session-restart-picker.css`'s
- * `.restart-picker__head`) - fixed height, `--oc-ground-titlerow`, a
- * hairline underneath via `box-shadow` rather than a border, mono type,
- * a small tracked uppercase label. Section headings and the collapsible
- * trigger follow the same small-tracked-uppercase pattern. `--oc-*`
- * tokens only, everywhere in this file.
- *
- * A CHANGE ROW EXPANDS IN PLACE (issue #920): the whole row is now a
- * keyboard-operable toggle, not just its feature chips, opening an inset
- * detail panel (`.sidebar-help__change-detail`) under the row - the same
- * cyan-ruled inset treatment `.sidebar-help__feature-body` gives an
- * expanded feature, since it renders the SAME `FeatureDetail.svelte`
- * component for `added`/`changed` entries.
- *
- * WIDENED AND RE-SECTIONED (issue #876). the team: "make it not as narrow.
- * redesign that modal so it fits the data and it's all easier to quickly
- * read and segregate the data." The card is now `min(1100px, 92vw)` wide
- * and up to `85vh` tall, so the release log and the feature list each read
- * as their own column of text instead of one narrow stack; the padding
- * that `.modal-content` gives every other dialog is zeroed on the
- * compound selector below (the same trick `session-restart-picker.css`'s
- * `.restart-picker .restart-picker__content` uses) so the title strip and
- * the new nav strip can span the card edge to edge. THREE PEER SECTIONS -
- * marks, releases, features, each a `.sidebar-help__section` - share one
- * header treatment, `.sidebar-help__h`: a tracked uppercase label the
- * same size as the title strip's, with a hairline underneath. Below
- * 1024px the card goes full screen rather than merely narrower, since a
- * three-section, two-column reading surface has nowhere to shrink to on
- * a phone.
- */
 
 .modal-overlay.sidebar-help {
     background: color-mix(in srgb, var(--oc-ground-page) 85%, transparent);
@@ -121,7 +79,6 @@
     padding: 0;
 }
 
-/* padding */
 .sidebar-help__section {
     padding: 20px 20px 24px;
 }
@@ -269,7 +226,7 @@
     overflow: hidden;
 }
 
-.sidebar-help__release-head {
+[data-help-release-head] {
     display: grid;
     grid-template-columns: 12px auto auto minmax(0, 1fr);
     align-items: center;
@@ -285,15 +242,11 @@
     cursor: pointer;
 }
 
-.sidebar-help__release-head[aria-expanded="true"] {
+[data-help-release-head][aria-expanded="true"] {
     box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
 }
 
-.sidebar-help__release-head:hover {
-    background: var(--oc-ground-hover);
-}
-
-.sidebar-help__release-head[aria-expanded="true"] .sidebar-help__collapse-caret {
+[data-help-release-head][aria-expanded="true"] .sidebar-help__collapse-caret {
     transform: rotate(45deg);
 }
 
@@ -358,7 +311,6 @@
     box-shadow: none;
 }
 
-/* <button> role="button" */
 .sidebar-help__change-row {
     display: grid;
     grid-template-columns: 12px 92px minmax(0, 1fr) minmax(0, 250px) 52px;
@@ -434,7 +386,8 @@
     min-width: 0;
 }
 
-.sidebar-help__feature-chip {
+.sidebar-help__feature-chip,
+[data-help-feature-chip] {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -450,12 +403,12 @@
     line-height: 1.5;
 }
 
-.sidebar-help__feature-chip--link {
+[data-help-feature-chip] {
     cursor: pointer;
 }
 
-.sidebar-help__feature-chip--link:hover,
-.sidebar-help__feature-chip--link:focus-visible {
+[data-help-feature-chip]:hover,
+[data-help-feature-chip]:focus-visible {
     color: var(--oc-cyan);
     box-shadow: inset 0 0 0 1px var(--oc-cyan);
 }
@@ -597,7 +550,7 @@
     box-shadow: inset 0 1px 0 0 var(--oc-line-faint);
 }
 
-.sidebar-help__feature-trigger {
+[data-help-feature-trigger] {
     display: grid;
     grid-template-columns: 12px minmax(0, 220px) minmax(0, 1fr) 96px;
     align-items: center;
@@ -613,11 +566,7 @@
     cursor: pointer;
 }
 
-.sidebar-help__feature-trigger:hover {
-    background: var(--oc-ground-hover);
-}
-
-.sidebar-help__feature-trigger[aria-expanded="true"] .sidebar-help__collapse-caret {
+[data-help-feature-trigger][aria-expanded="true"] .sidebar-help__collapse-caret {
     transform: rotate(45deg);
 }
 
@@ -629,7 +578,7 @@
     color: var(--oc-text-primary);
 }
 
-.sidebar-help__feature-trigger[aria-expanded="true"] .sidebar-help__feature-name {
+[data-help-feature-trigger][aria-expanded="true"] .sidebar-help__feature-name {
     color: var(--oc-text-bright);
 }
 
@@ -735,7 +684,8 @@
     margin-top: 4px;
 }
 
-.sidebar-help__media-item {
+.sidebar-help__media-item,
+[data-help-media-tile] {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -750,16 +700,20 @@
     font-family: var(--font-mono);
 }
 
-.sidebar-help__media-row--large .sidebar-help__media-item {
+.sidebar-help__media-row--large .sidebar-help__media-item,
+.sidebar-help__media-row--large [data-help-media-tile] {
     max-width: 220px;
 }
 
 .sidebar-help__media-item:hover,
-.sidebar-help__media-item:focus-visible {
+.sidebar-help__media-item:focus-visible,
+[data-help-media-tile]:hover,
+[data-help-media-tile]:focus-visible {
     box-shadow: inset 0 0 0 1px var(--oc-cyan);
 }
 
-.sidebar-help__media-item:focus-visible {
+.sidebar-help__media-item:focus-visible,
+[data-help-media-tile]:focus-visible {
     outline: none;
 }
 
@@ -792,7 +746,7 @@
     color: var(--oc-orange);
 }
 
-.sidebar-help__media-gif-poster {
+[data-help-media-gif-poster] {
     min-height: 64px;
     justify-content: center;
 }
@@ -825,7 +779,7 @@
 }
 
 @media (max-width: 640px) {
-    .sidebar-help__release-head {
+    [data-help-release-head] {
         grid-template-columns: 12px auto minmax(0, 1fr);
         row-gap: 4px;
         padding: 8px 12px;
@@ -867,7 +821,7 @@
         margin: 0 8px 10px 8px;
     }
 
-    .sidebar-help__feature-trigger {
+    [data-help-feature-trigger] {
         grid-template-columns: 12px minmax(0, 1fr) auto;
         grid-template-areas:
             "caret name status"
@@ -875,7 +829,7 @@
         row-gap: 4px;
     }
 
-    .sidebar-help__feature-trigger .sidebar-help__collapse-caret { grid-area: caret; }
+    [data-help-feature-trigger] .sidebar-help__collapse-caret { grid-area: caret; }
     .sidebar-help__feature-name { grid-area: name; }
     .sidebar-help__feature-summary {
         grid-area: summary;

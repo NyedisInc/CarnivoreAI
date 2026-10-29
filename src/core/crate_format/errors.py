@@ -42,7 +42,6 @@ class CrateCorrupt(CrateError):
 
 
 class DestinationNotEmpty(CrateError):
-    """An extract destination that already exists."""
 
     code = "destination_exists"
 
@@ -63,7 +62,6 @@ class WrongKey(CrateError):
 
 
 class ConversationNotInCrate(CrateError):
-    """The conversation id named for an extract is not in the crate. Inputs: conversation_id."""
 
     code = "conversation_not_in_crate"
 

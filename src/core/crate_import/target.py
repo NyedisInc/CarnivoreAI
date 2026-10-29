@@ -132,7 +132,6 @@ def _free_name(conn: sqlite3.Connection, name: str, date: str) -> Tuple[str, Opt
 
 
 def _suggested(env: ImportEnv, name: Optional[str]) -> str:
-    """The folder offered when a same-path restore is not allowed: ``<projects folder>/<safe name>``. Pure."""
     safe = "".join(ch if (ch.isalnum() or ch in " ._-") else "_" for ch in (name or "restored project")).strip(" .") or "restored project"
     return os.path.join(env.projects_dir, safe)
 
@@ -183,8 +182,6 @@ def _foreign_gate(root_to: str, prov: Provenance, env: ImportEnv, rows: List[Dic
 
 def _pick_root(crate: CrateProject, request: ImportRequest, prov: Provenance, env: ImportEnv, rows: List[Dict[str, Any]],
                row_by_uid: Optional[Dict[str, Any]], col: Collector, out: TargetDecision) -> Optional[Tuple[str, Optional[Dict[str, Any]], str]]:
-    """Choose the root and the project row already there. Output: (root_to, existing row | None, how) with how in ``root``, ``uid``,
-    ``picked``; or None when blocked (a blocker is on ``col``)."""
     if crate.scope == "session" and crate.root is None:
         picked = None
         if request.target_project_id is not None:

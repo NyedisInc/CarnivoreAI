@@ -29,7 +29,6 @@ class StaleBase(OverrideError):
 
 
 def file_sha256(path: str) -> str:
-    """sha256 hex of the whole file, read in chunks. Example: file_sha256('/a/SKILL.md')."""
     digest = hashlib.sha256()
     with open(path, "rb") as handle:
         for chunk in iter(lambda: handle.read(1 << 16), b""):

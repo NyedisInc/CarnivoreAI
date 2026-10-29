@@ -1,3 +1,4 @@
+/* is unset and */
 import { authFetch, familyOf, resourcePush } from '../sdk';
 
 export const PREFS_FAMILY = 'cplug.huddle.prefs';
@@ -6,11 +7,10 @@ interface AllPrefs {
   sessions: Record<string, boolean>;
   lists: Record<string, boolean>;
   leads?: Record<string, string>;
-  dnd?: string[];
 }
 
-const cache: { sessions: Record<string, boolean>; lists: Record<string, boolean>; leads: Record<string, string>; dnd: Set<string>; loaded: boolean } =
-  { sessions: {}, lists: {}, leads: {}, dnd: new Set(), loaded: false };
+const cache: { sessions: Record<string, boolean>; lists: Record<string, boolean>; leads: Record<string, string>; loaded: boolean } =
+  { sessions: {}, lists: {}, leads: {}, loaded: false };
 let started = false;
 
 export function effectiveNudge(own: boolean | undefined, projectOn: boolean): boolean {
@@ -32,7 +32,6 @@ export async function refreshSessionNudge(): Promise<void> {
     cache.sessions = body.sessions ?? {};
     cache.lists = body.lists ?? {};
     cache.leads = body.leads ?? {};
-    cache.dnd = new Set(body.dnd ?? []);
     cache.loaded = true;
   } catch (err) {
     console.error('[huddle] could not read the nudge switches:', err);
@@ -51,23 +50,11 @@ export function sessionLeads(sessionUuid: string, projectId: number | string | n
   return projectId != null && cache.leads[String(projectId)] === sessionUuid;
 }
 
-export function sessionDnd(sessionUuid: string): boolean {
-  return cache.dnd.has(sessionUuid);
-}
-
 export async function setProjectLead(projectId: number | string, sessionUuid: string | null): Promise<void> {
   const key = String(projectId);
   await authFetch(`/cplugs/huddle/lists/${encodeURIComponent(key)}/lead`, { method: 'PUT', body: JSON.stringify({ session: sessionUuid }) });
   if (sessionUuid === null) delete cache.leads[key];
   else cache.leads[key] = sessionUuid;
-}
-
-export async function setSessionDnd(sessionUuid: string, on: boolean): Promise<boolean> {
-  const stored = await authFetch<{ session: string; dnd: boolean }>(
-    `/cplugs/huddle/sessions/${encodeURIComponent(sessionUuid)}/dnd`, { method: 'PUT', body: JSON.stringify({ dnd: on }) });
-  if (stored.dnd) cache.dnd.add(sessionUuid);
-  else cache.dnd.delete(sessionUuid);
-  return stored.dnd;
 }
 
 export function startSessionNudge(): void {
@@ -83,7 +70,6 @@ export function resetSessionNudge(): void {
   cache.sessions = {};
   cache.lists = {};
   cache.leads = {};
-  cache.dnd = new Set();
   cache.loaded = false;
   started = false;
 }

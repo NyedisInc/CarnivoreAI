@@ -142,10 +142,10 @@ def test_ten_wrong_codes_in_an_hour_pause_code_mode():
             got = iv.take_attempt("code")
             if got is None:
                 break
-            iv.finish_attempt(got, ok=False, mode="code", addr="198.51.100.14")
+            iv.finish_attempt(got, ok=False, mode="code", addr="10.0.0.9")
         if iv.code_paused():
             break
-    assert iv.code_paused() and ("paused", "198.51.100.14") in notices and ("burned", "198.51.100.14") in notices
+    assert iv.code_paused() and ("paused", "10.0.0.9") in notices and ("burned", "10.0.0.9") in notices
     assert iv.mint().code is None and iv.take_attempt("code") is None
     clock.now += inv_mod.CODE_PAUSE_S + 1
     assert iv.mint().code is not None

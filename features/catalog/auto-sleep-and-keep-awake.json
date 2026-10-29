@@ -27,7 +27,34 @@
     "keep awake",
     "idle"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "A dark coffee cup icon in the terminal bar",
+      "caption": "Keep awake off: the cup is dark",
+      "file": "cup-off.png",
+      "kind": "icon",
+      "state": "off"
+    },
+    {
+      "alt": "A lit coffee cup icon with steam in the terminal bar",
+      "caption": "Keep awake on: the cup is lit, with steam",
+      "file": "cup-on.png",
+      "kind": "icon",
+      "state": "on"
+    },
+    {
+      "alt": "A drawer row for api-server with a small coffee cup beside its name",
+      "caption": "A kept-awake session shows the cup on its drawer row",
+      "file": "drawer-cup.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The settings dialog's workspace tab showing the auto-sleep controls",
+      "caption": "The auto-sleep settings in the workspace tab",
+      "file": "settings.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Auto-sleep and keep-awake",
   "since": "2026-09-25",
   "status": "stable",
@@ -39,7 +66,7 @@
   "updated": "2026-09-27",
   "where": [
     "Keep awake: the coffee cup at the right end of a claude or codex session's terminal bar.",
-    "Auto sleep: settings (gear at the bottom of the drawer), sessions section, the auto-sleep group."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+    "Auto sleep: settings (gear at the bottom of the drawer), sessions section, the auto-sleep group.",
+    "Every kept-awake session: the lit cup on its drawer row, and the keep awake home widget, which lists them all and says whether this computer is held awake."
+  ]
 }

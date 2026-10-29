@@ -1,3 +1,4 @@
+// ----------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -36,6 +37,7 @@ function env(stored) {
     const gone = [];
     const go = (w) => { gone.push(w.session_id); return Promise.resolve(true); };
     sandbox.window.ToastNavigate = { go, open: go, isAskToast: () => false };
+    vm.runInContext(fs.readFileSync(path.join(ROOT, 'client/js/i18n/tr.js'), 'utf8'), sandbox, { filename: 'tr.js' });
     vm.runInContext(MODE_SRC, sandbox, { filename: 'toast-mode.js' });
     assert.ok(sandbox.ToastMode, 'toast-mode.js did not export itself');
     return { ...base, gone, bridge, intervals };
@@ -73,7 +75,7 @@ test('compact (absent setting): the most urgent event wins, generic title', asyn
     await settle();
     const shown = cards(container);
     assert.equal(shown.length, 1, 'one card per session in both modes');
-    assert.equal(shown[0].dataset.kind, 'PermissionRequest', "the team's fold keeps the permission");
+    assert.equal(shown[0].dataset.kind, 'PermissionRequest', "Alex's fold keeps the permission");
     assert.equal(text(shown[0], 'toast__title-text'), 'needs your permission');
     assert.equal(shown[0].dataset.mode, 'compact');
 });
@@ -165,7 +167,7 @@ test('compact: clicking a card navigates and acks nothing (unchanged)', async ()
     cards(container)[0].click();
     await settle();
     assert.deepEqual(gone, ['A']);
-    assert.deepEqual(acked, [], "the team's click reads a notification, it does not answer it");
+    assert.deepEqual(acked, [], "Alex's click reads a notification, it does not answer it");
     assert.equal(cards(container).length, 1);
 });
 
@@ -204,6 +206,17 @@ test('an unknown stored value reads compact', async () => {
     pile().forEach((r) => mgr.add(r));
     await settle();
     assert.equal(cards(container)[0].dataset.mode, 'compact');
+});
+
+test('detailed: a permission prompt is never hidden behind the overflow cap by a newer Stop in its session (u009-01)', async () => {
+    const { container, mgr } = env('detailed');
+    mgr.add(at('PermissionRequest', 'needs your permission', 'A', 1, PERMISSION));
+    mgr.add(at('Stop', 'Your turn', 'A', 2, FINISHED));
+    for (let i = 0; i < 12; i += 1) mgr.add(at('Stop', 'Your turn', 'Q' + i, 10 + i, FINISHED));
+    await settle();
+    const mine = cards(container).find((c) => text(c, 'toast__session') === 'cloude_A');
+    assert.ok(mine, 'the session holding the permission prompt is still on screen');
+    assert.equal(mine.attrs ? mine.attrs.role : mine.getAttribute('role'), 'alert', 'and it is announced as an alert');
 });
 
 let failed = 0;

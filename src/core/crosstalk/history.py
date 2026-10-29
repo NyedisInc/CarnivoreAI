@@ -18,7 +18,7 @@ class HistoryError(ValueError):
     pass
 
 
-def _redact(value: Any) -> Any:
+def redact(value: Any) -> Any:
     from src.core.mcp.read_tools import scrub
     return scrub(value)
 
@@ -112,7 +112,7 @@ def list_threads(*, session: Optional[str] = None, session_row: Optional[int] = 
                         'last_preview': last['text'][:PREVIEW_CHARS], 'last_sender_key': last['sender_key'],
                         'last_status': last['status']})
     next_before = threads[-1]['last_at'] if len(threads) == limit else None
-    return _redact({'threads': threads, 'next_before': next_before})
+    return redact({'threads': threads, 'next_before': next_before})
 
 
 def thread_messages(thread: str, *, participant: Optional[str] = None, before: Optional[float] = None,
@@ -134,7 +134,7 @@ def thread_messages(thread: str, *, participant: Optional[str] = None, before: O
     if participant is not None:
         store._confirm_read(participant, messages)
     next_before = messages[0]['created_at'] if len(messages) == limit else None
-    return _redact({'thread': thread, 'messages': messages, 'next_before': next_before})
+    return redact({'thread': thread, 'messages': messages, 'next_before': next_before})
 
 
 def task_item_trail(task_item: int, *, limit: int = MESSAGES_LIMIT) -> dict:
@@ -146,4 +146,4 @@ def task_item_trail(task_item: int, *, limit: int = MESSAGES_LIMIT) -> dict:
     messages = [{**{k: row[k] for k in ('id', 'thread', 'sender_name', 'receiver_name', 'created_at', 'status')},
                  'preview': ((row['text'] or '').strip().splitlines() or [''])[0][:PREVIEW_CHARS]}
                 for row in reversed(rows)]
-    return _redact({'task_item': task_item, 'messages': messages})
+    return redact({'task_item': task_item, 'messages': messages})

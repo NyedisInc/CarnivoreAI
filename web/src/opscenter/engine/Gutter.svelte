@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { beginGesture } from './pointer';
   import { META, metaFor } from './meta';
   import { ROW_MAX, rowFloor } from './model';
@@ -17,6 +16,7 @@
     flexSpace = 0,
     gutter,
     belowLabel = '',
+    tail,
     mirror = false,
     store,
   }: {
@@ -28,6 +28,7 @@
     flexSpace?: number;
     gutter: number;
     belowLabel?: string;
+    tail?: number;
     mirror?: boolean;
   } = $props();
 
@@ -58,6 +59,7 @@
       return t('opscenter.gutter.resize', { first: a, second: b });
     }
     const a = row.slots[0] ? t(metaFor(row.slots[0].id, META).titleKey) : t('opscenter.gutter.row');
+    if (tail !== undefined) return t('opscenter.gutter.grow_down', { label: a });
     return t('opscenter.gutter.resize', {
       first: a,
       second: belowLabel || t('opscenter.gutter.row_below'),
@@ -97,7 +99,12 @@
     if (axis === 'x') {
       if (!seam) return;
       store.dragColumns(snapshot, row.id, seam.index, dx, liftFree, seam.leftMinPx, seam.leftMaxPx);
-    } else store.dragRows(snapshot, row.id, dy, liftFlex);
+    } else store.dragRows(snapshot, row.id, tail === undefined ? dy : tailDelta(snapshot, dy), liftFlex);
+  }
+
+  function tailDelta(base: Layout, dy: number): number {
+    const size = base.rows.find((entry) => entry.id === row.id)?.size ?? 0;
+    return Math.max(dy, Math.min(0, (tail ?? 0) - size));
   }
 
   function light(state: 'hover' | 'active' | null): void {
@@ -141,7 +148,7 @@
     if (axis === 'x') {
       if (!seam) return;
       store.dragColumns(base, row.id, seam.index, pixels, seam.space, seam.leftMinPx, seam.leftMaxPx);
-    } else store.dragRows(base, row.id, pixels, flexSpace);
+    } else store.dragRows(base, row.id, tail === undefined ? pixels : tailDelta(base, pixels), flexSpace);
     store.announceLater(spoken);
   }
 

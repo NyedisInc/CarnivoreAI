@@ -19,7 +19,7 @@ from src.core.crate_format.tarsink import CrateSink, content_id_of, template_byt
 
 EPOCH = 1792267200
 CONV = "11111111-2222-4333-8444-555555555555"
-CODEX_CONV = "539b3ad5-1ce8-4b6e-8ffe-99da6a26a6dc"
+CODEX_CONV = "019a0000-0000-7000-8000-00000000c0de"
 ENC = "-Users-x-app"
 WORKING_DIR = "/Users/x/app"
 
@@ -166,7 +166,7 @@ def manifest_json(members, blobs: Dict[str, Any], files: Sequence[SrcFile], vari
     return {
         "format": FORMAT, "format_version": [1, minor], "variant": variant, "byte_exact": variant == "own",
         "resume": "native" if variant == "own" else "fork_only", "complete": True,
-        "bundle_id": "crate-20261017T200000Z-session-225fde27", "label": None, "created_at": "2026-10-17T20:00:00Z",
+        "bundle_id": "crate-20261017T200000Z-session-1a2b3c4d", "label": None, "created_at": "2026-10-17T20:00:00Z",
         "created_epoch": EPOCH, "writer": {"app_version": "test", "codec": "zstd"}, "source": {"install_id": "i"},
         "scope": {"kind": "session"},
         "homes": [{"kind": "claude", "index": 0, "path": None if variant == "share" else "/Users/x/.claude"}],

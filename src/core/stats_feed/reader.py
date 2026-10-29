@@ -34,7 +34,7 @@ def read_revision(store: StatsStore) -> int:
 
 
 def read_probe(store: StatsStore) -> Tuple[int, str]:
-    with store.connect(readonly=True) as conn:
+    with store.connect_read() as conn:
         row = conn.execute("SELECT value FROM stats_meta WHERE key='revision'").fetchone()
         if row is None:
             raise sqlite3.DatabaseError("stats.db has no revision row")
@@ -52,7 +52,7 @@ def _sums(conn: sqlite3.Connection, table: str, since: int, cap: int) -> Dict[in
 
 
 def read_snapshot(store: StatsStore, now: float) -> Snapshot:
-    with store.connect(readonly=True) as conn:
+    with store.connect_read() as conn:
         conn.execute("BEGIN")
         try:
             revision_row = conn.execute("SELECT value FROM stats_meta WHERE key='revision'").fetchone()

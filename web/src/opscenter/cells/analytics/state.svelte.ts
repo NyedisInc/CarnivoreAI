@@ -254,7 +254,6 @@ export function changeChart(chart: ChartConfig): void {
 const VIEW_SAVE_DELAY_MS = 600;
 const viewTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-/*  hidden  */
 export function saveChartView(id: string, mutate: (chart: ChartConfig) => ChartConfig): void {
   const current = analytics.charts[id];
   if (!current) return;
@@ -283,6 +282,14 @@ async function writeChartView(id: string): Promise<void> {
   await creating.get(id);
   const local = analytics.charts[id];
   if (!local) return;
+  if (unsaved.has(id)) {
+    try {
+      const saved = await createChart($state.snapshot(local) as ChartConfig);
+      unsaved.delete(id);
+      analytics.charts[id] = { ...local, revision: saved.revision };
+    } catch (error) { analytics.error = error instanceof Error ? error.message : t('analytics.chart_unavailable'); }
+    return;
+  }
   const whole = settingsPending.delete(id);
   try {
     let saved: ChartConfig;
@@ -299,6 +306,8 @@ async function writeChartView(id: string): Promise<void> {
   } catch (error) { analytics.error = error instanceof Error ? error.message : t('analytics.chart_unavailable'); }
 }
 
+const unsaved = new Set<string>();
+
 const creating = new Map<string, Promise<void>>();
 
 export function addChart(copy?: ChartConfig): ChartConfig {
@@ -307,6 +316,7 @@ export function addChart(copy?: ChartConfig): ChartConfig {
     const local = analytics.charts[chart.id];
     if (local) analytics.charts[chart.id] = { ...local, revision: saved.revision };
   }).catch((error: unknown) => {
+    unsaved.add(chart.id);
     analytics.error = error instanceof Error ? error.message : t('analytics.chart_unavailable');
   }).finally(() => { creating.delete(chart.id); });
   creating.set(chart.id, done);

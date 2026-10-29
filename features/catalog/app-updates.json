@@ -15,15 +15,16 @@
   ],
   "examples": [
     "See the red menu bar icon, click it, click the update row, and watch the window go from downloading to restarting.",
-    "Turn on update automatically and never see the icon, the row, the notice or the window: the app updates itself when no session is working."
+    "Turn on update automatically and never see the icon, the row, the notice or the window: the app updates itself when no session is working.",
+    "Update studio from this computer without touching it, then switch its auto update on."
   ],
   "how_to": [
     "Open settings, general, updates. The block shows the running version and what the updater says.",
-    "A small window shows the download, the check, the install and the restart. Nothing else to confirm.",
+    "When the menu bar icon turns red with an up arrow, click it and click the first row, 'update to X: download, install and restart'. A small window shows the download, the check, the install and the restart. Nothing else to confirm.",
     "The notice in Notification Center carries an update button; clicking the notice itself does the same.",
     "Press check now to look for a new version, and update now when one is waiting. The app downloads it, stops the server and restarts; your sessions keep running.",
     "Turn on update automatically to download new versions in the background and restart into them when no session is working. It is off by default.",
-    "To update a paired computer, open the Pack page, Computers, and use update now or the update automatically switch on its row."
+    "To update a paired computer, open the Pack page, Computers, and use update now or the update automatically switch on its row. A computer on an older version shows 'update it by hand once'."
   ],
   "id": "app-updates",
   "issues": [

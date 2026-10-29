@@ -19,7 +19,6 @@ contextBridge.exposeInMainWorld('carnivoreDesktop', {
   setLoginItem(which, enabled) {
     return ipcRenderer.invoke('carnivore:set-login-item', String(which), enabled);
   },
-  /* permission prompt */
   requestNotifications() {
     return ipcRenderer.invoke('carnivore:request-notifications');
   },
@@ -94,9 +93,17 @@ ipcRenderer.on('carnivore:screen-reader', (_event, on) => {
   if (typeof on === 'boolean') window.postMessage({ type: 'carnivore.screen-reader', on }, window.location.origin);
 });
 
-//  hidden 
 ipcRenderer.on('carnivore:window-hidden', (_event, hidden) => {
   if (typeof hidden === 'boolean') window.postMessage({ type: 'carnivore.window-hidden', hidden }, window.location.origin);
+});
+
+ipcRenderer.on('carnivore:window-blurred', (_event, blurred) => {
+  if (typeof blurred === 'boolean') window.postMessage({ type: 'carnivore.window-blurred', blurred }, window.location.origin);
+});
+ipcRenderer.on('carnivore:power-calm', (_event, state) => {
+  if (state && typeof state.calm === 'boolean' && typeof state.reason === 'string' && /^[a-z-]{0,12}$/.test(state.reason)) {
+    window.postMessage({ type: 'carnivore.power-calm', calm: state.calm, reason: state.reason }, window.location.origin);
+  }
 });
 
 ipcRenderer.on('carnivore:window-chrome', (_event, state) => {

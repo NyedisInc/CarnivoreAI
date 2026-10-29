@@ -37,7 +37,6 @@ def initialize(store: Any) -> None:
 
 
 def _git(cwd: Path, args: list[str]) -> str:
-    """Run a bounded read-only git query, never a shell or repository hook; '' when git is not installed."""
     if not git_guard.git_available():
         return ''
     result = subprocess.run(['git', '--no-pager', '-C', str(cwd), *args],

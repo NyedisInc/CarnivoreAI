@@ -11,6 +11,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 import structlog
 
+from src.core.pack import progress
 from src.core.trail_entry import utc_now
 
 logger = structlog.get_logger()
@@ -200,6 +201,7 @@ async def send_file(request: Request, path: str, *, blob_id: str, kind: str, chu
     offset = int(answer.get("received", 0)) if status == 200 and isinstance(answer, dict) else 0
     if status == 200 and isinstance(answer, dict) and answer.get("sealed"):
         return blob_id
+    progress.blob_start(kind, size, offset)
     with open(path, "rb") as handle:
         while offset < size:
             handle.seek(offset)
@@ -208,6 +210,7 @@ async def send_file(request: Request, path: str, *, blob_id: str, kind: str, chu
                                            headers={"X-Chunk-Sha256": hashlib.sha256(data).hexdigest()})
             if status == 200:
                 offset += len(data)
+                progress.blob_bytes(len(data))
             elif status == 409 and isinstance(answer, dict) and isinstance(answer.get("received"), int):
                 offset = answer["received"]
             else:
@@ -215,6 +218,7 @@ async def send_file(request: Request, path: str, *, blob_id: str, kind: str, chu
     status, answer = await request("POST", f"{base}/seal", json={"size": size, "sha256": digest, "kind": kind})
     if status != 200:
         raise BlobError(_code(answer, "send_failed"), status)
+    progress.blob_sealed(kind, size)
     return blob_id
 
 

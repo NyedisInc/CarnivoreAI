@@ -1,4 +1,3 @@
-/* and writes nothing */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import type { Plugin } from 'vite';

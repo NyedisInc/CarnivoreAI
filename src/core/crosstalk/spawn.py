@@ -11,7 +11,7 @@ from typing import Any, Literal
 import structlog
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from src.core.crosstalk import bus, directory, store
+from src.core.crosstalk import bus, directory, spawn_rules, store
 from src.core.flow_data import spawn_links
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import ToolError
@@ -86,16 +86,6 @@ async def _worktree(path: str, name: str) -> str:
     return plan.path
 
 
-def _flags(body: SpawnRequest, beast: bool) -> list[str]:
-    flags: list[str] = []
-    if body.effort:
-        flags.extend(['-c', f'model_reasoning_effort="{body.effort}"'] if body.provider == 'codex'
-                     else ['--effort', body.effort])
-    if beast and body.provider == 'codex':
-        flags.append('--dangerously-bypass-approvals-and-sandbox')
-    return flags
-
-
 async def spawn(view: Any, caller: AgentCaller, body: SpawnRequest, *, owner_approved: bool = False) -> dict:
     from src.core.mcp import beast_mode, write_tools
     from src.core.mcp.protocol import BatchView
@@ -123,15 +113,8 @@ async def spawn(view: Any, caller: AgentCaller, body: SpawnRequest, *, owner_app
     parent_epoch = parent.session.tmux_created_epoch if parent else None
     summary = f"spawn {body.provider} in {folder} for: {body.task[:160]}"
     shown = body.model_dump(exclude_none=True)
-    task = body.task
-    if body.report_back:
-        task += ('\n\nWhen the requested work is complete, report the actual outcome to your '
-                 'parent with crosstalk_reply on this message. Include what changed, checks, and blockers.')
-    from src.core.session_one_shot_gate import MAX_BODY_BYTES
-    if len(task) > store.MAX_TEXT or len(task.encode('utf-8')) + 1024 > MAX_BODY_BYTES:
-        raise ToolError('task exceeds the crosstalk delivery limit')
-    if any((ord(char) < 32 and char not in '\n\t') or 127 <= ord(char) <= 159 for char in task):
-        raise ToolError('task contains control characters the delivery guard would alter')
+    task = spawn_rules.task_with_report_back(body.task, body.report_back)
+    spawn_rules.validate_paste_text(task)
 
     async def run(_approved: bool) -> dict:
         from src.api.session_crud_routes import create_session_with_extra
@@ -157,7 +140,7 @@ async def spawn(view: Any, caller: AgentCaller, body: SpawnRequest, *, owner_app
                                            project_name=os.path.basename(target_dir),
                                            label=body.name, model=body.model)
             created = await _via_route(create_session_with_extra(_request(fresh), request,
-                                                                 agent_extra_args=_flags(body, beast)))
+                                                                 agent_extra_args=spawn_rules.agent_cli_flags(body.provider, body.effort, beast)))
             _created[created.id] = (caller.tmux_name, time.monotonic())
         cards = await directory.list_cards(BatchView(view.app.state.session_manager, view.app),
                                            self_tmux=again.tmux_session if again else None,

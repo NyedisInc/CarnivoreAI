@@ -3,6 +3,10 @@
   import { ApiError } from '../api/auth.svelte';
   import type { ChartConfig, ChartSeries } from '../cells/analytics/types';
   import { t } from '../../lib/i18n/index.svelte';
+  import Button from '../../lib/base/Button.svelte';
+  import Checkbox from '../../lib/base/Checkbox.svelte';
+  import NumberField from '../../lib/base/NumberField.svelte';
+  import Select from '../../lib/base/Select.svelte';
   import { analytics, chartTick } from '../cells/analytics/state.svelte';
   import { displayUnit, toDisplay, toStored, tripwireQuery, type Tripwire } from './tripwire-model';
   import { removeTripwire, saveTripwire } from './tripwires.svelte';
@@ -14,23 +18,23 @@
     window: wire?.window_minutes ?? 15, hold: wire?.for_minutes ?? 5, cooldown: wire?.cooldown_minutes ?? 30, enabled: wire?.enabled ?? true,
   }));
   let comparator = $state<'>' | '<'>(seed.comparator);
-  let threshold = $state(seed.threshold);
-  let windowMinutes = $state(seed.window);
-  let forMinutes = $state(seed.hold);
-  let cooldown = $state(seed.cooldown);
+  let threshold = $state<number | null>(seed.threshold);
+  let windowMinutes = $state<number | null>(seed.window);
+  let forMinutes = $state<number | null>(seed.hold);
+  let cooldown = $state<number | null>(seed.cooldown);
   let enabled = $state(seed.enabled);
   let busy = $state(false);
   let failure = $state('');
 
   async function save(): Promise<void> {
-    if (!Number.isFinite(threshold)) { failure = t('tripwire.bad_threshold'); return; }
+    if (threshold === null || !Number.isFinite(threshold)) { failure = t('tripwire.bad_threshold'); return; }
     busy = true;
     failure = '';
     try {
       await saveTripwire(wire?.id ?? null, {
         chart_id: config.id, name: (config.title || series.metric).slice(0, 80),
         query: tripwireQuery(config, series, { now: chartTick({ series: [series] }), timezone: analytics.timezone, filters: analytics.filters }),
-        window_minutes: windowMinutes, comparator, threshold: toStored(threshold, unit), for_minutes: forMinutes, cooldown_minutes: cooldown, enabled,
+        window_minutes: windowMinutes as number, comparator, threshold: toStored(threshold, unit), for_minutes: forMinutes as number, cooldown_minutes: cooldown as number, enabled,
       });
       ondone?.();
     } catch (cause) {
@@ -47,19 +51,16 @@
 </script>
 
 <div class="tw-row" data-tripwire-row={wire?.id ?? 'new'}>
-  <label class="tw-row__field">{t('tripwire.when')}
-    <select class="oc-field" bind:value={comparator} aria-label={t('tripwire.comparator')}><option value=">">{t('tripwire.above')}</option><option value="<">{t('tripwire.below')}</option></select>
-  </label>
-  <label class="tw-row__field">{t('tripwire.threshold')} {caption}
-    <input class="oc-field" type="number" step="any" bind:value={threshold} data-tripwire-threshold="" />
-  </label>
-  <label class="tw-row__field">{t('tripwire.window')}<input class="oc-field" type="number" min="1" max="1440" bind:value={windowMinutes} /></label>
-  <label class="tw-row__field">{t('tripwire.hold')}<input class="oc-field" type="number" min="0" max="1440" bind:value={forMinutes} data-tripwire-for="" /></label>
-  <label class="tw-row__field">{t('tripwire.cooldown')}<input class="oc-field" type="number" min="0" max="10080" bind:value={cooldown} /></label>
-  <label class="tw-row__field tw-row__check"><input type="checkbox" bind:checked={enabled} /> {t('analytics.enabled')}</label>
+  <Select size="sm" label={t('tripwire.when')} aria-label={t('tripwire.comparator')} bind:value={comparator}
+    options={[{ value: '>', label: t('tripwire.above') }, { value: '<', label: t('tripwire.below') }]} />
+  <NumberField size="sm" label={`${t('tripwire.threshold')} ${caption}`.trim()} bind:value={threshold} data-tripwire-threshold="" />
+  <NumberField size="sm" label={t('tripwire.window')} min={1} max={1440} bind:value={windowMinutes} />
+  <NumberField size="sm" label={t('tripwire.hold')} min={0} max={1440} bind:value={forMinutes} data-tripwire-for="" />
+  <NumberField size="sm" label={t('tripwire.cooldown')} min={0} max={10080} bind:value={cooldown} />
+  <Checkbox label={t('analytics.enabled')} bind:checked={enabled} />
   <span class="tw-row__actions">
-    <button type="button" class="modal-btn modal-btn-confirm" disabled={busy} onclick={() => void save()} data-tripwire-save="">{t('analytics.save')}</button>
-    <button type="button" class="modal-btn modal-btn-danger" disabled={busy} onclick={() => void remove()}>{wire ? t('analytics.remove') : t('tripwire.cancel')}</button>
+    <Button variant="confirm" disabled={busy} onclick={() => void save()} data-tripwire-save="">{t('analytics.save')}</Button>
+    <Button variant="danger" disabled={busy} onclick={() => void remove()}>{wire ? t('analytics.remove') : t('tripwire.cancel')}</Button>
   </span>
   {#if failure}<p class="tw-row__note" role="alert">{failure}</p>{/if}
 </div>
@@ -67,12 +68,6 @@
 <style>
   @layer components {
     .tw-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--oc-space-2); flex-basis: 100%; padding: var(--oc-space-2) 0; box-shadow: 0 -1px 0 var(--oc-line-rule); }
-
-    .tw-row__field { display: flex; flex-direction: column; gap: var(--oc-space-1); color: var(--oc-text-muted); font: var(--oc-fs-micro) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
-
-    .tw-row__field input[type='number'] { width: 7ch; }
-
-    .tw-row__check { flex-direction: row; align-items: center; }
 
     .tw-row__actions { display: flex; gap: var(--oc-space-2); margin-left: auto; }
 

@@ -43,7 +43,7 @@ describe('the title count is one labeled number over active tasks', () => {
     expect(all.filter(MK2_CHIP_TEST.unread).map((item) => item.id)).toEqual([1, 6]);
   });
 
-  test('the unread chip shows the title strip\'s message number, while its filter still lists tasks', () => {
+  test('the unread chip shows the title strip\'s message number, while its filter still lists tasks (Joe, 2026-10-23, "what about the filter pills")', () => {
     const post = (id: number) => ({ id, author: 'claude', kind: 'info', text: `post ${id}`, answered: false });
     const threaded = [mk(11, '7', { unread: true, thread: [post(1), post(2), post(3)] }), mk(12, '7', { unread: true, thread: [post(4)] }), mk(13, '7')];
     const entries = entriesOf([{ list: '7', name: 'Carnivore', items: threaded }] as unknown as TaskManagerGroup[]);

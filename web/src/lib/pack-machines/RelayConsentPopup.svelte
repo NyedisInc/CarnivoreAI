@@ -3,6 +3,7 @@
   import './relay-consent.css';
   import ModalShell from '../launchpad/ModalShell.svelte';
   import { t } from '../i18n/index.svelte';
+  import Button from '../base/Button.svelte';
   import RelayConsentList from './RelayConsentList.svelte';
   import { answerConsent, consentBody, relayConsent, type ConsentAnswer } from './relay-consent-store.svelte';
 
@@ -48,10 +49,10 @@
     <RelayConsentList offers={pending} bind:ticked bind:all disabled={busy} idBase="rc-popup" />
     {#if error}<p class="rc-error" role="alert" data-rc="error">{error}</p>{/if}
     {#snippet footer()}
-      <button type="button" class="modal-btn modal-btn-secondary" data-rc="no" disabled={busy}
-        onclick={() => void send({ mode: 'none' })}>{t('pack.consent.no')}</button>
-      <button type="button" class="modal-btn modal-btn-confirm" data-rc="yes" disabled={busy || ticked.length === 0}
-        onclick={yes}>{t('pack.consent.yes')}</button>
+      <Button data-rc="no" disabled={busy}
+        onclick={() => void send({ mode: 'none' })}>{t('pack.consent.no')}</Button>
+      <Button variant="confirm" data-rc="yes" disabled={busy || ticked.length === 0}
+        onclick={yes}>{t('pack.consent.yes')}</Button>
     {/snippet}
   </ModalShell>
 {/if}

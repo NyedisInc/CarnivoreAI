@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import subprocess
 from types import SimpleNamespace
 
 import pytest
@@ -36,8 +35,7 @@ def _record(world, **fields):
 
 
 def _run(world):
-    ok = lambda: subprocess.CompletedProcess(["tmutil"], 1, stdout="", stderr="")  # noqa: E731
-    return runner.run_checks(world.state, world.db, now=NOW, tmutil=ok, volume=world.drive)
+    return runner.run_checks(world.state, world.db, now=NOW, volume=world.drive)
 
 
 def _active(world):

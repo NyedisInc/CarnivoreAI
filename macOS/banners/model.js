@@ -1,4 +1,3 @@
-// could not
 
 'use strict';
 
@@ -105,7 +104,6 @@ function threadFor(item) {
   return item.session_id;
 }
 
-/* label: ' */
 function applyCap(buttons, cap, t) {
   if (!Number.isInteger(cap) || cap < 1 || buttons.length <= cap) return buttons;
   return [...buttons.slice(0, cap - 1), { label: t('desktop.banner.more'), kind: 'open_app', optionIndex: null }];

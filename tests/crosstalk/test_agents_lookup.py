@@ -35,12 +35,12 @@ def mgr(monkeypatch):
     monkeypatch.setattr(directory, "_asleep_rows", lambda: [])
     monkeypatch.setattr(directory, "_session_details", lambda ids: {i: (f"uuid-{i}", "Claude Title" if i == 5 else None, []) for i in ids})
     return FakeManager(
-        [_info("ses_1", "cloude_a", "Zed-Misc UI", "claude", row=1),
-         _info("ses_2", "cloude_b", "Zed-Misc Api", "codex", row=2),
+        [_info("ses_1", "cloude_a", "Cv-Misc UI", "claude", row=1),
+         _info("ses_2", "cloude_b", "Cv-Misc Api", "codex", row=2),
          _info("ses_3", "cloude_c", "Twin", "claude", row=3),
          _info("ses_4", "cloude_d", "Twin", "codex", row=4),
          _info("ses_5", "cloude_e", None, "claude", row=5)],
-        [_info("remote:peer-x:cloude_r", "cloude_r", "Remote Bot", "claude", host="hosta", state="disconnected")])
+        [_info("remote:peer-x:cloude_r", "cloude_r", "Remote Bot", "claude", host="studio", state="disconnected")])
 
 
 def _run(coro):
@@ -52,18 +52,18 @@ def _names(res):
 
 
 def test_name_spellings_all_hit_the_same_agent(mgr):
-    for q in ("Zed-Misc UI", "@zed-misc ui", "zed_misc-ui", "ZED.MISC.UI", "ses_1", "cloude_a"):
+    for q in ("Cv-Misc UI", "@cv-misc ui", "cv_misc-ui", "CV.MISC.UI", "ses_1", "cloude_a"):
         res = _run(directory.lookup(mgr, query=q))
-        assert _names(res)[:1] == ["Zed-Misc UI"] and not res["ambiguous"], q
-    assert _run(directory.lookup(mgr, query="zed_misc-ui"))["match"] == "normalized"
-    assert _run(directory.lookup(mgr, query="zed-misc ui"))["match"] == "label"
+        assert _names(res)[:1] == ["Cv-Misc UI"] and not res["ambiguous"], q
+    assert _run(directory.lookup(mgr, query="cv_misc-ui"))["match"] == "normalized"
+    assert _run(directory.lookup(mgr, query="cv-misc ui"))["match"] == "label"
 
 
 def test_lower_tiers_and_no_match(mgr):
     assert _run(directory.lookup(mgr, query="remote"))["match"] == "prefix"
     assert _run(directory.lookup(mgr, query="bot"))["match"] == "substring"
-    fuzzy = _run(directory.lookup(mgr, query="zed-misc uii"))
-    assert fuzzy["match"] == "fuzzy" and _names(fuzzy)[0] == "Zed-Misc UI"
+    fuzzy = _run(directory.lookup(mgr, query="cv-misc uii"))
+    assert fuzzy["match"] == "fuzzy" and _names(fuzzy)[0] == "Cv-Misc UI"
     none = _run(directory.lookup(mgr, query="zzzzzz"))
     assert none["agents"] == [] and none["match"] is None
 
@@ -78,13 +78,13 @@ def test_provider_filter_card_fields_and_remote(mgr):
     res = _run(directory.lookup(mgr, provider="Codex"))
     assert {a["provider"] for a in res["agents"]} == {"codex"}
     card = next(a for a in _run(directory.lookup(mgr))["agents"] if a["id"] == "ses_1")
-    assert card["handle"] == "@Zed-Misc UI" and card["session_uuid"] == "uuid-1" and card["model"] == "m1"
+    assert card["handle"] == "@Cv-Misc UI" and card["session_uuid"] == "uuid-1" and card["model"] == "m1"
     assert next(a for a in _run(directory.lookup(mgr))["agents"] if a["id"] == "ses_5")["name"] == "Claude Title"
     assert card["reachable_via"] == ["paste"]
     remote = _run(directory.lookup(mgr, query="remote bot"))["agents"][0]
-    assert remote["host"] == "hosta" and remote["host_state"] == "disconnected" and remote["session_uuid"] == "u-remote:peer-x:cloude_r"
+    assert remote["host"] == "studio" and remote["host_state"] == "disconnected" and remote["session_uuid"] == "u-remote:peer-x:cloude_r"
     assert remote["reachable_via"] == []
-    assert not any(a["host"] == "hosta" for a in _run(directory.lookup(mgr, include_remote=False))["agents"])
+    assert not any(a["host"] == "studio" for a in _run(directory.lookup(mgr, include_remote=False))["agents"])
 
 
 def test_self_excluded_unless_asked_and_limit(mgr):

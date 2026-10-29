@@ -1,22 +1,3 @@
-"""Can each offered session be reopened RIGHT NOW, and how? SYNCHRONOUS.
-
-  REFUSALS, EACH ONE A MEASURED FACT:
-    already_running_elsewhere   a live claude process, in tmux or not, has
-                                this conversation open (Claude Code's own
-                                pid registry, validated against ``ps``).
-    unidentified_claude_here    a claude runs in this folder and its
-                                conversation could not be identified.
-    writers_unmeasured          ``ps`` did not run, so no process can be
-                                ruled out. Not having looked is not a yes.
-    no_conversation             a CLAUDE row names no conversation; reopening
-                                it would be a fresh start, not a reopen. A
-                                SHELL row never has one and is not blocked.
-    transcript_missing          the conversation's file was looked for under
-                                every spelling of the folder and is absent.
-    name_in_use                 another tmux instance holds the row's name.
-    no_wrapper                  no configured wrapper can be chosen.
-    presence_unmeasured         the listing did not run or was incomplete.
-"""
 
 from __future__ import annotations
 
@@ -59,12 +40,12 @@ _WRITER_TO_BLOCK = {
 
 def wrapper_table() -> Tuple[Dict[str, FrozenSet[str]], Optional[str], List[Dict[str, str]]]:
     from src.core.session_agent_infer import _is_claude_family, wrapper_flag_signature
-    from src.core.session_manager import _configured_wrappers
+    from src.config import wrapper_reader
 
     sigs: Dict[str, FrozenSet[str]] = {}
     options: List[Dict[str, str]] = []
     default_id: Optional[str] = None
-    for w in _configured_wrappers():
+    for w in wrapper_reader.configured_wrappers():
         wid = getattr(w, "id", None)
         if not wid or not _is_claude_family(w):
             continue

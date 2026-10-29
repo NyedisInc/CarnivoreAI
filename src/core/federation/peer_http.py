@@ -44,6 +44,13 @@ async def _read_chunked(reader: asyncio.StreamReader, max_body: int = MAX_BODY) 
         await reader.readline()
 
 
+def _status_of(status_line: str) -> int:
+    parts = status_line.split(" ", 2)
+    if len(parts) < 2 or not parts[0].startswith("HTTP/"):
+        raise ValueError("malformed status line")
+    return int(parts[1])
+
+
 async def exchange(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, method: str, path: str, *,
                    token: Optional[str] = None, body: Any = None, keep_alive: bool = False,
                    max_body: int = MAX_BODY, content: Optional[bytes] = None,
@@ -70,7 +77,7 @@ async def exchange(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, m
     except asyncio.LimitOverrunError:
         raise ReplyTooLarge("header block too large") from None
     lines = block.decode("latin-1").split("\r\n")
-    status = int(lines[0].split(" ", 2)[1])
+    status = _status_of(lines[0])
     headers = {k.strip().lower(): v.strip() for k, _, v in (ln.partition(":") for ln in lines[1:] if ln)}
     if headers.get("transfer-encoding", "").lower() == "chunked":
         payload = await _read_chunked(reader, max_body)

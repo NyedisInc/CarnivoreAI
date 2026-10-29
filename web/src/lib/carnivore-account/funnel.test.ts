@@ -73,3 +73,43 @@ describe('requireAccount', () => {
         expect(resume).not.toHaveBeenCalled();
     });
 });
+
+describe('settling and joining (u132-01, u132-03)', () => {
+    it('a sign in that closes as signed_in but whose account read fails drops the prompt, so the next call opens again (u132-01)', async () => {
+        const { settleSignIn } = await import('./funnel');
+        const opened = vi.fn();
+        window.addEventListener(SIGNIN_REQUEST_EVENT, opened);
+        const cancelled = vi.fn();
+        await requireAccount({ feature: 'comment', src: 'menu', resume: vi.fn(), cancelled });
+        (globalThis as any).API = { getCatalogSession: async () => { throw new Error('offline'); } };
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        await settleSignIn();
+        warn.mockRestore();
+        expect(cancelled).toHaveBeenCalledTimes(1);
+        await requireAccount({ feature: 'comment', src: 'menu', resume: vi.fn() });
+        expect(opened).toHaveBeenCalledTimes(2);
+        window.removeEventListener(SIGNIN_REQUEST_EVENT, opened);
+    });
+
+    it('a settle with the account now signed in runs the resume once (u132-01)', async () => {
+        const { settleSignIn } = await import('./funnel');
+        const resume = vi.fn();
+        await requireAccount({ feature: 'comment', src: 'menu', resume });
+        signedIn = true;
+        await settleSignIn();
+        expect(resume).toHaveBeenCalledTimes(1);
+    });
+
+    it('a refusal that joins an open gate keeps the gate resume (u132-03)', async () => {
+        const gate = vi.fn();
+        const gateCancelled = vi.fn();
+        const refusalDone = vi.fn();
+        await requireAccount({ feature: 'share_link', src: 'menu', resume: gate, cancelled: gateCancelled });
+        await requireAccount({ feature: null, src: 'refusal', resume: refusalDone, joins: true });
+        expect(gateCancelled).not.toHaveBeenCalled();
+        signedIn = true;
+        await sessionEvent();
+        expect(gate).toHaveBeenCalledTimes(1);
+        expect(refusalDone).toHaveBeenCalledTimes(1);
+    });
+});

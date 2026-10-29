@@ -1,25 +1,3 @@
-"""The 15 second timer for claude sessions stopped on their account's limit.
-
-WHAT IT RUNS. The SAME pass the ledger hook runs, every
-:data:`TICK_SECONDS`, against the ledger's in-memory snapshot. The pass
-itself returns at once while auto-switch is off or no switch is pending, so
-every gate (a limit stop as the last turn, status exactly idle, the quiet
-window, the re-check before the kill, never a working session) is the one
-place it has always been, and the pass's single-flight guard keeps the timer
-and the ledger hook from ever running two passes at once.
-
-OFF THE LOOP AND BOUNDED. Every blocking read inside the pass already runs
-in a thread or a bounded subprocess, the pass restarts at most three
-sessions, and a tick never overlaps the one before it (the sleep follows
-the pass). A pass is never cancelled mid-way, because it may be between a
-kill and its read-back.
-
-STOPS CLEANLY. :meth:`RestartTimer.stop` wakes the sleep at once; a pass
-already running gets :data:`STOP_GRACE_SECONDS` to finish before it is
-cancelled. Started and stopped beside the ledger loop
-(``provider_ledger.poller.start``/``stop``), so it never runs under
-``CLOUDE_TEST_MODE``.
-"""
 
 from __future__ import annotations
 

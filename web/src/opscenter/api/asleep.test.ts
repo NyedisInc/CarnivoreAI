@@ -20,7 +20,7 @@ const NEEDED = {
   status: 'refused',
   code: 'wrapper_needed',
   detail: "'claude' is not a configured launch wrapper",
-  wrapper_options: ['claude-skip-permissions', 'keyc'],
+  wrapper_options: ['claude-skip-permissions', 'cld'],
 };
 
 type Mod = typeof import('./asleep.svelte');
@@ -44,10 +44,10 @@ describe('waking an asleep session', () => {
     const mod = await load();
     answers = [{ status: 'started', detail: '' }, { status: 'started', detail: '' }];
     await mod.wakeSession('u-1');
-    await mod.wakeSession('u-1', 'keyc');
+    await mod.wakeSession('u-1', 'cld');
     expect(calls).toEqual([
       { path: '/sessions/u-1/wake', method: 'POST', body: null },
-      { path: '/sessions/u-1/wake', method: 'POST', body: { agent_type: 'keyc' } },
+      { path: '/sessions/u-1/wake', method: 'POST', body: { agent_type: 'cld' } },
     ]);
   });
 
@@ -56,8 +56,8 @@ describe('waking an asleep session', () => {
     answers = [NEEDED];
     const pickAndWake = vi.fn(async () => ({ status: 'started', detail: 'resumed' }));
     (globalThis as Record<string, unknown>).SessionRowMenuSleep = { pickAndWake };
-    const out = await mod.wakeOrPick('u-3d', 'carnivore_3D Studio-2', '3D Studio');
-    expect(pickAndWake).toHaveBeenCalledWith('carnivore_3D Studio-2', '3D Studio', 'u-3d');
+    const out = await mod.wakeOrPick('u-3d', 'carnivore_3D Work-2', '3D Work');
+    expect(pickAndWake).toHaveBeenCalledWith('carnivore_3D Work-2', '3D Work', 'u-3d');
     expect(out).toEqual({ status: 'started', detail: 'resumed' });
   });
 

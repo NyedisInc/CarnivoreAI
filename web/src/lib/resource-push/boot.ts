@@ -1,4 +1,4 @@
-import { FRAME_TYPE, ResourceTopicStore, pushOrPoll } from './store';
+import { FRAME_TYPE, ResourceTopicStore, pushOrPoll, type TopicListener } from './store';
 
 interface HostEvents {
     subscribe(handler: (frame: { type?: string }) => void): () => void;
@@ -9,7 +9,7 @@ interface HostEvents {
 export interface ResourcePushGlobal {
     store: ResourceTopicStore;
     isLive(topic: string): boolean;
-    onChange(fn: (topics: string[]) => void): () => void;
+    onChange(fn: TopicListener): () => void;
     pushOrPoll(refresh: () => void, intervalMs: number, topics: readonly string[]): () => void;
 }
 
@@ -36,7 +36,7 @@ export function bootResourcePush(): ResourcePushGlobal {
             if (!frame || typeof frame.type !== 'string') return;
             if (frame.type === 'events.hello') store.hello(frame as { resource_topics?: unknown });
             else if (frame.type === 'events.closed') store.closed();
-            else if (frame.type === FRAME_TYPE) store.frame(frame as { topics?: unknown });
+            else if (frame.type === FRAME_TYPE) store.frame(frame as { topics?: unknown; bodies?: unknown });
         });
         const hello = events.isConnected() && typeof events.lastHello === 'function' ? events.lastHello() : null;
         if (hello) store.hello(hello);

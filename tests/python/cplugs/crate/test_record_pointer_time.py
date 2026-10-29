@@ -11,7 +11,7 @@ from src.cplugs.sdk import exports as sx
 from tests.python.cplugs.crate.crate_world import env_for, make_world
 
 DAY = 86_400
-CONV = "c58d095c-7e14-49a6-8dfb-23792a5d3f54"
+CONV = "c0ffee00-0000-4000-8000-00000000abcd"
 
 
 def _rec(bundle_id: str, created: int, path: Path) -> dict:

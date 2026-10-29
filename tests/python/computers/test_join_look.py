@@ -31,7 +31,7 @@ def test_hostile_pn_is_cleaned_on_read():
     d = discovery.Discovery(config_path="/nonexistent/config.json")
     txt = bonjour.encode_txt([("p", "1"), ("fid", "abcdef123"), ("mid", "m"), ("lp", "9443"), ("pn", "Evil\n<img>")])
     d._on_resolve(0, "air", "air.local.", 22, txt)
-    d._peers["air"]["addresses"] = ["192.0.2.13"]
+    d._peers["air"]["addresses"] = ["10.0.0.5"]
     assert d.candidates()[0]["pack_name"] == "Evil img"
 
 
@@ -72,7 +72,7 @@ async def test_a_look_ends_finding_with_candidates_and_never_blocks_a_join(env, 
     deps = await _deps(main, join, srv, join=never)
     door = await _door(tmp_path)
     packs = [{"name": "air", "fid": "abcdef123456", "fid_short": "abcdef", "pack_name": "Home Pack", "addresses": [("127.0.0.1", 1)]},
-             {"name": "hosta", "fid": "123456abcdef", "fid_short": "123456", "pack_name": None, "addresses": [("127.0.0.1", 1)]}]
+             {"name": "studio", "fid": "123456abcdef", "fid_short": "123456", "pack_name": None, "addresses": [("127.0.0.1", 1)]}]
     seen = {}
 
     async def targets(status):
@@ -90,7 +90,7 @@ async def test_a_look_ends_finding_with_candidates_and_never_blocks_a_join(env, 
     assert status["state"] == "finding" and status["error"] is None
     assert status["candidates"] == [
         {"name": "air", "fid": "abcdef123456", "fid_short": "abcdef", "pack_name": "Home Pack", "label": "Home Pack abcdef"},
-        {"name": "hosta", "fid": "123456abcdef", "fid_short": "123456", "pack_name": None, "label": "hosta 123456"}]
+        {"name": "studio", "fid": "123456abcdef", "fid_short": "123456", "pack_name": None, "label": "studio 123456"}]
     assert join_job.candidate_view() == status["candidates"] and not spake
 
     nobody = join_job.start_look(origin="local")

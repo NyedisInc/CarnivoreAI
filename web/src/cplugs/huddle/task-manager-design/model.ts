@@ -37,6 +37,7 @@ export interface Task {
   githubIssue?: { url: string; repo: string; number: number; title: string };
   list?: string;
   asks?: TaskManagerMessage[];
+  hiddenCount?: number;
   item?: HuddleItem;
   unread?: boolean;
   scheduled?: boolean;

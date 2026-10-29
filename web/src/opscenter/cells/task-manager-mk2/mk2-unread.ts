@@ -1,4 +1,3 @@
-/*  hidden  */
 import { entriesOf } from '../../../cplugs/huddle/task-manager-design/entries';
 import { stateOfItem } from '../../../cplugs/huddle/task-manager-design/adapter';
 import { newMessageIds } from '../../../cplugs/huddle/task-manager-design/task-view';
@@ -13,7 +12,6 @@ export function countsAsUnread(state: TaskState, flagged: boolean): boolean {
 }
 
 
-/* scheduled tasks */
 export function isUnreadItem(item: HuddleItem): boolean {
   if (item.status === 'scheduled' && newMessageIds(item).length === 0) return false;
   return countsAsUnread(stateOfItem(item), item.unread === true);

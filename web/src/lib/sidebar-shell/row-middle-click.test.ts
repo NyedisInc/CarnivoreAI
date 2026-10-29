@@ -6,7 +6,7 @@ vi.mock('../confirm-ok/confirm-ok', async () => {
     const real = await vi.importActual<typeof import('../confirm-ok/confirm-ok')>('../confirm-ok/confirm-ok');
     return { ...real, confirmOk: async (o: { title: string; message: string }) => { ask.calls.push(o); return ask.answer; } };
 });
-import { middleActionFor, onRowAuxClick } from './row-middle-click';
+import { middleActionFor, middleClickRow, onRowAuxClick } from './row-middle-click';
 
 const api = {
     sleepSession: vi.fn(async () => ({ status: 'asleep' })),
@@ -105,6 +105,12 @@ describe('sidebar row middle click', () => {
         await settle();
         expect(ask.calls).toHaveLength(1);
         none();
+    });
+
+    it('a close whose function is missing reports failure, never success (u151-07)', async () => {
+        Object.assign(globalThis, { API: {}, SessionRowMenuActions: {} });
+        expect(await middleClickRow(rowEl('cloude_sleeper'))).toBe(false);
+        expect(await middleClickRow(rowEl('layout:l1', { 'data-kind': 'layout' }))).toBe(false);
     });
 
     it('a row with no stored session id asks nothing', async () => {

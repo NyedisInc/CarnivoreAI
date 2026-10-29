@@ -77,7 +77,7 @@ def _run_cldor(tmp_path: Path, bin_dir_name: str, claude_present: bool, args: li
         )
     script = tmp_path / f"{bin_dir_name}_cldor_body.sh"
     script.write_text(EXAMPLE_WRAPPER_CLDOR)
-    cmd = [_BASH, "-c", f'source {script} ; clxor "$@"', "_"] + args
+    cmd = [_BASH, "-c", f'source {script} ; cldor "$@"', "_"] + args
     env = {"PATH": str(bin_dir), "HOME": str(tmp_path), "USER": "testuser"}
     return subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=10)
 

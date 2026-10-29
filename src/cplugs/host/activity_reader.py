@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.cplugs.sdk.activity import ActivityUnavailable
 
 logger = structlog.get_logger()
@@ -26,7 +27,7 @@ def _ro(path: Path) -> sqlite3.Connection:
     if not path.is_file():
         raise ActivityUnavailable(f"{path.name} is absent")
     try:
-        conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True, timeout=5)
+        conn = connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)
     except sqlite3.Error as exc:
         raise ActivityUnavailable(f"{path.name}: {exc}") from exc
     conn.row_factory = sqlite3.Row
@@ -42,10 +43,6 @@ def _marks(values: Sequence[Any]) -> str:
 
 
 class ActivityReader:
-    """Read-only access to the run-reconstruction sources of one install.
-
-    Inputs: state_dir (Path) - this install's state directory.
-    """
 
     def __init__(self, state_dir: Path) -> None:
         self._state_dir = Path(state_dir)
@@ -55,7 +52,7 @@ class ActivityReader:
 
         return _ro(db_path_for(self._state_dir))
 
-    def _huddle(self) -> sqlite3.Connection:
+    def _task_manager_db(self) -> sqlite3.Connection:
         return self._core()
 
     def sources(self) -> Dict[str, Any]:
@@ -71,7 +68,7 @@ class ActivityReader:
         except ActivityUnavailable as exc:
             out["core"] = str(exc)
         try:
-            with closing(self._huddle()) as conn:
+            with closing(self._task_manager_db()) as conn:
                 out["optional"]["huddle_source_item"] = "source_item_id" in _columns(conn, "work_items")
                 out["optional"]["write_actors"] = bool(_columns(conn, "work_write_actors"))
         except ActivityUnavailable as exc:
@@ -79,9 +76,9 @@ class ActivityReader:
         return out
 
     def huddle_item(self, item_id: int) -> Optional[Dict[str, Any]]:
-        with closing(self._huddle()) as conn:
+        with closing(self._task_manager_db()) as conn:
             have = _columns(conn, "work_items")
-            extra_item = "".join(f", {c}" for c in ("source_item_id", "title") if c in have)
+            extra_item = "".join(f", {c}" for c in ("source_item_id", "title", "github_issue") if c in have)
             extra_item += ", substr(review_description,1,400) AS review_description" if "review_description" in have else ""
             item = conn.execute(f"SELECT id, list_key, text, created_by, state, created_at, updated_at{extra_item} FROM work_items WHERE id=?",
                                 (item_id,)).fetchone()
@@ -99,11 +96,27 @@ class ActivityReader:
                                                         "ORDER BY id LIMIT ?", (item_id, MAX_ROWS))]
         return {"item": dict(item), "messages": [dict(r) for r in msgs], "card_events": [dict(r) for r in events], "actors": actors}
 
+    def task_manager_recent(self, query: str, limit: int) -> List[Dict[str, Any]]:
+        with closing(self._task_manager_db()) as conn:
+            title = "title" if "title" in _columns(conn, "work_items") else "NULL"
+            where, args = ["deleted = 0"], []  # type: List[str], List[Any]
+            if query:
+                like = "%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+                match = f"(text LIKE ? ESCAPE '\\' OR {title} LIKE ? ESCAPE '\\'"
+                args += [like, like]
+                if query.isdigit():
+                    match += " OR id = ?"
+                    args.append(int(query))
+                where.append(match + ")")
+            rows = conn.execute(f"SELECT id, {title} AS title, substr(text,1,400) AS text, state, list_key, updated_at FROM work_items "
+                                f"WHERE {' AND '.join(where)} ORDER BY updated_at DESC, id DESC LIMIT ?", (*args, limit)).fetchall()
+        return [dict(r) for r in rows]
+
     def task_manager_messages(self, item_ids: Iterable[int], start: float, end: float) -> List[Dict[str, Any]]:
         ids = list(item_ids)
         if not ids:
             return []
-        with closing(self._huddle()) as conn:
+        with closing(self._task_manager_db()) as conn:
             rows = conn.execute(f"SELECT id, item_id, author, author_key, kind, substr(text,1,400) AS text, created_at FROM work_messages "
                                 f"WHERE item_id IN ({_marks(ids)}) AND created_at BETWEEN ? AND ? ORDER BY id LIMIT ?",
                                 (*ids, start, end, MAX_ROWS)).fetchall()
@@ -113,7 +126,7 @@ class ActivityReader:
         if not session_uuids:
             return []
         marks = _marks(session_uuids)
-        with closing(self._huddle()) as conn:
+        with closing(self._task_manager_db()) as conn:
             rows = conn.execute(f"SELECT id, list_key, text, created_by, state, created_at FROM work_items WHERE deleted=0 AND "
                                 f"created_at BETWEEN ? AND ? AND (created_by IN ({marks}) OR id IN (SELECT item_id FROM work_card_events "
                                 f"WHERE kind='created' AND by IN ({marks}))) ORDER BY id LIMIT ?",
@@ -153,8 +166,10 @@ class ActivityReader:
                                    f"FROM sessions WHERE session_uuid IN ({_marks(session_uuids)}) AND claude_session_uuid IS NOT NULL",
                                    list(session_uuids)).fetchall()
         seen: Dict[str, Dict[str, Any]] = {}
-        for r in (*rows, *current):
+        for r in rows:
             seen.setdefault(r["conversation_id"], dict(r))
+        for r in current:
+            seen.setdefault(r["conversation_id"], dict(r))["ended_at"] = None
         for conv in seen.values():
             conv["path"] = self._transcript_path(conv["conversation_id"])
         return list(seen.values())

@@ -13,7 +13,8 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from src.api.auth import require_auth, security
 from src.core.computers import direction
-from src.core.db import DatastoreUnreadableError, connect, db_path_for, get_meta
+from src.core.db import DatastoreUnreadableError, db_path_for, get_meta
+from src.core.db_reuse.core_read import lend_pooled_or_raise
 from src.core.db_models import META_INSTALL_ID
 from src.core.federation import grants, peer_token
 from src.core.federation.grants import Grant
@@ -40,7 +41,7 @@ OWNER = Principal("owner")
 def open_db() -> sqlite3.Connection:
     from src.config import settings
 
-    return connect(db_path_for(settings.get_state_dir()), create=False)
+    return lend_pooled_or_raise(db_path_for(settings.get_state_dir()))
 
 
 def read_install_id(conn: sqlite3.Connection) -> Optional[str]:

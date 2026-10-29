@@ -1,6 +1,8 @@
 <!-- the reading pane -->
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
+  import Button from '../base/Button.svelte';
+  import State from '../base/State.svelte';
   import '../ledger/ledger-chrome.css';
   import '../computers/computers.css';
   import '../pack-machines/pack-settings.css';
@@ -89,16 +91,16 @@
     <nav class="cat-rail" aria-label={t('roster.rail.label')}>
       <div class="cat-rail__group" role="radiogroup" aria-label={t('roster.rail.pack')}><span class="cat-rail__label">{t('roster.rail.pack')}</span>
         {#each PACK_FILTERS as key (key)}
-          <button type="button" role="radio" class="cat-rail__row" aria-checked={rosterUi.filter === key && !rosterUi.mode} data-rail={key} onclick={() => { rosterUi.filter = key; rosterUi.mode = null; }}>
-            <span class="cat-rail__name">{t(`roster.filter.${key}`)}</span><span class="cat-rail__count">{loaded ? counts[key] : ''}</span></button>
+          <Button variant="row" role="radio" aria-checked={rosterUi.filter === key && !rosterUi.mode} data-rail={key} onclick={() => { rosterUi.filter = key; rosterUi.mode = null; }}>
+            <span class="cat-rail__name">{t(`roster.filter.${key}`)}</span><span class="cat-rail__count">{loaded ? counts[key] : ''}</span></Button>
         {/each}
       </div>
       {#if looks.length > 0}
         <hr class="m1-rail-hr" />
         <div class="cat-rail__group" data-look="" role="radiogroup" aria-label={t('roster.rail.look')}><span class="cat-rail__label">{t('roster.rail.look')}</span>
           {#each looks as key (key)}
-            <button type="button" role="radio" class="cat-rail__row" aria-checked={rosterUi.filter === key} data-rail={key} onclick={() => (rosterUi.filter = key)}>
-              <span class="cat-rail__name">{t(`roster.look.${key}`)}</span><span class="cat-rail__count">{counts[key]}</span></button>
+            <Button variant="row" role="radio" aria-checked={rosterUi.filter === key} data-rail={key} onclick={() => (rosterUi.filter = key)}>
+              <span class="cat-rail__name">{t(`roster.look.${key}`)}</span><span class="cat-rail__count">{counts[key]}</span></Button>
           {/each}
         </div>
       {/if}
@@ -110,7 +112,7 @@
           <div class="rs-state" role="alert"><p>{t('roster.err.title')}</p>
             <ul class="m1-reads">
               <li><span class="pp-st" data-shape="slash" data-tone="bad"><i class="pp-st__mark"></i><span class="pp-st__word">{t('roster.err.could_not')}</span></span> {computers.status === 'error' ? t('roster.err.computers') : t('roster.err.hosts')}
-                <button type="button" class="oc-btn oc-btn--sm" aria-label={t('roster.err.retry_aria', { what: t('roster.err.computers') })} onclick={() => { void computers.refresh(true); void packMachines.refresh(true); }}>{t('roster.err.retry')}</button></li>
+                <Button size="sm" aria-label={t('roster.err.retry_aria', { what: t('roster.err.computers') })} onclick={() => { void computers.refresh(true); void packMachines.refresh(true); }}>{t('roster.err.retry')}</Button></li>
             </ul></div>
         {:else if !loaded}
           <p class="rs-state" role="status">{t('computers.loading')}</p>
@@ -118,7 +120,7 @@
           <div class="wz-census m1-census" class:m1-census--two={true}>
             <section class="oc-rank m1-census__pack" data-panel="pack">
               <header class="oc-rank__head"><h3 class="oc-rank__label">{t('roster.census.pack')}</h3>
-                <button type="button" class="oc-btn oc-btn--sm oc-btn--ghost" onclick={() => setSettings(true)}>{t('roster.census.settings')}</button></header>
+                <Button variant="quiet" size="sm" onclick={() => setSettings(true)}>{t('roster.census.settings')}</Button></header>
               <dl class="pp-facts">
                 <dt class="m1-lead-k" role="img" aria-label={t('roster.census.leader')} title={t('roster.census.leader')}><Icon name="wolf" size={14} /></dt><dd>{alpha?.name ?? '-'}</dd>
                 <dt>{t('roster.census.linked')}</dt><dd>{others.length ? t('roster.census.linked_of', { linked, total: others.length }) : t('roster.census.none')}</dd>
@@ -131,13 +133,13 @@
           {#if rosterUi.filter === 'all' && ghosts.length > 0}
             <section class="m1-near" data-panel="near" aria-label={t('roster.sec.near')}>
               <div class="cat-sec"><span class="cat-sec__label">{t('roster.sec.near')}</span>
-                <button type="button" class="oc-btn oc-btn--sm oc-btn--ghost" disabled={rosterActivity.busy !== null} onclick={() => void discovered.refresh(true)}>{t('hosts.fed.rescan')}</button>
+                <Button variant="quiet" size="sm" disabled={rosterActivity.busy !== null} onclick={() => void discovered.refresh(true)}>{t('hosts.fed.rescan')}</Button>
                 <span class="cat-sec__count">{t('roster.sec.near_count', { count: ghosts.length })}</span></div>
               <ul class="warez-grid m1-ghosts">
                 {#each ghosts as d (d.fid)}
                   <li><article class="catalog-card m1-ghost" data-near={d.fid}>
                     <div class="catalog-card__head"><span class="catalog-card__name"><span class="oc-icon-tile m1-ghost__icon" aria-hidden="true">{d.name.charAt(0).toUpperCase()}</span><span class="m1-ghost__name">{d.name}</span></span>
-                      <span class="catalog-card__slot"><button type="button" class="oc-btn oc-btn--sm oc-btn--confirm" aria-label={t('roster.near.link_aria', { name: d.name })} onclick={() => { rosterUi.route = 'older'; openAdd('older'); }}>{t('roster.near.link')}</button></span></div>
+                      <span class="catalog-card__slot"><Button variant="confirm" size="sm" aria-label={t('roster.near.link_aria', { name: d.name })} onclick={() => { rosterUi.route = 'older'; openAdd('older'); }}>{t('roster.near.link')}</Button></span></div>
                     <div class="m1-brief m1-ghost__brief"><span class="pp-dim">{d.host}</span><span class="pp-dim">{t('roster.near.brief', { key: d.fid.slice(0, 8) })}</span>
                       <span class="m1-brief__st"><span class="pp-st" data-shape="tri" data-tone="warn"><i class="pp-st__mark" aria-hidden="true"></i><span class="pp-st__word">{t('roster.near.trust')}</span></span></span></div>
                   </article></li>
@@ -146,8 +148,9 @@
           {/if}
           <div class="cat-sec"><span class="cat-sec__label">{t('roster.sec.computers')}</span><span class="cat-sec__count">{t('roster.sec.computers_count', { shown: visible.length, total: list.length })}</span></div>
           {#if visible.length === 0 && jobs.length === 0}
-            <div class="m1-empty"><span>{list.length === 0 ? t('roster.empty_all') : t('roster.empty_filter')}</span>
-              <button type="button" class="oc-btn oc-btn--sm" onclick={() => { rosterUi.q = ''; rosterUi.filter = 'all'; }}>{t('roster.clear_filter')}</button></div>
+            <State title={list.length === 0 ? t('roster.empty_all') : t('roster.empty_filter')} data-roster-empty="">
+              {#snippet actions()}<Button size="sm" onclick={() => { rosterUi.q = ''; rosterUi.filter = 'all'; }}>{t('roster.clear_filter')}</Button>{/snippet}
+            </State>
           {:else if rosterUi.view === 'list'}
             <ul class="m1-rows">{#each visible as c (c.id)}<RosterCard {c} list open={rosterUi.openId === c.id && !rosterUi.mode} onOpen={(id) => openComputer(id)} {nowMs} />{/each}</ul>
           {:else}
@@ -165,7 +168,9 @@
             </ul>
           {/if}
           {#if list.length === 1 && list[0]?.isSelf && rosterUi.q === ''}
-            <div class="m1-empty"><span>{t('roster.only_self')}</span><button type="button" class="oc-btn oc-btn--sm oc-btn--confirm" onclick={() => openAdd()}>{t('roster.toolbar.add')}</button></div>
+            <State title={t('roster.only_self')} data-roster-only-self="">
+              {#snippet actions()}<Button variant="confirm" size="sm" onclick={() => openAdd()}>{t('roster.toolbar.add')}</Button>{/snippet}
+            </State>
           {/if}
         {/if}
       </div>

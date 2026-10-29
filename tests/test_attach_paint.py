@@ -107,7 +107,7 @@ async def test_fullscreen_pane_paints_again_on_reattach(socket_cleanup) -> None:
         assert (first, second) == ("screen", "screen")
         assert rejoined.capture_scrollback(), (
             "an alternate-screen pane must still capture bytes on rejoin; "
-            "this is the exact invariant a685242 broke"
+            "this is the exact invariant 4cdfb61 broke"
         )
     finally:
         _tmux("kill-session", "-t", backend.tmux_session)

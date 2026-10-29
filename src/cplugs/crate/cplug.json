@@ -5,17 +5,11 @@
   "description_key": "cplug.crate.description",
   "version": "1.0.0",
   "icon": "archive",
-  "author": "Carnivore contributors",
+  "author": "Carnivore",
   "min_app_version": "1.16.1",
   "tier": "builtin",
   "default_enabled": false,
-  "permissions": {
-    "app": [
-      "sessions.read",
-      "agent_writes",
-      "imports.write"
-    ]
-  },
+  "permissions": { "app": ["sessions.read", "agent_writes", "imports.write"] },
   "permission_reasons": {
     "sessions.read": "check that every session in an export is asleep, and name sessions in the plan",
     "agent_writes": "let an agent cancel a crate job, verify a crate, copy one to your second folder, or unpack a plain crate into the plugin's scratch folder; exporting always waits for you",
@@ -23,122 +17,31 @@
   },
   "surfaces": {
     "routes": true,
-    "plugins": [
-      "settings-panel"
-    ],
-    "topics": [
-      "jobs"
-    ],
-    "mcp_tools": [
-      "crate_status",
-      "crate_backup_families",
-      "crate_export_preview",
-      "crate_export",
-      "crate_jobs_list",
-      "crate_job_cancel",
-      "crate_bundles_list",
-      "crate_check",
-      "crate_unpack",
-      "crate_copy",
-      "crate_remove",
-      "crate_folder_crates_list",
-      "crate_import_preview",
-      "crate_import",
-      "crate_imports_list",
-      "crate_import_undo"
-    ]
+    "plugins": ["settings-panel"],
+    "topics": ["jobs"],
+    "mcp_tools": ["crate_status", "crate_backup_families", "crate_export_preview", "crate_export", "crate_jobs_list", "crate_job_cancel",
+                  "crate_bundles_list", "crate_check", "crate_unpack", "crate_copy", "crate_remove", "crate_folder_crates_list", "crate_import_preview",
+                  "crate_import", "crate_imports_list", "crate_import_undo"]
   },
   "owns": {
-    "routes": [
-      "/summary",
-      "/backup-families",
-      "/plan",
-      "/exports",
-      "/jobs",
-      "/jobs/{job_id}",
-      "/jobs/{job_id}/cancel",
-      "/bundles",
-      "/bundles/{bundle_id}",
-      "/bundles/{bundle_id}/contents",
-      "/bundles/{bundle_id}/verify",
-      "/bundles/{bundle_id}/copies",
-      "/bundles/{bundle_id}/extract",
-      "/bundles/{bundle_id}/download",
-      "/folders/{folder}/crates",
-      "/folders/primary/crates/upload",
-      "/crates/remove",
-      "/folders/{folder}/crates/{name}/contents",
-      "/folders/{folder}/crates/{name}/verify",
-      "/folders/{folder}/crates/{name}/extract",
-      "/folders/{folder}/crates/{name}/download",
-      "/imports/plan",
-      "/imports",
-      "/imports/{import_id}",
-      "/imports/{import_id}/undo"
-    ],
-    "strings": [
-      "cplug.crate."
-    ],
-    "tests": [
-      "tests/python/cplugs/crate/",
-      "web/src/cplugs/crate/"
-    ],
-    "style_guide": [
-      "web/src/cplugs/crate/CratePanel.svelte",
-      "web/src/cplugs/crate/ExportDialog.svelte",
-      "web/src/cplugs/crate/ImportDialog.svelte",
-      "web/src/cplugs/crate/RemoveDialog.svelte",
-      "web/src/cplugs/crate/UndoDialog.svelte",
-      "web/src/cplugs/crate/RestoredList.svelte",
-      "web/src/cplugs/crate/ImportPreview.svelte",
-      "web/src/cplugs/crate/ImportResult.svelte",
-      "web/src/cplugs/crate/JobProgress.svelte",
-      "web/src/cplugs/crate/TtyBox.svelte",
-      "web/src/cplugs/crate/ProjectCrates.svelte",
-      "web/src/cplugs/crate/crate-dialog.css"
-    ],
-    "contributions": [
-      "settings.panel",
-      "projects.panel"
-    ]
+    "routes": ["/summary", "/backup-families", "/plan", "/exports", "/jobs", "/jobs/{job_id}", "/jobs/{job_id}/cancel", "/bundles",
+               "/bundles/{bundle_id}", "/bundles/{bundle_id}/contents", "/bundles/{bundle_id}/verify",
+               "/bundles/{bundle_id}/copies", "/bundles/{bundle_id}/extract", "/bundles/{bundle_id}/download", "/folders/{folder}/crates", "/folders/primary/crates/upload", "/crates/remove",
+               "/folders/{folder}/crates/{name}/contents", "/folders/{folder}/crates/{name}/verify",
+               "/folders/{folder}/crates/{name}/extract", "/folders/{folder}/crates/{name}/download", "/imports/plan", "/imports", "/imports/{import_id}", "/imports/{import_id}/undo"],
+    "strings": ["cplug.crate."],
+    "tests": ["tests/python/cplugs/crate/", "web/src/cplugs/crate/"],
+    "style_guide": ["web/src/cplugs/crate/CratePanel.svelte", "web/src/cplugs/crate/ExportDialog.svelte",
+                    "web/src/cplugs/crate/ImportDialog.svelte", "web/src/cplugs/crate/RemoveDialog.svelte", "web/src/cplugs/crate/UndoDialog.svelte", "web/src/cplugs/crate/RestoredList.svelte", "web/src/cplugs/crate/ImportPreview.svelte", "web/src/cplugs/crate/ImportResult.svelte", "web/src/cplugs/crate/JobProgress.svelte", "web/src/cplugs/crate/TtyBox.svelte",
+                    "web/src/cplugs/crate/ProjectCrates.svelte", "web/src/cplugs/crate/crate-dialog.css"],
+    "contributions": ["settings.panel", "projects.panel"]
   },
-  "settings_schema": {
-    "version": 1,
-    "fields": {
-      "folder": {
-        "kind": "string",
-        "labelKey": "cplug.crate.settings.folder",
-        "hintKey": "cplug.crate.settings.folder_hint",
-        "maxLength": 1024,
-        "default": ""
-      },
-      "secondFolder": {
-        "kind": "string",
-        "labelKey": "cplug.crate.settings.second_folder",
-        "hintKey": "cplug.crate.settings.second_folder_hint",
-        "maxLength": 1024,
-        "default": ""
-      },
-      "recipients": {
-        "kind": "string",
-        "labelKey": "cplug.crate.settings.recipients",
-        "hintKey": "cplug.crate.settings.recipients_hint",
-        "maxLength": 2000,
-        "default": ""
-      },
-      "encryptByDefault": {
-        "kind": "boolean",
-        "labelKey": "cplug.crate.settings.encrypt_default",
-        "default": false
-      },
-      "keyHint": {
-        "kind": "string",
-        "labelKey": "cplug.crate.settings.key_hint",
-        "hintKey": "cplug.crate.settings.key_hint_hint",
-        "maxLength": 200,
-        "default": ""
-      }
-    }
-  },
+  "settings_schema": { "version": 1, "fields": {
+    "folder": { "kind": "string", "labelKey": "cplug.crate.settings.folder", "hintKey": "cplug.crate.settings.folder_hint", "maxLength": 1024, "default": "" },
+    "secondFolder": { "kind": "string", "labelKey": "cplug.crate.settings.second_folder", "hintKey": "cplug.crate.settings.second_folder_hint", "maxLength": 1024, "default": "" },
+    "recipients": { "kind": "string", "labelKey": "cplug.crate.settings.recipients", "hintKey": "cplug.crate.settings.recipients_hint", "maxLength": 2000, "default": "" },
+    "encryptByDefault": { "kind": "boolean", "labelKey": "cplug.crate.settings.encrypt_default", "default": false },
+    "keyHint": { "kind": "string", "labelKey": "cplug.crate.settings.key_hint", "hintKey": "cplug.crate.settings.key_hint_hint", "maxLength": 200, "default": "" }
+  } },
   "css_prefix": "crt"
 }

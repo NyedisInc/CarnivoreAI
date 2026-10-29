@@ -41,10 +41,6 @@ class SidecarDefinition:
 
 
 class SidecarRegistry:
-    """The installed catalog cplugs of one state directory.
-
-    Inputs: state_dir (Path); rows (() -> the install ledger's rows, injected so tests need no app; blocking).
-    """
 
     def __init__(self, state_dir: Path, rows: Callable[[], Iterable[Any]]) -> None:
         self.state_dir = Path(state_dir)

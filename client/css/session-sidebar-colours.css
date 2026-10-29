@@ -1,20 +1,3 @@
-/* =====================================================================
- * Agents drawer COLOUR CODING (issue #694).
-
- * ONE PALETTE, NAMED ONCE, BELOW. Every hue is an --oc-* token or a
- * color-mix() of two, re-declared at `[data-session-theme]` exactly as
- * web/src/opscenter/tokens.css re-derives the tokens themselves, so every
- * shipped theme repaints it. NO LITERAL. The keys match
- * src/core/session_group_style.py's COLOURS, GRADIENTS and ANIMATIONS,
- * which tests/test_session_group_style.py holds to this file.
-
- * THE MECHANISM IS ONE INPUT, `--band-hue`. A section sets it (by its
- * data-group key, or a hand-made group's `data-group-colour`, stamped by
- * client/js/session-sidebar-group-colour.js); the heading paints in it,
- * and a TERMINALS or BROWSERS row name paints in `--band-shade`, the hue
- * pulled toward the primary text tier so a title stays readable. Agent
- * rows are never touched: they keep --oc-text-primary and the asleep dim.
- * ===================================================================== */
 
 @layer components {
 :root,
@@ -97,7 +80,6 @@
     border: var(--sb-block-edge) solid var(--sb-block);
     border-radius: var(--oc-radius-sm);
     background: color-mix(in srgb, var(--sb-block) var(--oc-project-block-mix, 9%), var(--oc-ground-panel));
-    /* padding */
     margin: calc(-1 * (var(--sb-block-pad) + var(--sb-block-edge)));
     padding: var(--sb-block-pad);
 }
@@ -320,12 +302,6 @@
 }
 
 .group-colour-picker__title {
-    height: 26px;
-    display: flex;
-    align-items: center;
-    padding: 0 10px;
-    background: var(--oc-ground-titlerow);
-    box-shadow: inset 0 -1px 0 var(--oc-line-rule);
     color: var(--oc-orange);
     font-size: var(--oc-fs-micro);
     letter-spacing: var(--oc-tracking-label, 1.2px);

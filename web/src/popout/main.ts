@@ -1,3 +1,4 @@
+/* the home screen */
 import '../cplugs/host/early-kinds';
 import '../app.css';
 import '../opscenter/app.css';
@@ -80,7 +81,6 @@ export function bootPopout(): boolean {
 // nothing at all
 installSharedTooltip();
 
-// the offline marker
 bootListingPush();
 bootPopoutLive();
 bootPopout();

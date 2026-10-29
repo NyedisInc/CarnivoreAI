@@ -1,5 +1,7 @@
 
 <script lang="ts">
+    import Button from '../base/Button.svelte';
+    import IconButton from '../base/IconButton.svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
@@ -62,8 +64,8 @@
         error = '';
         try {
             if (match) {
-                answered = true;
                 const done = await calls.confirmPending(waiting.nonce);
+                answered = true;
                 if (done.state === 'active') close(null);
             } else {
                 await calls.cancelPending(waiting.nonce);
@@ -76,13 +78,26 @@
             busy = false;
         }
     }
+
+    /* nobody is looking at */
+    async function dismiss(): Promise<void> {
+        const pending = waiting;
+        if (pending && !answered) {
+            try {
+                await calls.cancelPending(pending.nonce);
+            } catch (err) {
+                console.warn('ShowCodeModal: could not drop the pending pairing on close:', err);
+            }
+        }
+        close(null);
+    }
 </script>
 
-<ModalShell title={t('hosts.code.title')} overlayClass="text-prompt-modal na-flow" onCancel={() => close(null)}>
+<ModalShell title={t('hosts.code.title')} overlayClass="text-prompt-modal na-flow" onCancel={() => void dismiss()}>
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">&raquo; {t('hosts.code.title')}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')} onclick={() => close(null)}>&times;</button>
+            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => void dismiss()} />
         </div>
     {/snippet}
     {#if waiting}
@@ -108,11 +123,11 @@
     {/if}
     {#snippet footer()}
         {#if waiting}
-            <button class="modal-btn modal-btn-danger" disabled={busy} data-fed-sas-differ onclick={() => void answer(false)}>{t('hosts.sas.differ')}</button>
-            <button class="modal-btn modal-btn-confirm" disabled={busy || answered} data-fed-sas-match onclick={() => void answer(true)}>{t('hosts.sas.match')}</button>
+            <Button variant="danger" disabled={busy} data-fed-sas-differ onclick={() => void answer(false)}>{t('hosts.sas.differ')}</Button>
+            <Button variant="confirm" disabled={busy || answered} data-fed-sas-match onclick={() => void answer(true)}>{t('hosts.sas.match')}</Button>
         {:else}
-            <button class="modal-btn modal-btn-secondary" disabled={busy} data-fed-code-new onclick={() => void make()}>{t('hosts.code.new')}</button>
-            <button class="modal-btn modal-btn-confirm" onclick={() => close(null)}>{t('hosts.code.done')}</button>
+            <Button disabled={busy} data-fed-code-new onclick={() => void make()}>{t('hosts.code.new')}</Button>
+            <Button variant="confirm" onclick={() => close(null)}>{t('hosts.code.done')}</Button>
         {/if}
     {/snippet}
 </ModalShell>

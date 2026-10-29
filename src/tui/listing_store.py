@@ -1,12 +1,3 @@
-"""The TUI's copy of the pushed session listing (mirror of web/src/lib/listing-push/store.ts).
-
-THE SERVER COMPUTES, THIS FILE ONLY APPLIES. A snapshot (``GET /sessions/listing``)
-seeds the store; ``listing.delta`` frames then arrive with a stream id and a
-sequence. A frame in order is applied, a gap or a new stream resyncs, a frame
-that arrives during a resync is buffered and replayed after it. A row keeps the
-two levels the route answers with (wrapper fields on the wrapper, ``.session``
-nested) and a null the server sent stays null: nothing here defaults a field.
-"""
 
 from __future__ import annotations
 
@@ -19,6 +10,8 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 LIVENESS = "$live"
+
+MALFORMED_FRAME_ERRORS = (KeyError, TypeError, AttributeError, ValueError)
 
 Snapshot = dict[str, Any]
 Row = dict[str, Any]
@@ -93,7 +86,12 @@ class ListingStore:
             return
         if seq <= self._seq:
             return
-        self._apply(frame)
+        try:
+            self._apply(frame)
+        except MALFORMED_FRAME_ERRORS as exc:
+            logger.warning("tui_listing_frame_malformed", error=type(exc).__name__)
+            self.resync()
+            return
         self._notify(list(frame["changes"]))
 
     def resync(self) -> asyncio.Task[None]:
@@ -115,20 +113,36 @@ class ListingStore:
                 self._syncing = None
             self._set_live(False)
             return
-        self._load(snap)
-        pending = sorted(
-            (f for f in self._buffered if f.get("stream") == snap.get("stream") and f["seq"] > snap["seq"]),
-            key=lambda f: f["seq"],
-        )
+        try:
+            pending = self._load_and_pending(snap)
+        except MALFORMED_FRAME_ERRORS as exc:
+            logger.warning("tui_listing_snapshot_malformed", error=type(exc).__name__)
+            self._buffered = []
+            if self._syncing is me:
+                self._syncing = None
+            self._set_live(False)
+            return
         self._buffered = []
         self._syncing = None
-        for f in pending:
-            if f["seq"] != self._seq + 1:
-                self.resync()
-                return
-            self._apply(f)
+        try:
+            for f in pending:
+                if f["seq"] != self._seq + 1:
+                    self.resync()
+                    return
+                self._apply(f)
+        except MALFORMED_FRAME_ERRORS as exc:
+            logger.warning("tui_listing_frame_malformed", error=type(exc).__name__)
+            self.resync()
+            return
         self._live = True
         self._notify([LIVENESS, *self._cols])
+
+    def _load_and_pending(self, snap: Snapshot) -> list[dict[str, Any]]:
+        self._load(snap)
+        return sorted(
+            (f for f in self._buffered if f.get("stream") == snap.get("stream") and f["seq"] > self._seq),
+            key=lambda f: f["seq"],
+        )
 
     async def poll(self) -> None:
         snap = await self._fetch()

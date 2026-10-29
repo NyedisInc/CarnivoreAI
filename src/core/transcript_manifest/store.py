@@ -23,14 +23,10 @@ def _row(record: Any) -> Row:
 
 
 def load_rows(conn: sqlite3.Connection) -> Dict[str, Row]:
-    """Every stored row by path; {} when the table does not exist yet. Output: dict[str, Row].
-
-    Raises: sqlite3.Error. Example: load_rows(conn)['/Users/x/.claude/projects/s/a.jsonl'].size
-    """
     if not table_present(conn):
         return {}
     conn.row_factory = sqlite3.Row
-    return {r["path"]: _row(r) for r in conn.execute(f"SELECT id, {', '.join(_COLUMNS)} FROM {K.TABLE}")}
+    return {r[0]: Row(*r) for r in conn.execute(f"SELECT {', '.join(_COLUMNS)}, id FROM {K.TABLE}")}
 
 
 def persist(conn: sqlite3.Connection, result: ScanResult, now: str) -> None:

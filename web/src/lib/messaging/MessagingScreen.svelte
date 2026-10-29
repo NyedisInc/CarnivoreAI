@@ -2,6 +2,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
+    import { Button } from '../base';
     import type { Translate } from '../sessions/types';
     import '../settings-page/panel-kit/panel-kit.css';
     import './messaging.css';
@@ -54,14 +55,14 @@
 
     <span class="oc-key">{t('messaging.ui.providers.title')}</span>
     {#each messaging.providers as provider (provider.id)}
-        <ProviderCard {t} {provider} conversations={messaging.conversations.filter((c) => c.provider_id === provider.id)} {busy} {act} {fetcher} />
+        <ProviderCard {t} {provider} conversations={messaging.conversations.filter((c) => c.provider_id === provider.id)} bindings={messaging.bindings} {busy} {act} {fetcher} />
     {/each}
     {#if messaging.loaded && messaging.providers.length === 0}<p class="tm__sub" data-messaging="no-providers">{t('messaging.ui.providers.none')}</p>{/if}
     {#if adding}
         <ProviderForm {t} {busy} onSave={(b) => void save(b)} onCancel={() => (adding = false)} />
     {:else}
         <div class="tm__actions">
-            <button type="button" class="oc-btn oc-btn--confirm" disabled={busy} data-messaging="provider-add" onclick={() => (adding = true)}>{t('messaging.ui.provider.add')}</button>
+            <Button variant="confirm" disabled={busy} data-messaging="provider-add" onclick={() => (adding = true)}>{t('messaging.ui.provider.add')}</Button>
         </div>
     {/if}
 
@@ -80,8 +81,8 @@
                 {#if row.hint}<span class="tm__sub" data-messaging="unconfirmed-hint">{row.hint}</span>{/if}
                 <span class="messaging-log__text">{m.text}</span>
                 {#if row.retry}
-                    <button type="button" class="oc-btn oc-btn--ghost" disabled={busy} data-messaging="retry"
-                        onclick={() => void act(async () => void (await retryMessage(m.id, fetcher)))}>{t('messaging.ui.log.retry')}</button>
+                    <Button variant="quiet" size="sm" disabled={busy} data-messaging="retry"
+                        onclick={() => void act(async () => void (await retryMessage(m.id, fetcher)))}>{t('messaging.ui.log.retry')}</Button>
                 {/if}
             </div>
         {/each}

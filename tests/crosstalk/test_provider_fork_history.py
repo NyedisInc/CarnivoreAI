@@ -1,6 +1,8 @@
 
 import json
 
+import pytest
+
 from src.core.crosstalk.fork.codex_to_claude import rows
 from src.core.crosstalk.fork.history import replay_parts
 from src.core.crosstalk.fork.replay import render_replay
@@ -33,3 +35,11 @@ def test_codex_history_converts_to_chained_claude_rows_without_losing_tools():
     assert 'VIOLET-731' in bounded.text
     assert 'history trimmed:' in bounded.text
     assert len(bounded.text.encode()) <= 500
+
+
+def test_a_torn_final_line_and_a_non_object_row_do_not_fail_the_fork():
+    good = json.dumps({'type': 'user', 'message': {'content': 'hello'}})
+    parts = replay_parts('claude', (good + '\n[1, 2]\n3\n{"type": "assis').encode())
+    assert [p.text for p in parts] == ['hello']
+    with pytest.raises(ValueError):
+        replay_parts('claude', (good + '\n{broken\n' + good + '\n').encode())

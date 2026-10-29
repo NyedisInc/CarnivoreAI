@@ -1,4 +1,4 @@
-/* recently closed sessions running sessions */
+/* recently closed sessions */
 
 import type { SessionRecord } from '../../api';
 import { createSortPref } from '../../lib/list-sort.svelte';

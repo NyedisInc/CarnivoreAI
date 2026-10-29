@@ -1,14 +1,14 @@
 
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { authFetch } from '../../opscenter/api/auth.svelte';
+  import { loadFeatureCatalog } from './feature-catalog';
   import { t } from '../i18n/index.svelte';
+  import { Button } from '../base';
   import { clearFocusFeature, featureFocusState } from './feature-focus.svelte';
   import {
     findFeature,
     groupFeaturesByArea,
     type FeatureAreaGroup,
-    type FeatureCatalogPayload,
   } from './features-by-area';
   import FeatureDetail from './FeatureDetail.svelte';
   import MediaLightbox from './MediaLightbox.svelte';
@@ -27,7 +27,7 @@
   async function load(): Promise<void> {
     viewState = 'loading';
     try {
-      const payload = await authFetch<FeatureCatalogPayload>('/feature-catalog');
+      const payload = await loadFeatureCatalog();
       if (!payload.available) {
         viewState = 'unavailable';
         return;
@@ -92,9 +92,9 @@
         <ul class="sidebar-help__feature-list">
           {#each group.features as feature (feature.id)}
             <li class="sidebar-help__feature" id={domIdFor(feature.id)}>
-              <button
-                type="button"
-                class="sidebar-help__feature-trigger"
+              <Button
+                variant="row"
+                data-help-feature-trigger
                 aria-expanded={isExpanded(feature.id)}
                 aria-controls="{domIdFor(feature.id)}-body"
                 onclick={() => toggle(feature.id)}
@@ -109,7 +109,7 @@
                     </span>
                   {/if}
                 </span>
-              </button>
+              </Button>
               <div
                 class="sidebar-help__feature-body"
                 id="{domIdFor(feature.id)}-body"

@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* padding */
   import TaskWrapper from '../../lib/base/TaskWrapper.svelte';
   import type { TaskState } from '../../lib/base/task-wrapper';
   import Icon from '../../opscenter/ui/Icon.svelte';

@@ -1,4 +1,4 @@
-<!-- could not -->
+
 <script lang="ts">
     import { mcpCommandLine } from '../catalog/mcp';
     import type { Translate } from '../sessions/types';

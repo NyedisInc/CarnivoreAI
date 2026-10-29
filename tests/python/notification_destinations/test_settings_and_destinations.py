@@ -138,7 +138,7 @@ def test_failed_keychain_create_saves_nothing(service, keychain):
     client = make_client(service)
     keychain.fail_writes = True
     r = client.post(f"{BASE}/destinations", json=slack_body())
-    assert r.status_code == 503 and r.json()["detail"]["error"] == "keychain_unavailable"
+    assert r.status_code == 503 and r.json()["detail"]["code"] == "destination_keychain_unavailable"
     assert client.get(f"{BASE}/destinations").json()["destinations"] == []
     assert keychain.items == {}
 
@@ -149,7 +149,7 @@ def test_oversize_secret_bundle_is_a_422_and_writes_nothing(service, keychain, m
     monkeypatch.setattr(secrets_mod, "MAX_ENCODED_BYTES", 8)
     client = make_client(service)
     r = client.post(f"{BASE}/destinations", json=slack_body())
-    assert r.status_code == 422 and r.json()["detail"]["error"] == "secret_too_large"
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "destination_secret_too_large"
     assert client.get(f"{BASE}/destinations").json()["destinations"] == []
     assert keychain.items == {}
 
@@ -196,7 +196,7 @@ def test_extras_roundtrip_and_details_refused_for_sms(service):
     twilio = client.post(f"{BASE}/destinations", json={"kind": "twilio", "name": "sms", "secrets": {
         "sid": "AC1", "token": "t", "from_number": "+15550001111", "numbers": ["+15550002222"]}}).json()["destination"]["id"]
     r = client.put(f"{BASE}/destinations/{twilio}/extras", json={"details": True})
-    assert r.status_code == 422 and r.json()["detail"]["error"] == "details_not_allowed"
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "destination_details_not_allowed"
     assert client.put(f"{BASE}/destinations/d_ffffffffffff/extras", json={"away": True}).status_code == 404
 
 
@@ -325,5 +325,5 @@ def test_global_destination_cap(service, monkeypatch):
     client = make_client(service)
     create(client)
     r = client.post(f"{BASE}/destinations", json=slack_body())
-    assert r.status_code == 409 and r.json()["detail"]["error"] == "limit"
+    assert r.status_code == 409 and r.json()["detail"]["code"] == "destination_limit"
     assert len(service.destinations._secrets._backend.items) == 1

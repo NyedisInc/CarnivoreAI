@@ -114,13 +114,13 @@ def world():
 
 async def _main_prov(main: Side, join: Side, kind: str, grant: str = "gj", **kw):
     return await commit.main_provisional(main.open_db, main.listener, identity=main.identity, own_iid=MAIN,
-                                         joiner=join.peer_id(grant, "hosta"), kind=kind, pack=main.pack, **kw)
+                                         joiner=join.peer_id(grant, "studio"), kind=kind, pack=main.pack, **kw)
 
 
 async def _join_prov(main: Side, join: Side, res, kind: str, own_grant: str = "gj"):
     await commit.joiner_provisional(join.open_db, join.links, identity=join.identity, own_iid=JOIN,
                                     main=main.peer_id(res.grant_id, "air"), own_grant_id=own_grant, kind=kind,
-                                    settings=res.settings, addresses=["192.0.2.13"], link_port=47110, pack=join.pack)
+                                    settings=res.settings, addresses=["10.0.0.5"], link_port=47110, pack=join.pack)
 
 
 def _counts(side: Side):
@@ -129,8 +129,8 @@ def _counts(side: Side):
 
 def _pair_over_ssh(main: Side, join: Side) -> None:
     with closing(main.open_db()) as c:
-        grants.create_grant(c, peer_install_id=JOIN, public_key=join.public, label="hosta", remote_grant_id="gj", grant_id="gm")
-        peer_hosts.upsert(c, install_id=JOIN, label="hosta", grant_id="gj", fid="f", initiator=True, ssh_target="acme@hosta", ssh_port=22)
+        grants.create_grant(c, peer_install_id=JOIN, public_key=join.public, label="studio", remote_grant_id="gj", grant_id="gm")
+        peer_hosts.upsert(c, install_id=JOIN, label="studio", grant_id="gj", fid="f", initiator=True, ssh_target="alex@studio", ssh_port=22)
     with closing(join.open_db()) as c:
         grants.create_grant(c, peer_install_id=MAIN, public_key=main.public, label="air", remote_grant_id="gm", grant_id="gj")
         peer_hosts.upsert(c, install_id=MAIN, label="air", grant_id="gm", fid="f", initiator=False)
@@ -147,7 +147,7 @@ async def test_new_member_provisional_then_final_on_both_sides(world):
     assert main.listener.sets == [[JOIN]]
     await _join_prov(main, join, res, "new")
     rows, gr, hosts = _counts(join)
-    assert (rows[0].role, rows[0].addresses, rows[0].link_port, rows[0].provisional) == ("main", ("192.0.2.13",), 47110, True)
+    assert (rows[0].role, rows[0].addresses, rows[0].link_port, rows[0].provisional) == ("main", ("10.0.0.5",), 47110, True)
     assert hosts[0].initiator and hosts[0].peer_grant_id == res.grant_id and gr[0].grant_id == "gj" and join.links.started == [MAIN]
     assert not setup_state.joined_marker_path(join.config).exists()
     assert (join.dir / setup_state.PAIRED_SENTINEL_NAME).exists()
@@ -192,14 +192,14 @@ async def test_migrate_keeps_main_ssh_link_until_final_then_flips(world):
     res = await _main_prov(main, join, "migrate")
     rows, gr, hosts = _counts(main)
     assert res.grant_id == "gm" and len(gr) == 1 and rows[0].join_kind == "migrate" and rows[0].prev_initiator == 1
-    assert hosts[0].initiator is True and hosts[0].ssh_target == "acme@hosta" and main.links.removed == []
+    assert hosts[0].initiator is True and hosts[0].ssh_target == "alex@studio" and main.links.removed == []
     await _join_prov(main, join, res, "migrate")
     _rows, jgr, jhosts = _counts(join)
     assert jhosts[0].initiator is True and len(jgr) == 1 and join.links.started == [MAIN]
     assert _counts(join)[0][0].prev_initiator == 0
     await commit.main_final(main.open_db, main.links, JOIN)
     hosts = _counts(main)[2]
-    assert main.links.removed == [JOIN] and hosts[0].initiator is False and hosts[0].ssh_target == "acme@hosta"
+    assert main.links.removed == [JOIN] and hosts[0].initiator is False and hosts[0].ssh_target == "alex@studio"
 
 
 @pytest.mark.asyncio
@@ -268,7 +268,7 @@ async def _main_prov_ok(main, join, real, monkeypatch):
 @pytest.mark.asyncio
 async def test_refusals_write_nothing(world):
     main, join = world
-    bad = PeerId(JOIN, "hosta", join.public, b"\x30\x03junk", "x" * 26, "gj")
+    bad = PeerId(JOIN, "studio", join.public, b"\x30\x03junk", "x" * 26, "gj")
     with pytest.raises(JoinRefused):
         await commit.main_provisional(main.open_db, main.listener, identity=main.identity, own_iid=MAIN, joiner=bad, kind="new", pack=main.pack)
     assert _counts(main) == ([], [], []) and main.listener.sets == []

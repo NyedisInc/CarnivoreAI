@@ -1,3 +1,4 @@
+/* on the terminal screen */
 (function () {
     'use strict';
 
@@ -62,7 +63,6 @@
 
     var textEl = null;
 
-    /* nothing at all */
     function setStatus(message, kind) {
         if (!statusEl) return;
         statusEl.textContent = message;
@@ -139,10 +139,7 @@
     }
 
     function isHttpUrl(value) {
-        var stripped = String(value == null ? '' : value)
-            .replace(/[\s -]+/g, '')
-            .toLowerCase();
-        return /^https?:\/\/[^/]/.test(stripped);
+        return !!(window.HttpUrl && window.HttpUrl.isHttpUrl(value));
     }
 
     function buildRow(termWrapper, item) {

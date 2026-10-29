@@ -1,5 +1,4 @@
 <script lang="ts">
-  /*  hidden  */
   import { activeTerminalSessionId } from '../../lib/active-terminal';
   import { sessionGit, releaseSessionGit } from '../../api/session-git.svelte';
   import type { Resource } from '../../api/poll.svelte';

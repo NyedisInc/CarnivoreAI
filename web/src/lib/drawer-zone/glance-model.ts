@@ -13,7 +13,6 @@ export const FAMILY_TARGET_OPTION = 'target';
 
 export type { PlacementOptionValue };
 
-/* the glance area */
 export interface GlancePlacement {
   id: string;
   widget: string;
@@ -59,7 +58,6 @@ export function glanceToStored(list: readonly GlancePlacement[]): { id: string; 
   return list.map((p) => (Object.keys(p.options).length ? { id: p.id, widget: p.widget, options: { ...p.options } } : { id: p.id, widget: p.widget }));
 }
 
-/* the glance area */
 export function addPlacement(
   list: readonly GlancePlacement[],
   widget: string,

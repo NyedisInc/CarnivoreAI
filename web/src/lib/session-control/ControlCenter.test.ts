@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+/* and the three */
 import { afterEach, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 import ControlCenter from './ControlCenter.svelte';
@@ -220,7 +221,7 @@ test('timers read as times, live first, with fired and canceled ones folded into
   expect(live[1]?.querySelector('.scc-type')?.textContent).toMatch(/^once, (today|tomorrow) \d{1,2}:\d{2} (am|pm)$/);
   expect(live[1]?.querySelector('.scc-num')?.textContent).toBe('in 32m');
   expect(live[0]?.querySelector('.scc-type')?.textContent).toBe('every 30 minutes');
-  const fold = timers.querySelector<HTMLButtonElement>('.scc-fold')!;
+  const fold = timers.querySelector<HTMLButtonElement>('[data-scc-fold]')!;
   expect(fold.textContent).toBe('history (2)');
   expect(fold.getAttribute('aria-expanded')).toBe('false');
   expect(timers.textContent).not.toContain('run the nightly import');

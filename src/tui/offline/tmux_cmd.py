@@ -30,11 +30,10 @@ class OfflineTmuxError(Exception):
 
 
 class TmuxNotRunning(OfflineTmuxError):
-    """No tmux server answers on the socket: the sessions are gone."""
+    pass
 
 
 class TmuxCommandFailed(OfflineTmuxError):
-    """tmux ran but refused, timed out, or could not be executed; ``detail`` is its first stderr line."""
 
     def __init__(self, detail: str) -> None:
         super().__init__(detail)

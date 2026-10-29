@@ -205,14 +205,14 @@ describe('the modal', () => {
         (document.querySelector('[data-choice-trigger]') as HTMLElement).click();
         await settle();
         expect(Array.from(document.querySelectorAll('[data-choice-option]')).map((e) => e.getAttribute('data-choice-option'))).toEqual(['claude-work', 'codex-yolo']);
-        (Array.from(document.querySelectorAll('.modal-btn-secondary')).find((b) => b.textContent === 'cancel') as HTMLButtonElement).click();
+        (Array.from(document.querySelectorAll('[data-btn="secondary"]')).find((b) => b.textContent === 'cancel') as HTMLButtonElement).click();
         await promise;
     });
 
     test('cancel answers null', async () => {
         const promise = openModal<unknown, Record<string, unknown>>(LaunchPickerModal as never, { title: 'x', t, api: fakeApi });
         await settle();
-        (Array.from(document.querySelectorAll('.modal-btn-secondary')).find((b) => b.textContent === 'cancel') as HTMLButtonElement).click();
+        (Array.from(document.querySelectorAll('[data-btn="secondary"]')).find((b) => b.textContent === 'cancel') as HTMLButtonElement).click();
         expect(await promise).toBeNull();
     });
 });
@@ -354,20 +354,20 @@ describe("another computer's launchers (#1911)", () => {
     const open = async (computerLaunchers: () => Promise<unknown>) => {
         const asked: string[] = [];
         const far = { ...fakeApi, computerLaunchers: async (key: string) => { asked.push(key); return computerLaunchers(); } } as unknown as LaunchProfilesApi;
-        const answer = openModal<{ profileId: string; farLauncher: boolean; account: unknown } | null, Record<string, unknown>>(LaunchPickerModal as never, { title: 'x', t, api: far, remote: { key: 'hosta', label: 'hosta' } });
+        const answer = openModal<{ profileId: string; farLauncher: boolean; account: unknown } | null, Record<string, unknown>>(LaunchPickerModal as never, { title: 'x', t, api: far, remote: { key: 'studio', label: 'studio' } });
         await settle();
         return { asked, answer };
     };
 
     test("a computer that lists its launchers shows ITS ids, never this computer's, and the answer is flagged", async () => {
-        const { asked, answer } = await open(async () => ({ status: 'ok', launchers: [{ id: 'hosta-claude', name: 'hosta claude', family: 'claude' }] }));
-        expect(asked).toEqual(['hosta']);
-        expect(trigger('launch-profile').textContent).toContain('hosta claude');
+        const { asked, answer } = await open(async () => ({ status: 'ok', launchers: [{ id: 'studio-claude', name: 'studio claude', family: 'claude' }] }));
+        expect(asked).toEqual(['studio']);
+        expect(trigger('launch-profile').textContent).toContain('studio claude');
         expect(document.body.textContent).not.toContain('claude-main');
         expect(q('[data-launch-account]')).toBeNull();
-        expect(q('[data-lpm-remote]').textContent).toBe('launchers on hosta');
+        expect(q('[data-lpm-remote]').textContent).toBe('launchers on studio');
         q('[data-lpm-go]').click();
-        expect(await answer).toMatchObject({ profileId: 'hosta-claude', farLauncher: true, account: null });
+        expect(await answer).toMatchObject({ profileId: 'studio-claude', farLauncher: true, account: null });
     });
 
     test('a computer too old to list them shows the bare families with the default-launcher note, unflagged', async () => {
@@ -377,5 +377,28 @@ describe("another computer's launchers (#1911)", () => {
         expect(q('[data-lpm-remote]').textContent).toContain('runs its own default launcher');
         q('[data-lpm-go]').click();
         expect(await answer).toMatchObject({ profileId: 'claude', farLauncher: false });
+    });
+});
+
+describe('the name field and the pinned box (#2672)', () => {
+    test('prefilled, editable, and answered with the launch', async () => {
+        const answer = openModal<{ name?: string; pinned?: boolean } | null, Record<string, unknown>>(LaunchPickerModal as never, { title: 'x', t, api, prefill: { name: 'Carnivore 2', pinned: true } });
+        await settle();
+        const name = q<HTMLInputElement>('[data-lnp-name]');
+        expect(name.value).toBe('Carnivore 2');
+        expect(q('[data-lnp-pinned]')).not.toBeNull();
+        name.value = 'Edited'; name.dispatchEvent(new Event('input', { bubbles: true })); await settle();
+        q('[data-lpm-go]').click();
+        expect(await answer).toMatchObject({ name: 'Edited', pinned: true });
+    });
+
+    test('without a prefill neither control is drawn and the answer carries neither', async () => {
+        const answer = openModal<Record<string, unknown> | null, Record<string, unknown>>(LaunchPickerModal as never, { title: 'x', t, api });
+        await settle();
+        expect(q('[data-launch-name-pin]')).toBeNull();
+        q('[data-lpm-go]').click();
+        const got = await answer;
+        expect(got).not.toHaveProperty('name');
+        expect(got).not.toHaveProperty('pinned');
     });
 });

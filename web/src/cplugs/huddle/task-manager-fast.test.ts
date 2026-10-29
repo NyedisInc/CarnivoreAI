@@ -79,6 +79,12 @@ describe('optimistic steps (pure)', () => {
     expect([item.state, item.status, item.needs_you, item.needs_action]).toEqual(['open', 'question', true, 'answer']);
   });
 
+  test('an untick draws review, never open: the reopen goes back to where the task was and the owner can see it (#2679)', () => {
+    const item = mk({ state: 'done', status: 'done' });
+    applyTick(item, false);
+    expect(item.state).toBe('review');
+  });
+
   test('a tick on an item with a note is approved with the note; a parked item stays parked', () => {
     const noted = mk({ note: 'read me' });
     applyTick(noted, true);
@@ -109,7 +115,7 @@ describe('optimistic steps (pure)', () => {
     expect([item.thread.length, threadCount(item)]).toEqual([1, 9]);
   });
 
-  test('a reply on a review or done item draws it open at once, and the undo puts the state back', () => {
+  test('a reply on a review or done item draws it open at once (R92), and the undo puts the state back', () => {
     for (const state of ['review', 'done']) {
       const item = mk({ state, status: state });
       const undo = applyReply(item, 'why?', 100);
@@ -250,5 +256,18 @@ describe('slim threads', () => {
     net.refuse.add('GET /cplugs/huddle/items/1');
     await loadThread(1);
     expect(shown().thread.map((m) => m.id)).toEqual([3]);
+  });
+});
+
+describe('a thread load the read order refused (issue #2671)', () => {
+  test('is read again once the write that refused it settles', async () => {
+    showItem(mk({ thread_slim: true, thread_count: 3, thread: [msg(3)] }));
+    net.answers['GET /cplugs/huddle/items/1'] = { ...mk(), thread: [msg(1), msg(2), msg(3)] };
+    const pending = write(async () => { await new Promise<void>((r) => setTimeout(r, 20)); }, () => {});
+    await loadThread(1);
+    expect(shown().thread_slim).toBe(true);
+    await pending;
+    await new Promise<void>((r) => setTimeout(r, 30));
+    expect(net.calls.filter((c) => c === 'GET /cplugs/huddle/items/1').length).toBe(2);
   });
 });

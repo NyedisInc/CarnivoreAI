@@ -1,27 +1,4 @@
-<!--
-  The prompt rail: a thin strip of ticks down the terminal's right edge,
-  one per prompt the user typed.
 
-  THE DOM HALF ONLY. Every rule about what a tick points at, when the
-  strip rescans and what "current" means lives in ./rail-model.svelte.ts,
-  which is also where the marker arithmetic is written down.
-
-  HIDING IS `hidden`, NOT A DISPLAY OVERRIDE, and the guard rule below is
-  not belt and braces. `[hidden] { display: none }` lives in the
-  USER-AGENT stylesheet, where ANY author `display` declaration outranks
-  it. This project has already paid for that once: measured an earlier date, a
-  `hidden` archive panel whose class carried `display: flex` rendered
-  anyway and squeezed the list beside it. The rule declares no `display`
-  today, so the guard is what stops one being added later and painting an
-  empty strip over the terminal in every session that has no prompts and
-  on every alternate-screen app.
-
-  THE TOOLTIP IS RENDERED AS WELL AS SET AS `title`. A `title` covers a
-  mouse (it is the app's one delayed tooltip, web/src/lib/tooltip/
-  tooltip.ts); a thumb never hovers, so on a TAP the strip also paints this
-  box and the tick hands it a measured `top`. It wears the same look as
-  that one tooltip by carrying the same `popup-focus` class (issue #981).
--->
 <script lang="ts">
     import PromptTick from './PromptTick.svelte';
     import { t } from '../i18n/index.svelte';
@@ -40,7 +17,6 @@
 
     $effect(() => {
         rail.setElement(el);
-        // nothing at all
         if (!el) return () => rail.setElement(null);
         const node = el;
         node.addEventListener('click', jumpNear);
@@ -57,7 +33,6 @@
         tipShown = true;
     }
 
-    /* <button> */
     function jumpNear(event: MouseEvent): void {
         if (!el || event.target !== el) return;
         const ordinal = rail.ordinalNear(event.clientY - el.getBoundingClientRect().top);
@@ -65,7 +40,7 @@
     }
 </script>
 
-<!-- <button> -->
+
 <div
     bind:this={el}
     class="terminal-prompt-rail"

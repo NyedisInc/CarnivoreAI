@@ -1,0 +1,42 @@
+
+  >_ OpenAI Codex (v0.159.2)
+     /private/var/…/T/tmprigwkkkk/xw
+
+  All right. What have you got?
+
+  Tip: Maximize usage with GPT-6.1 Sol.
+  Try it on complex work for near-Astra
+  performance at a lower cost.
+
+
+› RIG:run40 please
+
+
+• Running touch
+  │ rigfile-with-a-fairly-long-nam
+  │ e.txt
+
+
+  Would you like to run the following
+  command?
+
+  Environment: local
+
+  Reason: rig wants to create a file
+  so that we can see how a long
+  justification wraps
+
+  $ touch
+  rigfile-with-a-fairly-long-name.txt
+
+
+› 1. Yes, proceed (y)
+  2. Yes, and don't ask again for
+     commands that start with `touch
+     rigfile-with-a-fairly-long-
+     name.txt` (p)
+  3. No, and tell Codex what to do
+     differently (esc)
+
+  Press enter to confirm or esc to
+  cancel

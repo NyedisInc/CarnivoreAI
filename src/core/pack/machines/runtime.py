@@ -12,7 +12,8 @@ from src.config import settings
 from src.core import resource_push
 from src.core.db import get_meta
 from src.core.db_models import META_INSTALL_ID
-from src.core.federation import fed_key, grants, peer_hosts, peer_links
+from src.core.db_reuse.kept_read import hot_read
+from src.core.federation import fed_key, grants, peer_hosts, peer_links, peer_listing
 from src.core.pack.load import agents as agents_mod
 from src.core.pack.machines import capabilities as caps_mod
 from src.core.pack.machines import exchange, restrictions as restrictions_mod, roster as roster_mod, settings_sign
@@ -34,9 +35,12 @@ def default_master_id(conn: sqlite3.Connection, self_id: str) -> str:
     return self_id if (row is None or row.initiator) else oldest.peer_install_id
 
 
+def stored_default_master(open_db: Callable[[], sqlite3.Connection], self_id: str) -> str:
+    return hot_read(open_db, ("pack_default_master", self_id), lambda conn: default_master_id(conn, self_id))
+
+
 def peer_infos(open_db: Callable[[], sqlite3.Connection], links: Optional[peer_links.PeerLinks]) -> List[roster_mod.PeerInfo]:
-    with closing(open_db()) as conn:
-        rows = peer_hosts.list_peers(conn)
+    rows = peer_listing.read_peers(open_db)
     return [roster_mod.PeerInfo(r.peer_install_id, r.label, r.key,
                                 links.state(r.peer_install_id) if links is not None else "disconnected",
                                 links.capabilities(r.peer_install_id) if links is not None else [])
@@ -139,8 +143,7 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
         stored = roster_mod.load_entries(conn)
 
     def default_master() -> str:
-        with closing(open_db()) as conn:
-            return default_master_id(conn, install_id)
+        return stored_default_master(open_db, install_id)
 
     def store(entry: roster_mod.Entry) -> None:
         with closing(open_db()) as conn:

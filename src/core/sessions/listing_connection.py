@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Iterator
+
+from src.core.sessions.ports import SessionManagerSurface
 
 
 @contextmanager
-def lend_name_read_connection(manager: Any) -> Iterator[None]:
+def lend_name_read_connection(manager: SessionManagerSurface) -> Iterator[None]:
     if getattr(manager._borrowed, "conn", None) is not None:
         yield
         return
@@ -16,3 +18,5 @@ def lend_name_read_connection(manager: Any) -> Iterator[None]:
         yield
     finally:
         manager._borrowed.conn = None
+        if conn is not None:
+            conn.close()

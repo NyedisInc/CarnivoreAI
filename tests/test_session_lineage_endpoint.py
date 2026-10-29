@@ -110,7 +110,7 @@ def harness(monkeypatch, tmp_path):
 
     monkeypatch.setattr(
         mgr,
-        "list_attachable_sessions_with_socket",
+        "_probe_instances",
         lambda: (
             SOCKET,
             _Listing(
@@ -199,7 +199,7 @@ def test_a_broken_tmux_listing_writes_nothing_and_does_not_raise(
     _client, _token, state, _anchor, mgr = harness
     monkeypatch.setattr(
         mgr,
-        "list_attachable_sessions_with_socket",
+        "_probe_instances",
         lambda: (SOCKET, _Listing(False, reason="tmux not running")),
     )
 

@@ -1,4 +1,3 @@
-/*  hidden  display:none */
 (function (global) {
     'use strict';
 
@@ -20,14 +19,22 @@
     }
 
     function painted(ctl) {
+        if (global.CarnivoreWindowHidden === true) return false;
         var el = ctl.term && ctl.term.element;
         var addons = global.TerminalAddons;
         if (!el || !addons || typeof addons.isPainted !== 'function') return true;
         return addons.isPainted(el, global.document);
     }
 
+    function report(ctl, held) {
+        var ws = ctl.ws;
+        if (!ws || ws.readyState !== 1) return;
+        try { ws.send(JSON.stringify({ type: held ? 'pause' : 'resume' })); } catch (err) {  }
+    }
+
     function release(ctl) {
         ctl._paintHeld = false;
+        report(ctl, false);
         var held = ctl.queue && ctl.queue.length > 0;
         if (held && !ctl.flushing && ctl.term) {
             ctl.flushing = true;
@@ -47,7 +54,7 @@
             if (ctl._disposed) { controllers.delete(ctl); return; }
             var shown = painted(ctl);
             if (shown && ctl._paintHeld) release(ctl);
-            else if (!shown) { ctl._paintHeld = true; anyHeld = true; }
+            else if (!shown) { if (!ctl._paintHeld) report(ctl, true); ctl._paintHeld = true; anyHeld = true; }
         });
         if (pollTimer !== null) { clearTimeout(pollTimer); pollTimer = null; }
         if (anyHeld) pollTimer = setTimeout(schedule, HELD_POLL_MS);
@@ -94,5 +101,6 @@
         register: register,
         unregister: unregister,
         check: check,
+        reassert: function (ctl) { if (ctl && ctl._paintHeld) report(ctl, true); },
     };
 })(window);

@@ -17,7 +17,14 @@
   "keywords": [
     "rename"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The rename action turns the row name into a text field, a new name is typed and saved",
+      "caption": "Renaming a session from its row menu",
+      "file": "rename.gif",
+      "kind": "gif"
+    }
+  ],
   "name": "Rename a session",
   "since": "2026-09-10",
   "status": "stable",
@@ -27,6 +34,5 @@
   "where": [
     "A session's row menu, rename (R).",
     "Or select a row in the drawer and press F2."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

@@ -15,12 +15,12 @@ const msg = (uuid: string): Automation =>
 test('labels come from the drawer resolver and stopped twins vanish', () => {
   (globalThis as { SessionLabel?: unknown }).SessionLabel = resolver;
   const records = [
-    rec('u-live', 'carnivore_Orchard-3', 'Orchard Deploy', 'running'),
-    rec('u-old1', 'carnivore_Orchard-3', 'Orchard', 'stopped'),
-    rec('u-old2', 'carnivore_Orchard-3', 'Orchard-Deploy', 'stopped'),
-    rec('u-nap', 'cloude_AdBoard', null, 'stopped', true),
+    rec('u-live', 'carnivore_Argent-3', 'Argent Deploy', 'running'),
+    rec('u-old1', 'carnivore_Argent-3', 'Argent', 'stopped'),
+    rec('u-old2', 'carnivore_Argent-3', 'Argent-Deploy', 'stopped'),
+    rec('u-nap', 'cloude_AdManager', null, 'stopped', true),
   ];
   const choices = sessionChoices(records, [msg('u-live')]);
-  expect(choices.map((c) => c.label)).toEqual(['Orchard Deploy', 'AdBoard']);
+  expect(choices.map((c) => c.label)).toEqual(['Argent Deploy', 'AdManager']);
 
 });

@@ -22,7 +22,7 @@ class _Ticks:
         return cpu_busy.CpuMeter(read=lambda: (self.busy, self.total), clock=lambda: self.now)
 
 
-def _measure(share, load=96.0):
+def _measure(share, load=184.0):
     ticks = _Ticks()
     meter = ticks.meter()
     meter.sample()

@@ -48,13 +48,6 @@ class FilesOut:
 
 
 def _open_history(path: str) -> int:
-    """Open a history or index file for reading; a symlink is followed only to a regular file inside the same agent home.
-
-    The home is the real folder holding the link (``~/.claude`` for ``history.jsonl``). A link is resolved once, its real
-    path must stay below that home, and the real path is opened with ``O_NOFOLLOW`` so a swap after the check is refused.
-    Output: an fd (the caller closes it). Raises: SourceForbidden (escaping link, loop, non-regular target); OSError.
-    Example: ``history.jsonl -> history.jsonl.nosync`` opens ``history.jsonl.nosync``.
-    """
     target = path
     if os.path.islink(path):
         home = os.path.realpath(os.path.dirname(path))

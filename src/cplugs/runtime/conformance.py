@@ -1,13 +1,3 @@
-"""The conformance kit (``docs/cplug-platform.md`` 13.3): one probe per host rule, each able to go red.
-
-A probe drives a :class:`Harness` with the hostile input of its finding and returns the list of ways the host failed (empty
-means the rule holds). Every probe also runs a POSITIVE control (the legitimate call must still work), so a host that refuses
-everything does not pass by looking at nothing (CLAUDE.md, gotcha 11). The negative control for a rule is the same probe run
-against a deliberately permissive harness; the tests keep those next to the probes (``tests/python/cplugs/runtime``).
-
-``real_harness`` wires the production code. The sandbox probe of 6.6 needs ``sandbox-exec`` and a real plugin process, so it is
-a fixture plugin run by ``tests/python/cplugs/runtime/test_sandbox_e2e.py`` on macOS.
-"""
 
 from __future__ import annotations
 
@@ -249,7 +239,7 @@ async def probe_h6_files(h: Harness) -> List[str]:
 async def probe_m1_notify(h: Harness) -> List[str]:
     ctx = h.ctx("m1", {"notify"})
     bad: List[str] = []
-    for title in ("see https://evil.example/x", "go to example.net now", "go to evil.ru now", "login at bank-secure.tk",
+    for title in ("see https://evil.example/x", "go to evil.com now", "go to evil.ru now", "login at bank-secure.tk",
                   "visit evil\uff0ecom now", "visit evil\u3002xyz now"):
         if not await refused(h, ctx, "notify.toast", {"ref": "ses_ok", "title": title}):
             bad.append(f"toast with URL text accepted: {title[:20]}")
@@ -316,8 +306,9 @@ def _make_repo(repo: Path) -> None:
 
 async def probe_l4_webhooks(h: Harness) -> List[str]:
     bad: List[str] = []
-    now = [1_000_000.0]
+    now = [900_000.0]
     verifier = h.new_verifier(lambda: now[0])
+    now[0] = 1_000_000.0
     secret = b"s3cret-s3cret-s3cret"
 
     def hdr(ts: int, nonce: str, body: bytes, key: bytes = secret) -> Dict[str, str]:
@@ -333,6 +324,11 @@ async def probe_l4_webhooks(h: Harness) -> List[str]:
         bad.append("a replayed nonce was accepted")
     if not _raises(lambda: verify("h", hdr(1_000_000 - 400, "n2", body), body), (webhooks.WebhookRefused,)):
         bad.append("a stale timestamp was accepted")
+    if not _raises(lambda: verify("h", hdr(1_000_000 + 120, "n8", body), body), (webhooks.WebhookRefused,)):
+        bad.append("a request dated far in the future was accepted (it would replay across a restart)")
+    restarted = h.new_verifier(lambda: now[0] + 100)
+    if not _raises(lambda: restarted.verify("h", secret, hdr(1_000_000, "n7", body), body), (webhooks.WebhookRefused,)):
+        bad.append("a request signed before the verifier was constructed was accepted (restart replay)")
     if not _raises(lambda: verify("h", hdr(1_000_000, "n3", body, b"wrong"), body), (webhooks.WebhookRefused,)):
         bad.append("a bad signature was accepted")
     if not _raises(lambda: verifier.verify("h", b"", hdr(1_000_000, "n5", body, b""), body), (webhooks.WebhookRefused,)):

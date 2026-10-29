@@ -1,0 +1,18 @@
+ - The trust ladder learns only from "tag
+   wrong" answers from now on.
+
+──────────────────────────────────────────
+ Claude has written up a plan and is ready
+ to execute. Would you like to proceed?
+
+ ❯ 1. Yes, and switch to BYPASS PERMISSIONS
+      (no further prompts) for this session
+   2. Yes, manually approve edits
+   3. Tell Claude what to change
+      shift+tab to approve with this
+      feedback
+
+ ctrl+g to edit in Vim ·
+ ~/.carnivore/accounts/claude-code-acme/p
+ lans/spam-in-my-email-snazzy-tulip.md
+

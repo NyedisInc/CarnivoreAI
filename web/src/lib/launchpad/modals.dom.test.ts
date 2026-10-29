@@ -9,14 +9,17 @@ import { remoteBrowseNote } from './remote-folders';
 import ProjectNameModal from './ProjectNameModal.svelte';
 import type { ChoiceItem, ClonedProject, FolderChoice, ProjectDetails } from './modal-types';
 
+/** Let Svelte's effects and any queued microtasks run. */
 async function settle(): Promise<void> {
     for (let i = 0; i < 6; i += 1) await Promise.resolve();
 }
 
+/** The overlay currently in the document, or null. */
 function overlay(): HTMLElement | null {
     return document.querySelector('.modal-overlay');
 }
 
+/** Press a key on the overlay, the way a user in the dialog would. */
 function press(key: string, target: Element | null = overlay()): void {
     target?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
 }
@@ -79,12 +82,12 @@ describe('the one-of-N picker', () => {
             items: ITEMS,
         });
         await settle();
-        const rows = overlay()!.querySelectorAll('.folder-picker-item');
+        const rows = overlay()!.querySelectorAll('[data-choice-index]');
         expect(rows).toHaveLength(2);
         expect(rows[0]!.textContent).toContain('start empty');
         expect(rows[0]!.textContent).toContain('a fresh working folder');
         expect(rows[1]!.textContent).toContain('clone from github');
-        expect(rows[0]!.classList.contains('folder-picker-item-active')).toBe(true);
+        expect(rows[0]!.hasAttribute('data-selected')).toBe(true);
         press('Escape', document.body);
         await promise;
     });
@@ -101,7 +104,7 @@ describe('the one-of-N picker', () => {
         expect(empty).not.toBe(null);
         expect(empty!.classList.contains('folder-picker-empty--unknown')).toBe(true);
         expect(empty!.textContent).toContain('nothing here');
-        expect(overlay()!.querySelectorAll('.folder-picker-item')).toHaveLength(0);
+        expect(overlay()!.querySelectorAll('[data-choice-index]')).toHaveLength(0);
         expect(overlay()!.querySelector('[data-choice-cancel]')!.textContent!.trim()).toBe('ok');
         press('Escape', document.body);
         await promise;
@@ -116,14 +119,14 @@ describe('the one-of-N picker', () => {
             ] as ChoiceItem[],
         });
         await settle();
-        const rows = overlay()!.querySelectorAll('.folder-picker-item');
-        expect(rows[0]!.classList.contains('folder-picker-item-disabled')).toBe(true);
+        const rows = overlay()!.querySelectorAll('[data-choice-index]');
+        expect(rows[0]!.getAttribute('aria-disabled')).toBe('true');
         expect(rows[0]!.getAttribute('aria-disabled')).toBe('true');
         expect(rows[0]!.textContent).toContain('folder MISSING');
         (rows[0] as HTMLElement).click();
         await settle();
         expect(overlay()).not.toBe(null);
-        expect(rows[1]!.classList.contains('folder-picker-item-active')).toBe(true);
+        expect(rows[1]!.hasAttribute('data-selected')).toBe(true);
         (rows[1] as HTMLElement).click();
         expect(await promise).toBe('good');
     });
@@ -293,15 +296,15 @@ describe('the folder step asks, previews, and refuses', () => {
             ProjectFolderModal as never,
             {
                 name: 'My App',
-                defaultParent: async () => '/Users/example/carnivore-projects',
-                openPicker: async () => '/Users/example/code',
-                remote: { label: 'hosta', creates: true, browse: Promise.resolve(null) },
+                defaultParent: async () => '/Users/alex/carnivore-projects',
+                openPicker: async () => '/Users/alex/code',
+                remote: { label: 'studio', creates: true, browse: Promise.resolve(null) },
             },
         );
         await settle();
         (overlay()!.querySelector('#project-folder-browse') as HTMLElement).click();
         await settle();
-        expect((overlay()!.querySelector('#project-parent-input') as HTMLInputElement).value).toBe('/Users/example/code');
+        expect((overlay()!.querySelector('#project-parent-input') as HTMLInputElement).value).toBe('/Users/alex/code');
         press('Escape');
         await able;
 
@@ -312,9 +315,9 @@ describe('the folder step asks, previews, and refuses', () => {
                 defaultParent: async () => null,
                 openPicker: async () => '/x',
                 remote: {
-                    label: 'hosta',
+                    label: 'studio',
                     creates: true,
-                    browse: Promise.resolve('hosta runs an older carnivore that cannot list its folders. type the folder.'),
+                    browse: Promise.resolve('studio runs an older carnivore that cannot list its folders. type the folder.'),
                 },
             },
         );
@@ -322,7 +325,7 @@ describe('the folder step asks, previews, and refuses', () => {
         expect(overlay()!.querySelector('#project-folder-browse')).toBeNull();
         expect(overlay()!.querySelector('#project-path-status')!.textContent).toContain('runs an older carnivore');
         const input = overlay()!.querySelector('#project-parent-input') as HTMLInputElement;
-        input.value = '/Users/example/typed';
+        input.value = '/Users/alex/typed';
         input.dispatchEvent(new Event('input', { bubbles: true }));
         await settle();
         expect((overlay()!.querySelector('#project-folder-confirm') as HTMLButtonElement).disabled).toBe(false);
@@ -335,6 +338,7 @@ describe('the clone form collects a parent directory', () => {
     test('the parent field is there, prefilled, and travels with the request', async () => {
         let sent: Record<string, string> | null = null;
         const promise = openModal<ClonedProject, Record<string, unknown>>(CloneModal as never, {
+            defaultParentDir: '/Users/me/carnivore-projects',
             clone: async (payload: Record<string, string>) => {
                 sent = payload;
                 return { name: 'repo', path: '/p/repo' };
@@ -343,7 +347,7 @@ describe('the clone form collects a parent directory', () => {
         await settle();
         const parent = overlay()!.querySelector('#modal-clone-parent') as HTMLInputElement;
         expect(parent).not.toBe(null);
-        expect(parent.value).toBe('~/projects');
+        expect(parent.value).toBe('/Users/me/carnivore-projects');
 
         const url = overlay()!.querySelector('#modal-clone-url') as HTMLInputElement;
         url.value = 'owner/repo';
@@ -359,6 +363,19 @@ describe('the clone form collects a parent directory', () => {
             parentDir: '/Users/me/code',
             description: undefined,
         });
+    });
+
+    test('with no known default the field is empty with the cannot-determine prompt, never a hardcoded folder (u141-02)', async () => {
+        const promise = openModal<ClonedProject, Record<string, unknown>>(CloneModal as never, {
+            clone: async () => ({ name: 'repo', path: '/p/repo' }),
+        });
+        await settle();
+        const parent = overlay()!.querySelector('#modal-clone-parent') as HTMLInputElement;
+        expect(parent.value).toBe('');
+        expect(parent.placeholder).not.toBe('');
+        expect(parent.placeholder).not.toContain('~/projects');
+        press('Escape');
+        await promise;
     });
 
     test('an empty url is refused before anything is sent', async () => {
@@ -440,10 +457,10 @@ describe('the clone form collects a parent directory', () => {
 describe('remote browse is offered only when the first answer succeeded', () => {
     const t = ((key: string) => key) as never;
     test('a refusal, a one way answer or a busy computer hides browse; ok and a missing projects folder keep it', () => {
-        expect(remoteBrowseNote({ status: 'refused', code: 'outside_allowed_roots' }, 'hosta', t)).not.toBeNull();
-        expect(remoteBrowseNote({ status: 'unavailable', reason: 'one_way' }, 'hosta', t)).not.toBeNull();
-        expect(remoteBrowseNote({ status: 'unavailable', reason: 'busy' }, 'hosta', t)).not.toBeNull();
-        expect(remoteBrowseNote({ status: 'refused', code: 'not_found' }, 'hosta', t)).toBeNull();
-        expect(remoteBrowseNote({ status: 'ok', path: '/a', parent: null, entries: [], truncated: false }, 'hosta', t)).toBeNull();
+        expect(remoteBrowseNote({ status: 'refused', code: 'outside_allowed_roots' }, 'studio', t)).not.toBeNull();
+        expect(remoteBrowseNote({ status: 'unavailable', reason: 'one_way' }, 'studio', t)).not.toBeNull();
+        expect(remoteBrowseNote({ status: 'unavailable', reason: 'busy' }, 'studio', t)).not.toBeNull();
+        expect(remoteBrowseNote({ status: 'refused', code: 'not_found' }, 'studio', t)).toBeNull();
+        expect(remoteBrowseNote({ status: 'ok', path: '/a', parent: null, entries: [], truncated: false }, 'studio', t)).toBeNull();
     });
 });

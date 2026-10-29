@@ -2,7 +2,7 @@ import { epochAgo, HOUR, MIN } from './clock';
 import { sessionList, TERMINAL_ROW_ID } from './made-up';
 import type { WidgetFixtures } from './types';
 
-const SESSION_UUID = '0edffbc5-38a8-4edc-8c9a-e9bab14a8b5d';
+const SESSION_UUID = '8f1c2d3e-4a5b-4c6d-8e7f-9a0b1c2d3e4f';
 const APP_ACTOR = { kind: 'app' };
 
 function run(automationId: string, status: 'succeeded' | 'failed', endedAgo: number, extra: Record<string, unknown> = {}): unknown {
@@ -15,7 +15,7 @@ function run(automationId: string, status: 'succeeded' | 'failed', endedAgo: num
 
 function automation(id: string, name: string, cron: string, enabled: boolean, target: Record<string, unknown>, nextInS: number | null, last: unknown): unknown {
   return {
-    automation_id: id, name, enabled, trigger: { cron, timezone: 'UTC' }, target, delivery: { notify: true, notify_on: 'failure' },
+    automation_id: id, name, enabled, trigger: { cron, timezone: 'America/New_York' }, target, delivery: { notify: true, notify_on: 'failure' },
     next_fire_at: nextInS === null ? null : epochAgo(-nextInS), revision: 1, created_at: epochAgo(9 * 24 * HOUR), updated_at: epochAgo(2 * 24 * HOUR),
     created_by: 'owner', created_actor: APP_ACTOR, updated_by: 'owner', updated_actor: APP_ACTOR, retry_due_at: null, last_run: last,
     description: '', project_id: null, misfire: 'skip', retry_max: 0, retry_backoff_s: 0, max_runtime_s: null,

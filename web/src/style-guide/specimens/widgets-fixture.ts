@@ -1,3 +1,4 @@
+/* and the real */
 import { CORE_MANIFESTS } from '../../opscenter/widgets/core-manifests';
 import type { WidgetSettingsSchema } from '../../opscenter/widgets/types';
 import { createWidgetsAdapter } from '../../lib/widgets-page/widgets-adapter';

@@ -4,10 +4,11 @@ from __future__ import annotations
 import asyncio
 import os
 import time
-from typing import Dict, Iterable, Mapping, Optional, Set
+from typing import Callable, Dict, Iterable, Mapping, Optional, Set
 
 import structlog
 
+from src.core import fs_event_index
 from src.core.attention.fs_trigger import FsTrigger
 from src.core.pipe_wakeup import PipeWaiter
 
@@ -29,6 +30,9 @@ class WakeSources:
         self._dir_fd: Optional[int] = None
         self.waiter: Optional[PipeWaiter] = None
         self.trigger: Optional[FsTrigger] = None
+        self._index: Optional[fs_event_index.FsEventIndex] = None
+        self._unsubscribe: Optional[Callable[[], None]] = None
+        self._indexed: Dict[str, Set[str]] = {}
         self._files: Set[str] = set()
         self._files_event = asyncio.Event()
         self.next_full_at = 0.0
@@ -84,16 +88,28 @@ class WakeSources:
         self._later[session_id] = loop.call_later(max(0.0, delay), fire)
 
     def rearm(self, desired: Mapping[str, Iterable[str]]) -> None:
-        if self.trigger is not None:
-            self.trigger.rearm(desired)
+        if self.trigger is None:
+            return
+        index = self._index
+        if index is not None and index.watching:
+            kqueue = {p: ids for p, ids in desired.items() if not index.serves(p)}
+            self._indexed = {p: set(ids) for p, ids in desired.items() if index.serves(p)}
+        else:
+            kqueue, self._indexed = dict(desired), {}
+        self.trigger.rearm(kqueue)
+
+    def index_changed(self, paths: Set[str]) -> None:
+        woken: Set[str] = set()
+        if fs_event_index.RESYNC in paths:
+            for ids in self._indexed.values():
+                woken |= ids
+        for path in paths:
+            woken |= self._indexed.get(path, set())
+            woken |= self._indexed.get(os.path.dirname(path), set())
+        if woken:
+            self.files_changed(woken)
 
     def open(self) -> None:
-        """Start the directory watch and, if asked, the file trigger. Never raises.
-
-        Description: a directory that does not exist yet is the normal
-          state on a machine where claude has never run, and a failure to
-          watch costs latency, not correctness: the tick is the backstop.
-        """
         try:
             self._dir_fd = os.open(self.registry_directory, os.O_RDONLY)
         except OSError as exc:
@@ -105,6 +121,8 @@ class WakeSources:
         if self._watch_files:
             self.trigger = FsTrigger(self.files_changed)
             self.trigger.start()
+            self._index = fs_event_index.start()
+            self._unsubscribe = self._index.subscribe(self.index_changed)
 
     def close(self) -> None:
         for handle in self._later.values():
@@ -112,6 +130,10 @@ class WakeSources:
         self._later.clear()
         waiter, fd, trigger = self.waiter, self._dir_fd, self.trigger
         self.waiter = self.trigger = None
+        if self._unsubscribe is not None:
+            self._unsubscribe()
+            self._unsubscribe = None
+        self._index, self._indexed = None, {}
         self._dir_fd = None
         if trigger is not None:
             trigger.close()

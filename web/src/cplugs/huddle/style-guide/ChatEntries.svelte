@@ -6,6 +6,7 @@
   import RewindView from '../chat/RewindView.svelte';
   import TrafficCard from '../chat/TrafficCard.svelte';
   import type { AuthorCrumb, SwarmQuestion, SwarmTrafficEntry } from '../chat/chat-api';
+  import { recipientOf } from '../chat/chat-model';
 
   const STATUSES = ['queued', 'held', 'delivering', 'delivered', 'failed', 'expired'];
   const traffic = (status: string, i: number): SwarmTrafficEntry => ({
@@ -30,18 +31,18 @@
     title: 'trust this folder?', thread: [], swarm_ref: 'trust:4:ab12',
   } as unknown as HuddleItem;
   const COMMITS = [
-    { sha: 'db4e9413871817e67fbb2161406ef74acefca07c', at: '2026-10-05T14:02:00-04:00', subject: 'swarm: rook memory rewound to 9f8e7d6c', kind: 'rewind' },
+    { sha: 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678', at: '2026-10-05T14:02:00-04:00', subject: 'swarm: rook memory rewound to 9f8e7d6c', kind: 'rewind' },
     { sha: '9f8e7d6c5b4a39281706f5e4d3c2b1a098765432', at: '2026-10-05T11:30:00-04:00', subject: 'swarm: rook memory', kind: 'memory' },
     { sha: '0011223344556677889900aabbccddeeff001122', at: '2026-10-04T18:10:00-04:00', subject: 'swarm: rook promoted to a feature agent', kind: 'promotion' },
   ];
   const CONVERSATIONS = [
-    { wake_id: 4, conversation_uuid: 'ee624b77-93d3-4cee-862a-92af6504ff14', started_at: '2026-10-05T11:00:00-04:00', reason: 'owner_message', authority: 'owner', transcript_present: true },
-    { wake_id: 2, conversation_uuid: '3a40100b-042b-4ebe-8480-76e921f5148b', started_at: '2026-10-04T17:40:00-04:00', reason: 'spawn', authority: 'data', transcript_present: false },
+    { wake_id: 4, conversation_uuid: '5d1c0f7e-2b3a-4c4d-8e9f-0a1b2c3d4e5f', started_at: '2026-10-05T11:00:00-04:00', reason: 'owner_message', authority: 'owner', transcript_present: true },
+    { wake_id: 2, conversation_uuid: '7e2d1a8f-3c4b-4d5e-9f0a-1b2c3d4e5f60', started_at: '2026-10-04T17:40:00-04:00', reason: 'spawn', authority: 'data', transcript_present: false },
   ];
   const noop = (): void => {};
   const NOW = Date.now();
   const PATH: AuthorCrumb[] = [
-    { kind: 'company', name: 'Nyedis', agent_id: 3 }, { kind: 'project', name: 'Orchardco', agent_id: null }, { kind: 'agent', name: 'Orchard-Research', agent_id: 9 },
+    { kind: 'company', name: 'Nyedis', agent_id: 3 }, { kind: 'project', name: 'Cobalt', agent_id: null }, { kind: 'agent', name: 'Argent-Research', agent_id: 9 },
   ];
   const asking = {
     id: 4, list: 'all', text: '', note: '', position: 4, created_by: 'claude', state: 'open', kind: 'question', revision: 1, created_seq: 4, seq: 4,
@@ -50,7 +51,7 @@
   const QUESTION: SwarmQuestion = {
     summary: 'keep the current dlp vendor for one more quarter while the new ones are tested?', task: 'researching new dlp providers',
     details: 'the two shortlisted vendors both need a 90 day pilot; cancelling the current contract now leaves a gap.',
-    askers: [{ agent_id: 9, name: 'Orchard-Research', author_path: PATH }, { agent_id: 11, name: 'Orchard-QnA' }],
+    askers: [{ agent_id: 9, name: 'Argent-Research', author_path: PATH }, { agent_id: 11, name: 'Cobalt-QnA' }],
     asked_at: Math.floor(NOW / 1000) - 240,
   };
   const decided = {
@@ -60,7 +61,7 @@
 </script>
 
 <div class="sge">
-  {#each STATUSES as status, i (status)}<TrafficCard entry={traffic(status, i)} />{/each}
+  {#each STATUSES as status, i (status)}<TrafficCard entry={traffic(status, i)} to={recipientOf(traffic(status, i))} />{/each}
   {#each EVENTS as [event, text] (event)}<EventCard {event} {text} />{/each}
   <ChatCard item={decided} card="review" agentName="Loki" />
   <ChatCard item={promoted} card="question" agentName="Loki" />

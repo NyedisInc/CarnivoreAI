@@ -162,7 +162,7 @@ def test_a_chat_model_is_not_mistaken_for_an_embedder():
 
 
 
-@pytest.mark.parametrize("good", ["203.0.113.12:1234", "localhost:1234", "[::1]:1234"])
+@pytest.mark.parametrize("good", ["10.0.1.5:1234", "localhost:1234", "[::1]:1234"])
 def test_a_valid_host_port_survives(good):
     assert ProvidersConfig(local_host=good).local_host == good
 

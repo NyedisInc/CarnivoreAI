@@ -8,4 +8,4 @@
   }
 </script>
 
-<button type="button" data-fixture-dropdown aria-haspopup="menu" aria-expanded={open} onclick={() => (open = !open)} onkeydown={onKeydown}>more</button>
+<button data-base-exempt="test fixture, not shipped UI" type="button" data-fixture-dropdown aria-haspopup="menu" aria-expanded={open} onclick={() => (open = !open)} onkeydown={onKeydown}>more</button>

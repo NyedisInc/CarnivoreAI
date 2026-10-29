@@ -1,35 +1,23 @@
 import { authFetch } from './auth.svelte';
 import { resource, type Resource } from './poll.svelte';
+import { sharedResources } from './shared-resource';
 import type { SessionPaneFacts } from './types';
 
 export const PANE_FACTS_POLL_MS = 5000;
 
-const cache = new Map<string, { resource: Resource<SessionPaneFacts>; refs: number }>();
+const reads = sharedResources<string, SessionPaneFacts>();
 
 export function paneFacts(sessionId: string): Resource<SessionPaneFacts> {
-  let entry = cache.get(sessionId);
-  if (!entry) {
+  return reads.hold(sessionId, () => {
     const id = encodeURIComponent(sessionId);
-    entry = {
-      resource: resource<SessionPaneFacts>(() => authFetch<SessionPaneFacts>(`/sessions/${id}/pane-facts`), {
-        intervalMs: PANE_FACTS_POLL_MS,
-        topics: [`pane_facts:${sessionId}`],
-        name: `pane-facts:${sessionId}`,
-      }),
-      refs: 0,
-    };
-    cache.set(sessionId, entry);
-  }
-  entry.refs += 1;
-  return entry.resource;
+    return resource<SessionPaneFacts>(() => authFetch<SessionPaneFacts>(`/sessions/${id}/pane-facts`), {
+      intervalMs: PANE_FACTS_POLL_MS,
+      topics: [`pane_facts:${sessionId}`],
+      name: `pane-facts:${sessionId}`,
+    });
+  });
 }
 
 export function releasePaneFacts(sessionId: string): void {
-  const entry = cache.get(sessionId);
-  if (!entry) return;
-  entry.refs -= 1;
-  if (entry.refs <= 0) {
-    entry.resource.stop();
-    cache.delete(sessionId);
-  }
+  reads.drop(sessionId);
 }

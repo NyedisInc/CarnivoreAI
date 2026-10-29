@@ -11,7 +11,7 @@ import structlog
 from src.core.app_alerts import constants as AK
 from src.core.app_alerts import service
 from src.core.self_check import constants as K
-from src.core.self_check.checks import CheckResult, Context, SystemIO, report_dict, run_checks
+from src.core.self_check.checks import CheckResult, Context, SystemIO, agents_report, report_dict, run_checks
 
 logger = structlog.get_logger(__name__)
 
@@ -26,6 +26,7 @@ def server_context() -> Context:
     from src.config import settings
     from src.core.db import db_path_for
     from src.core.sessions.agent_update import CLAUDE_INSTALL_CANDIDATES
+    from src.core.sessions.codex_update import CODEX_INSTALL_CANDIDATES
     from src.core.tmux_discovery import resolve_tmux_path
     from src.core.tmux_socket_resolution import configured_tmux_socket_name, resolve_probe_socket
 
@@ -37,7 +38,8 @@ def server_context() -> Context:
     state = settings.get_state_dir()
     return Context(code_dir=Path(__file__).resolve().parents[3], claude_dir=Path.home() / ".claude",
                    state_dir=state, db_file=db_path_for(state), resolve_socket=resolve_socket,
-                   tmux_path=resolve_tmux_path(), claude_candidates=tuple(CLAUDE_INSTALL_CANDIDATES))
+                   tmux_path=resolve_tmux_path(), claude_candidates=tuple(CLAUDE_INSTALL_CANDIDATES),
+                   codex_candidates=tuple(CODEX_INSTALL_CANDIDATES))
 
 
 def apply(results: List[CheckResult]) -> List[str]:
@@ -105,4 +107,5 @@ def uninstall() -> None:
 
 
 def report(ctx: Optional[Context] = None) -> dict:
-    return report_dict(run_checks(ctx or server_context()))
+    context = ctx or server_context()
+    return {**report_dict(run_checks(context)), "agents": agents_report(SystemIO(), context)}

@@ -107,12 +107,12 @@ describe('the waiting-on-you widget, one copy at a time', () => {
 
   test('two copies keep their own checks: each lists, counts and publishes only what it checks', async () => {
     everythingWaiting();
-    const huddleOnly = draw({ kind_all: false, kind_approvals: false, kind_automations: false }, 'drawer-zone:core.questions');
+    const taskManagerOnly = draw({ kind_all: false, kind_approvals: false, kind_automations: false }, 'drawer-zone:core.questions');
     const noTaskManager = draw({ kind_all: false, kind_huddle: false }, 'drawer-zone:core.questions#i2');
     await settle();
-    expect(keys(huddleOnly)).toEqual(['huddle:7:9']);
+    expect(keys(taskManagerOnly)).toEqual(['huddle:7:9']);
     expect(keys(noTaskManager)).toEqual(['approval:a1']);
-    expect(huddleOnly.querySelector('[data-questions-count]')?.textContent).toBe('1 waiting on you');
+    expect(taskManagerOnly.querySelector('[data-questions-count]')?.textContent).toBe('1 waiting on you');
     const count = alertCountSource('core.questions')!;
     expect(count.read(null, { kind_all: false, kind_approvals: false, kind_automations: false })).toBe(1);
     expect(count.read(null, { kind_all: false, kind_huddle: false })).toBe(1);

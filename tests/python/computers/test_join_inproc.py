@@ -46,8 +46,8 @@ async def _join(main: Side, join: Side, port: int, **kw):
 
     server = await asyncio.start_unix_server(pipe, path=path)
     try:
-        return await join_client.join(relay_path=path, listen_port=47200, listen_addresses=["hosta.local"], identity=join.identity, fed_key=join.key,
-                                      public_key=join.public, own_iid=JOIN, own_label="hosta", open_db=join.open_db, links=join.links, pack=join.pack, **kw)
+        return await join_client.join(relay_path=path, listen_port=47200, listen_addresses=["studio.local"], identity=join.identity, fed_key=join.key,
+                                      public_key=join.public, own_iid=JOIN, own_label="studio", open_db=join.open_db, links=join.links, pack=join.pack, **kw)
     finally:
         server.close()
 

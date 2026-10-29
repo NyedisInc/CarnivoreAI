@@ -59,7 +59,7 @@ class AgentResweep:
     async def _run(self, session_manager: Any) -> None:
         try:
             examined, written = await asyncio.to_thread(self._sweep, session_manager)
-            logger.info(
+            (logger.info if written else logger.debug)(
                 "agent_infer_resweep_complete", examined=examined, written=written
             )
         except Exception as exc:  # noqa: BLE001

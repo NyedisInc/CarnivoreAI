@@ -1,9 +1,12 @@
+// Kill Port Holder
 
 'use strict';
 
 const path = require('path');
 
+/* Kill Port Holder */
 const KILL_GRACE_MS = 3000;
+/* Kill Port Holder */
 const NEVER_KILL = Object.freeze(['tmux', 'Electron', 'Carnivore', 'launchd', 'kernel_task']);
 
 function parseLsof(stdout) {
@@ -30,14 +33,12 @@ function isCarnivoreHealth(body) {
     && typeof body.version === 'string');
 }
 
-/* another user */
 function holderRefusal(holders, myUid) {
   if (!Array.isArray(holders) || holders.length === 0) return { reason: 'unknown', holder: null };
   const stranger = holders.find((h) => h.uid !== myUid);
   return stranger ? { reason: 'not_yours', holder: stranger } : null;
 }
 
-/* PORT_HOLDER_NOT_YOURS */
 function holderError(refusal, port) {
   const who = refusal.holder ? ` (${describeHolder(refusal.holder)})` : ' and Carnivore could not confirm it is yours';
   const err = new Error(`Another program holds port ${port}${who}. Carnivore will not open a window onto it or stop it. Stop that program, or change the port in Settings.`);
@@ -46,7 +47,7 @@ function holderError(refusal, port) {
   return err;
 }
 
-/* CANNOT DETERMINE could not be read */
+/* could not be read */
 function judgePort(input) {
   const holders = Array.isArray(input.holders) ? input.holders : null;
   const refusal = holderRefusal(holders, input.myUid);
@@ -63,16 +64,19 @@ function describeHolder(holder) {
   return bits ? `PID ${holder.pid} (${bits})` : `PID ${holder.pid}`;
 }
 
-function run(execFile, file, args) {
+function run(execFile, file, args, emptyExit) {
   return new Promise((resolve) => {
-    execFile(file, args, { timeout: 5000 }, (error, stdout) => resolve(error ? null : String(stdout || '')));
+    execFile(file, args, { timeout: 5000 }, (error, stdout) => {
+      const none = error && error.code === emptyExit && !String(stdout || '').trim();
+      resolve(error && !none ? null : String(stdout || ''));
+    });
   });
 }
 
 async function listeners(port, deps) {
   if (!Number.isInteger(port)) return null;
-  const out = await run(deps.execFile, '/usr/sbin/lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-F', 'pcu']);
-  return out === null ? [] : parseLsof(out);
+  const out = await run(deps.execFile, '/usr/sbin/lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-F', 'pcu'], 1);
+  return out === null ? null : parseLsof(out);
 }
 
 async function processIdentity(pid, deps) {
@@ -83,6 +87,7 @@ async function processIdentity(pid, deps) {
   return { start: parts.slice(0, 5).join(' '), exe: parts.slice(5).join(' ') };
 }
 
+/* Kill Port Holder */
 async function identifyHolder(port, deps) {
   const found = await listeners(port, deps);
   if (!found || found.length === 0) return null;

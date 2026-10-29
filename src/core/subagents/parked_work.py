@@ -12,8 +12,11 @@ import structlog
 
 from src.core.agent_families import DEFAULT_FAMILY
 from src.core.attention.output_holders import HELD, UNMEASURED, probe_output_holders
-from src.core.attention.registry_read import REG_IDLE, REG_OK, REG_SHELL
+from src.core.attention.registry_record import REG_IDLE, REG_OK, REG_SHELL
 from src.core.attention.turn_counts import KIND_SHELL
+from src.core.subagents.parent_index import read_completion_index
+from src.core.subagents.reader import subagents_dir_for
+from src.core.subagents.scan_inputs import agent_files_signature, index_snapshot
 from src.core.subagents.parked_launches import (
     OpenLaunches,
     find_open_launches,
@@ -149,6 +152,7 @@ class _Entry:
     launches: OpenLaunches
     until: float
     state: str = PARKED_NONE
+    inputs: Optional[tuple] = None
 
 
 class ParkedWorkReader:
@@ -197,15 +201,21 @@ class ParkedWorkReader:
         with self._lock:
             entry = self._entries.get(str(parent_path))
         if entry is not None and entry.key == key and at < entry.until:
-            deadline = entry.launches.earliest_deadline
-            if deadline is None or deadline > now:
+            if _deadline_open(entry.launches, now):
                 return entry.launches
+        inputs = (prompt, process_started_at, agent_files_signature(subagents_dir_for(parent_path)),
+                  index_snapshot(read_completion_index(parent_path)))
+        if (entry is not None and inputs == entry.inputs and inputs[2] is not None
+                and _deadline_open(entry.launches, now)):
+            with self._lock:
+                entry.key, entry.until = key, at + REFRESH_SECONDS
+            return entry.launches
         launches = find_open_launches(parent_path, last_prompt_at=prompt,
                                       process_started_at=process_started_at, now=now)
         with self._lock:
             old = self._entries.pop(str(parent_path), None)
             self._entries[str(parent_path)] = _Entry(
-                key, launches, at + REFRESH_SECONDS, old.state if old else PARKED_NONE)
+                key, launches, at + REFRESH_SECONDS, old.state if old else PARKED_NONE, inputs)
             while len(self._entries) > MAX_ENTRIES:
                 self._entries.pop(next(iter(self._entries)))
         return launches
@@ -221,6 +231,11 @@ class ParkedWorkReader:
         else:
             logger.info("parked_work_state", path=path, state=result.state,
                         live=result.live, detail=result.detail)
+
+
+def _deadline_open(launches: OpenLaunches, now: datetime) -> bool:
+    deadline = launches.earliest_deadline
+    return deadline is None or deadline > now
 
 
 def _mtime(path: Path) -> Optional[Tuple[int, int]]:

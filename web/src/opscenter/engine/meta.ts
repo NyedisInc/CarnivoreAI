@@ -7,10 +7,8 @@ import { STAT_TILE_META } from './stat-tile-meta';
 import { HEAD_ROW_PX } from '../shell/widget-head';
 import { COL_MIN, ROW_MIN } from './floors';
 
-/* padding */
 const TABLE_CHROME = 30;
 
-/* running sessions */
 
 export const INSTANCE_PHONE_ORDER = 40;
 
@@ -289,7 +287,6 @@ export const META: MetaMap = {
     id: 'notes',
     phoneOrder: 10,
     titleKey: 'opscenter.cell.notes.title',
-    // file editor
     icon: 'docs',
     iconTone: 'oc-cyan',
     showCount: false,
@@ -312,6 +309,7 @@ export const META: MetaMap = {
   },
   files: {
     id: 'files',
+    // move it around like a component
     phoneOrder: 11,
     titleKey: 'opscenter.cell.files.title',
     icon: 'folder',
@@ -368,7 +366,6 @@ export const META: MetaMap = {
     showCount: true,
     chrome: 'card',
     titleHeight: HEAD_ROW_PX,
-    // scheduled tasks
     defaultRow: 'r3',
     defaultIndex: 12,
     defaultFr: 0.3,
@@ -399,7 +396,6 @@ export const META: MetaMap = {
     defaultHeight: 128,
     minPx: 192,
     minHeight: 128,
-    // padding
     widthStates: [
       { name: 'compact', min: 192 },
       { name: 'wide', min: 600 },
@@ -837,7 +833,6 @@ export const META: MetaMap = {
 
 export const CELL_IDS: readonly CellId[] = Object.keys(META) as CellId[];
 
-/* padding */
 export const TERMINAL_META: CellMeta = {
   id: 'terminal:@primary',
   titleKey: 'opscenter.cell.terminal.title',
@@ -916,6 +911,7 @@ export function instanceId(kind: InstanceKind, sessionId: string): InstanceId {
   return `${kind}:${sessionId}` as InstanceId;
 }
 
+/* list, so the */
 export function metaFor(id: SlotId, metas: MetaMap = META): CellMeta {
   const kind = kindOf(id);
   if (kind) {
@@ -937,6 +933,7 @@ export function metaFor(id: SlotId, metas: MetaMap = META): CellMeta {
   return record;
 }
 
+/* with a plain */
 const PENDING_PLUGIN_META = {
   id: 'pending' as SlotId,
   titleKey: 'opscenter.cell.plugin_pending.title',

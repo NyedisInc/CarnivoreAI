@@ -67,6 +67,7 @@ def copy_templates(template_path: str, destination_path: str) -> tuple[bool, Opt
 
         copied_count = 0
         skipped_count = 0
+        kept_existing: list[str] = []
 
         for item in template_dir.rglob("*"):
             if any(should_exclude(part) for part in item.relative_to(template_dir).parents) or should_exclude(item):
@@ -76,16 +77,24 @@ def copy_templates(template_path: str, destination_path: str) -> tuple[bool, Opt
             rel_path = item.relative_to(template_dir)
             dest_item = dest_dir / rel_path
 
+            if item.is_symlink():
+                skipped_count += 1
+                continue
+
             try:
                 if item.is_dir():
                     dest_item.mkdir(parents=True, exist_ok=True)
                     logger.debug("template_dir_created", path=str(rel_path))
                 elif item.is_file():
+                    if dest_item.exists() or dest_item.is_symlink():
+                        kept_existing.append(str(rel_path))
+                        skipped_count += 1
+                        continue
                     dest_item.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(item, dest_item)
+                    shutil.copy2(item, dest_item, follow_symlinks=False)
                     copied_count += 1
                     logger.debug("template_file_copied", path=str(rel_path))
-            except Exception as e:
+            except (OSError, shutil.Error) as e:
                 logger.warning(
                     "template_item_copy_failed",
                     path=str(rel_path),
@@ -93,6 +102,8 @@ def copy_templates(template_path: str, destination_path: str) -> tuple[bool, Opt
                 )
                 skipped_count += 1
 
+        if kept_existing:
+            logger.info("template_existing_skipped", dest_dir=str(dest_dir), paths=kept_existing)
         logger.info(
             "templates_copied",
             template_dir=str(template_dir),
@@ -103,7 +114,7 @@ def copy_templates(template_path: str, destination_path: str) -> tuple[bool, Opt
 
         return True, None
 
-    except Exception as e:
+    except (OSError, shutil.Error) as e:
         error_msg = f"Template copy failed: {str(e)}"
         logger.error(
             "template_copy_error",

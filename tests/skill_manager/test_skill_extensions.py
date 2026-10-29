@@ -8,7 +8,7 @@ import pytest
 from src.core.skill_manager import skill_extensions as he
 from src.core.skill_manager.inventory import build_inventory
 from src.core.skill_manager.roots import known_profiles
-from src.cplugs.huddle import mcp as _huddle_mcp  # noqa: F401
+from src.cplugs.huddle import mcp as _task_manager_mcp  # noqa: F401
 from src.cplugs.huddle.guide_rev import TASK_MANAGER_GUIDE_REV
 
 

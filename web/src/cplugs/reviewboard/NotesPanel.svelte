@@ -2,7 +2,7 @@
   /* Escape closes it */
   import { onMount } from 'svelte';
   import { t } from '../sdk';
-  import { AnchoredPopup, Icon, MarkdownEditor, type NotesMode } from '../sdk/ui';
+  import { AnchoredPopup, IconButton, MarkdownEditor, type NotesMode } from '../sdk/ui';
   import { COUNTER_FROM, MAX_NOTE, readSize, writeSize } from './note-store';
 
   interface Props {
@@ -52,8 +52,7 @@
       {#if showCount}
         <span class="rb-notes-count" data-at-cap={count >= MAX_NOTE} aria-live="polite" data-notes-count>{t('cplug.reviewboard.notes.count', { n: count, max: MAX_NOTE })}</span>
       {/if}
-      <button type="button" class="rb-icon" aria-label={t('cplug.reviewboard.notes.close')} title={t('cplug.reviewboard.notes.close')}
-              data-notes-close onclick={onclose}><Icon name="close" size={14} /></button>
+      <IconButton label={t('cplug.reviewboard.notes.close')} icon="close" variant="close" iconSize={14} data-notes-close onclick={onclose} />
     </header>
     <div class="rb-notes-body">
       <MarkdownEditor {value} {oninput} {mode} framed onMode={(next) => (mode = next)} {placeholder} maxLength={MAX_NOTE}

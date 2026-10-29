@@ -8,11 +8,6 @@ function moduleScript(text: string): string {
   return text.slice(open.index, end < 0 ? text.length : end);
 }
 
-/**
- * The rules one cell's `Cell.svelte` breaks.
- * Inputs: cell - the file's text, or null when the folder has none. Output: ShellRule[] (empty when it conforms).
- * Example: scanShell('<script lang="ts">...</script><div/>') // ['no-definition', 'no-state', 'no-binding', 'no-shell']
- */
 export function scanShell(cell: string | null): ShellRule[] {
   if (cell === null) return ['no-cell'];
   const module = moduleScript(cell);

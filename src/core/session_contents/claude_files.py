@@ -32,13 +32,6 @@ def project_claude_dirs(chain: List[Path], config_dir: Path) -> List[Path]:
     return [d / ".claude" for d in chain if (d / ".claude").is_dir() and not same_dir(d / ".claude", config_dir)]
 
 
-def _line_count(path: Path) -> int:
-    try:
-        return len(path.read_text(encoding="utf-8", errors="replace").splitlines())
-    except OSError:
-        return 0
-
-
 def _imports_of(path: Path) -> List[Path]:
     try:
         if path.stat().st_size > C.MAX_READ_BYTES:
@@ -56,7 +49,7 @@ def _imports_of(path: Path) -> List[Path]:
 
 
 def _instruction(path: Path, scope: str, via: str = "") -> Item:
-    detail = f"{_line_count(path)} lines" + (f", imported by {via}" if via else "")
+    detail = f"imported by {via}" if via else ""
     return item(path.name if path.parent.name != "rules" else f"rules/{path.name}", scope, path, detail=detail)
 
 

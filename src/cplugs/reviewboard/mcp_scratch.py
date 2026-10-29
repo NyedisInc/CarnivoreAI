@@ -133,7 +133,7 @@ TOOLS: Dict[str, Any] = {
         required=["name"], handler=task_manager_scratch_post, gate="agent_direct",
         max_body_bytes=scratch.MAX_BODY_BYTES, pane_only_args=PANE_ONLY),
     "task_manager_scratch_clear": ToolSpec(
-        description=("Ask the owner to clear a scratch board for good: its folder, every post's page and files. It waits for their approval every "
+        description=("Ask the owner to clear a scratch board for good: its folder, every post's page and files. It waits for his approval every "
                      "time, Beast Mode included (only the owner deletes). Only a scratch board is cleared; its Scratch task stays."),
         properties={"board": {"type": "string", "description": "The scratch board's slug from task_manager_boards_list (scratch: true)."}},
         required=["board"], handler=task_manager_scratch_clear, gate="inbox", prepare=_clear_prepare, dedupe_by=("board",)),

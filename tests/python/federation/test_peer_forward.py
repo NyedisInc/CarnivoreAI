@@ -21,7 +21,7 @@ from src.core.federation import fed_key, grants, peer_forward, peer_hosts, peer_
 from src.core.federation.peer_client import PeerUnreachable
 from src.main import app
 
-PEER_IID = "iid-hosta"
+PEER_IID = "iid-studio"
 OWNER_UUID = "11111111-2222-4333-8444-555555555555"
 
 
@@ -56,8 +56,8 @@ def world(tmp_path, monkeypatch):
     path = db_path_for(tmp_path)
     monkeypatch.setattr(peer_auth, "open_db", lambda: connect(path, create=False))
     with closing(connect(path, create=False)) as conn:
-        peer = peer_hosts.upsert(conn, install_id=PEER_IID, label="hosta", grant_id="g", fid="f", initiator=True,
-                                 ssh_target="hosta")
+        peer = peer_hosts.upsert(conn, install_id=PEER_IID, label="studio", grant_id="g", fid="f", initiator=True,
+                                 ssh_target="studio")
         conn.execute("UPDATE hosts SET peer_state = 'connected' WHERE key = ?", (peer.key,))
         shadow_rows.sync_peer(conn, host_key=peer.key, peer_install_id=PEER_IID, complete=True,
                               rows=[{"session_uuid": OWNER_UUID, "row_id": 7, "name": "carnivore_api", "working_dir": "/w"}])
@@ -195,7 +195,7 @@ def test_a_session_answer_carries_the_wire_id_not_the_owners_own(world) -> None:
                                                         "host_key": "local", "host_label": "this machine"})
     reply = world.http.get("/api/v1/sessions", params={"session_id": world.wire, "include_scrollback": "1"}).json()
     assert reply["session"]["id"] == world.wire
-    assert (reply["host_key"], reply["host_label"]) == (world.key, "hosta")
+    assert (reply["host_key"], reply["host_label"]) == (world.key, "studio")
 
 
 def test_the_whole_ask_batch_answer_for_a_paired_computers_ask_goes_to_that_computer(world) -> None:
@@ -224,7 +224,7 @@ def test_a_file_upload_into_a_paired_computers_session_goes_to_that_computer(wor
                               lambda self: SimpleNamespace(uploads=SimpleNamespace(max_size_mb=10, max_file_size_mb=50)))
     world.monkeypatch.setattr(peer_links, "LINKS", FakeLinks(world.client, minor=UPLOAD_MINOR))
     world.monkeypatch.setitem(peer_listing._OWNER_IDS, world.key, {"carnivore_api": "ses_owner9"})
-    saved = {"path": "/w/.cloude_uploads/49759e95-note.txt", "filename": "49759e95-note.txt", "size": 5}
+    saved = {"path": "/w/.cloude_uploads/ab12cd34-note.txt", "filename": "ab12cd34-note.txt", "size": 5}
     world.client.answers[("POST", "/sessions/upload-file")] = (201, saved)
     reply = world.http.post("/api/v1/sessions/upload-file", params={"session_id": world.wire},
                             files={"file": ("note.txt", b"hello", "text/plain")})

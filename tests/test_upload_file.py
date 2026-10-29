@@ -33,7 +33,7 @@ from src.api.uploads import (  # noqa: E402
     save_upload_to_session_dir,
     validate_upload,
 )
-from src.core.upload_sweeper import UPLOAD_DIR_NAME  # noqa: E402
+from src.core.product_identity import UPLOAD_DIR_NAME  # noqa: E402
 from src.models import Session, SessionStatus  # noqa: E402
 
 

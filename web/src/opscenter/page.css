@@ -104,7 +104,6 @@
     white-space: nowrap;
   }
 
-  /*  hidden  */
   .oc-titlebar__actions {
     display: flex;
     grid-column: 3;
@@ -422,7 +421,6 @@
   }
 }
 
-/* var(--color-accent) */
 .oc-titlebar .oc-titlebar__title {
   margin: 0;
   font-size: var(--oc-fs-title, 12px);

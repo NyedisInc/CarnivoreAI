@@ -15,7 +15,7 @@ TIMER_CALL_CONTRACT_VERSION: int = 1
 TIMER_RESULT_CONTRACT_VERSION: int = 1
 
 MEASURED_AGAINST_CLAUDE_CODE: str = "2.1.92 to 2.1.181"
-MEASURED_ON: str = "not measured"
+MEASURED_ON: str = "2026-09-27"
 
 for _kind in ("timer_call", "timer_result"):
     register_contract_source(

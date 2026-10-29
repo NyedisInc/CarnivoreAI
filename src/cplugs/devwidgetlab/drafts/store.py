@@ -15,6 +15,7 @@ import structlog
 from src.cplugs.devwidgetlab.capture import REPO, SCRIPT  # noqa: F401
 from src.cplugs.devwidgetlab.drafts import checkout, renames
 from src.cplugs.devwidgetlab.errors import DraftExists, DraftInvalid, DraftNotFound, NoCheckout
+from src.cplugs.sdk import app_info
 
 logger = structlog.get_logger()
 
@@ -159,6 +160,8 @@ def list_drafts(storage_path: Path) -> List[Dict[str, Any]]:
 
 
 def head_sha(repo: Path) -> str:
+    if not app_info.git_available():
+        return ""
     try:
         done = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, timeout=10, check=False)
     except (OSError, subprocess.SubprocessError) as exc:

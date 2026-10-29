@@ -36,7 +36,14 @@
     "terminal",
     "tui"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "the carnivore tui block in settings, terminal, with a how-to list, a screenshot of the sessions screen and an install command button",
+      "caption": "settings, terminal, carnivore tui: what it is, how to use it and the install state",
+      "file": "settings-block.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Terminal client",
   "since": "2026-10-07",
   "status": "beta",
@@ -50,6 +57,5 @@
     "Settings, Terminal, carnivore tui: what it is, how to use it, and the install button for the command.",
     "Run carnivore tui in any terminal on the computer, including over ssh.",
     "Run carnivore tui --offline, or carnivore tui while the server is down, for the offline session list read from tmux."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

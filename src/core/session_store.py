@@ -1,110 +1,17 @@
-"""Repository layer for the ``sessions`` table (design doc section 3.3).
-
-Hand-rolled sqlite3, matching src/core/db.py and src/core/project_store.py
-house style. No ORM.
-
-IDENTITY, WHICH IS THE WHOLE POINT OF THIS MODULE.
-
-A session has two identities and they answer different questions:
-
-  ``session_uuid``  stable EXTERNAL identity, minted by the app, never
-                    reused, never recomputed. What a URL or a foreign key
-                    should carry.
-  the INSTANCE      ``(tmux_socket, tmux_name, tmux_created_epoch)``. What
-                    a live ``tmux list-sessions`` row can be matched
-                    against. From schema v40 it is also keyed on the
-                    machine, ``host_key``, and enforced by
-                    ``ux_sessions_host_instance`` (src/core/hosts/ddl.py).
-
-The name is also not TRUSTWORTHY input. tmux permits ``|`` inside a
-session name, which is the delimiter of the listing format, so the whole
-triple was once forgeable from a name a caller chose. That is fixed in
-src/core/tmux_listing_parse.py, not here, but it is worth knowing that
-the values arriving at these functions are only as good as that parser.
-
-WHAT THAT BUYS. When a session dies and a new one takes its name, the new
-instance's epoch differs, so it does not match the old row, so NO
-statement in this module touches the old row. The new instance gets its
-own row with ``origin='observed'`` and a fresh ``session_uuid``; the old
-row keeps its origin and its ``adopted_at`` byte for byte and falls to
-``stopped`` at the next successful probe. Without the epoch, name reuse
-would silently transfer an adoption to a process the user never claimed
-and badge it as his.
-
-NOTHING EVER DELETES A SESSIONS ROW, AND THAT IS A KNOWN GAP.
-Verified by walking the source rather than by grep: no statement
-anywhere in ``src/`` issues ``DELETE FROM sessions``. There is no
-reaper, no expiry, no repair path, and no UI affordance that removes
-one. Combined with the ownership resolver's tier 2 - where ANY stored
-instance for a name is a specific epoch-keyed opinion that returns
-False for every other epoch - this makes a wrong ``owned`` row a
-PERMANENT negative opinion about that name. A user who hits one has no
-way back short of editing cloude.db by hand.
-
-The mitigations that exist are all upstream, and they are why this is a
-gap rather than an active defect: a NULL epoch is filtered out of
-:func:`owned_instances` so it can never become such an opinion, and
-:func:`src.core.session_import_mapping._stopped_epoch` no longer invents
-a 0 that would have created one on every upgrade. So the known routes to
-a wrong row are closed. What is missing is what happens if a new one
-ever appears.
-
-THE INTENDED REPAIR PATH, when it is built, is a REAPER keyed on the
-instance triple: any row whose ``(socket, name, epoch)`` is absent from
-a live listing, and whose ``lifecycle`` has been ``stopped`` for longer
-than a retention window, may be deleted.
-
-Its one non-negotiable precondition, stated here because it is the part
-that is easy to leave out and catastrophic to miss: the reaper MUST run
-only against a listing with ``ok=True``. An unavailable listing carries
-no rows BY CONTRACT, not because there are none, so reaping against one
-would delete the user's entire session history the first time tmux
-failed to answer - turning a transient probe failure into permanent
-data loss. Until that reaper exists, treat every row this module returns
-as immortal.
-
-WHERE THE WRITES LIVE. This module is the READ side. Everything that
-can create, claim or refuse a row is in src/core/session_identity.py,
-because those are the only operations that can get identity wrong.
-
-THE ONE-SECOND COLLISION. ``#{session_created}`` has one-second
-resolution, so a session killed and recreated with the same name inside
-the same second produces a colliding triple. Two things resolve it, and
-the second was added because the first covered only the rarer half:
-
-  ``sessions.tmux_session_id`` (schema v3) stores tmux's
-  ``#{session_id}``, which is unique per server lifetime. When the stored
-  and incoming ids DISAGREE the rows are provably different sessions and
-  the merge is refused whatever the stored lifecycle says. It is a
-  DISCRIMINATOR and never a key: the id counter restarts at ``$0`` when
-  the tmux server does, so it is worse than the epoch as a durable
-  identity and better than it at separating two sessions alive right now.
-
-  A stored row already marked ``stopped`` CANNOT be the live session we
-  are looking at, so that merge is refused too.
-
-In both cases the correct action is to REFUSE THE MERGE AND LOG - never
-to overwrite. See :func:`record_instance` and design section 4.6.
-
-THE LEGACY NAME SET IS A SEPARATE, LOWER TIER. It is NOT folded into
-:func:`owned_instances`. It used to be, as ``(tmux_name, None)``, which
-the listing backend read as a name-only WILDCARD - and that disabled the
-epoch tier for every session the app had created since the last restart,
-which is exactly the population the epoch protects. Legacy names now
-travel as their own argument and are resolved after a stored epoch has
-had its say. See :func:`src.core.tmux_listing_parse.resolve_ownership`.
-"""
 
 from __future__ import annotations
 
 import sqlite3
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from src.core.db_reuse.executor import Executor
+
 import structlog
 
 from src.core.companion_shell.rows import exclude_clause
 from src.core.db import column_exists, table_exists
 from src.core.hosts.ddl import LOCAL_HOST_KEY, host_scope
+from src.core.sessions import errors as session_errors
 from src.core.db_models import (
     DEFAULT_TMUX_SOCKET,
     SESSION_ATTRIBUTION_UNKNOWN,
@@ -124,7 +31,7 @@ class SessionInstanceMismatchError(LookupError):
     pass
 
 
-class SessionNotFoundError(LookupError):
+class SessionNotFoundError(session_errors.SessionNotFound):
     pass
 
 def sessions_table_ready(conn: sqlite3.Connection) -> bool:
@@ -225,30 +132,6 @@ def list_sessions(
 
 
 def listable_sessions(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
-    """Every stored session a USER-FACING LISTING may show, newest first.
-
-      The rule has two halves and they are NOT the same idea:
-
-        ENDED (``lifecycle='stopped'``) IS INCLUDED. A session whose
-        tmux instance is gone still has a name, a project, a working
-        directory and a history the user put there. Hiding it is how he
-        loses track of work he did.
-
-      ``lifecycle='unknown'`` is deliberately still returned. It is a
-      CANNOT DETERMINE, not an absence, and the caller routes it into
-      NEEDS ATTENTION rather than dropping it - suppressing it here
-      would turn "we could not evaluate this" into "there is nothing
-      here", which is the collapse this project keeps removing.
-
-      Lineage rows stay out, inherited from :func:`list_sessions`'s
-      default: a lineage row describes a past CONVERSATION inside a tmux
-      session, not a session of its own.
-    Inputs: conn (sqlite3.Connection).
-    Output: list[dict] - empty on a pre-v2 database. That emptiness is an
-      absence of a TABLE, not an answer about sessions; callers that need
-      to tell those apart ask GET /sessions/import-status.
-    Example: listable_sessions(conn)  # [{'session_uuid': 'u1', ...}]
-    """
     return list_sessions(
         conn, include_archived=False, include_automated=False
     )
@@ -385,18 +268,6 @@ def set_notification_mute(
     expected_tmux_created_epoch: Optional[int] = None,
     now: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Record whether this session's notifications are muted. Durably.
-
-    Description: THE ONLY WRITER of ``sessions.notifications_muted`` and
-      of ``sessions.notification_policy_generation``, so the ordering of
-      policy changes has exactly one author.
-
-      A NO-OP DOES NOT STEP IT. Muting an already-muted session returns
-      the current generation unchanged and writes nothing. Stepping there
-      would invalidate every queued notification each time a client
-      re-sent the state it already had, which is a way to lose alerts
-      nobody asked to lose.
-    """
     from src.core.trail_entry import utc_now
 
     if not sessions_table_ready(conn):
@@ -480,18 +351,8 @@ def set_notification_mute(
 
 
 def needs_attention(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
-    """Return the rows the home screen must surface as CANNOT DETERMINE.
-
-    Description: design section 4.3's NEEDS ATTENTION group, restricted
-      to what the sessions table itself can answer: a row whose lifecycle
-      could not be evaluated, or whose project attribution could not be
-      evaluated. This group exists so the third outcome reaches the
-      roll-up instead of being folded into RUNNING or RECENT. Empty on a
-      healthy machine, which is the point.
-    """
     if not sessions_table_ready(conn):
         return []
-    # could not
     rows = conn.execute(
         "SELECT * FROM sessions "
         "WHERE (lifecycle = ? OR project_attribution = ?) "
@@ -554,45 +415,8 @@ def identity_for_instance(
 
 
 def identity_for_live_name(
-    conn: sqlite3.Connection, *, socket: str, name: str, host_key: str = LOCAL_HOST_KEY
+    conn: Executor, *, socket: str, name: str, host_key: str = LOCAL_HOST_KEY
 ) -> Optional[Dict[str, Any]]:
-    """Row identity for a LIVE tmux session, keyed on name alone.
-
-    Description: the exact-key :func:`identity_for_instance` needs an
-      epoch, and a live SessionInfo does not carry one - it knows the tmux
-      NAME it is attached to and nothing more. So this takes the NEWEST
-      instance for that name, which for a live session is the right row by
-      construction: the pane you are attached to is the most recent
-      instance of that name, and any older row with the same name is a
-      dead session whose name was reused.
-
-      That is a weaker guarantee than the exact key, and it is stated
-      rather than hidden. Use :func:`identity_for_instance` wherever an
-      epoch is available.
-    Inputs: conn (sqlite3.Connection). socket (str). name (str).
-      host_key (str) - the machine the socket is on (issue #162).
-    Output: dict with ``id``, ``parent_session_id``, ``agent_type``,
-      ``agent_family`` and ``agent_family_source``, or None when no row
-      carries that name. THE LAST THREE TRAVEL TOGETHER: ``agent_type``
-      alone cannot say whether it was launched or inferred from the
-      pane's process tree, and a caller that reads one without the other
-      renders a guess as a fact (see
-      src/core/session_agent_evidence.py). ``agent_family`` is the
-      family the LAUNCHER resolved and stored; without it a caller can
-      only re-derive one from ``agent_type`` against the config as it
-      stands now, which answers nothing for a wrapper that has since
-      been deleted.
-
-      ALSO ``project_id`` AND ``project_name``, which the conversations
-      drawer groups on. Both are always present and both are None when
-      the binding could not be read - an unmigrated database, a deleted
-      project row, or a session that genuinely has none. None means
-      "could not be determined" and is never a guess; the client files
-      such a session under its own node rather than inventing a project
-      from the working directory, because a symlinked path spells one
-      folder two ways and would split a project in two.
-    Example: identity_for_live_name(conn, socket='cloude', name='a')
-    """
     if not sessions_table_ready(conn) or not name:
         return None
     project_ready = _project_join_ready(conn)
@@ -622,7 +446,6 @@ def identity_for_live_name(
         ).fetchone()
     if row is None:
         return None
-    # could not be read
     project_id = row["project_id"] if project_ready else None
     project_name = row["project_name"] if project_ready else None
     return {
@@ -631,7 +454,6 @@ def identity_for_live_name(
         "agent_type": row["agent_type"],
         "agent_family": row["agent_family"],
         "agent_family_source": row["agent_family_source"],
-        # conversation id
         "claude_session_uuid": row["claude_session_uuid"] or None,
         "launch_record": row["launch_record"],
         "project_id": int(project_id) if project_id is not None else None,

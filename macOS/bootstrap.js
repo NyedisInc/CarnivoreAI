@@ -1,4 +1,3 @@
-/* Application Support */
 
 const { spawn, execFile, spawnSync } = require('child_process');
 const crypto = require('crypto');
@@ -9,6 +8,8 @@ const { ensureDirMode, PRIVATE_DIR_MODE } = require('./engine/fs-perms');
 const { resolvePayload } = require('./engine/payload-select');
 const { classifyPython, tooNewMessage, buildPipInstallArgs, venvNeedsRebuild, MIN_MINOR } = require('./python-lock');
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 const MIN_PYTHON_MAJOR = 3;
 const MIN_PYTHON_MINOR = MIN_MINOR;
@@ -24,8 +25,9 @@ const SAFE_PATH = [
 
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-/* padding */
 function base32Encode(buffer) {
   let bits = 0;
   let value = 0;
@@ -129,9 +131,17 @@ function sha256File(filePath) {
   return hash.digest('hex');
 }
 
-function atomicWriteFile(filePath, content) {
+const PRIVATE_FILE_MODE = 0o600;
+
+function atomicWriteFile(filePath, content, mode = PRIVATE_FILE_MODE) {
   const tmp = filePath + '.tmp';
-  fs.writeFileSync(tmp, content, 'utf8');
+  const fd = fs.openSync(tmp, 'w', mode);
+  try {
+    fs.fchmodSync(fd, mode);
+    fs.writeSync(fd, content, 0, 'utf8');
+  } finally {
+    fs.closeSync(fd);
+  }
   fs.renameSync(tmp, filePath);
 }
 
@@ -154,6 +164,8 @@ function secureEnvFile(envPath) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 function generateEnvFile({ envExamplePath, envOutPath, defaultWorkingDir, logDirectory }) {
   if (!fs.existsSync(envExamplePath)) {
@@ -176,6 +188,8 @@ function generateEnvFile({ envExamplePath, envOutPath, defaultWorkingDir, logDir
   return { codeKeyLen: totpSecret.length, signKeyLen: jwtSecret.length };
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 const RESYNC_ALLOWLIST = [
   { name: 'src', isDir: true, keep: ['__pycache__'] },
@@ -186,7 +200,6 @@ const RESYNC_ALLOWLIST = [
   { name: 'setup_auth.py', isDir: false },
   { name: 'config.example.json', isDir: false },
   { name: '.env.example', isDir: false },
-  // state directory
   { name: 'nuke.sh', isDir: false },
   { name: 'scripts/session_journal.py', isDir: false },
   { name: 'scripts/resolve-port.sh', isDir: false },
@@ -248,7 +261,6 @@ function syncBundledAssets({ serverDir, bundleResourcesDir, isPackaged }) {
       }
       synced.push(`${item.name}/`);
     } else {
-      // already exists
       try {
         fs.mkdirSync(path.dirname(dst), { recursive: true });
         fs.copyFileSync(src, dst);
@@ -271,6 +283,8 @@ function syncBundledAssets({ serverDir, bundleResourcesDir, isPackaged }) {
   return { ok: true, summary };
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 const USER_THEMES_README = `# Carnivore: User Themes
 
@@ -348,12 +362,13 @@ function provisionUserThemesDir(userDataDir) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 const VERSION_FILE_HEADER =
   '# GENERATED FROM THE GIT TAG AT RELEASE TIME. DO NOT EDIT BY HAND.\n' +
   '# See src/core/version.py for the resolution order.\n';
 
-/* CLOUDE_APP_VERSION */
 function writeVersionStamp(serverDir, version) {
   const value = String(version || '').trim();
   if (!value) return false;
@@ -371,6 +386,8 @@ function writeVersionStamp(serverDir, version) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 async function bootstrapIfNeeded({
   serverDir, bundleResourcesDir, isPackaged, onStateChange, appVersion,
@@ -389,8 +406,12 @@ async function bootstrapIfNeeded({
 
   const payload = resolvePayload(bundleResourcesDir);
 
+  // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   ensureDirMode(serverDir, PRIVATE_DIR_MODE, { log: (message) => console.warn(message) });
 
+  // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   const python = payload ? null : await findSuitablePython();
   if (!payload && !python) {
     return {
@@ -409,10 +430,12 @@ async function bootstrapIfNeeded({
   if (payload) console.log(`[bootstrap] engine payload: ${payload.root}`);
   else console.log(`[bootstrap] Python found: ${python.path} (${python.version})`);
 
+  // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   provisionUserThemesDir(path.dirname(serverDir));
 
-  // Application Support
-  // already exists
+  // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   {
     emit('syncing-assets');
     fs.mkdirSync(serverDir, { recursive: true });
@@ -431,6 +454,8 @@ async function bootstrapIfNeeded({
     }
   }
 
+  // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   const venvPython = path.join(serverDir, 'venv', 'bin', 'python3');
   const envPath = path.join(serverDir, '.env');
   const depsHashPath = path.join(serverDir, '.deps-hash');
@@ -455,6 +480,8 @@ async function bootstrapIfNeeded({
     return { status: 'ready', freshInstall: false };
   }
 
+  // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   emit('preparing');
 
   try {
@@ -552,7 +579,6 @@ async function bootstrapIfNeeded({
       const defaultWorkingDir = path.join(os.homedir(), 'carnivore-projects');
       const logDirectory = path.join(os.homedir(), 'Library', 'Logs', 'cloude-code');
 
-      // DEFAULT_WORKING_DIR
       for (const d of [defaultWorkingDir, logDirectory]) {
         try {
           if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });

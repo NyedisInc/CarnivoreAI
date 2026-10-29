@@ -54,14 +54,17 @@ class _TmuxCallCounter:
 
     def __init__(self) -> None:
         self.calls: list[str] = []
+        self.argvs: list[tuple] = []
 
     def install(self, monkeypatch) -> None:
         original = TmuxBackend._run_tmux_sync
         calls = self.calls
+        argvs = self.argvs
 
         def counting(self_backend, *args, **kwargs):
             if args:
                 calls.append(str(args[0]))
+            argvs.append(args)
             return original(self_backend, *args, **kwargs)
 
         monkeypatch.setattr(TmuxBackend, "_run_tmux_sync", counting)
@@ -282,3 +285,17 @@ async def test_attachable_listing_still_decorates_every_row(
                 "stored row once must change how many times it is "
                 "fetched, never what the listing says"
             )
+
+
+@requires_tmux
+def test_attachable_listing_reads_tmux_in_one_spawn(live_manager, monkeypatch):
+    manager, names = live_manager
+    counter = _TmuxCallCounter()
+    counter.install(monkeypatch)
+
+    listing = manager.list_attachable_sessions()
+
+    assert listing.ok and {r["name"] for r in listing.sessions} >= set(names)
+    spawns = [argv for argv in counter.argvs if "list-sessions" in argv or "list-panes" in argv]
+    assert len(spawns) == 1, f"the attachable pass spawned {len(spawns)} listing processes: {spawns}"
+    assert "list-sessions" in spawns[0] and "list-panes" in spawns[0]

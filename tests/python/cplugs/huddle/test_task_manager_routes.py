@@ -82,7 +82,7 @@ def test_aggregate_is_empty_with_no_items(client):
     assert client.get("/api/v1/cplugs/huddle/aggregate").json()["groups"] == []
 
 
-def test_owner_adds_approves_with_a_note_and_a_stale_revision_is_409(client):
+def test_joe_adds_approves_with_a_note_and_a_stale_revision_is_409(client):
     item = client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "fix this"}).json()
     assert item["created_by"] == "joe"
     done = client.patch(f"/api/v1/cplugs/huddle/items/{item['id']}",
@@ -204,7 +204,7 @@ def test_tell_from_all_projects_names_the_lists_that_changed_and_their_own_list_
     assert "omit list" in third and "\n" not in third
 
 
-def test_the_tell_button_is_untold_until_a_tell_carries_owners_changes(client, app, pasted):
+def test_the_tell_button_is_untold_until_a_tell_carries_joes_changes(client, app, pasted):
     def untold(key: str) -> bool:
         return next(r for r in client.get("/api/v1/cplugs/huddle/lists").json()["lists"] if r["key"] == key)["untold"]
 

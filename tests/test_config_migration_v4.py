@@ -31,7 +31,7 @@ def _v3_config(commands):
             "default_wrapper": "claude-skip-permissions",
             "wrappers": [
                 {"id": "claude-skip-permissions", "family": "claude"},
-                {"id": "keyc", "family": "claude"},
+                {"id": "cld", "family": "claude"},
             ],
         },
     }
@@ -117,7 +117,7 @@ def test_wrapper_ids_survive_the_step():
     out = _step_v3_to_v4(_v3_config(["/clear"]))
     assert [w["id"] for w in out["agents"]["wrappers"]] == [
         "claude-skip-permissions",
-        "keyc",
+        "cld",
     ]
     assert out["agents"]["default_wrapper"] == "claude-skip-permissions"
     assert out["agents"]["claude_command"] == (

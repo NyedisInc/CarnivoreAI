@@ -63,6 +63,7 @@ export interface HistoryProject {
     readonly company_name?: string | null;
     readonly has_image?: boolean;
     readonly image_rev?: string | null;
+    readonly new_sessions_join_swarm?: boolean;
     readonly storage?: PackStorage | null;
     readonly pack_state?: string | null;
     readonly moved_to_label?: string | null;
@@ -88,7 +89,6 @@ export interface HistoryPage {
     readonly next_offset: number | null;
     readonly groups: readonly HistoryGroup[];
     readonly peer_groups?: readonly HistoryGroup[];
-    /* did not answer */
     readonly peer_unavailable?: readonly { readonly host_label: string }[];
     readonly facets: { readonly agents: readonly string[]; readonly states: Readonly<Record<string, number>> };
 }
@@ -105,7 +105,6 @@ export interface HistoryApi {
     archiveProject(name: string): Promise<unknown>;
     unarchiveProject(name: string): Promise<unknown>;
     deleteProject?(name: string): Promise<unknown>;
-    /*  hidden  */
     pack?: PackApi;
     sleep(sessionUuid: string): Promise<{ status: string; detail: string }>;
     wake(session: HistorySession): Promise<{ status: string; detail: string } | null>;
@@ -121,6 +120,7 @@ export interface HistoryApi {
     listCompanies?(): Promise<Company[]>;
     createCompany?(name: string): Promise<Company>;
     turnOnAgent?(projectId: number): Promise<{ readonly display_name: string }>;
+    setNewSessionsJoin?(projectId: number, on: boolean): Promise<unknown>;
     renameCompany?(id: number, name: string): Promise<unknown>;
     deleteCompany?(id: number): Promise<unknown>;
     setProjectCompany?(projectName: string, companyId: number | null): Promise<unknown>;
@@ -235,6 +235,8 @@ export const historyApi: HistoryApi = {
     createProject: () => startNewProject(),
     listCompanies: () => listCompanies(),
     createCompany: (name) => createCompany(name),
+    setNewSessionsJoin: (projectId, on) =>
+        authFetch(`/swarm/projects/${projectId}/membership`, { method: 'PUT', body: JSON.stringify({ new_sessions_join_swarm: on }) }),
     turnOnAgent: (projectId) => authFetch<{ display_name: string }>(`/swarm/projects/${projectId}/agent`, { method: 'POST' }),
     renameCompany: (id, name) => renameCompany(id, name),
     deleteCompany: (id) => deleteCompany(id),

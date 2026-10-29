@@ -1,19 +1,3 @@
-"""THE ADOPTION PASS (docs/warez/05, section 3): record every compiled-in plugin as an installed built-in, and move nothing.
-
-At boot, beside ``ensure_required``, each plugin on the ship list that has no install-ledger row gets one: kind ``cplug``, item
-``nyedis/<id>``, version from its manifest, source ``builtin``. The rows are what lets warez later offer an update for a plugin
-that is already running; until then they are inert.
-
-- it never writes ``<state_dir>/cplugs/state.json`` or anything else under ``<state_dir>/cplugs/``, so every plugin's switch,
-  grants, settings and data read exactly as before (a plugin with no state entry still follows ``default_enabled``);
-- it never changes a plugin's on/off state, copies a byte of code, or restarts anything;
-- it is idempotent: a second run on the same build writes nothing;
-- it is inert on failure: a ledger error is logged as a warning (``cplug_adoption_failed``) and boot goes on;
-- it is reversible: ``python3 -m scripts.warez.unadopt`` deletes the rows whose source is ``builtin`` (one statement).
-
-The ledger's ``UNIQUE(name, ...)`` key is shared with skills, and the Task Manager plugin and the bundled ``huddle`` skill
-share a name, so a plugin row's ``name`` is ``cplug-<id>``; its ``item_id`` stays ``nyedis/<id>``.
-"""
 
 from __future__ import annotations
 

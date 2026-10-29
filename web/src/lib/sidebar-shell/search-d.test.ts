@@ -107,7 +107,7 @@ it('a typed text lists sleeping rows whatever the view menu says; clearing it re
 
 it('the folder match is the folder\'s own name, never its parent directories', () => {
     const rows = [
-        row('cloude_garden', { name: 'cloude_garden', label: 'Garden Kitchen', project_name: 'Sports', working_dir: '/Users/x/carnivore-projects/garden-kitchen' }),
+        row('cloude_fantasy', { name: 'cloude_fantasy', label: 'Fantasy Hockey', project_name: 'Sports', working_dir: '/Users/x/carnivore-projects/fantasy-hockey' }),
         row('cloude_app', { project_name: 'Ledger', working_dir: '/a/b/carnivore-app/' }),
     ];
     assert.deepEqual(searchHitRows(rows as never, 'carn').map((r) => r.name), ['cloude_app']);
@@ -115,13 +115,13 @@ it('the folder match is the folder\'s own name, never its parent directories', (
 
 it('matches a tmux handle without its owned product prefix: "carn" and "clou" list no agent for the prefix alone', () => {
     const q = (text: string) => Search.normalize(text);
-    const kitchen = { name: 'carnivore_garden_kitchen', label: 'Garden Kitchen', working_dir: '/x/garden-kitchen' };
+    const hockey = { name: 'carnivore_fantasy_hockey', label: 'Fantasy Hockey', working_dir: '/x/fantasy-hockey' };
     const wrapper = { name: 'carnivore_carnivore_wrapper', label: 'Carnivore - Wrapper' };
     const legacy = { name: 'cloude_api' };
-    assert.equal(Search.matchesRow(kitchen, q('carn')), false, 'the carnivore_ prefix alone is not a match');
+    assert.equal(Search.matchesRow(hockey, q('carn')), false, 'the carnivore_ prefix alone is not a match');
     assert.equal(Search.matchesRow(wrapper, q('carn')), true, 'a name that really says carnivore still matches');
     assert.equal(Search.matchesRow(legacy, q('clou')), false, 'the legacy cloude_ prefix alone is not a match');
-    assert.equal(Search.matchesRow(kitchen, q('garden_kitchen')), true, 'the rest of the handle still matches');
+    assert.equal(Search.matchesRow(hockey, q('fantasy_hockey')), true, 'the rest of the handle still matches');
 });
 
 it('an agent row in a search is the quiet D row: no box chrome, provider mark, status-icon cluster, closed chip or pin, but the kebab, the age and the model line', () => {
@@ -138,7 +138,7 @@ it('an agent row in a search is the quiet D row: no box chrome, provider mark, s
     assert.match(html, /<span>opus-4-6<\/span><span class="sd-dim">high<\/span>/);
 });
 
-it('a closed agent row still draws a light slot (the quiet ring), so its name starts in the same column as every other row', () => {
+it('a closed agent row still draws a light slot (the quiet ring), so its name starts in the same column as every other row (Joe, 2026-10-22)', () => {
     Search.setQuery('carn');
     const html = drawList([row('cloude_carn_a'), row('cloude_carn_b', { closed: true })]);
     const closed = html.slice(html.indexOf('data-name="cloude_carn_b"'));

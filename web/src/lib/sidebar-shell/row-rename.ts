@@ -1,8 +1,11 @@
-/* Escape cancels */
+/* what the row shows */
 import { t } from '../i18n/index.svelte';
+import { isEditing as isLegacyEditorOpen } from '../drawer/rename';
 import { headingRename, openHeadingRename } from './heading-rename.svelte';
-import { announce, hg } from './interaction-globals';
-import { dataOf, refetch, rg } from './row-globals';
+import { announce } from './interaction-globals';
+import { refetchDrawer } from './interaction-globals';
+import { dataOf, rg } from './row-globals';
+import { isBrowserName, rename as renameBrowser } from '../drawer/browser-rows';
 
 const ROW_KEY = 'row:';
 
@@ -15,7 +18,7 @@ export function isRowEditing(name: string, band: string | null | undefined): boo
 }
 
 export function beginRowRename(rowEl: Element): boolean {
-    if (headingRename.spec || hg().SessionSidebarRename?.isEditing?.()) return false;
+    if (headingRename.spec || isLegacyEditorOpen()) return false;
     const name = dataOf(rowEl, 'name');
     const id = dataOf(rowEl, 'sessionId') || (rowEl.hasAttribute('data-asleep') ? dataOf(rowEl, 'sessionUuid') : '') || dataOf(rowEl, 'browserId') || dataOf(rowEl, 'layoutUuid') || null;
     const nameEl = rowEl.querySelector('[data-row-name]');
@@ -33,16 +36,14 @@ export function beginRowRename(rowEl: Element): boolean {
         ariaLabel: `Rename ${seed}`,
         save: (value) => {
             const g = rg();
-            const B = g.SessionSidebarBrowsers;
             const L = g.SessionSidebarLayouts;
-            if (B?.isBrowserName?.(name) && B.rename) return B.rename(id, value);
+            if (isBrowserName(name)) return renameBrowser(id, value);
             if (L?.isLayoutName?.(name) && L.rename) return L.rename(id, value);
             if (!g.API) return Promise.reject(new Error('the API client is not loaded'));
             return g.API.renameSession(id, value);
         },
         afterSuccess: async () => {
-            const ctrl = rg().SessionSidebar;
-            if (ctrl) await refetch(ctrl);
+            await refetchDrawer();
         },
     });
 }

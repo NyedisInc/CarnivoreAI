@@ -5,7 +5,6 @@
 </script>
 
 <script lang="ts">
-  /*  hidden  */
   import { untrack } from 'svelte';
   import type { CellProps } from '../../lib/cell';
   import { sessions } from '../../api';
@@ -69,12 +68,14 @@
     el.className = 'shell-pane xterm-host';
     body.appendChild(el);
     const handle: LiveTerminal | null = startLiveTerminal(el, owner, target);
+    liveClient = handle ? handle.client : null;
     if (!handle) {
       console.error('CloudeOpscenter: the terminal client is not on this page, so the shell widget drew nothing');
       return () => el.remove();
     }
     const stopTheme = bindTerminalTheme(handle.client, body, { pinnedTheme: null });
     return () => {
+      liveClient = null;
       stopTheme();
       inputFocus.forget(owner);
       handle.dispose();
@@ -83,6 +84,7 @@
   });
 
   let recheckTimer: ReturnType<typeof setTimeout> | undefined;
+  let liveClient: unknown = null;
   function recheck(): void {
     const id = untrack(() => agentId);
     if (plate !== 'live' || !id) return;
@@ -96,8 +98,8 @@
   $effect(() => {
     if (plate !== 'live') return;
     const onConnection = (event: Event): void => {
-      const detail = (event as CustomEvent<{ text?: string }>).detail;
-      if (detail?.text && detail.text !== 'Connected') recheck();
+      const detail = (event as CustomEvent<{ className?: string; controller?: unknown }>).detail;
+      if (detail && detail.className !== 'connected' && detail.controller === liveClient) recheck();
     };
     window.addEventListener('cloude:terminal-connection', onConnection);
     return () => { window.removeEventListener('cloude:terminal-connection', onConnection); clearTimeout(recheckTimer); };
@@ -152,7 +154,6 @@
 
     .shell-cell__body { position: relative; flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* padding */
-    .shell-cell__body :global(.shell-pane) { position: relative; flex: 1 1 auto; min-height: 0; min-width: 0; padding-left: var(--oc-terminal-inset); }
+    .shell-cell__body :global(.shell-pane) { position: relative; flex: 1 1 auto; min-height: 0; min-width: 0; padding-left: var(--oc-terminal-inset); display: flex; flex-direction: column; justify-content: flex-end; }
   }
 </style>

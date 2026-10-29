@@ -187,7 +187,6 @@ async def search_targets(
     if tasks:
         done, pending = await asyncio.wait(tasks.keys(), timeout=deadline_s)
     for task in pending:
-        # already running
         task.cancel()
 
     by_id: Dict[str, SessionHits] = {}

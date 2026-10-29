@@ -170,6 +170,15 @@
       <Check label="" bare role="switch" checked={swarmSettings.naming_family} disabled={busy}
              ariaLabel={t('cplug.huddle.swarm.settings.naming_family')} onToggle={(next) => void save({ naming_family: next })} />
     </div>
+    
+    <div class="pkg-set-row" data-swarm-setting="chat_card_bodies">
+      <div class="pkg-set-text">
+        <span class="pkg-set-label" id="swarm-setting-chat_card_bodies">{t('cplug.huddle.swarm.settings.chat_card_bodies')}</span>
+        <p class="pkg-set-hint">{t('cplug.huddle.swarm.settings.chat_card_bodies_help')}</p>
+      </div>
+      <Check label="" bare role="switch" checked={swarmSettings.chat_card_bodies} disabled={busy}
+             ariaLabel={t('cplug.huddle.swarm.settings.chat_card_bodies')} onToggle={(next) => void save({ chat_card_bodies: next })} />
+    </div>
   </section>
   {#if failed}<p class="pkg-set-error" role="alert" data-swarm-settings-failed>{t('cplug.huddle.swarm.settings.failed')}</p>{/if}
 </div>

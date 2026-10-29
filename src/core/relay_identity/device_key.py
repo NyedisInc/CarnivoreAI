@@ -37,7 +37,7 @@ _B64URL_RE = re.compile(r"\A[A-Za-z0-9_-]*\Z")
 
 
 class DeviceKeyUnavailable(RuntimeError):
-    """The device key could not be read or stored. Never carries the seed."""
+    pass
 
 
 def b64url(raw: bytes) -> str:
@@ -145,21 +145,6 @@ def load_or_create(
     write: Write = relay_keychain.write_password,
     service: str = relay_keychain.DEVICE_KEY_SERVICE,
 ) -> DeviceKey:
-    """This install's device key, minting and storing one only when absent.
-
-    Description: blocking (it runs ``security``); call it off the loop.
-      The mint is CREATE-ONLY (never ``-U``) and the item is then read
-      back, so of two processes racing to mint, the second write fails and
-      both use the one key that landed first.
-    Inputs: install_id (str) - the Keychain account; read and write - the
-      Keychain seam, injected by tests so the real Keychain is never used;
-      service (str) - the item, the relay's by default (the federation key
-      passes its own, ``src/core/federation/fed_key.py``).
-    Output: DeviceKey.
-    Raises: DeviceKeyUnavailable - the Keychain could not be read or
-      written, or holds something that is not a seed.
-    Example: key = load_or_create(install_id)
-    """
     state, value = read(service, install_id)
     if state == relay_keychain.READ_ABSENT:
         try:
@@ -177,19 +162,6 @@ def load_or_create(
 
 
 def load_or_create_file(install_id: str, path: str) -> DeviceKey:
-    """The device key from a 0600 file, minting it only when the file is absent.
-
-    Description: the file-backed identity for a test slot, whose private HOME
-      has no login Keychain (``relay.device_key_file``). Same rules as
-      :func:`load_or_create`: create-only (``O_EXCL``, so a race leaves one
-      key), a file that cannot be read or is malformed is
-      :class:`DeviceKeyUnavailable` and is never replaced. Blocking.
-    Inputs: install_id (str) - unused, kept so this fits ``key_loader``;
-      path (str) - the key file, in an already private directory.
-    Output: DeviceKey.
-    Raises: DeviceKeyUnavailable.
-    Example: key = load_or_create_file(install_id, "/slot/state/relay-device.key")
-    """
     del install_id
     target = os.path.expanduser(path)
     if not os.path.isabs(target):

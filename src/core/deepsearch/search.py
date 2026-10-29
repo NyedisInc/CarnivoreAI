@@ -50,11 +50,6 @@ def snippet(text: str, tokens: List[str]) -> str:
 
 
 class HitOpener:
-    """Opens hits for one search: one live-file check per file, one line read per hit.
-
-    A row's bytes come from the file on disk, or (a row marked ``vault``) from the backup vault: ``byte_source.open_source``.
-    A source that cannot be opened or read makes its hits STALE (dropped and named in ``stale``), never an error.
-    """
 
     def __init__(self, overrides: Dict[str, Any]) -> None:
         self._overrides = overrides
@@ -100,13 +95,11 @@ class HitOpener:
         return (snippet(found[1], tokens), stamp, uuid)
 
     def open(self, row: sqlite3.Row, tokens: List[str]) -> Optional[str]:
-        """The hit's snippet, or None when its live file no longer holds the indexed bytes."""
         opened = self._open_live(row, tokens)
         return opened[0] if opened else None
 
     def open_with_time(self, row: sqlite3.Row,
                        tokens: List[str]) -> Optional[Tuple[str, Optional[str], Optional[str]]]:
-        """The hit's (snippet, timestamp, message uuid), or None when its live file no longer holds the indexed bytes."""
         return self._open_live(row, tokens)
 
 

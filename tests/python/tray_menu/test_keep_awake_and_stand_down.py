@@ -69,7 +69,7 @@ def test_boot_reconcile_honors_the_persisted_flag(keep):
 def test_demand_adds_to_the_session_list(keep):
     from src.config.auto_sleep import AutoSleepConfig
 
-    assert AutoSleepConfig(keep_awake=["b5a9f4e3"], mac_awake_always=True).mac_awake_demand() == 2
+    assert AutoSleepConfig(keep_awake=["a1b2c3d4"], mac_awake_always=True).mac_awake_demand() == 2
     assert AutoSleepConfig().mac_awake_demand() == 0
 
 

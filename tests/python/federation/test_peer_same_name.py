@@ -27,7 +27,7 @@ def conn(tmp_path):
 
 
 def peers(conn):
-    a = peer_hosts.upsert(conn, install_id="iid-a", label="hosta", grant_id="g", fid="f", initiator=True)
+    a = peer_hosts.upsert(conn, install_id="iid-a", label="studio", grant_id="g", fid="f", initiator=True)
     b = peer_hosts.upsert(conn, install_id="iid-b", label="lab", grant_id="g2", fid="f2", initiator=True)
     return a, b
 
@@ -67,3 +67,16 @@ def test_a_moved_session_lands_in_the_project_it_left_not_a_suffixed_peer_projec
     shadow = shadow_rows.sync_peer(conn, host_key=a.key, peer_install_id="iid-a", complete=True, rows=[row("u-moved", 1)])
     assert shadow[NAME].project_id == home and shadow[NAME].project_name == "api"
     assert conn.execute("SELECT COUNT(*) FROM projects WHERE root LIKE 'peer://%'").fetchone()[0] == 0
+
+
+def test_a_stale_shadow_held_only_by_a_torn_down_swarm_agent_is_pruned_not_retried_forever(conn):
+    a, _ = peers(conn)
+    sid = shadow_rows.sync_peer(conn, host_key=a.key, peer_install_id="iid-a", complete=True, rows=[row("u-a", 1)])[NAME].session_id
+    conn.execute("INSERT INTO swarm_agents (slug, rank, display_name, job, repo_dir, memory_scope, effort, character_seed, color_slot, thread_key, session_row_id, host_key, state, torn_down_at, created_at, updated_at) "
+                 "VALUES ('gone', 'task', 'gone', 'j', '/r', 'local', 'medium', 1, 1, 'agent:gone', ?, ?, 'torn_down', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
+                 (sid, a.key))
+    shadow_rows.sync_peer(conn, host_key=a.key, peer_install_id="iid-a", complete=True, rows=[])
+    conn.execute("UPDATE sessions SET updated_at = '2026-01-01T00:00:00Z' WHERE id = ?", (sid,))
+    shadow_rows.sync_peer(conn, host_key=a.key, peer_install_id="iid-a", complete=True, rows=[])
+    assert conn.execute("SELECT COUNT(*) FROM sessions WHERE id = ?", (sid,)).fetchone()[0] == 0
+    assert conn.execute("SELECT session_row_id FROM swarm_agents WHERE slug = 'gone'").fetchone()[0] is None

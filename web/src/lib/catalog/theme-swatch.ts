@@ -1,4 +1,3 @@
-/* could not */
 
 export interface ThemeSwatch {
     token: string;
@@ -47,7 +46,6 @@ export function parseThemeManifest(
     }
 }
 
-/* --color- */
 export function themeFacts(text: string | null | undefined): ThemeFacts {
     const manifest = parseThemeManifest(text);
     if (!manifest) return { name: null, swatches: [], effects: null };

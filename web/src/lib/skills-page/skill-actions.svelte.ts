@@ -58,7 +58,6 @@ export function createSkillActions(o: {
             if (run !== healthRun) return;
             health = { ledger, census: measured, tripwire: Object.fromEntries(judged) };
         },
-        /* the detail pane */
         async changeState(item, harness, choice): Promise<void> {
             const group = inventory()?.skills.find((g) => g.name === item.id);
             if (!group) return;

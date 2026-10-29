@@ -110,6 +110,22 @@ describe('Segmented iconOnly', () => {
     });
 });
 
+describe('Segmented option title', () => {
+    test('an option carries its own title; it wins over the icon-only label tip, and an option without one keeps today', () => {
+        const { items } = seg({ options: [
+            { value: 'a', label: 'alpha', title: 'the first one' },
+            { value: 'b', label: 'beta', icon: 'search', title: 'second tip' },
+            { value: 'c', label: 'gamma', icon: 'search' },
+            { value: 'd', label: 'delta' },
+        ], iconOnly: true, value: 'a' });
+        expect(items[0]!.getAttribute('title')).toBe('the first one');
+        expect(items[1]!.getAttribute('title')).toBe('second tip');
+        expect(items[1]!.getAttribute('aria-label')).toBe('beta');
+        expect(items[2]!.getAttribute('title')).toBe('gamma');
+        expect(items[3]!.hasAttribute('title')).toBe(false);
+    });
+});
+
 describe('segmented.css', () => {
     const rules = sheet('segmented.css');
     test('the picked option is the base picked state and the items are split by hairlines, not cards', () => {
@@ -118,5 +134,16 @@ describe('segmented.css', () => {
         expect(picked.decls['--_btn-ink']).toBe('var(--oc-text-bright)');
         expect(rules.find((r) => r.selector === '.oc-segmented > [data-btn] + [data-btn]')!.decls['box-shadow']).toContain('var(--oc-line-control)');
         expect(rules.map((r) => Object.values(r.decls).join(' ')).join(' ')).not.toMatch(/\d+px|#[0-9a-f]{3,8}\b/i);
+    });
+    test('a narrow container never squeezes an option to nothing: the group scrolls inside itself and each option keeps its label', () => {
+        const group = rules.find((r) => r.selector === '.oc-segmented')!;
+        expect(group.decls['overflow-x']).toBe('auto');
+        expect(group.decls['min-width']).toBe('0');
+        const item = rules.find((r) => r.selector === '.oc-segmented > [data-btn]')!;
+        expect(item.decls['flex']).toBe('0 0 auto');
+        expect(item.decls['max-width']).toBe('none');
+        expect(item.decls['overflow']).toBe('visible');
+        const filled = rules.find((r) => r.selector === '.oc-segmented[data-fill] > [data-btn]')!;
+        expect(filled.decls['flex']).toBe('1 0 auto');
     });
 });

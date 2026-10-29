@@ -25,10 +25,20 @@ INDEX_PUBLIC_KEY: Optional[str] = (
 )
 
 SPARE_INDEX_KEY_PLACEHOLDER: str = (
-    "UNSET: the spare index key is not generated yet"
+    "UNSET: the spare index key is not generated yet (Alex, #130)"
 )
 
-SPARE_INDEX_PUBLIC_KEY: str = SPARE_INDEX_KEY_PLACEHOLDER
+SPARE_INDEX_PUBLIC_KEY: str = (
+    "RWSeeYZSxBim1Z5u4leHGWUod6TaNQH5rVu5JaaRL2YslbcSRfWECHDK"
+)
+
+SPARE_PUBLISHER_KEY_PLACEHOLDER: str = (
+    "UNSET: the spare publisher key is not generated yet (Alex, #2676)"
+)
+
+SPARE_PUBLISHER_PUBLIC_KEY: str = (
+    "RWQGPEt+ZxuPaoblpJvNoLTkkVqcQyBbIJzn7dbK1OVMntRpkJUQCLs+"
+)
 
 PUBLISHER_PUBLIC_KEY: Optional[str] = (
     "RWSLc0Q76LhjNLhV3CcgMZGvNHCZYpVrWN5OFt09z2SImlq/lGQxBzVW"
@@ -50,6 +60,7 @@ class TrustRoot:
     max_serial_jump: int = 1000
     staleness_days: int = 30
     spare_index_key: Optional[PublicKey] = None
+    spare_publisher_key: Optional[PublicKey] = None
 
 
 class SpareIndexKeyError(ValueError):
@@ -72,6 +83,22 @@ def parse_spare_index_key(
         raise SpareIndexKeyError(
             f"the spare index key {spare.key_id} is the publisher key"
         )
+    return spare
+
+
+def parse_spare_publisher_key(
+    text: str,
+    publisher_key: Optional[PublicKey],
+    others: tuple[Optional[PublicKey], ...] = (),
+) -> Optional[PublicKey]:
+    if text == SPARE_PUBLISHER_KEY_PLACEHOLDER:
+        return None
+    spare = parse_public_key(text)
+    for other in (publisher_key, *others):
+        if other is not None and spare.key_id == other.key_id:
+            raise SpareIndexKeyError(
+                f"the spare publisher key {spare.key_id} equals another pinned key"
+            )
     return spare
 
 
@@ -110,6 +137,15 @@ def production_trust_root() -> TrustRoot:
             consequence="no index-key-revoked statement can be accepted",
         )
 
+    spare_publisher_key = parse_spare_publisher_key(
+        SPARE_PUBLISHER_PUBLIC_KEY, publisher_key, (index_key, spare_index_key),
+    )
+    if spare_publisher_key is None:
+        _warn_once(
+            "catalog_spare_publisher_key_unpinned",
+            consequence="no publisher-key-revoked statement can be accepted",
+        )
+
     return TrustRoot(
         index_key=index_key,
         publisher_key=publisher_key,
@@ -117,4 +153,5 @@ def production_trust_root() -> TrustRoot:
         max_serial_jump=MAX_SERIAL_JUMP,
         staleness_days=STALENESS_DAYS,
         spare_index_key=spare_index_key,
+        spare_publisher_key=spare_publisher_key,
     )

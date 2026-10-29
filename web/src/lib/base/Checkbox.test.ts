@@ -90,4 +90,14 @@ describe('pick.css', () => {
         const text = rules.map((r) => Object.values(r.decls).join(' ')).join(' ');
         expect(text).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(|\d+px/i);
     });
+    test('the mark lines up with the first line of the label at every width: no phone rule centers it, and the thumb height pads the text instead', () => {
+        const phone = rules.filter((r) => r.within.some((w) => w.startsWith('@media')));
+        const centered = phone.filter((r) => Object.values(r.decls).some((v) => v === 'center') && /oc-pick/.test(r.selector));
+        expect(centered).toEqual([]);
+        const markNudge = phone.find((r) => r.selector === '.oc-pick__input');
+        expect(markNudge?.decls['margin-top']).toBeUndefined();
+        const row = phone.find((r) => r.selector === '.oc-pick')!;
+        expect(row.decls['min-height']).toBe('var(--oc-tap)');
+        expect(row.decls['padding-block']).toBe('calc((var(--oc-tap) - 1lh) / 2)');
+    });
 });

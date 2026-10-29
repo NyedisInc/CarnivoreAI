@@ -20,6 +20,10 @@ import { RAIL_PINNED_BODY_CLASS, RAIL_CONTAINER_ID, setRailPinnedClass } from '.
 import { MENU_FLYOUT, SESSION_LIST_WIDGET } from './widget-ids';
 import { activeFlyout, closeFlyout } from './flyout.svelte';
 import { press, railBtn, railOn, settle, setupRail, teardownRail } from './fixtures/rail-harness';
+import { registerSwarmFlyout } from '../../cplugs/huddle/swarm-flyout';
+
+// The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
+registerSwarmFlyout();
 import { matchGolden } from '../zone-shell/fixtures/golden';
 
 setLocale('en');
@@ -39,6 +43,7 @@ const edge = (): HTMLElement | null => shell().querySelector('.sbr-shell__edge [
 const enter = (el: Element): void => { el.dispatchEvent(Object.assign(new MouseEvent('pointerenter'), { pointerType: 'mouse' })); flushSync(); };
 const leave = (el: Element): void => { el.dispatchEvent(Object.assign(new MouseEvent('pointerleave'), { pointerType: 'mouse' })); flushSync(); };
 const advance = (ms: number): void => { vi.advanceTimersByTime(ms); flushSync(); };
+/** A mouse click (detail 1: a click with no detail is the keyboard's). */
 const click = (el: Element): void => { el.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 })); flushSync(); };
 const open = (): void => { enter(shell()); click(handle()!); };
 
@@ -255,7 +260,7 @@ test('the menu flyout has no title row and the rail no keys while auto-hiding; a
   expect(titleRow(), 'the title row is back').not.toBeNull();
 });
 
-test('a pinned rail wears the pin icon last in its column; it toggles pin rail and follows the mode', async () => {
+test('a pinned rail wears the pin icon last in its column; it toggles pin rail and follows the mode (Joe, 2026-10-20, item 1041; #2047)', async () => {
   shared['widget_bars'] = { v: 1, rail: { mode: 'pinned' } };
   widgetBars.reload();
   await railOn();
@@ -271,4 +276,20 @@ test('a pinned rail wears the pin icon last in its column; it toggles pin rail a
 test('the rail handle draws the same DOM before and after the zone handle (golden, wrapper bar-handle rows)', async () => {
   await railOn();
   matchGolden('handle.rail', shell().querySelector('.sbr-shell__handle'));
+});
+
+test('a pointer resting over the rail does not peek it while a modal is showing (#2672: the sidebar hid and showed behind the picker)', async () => {
+  await railOn();
+  expect(stateOf()).toBe('handle');
+  shell().getBoundingClientRect = () => ({ left: 0, top: 0, right: 40, bottom: 400, width: 40, height: 400, x: 0, y: 0, toJSON: () => ({}) });
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  document.body.appendChild(modal);
+  window.dispatchEvent(Object.assign(new MouseEvent('pointermove', { clientX: 10, clientY: 10 }), { pointerType: 'mouse' }));
+  flushSync();
+  expect(stateOf(), 'the modal owns the pointer: the rail stays a handle').toBe('handle');
+  modal.remove();
+  window.dispatchEvent(Object.assign(new MouseEvent('pointermove', { clientX: 11, clientY: 10 }), { pointerType: 'mouse' }));
+  flushSync();
+  expect(stateOf(), 'with no modal the same pointer peeks it').toBe('peek');
 });

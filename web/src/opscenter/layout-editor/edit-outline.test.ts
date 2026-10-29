@@ -39,7 +39,7 @@ describe('the edit outline', () => {
     for (const re of inFront('oc-cyan')) expect(ruleFor(overlay, selector)).toMatch(re);
   });
 
-  test('each widget\'s dashes are cyan and painted in front of every layer a frame draws', () => {
+  test('each widget\'s dashes are cyan and painted in front of every layer a frame draws (Joe, 2026-10-03)', () => {
     for (const selector of ["#terminal-grid .oc-cellslot[data-slot])::after", "#launchpad-screen .oc-cellslot[data-slot])::after"]) {
       const rule = ruleFor(overlay, selector);
       expect(rule).toMatch(/border:\s*1px dashed var\(--oc-cyan\);/);
@@ -55,11 +55,11 @@ describe('the edit outline', () => {
     for (const re of inFront('oc-cyan')) expect(ruleFor(zone, '.dz-widgets--editing::after {')).toMatch(re);
   });
 
-  test('the glance area wears yellow dashes in front on all four sides', () => {
+  test('the glance area wears yellow dashes in front on all four sides (Joe, 2026-10-03; placement: DrawerZone.test.ts)', () => {
     for (const re of inFront('oc-yellow')) expect(ruleFor(glanceArea, '.dz-garea::after {')).toMatch(re);
   });
 
-  test('the widget area draws no sizer under its widgets', () => {
+  test('the widget area draws no sizer under its widgets (Joe, 2026-10-03)', () => {
     expect(zone).not.toMatch(/dz-grip|data-zone-grip|item-resize|role="separator"/);
   });
 

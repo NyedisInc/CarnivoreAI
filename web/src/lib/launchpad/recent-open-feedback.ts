@@ -1,4 +1,3 @@
-/* could not */
 import type { Translate } from './recent';
 
 export const OPEN_TOAST_KIND = 'RecentOpen';

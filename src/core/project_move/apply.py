@@ -1,29 +1,3 @@
-"""Run a passing move plan: folder, transcript folders, one transaction, the journal.
-
-ORDER AND UNDO. Filesystem first (with ``move_folder``, any missing parent
-the plan listed under ``create_parents``, then the folder; then each
-transcript folder, renamed whole or merged file by file), then ONE sqlite
-transaction. If any of those fails, every filesystem step already done
-(renames, folders created, emptied folders removed) is reversed, newest first, and the failure names what was
-undone and anything that could not be. The session journal comes last, through
-its own writer (``session_journal_task.mutate_journal``); a journal that could
-not be updated is reported, never a reason to unwind a committed move.
-
-UPDATE IN PLACE, NEVER RE-CREATE. ``projects.id`` carries sessions, the Task Manager
-list, the company and the color, so the row keeps its id and only ``root`` and
-``raw_path`` change (runbook gotcha 7).
-
-A RENAME NEVER LANDS ON SOMETHING. POSIX ``rename`` silently replaces an empty
-directory, so each target is checked again immediately before its rename.
-
-TRANSCRIPT ROWS FOLLOW THE FOLDER (``transcript_rekey.py``): ``transcript_files`` and
-``session_search_live`` (the older index, serving while the cache builds) are re-keyed in the same transaction;
-the deep search cache's files under the moved folders are deleted after it commits and re-indexed at the new paths.
-
-THE SWARM'S AGENTS FOLLOW THE FOLDER (``swarm_rows.py``, #1789): ``swarm_agents.repo_dir`` is prefix-rebased in the same transaction.
-
-LEFT ALONE ON PURPOSE (history): plugin cursors, ``time-machine/`` and the retired archive tables.
-"""
 
 from __future__ import annotations
 

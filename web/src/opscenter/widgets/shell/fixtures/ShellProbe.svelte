@@ -31,7 +31,7 @@
   }));
 </script>
 
-{#snippet controls(place: 'header' | 'body' | 'corner')}<button type="button" data-probe-controls={place}>c</button>{/snippet}
+{#snippet controls(place: 'header' | 'body' | 'corner')}<button data-base-exempt="test fixture probe, not shipped UI" type="button" data-probe-controls={place}>c</button>{/snippet}
 
 <WidgetShell {widget} {status} {note} controls={withControls ? controls : undefined}>
   <p data-probe-body>body</p>

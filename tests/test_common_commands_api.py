@@ -135,7 +135,7 @@ def test_starring_twice_is_idempotent(client, config_path):
 def test_a_blank_command_is_a_400_with_a_reason(client, config_path):
     resp = client.post(FAVORITE_URL, json={"command": "  ", "favorite": True})
     assert resp.status_code == 400
-    assert "blank" in resp.json()["detail"]
+    assert resp.json()["detail"]["code"] == "invalid_request"
     assert _stored(config_path) is None, "a refused toggle must not write"
 
 

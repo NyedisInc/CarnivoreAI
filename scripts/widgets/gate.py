@@ -16,7 +16,7 @@ Usage:
   venv/bin/python3 -m scripts.widgets.gate [--only ID ...] [--themes a,b] [--out DIR] [--no-build] [--records FILE]
       [--sizes named | all]
 
-Output: ``<out>/<id>.gate.json`` per widget and ``<out>/summary.json``. Exit 0: every selected widget passed. Exit 1: at
+Output: ``<out>/<id>.gate.json`` per widget (``<id>.partial.json`` for a ``--keys`` slice) and ``<out>/summary.json``. Exit 0: every selected widget passed. Exit 1: at
 least one failed. Exit 2: CANNOT DETERMINE (the harness did not build, serve or draw, or no widget matched), never a pass.
 """
 
@@ -28,10 +28,9 @@ import json
 import sys
 import time
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any, Mapping
 
-from scripts.widgets.capture import run_widget, write_catalog_images
+from scripts.widgets.capture import RunOptions, run_widget, write_catalog_images
 from scripts.widgets.fit_table import read_gates, write_table
 from scripts.widgets.verdicts import cells_of, render_failures
 from scripts.widgets.capture_one import source_revision
@@ -41,13 +40,11 @@ from src.cplugs.sdk.widget_gate import GATE_SCHEMA, MIN_THEMES, record_digest
 
 RECORDS_PATH = REPO / "src" / "data" / "widget-contracts.json"
 DEFAULT_OUT = REPO / "build" / "widget-gate"
-# pop-out window
 POPOUT_HOST, GLANCE_HOST, GLANCE_SIZE = "popout", "glance", "glance"
 DRAWER_SIZES = "s,m,l"
 
 
 def load_records(path: Path = RECORDS_PATH) -> list[dict]:
-    """The widget contract records in ``path``. Raises: HarnessError when the file is unreadable (the run cannot determine)."""
     try:
         return json.loads(path.read_text(encoding="utf-8"))["widgets"]
     except (OSError, ValueError, KeyError) as exc:
@@ -86,14 +83,18 @@ def gate_widget(page: Any, base: str, record: Mapping[str, Any], published: list
     for widget in runnable:
         zones = [z for z in ZONE_HOSTS if z in record["hosts"] and z in widget["zones"]]
         for zone in zones:
-            args = SimpleNamespace(zones=zone, fixtures=",".join(REQUIRED_FIXTURES), sizes=_wanted_sizes(record, zone, sizes_mode),
-                                   no_shots=True, out=DEFAULT_OUT, defects=True)
-            renders += run_widget(page, base, widget, args, themes)
-    return _gate_record(record, runnable, renders, themes, failures, sizes_mode)
+            options = RunOptions(zones=zone, fixtures=",".join(REQUIRED_FIXTURES), sizes=_wanted_sizes(record, zone, sizes_mode),
+                                 no_shots=True, out=DEFAULT_OUT, defects=True)
+            renders += run_widget(page, base, widget, options, themes)
+    return _gate_record(record, runnable, renders, themes, failures, sizes_mode, keys)
+
+
+def gate_path(out: Path, widget_id: str, keys: list[str] | None) -> Path:
+    return out / (f"{widget_id}.partial.json" if keys else f"{widget_id}.gate.json")
 
 
 def _gate_record(record: Mapping[str, Any], widgets: list[dict], renders: list[Render], themes: list[str],
-                 failures: list[str], sizes_mode: str) -> dict:
+                 failures: list[str], sizes_mode: str, keys: list[str] | None = None) -> dict:
     drawn = [r for r in renders if not r.error]
     for r in renders:
         failures += render_failures(r)
@@ -113,7 +114,7 @@ def _gate_record(record: Mapping[str, Any], widgets: list[dict], renders: list[R
             "fixtures": sorted({r.fixture for r in drawn}), "draws": len(renders),
             "findings": sum(len(r.findings) for r in renders), "errors": sum(1 for r in renders if r.error or r.console),
             "misses": sorted({m for r in renders for m in r.misses}), "failures": failures, "warnings": warnings_in(record),
-            "sizes_mode": sizes_mode, "cells": cells_of(renders, record["hosts"]), "source_revision": source_revision(),
+            "sizes_mode": sizes_mode, "keys": sorted(keys) if keys else None, "partial": bool(keys), "cells": cells_of(renders, record["hosts"]), "source_revision": source_revision(),
             "ran_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")}
 
 
@@ -132,10 +133,10 @@ def parse(argv: list[str]) -> argparse.Namespace:
 
 
 def main(argv: list[str]) -> int:
-    """Build if stale, serve, gate each selected widget, write the gate records. Output: the exit code (0 pass, 1 fail, 2 cannot determine)."""
     args = parse(argv)
     started = time.monotonic()
     try:
+        from playwright.sync_api import Error as PlaywrightError  # noqa: PLC0415
         from playwright.sync_api import sync_playwright  # noqa: PLC0415
     except ImportError:
         print("gate: CANNOT DETERMINE - playwright is not installed in this venv", file=sys.stderr)
@@ -161,7 +162,7 @@ def main(argv: list[str]) -> int:
             args.out.mkdir(parents=True, exist_ok=True)
             for record in chosen:
                 gate = gate_widget(page, base, record, published, themes, args.sizes, args.keys)
-                (args.out / f"{record['id']}.gate.json").write_text(json.dumps(gate, indent=1) + "\n", encoding="utf-8")
+                gate_path(args.out, record["id"], args.keys).write_text(json.dumps(gate, indent=1) + "\n", encoding="utf-8")
                 results.append(gate)
                 print(f"gate: {record['id']}: {'PASS' if gate['ok'] else 'FAIL'} ({gate['draws']} draws, {len(gate['failures'])} failures)", flush=True)
                 for warning in gate["warnings"]:
@@ -174,8 +175,8 @@ def main(argv: list[str]) -> int:
                 print(f"gate: wrote {write_catalog_images(browser, base, chosen_keys, harness_themes[0])} catalog images"
                       + (f"; none for the failing {', '.join(skipped)}" if skipped else ""))
             browser.close()
-    except HarnessError as exc:
-        print(f"gate: CANNOT DETERMINE - {exc}", file=sys.stderr)
+    except (HarnessError, PlaywrightError) as exc:
+        print(f"gate: CANNOT DETERMINE - {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
     finally:
         httpd.shutdown()

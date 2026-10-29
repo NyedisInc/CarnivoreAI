@@ -7,6 +7,7 @@
   import { buildView, isOpen, toggleFold, type ViewRow } from './drawer-view';
   import { widgetDrawerView } from './drawer-view-pref.svelte';
   import { WIDGET_TYPES, type WidgetType } from '../widgets/types';
+  import Button from '../../lib/base/Button.svelte';
   import FoldChevron from '../ui/FoldChevron.svelte';
   import { watchCascadeHint } from '../../lib/sidebar-shell/cascade-hint';
   import WidgetRow from './WidgetRow.svelte';
@@ -104,9 +105,8 @@
         {@const open = isOpen(widgetDrawerView.folded, section.type, query)}
         <li class="le-type" data-drawer-type={section.type}>
           <div class="session-sidebar-group__headerrow le-type__head" data-band-kind="widget-type" {@attach watchCascadeHint}>
-            <button
-              type="button"
-              class="session-sidebar-group__header"
+            <Button
+              variant="row"
               aria-expanded={open}
               aria-controls={`le-type-${section.type}`}
               aria-label={t(open ? 'layout_editor.group.fold' : 'layout_editor.group.unfold', { group: t(`widgets.type.${section.type}`) })}
@@ -115,7 +115,7 @@
             >
               <FoldChevron /><span class="session-sidebar-group__label">{t(`widgets.type.${section.type}`)}</span>
               <span class="le-type__count">{section.rows.length}</span>
-            </button>
+            </Button>
           </div>
           {#if open}
             <ul class="le-type__body" id={`le-type-${section.type}`} aria-label={t('layout_editor.view.tree')}>
@@ -132,6 +132,19 @@
   @layer components {
     .le-type {
       list-style: none;
+    }
+
+    [data-drawer-type-toggle] {
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 22px;
+      padding: var(--oc-space-1) var(--oc-space-2) var(--oc-space-1) 0;
+      gap: var(--sidebar-heading-inline-gap, 6px);
+      align-items: center;
+      font-size: var(--oc-fs-label);
+      font-weight: bold;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
     }
 
     .le-type__count {

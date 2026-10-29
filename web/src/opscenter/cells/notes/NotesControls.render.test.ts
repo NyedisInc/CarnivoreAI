@@ -25,6 +25,7 @@ const fake = vi.hoisted(() => {
 const { FakeApiError, calls } = fake;
 
 vi.mock('../../api/auth.svelte', () => ({
+  // The widget shell's settings read reaches the poll module, which names these two at import (item 1048).
   auth: { state: 'unknown' },
   initAuth: () => {},
   ApiError: fake.FakeApiError,
@@ -42,7 +43,7 @@ vi.mock('../../api/auth.svelte', () => ({
 }));
 
 vi.mock('../../api/events.svelte', () => ({ subscribe: () => () => {} }));
-vi.mock('../../api/host', () => ({ primarySessionId: () => 'ses_1' }));
+vi.mock('../../api/host', () => ({ primarySessionId: () => 'ses_1', openSession: () => {} }));
 vi.mock('../../api', () => ({
   primarySessionId: () => 'ses_1',
   sessions: { get data() { return [{ session: { id: 'ses_1' }, tmux_session: 'cloude_api' }]; } },
@@ -55,6 +56,7 @@ import { META } from '../../engine/meta';
 import { matchGolden } from '../../../lib/zone-shell/fixtures/golden';
 import { openDrawer, resetRightDrawerForTest } from '../../../lib/right-drawer/dock.svelte';
 
+/** A server answer shaped like the endpoint's. */
 function answer(body: string, revision: number, status = 'unchanged') {
   return { status, body, revision, updated_at: '2026-10-12T12:00:00+00:00' };
 }

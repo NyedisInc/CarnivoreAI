@@ -58,8 +58,8 @@ test('a wrapper that drops a flag says which', () => {
 });
 
 test('a conversation that disagrees with the record shows both', () => {
-    assert.equal(M.conversationWords({ conversation: '82af86c9-aaaa', conversation_recorded: '50aa3c82-bbbb' }),
-        '82af86c9 (record says 50aa3c82)');
+    assert.equal(M.conversationWords({ conversation: '4ac1ad63-aaaa', conversation_recorded: '02eacc04-bbbb' }),
+        '4ac1ad63 (record says 02eacc04)');
     assert.equal(M.conversationWords({ conversation: null }), 'none recorded');
 });
 

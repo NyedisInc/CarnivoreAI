@@ -27,7 +27,8 @@ def read_usage(skill: str, now: datetime) -> SkillUsage:
 @router.get("/skill-fires/usage", response_model=SkillUsage,
             dependencies=[Depends(require_auth)])
 async def get_skill_usage(skill: str = Query(..., min_length=1, max_length=128)) -> SkillUsage:
-    """
+    """Fires of one skill in the last 7, 30 and 90 days on this machine.
+
     Inputs: skill (str, 1..128). Output: SkillUsage.
     Example: GET /api/v1/skill-fires/usage?skill=deploy
     """

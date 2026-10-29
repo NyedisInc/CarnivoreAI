@@ -2,6 +2,7 @@
 <script lang="ts">
     import { onMount, tick } from 'svelte';
     import { t } from '../i18n/index.svelte';
+    import { Button, IconButton } from '../base';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import type { RealPageReach } from './pop-out-reach';
 
@@ -18,7 +19,7 @@
 
     const { label, proxyUrl, reach, shortened, openTab, close }: Props = $props();
 
-    let proxyButton = $state<HTMLButtonElement | null>(null);
+    let proxyButton = $state<HTMLElement | null>(null);
     const title = $derived(t('browser.popout.title', { label }));
     const realHint = $derived(
         reach.ok
@@ -51,7 +52,7 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">&raquo; {title}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')} onclick={() => close(null)}>&times;</button>
+            <IconButton variant="close" icon="close" label={t('modal.close')} onclick={() => close(null)} />
         </div>
     {/snippet}
     <p class="modal-description" id="browser-popout-question">{t('browser.popout.question')}</p>
@@ -61,17 +62,10 @@
         <p class="modal-description" data-popout-shortened>{t('browser.popout.shortened')}</p>
     {/if}
     {#snippet footer()}
-        <button type="button" class="modal-btn modal-btn-secondary" data-popout-cancel onclick={() => close(null)}>{t('browser.popout.cancel')}</button>
-        <button type="button" class="modal-btn modal-btn-confirm" data-popout-choice="real" disabled={!reach.ok}
-            onclick={() => take('real')} onkeydown={(e) => onChoiceKey(e, 'real')}>{t('browser.popout.real')}</button>
-        <button type="button" class="modal-btn modal-btn-confirm" data-popout-choice="proxy" bind:this={proxyButton}
-            onclick={() => take('proxy')} onkeydown={(e) => onChoiceKey(e, 'proxy')}>{t('browser.popout.proxy')}</button>
+        <Button data-popout-cancel onclick={() => close(null)}>{t('browser.popout.cancel')}</Button>
+        <Button variant="confirm" data-popout-choice="real" disabled={!reach.ok}
+            onclick={() => take('real')} onkeydown={(e) => onChoiceKey(e, 'real')}>{t('browser.popout.real')}</Button>
+        <Button variant="confirm" data-popout-choice="proxy" bind:element={proxyButton}
+            onclick={() => take('proxy')} onkeydown={(e) => onChoiceKey(e, 'proxy')}>{t('browser.popout.proxy')}</Button>
     {/snippet}
 </ModalShell>
-
-<style>
-    .modal-btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-    }
-</style>

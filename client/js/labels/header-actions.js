@@ -1,4 +1,3 @@
-/* nothing at all */
 
 export const HEADER_ACTION_KEYS = {
     components: 'header.components',
@@ -7,7 +6,6 @@ export const HEADER_ACTION_KEYS = {
     pauseHint: 'header.pause_hint',
 };
 
-/* label: ' */
 export function headerActionLabels(t) {
     return {
         components: {

@@ -24,7 +24,7 @@ function harness() {
     const fetcher = (async (path: string) => {
         paths.push(path);
         if (path === '/ai/presets') return { presets: [] };
-        if (path === '/ai/connections') return { revision: 1, connections: [{ id: 'local-1', label: 'llm-a' }], defaults: {}, features: {} };
+        if (path === '/ai/connections') return { revision: 1, connections: [{ id: 'local-1', label: 'spark' }], defaults: {}, features: {} };
         if (path === '/ai/features') return { features: [{ id: 'pack.placement.enhanced', capability: 'chat', label_key: 'ai.feature.pack_placement', description_key: null, target: null }] };
         if (path.startsWith('/ai/calls/summary')) return SUMMARY;
         if (path.startsWith('/ai/calls')) {
@@ -61,7 +61,7 @@ describe('ai recent calls', () => {
         expect($('[data-ai="calls-count"]').textContent).toBe('1 to 2 of 3');
         expect(($('[data-ai="calls-newer"]') as HTMLButtonElement).disabled).toBe(true);
 
-        $('[data-ai-call="3"] .ai-row').click();
+        $('[data-ai-call="3"] [data-ai="call-row"]').click();
         await settle();
         expect($('[data-ai="calls-detail"]').textContent).toContain('pack.placement.enhanced');
 

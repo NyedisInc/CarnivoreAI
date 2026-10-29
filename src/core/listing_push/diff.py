@@ -73,3 +73,22 @@ def diff(previous: Optional[KeyedRows], current: KeyedRows) -> Optional[Dict[str
     if current_keys != previous_keys:
         out["order"] = current_keys
     return out or None
+
+
+def apply_change(previous: Optional[KeyedRows], change: Optional[Dict[str, Any]]) -> KeyedRows:
+    rows = {key: dict(row) for key, row in (previous or [])}
+    if change:
+        for item in change.get("upsert", []):
+            key = item["key"]
+            row = rows.setdefault(key, {})
+            row.update(item.get("fields", {}))
+            for name, moved in item.get("nested", {}).items():
+                row[name] = {**(row.get(name) or {}), **moved}
+            for name in item.get("drop", []):
+                row.pop(name, None)
+        for key in change.get("remove", []):
+            rows.pop(key, None)
+        order = change.get("order")
+        if order is not None:
+            return [(key, rows[key]) for key in order if key in rows]
+    return list(rows.items())

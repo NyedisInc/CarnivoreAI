@@ -31,7 +31,6 @@
         return piece.slice(indent - 1);
     }
 
-    /* padding */
     function joinRows(rows, wraps, cols, brk, indent) {
         var lines = logicalLines(rows, wraps);
         var ends = [];

@@ -42,12 +42,6 @@ def failure_fields(exc: BaseException) -> Dict[str, str]:
 
 
 class AlertingSSLObject(ssl.SSLObject):
-    """An SSL object that keeps the TLS alert OpenSSL queued when a handshake fails, on the exception as ``link_alert``.
-
-    asyncio aborts a failed handshake without flushing that alert, so a TLS 1.3 client (which finishes its side before the server
-    checks its certificate) read a plain EOF and could not tell "refused" from a dropped network. ``_TlsGate`` sends the bytes.
-    Set it as a context's ``sslobject_class``. Example: ctx.sslobject_class = AlertingSSLObject
-    """
 
     _hook_logged = False
 

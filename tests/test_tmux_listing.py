@@ -33,8 +33,8 @@ from src.core.tmux_listing import (
     TmuxListing,
     classify_listing_failure,
     coerce_listing,
-    looks_like_no_server,
 )
+from src.core.tmux_stderr import looks_like_no_server
 
 TEST_SOCKET = "cloude_pytest_listing"
 
@@ -126,7 +126,7 @@ def test_tmux_missing_is_unavailable_not_empty(name, call):
     backend = _backend()
     tmux_discovery.reset_probe_cache()
     with mock.patch(
-        "src.core.tmux_backend.resolve_tmux_path", return_value=None
+        "src.core.tmux_transport.local.resolve_tmux_path", return_value=None
     ):
         listing = call(backend)
     assert listing.ok is False, f"{name}: no tmux binary is not zero sessions"

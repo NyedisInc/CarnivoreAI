@@ -1,12 +1,3 @@
-"""
-* In memory (this process): ``client_id`` -> what it wrote. A second call with the id answers ``duplicate`` and writes nothing; a call
-  with an id still IN FLIGHT waits for it (two tabs firing the same outbox entry before either committed).
-* Across a restart: the retry carries ``retry_age_s`` (how long ago the browser FIRST tried, a duration so two clocks need not agree);
-  the committed row is found by its list or task, owner, identical cleaned text and time window.
-* No ``client_id`` (an older client, a plain script): :func:`once` just runs.
-
-``docs/task-manager.md`` section 90.
-"""
 
 from __future__ import annotations
 

@@ -1,31 +1,3 @@
-"""One remote host as a session backend sees it (issue #162, slice S4).
-
-A :class:`RemoteHost` binds the S2 ssh pool and the S3 control channel of
-one host to what every :class:`~src.core.hosts.remote_backend.RemoteTmuxBackend`
-on it shares: the far box's tmux path and socket (D1), its login PATH, its
-``$HOME`` (learned, never assumed), the directory the panes' output files
-live in, the local directory their mirrors live in, and one rotation tick
-for the far files. It opens nothing itself; whoever owns the pool and the
-channel (S5a's host registry) connects them and then calls :meth:`prepare`.
-
-THE FAR BOX'S FILES live under ``$HOME/.cache/carnivore/pipes``, one
-``<instance>_<slug>.pipe`` per session, written by the pane's ``cat >>``
-copier. The instance tag in the name keeps two Carnivore servers driving
-one far socket from ever sharing a file.
-
-NO CONFIG FILE. The control channel keeps the far server running, so it
-is never cold, and ``TmuxBackend.start``'s pre-spawn ``set-option`` pair
-(history limit, ``remain-on-exit``) always lands before ``new-session``:
-every far pane is born at the full scrollback depth with no ``-f``.
-``source-file`` over the channel was tried and is not usable: measured on
-tmux 3.6a, the sourced commands answer outside the reply block and the
-channel reads that as a desync.
-
-EVERY FAILURE TO REACH THE HOST IS :class:`RemoteHostUnavailable` (an
-``OSError``), never an empty answer and never a guess: a command that could
-not be sent, timed out, or rode a channel that died says so, and the
-listing turns it into ``ok=False, reason='host_unreachable'``.
-"""
 
 from __future__ import annotations
 
@@ -48,7 +20,6 @@ from src.core.hosts.tmux_control import (
 
 logger = structlog.get_logger()
 
-# state directory
 REMOTE_STATE_DIR = ".cache/carnivore"
 
 REMOTE_MAX_PIPE_BYTES = 10 * 1024 * 1024
@@ -57,10 +28,6 @@ _HOME_RE = re.compile(r"/[^\x00-\x1f\x7f]{0,1023}")
 
 
 class RemoteHostUnavailable(ConnectionError):
-    """The host's tmux could not be asked; the message says why.
-
-    Attributes: timed_out (bool) - the command missed its deadline.
-    """
 
     def __init__(self, message: str, *, timed_out: bool = False) -> None:
         super().__init__(message)
@@ -102,7 +69,6 @@ class RemoteHost:
 
     @property
     def state_dir(self) -> str:
-        """The far box's state directory (absolute). Raises: RemoteHostUnavailable - not prepared."""
         if self.home is None:
             raise RemoteHostUnavailable(f"host {self.host_key} is not prepared")
         return f"{self.home.rstrip('/')}/{REMOTE_STATE_DIR}"
@@ -124,14 +90,6 @@ class RemoteHost:
 
 
     async def prepare(self) -> str:
-        """Learn the far ``$HOME``, create the pipe directory, start the rotation tick.
-
-        Description: one exec creates ``pipes/`` (mode 0700 by umask) and
-          prints ``$HOME``. Idempotent; call it once the channel is up.
-        Output: str - the far ``$HOME``.
-        Raises: RemoteHostUnavailable - the host could not be reached, or
-          answered a ``$HOME`` that is not an absolute printable path.
-        """
         self.loop = asyncio.get_running_loop()
         script = 'umask 077; mkdir -p "$HOME"/' + REMOTE_STATE_DIR + '/pipes && printf "%s\\n" "$HOME"'
         result = await self.exec(script=script)

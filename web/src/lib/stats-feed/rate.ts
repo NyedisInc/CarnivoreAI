@@ -70,7 +70,6 @@ export function mergeBars(bars: ChartBar[], maxBars: number, bucketSeconds: numb
   return out;
 }
 
-/* could not */
 const DOWN_WORDS: readonly string[] = ['unreachable', 'refused', 'not_supported'];
 
 export interface Missing {

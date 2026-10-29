@@ -85,7 +85,7 @@ test('an agent session keeps the agent usage bar', () => {
   expect(state.usageCalls).toBe(1);
 });
 
-test('no repo or branch in either terminal bar: the file browser shows it', () => {
+test('no repo or branch in either terminal bar: the file browser shows it (Alex, 2026-10-07)', () => {
   state.facts = FACTS;
   for (const family of ['shell', 'claude']) {
     const root = draw(family, 1200);

@@ -17,7 +17,7 @@ from src.cplugs.host import identity, runtime
 from src.cplugs.host.preview_check import MEDIA_TYPES, PreviewError, read_preview
 from src.cplugs.host.sidecar_manifest import VIEW_TYPES
 from src.cplugs.host.sidecar_registry import SidecarDefinition
-from src.cplugs.host.sidecar_routes import _LIVE_STATES, _error
+from src.cplugs.host.sidecar_routes import _LIVE_STATES, _error, held_off
 from src.cplugs.sdk import signed_links
 from src.cplugs.sdk.manifest import ID_PATTERN
 from src.security_headers import OWN_POLICY_HEADER, build_view_csp
@@ -48,7 +48,7 @@ def _view_of(request: Request, cplug_id: str, name: str) -> Tuple[SidecarDefinit
     if live is None:
         raise _error(503, "sidecar_runtime_unavailable", "the plugin runtime is not running")
     if any(live.safe_mode().values()) or live.supervisor.state(cplug_id) not in _LIVE_STATES:
-        raise _error(409, "cplug_disabled", f"{cplug_id} is held off (switch, safe mode, revoked or failed)")
+        raise held_off(host, d, live)
     try:
         return d, view, host.install_key(cplug_id)
     except identity.LedgerUnreadable as exc:

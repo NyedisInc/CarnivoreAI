@@ -76,7 +76,6 @@ def uninstall_routing() -> None:
 
 
 def current_view() -> Optional[RoutingView]:
-    """The current view, or None when routing is not installed."""
     provider = _view_provider
     return provider() if provider is not None else None
 

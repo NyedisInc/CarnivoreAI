@@ -1,34 +1,3 @@
-"""DDL for schema v16: the message identity / appearance model.
-
-So the model splits a message in two:
-
-  ``message_bodies``       one row per DISTINCT BODY, keyed by
-                           (uuid, sha256-of-body). Two different bodies
-                           under one uuid are two rows, never a merge and
-                           never a keep-first - losing either is data
-                           loss, and it is a real case: an independent
-                           re-measurement here of 3,443 duplicate-uuid
-                           groups that had raw JSON on both sides found
-                           39 (1.13%) with genuinely different bodies.
-  ``message_appearances``  one row per (transcript, line). Holds
-                           seq_in_file, is_sidechain, agent_id, the
-                           envelope values, the ORIGINAL top-level key
-                           order, and the sha256 of the original line.
-                           This is where the subagent linkage stops being
-                           an implicit near-duplicate row and becomes an
-                           explicit, queryable edge.
-
-NOTHING IS DROPPED BECAUSE IT FAILS TO PARSE OR TO LINK. A blank line and
-a line whose JSON does not parse both get an appearance row (with
-``line_status`` saying which, ``body_id`` NULL and ``raw_line`` holding
-the bytes), because byte-exact export of the whole transcript depends on
-them and because "we could not parse it" is not a reason to discard it.
-
-ADDITIVE ONLY, like every step before it: eight CREATE TABLE and nine
-CREATE INDEX statements, each carrying its own IF NOT EXISTS. No existing
-table is altered, no column added to one, nothing dropped, renamed or
-retyped.
-"""
 
 from __future__ import annotations
 

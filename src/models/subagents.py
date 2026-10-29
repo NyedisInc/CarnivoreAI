@@ -15,9 +15,9 @@ SubagentStatusReason = Literal[
     "resumed_after_end",
     "process_restarted",
     "silent",
-    "parent_unreadable",  # could not
+    "parent_unreadable",
     "shape_unrecognized",
-    "transcript_unreadable",  # could not be read
+    "transcript_unreadable",
 ]
 
 FileShape = Literal["ok", "absent", "unreadable", "shape_unrecognized"]

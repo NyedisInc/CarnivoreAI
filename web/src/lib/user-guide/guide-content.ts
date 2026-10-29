@@ -27,7 +27,9 @@ function inlineText(runs: Inline[]): string {
 function blockText(block: Block): string {
     if (block.kind === 'rule') return '';
     if (block.kind === 'code') return block.text;
-    if (block.kind === 'list') return block.items.map(inlineText).join(' ');
+    if (block.kind === 'list') {
+        return block.items.map((item, i) => [item, ...(block.subs[i]?.items ?? [])].map(inlineText).join(' ')).join(' ');
+    }
     return inlineText(block.children);
 }
 

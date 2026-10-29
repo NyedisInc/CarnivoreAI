@@ -6,6 +6,7 @@ import time
 import uuid
 from typing import Any
 
+from src.core.stats.plugin import usage_revision
 from src.models.stats import AnnotationWrite, ChartWrite
 
 
@@ -28,6 +29,7 @@ def require_enabled(store) -> None:
 
 def _bump(db) -> None:
     db.execute("UPDATE stats_meta SET value=CAST(value AS INTEGER)+1 WHERE key='revision'")
+    usage_revision.bump(db)
 
 
 def ensure_schema(store) -> None:
@@ -78,15 +80,6 @@ LEGEND_MIGRATION_KEY = "migration_legend_on_v1"
 
 
 def _migrate_legend_on(db) -> None:
-    """Turn the legend on for every saved chart that has it off, exactly once.
-
-    Description: series toggles live in the legend, so charts seeded with it off could not toggle.
-      The `stats_meta` marker makes this idempotent: a user who turns a legend off afterwards
-      keeps it off across restarts. Each touched row gets a new revision so an open editor sees a
-      conflict rather than silently overwriting.
-    Inputs: db - an open writable stats connection. Output: None.
-    Example: ensure_schema(store) twice changes each row at most once.
-    """
     db.commit()
     db.execute("BEGIN IMMEDIATE")
     try:
@@ -109,7 +102,7 @@ def _migrate_legend_on(db) -> None:
 
 
 def get_settings(store) -> dict:
-    with store.connect(readonly=True) as db:
+    with store.connect_read() as db:
         row = db.execute("SELECT enabled,revision FROM stats_settings WHERE singleton=1").fetchone()
     return {"enabled": bool(row["enabled"]), "revision": row["revision"]}
 
@@ -215,7 +208,7 @@ def list_annotations(store, *, start: int, end: int, limit: int = 200, cursor: i
             where.append(f"(json_extract(scope_json,'$.{key}') IS NULL OR "
                          f"json_extract(scope_json,'$.{key}')=?)")
             args.append(value)
-    with store.connect(readonly=True) as db:
+    with store.connect_read() as db:
         rows = db.execute(
             "SELECT * FROM stats_annotations WHERE " + " AND ".join(where) + " "
             "ORDER BY occurred_at,id LIMIT ? OFFSET ?",

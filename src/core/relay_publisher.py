@@ -418,17 +418,6 @@ async def _paint(
     link_id: str, backend: Any, scrubber: spectator_redaction.SpectatorScrubber,
     outbox: BoundedStream, framer: framing.LinkFramer,
 ) -> Optional[Tuple[int, int]]:
-    """Send one link's grid, then its current screen, scrubbed.
-
-    Description: the grid goes FIRST (a v1 size frame, or a v2 OPEN that
-      starts a new stream) so the viewer lays the paint out at the pane's
-      own width. A geometry that cannot be read sends nothing at all: an
-      invented grid would be a wrong screen drawn confidently.
-    Inputs: link_id; backend - the session's, or None; scrubber; outbox;
-      framer - the link's.
-    Output: (cols, rows) sent, or None when nothing was.
-    Raises: whatever the scrubber raised on the paint.
-    """
     geometry = await read_pane_geometry(backend)
     if geometry is None:
         logger.info("relay_link_size_unreadable", link_id=link_id)

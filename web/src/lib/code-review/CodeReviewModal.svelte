@@ -2,6 +2,7 @@
   import '../ledger/ledger-chrome.css';
   import ModalShell from '../launchpad/ModalShell.svelte';
   import { t } from '../i18n/index.svelte';
+  import { Button, IconButton } from '../base';
   import { reviewLines, visibleLines } from './risk';
 
   let { title, code, onClose, onApprove, onDeny, danger = false, busy = false }: {
@@ -20,15 +21,15 @@
   {#snippet head()}
     <div class="text-prompt-modal__head">
       <span class="text-prompt-modal__verb">&raquo; {t('code_review.title')}</span>
-      <button type="button" class="modal-close" aria-label={t('code_review.close')} onclick={() => onClose()}>&times;</button>
+      <IconButton label={t('code_review.close')} variant="close" icon="close" iconSize={14} data-modal-close onclick={() => onClose()} />
     </div>
   {/snippet}
   <div class="pledger cr-body" data-code-review>
     <div class="cr-bar">
       <span class="pl-label cr-title" data-code-review-title>{title}</span>
       <span class="pl-label cr-count" data-code-review-count>{t('code_review.count', { risky: riskyCount, total: lines.length })}</span>
-      <button type="button" class="modal-btn modal-btn-secondary cr-toggle" aria-pressed={riskyOnly}
-        data-code-review-toggle onclick={() => (riskyOnly = !riskyOnly)}>{t('code_review.risky_only')}</button>
+      <Button size="sm" aria-pressed={riskyOnly}
+        data-code-review-toggle onclick={() => (riskyOnly = !riskyOnly)}>{t('code_review.risky_only')}</Button>
     </div>
     <ol class="cr-lines" style:--cr-gutter="{gutter}ch" aria-label={t('code_review.lines_label')} data-code-review-lines>
       {#each shown as line (line.n)}
@@ -46,13 +47,13 @@
     <div class="pledger cr-foot">
       {#if onApprove || onDeny}
         <span class="cr-spacer"></span>
-        {#if onDeny}<button type="button" class="modal-btn modal-btn-secondary" data-code-review-deny disabled={busy}
-          onclick={() => onDeny?.()}>{t('approvals.deny')}</button>{/if}
-        {#if onApprove}<button type="button" class="modal-btn {danger ? 'modal-btn-danger' : 'modal-btn-confirm'}" data-code-review-approve disabled={busy}
-          onclick={() => onApprove?.()}>{t('approvals.approve')}</button>{/if}
+        {#if onDeny}<Button data-code-review-deny disabled={busy}
+          onclick={() => onDeny?.()}>{t('approvals.deny')}</Button>{/if}
+        {#if onApprove}<Button variant={danger ? 'danger' : 'confirm'} data-code-review-approve disabled={busy}
+          onclick={() => onApprove?.()}>{t('approvals.approve')}</Button>{/if}
       {:else}
         <span class="cr-spacer"></span>
-        <button type="button" class="modal-btn modal-btn-secondary" onclick={() => onClose()}>{t('code_review.close')}</button>
+        <Button data-code-review-close onclick={() => onClose()}>{t('code_review.close')}</Button>
       {/if}
     </div>
   {/snippet}
@@ -70,8 +71,8 @@
   .cr-bar { display: flex; align-items: center; gap: 10px; padding: 8px 14px; box-shadow: inset 0 -1px 0 0 var(--pl-line-quiet); }
   .cr-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cr-count { flex: none; }
-  .cr-toggle { flex: none; padding: var(--oc-space-1) 10px; font-size: var(--oc-fs-label); }
-  .cr-toggle[aria-pressed='true'] { color: var(--oc-coral); --_bd: var(--oc-coral); border-color: var(--_bd); }
+  [data-code-review-toggle] { flex: none; }
+  [data-code-review-toggle][aria-pressed='true'] { color: var(--oc-coral); --_bd: var(--oc-coral); border-color: var(--_bd); }
   .cr-lines {
     margin: 0; padding: 0; list-style: none; overflow: auto; overscroll-behavior: contain;
     max-height: min(60vh, 520px); font-family: var(--font-mono); font-size: 12px; line-height: 1.5; color: var(--pl-text);
@@ -87,5 +88,4 @@
   .cr-empty { margin: 0; padding: 14px; color: var(--pl-muted); font-size: 12px; }
   .cr-foot { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; }
   .cr-spacer { flex: 1; }
-  .cr-foot :global(.modal-btn:disabled) { opacity: 0.45; cursor: not-allowed; }
 </style>

@@ -65,8 +65,8 @@ async def _deps(main: Side, side: Side, srv: JoinServer, **over) -> JoinDeps:
         if sock is not None:
             sock.close()
 
-    deps = JoinDeps(identity=side.identity, fed_key=side.key, public_key=side.public, own_iid=JOIN, own_label="hosta", open_db=side.open_db,
-                    links=side.links, pack=side.pack, reserve_port=reserve, release_port=release, addresses=lambda: ["hosta.local"],
+    deps = JoinDeps(identity=side.identity, fed_key=side.key, public_key=side.public, own_iid=JOIN, own_label="studio", open_db=side.open_db,
+                    links=side.links, pack=side.pack, reserve_port=reserve, release_port=release, addresses=lambda: ["studio.local"],
                     app_version="t", **over)
     deps.held = held  # type: ignore[attr-defined]
     join_job.configure_join(deps)
@@ -191,7 +191,7 @@ async def test_two_start_join_calls_return_one_job(env):
     first = membership.start_join("123456", None, origin="local", totp_ok=False)
     second = membership.start_join("654321", None, origin="door", totp_ok=False)
     assert first is second and first.state == "waiting_relay" and membership.first_run_state() == "join_pending"
-    await join_job.attach_relay("/relay.sock", "192.0.2.13", None)
+    await join_job.attach_relay("/relay.sock", "10.0.0.5", None)
     await asyncio.sleep(0.05)
     assert membership.start_join("111111", None, origin="door", totp_ok=False) is first
     gate.set()
@@ -218,7 +218,7 @@ def test_local_routes_gate_on_transport_and_state(env):
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.include_router(join_local_routes.router, prefix="/api/v1")
     local = TestClient(app, base_url=f"http://127.0.0.1:{PORT}", client=("127.0.0.1", 50000))
-    remote = TestClient(app, base_url=f"http://127.0.0.1:{PORT}", client=("192.0.2.15", 50000))
+    remote = TestClient(app, base_url=f"http://127.0.0.1:{PORT}", client=("192.168.1.9", 50000))
     assert remote.get("/api/v1/auth/join/status").status_code == 403
     assert remote.get("/api/v1/auth/join/status").json()["detail"] == {"reason": "join_local_only"}
     assert local.get("/api/v1/auth/join/status", headers={"Authorization": "Bearer x"}).status_code == 403

@@ -12,7 +12,7 @@ PAGELESS_KINDS = frozenset({"questions", "rows"})
 _ITEM: Dict[str, Any] = {
     "type": "object", "required": ["id", "kind", "label"],
     "properties": {
-        "id": {"type": "string", "description": "lowercase id, letters digits - _ (the key of the owner's answer)"},
+        "id": {"type": "string", "description": "lowercase id, letters digits - _ (the key of Joe's answer)"},
         "kind": {"type": "string", "enum": list(ITEM_KINDS),
                  "description": "yesno: true or false, or unanswered; choice: one option id; multi: a list of option ids; toggle: on or off (false unless default); text: one line; longtext: a paragraph"},
         "label": {"type": "string", "maxLength": 300},
@@ -23,9 +23,9 @@ _ITEM: Dict[str, Any] = {
         "options": {"type": "array", "maxItems": MAX_OPTIONS, "description": "for choice and multi", "items": {
             "type": "object", "required": ["id", "label"], "properties": {"id": {"type": "string"}, "label": {"type": "string", "maxLength": 120}}}},
         "min": {"type": "integer", "description": "multi: advisory minimum, shown as unanswered below it; never enforced"},
-        "max": {"type": "integer", "description": "multi: the most the owner may pick (enforced)"},
+        "max": {"type": "integer", "description": "multi: the most he may pick (enforced)"},
         "placeholder": {"type": "string", "maxLength": 120, "description": "text and longtext"},
-        "default": {"description": "what the field shows until the owner edits it: a bool, an option id, a list of ids, or a string by kind"}}}
+        "default": {"description": "what the field shows until he edits it: a bool, an option id, a list of ids, or a string by kind"}}}
 
 _CHOICE: Dict[str, Any] = {
     "type": "object", "required": ["id", "label"],
@@ -35,7 +35,7 @@ _CHOICE: Dict[str, Any] = {
 _ROW: Dict[str, Any] = {
     "type": "object", "required": ["id", "title"],
     "properties": {
-        "id": {"type": "string", "description": "lowercase id, letters digits - _ (the key of the owner's pick)"},
+        "id": {"type": "string", "description": "lowercase id, letters digits - _ (the key of Joe's pick)"},
         "title": {"type": "string", "maxLength": 200},
         "tag": {"type": "string", "maxLength": 40, "description": "a small status chip"},
         "lines": {"type": "array", "maxItems": MAX_LINES, "description": "labeled plain-text lines (you had / now / my take)", "items": {
@@ -44,14 +44,14 @@ _ROW: Dict[str, Any] = {
         "group": {"type": "string", "maxLength": 120, "description": "consecutive rows sharing a group get one heading"},
         "anchor": {"type": "string", "description": "an anchor id of your page this row is about (declared in anchors)"},
         "choices": {"type": "array", "minItems": 1, "maxItems": MAX_CHOICES, "items": _CHOICE, "description": "this row's own picks; overrides the layer's choices"},
-        "suggest": {"type": "string", "description": "a choice id marked as your take; never picked for the owner"},
+        "suggest": {"type": "string", "description": "a choice id marked as your take; never picked for him"},
         "default": {"description": "a carried pick: a choice id, or a list of ids when the layer picks several"}}}
 
 LAYER: Dict[str, Any] = {
     "type": "object", "required": ["kind"],
     "description": ("Fill the board's frame with a prebuilt layer instead of writing the controls yourself. kind questions: a list of questions (yesno, choice, "
                     "multi, toggle, text, longtext), each with a note key; html is optional (your page as context, its parts tagged data-rb-anchor) and a "
-                    "question with an anchor is drawn right under that part. kind canvas: your own payload page (same as payload_mode true). the owner's answer comes "
+                    "question with an anchor is drawn right under that part. kind canvas: your own payload page (same as payload_mode true). Joe's answer comes "
                     "back in revision.draft and the round's payload as {layer, v, values: {item id: value}, notes: {item id: text}}; an unanswered item has no key. "
                     "kind rows: a list of rows to review (title, tag, labeled lines, meta, group), each with its own picks from `choices` "
                     "(the layer's, or the row's own) and a note; pick one or several; `suggest` marks your take without picking it. For rows the answer is "

@@ -33,11 +33,6 @@ TOO_LARGE = "transcript too large"
 
 
 class TranscriptUnreadable(Exception):
-    """The transcript could not be opened or is too large to parse.
-
-    ``repeat`` is True when the same refusal (same file identity and size bucket) was already raised before, so a
-    caller logs only when it is False.
-    """
 
     def __init__(self, message: str, *, repeat: bool = False) -> None:
         super().__init__(message)
@@ -146,13 +141,6 @@ def _advance(handle: BinaryIO, fold: _Fold) -> Tuple[int, List[TaskItem]]:
 
 
 def fold_transcript(path: Path) -> List[TaskItem]:
-    """Walk one transcript and return the agent's current task list.
-
-    Inputs: path - a claude ``<uuid>.jsonl``.
-    Output: list[TaskItem], oldest first; empty when the conversation never wrote a list.
-    Raises: TranscriptUnreadable - the file cannot be opened or exceeds :data:`MAX_BYTES`.
-    Example: fold_transcript(Path("/x/abc.jsonl"))[0].status == "in_progress"
-    """
     try:
         if path.stat().st_size > MAX_BYTES:
             raise TranscriptUnreadable(TOO_LARGE)

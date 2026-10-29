@@ -19,6 +19,7 @@ export interface OverlayHost {
     wireDeepLink(target?: Window | null): () => void;
 }
 
+/* the fragment that opens it */
 export function createOverlayHost(
     containerId: string,
     component: Component<Record<string, never>, Record<string, unknown>> | Component<Record<string, never>>,

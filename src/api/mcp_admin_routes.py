@@ -16,6 +16,7 @@ from src.core import config_writer
 from src.core.mcp import channel as channel_events
 from src.core.mcp import agent_tool_switches, instructions, pending, token_store, tools, trusted_proxy
 from src.core.mcp.write_tools import gate_enabled
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -119,12 +120,26 @@ def _agent_tools_answer() -> dict:
 @router.get("/agent-tools")
 async def get_agent_tools() -> dict:
     """The per-computer checkboxes for the agent tool families (#1685, #1754): Task Manager off, swarm on, app settings off by default.
+
+    Output: {Task Manager, swarm, app_settings} - whether every agent session's MCP offers the ``huddle_*`` / ``swarm_*`` tools and
+    the app-settings tools (pins, groups, preferences, colors, skills, mods, catalog, plugin rebuild, system settings).
+    The Pack, messaging and ai families have no checkbox: they follow the records the computer holds (``hidden_families``).
     """
     return _agent_tools_answer()
 
 
 @router.put("/agent-tools")
 async def put_agent_tools(body: AgentToolsBody, request: Request) -> dict:
+    """Turn Task Manager, swarm and/or app settings tools for agents on or off; owner only, this computer only, live.
+
+    Description: written through ``config_writer`` (``mcp.agent_huddle_tools`` / ``agent_swarm_tools`` / ``agent_app_settings_tools``). The tool
+      list and the guide read the switches on every request and both feed the MCP fingerprint, so connected sessions
+      pick the change up without a restart (``src/core/mcp/agent_tool_switches.py``). A Task Manager change also runs the
+      required skills pass at once: on installs the global Task Manager skill, off takes back a pristine copy this app
+      installed and leaves an edited one alone. The owner's own app routes (the Task Manager tab, swarm) are untouched.
+    Inputs: body (AgentToolsBody); request. Output: {Task Manager, swarm, app_settings}.
+    Raises: HTTPException 422 when neither field is given; 500 when config.json is unwritable.
+    """
     fields = {k: v for k, v in ((agent_tool_switches.TASK_MANAGER_FIELD, body.huddle),
                                 (agent_tool_switches.SWARM_FIELD, body.swarm),
                                 (agent_tool_switches.APP_SETTINGS_FIELD, body.app_settings)) if v is not None}
@@ -149,7 +164,7 @@ async def put_trusted_proxies(body: TrustedProxiesBody) -> dict:
     try:
         hosts = trusted_proxy.validate_list(body.hosts)
     except trusted_proxy.TrustedProxyError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_request", exc, step="put_trusted_proxies") from exc
     await _write_mcp_fields({trusted_proxy.FIELD: hosts}, "trusted_proxies")
     return {"hosts": hosts}
 
@@ -175,6 +190,13 @@ async def put_agent_notify(body: EnabledBody) -> dict:
 @router.put("/channels")
 async def put_channels(body: EnabledBody) -> dict:
     """Turn channel delivery (``mcp.channels``, research preview) on or off; owner only, default off.
+
+    Description: on, every NEW claude pane launch adds ``--dangerously-load-development-channels=server:carnivore``
+      (a startup warning the owner answers in the pane, on every launch) and ``GET /mcp`` serves the push stream, so a
+      Task Manager tell reaches that session as a channel event; off, ``GET /mcp`` answers 405 again and every tell pastes.
+      A running session is never relaunched; one already streaming falls back to the paste the moment this is off.
+      ``docs/task-manager.md`` section 37.
+    Inputs: body (EnabledBody). Output: {enabled}. Raises: HTTPException 500 when config.json is unwritable.
     """
     return await _write_mcp_flag("channels", body.enabled, "channels")
 
@@ -231,7 +253,7 @@ async def mint_token(body: MintBody) -> dict:
     try:
         row, secret = await asyncio.to_thread(token_store.get_store().mint, body.name, body.scope, body.expires_in_days)
     except token_store.TokenError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_request", exc, step="mint_token") from exc
     except OSError as exc:
         logger.error("mcp_token_unwritable", error=type(exc).__name__)
         raise HTTPException(status_code=500, detail="the token file could not be written") from exc
@@ -244,7 +266,7 @@ async def revoke_token(token_id: str) -> dict:
     try:
         found = await asyncio.to_thread(token_store.get_store().revoke, token_id)
     except token_store.TokenError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise api_error(422, "invalid_request", exc, step="revoke_token") from exc
     except OSError as exc:
         raise HTTPException(status_code=500, detail="the token file could not be written") from exc
     if not found:

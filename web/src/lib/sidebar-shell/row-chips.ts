@@ -18,6 +18,8 @@ const TOP_EFFORTS = ['xhigh', 'max'];
 const SHIMMER_EFFORTS = ['xhigh', 'max', 'ultracode'];
 const SHEEN_EFFORTS = ['high', 'xhigh'];
 
+export const PIN_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14l-2-4V4H7v9l-2 4z"></path></svg>';
+
 export function pinAttrs(name: string, pinned: boolean): Attrs {
     return {
         type: 'button',
@@ -149,7 +151,6 @@ export function agentsIconPlan(r: SidebarRow): GlyphChip | null {
     };
 }
 
-/*  hidden  */
 export function workflowIconPlan(r: SidebarRow): GlyphChip | null {
     if (r.workflow_active !== true) return null;
     const title = t('sidebar.row.workflow_icon.title');
@@ -164,7 +165,6 @@ export function workflowIconPlan(r: SidebarRow): GlyphChip | null {
     };
 }
 
-/* could not */
 export function shellsIconPlan(r: SidebarRow): GlyphChip | null {
     const openRaw = r.background_open;
     const open = typeof openRaw === 'number' && Number.isFinite(openRaw) && openRaw > 0
@@ -278,7 +278,6 @@ export function metaPlan(r: SidebarRow): MetaPlan {
     };
 }
 
-/* label: ' */
 export function hostChip(r: SidebarRow): TextChip | null {
     const key = r.host_key as string | undefined;
     if (!key || key === 'local') return null;
@@ -311,12 +310,16 @@ export function wakeTitle(epoch: unknown): string | null {
     return t('sidebar.row.wake_icon.title', { when: fireLabel(epoch) });
 }
 
-/* scheduled tasks */
 export function wakeIconPlan(r: SidebarRow): GlyphChip | null {
-    const title = r.asleep ? wakeTitle(r.next_wake_at) : null;
-    if (title === null) return null;
+    const when = r.asleep ? wakeTitle(r.next_wake_at) : null;
+    if (when === null) return null;
+    const title = t('sidebar.row.wake_icon.open', { title: when });
+    const uuid = typeof r.session_uuid === 'string' ? r.session_uuid : '';
+    const attrs: Record<string, string> = uuid
+        ? { type: 'button', class: 'session-sidebar-row-wake-icon', 'data-automations-session-uuid': uuid, tabindex: '-1', 'aria-label': title, title }
+        : { class: 'session-sidebar-row-wake-icon', role: 'img', 'aria-label': title, title };
     return {
-        attrs: { class: 'session-sidebar-row-wake-icon', role: 'img', 'aria-label': title, title },
+        attrs,
         svg: glyphSvg('clock', 13),
     };
 }
@@ -351,13 +354,11 @@ export function archivedPart(r: SidebarRow): { archived?: GlyphChip } {
 
 export function roleMarks(r: SidebarRow): { attrs: Attrs; html: string } {
     const lead = r.task_lead === true;
-    const dnd = r.do_not_disturb === true && !lead;
-    const mark = (which: 'lead' | 'dnd', glyph: string): string => {
-        const label = t(`cplug.huddle.role.${which}_mark`);
-        return `<span class="session-sidebar-row-provider__${which}" role="img" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">${glyphSvg(glyph, 7)}</span>`;
-    };
+    const label = t('cplug.huddle.role.lead_mark');
     return {
-        attrs: { 'data-role-lead': lead ? '1' : undefined, 'data-dnd': dnd ? '1' : undefined },
-        html: (lead ? mark('lead', 'star') : '') + (dnd ? mark('dnd', 'do-not-disturb') : ''),
+        attrs: { 'data-role-lead': lead ? '1' : undefined },
+        html: lead
+            ? `<span class="session-sidebar-row-provider__lead" role="img" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">${glyphSvg('star', 7)}</span>`
+            : '',
     };
 }

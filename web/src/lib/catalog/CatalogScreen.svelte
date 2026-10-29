@@ -65,7 +65,6 @@
         SheetOutcome,
     } from './types';
 
-    /*  hidden  */
     export const SEARCH_DEBOUNCE_MS = 150;
 
     const VIEW_KEY = 'skills';
@@ -137,7 +136,6 @@
     /* the warez menu */
     let node = $state<MenuNode>(HOME_NODE);
     let phoneView = $state<'menu' | 'page'>('menu');
-    /* the reading pane */
     let selectedId = $state<string | null>(null);
     let detailW = $state(readDetailWidth());
     let bodyEl = $state<HTMLElement | null>(null);
@@ -182,12 +180,11 @@
     const shelfShown = $derived(!bands || (browsing && filters.kind === null && shown.some((card) => card.isLoadout && card.id)));
     const packless = $derived(bands && shelfShown ? shown.filter((card) => !card.isLoadout) : shown);
     const sources = $derived(menu.sources);
-    /* first published the census band */
+    /* the census band */
     const newestIds = $derived(new Set(newestItems(data.items).map((item) => item.id)));
     const gridShown = $derived(bands && node.scope === 'store' && node.page === 'newest' ? packless.filter((card) => !!card.id && newestIds.has(card.id)) : packless);
     const menuOn = $derived(bands && !embedded);
     const installedPane = $derived(menuOn && (node.scope === 'installed' || node.scope === 'publish' || (node.scope === 'look' && node.page !== 'updates')));
-    /* the reading pane */
     const selected = $derived(
         selectedId
             ? (shown.find((card) => card.id === selectedId) ??
@@ -290,7 +287,6 @@
         filters = { ...NO_FILTERS };
     }
 
-    /* the reading pane */
     function applyNode(next: MenuNode): void {
         if (next.scope === 'store' && next.page === 'item') {
             node = HOME_NODE;
@@ -638,7 +634,6 @@
 {/if}
 
 <style>
-    /* --color- */
     :global(.cat) {
         --cat-ground: var(--oc-ground-page);
         --cat-panel: var(--oc-ground-panel);
@@ -762,7 +757,6 @@
     }
 
     /* the reading pane */
-    /* not allowed */
     @media (max-width: 767px) {
         :global(.cat) {
             --cat-gutter: 12px;

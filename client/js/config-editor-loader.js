@@ -28,7 +28,6 @@
         return target;
     }
 
-    /* the page terminal */
     function openWhenReady(triggerBtn, controller = window.TerminalController, directory = null, host = null) {
         var request = ++opening;
         var target = freeze(controller, host);
@@ -73,7 +72,7 @@
     function toggleWhenReady(triggerBtn, controller = window.TerminalController, directory = null, host = null) {
         var open = panel();
         var scope = ['skills', 'plugins'].includes(directory) ? directory : null;
-        if (open && open.isOpen && open.mode === 'drawer' && open.directory === scope) {
+        if (open && open.isOpen && open.directory === scope) {
             opening++;
             return open.close();
         }
@@ -83,7 +82,7 @@
     function closeDrawer() {
         var open = panel();
         opening++;
-        if (open && open.isOpen && open.mode === 'drawer') return open.close();
+        if (open && open.isOpen) return open.close();
     }
 
     function retarget(controller, host) {
@@ -92,38 +91,10 @@
         open.retarget(freeze(controller, host || null));
     }
 
-    function attachWhenReady(cellEl, controller, host, onClose) {
-        var request = ++opening;
-        var target = freeze(controller, host || null);
-        if (!window.ModuleLoader || typeof window.ModuleLoader.loadFamily !== 'function') {
-            _fail('App: ModuleLoader is not loaded - the file browser cannot be fetched.',
-                'the file browser could not be loaded. reload the page and try again.');
-            return;
-        }
-        var urls = (window.ModuleFamilies && window.ModuleFamilies.CONFIG_EDITOR) || [];
-        return window.ModuleLoader.loadFamily('config-editor', urls).then(function () {
-            if (request !== opening || !cellEl.isConnected) return;
-            var open = panel();
-            if (open && typeof open.attach === 'function') return open.attach(cellEl, target, onClose);
-        }).catch(function (err) {
-            _fail('App: the config editor script family failed to load: ' +
-                (err && err.message ? err.message : err),
-                'the file browser could not be loaded. reload the page and try again.');
-        });
-    }
-
-    function detach(cellEl) {
-        opening++;
-        var open = panel();
-        if (open && typeof open.detach === 'function') open.detach(cellEl);
-    }
-
     window.ConfigEditorLoader = {
         openWhenReady: openWhenReady,
         toggleWhenReady: toggleWhenReady,
         closeDrawer: closeDrawer,
-        retarget: retarget,
-        attachWhenReady: attachWhenReady,
-        detach: detach
+        retarget: retarget
     };
 })();

@@ -37,7 +37,7 @@ async def test_joiner_writes_refuse_a_migrate_from_another_key_and_touch_nothing
     before, doc = _counts(join), join.pack.settings()
     with pytest.raises(JoinRefused):
         await commit.joiner_provisional(join.open_db, join.links, identity=join.identity, own_iid=JOIN, main=forged, own_grant_id="gj",
-                                        kind="migrate", settings=res.settings, addresses=["192.0.2.13"], link_port=47110, pack=join.pack)
+                                        kind="migrate", settings=res.settings, addresses=["10.0.0.5"], link_port=47110, pack=join.pack)
     assert _counts(join) == before and join.pack.settings() == doc and join.links.started == []
 
 

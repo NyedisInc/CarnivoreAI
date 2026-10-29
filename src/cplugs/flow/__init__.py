@@ -1,5 +1,6 @@
 
-from src.cplugs.flow import capabilities, live, mcp, routes, store, tail
+from src.core.flow_data import live, tail
+from src.cplugs.flow import capabilities, mcp, routes, store
 from src.cplugs.sdk import CplugDefinition, StorageSpec, load_manifest, with_capabilities
 
 

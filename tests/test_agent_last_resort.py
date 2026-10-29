@@ -22,6 +22,7 @@ if str(ROOT) not in sys.path:
 
 # ruff: noqa: E402
 from src.config import AgentsConfig, Settings
+from src.config.mcp import McpConfig
 from src.config.session import SessionConfig
 from src.core.agent_families import AGENT_FAMILIES, get_family
 from src.core.agent_last_resort import (
@@ -43,12 +44,13 @@ def _settings_with(tmp_path, **agent_overrides) -> Settings:
         default_working_dir=os.environ["DEFAULT_WORKING_DIR"],
         log_directory=str(tmp_path),
     )
-    cfg = SimpleNamespace(agents=AgentsConfig(**agent_overrides), session=SessionConfig())
+    cfg = SimpleNamespace(agents=AgentsConfig(**agent_overrides), session=SessionConfig(), mcp=McpConfig(),
+                          launch_profiles=None, byoai=None)
     object.__setattr__(settings, "load_auth_config", lambda: cfg)
     return settings
 
 
-@pytest.mark.parametrize("family_name", [f.name for f in AGENT_FAMILIES])
+@pytest.mark.parametrize("family_name", [f.name for f in AGENT_FAMILIES if f.seeded])
 def test_no_wrapper_yields_a_runnable_command(tmp_path, family_name):
     settings = _settings_with(tmp_path, wrappers=[])
     model = "some/model" if get_family(family_name).needs_model else None

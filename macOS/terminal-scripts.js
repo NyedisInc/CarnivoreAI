@@ -49,7 +49,6 @@ function printableLabel(label) {
   return String(label == null ? '' : label).replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, MAX_LABEL_LENGTH);
 }
 
-/* private directory */
 function scriptPreamble() {
   return [
     '#!/bin/bash',
@@ -71,7 +70,6 @@ function claudeFallbackLines(reason) {
   ];
 }
 
-/* could not */
 function buildSessionScript(spec) {
   if (!isAbsolutePath(spec.folder)) throw new Error('the session folder is not an absolute path');
   if (spec.claudeBin !== 'claude' && !isAbsolutePath(spec.claudeBin)) throw new Error('claude path is not absolute');
@@ -157,7 +155,6 @@ function buildShellScript(spec) {
 
 const PYCACHE_VARS = ['PYTHONPYCACHEPREFIX', 'PYTHONDONTWRITEBYTECODE'];
 
-/* CARNIVORE_BUNDLED_TMUX */
 function buildOfflineTuiScript(spec) {
   if (!isAbsolutePath(spec.serverDir)) throw new Error('the server folder is not an absolute path');
   const payload = spec.payload || null;

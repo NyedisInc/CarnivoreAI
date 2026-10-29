@@ -3,7 +3,7 @@ from __future__ import annotations
 
 
 class ActivityUnavailable(Exception):
-    """A source could not be opened or read; the message names which."""
+    pass
 
 
 __all__ = ["ActivityUnavailable"]

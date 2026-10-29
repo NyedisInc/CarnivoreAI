@@ -37,7 +37,7 @@ async def test_adopt_response_payload_carries_real_pty_pid():
     fake_backend.capture_scrollback = MagicMock(return_value=b"")
     fake_backend.tmux_session = "external_target"
     fake_backend._pipe_path = Path("/tmp/does_not_exist_for_test.pipe")
-    fake_backend.pid = 4212
+    fake_backend.pid = 54321
 
     with patch(
         "src.core.tmux_backend.TmuxBackend.for_external",
@@ -56,13 +56,13 @@ async def test_adopt_response_payload_carries_real_pty_pid():
 
     response = AdoptSessionResponse(**result)
 
-    assert response.session.pty_pid == 4212, (
+    assert response.session.pty_pid == 54321, (
         "AdoptSessionResponse.session.pty_pid must carry the live pane "
         f"pid, got {response.session.pty_pid!r}"
     )
 
     dumped = response.model_dump(mode="json")
-    assert dumped["session"]["pty_pid"] == 4212
+    assert dumped["session"]["pty_pid"] == 54321
 
 
 @pytest.mark.asyncio
@@ -107,7 +107,7 @@ async def test_create_session_response_already_carries_real_pty_pid():
 
     fake_backend = MagicMock(spec=TmuxBackend)
     fake_backend.start = AsyncMock(return_value=None)
-    fake_backend.pid = 4285
+    fake_backend.pid = 98765
     fake_backend.tmux_session = "cloude_createtest"
 
     with patch(
@@ -122,6 +122,6 @@ async def test_create_session_response_already_carries_real_pty_pid():
             auto_start_claude=False,
         )
 
-    assert session.pty_pid == 4285, (
+    assert session.pty_pid == 98765, (
         f"create_session response must carry the real pid, got {session.pty_pid!r}"
     )

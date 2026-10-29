@@ -16,7 +16,7 @@ KINDS = ("sessions", "blueprint_members", "project_defaults")
 
 
 class UsageUnknown(RuntimeError):
-    """A reference kind could not be read, so "unreferenced" cannot be claimed. The message names the kind."""
+    pass
 
 
 def count_references(conn: sqlite3.Connection, profile_id: str) -> Dict[str, int]:

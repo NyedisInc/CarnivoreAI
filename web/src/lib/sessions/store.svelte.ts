@@ -45,14 +45,12 @@ let recentInFlight = $state(false);
 let projects = $state<ProjectRow[]>([]);
 let projectsListingOk = $state<boolean | null>(null);
 let archivedFetchOk = $state<boolean | null>(null);
-/* CANNOT DETERMINE */
 let projectAuthority = $state<ProjectAuthority | null>(null);
 let projectPresence = $state<Map<string, ProjectPresenceRow>>(new Map());
 let runningSessions = $state<RunningSessionRow[]>([]);
 let runningSessionsListing = $state<ListingState>(emptyListing());
 let sessionAttribution = $state<Map<string, SessionRecord>>(new Map());
 let sessionAttributionByInstance = $state<Map<string, SessionRecord>>(new Map());
-/* could not */
 let sessionAttributionAmbiguous = $state<Set<string>>(new Set());
 let sessionAttributionListingOk = $state(true);
 /* could not be read */
@@ -63,6 +61,9 @@ let workStampByName = $state<Map<string, string>>(new Map());
 let poller: Poller | null = null;
 let runningGeneration = 0;
 let newestRunningLoad: Promise<void> | null = null;
+let projectsGeneration = 0;
+let recentGeneration = 0;
+let attributionGeneration = 0;
 
 let host: SessionHost | null = null;
 
@@ -87,9 +88,7 @@ function applyAttribution(snap: AttributionSnapshot): void {
     sessionAttributionListingDetail = snap.listingDetail;
 }
 
-/* could not */
 async function fetchRunningSessions(t: Translate, generation: number): Promise<void> {
-    // could not
     const flags = (hostWindow() as unknown as {
         UIFlags?: { ensure?: unknown };
     } | undefined)?.UIFlags;
@@ -123,7 +122,6 @@ export const sessionStore = {
     set projectsListingOk(value: boolean | null) { projectsListingOk = value; },
     get archivedFetchOk(): boolean | null { return archivedFetchOk; },
     set archivedFetchOk(value: boolean | null) { archivedFetchOk = value; },
-    /* CANNOT DETERMINE */
     get projectAuthority(): ProjectAuthority | null { return projectAuthority; },
     set projectAuthority(value: ProjectAuthority | null) { projectAuthority = value; },
     get projectPresence(): Map<string, ProjectPresenceRow> { return projectPresence; },
@@ -140,7 +138,6 @@ export const sessionStore = {
     set sessionAttributionByInstance(value: Map<string, SessionRecord>) {
         sessionAttributionByInstance = value;
     },
-    /* could not */
     get sessionAttributionAmbiguous(): Set<string> { return sessionAttributionAmbiguous; },
     set sessionAttributionAmbiguous(value: Set<string>) { sessionAttributionAmbiguous = value; },
     get sessionAttributionListingOk(): boolean { return sessionAttributionListingOk; },
@@ -166,24 +163,26 @@ export const sessionStore = {
         includeArchived: boolean,
         t: RecentTranslate,
     ): Promise<void> {
+        const mine = ++recentGeneration;
         recentInFlight = true;
         try {
             const payload = await fetchRecent(!!includeArchived);
+            if (mine !== recentGeneration) return;
             recentPayload = {
-                // did not answer
                 state: (payload && payload.state) || 'probe_unavailable',
                 sessions: (payload && payload.sessions) || [],
                 notice: (payload && payload.notice) || null,
             };
         } catch (error) {
             console.warn('CloudeWeb: failed to load recent sessions:', error);
+            if (mine !== recentGeneration) return;
             recentPayload = {
                 state: 'probe_unavailable',
                 sessions: [],
                 notice: loadFailedNotice(error, t),
             };
         } finally {
-            recentInFlight = false;
+            if (mine === recentGeneration) recentInFlight = false;
         }
     },
 
@@ -216,6 +215,7 @@ export const sessionStore = {
         includeArchived: boolean,
         t: Translate,
     ): Promise<{ ok: boolean; error: string | null }> {
+        const mine = ++projectsGeneration;
         let sidecars: Promise<unknown> = Promise.resolve();
         try {
             const listing = activeHost().getProjects(includeArchived);
@@ -223,14 +223,19 @@ export const sessionStore = {
                 this.loadProjectPresence(),
                 this.loadProjectAuthority(),
             ]);
-            projects = await listing;
-            projectsListingOk = true;
-            archivedFetchOk = includeArchived ? true : null;
+            const answered = await listing;
+            if (mine === projectsGeneration) {
+                projects = answered;
+                projectsListingOk = true;
+                archivedFetchOk = includeArchived ? true : null;
+            }
             await sidecars;
             return { ok: true, error: null };
         } catch (error) {
-            projectsListingOk = false;
-            archivedFetchOk = includeArchived ? false : null;
+            if (mine === projectsGeneration) {
+                projectsListingOk = false;
+                archivedFetchOk = includeArchived ? false : null;
+            }
             await sidecars;
             console.error('CloudeWeb: failed to load projects:', error);
             return { ok: false, error: projectsLoadFailed(error, t) };
@@ -238,7 +243,9 @@ export const sessionStore = {
     },
 
     async loadSessionAttribution(t: Translate): Promise<void> {
-        applyAttribution(await startAttribution(t));
+        const mine = ++attributionGeneration;
+        const snap = await startAttribution(t);
+        if (mine === attributionGeneration) applyAttribution(snap);
     },
 
     loadRunningSessions(t: Translate): Promise<void> {
@@ -263,6 +270,9 @@ export const sessionStore = {
 
     reset(): void {
         ++runningGeneration;
+        ++projectsGeneration;
+        ++recentGeneration;
+        ++attributionGeneration;
         newestRunningLoad = null;
         this.stopPolling();
         recentPayload = null;

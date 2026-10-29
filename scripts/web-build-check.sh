@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-#
-#
-#
-#
-#
-#
 set -uo pipefail
 
 MODE=master
@@ -30,13 +24,21 @@ GENERATED_PATHS=(
     "${REPO_ROOT}/features/schema.json"
 )
 
-# pop-out window
-EXPECTED_OUTPUTS=(app.js app.css style-guide.js popout.js popout.css pair.js pair.css)
+EXPECTED_OUTPUTS=(app.js app.css style-guide.js popout.js popout.css pair.js pair.css widget-preview.js widget-preview.css widget-lab/widget-lab.js widget-lab/widget-lab.css)
 
 fail_cannot_evaluate() {
     echo "web-build-check: CANNOT EVALUATE - $1" >&2
     echo "web-build-check: nothing was proven about client/dist." >&2
     exit 2
+}
+
+git_capture() {
+    local __var="$1" __label="$2" __out __rc
+    shift 2
+    __out="$(git "$@" 2>/dev/null)"
+    __rc=$?
+    [ "${__rc}" -eq 0 ] || fail_cannot_evaluate "git ${__label} failed (exit ${__rc}); an empty answer would have read as clean"
+    printf -v "${__var}" '%s' "${__out}"
 }
 
 [ -d "${WEB_DIR}" ] || fail_cannot_evaluate "no web/ directory at ${WEB_DIR}"
@@ -54,7 +56,7 @@ esac
 
 cd "${REPO_ROOT}" || fail_cannot_evaluate "cannot cd to ${REPO_ROOT}"
 
-was_dirty_before="$(git status --porcelain -- "${DIST_DIR}" 2>/dev/null)"
+git_capture was_dirty_before "status of client/dist" status --porcelain -- "${DIST_DIR}"
 current_branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)"
 
 if [ "${MODE}" = "branch" ]; then
@@ -73,7 +75,7 @@ if [ "${MODE}" = "branch" ]; then
         || fail_cannot_evaluate "base ref ${base_ref} does not resolve (git fetch, or set CLOUDE_WEB_CHECK_BASE)"
     merge_base="$(git merge-base HEAD "${base_ref}" 2>/dev/null)" \
         || fail_cannot_evaluate "no merge base between HEAD and ${base_ref}"
-    carried="$(git diff --cached --name-only "${merge_base}" -- "${GENERATED_PATHS[@]}" 2>/dev/null)"
+    git_capture carried "diff against the merge base" diff --cached --name-only "${merge_base}" -- "${GENERATED_PATHS[@]}"
     if [ -n "${carried}" ]; then
         echo >&2
         echo "== BUNDLE CHANGE ON A BRANCH ==" >&2
@@ -130,7 +132,6 @@ echo "web-build-check: building web/ into client/dist ..."
 ( cd "${WEB_DIR}" && npm run build ) \
     || fail_cannot_evaluate "the vite build failed"
 
-# nothing at all
 missing=()
 untracked=()
 for name in "${EXPECTED_OUTPUTS[@]}"; do
@@ -167,7 +168,7 @@ if [ ${#untracked[@]} -gt 0 ]; then
     exit 1
 fi
 
-drift="$(git status --porcelain -- "${DIST_DIR}" 2>/dev/null)"
+git_capture drift "status of client/dist after the rebuild" status --porcelain -- "${DIST_DIR}"
 if [ -n "${drift}" ]; then
     echo >&2
     echo "== STALE BUNDLE ==" >&2

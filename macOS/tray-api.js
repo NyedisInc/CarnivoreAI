@@ -1,4 +1,4 @@
-// could not
+// WHY THIS FILE EXISTS
 
 'use strict';
 
@@ -8,7 +8,6 @@ const REQUEST_TIMEOUT_MS = 8000;
 
 const TRAY_LISTING_MAX_AGE_S = 30;
 
-/* could not */
 function listRowsFromBody(body) {
   if (Array.isArray(body)) return body;
   const list = body && body.collections && body.collections.list;
@@ -159,7 +158,6 @@ class TrayApiClient {
     };
   }
 
-  /* could not */
   async getAuthed(routePath) {
     const first = await this.ensureToken();
     if (!first.token) return { reachable: false, data: null, error: first.error };
@@ -201,7 +199,6 @@ class TrayApiClient {
     return { reachable: true, status: response.status, data: response.data, error: null };
   }
 
-  /* could not */
   async fetchSessions() {
     const pushed = await this.getAuthed(
       `/api/v1/sessions/listing?max_age=${TRAY_LISTING_MAX_AGE_S}`

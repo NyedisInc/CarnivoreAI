@@ -10,13 +10,16 @@ from src.core.attention.evidence import (
     REASON_QUEUED_REINVOKE,
     REASON_RESTING_PROMPT,
     REASON_SUBAGENTS,
+    REASON_TURN_ENDED,
     STATE_BUSY,
+    STATE_DONE_IDLE,
     STATE_UNKNOWN,
     TIER_PANE,
+    TIER_REGISTRY,
     AttentionVerdict,
     Evidence,
 )
-from src.core.attention.transcript_facts import FACTS_FOUND
+from src.core.attention.transcript_facts import FACTS_FOUND, TURN_END_INTERRUPT, TURN_END_NO_MODEL_TURN
 
 
 def _age_seconds(now: datetime, at: Optional[datetime]) -> Optional[float]:
@@ -29,23 +32,6 @@ def _age_seconds(now: datetime, at: Optional[datetime]) -> Optional[float]:
 
 
 def _turn_open_at_eof(evidence: Evidence) -> bool:
-    """Did claude speak or call a tool after the last turn boundary?
-
-    Description: PURE. The stand-in for "the window ends on an unanswered
-      ``tool_use``", which TranscriptFacts does not expose for
-      non-blocking tools (deviation 2 in the module docstring). An
-      assistant record newer than the newest turn-end record means the
-      current turn has produced output and has not ended, which is the
-      shape a permission prompt leaves behind: claude emits the tool_use,
-      then writes nothing at all until the human answers.
-
-      A window with no turn-end record but with an assistant record
-      counts as open, because the turn boundary is either behind the
-      window or has not happened.
-    Inputs: evidence (Evidence).
-    Output: bool - False whenever the transcript could not be read.
-    Example: _turn_open_at_eof(ev) -> True
-    """
     facts = evidence.transcript
     if facts.newest_assistant_at is None:
         return False
@@ -55,15 +41,6 @@ def _turn_open_at_eof(evidence: Evidence) -> bool:
 
 
 def _turn_at_rest(evidence: Evidence) -> bool:
-    """Is the newest turn-end record the last word in the window?
-
-    Description: PURE. The positive opposite of :func:`_turn_open_at_eof`,
-      and not its negation: a transcript that could not be read is
-      neither open nor at rest, and both answer False here.
-    Inputs: evidence (Evidence).
-    Output: bool.
-    Example: _turn_at_rest(ev) -> True
-    """
     facts = evidence.transcript
     if facts.verdict != FACTS_FOUND or facts.turn_end_at is None:
         return False
@@ -140,3 +117,50 @@ def _blocked_tool_reason(tool: str) -> str:
     if tool == "ExitPlanMode":
         return REASON_PLAN_APPROVAL
     return REASON_QUESTION
+
+
+def idle_turn_ended_verdict(
+    evidence: Evidence, *, previous_process_only: bool, unprompted: bool, fresh: bool,
+    status_age: Optional[float], quiet: Optional[float], still_appending: bool, shell_note: str,
+) -> AttentionVerdict:
+    facts = evidence.transcript
+
+    corroborated = (
+        ""
+        if fresh
+        else ", and that idle stamp is %.0fs old but the transcript "
+        "corroborates it" % (status_age or 0.0)
+    )
+    if quiet is None:
+        quiet_note = "there is no transcript to time"
+    elif still_appending:
+        quiet_note = (
+            "the transcript appended %.1fs ago, which is the shell "
+            "claude reports still running and not the turn" % quiet
+        )
+    else:
+        quiet_note = "the transcript has been quiet for %.1fs" % quiet
+    ended = {
+        TURN_END_INTERRUPT: "the turn was stopped with an interrupt "
+        "(Esc) with no agents pending",
+        TURN_END_NO_MODEL_TURN: "no model turn has run yet, only "
+        "local slash commands, so nothing is pending",
+    }.get(facts.turn_end_kind, "the turn ended with no agents pending")
+    if previous_process_only:
+        ended = (
+            "this claude process has written nothing to the "
+            "transcript since it started, so it has run no turn"
+        )
+    elif unprompted:
+        ended = (
+            "no transcript exists yet and its status has not changed "
+            "since it started, so it has never been prompted"
+        )
+    return _verdict(
+        STATE_DONE_IDLE,
+        REASON_TURN_ENDED,
+        TIER_REGISTRY,
+        "claude reports idle, %s and %s%s%s"
+        % (ended, quiet_note, corroborated, shell_note),
+        evidence=evidence,
+    )

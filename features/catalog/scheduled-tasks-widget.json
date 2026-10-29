@@ -41,6 +41,12 @@
     "Check at a glance that the nightly fleet check actually ran last night, without opening the desktop app.",
     "Spot a task that has never run since it was created."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "screenshot",
+      "file": "widget.png",
+      "caption": "The scheduled tasks widget on the home screen",
+      "alt": "A home screen cell titled scheduled tasks listing two tasks with their description and last run: 3h ago and 1d ago"
+    }
+  ]
 }

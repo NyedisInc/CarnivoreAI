@@ -1,5 +1,4 @@
 @layer legacy {
-/* --color- */
 
 .paste-fallback {
     position: fixed;
@@ -38,7 +37,6 @@
     color: var(--oc-text-secondary);
 }
 
-/* user-select: none */
 .paste-fallback__input {
     width: 100%;
     min-height: 96px;
@@ -53,11 +51,6 @@
     border-radius: var(--oc-radius-sm);
     -webkit-user-select: text;
     user-select: text;
-}
-
-.paste-fallback__input:focus {
-    outline: none;
-    border-color: var(--oc-orange);
 }
 
 .paste-fallback__actions {

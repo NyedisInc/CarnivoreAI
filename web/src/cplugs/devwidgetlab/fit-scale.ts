@@ -16,6 +16,7 @@ export function watchWidth(node: HTMLElement, report: (width: number) => void): 
 
 export const PAGE_GUTTER_PX = 26;
 
+/* the phone layout */
 export function frameScale(phone: boolean, page: number, frame: number): number {
   return phone ? scaleFor(page - PAGE_GUTTER_PX, frame) : 1;
 }

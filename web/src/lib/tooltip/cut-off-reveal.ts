@@ -3,7 +3,6 @@ import { isClipped } from './truncated-tip';
 export const REVEAL_ATTR = 'data-cut-off-reveal';
 const MAX_DEPTH = 8;
 
-/* overflow:hidden; text-overflow:ellipsis; white-space:nowrap */
 export function cutsWithEllipsis(el: Element): boolean {
   const cs = getComputedStyle(el);
   if (cs.textOverflow === 'ellipsis') return true;

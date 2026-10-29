@@ -1,12 +1,14 @@
 
 from __future__ import annotations
 
+import functools
 import re
 from typing import Optional
 
 _BAD = re.compile(r"[^A-Za-z0-9._-]")
 
 
+@functools.lru_cache(maxsize=1)
 def local_computer() -> Optional[str]:
     from src.core.federation.discovery import local_host_name  # noqa: PLC0415
 

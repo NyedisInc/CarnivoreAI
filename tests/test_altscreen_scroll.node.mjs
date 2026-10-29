@@ -42,7 +42,7 @@ const RULE = '─'.repeat(100);
 const CLAUDE_LIVE = [
     '',
     ' ▐▛███▜▌   Claude Code v2.1.199',
-    '  ‘‘ ’’    ~/project',
+    '  ‘‘ ’’    ~/Scratch/scratch-lab/altscreen-lab',
     '',
     '❯ TRANSCRIPT LINE 0229 user marker',
     '',
@@ -51,7 +51,7 @@ const CLAUDE_LIVE = [
     RULE,
     '❯ Try "how do I log an error?"',
     RULE,
-    '  [aaaaaaa] host:⌂/~/work',
+    '  [aaaaaaa] sam@Joe-MBP-M1:⌂/Scratch/scratch-lab/altscreen-lab',
     '  ← for agents',
 ];
 

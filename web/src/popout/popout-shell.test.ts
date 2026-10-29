@@ -21,6 +21,7 @@ function ruleFor(selector: string): string {
 
 test('the window is ONE scroller: #popout-screen is a flex column that scrolls, the page itself never does', () => {
   const screen = ruleFor('#popout-screen');
+  // flex: 1 1 auto
   expect(screen).toMatch(/display:\s*flex/);
   expect(screen).toMatch(/flex-direction:\s*column/);
   expect(screen).toMatch(/overflow-y:\s*auto/);

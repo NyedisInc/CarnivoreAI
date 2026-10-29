@@ -1,21 +1,10 @@
 import { t } from '../i18n/index.svelte';
 import { ApiError } from '../../opscenter/api/auth.svelte';
+import { codeWords, reasonWords } from './logic/words';
 import type { Actor, Automation, RunSummary } from './api';
 
-export function codeLabel(prefix: string, code: string): string {
-  const key = `${prefix}.${code}`;
-  const text = t(key);
-  return text === key ? code : text;
-}
-
-export function reasonLabel(reason: string | null | undefined): string {
-  if (!reason) return '';
-  const exit = /^exit_(\d+)$/.exec(reason);
-  return exit ? t('automations.reason.exit', { n: exit[1] ?? '' }) : codeLabel('automations.reason', reason);
-}
-
 export function logEventLabel(line: { event: string; status?: unknown }): string {
-  const word = codeLabel('automations.log.event', line.event);
+  const word = codeWords('automations.log.event', line.event);
   const status = typeof line.status === 'string' ? line.status : '';
   return status && !word.includes(status) ? `${word} ${status}` : word;
 }
@@ -30,7 +19,7 @@ export function refusalCode(error: unknown): string {
 export function refusalText(error: unknown): string {
   const code = refusalCode(error);
   if (code) {
-    const known = codeLabel('automations.refused', code);
+    const known = codeWords('automations.refused', code);
     if (known !== code) return known;
   }
   return error instanceof Error ? error.message : String(error);
@@ -45,7 +34,7 @@ function dayLabel(epoch: number): string {
 }
 
 export function runLine(run: RunSummary): string {
-  const reason = reasonLabel(run.reason);
+  const reason = reasonWords(run.reason);
   if (run.status !== 'skipped') return reason;
   const count = run.skip_count ?? 1;
   if (count <= 1) return t('automations.run.skipped_one', { reason });
@@ -63,14 +52,14 @@ export function costLabel(cost: number | null | undefined): string {
 
 export function lastRunLine(run: RunSummary): string {
   if (run.status === 'skipped') return runLine(run);
-  const reason = reasonLabel(run.reason);
-  return [codeLabel('automations.run.status', run.status) + (reason ? `: ${reason}` : ''), costLabel(run.cost_usd)].join(', ');
+  const reason = reasonWords(run.reason);
+  return [codeWords('automations.run.status', run.status) + (reason ? `: ${reason}` : ''), costLabel(run.cost_usd)].join(', ');
 }
 
 export function actorLabel(actor: Actor | null | undefined): string {
   if (!actor) return t('automations.actor.unknown');
   if (actor.kind === 'mcp') return t('automations.actor.mcp', { who: actor.tmux || actor.session_id || actor.client || '?' });
-  return codeLabel('automations.actor', actor.kind);
+  return codeWords('automations.actor', actor.kind);
 }
 
 export function modifiedLine(automation: Automation): string {
@@ -86,4 +75,9 @@ export function valueLabel(value: unknown): string {
 
 export function toMinutes(seconds: number): number {
   return Math.max(1, Math.round(seconds / 60));
+}
+
+export function fieldSeconds(minutes: number, stored: number | null | undefined): number {
+  const whole = Math.round(minutes);
+  return stored != null && toMinutes(stored) === whole ? stored : whole * 60;
 }

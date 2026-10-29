@@ -35,7 +35,7 @@
         </p>
     {:else}
         {#if view.checked !== null}
-            <!-- could not -->
+            
             <p class="cat-grade__note">
                 {t(SKILL_KEYS.gradeChecked, { count: view.checked })}
             </p>
@@ -64,7 +64,7 @@
                 {/each}
             </ul>
         {:else if !view.failedMalformed}
-            <!-- could not be read -->
+            <!-- could not be read there is nothing -->
             <p class="cat-grade__note">{t(SKILL_KEYS.gradeNoFailures)}</p>
         {/if}
 
@@ -75,7 +75,7 @@
         {/if}
 
         {#if view.failedMalformed}
-            <!-- could not -->
+            
             <p class="cat-grade__note cat-grade__note--out" role="status">
                 {t(SKILL_KEYS.gradeFailedMalformed)}
             </p>

@@ -9,7 +9,6 @@ const WINDOW_FLAG = 'login-window.flag';
 
 const WHICH = Object.freeze(['engine', 'window', 'background']);
 
-/*  background: (boolean|null)}} background is null unless a service is passed; */
 function readLogin({ installer, dir, fsImpl, service = null }) {
   const f = fsImpl || fs;
   if (!installer) return { engine: null, window: null, background: null };

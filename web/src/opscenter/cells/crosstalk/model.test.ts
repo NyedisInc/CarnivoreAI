@@ -144,7 +144,7 @@ describe('layout and the stacked divider', () => {
     expect(layoutFor(320, 480)).toBe('stack');
     expect(layoutFor(300, 200)).toBe('drill');
   });
-  it('stacks in a right bar shared by two widgets', () => {
+  it('stacks in a right bar shared by two widgets (Joe, 2026-10-21: "I don\'t see that")', () => {
     expect(STACK_MIN_HEIGHT).toBe(320);
     expect(layoutFor(380, 420)).toBe('stack');
     expect(layoutFor(380, 320)).toBe('stack');

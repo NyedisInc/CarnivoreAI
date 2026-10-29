@@ -1,31 +1,3 @@
-"""Resolve the REAL files the idle seed reads mtimes off, and stat them.
-
-Description: the I/O half of seeding (see :mod:`idle_seed` for the pure
-  selection logic). Everything here is bounded, synchronous file-stat and
-  small-file work, run at most once per session for the life of the
-  process (the caller in :mod:`src.core.attention_wiring` gates on that),
-  so doing it inline costs nothing worth avoiding.
-
-  EVERY PATH HERE IS RESOLVED THROUGH THE SAME FUNCTION THE ATTENTION
-  READERS ALREADY USE. The claude registry directory and lookup come from
-  :mod:`src.core.attention.registry_read` (the exact scan and identity
-  gates :mod:`src.core.attention_reader` runs for the default profile);
-  the transcript path comes from
-  :func:`src.core.session_transcript_presence.conversation_presence`, the
-  same resolver :func:`src.core.listing_attention.transcript_facts_for`
-  calls; the codex rollout path comes from
-  :func:`src.core.attention.codex_gather.rollout_path_for`. Nothing here
-  re-derives a lookup that already exists.
-
-  THE PROFILE FALLBACK IS THE ONE NEW LOOKUP. A session launched on a
-  managed account (``~/.carnivore/accounts/<id>``, issue #151) registers
-  under that profile's ``sessions``. When the record handed in does not
-  resolve, every registry root (``claude_config.profile_roots``: the
-  default plus each account profile's ``sessions``, #1102) is scanned in turn with the SAME :func:`registry_for_session`
-  resolver (same identity gates: the tmux instance floor and the
-  conversation uuid), so the first one that answers REG_OK is trusted
-  exactly as much as the default-directory answer would have been.
-"""
 
 from __future__ import annotations
 
@@ -38,12 +10,8 @@ import structlog
 
 from src.core.attention.codex_gather import DEFAULT_CODEX_HOME, rollout_path_for
 from src.core.attention.codex_reader import CodexEvidence
-from src.core.attention.registry_read import (
-    REG_OK,
-    RegistryRecord,
-    read_registry_index,
-    registry_for_session,
-)
+from src.core.attention.registry_record import REG_OK, RegistryRecord
+from src.core.attention.registry_index import read_registry_index, registry_for_session
 from src.core.claude_config.profile_roots import claude_registry_roots, registry_file_path
 from src.core.auto_sleep.idle_seed import (
     SOURCE_CLAUDE_REGISTRY,

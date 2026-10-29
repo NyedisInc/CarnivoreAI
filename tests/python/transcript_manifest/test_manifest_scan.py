@@ -18,7 +18,7 @@ from src.core.transcript_manifest import scan as scan_mod
 
 A, B, C = ("aaaaaaaa-0000-0000-0000-00000000000a", "aaaaaaaa-0000-0000-0000-00000000000b",
            "aaaaaaaa-0000-0000-0000-00000000000c")
-AGENT = "agent-225fde27"
+AGENT = "agent-1a2b3c4d"
 
 
 def _line(serial: str) -> bytes:

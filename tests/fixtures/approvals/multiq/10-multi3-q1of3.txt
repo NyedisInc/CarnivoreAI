@@ -1,0 +1,50 @@
+ ▐▛███▛█   Claude Code v2.1.296
+▝▜██████▀  Sonnet 5.5 · Claude Max
+ ▝▝          ▝▝   ~/scratch-lab/ui-fixes-2026-10-10/c2-rig
+
+  Updated to latest. Got 50 features, 423 bugfixes, and 128 other changes.
+  code.claude.com/docs/en/changelog for details
+
+▎ Auto mode is now Claude Code's default permission mode.
+▎ Auto mode lets Claude handle permission prompts automatically. Claude checks each tool call for risky actions and prompt injection before executing, runs the
+▎ ones it assesses as lower-risk, and blocks the rest.
+▎ https://code.claude.com/docs/en/permission-modes
+
+❯ Call the AskUserQuestion tool exactly once, with exactly one question and nothing else, no other tools: question "Pick a fruit?", header "Fruit", multiSelect
+  false, options [{label "Apple", description "red and crisp"}, {label "Banana", description "yellow and soft"}, {label "Cherry", description "small and
+  tart"}]. After I answer, reply with only the answer you received.
+  ⎿  Invalid tool parameters
+
+⏺ Sonnet 5.5's safeguards stopped the response above · continuing once with that noted
+
+⏺ User answered Claude's questions:
+  ⎿  · Pick a fruit? → Plum
+
+⏺ Plum
+
+✻ Cogitated for 9s · done 1:26 AM
+
+❯ Call the AskUserQuestion tool exactly once with this exact input and no other tools: {"questions":[{"question":"Which color?","header":"Color","multiSelect":
+  false,"options":[{"label":"Red","description":"warm"},{"label":"Green","description":"natural"},{"label":"Blue","description":"cool"}]},{"question":"Which
+  toppings?","header":"Toppings","multiSelect":true,"options":[{"label":"Cheese","description":"melty"},{"label":"Olives","description":"salty"},{"label":"Pepp
+  ers","description":"spicy"}]},{"question":"Which
+  size?","header":"Size","multiSelect":false,"options":[{"label":"Small","description":"S"},{"label":"Large","description":"L"}]}]} After I answer, reply with
+  only the answers you received.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☐ Color  ☐ Toppings  ☐ Size  ✔ Submit  →
+
+Which color?
+
+❯ 1. Red
+     warm
+  2. Green
+     natural
+  3. Blue
+     cool
+  4. Type something.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+
+

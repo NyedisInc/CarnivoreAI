@@ -103,6 +103,7 @@ export class BookmarksPanelState {
       done = result.ok || result.killed_live_pane;
       this.armed = false;
       await this.load();
+      if (!result.ok) throw new Error(result.detail || t('bookmarks.rewind_failed'));
       return t(result.resumed_copy ? 'bookmarks.rewound' : 'bookmarks.rewound_other');
     });
     return done;

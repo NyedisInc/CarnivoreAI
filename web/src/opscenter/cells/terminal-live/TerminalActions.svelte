@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* keep awake */
   import type { Snippet } from 'svelte';
   import Icon from '../../ui/Icon.svelte';
   import { sessions, asleep, sleepSession } from '../../api';
@@ -29,7 +28,6 @@
   let { slot, sessionId, width = 0, utilities, groupSlot = null, sessionName = null, getPalette, inHeader = false, agentFamily = null }: {
     slot: string; sessionId: string; width?: number; utilities?: Snippet; groupSlot?: string | null;
     inHeader?: boolean;
-    /* keep awake */
     agentFamily?: string | null;
     sessionName?: string | null;
     getPalette?: () => Record<string, string> | undefined;
@@ -239,6 +237,7 @@
   function runNotes(showing?: boolean): void {
     options?.hidePopover();
     const mine = showing ?? (notesAreOpen() && activeTerminalSlot() === slot);
+    // there is nothing
     if (!mine && notesAreOpen()) return;
     toggleSessionNotes();
   }
@@ -267,6 +266,7 @@
   }
   type TerminalActionId = Parameters<typeof terminalAction>[1];
 
+  /* too rather than */
   const PRIMARY_SESSION_GONE_EVENT = 'cloude:primary-session-gone';
 
   async function sleepThis(): Promise<void> {
@@ -286,6 +286,7 @@
   }
 
   const frameHeader = useFrameHeader();
+  /* the widget menu */
   let background = $state<{ toggleAt(anchor: HTMLElement): void } | null>(null);
   const headIcon = (): HTMLElement | null => tools?.closest('[data-widget-head]')?.querySelector<HTMLElement>('[data-corner]') ?? tools;
   $effect(() => {
@@ -361,7 +362,7 @@
   {/if}
 </div>
 {#if !inHeader}
-<!-- tabindex= -->
+
 <div class="cell-options popup-focus" bind:this={options} popover="auto" role="menu" tabindex="-1"
   aria-label={t('terminal.options.label')}
   ontoggle={(event) => {
@@ -426,7 +427,7 @@
 
     .bar-utilities :global([data-bookmarks-open]) { height:var(--cell-tool-h, var(--oc-ibtn-size, 20px)); }
 
-    :global(.oc-frame-strip) .cell-tools { align-self:stretch; box-sizing:border-box; border-top:calc(2 * var(--oc-border)) solid transparent; border-bottom:var(--oc-border) solid transparent; --cell-tool-h:100%; }
+    :global(.oc-frame-strip) .cell-tools { align-self:stretch; box-sizing:border-box; border-top:0; border-bottom:calc(var(--oc-border) + 5px) solid transparent; --cell-tool-h:100%; }
 
     button:hover, button:focus-visible, .cell-tools :global(.tbg-open:hover), .cell-tools :global(.tbg-open:focus-visible) { border-color:var(--oc-orange); background:var(--oc-ground-hover); transform:none; }
 

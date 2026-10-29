@@ -65,6 +65,7 @@ def test_a_project_agents_settings_deny_no_create_tool():
 @pytest.mark.parametrize("tool", sorted(RENAMED))
 @pytest.mark.parametrize("who", ["sysop", "acme"])
 def test_the_server_refuses_a_company_or_sysop_pane_even_when_its_settings_file_predates_the_rename(env, who, tool):
+    """RED WHEN: a live Company agent or SysOp can fork or create a group by the new name because its settings file is old."""
     assert asyncio.run(guard.create_refusal(_pane(who), tool)) == guard.CREATE_REFUSAL
     assert asyncio.run(guard.refusal(_pane(who), tool)) == guard.CREATE_REFUSAL
 

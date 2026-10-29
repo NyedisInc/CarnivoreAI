@@ -1,49 +1,4 @@
 #!/usr/bin/env python3
-"""fix/logout-button - does clicking logout actually LOG THE USER OUT.
-
-The cause was `onclick="App.logout()"` in client/index.html against
-src/main.py's `script-src 'self'`, which forbids inline event handlers.
-The browser refuses to run the handler, logs a CSP violation to the
-console, and raises NOTHING - no page error, no rejected promise, no
-changed attribute. There is no markup assertion that can see this, and
-there is no static harness that can see it either, because a plain
-static file server sends no CSP header and the inline handler runs fine
-there. THAT is why this script boots the REAL uvicorn app: the header
-under test is produced by the application, so anything less than the
-application cannot be evidence about it.
-
-It asserts on BEHAVIOUR, end to end, never on markup:
-  1. real TOTP login lands on an authenticated screen
-  2. the logout control is reachable and genuinely on screen (pixels)
-  3. clicking it makes the confirmation dialog VISIBLE (measured area,
-     not presence in the DOM)
-  4. confirming it ends the session - the access token is gone and the
-     login screen is the one occupying the viewport
-
-Step 3 and step 4 are separate on purpose. A dialog that renders zero
-pixels and a dialog that renders correctly are the same DOM.
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS  - the whole flow was driven and every step behaved
-  1  FAIL  - a step was measured and was wrong
-  2  CANNOT DETERMINE - the flow could not be driven at all (playwright
-             missing, venv missing, server never became ready, login
-             never completed, tab reported itself hidden). Never a pass.
-
-The hidden-tab check is not paranoia: a backgrounded Chromium tab
-freezes CSS transitions at frame zero and never fires rAF, so a computed
-style or a measured box read there means nothing.
-
-SAFETY. This starts a throwaway server against a throwaway config in a
-temp directory, on an ephemeral port, with its own generated TOTP and
-JWT secrets and - load bearing - its own `tmux_socket_name`, so it can
-never address the socket a real Cloude Code is using. It never touches
-the user's config.json.
-
-playwright is not importable under this project's venv. Run it with an
-interpreter that has it, e.g.
-    /opt/homebrew/bin/python3 scripts/verify_logout_chrome.py
-"""
 
 from __future__ import annotations
 

@@ -1,11 +1,3 @@
-"""The preflight for a project move: every check named, nothing changed.
-
-A PLAN IS A MEASUREMENT, NOT A PROMISE. ``apply`` never trusts a plan it was
-handed: the route builds a fresh one immediately before applying and refuses
-unless every check passes. A check that could not be measured (the tmux
-listing did not answer, a folder could not be read) FAILS: "could not tell"
-is never read as "nothing there".
-"""
 
 from __future__ import annotations
 

@@ -79,10 +79,10 @@ def test_a_replay_command_that_only_continues_is_unknown_not_resumed():
         CONVERSATION_RESUMED
     )
     assert continuity_from_command("claude --continue") == CONVERSATION_UNKNOWN
-    assert continuity_from_command("keyc") == CONVERSATION_NONE_RECORDED
+    assert continuity_from_command("cld") == CONVERSATION_NONE_RECORDED
     assert continuity_from_command(None) == CONVERSATION_UNKNOWN
     assert continuity_from_command(
-        "zsh -c 'source ~/.zshrc >/dev/null 2>&1 </dev/null; keyc'"
+        "zsh -c 'source ~/.zshrc >/dev/null 2>&1 </dev/null; cld'"
     ) == CONVERSATION_NONE_RECORDED
 
 
@@ -92,8 +92,8 @@ def test_the_agent_rung_reports_resumed_when_the_command_carries_a_resume():
     plan = resolve_respawn_plan(
         probe_ok=True,
         pane_dead="1",
-        pane_start_command='"keyc"',
-        agent_command=f"zsh -c 'keyc --resume {UUID}'",
+        pane_start_command='"cld"',
+        agent_command=f"zsh -c 'cld --resume {UUID}'",
         resume_outcome=CONVERSATION_RESUMED,
     )
     assert plan.kind == RESPAWN_AGENT
@@ -106,8 +106,8 @@ def test_the_agent_rung_says_so_when_there_is_no_conversation():
     plan = resolve_respawn_plan(
         probe_ok=True,
         pane_dead="1",
-        pane_start_command='"keyc"',
-        agent_command="zsh -c 'keyc'",
+        pane_start_command='"cld"',
+        agent_command="zsh -c 'cld'",
         resume_outcome=CONVERSATION_NONE_RECORDED,
     )
     assert plan.kind == RESPAWN_AGENT
@@ -120,8 +120,8 @@ def test_a_caller_claiming_a_resume_with_no_uuid_is_downgraded():
     plan = resolve_respawn_plan(
         probe_ok=True,
         pane_dead="1",
-        pane_start_command='"keyc"',
-        agent_command="zsh -c 'keyc'",
+        pane_start_command='"cld"',
+        agent_command="zsh -c 'cld'",
         resume_outcome=CONVERSATION_RESUMED,
     )
     assert plan.conversation == CONVERSATION_NONE_RECORDED
@@ -131,8 +131,8 @@ def test_an_unstated_lookup_is_unknown_not_none_recorded():
     plan = resolve_respawn_plan(
         probe_ok=True,
         pane_dead="1",
-        pane_start_command='"keyc"',
-        agent_command="zsh -c 'keyc'",
+        pane_start_command='"cld"',
+        agent_command="zsh -c 'cld'",
     )
     assert plan.conversation == CONVERSATION_UNKNOWN
     assert "cannot be determined" in plan.detail
@@ -160,8 +160,8 @@ def test_a_projection_can_never_arm_a_kill_whatever_the_conversation():
         CONVERSATION_UNKNOWN,
         "some-future-word",
     ):
-        for start in (None, "", '"keyc"'):
-            for agent in (None, f"keyc --resume {UUID}"):
+        for start in (None, "", '"cld"'):
+            for agent in (None, f"cld --resume {UUID}"):
                 plan = project_restart_rung(
                     probe_ok=True,
                     pane_start_command=start,
@@ -174,22 +174,22 @@ def test_a_projection_can_never_arm_a_kill_whatever_the_conversation():
 
 
 def test_only_a_measured_live_pane_and_a_confirmation_arm_the_kill():
-    resuming = f"keyc --resume {UUID}"
+    resuming = f"cld --resume {UUID}"
     dead = resolve_respawn_plan(
-        probe_ok=True, pane_dead="1", pane_start_command='"keyc"',
+        probe_ok=True, pane_dead="1", pane_start_command='"cld"',
         agent_command=resuming, resume_outcome=CONVERSATION_RESUMED,
     )
     assert dead.kills_live_pane is False
 
     unconfirmed = resolve_respawn_plan(
-        probe_ok=True, pane_dead="0", pane_start_command='"keyc"',
+        probe_ok=True, pane_dead="0", pane_start_command='"cld"',
         agent_command=resuming, resume_outcome=CONVERSATION_RESUMED,
     )
     assert unconfirmed.kind == "not_dead"
     assert unconfirmed.kills_live_pane is False
 
     confirmed = resolve_respawn_plan(
-        probe_ok=True, pane_dead="0", pane_start_command='"keyc"',
+        probe_ok=True, pane_dead="0", pane_start_command='"cld"',
         agent_command=resuming, resume_outcome=CONVERSATION_RESUMED,
         live_restart_confirmed=True,
     )
@@ -599,9 +599,9 @@ def test_a_verdict_about_one_conversation_never_refuses_another():
         name="two",
         probe_ok=True,
         pane_dead="1",
-        pane_start_command=f'"keyc --resume {other}"',
+        pane_start_command=f'"cld --resume {other}"',
         stored_agent_type="claude",
-        stored_agent_command=f"keyc --resume {UUID}",
+        stored_agent_command=f"cld --resume {UUID}",
         offers=[],
         presence_by_uuid={other: (CONVERSATION_ABSENT, "that one is gone")},
         resume_outcome=CONVERSATION_RESUMED,

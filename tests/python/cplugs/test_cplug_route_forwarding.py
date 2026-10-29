@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, List
@@ -9,6 +10,7 @@ from typing import Any, Callable, Dict, List
 import pytest
 
 from src.cplugs.host import identity, runtime, sidecar_registry
+from src.cplugs.host import state as owner_state
 from src.cplugs.runtime.owner_tokens import OwnerTokens, TokenRefused
 from src.cplugs.runtime.process import ProcessEnded
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
@@ -53,6 +55,8 @@ def world(tmp_path, monkeypatch):
     before = sidecar_registry.current()
     sidecar_registry.install(sidecar_registry.SidecarRegistry(state, lambda: rows))
     assert sidecar_registry.current().reload() == 1 and sidecar_registry.find(NAME).manifest.routes == ("ping", "fire")
+    m = sidecar_registry.find(NAME).manifest
+    owner_state.update(state, m, None, lambda st: replace(st, digest=m.code_digest))
     proc, tokens, flag = FakeProc(), OwnerTokens(), {"on": True, "running": True, "state": "running", "safe": {"off": False}}
     app.state.cplugs_host = runtime.Host(state, app)
     app.state.sidecar_runtime = SimpleNamespace(

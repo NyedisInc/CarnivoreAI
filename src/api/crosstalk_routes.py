@@ -5,6 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 
+from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.core.crosstalk import directory
 from src.core.mcp.protocol import BatchView
@@ -15,12 +16,13 @@ router = APIRouter(prefix="/crosstalk", tags=["crosstalk"], dependencies=[Depend
 @router.get("/agents")
 async def list_agents(
     request: Request,
-    q: Optional[str] = Query(None, description="a name: '@bot-Misc UI', case, spaces and dashes ignored"),
+    q: Optional[str] = Query(None, description="a name: '@Cv-Misc UI', case, spaces and dashes ignored"),
     provider: Optional[str] = Query(None, description="agent family filter, e.g. claude or codex"),
     include_remote: bool = True,
     limit: int = Query(25, ge=1, le=100),
 ) -> dict:
-    """
+    """Agents on this computer and the paired ones, ranked against ``q`` when given.
+
     Output: {"agents": [card], "match": tier | None, "ambiguous": bool, "truncated": bool, "query": str | None}.
     """
     view = BatchView(request.app.state.session_manager, request.app)
@@ -47,6 +49,7 @@ class SendRequest(BaseModel):
 @router.get('/messages')
 async def messages(session: str = Query(..., min_length=1), since: float = Query(0, ge=0),
                    limit: int = Query(200, ge=1, le=500)) -> dict:
+    """Owner's exact session history, including closed rows, for inline cards."""
     import asyncio
     return {'messages': await asyncio.to_thread(store.owner_messages, session, since=since, limit=limit)}
 
@@ -54,7 +57,6 @@ async def messages(session: str = Query(..., min_length=1), since: float = Query
 @router.post('/messages')
 async def send_message(body: SendRequest, request: Request) -> dict:
     """Send as the authenticated owner through the shared bus; an owner send grants its pair."""
-    from fastapi import HTTPException
     from src.core.mcp.common import ToolError
     view = BatchView(request.app.state.session_manager, request.app)
     caller = AgentCaller(session_id='owner', tmux_name='owner', current_session_id='owner', token_name='owner')
@@ -63,7 +65,7 @@ async def send_message(body: SendRequest, request: Request) -> dict:
                               in_reply_to=body.in_reply_to, expect_reply=body.expect_reply,
                               owner_approved=True, task_item=body.task_item)
     except ToolError as exc:
-        raise HTTPException(status_code=409, detail={'code': 'crosstalk_refused', 'message': str(exc)}) from exc
+        raise api_error(409, 'crosstalk_refused', exc) from exc
 
 
 from src.core.crosstalk import history
@@ -76,7 +78,8 @@ async def threads(session: Optional[str] = Query(None, min_length=1, max_length=
                   project: Optional[int] = Query(None, ge=1, description="projects.id; a thread one side belongs to"),
                   before: Optional[float] = Query(None, ge=0, description="only threads last active before this epoch"),
                   limit: int = Query(history.THREADS_LIMIT, ge=1, le=history.THREADS_MAX)) -> dict:
-    """
+    """The owner's past crosstalk threads, newest activity first (issue #1498); the MCP ``crosstalk_threads_list`` reads the same.
+
     Output: {"threads": [{"thread", "participants", "message_count", "last_at", "first_at", "last_preview",
       "last_sender_key", "last_status"}], "next_before"}; text redacted. Re-read on the ``crosstalk`` resource topic.
     """
@@ -94,11 +97,10 @@ async def thread_messages(thread: str, before: Optional[float] = Query(None, ge=
     for a participant.
     """
     import asyncio
-    from fastapi import HTTPException
     try:
         return await asyncio.to_thread(history.thread_messages, thread, before=before, limit=limit)
     except history.HistoryError as exc:
-        raise HTTPException(status_code=404, detail={'code': 'crosstalk_thread_unknown', 'message': str(exc)}) from exc
+        raise api_error(404, 'crosstalk_thread_unknown', exc, thread=thread) from exc
 
 
 @router.get('/task-items/{task_item}/messages')

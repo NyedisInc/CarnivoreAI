@@ -15,7 +15,6 @@ export function familyTags(counts: readonly (readonly [string, number])[]): stri
     return counts.length > FAMILY_TAGS_SHOWN ? [...shown, `+${counts.length - FAMILY_TAGS_SHOWN}`] : shown;
 }
 
-/* running sessions */
 export function toBlueprintItem(blueprint: Blueprint, t: Translate): BlueprintItem {
     const count = t('session.summary.sessions', { count: blueprint.spec.sessions.length });
     const counts = new Map<string, number>();

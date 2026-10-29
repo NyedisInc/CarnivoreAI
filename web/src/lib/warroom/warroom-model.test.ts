@@ -45,7 +45,7 @@ describe('buildWall', () => {
     const sessions = [
       live({ tmux: 'agent', rowId: 1 }),
       live({ tmux: 'sh', rowId: 2, agent_family: 'shell' }),
-      live({ tmux: 'far', rowId: 3, host_key: 'peer-a', host_label: 'hosta', host_state: 'up' }),
+      live({ tmux: 'far', rowId: 3, host_key: 'peer-a', host_label: 'studio', host_state: 'up' }),
     ];
     const data = { sessions, asleep: [record('u1', 'sleepy')], browsers: [browser('b1', 'https://x.test/p?token=1')] };
     const kinds = (toggles: Partial<WallInput['toggles']>): string[] =>
@@ -71,9 +71,9 @@ describe('buildWall', () => {
   });
 
   test('a paired computer groups under its own label and carries its offline state', () => {
-    const wall = buildWall(input({ sessions: [live({ tmux: 'far', rowId: 3, host_key: 'peer-a', host_label: 'hosta', host_state: 'disconnected' })] }));
-    expect(wall[0]!.label).toBe('hosta');
+    const wall = buildWall(input({ sessions: [live({ tmux: 'far', rowId: 3, host_key: 'peer-a', host_label: 'studio', host_state: 'disconnected' })] }));
+    expect(wall[0]!.label).toBe('studio');
     const tile = wall[0]!.tiles[0]!;
-    expect(tile.kind === 'live' && (tile as { offline: string | null }).offline).toBe('hosta');
+    expect(tile.kind === 'live' && (tile as { offline: string | null }).offline).toBe('studio');
   });
 });

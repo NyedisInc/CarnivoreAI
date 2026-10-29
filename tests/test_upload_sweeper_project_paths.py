@@ -37,8 +37,8 @@ def state_dir(tmp_path: Path) -> Path:
 def test_readable_db_view_returns_real_project_paths(state_dir: Path) -> None:
     with closing(connect(db_path_for(state_dir))) as conn:
         with conn:
-            create_project(conn, name="aa-one", path="/tmp/aa-one")
-            create_project(conn, name="bb-two", path="/tmp/bb-two")
+            create_project(conn, name="proj-a", path="/tmp/proj-a")
+            create_project(conn, name="proj-b", path="/tmp/proj-b")
 
     view = resolve_projects(state_dir)
     assert view.writable is True
@@ -49,7 +49,7 @@ def test_readable_db_view_returns_real_project_paths(state_dir: Path) -> None:
         "a writable view with real rows must not be reported as "
         "unreadable - this is the exact regression the read_only typo caused"
     )
-    assert sorted(paths) == ["/tmp/aa-one", "/tmp/bb-two"]
+    assert sorted(paths) == ["/tmp/proj-a", "/tmp/proj-b"]
 
 
 def test_empty_but_readable_db_returns_empty_list_not_none(state_dir: Path) -> None:

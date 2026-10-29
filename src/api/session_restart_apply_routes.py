@@ -6,8 +6,9 @@ from src.api.peer_auth import require_peer_sessions
 from src.config import settings
 from src.core import restart_inflight
 from src.core.agent_families import get_family
-from src.core.session_label import sanitize_tmux_name
+from src.core.session_name_claim import sanitize_tmux_name
 from src.models import RestartSessionResponse
+from src.api.error_response import api_error, refusal_error, soft_failure
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -34,9 +35,7 @@ async def restart_session(request: Request, session_uuid: str):
         with restart_inflight.claim(session_uuid):
             return await _restart_session(request, session_uuid)
     except restart_inflight.RestartInFlightError as exc:
-        raise HTTPException(
-            status_code=409, detail=restart_inflight.http_detail(exc)
-        )
+        raise api_error(409, restart_inflight.IN_PROGRESS_CODE, exc) from exc
 
 
 async def _restart_session(request: Request, session_uuid: str):
@@ -67,7 +66,7 @@ async def _restart_session(request: Request, session_uuid: str):
     try:
         source, host_key = await run_in_threadpool(_resolve)
     except DatastoreUnreadableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise api_error(503, "datastore_unavailable", exc, session_uuid=session_uuid) from exc
 
     if source.outcome == session_restart.RESTART_UNRESOLVED:
         raise HTTPException(
@@ -128,7 +127,6 @@ async def _restart_session(request: Request, session_uuid: str):
     from src.api.launch_profile_errors import refuse_gone_profile
 
     refuse_gone_profile(settings, source.agent_type, source.launch_record)
-    # active account
     from src.core.account_switch import restart_account
     from src.core.account_switch.launch_env import _config_path
 
@@ -153,17 +151,7 @@ async def _restart_session(request: Request, session_uuid: str):
             claude_account=account_plan.account_id,
         )
     except Exception as exc:
-        logger.warning(
-            "restart_create_failed",
-            replaced_session_uuid=session_uuid,
-            label=label,
-            error=str(exc),
-            error_type=type(exc).__name__,
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"could not create the replacement session: {exc}",
-        )
+        raise api_error(500, "session_restart_failed", exc, replaced_session_uuid=session_uuid, label=label) from exc
 
     child_tmux = getattr(child, "tmux_session", None)
 
@@ -186,11 +174,7 @@ async def _restart_session(request: Request, session_uuid: str):
     try:
         reused = bool(await run_in_threadpool(_verify_reuse))
     except DatastoreUnreadableError as exc:
-        # could not
-        note = (
-            f"the session was restarted, but whether it kept its "
-            f"original record could not be confirmed: {exc}"
-        )
+        note = soft_failure("restart_record_unconfirmed", exc, status=500, session_uuid=session_uuid)
         detail = f"{detail} {note}" if detail else note
     else:
         if not reused:
@@ -220,13 +204,9 @@ async def _restart_remote(session_manager, session_uuid: str, host_key: str, sou
         result = await restart_stopped(session_manager, session_uuid=session_uuid,
                                        host_key=host_key, source=source)
     except HostUnavailable as exc:
-        raise HTTPException(status_code=exc.status,
-                            detail={"code": exc.code, "detail": str(exc)})
+        raise refusal_error(exc, host=host_key) from exc
     except RemoteRestartRefused as exc:
-        raise HTTPException(status_code=exc.status, detail=(
-            {"code": exc.code, "message": exc.detail} if exc.code else exc.detail))
+        raise api_error(exc.status, exc.code or "remote_restart_refused", exc, host=host_key) from exc
     except (ValueError, RuntimeError) as exc:
-        logger.warning("restart_remote_create_failed", host=host_key, error=str(exc))
-        raise HTTPException(status_code=500,
-                            detail=f"could not create the replacement session: {exc}")
+        raise api_error(500, "session_restart_failed", exc, host=host_key, step="remote_create") from exc
     return RestartSessionResponse(**result)

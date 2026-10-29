@@ -16,10 +16,10 @@ from src.core.messaging.runtime import MessagingRuntime
 from src.core.messaging.secrets import MessagingSecrets, ProviderSecrets, match_of
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "approvals"
-JOE = "+15555550100"
-STRANGER = "+15555550199"
-CONV = "any;-;+15555550100"
-OTHER_CONV = "any;-;+15555550111"
+JOE = "+15165550100"
+STRANGER = "+15165550199"
+CONV = "any;-;+15165550100"
+OTHER_CONV = "any;-;+15165550111"
 UUID_A = "aaaaaaaa-1111-4111-8111-111111111111"
 UUID_B = "bbbbbbbb-2222-4222-8222-222222222222"
 TEST_SERVICE = "ai.carnivore.test.messaging"
@@ -92,7 +92,7 @@ class FakeManager:
 
 
 def info(session_id: str, *, row_id: int, status: str = "idle", gate: str = "ready", family: str = "claude",
-         name: str = "ledgerbot") -> SimpleNamespace:
+         name: str = "trader") -> SimpleNamespace:
     return SimpleNamespace(activity_status=status, startup_gate=gate, agent_family=family, tmux_session=f"cloude_{name}",
                            session_row_id=row_id, label=name, claude_title=None, session=SimpleNamespace(id=session_id))
 
@@ -126,13 +126,13 @@ def world(db, monkeypatch):
     keychain = FakeKeychain()
     provider = FakeProvider()
     manager = FakeManager()
-    manager.infos["ses_a"] = info("ses_a", row_id=1, name="ledgerbot")
+    manager.infos["ses_a"] = info("ses_a", row_id=1, name="trader")
     manager.infos["ses_b"] = info("ses_b", row_id=2, name="infra")
     app = SimpleNamespace(state=SimpleNamespace(session_manager=manager))
     rt = MessagingRuntime(app, secrets=MessagingSecrets(backend=keychain, service=TEST_SERVICE),
                           client_factory=lambda row, secrets: provider, start_streams=False)
     app.state.messaging = rt
-    secrets = ProviderSecrets(base_url="http://198.51.100.16:8787", token="tok-not-real", owner_senders=(JOE,),
+    secrets = ProviderSecrets(base_url="http://10.9.9.9:8787", token="tok-not-real", owner_senders=(JOE,),
                               match_key="k" * 64)
     pid = "p_0123456789ab"
     asyncio.run(rt.secrets.save(pid, secrets))
@@ -145,14 +145,14 @@ def world(db, monkeypatch):
     asyncio.run(rt.secrets.save(pid, secrets.with_conversation(conv_id, CONV)))
     asyncio.run(rt.load(pid))
 
-    cards = {UUID_A: {"id": "ses_a", "name": "ledgerbot", "session_uuid": UUID_A, "status": "idle"},
+    cards = {UUID_A: {"id": "ses_a", "name": "trader", "session_uuid": UUID_A, "status": "idle"},
              UUID_B: {"id": "ses_b", "name": "infra", "session_uuid": UUID_B, "status": "idle"}}
 
     async def fake_cards(_app):
         return dict(cards)
 
     monkeypatch.setattr(delivery, "session_cards", fake_cards)
-    screens: Dict[str, str] = {"cloude_ledgerbot": "> \n", "cloude_infra": "> \n"}
+    screens: Dict[str, str] = {"cloude_trader": "> \n", "cloude_infra": "> \n"}
 
     async def capture(_manager, tmux_name):
         return screens.get(tmux_name)

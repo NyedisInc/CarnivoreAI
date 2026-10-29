@@ -1,4 +1,3 @@
-/* the terminal grid */
 import type { ResolvedPlacement } from '../../opscenter/widgets/placement-resolve';
 import type { PlacementOptions } from '../../opscenter/widgets/placement-options';
 import type { FrameHeader } from '../../opscenter/shell/frame-header.svelte';
@@ -8,7 +7,6 @@ import type { WidgetManifest } from '../../opscenter/widgets/types';
 
 export type TabKind = 'terminal' | 'page' | 'widget' | 'panel';
 
-/*  hidden  */
 export type ZoneVisibility = 'shown' | 'hidden' | 'parked';
 
 export type PanelState = 'open' | 'collapsed' | 'closed';
@@ -19,7 +17,6 @@ export interface TabRef {
   placement?: ResolvedPlacement;
   source?: PlacementSource | null;
   options?: PlacementOptions;
-  /*  hidden  */
   unseen?: boolean;
 }
 

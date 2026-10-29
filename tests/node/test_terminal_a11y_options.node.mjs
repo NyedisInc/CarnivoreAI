@@ -40,6 +40,7 @@ const term = () => ({ options: { screenReaderMode: false } });
 const tick = () => new Promise((r) => setImmediate(r));
 
 let n = 0;
+/** Run one named case. */
 async function t(name, fn) { await fn(); n++; console.log(`ok - ${name}`); }
 
 await t('the options builder: auto follows the OS signal, on and off are forced both ways', () => {

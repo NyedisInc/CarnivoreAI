@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 import structlog
 
 from src.cplugs.devwidgetlab.drafts import store
-from src.cplugs.devwidgetlab.errors import BuildBusy, DraftInvalid, DraftNotFound, NoCheckout
+from src.cplugs.devwidgetlab.errors import BuildBusy, DraftInvalid, DraftNotFound, LabError, NoCheckout
 from src.cplugs.sdk import signed_links
 
 logger = structlog.get_logger()
@@ -61,26 +61,41 @@ def _record(folder: Path, **fields: Any) -> None:
 async def _run(folder: Path, repo: Path) -> None:
     build = folder / store.BUILD_FOLDER
     log = build / LOG_FILE
-    log.parent.mkdir(parents=True, exist_ok=True)
-    sha = await asyncio.to_thread(store.head_sha, repo)
-    where = str(repo)
+    sha = ""
     try:
-        with log.open("wb") as sink:
-            proc = await asyncio.create_subprocess_exec(*build_argv(repo), cwd=str(repo / "web"), env=build_env(folder), stdout=sink, stderr=asyncio.subprocess.STDOUT)
-            try:
-                await asyncio.wait_for(proc.wait(), timeout=TIMEOUT_SECONDS)
-            except asyncio.TimeoutError:
-                proc.kill()
-                await proc.wait()
-                _record(folder, state="failed", sha=sha, root=where, log=str(log), error=f"the build took longer than {TIMEOUT_SECONDS} seconds")
-                return
-        if proc.returncode == 0 and (build / SITE_FOLDER / "index.html").is_file():
-            _record(folder, state="built", sha=sha, root=where, built_at=time.strftime("%Y-%m-%dT%H:%M:%S"), log=str(log))
-        else:
-            _record(folder, state="failed", sha=sha, root=where, log=str(log), error=_first_error(log, proc.returncode))
-    except OSError as exc:
-        logger.warning("widget_lab_draft_build_failed", slug=folder.name, error_type=type(exc).__name__, error=str(exc))
-        _record(folder, state="failed", sha=sha, root=where, log=str(log), error=f"{type(exc).__name__}: {exc}")
+        log.parent.mkdir(parents=True, exist_ok=True)
+        sha = await asyncio.to_thread(store.head_sha, repo)
+        await _build_and_record(folder, repo, log, sha)
+    except (LabError, OSError) as exc:
+        logger.error("widget_lab_draft_build_failed", slug=folder.name, error_type=type(exc).__name__, error=str(exc))
+        _record_failed(folder, sha, str(repo), log, f"{type(exc).__name__}: {exc}")
+
+
+async def _build_and_record(folder: Path, repo: Path, log: Path, sha: str) -> None:
+    build = folder / store.BUILD_FOLDER
+    where = str(repo)
+    with log.open("wb") as sink:
+        proc = await asyncio.create_subprocess_exec(*build_argv(repo), cwd=str(repo / "web"), env=build_env(folder), stdout=sink, stderr=asyncio.subprocess.STDOUT)
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=TIMEOUT_SECONDS)
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.wait()
+            _record(folder, state="failed", sha=sha, root=where, log=str(log), error=f"the build took longer than {TIMEOUT_SECONDS} seconds")
+            return
+    if proc.returncode == 0 and (build / SITE_FOLDER / "index.html").is_file():
+        _record(folder, state="built", sha=sha, root=where, built_at=time.strftime("%Y-%m-%dT%H:%M:%S"), log=str(log))
+    else:
+        _record(folder, state="failed", sha=sha, root=where, log=str(log), error=_first_error(log, proc.returncode))
+
+
+def _record_failed(folder: Path, sha: str, root: str, log: Path, error: str) -> None:
+    if not folder.is_dir():
+        return
+    try:
+        _record(folder, state="failed", sha=sha, root=root, log=str(log), error=error)
+    except (LabError, OSError) as exc:
+        logger.error("widget_lab_draft_failure_unrecorded", slug=folder.name, error_type=type(exc).__name__, error=str(exc))
 
 
 def _first_error(log: Path, code: Optional[int]) -> str:
@@ -93,11 +108,7 @@ def _first_error(log: Path, code: Optional[int]) -> str:
     return f"the build exited {code}"
 
 
-def start_build(storage_path: Path, slug: str) -> Dict[str, Any]:
-    """Start a draft's build in the background. Inputs: storage_path; slug. Output: the draft's summary (state ``building``).
-
-    Raises: NoCheckout, DraftInvalid, DraftNotFound, BuildBusy (a build is already running).
-    """
+def prepare_build(storage_path: Path, slug: str) -> tuple[Path, Path]:
     repo = require_buildable(storage_path)
     folder = store.existing_dir(storage_path, slug)
     if is_building():
@@ -105,8 +116,25 @@ def start_build(storage_path: Path, slug: str) -> Dict[str, Any]:
     store.write_overrides_note(folder, store.read_record(folder))
     (folder / store.BUILD_FOLDER).mkdir(exist_ok=True)
     _record(folder, state="building", log=str(folder / store.BUILD_FOLDER / LOG_FILE))
-    _job.update(task=asyncio.ensure_future(_run(folder, repo)), slug=slug)
+    return folder, repo
+
+
+def schedule_build(folder: Path, repo: Path) -> None:
+    if is_building():
+        raise BuildBusy(f"a build is already running for {_job['slug']}")
+    _job.update(task=asyncio.ensure_future(_run(folder, repo)), slug=folder.name)
+
+
+def start_build(storage_path: Path, slug: str) -> Dict[str, Any]:
+    folder, repo = prepare_build(storage_path, slug)
+    schedule_build(folder, repo)
     return store.summary(folder)
+
+
+async def start_build_off_loop(storage_path: Path, slug: str) -> Dict[str, Any]:
+    folder, repo = await asyncio.to_thread(prepare_build, storage_path, slug)
+    schedule_build(folder, repo)
+    return await asyncio.to_thread(store.summary, folder)
 
 
 def building_slug() -> Optional[str]:

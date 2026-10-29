@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from src.core.attention.evidence import Evidence
-from src.core.attention.registry_read import REG_IDLE
+from src.core.attention.registry_record import REG_IDLE
 from src.core.attention.transcript_facts import (
     FACTS_FOUND,
     FACTS_NO_RECORD,

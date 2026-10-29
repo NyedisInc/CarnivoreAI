@@ -73,11 +73,21 @@ def replay_parts(provider: str, data: bytes) -> list[ReplayPart]:
     if len(data) > MAX_SOURCE_BYTES:
         raise ValueError('fork source exceeds the 64 MiB conversion limit')
     parts: list[ReplayPart] = []
-    for raw in data.splitlines():
+    lines = data.split(b'\n')
+    unterminated = lines.pop() if lines else b''
+    if unterminated.strip():
+        lines.append(unterminated)
+    for number, raw in enumerate(lines, start=1):
+        if not raw.strip():
+            continue
         try:
             row = json.loads(raw)
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            if raw is unterminated and number == len(lines):
+                break
             raise ValueError('source transcript contains an invalid record') from exc
+        if not isinstance(row, dict):
+            continue
         if provider == 'claude':
             kind = row.get('type')
             if kind not in ('user', 'assistant') or row.get('isSidechain'):

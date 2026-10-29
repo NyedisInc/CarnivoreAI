@@ -5,7 +5,7 @@ import { terminalLayout } from '../../opscenter/engine/layout.svelte';
 import { PRIMARY_BIND_EVENT } from '../../opscenter/engine/primary-bind';
 import { primarySessionId, sessions } from '../../opscenter/api';
 import NotesDrawer from './NotesDrawer.svelte';
-import { save } from '../../opscenter/api/notes.svelte';
+import { saveAll } from '../../opscenter/api/notes.svelte';
 import { closeDrawer, drawerHolds, openDrawer, registerOccupant, registerOpener } from '../right-drawer/dock.svelte';
 
 export const NOTES_BUTTON_ID = 'sessionNotesBtn';
@@ -38,6 +38,7 @@ function currentTmuxName(): string {
     return tmuxNameFor(primarySessionId());
 }
 
+/* there is nothing */
 function applyStoredVisibility(tmuxName: string): void {
     const name = (tmuxName ?? '').trim();
     if (!name) return;
@@ -126,7 +127,7 @@ export function openNotesAsComponent(): void {
 }
 
 function closePanel(): void {
-    if (panelOpen) void save();
+    if (panelOpen) void saveAll();
     unmountPanel(NOTES_PANEL_ID);
     const host = hostDocument()?.getElementById?.(NOTES_PANEL_ID);
     host?.remove?.();
@@ -139,7 +140,7 @@ export function toggleSessionNotes(): void {
         closePanel();
         remember(false);
     } else if (wide() && cellIsUp()) {
-        void save();
+        void saveAll();
         terminalLayout.hide(NOTES_CELL);
         remember(false);
     } else {

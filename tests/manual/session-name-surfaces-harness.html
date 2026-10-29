@@ -120,6 +120,10 @@ window.__measure = function () {
         title: document.title,
         cardPresent: !!card,
         cardBox: box(card),
+        // The RENDERED session line, read off the element that paints it,
+        // so a stray character injected by a CSS ::before rule shows up
+        // here instead of hiding behind a .textContent that reads the
+        // same either way.
         sessionPresent: !!sessionEl,
         sessionText: sessionEl ? sessionEl.textContent : null,
         sessionBox: box(sessionEl),

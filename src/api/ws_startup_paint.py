@@ -15,7 +15,6 @@ _CLEAR_AND_HOME = b"\x1b[H\x1b[2J"
 
 STALL_AFTER_SECONDS = 8.0
 
-# nothing is ever written into the pane
 _STALL_NOTICE = (
     b"\x1b[33m[carnivore] this session has been open for a while and has "
     b"printed nothing.\r\n"
@@ -59,28 +58,6 @@ async def paint_on_attach(
     websocket: _PaintTarget,
     backend: Optional[_PaintBackend],
 ) -> str:
-    """Make the pane's current screen visible to a freshly attached client.
-
-    Nothing is ever written into the pane. See the module docstring.
-
-    Args:
-        websocket: Connected client socket. Receives one binary frame
-            carrying the captured screen, or the stall notice, or nothing.
-        backend: The session's backend, or None when it could not be
-            resolved (in which case there is nothing to do).
-
-    Returns:
-        The strategy used, for logging and tests: ``"screen"`` (capture
-        sent to the client), ``"stalled"`` (screen was blank, the pane is
-        not a full-screen app, and the session is old enough that
-        blankness is itself the finding, so a notice was sent), or
-        ``"none"`` (no backend, or nothing to paint and no reason to
-        think anything is wrong).
-
-    Example:
-        >>> await paint_on_attach(ws, backend)
-        'screen'
-    """
     if backend is None:
         return "none"
 

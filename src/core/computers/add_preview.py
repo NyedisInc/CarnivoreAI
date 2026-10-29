@@ -69,11 +69,6 @@ class HostKeyJail:
 
 
 async def resolve_lookup(dest: ssh_exec.SshDestination) -> Tuple[str, List[str]]:
-    """How ssh itself will look the host up: ``(known_hosts name, [known_hosts files])`` from ``ssh -G`` (as ``pair_driver.host_key_pinned``).
-
-    The name is ``HostKeyAlias`` when set, else ``HostName``, else ``[HostName]:port`` for a port other than 22. ("", []) when ssh could not answer.
-    Example: ``await resolve_lookup(SshDestination("hosta", 2201))`` -> ``("[hosta.local]:2201", ["/Users/a/.ssh/known_hosts"])``.
-    """
     res = await ssh_exec.run_process([SSH_BINARY, "-G", *dest.port_args(), "--", dest.target], timeout=10, verb="add_resolve", host=dest.target)
     if not res.ok:
         return "", []

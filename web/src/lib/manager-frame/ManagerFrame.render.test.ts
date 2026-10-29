@@ -151,7 +151,7 @@ describe('the detail pane and the keyboard', () => {
             target,
             props: {
                 title: 'wrappers',
-                items: [{ id: 'keyc', name: 'keyc' }],
+                items: [{ id: 'cld', name: 'cld' }],
                 status: { kind: 'ready' },
                 query: '',
                 onQuery: () => {},
@@ -161,7 +161,7 @@ describe('the detail pane and the keyboard', () => {
         });
         flushSync();
         expect(target.querySelector('.mgr-card__open')).toBeNull();
-        expect(text(target, '.mgr-card__name')).toBe('keyc');
+        expect(text(target, '.mgr-card__name')).toBe('cld');
         expect(target.querySelector('[role="switch"]')).toBeNull();
         expect(target.querySelector('[data-page-close]')).toBeNull();
     });

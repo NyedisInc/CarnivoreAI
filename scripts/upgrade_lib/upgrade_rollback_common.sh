@@ -1,19 +1,10 @@
 #!/bin/bash
-#
-#
-#
 
-#
-# CLOUDE_STATE_DIR
-#
-#
-#
 INSTALL_REQUIRED_PAIR=(".env" "config.json")
 INSTALL_OPTIONAL_FILES=("config.json.bak" ".update-check.json")
 STATE_DIR_REQUIRED_FILES=("refresh_tokens.db")
 STATE_DIR_OPTIONAL_FILES=("session_metadata.json" "pinned_themes.json" "unread_state.json" "carnivore.db" "cloude.db" "migration_trail.jsonl" "hook_tokens.json")
 
-# could not
 _URC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 source "${_URC_DIR}/../resolve-port.sh"
 
@@ -24,7 +15,6 @@ log_step() { printf '[STEP] %s\n' "$*" >&2; }
 
 log_fail() { printf '[FAIL] %s\n' "$*" >&2; }
 
-# could not
 log_unknown() { printf '[UNKNOWN] %s\n' "$*" >&2; }
 
 die() {
@@ -33,7 +23,6 @@ die() {
 }
 
 
-# CARNIVORE_PAYLOAD_PYTHON
 resolve_python() {
     local install_dir="$1" bundle arch candidate
     if [ -x "${install_dir}/venv/bin/python3" ]; then
@@ -182,11 +171,7 @@ confirm_or_die() {
     fi
 }
 
-#
 
-#
-# state directory
-#
 _manifest_record() {
     if [ -n "${5:-}" ]; then
         printf '%s\t%s\t%s\t%s\n' "$2" "$3" "$4" "$5" >> "$1/.manifest"
@@ -195,9 +180,6 @@ _manifest_record() {
     fi
 }
 
-#
-#
-# PRAGMA integrity_check
 
 _is_sqlite_file() {
     local f="$1"
@@ -207,7 +189,6 @@ _is_sqlite_file() {
     [ "${header}" = "SQLite format 3" ]
 }
 
-# could not
 _copy_sqlite() {
     local src="$1" dst="$2"
     if ! command -v sqlite3 >/dev/null 2>&1; then
@@ -240,8 +221,6 @@ _copy_backup_file() {
     cp -p "${src}" "${dst}"
 }
 
-# state directory
-# already exists
 take_backup() {
     local install_dir="$1" backup_dir="$2"
     if [ -e "${backup_dir}" ]; then
@@ -319,8 +298,6 @@ take_backup() {
     printf '%s\n' "${backup_dir}"
 }
 
-# state directory
-# CLOUDE_STATE_DIR
 restore_backup() {
     local install_dir="$1" backup_dir="$2"
     if [ ! -d "${backup_dir}" ]; then

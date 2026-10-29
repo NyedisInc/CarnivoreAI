@@ -1,0 +1,30 @@
+❯ Read long.json in this directory with the Read tool, then call AskUserQuestion once passing its exact content as the
+  input. No other output.
+
+  Read 1 file (ctrl+o to expand)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☐ Long one  ☐ Two  ✔ Submit  →
+
+│ Which of these really long options? context context context context context context context context context context
+│ context context context context context context context context context context context context context context
+│ context context context context context context context context context context context context context context
+│ context context context context context context context context context context context context context context
+│ context context context context context context context context QEND
+
+❯ 1. Long-label-segment-ong-label-segment-ong-label-segment-ong-label-segment-ong-label-segment-ong-label-segment-ong-la
+     bel-segment-ong-label-segment-ong-label-segment-ong-label-segment-ong-label-segment-ong-label-segment-ong-label-seg
+     ment-ong-label-segment-END
+     d very long description words very long description words very long description words very long description words
+     very long description words very long description words very long description words very long description words
+     very long description words very long description words very long description words very long description words
+     very long description words very long description words very long description words very long description words
+     very long description words very long description words very long description words very long description words
+     very long description words DESCEND
+  2. short
+     s
+  3. Type something.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  4. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+

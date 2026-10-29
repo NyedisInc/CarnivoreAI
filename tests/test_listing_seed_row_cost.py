@@ -41,7 +41,7 @@ class _CountingManager:
         self.opens += 1
         return connect(str(self._db_path), create=False)
 
-    def _tmux_socket_name(self) -> str:
+    def tmux_socket_name(self) -> str:
         return SOCKET
 
 

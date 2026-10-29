@@ -40,7 +40,7 @@ def conn(tmp_path):
     path = migrated(tmp_path / "state")
     with closing(connect(path, create=False)) as c:
         _row(c, "here", "local", claude_uuid="c-here")
-        _row(c, "there", "hosta", claude_uuid="c-there")
+        _row(c, "there", "studio", claude_uuid="c-there")
         yield c
 
 
@@ -55,22 +55,22 @@ def _v39_conn() -> sqlite3.Connection:
 
 
 def test_the_scope_names_the_host_and_degrades_before_v40(conn):
-    assert host_scope(conn, "hosta") == (" AND host_key = ?", ("hosta",))
+    assert host_scope(conn, "studio") == (" AND host_key = ?", ("studio",))
     old = _v39_conn()
     assert host_scope(old) == ("", ())
-    assert host_scope(old, "hosta") == (" AND 0", ())
+    assert host_scope(old, "studio") == (" AND 0", ())
     old.execute(
         "INSERT INTO sessions (session_uuid, tmux_socket, tmux_name, tmux_created_epoch, origin, "
         "lifecycle, created_at, updated_at) VALUES ('v39', ?, ?, ?, 'created', 'running', 'n', 'n')",
         (SOCKET, NAME, EPOCH))
     assert get_instance(old, socket=SOCKET, name=NAME, epoch=EPOCH)["session_uuid"] == "v39"
-    assert get_instance(old, socket=SOCKET, name=NAME, epoch=EPOCH, host_key="hosta") is None
+    assert get_instance(old, socket=SOCKET, name=NAME, epoch=EPOCH, host_key="studio") is None
 
 
 def test_get_instance_answers_for_its_own_host(conn):
     assert get_instance(conn, socket=SOCKET, name=NAME, epoch=EPOCH)["session_uuid"] == "here"
     assert get_instance(conn, socket=SOCKET, name=NAME, epoch=EPOCH,
-                        host_key="hosta")["session_uuid"] == "there"
+                        host_key="studio")["session_uuid"] == "there"
     assert get_instance(conn, socket=SOCKET, name=NAME, epoch=EPOCH, host_key="nope") is None
 
 
@@ -96,7 +96,7 @@ def test_the_listing_index_reads_only_its_hosts_rows(conn):
     local = build_instance_index(conn, socket=SOCKET, names=[NAME])
     assert local.complete and local.identity(NAME, EPOCH)["id"] == here_id
     assert local.label(NAME, EPOCH) is None
-    remote = build_instance_index(conn, socket=SOCKET, names=[NAME], host_key="hosta")
+    remote = build_instance_index(conn, socket=SOCKET, names=[NAME], host_key="studio")
     assert remote.identity(NAME, EPOCH)["id"] == there_id
     assert remote.label(NAME, EPOCH) == "remote title"
 
@@ -104,12 +104,12 @@ def test_the_listing_index_reads_only_its_hosts_rows(conn):
 def test_a_fork_row_stays_on_its_anchors_host(conn):
     result = record_claude_session(conn, socket=SOCKET, name=NAME, epoch=EPOCH,
                                    claude_uuid="c-new", source="fork", pane_left_previous=True,
-                                   host_key="hosta")
+                                   host_key="studio")
     assert result.outcome == LINEAGE_FORKED, result.detail
     child = conn.execute("SELECT host_key, parent_session_id FROM sessions WHERE id = ?",
                          (result.row_id,)).fetchone()
     parent = conn.execute("SELECT id FROM sessions WHERE session_uuid = 'there'").fetchone()[0]
-    assert tuple(child) == ("hosta", parent)
+    assert tuple(child) == ("studio", parent)
     missing = record_claude_session(conn, socket=SOCKET, name=NAME, epoch=EPOCH,
                                     claude_uuid="c-other", source="fork", host_key="nope")
     assert missing.outcome == LINEAGE_UNRESOLVED

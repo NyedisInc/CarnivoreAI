@@ -79,6 +79,7 @@ test('no chip for a null, absent, zero or negative count', () => {
     const root = render({ running, sessionId: 's' });
     expect(root.querySelector('.subagent-count')).toBeNull();
   }
+  // Negative control: the same harness does draw a real count.
   expect(render({ running: 2, total: 5, sessionId: 's' }).querySelector('.subagent-count')).not.toBeNull();
 });
 

@@ -1,12 +1,3 @@
-"""What one polled account holds, and the three things a loop needs first.
-
-``AccountState`` IS IN MEMORY ONLY AND IS NEVER PERSISTED. A reading is
-worth exactly as long as the process that took it: a usage percentage
-restored from disk at boot would be presented as current while being
-arbitrarily old, and the row carries no field that could say so. A fresh
-process starts every account at ``unknown``, which is a real answer and
-is never ``idle``-shaped.
-"""
 
 from __future__ import annotations
 
@@ -27,12 +18,6 @@ CONNECT_TIMEOUT_SECONDS = 5.0
 
 
 def utc_now() -> datetime:
-    """The current moment, aware, in UTC.
-
-    Inputs: none.
-    Output: datetime - timezone aware.
-    Example: utc_now()
-    """
     return datetime.now(timezone.utc)
 
 
@@ -71,17 +56,6 @@ class AccountState:
 
 
 def poke_status(state: "AccountState") -> Optional[PokeStatus]:
-    """What to publish about this account's refresh poke, or nothing.
-
-    Description: ``None`` MEANS NOTHING HAS EVER HAPPENED, which is the
-      state of every healthy account and of every codex row, and it is a
-      different fact from a poke that was attempted and did nothing. A
-      screen that was handed ``{state: "idle"}`` for an account nobody
-      has ever poked could not tell the two apart.
-    Inputs: state (AccountState).
-    Output: PokeStatus | None.
-    Example: poke_status(state).error  # 'poke_no_refresh'
-    """
     if state.poke_last_at is None and state.poke_error is None:
         return None
     return PokeStatus(

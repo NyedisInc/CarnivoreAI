@@ -50,7 +50,6 @@ export interface KeyArea {
     session: string | null;
     project_id: number | null;
     project: string | null;
-    /* conversation id could not */
     conversation: string | null;
 }
 

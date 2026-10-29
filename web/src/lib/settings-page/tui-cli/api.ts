@@ -2,7 +2,6 @@ import { authFetch } from '../../../opscenter/api/auth.svelte';
 
 export type Fetcher = typeof authFetch;
 
-/* someone else's file */
 export type CliState = 'installed' | 'missing' | 'stale' | 'foreign';
 
 export type CliOutcome = 'installed' | 'already_installed' | 'cancelled' | 'timed_out' | 'foreign' | 'failed';

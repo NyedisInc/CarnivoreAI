@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Dict, FrozenSet, Iterable, List, Mapping, Optional, Tuple
 
 from mh_vocab import (
-    ALERT_STATES, DROP_DROPPED, DROP_NEEDS_AUTH, REASON_CONNECTED, REASON_NOT_SEEN, REASON_PROCESS_GONE, REASON_PROCESS_RUNNING, SOURCE_CLIENT_LOG,
+    ALERT_STATES, DROP_DROPPED, DROP_NEEDS_AUTH, REASON_CONNECTED, REASON_NOT_FOUND, REASON_NOT_IMPLEMENTED, REASON_NOT_SEEN, REASON_PROCESS_GONE, REASON_PROCESS_RUNNING, SOURCE_CLIENT_LOG,
     SOURCE_PROBE, SOURCE_PROCESS, STATE_CONNECTED, STATE_DOWN, STATE_NEEDS_AUTH, STATE_UNKNOWN, TRANSPORT_STDIO, TRANSPORT_UNKNOWN, Health, Link,
     ServerSpec)
 
@@ -34,6 +34,10 @@ def judge(spec: ServerSpec, ev: Evidence) -> Health:
     return Health(spec.name, transport, STATE_UNKNOWN, REASON_NOT_SEEN, SOURCE_PROCESS if spec.transport == TRANSPORT_STDIO else SOURCE_PROBE)
 
 
+def _is_not_implemented(health: Health) -> bool:
+    return health.state == STATE_DOWN and health.reason == REASON_NOT_IMPLEMENTED
+
+
 def judge_session(ev: Evidence) -> Tuple[Health, ...]:
     out: Dict[str, Health] = {}
     for spec in ev.specs:
@@ -43,6 +47,8 @@ def judge_session(ev: Evidence) -> Tuple[Health, ...]:
         if key in out or key in ev.excluded:
             continue
         health = judge(ServerSpec(name=link.name, transport=link.transport, scope="client_log"), ev)
+        if _is_not_implemented(health):
+            health = Health(health.name, health.transport, STATE_UNKNOWN, REASON_NOT_FOUND, health.source)
         out[key] = Health(health.name, health.transport, health.state, health.reason, health.source, exact=False)
     return tuple(sorted(out.values(), key=lambda h: h.name.lower()))
 

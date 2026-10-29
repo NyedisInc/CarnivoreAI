@@ -16,9 +16,9 @@ describe('confirmOk', () => {
     it('focuses ok by default, with the confirm look and the catalog words', async () => {
         const { ok } = await open();
         expect(document.activeElement).toBe(ok);
-        expect(ok.classList.contains('modal-btn-confirm')).toBe(true);
+        expect(ok.getAttribute('data-btn')).toBe('confirm');
         expect(ok.textContent).toBe('ok');
-        expect(document.querySelector('[data-confirm-ok-cancel]')!.classList.contains('modal-btn-secondary')).toBe(true);
+        expect(document.querySelector('[data-confirm-ok-cancel]')!.getAttribute('data-btn')).toBe('secondary');
     });
 
     it('Enter on the focused ok confirms (the browser presses the focused button)', async () => {

@@ -99,7 +99,7 @@ test('the clear x is drawn while the box holds text and is NOT focused, and has 
     expect(document.querySelector('.oc-search__clear')).toBeNull();
 });
 
-test('the similar terms are the context mode only: names, prompts and all show none', async () => {
+test('the similar terms are the context mode only: names, prompts and all show none (Joe, 2026-10-22)', async () => {
     for (const mode of [MODE_NAMES, MODE_PROMPTS, MODE_ALL]) {
         localStorage.setItem(DRAWER_SEARCH_MODE_KEY, mode);
         await typeAndPaint('carn');

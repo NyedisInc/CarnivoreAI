@@ -1,4 +1,3 @@
-/*  hidden  */
 
 import { STAT_TILE_IDS, type StatTileId } from '../engine/stat-tile-meta';
 import { ANALYTICS_META, BROWSER_META, CELL_IDS, META, TERMINAL_META, kindOf } from '../engine/meta';
@@ -6,6 +5,7 @@ import { isPluginSlot } from '../engine/plugin-kinds';
 import { resetLayout } from '../engine/model';
 import type { CellId, CellMeta, InstanceKind, PluginKind, SlotId } from '../engine/types';
 import { fitsFor } from './fits';
+import { validateManifest } from './validate';
 import {
   WIDGET_CANVASES,
   type WidgetCanvas,
@@ -20,7 +20,7 @@ import {
 
 export const CORE_WIDGET_VERSION = '1.0.0';
 
-const DRAFT_WIDGET_VERSION = '0.0.0-draft';
+const DRAFT_WIDGET_VERSION = '0.0.0';
 
 const CORE_NAMESPACE = 'core';
 
@@ -122,7 +122,6 @@ function viewsFor(cell: string): readonly WidgetView[] {
   ];
 }
 
-/*  hidden  */
 const TASK_MANAGER_REMEMBERS = ['status-folds', 'open-project', 'hidden-sections', 'counts-hidden', 'swarm-view', 'swarm-inactive', 'schedule-project'] as const;
 
 const EXTRAS: Readonly<Record<CellId | CoreKind, CoreExtras>> = {
@@ -155,7 +154,6 @@ const EXTRAS: Readonly<Record<CellId | CoreKind, CoreExtras>> = {
   pipeline: { category: 'tools', type: 'list', capabilities: [] },
   developer: { category: 'tools', type: 'monitor', capabilities: [] },
   'scheduled-tasks': { category: 'monitoring', type: 'monitor', capabilities: [] },
-  // keep awake
   'machine-stats': { category: 'monitoring', type: 'monitor', capabilities: [] },
   'keep-awake': { category: 'monitoring', type: 'monitor', capabilities: ['server-write'] },
   // waiting on you
@@ -237,15 +235,28 @@ export const CORE_MANIFESTS: Readonly<Record<string, WidgetManifest>> = Object.f
 const PLUGIN_MANIFESTS = new Map<string, WidgetManifest>();
 
 export function registerPluginManifest(kind: InstanceKind, meta: CellMeta, extras: CoreExtras, version: string): WidgetManifest {
-  const manifest = manifestFromMeta(kind, meta, WIDGET_CANVASES, 'per-target', extras, { id: kind, version });
+  const manifest = checked(manifestFromMeta(kind, meta, WIDGET_CANVASES, 'per-target', extras, { id: kind, version: semverOf(version) }));
   PLUGIN_MANIFESTS.set(kind, manifest);
+  return manifest;
+}
+
+function semverOf(version: string): string {
+  const parts = /^(\d+)\.(\d+)(?:\.(\d+))?/.exec(version);
+  return parts ? `${parts[1]}.${parts[2]}.${parts[3] ?? '0'}` : '0.0.0';
+}
+
+function checked(manifest: WidgetManifest, enforce = true): WidgetManifest {
+  const verdict = validateManifest(manifest);
+  if (verdict.ok) return manifest;
+  console.error('widgets: a manifest was refused', { id: manifest.id, refusal: verdict.refusal, detail: verdict.detail });
+  if (enforce) throw new Error(`widget ${manifest.id}: manifest refused (${verdict.refusal}): ${verdict.detail}`);
   return manifest;
 }
 
 const DRAFT_MANIFESTS = new Map<string, WidgetManifest>();
 
 export function registerDraftManifest(slot: string, meta: CellMeta, extras: CoreExtras, canvases: readonly WidgetCanvas[]): WidgetManifest {
-  const manifest = manifestFromMeta(slot as InstanceKind, meta, canvases, 'singleton', extras, { id: coreWidgetId(slot as CellId), version: DRAFT_WIDGET_VERSION });
+  const manifest = checked(manifestFromMeta(slot as InstanceKind, meta, canvases, 'singleton', extras, { id: coreWidgetId(slot as CellId), version: DRAFT_WIDGET_VERSION }), false);
   DRAFT_MANIFESTS.set(manifest.id, manifest);
   allTable = null;
   return manifest;

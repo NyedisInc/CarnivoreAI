@@ -88,14 +88,14 @@ describe('vault location panel', () => {
         const el = render(fetcher);
         await settle();
         const field = el.querySelector<HTMLInputElement>('[data-tm="location-field"]')!;
-        field.value = '/Volumes/ExampleDrive/vault';
+        field.value = '/Volumes/Backup/vault';
         field.dispatchEvent(new Event('input'));
         flushSync();
         el.querySelector<HTMLButtonElement>('[data-tm="location-save"]')!.click();
         await settle();
         const put = calls.find((c) => c.method === 'PUT')!;
         expect(put.path).toBe('/cplugs/save');
-        expect(put.body).toEqual({ revision: 3, settings: { vaultLocation: '/Volumes/ExampleDrive/vault' } });
+        expect(put.body).toEqual({ revision: 3, settings: { vaultLocation: '/Volumes/Backup/vault' } });
         expect(el.querySelector('[data-tm="location-note"]')).not.toBeNull();
         const warn = el.querySelector('[data-tm="location-warn"]')?.textContent ?? '';
         expect(warn).toContain('only copy');

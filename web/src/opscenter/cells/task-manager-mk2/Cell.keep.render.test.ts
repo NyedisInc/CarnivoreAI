@@ -46,6 +46,7 @@ import { clearViewFilter } from '../../../cplugs/huddle/task-manager-view-filter
 cplugEnablement.enabled = { huddle: true };
 
 const apps: Array<ReturnType<typeof mount>> = [];
+/** The ResizeObserver callbacks a test can fire by hand (jsdom has none). */
 const resizeCallbacks: Array<() => void> = [];
 const realRect = Element.prototype.getBoundingClientRect;
 
@@ -58,6 +59,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** Lay the rows out by the model: the list box at y 0, each row ROW_PX tall in document order (plus its data-grow), minus the scroll. */
 function modelLayout(): void {
   Element.prototype.getBoundingClientRect = function rect(this: Element): DOMRect {
     const box = this.closest('[data-task-manager-scroll]') as HTMLElement | null;
@@ -75,6 +77,7 @@ function modelLayout(): void {
   };
 }
 
+/** Mount the session cell under the menu host. Output: the host element after the body settled. */
 async function draw(): Promise<HTMLElement> {
   vi.stubGlobal('ResizeObserver', class { constructor(cb: () => void) { resizeCallbacks.push(cb); } observe(): void {} unobserve(): void {} disconnect(): void {} });
   modelLayout();
@@ -87,6 +90,7 @@ async function draw(): Promise<HTMLElement> {
   return host;
 }
 
+/** Settle the store and the DOM. Output: Promise<void>. */
 async function settle(): Promise<void> { for (let i = 0; i < 6; i += 1) { await Promise.resolve(); await tick(); } flushSync(); }
 const scroller = (host: HTMLElement): HTMLElement => host.querySelector('[data-task-manager-scroll]') as HTMLElement;
 function firstVisible(host: HTMLElement): { id: string; offset: number } {
@@ -105,13 +109,15 @@ async function letGo(host: HTMLElement): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, HOLD_LEAVE_MS + 50));
   await settle();
 }
+/** Push a live read into the store the way another agent's change does. Inputs: items. Output: void. */
 function push(items: unknown[]): void {
   huddle.body = { ...(huddle.body as object), items } as typeof huddle.body;
+  // a pinned widget reads its project out of the aggregate (#1710 round 7)
   huddle.groups = (huddle.groups ?? []).map((g) => (g.list === '7' ? { ...g, items } : g)) as typeof huddle.groups;
 }
 
 describe('TM Mark II keeps the first visible row in place', () => {
-  test('a task that leaves above the reading place does not move the row the owner reads', async () => {
+  test('a task that leaves above the reading place does not move the row he reads', async () => {
     const host = await draw();
     scrollTo(host, 130);
     await letGo(host);
@@ -123,7 +129,7 @@ describe('TM Mark II keeps the first visible row in place', () => {
     expect(scroller(host).scrollTop).toBe(130 - 2 * ROW_PX);
   });
 
-  test('a new task inserted above does not move the row the owner reads', async () => {
+  test('a new task inserted above does not move the row he reads', async () => {
     const host = await draw();
     scrollTo(host, 130);
     await letGo(host);
@@ -133,7 +139,7 @@ describe('TM Mark II keeps the first visible row in place', () => {
     expect(firstVisible(host)).toEqual(before);
   });
 
-  test('a row above that grows (a fold opening, text wrapping) does not move the row the owner reads', async () => {
+  test('a row above that grows (a fold opening, text wrapping) does not move the row he reads', async () => {
     const host = await draw();
     scrollTo(host, 130);
     await letGo(host);
@@ -144,7 +150,7 @@ describe('TM Mark II keeps the first visible row in place', () => {
     expect(firstVisible(host)).toEqual(before);
   });
 
-  test('a push held while the owner looked lands without moving the row the owner reads', async () => {
+  test('a push held while he looked lands without moving the row he reads', async () => {
     const host = await draw();
     scrollTo(host, 130);
     scroller(host).dispatchEvent(new PointerEvent('pointermove', { bubbles: true }));
@@ -166,7 +172,7 @@ describe('TM Mark II keeps the first visible row in place', () => {
     expect(host.querySelector('[data-huddle-item]')?.getAttribute('data-huddle-item')).toBe('99');
   });
 
-  test("the keeper's own correction is not the owner looking: it never arms the hold, so the next push lands at once", async () => {
+  test("the keeper's own correction is not the owner looking: it never arms the hold, so the next push lands at once (round 7 part 4)", async () => {
     const host = await draw();
     scrollTo(host, 130);
     await letGo(host);

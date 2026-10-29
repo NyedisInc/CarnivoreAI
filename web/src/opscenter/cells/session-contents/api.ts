@@ -5,6 +5,7 @@ export function getContents(rowId: number): Promise<SessionContents> {
   return authFetch<SessionContents>(`/sessions/${rowId}/contents`);
 }
 
+/* the head preview */
 export interface ConfigFileRead {
   content: string;
   is_sensitive: boolean;

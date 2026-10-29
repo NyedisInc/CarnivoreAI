@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+/** A localStorage that holds a token, so the auth gate reads signed in. */
 function signedInStorage() {
     const map = new Map<string, string>([['claude_tunnel_token', 'an-access-token']]);
     return {
@@ -57,7 +58,7 @@ describe('the pipeline status read', () => {
 
         push.frame({ topics: ['automations'] });
         await vi.advanceTimersByTimeAsync(0);
-        expect(reads).toHaveLength(afterHello);
+        expect(reads).toHaveLength(afterHello); // another topic reads nothing
 
         push.frame({ topics: ['pipeline'] });
         await vi.advanceTimersByTimeAsync(0);

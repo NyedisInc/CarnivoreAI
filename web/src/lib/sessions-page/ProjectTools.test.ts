@@ -50,7 +50,7 @@ test('a project of this computer gets the tools in its menu and a pick reaches t
 });
 
 test('a paired computer project gets no menu, so no tools', async () => {
-    const ids = await menuIds(own([{ computer: 'hosta' } as never]));
+    const ids = await menuIds(own([{ computer: 'studio' } as never]));
     expect(ids).toEqual([]);
     expect(document.querySelector('[role="menu"]')).toBeNull();
 });

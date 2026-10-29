@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { t } from '../sdk';
-  import { FoldChevron, Icon, watchCascadeHint } from '../sdk/ui';
+  import { Button, FoldChevron, Icon, watchCascadeHint } from '../sdk/ui';
   import { distinctWidgets, DRAFT_KEY_PREFIX, widgetStatus, widgetVerdict, type FitTable, type TreeGroup } from './lab-model';
   import WidgetTreeMenu from './WidgetTreeMenu.svelte';
   import { foldAll, groupOpen, readTreeFolds, ROOT_FOLD, rootOpen, writeTreeFolds, type TreeFolds } from './tree-folds';
@@ -71,31 +71,31 @@
 {/snippet}
 
 <nav class="dwl-tree" bind:this={nav} aria-label={t('cplug.devwidgetlab.tree.title')}>
-  <button type="button" class="dwl-all" data-all-fit aria-current={fitOnShow ? 'true' : undefined} onclick={onfit}>
+  <Button variant="row" data-all-fit aria-current={fitOnShow ? 'true' : undefined} onclick={onfit}>
     <Icon name="grid" size={14} />
     <span class="dwl-all-text"><span class="dwl-all-name">{t('cplug.devwidgetlab.tree.all_fit')}</span><span class="dwl-all-sub">{t('cplug.devwidgetlab.tree.all_sub')}</span></span>
     {#if total > 0}<span class="dwl-group-count">{total}</span>{/if}
-  </button>
-  <button type="button" class="dwl-group dwl-group--root" data-group-root aria-expanded={allOpen} {@attach watchCascadeHint} onmousedown={keepShiftOffSelection}
+  </Button>
+  <Button variant="row" data-tree-group data-group-root aria-expanded={allOpen} {@attach watchCascadeHint} onmousedown={keepShiftOffSelection}
     onclick={(event) => toggle(ROOT_FOLD, allOpen, event)}>
     <FoldChevron /><span class="dwl-leaf-name">{t('cplug.devwidgetlab.tree.title')}</span><span class="dwl-group-count">{total}</span>
-  </button>
+  </Button>
   {#if allOpen}{#each shown as group (group.id)}
-    <button type="button" class="dwl-group dwl-group--nested" data-group={group.id} aria-expanded={isOpen(group)} {@attach watchCascadeHint} onmousedown={keepShiftOffSelection}
+    <Button variant="row" data-tree-group data-group-nested data-group={group.id} aria-expanded={isOpen(group)} {@attach watchCascadeHint} onmousedown={keepShiftOffSelection}
       onclick={(event) => toggle(group.id, isOpen(group), event)}>
       <FoldChevron /><span class="dwl-leaf-name">{group.label}</span><span class="dwl-group-count">{distinctWidgets(group.leaves)}{#if failsIn(group) > 0}<span class="dwl-group-fail"> {t('cplug.devwidgetlab.tree.group_failing', { count: failsIn(group) })}</span>{/if}</span>
-    </button>
+    </Button>
     {#if isOpen(group)}
       {#each group.leaves as leaf, at (leaf.key)}
         {#if leaf.category !== undefined && leaf.category !== group.leaves[at - 1]?.category}
           <span class="dwl-draft-cat" data-draft-cat={leaf.category}>{leaf.categoryLabel}</span>
         {/if}
-        <button type="button" class="dwl-leaf dwl-leaf--nested" class:dwl-leaf--draft={leaf.tag !== undefined} aria-current={!fitOnShow && picked === leaf.key ? 'true' : undefined}
+        <Button variant="row" data-tree-leaf data-leaf-nested data-leaf-draft={leaf.tag !== undefined ? '' : undefined} aria-current={!fitOnShow && picked === leaf.key ? 'true' : undefined}
           oncontextmenu={(event) => rowMenu(event, leaf.key, leaf.label)} data-key={leaf.key} data-draft-row={leaf.tag !== undefined ? leaf.key.slice(DRAFT_KEY_PREFIX.length) : undefined} onclick={() => onpick(leaf.key)}>
           {#if leaf.tag !== undefined}<span class="dwl-draft-tag">{leaf.tag}</span>{:else}<span class="dwl-dot" data-verdict={widgetVerdict(table, leaf.key)} aria-hidden="true"></span>{/if}
           <span class="dwl-leaf-name">{leaf.label}</span>
           {#if leaf.status !== undefined}<span class="dwl-draft-state" data-state={leaf.statusKey}>{leaf.status}</span>{:else}{@render verdict(leaf.key)}{/if}
-        </button>
+        </Button>
       {/each}
     {/if}
   {/each}{/if}

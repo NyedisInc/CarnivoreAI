@@ -1,3 +1,5 @@
+/* gives the same */
+import { displayKind } from '../catalog/kind-display';
 
 export const HERO_W = 1536;
 export const HERO_H = 1024;
@@ -15,6 +17,7 @@ function hash(text: string): number {
     return h >>> 0;
 }
 
+/* gives the same */
 function rng(seed: number): () => number {
     let a = seed;
     return () => {
@@ -27,7 +30,8 @@ function rng(seed: number): () => number {
 }
 
 function artKind(kind: string): ArtKind {
-    return kind === 'theme' || kind === 'mod' ? kind : kind === 'plugin' || kind === 'cplug' ? 'plugin' : 'skill';
+    const shown = displayKind(kind);
+    return shown === 'theme' || shown === 'mod' || shown === 'plugin' ? shown : 'skill';
 }
 
 export function heroSvg(seed: string, kind: string, colors: HeroColors): string {

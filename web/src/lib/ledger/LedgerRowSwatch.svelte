@@ -17,7 +17,7 @@
 
 <span class="ledger-mark-cell">
     {#if onEdit}
-        <button
+        <button data-base-exempt="a color swatch: the color is the button"
             type="button"
             class="ledger-mark"
             class:ledger-mark--none={color === null}

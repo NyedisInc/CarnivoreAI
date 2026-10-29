@@ -20,7 +20,6 @@ export interface MenuCounts {
     on: ActiveKeys;
 }
 
-/* label: ' */
 export function buildPanels(c: MenuCounts, t: Translate): MenuPanel[] {
     const all = c.census.total || 1;
     const item = (key: string, id: string, n?: number): MenuItem => ({ key, label: t(`warez.elite.item.${id}`), ...(n == null ? {} : { count: n, frac: n / all }) });

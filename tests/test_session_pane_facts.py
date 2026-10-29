@@ -26,7 +26,7 @@ class _Manager:
     async def get_session_info(self, session_id: Optional[str] = None):
         return self._rows.get(session_id)
 
-    def _tmux_socket_name(self) -> str:
+    def tmux_socket_name(self) -> str:
         return TEST_SOCKET_NAME
 
 

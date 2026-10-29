@@ -2,7 +2,7 @@
   "id": "session-timers",
   "name": "Session timers",
   "summary": "See when a session will wake itself next: a clock chip beside the session shows the time to its next live timer, and opens a read-only list of every timer it set.",
-  "description": "Claude Code records the scheduling a session does for itself as tool calls in its own transcript: a self wakeup (the /loop mechanism) and session-only cron jobs, which a later call can cancel. The attention watcher reads them from the session's current conversation once per cycle and counts a timer as live only while the claude process that set it is alive and started before it, because these timers live inside that process and die with it. The session listing carries the live count and the soonest fire time; a codex or shell session is not applicable, never zero. A clock chip beside the subagent chip shows the time to the next fire (18m, 3h, due) or the live count, in the agents drawer (cozy and detailed density) and the running sessions cell. Since issue #945's follow-up (#1039), when a SUB-AGENT is what parked on its own open shell or Monitor - the case that used to show a session as working_subagent with nothing on screen explaining why - the list also names each one: which sub-agent, its task, its kind and how long it has been open, in one already-redacted sentence with no command or output ever shown. The same sentence appears in the status light's tooltip when that is the reason the light reads working_subagent. Nothing here feeds the light's colour or the auto-sleep idle clock.",
+  "description": "Claude Code records the scheduling a session does for itself as tool calls in its own transcript: a self wakeup (the /loop mechanism) and session-only cron jobs, which a later call can cancel. The attention watcher reads them from the session's current conversation once per cycle and counts a timer as live only while the claude process that set it is alive and started before it, because these timers live inside that process and die with it. The session listing carries the live count and the soonest fire time; a codex or shell session is not applicable, never zero. A clock chip beside the subagent chip shows the time to the next fire (18m, 3h, due) or the live count, in the agents drawer (cozy and detailed density) and the running sessions cell. Since 2026-09-28 (Joe), EVERY density, compact included, also draws a small icon-only scheduled-tasks marker beside the status light while at least one timer is live: no visible count or countdown, its hover title carries the same count-and-next-fire wording the clock chip's own tooltip does. Clicking the chip opens a read-only list: each timer's status (live, fired, canceled, replaced, expired, lost), its schedule, when it fires, and a redacted summary of its prompt, plus the watcher's count of open background shells and monitors. Since issue #945's follow-up (#1039), when a SUB-AGENT is what parked on its own open shell or Monitor - the case that used to show a session as working_subagent with nothing on screen explaining why - the list also names each one: which sub-agent, its task, its kind and how long it has been open, in one already-redacted sentence with no command or output ever shown. The same sentence appears in the status light's tooltip when that is the reason the light reads working_subagent. Nothing here feeds the light's colour or the auto-sleep idle clock.",
   "area": "sessions",
   "status": "stable",
   "since": "2026-09-27",
@@ -49,6 +49,18 @@
     "A session polling a CI run every 15 minutes shows a chip reading 12m, so you know when it will next report without opening it.",
     "After a reboot the chip is gone and the list says lost, which tells you the loop needs starting again."
   ],
-  "media": [],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  "media": [
+    {
+      "kind": "icon",
+      "file": "chip.png",
+      "caption": "The clock chip beside a session's status light, reading the time to its next timer",
+      "alt": "A running sessions row with a green status light and a small outlined clock chip reading the minutes to its next timer"
+    },
+    {
+      "kind": "screenshot",
+      "file": "list.png",
+      "caption": "The read-only timer list, opened by clicking the chip",
+      "alt": "A popup titled timers listing two live timers: a recurring job every 15 minutes and a one-time wakeup, each with when it fires and its prompt"
+    }
+  ]
 }

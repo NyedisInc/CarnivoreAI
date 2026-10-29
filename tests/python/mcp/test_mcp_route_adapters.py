@@ -202,6 +202,7 @@ CLOSED_UUID = "cccccccc-3333-4333-8333-333333333333"
 
 @pytest.mark.parametrize("tool", ["session_wake", "session_restart"])
 def test_wake_of_a_tmux_missing_row_with_a_conversation_reaches_recreate(world, monkeypatch, tool):
+    """#1980: a row closed by a reboot (tmux_missing) is reopened through recreate, agent_type defaulting to the row's own."""
     from src.core.crosstalk import directory
 
     row = {"id": 970, "session_uuid": CLOSED_UUID, "tmux_name": "carnivore_gone", "agent_type": "claude",

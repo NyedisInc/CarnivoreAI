@@ -26,6 +26,7 @@ function harness({ open = false, running = false, canOpen = true, menu = { m: 1 
 }
 
 let n = 0;
+/** Run one named case. */
 function t(name, fn) { fn(); n++; console.log(`ok - ${name}`); }
 
 t('server running: opens the window, never pops a menu', () => {

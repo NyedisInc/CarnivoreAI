@@ -5,6 +5,16 @@ the section for the component you are touching, and copy what it shows.</p>
 
 <h3 class="sg-h3" id="principles-rules">the rules that bind every surface</h3>
 <ol>
+    <li><strong>Military Terminal, everywhere.</strong> All UI, <code>client/js</code> and <code>web/</code> alike, wears
+        the Military Terminal look (Alex, 2026-09-25, <code>docs/DECISIONS.md</code>). That means: mono type
+        (<code>--font-mono</code>), a title-row strip on its own ground with a hairline under it, small tracked uppercase
+        labels, 1px hairlines between regions instead of cards and shadows (a column of several sections gets one bordered panel per section, <a href="#panels-sections">a column of sections</a>), small square corners (2px on controls), the
+        accent used for ONE thing per surface, and focus drawn as the element's own border, a little brighter, same width (<code>web/src/opscenter/focus.css</code>).</li>
+    <li><strong>Copy, never invent.</strong> Using <code>--oc-*</code> tokens is necessary and not sufficient. PR #598
+        used only tokens and still shipped a rounded, accent-ringed field and a filled accent button; Alex rejected it
+        ("looks the same. Not Military Terminal at all."). New UI copies the classes and patterns shown here. Where a
+        scoped rule cannot be reached, restate it and name its source in a comment, the way
+        <code>client/css/text-prompt-modal.css</code> does.</li>
     <li><strong>Colour is <code>--oc-*</code> tokens only.</strong> Never a hex, <code>rgb()</code> or named colour in a
         component. <code>web/src/opscenter/tokens.css</code> re-derives every token from the active theme's
         <code>--color-*</code> manifest, so a token repaints under all 42 themes and a literal does not. See
@@ -12,25 +22,40 @@ the section for the component you are touching, and copy what it shows.</p>
     <li><strong>Every theme, every time.</strong> Before calling a UI change done, render it under the default and at
         least two more themes with visibly different accents and grounds (one light, such as <code>codex</code>). Use the
         picker at the top of this page to see the same thing for every component here.</li>
+    <li><strong>New UI goes in <code>web/</code> (Svelte 5), even on a legacy screen</strong> (Alex, 2026-09-12). A
+        compiled component reaches the page only through <code>mountPanel</code> or <code>ensurePanel</code>
+        (<code>web/src/lib/mount.ts</code>). Logic that renders nothing stays framework free in <code>client/js</code>.</li>
     <li><strong>Every string comes from the one catalog.</strong> <code>client/js/i18n/catalog.en.js</code>, read in
         Svelte through <code>t()</code> from <code>web/src/lib/i18n/index.svelte.ts</code> and in legacy code through
         <code>window.CloudeI18n.t</code>. Copy is lowercase and plain. No em dashes, no en dashes, no emoji. A missing key
         renders the key itself, loudly.</li>
+    <li><strong>Every user action goes through an authenticated API route</strong> (Alex, 2026-09-25). A button is a
+        client of a route, never a second implementation of one.</li>
     <li><strong>Words carry meaning, colour repeats it.</strong> A state is never colour only: a light has a label and a
         tooltip, a chip has text, idle and unknown differ by shape.</li>
     <li><strong>Efficiency is god.</strong> No intro paragraphs above controls, no per-option explanations, no poller
         chatter, no hint text printed inside a menu (#558, #603). One line per thing. Long help folds shut.</li>
+    <li><strong>A glance tells the sections apart.</strong> Where one section ends, where the next starts and what each
+        one is must read without reading body text: each section its own title strip with the accent label, a hairline
+        plus a real gap between sections, and one primary section, the one that holds the next step (Alex (example-owner),
+        2026-10-24, #2469 publish page mockup round 3: "I need better overall visual separation for intuitive. Quick
+        understanding of different sections around here."; round 4 ruling 2, accepted the same day). The recipe:
+        <a href="#panels-sections">a column of sections</a>.</li>
     <li><strong>A new component, icon or pattern joins this guide in the same change.</strong> The drift test
         (<code>tests/test_style_guide_drift.py</code>) fails when a shipped class or Svelte component has no entry here,
         and when an entry here names something that no longer exists.</li>
 </ol>
 
 <h3 class="sg-h3" id="principles-references">the canonical reference surfaces</h3>
+<p>When this guide does not show something you need, copy from these, in this order. They are the surfaces the rules
+above were ruled against (<code>docs/DECISIONS.md</code>, 2026-09-25, "Military Terminal means copying the reference
+surfaces, not using tokens").</p>
 <div class="sg-table-wrap">
 <table class="sg-table">
     <thead><tr><th>surface</th><th>file</th><th>copy it for</th></tr></thead>
     <tbody>
-        <tr><td>restart picker</td><td><code>client/css/session-restart-picker.css</code></td></tr>
+        <tr><td>restart picker</td><td><code>client/css/session-restart-picker.css</code></td><td>the dialog recipe and the
+            button shape every button now copies (Alex, 2026-09-25)</td></tr>
         <tr><td>provider ledger</td><td><code>web/src/lib/ledger/ledger-chrome.css</code>, <code>LedgerScreen.svelte</code></td>
             <td><code>.pl-titlebar</code>, <code>.pl-title</code>, <code>.pl-label</code>, <code>.pl-panel</code>, a page shell</td></tr>
         <tr><td>catalog</td><td><code>CatalogScreen.svelte</code>, <code>CatalogToolbar.svelte</code>, <code>CatalogCard.svelte</code></td>
@@ -42,7 +67,8 @@ the section for the component you are touching, and copy what it shows.</p>
         <tr><td>file drawer tree</td><td><code>client/css/config-editor.css</code></td><td>tree rows, toggles, hover</td></tr>
         <tr><td>new group dialog</td><td><code>client/css/text-prompt-modal.css</code></td><td>the worked example: every rule
             names the reference it was copied from</td></tr>
-        <tr><td>carnivore.ai</td><td><code>web/src/public-site/site.css</code></td></tr>
+        <tr><td>carnivore.ai</td><td>the site stylesheet in the private carnivore-site repo</td><td>the standalone public site.
+            App buttons still exclude corner targeting brackets (Alex, 2026-09-25: "i dont' need the corners flare").</td></tr>
     </tbody>
 </table>
 </div>
@@ -66,9 +92,16 @@ Carnivore surfaces. Where they disagree, follow this guide:</p>
         faces for the measured dashboard mockup, but no shipped rule names that family, and <code>--oc-font</code> resolves
         to <code>--font-mono</code> today. Components write <code>--font-mono</code>, as every reference surface does (a
         family swap changes glyph advance, which is geometry).</li>
+    <li><strong>Palette.</strong> Gold master's baseline is green on <code>#010709</code> with green as the main action.
+        Shipped Carnivore is a deep blue-green ground (<code>#02161e</code>, owner reference 2026-09-22) with a red accent
+        (<code>#ff4652</code>), carried by the token still named <code>--oc-orange</code>.</li>
+    <li><strong>Buttons.</strong> Gold master's primary is an outline. Shipped buttons copy the restart picker footer: a
+        tinted interior with a 1px bright edge, no corner brackets (Alex, 2026-09-25, #637). See <a href="#buttons">buttons</a>.</li>
     <li><strong>Geometry.</strong> Gold master measures a 62px header and a 352px hero on a <code>100vw / 1672</code>
         unit. Shipped geometry is the fixed pixel set in <code>tokens.css</code>: 54px top bar, 31px widget header (<a href="#cells-widget-header">the widget header</a>), 26px rows,
         12px gutter.</li>
+    <li><strong>Navigation.</strong> Gold master draws a left rail on home. Alex had that rail removed on 2026-09-23;
+        its rows live in the agents drawer's menu tab (<code>web/src/opscenter/shell/rail-items.ts</code>).</li>
 </ul>
 
 <h3 class="sg-h3" id="principles-state-classes">shared state classes</h3>

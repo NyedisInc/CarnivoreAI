@@ -39,6 +39,6 @@
   "summary": "a deal that needs a new agent waits for a slot when the grant is full or the machine is hot, and is dealt by itself when one frees; grants and pace come from SysOp, company agents and you.",
   "updated": "2026-10-08",
   "where": [
-    "The board screen arrives in a later slice."
+    "Backend only for now: the owner routes under /api/v1/swarm/cards (capacity, grants), the swarm_card_capacity, swarm_card_grant and swarm_card_pace tools for SysOp and company agents, and the slots and pace lines in a project agent's deal request. The board screen arrives in a later slice."
   ]
 }

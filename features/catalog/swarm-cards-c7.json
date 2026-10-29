@@ -9,6 +9,7 @@
     "docs/swarm-cards.md"
   ],
   "examples": [
+    "A card is finished with the steps 'run pytest -q and open the page'. Validate it: a task agent runs both, reports 'ran pytest -q: 3 failed' as a fail, and the card goes back to the agent that built it, marked validation failed, with that text as the proof.",
     "With auto-validate and auto-done both on for a project, a card that reaches Review is validated; on a pass it moves to Done by itself, and on a fail it goes back to In Progress."
   ],
   "how_to": [
@@ -36,6 +37,6 @@
   "summary": "a card in Review can be validated by a fresh task agent (or a validator agent definition) that returns pass or fail with its proof; a fail sends the card back marked validation failed, a pass can finish it.",
   "updated": "2026-10-07",
   "where": [
-    "The board screen arrives in a later slice."
+    "Backend only for now: the owner routes live under /api/v1/swarm/cards (validate and validation) and the validating agent uses the swarm_card_verdict tool. The board screen arrives in a later slice."
   ]
 }

@@ -1,3 +1,4 @@
+/* and the three */
 @layer components {
     .pp-root {
         container: pp / inline-size;
@@ -99,7 +100,6 @@
         .d-tabs { padding-inline: var(--oc-space-1); }
         .d-tabs .oc-ptabs { height: auto; }
         .d-tabs .oc-ptabs__list { flex-wrap: wrap; overflow: visible; }
-        /* padding */
         .d-tabs .oc-ptab { flex: 1 1 auto; justify-content: center; padding-block: var(--oc-pp-space-10) var(--oc-pp-space-9); min-height: var(--oc-tap, 44px); }
         .d-wrap { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'list' 'main' 'side'; min-height: 0; }
         .d-wrap[data-rules='1'] { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'list' 'main'; }

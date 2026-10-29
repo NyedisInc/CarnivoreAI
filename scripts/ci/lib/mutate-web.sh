@@ -1,9 +1,4 @@
 #!/bin/bash
-#
-#
-# could not
-# measuring nothing
-#
 
 mutate_web_available() {
     local root="$1"
@@ -31,7 +26,6 @@ mutate_web_require() {
     fi
 }
 
-#
 mutate_web_run() {
     local root="$1" file="$2"
     local rel="${file#web/}"
@@ -44,7 +38,6 @@ mutate_web_run() {
     return "$rc"
 }
 
-#
 mutate_web_files_exist() {
     local root="$1"; shift
     local f missing=0

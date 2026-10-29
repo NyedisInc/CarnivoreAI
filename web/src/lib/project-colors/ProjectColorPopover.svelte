@@ -1,6 +1,7 @@
-<!-- position: fixed -->
+
 <script lang="ts">
     import AnchoredPopup from '../dialog-frame/AnchoredPopup.svelte';
+    import { Button, IconButton } from '../base';
     import type { Translate } from '../sessions/types';
     import { hexToRgb, rgbToHex } from './palette';
     import { hsvToRgb, rgbToHsv } from './hsv';
@@ -181,20 +182,20 @@
                 {#each CHANNELS as name, i (name)}
                     <label class="pc-pop__chan">
                         <span>{name}</span>
-                        <input type="number" min="0" max="255" step="1" value={channels[i]} data-channel={name} oninput={(e) => setChannel(i, e)} />
+                        <input type="number" data-field data-size="sm" min="0" max="255" step="1" value={channels[i]} data-channel={name} oninput={(e) => setChannel(i, e)} />
                     </label>
                 {/each}
             </div>
             {#if hasEyeDropper}
-                <button type="button" class="pc-pop__eye" data-pc-eyedropper aria-label={t('project.color.eyedropper')} onclick={sample}>
+                <IconButton label={t('project.color.eyedropper')} data-pc-eyedropper style="--oc-ibtn-size: 1.5rem" onclick={sample}>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 22 1-1h3l9-9M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3z"/></svg>
-                </button>
+                </IconButton>
             {/if}
         </div>
     </div>
     <div class="pc-pop__foot">
-        <button type="button" class="modal-btn modal-btn-secondary" data-project-color-cancel onclick={onCancel}>{t('project.color.cancel')}</button>
-        <button type="button" class="modal-btn modal-btn-confirm" data-project-color-ok onclick={() => confirm(hex)}>{t('project.color.ok')}</button>
+        <Button data-project-color-cancel onclick={onCancel}>{t('project.color.cancel')}</Button>
+        <Button variant="confirm" data-project-color-ok onclick={() => confirm(hex)}>{t('project.color.ok')}</Button>
     </div>
 </AnchoredPopup>
 
@@ -293,23 +294,6 @@
             border-radius: 50%;
         }
 
-        .pc-pop__eye {
-            flex: none;
-            display: grid;
-            place-items: center;
-            width: 1.9rem;
-            height: 1.9rem;
-            border: 1px solid var(--oc-line-frame);
-            border-radius: 2px;
-            background: var(--oc-ground-chrome);
-            color: var(--oc-text-secondary);
-            cursor: pointer;
-        }
-
-        .pc-pop__eye:hover {
-            color: var(--oc-text-primary);
-        }
-
         .pc-pop__rgb {
             display: flex;
             flex: 1;
@@ -331,12 +315,6 @@
         .pc-pop__chan input {
             width: 100%;
             min-width: 0;
-            padding: 3px 4px;
-            border: 1px solid var(--oc-line-frame);
-            border-radius: 2px;
-            background: var(--oc-ground-chrome);
-            color: var(--oc-text-primary);
-            font: inherit;
             letter-spacing: 0;
         }
 

@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "api_version": 1,
   "min_app_version": "1.16.1",
-  "author": "Carnivore contributors",
+  "author": "Carnivore",
   "license": "MIT",
   "tier": "dev",
   "scope": [

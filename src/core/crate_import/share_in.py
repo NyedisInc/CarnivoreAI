@@ -1,10 +1,3 @@
-"""
-A share crate carries no rows, no entries and no install id (``docs/crate.md``, section 6): redacted conversation files under a
-``_shared`` folder, a project name and uid, and one conversation record per conversation. So an import of one is small and has fixed
-rules:
-
-A second import of the same share finds the derived session uuids already here and writes nothing.
-"""
 
 from __future__ import annotations
 
@@ -36,8 +29,6 @@ CLAUDE_FAMILY = "claude"
 
 @dataclass(frozen=True)
 class ShareSession:
-    """One session a share crate brings: ``session_uuid`` (the new one), ``conversation`` (its newest Claude conversation id),
-    ``title`` and ``sender_uuid`` (the uuid the crate named, or None)."""
 
     session_uuid: str
     conversation: str
@@ -91,7 +82,7 @@ def write_sessions(ctx: rw.WriteCtx, manifest: CrateManifest, files: Iterable[Fi
                "created_at": now, "updated_at": now}
         try:
             _inserted, rowid = rw.insert_row(ctx, "sessions", rw.own_columns(ctx, "sessions", row), ignore=False)
-        except sqlite3.IntegrityError as exc:  # conversation id
+        except sqlite3.IntegrityError as exc:
             logger.warning("crate_import_share_session_refused", error=str(exc)[:120])
             counts.skip("refused_by_unique_rule")
             continue

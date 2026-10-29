@@ -1,4 +1,4 @@
-/*  hidden  display: none */
+/* the home screen */
 import { insetsOf, SURFACE_INSET_VARS } from '../menu-page/menu-page-surface';
 
 export const HOME_IN_MAIN_CLASS = 'home-in-main';

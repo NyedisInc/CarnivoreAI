@@ -20,7 +20,7 @@ from src.core.pack.machines.settings_custody import SettingsCustody  # noqa: E40
 from src.core.pack.skills.scan import scan_root  # noqa: E402
 from src.core.pack.skills.targets import receiver_roots  # noqa: E402
 
-LABELS = {"A": "hostb", "B": "hosta", "C": "newt", "X": "hosta"}
+LABELS = {"A": "nostromo", "B": "studio", "C": "newt", "X": "ripley"}
 
 
 class Rt:
@@ -92,7 +92,7 @@ def test_alpha_changed_raises_once_per_computer_and_never_for_our_own_edit(world
     assert rows("pack_skills.") == []
     assert exchange.PackMachines._merge_remote(rt, remote("B", 3, "ME"), "B") is True
     (row,) = rows(alerts.ALPHA_KEY)
-    assert row["params"] == {"new": "hosta", "old": "hostb", "claimed": "this computer", "sender": "hosta"}
+    assert row["params"] == {"new": "studio", "old": "nostromo", "claimed": "this computer", "sender": "studio"}
     again = next(a for a in row["actions"] if a["id"] == "make_alpha_again")
     assert (again["method"], again["route"], again["body"]) == ("PUT", "/pack/master", {"machine": "A"})
     assert exchange.PackMachines._merge_remote(rt, remote("B", 3, "ME"), "B") is False
@@ -100,7 +100,7 @@ def test_alpha_changed_raises_once_per_computer_and_never_for_our_own_edit(world
     assert [(r["id"], r["count"]) for r in rows(alerts.ALPHA_KEY)] == [(row["id"], 1)]
     assert exchange.PackMachines._merge_remote(rt, remote("C", 4, "B"), "B") is True
     (row2,) = rows(alerts.ALPHA_KEY)
-    assert (row2["id"], row2["count"], row2["params"]["new"], row2["params"]["old"]) == (row["id"], 2, "newt", "hosta")
+    assert (row2["id"], row2["count"], row2["params"]["new"], row2["params"]["old"]) == (row["id"], 2, "newt", "studio")
     rt.doc = settings_doc.edited(rt.doc, {"master_install_id": "A"}, "ME")
     alerts.check_alpha(state, "local_edit")
     assert [(r["id"], r["count"]) for r in rows(alerts.ALPHA_KEY)] == [(row["id"], 2)]
@@ -121,7 +121,7 @@ def test_a_replaced_local_edit_raises_once_and_names_the_trash_folder(world) -> 
     doc, bundle = alpha_bundle(world.tmp)
     ap.apply_document(doc, bundle, roots, world.state)
     (row,) = rows(alerts.EDIT_PREFIX)
-    assert row["params"]["name"] == "demo" and row["params"]["alpha"] == "hosta" and row["severity"] == "info"
+    assert row["params"]["name"] == "demo" and row["params"]["alpha"] == "ripley" and row["severity"] == "info"
     assert Path(row["params"]["folder"]).name == ".carnivore-trash" and any(Path(row["params"]["folder"]).glob("demo-*"))
     ap.apply_document(doc, bundle, roots, world.state)
     assert len(rows(alerts.EDIT_PREFIX)) == 1
@@ -140,7 +140,7 @@ def test_placed_skills_alert_survives_a_dismissal_and_trash_placed_resolves_it(w
     for _ in range(3):
         alerts.check_placers(world.state)
     (row,) = rows(alerts.PLACER_PREFIX)
-    assert row["params"] == {"label": "hosta", "count": 1}
+    assert row["params"] == {"label": "ripley", "count": 1}
     remove = next(a for a in row["actions"] if a["id"] == "remove_placed")
     inner = remove["actions"][0]
     assert (inner["route"], inner["body"], inner["tone"]) == ("/pack/skills/trash-placed", {"from_install_id": "X"}, "danger")
@@ -157,8 +157,8 @@ def test_placed_skills_alert_survives_a_dismissal_and_trash_placed_resolves_it(w
     doc2, bundle2 = alpha_bundle(world.tmp, "alpha copy 2\n")
     ap.apply_document({**doc2, "gen": 2}, bundle2, roots, world.state)
     alerts.check_placers(world.state)
-    view = owner.receiver_view(SimpleNamespace(state=world.state), "B", "hosta")
-    assert view["rows"][0]["placed_by"] == {"id": "X", "label": "hosta"}
+    view = owner.receiver_view(SimpleNamespace(state=world.state), "B", "studio")
+    assert view["rows"][0]["placed_by"] == {"id": "X", "label": "ripley"}
 
 
 def test_nothing_crashes_or_raises_without_state_or_a_configured_service(world, tmp_path) -> None:

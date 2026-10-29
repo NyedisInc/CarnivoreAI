@@ -22,6 +22,7 @@ import { countSentence, face, firstLine, metricTiles, type Face, type RuleContex
 import type { FeedRun, ReportLookup } from '../logic/types';
 import { bytesWords, humanKey, isLive, secsWords, statusWord, tookWords, triggerLabel, triggerWord, type Clock } from '../logic/words';
 import { stripAnsi } from '../logic/markdown';
+import { REPORT_NEAR_CAP_BYTES } from '../logic/report-cap';
 
 const INDENT = '  ';
 
@@ -196,7 +197,7 @@ export function readerFacts(run: ReaderRun, clock: Clock, tz: string, retryMax: 
   f.push([
     'size',
     bytes > 0
-      ? bytes >= 524288
+      ? bytes >= REPORT_NEAR_CAP_BYTES
         ? t('automations.page.reader.size_cap', { size: bytesWords(bytes) })
         : bytesWords(bytes)
       : run.status === 'succeeded'

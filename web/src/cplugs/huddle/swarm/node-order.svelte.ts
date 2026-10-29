@@ -44,8 +44,6 @@ export function durableKey(item: FloorItem): boolean {
   return !item.ordinary || (item.session?.sessionUuid != null && item.key === `session:${item.session.sessionUuid}`);
 }
 
-/*  hidden
- */
 export function nextOrder(shown: readonly string[], stored: readonly string[]): string[] {
   const seen = new Set(shown);
   return [...shown, ...stored.filter((k) => !seen.has(k))].slice(0, 500);

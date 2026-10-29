@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from datetime import datetime
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from src.cplugs.huddle import rich_ask
 from src.cplugs.huddle.rich_ask import MULTI, RANK, SINGLE, YES_NO
@@ -13,6 +14,7 @@ MAX_OTHER = 500
 ANSWERS_TO = "answers_to"
 EXTRA = "_extra"
 MAX_EXTRA = 4000
+MAX_FILES = 5
 
 
 def _clean(value: Any, qid: str, label: str, limit: int) -> str:
@@ -71,12 +73,29 @@ def _one(question: Mapping[str, Any], raw: Mapping[str, Any]) -> Optional[Dict[s
         if len(order) != len(options):
             raise TaskManagerInvalid(f"question {qid}: order must rank every option")
         out = {"order": order, "labels": [options[o] for o in order]}
+    elif kind == rich_ask.DATETIME:
+        out = _when(raw, qid)
+        if out is None:
+            return None
     else:
         text = _clean(raw["text"], qid, "text", question.get("max_length", rich_ask.TEXT_LIMITS[kind])) if raw.get("text") is not None else ""
         if not text:
             return None
         out = {"text": text}
     return out
+
+
+def _when(raw: Mapping[str, Any], qid: str) -> Optional[Dict[str, Any]]:
+    text = _clean(raw["text"], qid, "time", rich_ask.MAX_DATETIME) if raw.get("text") is not None else ""
+    if not text:
+        return None
+    try:
+        moment = datetime.fromisoformat(text)
+    except ValueError:
+        raise TaskManagerInvalid(f"question {qid}: the time must be ISO 8601 with a UTC offset") from None
+    if moment.tzinfo is None:
+        raise TaskManagerInvalid(f"question {qid}: the time needs a UTC offset")
+    return {"text": text}
 
 
 def _recommended(question: Mapping[str, Any], answer: Mapping[str, Any]) -> Optional[bool]:
@@ -99,7 +118,7 @@ def _recommended(question: Mapping[str, Any], answer: Mapping[str, Any]) -> Opti
 def validate(questions: Sequence[Mapping[str, Any]], answers: Any) -> Dict[str, Dict[str, Any]]:
     if not isinstance(answers, Mapping):
         raise TaskManagerInvalid("answers must be an object keyed by question id")
-    extra = _extra(answers.get(EXTRA))
+    extra, extra_files = _extra(answers.get(EXTRA))
     answers = {k: v for k, v in answers.items() if k != EXTRA}
     known = {q["id"] for q in questions}
     unknown = sorted(set(answers) - known)
@@ -113,6 +132,7 @@ def validate(questions: Sequence[Mapping[str, Any]], answers: Any) -> Dict[str, 
             raise TaskManagerInvalid(f"question {question['id']}: the answer must be an object")
         raw = raw or {}
         note = _clean(raw["note"], question["id"], "note", MAX_NOTE) if raw.get("note") is not None else ""
+        attached = _files(raw.get("files"), question["id"])
         deliberate = raw.get("skipped") is True
         answer = None if deliberate else _one(question, raw)
         if answer is None:
@@ -128,23 +148,35 @@ def validate(questions: Sequence[Mapping[str, Any]], answers: Any) -> Dict[str, 
                 answer["recommended"] = verdict
         if note:
             answer["note"] = note
+        if attached:
+            answer["files"] = attached
         out[question["id"]] = {**answer, "prompt": question["prompt"]}
     if missing:
         raise TaskManagerInvalid(f"required questions left unanswered: {', '.join(missing)}")
-    if extra:
-        out[EXTRA] = {"text": extra}
+    if extra or extra_files:
+        out[EXTRA] = {"text": extra, **({"files": extra_files} if extra_files else {})}
     return out
 
 
-def _extra(raw: Any) -> str:
+def _files(raw: Any, qid: str) -> List[str]:
     if raw is None:
-        return ""
+        return []
+    if not isinstance(raw, list) or not all(isinstance(p, str) and p.startswith("/") for p in raw):
+        raise TaskManagerInvalid(f"question {qid}: files must be a list of absolute paths")
+    if len(raw) > MAX_FILES:
+        raise TaskManagerInvalid(f"question {qid}: at most {MAX_FILES} files")
+    return list(raw)
+
+
+def _extra(raw: Any) -> Tuple[str, List[str]]:
+    if raw is None:
+        return "", []
     if not isinstance(raw, Mapping) or not isinstance(raw.get("text", ""), str):
         raise TaskManagerInvalid(f"{EXTRA} must be {{text}}")
     text = raw.get("text", "").strip()
     if len(text) > MAX_EXTRA:
         raise TaskManagerInvalid(f"{EXTRA}: over {MAX_EXTRA} characters")
-    return text
+    return text, _files(raw.get("files"), EXTRA)
 
 
 def _words(answer: Mapping[str, Any]) -> str:
@@ -164,6 +196,10 @@ def _words(answer: Mapping[str, Any]) -> str:
     return ", ".join(parts)
 
 
+def extra_line(extra: Mapping[str, Any]) -> str:
+    return f"anything else: {extra['text']}" + "".join(f"; file: {path}" for path in extra.get("files", []))
+
+
 def text_of(questions: Sequence[Mapping[str, Any]], answers: Mapping[str, Mapping[str, Any]]) -> str:
     lines = [f"answers to {len(questions)} question{'' if len(questions) == 1 else 's'}:"]
     for number, question in enumerate(questions, 1):
@@ -175,9 +211,11 @@ def text_of(questions: Sequence[Mapping[str, Any]], answers: Mapping[str, Mappin
             line += " (not the recommendation)"
         if answer.get("note"):
             line += f"; note: {answer['note']}"
+        for path in answer.get("files", []):
+            line += f"; file: {path}"
         lines.append(line)
     if answers.get(EXTRA):
-        lines.append(f"anything else: {answers[EXTRA]['text']}")
+        lines.append(extra_line(answers[EXTRA]))
     return "\n".join(lines)
 
 
@@ -185,7 +223,7 @@ def lines_of(answers: Mapping[str, Mapping[str, Any]]) -> List[str]:
     questions = [(qid, a) for qid, a in answers.items() if qid != EXTRA]
     lines = [f"{n}. {a.get('prompt', qid)}: {_words(a)}" for n, (qid, a) in enumerate(questions, 1)]
     if answers.get(EXTRA):
-        lines.append(f"anything else: {answers[EXTRA]['text']}")
+        lines.append(extra_line(answers[EXTRA]))
     return lines
 
 
@@ -194,7 +232,7 @@ def dump(question_id: int, answers: Mapping[str, Any]) -> str:
 
 
 def wire(raw: str) -> Optional[Dict[str, Any]]:
-    if not raw or not raw.startswith('{"v": 2, "answers_to"'):
+    if not raw or not raw.startswith(rich_ask.ANSWERS_TO_PREFIX):
         return None
     try:
         data = json.loads(raw)
@@ -205,4 +243,4 @@ def wire(raw: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-__all__ = ["ANSWERS_TO", "EXTRA", "dump", "lines_of", "text_of", "validate", "wire"]
+__all__ = ["ANSWERS_TO", "EXTRA", "MAX_FILES", "dump", "extra_line", "lines_of", "text_of", "validate", "wire"]

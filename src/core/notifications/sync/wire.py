@@ -26,7 +26,7 @@ Call = Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]]
 
 
 class ExchangeError(Exception):
-    """The peer's answer was not usable. The message carries no settings content."""
+    pass
 
 
 def digest(global_map: Mapping[str, Any]) -> str:
@@ -77,10 +77,6 @@ def handle_exchange(store: SettingsDocStore, body: Mapping[str, Any], now: float
 
 async def serve_exchange(store: SettingsDocStore, secrets: secret_store.DestinationSecrets, body: Mapping[str, Any],
                          now: float) -> Dict[str, Any]:
-    """The receiver as the route runs it: the merge off the loop, then the Keychain items of deleted destinations.
-
-    Raises ValueError for a malformed body, OSError when the settings could not be saved.
-    """
     answer, deleted = await asyncio.to_thread(handle_exchange, store, body, now)
     for dest_id in deleted:
         try:

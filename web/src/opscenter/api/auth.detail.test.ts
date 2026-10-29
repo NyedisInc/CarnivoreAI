@@ -21,3 +21,16 @@ test('a plain string detail still wins, and a body with nothing to say falls bac
     answer(500, {});
     expect(((await authFetch('/x').catch((e: unknown) => e)) as ApiError).status).toBe(500);
 });
+
+test('a code the string catalog knows shows the catalog sentence, not the server text (wave H3)', async () => {
+    answer(500, { detail: { code: 'not_found', detail: 'raw text /Users/x/secret' } });
+    const error = (await authFetch('/x').catch((e: unknown) => e)) as ApiError;
+    expect(error.message).toBe('that item was not found.');
+    expect(error.code).toBe('not_found');
+});
+
+test('a code the catalog does not know keeps the server sentence', async () => {
+    answer(409, { detail: { code: 'no_such_catalog_code', detail: 'the server sentence' } });
+    const error = (await authFetch('/x').catch((e: unknown) => e)) as ApiError;
+    expect(error.message).toBe('the server sentence');
+});

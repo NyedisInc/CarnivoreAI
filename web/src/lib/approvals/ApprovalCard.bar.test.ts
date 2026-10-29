@@ -50,7 +50,7 @@ describe('the bottom bar', () => {
     for (const sel of ['[data-ap-option]', '[data-approval-approve-go]', '[data-approval-deny]', '[data-approval-open]']) {
       expect(bar.querySelector(sel), sel).not.toBeNull();
     }
-    const outside = [...card.querySelectorAll('.modal-btn')].filter((b) => !bar.contains(b));
+    const outside = [...card.querySelectorAll('[data-btn]')].filter((b) => !bar.contains(b));
     expect(outside).toEqual([]);
     expect(bar.lastElementChild?.hasAttribute('data-ap-jump')).toBe(true);
   });

@@ -75,28 +75,3 @@ def set_cap_gb(state_dir: Path, cap_gb: float) -> int:
         raise ValueError("cap_gb must be positive")
     _write(state_dir, {"cap_gb": float(cap_gb)})
     return int(cap_gb * _GB)
-
-
-def summary_method(state_dir: Path) -> str:
-    value = read_limits(state_dir).get("summary_method")
-    return value if value in C.SUMMARY_METHODS else C.DEFAULT_SUMMARY_METHOD
-
-
-def summary_model(state_dir: Path) -> str:
-    value = read_limits(state_dir).get("summary_model")
-    return value.strip() if isinstance(value, str) and value.strip() else C.DEFAULT_SUMMARY_MODEL
-
-
-def set_summary(state_dir: Path, *, method: Optional[str] = None, model: Optional[str] = None) -> None:
-    changes: Dict[str, Any] = {}
-    if method is not None:
-        if method not in C.SUMMARY_METHODS:
-            raise ValueError(f"unknown summary method {method!r}")
-        changes["summary_method"] = method
-    if model is not None:
-        cleaned = model.strip()
-        if not cleaned or len(cleaned) > C.SUMMARY_MODEL_MAX_CHARS or any(c.isspace() for c in cleaned):
-            raise ValueError("summary_model must be a single model id")
-        changes["summary_model"] = cleaned
-    if changes:
-        _write(state_dir, changes)

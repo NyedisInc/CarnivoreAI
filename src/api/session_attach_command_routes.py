@@ -56,6 +56,6 @@ async def get_session_attach_command(request: Request, session_id: str, read_onl
         raise HTTPException(status_code=409, detail={
             "code": NO_TMUX_SESSION_CODE,
             "detail": "this session has no tmux session to attach to (asleep, or never started)"})
-    socket_name = manager._tmux_socket_name()
+    socket_name = manager.tmux_socket_name()
     return AttachCommand(argv=attach_argv(name, socket_name, read_only), tmux_session=name, socket=socket_name,
                          read_only=read_only)

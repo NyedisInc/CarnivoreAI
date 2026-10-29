@@ -56,7 +56,7 @@ test('local login gate: needs joined, the app window, and the loopback origin th
   assert.equal(mayLoginLocally({ ...base, joined: false }), false);
   assert.equal(mayLoginLocally({ ...base, joined: null }), false);
   assert.equal(mayLoginLocally({ ...base, fromAppWindow: false }), false);
-  const lan = 'http://203.0.113.11:8000';
+  const lan = 'http://192.168.1.5:8000';
   assert.equal(mayLoginLocally({ ...base, senderOrigin: lan, windowOrigin: lan }), false);
   assert.equal(mayLoginLocally({ ...base, senderOrigin: 'http://localhost:8000' }), false);
 
@@ -216,8 +216,8 @@ test('P1: a member whose configured host stays wide (restart_required true) on l
 
 test('P10: the door path follows the file name the server reported, and only a well formed one', () => {
   const { doorPath } = load('local-login.js');
-  assert.equal(doorPath('/x', '/h', 'door-e991da92.sock'), '/h/.carnivore/fed/door-e991da92.sock');
-  for (const bad of ['../../etc/door-e991da92.sock', 'door-xyz.sock', '', null, undefined]) {
+  assert.equal(doorPath('/x', '/h', 'door-0123abcd.sock'), '/h/.carnivore/fed/door-0123abcd.sock');
+  for (const bad of ['../../etc/door-0123abcd.sock', 'door-xyz.sock', '', null, undefined]) {
     assert.equal(doorPath('/x', '/h', bad), doorPath('/x', '/h'));
   }
 });
@@ -237,7 +237,7 @@ test('P7: rehome reopens a window whose origin is no longer the published one, a
   };
   try {
     const { createAppWindow } = fresh('app-window.js');
-    let url = 'http://203.0.113.11:8000';
+    let url = 'http://192.168.1.5:8000';
     const w = createAppWindow({ getUrl: () => url });
     w.open();
     opened.length = 0;

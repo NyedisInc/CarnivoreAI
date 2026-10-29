@@ -43,7 +43,7 @@ beforeEach(() => {
 afterEach(async () => {
   for (const c of mounted.splice(0)) await unmount(c);
   document.body.replaceChildren();
-  for (const key of ['SessionSidebarSearch', 'SessionSidebar', 'SessionSidebarReorder', 'SessionLabel']) {
+  for (const key of ['SessionSidebarSearch', 'SessionSidebar', 'SessionLabel']) {
     delete win[key];
   }
   vi.restoreAllMocks();
@@ -69,16 +69,16 @@ test('renders a labeled text box, placeholder and aria-label from the catalog, n
 
 test('typing sets window.SessionSidebarSearch\'s query and shows the clear button', () => {
   const { row, input } = render();
-  input.value = 'orchard';
+  input.value = 'argent';
   input.dispatchEvent(new Event('input', { bubbles: true }));
   flushSync();
-  expect((win.SessionSidebarSearch as { getQuery: () => string }).getQuery()).toBe('orchard');
+  expect((win.SessionSidebarSearch as { getQuery: () => string }).getQuery()).toBe('argent');
   expect(row.querySelector<HTMLButtonElement>('.oc-search__clear')).not.toBeNull();
 });
 
 test('the clear button empties the box, clears the query, and returns focus to the input', () => {
   const { row, input } = render();
-  input.value = 'orchard';
+  input.value = 'argent';
   input.dispatchEvent(new Event('input', { bubbles: true }));
   flushSync();
   row.querySelector<HTMLButtonElement>('.oc-search__clear')!.click();
@@ -93,7 +93,7 @@ test('Escape on a non-empty box clears it and stops the keystroke reaching a doc
   const { input } = render();
   const outer = vi.fn();
   document.addEventListener('keydown', outer);
-  input.value = 'orchard';
+  input.value = 'argent';
   input.dispatchEvent(new Event('input', { bubbles: true }));
   flushSync();
   input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
@@ -113,19 +113,35 @@ test('Escape on an EMPTY box does nothing here and reaches the document, so a se
   document.removeEventListener('keydown', outer);
 });
 
-test('ArrowDown moves focus onto the first row via SessionSidebarReorder, not some ad-hoc lookup', () => {
+function drawRows(rows: Array<[string, string]>): HTMLElement[] {
+  const listEl = document.createElement('div');
+  const els = rows.map(([name, band]) => {
+    const el = document.createElement('div');
+    el.className = 'session-sidebar-row';
+    el.dataset.name = name;
+    el.dataset.band = band;
+    el.tabIndex = -1;
+    listEl.appendChild(el);
+    return el;
+  });
+  document.body.appendChild(listEl);
+  win.SessionSidebar = { listEl };
+  return els;
+}
+
+test('ArrowDown moves focus onto the first row through the shell\'s roving tab stop, not some ad-hoc lookup', () => {
   const { input } = render();
-  const rowEl = { dataset: { name: 'cloude_alpha', band: 'pinned' } } as unknown as HTMLElement;
-  const setFocusRow = vi.fn();
-  win.SessionSidebarReorder = { rowEls: () => [rowEl], setFocusRow };
+  const [first, second] = drawRows([['cloude_alpha', 'pinned'], ['cloude_beta', 'p:1']]);
   input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
   flushSync();
-  expect(setFocusRow).toHaveBeenCalledWith('cloude_alpha', 'pinned', true);
+  expect(document.activeElement).toBe(first);
+  expect(first!.getAttribute('tabindex')).toBe('0');
+  expect(second!.getAttribute('tabindex')).toBe('-1');
 });
 
 test('ArrowDown with no rows on screen is a no-op, not a throw', () => {
   const { input } = render();
-  win.SessionSidebarReorder = { rowEls: () => [], setFocusRow: vi.fn() };
+  drawRows([]);
   expect(() => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))).not.toThrow();
 });
 
@@ -150,7 +166,7 @@ test('"/" typed while ALREADY inside the search box is an ordinary character, no
   expect(prevented, 'typing "/" while already in the box must not be intercepted').toBe(false);
 });
 
-test('"/" from anywhere outside the drawer focuses the box (a global shortcut)', () => {
+test('"/" from anywhere outside the drawer focuses the box (a global shortcut, Joe 2026-10-22)', () => {
   const { input } = render();
   (document.activeElement as HTMLElement | null)?.blur?.();
   document.body.focus();

@@ -1,5 +1,5 @@
 import { errorText } from '../../settings-page/panel-kit/error-text';
-import { resourcePush } from '../../resource-push/boot';
+import { createPushedStore } from '../../resource-push/pushed-store';
 import { EMPTY_SETTINGS, fetchRegistry, fetchRouting, putDefault, putPaused, putTick, resetTick, SCREEN, type Cell, type Family, type Fetcher, type RoutingSettings, type TypeRow } from './api';
 
 export const matrix = $state<{ families: Family[]; types: TypeRow[]; settings: RoutingSettings; loaded: boolean; problem: string; localOnly: boolean }>({
@@ -8,24 +8,14 @@ export const matrix = $state<{ families: Family[]; types: TypeRow[]; settings: R
 
 export const MATRIX_POLL_MS = 15000;
 
-let fetcherInUse: Fetcher | undefined;
-let inflight: Promise<void> | null = null;
-let attached = 0;
-let stop: (() => void) | null = null;
-
-export function refresh(): Promise<void> {
-    inflight ??= read().finally(() => { inflight = null; });
-    return inflight;
-}
-
-async function read(): Promise<void> {
+async function read(fetcher: Fetcher | undefined): Promise<void> {
     try {
         if (matrix.types.length === 0) {
-            const registry = await fetchRegistry(fetcherInUse);
+            const registry = await fetchRegistry(fetcher);
             matrix.families = registry.families;
             matrix.types = registry.types;
         }
-        matrix.settings = await fetchRouting(fetcherInUse);
+        matrix.settings = await fetchRouting(fetcher);
         matrix.problem = '';
         matrix.loaded = true;
     } catch (error) {
@@ -53,38 +43,26 @@ async function act(work: () => Promise<void>): Promise<void> {
 export const setTick = (column: string, typeId: string, value: boolean): Promise<void> =>
     act(async () => {
         const body = matrix.localOnly ? { column, type_id: typeId, value, scope: 'local' as const } : { column, type_id: typeId, value };
-        setCell(column, typeId, (await putTick(body, fetcherInUse)).cell);
+        setCell(column, typeId, (await putTick(body, store.fetcher())).cell);
     });
 
 export const resetCell = (column: string, typeId: string): Promise<void> =>
     act(async () => {
-        await resetTick(column, typeId, fetcherInUse);
+        await resetTick(column, typeId, store.fetcher());
         await refresh();
     });
 
 export const setDefault = (typeId: string, value: boolean): Promise<void> =>
     act(async () => {
-        const answer = await putDefault(typeId, value, fetcherInUse);
+        const answer = await putDefault(typeId, value, store.fetcher());
         matrix.settings = { ...matrix.settings, defaults: answer.defaults };
     });
 
 export const setPaused = (paused: boolean): Promise<void> =>
     act(async () => {
-        await putPaused(paused, fetcherInUse);
+        await putPaused(paused, store.fetcher());
         matrix.settings = { ...matrix.settings, paused };
     });
 
-export function attach(fetcher?: Fetcher): () => void {
-    if (fetcher) fetcherInUse = fetcher;
-    attached += 1;
-    if (attached === 1) stop = resourcePush().pushOrPoll(() => void refresh(), MATRIX_POLL_MS, ['notification_settings']);
-    void refresh();
-    return () => {
-        attached -= 1;
-        if (attached === 0) {
-            stop?.();
-            stop = null;
-            fetcherInUse = undefined;
-        }
-    };
-}
+const store = createPushedStore<Fetcher>({ topics: ['notification_settings'], pollMs: MATRIX_POLL_MS, read });
+export const { refresh, attach } = store;

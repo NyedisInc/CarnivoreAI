@@ -2,10 +2,9 @@ import type { Contribution } from '../sdk';
 import { t } from '../sdk';
 import type { SessionCardRow } from '../../lib/plugins/types';
 import { swarmRoster } from './agents/agent-roster.svelte';
-import { sessionDnd, sessionLeads, setProjectLead, setSessionDnd } from './task-manager-session-prefs';
+import { sessionLeads, setProjectLead } from './task-manager-session-prefs';
 
 export const LEAD_ACTION_ID = 'huddle-project-lead';
-export const DND_ACTION_ID = 'huddle-do-not-disturb';
 
 export function isSwarmBody(row: SessionCardRow): boolean {
   const id = row.sessionId;
@@ -44,21 +43,4 @@ const lead: Contribution<'session-card-action'> = {
   },
 };
 
-const dnd: Contribution<'session-card-action'> = {
-  id: DND_ACTION_ID,
-  surface: 'session-card-action',
-  order: 530,
-  enabled: () => true,
-  payload: {
-    shortcut: 'N',
-    label: (row) => t(sessionDnd(row.sessionUuid ?? '') ? 'cplug.huddle.role.dnd_off' : 'cplug.huddle.role.dnd_on'),
-    hidden: (row) => isSwarmBody(row) || sessionLeads(row.sessionUuid ?? '', row.projectId),
-    async run(row, context): Promise<void> {
-      const uuid = row.sessionUuid;
-      if (!uuid) return;
-      await attempt('do not disturb', () => setSessionDnd(uuid, !sessionDnd(uuid)), context.refresh);
-    },
-  },
-};
-
-export const roleActions: Contribution<'session-card-action'>[] = [lead, dnd];
+export const roleActions: Contribution<'session-card-action'>[] = [lead];

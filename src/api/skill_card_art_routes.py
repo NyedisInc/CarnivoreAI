@@ -13,6 +13,7 @@ from src.api.skills_manager_routes import resolve_location
 from src.core import terminal_background
 from src.core.companies import hero_images
 from src.core.skill_manager import card_art
+from src.api.error_response import api_error
 
 router = APIRouter(tags=["skills"])
 
@@ -66,7 +67,7 @@ async def regenerate_all_card_art(request: Request) -> dict:
     try:
         return await skill_card_art_bulk.start(request.app)
     except RuntimeError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise api_error(409, "conflict", exc, step="regenerate_all_card_art") from exc
 
 
 @router.get("/skills/card-art-bulk", dependencies=[Depends(require_auth)])

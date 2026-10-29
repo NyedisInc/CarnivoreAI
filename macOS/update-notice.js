@@ -5,7 +5,6 @@ function createUpdateNotice({ Notification, memo, t, onInstall, bannersPosting }
   return {
     async onUx(ux) {
       if (!ux || !ux.notify || !ux.menuRow) return false;
-      // permission prompt
       let posting = false;
       try {
         posting = (await bannersPosting()) === true;

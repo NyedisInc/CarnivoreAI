@@ -22,9 +22,9 @@ from src.core.swarm.cards import port as card_port
 from src.core.swarm.facade import SwarmFacade
 
 VIEW = SimpleNamespace(app=SimpleNamespace(state=object()))
-UNCOVERED = "should the walkthrough page be renamed to orchard walkthrough before launch"
+UNCOVERED = "should the walkthrough page be renamed to argent walkthrough before launch"
 OWNER_REF = "huddle:msg:347"
-OWNER_REPLY = "Yes, rename it to Orchard-Walkthrough."
+OWNER_REPLY = "Yes, rename it to Argent-Walkthrough."
 
 
 class Port:
@@ -70,10 +70,10 @@ def env(tmp_path, monkeypatch):
         parent_id=parent, project_id=None)
     alpha = mk("alpha", "alpha")
     nyedis = mk("nyedis", "company", alpha["id"])
-    orchard = mk("orchard", "project", nyedis["id"])
-    fixer = mk("fixer", "feature", orchard["id"])
+    argent = mk("argent", "project", nyedis["id"])
+    fixer = mk("fixer", "feature", argent["id"])
     relay = mk("relay", "project", alpha["id"])
-    for a in (alpha, nyedis, orchard, fixer, relay):
+    for a in (alpha, nyedis, argent, fixer, relay):
         memory.ensure_layout(memory.memory_dir(Path(a["repo_dir"]), a["slug"], a["memory_scope"]))
     told, current = [], {"agent": fixer}
 
@@ -86,7 +86,7 @@ def env(tmp_path, monkeypatch):
 
     monkeypatch.setattr(routing, "tell", tell)
     monkeypatch.setattr(spawn, "parent_agent", parent_agent)
-    yield SimpleNamespace(conn=conn, alpha=alpha, nyedis=nyedis, orchard=orchard, fixer=fixer, relay=relay, port=port,
+    yield SimpleNamespace(conn=conn, alpha=alpha, nyedis=nyedis, argent=argent, fixer=fixer, relay=relay, port=port,
                           cards=cards, told=told, tmp=tmp_path, as_agent=lambda a: current.update(agent=a))
     thread_port.register(None)
     card_port.register(None)
@@ -106,7 +106,7 @@ def owner_wrote(env, agent, at):
 def climb_to_owner(env):
     env.as_agent(env.fixer)
     qid = run(routing.ask(VIEW, None, {"question": UNCOVERED, "summary": "Rename the walkthrough page?"}))["question_id"]
-    for tier in (env.orchard, env.nyedis, env.alpha):
+    for tier in (env.argent, env.nyedis, env.alpha):
         assert env.told[-1].agent_id == tier["id"] and env.port.cards == []
         env.as_agent(tier)
         run(answers.pass_up(VIEW, None, {"question_id": qid}))
@@ -117,7 +117,7 @@ def test_every_tier_is_asked_then_the_card_lands_where_the_owner_is_reading(env)
     owner_wrote(env, env.fixer, "2026-10-08T05:00:00.000000Z")
     owner_wrote(env, env.nyedis, "2026-10-08T05:29:35.000000Z")
     qid = climb_to_owner(env)
-    assert [t.agent_id for t in env.told] == [env.orchard["id"], env.nyedis["id"], env.alpha["id"]]
+    assert [t.agent_id for t in env.told] == [env.argent["id"], env.nyedis["id"], env.alpha["id"]]
     assert all(t.source == "swarm_question" and t.authority == "data" for t in env.told)
     assert env.port.cards == [(env.nyedis["thread_key"], "question", f"question:{qid}")]
     assert env.conn.execute("SELECT state FROM swarm_questions WHERE id = ?", (qid,)).fetchone()[0] == "open"
@@ -143,7 +143,7 @@ def test_the_owner_answer_carries_his_message_id_and_a_relayed_one_does_not(env)
     env.as_agent(env.fixer)
     relayed_q = run(routing.ask(VIEW, None, {"question": "which colour is the staging banner on deploy pages",
                                               "summary": "Banner colour?"}))["question_id"]
-    env.as_agent(env.orchard)
+    env.as_agent(env.argent)
     run(answers.answer(VIEW, None, {"question_id": relayed_q, "owner_message_ref": OWNER_REF,
                                     "text": f"The owner answered your question {relayed_q} ({OWNER_REF}): orange"}))
     delivered = env.told[-1]

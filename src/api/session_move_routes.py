@@ -18,6 +18,7 @@ from src.core.session_move.apply import (
     plan_move,
 )
 from src.models.session_move import SessionMoveRequest, SessionMoveResponse
+from src.api.error_response import api_error, refusal_error
 
 logger = structlog.get_logger()
 router = APIRouter(tags=["sessions"])
@@ -69,13 +70,10 @@ async def move_session_folder(session_uuid: str, body: SessionMoveRequest, reque
         raise HTTPException(status_code=404, detail={"code": "session_not_found",
                                                      "message": "no running session on this computer has that id"})
     except SessionMoveRefused as exc:
-        raise HTTPException(status_code=409, detail={
-            "code": exc.code, "message": str(exc), "plan": exc.plan.to_wire() if exc.plan else None})
+        raise refusal_error(exc, status=409, session_uuid=session_uuid,
+                            extra={"plan": exc.plan.to_wire() if exc.plan else None}) from exc
     except SessionMoveFailed as exc:
-        logger.error("session_move_failed", session_uuid=session_uuid, step=exc.step, error=str(exc),
-                     undo_errors=exc.undo_errors, backup=exc.backup)
-        raise HTTPException(status_code=500, detail={
-            "code": "move_failed", "step": exc.step, "message": str(exc), "undo_errors": exc.undo_errors,
-            "backup": exc.backup})
+        raise api_error(500, "move_failed", exc, extra={"step": exc.step}, session_uuid=session_uuid,
+                        step_name=exc.step, undo_errors=exc.undo_errors, backup=exc.backup) from exc
     _tell_browsers(request, bool((answer.get("done") or {}).get("project_created")))
     return SessionMoveResponse(**answer)

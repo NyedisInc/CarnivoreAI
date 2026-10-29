@@ -1,15 +1,12 @@
-/* first paragraph */
 
 function fold(text: string): string {
     return text.split(/\s+/).filter(Boolean).join(' ');
 }
 
-/* first paragraph */
 function firstParagraph(text: string): string {
     return fold(text.split(/\n[ \t]*\n/)[0] ?? '');
 }
 
-/* first paragraph */
 function sameStart(scanned: string, transcriptPrompt: string): boolean {
     const a = fold(scanned);
     const b = firstParagraph(transcriptPrompt);

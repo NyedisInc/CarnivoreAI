@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button, Checkbox, Field, IconButton, Select } from '../base';
   import ModalShell from '../launchpad/ModalShell.svelte';
   import { forkSessionTo } from './fork-to';
   import { t } from '../i18n/index.svelte';
@@ -13,6 +14,13 @@
   let worktree = $state(false);
   let busy = $state(false);
   let error = $state('');
+
+  const PROVIDERS = [{ value: 'codex', label: 'codex' }, { value: 'claude', label: 'claude' }];
+  const efforts = $derived([
+    { value: '', label: t('session.fork_to.default') },
+    { value: 'low', label: 'low' }, { value: 'medium', label: 'medium' }, { value: 'high', label: 'high' },
+    ...(provider === 'codex' ? [{ value: 'xhigh', label: 'xhigh' }, { value: 'max', label: 'max' }] : []),
+  ]);
 
   async function create(): Promise<void> {
     if (busy) return;
@@ -31,30 +39,19 @@
   {#snippet head()}
     <div class="text-prompt-modal__head">
       <span class="text-prompt-modal__verb">{t('session.fork_to.title')}</span>
-      <button type="button" class="modal-close" aria-label={t('modal.close')} disabled={busy} onclick={onClose}>×</button>
+      <IconButton variant="close" icon="close" label={t('modal.close')} disabled={busy} onclick={onClose} />
     </div>
   {/snippet}
   <p class="modal-description">{t('session.fork_to.source', { name })}</p>
-  <label class="modal-label" for="fork-provider">{t('session.fork_to.provider')}</label>
-  <select id="fork-provider" class="modal-input" bind:value={provider} disabled={busy}>
-    <option value="codex">codex</option><option value="claude">claude</option>
-  </select>
-  <label class="modal-label" for="fork-model">{t('session.fork_to.model')}</label>
-  <input id="fork-model" class="modal-input" bind:value={model} disabled={busy} maxlength="200" placeholder={t('session.fork_to.default')} />
-  <label class="modal-label" for="fork-effort">{t('session.fork_to.effort')}</label>
-  <select id="fork-effort" class="modal-input" bind:value={effort} disabled={busy}>
-    <option value="">{t('session.fork_to.default')}</option>
-    <option value="low">low</option><option value="medium">medium</option>
-    <option value="high">high</option>{#if provider === 'codex'}<option value="xhigh">xhigh</option><option value="max">max</option>{/if}
-  </select>
-  <label class="modal-label" for="fork-name">{t('session.fork_to.name')}</label>
-  <input id="fork-name" class="modal-input" bind:value={forkName} disabled={busy} maxlength="200" placeholder={t('session.fork_to.default')} />
-  <label class="modal-label" for="fork-prompt">{t('session.fork_to.prompt')}</label>
-  <textarea id="fork-prompt" class="modal-input" bind:value={prompt} disabled={busy} maxlength="4000"></textarea>
-  <label class="modal-label"><input type="checkbox" bind:checked={worktree} disabled={busy} /> {t('session.fork_to.worktree')}</label>
+  <Select id="fork-provider" label={t('session.fork_to.provider')} bind:value={provider} disabled={busy} options={PROVIDERS} />
+  <Field id="fork-model" label={t('session.fork_to.model')} bind:value={model} disabled={busy} maxlength={200} placeholder={t('session.fork_to.default')} />
+  <Select id="fork-effort" label={t('session.fork_to.effort')} bind:value={effort} disabled={busy} options={efforts} />
+  <Field id="fork-name" label={t('session.fork_to.name')} bind:value={forkName} disabled={busy} maxlength={200} placeholder={t('session.fork_to.default')} />
+  <Field id="fork-prompt" label={t('session.fork_to.prompt')} multiline bind:value={prompt} disabled={busy} maxlength={4000} />
+  <Checkbox label={t('session.fork_to.worktree')} bind:checked={worktree} disabled={busy} />
   {#if error}<p role="alert">{error}</p>{/if}
   {#snippet footer()}
-    <button type="button" class="modal-btn modal-btn-secondary" disabled={busy} onclick={onClose}>{t('session.fork_to.cancel')}</button>
-    <button type="button" class="modal-btn modal-btn-confirm" data-fork-to-create disabled={busy} onclick={create}>{t('session.fork_to.create')}</button>
+    <Button disabled={busy} onclick={onClose}>{t('session.fork_to.cancel')}</Button>
+    <Button variant="confirm" data-fork-to-create disabled={busy} onclick={create}>{t('session.fork_to.create')}</Button>
   {/snippet}
 </ModalShell>

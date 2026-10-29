@@ -5,6 +5,7 @@ import ProjectColorPopover from './ProjectColorPopover.svelte';
 import { setLocale, t } from '../i18n/index.svelte';
 import { recorded, reframed, snapshot } from '../dialog-frame/goldens';
 
+/** The move's only intended change: the frame is `AnchoredPopup`'s, which adds its own class. */
 const FRAME = { addClasses: ['oc-anchored'] };
 
 setLocale('en');

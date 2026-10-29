@@ -77,7 +77,7 @@ const feedIds = (host: HTMLElement): string[] => [...host.querySelectorAll('[dat
 const joeReply = msg(706, 'reply', 'did this just work', { author: 'joe', files: [{ id: 'a1', name: 'shot.png' }] });
 const answer = msg(707, 'answer', 'yes, it worked end to end', { unread: true, quote: { id: 706, text: 'did this just work' } });
 
-describe('an answer newer than their reply', () => {
+describe('an answer newer than his reply (item 183)', () => {
   test('pure: it is in the row feed', () => {
     expect(rowFeed(mk({ thread: [joeReply, answer] }) as never).map((m) => m.id)).toEqual([707]);
   });

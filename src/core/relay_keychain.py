@@ -1,30 +1,3 @@
-"""The relay's two login Keychain items: the legacy token and the device key.
-
-WHY IT EXISTS. The publish token used to come from the environment alone,
-so a server started without ``CLOUDE_RELAY_PUBLISH_TOKEN`` exported (a
-login-item launch, a restart from a different shell) came up with no
-relay publisher and nothing but a log line to say so. The Keychain item
-survives every restart; the environment variables still win when set, so
-an operator can override it for one run (``relay_protocol.publish_token``
-owns that order).
-
-THE SECRET NEVER TOUCHES ARGV. A write goes through ``security -i`` with
-the command on stdin, so the value is never in ``ps`` or a process
-listing, and ``-A`` is never passed, so only ``/usr/bin/security`` is on
-the item's access list. A read is ``find-generic-password -w`` and the
-value comes back on stdout. Nothing here logs, formats into an exception
-or returns the value except as the read's answer.
-
-THE DEVICE KEY (``src/core/relay_identity``) uses the same read and
-write, under service ``ai.carnivore.relay.device-key`` with the install
-id as the account. A read tells ABSENT (exit 44) apart from UNAVAILABLE
-(locked, denied, timed out), because only absent may be answered by
-minting a new key: minting over a key that merely could not be read
-would silently become a different device.
-
-This is a SEPARATE module from ``src/core/provider_ledger/keychain.py``,
-which promises it only ever reads.
-"""
 
 from __future__ import annotations
 
@@ -67,7 +40,6 @@ READ_OK = "ok"
 READ_ABSENT = "absent"
 READ_UNAVAILABLE = "unavailable"
 
-# could not
 _EXIT_NOT_FOUND = 44
 
 SECURITY_BIN = "/usr/bin/security"
@@ -82,7 +54,7 @@ def is_safe_secret(value: str) -> bool:
 
 
 class KeychainWriteError(RuntimeError):
-    """The token could not be stored. The message never carries the value."""
+    pass
 
 
 def _refused_under_test(service: str) -> bool:

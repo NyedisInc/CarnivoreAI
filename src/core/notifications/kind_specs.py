@@ -43,6 +43,7 @@ class FieldSpec:
     pattern: Optional[str] = None
     choices: Tuple[str, ...] = ()
     default: Optional[str] = None
+    max_items: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -69,8 +70,12 @@ class KindSpec:
     virtual: bool = False
 
 
-def _secret(name: str, type_: str = FIELD_SECRET, required: bool = True, max_len: int = 512) -> FieldSpec:
-    return FieldSpec(name=name, type=type_, required=required, secret=True, max_len=max_len)
+MAX_EMAIL_RECIPIENTS = 10
+
+
+def _secret(name: str, type_: str = FIELD_SECRET, required: bool = True, max_len: int = 512,
+            max_items: Optional[int] = None) -> FieldSpec:
+    return FieldSpec(name=name, type=type_, required=required, secret=True, max_len=max_len, max_items=max_items)
 
 
 def _kind(kind_id: str, **kw: object) -> KindSpec:
@@ -107,7 +112,7 @@ KINDS: Tuple[KindSpec, ...] = (
                          FieldSpec(name="security", type=FIELD_ENUM, choices=("starttls", "tls", "plain"),
                                    default="starttls")),
           secret_fields=(_secret("user", required=False), _secret("password", required=False),
-                         _secret("from_address"), _secret("recipients", FIELD_LIST)),
+                         _secret("from_address"), _secret("recipients", FIELD_LIST, max_items=MAX_EMAIL_RECIPIENTS)),
           hosts=HostRules(any_host=True)),
     _kind(KIND_SNS,
           public_fields=(FieldSpec(name="region", type=FIELD_ENUM, max_len=32,

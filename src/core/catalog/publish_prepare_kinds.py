@@ -47,6 +47,9 @@ _CAPS = {
     KIND_MOD: (200, rules.MAX_FILE_BYTES, 1024 * 1024),
     KIND_CPLUG: (install_gates.MAX_MEMBERS, install_gates.MAX_FILE_BYTES, install_gates.MAX_TOTAL_BYTES),
 }
+_CPLUG_SOURCE_SUFFIXES = frozenset({".py", ".js", ".html", ".css", ".svg"})
+_SOURCE_DETECTORS = tuple(d for d in message_model_secrets.ALL_DETECTORS
+                          if d != message_model_secrets.DETECTOR_HIGH_ENTROPY_ASSIGNMENT)
 _MOD_MANIFEST_KEYS = frozenset(
     {"name", "version", "description", "author", "homepage", "repository", "license", "keywords", "types"}
 )
@@ -82,7 +85,8 @@ def _read_all(folder: Path, paths: List[str], prepared: publish_prepare.Prepared
         if len(content) > max_file:
             _refuse(prepared, rules.SUBMISSION_INVALID, f"this file is over the {max_file // 1024} KiB limit", relpath)
             continue
-        found = sorted({f.detector for f in message_model_secrets.scan_text(content.decode("utf-8", errors="replace"))})
+        detectors = _SOURCE_DETECTORS if kind == KIND_CPLUG and Path(relpath).suffix.lower() in _CPLUG_SOURCE_SUFFIXES else None
+        found = sorted({f.detector for f in message_model_secrets.scan_text(content.decode("utf-8", errors="replace"), detectors=detectors)})
         if found:
             _refuse(prepared, rules.SUBMISSION_INVALID,
                     f"this file looks like it holds a credential ({', '.join(found)}); remove it before publishing", relpath)
@@ -277,6 +281,8 @@ def _check_cplug(folder: Path, paths: List[str], read: Dict[str, bytes], prepare
         body = _json_text(doc)
         prepared.total_bytes += len(body) - len(read[path])
         prepared.members = [(p, body if p == path else c) for p, c in prepared.members]
+    if prepared.total_bytes > install_gates.MAX_TOTAL_BYTES:
+        _refuse(prepared, rules.BODY_TOO_LARGE, f"a cplug may total at most {install_gates.MAX_TOTAL_BYTES // 1024} KiB", None)
 
 
 def _json_object(raw: bytes) -> Optional[Dict[str, Any]]:

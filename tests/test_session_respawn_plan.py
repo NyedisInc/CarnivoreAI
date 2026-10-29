@@ -20,11 +20,11 @@ def test_dead_pane_with_agent_record_re_derives_the_agent_command():
     plan = resolve_respawn_plan(
         probe_ok=True,
         pane_dead="1",
-        pane_start_command='"keyc"',
-        agent_command="zsh -c 'source ~/.zshrc; keyc'",
+        pane_start_command='"cld"',
+        agent_command="zsh -c 'source ~/.zshrc; cld'",
     )
     assert plan.kind == RESPAWN_AGENT
-    assert plan.command == "zsh -c 'source ~/.zshrc; keyc'"
+    assert plan.command == "zsh -c 'source ~/.zshrc; cld'"
     assert plan.actionable is True
 
 
@@ -51,7 +51,7 @@ def test_dead_pane_without_agent_record_replays_tmux_own_command():
     assert plan.actionable is True
 
 
-@pytest.mark.parametrize("agent_command", ["keyc", "claude --dangerously-skip-permissions"])
+@pytest.mark.parametrize("agent_command", ["cld", "claude --dangerously-skip-permissions"])
 def test_bare_shell_pane_never_launches_an_agent(agent_command):
     plan = resolve_respawn_plan(
         probe_ok=True,
@@ -69,7 +69,7 @@ def test_failed_probe_is_cannot_determine_not_a_guess():
         probe_ok=False,
         pane_dead=None,
         pane_start_command=None,
-        agent_command="keyc",
+        agent_command="cld",
     )
     assert plan.kind == RESPAWN_CANNOT_DETERMINE
     assert plan.command is None
@@ -82,7 +82,7 @@ def test_missing_start_command_field_is_cannot_determine():
         probe_ok=True,
         pane_dead="1",
         pane_start_command=None,
-        agent_command="keyc",
+        agent_command="cld",
     )
     assert plan.kind == RESPAWN_CANNOT_DETERMINE
     assert plan.actionable is False
@@ -92,8 +92,8 @@ def test_live_pane_is_not_dead_and_is_not_actionable():
     plan = resolve_respawn_plan(
         probe_ok=True,
         pane_dead="0",
-        pane_start_command='"keyc"',
-        agent_command="keyc",
+        pane_start_command='"cld"',
+        agent_command="cld",
     )
     assert plan.kind == RESPAWN_NOT_DEAD
     assert plan.actionable is False
@@ -102,7 +102,7 @@ def test_live_pane_is_not_dead_and_is_not_actionable():
 
 def test_every_kind_carries_a_sentence_the_ui_can_show():
     cases = [
-        dict(probe_ok=True, pane_dead="1", pane_start_command='"keyc"', agent_command="keyc"),
+        dict(probe_ok=True, pane_dead="1", pane_start_command='"cld"', agent_command="cld"),
         dict(probe_ok=True, pane_dead="1", pane_start_command='"x"', agent_command=None),
         dict(probe_ok=True, pane_dead="1", pane_start_command="", agent_command=None),
         dict(probe_ok=True, pane_dead="0", pane_start_command="", agent_command=None),
@@ -142,7 +142,7 @@ def test_whitespace_only_agent_command_falls_through_to_replay():
     plan = resolve_respawn_plan(
         probe_ok=True,
         pane_dead="1",
-        pane_start_command='"keyc"',
+        pane_start_command='"cld"',
         agent_command="   ",
     )
     assert plan.kind == RESPAWN_REPLAY

@@ -33,7 +33,7 @@ const account = (id: string, name: string, short: string | null) => ({
 });
 
 fakeLedger.data = {
-  accounts: [account('a', 'Claude - acme', 'acme'), account('b', 'Plain Name', null)],
+  accounts: [account('a', 'Claude - Evergreen', 'Evergreen'), account('b', 'Plain Name', null)],
   total: { accounts: 2, windows: [] },
   loop: { alive: true, last_pass_at: null },
 } as unknown as LedgerSnapshot;
@@ -64,7 +64,7 @@ describe('home ledger cell renders the drawer widget', () => {
       phone: false,
     });
     const names = (h: HTMLElement) => [...h.querySelectorAll('.ldp-name')].map((n) => n.textContent?.trim());
-    expect(names(cell)).toEqual(['acme', 'Plain Name']);
+    expect(names(cell)).toEqual(['Evergreen', 'Plain Name']);
     expect(names(cell)).toEqual(names(drawer));
     const count = (h: HTMLElement, sel: string) => h.querySelectorAll(sel).length;
     expect(count(cell, '.ldp-account')).toBe(count(drawer, '.ldp-account'));

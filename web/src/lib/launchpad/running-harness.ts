@@ -1,9 +1,3 @@
-import { mount, unmount } from 'svelte';
-
-import RunningSessions from './RunningSessions.svelte';
-import { sessionStore } from '../sessions/store.svelte';
-import { uiPrefs } from '../ui/prefs.svelte';
-import type { RunningChrome } from './running-chrome';
 import type {
     CardAction,
     LabelVerdict,
@@ -12,9 +6,9 @@ import type {
     RestartChoice,
     RowActionDescriptor,
     RunningHost,
+    ThemeColors,
 } from './running-host';
-import type { ThemeColors } from './running-row';
-import type { ListingState, RunningSessionRow } from '../sessions/types';
+import type { RunningSessionRow } from '../sessions/types';
 
 export interface HostCall {
     method: string;
@@ -30,7 +24,6 @@ export interface HostAnswers {
     confirm?: boolean;
     validateLabel?: (value: string) => LabelVerdict;
     restartChoice?: RestartChoice | null;
-    /* could not */
     restartError?: string | null;
     hasRestartPicker?: boolean;
     respawn?: RespawnResult | (() => never);
@@ -164,46 +157,12 @@ export function recordingHost(answers: HostAnswers = {}): RecordingHost {
     };
 }
 
-export interface RecordingChrome extends RunningChrome {
-    counts: Array<{ text: string; listingOk: boolean }>;
-    visibility: boolean[];
-}
-
-export function recordingChrome(): RecordingChrome {
-    const counts: Array<{ text: string; listingOk: boolean }> = [];
-    const visibility: boolean[] = [];
-    return {
-        counts,
-        visibility,
-        setCount(text: string, listingOk: boolean) { counts.push({ text, listingOk }); },
-        setSectionVisible(visible: boolean) { visibility.push(visible); },
-    };
-}
-
-export interface RunningFixture {
-    rows?: RunningSessionRow[];
-    listing?: ListingState;
-}
-
-export function applyRunningFixture(fixture: RunningFixture): void {
-    sessionStore.runningSessions = fixture.rows ?? [];
-    sessionStore.runningSessionsListing = fixture.listing
-        ?? { ok: true, reason: null, detail: null, sources: [] };
-}
-
 export function testTranslate(
     key: string,
     params?: Record<string, unknown> | null,
 ): string {
     const values = params ? Object.values(params) : [];
     return values.length ? `${key} ${values.join(' ')}` : key;
-}
-
-export interface MountedList {
-    container: HTMLElement;
-    host: RecordingHost;
-    chrome: RecordingChrome;
-    destroy(): void;
 }
 
 export function row(
@@ -232,33 +191,5 @@ export function row(
         startup_gate: 'ready',
         status_source: 'hook',
         ...patch,
-    };
-}
-
-export function mountList(
-    fixture: RunningFixture = {},
-    answers: HostAnswers = {},
-): MountedList {
-    uiPrefs.resetForTests();
-    applyRunningFixture(fixture);
-    const container = document.createElement('div');
-    container.id = 'running-sessions-list';
-    document.body.appendChild(container);
-    const host = recordingHost(answers);
-    const chrome = recordingChrome();
-    const instance = mount(RunningSessions, {
-        target: container,
-        props: { host, chrome, t: testTranslate },
-    });
-    return {
-        container,
-        host,
-        chrome,
-        destroy() {
-            unmount(instance, { outro: false });
-            container.remove();
-            sessionStore.reset();
-            uiPrefs.resetForTests();
-        },
     };
 }

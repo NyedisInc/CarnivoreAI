@@ -4,10 +4,11 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from src.core.db import transaction
 from src.core.mcp import family_signals
+from src.core.pack import progress
 from src.core.trail_entry import utc_now
 
 STEPS = ("prepare", "code", "rows", "transcripts", "verify", "flip")
@@ -58,6 +59,7 @@ def update(conn: sqlite3.Connection, op_id: str, role: str, *, state: Optional[s
             "UPDATE pack_migrations SET state = COALESCE(?, state), step = COALESCE(?, step), error_code = COALESCE(?, error_code), "
             "detail_json = ?, finished_at = CASE WHEN ? THEN ? ELSE finished_at END WHERE id = ? AND role = ?",
             (state, step, error_code, json.dumps(merged), 1 if done else 0, utc_now(), op_id, role))
+    progress.on_update(op_id, role, state=state, step=step, error_code=error_code, detail=detail)
     _notify(op_id)
 
 
@@ -72,6 +74,17 @@ def read(conn: sqlite3.Connection, op_id: str, role: Optional[str] = None) -> Op
     return None
 
 
+MAX_LISTED_FILES = 20
+
+
+def listed_dropped_files(summary: object) -> Tuple[List[str], int]:
+    names = summary.get("task_files_not_copied") if isinstance(summary, dict) else None
+    if not isinstance(names, list):
+        return [], 0
+    kept = [n for n in names if isinstance(n, str)]
+    return kept[:MAX_LISTED_FILES], max(0, len(kept) - MAX_LISTED_FILES)
+
+
 def view(conn: sqlite3.Connection, op_id: str) -> Optional[Dict[str, Any]]:
     op = read(conn, op_id)
     if op is None:
@@ -82,6 +95,7 @@ def view(conn: sqlite3.Connection, op_id: str) -> Optional[Dict[str, Any]]:
     for child in children:
         detail = (read(conn, child["id"]) or {}).get("detail", {})
         child["name"] = detail.get("name")
+        child["task_files_not_copied"], child["task_files_not_copied_more"] = listed_dropped_files(detail.get("summary"))
     op["children"] = children
     op["steps"] = steps_for(op["detail"])
     return op

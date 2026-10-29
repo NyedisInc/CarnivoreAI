@@ -23,7 +23,6 @@ class HealthResponse(BaseModel):
     uptime: int = Field(..., description="Server uptime in seconds")
     session_name: Optional[str] = Field(None, description="Current session name/working dir")
     local_server_count: int = Field(0, description="Number of detected local dev servers")
-    # CANNOT DETERMINE
     version: str = Field(
         "", description="Version of the running server code, frozen at startup"
     )

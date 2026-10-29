@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import ProjectChip from './ProjectChip.svelte';
     import type { Snippet } from 'svelte';
     import FoldChevron from '../../opscenter/ui/FoldChevron.svelte';
     import Button from '../base/Button.svelte';
@@ -74,7 +75,7 @@
         <Button variant="row" aria-expanded={leaf ? undefined : !folded} aria-disabled={leaf ? 'true' : undefined} aria-label={t('sessions.page.group.fold', { name: group.label })} data-fold={group.key} onclick={() => !leaf && onFold(group.key)}>
             <FoldChevron />
             {#if group.project}
-                <span class="sp-pchip" style:--pc={projectColorVar(projectColorOf(group.project.id ?? null))}>{(group.label.charAt(0) || '?').toUpperCase()}</span>
+                <ProjectChip name={group.label} projectId={group.project.id ?? null} />
             {:else if mark}
                 <span class="sp-pico" aria-hidden="true">{@html mark.svg}</span>
             {/if}

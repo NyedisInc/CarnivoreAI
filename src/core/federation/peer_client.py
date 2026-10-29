@@ -125,11 +125,17 @@ class PeerClient:
             raise PeerRefused("grant_invalid")
         if response.status_code != 200:
             raise PeerRefused(f"http_{response.status_code}")
-        data = response.json()
-        if data.get("install_id") != self._peer:
-            raise PeerRefused("identity_changed")
-        self._token = str(data["token"])
-        self._expires = self._clock() + float(data.get("expires_in", peer_token.TOKEN_TTL_SECONDS))
+        try:
+            data = response.json()
+            if not isinstance(data, dict):
+                raise ValueError("token answer is not an object")
+            if data.get("install_id") != self._peer:
+                raise PeerRefused("identity_changed")
+            token = str(data["token"])
+            expires = self._clock() + float(data.get("expires_in", peer_token.TOKEN_TTL_SECONDS))
+        except (ValueError, KeyError, TypeError):
+            raise PeerRefused("bad_answer") from None
+        self._token, self._expires = token, expires
         return self._token
 
     async def bearer(self, force: bool = False) -> str:
@@ -150,14 +156,6 @@ class PeerClient:
     async def request(self, method: str, path: str, *, json: Any = None, timeout: Optional[float] = None,
                       max_body: int = peer_http.MAX_BODY, content: Optional[bytes] = None,
                       headers: Optional[Dict[str, str]] = None) -> peer_http.Reply:
-        """One authenticated request under ``/api/v1/federation`` or any absolute ``/api/...`` path.
-
-        ``timeout`` overrides the per-request deadline (a restart on the far end outlasts the default).
-        ``max_body`` is the reply cap; only the session listing asks for more than the default. ``content`` and
-        ``headers`` send raw bytes with extra headers (a Pack blob chunk) in place of ``json``.
-        Raises: PeerUnreachable, PeerRefused (the token could not be earned).
-        Example: (await client.request("GET", "/federation/hello")).json()
-        """
         token = self._token if self._clock() < self._expires - REFRESH_MARGIN else await self._mint()
         response = await self._send(method, _url(path), token, json, timeout, max_body, content, headers)
         if response.status_code == 401:

@@ -10,6 +10,7 @@ const SCROLLBAR_RESERVE_PX = 16;
 const cell = fs.readFileSync(path.join(HERE, 'Cell.svelte'), 'utf8');
 const tokens = fs.readFileSync(path.join(WEB, 'src', 'opscenter', 'tokens.css'), 'utf8');
 
+/* the whole file */
 function paneRule(): string {
   const at = cell.indexOf(':global(.oc-tl-pane) {');
   expect(at, 'the .oc-tl-pane rule is gone or renamed').toBeGreaterThan(-1);
@@ -35,4 +36,10 @@ test('the host takes no padding on the axis that costs rows', () => {
     expect(rule, `${side} on the host would move the grid the user is reading`)
       .not.toContain(side);
   }
+});
+
+test('the host anchors the grid to its bottom edge (slack goes above the first row)', () => {
+  const rule = paneRule();
+  expect(rule).toContain('justify-content: flex-end');
+  expect(rule).toContain('flex-direction: column');
 });

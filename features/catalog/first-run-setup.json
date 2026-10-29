@@ -7,18 +7,21 @@
   "docs": [
     "README.md",
     "SECURITY_GAPS.md",
-    "docs/deployment-docker.md",
+    "docs/deploy-mini.md",
     "docs/computers.md"
   ],
   "examples": [
     "Install Carnivore, open it on the same computer, scan the code with your authenticator app, and type one code to finish.",
+    "Close the setup window by mistake: open Carnivore on this computer again and the same setup screen comes back until you pair.",
     "Join a second computer to your pack: choose join your pack on its first-run screen and type the code from your main computer; it links to the pack without an authenticator of its own."
   ],
   "how_to": [
     "Open Carnivore on the computer it runs on (the menu bar opens it on first launch, or use Finish Setup... in the menu). Choose set up as a new computer, or join your pack.",
     "Scan the code with any authenticator app, or open can't scan? and type the key.",
     "Choose i scanned it, type the 6-digit code from the app, and choose finish setup.",
-    "The window opens Terminal for the join; if it cannot, it shows a line to paste there."
+    "Carnivore restarts itself once so your phone can reach this computer, then opens signed in.",
+    "To join a pack instead: choose join your pack, type the 6 digit code your main computer shows (or paste a link), and wait for the status line to say this computer joined. The window opens Terminal for the join; if it cannot, it shows a line to paste there.",
+    "After the code is accepted, setup shows one more step: whether claude code is found on this computer. If it is not, it shows the official install line and says to run claude and sign in; check again re-reads it, and continue always leaves setup. Codex shows only when found. The installer needs macos 14 and prints the same check."
   ],
   "id": "first-run-setup",
   "issues": [
@@ -34,7 +37,26 @@
     "join",
     "pack"
   ],
-  "media_exempt": "needs an unpaired test slot and scripts/testsrv always writes the pairing sentinel; follow-up issue #1535",
+  "media": [
+    {
+      "alt": "The first-run setup screen: set up as a new computer, or join your pack",
+      "caption": "First screen: choose a new computer or join your pack",
+      "file": "choose.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The setup screen showing the authenticator QR code, a can't scan option and an i scanned it button",
+      "caption": "Scan the code with your authenticator app",
+      "file": "scan.png",
+      "kind": "screenshot"
+    },
+    {
+      "alt": "The setup screen asking for the 6-digit code from the authenticator app",
+      "caption": "Type one code to finish",
+      "file": "confirm.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "First-run setup",
   "since": "2026-10-10",
   "status": "stable",
@@ -45,7 +67,7 @@
     "macOS/main.js",
     "web/src/lib/first-run/FirstRunJoin.svelte"
   ],
-  "updated": "2026-10-12",
+  "updated": "2026-10-29",
   "where": [
     "On the computer Carnivore runs on, open Carnivore before pairing an authenticator: the setup screen replaces the login screen.",
     "From any other device before pairing: a panel says to finish setup on the computer."

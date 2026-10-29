@@ -35,7 +35,7 @@ LINK_TOKEN_DB_FILENAME = "spectator_link_tokens.db"
 
 
 class LinkKeysUnavailableError(RuntimeError):
-    """A v2 link's content key could not be kept, so it was not minted."""
+    pass
 
 
 def link_token_db_path(db_path: str) -> Path:
@@ -95,19 +95,6 @@ _COLUMNS = (
 
 
 class SpectatorLinksStore:
-    """Async sqlite store for read-only session shares.
-
-    Description: one long-lived ``aiosqlite`` connection behind an
-      ``asyncio.Lock``, exactly as ``RefreshStore`` does it, because a
-      mint is a read-modify-write and sqlite's own lock only protects
-      single statements.
-    Inputs (constructor): db_path (str) - the sqlite file, normally
-      ``cloude.db`` inside the state directory; token_db_path (str |
-      None) - the live-link token sidecar, defaulting to
-      ``link_token_db_path(db_path)``.
-    Output: an uninitialised store; call ``init`` before anything else.
-    Example: store = SpectatorLinksStore("/tmp/cloude.db")
-    """
 
     def __init__(self, db_path: str, *, token_db_path: Optional[str] = None):
         self._db_path = str(Path(db_path).expanduser())

@@ -33,6 +33,7 @@ export function setDashboardLayout(id: string, layout: Layout): Promise<Dashboar
   return call(`/${encodeURIComponent(id)}/layout`, { method: 'PUT', body: JSON.stringify({ layout }) });
 }
 
+/* the home screen */
 export function activateDashboard(id: string): Promise<DashboardList> {
   return call(`/${encodeURIComponent(id)}/activate`, { method: 'POST' });
 }

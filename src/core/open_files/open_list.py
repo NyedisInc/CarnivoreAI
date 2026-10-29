@@ -1,9 +1,3 @@
-"""
-HELD IN MEMORY AND PERSISTED: every change is written to ``open_files.json`` in the state directory (``store.py``) at
-the one mutation point below, and :func:`configure` reloads it once at startup, so a restart brings each row back with
-the same id and order. No database. THE ONE WRITER of the ``open_files`` topic: every open, reuse and close names it
-(``resource_push.notify``), so every open window re-reads ``GET /api/v1/files/open`` once (PUSH, NOT PULL).
-"""
 
 from __future__ import annotations
 
@@ -38,6 +32,7 @@ class OpenFile:
     title: str
     opened_at: float
     seq: int = 0
+    scope_root: Optional[str] = None
 
 
 _lock = threading.Lock()
@@ -52,8 +47,6 @@ def _persist_locked() -> None:
 
 
 def configure(state_directory: Optional[Path]) -> None:
-    """Point the list at its file in the state directory and load what a previous run left (call once at startup).
-    """
     global _file, _clock
     with _lock:
         _file = None if state_directory is None else store.path_in(state_directory)
@@ -75,18 +68,19 @@ def title_for(path: str) -> str:
     return (os.path.basename(path.rstrip("/")) or path)[:MAX_TITLE]
 
 
-def open_file(kind: str, root: str, path: str, session_uuid: str) -> Tuple[OpenFile, bool]:
+def open_file(kind: str, root: str, path: str, session_uuid: str,
+              scope_root: Optional[str] = None) -> Tuple[OpenFile, bool]:
     global _clock
     with _lock:
         _clock += 1
         found = next((f for f in _files if (f.kind, f.root, f.path, f.session_uuid) == (kind, root, path, session_uuid)), None)
         if found is None:
-            stored = OpenFile(new_id(), kind, root, path, session_uuid, title_for(path), time.time(), _clock)
+            stored = OpenFile(new_id(), kind, root, path, session_uuid, title_for(path), time.time(), _clock, scope_root)
             _files.append(stored)
             if len(_files) > MAX_FILES:
                 _files.remove(min((f for f in _files if f is not stored), key=lambda f: f.seq))
         else:
-            stored = replace(found, opened_at=time.time(), seq=_clock)
+            stored = replace(found, opened_at=time.time(), seq=_clock, scope_root=scope_root if root == "absolute" else found.scope_root)
             _files[_files.index(found)] = stored
         _persist_locked()
     resource_push.notify(OPEN_FILES)

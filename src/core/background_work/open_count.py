@@ -1,23 +1,3 @@
-"""How many background shells and monitors a claude session has open
-(issue #1044 follow-up).
-
-THE CONTINUOUS SOURCE. A background shell is a live process, so the count
-is MEASURED from the process tree on every cycle: a direct child of the
-claude pid whose stdout is ``tasks/<id>.output`` names its task id. A
-foreground Bash call holds its task file on stdout too (measured the same
-day), so a child counts only when that id was recorded as a background
-launch (``backgroundTaskId``) in some file of this conversation
-(:func:`src.core.subagents.parked_launches.conversation_launches`). A
-shell's end needs no notice: its process is gone. A Monitor keeps its
-stdio on pipes (``subagents.parked_work``), so a Monitor counts from its
-records alone: launched by the current claude process, never stopped or
-notified with a status, and inside its ``timeoutMs`` when it has one.
-
-CACHED WHERE SOUND. The transcript half is re-read when the parent
-changes, the ``subagents/`` folder changes, a live task id has not been
-looked up yet, a Monitor deadline passes, or
-:data:`REFRESH_SECONDS` elapse; the process half is never cached.
-"""
 
 from __future__ import annotations
 
@@ -122,14 +102,6 @@ class BackgroundCountReader:
         process_started_at: Optional[datetime],
         now: datetime,
     ) -> Optional[int]:
-        """This cycle's count, or None when it could not be measured.
-
-        Inputs: parent_path (Path | None) - the located conversation.
-          claude_pid (int | None) - from a positive registry read naming
-          this conversation. process_parents (mapping | None) - the shared
-          snapshot. process_started_at (datetime | None). now (datetime).
-        Output: int | None - None without a transcript, a pid or a snapshot.
-        """
         if parent_path is None or claude_pid is None or not process_parents:
             return None
         live = live_task_ids(claude_pid, process_parents, stdout_of=self._stdout_of)

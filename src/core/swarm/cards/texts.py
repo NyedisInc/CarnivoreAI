@@ -16,7 +16,7 @@ def dealt(card: Card, chain_facts: Sequence[Mapping[str, str]] = (), note: str =
             f"Handoff so far: {card.get('handoff') or 'none yet'}.\n"
             + (f"The owner's note for you: {note}\n" if note else "")
             + (f"What your chain already knows:\n{known}" if known else "") +
-            "Call swarm_card_start now (it answers the full card), keep the handoff current with swarm_card_handoff, and finish with swarm_card_finish (result plus how-to-validate).")
+            "Call swarm_card_start now (it answers the full card), keep the handoff current with swarm_card_handoff, and finish with swarm_card_finish (result, how-to-validate and needs_owner).")
 
 
 def refresh(card: Card, **_: Any) -> str:
@@ -56,13 +56,13 @@ def validation_failed(card: Card, *, proof: str = "", **_: Any) -> str:
 
 def sent_back(card: Card, **_: Any) -> str:
     return (f"Card #{card['id']} ({_title(card)}) was sent back to you. The owner's note follows. Update the handoff with "
-            "swarm_card_handoff, fix what it names, and call swarm_card_finish again (result plus how-to-validate).")
+            "swarm_card_handoff, fix what it names, and call swarm_card_finish again (result, how-to-validate and needs_owner).")
 
 
 def spawn_card_line(card: Card, chain_facts: Sequence[Mapping[str, str]] = ()) -> str:
     known = "".join(f"fact {f['fact_id']}: {' '.join(str(f['title']).split())}\n" for f in list(chain_facts)[:3])
     return (f"\n\nYour card is #{card['id']}: {_title(card)}. Call swarm_card_start before you begin (it answers the full card); the card is the whole job. "
-            "Keep the handoff current with swarm_card_handoff, and finish with swarm_card_finish (result plus how-to-validate)."
+            "Keep the handoff current with swarm_card_handoff, and finish with swarm_card_finish (result, how-to-validate and needs_owner)."
             + (f"\nWhat your chain already knows:\n{known}" if known else ""))
 
 

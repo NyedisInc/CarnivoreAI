@@ -84,7 +84,7 @@ def real_manager(open_connection):
         _last_work_stamp_at={},
         _work_stamp_epoch=lambda sid, name: EPOCH,
         _writable_datastore_connection=open_connection,
-        _tmux_socket_name=lambda: SOCKET,
+        tmux_socket_name=lambda: SOCKET,
     )
     probe._persist_work_stamp = types.MethodType(SessionManager._persist_work_stamp, probe)
     return probe

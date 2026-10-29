@@ -15,7 +15,7 @@ beforeEach(() => {
     setCacheBackend(memory);
     vi.useFakeTimers();
     vi.stubGlobal('localStorage', { getItem: () => `h.${btoa(JSON.stringify({ sub: 'alice' }))}.s` });
-    vi.stubGlobal('location', { origin: 'https://mac.local:8000' });
+    vi.stubGlobal('location', { origin: 'https://mini.local:8000' });
 });
 afterEach(() => {
     vi.useRealTimers();

@@ -1,3 +1,4 @@
+/* there is nothing */
 
 (function () {
     'use strict';
@@ -32,7 +33,7 @@
         termWrapper = wrapper;
         term = wrapper.term;
         screenEl = term.element.querySelector('.xterm-screen') || term.element;
-        const container = term.element.parentElement;
+        const container = term.element.parentElement; // #terminal
         if (!container) return;
 
         container.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });

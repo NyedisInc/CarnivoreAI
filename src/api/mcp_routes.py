@@ -6,6 +6,7 @@ import hashlib
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
+from starlette.requests import ClientDisconnect
 
 from slowapi.util import get_remote_address
 
@@ -19,6 +20,8 @@ from src.core.mcp.caller import AgentCaller
 
 logger = structlog.get_logger()
 router = APIRouter()
+
+CLIENT_CLOSED_STATUS = 499
 
 
 def mcp_enabled() -> None:
@@ -46,7 +49,7 @@ async def mcp_post(
     """Handle one JSON-RPC message or batch from an authenticated agent.
 
     Inputs: request (Request); caller (AgentCaller) - from ``require_agent``.
-    Output: JSON reply, or 202 with no body for notifications, 413 when the
+    Output: JSON reply, or 202 with no body for notifications, 499 when the client hung up mid-body (nobody reads it), 413 when the
       body is over the cap (``protocol.MAX_BODY_BYTES``, or a larger one only for one call of a tool that takes files inline,
       ``protocol.body_allowed``; nothing past ``protocol.MAX_READ_BYTES`` is ever read).
     """
@@ -56,11 +59,15 @@ async def mcp_post(
         return too_large
     chunks: list[bytes] = []
     size = 0
-    async for chunk in request.stream():
-        size += len(chunk)
-        if size > protocol.MAX_READ_BYTES:
-            return too_large
-        chunks.append(chunk)
+    try:
+        async for chunk in request.stream():
+            size += len(chunk)
+            if size > protocol.MAX_READ_BYTES:
+                return too_large
+            chunks.append(chunk)
+    except ClientDisconnect:
+        logger.debug("mcp_client_disconnected", route=request.url.path, client=get_remote_address(request), bytes_read=size)
+        return Response(status_code=CLIENT_CLOSED_STATUS)
     raw = b"".join(chunks)
     if not protocol.body_allowed(raw, caller):
         return too_large

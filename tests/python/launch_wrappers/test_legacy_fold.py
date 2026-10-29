@@ -14,7 +14,7 @@ from src.core.config_migration import CURRENT_CONFIG_VERSION, migrate_config_fil
 from src.core.launch_wrappers.legacy_fold import fold_legacy_commands
 from src.core.session_restart import resume_arguments
 
-UUID = "9f27394c-7842-4fb8-87b7-6aa0543ae908"
+UUID = "0198c8f0-1111-7222-8333-944445555666"
 
 FIXTURE = {
     "config_version": 5,
@@ -30,8 +30,8 @@ FIXTURE = {
             {"id": "claude-skip-permissions", "family": "claude", "label": "claude",
              "script": 'command claude --dangerously-skip-permissions "$@"',
              "default": True, "accepts_model": False},
-            {"id": "keyc", "family": "claude", "label": "keyc", "script": "keyc() { :; }",
-             "entry": "keyc", "default": False, "accepts_model": False},
+            {"id": "cld", "family": "claude", "label": "cld", "script": "cld() { :; }",
+             "entry": "cld", "default": False, "accepts_model": False},
             {"id": "cldl", "family": "local", "label": "cldl", "script": "cldl() { :; }",
              "entry": "cldl", "default": False, "accepts_model": True},
         ],
@@ -90,7 +90,7 @@ def test_a_family_with_wrappers_keeps_launching_them(migrated):
     _path, _before, after = migrated
     claude = _family(after, "claude")
     assert [(w["id"], w["default"]) for w in claude] == [
-        ("claude-skip-permissions", True), ("keyc", False)]
+        ("claude-skip-permissions", True), ("cld", False)]
     local = _family(after, "local")
     assert [(w["id"], w["default"]) for w in local] == [("cldl", True), ("local-legacy", False)]
     assert local[1]["script"] == 'cldl --fast "$@"'
@@ -110,7 +110,7 @@ def test_no_customised_value_is_lost_and_the_keys_stay_inert(migrated):
 
 def test_every_family_ends_with_exactly_one_default(migrated):
     _path, _before, after = migrated
-    for family in AGENT_FAMILIES:
+    for family in (f for f in AGENT_FAMILIES if f.seeded):
         flags = [w for w in _family(after, family.name) if w.get("default")]
         assert len(flags) == 1, family.name
     AgentsConfig(**after["agents"])

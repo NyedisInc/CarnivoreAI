@@ -1,84 +1,4 @@
 #!/usr/bin/env python3
-"""Does `unknown` render as a DIFFERENT SHAPE from every definite status.
-
-THE DEFECT. `.status-dot--idle` and `.status-dot--unknown` were two
-colour rules, `--color-fg-faint` and `--color-fg-subtle`. Under the
-`claude` theme those two tokens are the same value (#959595), so the two
-dots were pixel-identical; under `terminal` they are 5 levels apart,
-which no eye and no threshold worth having would call a difference.
-`idle` means "alive, nothing happening". `unknown` means the server could
-not determine the state. Rendering a could-not-evaluate identically to a
-definite answer is exactly the collapse this repo's THREE-OUTCOME RULE
-forbids, sitting in the indicator the user reads most often.
-
-THE FIX UNDER TEST. `unknown` is now a HOLLOW RING: transparent fill with
-an inset rim. That matches the macOS tray, where `tray-unknown` is the
-only hollow glyph and every measured state is a filled one, so both
-surfaces speak one vocabulary. It is a shape change, not a severity
-change - same quiet ink, no new colour, no pulse.
-
-WHY THIS IS A PIXEL TEST AND NOT A CLASS-NAME TEST. A class-name
-assertion passes against a ring that renders solid, and this repo has
-shipped three visibly broken features through fully green suites whose
-assertions read markup - including a button that fell through to the bare
-user-agent stylesheet while "the button exists" passed. So every verdict
-below comes from screenshotting TWO real pixels of each dot in a real
-Chromium that loaded the real stylesheets in the shipped order:
-
-    centre  (x+4, y+4)  - the middle of the 9px box
-    rim     (x+1, y+4)  - fully inside a 2px inset rim, and fully inside
-                          a filled dot, for BOTH a 50% radius and a 0
-                          radius. Worked out from the geometry rather
-                          than eyeballed: against a circle of radius 4.5
-                          centred at (4.5, 4.5), every corner of that
-                          pixel sits at radial distance 2.55 to 3.54,
-                          which is inside the filled disc and inside the
-                          rim band [2.5, 4.5] alike. No antialiased edge
-                          is sampled either way.
-
-filled  =>  centre and rim MATCH
-hollow  =>  centre and rim DIFFER, centre is the page backdrop, and the
-            rim is ink that is not the backdrop
-
-ANIMATION. Three dots pulse their opacity forever. Two screenshots of one
-pulsing dot land at different points in its cycle, so a solid dot would
-report centre != rim and be scored hollow - a false verdict manufactured
-inside the measurement. Every sample here is taken with animations pinned
-to a fixed frame (sample_pixel(..., freeze_animations=True)).
-
-THREE THEMES, chosen for what each one can falsify, not for coverage:
-  claude    the user's own theme, and the one where fg-faint == fg-subtle
-            exactly, so colour alone provably cannot separate the two.
-  terminal  sets --radius-full to 0. A ring built on a radius token would
-            collapse there; the run REQUIRES one measured theme to have a
-            zeroed radius, and reports CANNOT DETERMINE if none does, so
-            this case cannot silently stop being exercised.
-  codex     a LIGHT page (#f7f7fa) where every dark-theme assumption about
-            what a transparent centre composites to is wrong.
-gameboy and matrix are deliberately not used: they set several status
-tokens to the same value, so states are indistinguishable there and a run
-could pass for the wrong reason.
-
-TWO POSITIVE CONTROLS, one per verdict. #control-filled is deliberately
-solid and #control-hollow deliberately hollow, both independent of the
-code under test. A sampler that could only ever say "centre equals rim"
-would pass every filled state for the wrong reason and fail the hollow
-control; one that could only ever say "they differ" would fail the filled
-control. Without both, a broken sampler manufactures a green inside the
-verification step, which is the worst place for one.
-
-THREE OUTCOMES, and they exit differently:
-  0  PASS  - every dot measured, unknown hollow, all six others filled
-  1  FAIL  - something was measured and was wrong
-  2  CANNOT DETERMINE - the measurement could not be taken at all
-             (playwright missing, browser would not launch, harness never
-             became ready, tab reported itself hidden, no radius-zero
-             theme in the set). Never a pass.
-
-playwright is not importable under this project's venv. Run it with an
-interpreter that has it, e.g.
-    /opt/homebrew/bin/python3 scripts/verify_status_dot_shape.py
-"""
 
 from __future__ import annotations
 
@@ -155,13 +75,6 @@ def opaque(css_color: str) -> tuple:
 
 
 def measure_theme(page, theme: str, undetermined: list) -> dict:
-    """Apply one theme and sample every dot's centre and rim, in pixels.
-
-    Inputs: page - a Playwright page already on the harness; theme (str) -
-      a shipped theme directory name; undetermined (list) - appended to
-      when something could not be measured at all.
-    Output: dict - the measurement bundle, or {} when nothing was measured.
-    """
     try:
         page.evaluate("(id) => window.__applyTheme(id)", theme)
     except Exception as exc:  # noqa: BLE001
@@ -307,17 +220,6 @@ def check_theme(m: dict, failures: list, undetermined: list) -> None:
 
 
 def check_radius_zero(measured: dict, failures: list, undetermined: list) -> None:
-    """Require the radius-zeroing case to have been genuinely exercised.
-
-    `terminal`, `gameboy` and `legacy_apple` set every radius token to 0
-    on purpose. A hollow ring built on `--radius-full` would collapse into
-    a square OUTLINE there, which is still hollow and still correct - but
-    only a theme that actually zeroes the token can prove it. If no theme
-    in the set does, this is a CANNOT DETERMINE, never a quiet pass.
-
-    Inputs: measured (dict); failures (list); undetermined (list).
-    Output: None.
-    """
     zeroed = [t for t, m in measured.items()
               if m["tokens"]["radiusFull"].strip() in ("0", "0px", "0%")]
     if not zeroed:

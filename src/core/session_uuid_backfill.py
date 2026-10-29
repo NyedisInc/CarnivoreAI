@@ -21,7 +21,6 @@ OUTCOME_NO_CANDIDATE = "no_candidate"
 
 OUTCOME_SOUND = "sound"
 
-# as a duplicate
 OUTCOME_COLLIDES = "collides_with_existing_row"
 
 OUTCOME_NOT_WRITABLE: Tuple[str, ...] = (

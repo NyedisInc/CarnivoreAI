@@ -74,7 +74,7 @@ await test('a good team and a greater version pass, and the temp dir is gone', a
 });
 
 await test('a wrong team is refused (the old team, an ad hoc "not set", and a failed requirement)', async () => {
-  for (const o of [{ team: 'XXXXXXXXXX' }, { team: 'not' }, { failRequirement: true }]) {
+  for (const o of [{ team: 'MDH8UQ6H46' }, { team: 'not' }, { failRequirement: true }]) {
     const r = await verify({ ...o, version: '9.0.0' });
     assert.equal(r.ok, false, JSON.stringify(o));
     assert.match(r.reason, /team|Requirement/i);
@@ -201,7 +201,7 @@ async function readyController(o, current = '1.16.3') {
 }
 
 await test('a refused update never stops the engine or installs, and the state is update_refused', async () => {
-  for (const o of [{ team: 'XXXXXXXXXX', version: '2.0.0' }, { version: '1.16.3' }, { version: '1.16.2' }]) {
+  for (const o of [{ team: 'MDH8UQ6H46', version: '2.0.0' }, { version: '1.16.3' }, { version: '1.16.2' }]) {
     const { c, order } = await readyController(o);
     assert.equal(await c.install(), false);
     assert.deepEqual(order, [], JSON.stringify(o));

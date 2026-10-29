@@ -48,7 +48,7 @@ test.each([1200, 200])('background changes stay bound to their cell when input f
   flushSync();
   window.dispatchEvent(new CustomEvent('background-focus', { detail: { session: 'cloude_primary' } }));
   flushSync();
-  const select = target.querySelector('.tbg__select') as HTMLSelectElement;
+  const select = target.querySelector('select#tbg-source') as HTMLSelectElement;
   select.value = 'none';
   select.dispatchEvent(new Event('change', { bubbles: true }));
   await Promise.resolve();

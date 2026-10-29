@@ -34,7 +34,7 @@ export interface UsageLimit {
   since: string;
 }
 
-/* could not */
+/* could not determine */
 export interface SessionInfo {
   session: SessionRow;
   recent_logs: LogEntry[];
@@ -71,7 +71,6 @@ export interface SessionInfo {
   automations_total?: number | null;
   automations_enabled?: number | null;
   automations_next?: Array<{ name: string; enabled: boolean; next_fire_at: number | null }> | null;
-  /* could not */
   sleep_hold?: { reasons: string[]; text: string } | null;
   skills_state?: string | null;
   skills_fired?: number | null;
@@ -82,6 +81,8 @@ export interface SessionInfo {
 
 export interface SessionRecord {
   session_uuid: string;
+  host_key?: string | null;
+  host_label?: string | null;
   origin: string;
   owned: boolean;
   lifecycle: string;
@@ -224,7 +225,6 @@ export interface LedgerSnapshot {
   loop: { alive: boolean; last_pass_at: string | null };
 }
 
-/* conversation id could not */
 export type TokenUsageState = 'ok' | 'absent' | 'unchecked';
 
 export type TokenUsageFamily = 'claude' | 'codex';
@@ -274,7 +274,7 @@ export interface EventFrame {
   startup_gate?: string | null;
   new_name?: string;
   reason?: string;
-  /* could not */
+  /* could not determine */
   server_version?: string;
   client_build?: string;
 }

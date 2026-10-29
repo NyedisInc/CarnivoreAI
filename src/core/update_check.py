@@ -1,37 +1,3 @@
-"""Background release-tag self check.
-
-    current           we fetched the remote tag list, compared, we are newest
-    update_available  we fetched the list and a newer tag exists (named)
-    unknown           we could NOT look: offline, no git, remote unreachable,
-                      timed out, or the local version did not resolve
-
-``unknown`` is its own visible state and must never render as "up to date".
-Collapsing "I could not look" into "nothing is wrong" is the single defect
-class this project has spent the most time killing.
-
-DESIGN NOTES
-
-* Only a development checkout is asked. A source root with no ``.git`` entry (a packaged install) and no explicit
-  ``updates.remote`` is NOT APPLICABLE: ``refresh()`` returns None, runs no git, stores nothing, and the version
-  route reports ``update: null``. Not applicable is neither current nor unknown.
-* Never blocks. The HTTP endpoint returns whatever is cached; the network
-  call happens on a background thread kicked off after startup and then on a
-  refresh interval. A page load never waits on a remote.
-* The cached answer carries ``checked_at``, and the client shows it, so a
-  stale answer is visibly stale rather than silently wrong.
-* NEVER auto-updates. It reports, and offers the command. Pulling code out
-  from under a running agent session unattended is not acceptable. The
-  distribution channel is the signed-by-nobody .dmg built by
-  ``macOS/package.json``, so the offered command opens the releases page.
-  This is a notice for the web UI only; the Mac app's tray and menu follow
-  electron-updater (``macOS/auto-update.js``, #660), the one update path.
-* Which remote: the checkout's own ``origin`` when the source root IS a git
-  work tree, because a dev running from a fork should be told about that
-  fork's tags. A packaged install has no ``origin`` (see
-  ``discover_origin_remote``) and falls through to FALLBACK_REMOTE, the
-  public upstream the .dmg is released from. ``updates.remote`` in
-  config.json overrides both with an explicit URL.
-"""
 
 from __future__ import annotations
 
@@ -134,18 +100,6 @@ def discover_origin_remote(root: Path) -> str:
 
 
 def is_work_tree(root: Path) -> bool:
-    """Tell, without running git, whether ``root`` carries its own ``.git`` entry.
-
-    A packaged install copies the server into Application Support with no ``.git``; a development checkout (or a
-    linked worktree, whose ``.git`` is a file) has one. Reading the filesystem keeps a stock Mac from ever seeing
-    Apple's developer-tools dialog.
-
-    Args:
-        root: the source root.
-
-    Returns:
-        True when ``<realpath of root>/.git`` exists.
-    """
     try:
         return (Path(root).resolve() / ".git").exists()
     except OSError:
@@ -153,18 +107,6 @@ def is_work_tree(root: Path) -> bool:
 
 
 def fetch_remote_tags(remote: str) -> list[str]:
-    """List release tags on a remote without cloning or fetching objects.
-
-    Args:
-        remote: a git remote URL.
-
-    Returns:
-        Sorted-by-version list of plain release tags, newest last.
-
-    Raises:
-        UpdateCheckError: git is absent, the remote is unreachable, the call
-            timed out, or the output could not be parsed.
-    """
     if not git_guard.git_available():
         raise UpdateCheckError("git is not installed")
     try:
@@ -307,16 +249,6 @@ class UpdateChecker:
                 return
 
     def _unknown(self, reason: str, remote: str = "", current: str = "") -> UpdateStatus:
-        """Build an UNKNOWN status.
-
-        Args:
-            reason: short human sentence describing what could not be done.
-            remote: the remote that was being consulted, if known.
-            current: the installed version, if it resolved.
-
-        Returns:
-            An UpdateStatus in STATUS_UNKNOWN.
-        """
         return UpdateStatus(
             status=STATUS_UNKNOWN,
             current_version=current,

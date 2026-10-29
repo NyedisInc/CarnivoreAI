@@ -5,8 +5,10 @@ import sqlite3
 from contextlib import closing
 from typing import Callable, Dict, List
 
+from src.core import session_sleep
 from src.core.db import get_meta
 from src.core.db_models import META_INSTALL_ID
+from src.core.federation.shadow_rows import PEER_ORIGIN
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.hosts.identity import REMOTE_ID_PREFIX
 from src.models import SessionInfo
@@ -43,6 +45,18 @@ def serve_to_peer(infos: List[SessionInfo], open_db: Callable[[], sqlite3.Connec
         uuids = _stamp_lookup(conn, kept)
         uids = _uid_lookup(conn, kept)
     return [_slim(i, install_id, uuids.get(i.session_row_id), uids.get(i.project_id, (None, None))) for i in kept]
+
+
+def serve_asleep_to_peer(open_db: Callable[[], sqlite3.Connection]) -> List[Dict[str, object]]:
+    with closing(open_db()) as conn:
+        install_id = get_meta(conn, META_INSTALL_ID)
+        rows = session_sleep.asleep_rows(conn)
+    return [{"origin_install_id": install_id, "session_uuid": r["session_uuid"], "tmux_session": r.get("tmux_name"),
+             "label": r.get("title"), "working_dir": r.get("working_dir"), "agent_type": r.get("agent_type"),
+             "agent_family": r.get("agent_family"), "agent_family_source": r.get("agent_family_source"),
+             "source": r.get("lifecycle_source") if r.get("lifecycle_source") in session_sleep.SLEEP_SOURCES
+             else session_sleep.LIFECYCLE_SOURCE_SLEPT}
+            for r in rows if r.get("host_key", LOCAL_HOST_KEY) == LOCAL_HOST_KEY and r.get("origin") != PEER_ORIGIN]
 
 
 def _slim(info: SessionInfo, install_id: object, detail: tuple[str, str | None] | str | None,

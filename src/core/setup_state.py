@@ -1,51 +1,3 @@
-"""Is this instance set up yet, and what may it expose while it is not.
-
-THE PROBLEM THIS SOLVES
-
-A fresh install binds ``0.0.0.0`` (``Settings.host`` in src/config.py, and
-``DEFAULT_BIND_HOST`` in macOS/server-manager.js). So from the first second it
-runs it is reachable from every machine on the LAN and on the tailnet, before
-anybody has paired an authenticator with it. The setup wizard has to be usable
-without logging in - there is no credential to log in WITH yet - which means
-that during exactly the window in which the TOTP secret gets decided, an
-unauthenticated page that decides it is reachable by strangers. Whoever reaches
-it first owns the instance. That is a remote takeover, not a papercut.
-
-THE INVARIANT
-
-    The wizard is only reachable without authentication while the server is
-    bound to loopback.
-
-Both halves of that sentence are decided HERE, by one function, from one piece
-of state, and ``resolve_exposure`` raises rather than return a pair that
-violates it. They are not two settings that must be kept in agreement; there is
-no way to express the dangerous combination.
-
-WHY THE STATE IS READ FROM THE FILESYSTEM AND NOT FROM CONFIG
-
-"Setup is done" is not a flag someone can set. It is four facts, each of which
-is the physical residue of setup actually having happened:
-
-    1. the config file exists and parses
-    2. a TOTP secret is configured
-    3. a JWT secret is configured
-    4. an authenticator has actually been paired - the ``.totp_paired``
-       sentinel that src/api/auth.py already writes and already trusts
-
-Number 4 is the load-bearing one, and it is why a boolean in config.json would
-have been the wrong design. A TOTP secret sitting in .env that nobody has ever
-scanned does not mean the instance has an owner. Only a completed pairing does.
-
-THREE OUTCOMES, AND WHICH WAY THE THIRD ONE FAILS
-
-Setup state is complete, incomplete, or UNDETERMINED - the last when a file
-exists but cannot be read or parsed, so no honest verdict is available. For the
-exposure decision, undetermined is treated exactly like incomplete: bind
-loopback, leave the wizard open. That is failing closed on the dimension that
-matters, because the invariant above still holds - an undetermined instance is
-not reachable from the network at all, so an open wizard on it can only be
-reached by something already running as this user.
-"""
 
 from __future__ import annotations
 
@@ -61,7 +13,6 @@ SETUP_COMPLETE = "complete"
 
 SETUP_INCOMPLETE = "incomplete"
 
-# could not be read
 SETUP_UNDETERMINED = "undetermined"
 
 LOOPBACK_HOST = "127.0.0.1"
@@ -84,14 +35,6 @@ class SetupCheck:
 
 @dataclass(frozen=True)
 class SetupState:
-    """Whether this instance has been set up, and the evidence for the verdict.
-
-    Attributes:
-        status: One of SETUP_COMPLETE, SETUP_INCOMPLETE, SETUP_UNDETERMINED.
-        checks: Every fact examined, in the order the wizard should show them.
-        joined: True when the joined marker exists, False when it does not, None when it could not be read.
-        pack_left: True when the "left a pack" tombstone exists (an unreadable one counts as present).
-    """
 
     status: str
     checks: tuple[SetupCheck, ...]
@@ -100,21 +43,9 @@ class SetupState:
 
     @property
     def is_complete(self) -> bool:
-        """Whether setup is finished.
-
-        Returns:
-            True only for SETUP_COMPLETE. An undetermined state is not
-            complete, because "I could not check" is not "yes".
-        """
         return self.status == SETUP_COMPLETE
 
     def outstanding(self) -> tuple[SetupCheck, ...]:
-        """The checks that are not passing.
-
-        Returns:
-            Every check that failed or could not be evaluated, which is what
-            the wizard lists as remaining work.
-        """
         return tuple(c for c in self.checks if c.passed is not True)
 
 
@@ -129,16 +60,6 @@ class Exposure:
 
     @property
     def restart_required_to_apply(self) -> bool:
-        """Whether finishing setup needs a restart before the bind changes.
-
-        uvicorn binds its socket once, at startup, and has no in-place rebind.
-        So a lockdown that lifts the moment setup completes lifts only in this
-        object, not in the kernel. The wizard must say so out loud rather than
-        leaving the user believing he is reachable on an address he is not.
-
-        Returns:
-            True whenever the address in force differs from the configured one.
-        """
         return self.bind_host != self.configured_bind_host
 
 
@@ -390,23 +311,6 @@ def current_exposure() -> Exposure:
 
 
 def mark_setup_complete(config_path: Path) -> None:
-    """Write the pairing sentinel, completing setup. TEST-ONLY.
-
-    No route calls this any more (``/setup/finish`` is gone, #1503): the one
-    production writer is ``redeem_totp_code`` after a real TOTP check.
-
-    Idempotent. Written with ``O_EXCL`` where possible so two concurrent
-    finishes cannot race, and an already-present sentinel is success rather
-    than an error - the caller's goal is the file existing, not creating it.
-
-    Args:
-        config_path: Path to config.json; the sentinel is written alongside it.
-
-    Raises:
-        OSError: The sentinel could not be created. Propagated deliberately -
-            a silent failure here would leave the instance permanently pinned
-            to loopback with no explanation.
-    """
     path = _sentinel_path(config_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     try:

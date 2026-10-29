@@ -26,20 +26,7 @@
     text-transform: uppercase;
   }
 
-  .flw-field {
-    --_bd: var(--oc-line-frame);
-    box-sizing: border-box;
-    min-width: 0;
-    height: 24px;
-    padding: 0 6px;
-    border: 1px solid var(--_bd);
-    border-radius: var(--oc-radius-sm);
-    background: var(--oc-ground-field);
-    color: var(--oc-text-primary);
-    font: inherit;
-  }
-
-  .flw-field--id { flex: 1 1 80px; }
+  .flw-id { flex: 1 1 80px; min-width: 0; }
 
   .flw-follow { margin-left: auto; }
 
@@ -170,16 +157,6 @@
     color: var(--oc-text-secondary);
   }
   .flw-md a { color: var(--oc-cyan); }
-
-  .flw-more {
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--oc-text-muted);
-    font: inherit;
-    font-size: var(--oc-fs-micro);
-    cursor: pointer;
-  }
 
   .flw-card {
     --_kind: var(--oc-text-secondary);

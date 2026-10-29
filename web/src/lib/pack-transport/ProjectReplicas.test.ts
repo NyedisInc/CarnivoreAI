@@ -16,10 +16,10 @@ vi.mock('../../opscenter/api/auth.svelte', async (original) => ({
     calls.push({ path, method, body: init?.body ? JSON.parse(String(init.body)) : null });
     if (path === '/pack/machines') {
       return { master_install_id: 'mac', self_install_id: 'mac', settings: { placement_mode: 'stats', auto_distribute: false }, disagreement: null,
-        machines: [machine('mac', { is_self: true, state: 'self' }), machine('hosta'), machine('odin'), machine('loki', { state: 'disconnected' })] };
+        machines: [machine('mac', { is_self: true, state: 'self' }), machine('studio'), machine('odin'), machine('loki', { state: 'disconnected' })] };
     }
     if (method !== 'GET' && state.refuse) throw new Error(state.refuse);
-    if (method === 'POST') state.replicas = [...state.replicas, { install_id: 'hosta', label: 'hosta', state: 'active' }];
+    if (method === 'POST') state.replicas = [...state.replicas, { install_id: 'studio', label: 'studio', state: 'active' }];
     if (method === 'DELETE') state.replicas = [];
     return { pack_state: state.packState, replicas: state.replicas };
   },
@@ -54,10 +54,10 @@ describe('the project replicas block', () => {
     const root = await render();
     expect(root.querySelector('[data-pt="replicas-none"]')).not.toBeNull();
     const options = [...root.querySelectorAll<HTMLOptionElement>('[data-pt="replica-pick"] option')].map((o) => o.value).filter(Boolean);
-    expect(options).toEqual(['hosta', 'odin']);
+    expect(options).toEqual(['studio', 'odin']);
     const select = root.querySelector<HTMLSelectElement>('[data-pt="replica-pick"]')!;
     expect(root.querySelector<HTMLButtonElement>('[data-pt="replica-add"]')!.disabled).toBe(true);
-    select.value = 'hosta';
+    select.value = 'studio';
     select.dispatchEvent(new Event('change', { bubbles: true }));
     flushSync();
     root.querySelector<HTMLButtonElement>('[data-pt="replica-add"]')!.click();
@@ -65,17 +65,17 @@ describe('the project replicas block', () => {
     await settle();
     const post = calls.find((c) => c.method === 'POST');
     expect(post?.path).toBe('/projects/notes/replicas');
-    expect(post?.body).toEqual({ machine: 'hosta' });
-    expect(root.querySelector('[data-replica="hosta"]')).not.toBeNull();
+    expect(post?.body).toEqual({ machine: 'studio' });
+    expect(root.querySelector('[data-replica="studio"]')).not.toBeNull();
     const left = [...root.querySelectorAll<HTMLOptionElement>('[data-pt="replica-pick"] option')].map((o) => o.value).filter(Boolean);
     expect(left).toEqual(['odin']);
   });
 
   test('remove needs a second press on the danger button, then sends one DELETE', async () => {
-    state.replicas = [{ install_id: 'hosta', label: 'hosta', state: 'active' }];
+    state.replicas = [{ install_id: 'studio', label: 'studio', state: 'active' }];
     const root = await render();
     const button = root.querySelector<HTMLButtonElement>('[data-pt="replica-remove"]')!;
-    expect(button.classList.contains('modal-btn-danger')).toBe(true);
+    expect(button.getAttribute('data-btn')).toBe('danger');
     button.click();
     await settle();
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
@@ -83,12 +83,12 @@ describe('the project replicas block', () => {
     root.querySelector<HTMLButtonElement>('[data-pt="replica-remove"]')!.click();
     await settle();
     await settle();
-    expect(calls.find((c) => c.method === 'DELETE')?.path).toBe('/projects/notes/replicas/hosta');
+    expect(calls.find((c) => c.method === 'DELETE')?.path).toBe('/projects/notes/replicas/studio');
     expect(root.querySelector('[data-replica]')).toBeNull();
   });
 
   test('a refusal shows in words, and a moved-away project offers no add control', async () => {
-    state.refuse = 'hosta is set to one way and holds no replicas';
+    state.refuse = 'studio is set to one way and holds no replicas';
     const root = await render();
     const select = root.querySelector<HTMLSelectElement>('[data-pt="replica-pick"]')!;
     select.value = 'odin';

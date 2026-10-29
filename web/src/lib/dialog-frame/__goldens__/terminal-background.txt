@@ -21,7 +21,7 @@
     <label class="tbg__row tbg__row--stacked">
       <span class="tbg__label">
         "from this theme"
-      <select class="tbg__select">
+      <select aria-label="from this theme" data-field="true" id="tbg-source" style="flex: 1 1 0%; min-width: max-content; max-width: 100%;">
         <option value="theme">
           "from this theme"
         <option value="none">

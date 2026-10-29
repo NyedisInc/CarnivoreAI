@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
+from collections import OrderedDict
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +13,8 @@ from typing import Dict, List, Optional, Sequence, Tuple
 from src.core.test_write_guard import assert_test_write_allowed
 
 DB_NAME = "skill_watch.db"
+
+MAX_CACHED_CURSORS = 1024
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS drift_baseline (
@@ -47,6 +51,8 @@ class SkillWatchStore:
     def __init__(self, path: Path) -> None:
         self._path = path
         self._ready = False
+        self._cursors: "OrderedDict[str, int]" = OrderedDict()
+        self._cursor_lock = threading.Lock()
 
     def _connect(self, write: bool) -> sqlite3.Connection:
         if not write and not self._path.exists():
@@ -56,7 +62,7 @@ class SkillWatchStore:
         assert_test_write_allowed(self._path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(self._path), timeout=5.0)
-        if not self._ready:
+        if write or not self._ready:
             conn.executescript(_SCHEMA)
             self._ready = True
         return conn
@@ -106,16 +112,32 @@ class SkillWatchStore:
             return cur.rowcount == 1
 
     def tripwire_offset(self, path: str) -> Optional[int]:
+        with self._cursor_lock:
+            known = self._cursors.get(path)
+            if known is not None:
+                self._cursors.move_to_end(path)
+        if known is not None:
+            return known
         with closing(self._connect(False)) as conn:
             row = conn.execute("SELECT off FROM tripwire_cursor WHERE path = ?", (path,)).fetchone()
-        return None if row is None else int(row[0])
+        if row is None:
+            return None
+        self._remember_cursor(path, int(row[0]))
+        return int(row[0])
 
     def set_tripwire_offset(self, path: str, offset: int) -> None:
         with closing(self._connect(True)) as conn, conn:
             conn.execute("INSERT OR REPLACE INTO tripwire_cursor VALUES (?,?)", (path, offset))
+        self._remember_cursor(path, offset)
+
+    def _remember_cursor(self, path: str, offset: int) -> None:
+        with self._cursor_lock:
+            self._cursors[path] = offset
+            self._cursors.move_to_end(path)
+            while len(self._cursors) > MAX_CACHED_CURSORS:
+                self._cursors.popitem(last=False)
 
 
 def default_watch_store() -> SkillWatchStore:
-    """The watch store under the app's state directory (resolved at call time)."""
     from src.config import settings  # noqa: PLC0415
     return SkillWatchStore(Path(settings.get_state_dir()) / DB_NAME)

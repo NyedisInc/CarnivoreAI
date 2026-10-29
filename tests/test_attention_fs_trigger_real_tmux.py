@@ -16,7 +16,7 @@ import pytest
 from src.core.attention import fs_trigger
 from src.core.attention.evidence import FAMILY_CLAUDE, STATE_BUSY, Evidence
 from src.core.attention.ledger import AttentionLedger
-from src.core.attention.registry_read import read_registry_index
+from src.core.attention.registry_index import read_registry_index
 from src.core.attention.transcript_facts import read_transcript_facts
 from src.core.attention.watcher import AttentionWatcher, Observation, WatchTarget
 from src.core.listing_attention import attention_reads_for_name
@@ -28,7 +28,7 @@ pytestmark = [
     pytest.mark.skipif(not fs_trigger.KQUEUE_AVAILABLE, reason="no kqueue"),
 ]
 
-CONVERSATION = "e6359ff1-aa7d-4e38-85a9-c5db50ae35db"
+CONVERSATION = "76200000-1a7b-42f9-baba-abacc8720762"
 CLAUDE_VERSION = "2.1.283"
 TICK_SECONDS = 30.0
 WINDOW_SECONDS = 2.0

@@ -61,15 +61,6 @@ class ProjectColorInvalid(ProjectWriteError):
 
 
 class ProjectRootConflict(ProjectWriteError):
-    """A project already exists at the requested root.
-
-    Description: the database-level guarantee that made the duplicate
-      problem visible in the first place. Surfaced as its own error so a
-      caller can say "you already have this folder, under this name"
-      rather than a generic constraint failure. ``existing_id`` and
-      ``existing_name`` carry the clashing row, so a caller reuses it
-      without parsing the message or consulting a possibly stale list.
-    """
 
     def __init__(
         self,
@@ -134,32 +125,6 @@ def _work_rollup_available(conn: sqlite3.Connection) -> bool:
 def list_projects_ordered(
     conn: sqlite3.Connection, *, include_archived: bool = False
 ) -> List[Dict[str, Any]]:
-    """Return project rows most-recently-WORKED-IN first.
-
-    Description: the read behind GET /projects. Distinct from
-      ``project_store.list_projects``, which orders by ``id DESC`` and is
-      kept unchanged because the presence route and its tests depend on
-      that contract.
-
-      THE ORDER KEY IS WORK, NOT OPENING. Each row carries ``work_at`` =
-      MAX(``sessions.last_work_at``) over the sessions attributed to it,
-      and rows sort by that. Clicking, opening, attaching or deep-linking
-      to a project changes nothing here. See the ``_ORDER_BY`` block
-      above for the full reasoning and for where an unrecorded project
-      sorts.
-
-      ``work_at`` IS RETURNED ON EVERY ROW, including as None. The client
-      needs it to LABEL a project whose work has never been recorded, and
-      a client that cannot tell "no work yet" from "worked on long ago"
-      would render the two identically - which is the collapse the whole
-      ordering change exists to undo.
-    Inputs: conn (sqlite3.Connection). include_archived (bool) - when
-      False (default), rows with a non-null ``archived_at`` are omitted.
-    Output: list[dict] - each row plus ``work_at`` (str | None). Empty
-      list when the table does not exist yet, never an exception,
-      matching ``list_projects``.
-    Example: list_projects_ordered(conn)[0]["display_name"]
-    """
     if not table_exists(conn, PROJECTS_TABLE):
         return []
     have_work = _work_rollup_available(conn)
@@ -232,6 +197,17 @@ def create_project(
     )
 
 
+def find_root_clash(conn: sqlite3.Connection, root: str) -> Optional[Tuple[str, int]]:
+    exact = conn.execute("SELECT display_name, id FROM projects WHERE root = ?", (root,)).fetchone()
+    if exact is not None:
+        return exact[0], exact[1]
+    wanted = fold_path(canonical(root) or root)
+    for stored, name, pid in conn.execute("SELECT root, display_name, id FROM projects"):
+        if fold_path(canonical(stored) or stored) == wanted:
+            return name, pid
+    return None
+
+
 def insert_project_row(
     conn: sqlite3.Connection,
     *,
@@ -247,7 +223,7 @@ def insert_project_row(
 ) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]], List[Dict[str, Any]]]:
     stamp = now or utc_now()
     refuse_unsafe_root(conn, root)
-    clash = conn.execute("SELECT display_name, id FROM projects WHERE root = ?", (root,)).fetchone()
+    clash = find_root_clash(conn, root)
     if clash is not None:
         raise ProjectRootConflict(
             f"a project at {root} already exists, named {clash[0]!r}",
@@ -376,27 +352,6 @@ def delete_project(conn: sqlite3.Connection, project_id: int) -> Dict[str, Any]:
 def touch_project_by_path(
     conn: sqlite3.Connection, working_dir: str, *, now: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
-    """Mark the project at a working directory as most recently opened.
-
-    Description: the replacement for ``Settings.move_project_to_top``.
-      Same contract, including the silent miss: a session can be started
-      in any directory, and a directory with no project row is the normal
-      case rather than an error. Returns None for that, so a caller can
-      still tell "nothing to reorder" from "reordered", which the old
-      void-returning version could not.
-
-      Matches on the SAME normalisation the table stores
-      (``expanduser`` only). The old implementation called the method
-      that collapses symlinks on both sides, which meant a project behind
-      a symlink matched but a project on a sleeping volume raised inside
-      a bare ``except Exception`` and was swallowed. Neither behaviour is
-      reproduced here.
-    Inputs: conn (sqlite3.Connection) - opens its own transaction.
-      working_dir (str) - the session's cwd. now (str | None).
-    Output: dict | None - the touched row, or None when no project is
-      rooted at that directory.
-    Example: touch_project_by_path(conn, "/Users/example/dev/app")
-    """
     if not table_exists(conn, PROJECTS_TABLE):
         return None
     stamp = now or utc_now()

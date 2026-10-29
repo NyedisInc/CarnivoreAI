@@ -152,6 +152,8 @@ test('the picker is placed by the SHARED anchor rule, not a local copy', () => {
         'the shared rule must still clamp to the visual viewport');
 });
 
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 test('THE REMOVED FEATURE: no sound control is reachable here any more', () => {
     assert.ok(src.length > 1000,

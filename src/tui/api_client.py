@@ -33,10 +33,6 @@ class LoginError(Exception):
 
 
 class ServerUnavailable(Exception):
-    """The server did not answer (down, restarting, 5xx, 429); the saved pair is kept.
-
-    ``retry_after`` is the server's Retry-After in seconds when it sent one.
-    """
 
     def __init__(self, reason: str = "", retry_after: Optional[float] = None) -> None:
         super().__init__(reason)

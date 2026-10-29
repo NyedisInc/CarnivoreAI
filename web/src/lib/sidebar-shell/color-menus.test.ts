@@ -126,7 +126,7 @@ describe('one picker', () => {
         });
     }
 
-    it('no component opens a native color input; the shared in page picker replaced it (26ad3d66d)', () => {
+    it('no component opens a native color input; the shared in page picker replaced it (3a4786914)', () => {
         const owners = sources(SRC)
             .filter((f) => /type="color"/.test(fs.readFileSync(f, 'utf8')))
             .map((f) => path.relative(SRC, f))

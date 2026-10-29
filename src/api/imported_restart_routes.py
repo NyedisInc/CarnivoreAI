@@ -1,25 +1,3 @@
-"""Preview and perform a restart for a session that has NO tmux identity.
-
-WHY THEY ARE THEIR OWN ROUTES AND NOT A SECOND MODE ON THE EXISTING ONES.
-Every parameter, every gate and every failure mode differs. The pane path
-answers "what would respawning this pane do", gated on ``pane_dead``,
-``#{pane_start_command}`` and a live-kill confirmation. This one answers
-"what would creating a session for this conversation do", gated on
-whether the transcript is still on disk and which SPELLING of the
-directory holds it. Folding them together would put four inapplicable
-gates in front of a path that has none of them, and a caller could not
-tell which set it was subject to.
-
-THE RESPONSE SHAPE IS THE SAME ON PURPOSE, though. The preview returns
-``RestartPreviewResponse``, the model the picker already renders, with
-``pane_state`` reporting the honest ``'unknown'``: there is no pane, so
-its state is not a fact anybody measured. A client needs no second
-renderer, only a second URL.
-
-NOTHING HERE DECIDES ANYTHING. Every rule lives in
-``src/core/session_imported_restart.py``; this module reads the row,
-calls the validators and translates outcomes into HTTP.
-"""
 
 from __future__ import annotations
 
@@ -56,6 +34,7 @@ from src.models import (
     RestartPreviewOption,
     RestartPreviewResponse,
 )
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 
@@ -121,15 +100,6 @@ def _db_path():
 
 
 def _read_row(session_uuid: str) -> Dict[str, Any]:
-    """Read one sessions row by its durable key, on a worker thread.
-
-    Description: returns a dict with ``row`` and ``row_read_ok`` rather
-      than a bare row, because "the datastore answered and holds no such
-      row" and "the datastore could not be read" are different facts and
-      every consumer here has to tell them apart.
-    Inputs: session_uuid (str).
-    Output: dict - ``{'row': dict|None, 'row_read_ok': bool}``.
-    """
     try:
         with closing(connect(_db_path(), create=False)) as conn:
             found = conn.execute(
@@ -296,9 +266,7 @@ async def imported_restart(
         with restart_inflight.claim(body.session_uuid):
             return await _imported_restart(request, body)
     except restart_inflight.RestartInFlightError as exc:
-        raise HTTPException(
-            status_code=409, detail=restart_inflight.http_detail(exc)
-        )
+        raise api_error(409, restart_inflight.IN_PROGRESS_CODE, exc) from exc
 
 
 async def _imported_restart(
@@ -370,15 +338,7 @@ async def _imported_restart(
     except ProjectMovedAway:
         raise
     except Exception as exc:  # noqa: BLE001
-        logger.error(
-            "imported_restart_failed",
-            session_uuid=body.session_uuid,
-            error=str(exc),
-        )
-        raise HTTPException(
-            status_code=500,
-            detail=f"failed to start a session for {body.session_uuid!r}: {exc}",
-        )
+        raise api_error(500, "session_restart_failed", exc, session_uuid=body.session_uuid, step="imported") from exc
 
     logger.info(
         "imported_restart_started",

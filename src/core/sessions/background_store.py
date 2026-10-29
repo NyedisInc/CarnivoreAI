@@ -27,7 +27,6 @@ def _coerce_entry(raw: object) -> Optional[Dict[str, object]]:
     dim = raw.get("dim")
     dim = clamp_dim(dim) if isinstance(dim, (int, float)) and not isinstance(dim, bool) else None
     disabled = bool(raw.get("disabled"))
-    # state directory
     image = raw.get("image")
     if isinstance(image, str) and image:
         try:

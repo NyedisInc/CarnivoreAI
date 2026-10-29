@@ -77,7 +77,6 @@
     overflow: visible;
   }
 
-  /*  hidden  */
   .kaw-icon :global(.kaw-steam) {
     opacity: 0;
   }

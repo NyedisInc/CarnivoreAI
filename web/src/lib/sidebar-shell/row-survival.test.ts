@@ -79,7 +79,7 @@ async function dragThroughUpdate(g: Gestures, update: boolean): Promise<DragSeen
     const hold = g.press(ROW('cloude_a'));
     hold.moveTo(1);
     const row = g.el('.session-sidebar-group[data-group="p:10"] .session-sidebar-row[data-name="cloude_a"]');
-    const held = !!w.SessionSidebarReorder.isDragging();
+    const held = sidebarShell.isDragging();
     if (update) await liveUpdate();
     const after = document.querySelector('#session-sidebar-list .session-sidebar-group[data-group="p:10"] .session-sidebar-row[data-name="cloude_a"]');
     hold.moveTo(2);

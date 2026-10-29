@@ -82,6 +82,7 @@ function attach(controller, sessionId) {
     return sock;
 }
 
+// ---------------------------------------------------------------------------
 
 test('a frame from the session the user LEFT never reaches the one they opened', () => {
     const sb = makeRealm();
@@ -240,6 +241,7 @@ test('the guard rule itself names each refusal', () => {
     assert.equal(G.accepts({ socket: null, liveSocket: null }).ok, false);
 });
 
+// ---------------------------------------------------------------------------
 
 for (const [name, fn] of queue) {
     try {

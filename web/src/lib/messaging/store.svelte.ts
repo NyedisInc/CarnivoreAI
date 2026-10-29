@@ -1,5 +1,5 @@
 import { ApiError } from '../../opscenter/api/auth.svelte';
-import { resourcePush } from '../resource-push/boot';
+import { createPushedStore } from '../resource-push/pushed-store';
 import { errorText } from '../settings-page/panel-kit/error-text';
 import { fetchBindings, fetchConversations, fetchMessages, fetchProviders, type Binding, type Conversation, type Fetcher, type Message, type Provider } from './api';
 
@@ -18,11 +18,6 @@ export const messaging = $state<{
     problem: string;
 }>({ providers: [], conversations: [], bindings: [], messages: [], loaded: false, problem: '' });
 
-let fetcherInUse: Fetcher | undefined;
-let inflight: Promise<void> | null = null;
-let attached = 0;
-let stop: (() => void) | null = null;
-
 export function refusalCode(error: unknown): string | null {
     if (!(error instanceof ApiError)) return null;
     const detail = (error.payload as { detail?: unknown } | null)?.detail;
@@ -37,7 +32,6 @@ export function refusalReason(error: unknown): string | null {
     return typeof reason === 'string' && reason.trim() ? reason.trim() : null;
 }
 
-/* did not answer */
 export function problemText(error: unknown, t: (key: string) => string): string {
     const code = refusalCode(error);
     const reason = refusalReason(error);
@@ -49,16 +43,11 @@ export function problemText(error: unknown, t: (key: string) => string): string 
     return reason && !words.includes(reason) ? `${words} (${reason})` : words;
 }
 
-export function refresh(): Promise<void> {
-    inflight ??= read().finally(() => { inflight = null; });
-    return inflight;
-}
-
-async function read(): Promise<void> {
+async function read(fetcher: Fetcher | undefined): Promise<void> {
     try {
         const [providers, conversations, bindings, messages] = await Promise.all([
-            fetchProviders(fetcherInUse), fetchConversations(fetcherInUse), fetchBindings(undefined, fetcherInUse),
-            fetchMessages(LOG_LIMIT, fetcherInUse),
+            fetchProviders(fetcher), fetchConversations(fetcher), fetchBindings(undefined, fetcher),
+            fetchMessages(LOG_LIMIT, fetcher),
         ]);
         Object.assign(messaging, { providers, conversations, bindings, messages, loaded: true, problem: '' });
     } catch (error) {
@@ -66,17 +55,4 @@ async function read(): Promise<void> {
     }
 }
 
-export function attach(fetcher?: Fetcher): () => void {
-    if (fetcher) fetcherInUse = fetcher;
-    attached += 1;
-    if (attached === 1) stop = resourcePush().pushOrPoll(() => void refresh(), FALLBACK_MS, [TOPIC]);
-    void refresh();
-    return () => {
-        attached -= 1;
-        if (attached === 0) {
-            stop?.();
-            stop = null;
-            fetcherInUse = undefined;
-        }
-    };
-}
+export const { refresh, attach } = createPushedStore<Fetcher>({ topics: [TOPIC], pollMs: FALLBACK_MS, read });

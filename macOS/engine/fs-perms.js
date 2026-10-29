@@ -4,7 +4,6 @@ const nodeFs = require('node:fs');
 
 const PRIVATE_DIR_MODE = 0o700;
 
-/* not a directory */
 function ensureDirMode(dir, mode = PRIVATE_DIR_MODE, { fs = nodeFs, log = () => {} } = {}) {
   try {
     let st = null;

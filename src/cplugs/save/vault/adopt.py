@@ -1,20 +1,3 @@
-"""
-THE RULES, all from the vault's own model (``manifest.py``, ``store.py``, ``retention.py``); no schema change:
-- ADD ONLY. A call writes new chunks (``BlobStore.put``: the chunk is re-hashed, one already stored is not written again, which is the
-  dedupe by chunk hash) and new manifests. It never edits, replaces or removes an existing manifest or blob.
-- A POINT IS WRITTEN LAST. Every file is streamed through the vault's own chunker, the reassembled bytes are checked against the sha256 the
-  sender recorded, ``sync_dirs`` makes the blob folders durable, and only then is the manifest published (temp file, fsync, rename), under
-  the shared capture guard (a blob collection cannot run between the chunks and the manifest). A failure before that leaves unreferenced
-  chunks (the vault's own collector removes them after its grace) and no point.
-- THE SAME POINT TWICE IS ONE POINT. A point id already in the unit whose files have the same signature is ``present`` (nothing written). The same id
-  with different files gets a new id; the sender's id is never reused for different bytes.
-- A TAGGED POINT carries its tags (step 7, ``FallbackPoint.tags``) in a ``<point>.tags`` sidecar written before the manifest and removed with it by ``remove_adopted``.
-- AN ADOPTED POINT IS NEVER PRUNED. Its ``.keep`` marker is made durable before the manifest is published, so retention never thins or
-  replaces it and it does not count as history: it is never dropped sooner than the point it came from.
-- THE UNDO LOG COMES FIRST. ``log`` receives the entry (unit, point id, the hash of the manifest bytes, the chunks this call newly wrote)
-  before the manifest is published; ``remove_adopted`` removes exactly that.
-The caller (the crate import) has already mapped ``rel``, ``working_dir`` and ``encoded_folder`` for a relocated conversation.
-"""
 
 from __future__ import annotations
 
@@ -131,7 +114,7 @@ def adopt_point(vault: Vault, point: FallbackPoint, log: Callable[[Dict[str, Any
             point_id = point.point_id if held is None else layout.new_point_id(
                 "".join(c for c in point.reason.lower() if c.isalpha()) or "point", _stamp(point), taken)
             manifest = _manifest_of(point, point_id, entries)
-            if any(not vault.blobs.has(c.sha256) for e in entries for c in e.chunks):
+            if any(not vault.blobs.on_disk(c.sha256) for e in entries for c in e.chunks):
                 raise AdoptRefused("a chunk is missing after it was written")
             data = vault.manifests.render(manifest)
             log({"op": "vault_point", "unit": unit, "point_id": point_id, "manifest_sha256": hashlib.sha256(data).hexdigest(),
@@ -193,10 +176,4 @@ def _drop_chunks(vault: Vault, chunks: Set[str], report: Dict[str, List[str]]) -
             report["errors"].append(f"chunks kept: {type(exc).__name__}")
             return
         for sha in sorted(chunks - referenced):
-            found = vault.blobs.find(sha)
-            if found is not None:
-                found[0].unlink(missing_ok=True)
-                try:
-                    found[0].parent.rmdir()
-                except OSError:
-                    pass
+            vault.blobs.remove(sha, prune=True)

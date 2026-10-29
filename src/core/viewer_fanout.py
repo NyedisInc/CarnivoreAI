@@ -51,6 +51,8 @@ class ResyncViewerStream(BoundedStream):
         self._timer: Optional[asyncio.TimerHandle] = None
         self._owed = (0, 0)
         self._queued_marker = (0, 0)
+        self.paused = False
+        self.held_chunks = 0
         self.resyncs = 0
         self.dropped_chunks = 0
         self.dropped_bytes = 0
@@ -103,6 +105,12 @@ class ResyncViewerStream(BoundedStream):
             return
         self._drop_stale()
         if not self._queue_marker(asyncio.get_running_loop().time()):
+            self.close(REASON_OVERFLOW)
+
+    def resync_now(self) -> None:
+        self._drop_stale()
+        self._owed = (self._owed[0] + 1, self._owed[1])
+        if not self._closed and not self._queue_marker(asyncio.get_running_loop().time()):
             self.close(REASON_OVERFLOW)
 
     def _owe(self, item: Any, cost: int) -> bool:
@@ -158,6 +166,9 @@ def new_viewer_stream(
 
 
 def offer_pty(stream: BoundedStream, encoded: str) -> str:
+    if getattr(stream, "paused", False):
+        stream.held_chunks = getattr(stream, "held_chunks", 0) + 1
+        return OFFER_ACCEPTED
     return stream.offer(ViewerFrame(FRAME_PTY, encoded), len(encoded))
 
 
@@ -170,30 +181,6 @@ def offer_paint(stream: BoundedStream, encoded: str) -> str:
 
 
 def is_viewer_stream(candidate: Any) -> bool:
-    """True when this object is a viewer outbox rather than a bare queue.
-
-    Description: `ConnectionManager` is handed a stream for every socket
-      it registers, and a test double or an older caller may hand it
-      something else. Asking rather than assuming is what lets the
-      broadcast paths fall back honestly instead of raising inside a
-      fan-out that must not fail.
-
-      STRUCTURAL, NOT `isinstance`, AND THAT IS NOT FUSSINESS. It was
-      `isinstance(candidate, BoundedStream)` and that is an identity
-      test on a class object imported BY VALUE, so it answers False the
-      moment this process holds two class objects for one module - which
-      is not hypothetical: the test suite reproduces it, a `BoundedStream`
-      built from one binding measured against another under the same
-      `__module__` name. When it fails it fails SILENTLY and in the worst
-      direction: `_close_viewer_stream` stops closing, so every writer
-      task stays parked in `get()` until its socket dies, and a broadcast
-      reports every viewer undeliverable. The three attributes below are
-      exactly what the callers use, an `asyncio.Queue` has none of them,
-      and no module identity is involved.
-    Inputs: candidate (Any).
-    Output: bool.
-    Example: if is_viewer_stream(stream): offer_text(stream, frame)
-    """
     return (
         hasattr(candidate, "offer")
         and hasattr(candidate, "close")

@@ -1,5 +1,8 @@
 
 <script lang="ts">
+    import Button from '../base/Button.svelte';
+    import Field from '../base/Field.svelte';
+    import IconButton from '../base/IconButton.svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
     import ModalShell from '../launchpad/ModalShell.svelte';
     import type { Translate } from '../sessions/types';
@@ -24,10 +27,9 @@
     let socket = $state('');
     let busy = $state(false);
     let error = $state('');
-    let labelEl: HTMLInputElement | null = $state(null);
 
     $effect(() => {
-        const timer = setTimeout(() => labelEl?.focus(), 100);
+        const timer = setTimeout(() => document.getElementById('modal-host-label')?.focus(), 100);
         return () => clearTimeout(timer);
     });
 
@@ -64,75 +66,54 @@
     {#snippet head()}
         <div class="text-prompt-modal__head">
             <span class="text-prompt-modal__verb">&raquo; {t('hosts.add.title')}</span>
-            <button type="button" class="modal-close" aria-label={t('modal.close')}
-                disabled={busy} onclick={() => close(null)}>&times;</button>
+            <IconButton label={t('modal.close')} variant="close" icon="close" iconSize={14} data-modal-close
+                disabled={busy} onclick={() => close(null)} />
         </div>
     {/snippet}
-    <div class="modal-input-group">
-        <label class="modal-label" for="modal-host-label">{t('hosts.add.label_label')}</label>
-        <input
-            type="text"
-            class="modal-input"
-            id="modal-host-label"
-            placeholder={t('hosts.add.label_placeholder')}
-            autocomplete="off"
-            disabled={busy}
-            bind:this={labelEl}
-            bind:value={label}
-            onkeydown={onKey}
-        />
-    </div>
-    <div class="modal-input-group">
-        <label class="modal-label" for="modal-host-target">{t('hosts.add.target_label')}</label>
-        <input
-            type="text"
-            class="modal-input"
-            id="modal-host-target"
-            placeholder={t('hosts.add.target_placeholder')}
-            autocomplete="off"
-            disabled={busy}
-            bind:value={sshTarget}
-            onkeydown={onKey}
-        />
-        <div class="modal-description">{t('hosts.add.target_hint')}</div>
-    </div>
-    <div class="modal-input-group">
-        <label class="modal-label" for="modal-host-port">{t('hosts.add.port_label')}</label>
-        <input
-            type="text"
-            inputmode="numeric"
-            class="modal-input"
-            id="modal-host-port"
-            placeholder={t('hosts.add.port_placeholder')}
-            autocomplete="off"
-            disabled={busy}
-            bind:value={sshPort}
-            onkeydown={onKey}
-        />
-    </div>
-    <div class="modal-input-group">
-        <label class="modal-label" for="modal-host-socket">{t('hosts.add.socket_label')}</label>
-        <input
-            type="text"
-            class="modal-input"
-            id="modal-host-socket"
-            placeholder={t('hosts.add.socket_placeholder')}
-            autocomplete="off"
-            disabled={busy}
-            bind:value={socket}
-            onkeydown={onKey}
-        />
-        <div class="modal-description">{t('hosts.add.socket_hint')}</div>
-    </div>
+    <Field
+        label={t('hosts.add.label_label')}
+        id="modal-host-label"
+        placeholder={t('hosts.add.label_placeholder')}
+        autocomplete="off"
+        disabled={busy}
+        bind:value={label}
+        onkeydown={onKey}
+    />
+    <Field
+        label={t('hosts.add.target_label')}
+        id="modal-host-target"
+        placeholder={t('hosts.add.target_placeholder')}
+        help={t('hosts.add.target_hint')}
+        autocomplete="off"
+        disabled={busy}
+        bind:value={sshTarget}
+        onkeydown={onKey}
+    />
+    <Field
+        label={t('hosts.add.port_label')}
+        id="modal-host-port"
+        inputmode="numeric"
+        placeholder={t('hosts.add.port_placeholder')}
+        autocomplete="off"
+        disabled={busy}
+        bind:value={sshPort}
+        onkeydown={onKey}
+    />
+    <Field
+        label={t('hosts.add.socket_label')}
+        id="modal-host-socket"
+        placeholder={t('hosts.add.socket_placeholder')}
+        help={t('hosts.add.socket_hint')}
+        autocomplete="off"
+        disabled={busy}
+        bind:value={socket}
+        onkeydown={onKey}
+    />
     {#if error}
         <p class="modal-description" role="alert" data-host-add-error style="color: var(--oc-coral);">{error}</p>
     {/if}
     {#snippet footer()}
-        <button class="modal-btn modal-btn-secondary" disabled={busy} onclick={() => close(null)}
-            >{t('hosts.add.cancel')}</button
-        >
-        <button class="modal-btn modal-btn-confirm" disabled={!canSubmit} data-host-add-confirm onclick={() => void submit()}
-            >{busy ? t('hosts.add.busy') : t('hosts.add.confirm')}</button
-        >
+        <Button disabled={busy} onclick={() => close(null)}>{t('hosts.add.cancel')}</Button>
+        <Button variant="confirm" disabled={!canSubmit} data-host-add-confirm onclick={() => void submit()}>{busy ? t('hosts.add.busy') : t('hosts.add.confirm')}</Button>
     {/snippet}
 </ModalShell>

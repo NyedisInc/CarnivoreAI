@@ -11,11 +11,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 
 from src.api.auth import require_auth
 from src.api.swarm_switch_routes import require_swarm_on
-from src.core import db, session_change_notice
-from src.core.swarm import answers, body, company_agent, company_promote, create, export as swarm_export, facts, leaders, memory, owner_message, profiles, project_agent, project_promote, promotion, rename as swarm_rename, rewind, routing, settings as swarm_settings, promotion_store, store, stream, thread_port, turn_off, views
+from src.core import db, session_change_notice, single_flight
+from src.core.ttl_flight import TtlFlight
+from src.core.swarm import answers, body, fact_life, company_agent, company_promote, create, export as swarm_export, facts, leaders, memory, owner_message, profiles, project_agent, project_promote, promotion, rename as swarm_rename, rewind, routing, settings as swarm_settings, promotion_store, store, stream, thread_port, turn_off, views
 from src.core.swarm.body import BodyError
 from src.models.swarm import (
-    SwarmAgentDetail, SwarmCheckpointList, SwarmConversationPage, SwarmEarlierConversation, SwarmCreateRequest, SwarmFact, SwarmFactScope, SwarmKillResponse, SwarmMessageResponse,
+    SwarmAgentDetail, SwarmCheckpointList, SwarmConversationPage, SwarmEarlierConversation, SwarmCreateRequest, SwarmFact, SwarmFactScope, SwarmKillResponse, SwarmMemoryCleanupResponse, SwarmMessageResponse,
     SwarmLookRequest, SwarmOwnerMessage, SwarmProjectSettings, SwarmPromoteRequest, SwarmQuestion, SwarmRewindRequest, SwarmRenameRequest, SwarmRoster, SwarmSettings, SwarmSleepResponse, SwarmTurnOffRequest, SwarmTurnOnRequest, SwarmWakeRequest,
     SwarmWakeResponse,
 )
@@ -49,6 +50,20 @@ def _manager(request: Request) -> Any:
     return request.app.state.session_manager
 
 
+ROSTER_BODIES_CACHE: TtlFlight = TtlFlight("swarm_roster_bodies", 1.0)
+
+
+class _RosterBodies:
+
+    def __init__(self, manager: Any) -> None:
+        self._manager = manager
+
+    async def list_session_infos(self) -> List[Any]:
+        manager = self._manager
+        flight = single_flight.flight_on(manager, single_flight.SESSION_LIST_FLIGHT_ATTR, single_flight.SESSION_LIST_FLIGHT_NAME)
+        return list(await ROSTER_BODIES_CACHE.get(lambda: flight.run(manager.list_session_infos)))
+
+
 @router.get("/roster", response_model=SwarmRoster)
 async def get_roster(request: Request) -> Dict[str, Any]:
     """Every live agent oldest first, each with its body's ``ses_`` id when awake, and the body caps.
@@ -56,7 +71,7 @@ async def get_roster(request: Request) -> Dict[str, Any]:
     Answers with the Task Manager plugin off too (``threads_ready`` false): the Swarm page draws its empty state from that flag.
     """
     try:
-        return await views.roster(_manager(request))
+        return await views.roster(_RosterBodies(_manager(request)))
     except (db.DatastoreUnreadableError, sqlite3.Error) as exc:
         _refused(exc)
 
@@ -111,6 +126,13 @@ async def create_agent(body_in: SwarmCreateRequest, request: Request) -> Dict[st
 @router.post("/projects/{project_id}/agent", response_model=SwarmAgentDetail, status_code=201, dependencies=NEEDS_ON)
 async def turn_on_project_agent(project_id: int, request: Request, payload: Optional[SwarmTurnOnRequest] = None) -> Dict[str, Any]:
     """Turn on a project's agent: its row, its thread (the project's own list) and one wake to propose a naming family.
+
+    A folder that is not a git repo gets ``git init`` here: the turn-on is the owner's yes (#1434). A missing folder, the home
+    folder, a system folder or one inside another repo is refused with the reason and nothing is written.
+    The wake's orders ask the agent for a naming family and persona (``swarm_propose_naming``); until the owner approves
+    that card, its children get plain job names. Turning on again after a failed first wake retries the wake.
+    Raises: 404 ``project_not_found``, 422 ``invalid_agent`` (an unknown ``launch_profile``, nothing written), 409 ``swarm_refused`` (already on, git init refused, or the wake failed),
+      503 (the datastore cannot be read).
     """
     try:
         agent = await project_agent.turn_on(request.app.state, project_id, (payload or SwarmTurnOnRequest()).launch_profile)
@@ -196,6 +218,11 @@ def _muted_categories(request: Request) -> Optional[List[str]]:
 async def get_conversation(agent_id: int, request: Request, since: Optional[str] = Query(None, max_length=64),
                            limit: int = Query(stream.MAX_LIMIT, ge=1, le=stream.MAX_LIMIT),
                            view: Literal["all", "shown"] = Query("all")) -> Dict[str, Any]:
+    """The agent's thread, oldest first: owner and agent messages and the Task Manager cards the owner acts on.
+
+    Inputs: since (an entry id: only later entries); limit (1 to 200: the newest that many); view (``all`` is every entry,
+    ``shown`` drops the categories the owner muted in ``ui_preferences.swarm_chat_muted``). ``cursor`` is the newest id.
+    """
     try:
         muted = await asyncio.to_thread(_muted_categories, request) if view == "shown" else None
         return await stream.page(await views.get_agent_row(agent_id), since=since, limit=limit, view=view, muted=muted)
@@ -284,7 +311,8 @@ async def turn_off_agent(agent_id: int, request: Request, payload: Optional[Swar
 
 @router.put("/agents/{agent_id}/name", response_model=SwarmAgentDetail, dependencies=NEEDS_ON)
 async def rename_agent(agent_id: int, payload: SwarmRenameRequest, request: Request) -> Dict[str, Any]:
-    """
+    """Rename any live agent (the owner; agents use the ``swarm_rename`` tool, which parks for the owner's approval), at any time.
+
     Changes the display name on the row, the sessions label (the drawer follows) and ``swarm.json``; the id, slug, memory, cards,
     thread, project and company stay, and ``agents_lookup`` by the old name still resolves (``former_names``). The naming rules
     apply (issue #1444). Raises: 404 ``agent_not_found``, 422 ``invalid_name`` (empty, over 25 characters, a feat/fix/tweak
@@ -347,6 +375,19 @@ async def patch_fact(fact_id: str, payload: SwarmFactScope) -> Dict[str, Any]:
     except (facts.FactRefused, facts.memory.SwarmFileError) as exc:
         raise HTTPException(status_code=409, detail={"code": "swarm_refused", "message": str(exc)}) from exc
     except (db.DatastoreUnreadableError, sqlite3.Error, OSError) as exc:
+        _refused(exc)
+
+
+@router.post("/memory/cleanup", response_model=SwarmMemoryCleanupResponse, dependencies=NEEDS_ON)
+async def post_memory_cleanup(request: Request) -> Dict[str, Any]:
+    """The one-time memory cleanup (Alex (example-owner), 2026-10-27, #2609): every live project agent is handed the prune order
+    (woken when asleep), deletes by the memory bar with ``swarm_forget`` and posts "kept N, deleted M" on its own thread.
+
+    Raises: 503 (the datastore cannot be read). Example: POST /api/v1/swarm/memory/cleanup -> {"agents": [4, 9], "refused": []}
+    """
+    try:
+        return await fact_life.cleanup(request.app.state)
+    except (db.DatastoreUnreadableError, sqlite3.Error) as exc:
         _refused(exc)
 
 

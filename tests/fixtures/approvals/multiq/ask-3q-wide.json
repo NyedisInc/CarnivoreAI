@@ -1,0 +1,49 @@
+{
+ "questions": [
+  {
+   "question": "Which authentication method should the service use?",
+   "header": "Authentication method",
+   "multiSelect": false,
+   "options": [
+    {
+     "label": "OAuth",
+     "description": "delegated"
+    },
+    {
+     "label": "API key",
+     "description": "static"
+    }
+   ]
+  },
+  {
+   "question": "Which database engine do you want?",
+   "header": "Database engine",
+   "multiSelect": false,
+   "options": [
+    {
+     "label": "Postgres",
+     "description": "relational"
+    },
+    {
+     "label": "SQLite",
+     "description": "embedded"
+    }
+   ]
+  },
+  {
+   "question": "Which deployment target?",
+   "header": "Deployment target",
+   "multiSelect": true,
+   "options": [
+    {
+     "label": "Edge",
+     "description": "cdn"
+    },
+    {
+     "label": "Region",
+     "description": "single"
+    }
+   ]
+  }
+ ]
+}

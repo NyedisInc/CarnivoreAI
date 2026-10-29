@@ -9,6 +9,7 @@ from typing import Optional
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core.transcript_manifest import store
 
 logger = structlog.get_logger(__name__)
@@ -32,7 +33,7 @@ def transcript_path(conversation_id: Optional[str], family: Optional[str], *,
         if conn is not None:
             found = store.path_for_conversation(conn, str(conversation_id), family)
         else:
-            with closing(sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True, timeout=5)) as own:
+            with closing(connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)) as own:
                 found = store.path_for_conversation(own, str(conversation_id), family)
     except (sqlite3.Error, OSError) as exc:
         logger.warning("transcript_manifest_lookup_failed", conversation_id=conversation_id, error=str(exc))

@@ -7,6 +7,7 @@ import { ownsEscape } from '../sidebar-widgets/escape-guards';
 let stop: () => void = () => {};
 let closers: Record<string, ReturnType<typeof vi.fn>>;
 
+/** Wait for the shell's MutationObserver. */
 async function settle(): Promise<void> {
     await Promise.resolve();
     await Promise.resolve();

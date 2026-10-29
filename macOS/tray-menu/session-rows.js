@@ -28,7 +28,6 @@ function recency(info) {
   return Number.isFinite(at) ? at : 0;
 }
 
-/* cannot be opened */
 function terminalBlock(info) {
   if (!isLocal(info)) return 'menubar.reason.peer';
   if (info.activity_status === 'asleep') return 'menubar.reason.asleep';

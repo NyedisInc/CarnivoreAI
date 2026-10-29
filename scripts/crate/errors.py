@@ -57,7 +57,6 @@ class ApiError(CrateScriptError):
 
 
 class NetworkError(CrateScriptError):
-    """The host could not be reached (refused, DNS, reset, TLS)."""
 
     exit_code = EXIT_NETWORK
 

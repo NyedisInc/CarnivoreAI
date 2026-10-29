@@ -1,4 +1,3 @@
-/* active account */
 
 import { subscribe } from '../../opscenter/api/events.svelte';
 import type { EventFrame } from '../../opscenter/api/types';

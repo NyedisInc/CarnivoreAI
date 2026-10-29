@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from src.api.auth import require_auth
 from src.core.stats import config, events
+from src.api.error_response import api_error
 
 router = APIRouter(prefix="/stats", tags=["stats"], dependencies=[Depends(require_auth)])
 
@@ -29,4 +30,4 @@ async def get_event_log(request: Request, from_: datetime = Query(alias="from"),
     except config.StatsOff as exc:
         raise HTTPException(409, detail={"code": "stats_off", "message": "stats off"}) from exc
     except ValueError as exc:
-        raise HTTPException(422, detail={"code": "invalid_stats_request", "message": str(exc)}) from exc
+        raise api_error(422, "invalid_stats_request", exc) from exc

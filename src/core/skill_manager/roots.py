@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import hashlib
 import os
+import unicodedata
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import structlog
 
+from src.config.provider_accounts import profile_dir_for
+from src.core.provider_ledger import accounts_store
 from src.core.skill_manager.types import (
     CLAUDE,
     CODEX,
@@ -31,6 +34,10 @@ PROJECT_SKILL_DIRS: Tuple[Tuple[str, str], ...] = (
 )
 
 
+def _canonical(path: str) -> str:
+    return unicodedata.normalize("NFC", os.path.realpath(os.path.expanduser(path)))
+
+
 def make_key(kind: str, real_path: str) -> str:
     return f"{kind}-{hashlib.sha256(real_path.encode('utf-8')).hexdigest()[:12]}"
 
@@ -44,6 +51,7 @@ def known_profiles(
     *,
     home: Path,
     managed_root: str,
+    foreign_dirs: Iterable[str] = (),
 ) -> List[Profile]:
     default_dir = os.path.normpath(str(home / ".claude"))
     out: List[Profile] = []
@@ -62,17 +70,34 @@ def known_profiles(
             out.append(Profile(account_id, expanded))
             seen_dirs.add(expanded)
     managed = os.path.abspath(os.path.expanduser(managed_root))
+    foreign = {_canonical(d) for d in foreign_dirs}
     try:
         entries = sorted(os.scandir(managed), key=lambda e: e.name)
     except OSError:
         entries = []
     ids = {p.profile_id for p in out}
     for entry in entries:
-        if entry.is_dir(follow_symlinks=False) and entry.path not in seen_dirs and entry.name not in ids:
+        if entry.is_dir(follow_symlinks=False) and entry.path not in seen_dirs and _canonical(entry.path) not in foreign and entry.name not in ids:
             out.append(Profile(entry.name, entry.path))
             seen_dirs.add(entry.path)
             ids.add(entry.name)
     return out
+
+
+def configured_account_dirs(config_path: Path) -> Tuple[List[Tuple[str, str]], List[str]]:
+    try:
+        accounts = accounts_store.list_accounts(config_path)
+    except (OSError, ValueError) as exc:
+        logger.warning("skills_inventory_accounts_unreadable", path=str(config_path), error=type(exc).__name__)
+        return [], []
+    claude = [(a.id, profile_dir_for(a)) for a in accounts if a.provider == "claude"]
+    other = [profile_dir_for(a) for a in accounts if a.provider != "claude"]
+    return claude, other
+
+
+def configured_profiles(home: Path, config_path: Path, managed_root: str) -> List[Profile]:
+    pairs, foreign = configured_account_dirs(config_path)
+    return known_profiles(pairs, home=home, managed_root=managed_root, foreign_dirs=foreign)
 
 
 def profile_groups(profiles: Sequence[Profile]) -> Tuple[ProfileGroup, ...]:

@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import Button from '../base/Button.svelte';
     import type { Translate } from '../sessions/types';
     import type { CallsSummary, SpendRow } from './api';
     import { compact, costText, latencyText, modelName, percent } from './calls-logic';
@@ -42,12 +43,12 @@
             <div class="ai-spend__col">
                 <h4 class="ai-spend__title">{t(`settings.ai.calls.spend.${kind}`)}</h4>
                 {#each rows as row (row.key)}
-                    <button type="button" class="ai-spend__row" data-ai-spend={kind} title={t('settings.ai.calls.spend.filter')}
+                    <Button variant="row" data-ai-spend={kind} title={t('settings.ai.calls.spend.filter')}
                         onclick={() => onpick(kind, row.key)}>
                         <span class="ai-spend__name">{kind === 'feature' ? featureName(row.key) : modelName(row.key).name}</span>
                         <span class="ai-spend__num">{bySpend ? costText(row.spend) : t('settings.ai.calls.spend.calls', { n: row.calls })}</span>
                         <span class="ai-spend__bar" aria-hidden="true"><span class="ai-spend__fill" style:width="{share(rows, row)}%"></span></span>
-                    </button>
+                    </Button>
                 {/each}
             </div>
         {/each}

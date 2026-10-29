@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readonly
 from src.core.crate_import import ledger
 from src.core.db import connect, db_path_for, transaction
 from src.core.inventory.model import MAIN_STORE
@@ -23,7 +24,7 @@ _MAX_COLUMNS = 120
 
 
 class JournalError(Exception):
-    """The journal could not be started (a table too wide to log). The import is refused before it writes anything."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -149,7 +150,7 @@ def store_path(state: Path, store: str) -> Path:
 
 
 def _seal_store(path: Path, tables: Dict[str, Any]) -> None:
-    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=30.0)
+    conn = connect_readonly(path, timeout=READONLY_TIMEOUT_LONG_S)
     try:
         for tbl, table in tables.items():
             for item in table["ins"]:
@@ -161,10 +162,6 @@ def _seal_store(path: Path, tables: Dict[str, Any]) -> None:
 
 
 def seal(state: Path, import_id: str) -> None:
-    """Add the after-hash of every journaled row (module docstring), once. Blocking; one write transaction on ``carnivore.db``.
-
-    A store that cannot be opened now keeps null hashes, which an undo reads as "cannot tell if it changed" and refuses. Safe to run twice.
-    """
     conn = connect(db_path_for(state), create=False)
     try:
         record = ledger.read_undo(conn, import_id)

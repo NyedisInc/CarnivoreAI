@@ -1,5 +1,3 @@
-/*  hidden
- */
 
 console.log('[SessionStatusSummary Module] Loading...');
 
@@ -35,6 +33,7 @@ console.log('[SessionStatusSummary Module] Loading...');
         if (l.inner === 'waiting-permission') return 'permission';
         if (l.inner === 'waiting-input' || l.inner === 'notice') return 'input';
         if (l.inner === 'working') return 'working';
+        // without.
         if (l.outer === 'unread') return 'unread';
         if (l.inner === 'idle' || l.inner === 'done') return 'done';
         if (l.inner === 'dead' || l.inner === 'disconnected') return 'dead';
@@ -136,7 +135,6 @@ console.log('[SessionStatusSummary Module] Loading...');
         return labels.sessionSummaryLabel(s, t);
     }
 
-    /* title="unread - 1 session, 1 unread" */
     function summaryHtml(children, opts) {
         const o = opts || {};
         const s = summarizeStates(children);

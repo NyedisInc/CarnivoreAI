@@ -12,11 +12,13 @@ from typing import Any, Optional, Tuple
 import structlog
 
 from src.core.agent_families import DEFAULT_FAMILY
-from src.core.attention.registry_read import REG_OK
+from src.core.attention.registry_record import REG_OK
 from src.core.session_token_usage import claude_reader
 from src.core.session_transcript_presence import CONVERSATION_ABSENT, CONVERSATION_PRESENT
 from src.core.subagents.parent_index import parse_timestamp
+from src.core.subagents.parent_index import read_completion_index
 from src.core.subagents.reader import read_subagents, subagents_dir_for
+from src.core.subagents.scan_inputs import agent_files_signature, index_snapshot
 
 logger = structlog.get_logger(__name__)
 
@@ -53,6 +55,7 @@ class _Entry:
     key: Optional[tuple] = None
     tally: Optional[SubagentTally] = None
     computed_at: float = 0.0
+    inputs: Optional[tuple] = None
 
 
 def process_start_for(record: Any, conversation_uuid: Optional[str]) -> Optional[datetime]:
@@ -137,6 +140,13 @@ class SubagentTallyCache:
                     self._entries.popitem(last=False)
         return entry
 
+    @staticmethod
+    def _inputs(parent: Path) -> Optional[tuple]:
+        files = agent_files_signature(subagents_dir_for(parent))
+        if files is None:
+            return None
+        return (files, index_snapshot(read_completion_index(parent)))
+
     def _tally(self, uuid: str, working_dir: Optional[str],
                process_started_at: Optional[datetime], now: datetime) -> SubagentTally:
         at = self._clock()
@@ -145,8 +155,12 @@ class SubagentTallyCache:
             return entry.tally or UNCHECKED
         key = (_mtime_key(entry.path), _mtime_key(subagents_dir_for(entry.path)),
                process_started_at)
-        if (entry.tally is not None and entry.key == key
-                and at - entry.computed_at < REFRESH_SECONDS):
+        fresh = entry.tally is not None and at - entry.computed_at < REFRESH_SECONDS
+        if fresh and entry.key == key:
+            return entry.tally
+        inputs = self._inputs(entry.path)
+        if fresh and inputs is not None and inputs == entry.inputs and key[2] == entry.key[2]:
+            entry.key = key
             return entry.tally
         result = read_subagents(entry.path, conversation_uuid=uuid,
                                 process_started_at=process_started_at, now=now)
@@ -161,7 +175,7 @@ class SubagentTallyCache:
             )
             tally = SubagentTally(STATE_OK, running=counts.running, total=counts.total,
                                   unknown=counts.unknown, last_activity_at=latest)
-        entry.key, entry.tally, entry.computed_at = key, tally, at
+        entry.key, entry.tally, entry.computed_at, entry.inputs = key, tally, at, inputs
         return tally
 
 

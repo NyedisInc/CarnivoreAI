@@ -7,6 +7,7 @@
     id: 'core.files',
     scope: 'session',
     actions: [
+      { id: 'open-path', labelKey: 'opscenter.cell.files.path.action', group: 'tree' },
       { id: 'search', labelKey: 'opscenter.cell.files.menu.filter', group: 'view' },
       { id: 'just-changes', labelKey: 'opscenter.cell.files.menu.just_changes', kind: 'switch', group: 'view' },
       { id: 'whole-file', labelKey: 'opscenter.cell.files.menu.whole_file', kind: 'switch', group: 'view' },
@@ -23,8 +24,6 @@
 </script>
 
 <script lang="ts">
-  /*  hidden
- */
   import { tick, untrack } from 'svelte';
   import type { CellProps } from '../../lib/cell';
   import { sessions } from '../../api/sessions.svelte';
@@ -34,9 +33,11 @@
   import { titlelessHost } from '../../shell/frame-header.svelte';
   import { useWidget, type WidgetHandle } from '../../widgets/shell/define-widget.svelte';
   import WidgetShell from '../../widgets/shell/WidgetShell.svelte';
+  import ModalShell from '../../../lib/launchpad/ModalShell.svelte';
+  import { Button, Field } from '../../../lib/base';
   import { buildGitTags, gitTagFor, GIT_LETTERS, GIT_TONES, type GitTag } from '../../../lib/file-drawer/git-tags';
   import { writeRootPrefs } from '../../../lib/file-drawer/roots-prefs.svelte';
-  import { findIn, openInFilesList, readLevel } from '../../../lib/file-drawer/tree-api';
+  import { findIn, openInFilesList, openPathInFilesList, readLevel } from '../../../lib/file-drawer/tree-api';
   import { workdirRelative } from '../../../lib/open-files/paths';
   import { t } from '../../../lib/i18n/index.svelte';
   import { buildRows, focusable, levelKey, parentOf, rootOrder, splitLevelKey, stepFocus, unreadLevels, type FxRow, type Level, type RootId } from './model';
@@ -53,6 +54,7 @@
   const FILTER_DEBOUNCE_MS = 200;
 
   const widget: WidgetHandle<typeof FILES_WIDGET> = useWidget(FILES_WIDGET, () => props, () => ({
+    'open-path': { run: () => (pathDialog = true) },
     search: { run: () => filterEl?.focus() },
     'just-changes': { on: justChanges, run: toggleJustChanges, blocked: changeCount === 0 && !justChanges ? fk('changed.none_reason') : '' },
     'whole-file': { on: view['whole-file'], run: () => (view['whole-file'] = !view['whole-file']) },
@@ -104,6 +106,7 @@
   const projectScope = $derived(foldScope('workdir', workdir));
 
   let levels = $state<Record<string, Level>>({});
+  /* the project folder */
   let generation = 0;
 
   async function load(root: RootId, path: string): Promise<void> {
@@ -186,6 +189,25 @@
   }
 
   let status = $state<{ text: string; tone: 'muted' | 'error' } | null>(null);
+  let pathDialog = $state(false);
+  let pathValue = $state('');
+  let pathError = $state('');
+  let pathBusy = $state(false);
+
+  async function submitPath(): Promise<void> {
+    if (pathBusy) return;
+    pathBusy = true;
+    pathError = '';
+    try {
+      await openPathInFilesList(pathValue);
+      pathDialog = false;
+      say(fk('path.opened'));
+    } catch (err) {
+      pathError = err instanceof Error ? err.message : String(err);
+    } finally {
+      pathBusy = false;
+    }
+  }
 
   function say(text: string, tone: 'muted' | 'error' = 'muted'): void {
     status = { text, tone };
@@ -310,7 +332,13 @@
 {/snippet}
 
 {#snippet controls(place: 'header' | 'body' | 'corner')}
-  {#if place !== 'corner'}{@render chip()}{/if}
+  {#if place === 'header'}{@render chip()}{/if}
+  <Button size="sm" variant="quiet" data-files-open-path onclick={() => (pathDialog = true)}>{fk('path.action')}</Button>
+{/snippet}
+
+{#snippet filterActions()}
+  {#if !corner && !widget.frame?.suppressed}{@render chip()}{/if}
+  <Button size="sm" variant="quiet" data-files-open-path onclick={() => (pathDialog = true)}>{fk('path.action')}</Button>
 {/snippet}
 
 {#snippet projectSummary()}
@@ -327,7 +355,7 @@
       placeholder={fk('filter.placeholder')}
       label={fk('filter.label')}
       onkeydown={onFilterKey}
-      after={!headerDrawn && !corner && !widget.frame?.suppressed ? chip : undefined}
+      after={!headerDrawn ? filterActions : undefined}
     />
 
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -363,8 +391,22 @@
   </div>
 </WidgetShell>
 
+{#if pathDialog}
+  <ModalShell title={fk('path.title')} onCancel={() => { if (!pathBusy) pathDialog = false; }} dismissable={!pathBusy}>
+    <form class="files-path-form" onsubmit={(event) => { event.preventDefault(); void submitPath(); }}>
+      <Field label={fk('path.label')} placeholder={fk('path.placeholder')} bind:value={pathValue} maxlength={4096} error={pathError} block />
+      <div class="files-path-actions">
+        <Button type="button" variant="quiet" onclick={() => (pathDialog = false)} disabled={pathBusy}>{t('files.editor.cancel')}</Button>
+        <Button type="submit" variant="confirm" disabled={pathBusy || !pathValue.trim()}>{fk('path.open')}</Button>
+      </div>
+    </form>
+  </ModalShell>
+{/if}
+
 <style>
   @layer components {
+    .files-path-form { display: grid; gap: var(--oc-space-3); }
+    .files-path-actions { display: flex; justify-content: flex-end; gap: var(--oc-space-2); }
     .files {
       box-sizing: border-box;
       display: flex;

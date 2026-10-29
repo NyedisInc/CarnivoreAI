@@ -1,13 +1,3 @@
-/**
- * Canvas painting for a war room tile (issue #135): the tile's xterm is a parser and buffer only, never `open()`ed, so a tile
- * flush makes ZERO DOM mutations. The page's global `:has()` rules turn every DOM mutation into a document-wide style
- * recalculation (about 70 ms with real Claude panes); one 2D canvas per tile has no such cost.
- *
- * Description: `paintTile` draws the visible buffer rows of an emulator onto a canvas: cell text with foreground and background
- *   colors (default, 256 palette, truecolor), bold, dim, italic, underline and inverse, in the session's theme palette. Runs of
- *   ASCII cells with equal attributes are one `fillText`; a non-ASCII or wide character is drawn alone at its own cell so the
- *   grid never drifts. Wide and CJK glyphs are approximate. No cursor is drawn.
- */
 
 import { PEEK_PAD } from './wall-layout';
 
@@ -73,8 +63,6 @@ export function paletteColor(index: number, theme: TileTheme): string {
   return `rgb(${level},${level},${level})`;
 }
 
-/*  color: default, palette or truecolor.
- * Inputs: the cell and whether the foreground (true) or background is asked; */
 function cellColor(cell: Cell, foreground: boolean, theme: TileTheme): string | null {
   const rgb = foreground ? cell.isFgRGB() : cell.isBgRGB();
   const palette = foreground ? cell.isFgPalette() : cell.isBgPalette();

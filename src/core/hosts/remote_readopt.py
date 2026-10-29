@@ -139,6 +139,10 @@ async def readopt_host(manager: Any, host_key: str, *,
             report = {"outcome": "cannot_determine", "detail": exc.code}
         except RemoteHostUnavailable as exc:
             report = {"outcome": "cannot_determine", "detail": str(exc)}
+        except (sqlite3.Error, OSError) as exc:
+            logger.warning("remote_readopt_datastore_error", host=host_key, attempt=attempt,
+                           error_type=type(exc).__name__, error=str(exc))
+            report = {"outcome": "cannot_determine", "detail": f"datastore: {type(exc).__name__}"}
         if report["outcome"] == "ran":
             return report
         logger.info("remote_readopt_retry", host=host_key, attempt=attempt,
@@ -149,8 +153,15 @@ async def readopt_host(manager: Any, host_key: str, *,
 
 async def readopt_remote_hosts(manager: Any, **options: Any) -> Dict[str, Dict[str, Any]]:
     keys = await asyncio.to_thread(open_remote_hosts, manager._datastore_connection)
-    reports = await asyncio.gather(*(readopt_host(manager, key, **options) for key in keys))
-    return dict(zip(keys, reports))
+    reports = await asyncio.gather(*(readopt_host(manager, key, **options) for key in keys),
+                                   return_exceptions=True)
+    out: Dict[str, Dict[str, Any]] = {}
+    for key, report in zip(keys, reports):
+        if isinstance(report, BaseException):
+            logger.error("remote_readopt_host_failed", host=key, error_type=type(report).__name__, error=str(report))
+            report = {"outcome": "failed", "detail": type(report).__name__}
+        out[key] = report
+    return out
 
 
 def schedule_remote_readopt(manager: Any) -> Optional["asyncio.Task[Any]"]:

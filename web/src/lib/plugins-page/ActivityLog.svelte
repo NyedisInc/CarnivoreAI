@@ -1,4 +1,4 @@
-
+<!-- there is nothing -->
 <script lang="ts">
     import type { Translate } from '../sessions/types';
     import type { ActivityRow } from './cplugs-adapter';

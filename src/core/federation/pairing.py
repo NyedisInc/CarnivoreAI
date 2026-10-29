@@ -117,39 +117,43 @@ class PairingOffers:
         self._clock = clock
         self._offers: Dict[str, Offer] = {}
         self._windows: Dict[str, SlidingWindow] = {}
+        self._lock = threading.Lock()
 
     def begin(self, proof: str, state_dir: Path) -> Offer:
-        now = self._clock()
-        if not self._windows.setdefault(proof, SlidingWindow(BEGIN_PER_MINUTE, 60.0)).hit(now):
-            raise RateLimited()
-        self._drop(proof)
-        nonce = secrets.token_hex(8)
-        code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(CODE_LENGTH))
-        ttl = FILE_TTL_SECONDS if proof == PROOF_SSH_FILE else TYPED_TTL_SECONDS
-        path = _write_code_file(state_dir, nonce, code) if proof == PROOF_SSH_FILE else None
-        offer = self._offers[proof] = Offer(nonce=nonce, proof=proof, expires=now + ttl, path=path, _code=code)
-        return offer
+        with self._lock:
+            now = self._clock()
+            if not self._windows.setdefault(proof, SlidingWindow(BEGIN_PER_MINUTE, 60.0)).hit(now):
+                raise RateLimited()
+            self._drop(proof)
+            nonce = secrets.token_hex(8)
+            code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(CODE_LENGTH))
+            ttl = FILE_TTL_SECONDS if proof == PROOF_SSH_FILE else TYPED_TTL_SECONDS
+            path = _write_code_file(state_dir, nonce, code) if proof == PROOF_SSH_FILE else None
+            offer = self._offers[proof] = Offer(nonce=nonce, proof=proof, expires=now + ttl, path=path, _code=code)
+            return offer
 
     def redeem(self, nonce: object, code: object) -> Offer:
-        for proof in list(self._offers):
-            if self._clock() >= self._offers[proof].expires:
-                self._drop(proof)
-        if not (isinstance(nonce, str) and isinstance(code, str)):
-            raise PairError()
-        offer = next((o for o in self._offers.values()
-                      if hmac.compare_digest(nonce.encode(), o.nonce.encode())), None)
-        if offer is None:
-            raise PairError()
-        offer.attempts += 1
-        if not hmac.compare_digest(code.strip().upper().encode(), offer.code.encode()):
-            if offer.attempts >= MAX_ATTEMPTS:
-                self._drop(offer.proof)
-            raise PairError()
-        self._drop(offer.proof)
-        return offer
+        with self._lock:
+            for proof in list(self._offers):
+                if self._clock() >= self._offers[proof].expires:
+                    self._drop(proof)
+            if not (isinstance(nonce, str) and isinstance(code, str)):
+                raise PairError()
+            offer = next((o for o in self._offers.values()
+                          if hmac.compare_digest(nonce.encode(), o.nonce.encode())), None)
+            if offer is None:
+                raise PairError()
+            offer.attempts += 1
+            if not hmac.compare_digest(code.strip().upper().encode(), offer.code.encode()):
+                if offer.attempts >= MAX_ATTEMPTS:
+                    self._drop(offer.proof)
+                raise PairError()
+            self._drop(offer.proof)
+            return offer
 
     def outstanding(self) -> bool:
-        return any(self._clock() < o.expires for o in self._offers.values())
+        with self._lock:
+            return any(self._clock() < o.expires for o in self._offers.values())
 
     def _drop(self, proof: str) -> None:
         offer = self._offers.pop(proof, None)

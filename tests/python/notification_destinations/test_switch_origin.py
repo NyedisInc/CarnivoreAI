@@ -19,7 +19,7 @@ from .test_allow_private import fields_of, webhook  # noqa: E402
 from .test_settings_and_destinations import BASE, make_client  # noqa: E402
 
 SPEC = kind_specs.get_kind("webhook")
-A, B = "http://203.0.113.13:8123/hook", "http://203.0.113.19:8123/hook"
+A, B = "http://192.168.1.20:8123/hook", "http://192.168.1.99:8123/hook"
 
 
 def _config(service, dest_id):
@@ -48,7 +48,7 @@ def test_a_save_that_does_not_touch_the_switch_or_url_keeps_the_old_origin(servi
     key = view.allow_private_key(dest)
     before = service.docs.snapshot()["local"][key]
     assert client.patch(f"{BASE}/destinations/{dest}", json={"name": "renamed"}).status_code == 200
-    assert service.docs.snapshot()["local"][key] == before == "http://203.0.113.13:8123"
+    assert service.docs.snapshot()["local"][key] == before == "http://192.168.1.20:8123"
 
 
 def test_backfill_records_the_current_origin_for_a_bare_true_switch(service):
@@ -62,7 +62,7 @@ def test_backfill_records_the_current_origin_for_a_bare_true_switch(service):
     assert base.policy_for(SPEC, _config(service, dest), A).allow_private is False
     assert asyncio.run(switch_origin.backfill(service.docs, service.destinations._secrets)) == 2
     local = service.docs.snapshot()["local"]
-    assert local[k_priv] == local[k_plain] == "http://203.0.113.13:8123"
+    assert local[k_priv] == local[k_plain] == "http://192.168.1.20:8123"
     assert base.policy_for(SPEC, _config(service, dest), A).allow_plain_http is True
     assert asyncio.run(switch_origin.backfill(service.docs, service.destinations._secrets)) == 0
 
@@ -89,7 +89,7 @@ def test_the_sync_path_refuses_a_public_literal_over_http_like_any_invalid_recor
     from src.core.notifications.sync import secrets_sync
 
     assert secrets_sync._checked_fields(SPEC, {"url": "http://134744072/x"}) is None
-    assert secrets_sync._checked_fields(SPEC, {"url": "http://203.0.113.13/x"}) is not None
+    assert secrets_sync._checked_fields(SPEC, {"url": "http://192.168.1.20/x"}) is not None
 
 
 def _retarget(service, dest_id: str, url: str) -> None:
@@ -138,5 +138,5 @@ def test_resending_on_for_an_origin_that_still_matches_changes_nothing(service):
     keys = switch_origin.keys_of(dest)
     before = [service.docs.snapshot()["local"][k] for k in keys]
     assert client.patch(f"{BASE}/destinations/{dest}", json=BOTH).status_code == 200
-    assert [service.docs.snapshot()["local"][k] for k in keys] == before == ["http://203.0.113.13:8123"] * 2
+    assert [service.docs.snapshot()["local"][k] for k in keys] == before == ["http://192.168.1.20:8123"] * 2
     assert _switches(client, dest) == (True, True)

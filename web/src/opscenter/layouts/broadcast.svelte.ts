@@ -2,7 +2,7 @@ import { sessions } from '../api';
 import type { SessionInfo } from '../api/types';
 import { layoutError, setMemberBroadcast, type LayoutMember } from './api';
 import { layoutActive, layoutMode, memberForRow } from './mode.svelte';
-import { displayName, liveRowFor, rowIdForSession } from './names';
+import { displayName, isLiveRow, liveRowFor, rowIdForSession } from './names';
 
 const BUSY = new Set(['working', 'working_subagent']);
 
@@ -43,17 +43,13 @@ export interface Recipients {
   busy: string[];
 }
 
-function live(row: SessionInfo | null): row is SessionInfo {
-  return row !== null && row.activity_status !== 'dead';
-}
-
 export function recipients(): Recipients {
   void sessions.data;
   let receiving = 0;
   const busy: string[] = [];
   for (const member of layoutMode.members) {
     const row = liveRowFor(member.session_row_id);
-    if (!broadcastOn(member) || !live(row)) continue;
+    if (!broadcastOn(member) || !isLiveRow(row)) continue;
     receiving += 1;
     if (BUSY.has(String(row.activity_status ?? ''))) busy.push(displayName(row.label, row.tmux_session));
   }

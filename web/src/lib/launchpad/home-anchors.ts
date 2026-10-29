@@ -1,3 +1,4 @@
+/* the home screen */
 
 export const SCREEN_ID = 'launchpad-screen';
 

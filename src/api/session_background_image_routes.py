@@ -1,54 +1,6 @@
-"""Uploading, serving and removing one session's own background picture.
-
-Three routes over one file per session. They sit beside
-:mod:`src.api.session_background_routes`, which owns the same resource's
-JSON half (which theme's picture to borrow, how dark the scrim is, whether
-the picture is off here at all), and they are a separate module because
-this half handles BYTES FROM A CLIENT and that is a different job with a
-different set of rules.
-
-**EVERY BYTE IS HOSTILE AND ONLY THE BYTES MAY DECIDE THE TYPE.** The
-client's ``Content-Type`` and the filename it declares are read for the log
-line and are used for NOTHING else. The type is sniffed out of the leading
-bytes by :func:`src.core.terminal_background.sniff_image_extension`, and
-the same sniffed extension is what the GET later derives its response type
-from - so the byte that decided what was stored is the byte that decides
-what it is served as. A PNG named ``.txt`` is stored as a PNG; a shell
-script named ``.png`` is a 415.
-
-**SVG IS REFUSED AND CANNOT BE ACCEPTED BY ACCIDENT.** It has no magic
-number, so the sniffer has nothing to match and there is no table entry to
-add one to. That is not an oversight: an SVG is a document that can carry
-script, and this app's whole CSP argument rests on a picture not being able
-to become a program.
-
-**THE CAP IS APPLIED WHILE READING, NOT AFTER.** The body is consumed in
-chunks and the request is refused the moment the accumulated size passes
-``UploadsConfig.max_size_mb``, so nothing oversize is ever assembled into a
-contiguous buffer and nothing oversize ever reaches the state directory.
-The cap is the one the paste-an-image endpoint already uses, not a second
-number that could drift from it.
-
-**THE STORED NAME IS COMPOSED HERE, NEVER RECEIVED.** The file is
-``<session name>.<sniffed ext>`` inside one directory, and the composed
-name is run through :func:`src.core.terminal_background.safe_image_filename`
-- the same allowlist a catalog theme's manifest is held to - before it
-reaches a path join. A session name carrying anything outside that
-allowlist is refused rather than rewritten.
-
-**THE READ IS AUTHENTICATED, WHICH IS WHY THE CLIENT PAINTS A BLOB.** A
-browser cannot put an ``Authorization`` header on a CSS ``url()``, so the
-picture cannot be a plain url in a stylesheet without either dropping the
-auth or inventing a token-in-the-query scheme that would then live in
-history, logs and referrers. It does neither: the client fetches these
-bytes with its ordinary authenticated fetch and paints the result through
-an object url, which is same-origin, carries no credential and is revoked
-when it is replaced. See ``client/js/terminal-background.js``.
-"""
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -56,7 +8,9 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 
+from src.core.safe_io.atomic_write import atomic_write_bytes
 from src.api.auth import require_auth
+from src.api.capped_reads import read_capped_upload
 from src.api.remote_route_guard import routed_remote
 from src.api.session_background_routes import _entry_model, _store
 from src.api.session_name_known import known_tmux_names, strip_adopted_prefix
@@ -64,14 +18,10 @@ from src.config import settings
 from src.core import terminal_background
 from src.core.hosts.remote_controls import image_file_stem
 from src.core.terminal_background import UnsafeImageName
-from src.core.unique_tmp_path import unique_tmp_path
 from src.models import SessionBackgroundEntry
 
 logger = structlog.get_logger()
 router = APIRouter()
-
-_CHUNK_BYTES = 64 * 1024
-
 
 def _known_session(request: Request, session_name: str) -> str:
     session_manager = request.app.state.session_manager
@@ -121,63 +71,15 @@ def _remove_other_extensions(name: str, keep: Optional[str]) -> None:
             )
 
 
-async def _read_capped(file: UploadFile, max_bytes: int) -> bytes:
-    chunks: list[bytes] = []
-    total = 0
-    while True:
-        chunk = await file.read(_CHUNK_BYTES)
-        if not chunk:
-            break
-        total += len(chunk)
-        if total > max_bytes:
-            raise HTTPException(
-                status_code=413,
-                detail=(
-                    "image exceeds the maximum upload size of "
-                    f"{max_bytes // (1024 * 1024)} MB"
-                ),
-            )
-        chunks.append(chunk)
-    return b"".join(chunks)
-
-
 def _write_atomically(target: Path, data: bytes) -> None:
-    """Put the bytes on disk so a reader never sees a partial file.
-
-    Description: the sequence every durable write in this app uses -
-      unique temp file in the same directory, fsync, ``os.replace`` - plus
-      mode 0o600, because these are a user's own pictures sitting in a
-      shared state directory and no other local account has any business
-      reading them. ``os.replace`` is atomic within a filesystem, which is
-      what makes a re-upload swap the file rather than briefly empty it.
-    Inputs: target (Path). data (bytes).
-    Output: None.
-    Raises: HTTPException(500) when the directory or the file cannot be
-      written.
-    Example: _write_atomically(dir / "cloude_api.png", data)
-    """
-    tmp: Optional[Path] = None
     try:
-        target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        tmp = unique_tmp_path(target)
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        try:
-            os.write(fd, data)
-            os.fsync(fd)
-        finally:
-            os.close(fd)
-        os.replace(str(tmp), str(target))
+        atomic_write_bytes(target, data, mode=0o600, parent_mode=0o700)
     except OSError as exc:
         logger.error(
             "session_background_image_write_failed",
             target=str(target),
             error=str(exc),
         )
-        if tmp is not None:
-            try:
-                tmp.unlink(missing_ok=True)
-            except OSError:
-                pass
         raise HTTPException(
             status_code=500, detail="could not store the background image"
         ) from exc
@@ -209,7 +111,7 @@ async def upload_session_background_image(
     """
     name = _known_session(request, session_name)
     max_bytes = settings.load_auth_config().uploads.max_size_mb * 1024 * 1024
-    data = await _read_capped(file, max_bytes)
+    data = await read_capped_upload(file, max_bytes)
 
     ext = terminal_background.sniff_image_extension(
         data[: terminal_background.SNIFF_LENGTH]
@@ -303,6 +205,11 @@ async def delete_session_background_image(
     request: Request, session_name: str
 ) -> Response:
     """Remove one session's stored picture and clear the field.
+
+    IDEMPOTENT. A session that has no picture is a 204 as well: the
+    caller asked for a state, and that state already holds. The other
+    three override fields are untouched, so a session that also borrowed
+    a theme's picture falls back to it rather than to nothing.
 
     Inputs: session_name (str).
     Output: Response - 204, no body.

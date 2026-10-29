@@ -27,6 +27,7 @@ import { ApiError } from '../api/auth.svelte';
 import { listLayouts } from './api';
 import { epochOf, resetLayoutMigration, runLayoutMigration, stripSplit, tmuxNameOf } from './migrate';
 
+/** A grid of one flex row holding these slots. */
 function grid(...ids: string[]): Layout {
   return {
     v: 6,

@@ -2,6 +2,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import { t } from '../i18n/index.svelte';
+  import { Button } from '../base';
   import { fetchFeatureMediaBlob } from './feature-media';
   import type { FeatureMediaItem } from './features-by-area';
 
@@ -46,30 +47,31 @@
 </script>
 
 {#if item.kind === 'gif' && !playing}
-  <button
-    type="button"
-    class="sidebar-help__media-item sidebar-help__media-gif-poster"
+  <Button
+    variant="row"
+    data-help-media-tile
+    data-help-media-gif-poster
     onclick={play}
     onfocus={play}
     aria-label={t('sidebar_help.features.gif_play', { alt: item.alt })}
   >
     <span class="sidebar-help__media-gif-play" aria-hidden="true">&#9654;</span>
     {#if item.caption}<span class="sidebar-help__media-caption">{item.caption}</span>{/if}
-  </button>
+  </Button>
 {:else if loadFailed}
   <div class="sidebar-help__media-item sidebar-help__media-item--failed">
     <span class="sidebar-help__media-caption">{item.alt}</span>
   </div>
 {:else if objectUrl}
-  <button
-    type="button"
-    class="sidebar-help__media-item"
+  <Button
+    variant="row"
+    data-help-media-tile
     onclick={() => onOpen(objectUrl as string, item.alt, item.caption)}
   >
     <img src={objectUrl} alt={item.alt} loading="lazy" class="sidebar-help__media-img" />
     {#if item.caption}<span class="sidebar-help__media-caption">{item.caption}</span>{/if}
     {#if item.state}<span class="sidebar-help__media-state">{item.state}</span>{/if}
-  </button>
+  </Button>
 {:else}
   <div class="sidebar-help__media-item sidebar-help__media-item--loading" aria-hidden="true"></div>
 {/if}

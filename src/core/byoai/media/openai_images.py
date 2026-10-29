@@ -41,9 +41,9 @@ async def generate(target: Target, key: Optional[str], prompt: str,
     body: dict = {"prompt": prompt, **dict(input)}
     if target.model:
         body["model"] = target.model
-    result = (await transport.request(target.connection, key, "POST",
+    result = (await transport.request_json(target.connection, key, "POST",
                                       _PATH_BY_PRESET.get(target.connection.preset, _GENERATE_PATH),
-                                      json=body, timeout=IMAGE_TIMEOUT_S)).json()
+                                      json=body, timeout=IMAGE_TIMEOUT_S))
     width, height = _size(body.get("size"))
     mime = _FORMAT_MIMES.get(str(body.get("output_format") or "png").lower(), "image/png")
     items: List[MediaItem] = []
@@ -68,7 +68,7 @@ async def generate(target: Target, key: Optional[str], prompt: str,
 
 async def list_models(connection: Connection, key: Optional[str]) -> List[ModelInfo]:
     listing = IMAGE_LISTING_BY_PRESET.get(connection.preset)
-    body = (await transport.request(connection, key, "GET", listing or "/models")).json()
+    body = (await transport.request_json(connection, key, "GET", listing or "/models"))
     return [ModelInfo(id=m["id"], capabilities=(CAP_IMAGE,), label=str(m.get("name") or ""))
             for m in body.get("data", [])
             if isinstance(m, dict) and m.get("id") and (listing or any(w in m["id"].lower() for w in _IMAGE_WORDS))]

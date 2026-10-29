@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../sdk';
+  import { Button } from '../sdk/ui';
 
   interface Props {
     count: number;
@@ -14,9 +15,9 @@
 </script>
 
 <div class="dwl-foot">
-  <button type="button" class="oc-btn oc-btn--confirm dwl-foot-key" disabled={!available || running !== null || count === 0} onclick={oncapture}>
+  <Button variant="confirm" disabled={!available || running !== null || count === 0} onclick={oncapture}>
     {running ? t('cplug.devwidgetlab.capture.progress', { done: running.done, total: running.total }) : count === 1 ? t('cplug.devwidgetlab.capture.frame') : t('cplug.devwidgetlab.capture.frames', { count })}
-  </button>
+  </Button>
   {#if !available}
     <p class="dwl-note">{t(`cplug.devwidgetlab.capture.unavailable.${reason || 'unknown'}`)}</p>
   {:else if last}

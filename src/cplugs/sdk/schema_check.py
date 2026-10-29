@@ -67,11 +67,6 @@ class SchemaSet:
         return found
 
     def validate(self, name: str, instance: Any) -> List[str]:
-        """Validate ``instance`` against the schema file ``name``. Output: error messages (empty list means valid).
-
-        Raises SchemaError for an unknown file, an unresolvable ``$ref`` or an unsupported keyword.
-        Example: SchemaSet.load(folder).validate("item.schema.json", {}) -> ["$: missing required property 'kind'", ...]
-        """
         if name not in self.documents:
             raise SchemaError(f"no schema named {name}")
         errors, _ = _Walker(self, name).run(self.documents[name], instance, "$")

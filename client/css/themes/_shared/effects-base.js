@@ -1,5 +1,4 @@
-//  hidden 
-// pointer-events: none
+// THREE-OUTCOME RULE
 
 export const STATUS = Object.freeze({
     INACTIVE: 'inactive',
@@ -7,7 +6,7 @@ export const STATUS = Object.freeze({
     PAUSED: 'paused',
     STATIC: 'static',
     SKIPPED: 'skipped',
-    UNAVAILABLE: 'unavailable',     // could not
+    UNAVAILABLE: 'unavailable',
 });
 
 const STATUS_ATTR = 'themeEffects';
@@ -20,7 +19,6 @@ const MAX_FRAME_GAP_MS = 250;
 
 const SLEEP_SLACK_MS = 8;
 
-/* --color- */
 export function readVar(name, fallback) {
     try {
         const v = getComputedStyle(document.documentElement)
@@ -42,6 +40,7 @@ export function rgbTriple(hex, fallback = '128, 128, 128') {
 }
 
 function backdropHeld() {
+    if (document.documentElement.getAttribute('data-calm') !== null) return true;
     const list = document.documentElement.getAttribute('data-anim-off') || '';
     return (' ' + list + ' ').indexOf(' theme-backdrop ') >= 0;
 }
@@ -150,7 +149,6 @@ export function createEffect(spec) {
         scheduleNext(cap);
     }
 
-    /* already running */
     function startLoop() {
         if (rafId != null || timerId != null) return;
         lastFrameAt = 0;
@@ -215,6 +213,7 @@ export function createEffect(spec) {
             position: 'fixed',
             inset: '0',
             width: '100vw',
+            // screen.
             height: '100dvh',
             zIndex: '-1',
             pointerEvents: 'none',
@@ -277,6 +276,10 @@ export function createEffect(spec) {
             resizeHandler = () => {
                 try {
                     resize();
+                    if (document.hidden || backdropHeld()) {
+                        if (typeof spec.staticFrame === 'function') spec.staticFrame(ctx, env, state, 0);
+                        else spec.draw(ctx, env, state, elapsedMs);
+                    }
                 } catch (e) {
                     console.warn('ThemeEffects: resize threw for', spec.id, e);
                     teardownRuntime();
@@ -286,6 +289,7 @@ export function createEffect(spec) {
             window.addEventListener('resize', resizeHandler, { passive: true });
 
             visHandler = () => {
+                if (prefersReducedMotion()) return;
                 if (document.hidden || backdropHeld()) {
                     stopLoop();
                     setStatus(STATUS.PAUSED);
@@ -296,7 +300,7 @@ export function createEffect(spec) {
             document.addEventListener('visibilitychange', visHandler);
             if (typeof MutationObserver === 'function') {
                 typeObserver = new MutationObserver(visHandler);
-                typeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-anim-off'] });
+                typeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-anim-off', 'data-calm'] });
             }
 
             try {

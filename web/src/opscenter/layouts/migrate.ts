@@ -1,4 +1,3 @@
-/* could not */
 import { whenLegacyBootComplete } from '../../lib/legacy-boot';
 import { t } from '../../lib/i18n/index.svelte';
 import { sessions } from '../api';
@@ -60,7 +59,6 @@ export function epochOf(key: string): number | null {
   return /^\d+$/.test(suffix) ? Number(suffix) : null;
 }
 
-/* could not */
 function anchorRowFor(key: string, rows: readonly SessionInfo[]): SessionInfo | null {
   const name = tmuxNameOf(key);
   const epoch = epochOf(key);
@@ -116,7 +114,6 @@ function backup(key: string, entry: ArrangementEntry): void {
   }
 }
 
-/* could not */
 async function migrateEntry(
   key: string, entry: ArrangementEntry, rows: readonly SessionInfo[], taken: readonly string[],
 ): Promise<string | null> {
@@ -128,7 +125,7 @@ async function migrateEntry(
   const rekeyed = rekeyEntry({ layout, groups: entry.groups, active: {} }, rows, true);
   const finalLayout = rekeyed.layout ?? layout;
   const finalGroups = rekeyed.groups ?? entry.groups;
-  if (visibleTerminals(finalLayout) < 2) return null; // could not
+  if (visibleTerminals(finalLayout) < 2) return null;
   const shape = toServerShape(finalLayout, finalGroups, anchorRowId);
   const anchorName = displayName(anchorRow.label, anchorRow.tmux_session);
   const second = displayedTabs(finalLayout, finalGroups).find((tab) => tab !== PRIMARY_SLOT) ?? '';

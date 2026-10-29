@@ -107,7 +107,7 @@ def test_an_oversized_skill_file_is_named(roots, monkeypatch):
 
 def test_descriptions_are_redacted(roots):
     tasks, _ = roots
-    key = "ghp_" + "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"  # synthetic test value, never issued
+    key = "ghp_" + "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"
     _task(tasks, "leaky", f"---\nname: leaky\ndescription: uses {key}\n---\n")
     leaky = next(task for task in _read(roots).tasks if task.id == "leaky")
     assert key not in leaky.description and "[redacted]" in leaky.description

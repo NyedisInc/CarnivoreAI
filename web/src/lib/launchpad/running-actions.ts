@@ -4,6 +4,7 @@ import {
 } from '../../../../client/js/labels/running-session.js';
 import { sessionDisplayLabel } from '../sessions/session-label';
 import type { RunningSessionRow, Translate } from '../sessions/types';
+import { refusedWith, SERVER_PHRASE } from './refusal-shape';
 import { ApiUnavailableError, type RunningHost } from './running-host';
 
 export const ACTION_CLOSE = 'close';
@@ -153,13 +154,13 @@ export async function saveRename(
 
 export function renameFailureText(error: unknown, t: Translate): string {
     const message = reasonFrom(error, t);
-    if (/409/.test(message) || /already in use/i.test(message)) {
+    if (refusedWith(error, { status: 409 }) || refusedWith(error, { phrase: SERVER_PHRASE.nameInUse })) {
         return t(RUNNING_SESSION_KEYS.renameFailedInUse);
     }
-    if (/400/.test(message) || /Invalid session name/i.test(message)) {
+    if (refusedWith(error, { status: 400 }) || refusedWith(error, { phrase: SERVER_PHRASE.invalidSessionName })) {
         return t(RUNNING_SESSION_KEYS.renameFailedInvalid);
     }
-    if (/404/.test(message)) {
+    if (refusedWith(error, { status: 404 })) {
         return t(RUNNING_SESSION_KEYS.renameFailedMissing);
     }
     return message || t(RUNNING_SESSION_KEYS.renameFailed);

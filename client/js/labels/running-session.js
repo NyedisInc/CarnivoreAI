@@ -53,7 +53,7 @@ export function runningCountLabel(count, t) {
     return t(RUNNING_SESSION_KEYS.count, { count: count });
 }
 
-/* could not be determined did not answer */
+/* could not be determined */
 export function runningCountUnavailableLabel(t) {
     return t(RUNNING_SESSION_KEYS.countUnavailable);
 }

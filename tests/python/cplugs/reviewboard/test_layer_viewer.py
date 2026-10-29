@@ -10,6 +10,7 @@ import pytest
 
 from src.cplugs.reviewboard import mcp, viewer
 from src.cplugs.reviewboard.layers import inject, tool_schema
+from src.core.mcp.caller import AgentCaller
 from src.cplugs.sdk import ToolError
 from tests.python.cplugs.reviewboard.boards import PAGE, SIDECAR, make_board, make_root
 from tests.python.cplugs.reviewboard.layer_fixtures import QUESTIONS, layer_sidecar
@@ -84,17 +85,36 @@ def test_the_tool_offers_only_kinds_the_frame_draws() -> None:
     for name in ("task_manager_board_create", "task_manager_board_revision_add"):
         assert mcp.TOOLS[name].properties["layer"] is tool_schema.LAYER
 
+PANE = AgentCaller("ses_1", "pane", "ses_1")
+TOKEN = AgentCaller("mcp-token:7", "mcp-token:7", "mcp-token:7", token_name="phone", scope="write")
+APPROVED_TOKEN = AgentCaller("mcp-token:7", "mcp-token:7", "mcp-token:7")
+
+
+@pytest.mark.parametrize("caller", [TOKEN, APPROVED_TOKEN])
+@pytest.mark.parametrize("args", [{"summary": "s", "file_path": "/etc/hosts.html"},
+                                  {"summary": "s", "html": "<p>", "views": [{"label": "v", "file_path": "/etc/hosts.html"}]}])
+def test_a_token_may_not_name_a_file_at_the_top_or_inside_views(caller, args) -> None:
+    with pytest.raises(ToolError, match="only a session running here"):
+        mcp.file_pages(args, caller)
+
+
+@pytest.mark.parametrize("name", ["task_manager_board_create", "task_manager_board_revision_add", "task_manager_board_live_set"])
+def test_every_page_writing_tool_lists_file_path_as_pane_only(name: str) -> None:
+    from src.cplugs.reviewboard import mcp_live  # noqa: F401
+    spec = mcp.TOOLS.get(name) or mcp_live.TOOLS[name]
+    assert "file_path" in spec.pane_only_args
+
 
 @pytest.mark.parametrize("layer,ok", [({"kind": "questions"}, True), ({"kind": "rows"}, True), ({"kind": "canvas"}, False), (None, False)])
 def test_a_questions_layer_may_leave_out_the_page(layer, ok: bool) -> None:
     args = {"summary": "s"} | ({"layer": layer} if layer else {})
     if ok:
-        assert "html" not in mcp.file_pages(args)
+        assert "html" not in mcp.file_pages(args, PANE)
     else:
         with pytest.raises(ToolError, match="exactly one of html"):
-            mcp.file_pages(args)
+            mcp.file_pages(args, PANE)
 
 
 def test_a_page_and_a_file_together_are_still_refused() -> None:
     with pytest.raises(ToolError, match="exactly one of html"):
-        mcp.file_pages({"summary": "s", "html": "<p>", "file_path": "/x.html", "layer": {"kind": "questions"}})
+        mcp.file_pages({"summary": "s", "html": "<p>", "file_path": "/x.html", "layer": {"kind": "questions"}}, PANE)

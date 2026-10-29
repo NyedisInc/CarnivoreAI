@@ -1,4 +1,3 @@
-/* <button aria-expanded> */
 (function () {
     'use strict';
 
@@ -72,12 +71,9 @@
     function markRows() {
         var controls = window.SessionSidebarRowControls;
         var rows = [];
-        if (controls && typeof controls.pinButtonHtml === 'function') {
-            var inert = function (html) {
-                return html.replace('<button type="button"', '<button type="button" disabled aria-hidden="true"');
-            };
-            rows.push({ html: inert(controls.pinButtonHtml('example', true)), text: 'pinned: kept at the top of the list' });
-            rows.push({ html: inert(controls.pinButtonHtml('example', false)), text: 'not pinned (tilted). click it to pin' });
+        if (controls && typeof controls.pinLegendHtml === 'function') {
+            rows.push({ html: controls.pinLegendHtml(true), text: 'pinned: kept at the top of the list' });
+            rows.push({ html: controls.pinLegendHtml(false), text: 'not pinned (tilted). click it to pin' });
         }
         var glyphs = globalThis.CloudeGlyphs;
         if (glyphs && typeof glyphs.glyphSvg === 'function') {

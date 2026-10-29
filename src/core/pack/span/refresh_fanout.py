@@ -98,9 +98,6 @@ async def _run(script: Path) -> None:
 
 
 async def run_install_refresh() -> Dict[str, Any]:
-    """
-    Raises: LookupError (no script in this install: ``no_refresh_script``), RuntimeError (one is already running: ``refresh_running``).
-    """
     if not SCRIPT.is_file():
         raise LookupError("no_refresh_script")
     if not await asyncio.to_thread(_take_lock):

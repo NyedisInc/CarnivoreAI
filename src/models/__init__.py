@@ -113,13 +113,6 @@ from .records import (
     SessionImportStatus,
     RecentSessionsResponse,
 )
-from .attribution import (
-    UnattributedSession,
-    SessionAttributionPrompt,
-    AttributionDeclineRequest,
-    AttributionDeclineResponse,
-)
-
 from .catalog import (
     IndexDocument,
     CatalogItem,
@@ -151,7 +144,7 @@ __all__ = [
     "CompanionShell",
     "AddProviderModelRequest", "AdoptSessionRequest", "AdoptSessionResponse",
     "AttachableListingStatus", "AttachableSession",
-    "AttributionDeclineRequest", "AttributionDeclineResponse", "AuthTokenResponse",
+    "AuthTokenResponse",
     "BrowseResponse", "CloneProjectRequest", "CommandRequest", "ConfigSettingsUpdateRequest",
     "CheckProjectRootRequest", "CreateProjectRequest", "CreateSessionRequest", "CreateToastRequest",
     "DirectoryEntry", "ErrorResponse", "ForkSessionResponse", "HealthResponse",
@@ -162,12 +155,12 @@ __all__ = [
     "RespawnSessionRequest", "RespawnSessionResponse", "RestartPlanPreview",
     "RestartPreviewOption", "RestartPreviewResponse", "RestartSessionResponse",
     "RestartAccountOption", "RestartAccountsResponse",
-    "ServerPrefsUpdate", "Session", "SessionAttributionPrompt", "SessionImportStatus",
+    "ServerPrefsUpdate", "Session", "SessionImportStatus",
     "SessionInfo", "SessionRecord", "SessionRenamedMessage", "SessionStats",
     "SessionStatus", "SetUnreadRequest", "SuccessResponse",
     "SessionBackgroundEntry", "SessionBackgroundsResponse",
     "UpdateSessionBackgroundRequest", "ThemeBackgroundManifest", "ThemeManifest", "Toast", "ToastAckMessage",
-    "ToastNewMessage", "ToggleFavoriteCommandRequest", "UnattributedSession",
+    "ToastNewMessage", "ToggleFavoriteCommandRequest",
     "UpdatePinnedThemeRequest", "UpdateProjectRequest", "UpdateThemeRequest",
     "UploadImageResponse", "VerifyTOTPRequest", "WSCommandMessage",
     "WSErrorMessage", "WSLocalServerDetectedMessage", "WSLocalServerLostMessage",

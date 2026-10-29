@@ -1,10 +1,8 @@
 <script lang="ts">
-  /* pop-out window */
   import { t } from '../sdk';
-  import { ChoiceDropdown, FoldChevron, type ChoiceItem } from '../sdk/ui';
+  import { Button, Checkbox, ChoiceDropdown, FoldChevron, IconButton, Select, type ChoiceItem } from '../sdk/ui';
   import { FIXTURE_CHOICES, type FixtureChoice } from './frame-url';
   import { flipIn, flipPlacement, isDockPlacement, PLACEMENT_ORDER, placementsOn, PREVIEW_WIDTHS_SHOWN, type LabSelection, type Placement, type SizeOption } from './lab-selection';
-  import OptionChip from './OptionChip.svelte';
   import { placementLabel, placementSummary } from './placement-label';
 
   interface Props {
@@ -55,7 +53,7 @@
 </script>
 
 {#snippet width(one: SizeOption)}
-  <OptionChip label={sizeLabel(one)} checked={sel.sizes.includes(one.name)} onpick={() => onset({ sizes: flipIn(sel.sizes, one.name), focus: null })} />
+  <Checkbox label={sizeLabel(one)} data-width-choice={one.name} checked={sel.sizes.includes(one.name)} onchange={() => onset({ sizes: flipIn(sel.sizes, one.name), focus: null })} />
 {/snippet}
 
 <div class="dwl-rows">
@@ -78,8 +76,8 @@
       {#each main as one (one.name)}{@render width(one)}{/each}
     </div>
     {#if more.length > 0}
-      <button type="button" class="dwl-more-key" aria-expanded={moreShown} onclick={() => (moreOpen = !moreShown)}>
-        <FoldChevron />{t('cplug.devwidgetlab.sizes.more', { count: more.length })}</button>
+      <Button variant="quiet" size="sm" data-more-key aria-expanded={moreShown} onclick={() => (moreOpen = !moreShown)}>
+        <FoldChevron />{t('cplug.devwidgetlab.sizes.more', { count: more.length })}</Button>
       {#if moreShown}<div class="dwl-choices">{#each more as one (one.name)}{@render width(one)}{/each}</div>{/if}
     {/if}
   </div>
@@ -95,12 +93,10 @@
   <div class="dwl-row">
     <label class="dwl-label" for="dwl-theme">{t('cplug.devwidgetlab.theme')}</label>
     <div class="dwl-seg dwl-seg--theme">
-      <button type="button" class="oc-btn oc-btn--sm" aria-label={t('cplug.devwidgetlab.theme.prev')} onclick={() => step(-1)}>&lt;</button>
-      <select id="dwl-theme" class="oc-field" value={sel.theme} onchange={(event) => onset({ theme: event.currentTarget.value })}>
-        {#each themes as one (one.id)}<option value={one.id}>{one.name}</option>{/each}
-        {#if themes.length === 0}<option value={sel.theme}>{sel.theme}</option>{/if}
-      </select>
-      <button type="button" class="oc-btn oc-btn--sm" aria-label={t('cplug.devwidgetlab.theme.next')} onclick={() => step(1)}>&gt;</button>
+      <IconButton label={t('cplug.devwidgetlab.theme.prev')} icon="chevron-left" data-theme-step="prev" onclick={() => step(-1)} />
+      <Select id="dwl-theme" size="sm" value={sel.theme} onchange={(event) => onset({ theme: event.currentTarget.value })}
+        options={themes.length > 0 ? themes.map((one) => ({ value: one.id, label: one.name })) : [{ value: sel.theme, label: sel.theme }]} />
+      <IconButton label={t('cplug.devwidgetlab.theme.next')} icon="chevron-right" data-theme-step="next" onclick={() => step(1)} />
     </div>
   </div>
 </div>

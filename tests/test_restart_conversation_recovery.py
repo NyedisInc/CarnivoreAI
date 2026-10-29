@@ -33,8 +33,8 @@ from src.core.session_transcript_presence import (
 from src.core.trail_entry import utc_now
 
 ANCHOR_UUID = "c33e4ce2-17ea-4320-aa28-36204c4d13c5"
-HEAD_UUID = "deab833f-234e-44d2-be54-ddaf69c8db4b"
-WORKING_DIR = "/Users/x/Development/app"
+HEAD_UUID = "2629dba5-234e-44d2-be54-ddaf69c8db4b"
+WORKING_DIR = "/Users/x/Development/CloudeCode"
 
 
 @pytest.fixture
@@ -117,7 +117,7 @@ def test_restart_resumes_the_lineage_head_not_the_anchors_first_uuid(
     assert source.parent_id == anchor_id
 
 
-FORK_UUID = "74e967e4-b7de-4e08-8cea-5de6cfb2388f"
+FORK_UUID = "f3296194-3131-48ed-aeaf-27f931d7a131"
 
 
 def _insert_gui_fork(conn, parent_id):
@@ -125,7 +125,7 @@ def _insert_gui_fork(conn, parent_id):
         conn,
         session_uuid="gui-fork",
         claude_session_uuid=FORK_UUID,
-        tmux_name="cloude_Agent_-_Fenhaven_Zarvale",
+        tmux_name="cloude_Agent_-_Cloude_Code_fork",
         tmux_created_epoch=1788902385,
         parent_session_id=parent_id,
         fork_kind="fork",
@@ -233,16 +233,16 @@ def test_presence_probe_finds_a_transcript_the_slug_function_would_miss(
     root = tmp_path / "projects"
     root.mkdir()
     real_slug = (
-        "-Users-x-Library-Mobile-Documents-com-apple-CloudDocs-work-"
-        "Development-app"
+        "-Users-x-Library-Mobile-Documents-com-apple-CloudDocs-Sync-"
+        "Development-CloudeCode"
     )
     _write_transcript(root, HEAD_UUID, slug=real_slug)
 
     result = conversation_presence(
         HEAD_UUID,
         working_dir=(
-            "/Users/x/Library/Mobile Documents/com~apple~CloudDocs/work/"
-            "Development/app"
+            "/Users/x/Library/Mobile Documents/com~apple~CloudDocs/Sync/"
+            "Development/CloudeCode"
         ),
         corpus_root=root,
     )

@@ -1,3 +1,4 @@
+// Exits 0 and prints "ALL PASS" on success; exits 1 otherwise.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,6 +12,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let passes = 0;
 let failures = 0;
 
+/**
+ * Run one named assertion block immediately, recording the outcome.
+ *
+ * @param {string} name - what is being asserted.
+ * @param {function(): void} fn - the assertions.
+ * @returns {void}
+ */
 function test(name, fn) {
     try {
         fn();
@@ -23,12 +31,16 @@ function test(name, fn) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 const DPR = 3;
 const CHAR_WIDTH = 8.65625;
 const PARENT_WIDTH = 374;
 const SCROLLBAR_WIDTH = 15;
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 function webglDimensions(charWidth, dpr, cols) {
     const deviceCell = Math.floor(charWidth * dpr);
@@ -48,6 +60,8 @@ function proposeCols(available, cssCellWidth) {
     return Math.max(2, Math.floor(available / cssCellWidth));
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 function loadMetrics() {
     const src = fs.readFileSync(
@@ -98,6 +112,8 @@ function makeController(sandbox, model, cols, parentWidth, scrollBarWidth) {
     return { term };
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 test('measured device case: webgl pitch is not the font advance', () => {
     const d = webglDimensions(CHAR_WIDTH, DPR, 43);

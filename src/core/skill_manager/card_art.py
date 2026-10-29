@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -18,7 +17,7 @@ from src.core.byoai import gateway as gateway_module, registry
 from src.core.byoai.contracts import CAP_IMAGE, ByoaiError, InvalidKey, LoginExpired, MissingKey, NotConfigured
 from src.core.companies import hero_art_prompt, hero_images
 from src.core.resource_push import topics as resource_topics
-from src.core.skill_manager import card_art_crop, card_art_style
+from src.core.skill_manager import ai_job, card_art_crop, card_art_style
 
 logger = structlog.get_logger()
 
@@ -81,10 +80,7 @@ def _fail_path(key: str) -> Path:
 
 
 def _read_fail(key: str) -> Dict[str, Any]:
-    try:
-        return json.loads(_fail_path(key).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    return ai_job.read_fail(_fail_path(key))
 
 
 def enabled() -> bool:
@@ -109,10 +105,7 @@ class LinkReply(ValueError):
 def _note(key: str, reason: str, *, final: bool = False, bump: bool = True) -> None:
     prior = int(_read_fail(key).get("attempts", 0))
     attempts = MAX_JOBS if final else (prior + 1 if bump else max(prior, 1))
-    try:
-        hero_images.atomic_write(_fail_path(key), json.dumps({"attempts": attempts, "at": time.time(), "reason": reason}).encode())
-    except OSError as exc:
-        logger.warning("skill_card_art_note_failed", error=type(exc).__name__)
+    ai_job.write_fail(_fail_path(key), attempts, reason, log_event="skill_card_art_note_failed")
     if reason == ATTEMPT_STARTED:
         logger.info("skill_card_art_attempt_started", art_id=key, attempts=attempts)
     else:
@@ -186,22 +179,11 @@ def _job(key: str, name: str, description: str, regenerate: bool) -> Dict[str, A
     try:
         return generate(key, name, description, regenerate=regenerate)
     finally:
-        with _lock:
-            _inflight.discard(key)
+        ai_job.release(_inflight, _lock, key)
 
 
 def schedule(key: str, name: str, description: str, *, regenerate: bool = False) -> bool:
-    with _lock:
-        if key in _inflight:
-            return False
-        _inflight.add(key)
-    try:
-        _pool.submit(_job, key, name, description, regenerate)
-    except RuntimeError:
-        with _lock:
-            _inflight.discard(key)
-        return False
-    return True
+    return ai_job.submit_once(_pool, _inflight, _lock, key, _job, key, name, description, regenerate)
 
 
 def _due(key: str) -> bool:

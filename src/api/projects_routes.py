@@ -17,6 +17,7 @@ from src.core.project_pack import store as project_pack_store
 from src.core.project_pack.constants import BUSY_STATES, STATE_UNPACKED as PACK_STATE_UNPACKED
 from src.core.companies import hero_images
 from src.core.session_roles import check as session_roles_check
+from src.api.error_response import api_error
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -44,13 +45,23 @@ async def get_projects(
     reads the ``projects`` table, which is keyed ``UNIQUE(root)`` and
     therefore returns ONE entry per unique folder - the fix for the
     launcher drawing three nodes for
-    ``/Users/example/Development/ses_2a5a4495`` and expanding the same
+    ``/Users/sam/Development/ses_ec5bf2a3`` and expanding the same
     two child sessions under each of them.
 
     Each row now carries its ``id``, so the launcher attaches child
     sessions by row id straight from this response instead of looking the
     id up in a second request keyed by raw path - the lookup that made
     duplicate-path entries share children in the first place.
+
+    THREE OUTCOMES, and this route never collapses them:
+      - the database answered: rows served, authoritative;
+      - the database is unreachable: config.json's entries are served,
+        deduplicated by root, and GET /projects/authority reports
+        ``mode: config_fallback`` with writes refused;
+      - the database is readable but empty while config.json is not:
+        the list is EMPTY and the mode says ``db_unreadable``, so an
+        empty list is never rendered as "you have no projects" when it
+        actually means "nothing could be read".
 
     A client that needs to know WHICH of those it is calls
     GET /projects/authority. This route always returns a list, because a
@@ -194,7 +205,7 @@ async def create_project(body: CreateProjectRequest):
         return JSONResponse(status_code=409, content={"detail": str(e), "code": ProjectRootRefused.CODE})
     except ProjectNameConflict as e:
         logger.warning("project_creation_failed_validation", error=str(e))
-        raise HTTPException(status_code=400, detail=str(e))
+        raise api_error(400, "project_invalid", e, step="create_project") from e
 
     logger.info("project_created", name=row["display_name"], path=row["raw_path"])
 
@@ -253,7 +264,7 @@ async def delete_project(project_name: str, request: Request):
     try:
         await project_removal.turn_off_agents(request.app.state, target["id"], agents)
     except BodyError as exc:
-        raise HTTPException(status_code=409, detail={"code": "swarm_refused", "message": str(exc)}) from exc
+        raise api_error(409, "swarm_refused", exc) from exc
     with closing(projects_service.open_db_or_503(settings)) as conn:
         db_delete_project(conn, target["id"])
     hero_images.remove(hero_images.PROJECT, target["id"])
@@ -330,7 +341,7 @@ async def update_project(project_name: str, body: UpdateProjectRequest):
         short_description = clean_text(body.short_description, single_line=True)
         description = clean_text(body.description, single_line=False)
     except DescriptionInvalid as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, "project_invalid", exc, step="update_project") from exc
 
     projects_service.guard_writable(settings)
 
@@ -347,7 +358,7 @@ async def update_project(project_name: str, body: UpdateProjectRequest):
                 color=body.color,
             )
     except ProjectColorInvalid as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise api_error(422, "invalid_request", exc, step="update_project") from exc
     except ProjectNameConflict:
         logger.warning(
             "project_update_name_conflict",
@@ -411,6 +422,17 @@ async def archive_project_route(project_name: str):
     be unreachable by the endpoint that restores it), and comes back with
     one call to ``/unarchive``.
 
+    IT ARCHIVES THE PROJECT'S ASLEEP AND OTHER NON-LIVE SESSIONS TOO (#1507,
+    Joe (ccsliinc), 2026-10-10), stamped with the project's own
+    ``archived_at``. A session whose lifecycle is ``running`` is left alone
+    and stays listed; the response's ``sessions_live`` counts them. The archive
+    does not refuse a project that has one.
+
+    IDEMPOTENT. Archiving an already-archived project is a 200, not a
+    409 - the user asked for a state and that state holds. The response's
+    ``archived_at`` is the original stamp, because the first stamp wins;
+    the log line says which of the two happened.
+
     Args:
         project_name: Display name of the project to archive.
 
@@ -463,6 +485,10 @@ async def unarchive_project_route(project_name: str):
     one is a delete wearing a softer word. Clears ``archived_at``; writes
     the sessions the archive cascaded to (those carrying the project's
     archive stamp); a session deleted on its own stays deleted.
+
+    IDEMPOTENT in the same shape: unarchiving a live project is a 200
+    whose ``archived_at`` is null, which is the state the caller asked
+    for.
 
     Args:
         project_name: Display name of the project to restore.

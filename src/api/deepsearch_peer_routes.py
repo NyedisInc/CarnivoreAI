@@ -15,6 +15,7 @@ from src.core.deepsearch.cache import flip
 from src.core.deepsearch.query import SEARCH_QUERY_MAX_CHARS
 from src.core.deepsearch import peer_air_gap
 from src.core.deepsearch.reader import ContextNotFound, ConversationIndex, ConversationsUnavailable, InvalidSearch
+from src.api.error_response import api_error
 
 _inflight = 0
 
@@ -35,6 +36,7 @@ async def peer_search(q: str = Query(..., min_length=1, max_length=SEARCH_QUERY_
                       conversation_id: Optional[str] = Query(None, max_length=128),
                       limit: int = Query(GROUP_LIMIT_DEFAULT, ge=1, le=GROUP_LIMIT_MAX),
                       per_group: int = Query(PER_GROUP_DEFAULT, ge=1, le=PER_GROUP_MAX)) -> Dict[str, Any]:
+    """This computer's own grouped hits. Output: ``{query, total_conversations, total_matches, groups}``, groups cleaned."""
     global _inflight
     if not q.strip():
         raise HTTPException(status_code=422, detail={"code": "deepsearch_invalid", "detail": "q is empty"})
@@ -58,7 +60,7 @@ async def peer_search(q: str = Query(..., min_length=1, max_length=SEARCH_QUERY_
     try:
         answer = await asyncio.shield(search)
     except InvalidSearch as exc:
-        raise HTTPException(status_code=422, detail={"code": "deepsearch_invalid", "detail": str(exc)}) from exc
+        raise api_error(422, "deepsearch_invalid", exc) from exc
     except ConversationsUnavailable as exc:
         raise HTTPException(status_code=503, detail={"code": "deepsearch_unavailable", "detail": "the search index cannot be read"}) from exc
     except peer_air_gap.AirGapUnreadable as exc:
@@ -72,6 +74,12 @@ async def peer_context(conversation_id: str = Query(..., min_length=1, max_lengt
                        before_line: Optional[int] = Query(None, ge=0), after_line: Optional[int] = Query(None, ge=0),
                        file_kind: str = Query("conversation", pattern="^(conversation|subagent)$"),
                        before: int = Query(20, ge=1, le=50), after: int = Query(20, ge=1, le=50)) -> Dict[str, Any]:
+    """THIS computer's own window of one conversation, for a paired computer (the context modal, issue #1732).
+
+    Same gate as ``peer-search``: peer token, this computer's own index only (it never reaches another computer: the loop
+    guard), a conversation the air-gap rule withholds answers 404 exactly like an absent one, and the answer is cleaned
+    (``peer_deepsearch.clean_context``). Exactly one anchor, as ``GET /deepsearch/context``.
+    """
     if sum(x is not None for x in (line, at, before_line, after_line)) != 1:
         raise HTTPException(status_code=422, detail={"code": "deepsearch_invalid", "detail": "name exactly one anchor"})
     state_dir = app_settings.get_state_dir()

@@ -1,33 +1,3 @@
-"""Deciding whether the recorded schema version is safe to act on.
-
-Split out of src/core/db_migration.py. The seam is the same one used
-throughout this datastore code: the MEASUREMENT is separated from the
-MIGRATION, because the migration is irreversible and the measurement is
-where the false confidence came from.
-
-Note the shape of that failure. Nothing errored. Every downstream signal
-was green. The only evidence was a backup that was never taken, which is
-invisible precisely when you need it.
-
-TWO CHECKS, AND THEY ARE NOT REDUNDANT. It is tempting to keep only the
-second, because on a populated database either one alone would refuse.
-They come apart on an EMPTY database:
-
-  UNREADABLE VERSION. The version text will not parse. We do not know
-  what this file is, and an empty projects table does not make a garbage
-  string readable. Refuse regardless of population.
-
-  ABSENT VERSION ON A POPULATED FILE. No version recorded. That is
-  normal for a genuinely new file, and the bootstrap path is CORRECT for
-  one - it skips the backup because there is nothing yet to back up. The
-  reasoning fails the instant the file already holds user data, so the
-  claim is checked rather than assumed.
-
-THE THIRD OUTCOME IS HONOURED IN THE DISCRIMINATOR TOO.
-``database_is_populated`` can fail to answer, and a None is treated
-exactly like True. Skipping a backup on a probe that did not answer is
-the same defect one level down.
-"""
 
 from __future__ import annotations
 
@@ -52,15 +22,6 @@ class VersionGate:
 
 
 def _populated_text(populated: Optional[bool]) -> str:
-    """Render the populated probe's three outcomes for an operator message.
-
-    Inputs: populated (bool | None) - the probe result, None meaning the
-      probe could not answer.
-    Output: str - ``CANNOT_DETERMINE`` for None, else the boolean.
-    Example:
-        >>> _populated_text(None)
-        'CANNOT_DETERMINE'
-    """
     return CANNOT_DETERMINE if populated is None else str(populated)
 
 

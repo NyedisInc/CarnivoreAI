@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import threading
 import time
 from dataclasses import replace
@@ -19,14 +18,17 @@ from src.core.approvals.extract import DIALOG_SCROLLBACK_LINES, extract_dialog_s
 from src.core.attention.codex_pane import classify_codex_pane
 from src.core.attention.codex_reader import CodexEvidence
 from src.core.attention.codex_stores import resolve_primary_uuid
-from src.core.attention.evidence import Evidence, FAMILY_CLAUDE, FAMILY_CODEX
+from src.core.attention.evidence import Evidence, EvidenceIdentity, FAMILY_CLAUDE, FAMILY_CODEX
 from src.core.attention.pane_markers import classify_pane_tail
 from src.core.attention.process_scope import evidence_process_floor
+from src.core.attention.prompt_suggestion import PromptSuggestions
 from src.core.attention.record_identity import RecordIdentity
 from src.core.attention.restart_floor import RestartFloors
-from src.core.attention.registry_read import read_registry_index
+from src.core.attention.registry_record import REG_IDLE
+from src.core.attention.registry_index import read_registry_index
 from src.core.attention.resolve import resolve_attention
 from src.core.attention.screen_demand import ScreenDemand, decide, stays_sticky
+from src.core.attention.screen_read import CAPTURE_TIMEOUT_SECONDS, capture_screen, read_screen
 from src.core.attention.screen_reuse import ScreenReuse
 from src.core.attention.startup_screen import StartupScreenMemory, read_startup_screen
 from src.core.claude_config.profile_roots import registry_file_path
@@ -51,7 +53,6 @@ from src.core.skill_fires.tally import SkillTallyCache
 from src.core.timers.tally import TimerTallyCache
 
 logger = structlog.get_logger()
-CAPTURE_TIMEOUT_SECONDS = 2.0
 PROCESS_SNAPSHOT_MAX_AGE_SECONDS = 10.0
 
 
@@ -65,6 +66,7 @@ class AttentionEvidenceReader:
         watch_codex_rollouts: Callable[[], bool] = lambda: False,
         ask_open: Callable[[str], bool] = lambda key: False,
         record_identity: Optional[RecordIdentity] = None,
+        screens: Optional[ScreenReuse] = None,
     ) -> None:
         self._manager = manager
         self._restart_floors = restart_floors
@@ -93,19 +95,18 @@ class AttentionEvidenceReader:
         self._startup_screens = StartupScreenMemory()
         self._remote = RemotePass()
         self._pane_facts = PaneFactsWatch()
-        self._screens = ScreenReuse()
+        self._screens = screens if screens is not None else ScreenReuse()
         self._demand = ScreenDemand()
+        self._suggestions = PromptSuggestions()
         self._ask_open = ask_open
         self._record_identity = record_identity if record_identity is not None else RecordIdentity()
 
     def _pass(self, now: datetime) -> Tuple[Any, Any, Any]:
-        from src.core.session_manager import _configured_wrappers
-
         with self._lock:
             if self._pass_at != now:
                 status_map = self._manager._build_tmux_status_map()
                 registry_index = read_registry_index()
-                wrappers = _configured_wrappers()
+                wrappers = self._manager._wrappers_reader()
                 self._status_map = status_map
                 if self._publish_status_map is not None:
                     self._publish_status_map(status_map)
@@ -129,7 +130,7 @@ class AttentionEvidenceReader:
         if not names:
             return None
         index = self._manager._instance_index_for_listing(
-            socket=self._manager._tmux_socket_name(), names=names
+            socket=self._manager.tmux_socket_name(), names=names
         )
         return (index, frozenset(names)) if getattr(index, "complete", False) else None
 
@@ -261,7 +262,7 @@ class AttentionEvidenceReader:
         evidence = Evidence(
             tmux_liveness=liveness, agent_family=family_name,
             registry=registry, transcript=transcript, pane=None, codex=codex,
-            now=now, identity=(socket, name, epoch, pane_row.get("pid"), uuid),
+            now=now, identity=EvidenceIdentity(socket, name, epoch, pane_row.get("pid"), uuid),
             codex_bind_uuid=picked_uuid, subagents=subagents, timers=timers, skills=skills,
             parked_work=parked, background_open=background_open,
             background_process=background_process,
@@ -282,13 +283,16 @@ class AttentionEvidenceReader:
             identity_proven=self._record_identity.proven(registry.pid, registry.proc_start),
             ask_open=self._ask_open(target.key), paneless=paneless,
             sticky=self._demand.sticky(target.session_id),
-            seconds_since_read=self._demand.since_read(target.session_id, mono), forced=forced)
+            seconds_since_read=self._demand.since_read(target.session_id, mono), forced=forced,
+            seconds_since_status=(now - registry.status_updated_at).total_seconds()
+            if getattr(registry, "status_updated_at", None) and now.tzinfo is not None else None)
         logger.debug("attention_screen_decision", session_id=target.session_id, read=decision.read,
                      reason=decision.reason, registry_status=registry.status if registry.known else None,
                      paneless_state=paneless.state, paneless_tier=paneless.tier)
         if not decision.read:
             return replace(evidence, screen_decision=decision, startup_screen=self._startup_screen(
-                target.session_id, None, evidence, None, pane_row, now))
+                target.session_id, None, evidence, None, pane_row, now),
+                prompt_suggestion=self._suggestion(target.session_id, evidence, None, socket, name))
         text = self._screen_text(socket, name, pane_row)
         pane = dialog = None
         codex = evidence.codex
@@ -307,14 +311,24 @@ class AttentionEvidenceReader:
                               startup_screen=startup_screen, paneless=paneless, registry=registry)
         self._demand.record_read(target.session_id, mono, sticky)
         return replace(evidence, pane=pane, codex=codex, dialog=dialog, startup_screen=startup_screen,
-                       screen_decision=decision)
+                       screen_decision=decision,
+                       prompt_suggestion=self._suggestion(target.session_id, evidence, text, socket, name))
+
+    def _suggestion(self, session_id: str, evidence: Evidence, text: Optional[str], socket: Optional[str],
+                    name: str) -> Optional[str]:
+        if evidence.agent_family == FAMILY_CODEX:
+            return None
+        registry = evidence.registry
+        return self._suggestions.update(
+            session_id, idle=bool(registry.known and registry.status == REG_IDLE), screen=text,
+            read_row=lambda row: self._capture(socket, name, row=row))
 
     def _startup_screen(self, session_id: str, text: Optional[str], evidence: Evidence, pane: Any,
                         pane_row: dict, now: datetime) -> Any:
         return read_startup_screen(
             self._startup_screens, session_id, text=text, registry=evidence.registry, pane=pane,
             pane_pid=pane_row.get("pid"), snapshot=lambda: self._process_snapshot(now),
-            instance=evidence.identity[:4], now=now)
+            instance=evidence.identity.instance, now=now)
 
     def set_skill_probe(self, probe: Any) -> None:
         self._skills.set_probe(probe)
@@ -350,6 +364,7 @@ class AttentionEvidenceReader:
     def watch_paths(self, session_ids: Set[str]) -> Dict[str, Tuple[str, ...]]:
         self._pane_facts.retain(session_ids)
         self._demand.retain_only(session_ids)
+        self._suggestions.retain_only(session_ids)
         with self._lock:
             self._paths = {k: v for k, v in self._paths.items() if k in session_ids}
             self._transcripts = {k: v for k, v in self._transcripts.items() if k in session_ids}
@@ -364,15 +379,6 @@ class AttentionEvidenceReader:
         return self._process_snapshot(now).parents  # type: ignore[return-value]
 
     def _process_snapshot(self, now: datetime) -> ProcessSnapshot:
-        """The ONE ``ps`` snapshot of this pass, parents and commands, shared by every pane.
-
-        Description: taken at most once per pass (keyed on the pass's
-          ``now``), so identity proof, the background count and the
-          measured background answer (issue #1185) all walk the same table.
-          A table that could not be read is :data:`UNREADABLE`, never empty.
-        Inputs: now (datetime) - the pass clock.
-        Output: ProcessSnapshot.
-        """
         from src.core.claude_resume_argv import SHARED_TABLE_MAX_AGE_SECONDS, list_process_table
 
         with self._lock:
@@ -415,42 +421,8 @@ class AttentionEvidenceReader:
         return (pane_pids, registry_pids, tuple(marks))
 
     def _screen_text(self, socket: Optional[str], name: str, pane_row: dict) -> Optional[str]:
-        """This pane's visible screen: the kept capture while tmux proves it unchanged, else a capture.
-
-        Description: ``pane_row`` is THIS pass's listing row, taken after
-          any earlier capture of the pane, which is what lets its stamp
-          prove nothing was written since (``attention/screen_reuse.py``).
-          The clocks are read immediately before a capture starts.
-        Inputs: socket (str | None); name (str) - tmux session name;
-          pane_row (dict) - the listing row, ``{}`` when unproven.
-        Output: str | None - None when the capture failed.
-        """
-        pane = (socket, name)
-        kept = self._screens.reusable(pane, pane_row, time.time(), time.monotonic())
-        if kept is not None:
-            return kept
-        started_wall, started_mono = time.time(), time.monotonic()
-        text = self._capture(socket, name)
-        self._screens.keep(pane, pane_row, text, started_wall, started_mono)
-        return text
+        return read_screen(self._screens, (socket, name), pane_row, lambda: self._capture(socket, name))
 
     @staticmethod
-    def _capture(socket: Optional[str], name: str, history: int = 0) -> Optional[str]:
-        from src.core.tmux_backend import _safe_target
-        from src.core.tmux_discovery import tmux_argv_prefix
-
-        if not socket:
-            return None
-        try:
-            result = subprocess.run(
-                tmux_argv_prefix(socket) + ["capture-pane", "-p", "-S", str(-history) if history > 0 else "0",
-                                            "-t", _safe_target(name)],
-                capture_output=True, timeout=CAPTURE_TIMEOUT_SECONDS, check=False,
-                close_fds=False,
-            )
-        except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
-            logger.warning("attention_capture_failed", tmux_name=name, error=str(exc))
-            return None
-        if result.returncode != 0:
-            return None
-        return result.stdout.decode("utf-8", errors="replace")
+    def _capture(socket: Optional[str], name: str, history: int = 0, row: Optional[int] = None) -> Optional[str]:
+        return capture_screen(socket, name, history, row)

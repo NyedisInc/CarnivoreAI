@@ -32,7 +32,7 @@ for (const layout of ['ledger', 'best'] as const) {
         paint(layout);
         const button = host.querySelector<HTMLElement>('[data-action="more"]');
         expect(button, 'the more button').not.toBeNull();
-        expect(button!.classList.contains('sd-ib--framed')).toBe(true);
+        expect(button!.getAttribute('data-size')).toBe('icon');
         button!.click();
         flushSync();
         await Promise.resolve();

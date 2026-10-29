@@ -228,6 +228,7 @@ console.log('[SessionRestartOptions Module] Loading...');
         });
     }
 
+    /* there is nothing */
     function accountsFor(sessionUuid) {
         if (!sessionUuid || !window.API || !window.API.restartAccounts) {
             return Promise.resolve(null);
@@ -240,7 +241,7 @@ console.log('[SessionRestartOptions Module] Loading...');
         });
     }
 
-    /* could not */
+    /* A LIVE SESSION IS NEVER RE-ASKED could not determine */
     function shouldRecreate(preview) {
         if (!preview) return false;
         if (preview.pane_state === 'alive') return false;

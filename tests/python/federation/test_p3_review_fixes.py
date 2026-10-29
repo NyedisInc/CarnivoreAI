@@ -16,7 +16,7 @@ from src.core.federation import peer_events, peer_hosts, peer_http, peer_listing
 from src.core.federation.ddl_peer_sessions import REVERSAL_SQL_V45
 from src.core.federation.peer_link import CONNECTED, DISCONNECTED
 
-IID_A = "49759e95-ca80-470e-8314-dc0cfeebc803"
+IID_A = "ab12cd34-ef56-4a00-8000-000000000001"
 
 
 class Reply:
@@ -94,7 +94,7 @@ def test_h1_deep_json_never_breaks_the_owner_listing(owner):
 
 
 def test_h1_one_broken_peer_costs_only_its_own_rows(owner):
-    other = "8a2e38e6-515b-4f60-8f04-7a270ab6bf05"
+    other = "cd34ef56-ab12-4b00-8000-000000000002"
     owner.pair()
     owner.pair(other)
     owner.replies[IID_A] = Reply(None, raw="[" * 60000)

@@ -5,6 +5,7 @@
 </script>
 
 <script lang="ts">
+  /* and the real */
     import type { CellProps } from '../../lib/cell';
   import { atLeast } from '../../lib/states';
   import { sessions, statusHue, statusLabel, openSession, type StatusHue } from '../../api';
@@ -84,7 +85,6 @@
   let stage = $state<HTMLDivElement | null>(null);
   let bodyEl = $state<HTMLDivElement | null>(null);
 
-  /*  hidden  */
   $effect(() => {
     const el = bodyEl;
     if (!el) return;
@@ -101,7 +101,6 @@
     };
   });
 
-  /* the session is gone */
   const live = $derived(sessionId !== '' && showsPane && !dead && stage !== null);
 
   function monoFace(): string {
@@ -111,12 +110,10 @@
     return view.getComputedStyle(root).getPropertyValue('--font-mono').replace(/\s+/g, ' ').trim();
   }
 
-  /* xterm options */
   const TERM_OPTIONS = {
     fontSize: 14,
     fontWeight: 'normal',
     fontWeightBold: 'bold',
-    // scrollback: 0
     scrollback: 50000,
     disableStdin: !VIEWER_ACCEPTS_INPUT,
     cursorBlink: false,
@@ -162,7 +159,6 @@
       paneHeight = target.offsetHeight || 0;
     };
     measure();
-    //  hidden 
     const RO = (globalThis as { ResizeObserver?: typeof ResizeObserver }).ResizeObserver;
     const observer = typeof RO === 'function' ? new RO(measure) : null;
     observer?.observe(target);
@@ -244,7 +240,7 @@
       {#if showsReadOnlyNotice(acceptsInput, dead)}
         <span class="oc-tv-readonly" data-viewer-input="none">{t(VIEWER_KEYS.readOnly)}</span>
       {/if}
-      
+      <!-- there is nothing -->
       {#if page !== 'terminal'}
         <button class="oc-tv-action" data-btn="secondary" data-size="sm" type="button" onclick={act} disabled={sessionId === ''}
           >{t(VIEWER_KEYS.open)}</button
@@ -263,7 +259,7 @@
   {:else if !showsPane}
     <State inline data-viewer-state="strip" title={t(VIEWER_KEYS.tooShort)} />
   {:else}
-    <!-- hidden  overflow: hidden -->
+    
     <div
       class="oc-tv-body"
       data-viewer-state="pane"

@@ -66,10 +66,10 @@ def _seed_rows(w: SimpleNamespace) -> None:
     runs = Path(w.side["automations.db"])
     _sql(runs, "UPDATE runs SET report = ?, error = CAST(? AS TEXT), cost_usd = ?, slot_at = 9e999, notes = NULL",
          BLOB_VALUE, NOT_UTF8, REAL_VALUE)
-    huddle = Path(w.state) / "carnivore.db"
-    _sql(huddle, "UPDATE work_item_waits SET token_hash = ?", SECRET_VALUE)
+    task_manager_db = Path(w.state) / "carnivore.db"
+    _sql(task_manager_db, "UPDATE work_item_waits SET token_hash = ?", SECRET_VALUE)
     parts = json.dumps({"files": [{"path": str(Path(w.root1) / PARTS_PATH_NAME)}]})
-    _sql(huddle, "UPDATE work_messages SET parts = ? WHERE item_id = ?", parts, w.item_a)
+    _sql(task_manager_db, "UPDATE work_messages SET parts = ? WHERE item_id = ?", parts, w.item_a)
     _sql(Path(w.state) / "carnivore.db", f"DELETE FROM {EMPTY_TABLE}")
 
 

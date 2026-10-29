@@ -39,7 +39,6 @@ export function setHomeSeedLevel(level: number): void {
 
 let referencedIds: (() => Set<string>) | null = null;
 
-/*  hidden  */
 export function homeReferencedAnalytics(): Set<string> | null {
   return referencedIds ? referencedIds() : null;
 }

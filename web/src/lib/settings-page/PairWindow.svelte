@@ -26,6 +26,7 @@
     // svelte-ignore state_referenced_locally
     let qrExpires = $state(win.qr_expires_at);
     let showCode = $state(false);
+    let confirmingRevoke = $state(false);
     let rotating = false;
     $effect(() => {
         qr = win.qr;
@@ -64,7 +65,12 @@
         <p class="tm__sub" data-pl="paired">{t('settings.phone_link.window.paired', { label: pairing.device.label })}</p>
         <div class="pl-window__actions">
             <Button variant="confirm" data-pl="done" onclick={onDone}>{t('settings.phone_link.window.done')}</Button>
-            <Button variant="danger" size="sm" data-pl="paired-revoke" onclick={() => onRevoke(pairing.device?.id ?? '')}>{t('settings.phone_link.revoke')}</Button>
+            {#if confirmingRevoke}
+                <Button size="sm" data-pl="paired-revoke-keep" onclick={() => (confirmingRevoke = false)}>{t('settings.phone_link.revoke_keep')}</Button>
+                <Button variant="danger" size="sm" data-pl="paired-revoke-sure" onclick={() => onRevoke(pairing.device?.id ?? '')}>{t('settings.phone_link.revoke_sure')}</Button>
+            {:else}
+                <Button variant="danger" size="sm" data-pl="paired-revoke" onclick={() => (confirmingRevoke = true)}>{t('settings.phone_link.revoke')}</Button>
+            {/if}
             <Button data-pl="again" onclick={onAgain}>{t('settings.phone_link.window.again')}</Button>
         </div>
     {:else if pairing.state === 'pending'}

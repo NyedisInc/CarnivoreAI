@@ -23,7 +23,7 @@ if str(ROOT) not in sys.path:
 
 from src.core import listing_attention  # noqa: E402
 from src.core.attention import side_effects as side_effects_module  # noqa: E402
-from src.core.attention.registry_read import parse_registry_record  # noqa: E402
+from src.core.attention.registry_record import parse_registry_record  # noqa: E402
 from src.core.attention.transcript_facts import (  # noqa: E402
     FACTS_FOUND,
     TranscriptFacts,
@@ -153,8 +153,11 @@ class RecordingManager:
     def _instance_index_for_listing(self, *, socket, names):
         return InstanceIndex()
 
-    def _tmux_socket_name(self):
+    def tmux_socket_name(self):
         return SOCKET
+
+    def _wrappers_reader(self):
+        return []
 
     def _identity_for_instance(self, tmux_name, epoch):
         return {"agent_type": "claude", "agent_family": "claude",
@@ -656,11 +659,11 @@ def test_a_rename_typed_inside_claude_goes_out_on_both_wires(monkeypatch):
         side_effects_module.claude_title_sync_apply,
         "sync_claude_title",
         lambda manager, session_id: types.SimpleNamespace(
-            broadcast_title="Image Tool"
+            broadcast_title="Media Compression"
         ),
     )
 
-    sent, hub = _rename_wires("Image Tool")
+    sent, hub = _rename_wires("Media Compression")
 
     renamed = [
         json.loads(payload)
@@ -668,7 +671,7 @@ def test_a_rename_typed_inside_claude_goes_out_on_both_wires(monkeypatch):
         if json.loads(payload).get("type") == "session.renamed"
     ]
     assert len(renamed) == 1, "the terminal socket did not carry the rename"
-    assert renamed[0]["new_name"] == "Image Tool"
+    assert renamed[0]["new_name"] == "Media Compression"
 
     notices = [f for f in hub.frames if f.get("type") == "session.renamed"]
     assert len(notices) == 1, (

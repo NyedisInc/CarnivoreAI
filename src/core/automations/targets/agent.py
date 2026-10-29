@@ -14,8 +14,7 @@ from pydantic import ValidationError
 from src.core.automations import attachments, lifecycle, recipes
 from src.core.automations import models as m
 from src.core.automations.targets import agent_def
-from src.core.automations.targets.recipe import _tell, _wants
-from src.core.app_alerts import constants as alert_const
+from src.core.automations import notify_policy
 from src.core.project_writes import list_projects_ordered
 from src.models.automations import UNATTENDED_PHRASE
 
@@ -130,10 +129,9 @@ async def _api_key(connection_id: str) -> Optional[str]:
 async def run(ctx: Any, automation: Dict[str, Any], run_row: Dict[str, Any]) -> m.RunOutcome:
     outcome = await _run(ctx, automation, run_row)
     failed = outcome.status != m.SUCCEEDED
-    delivery = {**automation["delivery"], "notify_on": automation["delivery"].get("notify_on") or "always"}
-    if _wants({**automation, "delivery": delivery}, failed):
-        _tell("automation_failed" if failed else "automation_report", automation, run_row["run_id"],
-              alert_const.SEV_WARN if failed else alert_const.SEV_INFO, ctx.store)
+    notice = notify_policy.decide(automation, failed, notify_policy.DEFAULT_ALWAYS)
+    if notice:
+        notify_policy.tell(notice, automation, run_row["run_id"], ctx.store)
     return outcome
 
 

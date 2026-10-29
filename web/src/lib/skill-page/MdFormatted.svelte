@@ -1,6 +1,6 @@
-<!-- the whole file -->
+
 <script lang="ts">
-    import type { Inline } from '../../opscenter/cells/notes/markdown';
+    import type { Inline, SubList } from '../../opscenter/cells/notes/markdown';
     import { splitSkillMd } from './model';
     import { splitTables } from './md-tables';
 
@@ -24,6 +24,14 @@
         {:else}<a href={node.href} target="_blank" rel="noopener noreferrer">{@render inline(node.children)}</a>
         {/if}
     {/each}
+{/snippet}
+
+{#snippet sublist(sub: SubList | null | undefined)}
+    {#if sub?.ordered}
+        <ol>{#each sub.items as item, k (k)}<li>{@render inline(item)}</li>{/each}</ol>
+    {:else if sub}
+        <ul>{#each sub.items as item, k (k)}<li>{@render inline(item)}</li>{/each}</ul>
+    {/if}
 {/snippet}
 
 <div class="skp-fmt" data-skill-md-formatted>
@@ -55,9 +63,9 @@
             <p class="skp-fmt__quote">{@render inline(block.children)}</p>
         {:else if block.kind === 'list'}
             {#if block.ordered}
-                <ol>{#each block.items as item, j (j)}<li>{@render inline(item)}</li>{/each}</ol>
+                <ol start={block.start}>{#each block.items as item, j (j)}<li>{@render inline(item)}{@render sublist(block.subs[j])}</li>{/each}</ol>
             {:else}
-                <ul>{#each block.items as item, j (j)}<li>{@render inline(item)}</li>{/each}</ul>
+                <ul>{#each block.items as item, j (j)}<li>{@render inline(item)}{@render sublist(block.subs[j])}</li>{/each}</ul>
             {/if}
         {:else}
             <hr class="skp-fmt__rule" />

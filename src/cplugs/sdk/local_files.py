@@ -11,13 +11,6 @@ from src.cplugs.sdk.uploads import UploadRefused, caps, check_bytes
 
 
 def read_local_file(caller: AgentCaller, path_text: Any, *, argument: str = "file_paths") -> Tuple[bytes, str]:
-    """The bytes and safe name of a file a pane named.
-
-    Inputs: caller (the MCP caller; a token is refused); path_text (str, an absolute path); argument (the argument's name, for messages).
-    Output: (bytes, sanitized basename). Raises: ToolError (a token caller, not absolute, not a regular file, a symlink, over the larger
-      upload cap, unreadable, or refused by the upload rule).
-    Example: data, name = read_local_file(pane, "/Users/me/shot.png")
-    """
     if caller.from_token:
         raise ToolError(f"{argument} names a file on this computer, so only a session running here may pass it; send the file's content instead")
     if not isinstance(path_text, str) or not path_text or not os.path.isabs(path_text):

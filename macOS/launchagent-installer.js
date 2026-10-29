@@ -171,7 +171,6 @@ ${argXml}
     }
   }
 
-  /* once per launch true only when this */
   migrateLegacyIfNeeded(appPath) {
     const legacyExists = fs.existsSync(this.legacyPlistPath);
 
@@ -179,7 +178,6 @@ ${argXml}
       return { ran: false, migrated: false, details: 'no legacy plist present' };
     }
 
-    // already exists
 
     const legacyWasLoaded = this._isLabelLoaded(this.legacyLabel);
 
@@ -225,7 +223,6 @@ ${argXml}
     return this._finishLegacyCleanup();
   }
 
-  /* once per launch */
   upgradePlistIfNeeded(appPath) {
     if (!fs.existsSync(this.plistPath)) {
       return { ran: false, upgraded: false, details: 'no current plist to upgrade' };

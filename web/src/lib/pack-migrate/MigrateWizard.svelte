@@ -3,10 +3,12 @@
   import './migrate-wizard.css';
   import { t } from '../i18n/index.svelte';
   import Check from '../../opscenter/ui/Check.svelte';
+  import Button from '../base/Button.svelte';
+  import Field from '../base/Field.svelte';
   import { packMachines, type PackMachine } from '../pack-machines/pack-machines-store.svelte';
   import { applyMove, closeMigrate, followedOp, migrate, phaseOf, planMove, publishRepo, type ProjectPlan } from './migrate-store.svelte';
 
-  import { movePanelState, stepProgress } from './move-panel-state';
+  import { movePanelState, notCopiedFiles, stepProgress } from './move-panel-state';
 
   function toggleStop(next: boolean): void {
     migrate.stopRunning = next;
@@ -21,6 +23,7 @@
   const STEPS = ['prepare', 'code', 'rows', 'transcripts', 'verify', 'flip'];
   const panelState = $derived(movePanelState({ kind: target?.kind ?? 'project', phase: migrate.phase, machine: migrate.machine, busy: migrate.busy,
     error: migrate.error, canApply: migrate.plan?.can_apply ?? null, opState: op?.state ?? null }));
+  const lostFiles = $derived(notCopiedFiles(op));
   const progress = $derived(stepProgress(op?.step ?? null, op?.steps ?? STEPS));
   let chosenHere = $state(false);
   let owner = $state('');
@@ -58,7 +61,7 @@
     <div class="pl-titlebar">
       <h3 class="pl-title" id="mw-title">{target.kind === 'back' ? t('pack.migrate.title_back') : t('pack.migrate.title')}</h3>
       <span class="mw-spacer"></span>
-      <button type="button" class="oc-btn oc-btn--sm" data-mw="close" disabled={panelState === 'moving'} onclick={closeMigrate}>{t('pack.migrate.close')}</button>
+      <Button size="sm" data-mw="close" disabled={panelState === 'moving'} onclick={closeMigrate}>{t('pack.migrate.close')}</Button>
     </div>
     <div class="mw-body">
       <p class="mw-subject"><span class="pl-label">{t(`pack.migrate.kind.${target.kind === 'company' ? 'company' : 'project'}`)}</span>
@@ -79,8 +82,8 @@
             {#each peers as machine (machine.install_id)}
               {@const why = refusal(machine)}
               <li class="mw-machine" data-machine={machine.install_id} data-disabled={why !== null}>
-                <button type="button" class="oc-btn oc-btn--sm" data-mw="pick" disabled={why !== null || migrate.busy}
-                  onclick={() => { chosenHere = true; void planMove(machine.label || machine.install_id); }}>{machine.label || machine.install_id.slice(0, 8)}</button>
+                <Button size="sm" data-mw="pick" disabled={why !== null || migrate.busy}
+                  onclick={() => { chosenHere = true; void planMove(machine.label || machine.install_id); }}>{machine.label || machine.install_id.slice(0, 8)}</Button>
                 {#if why}<span class="pm-note" data-mw="reason">{why}</span>{/if}
               </li>
             {/each}
@@ -108,7 +111,14 @@
             <p class="pm-note">{t('pack.migrate.lands_at', { path: p.target_root })}</p>
             <ul class="mw-checks">
               {#each p.checks as check (check.name)}
-                <li class="mw-check" data-ok={check.ok} data-blocking={check.blocking && !check.ok}>{check.detail}</li>
+                <li class="mw-check" data-ok={check.ok} data-blocking={check.blocking && !check.ok}>{check.detail}
+                  {#if check.files?.length}
+                    <ul class="mw-checks" data-mw="plan-files">
+                      {#each check.files as name, i (i)}<li class="mw-check" data-mw="plan-file">{name}</li>{/each}
+                      {#if check.files_more}<li class="mw-check" data-mw="plan-files-more">{t('pack.migrate.files_lost_more', { count: check.files_more })}</li>{/if}
+                    </ul>
+                  {/if}
+                </li>
               {/each}
             </ul>
             {#if offered(p) && p.publish_card}
@@ -116,16 +126,14 @@
                 <h4 class="pl-label">{t('pack.migrate.publish_title')}</h4>
                 <p class="pm-note">{t('pack.migrate.publish_help', { name: p.publish_card.name })}</p>
                 {#if p.publish_card.asks.includes('owner')}
-                  <label class="pm-field"><span class="oc-sub">{t('pack.migrate.publish_owner')}</span>
-                    <input class="oc-field" bind:value={owner} placeholder={p.publish_card.owner ?? ''} /></label>
+                  <Field label={t('pack.migrate.publish_owner')} bind:value={owner} placeholder={p.publish_card.owner ?? ''} />
                 {/if}
                 {#if p.publish_card.asks.includes('account')}
-                  <label class="pm-field"><span class="oc-sub">{t('pack.migrate.publish_account')}</span>
-                    <input class="oc-field" bind:value={account} placeholder={p.publish_card.account ?? ''} /></label>
+                  <Field label={t('pack.migrate.publish_account')} bind:value={account} placeholder={p.publish_card.account ?? ''} />
                 {/if}
                 <div class="mw-actions">
-                  <button type="button" class="oc-btn oc-btn--sm" data-mw="publish-go" disabled={migrate.busy}
-                    onclick={() => void publishRepo(owner, account)}>{t('pack.migrate.publish_go')}</button>
+                  <Button size="sm" data-mw="publish-go" disabled={migrate.busy}
+                    onclick={() => void publishRepo(owner, account)}>{t('pack.migrate.publish_go')}</Button>
                 </div>
               </div>
             {/if}
@@ -165,6 +173,18 @@
       {#if panelState === 'done'}
         <p class="mw-result" role="status" data-mw="done">{target.kind === 'back' ? t('pack.migrate.done_back', { name: target.name }) : t('pack.migrate.done', { machine: migrate.plan?.machine ?? '' })}</p>
       {/if}
+      {#if panelState === 'done' && lostFiles.total > 0}
+        <div class="pm-warn" role="status" data-mw="files-lost">
+          <p class="pl-label">{t('pack.migrate.files_lost', { count: lostFiles.total })}</p>
+          <p class="pm-note">{t('pack.migrate.files_lost_help')}</p>
+          <ul class="mw-checks">
+            {#each lostFiles.names as name, i (i)}<li class="mw-check" data-mw="file-lost">{name}</li>{/each}
+            {#if lostFiles.total > lostFiles.names.length}
+              <li class="mw-check" data-mw="files-lost-more">{t('pack.migrate.files_lost_more', { count: lostFiles.total - lostFiles.names.length })}</li>
+            {/if}
+          </ul>
+        </div>
+      {/if}
       {#if panelState === 'failed' && op}
         <p class="pm-error" role="alert" data-mw="failed">{t('pack.migrate.failed', { step: op.step ?? '', code: op.error_code ?? 'unknown' })}
           {typeof op.detail.error === 'string' ? op.detail.error : ''}</p>
@@ -173,16 +193,16 @@
     </div>
     <div class="mw-foot" data-mw="foot">
       {#if panelState === 'done' || panelState === 'failed'}
-        <button type="button" class="modal-btn modal-btn-secondary" data-mw="done-close" onclick={closeMigrate}>{t('pack.migrate.close')}</button>
+        <Button data-mw="done-close" onclick={closeMigrate}>{t('pack.migrate.close')}</Button>
       {:else}
         {#if chosenHere && (panelState === 'refused' || panelState === 'ready') && target.kind !== 'back'}
-          <button type="button" class="modal-btn modal-btn-secondary" data-mw="change" onclick={() => { migrate.phase = 'pick'; migrate.plan = null; migrate.machine = null; migrate.error = null; }}>{t('pack.migrate.change_machine')}</button>
+          <Button data-mw="change" onclick={() => { migrate.phase = 'pick'; migrate.plan = null; migrate.machine = null; migrate.error = null; }}>{t('pack.migrate.change_machine')}</Button>
         {/if}
-        <button type="button" class="modal-btn modal-btn-secondary" data-mw="cancel" disabled={panelState === 'moving'} onclick={closeMigrate}>{t('pack.migrate.cancel')}</button>
+        <Button data-mw="cancel" disabled={panelState === 'moving'} onclick={closeMigrate}>{t('pack.migrate.cancel')}</Button>
         {#if panelState !== 'pick'}
-          <button type="button" data-mw="confirm" class={oneWay ? 'modal-btn modal-btn-danger' : 'modal-btn modal-btn-confirm'}
+          <Button data-mw="confirm" variant={oneWay ? 'danger' : 'confirm'}
             disabled={panelState !== 'ready' || migrate.busy || (oneWay && !migrate.confirmedOneWay)} onclick={() => void applyMove()}>
-            {panelState === 'moving' ? t('pack.migrate.moving') : target.kind === 'back' ? t('pack.migrate.confirm_back') : oneWay ? t('pack.migrate.confirm_one_way') : t('pack.migrate.confirm')}</button>
+            {panelState === 'moving' ? t('pack.migrate.moving') : target.kind === 'back' ? t('pack.migrate.confirm_back') : oneWay ? t('pack.migrate.confirm_one_way') : t('pack.migrate.confirm')}</Button>
         {/if}
       {/if}
     </div>

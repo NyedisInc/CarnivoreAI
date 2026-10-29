@@ -7,9 +7,10 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
+from src.api.error_response import refusal_error
 from src.api import themes_routes
 from src.api.auth import require_auth
 
@@ -24,7 +25,6 @@ MAX_THEME_JSON_BYTES = 256 * 1024
 
 
 class ThemeExportRefused(Exception):
-    """A theme could not be exported. ``status`` and ``code`` say why."""
 
     def __init__(self, status: int, code: str, message: str) -> None:
         super().__init__(message)
@@ -79,7 +79,7 @@ async def export_theme(theme_id: str) -> JSONResponse:
             theme_id, themes_routes._bundled_themes_root(), themes_routes._user_themes_root()
         )
     except ThemeExportRefused as exc:
-        raise HTTPException(status_code=exc.status, detail={"code": exc.code, "message": str(exc)})
+        raise refusal_error(exc, theme_id=theme_id) from exc
     return JSONResponse(
         document,
         headers={

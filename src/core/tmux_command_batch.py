@@ -27,29 +27,6 @@ EMPTY_BATCH: BatchOutcome = BatchOutcome(batched=True, failures=())
 
 
 def build_batch_argv(commands: Sequence[TmuxCommand]) -> List[str]:
-    """Flatten several tmux commands into one argv, ``;`` separated.
-
-    Args:
-        commands: the commands, each an argv fragment with no ``tmux -L``
-            prefix. Must be non-empty and contain no empty command.
-
-    Returns:
-        list[str]: the flattened argv fragment.
-
-    Raises:
-        ValueError: when a command is empty, or when any token would be
-            read by tmux as a command separator - a token that IS ``;``
-            or ENDS in an unescaped ``;``. Such a token would split the
-            batch at a place the caller did not intend, running half a
-            command with the rest of it as arguments to something else.
-            Refusing loudly is the only safe answer; a semicolon in the
-            MIDDLE of a token is fine and is passed through.
-
-    Example:
-        >>> build_batch_argv([("set-option", "-g", "mouse", "on"),
-        ...                   ("set-option", "-s", "escape-time", "0")])
-        ['set-option', '-g', 'mouse', 'on', ';', 'set-option', '-s', 'escape-time', '0']
-    """
     if not commands:
         raise ValueError("build_batch_argv needs at least one command")
     argv: List[str] = []
@@ -150,30 +127,6 @@ async def run_on_stdin(
     *args: str,
     check: bool = True,
 ) -> Tuple[int, bytes, bytes]:
-    """Run a tmux command with its arguments on stdin, never on argv.
-
-    WHY. Any local process can list every other process's command line
-    (``ps -axww``, any user, on macOS), while a process's environment and
-    pipes are readable only by its own user. A hook token passed as
-    ``set-environment ... CLOUDECODE_HOOK_TOKEN <value>`` or
-    ``new-session -e CLOUDECODE_HOOK_TOKEN=<value>`` was on the command
-    line of the tmux client for the life of the call, and on the tmux
-    SERVER's for the life of the socket when that call started it. Here the
-    tmux client's argv is only ``source-file -``.
-
-    A drop-in for ``run_tmux`` (same signature, same return), so it also
-    serves as the ``run_tmux`` of :func:`run_optional_batch`.
-
-    Args:
-        run_tmux: ``TmuxBackend._run_tmux`` (must accept ``stdin_bytes``).
-        *args: the command, as it would follow ``tmux -L <socket>``.
-        check: passed through.
-
-    Returns:
-        tuple: (returncode, stdout, stderr). An argument that cannot be
-        encoded answers rc 1 with the reason (never the value) as stderr,
-        and nothing is run.
-    """
     try:
         script = stdin_script(args)
     except TmuxQuoteError as exc:
@@ -183,24 +136,6 @@ async def run_on_stdin(
 
 
 def loggable_command(tokens: Sequence[str]) -> str:
-    """A command as one log string, with every secret-named value redacted.
-
-    Description: a ``set-environment`` value and a ``-e KEY=VALUE`` value
-      whose variable NAME is secret-shaped (``debug_trace.is_secret_name``:
-      token, secret, key, password ...) are replaced by
-      ``debug_trace.fingerprint`` (length and an 8-hex hash). Everything
-      else is kept, so the line still answers which command failed.
-
-    Args:
-        tokens: one command (or a ``;`` batch) as argv words.
-
-    Returns:
-        str: the words joined by spaces.
-
-    Example:
-        >>> loggable_command(["set-environment", "-t", "s", "CLOUDECODE_HOOK_TOKEN", "abc"])
-        'set-environment -t s CLOUDECODE_HOOK_TOKEN len=3 fp=ba7816bf'
-    """
     out: List[str] = []
     command: List[str] = []
     for word in map(str, tokens):

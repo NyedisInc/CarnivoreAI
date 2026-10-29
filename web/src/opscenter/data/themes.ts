@@ -1,5 +1,4 @@
 
-/* could not */
 export interface ThemeRow {
   chip: string;
   line?: string;

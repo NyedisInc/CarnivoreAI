@@ -11,6 +11,7 @@ import { installPopoverPolyfill } from '../../../lib/popover-jsdom-polyfill';
 import { t } from '../../../lib/i18n/index.svelte';
 import { recorded, reframed, snapshot } from '../../../lib/dialog-frame/goldens';
 
+/** The move's only intended change: the frame is `AnchoredPopup`'s, which adds its own class. */
 const FRAME = { addClasses: ['oc-anchored'] };
 
 installPopoverPolyfill();

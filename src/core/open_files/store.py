@@ -1,14 +1,3 @@
-"""The open-file list's file: ``open_files.json`` in the state directory, so file rows survive a server restart.
-
-``open_list.py`` is the one place the list changes and calls :func:`save` at that point; :func:`load` runs once at
-startup. This is NOT ``config.json`` (that boundary is ``src/core/config_writer.py``); it is a small separate state
-file written the careful way (``src/core/json_artifact.atomic_write_json``: temp file beside it, fsync,
-``os.replace``), the same posture as ``src/core/browser_pages/store.py``.
-
-A bad file never stops boot: a file that is not valid JSON, or not the expected envelope, is moved aside to
-``open_files.json.corrupt-<unix ts>`` and the list starts empty; a single malformed row is dropped with a warning and
-the rest are kept.
-"""
 
 from __future__ import annotations
 
@@ -25,17 +14,15 @@ from src.core.json_artifact import atomic_write_json
 
 logger = structlog.get_logger(__name__)
 
-# state directory
 FILENAME = "open_files.json"
 VERSION = 1
 ID_RE = re.compile(r"^[0-9a-f]{16}$")
 KINDS = ("file", "diff")
-ROOTS = ("user", "workdir")
+ROOTS = ("user", "workdir", "absolute")
 _REQUIRED = {"id": str, "kind": str, "root": str, "path": str, "session_uuid": str, "title": str, "seq": int}
 
 
 def path_in(directory: Path) -> Path:
-    """The list file inside a state directory. Inputs: directory (Path). Output: Path."""
     return directory / FILENAME
 
 
@@ -46,7 +33,12 @@ def valid_row(row: Any) -> bool:
         return False
     if not isinstance(row.get("opened_at"), (int, float)) or isinstance(row.get("opened_at"), bool):
         return False
-    return bool(ID_RE.match(row["id"])) and row["kind"] in KINDS and row["root"] in ROOTS and bool(row["path"])
+    if row.get("scope_root") is not None and not isinstance(row["scope_root"], str):
+        return False
+    return (bool(ID_RE.match(row["id"])) and row["kind"] in KINDS and row["root"] in ROOTS
+            and bool(row["path"]) and (row["root"] != "absolute" or
+                                    (row["kind"] == "file" and not row["session_uuid"] and
+                                     Path(row["path"]).is_absolute())))
 
 
 def _move_aside(target: Path, reason: str) -> None:

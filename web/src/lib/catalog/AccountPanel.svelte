@@ -15,6 +15,7 @@
         t: Translate;
         onDeleted: () => void;
         publishHost?: PublishHost;
+        /* there is nothing */
         hasHandle?: boolean;
         guest?: boolean;
     }

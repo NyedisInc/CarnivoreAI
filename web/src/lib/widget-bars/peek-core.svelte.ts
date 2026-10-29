@@ -1,4 +1,4 @@
-/* no longer holds something else */
+/* no longer holds */
 import { tick } from 'svelte';
 import { PeekController, peekOut, realClock, type Clock, type PeekFlags } from './bar-state';
 
@@ -65,7 +65,6 @@ export function createPeekCore(input: PeekCoreInput) {
       const to = event.relatedTarget;
       if (to instanceof Node && input.nav()?.contains(to) && !inHandle(to)) return;
       if (flags.focusIn) peek.focusOut();
-      // something else
       if (input.isFolded?.() && !flags.hover) peek.escape();
     },
     onkeydown(event: KeyboardEvent): void {

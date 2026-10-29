@@ -125,19 +125,6 @@ def assert_collector_live(page) -> str | None:
 
 
 def assert_policy_served(response) -> str | None:
-    """Prove the document really arrived carrying a script-src policy.
-
-    Inputs:
-        response: the playwright Response returned by page.goto(). A CSP
-            header is NOT readable from JS, so it has to be read off the
-            wire; asking the document is not an option.
-    Output:
-        None if `script-src` is in force, else a reason string.
-
-    Same reasoning as the collector control. If the header never arrived,
-    every CSP assertion downstream is vacuous, and vacuous must report
-    CANNOT DETERMINE rather than pass.
-    """
     if response is None:
         return "no response object, so the served policy is unknown"
     try:

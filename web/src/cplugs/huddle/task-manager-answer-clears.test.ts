@@ -95,14 +95,14 @@ describe('an item-level question', () => {
   });
 });
 
-describe('their reply clears the row', () => {
-  test('pure: only Claude posts newer than their latest reply', () => {
+describe('his reply clears the row', () => {
+  test('pure: only Claude posts newer than his latest reply', () => {
     const thread = [msg(1, 'info', 'old', { unread: true }), msg(2, 'reply', 'mine', { author: 'joe' }), msg(3, 'info', 'new', { unread: true })];
     expect(rowFeed({ thread } as never).map((m) => m.id)).toEqual([3]);
     expect(rowFeed({ thread: thread.slice(0, 2) } as never)).toEqual([]);
   });
 
-  test('the row shows only the newer Claude post; their reply and the older unread post are gone from the row', async () => {
+  test('the row shows only the newer Claude post; his reply and the older unread post are gone from the row', async () => {
     server.items = [mk({ info_unseen: true, info_unread: 2, thread: [msg(1, 'info', 'old', { unread: true }), msg(2, 'reply', 'mine', { author: 'joe' }), msg(3, 'info', 'new', { unread: true })] })];
     const host = await mountBody();
     expect(feedIds(host)).toEqual(['3']);

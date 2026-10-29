@@ -13,6 +13,7 @@ const i18n = createI18n({ locale: 'en' }) as {
 };
 const t = (key: string, params?: Record<string, unknown> | null) => i18n.t(key, params);
 
+/** An installed global copy with an update waiting. */
 const ROW: InstalledItem = {
     install_id: 'i1',
     item_id: 'a/b',
@@ -22,20 +23,26 @@ const ROW: InstalledItem = {
     update_available: true,
 };
 
-function refusal(body: Record<string, unknown>): Error {
-    const error = new Error('HTTP 409') as Error & { status: number; body: unknown };
+function refusal(detail: Record<string, unknown>): Error {
+    const error = new Error('HTTP 409') as Error & { status: number; body: unknown; detail: unknown };
     error.status = 409;
-    error.body = body;
+    error.detail = detail;
+    error.body = { detail };
     return error;
 }
 
+/** Everything the update path was asked to send. */
 interface Recorder {
     host: CatalogHost;
     updates: UpdateInstalledRequest[];
     previews: number;
 }
 
-function hostFor(carried: Record<string, unknown>, previewBody?: Record<string, unknown>): Recorder {
+/**
+ * A host whose first update refuses `consent_required` and whose second
+ * succeeds, with the 409 optionally carrying the text and the sha.
+ */
+function hostFor(carried: Record<string, unknown>, previewBody?: Record<string, unknown>, refuseOnce = true): Recorder {
     const refuse = () => Promise.reject(new Error('the test never calls this'));
     const recorder: Recorder = { host: null as never, updates: [], previews: 0 };
     recorder.host = {
@@ -52,7 +59,7 @@ function hostFor(carried: Record<string, unknown>, previewBody?: Record<string, 
         patchInstalled: refuse,
         applyUpdate: (_id: string, body: UpdateInstalledRequest) => {
             recorder.updates.push(body);
-            if (recorder.updates.length === 1) {
+            if (refuseOnce && recorder.updates.length === 1) {
                 return Promise.reject(refusal({ code: 'consent_required', ...carried }));
             }
             return Promise.resolve({ ...ROW, revision: 5, update_available: false });
@@ -67,13 +74,14 @@ function hostFor(carried: Record<string, unknown>, previewBody?: Record<string, 
 
 let panel: Record<string, unknown> | null = null;
 
-function paint(host: CatalogHost, onLedgerChange = vi.fn()): void {
+/** Mount the action row over one host, with an update waiting. */
+function paint(host: CatalogHost, onLedgerChange = vi.fn(), kind: string | undefined = undefined): void {
     const target = document.createElement('div');
     document.body.appendChild(target);
     panel = mount(DetailActions, {
         target,
         props: {
-            card: cardView({ id: 'a/b', name: 'tidy', latest: '1.0' }, false),
+            card: cardView({ id: 'a/b', name: 'tidy', latest: '1.0', kind }, false),
             installed: ROW,
             rowState: { kind: 'update-available' },
             host,
@@ -84,15 +92,18 @@ function paint(host: CatalogHost, onLedgerChange = vi.fn()): void {
     }) as never;
 }
 
+/** Let every microtask settle. */
 function settle(): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+/** The primary control of whichever modal is open. */
 function modalConfirm(): HTMLButtonElement {
     const buttons = [...document.querySelectorAll('.modal-btn-primary')];
     return buttons[buttons.length - 1] as HTMLButtonElement;
 }
 
+/** Press update and agree to the plain version confirm. */
 async function startUpdate(): Promise<void> {
     (document.querySelector('[data-act="update"]') as HTMLButtonElement).click();
     await settle();
@@ -100,6 +111,15 @@ async function startUpdate(): Promise<void> {
     await settle();
 }
 
+/**
+ * Close anything still open before the next case starts.
+ *
+ * TEARING THE DOM OUT DOES NOT RESOLVE A MODAL. `openModal` holds a
+ * promise and an open count that only its own `close` settles, so a case
+ * ending with a sheet up leaks that count into the next one, where the
+ * in-flight guard then refuses to open anything at all. Escape is how a
+ * person closes it, so it is how this closes it too.
+ */
 async function dismissEverything(): Promise<void> {
     for (let guard = 0; guard < 8; guard += 1) {
         const open = document.querySelector('.modal-overlay');
@@ -155,17 +175,13 @@ describe('when the new version changed the skill text', () => {
         );
     });
 
-    test('a 409 that named no text falls back to a PREVIEW for it', async () => {
+    test('DEFECT 2: a 409 with no text never asks the planner for a preview', async () => {
         const recorder = hostFor({}, { body: '# from preview', body_sha: 'sha-preview' });
         paint(recorder.host);
         await startUpdate();
-        expect(recorder.previews).toBe(1);
-        expect(document.querySelector('.confirm__document')?.textContent).toBe('# from preview');
-        (document.querySelector('.confirm__accept input') as HTMLInputElement).click();
-        await settle();
-        modalConfirm().click();
-        await settle();
-        expect(recorder.updates[1]?.consent).toEqual({ body_sha: 'sha-preview' });
+        expect(recorder.previews).toBe(0);
+        expect(document.body.textContent).toContain(i18n.t('skill.update.consent.unavailable'));
+        expect(modalConfirm().disabled).toBe(true);
     });
 
     test('with NO text anywhere the tick is refused and nothing is sent again', async () => {
@@ -274,21 +290,74 @@ describe('the consent block the second send carries', () => {
         });
     });
 
-    test('a 409 carrying no text takes the digest from the FRESH preview', async () => {
-        const recorder = hostFor(
-            {},
-            { body: '# from preview', body_sha: 'sha-preview', digest: 'digest-preview' },
-        );
+    test('DEFECT 1 end to end: text, sha and digest come off the wrapped {detail} 409', async () => {
+        const recorder = hostFor({ body: '# wrapped', body_sha: 'sha-w', digest: 'dg-w' });
         paint(recorder.host);
         await startUpdate();
-        expect(recorder.previews).toBe(1);
+        expect(document.querySelector('.confirm__document')?.textContent).toBe('# wrapped');
         (document.querySelector('.confirm__accept input') as HTMLInputElement).click();
         await settle();
         modalConfirm().click();
         await settle();
-        expect(recorder.updates[1]?.consent).toEqual({
-            body_sha: 'sha-preview',
-            digest: 'digest-preview',
+        expect(recorder.updates[1]?.consent).toEqual({ body_sha: 'sha-w', digest: 'dg-w' });
+    });
+});
+
+const FACTS = {
+    id: 'a/b', name: 'b', description: 'd', version: '1.0.1', entry: 'main.py', files: 3, bytes: 900,
+    permissions: [{ name: 'net.fetch', risk: 'high', reason: 'reads the health page' }],
+    tools: [], network_hosts: [], lan_hosts: [], secrets: [],
+};
+
+async function cplugSheet(): Promise<Recorder> {
+    const recorder = hostFor({
+        body: '{"id": "a/b"}',
+        body_sha: 'sha-c',
+        digest: 'dg-c',
+        script_files: [],
+        requires_consent: true,
+        cplug_facts: FACTS,
+        cplug_facts_sha: 'facts-sha',
+    });
+    paint(recorder.host, vi.fn(), 'cplug');
+    await startUpdate();
+    return recorder;
+}
+
+describe('the update of a plugin (cplug)', () => {
+    test('DEFECT 4: its document and declared permissions are on screen, worded as a plugin', async () => {
+        await cplugSheet();
+        expect(document.querySelector('.confirm__document')?.textContent).toBe('{"id": "a/b"}');
+        expect(document.querySelector('.cplugfacts')?.textContent).toContain('net.fetch');
+        expect(document.body.textContent).toContain(i18n.t('skill.update.consent.cplug_lead'));
+        expect(document.body.textContent).not.toContain(i18n.t('skill.update.consent.lead'));
+        expect(modalConfirm().disabled).toBe(true);
+    });
+
+    test('DEFECT 3: requires_consent sends scripts: true although no script is listed', async () => {
+        const recorder = await cplugSheet();
+        (document.querySelector('.cplugfacts input') as HTMLInputElement).click();
+        await settle();
+        modalConfirm().click();
+        await settle();
+        expect(recorder.updates[1]?.consent).toEqual({ body_sha: 'sha-c', digest: 'dg-c', scripts: true });
+    });
+
+    test('END TO END: zero scripts, text shown, accepted, the update carries sha plus scripts, success', async () => {
+        const recorder = await cplugSheet();
+        const onChange = vi.fn();
+        expect(recorder.updates).toEqual([{ expected_revision: 4 }]);
+        expect(document.querySelectorAll('.confirm__line')).toHaveLength(0);
+        (document.querySelector('.cplugfacts input') as HTMLInputElement).click();
+        await settle();
+        modalConfirm().click();
+        await settle();
+        expect(recorder.updates[1]).toEqual({
+            expected_revision: 4,
+            consent: { body_sha: 'sha-c', digest: 'dg-c', scripts: true },
         });
+        expect(document.querySelector('.modal-overlay')).toBeNull();
+        expect(document.querySelector('.acts__refusal')).toBeNull();
+        void onChange;
     });
 });

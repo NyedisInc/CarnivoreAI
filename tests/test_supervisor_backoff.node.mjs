@@ -1,3 +1,4 @@
+// WHY THIS FILE EXISTS
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -189,6 +190,7 @@ test('a manual start clears a give-up so the user is not locked out', () => {
   assert.equal(sup.recordDown({ expected: false }).action, SUPERVISOR_RESTART);
 });
 
+// --- wiring (SOURCE-LEVEL) ------------------------------------------------
 
 test('wiring (SOURCE-LEVEL): server-manager runs the supervisor on unexpected exit', () => {
   assert.ok(

@@ -19,7 +19,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 from src.api import restore_offer_routes as routes
 from src.core.attention.pane_markers import RESTING_PROMPT_MARKER
 from src.core.attention.pane_prompt_box import input_box_drawn
-from src.core.attention.registry_read import parse_registry_record
+from src.core.attention.registry_record import parse_registry_record
 from src.core.session_restore_startup_check import watch_for_startup_prompts
 
 RULE = "─" * 60

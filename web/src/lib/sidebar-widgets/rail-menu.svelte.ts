@@ -11,7 +11,11 @@ import { rootZone, SESSION_LIST_TAB } from '../drawer-layout/root-zone.svelte';
 import { SESSION_LIST_WIDGET } from './widget-ids';
 import { isMenuKey } from '../zone-shell/key-nav';
 
-export const railMenu: { at: { x: number; y: number } | null; keyId: string | null } = $state({ at: null, keyId: null });
+export const railMenu: { at: { x: number; y: number } | null; keyId: string | null; closed: boolean } = $state({ at: null, keyId: null, closed: false });
+
+function drawerClosed(): boolean {
+  return document.body.classList.contains('session-sidebar-railed');
+}
 
 export function closeRailMenu(): void {
   railMenu.at = null;
@@ -30,6 +34,7 @@ export function onRailShellContextMenu(event: MouseEvent): void {
 
 function openRailMenu(keyId: string | null, x: number, y: number): void {
   railMenu.keyId = keyId;
+  railMenu.closed = drawerClosed();
   if (railMenuItems().length === 0) {
     closeRailMenu();
     return;
@@ -52,7 +57,7 @@ export function railNodesFor(keyId: string | null, onClose: () => void, declared
   const root = rootZone();
   const declared = keyId === SESSION_LIST_WIDGET ? declaredGroups(declaredActionsFor(root.headerIdOf({ key: SESSION_LIST_TAB, kind: 'panel' }))) : [];
   return railMenuNodes({
-    pin: keyId === null && stripPinsOffered() ? { pinned: barPinned('rail'), toggle: () => void toggleBarPin('rail') } : null,
+    pin: keyId === null && stripPinsOffered() && !drawerClosed() ? { pinned: barPinned('rail'), toggle: () => void toggleBarPin('rail') } : null,
     declared: [...declared, ...declaredMore],
     editing: layoutEditor.active,
     toggleEdit: canOpen() ? () => void toggleLayoutEditor() : null,

@@ -1,11 +1,3 @@
-"""The row-look table: row id -> {color, icon}, kept in memory and persisted to ``row_looks.json`` in the state directory.
-
-THE ONE WRITER of the ``row_looks`` topic (``resource_push.notify``): every set and forget names it, so every open window
-re-reads ``GET /api/v1/sidebar/row-looks`` once (PUSH, NOT PULL). Same careful write as ``open_files/store.py``
-(``atomic_write_json``); a bad file never stops boot (it is ignored and the table starts empty, a bad entry is dropped).
-A closed row calls :func:`forget`; the table is also capped at :data:`MAX_LOOKS` (oldest set dropped) so a row closed by
-a path that missed it can never grow the file without bound.
-"""
 
 from __future__ import annotations
 

@@ -170,7 +170,7 @@ class TestDatastoreUnreadableIsItsOwnOutcome:
         def boom(*args, **kwargs):
             raise OSError("disk gone")
 
-        monkeypatch.setattr(authority, "connect", boom, raising=True)
+        monkeypatch.setattr(authority, "lend_pooled_or_raise", boom, raising=True)
         view = authority.resolve_projects(env.state_dir)
 
         assert view.mode == authority.MODE_DB_UNREADABLE

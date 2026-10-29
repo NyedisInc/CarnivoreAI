@@ -21,7 +21,7 @@ const ONE: ProviderLedger = {
             name: 'main',
             provider: 'claude',
             plan: 'max 20x',
-            identity: 'acme',
+            identity: 'alex',
             credential_state: 'ok',
             fetched_at: null,
             next_poll_at: null,
@@ -156,6 +156,7 @@ async function press(selector: string): Promise<void> {
     await settle();
 }
 
+/* there is nothing */
 async function fillAdvancedClaude(name: string, dir: string): Promise<void> {
     type('#ledger-account-name', name);
     await press('[data-ledger="advanced"] [data-btn="row"]');

@@ -7,6 +7,7 @@
 </script>
 
 <script lang="ts">
+  /* the widget menu */
   import type { CellProps } from '../../lib/cell';
   import HuddleBody from '../../../cplugs/huddle/HuddleBody.svelte';
   import { sessionScopeFor } from '../../widgets/session-scope';

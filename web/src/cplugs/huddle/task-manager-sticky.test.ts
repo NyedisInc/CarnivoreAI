@@ -68,6 +68,7 @@ function source(file: string): string {
   return readFileSync(new URL(file, import.meta.url), 'utf8');
 }
 
+/** The declarations of the LAST rule whose selector is exactly `selector` in a component's style block. */
 function rule(file: string, selector: string): string {
   const css = (source(file).split('<style>')[1] ?? '').replace('@layer components {', '');
   const found = [...css.matchAll(/(^|\n)\s*([^{}\n]+)\{([^}]*)\}/g)].filter((m) => (m[2] as string).trim() === selector);
@@ -142,7 +143,7 @@ describe.each([['the sidebar', false], ['the pop-out', true]])('on screen, %s', 
     expect(block.style.getPropertyValue('--hd-stick-top')).toBe('0px');
   });
 
-  test('each status section is its own wrapper (header and list), so a header fenmont where its section ends', async () => {
+  test('each status section is its own wrapper (header and list), so a header lets go where its section ends', async () => {
     const host = await mountBody(popout);
     const sections = [...host.querySelectorAll<HTMLElement>('[data-task-manager-block="12"] .hss-section')];
     expect(sections.length).toBeGreaterThan(1);

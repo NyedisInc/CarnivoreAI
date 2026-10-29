@@ -64,6 +64,8 @@ def fold_legacy_commands(data: Dict) -> Dict:
 
     result: List = [dict(w) if isinstance(w, dict) else w for w in wrappers]
     for family in AGENT_FAMILIES:
+        if not family.seeded:
+            continue
         command = customised_command(agents, family.name)
         if not command:
             continue

@@ -36,7 +36,7 @@
   "name": "Web push alerts",
   "since": "2026-09-30",
   "status": "beta",
-  "summary": "",
+  "summary": "a push from this computer to your mobile device or browser, with a fixed typed title and body per notification type, so no session name or question text leaves the computer beyond what that type's copy says.",
   "surfaces": [],
   "updated": "2026-10-03",
   "where": [

@@ -78,19 +78,32 @@ describe('ghost lines', () => {
   });
 });
 
-describe('a revision that landed while the owner wrote', () => {
+const WORDS = { yes: 'yes', no: 'no' };
+
+describe('a revision that landed while Joe wrote', () => {
   it('carries answers that still fit and turns the rest into words in the note', () => {
     const from = revision(2, { prompts: [layout, extra], anchors: [{ id: 'send', label: 'send button' }] });
     const to = revision(3, { prompts: [{ ...layout, options: [{ id: 'a', label: 'a' }] }, extra], anchors: [{ id: 'buttons', label: 'b' }] });
     let d = setNote(pickOption(newDraft('r2', 'keep'), layout, 'b'), 'hello');
     d = setAnchorNote(setText(d, extra, 'warn'), 'send', 'close');
-    const moved = carryDraft(d, from, to);
+    const moved = carryDraft(d, from, to, WORDS);
     expect(moved).toMatchObject({ revision: 'r3', client_round_id: 'keep' });
     expect(moved.answers.map((a) => a.prompt)).toEqual(['extra']);
     expect(moved.note).toContain('hello');
-    expect(moved.note).toContain('which row: b');
+    expect(moved.note).toContain('which row: two rows');
     expect(moved.note).toContain('send button: close');
     expect(moved.anchor_notes).toEqual([]);
+  });
+
+  it('writes a checked answer that cannot move as yes or no, with its own note (u127-08)', () => {
+    const tick: BoardPrompt = { id: 'tick', kind: 'check', label: 'ship it', options: [] } as unknown as BoardPrompt;
+    const from = revision(2, { prompts: [tick] });
+    const to = revision(3, { prompts: [] });
+    let d = newDraft('r2', 'keep');
+    d = { ...d, answers: [{ prompt: 'tick', checked: false, note: 'not yet' }] };
+    expect(carryDraft(d, from, to, WORDS).note).toBe('ship it: no / not yet');
+    d = { ...d, answers: [{ prompt: 'tick', checked: true, note: '' }] };
+    expect(carryDraft(d, from, to, WORDS).note).toBe('ship it: yes');
   });
 });
 

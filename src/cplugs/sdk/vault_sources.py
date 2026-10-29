@@ -6,6 +6,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core.inventory import locations
 from src.cplugs.host.data_roots import VaultFolder
 from src.core.inventory.registry_side import DEEPSEARCH, READER_STATE, SIDE_DBS, SKILL_FIRES, STATS
@@ -14,7 +15,7 @@ DERIVED_SIDE_DBS = frozenset({DEEPSEARCH, STATS, READER_STATE, SKILL_FIRES})
 
 
 class SourceUnavailable(RuntimeError):
-    """The install's database could not be read (missing, locked, unreadable)."""
+    pass
 
 
 def claude_roots() -> Tuple[Path, ...]:
@@ -49,7 +50,7 @@ def _connect_readonly(state_dir: Path) -> sqlite3.Connection:
 
     path = db_path_for(Path(state_dir))
     try:
-        conn = sqlite3.connect(f"{Path(path).resolve().as_uri()}?mode=ro", uri=True, timeout=5)
+        conn = connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)
     except (sqlite3.Error, OSError) as exc:
         raise SourceUnavailable(f"cannot open {path}: {exc}") from exc
     conn.row_factory = sqlite3.Row

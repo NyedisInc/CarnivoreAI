@@ -4,12 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>session row edge harness</title>
-<!-- --color- -->
 <link rel="stylesheet" href="../../client/css/styles.css" />
 <link rel="stylesheet" href="../../client/css/session-sidebar.css" />
 <link rel="stylesheet" href="../../client/css/session-theme-tint.css" />
 <style>
-  /* --color- */
   body { margin: 0; padding: 24px; }
   #rows { max-width: 520px; }
   #control-stripe {
@@ -78,6 +76,9 @@ window.__applyTheme = async function (id) {
     const root = document.documentElement;
     Object.keys(vars).forEach((k) => root.style.setProperty(k, vars[k]));
     root.setAttribute('data-theme', id);
+    // The page backdrop is the theme's own page colour. Several rows are
+    // translucent by design (an 80 percent fill over --color-bg), so the
+    // colour behind them decides what a sampled pixel composites to.
     document.body.style.background = vars['--color-bg'] || '#000000';
     return vars;
 };
@@ -93,7 +94,11 @@ window.__token = function (name) {
 
 /**
  * Every paint fact one row's edges are judged on, plus its box.
-
+ *
+ * Widths and colours are reported for all FOUR sides because the defect
+ * under test is an edge that differs from its three neighbours; a single
+ * borderLeftColor read cannot express "the four sides disagree".
+ *
  * @param {string} id - element id.
  * @returns {?object} null when the element is absent.
  */

@@ -29,7 +29,6 @@ OUTCOME_ALREADY_COMPLETE = "already_complete"
 
 OUTCOME_NOTHING = "nothing_to_recover"
 
-# could not
 OUTCOME_REFUSED = "refused"
 
 REFUSED_DIR_NAME = "refused"
@@ -74,29 +73,6 @@ def refuse_journal(path: Path, journal: PendingJournal, reason: str) -> None:
 def recover_one(
     path: Path, journal: PendingJournal, *, roots: InstallRoots
 ) -> str:
-    """Finish or reverse one interrupted update, then delete its journal.
-
-    Description: decided from THE FILESYSTEM, never from ``step``. Four
-      states, and each one has exactly one safe answer. The staged copy
-      present with the target gone is the middle of a swap and is
-      FINISHED, because the new folder has already been verified and the
-      old one is safe in the trash. Everything else is REVERSED: put the
-      displaced folder back if the target is missing, and drop the staged
-      copy, because a staged copy nobody is mid-swap on is debris.
-      CONTAINMENT IS CHECKED FIRST, BEFORE ANY OF THE FOUR STATES IS EVEN
-      LOOKED FOR. Every path below came out of a file on disk, and the
-      first thing this function does with one is hand it to ``copy_tree``
-      or ``remove_tree``. So a journal naming paths this app could not
-      have produced is moved aside and acted on in no way at all: nothing
-      renamed, nothing copied, nothing deleted.
-    Inputs: path (Path) - the journal file. journal (PendingJournal).
-      roots (InstallRoots) - keyword only, with NO default, because a
-      default would be a second way to find a person's home directory and
-      because containment cannot be decided without it.
-    Output: str - one of the five ``OUTCOME_*`` constants.
-    Raises: OutsideTempWriteError: a test run aimed this at a real path.
-    Example: recover_one(p, read_pending(p), roots=services.install_roots)
-    """
     refusal = journal_refusal(journal, roots=roots)
     if refusal is not None:
         logger.warning(
@@ -148,23 +124,6 @@ def recover_one(
 
 
 def recover_pending(pending_dir: Path, roots: InstallRoots) -> dict[str, int]:
-    """Finish or reverse every interrupted update found at boot.
-
-    Description: one journal at a time, and a failure on one is logged and
-      does NOT stop the others: a single unrecoverable update must not
-      leave every other one in flight for ever. A journal that cannot be
-      parsed is left ALONE, because acting on a description this pass
-      could not read would be acting on a guess.
-    Inputs: pending_dir (Path) - from ``InstallRoots.pending_dir()``.
-      roots (InstallRoots) - the port, used to CONFIRM that the directory
-      handed in is the journal directory. This function deletes every
-      ``.json`` file it processes, so a caller that passed the staging
-      directory or a project folder by mistake would have it emptied. The
-      check costs one call and makes that impossible.
-    Output: dict[str, int] - one count per outcome, plus ``unreadable``.
-    Raises: ValueError when ``pending_dir`` is not the port's own.
-    Example: recover_pending(roots.pending_dir(), roots)["finished"]
-    """
     expected = roots.pending_dir()
     if Path(pending_dir) != expected:
         raise ValueError(

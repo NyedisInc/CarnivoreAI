@@ -101,12 +101,6 @@ def root_is_free(root: Optional[str]) -> bool:
 
 
 def compare_with_disk(files: List[Tuple[FileRecord, Path]], links: List[LinkPlan], root: Path) -> Tuple[int, int]:
-    """How many of the crate's project files (and links that would be made) the project's folder already holds identically, and how many
-    are missing or different there. A file matches when the path is a real file inside ``root``, its size equals the record's, and its
-    sha256 does (size first, so only a same-size file is hashed). Blocking (reads matching-size files).
-
-    Output: (matching, differing). Example: compare_with_disk([(record, root / 'a.py')], [], root) -> (1, 0)
-    """
     real_root = os.path.realpath(root)
     same = other = 0
     for record, dest in files:

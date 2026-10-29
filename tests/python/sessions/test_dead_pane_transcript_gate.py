@@ -8,7 +8,7 @@ import pytest
 from src.core import session_sleep
 from src.core.session_pane_death import LIFECYCLE_SOURCE_PANE_DEAD
 
-CONV = "8a40e81d-5201-4c2b-8ddc-226e2af376ab"
+CONV = "7c1d2e3f-aaaa-4bbb-8ccc-0123456789ab"
 
 
 def _row(**extra) -> dict:

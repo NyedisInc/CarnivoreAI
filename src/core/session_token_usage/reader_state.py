@@ -88,13 +88,6 @@ def effective_version(spec: PersistSpec) -> Optional[str]:
 
 
 def _read_checks(path: str, offset: int) -> Optional[Tuple[os.stat_result, bytes, bytes]]:
-    """Stat a file and read its head and the bytes just before ``offset``.
-
-    Inputs: path (str), offset (int).
-    Output: (stat, head, tail) or None when the file could not be read whole;
-      the tail is short only when the file is shorter than ``offset``.
-    Raises FileNotFoundError when the path is gone.
-    """
     with open(path, "rb") as handle:
         stat = os.fstat(handle.fileno())
         head = handle.read(HEAD_BYTES)

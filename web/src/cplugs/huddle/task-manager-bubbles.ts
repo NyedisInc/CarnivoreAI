@@ -1,4 +1,4 @@
-/* padding */
+/* the markdown body */
 import type { TaskManagerMessage } from './huddle-model';
 import { KIND_COLORS } from './task-manager-posts';
 import { STATUS_ICON } from './huddle-status';

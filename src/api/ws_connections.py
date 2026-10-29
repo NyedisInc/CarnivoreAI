@@ -76,22 +76,6 @@ class ConnectionManager:
         return sent
 
     def _offer(self, websocket: WebSocket, message: str) -> bool:
-        """Queue one text frame for a socket's own writer. Never awaits.
-
-        Description: THE SINGLE-WRITER SEAM. Everything that used to call
-          ``websocket.send_text`` from a broadcast now lands here, so the
-          only coroutine that ever touches a live terminal socket is that
-          viewer's writer task. It also stops one unreachable browser
-          delaying the rest of a fan-out, because an offer cannot block.
-          A socket registered WITHOUT a stream falls back to nothing and
-          is reported undeliverable rather than being sent to directly -
-          that would be the second writer coming back through the door
-          this closes.
-        Inputs: websocket (WebSocket); message (str) - JSON to send.
-        Output: bool - False when the frame could not be queued, which is
-          the caller's signal to drop that socket.
-        Example: if not self._offer(ws, payload): drop(ws)
-        """
         stream = self._streams.get(id(websocket))
         if stream is None:
             return False

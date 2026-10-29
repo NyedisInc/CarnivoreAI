@@ -164,7 +164,6 @@ function placedIds(layout: Layout): string {
     .join('\n');
 }
 
-/*  hidden  */
 export function settleDrop(before: Layout, raw: Layout, id: SlotId, metas: MetaMap = META): Compacted | null {
   const settled = compactRows(raw, widthsOf(before, metas, id));
   const after = settled.layout;

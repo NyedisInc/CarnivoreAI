@@ -1,4 +1,3 @@
-/*  hidden  */
 import { untrack } from 'svelte';
 import { railSlideout } from '../session-rail/slideout.svelte';
 import type { RailEdge } from '../session-rail/rail-model';
@@ -54,7 +53,6 @@ export function createBarVisibility(edge: RailEdge, read: () => BarVisibilityInp
     const shown = input.panelShown;
     untrack(() => {
       if (shownBefore && !shown) {
-        // removed with it
         const focused = document.activeElement;
         if (!focused || !nav()?.contains(focused) || focused.closest('[data-rail-slideout]')) peek.focusOut();
         if (!foldWithPanel && !untrack(() => folded)) peek.panelClosed();

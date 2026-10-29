@@ -1,4 +1,4 @@
-<!-- <button> -->
+
 <script lang="ts">
     import { SKILL_KEYS, refusalMessage } from '../../../../client/js/labels/skill.js';
     import type { Translate } from '../sessions/types';

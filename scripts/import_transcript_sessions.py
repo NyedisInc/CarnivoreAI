@@ -1,7 +1,36 @@
 #!/usr/bin/env python3
-"""
+"""Give every real Claude Code conversation on this machine a sessions row.
+
 DRY RUN IS THE DEFAULT AND IS THE ONLY MODE THAT NEEDS NO ARGUMENT.
 ``--apply`` exists so a human can act on a report he has read.
+
+WHY THIS SCRIPT EXISTS. ``~/.claude/projects`` holds every conversation
+this machine has ever had - measured 2026-09-08, 1,486 top-level
+transcripts - and ``sessions`` held 43 rows, 28 of which pointed at one.
+Everything else was invisible to the app: not archived, not hidden, just
+absent. The owner's model is "all sessions belong to projects, the root
+folder... sessions and projects can be archived not deleted", and
+"everything real should be accounted for". This is the pass that makes
+that true.
+
+WHAT IT WRITES, AND WHAT IT REFUSES TO INVENT. One ``sessions`` row per
+transcript, ARCHIVED, carrying only what the file itself says: the
+conversation uuid, the working directory, the first and last timestamps,
+and a title (the ``custom-title`` the owner typed, else his first
+message, truncated). ``tmux_name``, ``tmux_created_epoch``,
+``agent_type``, ``agent_family`` and ``model`` are left NULL - this app
+never watched these sessions and a guess in any of those columns would be
+indistinguishable from a measurement. A project that does not exist yet
+is created ARCHIVED too, so nothing lands on a screen unasked.
+
+ONE EXCLUSION RULE, AND IT IS ABOUT THE PATH, NOT THE WORK. A
+conversation whose cwd is under ``/private/tmp``, ``/tmp`` or
+``/var/folders`` is a per-run scratch directory that can never be a
+project root. The owner's own test projects - ``fstest``,
+``scrolltest``, a ``Scratch/scratch-lab`` lab - are REAL and are
+imported: he did that work in a directory he chose, and "this looks like
+a throwaway" is exactly the judgement that would start deleting his
+history.
 
 READ-ONLY BY CONSTRUCTION IN DRY RUN. The database is opened with
 ``PRAGMA query_only=ON`` rather than a ``mode=ro`` URI, because
@@ -12,6 +41,10 @@ Usage::
 
     # the report to read - writes nothing
     venv/bin/python3 scripts/import_transcript_sessions.py
+
+    # the same pass, as a file
+    venv/bin/python3 scripts/import_transcript_sessions.py \\
+        --report .claude/notes/import-dry-run-2026-09-08.md
 
     # act on it
     venv/bin/python3 scripts/import_transcript_sessions.py --apply
@@ -29,7 +62,7 @@ from typing import Dict, List, Optional, Sequence
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.db_rename.legacy import script_default_db  # noqa: E402
+from src.core.db_rename.legacy import connect_existing, resolve_script_db  # noqa: E402
 
 from src.core.transcript_import_facts import (  # noqa: E402
     read_transcript_facts,
@@ -42,18 +75,14 @@ from src.core.transcript_import_plan import (  # noqa: E402
     PLAN_NOT_A_CONVERSATION,
     PLAN_NOT_A_SESSION_REF,
     ProposedSession,
-    canonical,
     dedupe_by_uuid,
     plan_transcript,
     summarise,
 )
+from src.core.transcript_import_paths import canonical  # noqa: E402
 from src.core.transcript_import_write import apply_plans  # noqa: E402
 
 SAMPLE_ROWS = 10
-
-
-def default_db() -> str:
-    return script_default_db()
 
 
 def default_corpus() -> Path:
@@ -61,13 +90,7 @@ def default_corpus() -> Path:
 
 
 def open_readonly(db_path: str) -> sqlite3.Connection:
-    """Open the datastore so a write is impossible for the connection's life.
-
-    Inputs: db_path (str).
-    Output: sqlite3.Connection.
-    Raises: sqlite3.Error - the file could not be opened.
-    """
-    conn = sqlite3.connect(db_path)
+    conn = connect_existing(db_path)
     conn.execute("PRAGMA query_only=ON")
     return conn
 
@@ -273,7 +296,11 @@ def render_report(plans: Sequence[ProposedSession], *, db_path: str) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--db", default=default_db(), help="path to cloude.db")
+    parser.add_argument(
+        "--db",
+        default=None,
+        help="path to the database (default: the conventional state directory)",
+    )
     parser.add_argument(
         "--corpus",
         default=str(default_corpus()),
@@ -291,25 +318,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """Run one pass. Returns a process exit code.
-
-    Description: 0 on success, 2 when the datastore could not be read -
-      which is COULD NOT DETERMINE, not "nothing to import", and must not
-      be mistaken for a clean pass by a caller reading the exit code.
-    Inputs: argv (list[str] | None).
-    Output: int.
-    Example: main(['--report', '/tmp/r.md'])  # 0
-    """
     args = build_parser().parse_args(argv)
+    args.db = resolve_script_db(args.db)
     try:
         conn = open_readonly(args.db)
+        try:
+            state = read_state(conn)
+        finally:
+            conn.close()
     except sqlite3.Error as exc:
         print(f"COULD NOT READ {args.db}: {exc}", file=sys.stderr)
         return 2
-    try:
-        state = read_state(conn)
-    finally:
-        conn.close()
 
     plans = build_plans(Path(args.corpus), state)
     report = render_report(plans, db_path=args.db)

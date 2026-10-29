@@ -1,4 +1,3 @@
-/* is not installed */
 import type { CardView } from '../catalog/card';
 import { latestVersion } from '../catalog/card';
 import type { CatalogItem, InstalledItem } from '../catalog/types';

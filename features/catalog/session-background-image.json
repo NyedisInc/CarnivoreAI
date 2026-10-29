@@ -21,7 +21,20 @@
     "background",
     "wallpaper"
   ],
-  "media": [],
+  "media": [
+    {
+      "alt": "The three dots menu at the right end of the terminal bar, open on its background item",
+      "caption": "The background item in the terminal bar's three dots menu",
+      "file": "button.png",
+      "kind": "icon"
+    },
+    {
+      "alt": "The terminal background panel in a close crop: an ascii decoration choice, an image picker, a source choice and a dim slider with a readability note",
+      "caption": "The background panel's controls, cropped to the panel alone",
+      "file": "popover.png",
+      "kind": "screenshot"
+    }
+  ],
   "name": "Session background image",
   "since": "2026-09-20",
   "status": "stable",
@@ -33,6 +46,5 @@
   "updated": "2026-10-21",
   "where": [
     "Open a session, then the picture icon in its terminal bar; on a narrow bar it is the background item in the three-dot menu."
-  ],
-  "media_exempt": "screenshots and captures are not part of the open source export"
+  ]
 }

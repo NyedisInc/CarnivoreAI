@@ -11,7 +11,7 @@ from src.core.session_resume_target import (
     resume_target_from_row,
 )
 
-UUID = "3fce7313-a048-4034-8b0d-72deecec7e53"
+UUID = "ad166ca4-f8b4-989f-dee8-b5b4f34999e3"
 
 
 def test_claude_resume_is_the_dash_dash_resume_flag():
@@ -75,7 +75,7 @@ def _exploding_pick(_working_dir):
 def test_adopted_codex_empty_column_resumes_on_the_live_pick():
     from src.core.session_resume_target import upgrade_codex_adopted_target
 
-    picked = "3fce7313-a048-4034-8b0d-72deecec7e53"
+    picked = "ad166ca4-f8b4-989f-dee8-b5b4f34999e3"
     base = resume_target_from_row(_adopted_codex_row(), row_read_ok=True)
     assert resume_extra_args(base) is None
 

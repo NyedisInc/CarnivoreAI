@@ -10,11 +10,11 @@ from typing import Dict
 import pytest
 
 from src.core.attention import output_holders
+from src.core.attention.parent_map import descendants
 from src.core.attention.output_holders import (
     HELD,
     NOT_HELD,
     UNMEASURED,
-    descendants,
     probe_output_holders,
 )
 from src.core.claude_resume_argv import list_process_table

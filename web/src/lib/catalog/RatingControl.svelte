@@ -21,7 +21,6 @@
         t: Translate;
         signedIn: boolean;
         installed?: boolean;
-        /* could not */
         onWritten?: () => void;
         gate?: RegisterGate;
         initialStars?: number | null;
@@ -57,7 +56,7 @@
         words = initialText ?? '';
     });
 
-    /* could not be reached */
+    /* could not be reached its own sentence */
     function report(error: unknown): void {
         const code = refusalCodeOf(error);
         if (code) refusal = refusalMessage(code, t);

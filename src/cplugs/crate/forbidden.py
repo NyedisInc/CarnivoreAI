@@ -1,9 +1,3 @@
-"""Sources a crate never reads, and the one way a source file is opened (plan 2.5).
-
-A file is opened ``O_RDONLY | O_NOFOLLOW`` and refused when it is not a regular file, when its parent's real path is not
-inside an allowed root, when its name matches a deny pattern, when its ``(st_dev, st_ino)`` is a known credential file's
-(a hard link named like a transcript), or when it is an iCloud placeholder. A refusal names the path, never content.
-"""
 
 from __future__ import annotations
 

@@ -49,7 +49,7 @@
 </script>
 
 {#if !headless}
-<button
+<button data-base-exempt="a terminal bar key (or menu item) drawn by the bar, with a picture glyph"
     bind:this={buttonEl}
     class="tbg-open"
     class:tbg-menuitem={asMenuItem}
@@ -86,14 +86,7 @@
 {/if}
 
 {#if open}
-    <!-- The frame, the top layer, Escape and the press outside are `AnchoredPopup`'s (wrapper package T-2). ESCAPE IS HEARD ON THE
-         DOCUMENT IN THE CAPTURE PHASE, wherever focus is, because the panel holds a select and a file input and a native picker
-         takes focus out of this subtree entirely; the key is not stopped there, so the picker still gets it. THE TOP LAYER: the
-         terminal grid carries `contain: layout` (`engine/grid.css`, issue #819), which makes it the containing block for every
-         `position: fixed` descendant, so the viewport coordinates `position()` writes landed off screen (issue #860).
-         `[popover]` escapes that with no DOM move, so the node still inherits its session's `--color-*` tokens from its
-         `.oc-frame` ancestor, and a nested top-layer element (inside `TerminalActions.svelte`'s `.cell-options`) still
-         promotes independently. Nothing takes focus on open; `close` gives it back. -->
+    
     <AnchoredPopup
         bind:element={popoverEl}
         class="tbg-pop"
@@ -155,7 +148,6 @@
             background: var(--color-accent-bg);
         }
 
-        /*  hidden  padding */
         @media (pointer: coarse) {
             .tbg-open:not(.tbg-menuitem) {
                 width: 44px;
@@ -164,7 +156,6 @@
             }
         }
 
-        /* padding */
         .tbg-menuitem {
             width: 100%;
             height: auto;

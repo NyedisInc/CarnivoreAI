@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* there is nothing */
   import { setContext, type Snippet } from 'svelte';
   import { t } from '../sdk';
   import { RailResizeHandle } from '../sdk/ui';

@@ -33,9 +33,9 @@ def _item_with_attention(store: TaskManagerStore) -> tuple:
 
 def test_a_message_arriving_during_a_reply_stays_unread_after_the_reply_saves(store):
     item, shown = _item_with_attention(store)
-    store.post(item, "arrived while the owner typed", actor="claude", kind="attention")
+    store.post(item, "arrived while he typed", actor="claude", kind="attention")
     done = store.post(item, "my reply", actor="joe", ack_through=shown)["item"]
-    assert _unread(done) == ["arrived while the owner typed"]
+    assert _unread(done) == ["arrived while he typed"]
     assert done["unread"] is True
     assert store.item(item)["unread"] is True
 

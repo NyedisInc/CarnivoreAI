@@ -6,10 +6,12 @@ import sqlite3
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import quote
 from typing import Dict, Optional
 
 import structlog
 
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core import product_identity
 
 logger = structlog.get_logger()
@@ -47,7 +49,7 @@ def _is_empty_db(path: Path) -> bool:
     if path.stat().st_size == 0:
         return wal_bytes == 0
     try:
-        with closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=5)) as conn:
+        with closing(connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)) as conn:
             return conn.execute("SELECT count(*) FROM sqlite_master").fetchone()[0] == 0
     except sqlite3.Error as exc:
         logger.warning("legacy_db_probe_failed", path=path.name, error=str(exc))
@@ -184,3 +186,20 @@ def script_default_db() -> str:
     if not path.exists() or path.stat().st_size == 0:
         raise SystemExit(f"no database found at {path} (and no cloude.db beside it); pass --db explicitly")
     return str(path)
+
+
+def resolve_script_db(explicit: Optional[str]) -> str:
+    return explicit if explicit else script_default_db()
+
+
+def connect_existing(path: str) -> sqlite3.Connection:
+    return sqlite3.connect(f"file:{quote(str(path))}?mode=rw", uri=True)
+
+
+def backup_refusal(backup: Optional[str]) -> Optional[str]:
+    if not backup:
+        return "REFUSED: --apply needs --require-backup <path>"
+    path = Path(os.path.expanduser(backup))
+    if not path.exists() or (path.is_file() and path.stat().st_size == 0):
+        return f"REFUSED: backup {path} is missing or empty"
+    return None

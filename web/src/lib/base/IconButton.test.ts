@@ -24,6 +24,13 @@ describe('IconButton', () => {
         expect(el.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
     });
 
+    test('a tooltip is the title while the label stays the accessible name; without one the label is both', () => {
+        const el = button({ tooltip: 'close (esc)' });
+        expect(el.getAttribute('aria-label')).toBe('close');
+        expect(el.title).toBe('close (esc)');
+        expect(button({}).title).toBe('close');
+    });
+
     test('the variants map onto the one button recipe', () => {
         expect(button({ variant: 'quiet' }).dataset).toMatchObject({ btn: 'quiet', size: 'icon' });
         expect(button({ variant: 'quiet' }).hasAttribute('data-tone')).toBe(false);

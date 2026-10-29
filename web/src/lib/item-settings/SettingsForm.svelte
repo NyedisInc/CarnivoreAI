@@ -1,7 +1,11 @@
 
 <script lang="ts">
+    import { untrack } from 'svelte';
     import type { Translate } from '../sessions/types';
     import Switch from '../base/Switch.svelte';
+    import Button from '../base/Button.svelte';
+    import Segmented from '../base/Segmented.svelte';
+    import Select from '../base/Select.svelte';
     import type { WidgetSettingField, WidgetSettingsSchema } from '../../opscenter/widgets/types';
     import { fieldDisabled, resolveValue, type SettingValue } from './api';
     import { controlOf, settingGroups } from './schema-layout';
@@ -26,6 +30,21 @@
     function wordsFor(key: string, labelKey: string, option: string): string {
         return optionLabel?.(key, option) ?? t(`${labelKey}.option.${option}`);
     }
+
+    let formEl = $state<HTMLElement | null>(null);
+
+    $effect(() => {
+        const refused = error;
+        if (!refused || !formEl) return;
+        const field = schema.fields[refused.key];
+        if (!field) return;
+        untrack(() => {
+            const wanted = `${idPrefix}-${refused.key}`;
+            for (const el of formEl?.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select') ?? []) {
+                if (el.id === wanted) el.value = String(shown(refused.key, field));
+            }
+        });
+    });
 
     const entries = $derived(Object.entries(schema.fields) as [string, WidgetSettingField][]);
     const groups = $derived(settingGroups(schema));
@@ -61,7 +80,7 @@
     }
 </script>
 
-<section class="sf" data-oc-base aria-labelledby={heading ? `${idPrefix}-title` : undefined} aria-label={heading ? undefined : t('item_settings.title')} data-settings-form>
+<section class="sf" bind:this={formEl} data-oc-base aria-labelledby={heading ? `${idPrefix}-title` : undefined} aria-label={heading ? undefined : t('item_settings.title')} data-settings-form>
     {#if heading}<h3 class="sf__title oc-label" id={`${idPrefix}-title`}>{t('item_settings.title')}</h3>{/if}
     {#if entries.length === 0}
         <p class="sf__empty">{t('item_settings.none')}</p>
@@ -102,7 +121,8 @@
                 {:else if field.kind === 'number'}
                     <input
                         id={control}
-                        class="oc-field sf__input sf__input--number"
+                        class="sf__input sf__input--number"
+                        data-field
                         type="number"
                         inputmode="decimal"
                         step="any"
@@ -115,35 +135,29 @@
                     />
                 {:else if field.kind === 'enum' && controlOf(field) === 'segmented'}
                     {@const current = shown(key, field)}
-                    <div class="oc-seg" id={control} role="radiogroup" aria-label={t(field.labelKey)}>
-                        {#each field.options as option (option)}
-                            <button
-                                type="button"
-                                class="oc-seg__item"
-                                role="radio"
-                                aria-checked={current === option}
-                                data-option={option}
-                                disabled={busy}
-                                onclick={() => { if (current !== option) onChange(key, option); }}
-                            >{wordsFor(key, field.labelKey, option)}</button>
-                        {/each}
-                    </div>
-                {:else if field.kind === 'enum'}
-                    <select
+                    <Segmented
                         id={control}
-                        class="oc-field sf__input"
-                        value={shown(key, field)}
+                        label={t(field.labelKey)}
+                        value={String(current)}
                         disabled={busy}
-                        onchange={(event) => onChange(key, event.currentTarget.value)}
-                    >
-                        {#each field.options as option (option)}
-                            <option value={option}>{wordsFor(key, field.labelKey, option)}</option>
-                        {/each}
-                    </select>
+                        options={field.options.map((option) => ({ value: option, label: wordsFor(key, field.labelKey, option), attrs: { 'data-option': option } }))}
+                        onchange={(next) => onChange(key, next)}
+                    />
+                {:else if field.kind === 'enum'}
+                    <Select
+                        id={control}
+                        data-sf-input
+                        aria-label={t(field.labelKey)}
+                        value={String(shown(key, field))}
+                        disabled={busy}
+                        options={field.options.map((option) => ({ value: option, label: wordsFor(key, field.labelKey, option) }))}
+                        onchange={(event) => onChange(key, (event.currentTarget as HTMLSelectElement).value)}
+                    />
                 {:else}
                     <input
                         id={control}
-                        class="oc-field sf__input"
+                        class="sf__input"
+                        data-field
                         type="text"
                         maxlength={field.maxLength}
                         value={shown(key, field)}
@@ -153,9 +167,9 @@
                     />
                 {/if}
                 {#if chosen(key)}
-                    <button type="button" class="oc-btn sf__reset" disabled={busy} onclick={() => onChange(key, null)}>
+                    <Button data-sf-reset disabled={busy} onclick={() => onChange(key, null)}>
                         {t('item_settings.use_default')}
-                    </button>
+                    </Button>
                 {:else}
                     <span class="sf__default">{t('item_settings.default')}</span>
                 {/if}

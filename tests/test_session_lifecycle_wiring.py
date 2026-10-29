@@ -51,6 +51,9 @@ class _StubSettings:
         self._root = root
         self.port = 5001
 
+    def load_auth_config(self):
+        raise FileNotFoundError("no config.json in this stub")
+
     def get_pinned_themes_path(self) -> Path:
         return self._root / "pinned_themes.json"
 
@@ -134,6 +137,32 @@ def test_the_home_screen_listing_actually_reaps(monkeypatch, tmp_path):
     with closing(connect(db_path_for(tmp_path), create=False)) as c:
         assert row_by_uuid(c, "u-dead")["lifecycle"] == SESSION_LIFECYCLE_STOPPED
         assert row_by_uuid(c, "u-live")["lifecycle"] == SESSION_LIFECYCLE_RUNNING
+
+
+def test_the_home_screen_listing_calls_the_reconciler_exactly_once_with_the_pane_map(
+    monkeypatch, tmp_path
+):
+    calls = []
+    mgr = _wired(
+        monkeypatch,
+        tmp_path,
+        TmuxListing.answered(
+            [{"name": "cloude_a", "created_at_epoch": 1000, "window_count": 1}]
+        ),
+    )
+    real = mgr.reconcile_lifecycle
+
+    def spy(listing, pane_status=None):
+        calls.append((listing, pane_status))
+        return real(listing, pane_status)
+
+    monkeypatch.setattr(mgr, "reconcile_lifecycle", spy)
+    result = mgr.list_attachable_sessions()
+
+    assert len(calls) == 1
+    listing, pane_status = calls[0]
+    assert [r["name"] for r in listing.sessions] == [r["name"] for r in result.sessions]
+    assert pane_status is not None and pane_status.socket == SOCKET
 
 
 def test_the_home_screen_listing_does_not_reap_on_a_failed_probe(

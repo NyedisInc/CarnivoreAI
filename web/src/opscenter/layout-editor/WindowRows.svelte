@@ -9,6 +9,7 @@
 </script>
 
 <script lang="ts">
+  import Button from '../../lib/base/Button.svelte';
   import Icon from '../ui/Icon.svelte';
   import { t } from '../../lib/i18n/index.svelte';
 
@@ -43,9 +44,9 @@
     {@const isOpen = open === kind}
     {@const word = t(`layout_editor.drawer.${kind}`)}
     <div class="le-wfold" class:le-wfold--open={isOpen} data-window-fold={kind}>
-      <button
-        type="button"
-        class="le-card le-wfold__head"
+      <Button
+        variant="row"
+        data-le-card=""
         data-picker-entry={kind}
         aria-expanded={isOpen}
         aria-controls={`le-wfold-${kind}`}
@@ -60,17 +61,17 @@
           <span class="le-card__meta">{t(list.length === 1 ? 'layout_editor.drawer.window_count_one' : 'layout_editor.drawer.window_count', { count: list.length })}</span>
         </span>
         <span class="le-wfold__chev" aria-hidden="true"></span>
-      </button>
+      </Button>
       {#if isOpen}
         <div class="le-wfold__body" id={`le-wfold-${kind}`}>
           {#if list.length > 0}<p class="le-wfold__hint">{t(aimed ? 'layout_editor.drawer.window_aimed' : 'layout_editor.drawer.window_hint')}</p>{/if}
           <ul class="le-wfold__list" aria-label={word}>
             {#each list as choice (choice.id)}
               <li>
-                <button
-                  type="button"
-                  class="le-card le-wfold__choice"
-                  class:le-card--placed={choice.why !== ''}
+                <Button
+                  variant="row"
+                  data-le-card=""
+                  data-placed={choice.why !== '' ? '' : undefined}
                   data-picker-row={choice.id}
                   aria-disabled={choice.why !== ''}
                   title={choice.why || choice.label}
@@ -82,7 +83,7 @@
                     <span class="le-card__name">{choice.label}</span>
                     {#if choice.why}<span class="le-card__meta">{choice.why}</span>{/if}
                   </span>
-                </button>
+                </Button>
               </li>
             {:else}
               <li class="le-wfold__none" role="status">{t('layout_editor.drawer.window_none', { kind: word })}</li>
@@ -112,13 +113,13 @@
       border-top: 1px solid var(--oc-line-rule);
     }
 
-    .le-windows :global(.le-wfold__head) {
+    .le-windows :global([data-picker-entry]) {
       min-height: 34px;
       padding: var(--oc-space-1) 6px;
       gap: var(--oc-space-2);
     }
 
-    .le-wfold--open :global(.le-wfold__head) {
+    .le-wfold--open :global([data-picker-entry]) {
       background: var(--oc-ground-hover);
       border-color: var(--oc-line-rule);
     }
@@ -177,7 +178,7 @@
       list-style: none;
     }
 
-    .le-windows :global(.le-wfold__choice) {
+    .le-windows :global([data-picker-row]) {
       min-height: 26px;
       padding: 3px 6px;
       gap: var(--oc-space-2);

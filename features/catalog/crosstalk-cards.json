@@ -33,7 +33,8 @@
   "how_to": [
     "Switch \"show crosstalk cards\" on; a card appears on both terminals when a message is delivered.",
     "Click a card to dismiss it; it also fades after twenty seconds.",
-    "Switch the sending or the receiving side off under it."
+    "Switch the sending or the receiving side off under it.",
+    "Switch on \"keep cards until dismissed\" (off by default) to keep each session's cards until you dismiss them, so they are still there when you switch tabs and back."
   ],
   "examples": [
     "A reply from a Codex agent shows a FROM card on your Claude terminal without leaving the conversation."

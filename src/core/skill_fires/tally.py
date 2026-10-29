@@ -37,7 +37,6 @@ NOT_MEASURED = SkillTally(STATE_NOT_MEASURED)
 
 
 def default_store() -> SkillFireStore:
-    """The store under the app's state directory (resolved at call time)."""
     from src.config import settings  # noqa: PLC0415
     return SkillFireStore(Path(settings.get_state_dir()) / DB_NAME)
 
@@ -54,14 +53,6 @@ class SkillTallyCache:
         self._probe = probe
 
     def tally(self, family: Optional[str], transcript_path: Optional[Any]) -> SkillTally:
-        """Advance one transcript and summarise it. Never raises.
-
-        Inputs: family (str | None) - None counts as claude; anything
-          but claude and codex is ``unsupported``. transcript_path (Path
-          | str | None) - the located transcript or rollout.
-        Output: SkillTally; ``not_measured`` when there is no transcript
-          or the scan could not read it.
-        """
         if family is not None and family not in (FAMILY_CLAUDE, FAMILY_CODEX):
             return UNSUPPORTED
         if transcript_path is None:

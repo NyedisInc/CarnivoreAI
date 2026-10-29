@@ -46,7 +46,7 @@ def verify_run(vault: Vault, state: Path, run_id: str) -> Dict[str, Any]:
     for row in runs.read_expected(state, run_id):
         placed = filed.get((row["unit"], row["source_point_id"]))
         if placed is None:
-            continue  # nothing was written
+            continue
         checked += 1
         why_not = ""
         try:

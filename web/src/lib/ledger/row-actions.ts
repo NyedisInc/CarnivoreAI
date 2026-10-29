@@ -1,4 +1,3 @@
-/* could not */
 import { beginNav, keepNav } from '../launchpad/nav-generation';
 import { LEDGER_KEYS } from './ledger-model';
 import {
@@ -43,7 +42,6 @@ function loginRefusal(error: unknown): LoginRefusal {
     return { kind: 'in_progress_unnamed' };
 }
 
-/* something else */
 async function enterSession(
     sessionId: string,
     token: unknown,

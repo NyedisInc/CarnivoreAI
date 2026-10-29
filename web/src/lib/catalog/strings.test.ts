@@ -18,6 +18,7 @@ import {
     submitRefusalKey,
 } from '../../../../client/js/labels/skill-submit.js';
 
+/** The repo root, from this file. */
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 const SOURCES = [

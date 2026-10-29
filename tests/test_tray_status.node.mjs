@@ -1,3 +1,5 @@
+// WHY THIS FILE EXISTS
+// we know nothing
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -394,7 +396,7 @@ await test('changing the bind address discards the cached token', async () => {
   });
 
   await client.fetchSessions();
-  client.setBaseUrl('http://192.0.2.12:8000');
+  client.setBaseUrl('http://10.0.1.5:8000');
   await client.fetchSessions();
 
   const verifies = calls.filter((c) => c.url.endsWith('/auth/verify'));

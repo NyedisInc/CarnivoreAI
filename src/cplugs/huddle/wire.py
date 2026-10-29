@@ -5,7 +5,7 @@ import sqlite3
 from typing import Dict, Mapping, Sequence
 
 from src.cplugs.huddle.cards.columns import CARD_COLS
-from src.cplugs.huddle import answers, artifacts, blockers, board, corrections, waits, files, fork, from_project, github_issue, inbox, item_marker, item_owner, kinds, lifecycle, nudges, quotes, review, review_checks, rich_ask, rules, schedule_offer, status_lines, structured, title as titles, triggers
+from src.cplugs.huddle import answers, artifacts, blockers, board, card_line, corrections, waits, files, fork, from_project, github_issue, inbox, item_marker, item_owner, kinds, lifecycle, nudges, quotes, review, review_checks, rich_ask, rules, schedule_offer, status_lines, structured, title as titles, triggers
 
 ITEM_COLS = ("id, list_key, text, note, position, created_by, created_key, swarm_ref, state, claude_done, created_at, "
               "updated_at, revision, created_seq, seq, deleted, kind, attention_seq, seen_seq, joe_seq, claude_read_seq, "
@@ -106,6 +106,9 @@ def message_dict(row: sqlite3.Row) -> dict:
         out[board.ROUND_KEY] = sent
     if "category" in row.keys() and row["category"]:
         out["category"] = row["category"]
+    line_card = card_line.read(raw)
+    if line_card is not None:
+        out[card_line.KEY] = line_card
     offered = schedule_offer.read(raw)
     if offered is not None:
         out[schedule_offer.KEY] = offered

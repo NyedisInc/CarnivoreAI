@@ -30,7 +30,7 @@ PROVIDER = "claude"
 
 
 class PinUnreadable(Exception):
-    """config.json could not be read, so whether a session is pinned is unknown (never read as "no pin")."""
+    pass
 
 CONTINUE_WORD = "continue"
 
@@ -51,14 +51,6 @@ async def pick_target(
     launchable: Callable[[Optional[ProviderAccount]], Awaitable[bool]],
     excluded: AbstractSet[str] = frozenset(),
 ) -> Optional[str]:
-    """The best account other than the capped one that a session can start and resume on, or None.
-
-    Inputs: rows (ledger rows); accounts (configured rows plus the built-in login); capped_id (str);
-      threshold (float) - the auto-switch threshold; now (datetime); launchable (async account -> bool);
-      excluded (set[str]) - accounts a transcript already proved capped (never moved onto, whatever the ledger says).
-    Output: str | None - the account id; None means "nothing has headroom yet".
-    Example: await pick_target(rows, accounts, capped_id="a", threshold=99, now=now, launchable=rot.launchable)
-    """
     ranked = rank_candidates(
         rows, provider=PROVIDER, active_account_id=capped_id, threshold_percent=threshold, now=now
     )
@@ -82,10 +74,6 @@ class Rotation:
         return None if key in (None, info.session.id) else key
 
     async def pin_for(self, session_uuid: Optional[str]) -> Optional[str]:
-        """The account this session is pinned to, or None. Inputs: session_uuid. Output: str | None.
-
-        Raises: PinUnreadable - config.json could not be read (unlike ``session_pin.pin_for``, which answers None).
-        """
         def read() -> Optional[str]:
             config = config_writer.read_config(self._config_path())
             if not isinstance(config, dict):

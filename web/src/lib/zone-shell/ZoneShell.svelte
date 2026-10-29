@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* display: none */
   import type { Snippet } from 'svelte';
   import ZonePane from './ZonePane.svelte';
   import ZoneTabContext from './ZoneTabContext.svelte';

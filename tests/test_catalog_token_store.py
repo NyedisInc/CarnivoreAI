@@ -28,7 +28,7 @@ from src.core.catalog.token_store import (
 
 def a_session(**overrides) -> CatalogSession:
     fields = {
-        "login": "acme",
+        "login": "example-owner",
         "access_token": "access-token-value",
         "access_expires_at": 2_000_000_000,
         "refresh_token": "refresh-token-value",

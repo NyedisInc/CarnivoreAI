@@ -23,6 +23,7 @@ describe('kinds', () => {
         ]);
         expect(tabOf(undefined)).toBe('skills');
         expect(tabOf('nonsense')).toBeNull();
+        expect(tabOf('')).toBe('skills');
         expect(realKind({ kind: 'cplug' })).toBe('cplug');
         expect(realKind({ kind: 'plugin' })).toBe('plugin');
         expect(realKind({})).toBe('skill');

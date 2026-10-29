@@ -22,7 +22,6 @@ export interface GradeFailureView {
 export interface GradeView {
     shape: GradeShape;
     letter: string | null;
-    /* could not */
     checked: number | null;
     failed: GradeFailureView[];
     notGraded: string[];
@@ -71,6 +70,7 @@ export function gradeView(grade: CatalogGrade | null | undefined): GradeView {
     const notGraded = notGradedOf(grade.not_graded);
 
     if (letter === UNGRADED) {
+        // there is nothing
         return {
             shape: 'ungraded',
             letter: null,

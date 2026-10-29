@@ -1,10 +1,12 @@
 
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from src.core import config_writer
+from src.core.read_caches.config_stat import CONFIG_READS
 from src.core.pack.machines import restrictions as restrictions_mod
 from src.core.pack.machines import settings_doc
 from src.core.pack.relay import consent as consent_mod
@@ -14,6 +16,11 @@ CONFIG_KEY = "pack_machines"
 SIG_KEY = "settings_sig"
 SIGNED_MODE_KEY = "settings_signed"
 ANCHOR_KEY = "settings_anchor"
+
+
+def _read_block(path: Path) -> Dict[str, Any]:
+    block = config_writer.read_config(path).get(CONFIG_KEY)
+    return block if isinstance(block, dict) else {}
 
 
 def _settings_path() -> Path:
@@ -28,12 +35,12 @@ class ConfigState:
         self._path = path
 
     def _block(self) -> Dict[str, Any]:
+        path = self._path()
         try:
-            doc = config_writer.read_config(self._path())
+            block = CONFIG_READS.fetch(path, CONFIG_KEY, lambda: _read_block(path))
         except (OSError, ValueError):
             return {}
-        block = doc.get(CONFIG_KEY)
-        return block if isinstance(block, dict) else {}
+        return copy.deepcopy(block)
 
     def _commit(self, key: str, value: Any) -> bool:
         return self._commit_many({key: value})
